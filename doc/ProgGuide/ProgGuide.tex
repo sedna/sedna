@@ -1,0 +1,2267 @@
+
+% File:  ProgGuide.tex
+% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+
+\documentclass[a4paper,12pt]{article}
+\font\mmmm cmtt10
+\makeatletter
+\def\verbatim@font{\mmmm}
+\makeatother
+%\usepackage[russian]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{theorem}
+\newtheorem{definition}{Definition}
+{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
+\newtheorem{theo}{Theorem}
+\newtheorem{note}{Note}
+
+%\usepackage{tex4ht}
+
+% ѕозвол€ет вставл€ть картинки в формате eps.
+\usepackage[dvips]{epsfig}
+
+%используетс€ дл€ создани€ таблиц со слепленными клетками 
+\usepackage{multirow}
+
+% Ќиже следующие две строчки позвол€ют имен€ть пол€ документа.
+%\addtolength{\hoffset}{31pt}
+%\addtolength{\textwidth}{104pt}
+
+\title{Sedna Programmer's Guide}
+\date{}
+
+\begin{document}
+% Ёто однострочный комментарий. ћногострочных комментариев, к сожаление, в латехе нет.
+
+% Ќиже следующий \sloppy ничего по сути не мен€ет, он только делает латех менее предирчивым к 
+% оформлению документа. \sloppy лучше вставл€ть всегда.
+\sloppy
+
+% ¬ставка титульной страницы. ≈е содержимое определ€етс€ командами \title{},
+%\author{}, \date{}, которые вставл€ютс€ до \begin{document}
+\maketitle
+
+
+% ¬ставка оглавлени€
+\tableofcontents
+
+%\part{(ѕример части) Ќазвание первой части}
+%\chapter{(ѕример главы) «накомство с \LaTeX}
+\section{Client Application Programming Interfaces}
+The Sedna client application programming interfaces (APIs) provides programmatic access to Sedna from client applications developed in host programming languages. This section describes the client APIs distributed with Sedna.  
+
+\subsection{Java API}
+The Java API provides programmatic access to XML data from the Java programming language. Using the Java API, applications written in the Java can access one or more databases of the Sedna DBMS and manipulate database data using the database language described in Section \ref{sec:DBLang}. 
+
+Application working with the Sedna DBMS through the Java API operates with the following notions of the Java API: session, transaction, statement, result. 
+
+\subsubsection{Sessions}
+To start working with Sedna application has to open a session via establishing an authenticated connection with the server. The Java API defines the \verb!SednaConnection! interface to represent a session.
+
+To open a session application uses static method \verb!getConnection! of the \verb!DatabaseManager! class. 
+
+\small{
+\begin{verbatim}
+ public static SednaConnection getConnection(java.lang.String url, 
+                                             java.lang.String DBName,
+                                             java.lang.String user, 
+                                             java.lang.String password)
+                                                    throws DriverException
+\end{verbatim}
+}
+Parameters:
+
+ \verb!url! - the name of the computer where the Sedna DBMS is running. This parameter may contain a port number. If the port number is not specified, the default port number (5050) is used.
+ 
+ \verb!DBName! - the name of the database to connect. 
+ 
+ \verb!user! - user name. 
+ 
+ \verb!password! - user password.
+ 
+If the connection is established and authentication succeeds the method returns an object that implements the \verb!SednaConnection! interface. Otherwise, \verb!DriverException! is thrown.
+
+Application can close session using the \verb!close! method of the \verb!SednaConnection! interface.
+
+\begin{verbatim}
+ public void close() throws DriverException
+\end{verbatim}
+
+If the server does not manage to close connection properly the \verb!close! method throws \verb!DriverException!. 
+
+The \verb!isClosed! method retrieves whether this connection has been closed or not. A connection is closed if the method \verb!close! has been called on it or if certain fatal errors have occurred.
+
+\begin{verbatim}
+ public boolean isClosed()
+\end{verbatim}
+
+
+
+\subsubsection{Transactions}
+Application can execute queries and updates against specified database only in the scope of a transaction. That is, once a session has been opened, application can begin a transaction, execute statements and commit (or rollback) this transaction. 
+
+In the session transactions are processed sequentially. That is, application must commit a begun transaction before beginning a new one.
+  
+To specify transaction boundaries application uses methods of the \verb!SednaConnection! interface:
+\verb!begin!, \verb!commit!.
+
+The \verb!begin! method begins a new transaction.
+
+\begin{verbatim}
+ public void begin() throws DriverException
+\end{verbatim}
+
+If the transaction has not begun successfully the \verb!begin! method throws \verb!DriverException!.
+
+The \verb!commit! method commits a transaction. 
+
+\begin{verbatim}
+ public void commit() throws DriverException
+\end{verbatim}
+ 
+If the transaction has not been committed successfully the \verb!commit! method throws \verb!DriverException!.
+
+To rollback transaction the \verb!rollback! method is used.
+
+\begin{verbatim}
+ public void rollback() throws DriverException
+\end{verbatim}
+
+If the transaction has not been rollback successfully the \verb!rollback! method throws \verb!DriverException!.
+
+
+The Java API does not provide auto-commit mode for transactions. That is, every transaction must be explicitly started (by means of \verb!begin!) and commited (by means of \verb!commit!). If session is closed (by means of \verb!close!) before a transaction committed, server does rollback for that transaction, and \verb!close! throws \verb!DriverException!. 
+
+
+
+\subsubsection{Statements}
+The \verb!SednaStatement! interface provides methods for loading documents into the database, executing statements of the database language defined in Section \ref{sec:DBLang} and retrieving results that statements produce.
+\verb!SednaStatement! object is created using the \verb!createStatement! method of the \verb!SednaConnection! interface:
+
+\begin{verbatim}
+ public SednaStatement createStatement() throws DriverException 
+\end{verbatim}
+
+\verb!SednaStatement! object may only be created on an open connection. Otherwise, the  \verb!createStatement! method throws \verb!DriverException!.
+
+To load the document into the database use:
+
+\begin{verbatim}
+ public void loadDocument(InputStream in, String doc_name)
+                        throws DriverException, IOException 
+\end{verbatim}
+
+The \verb!in! parameter is an input stream to get the document from. The \verb!doc_name! parameter is the name for this document in the database.
+
+To load the document into the specified collection of the database use:
+
+\begin{verbatim}
+ public void loadDocument(InputStream in, String doc_name, String col_name)
+                        throws DriverException, IOException 
+\end{verbatim}
+
+The \verb!in! parameter is an input stream to get the document from. The \verb!doc_name! parameter is the name for this document in the database. The \verb!col_name! parameter is the name of the collection to load the document into.
+
+To execute a statement the \verb!execute! methods of the \verb!SednaStatement! are used. 
+
+%As described in Section \ref{sec:DBLang} Sedna supports three types of statements: XQuery queries, updates and bulk load.
+%For XQuery queries  the \verb!execute! methods retrieve the result of the XQuery query evaluation in the serialized form.
+
+\begin{verbatim}
+public boolean execute(java.lang.String queryText) 
+                                     throws DriverException
+\end{verbatim}
+
+The \verb!queryText! parameter contains the text of the statement. 
+
+\begin{verbatim}
+public boolean execute(java.io.InputSteram in) throws DriverException
+\end{verbatim}
+
+The \verb!in! parameter is some input stream to read an XQuery statement from.
+
+
+Some statements (such as XQuery statements or the retrieve metadata command) produce the result. In case of such statements, the \verb!execute! methods return true and the result can be obtained as described in Section \ref{sec:results}. In case of statements that do not produce the result (such as updates or bulk load), the \verb!execute! methods return false. 
+
+%The methods return true if the query was not an update, and returns false if that was an update. The methods throw \verb!DriverException! if the execution fails.
+
+
+
+\subsubsection{Results}
+\label{sec:results}
+%If the query was not an update and the execution of that query succeeds, application can obtain a result of this query. 
+
+The \verb!SednaSerializedResult! interface represents the result of the statement evaluation. Application can obtain the result using the \verb!getSerializedResult! method of the \verb!SednaStatement! interface.
+
+\begin{verbatim}
+public SednaSerializedResult getSerializedResult()
+\end{verbatim}
+
+The result of the non-XQuery statement evaluation is retrieved as a sequence with only one item, where the item is a string. For example, in case of the retrieve descriptive schema command the result is a sequence with an item that is a descriptive schema represented as a string. The result of the XQuery statement evaluation is retrieved as a sequence of items, where every item is represented as a string.
+
+Application can use the \verb!next! methods of the \verb!SednaSerializedResult! interface to iterate over the result sequence:
+
+\begin{verbatim}
+public String next() throws DriverException
+\end{verbatim}
+
+The method returns an item of the result sequence as a string. If the sequence has ended it returns null. It throws \verb!DriverException! in the case of error.
+
+\begin{verbatim}
+public int next(java.io.Writer writer) throws DriverException
+\end{verbatim}
+
+The method writes an item of the result sequence to some output stream using \verb!writer!. It returns 0 if an item was retrieved and written successful, and 1 if the result sequence has ended. It throws \verb!DriverException! in the case of error.
+
+Please, notice, that in the current version of the Sedna DBMS application has to execute statements and use the results of their execution sequentially. To explain this note, suppose application execute a statement, obtains a result of that statement execution and iterates over this result. If, after that, application executes next statement, it cannot iterate over the result of the previous statement any more.
+
+\subsubsection{Exceptions}
+
+The \verb!DriverException! class provides information about errors that occur while application works with the Sedna DBMS through the Java API. \verb!DriverException! is also thrown when application loses its connection with the server.
+
+
+\subsubsection{Code example}
+In this section we provide fragments of an example program that uses the Java API to work with Sedna DBMS.
+
+\small{
+\begin{verbatim}
+import ru.ispras.sedna.driver.*;
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+       ...
+       ...
+		
+	   System.out.println("Client started\n");
+
+
+  // Set up arguments for the call to the getConnection method.
+       String url = "localhost";
+       String dbname = "sample-db";
+       String user = "SYSTEM";
+       String password = "MANAGER";
+       String item;
+       int count;
+
+       SednaConnection con = null;
+// Get a connection
+       try{
+         con = DatabaseManager.getConnection(url, dbname, user, password);
+
+
+// begin transaction
+         con.begin();
+         
+        // creates statements
+         SednaStatement st1 = con.createStatement();
+         SednaStatement st2 = con.createStatement();
+      
+        // execute a statement. the statement is a bluk load.
+         System.out.println("Loading data");
+         boolean call_res = 
+           st1.execute("LOAD \"region.xml\" \"region\"");
+         if(!call_res) // if call_res is false the statement was an update
+           {
+            System.out.println("Bulk load succeeded");
+            System.out.println("===============================\n");
+            
+           }
+        
+        // execute query.
+         System.out.println("Executing query");
+         call_res = 
+          st2.execute("document(\"region\")/*/*");
+         if(call_res) // if call_res is true the statement 
+                       // was not an update and we can use
+                       // SerializedResult object
+          {
+          	System.out.println("Result:");
+            SednaSerializedResult pr1 = st2.getSerializedResult();
+            item = null;
+            item = pr1.next();
+            count = 1;
+            while(item!=null)
+             {
+                 System.out.println(count+" item: "+item);
+                 item = pr1.next();
+                 System.out.println("===============================\n");
+                 count++;
+             }
+          }
+        
+         // execute update.
+         System.out.println("Executing update");
+         call_res =
+          st2.execute("UPDATE delete document(\"region\")//africa");
+         System.out.println("===============================\n");
+         
+        // execute query.
+         System.out.println("Executing query");
+         call_res = st2.execute("document(\"region\")/*/*");
+         if(call_res)  // if call_res is true the statement was not 
+                       // an update and we can use PlaneResult object
+          {
+             System.out.println("Result:");
+             SednaSerializedResult pr3 = st2.getSerializedResult();
+             item = null;
+             item = pr3.next();
+             count = 1;
+             while(item!=null)
+              {
+                  System.out.println(count+" item: "+item);
+                  item = pr3.next();
+                  System.out.println("===============================\n");
+                  count++;
+              }
+
+ // commit the transaction
+        con.commit();
+     }
+     
+ // close the connection    
+   con.close();  
+   }
+
+     catch(DriverException e)
+       {
+
+           System.out.println(e.toString());
+       }
+   ...
+\end{verbatim}
+}
+
+
+The source code of this example program can be found in 
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\applications\java\Client.java
+\end{verbatim}
+\begin{verbatim}
+[linux:] INSTALL_DIR/examples/applications/java/Client.java
+\end{verbatim}
+where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
+%Before run the example make sure that the Sedna DBMS is running with the listener started. For more detail see the Sedna Administration Guide.
+
+Before running the example make sure that the Sedna DBMS is installed and do the following steps:
+\begin{enumerate}
+\item Start Sedna by runing the following command:
+\begin{verbatim}
+se_gov
+\end{verbatim}
+If Sedna is started successfully it prints "GOVERNOR has been started in
+the background mode".
+\item Create a new database \verb!sample-db! by running the following command:
+\begin{verbatim}
+se_cdb sample-db
+\end{verbatim}
+If the database is created successfully it prints "The database 'sample-db'
+has been created successfully".
+\item Start the sample-db database by running the following command:
+\begin{verbatim}
+se_sm sample-db
+\end{verbatim}
+If the database is started successfully it prints "SM has been started in
+the background mode".
+\end{enumerate}
+
+You can compile and run the example by following the steps listed below:
+\begin{enumerate}
+\item In the file \verb!Client.java!, the \verb!url! parameter denotes the
+ name of the computer where the server is running. If Sedna DBMS is not running 
+ on the same computer edit the file \verb!Client.java! to set the value of the \verb!url!
+ parameter. 
+ This looks as something like the following:
+ \begin{verbatim}String url = "computer-name";\end{verbatim}
+ 
+if Sedna DBMS is running on the same computer you do not need to edit this parameter.
+\item To compile the example, run the script
+ \begin{verbatim}[win:] Clientbuild.bat\end{verbatim}
+ \begin{verbatim}[linux:] Clientbuild.sh\end{verbatim}
+ located in the same folder as \verb!Client.java!.
+
+\item  To run the compiled example, use the script
+ \begin{verbatim}[win:] Client.bat\end{verbatim} 
+ \begin{verbatim}[linux:] Client.sh\end{verbatim} 
+ located in the same folder as \verb!Client.java!.
+ 
+\end{enumerate}
+
+%==========================================================================
+%
+%                                  C API
+%
+%===========================================================================
+\subsection{C API}
+libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
+
+libsedna library is supplied with header file: \verb!"libsedna.h"!. Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the directory where \verb!"libsedna.h"! files are stored.   
+
+Sedna XML DBMS is supplied with libsednamt library also. libsednamt library is libsedna library compiled in multithreaded mode. Applications that need to be compiled in multithreaded mode must link with libsednamt library.
+
+Below in the example we consider libsedna (single-threaded library).
+
+
+\subsubsection{Connecting to a Database}
+Before working with Sedna an application has to declare variable of the \verb!SednaConnection! type and initialize it in the following manner:
+
+\begin{verbatim}struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;\end{verbatim}
+
+\begin{note}
+The initialization with \verb!SEDNA_CONNECTION_INITIALIZER! is not mandatory if you are using Sedna version 0.5 or earlier. 
+\end{note}
+To start working with Sedna an application has to open a session via establishing an authenticated connection with the server using SEconnect:
+\begin{verbatim}
+int SEconnect(SednaConnection* conn, 
+              const char* url, 
+              const char* db_name, 
+              const char* login, 
+              const char* password)
+\end{verbatim}
+This function opens a session to the database, using the following parameters:
+
+\verb!conn! - is a pointer to an instance of SednaConnection type, that is associated with a session. The instance of SednaConnection type is initialized by the SEconnect if the session is open successfully. 
+
+\verb!url! - the name of the computer where the Sedna DBMS is running. This
+parameter may contain a port number. If the port number is not specified, the
+default port number (5050) is used.
+
+\verb!db_name! -  the name of the database to connect.
+
+\verb!login! - user name.
+
+\verb!password! - user password.
+
+SEconnect returns:
+
+positive values:
+
+\verb!SEDNA_SESSION_OPEN! - connection to the database is established, authentication is passed successfully, and session is opened.
+
+negative values:
+
+\verb!SEDNA_AUTHENTICATION_FAILED! - authentication was not passed, session is not open.
+
+\verb!SEDNA_OPEN_SESSION_FAILED! - failed to open session.
+
+\verb!SEDNA_ERROR! - some error is occured, session is not open.
+
+
+To access multiple databases at one time or to better process its complex logic an application can have several sessions open at one time.
+
+When the application finishes its work with the database, it must close the session. SEclose finishes the session and closes the connection to the server. SEclose also frees resourses that were equipped by the call to SEconnect function, that is for every successful call to SEconnect there must be a call to SEclose in the client program. You must call SEclose both when application finishes its work with the database, and when application cannot work with the database anymore due to some error.
+
+\begin{verbatim}int SEclose(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
+
+SEclose returns:
+
+\verb!SEDNA_SESSION_CLOSED! - session is closed succeffully.
+
+\verb!SEDNA_CLOSE_SESSION_FAILED! - session was closed with errors.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+
+
+%---------------------------------------------------------------------------
+
+\subsubsection{Transactions}
+Application can execute queries and updates against the specified database only in the scope of a transaction. That is, once a session has been opened, application can begin a transaction, execute statements and commit this transaction. 
+In a session transactions are processed sequentially. That is, application must commit a begun transaction before beginning a new one. To specify transaction boundaries application uses functions \verb!SEbegin!, \verb!SEcommit!:
+
+\begin{verbatim}int SEbegin(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+SEbegin returns:
+
+positive value:
+
+\verb!SEDNA_BEGIN_TRANSACTION_SUCCEEDED! - transaction is begun.
+
+negative value:
+
+\verb!SEDNA_BEGIN_TRANSACTION_FAILED! - failed to begin a transaction.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+\begin{verbatim}int SEcommit(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!SEcommit! returns:
+
+positive value:
+
+\verb!SEDNA_COMMIT_TRANSACTION_SUCCEEDED! - transaction is committed.
+
+negative value:
+
+\verb!SEDNA_COMMIT_TRANSACTION_FAILED! - failed to commit transaction.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+To rollback transaction use \verb!SErollback! function:
+
+\begin{verbatim}int SErollback(SednaCommection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!SErollback! returns:
+
+positive value:
+
+\verb!SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED! - rollback transaction succeeded.
+
+negative value:
+
+\verb!SEDNA_ROLLBACK_TRANSACTION_FAILED! - failed to rollback transaction.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+
+%---------------------------------------------------------------------------
+
+\subsubsection{Getting connection and transaction status}
+
+An application can know the connection status by calling to \verb!SEconnectionStatus! function:
+ 
+\begin{verbatim}int SEconnectionStatus(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_CONNECTION_OK! - specified connection is open and functions ok.
+
+\verb!SEDNA_CONNECTION_CLOSED! - specified connection is closed. This could be either after the call to \verb!SEclose! function, or before the call to \verb!SEconnect! function.
+
+negative values:
+
+\verb!SEDNA_CONNECTION_FAILED! - specified connection has failed. (Note: in this case you should call \verb!SEclose! function as it releases resources.)
+
+An application can know the transaction status by calling to \verb!SEtransactionStatus! function:
+
+\begin{verbatim}int SEtransactionStatus(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_TRANSACTION_ACTIVE! - specified connection runs transaction.
+
+\verb!SEDNA_NO_TRANSACTION! - specified connection does not run transaction. This could be for example when previous transaction has been committed and a new one has not been begun yet.
+
+\verb!!
+%---------------------------------------------------------------------------
+
+
+\subsubsection{Executing Queries and Updates and Retrieving Result Data}
+
+There are two functions to execute a statement (query or update): \verb!SEexecute! function and \verb!SEexecuteLong! function.
+
+\begin{verbatim}int SEexecute(SednaConnection* conn, const char* query)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!query! - a null-terminated string with an XQuery query or XUpdate update statement.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_QUERY_SUCCEEDED! - specified query succeeded and result data can be retrieved.
+
+\verb!SEDNA_UPDATE_SUCCEEDED! - specified update succeeded.
+
+\verb!SEDNA_BULK_LOAD_SUCCEEDED! - specified update (bulk load- see Section 2) succeeded.
+
+
+negative values:
+
+\verb!SEDNA_QUERY_FAILED! - specified query failed.
+
+\verb!SEDNA_UPDATE_FAILED! - specified update failed.
+
+\verb!SEDNA_BULK_LOAD_FAILED! - bulk load failed.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+
+
+If the statement is really long, and you prefer to pass it to the Sedna directly from a file use \verb!SEexecuteLong! function.
+
+\begin{verbatim}int SEexecuteLong(SednaConnection* conn, FILE* query_file)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!query_file! - a pointer to the open file with the statement to execute.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_QUERY_SUCCEEDED! - specified query succeeded and result data can be retrieved.
+
+\verb!SEDNA_UPDATE_SUCCEEDED! - specified update succeeded.
+
+\verb!SEDNA_BULK_LOAD_SUCCEEDED! - specified update (bulk load- see Section 2) succeeded.
+
+
+negative values:
+
+\verb!SEDNA_QUERY_FAILED! - specified query failed.
+
+\verb!SEDNA_UPDATE_FAILED! - specified update failed.
+
+\verb!SEDNA_BULK_LOAD_FAILED! - bulk load failed.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+
+If \verb!SEexecute! function or \verb!SEexecuteLong! function returns \verb!SEDNA_QUERY_SUCCEEDED!, the result data can be retrieved. The result of XQuery query evaluation is a sequence of items, where every item is represented as
+a string. Use the SEnext function to iterate over the sequence and SEgetData function to retrieve current item of the sequence.
+
+\begin{verbatim}int SEnext(SednaConnection* conn)\end{verbatim}
+
+ parameters:
+ 
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_NEXT_ITEM_SUCCEEDED! - moving to a next item succeeded, and the item can be retrieved.
+
+negative values:
+
+\verb!SEDNA_NEXT_ITEM_FAILED! - failed to get next item.
+
+\verb!SEDNA_RESULT_END! - the result sequence is ended, no result data to retrieve.
+
+\verb!SEDNA_NO_ITEM! - there was no succeeded query that produced the result data, no result data to retrieve.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+\begin{verbatim}int SEgetData(SednaConnection* conn, char* buf, int bytes_to_read)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!buf! - pointer to the buffer that receives the data got from the server. 
+
+\verb!bytes_to_read! - number of bytes to be read from the server into the buffer.
+
+
+returns:
+
+positive values:
+
+number of bytes actually read from the server and put into the buffer.
+
+zero - no data was read from the server and put into the buffer because of the item end. (use SEnext to move to the next item of the result)
+
+negative values:
+
+\verb!SEDNA_GET_DATA_FAILED! - failed to get data.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+%---------------------------------------------------------------------------
+
+\subsubsection{Loading Data}
+
+XML data can be loaded into a database using \verb!"LOAD"! statement of the Data Manipulation Language (see \ref{bulk-load}). Besides, libsedna library provides \verb!SEloadData! and \verb!SEendLoadData! functions to load well-formed XML documents divided into parts of any convenient size.
+
+\verb!SEloadData! functions loads a chunk of XML document:
+
+\begin{verbatim}
+int SEloadData(SednaConnection* conn, 
+                     const char* buf, 
+                   int bytes_to_load, 
+                const char* doc_name)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+\verb!buf! - a buffer with chunk of XML document.
+
+\verb!bytes_to_load! - number of bytes to load.
+
+\verb!doc_name! - name of the document in database the data loads to.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_DATA_CHUNK_LOADED! - chunk of XML document was loaded.
+
+negative values:
+
+\verb!SEDNA_ERROR! - some error occured. Data were not loaded.
+
+When the whole document is loaded using \verb!SEloadData!, application must use \verb!SEendLoadData! to notify server that  transfer of XML document is finished:
+
+\begin{verbatim}int SEendLoadData(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+returns:
+
+positive values:
+
+\verb!SEDNA_BULK_LOAD_SUCCEEDED! - XML document was successfully loaded into the database.
+
+negative values:
+
+\verb!SEDNA_BULK_LOAD_FAILED! - Failed to load XML document into the database.
+
+\verb!SEDNA_ERROR! - some error occured.
+
+
+
+
+
+%---------------------------------------------------------------------------
+
+
+\subsubsection{Error Handling}
+
+If the function returns negative value, application can get the error info in the form of string using \verb!SEgetLastErrorMsg! function:
+
+\begin{verbatim}char* SEgetLastErrorMsg(SednaConnection* conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+The function returns the information about the last error occured in this session.
+
+
+
+%---------------------------------------------------------------------------
+
+\subsubsection{Example Code}
+
+\small{
+\begin{verbatim}
+
+/* This is an example application that works with Sedna XML DBMS through 
+ * C-API using libsedna library.
+ * The application opens a session to "sample-db" database, 
+ * begins a transaction, loads document
+ * "region.xml" to "sample-db" database, executes XQuery query, 
+ * retrieves every item of the 
+ * result data, commits the  transaction and closes the session.
+ */
+
+#include "libsedna.h"
+#include <stdio.h>
+
+int main()
+{
+    struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
+    int bytes_read, res;
+    char buf[1024];
+
+    const char* url = "localhost";
+    const char* db_name = "sample-db";
+    const char* login = "SYSTEM";
+    const char* password = "MANAGER";
+    
+    printf("Client started.\n");
+    
+    //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
+    res = SEconnect(&conn, url, db_name, login, password);
+	
+    if(res != SEDNA_SESSION_OPEN) 
+    {
+        printf("Session starting failed \n%s\n", SEgetLastErrorMsg(&conn));
+        return -1;
+    }
+	
+    //begin transaction
+    res = SEbegin(&conn);
+    if(res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
+    {
+        printf("Begin transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
+    }
+    
+    // load data from file "region.xml" into the document "regions"
+    res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 
+    if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
+    {
+        printf("Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
+    }
+	
+    // execute XQuery query	
+    res = SEexecute(&conn, "document(\"region\")/*/*"); 
+    if(res != SEDNA_QUERY_SUCCEEDED) 
+    {
+        printf("Query failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
+    }
+ 
+    //iterate over the result sequece and retrieve the result data
+    res = SEnext(&conn);
+
+    while((res != SEDNA_RESULT_END)&&(res != SEDNA_ERROR))
+    {
+        bytes_read = SEgetData(&conn, buf, 1024-1);
+        buf[bytes_read] = '\0';
+        printf("result item: %s\n", buf);
+        res = SEnext(&conn);
+    }
+    
+    
+    if(res == SEDNA_RESULT_END) 
+    {
+        printf("Result end \n");
+    }
+
+    //commiting the transaction
+    res = SEcommit(&conn);
+    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+    {
+        printf("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
+    }
+	
+    //closing session
+    res = SEclose(&conn);
+    if(res != SEDNA_SESSION_CLOSED) 
+    {
+        printf("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
+        return -1;
+    }
+    return 1;
+}
+
+\end{verbatim}
+}
+
+The source code of this example program can be found in 
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\applications\c\Client.c
+\end{verbatim}
+\begin{verbatim}
+[linux:] INSTALL_DIR/examples/applications/c/Client.c
+\end{verbatim}
+
+\verb!INSTALL_DIR! refers to the directory where Sedna is installed.
+
+Before running the example make sure that the Sedna DBMS is installed and do the following steps:
+\begin{enumerate}
+\item Start Sedna by runing the following command:
+\begin{verbatim}
+se_gov
+\end{verbatim}
+If Sedna is started successfully it prints "GOVERNOR has been started in
+the background mode".
+\item Create a new database \verb!sample-db! by running the following command:
+\begin{verbatim}
+se_cdb sample-db
+\end{verbatim}
+If the database is created successfully it prints "The database 'sample-db'
+has been created successfully".
+\item Start the sample-db database by running the following command:
+\begin{verbatim}
+se_sm sample-db
+\end{verbatim}
+If the database is started successfully it prints "SM has been started in
+the background mode".
+\end{enumerate}
+
+You can compile and run the example by following the steps listed below:
+\begin{enumerate}
+\item In the file \verb!Client.c!, the \verb!url! parameter specifies the
+ name of the computer where the server is running. If Sedna DBMS is not running 
+ on the same computer edit the file \verb!Client.c! to set the value of the \verb!url!
+ parameter. 
+ This looks as something like the following:
+ \begin{verbatim}const char* url = "computer-name";\end{verbatim}
+ 
+if Sedna DBMS is running on the same computer you do not need to edit this parameter.
+
+\item To compile the example use 
+\begin{verbatim}
+[win:] Clientbuild.bat
+\end{verbatim}
+\begin{verbatim}
+[linux:] Clientbuild.sh 
+\end{verbatim}
+located in the same folder as \verb!Client.c!.
+
+\item To run the compiled example use
+\begin{verbatim}
+[win:] Client.exe
+\end{verbatim}
+\begin{verbatim}
+[linux:] Client
+\end{verbatim}
+located in the same folder as \verb!Client.c!.
+\end{enumerate}
+
+
+
+
+
+%==========================================================================
+%
+%                                  Scheme API
+%
+%===========================================================================
+\subsection{Scheme API}
+
+Scheme API allows querying and managing XML data from an application written
+in Scheme.
+Scheme API follows the spirit of SchemeQL~\cite{paper:scheme-ql}, an
+implementation of SQL 1992 for Scheme.
+The results of XQuery queries to the Sedna DBMS via the Scheme API can be
+represented either in XML or SXML~\cite{paper:sxml}.
+
+\subsubsection{Sessions}
+
+For working with the Sedna DBMS from Scheme, you should first establish a
+connection between the Scheme API driver and the Sedna DBMS.
+Here are two functions to manage connections:
+
+\begin{verbatim}> (sedna:connect-to-database host db-name user password)
+  : String String String String -> connection-object\end{verbatim}
+
+Establishes a connection between the client application and the Sedna DBMS.
+Returns a 'connection' object which incapsulate information about the
+connection.
+The arguments are strings that denote connection parameters:
+\begin{itemize}
+\item \texttt{host} is the host where the Sedna DBMS is running.
+ If it is on the same machine as your Scheme application, you can use
+ \texttt{"localhost"} for the value of this parameter.
+\item \texttt{db-name} is the name of the database you want to work with.
+ You are to establish a separate connection for each database you would like to
+ work with.
+\item \texttt{user} is your user name for the session.
+ You can use \texttt{"SYSTEM"} for the value of this paramter.
+\item \texttt{password} is your password for the session.
+ You can use the \texttt{"MANAGER"} value of this parameter. 
+\end{itemize}
+
+To disconnect from the database, you can use the following function:
+
+\begin{verbatim}> (sedna:disconnect-from-database connection)
+  : connection-object -> void\end{verbatim}
+
+Closes the connection represented by the \texttt{connection} object.
+If server fails to close the connection, the function closes the connection
+forcibly from the client side and raises the exception, as discussed
+in subsubsection~\ref{scheme-errors}.
+
+
+\subsubsection{Transactions}
+
+After the connection with a database is established and the session is begun,
+you can run zero or more transactions in this session.
+Transactions are to be run sequentially, with no more than a single transaction
+at a time, so you should commit your running transaction before starting a
+new one.
+
+To begin a new transaction, the following function is provided:
+%To begin a new transaction, you can use the function:
+
+\begin{verbatim}> (sedna:begin-transaction connection)
+  : connection-object -> void\end{verbatim}
+
+It accepts the \texttt{connection} object (earlier created by
+\texttt{sedna:connect-to-database} function) and starts a new transaction.
+If the transaction could not be created, the exception is raised, as discussed
+in subsubsection~\ref{scheme-errors}.
+
+To end your running transaction, you are provided with the following function:
+
+\begin{verbatim}> (sedna:end-transaction connection action)
+  : connection-object, symbol -> void\end{verbatim}
+
+If \texttt{action} is \texttt{'COMMIT} the transaction in the given connection
+will be commited, if \texttt{'ROLLBACK} is given, the transaction will be
+rolled back.
+
+%\begin{note}In the current version of the Sedna DBMS, transaction rollback is not
+% supported.
+% Calling \texttt{sedna:end-transaction} with a \texttt{'ROLLBACK} action would
+% currently result to an exception.
+%\end{note}
+
+
+\subsubsection{Executing Queries}
+
+Within a transaction, you can execute zero or more queries to the database.
+
+\begin{verbatim}> (sedna:execute-query connection query)
+  : connection-object, string -> result\end{verbatim}
+
+The first argument is the \texttt{connection} object, earlier created by
+\texttt{sedna:connect-to-database} function.
+The \texttt{query} is represented as a string and can express one of the 3
+kinds of queries:
+\begin{itemize}
+\item XQuery query -- for querying data from the database, without modifying it;
+\item Update command -- for making modifications to the database you work
+ with;
+\item Bulk load command -- for loading a new XML document from the local file to the
+ database.
+\end{itemize}
+
+If an error occurs at the server side during query execution (e.g.\ the
+requested document not found), the function raises an exception that contains
+the message about the error occured.
+
+In the successful case of query execution, \texttt{sedna:execute-query} returns
+\texttt{\#t} for the last 2 kinds of queries, to denote a successful update
+made to the database.
+The XQuery \texttt{query} results to a sequence of items, which are evaluated
+lazily and are represented as a pair:
+\begin{verbatim}xquery-result ::= (cons current-item promise)\end{verbatim}
+This way of result representation is very close to the notion of SchemeQL
+{\em cursor}~\cite{paper:scheme-ql} (with the only difference in that the Scheme API driver returns XQuery items instead of table rows returned by
+SchemeQL).
+The first member of the pair is the \texttt{current-item} represented in SXML,
+and the second member of the pair holds a promise (which can be forced) to
+evaluate and return the next item in the result sequence.
+
+To iterate over the result sequence, you can use the function:
+\begin{verbatim}> (sedna:next xquery-result)
+  : xquery-result -> xquery-result or '()\end{verbatim}
+which forces the evaluation of the following items in the result sequence,
+until the end of the sequence is reached.
+
+Such a design allows you to process a query result in a lazy stream-wise
+fashion and provides you with an ability to process large query results, which
+would not otherwise fit in the main memory.
+
+However, for query results that are not very large, you may find it convenient
+to evaluate them all at once and represent the result sequence as a Scheme
+list.
+Scheme API provides a function that converts the \texttt{xquery-result}
+into the list that contains all items of the result sequence:
+\begin{verbatim}> (sedna:result->list xquery-result)
+  : xquery-result -> (listof item)\end{verbatim}
+
+To obtain the result sequence in the form of the list, you can execute your
+queries as a superposition of the above considered functions:
+\begin{verbatim}(sedna:result->list
+  (sedna:execute-query connection query))\end{verbatim}
+It should be noted that the XQuery query result in that case exactly
+corresponds to the term of a {\em node-set} in the XPath implementation in
+Scheme SXPath~\cite{paper:sxpath}.
+
+If you want to obtain your query results in XML instead of SXML, you can use
+the function
+\begin{verbatim}> (sedna:execute-query-xml connection query)
+  : connection-object, string -> result\end{verbatim}
+It is the counterpart of earlier discussed \texttt{sedna:execute-query} and
+has the same signature, but represents query results in XML.
+The function returns a sequence of items, in the form of \texttt{xquery-result}
+discussed above, but the \texttt{current-item} is now a string containing the
+representation for the current item in the form of XML.
+
+
+\subsubsection{Bulk load from stream}
+
+The following wrapper function provides a natural way to load an input stream
+containing an XML document into your database:
+\begin{verbatim}> (sedna:bulk-load-from-xml-stream
+                          connection port document-name . collection-name)
+  : connection-object, input-port, string [, collection-name] -> boolean\end{verbatim}
+
+As for \texttt{sedna:execute-query}, the first argument here is the
+\texttt{connection} object, earlier created by
+\texttt{sedna:connect-to-database} function.
+Argument \texttt{port} is a Scheme input port and is supposed to contain
+a well-formed XML document.
+Argument \texttt{document-name} specifies the name that will be given to the
+XML document within a database.
+If the $4$-th argument \texttt{collection-name} is supplied, the XML document
+is loaded into the collection which name is specified by the
+\texttt{collection-name} argument.
+If the $4$-th argument of the function call is not supplied, the XML document
+is loaded into the database as a standalone document.
+
+By allowing you to specify the input port you would like to use, this function
+provides a higher-level shortcut for \texttt{sedna:execute-query} when bulk
+load from stream is concerned.
+For more details on bulk load, see Sect.~\ref{bulk-load}.
+
+\subsubsection{Higher-level function for a transaction}
+
+This higher-level function provides a convenient way for executing a
+transaction consisting of several queries, within a single function call:
+
+\begin{verbatim}> (sedna:transaction connection . queries)
+  : connection-object, string* -> result\end{verbatim}
+
+This function starts a new transaction on the \texttt{connection} objects and
+executes all the \texttt{queries} given in order.
+If no exception occurs, the function commits the transaction and returns the
+result of the last query.
+If any exception occured during query execution, the function sends rollback
+to the Sedna DBMS and passes along the exception to the application.
+
+
+\subsubsection{Error handling}
+\label{scheme-errors}
+
+Error handling in the Scheme API driver is based on the exception mechanism
+suggested in the (currently withdrawn) SRFI-12~\cite{paper:srfi-12}.
+The SRFI-12 exception mechanism is natively supported in the Chicken Scheme
+compiler~\cite{paper:chicken}.
+In the Scheme API driver, we also provide the SRFI-12 implementation for PLT
+and Gambit.
+
+
+\subsubsection{Code example}
+
+This section presents an example that illustrates the application of
+the Scheme API driver.
+
+\begin{verbatim}; Load the necessary Scheme API driver files
+(load "collect-sedna-plt.scm")
+
+; Create a connection
+(define conn
+  (sedna:connect-to-database "localhost" "sample-db" "SYSTEM" "MANAGER"))
+
+; Begin a transaction
+(sedna:begin-transaction conn)
+
+; Bulk load
+(call/cc  ; Thanks to Felix Winkelmann for recommending us to use call/cc here
+ (lambda (k)
+   (with-exception-handler  ; Exception handler
+    (lambda (x)
+      (display "File already loaded to the database")
+      (newline)
+      (k #f))
+    (lambda ()
+      (sedna:execute-query conn "LOAD 'region.xml' 'regions'")))))
+
+; Execute a statement and represent it as an SXML nodeset
+(pp
+ (sedna:result->list
+  (sedna:execute-query conn "document('region')/*/*")))
+
+; Update statement
+(pp
+ (sedna:execute-query conn "UPDATE delete document('region')//africa"))
+
+; Querying all regions once again
+(pp
+ (sedna:result->list
+  (sedna:execute-query conn "document('region')/*/*")))
+
+; Commit transaction
+(sedna:end-transaction conn 'COMMIT)
+
+; Close the connection
+(sedna:disconnect-from-database conn)\end{verbatim}
+
+You can find the example and the Scheme API driver code in:
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\applications\scheme
+[linux:] INSTALL_DIR/examples/applications/scheme
+\end{verbatim}
+where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
+
+Before running the example make sure that the Sedna DBMS is installed and do the following steps:
+\begin{enumerate}
+\item Start Sedna by runing the following command in a command line:
+\begin{verbatim}
+se_gov
+\end{verbatim}
+If Sedna is started successfully it prints "GOVERNOR has been started in
+the background mode".
+\item Create a new database \verb!sample-db! by running the following command:
+\begin{verbatim}
+se_cdb sample-db
+\end{verbatim}
+If the database is created successfully it prints "The database 'sample-db'
+has been created successfully".
+\item Start the sample-db database by running the following command:
+\begin{verbatim}
+se_sm sample-db
+\end{verbatim}
+If the database is started successfully it prints "SM has been started in
+the background mode".
+\end{enumerate}
+
+If the Sedna DBMS is running on the same computer as your Scheme application,
+you don't need to change anything in the example code.
+If the Sedna DBMS is running on a remote machine, you should use the name of
+this machine when connecting to the database with
+\texttt{sedna:connect-to-database} function.
+
+For running the example supplied, you should copy all files from the folder
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\applications\scheme
+[linux:] INSTALL_DIR/examples/applications/scheme
+\end{verbatim} 
+into the folder where the Scheme API driver code is located 
+\begin{verbatim}
+[win:] INSTALL_DIR\driver\scheme
+[linux:] INSTALL_DIR/driver/scheme
+\end{verbatim}
+where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
+
+You can use PLT DrScheme GUI to open and run \texttt{"client.scm"} in the
+graphical mode.
+You can also run the example from your command line, by typing
+\begin{verbatim}mzscheme -gr client.scm\end{verbatim}
+
+For running the example with a different Scheme implementation (Chicken or
+Gambit), uncomment the corresponding line at the beginning of the example code
+in \texttt{"client.scm"} and follow the instructions of the chosen Scheme
+implementation in running the program.
+
+%==========================================================================
+%
+%                                  Database Language
+%
+%===========================================================================
+\section{Database Language}
+\label{sec:DBLang}
+\subsection{Data Manipulation Language} 
+
+\subsubsection{XQuery Support}
+\label{sec:xquery-support}
+The Sedna query language is XQuery \cite{paper:query-language} developed by W3C. 
+Below is the list of the XQuery features, supported in the current release of Sedna.
+\begin{itemize}
+\item	Data model \cite{paper:data-model} 
+\begin{itemize}
+\item Nodes: Element, Document, Text, Namespace and Attribute Nodes.
+\item Accesors: dm:node-kind, dm:node-name, dm:string-value, dm:typed-value
+\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xdt:untypedAtomic and xdt:anyAtomicType .
+\end{itemize}
+\item	Language features \cite{paper:query-language} 
+\begin{itemize}
+\item Primary Expressions: literals, variable references, parenthesized expressions, context item expression, XQuery comments
+\item Path Expressions
+\begin{itemize}
+\item Axes: child, descendant, attribute, self, descendant-or-self, parent.
+\item Node Tests: NameTest, Wildcard , TextTest, AnyKindTest.
+\item Other Features: predicates, abbriviated syntax.
+\end{itemize}
+\item Sequences: comma operator
+\item Arithmetic Expressions
+\item Comparisons: value comparison, general comparison, node comparison.
+\item Logical Expressions
+\item Constructors: direct element constructor, computed element and attribute constructors.
+\item FLWOR: for and let clause, where clause, return clause.
+\item Function declaration (locally defined user functions are supported).
+\item Other Expressions: conditional expression, quantified expression (without type declaration), cast expression.
+\end{itemize}
+\item Functions and operators \cite{paper:query-fo}: see \ref{xquery-functions}
+\end{itemize}
+
+
+\subsubsection{Update Language}
+The update language is based on the XQuery update proposal by Patrick Lehti \cite{paper:query-update} with the number of improvements.
+
+\begin{note}The result of each update statement, shouldn't break the well-formedness and validness of XML entitites, stored in the database.
+Otherwise, an error is raised.
+\end{note}
+
+\emph{INSERT}
+
+The insert statement inserts content at positions identified by the \verb!INTO!, \verb!PRECEDING! and \verb!FOLLOWING! clauses. 
+
+\begin{verbatim}
+UPDATE
+insert Expr1 (INTO|PRECEEDING|FOLLOWING) Expr2
+\end{verbatim}
+
+\verb!Expr1! identifies the ordered sequence of the nodes to be inserted. The \verb!INTO!, \verb!PRECEDING! or \verb!FOLLOWING! clause identifies the position. For each node in the result sequence of \verb!Expr2!, the result sequence of \verb!Expr1! is inserted to the position identified by the \verb!INTO!, \verb!PRECEDING! or \verb!FOLLOWING! clauses. 
+If the \verb!INTO! clause is specified, the sequence is appended to the random position of the child sequence for each node in the result of \verb!Expr2!. If the \verb!PRECEDING! clause is specified, the sequence is appended before each node in the result of \verb!Expr2!. If the \verb!FOLLOWING! clause is specified, the sequence is appended after each node in the result of \verb!Expr2!.
+
+If one of the following conditions is met an error occurs:
+\begin{itemize}
+\item There are non-element nodes in the result of \verb!Expr2! in case of the \verb!INTO! clause
+\item There are temporary nodes in  \verb!Expr2! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
+\end{itemize}
+
+\begin{verbatim}
+UPDATE
+insert <warning>High Blood Pressure!</warning>
+preceeding doc("hospital")//blood_pressure[systolic>180]
+\end{verbatim}
+
+\emph{DELETE}
+
+The \verb!DELETE! statement serves to remove persistent nodes from the database. It contains a subexpression, that returns the nodes to be deleted. 
+
+\begin{verbatim}
+UPDATE
+delete Expr 
+\end{verbatim}
+\verb!Expr! identifies the  nodes to be removed from the datatbase. Note, that nodes are removed from the database with all their descandants. 
+
+If one of the following conditions is met an error occurs:
+\begin{itemize}
+\item There are nodes in the result sequence of \verb!Expr! that are not stored in external memory
+\end{itemize}
+
+\begin{verbatim}
+UPDATE
+delete doc("hospital")//blood_pressure[systolic>180]
+\end{verbatim}
+
+\emph{DELETE\_UNDEEP}
+\begin{verbatim}
+UPDATE
+delete_undeep Expr 
+\end{verbatim}
+
+The \verb!DELETE_undeep! statement removes nodes identified by \verb!Expr!, but in contrast to the \verb!DELETE! statement it leaves the descendants of the nodes in the database.
+
+Consider the following example:
+\begin{verbatim}
+A document named "a.xml" before update:
+<A>
+<B>
+<C/>
+<D/>
+</B>
+</A>
+
+UPDATE
+delete_undeep doc("a.xml")//B
+
+The document after update:
+<A>
+<C/>
+<D/>
+</A>
+\end{verbatim}
+
+\emph{REPLACE}
+
+The \verb!REPLACE! statement is used to replace nodes in an XML document in the following manner. Each node returned by \verb!Expr1! is replaced with the sequence of the nodes returned by \verb!Expr2! where \verb!$var! is bound to the node. Note that \verb!Expr2! is executed over the original document without taking into account intermediate updates performed during execution of this statement. 
+
+If one of the following conditions is met, an error occurs:
+\begin{itemize}
+\item There are atomic values in the result of \verb!Expr1!
+\item There are temporary nodes in  \verb!Expr1! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
+\end{itemize}
+
+The \verb!$var! variable bound in \verb!replace! clause may have an optional type declaration. If the type of a value bound to the variable does not match the declared type, an error is raised.
+
+\begin{verbatim}
+UPDATE
+replace $var [as type] in Expr1
+with Expr2($var)
+\end{verbatim}
+
+In the following example the salary of persons named "John" is doubled.
+
+\begin{verbatim}
+UPDATE
+replace $p in doc("foo.xml")/db/person[name="John"]
+with 
+<person>
+{($p/@*, 
+  $p/node()[not(self::salary)],
+  for $s in $p/salary
+  return <salary>{$s*2}</salary>)}
+</person>
+\end{verbatim}
+
+
+
+\emph{RENAME}
+
+The \verb!RENAME! statement is used to change the qualified name of an element or attribute.
+
+\begin{verbatim}
+UPDATE
+rename Expr on QName
+\end{verbatim}
+
+The following expression changes the name of \verb!<job/>! elements without changing their contents:
+\begin{verbatim}
+UPDATE
+rename //job[.="bit banger"] on profession
+\end{verbatim}
+
+\subsubsection{Bulk load}
+\label{bulk-load}
+To do bulk load use the following statements:
+\begin{verbatim}
+LOAD "file_name" "document_name" 
+\end{verbatim}
+
+The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database.
+
+\begin{verbatim}
+LOAD "file_name" "document_name" "collection_name"
+\end{verbatim}
+
+The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database. The third parameter is the collection name to load the document into.
+
+For performing bulk load not from the source file but from an input stream,
+use the following statements:
+\begin{verbatim}LOAD STDIN "document_name"\end{verbatim}
+
+\begin{verbatim}LOAD STDIN "document_name" "collection_name"\end{verbatim}
+
+Compared to the above bulk load statements, here the
+\verb!"file_name"! is replaced by the keyword \verb!STDIN! to denote that
+the file to be loaded is taken from the input stream. Characters in the input stream must form a well-formed XML document, which is loaded into the database and named as specified by
+\verb!"document_name"!. If \verb!collection_name! is set, the document is loaded into the specified collection of the database.
+
+By default, the standard input stream is used. You can redirect a different input stream to be used as an input for bulk load. For example, an XML document produced by some program as its output can be loaded to a Sedna database in a stream-wise fashion. To redirect the input when working from a command line, you can use the functionality provided by your operation system.
+Java and Scheme APIs provide additional wrappers for bulk load from stream, such that the input stream can be specified by an additional argument of a function call.
+
+By default, Sedna removes boundary whitespaces according to the boundary-space policy defined in \cite{paper:query-language}. To control boundary whitespaces processing, use \emph{boundary-space declaration} in the prolog of the \verb!LOAD! statement as specified in \cite{paper:query-language}.  The following example illustrates a boundary-space declaration that instructs Sedna to preserve whitespaces:
+\begin{verbatim}
+declare boundary-space preserve;
+\end{verbatim}
+
+
+\subsubsection{Controlling Serialization}
+\label{indents}
+Serialization is the process of converting XML nodes evaluated by XQuery into a stream of characters. In Sedna serialization is carried out when the result of a query is returned to the user. You can control the serialization by setting the \emph{serialization parameters} specified in \cite{paper:query-serialization}. Currently, Sedna supports the following serialization parameters:
+
+\begin{tabular}{|l|l|l|}
+\hline
+Parameter name & Values & Description \\
+\hline
+\hline
+indent & "yes" or "no" (default no) & Output indented \\
+\hline
+\end{tabular}
+
+To set a serialization parameter, use the \verb!output! option in a query prolog. The \verb!output! option is in the Sedna namespace (
+http://www.modis.ispras.ru/sedna) which is the predefined namespace in Sedna so you can omit its declaration. The value of the \verb!output! option must have the following structure "parameter-name=value; parameter-name=value". Consider the following examples.
+
+\begin{verbatim}
+declare namespace se = "http://www.modis.ispras.ru/sedna";
+declare option se:output "indent=yes";
+\end{verbatim}
+
+As mentioned above, you may omit the Sedna namespace declaration:
+\begin{verbatim}
+declare option output "indent=yes";
+\end{verbatim}
+
+
+
+\subsection{XQuery Functions}
+\label{functions}
+\subsubsection{Standard XQuery Functions}
+\label{xquery-functions}
+The following standard XQuery functions specified in \cite{paper:query-fo} are supported:
+\begin{itemize}
+\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, true, false, not, empty, exists, string, string-length, translate
+\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib}; 
+see \cite{paper:query-fo}  for function signatures and \cite{lib:pcre-lib} for regular expression syntax) 
+\end{itemize}
+
+%==========================================================================
+%                                                Index-scan functions
+%==========================================================================
+\subsubsection{Index-scan Functions}
+\label{sec:index-scan-fun}
+In the current version of Sedna, query executor does not use indecies automatically. Use the following functions
+to enforce executor to employ indices. 
+
+\begin{verbatim}
+index-scan ($title as xs:string, $value as xdt:anyAtomicType, 
+           $mode as xs:string ) as node()*
+\end{verbatim}
+
+The \verb!index-scan! function scans the index with the \verb!$title! name and returns the sequence of nodes which keys are equal (less than, greater than, greater or equal, less or equal) to the search value \verb!$value!. An Sedna error is raised if the search value can not be cast to the atomic type of the index. The \verb!$mode! parameter of the \verb!xs:string! type is used to set the type of the scan. If the value of the parameter is not equal to one of the following then the Sedna error SE2034 is raised: ФEQФ (equal), УLTФ (less than), УGTФ (greater than), ФGEФ (greater or equal), ФLEФ (less or equal).
+
+\begin{verbatim}
+index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType, 
+         $value2 as xdt:anyAtomicType, $range as xs:string ) 
+                               as node()*
+\end{verbatim}
+
+The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: УINTФ (interval), ФHINTRФ (segment), УSEGФ (left half-interval), ФHINTLФ (right half-interval).
+
+For example, to select the names of people who live in the London city employing the "people" index defined in Section \ref{sec:managing-indices}, use the following expression:
+\begin{verbatim}
+index-scan("people", "London", "EQ")/name
+\end{verbatim}
+
+
+
+
+%==========================================================================
+%                                  SQL
+%==========================================================================
+\subsubsection{SQL Connection}
+SQL Connection allows access to relational databases from XQuery using SQL.
+The resulting ralations are represented on-the-fly as sequenses of XML-elements representing rows. These elements have sub-elements corresponding with the columns returned by the SQL query. and thus can be 
+easy processed in XQuery. All functions dealing with access to SQL data are located in the namespace
+``\verb!http://modis.ispras.ru/Sedna/SQL!'' which is refered as \verb!sql!
+in the following function declarations and examples.
+
+\subsubsection*{Connections} 
+In order to execute SQL queries on a RDBMS, you should first establish a connection
+to it. There are two functions for managing connections:
+
+\begin{verbatim}
+function sql:connect($db-url as xs:string) as xs:integer
+function sql:connect($db-url as xs:string, $user as xs:string) 
+       as xs:integer
+function sql:connect($db-url as xs:string, $user as xs:string, 
+      $password as xs:string) as xs:integer
+function sql:connect($db-url as xs:string, $user as xs:string,
+      $password as xs:string, $options as element()*) as xs:integer
+\end{verbatim}
+
+These functions attempt to establish a database connection to the given URL using a user name and password if specified.
+They return a connection handle which could be then passed to \verb!sql:execute!, \verb!sql:prepare!, \verb!sql:close!, 
+\verb!sql:rollback!, and \verb!sql:commit!
+
+If no connection can be opened, an Sedna error is raised.
+
+All arguments of  the \verb!sql:connect! functions except for \verb!$db-url! are optional:
+\begin{itemize}
+\item \verb!$db-url! is the URL of the database to which a connect is established.
+URL is of the following form:
+\begin{verbatim}
+odbc:<driver name>:[//<server>[/<database>][;]][<driver options>]
+\end{verbatim}
+``;'' after \verb!<database>! or \verb!<server>! is required if there are some driver options following it
+\item \verb!$user! is your user name for the session.
+\item \verb!$password! is your password for the session.
+\item \verb!$options! is an optional sequence of connection options.
+Connection options are elements of the form
+\begin{verbatim}
+<sql:option name="<option-name>" value="<option-value>"/>
+\end{verbatim}
+The only connection option available for the moment is ``\verb!manual-commit!''
+which enables manual commit mode if its value is ``\verb!on!''
+\end{itemize}
+
+To disconnect from the database, you can use the following function:
+\begin{verbatim}function sql:close($connecton as xs:integer) as element()?\end{verbatim}
+
+It closes database connection associated with connection handle \verb!$connection!.
+An Sedna error is raised if operation cannot be completed.
+
+\subsubsection*{Executing Queries}
+When a database connection is established you can start executing queries. Two types of
+query execution are supported: \emph{direct query execution} and \emph{prepared query execution}.
+
+\subsubsection*{Direct Queries}
+Simple SQL queries are executed as the following XQuery example shows:
+\small{
+\begin{verbatim}
+declare namespace sql="http://modis.ispras.ru/Sedna/SQL";
+let $connection := 
+   sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/somedb", "user", 
+      "pass")
+return
+   sql:execute($connection, "SELECT * FROM people WHERE first = 'Peter'");
+\end{verbatim}
+}
+
+The result is as follows:
+\small{
+\begin{verbatim}
+<tuple first="Peter" last="Jackson" city="Wellington"/>
+\end{verbatim}
+}
+There are two functions for direct query execution:
+\begin{verbatim}
+function sql:execute($connection as xs:integer, $statement as xs:string) 
+   as element()*
+function sql:execute($connection as xs:integer, $statement as xs:string, 
+      $query-options as element()*) as element()*
+\end{verbatim}
+These functions execute a SQL query and return a sequence of elements representing the query result. SQL query can be as
+both a query statement and an update statement. In case of query statement, the result sequence contains an element named 'row' for each row of the query result. Each element contains as many children attributes as there are non-NULL fields in the corresponding result-row.
+Each attribute has the name of a row field. Fields with NULL values are not included. In case of update statement, empty sequence is returned.
+
+An Sedna error is raised on an erroneous statement.
+
+The \verb!sql:execute! have the following arguments:
+\begin{itemize}
+\item \verb!$connection! is a connection handle, returned by \verb!sql:connect!;
+\item \verb!$statement! is a string containing SQL statement to be executed;
+\item \verb!$query-options! is a sequence of optional query parameters.
+\end{itemize}
+
+Update queries can be executed using the \verb!sql:exec-update! function:
+\begin{verbatim}
+function sql:exec-update($connection as xs:integer, 
+          $statement as xs:string) as xs:integer
+function sql:exec-update($connection as xs:integer, 
+      $statement as xs:string, 
+      $query-options as element()*) as xs:integer
+\end{verbatim}
+these functions are similar to \verb!sql:execute!, but return the number
+of rows affected by an update query (instead of an empty sequence returned by
+\verb!sql:execute! for update-queries). Function arguments are same as for \verb!sql:execute!.
+
+The behaivor of this function is undefined for non-update queries.
+
+
+
+\subsubsection*{Prepared Statements}
+Sometimes it is more convenient or more efficient to use prepared SQL statemets
+instead of direct query execution. In most cases, when a SQL statement is
+prepared it will be sent to the DBMS right away, where it will be compiled.
+This means that the DBMS does not have to compile a prepared statement each time
+it is executed.
+Prepared statements can take parameters. This allows using the same statement
+and supply it with different values each time you execute it, as in the
+following XQuery example:
+\small{
+\begin{verbatim}
+declare namespace sql="http://modis.ispras.ru/Sedna/SQL";
+let $connection :=
+   sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/somedb", "user", 
+     "pass")
+let $statement :=
+   sql:prepare($connection, "INSERT INTO people(first, last) 
+         VALUES (?, ?)")
+return (
+   sql:execute($statement, "John", "Smith"),
+   sql:execute($statement, "Matthew", "Barney")
+)
+\end{verbatim}
+}
+this XQuery code inserts two rows into table \verb!people! and returns an empty
+sequence.
+
+To use prepared statements, first you need to create a prepared statement handle
+using the \verb!sql:prepare! function:
+\begin{verbatim}
+function sql:prepare($connection as xs:integer, $statement as xs:string)
+      as xs:integer
+function sql:prepare($connection as xs:integer, $statement as xs:string, 
+      $query-options as element()*) as xs:integer
+\end{verbatim}
+these function prepare a SQL statement for later execution and returns a
+prepated statement handle which can be used in
+the \verb!sql:execute! and \verb!sql:exec-update! functions.
+
+The \verb!sql:prepare! functions have the following arguments:
+\begin{itemize}
+\item \verb!$connection! is a connection handle, created by \verb!sql:connect!;
+\item \verb!$statement! is a string containing a SQL statement that may
+contain one or more '?' - IN parameter placeholders;
+\item \verb!$query-options! is a sequence of optional query parameters.
+\end{itemize}
+An Sedna error is raised on an erroneous statement.
+
+There are two prepared statement execution functions, similar to direct query
+execution:
+
+\begin{verbatim}
+function sql:execute($prepared-statement as xs:integer, 
+      $param1 as item()?, ...) as element()*
+\end{verbatim}
+this function is similar to \verb!sql:execute! for direct queries and
+returns a sequence of elements representing query result.
+\begin{itemize}
+\item \verb!$prepared-statement! is a prepared statement handle created by
+\verb!$sql:prepare!;
+\item \verb!$param1, ...! are parameters for parametrized
+statements. The number of parameters specified must exactly match the number
+of parameters of the prepared statement. NULL values are represended as empty
+sequences ``\verb!()!''.
+\end{itemize}
+
+\begin{verbatim}
+function sql:exec-update($prepared-statement as xs:integer, 
+      $param1 as item()?, $param2...) as xs:integer
+\end{verbatim}
+
+This function is similar to \verb!sql:execute!, but returns the number
+of rows affected by an update query (instead of an empty sequence returned by
+\verb!sql:execute! for update-qeries). Function arguments are the same as for \verb!sql:execute!.
+
+The behaivor of this function is undefined for non-update queries.
+
+\subsubsection*{Transactions}
+
+The default commit mode of connection is auto-commit, meaning that all updates
+will be commited automatically. If this is not desired behaviour, you can
+pass manual-commit option to \verb!sql:connect! when you create a connection
+handle.
+
+In manual commit mode you can specify when updates will be committed or rolled
+back:
+
+\small{
+\begin{verbatim}
+declare namespace sql="http://modis.ispras.ru/Sedna/SQL";
+let $connection := 
+  sql:connect("odbc:MySQL ODBC 3.51 Driver://localhost/somedb", "user", 
+         "pass",<sql:option name="manual-commit" value="1"/>)
+return
+  for $person in doc("somedoc.xml")/person
+  return (
+    sql:execute($connection, "<do something with person>"),
+    if (allok($connection, $person)) then
+      (
+        sql:execute($connection, "<do something else with person>"),
+        sql:commit($connection)
+      )
+    else
+      sql:rollback($connection)
+  )
+\end{verbatim}
+}
+
+There are two functions for specifying transaction boundaries -
+\verb!sql:commit! and \verb!sql:rollback! (transactions are started
+automatically by queries, these functions only close them):
+\begin{verbatim}
+function sql:commit($connecton as xs:integer) as element()?
+\end{verbatim}
+
+\verb!sql:commit! commits all changes made during the last transaction in the database
+connection specified by connection handle \verb!$connection!
+and closes transaction.
+
+An Sedna error is raised if operation cannot be completed.
+
+
+\begin{verbatim}
+function sql:rollback($connecton as xs:integer) as element()?
+\end{verbatim}
+rolls back all changes made during the last transaction in the database
+connection specified by connection the handle \verb!$connection!
+and closes transaction.
+
+An Sedna error is raised if operation cannot be completed.
+
+
+%\subsubsection*{Code Examples}
+%The example source code can be found in
+%\begin{verbatim}
+%[win:] INSTALL_DIR\examples\...\sql\*.xquery
+%\end{verbatim}
+%\begin{verbatim}
+%[linux:] INSTALL_DIR/examples/.../sql/*.xquery
+%\end{verbatim}
+%
+%Before running the example make sure that the Sedna DBMS is installed and do
+%the following steps:
+%\begin{enumerate}
+%\item Start Sedna by runing the following command:
+%\begin{verbatim}
+%se_gov
+%\end{verbatim}
+%If Sedna is started successfully it prints "GOVERNOR has been started in
+%the background mode".
+%\item Start listener by running the following command:
+%\begin{verbatim}
+%listener
+%\end{verbatim}
+%If the listener is started successfully it prints "Listener has been started in
+%the background mode".
+%\item Create a new database \verb!sample-db! by running the following command:
+%\begin{verbatim}
+%se_cdb sample-db
+%\end{verbatim}
+%If the database is created successfully it prints "The database 'sample-db'
+%has been created successfully".
+%\item Start the sample-db database by running the following command:
+%\begin{verbatim}
+%se_sm sample-db
+%\end{verbatim}
+%If the database is started successfully it prints "SM has been started in
+%the background mode".
+%\end{enumerate}
+
+%==========================================================================
+%                             External functions
+%==========================================================================
+
+\subsubsection{External Functions}
+\emph{External function} is a notion defined in the XQuery specification \cite{paper:query-language} as follows:
+"External functions are functions that are implemented outside the query environment".
+Support for external functions allows you to extend XQuery by implementing 
+functions in other languages. 
+
+Sedna provides a server programming API to write external 
+functions in the C/C++ language. 
+External functions in Sedna are limited to dealing with sequences of atomic values. 
+External functions are compiled and linked in the form of shared
+libraries (i.e. \verb!.dll! files in Windows or \verb!.so! files in Linux) 
+and loaded by the server on demand.
+Although the Sedna XQuery executor evaluates queries in a lazy manner, all external function calls are evaluated in an eager manner.
+
+\subsubsection*{Using External Functions}
+To use an external function you need to declare this function in prologue
+with \verb!external! keyword instead of function body. Then it may be used
+normally:
+\begin{verbatim}
+declare function f($a as xs:integer) as $xs:integer external;
+f(10)
+\end{verbatim}
+
+\subsubsection*{Creating External Functions}
+External functions must be written in C/C++. To implement a new XQuery
+function \verb!func! you should write the following C (or C++) functions:
+\verb!func!, \verb!func_init! and \verb!func_deinit!.
+When executor decides that it needs to use an external function, first it
+initializes this function by calling \verb!func_init!, after that it will
+call \verb!func! to compute results as many times as needed. When some
+external function is not needed anymore, executor calls \verb!func_deinit!
+(which probaly will free any memory allocated by \verb!func_init!).
+Each one of the three functions receives an \verb!SEDNA_EF_INIT!\footnote{All
+needed types and constants are defined in the sedna\_ef.h file,
+located in the include directory of the Sedna distribution.
+See Section ``Sedna Directory Structure'' in \cite{doc:admin} to learn where the include directory is located.}
+structure as a parameter. This structure has several fields that are
+initialized by executor before any \verb!func_init! or \verb!func_deinit! calls:
+\begin{verbatim}
+typedef struct sedna_ef_init
+{
+    void *(*sedna_malloc)(size_t);
+    void (*sedna_free)(void *);
+    SEDNA_SEQUENCE_ITEM *item_buf;
+} SEDNA_EF_INIT;
+\end{verbatim}
+The fields of this structure may be used in your implementation:
+\begin{itemize}
+	\item \verb!sedna_malloc! is a pointer to a malloc function which must be used to 
+	allocate memory for 
+	function results, this memory will be automatically freed by the query executor.
+	It may also be used to allocate memory for iternal use, such memory must be
+	freed manually using the \verb!sedna_free! function.
+	\item \verb!sedna_free! is a pointer to free function that releases memory
+	allocated using \verb!sedna_malloc! function.
+	\item \verb!item_buf! is a pointer to a preallocated \verb!SEDNA_SEQUENCE_ITEM! 
+	which may be used to store results
+	(this allows to avoid using \verb!sedna_malloc! function when result is
+	a single atomic non-string value)
+\end{itemize}
+
+\verb!func!, \verb!func_init! and \verb!func_deinit! must have specific signatures:
+\begin{itemize}
+\item \verb!func()! (required)
+
+computes external function results.
+This function has the following signature:
+\begin{verbatim}
+SEDNA_SEQUENCE_ITEM *func(SEDNA_EF_INIT *init,
+                          SEDNA_EF_ARGS *args,
+                          char * error_msg_buf);
+\end{verbatim}
+\begin{itemize}
+	\item \verb!init! is a pointer to the \verb!SEDNA_EF_INIT! structure which
+		was passed to \verb!func_init! function (if written)
+	\item \verb!args! is a pointer to the \verb!SEDNA_EF_ARGS! structure which
+		contains all function arguments
+	\item \verb!error_msg_buf! is a pointer to the string buffer used for specifying error
+		message if function invocation fails. Maximum message length is
+		\verb!SEDNA_ERROR_MSG_BUF_SIZE! bytes, including the null character \verb!'\0'!.
+\end{itemize}
+
+\item \verb!func_init()! (optional)
+
+The initialization function.
+It can be used to allocate any memory required by the main function.
+This function has the following signature:
+\begin{verbatim}
+void func_init(SEDNA_EF_INIT *init, char * error_msg_buf);
+\end{verbatim}
+\begin{itemize}
+	\item \verb!init! is a pointer to the \verb!SEDNA_EF_INIT! structure
+		(the pointer to this structure will be passed then to \verb!func! and 
+		\verb!func_deinit! functions)
+	\item \verb!error_msg_buf! is a pointer to the string buffer used for specifying error
+		message if function invocation fails. Maximum message length is
+		\verb!SEDNA_ERROR_MSG_BUF_SIZE!, including the null character \verb!'\0'!.
+\end{itemize}
+
+\item \verb!func_deinit()! (optional)
+
+The deinitialization function.
+It should deallocate any memory allocated by the initialization function.
+This function has the following signature:
+\begin{verbatim}
+void func_init(SEDNA_EF_INIT *init, char * error_msg_buf);
+\end{verbatim}
+\begin{itemize}
+	\item \verb!init! is a pointer to the \verb!SEDNA_EF_INIT! structure which
+		was passed to \verb!func_init! function (if written)
+	\item \verb!error_msg_buf! is a pointer to the string buffer used for specifying error
+		message if function invocation fails. Maximum message length is
+		\verb!SEDNA_ERROR_MSG_BUF_SIZE!, including the null character \verb!'\0'!.
+\end{itemize}
+
+\end{itemize}
+
+When \verb!func!, \verb!func_init! or \verb!func_deinit! is executed
+\verb!error_msg_buf! contains an empty string. If function is executed
+succesfully, it should not change this value. In case of error
+a non-empty string (error description) must be placed in \verb!error_msg_buf!
+(if you place an empty string in \verb!error_msg_buf! executor assumes
+that function execution was successful)
+
+Each shared library must also export an null-terminated array with the names
+of the XQuery functions defined by this library:
+
+\verb!char const *ef_names[] = { "func", NULL};!
+
+The file \verb!sedna_ef.h! defines several types for representing
+function arguments and results:
+\begin{itemize}
+	\item \verb!SEDNA_ATOMIC_TYPE!
+
+		represents an atomic type:
+		\begin{verbatim}
+typedef enum sedna_atomic_type {
+     SEDNATYPE_integer,
+     SEDNATYPE_float,
+     SEDNATYPE_double,
+     SEDNATYPE_string
+} SEDNA_ATOMIC_TYPE;
+		\end{verbatim}
+
+	\item \verb!SEDNA_ATOMIC_VALUE!
+
+		represents an atomic value:
+\begin{verbatim}
+typedef int     SEDNA_integer;
+typedef float   SEDNA_float;
+typedef double  SEDNA_double;
+typedef char   *SEDNA_string;
+typedef struct sedna_atomic_value
+{
+    SEDNA_ATOMIC_TYPE type;
+    union	{
+        SEDNA_integer	val_integer;
+        SEDNA_float	  val_float;
+        SEDNA_double  val_double;
+        SEDNA_string  val_string;
+    };
+} SEDNA_ATOMIC_VALUE;
+\end{verbatim}
+
+		Memory for values that are pointers (i.e. \verb!SEDNA_string!) MUST be
+		allocated using the malloc function passed in the \verb!SEDNA_EF_INIT! structure.
+
+
+	\item \verb!SEDNA_SEQUENCE_ITEM!
+	  represents a node in a linked list of atomic values:
+	  
+	  \begin{verbatim}
+typedef struct sedna_sequence_item
+{
+    SEDNA_ATOMIC_VALUE	data;
+    struct sedna_sequence_item	*next;
+} SEDNA_SEQUENCE_ITEM;
+		\end{verbatim}
+		
+		Linked lists are used to represent sequences of atomic values.
+		An empty sequence is presented by a NULL pointer.
+		If \verb!func! needs to return a sequence of values, memory for nodes
+		MUST be allocated using the malloc function passed in \verb!SEDNA_EF_INIT!
+		structure.
+	
+	\item \verb!SEDNA_EF_ARGS!
+	  represents an array of arguments passed to a function:
+	  \begin{verbatim}
+typedef struct sedna_ef_args
+{
+    int length;
+    SEDNA_SEQUENCE_ITEM **args;
+} SEDNA_EF_ARGS;
+\end{verbatim}
+\end{itemize}
+
+\subsubsection*{Location of External Function Libraries}
+Compiled libraries must be placed in the directory \verb!lib! that is (1) in the same directory 
+where the directory \verb!data! with database data is located or (2) in the directory \verb!<db_name>_files! where database data are stored\footnote{See Section ``Sedna Directory Structure'' in \cite{doc:admin} to learn where database data are located}. Libraries that are database-independent should be placed in (1). Libraries that are database-specific should be placed in (2). Overloaded functions are not allowed. If two libraries located in (1) and (2) contain functions with the same name, a function from the library in (2) is called. If libraries in the same directory (1 or 2) contain functions with the same name, it is not specified which one is called.
+
+There is a sample external function code available in the folder:
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\applications\external-functions\c\
+\end{verbatim}
+\begin{verbatim}
+[linux:] INSTALL_DIR/examples/applications/external-functions/c/
+\end{verbatim}
+where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
+
+
+\subsection{Data Definition Language}
+
+This section describes Sedna Data Definition Language (DDL) that is used to create the database structures that will hold oneТs data.
+
+Most of parameters of Sedna DDL are computable and specified as XQuery expressions.
+The expected type of all the parameters is \verb!xs:string!. All parameters are evaluated and atomized.
+If the atomized value is not of \verb!xs:string!, a dynamic error is raised.
+
+\subsubsection{Managing Documents}
+\begin{verbatim}
+CREATE DOCUMENT doc-name-expr
+\end{verbatim}
+
+The \verb!CREATE! \verb!DOCUMENT! statement creates a new standalone document
+with the name that is the result of \verb!doc-name-expr!. 
+
+\begin{verbatim}
+DROP DOCUMENT doc-name-expr
+\end{verbatim}
+
+The \verb!DROP! \verb!DOCUMENT! statement drops the standalone document with the
+name that is the result of \verb!doc-name-expr!.
+
+
+
+\subsubsection{Managing Collections}
+
+Sedna provides a mechanism of organizing multiple documents into a collection.
+Collection provides a uniform way of writing XQuery and XML update statements
+addressed to multiple documents at once.
+Collections are preferrable for situations when a group of documents is to be
+queried/updated by means of not referring to their individual document names,
+but according to some conditions over their content.
+
+In a Sedna database, a document can be either a standalone one (when it
+doesn't belong to any collection) or belonging to some collection.
+Compared to standalone documents, all documents within a given collection have
+a common descriptive schema.
+The common descriptive schema (which can be considered as a union of
+individual descriptive schemas for all documents that belong to a collection)
+allows addressing XQuery and XML update queries to all members of a collection.
+
+Below is the specification of syntax and semantic of statements that manage
+collections.
+
+\begin{verbatim}CREATE COLLECTION coll-name-expr\end{verbatim}
+
+The \verb!CREATE COLLECTION! statement creates a new collection with the
+name that is the result of \verb!coll-name-expr!.
+
+XML documents can be loaded into the collection, as previously described in
+Sect.\ref{bulk-load}.
+To access a single document from collection in an XQuery or XML update query,
+the \verb!document! function accepts a collection name as its second optional
+argument:
+
+\begin{verbatim}document(doc-name-expr, coll-name-expr)\end{verbatim}
+
+The function returns the document with
+the \verb!doc-name-expr! name that belongs to the collection named \verb!coll-name-expr!.
+
+\begin{verbatim}collection(coll-name-expr)\end{verbatim}
+
+The function \verb!collection! can be called from any place within an XQuery or
+XML update query where the function call is allowed.
+The \verb!collection! function returns the sequence of all documents that
+belong to the collection named \verb!coll-name-expr!.
+The relative order of documents in a sequence returned by \verb!collection!
+function is currently undefined in Sedna.
+
+Conventional XQuery predicates can be used for filtering the sequence returned
+by the \verb!collection! function call, for selecting certain documents that
+satisfy the desired condition.
+
+%To drop a document located in collection, the following statement is provided:
+\begin{verbatim}DROP DOCUMENT doc-name-expr IN COLLECTION coll-name-expr\end{verbatim}
+
+The \verb!DROP DOCUMENT IN COLLECTION! statement drops the document named
+\verb!doc-name-expr! located in the collection named \verb!coll-name-expr!.
+
+\begin{verbatim}DROP COLLECTION coll-name-expr\end{verbatim}
+
+The \verb!DROP COLLECTION! statement drops the collection with the
+\verb!coll-name-expr! name from the database.
+If the collection contains any documents, these documents are dropped as well.
+
+\subsubsection{Managing Indices}
+\label{sec:managing-indices}
+Sedna supports value indicies based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indicies.
+
+\begin{verbatim}
+CREATE INDEX title-expr
+ON Path1 BY Path2
+AS type
+\end{verbatim}
+
+The \verb!CREATE INDEX! creates an index on nodes (specified by \verb!Path1!) by keys (specified by \verb!Path2!). 
+
+\verb!Path1! is an XPath expression without any filter expressions that identifies the nodes of a document or a collection that are to be indexed. \verb!Path2! is an XPath expression without any filter expressions that specifies the relative path to the nodes  whose string-values are used as keys to identify the nodes returned by the \verb!Path1! expression. The \verb!Path2! expression should not start with У/Ф or У//Ф. The full path from the root of documents (that may be in a collection) to the key nodes is \verb!Path1/Path2!.
+
+For instance, let \verb!Path1! be \verb!doc("a")/b/c! and \verb!Path2! be \verb!d!. Let \verb!X! be  the node returned by the \verb!Path1! expression, and \verb!Y! be one of the nodes returned by the \verb!doc("a")/b/c/d! expression. If \verb!Y! is the descendant of \verb!X!, then the value of \verb!Y! is used as the key for searching the node \verb!X!.
+
+\verb!title-expr! is the title of the index created. It should be unique for each index in the database.
+
+\verb!type! is an atomic type which the value of the keys should be cast to. 
+
+In the following example, people are indexed by the names of their cities. To generate the index keys, city names are cast to the \verb!xs:string! type. 
+\begin{verbatim}
+CREATE INDEX "people" 
+ON doc("auction")/site//person BY address/city 
+AS xs:string
+\end{verbatim}
+
+To remove an index, use the following statement:
+\begin{verbatim}
+DROP INDEX title-expr
+\end{verbatim}
+
+The DROP INDEX statement removes the index named \verb!title-expr! from the database.
+
+\begin{note}In the current version of Sedna, query executor does not use indicies automatically. You can enforce the executor to employ indices by
+using the XQuery index-scan funtions specified in Section \ref{sec:index-scan-fun}.
+\end{note}
+
+\subsubsection{Retrieving Metadata}
+\begin{verbatim}
+RETRIEVE METADATA FOR DOCUMENTS [WITH STATISTICS]
+RETRIEVE METADATA FOR COLLECTIONS [WITH STATISTICS]
+\end{verbatim}
+
+The \verb!RETRIEVE! \verb!METADATA! statement retrieves the metadata information about all XML documents or collections stored in database. The output of this statement is an XML document, which complies with the following DTD:
+
+\begin{verbatim}
+<!ELEMENT XML_DOCUMENTS (Document)*|(Collection)*>
+<!ELEMENT Document (#TEXT)?>
+<!ATTLIST Document name CDATA #REQUIRED>
+<!ELEMENT Collection (#TEXT)?>
+<!ATTLIST Collection name CDATA #REQUIRED >                   
+\end{verbatim}
+
+The value of the \verb!name! attribute is the name of the document or collection. If the \verb!WITH! \verb!STATISTICS! command is stated, the following statictical information is retrieved as the content of the \verb!Document! or \verb!Collection! elements:
+
+\begin{itemize}
+\item \verb!TOTAL NODES IN SCHEMA!. The number of the nodes of the descriptive schema.
+\item \verb!TOTAL TEXT NODES IN SCHEMA!. The number of the text attribute and document nodes of the descriptive schema.
+\item \verb!TOTAL NODES!. The number of the nodes of the document (or collection).
+\item \verb!DEPTH!. The maximal depth of the document (or collection).
+\item \verb!TOTAL BLOCKS EXCEPT NID! and \verb!INDIR!. The number of the blocks occupied by document (or collection) except blocks with numberig schema and indirection.
+\item \verb!TOTAL DESCRIPTOR BLOCKS!. The number of  the descriptor blocks occupied by document (or collection) .
+\item \verb!TOTAL STRING BLOCKS!. The number of  the text blocks occupied by document (or collection) .
+\item \verb!FILL PERCENTAGE!. Fill factor of the blocks (in percents).
+\item \verb!TOTAL INNER BLOCKS!. The number of  the descriptor blocks occupied by document (or collection) except first and last blocks in each chain of blocks.
+\item \verb!TOTAL INNER NODES SIZE!. The size of the inner blocks.
+\item \verb!INNER FILL PERCENTAGE!. Fill factor of the inner blocks (in percents).
+\item \verb!STRINGS!. The share of  the string blocks (in percents).
+\item \verb!DESCRIPTORS!. The share of  the descriptor blocks (in percents).
+\item \verb!NIDS percentage!. The share of  the long labeling numbers' (>11) total size (in percents).
+\item \verb!INDIRECTION percentage!. The share of  the indirection records' total size (in percents).
+\item \verb!TOTAL SIZE!. The total size of the document (or collection), in MGBs.
+\item \verb!STRINGS size!. The total size of the string blocks , in MGBs.
+\item \verb!DESCRIPTORS size!. The total size of the descriptor blocks , in MGBs.
+\item \verb!NIDS size!. The total size of the long labeling numbers , in MGBs.
+\item \verb!FREE SPACE IN STRING BLOCKS size!. The total size of the free space in the string blocks.
+\item \verb!INDIRECTION size!. The total size of the indirection records , in MGBs.
+\item \verb!NIDS size!. The share of  the indirection records' total size (in percents).
+\item \verb!Data size variation!. The histogram of the xml data by it's size.
+\item \verb!NID size variation!. The histogram of the labeling numbers it's length.
+\end{itemize}
+
+\begin{verbatim}
+RETRIEVE DESCRIPTIVE SCHEMA FOR DOCUMENT doc-name-expr
+RETRIEVE DESCRIPTIVE SCHEMA FOR COLLECTION coll-name-expr
+\end{verbatim}
+
+The \verb!RETRIEVE! \verb!DESCRIPTIVE! \verb!SCHEMA! statement retrieves the descriptive schema of the XML document or collection with the \verb!doc-name-expr! or \verb!coll-name-expr! name respectively. 
+
+%The output format of the descriptive schema is specified after the \verb!AS! clause. In the current version of Sedna there is only the TREE format. In future versions more formats will be added. 
+
+The output of a descriptive schema is an XML document, which complies with the following DTD:
+
+\begin{verbatim}
+<!ELEMENT TREE_DESCRIPTIVE_SCHEMA NODE>
+<!ELEMENT NODE (NODE)*>
+<!ATTLIST NODE name CDATA #IMPLIED
+               type (document|element|text|attribute)>
+\end{verbatim}
+
+The root of the XML document is the \verb!TREE_DESCRIPTIVE_SCHEMA! element, which contains the tree representation of a descriptive schema. The \verb!NODE! element describes a node of descriptive schema. It has two attributes: \verb!name! and \verb!type!, which define the name and the type of the node correspondingly. There are four types of nodes in descriptive schema: document, element, attribute and text. More on descriptive schema see in \cite{paper:sedna-overview}.
+
+\begin{thebibliography}{9}
+\bibitem{doc:admin} ``Sedna Administration Guide''
+\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Working Draft, 4 April 2005
+\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Working Draft, 4 April 2005
+\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Working Draft, 4 April 2005
+\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Working Draft, 15 September 2005
+\bibitem{paper:query-update} Patrick Lehti. ``Design and Implementation of a Data Manipulation Processor for a XML Query Language'', http://www.ipsi.fraunhofer.de/~lehti/
+\bibitem{lib:pcre-lib} http://www.pcre.org/
+\bibitem{paper:sedna-overview}  
+Maxim Grinev, Andrey Fomichev, Sergey Kuznetsov, Kostantin Antipin, Alexander Boldakov, Dmitry Lizorkin, Leonid Novak, Maria Rekouts, Peter Pleshachkov. ``Sedna: A Native XML DBMS'', http://www.modis.ispras.ru/publications.htm
+
+\bibitem{paper:sedna-api} Rekouts Maria. ``Application Programming Interface for XML DBMS: design and implementation proposal'', http://www.modis.ispras.ru/publications.htm
+
+\bibitem{paper:scheme-ql}
+Noel Welsh, Francisco Solsona, Ian Glover.
+``SchemeUnit and SchemeQL: Two little languages'',
+Scheme Workshop 2002,
+http://schematics.sourceforge.net/schemeunit-schemeql.ps
+
+\bibitem{paper:sxml}
+Oleg Kiselyov.
+``SXML Specification, Revision 3.0'',
+http://www.okmij.org/ftp/Scheme/SXML.html
+
+\bibitem{paper:srfi-12}
+William Clinger, R.\ Kent Dybvig, Matthew Flatt, and Marc Feeley.
+``SRFI-12: Exception Handling'',
+http://srfi.schemers.org/srfi-12/srfi-12.html
+
+\bibitem{paper:chicken}
+Felix L.\ Winkelmann.
+``Chicken -- A practical and portable Scheme system'',
+http://www.call-with-current-continuation.org/chicken.pdf
+
+\bibitem{paper:sxpath}
+Kirill Lisovsky, Dmitry Lizorkin.
+``XML Path Language (XPath) and its functional implementation SXPath'',
+Russian Digital Libraries Journal , 2003, Volume 6, Issue 4,
+http://www.elbib.ru/index.phtml?page=elbib/eng/journal/2003/part4/LL
+
+\end{thebibliography}
+
+\end{document}

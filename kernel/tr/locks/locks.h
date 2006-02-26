@@ -1,0 +1,59 @@
+/*
+ * File:  locks.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#ifndef _LOCKS_H
+#define _LOCKS_H
+
+#include <list>
+
+#include "nodes.h"
+#include "lm_base.h"
+#include "usem.h"
+#include "SSMMsg.h"
+
+
+void lockWrite(node_blk_hdr* block);
+void lockRead(node_blk_hdr* block);
+void lockWriteXptr(xptr block);
+
+
+void init_local_lock_mgr(SSMMsg* _sm_server_);
+
+void release_local_lock_mgr();
+
+void release_locks();
+
+void release_resource(const char* name, resource_kind kind);
+
+//typedef std::list<resource_id>::iterator ridl_it;
+
+class LocalLockMgr
+{
+private:
+    //std::list<resource_id> resource_l;
+    lock_mode mode;
+    USemaphore sem;
+    SSMMsg *sm_server;
+    void obtain_lock(const char* name, resource_kind kind, bool intention_mode = false);
+public:
+    void Init_LocalLockMgr(SSMMsg* _sm_server_);
+    void Release_LocalLockMgr();
+    void put_lock_on_document(const char *name);
+    void put_lock_on_collection(const char *name);
+    void put_lock_on_index(const char *name);
+    void put_lock_on_db();
+    void lock(lock_mode _mode_) {mode = _mode_;};
+    lock_mode get_cur_lock_mode() {return mode;};
+    
+    //void lock(const char* name, resource_kind kind, lock_mode mode) throw (LockMgrException);
+    //void release(const char* name, resource_kind kind) throw (LockMgrException);
+    void release();
+    void release_resource(const char* name, resource_kind kind);
+};
+
+extern LocalLockMgr *local_lock_mrg;
+
+#endif
+

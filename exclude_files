@@ -1,0 +1,8 @@
+build-linux-*
+exclude_files
+ftpscript.txt
+copyright.sh
+linecount.sh
+release.sh
+CVS
+coverage.pl

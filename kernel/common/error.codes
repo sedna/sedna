@@ -1,0 +1,1449 @@
+###############################################################################
+## This file contains description of user error codes (according to the 
+## classification in exceptions.h).
+## This file is processed sequentially line by line according to the following
+## instructions:
+## 1. blank lines are ignored if they are not in error record (see what is 
+##    the error record below);
+## 2. lines starting with '#' are treated as comments (if they are not in
+##    error records) and ignored
+## 3. any other line is treated as a beginning of an error record, which 
+##    consists of three lines. The first line is the error code (for instance,
+##    "sedna-err:SE1000"). The second line consists of command that specify
+##    what to do in case of this error (format is under development and now 
+##    this string is simply ignored). The third line consistd of the textual
+##    description of the error
+###############################################################################
+
+
+
+###############################################################################
+## User Environment error (according to the classification in exceptions.h)
+## Important: this error must be the first error defined in this file;
+##            if you want to add a new error put it to the end of the file
+###############################################################################
+sedna-err:SE1000
+
+    Environment error. This error is caused by environment (operating system).
+
+
+
+###############################################################################
+## XQuery/XPath errors
+## These are errors from XQuery specification (do not edit them until the 
+## specification changes)
+###############################################################################
+err:XP0001
+    
+    It is a static error if analysis of an expression relies on some component of the static context that has not been assigned a value.
+err:XP0002
+    
+    It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that has not been assigned a value.
+err:XP0003
+    
+    It is a static error if an expression is not a valid instance of the grammar defined in A.1 EBNF.
+err:XP0004
+    
+    During the analysis phase, it is a type error if the static typing feature is in effect and an expression is found to have a static type that is not appropriate for the context in which the expression occurs.
+err:XP0005
+
+    During the analysis phase, it is a static error if the static typing feature is in effect and the static type assigned to an expression other than the expression () or data(()) is the empty type.
+err:XP0006
+
+    During the evaluation phase, it is a type error if a value does not match a required type as specified by the matching rules in 2.5.4 SequenceType Matching.
+err:XP0007
+
+    It is a type error if the fn:data function is applied to a node whose type annotation denotes a complex type with non-mixed complex content.
+err:XP0008
+
+    It is a static error if an expression refers to an element name, attribute name, type name, function name, namespace prefix, or variable name that is not defined in the static context, except within an ElementTest or an AttributeTest.
+err:XQ0009
+
+    An implementation that does not support the Schema Import Feature may raise a static error if a Prolog contains a schema import.
+err:XQ0010
+
+    An implementation that does not support the Full Axis Feature must raise a static error if it encounters a reference to an optional axis that it does not support.
+err:XQ0012
+
+    If the Schema Import Feature is in effect, it is a static error if the set of definitions contained in all imported schemas do not satisfy the conditions for schema validity specified in Sections 3 and 5 of [XML Schema] Part 1. In particular, the definitions must be valid, they must be complete, and they must be unique -- that is, the pool of definitions must not contain two or more schema components with the same name and target namespace.
+err:XQ0013
+
+    It is a static error if an implementation supports a pragma but determines that its content is invalid.
+err:XQ0014
+
+    It is a static error if an implementation does not support a must-understand extension or an implementation does support a must-understand extension and the implementation determines that the character content is invalid.
+err:XQ0015
+
+    It is a static error if the XQuery Flagger is enabled and the query contains a must-understand extension.
+err:XQ0016
+
+    An implementation that does not support the Module Feature raises a static error if it encounters a module declaration or a module import.
+err:XP0017
+
+    It is a static error if the expanded QName and number of arguments in a function call do not match the name and arity of a function signature in the static context.
+err:XP0018
+
+    It is a type error if the result of the last step in a path expression contains both nodes and atomic values.
+err:XP0019
+
+    It is a type error if the result of an step (other than the last step) in a path expression contains an atomic value.
+err:XP0020
+
+    It is a type error if in an axis expression, the context item is not a node.
+err:XP0021
+
+    It is a dynamic error if the argument of a cast expression or constructor function cannot be cast to the required type.
+err:XQ0022
+
+    It is a static error if the value of a namespace declaration attribute is not a literal string.
+err:XQ0023
+
+    (Not currently used.)
+err:XQ0024
+
+    It is a type error if the content sequence in an element constructor contains an attribute node following a node that is not an attribute node.
+err:XQ0025
+
+    It is a dynamic error if any attribute of a constructed element does not have a name that is distinct from the names of all other attributes of the constructed element.
+err:XQ0026
+
+    It is a dynamic error if the result of the content expression of a computed processing instruction constructor contains the string "?>".
+err:XQ0027
+
+    In a validate expression, it is a dynamic error if validation fails.
+err:XQ0028
+
+    (Not currently used.)
+err:XP0029
+
+    It is a dynamic error in a cast expression if the input value does not satisfy the facets of the target type.
+err:XQ0030
+
+    It is a type error if the argument of a validate expression does not evaluate to exactly one document or element node.
+err:XQ0031
+
+    It is a static error if the version number specified in a version declaration is not supported by the implementation.
+err:XQ0032
+
+    A static error is raised if a Prolog contains more than one base URI declaration.
+err:XQ0033
+
+    It is a static error if a Prolog contains multiple declarations for the same namespace prefix.
+err:XQ0034
+
+    It is a static error if multiple functions declared or imported by a module have the same expanded QName and the same number of arguments.
+err:XQ0035
+
+    It is a static error to import two schema components that both define the same name in the same symbol space and in the same scope.
+err:XQ0036
+
+    It is a type error to import a module if the importing module's in-scope type definitions do not include definitions for the type names that appear in variable declarations, function parameters, or function returns found in the imported module.
+err:XQ0037
+
+    (Not currently used.)
+err:XQ0038
+
+    It is a static error if a Prolog contains more than one default collation declaration, or the value specified by a default collation declaration does not identify a collation known to the implementation.
+err:XQ0039
+
+    It is a static error for a function declaration to have more than one parameter with the same name.
+err:XQ0040
+
+    It is a static error if the attributes specified by a direct element constructor do not have distinct names.
+err:XQ0041
+
+    It is a dynamic error if the value of the name expression in a computed processing instruction constructor cannot be cast to the type xs:NCName.
+err:XQ0042
+
+    (Not currently used.)
+err:XQ0043
+
+    (Not currently used.)
+err:XQ0044
+
+    It is a dynamic error if the name expression of a computed attribute constructor returns a QName that is in the namespace http://www.w3.org/TR/REC-xml-names (corresponding to namespace prefix xmlns), or returns a QName that is in no namespace and has local name xmlns.
+err:XQ0045
+
+    It is a static error if the function name in a function declaration is in one of the following namespaces: http://www.w3.org/XML/1998/namespace, http://www.w3.org/2001/XMLSchema, http://www.w3.org/2001/XMLSchema-instance, http://www.w3.org/2004/10/xpath-functions, http://www.w3.org/2004/10/xpath-datatypes.
+err:XQ0046
+
+    It is a static error if a string that is required to contain a valid URI does not contain a valid lexical form according to the definition of xs:anyURI in [XML Schema].
+err:XQ0047
+
+    It is a static error if multiple module imports in the same Prolog specify the same target namespace.
+err:XQ0048
+
+    It is a static error if a function or variable declared in a library module is not in the target namespace of the library module.
+err:XQ0049
+
+    It is a static error if more than one variable declared or imported by a module has the same expanded QName.
+err:XP0050
+
+    It is a dynamic error if the dynamic type of the operand of a treat expression does not match the type specified by the treat expression.
+err:XP0051
+
+    It is a static error if a QName that is used as an AtomicType in a SequenceType is not defined in the in-scope type definitions as an atomic type.
+err:XQ0052
+
+    (Not currently used.)
+err:XQ0053
+
+    (Not currently used.)
+err:XQ0054
+
+    It is a static error if the initializing expression in a variable declaration cannot be executed because of a circularity (for example, the expression depends on a function that in turn depends on the value of the initialized variable).
+err:XQ0055
+
+    It is a static error if a Prolog contains more than one inherit-namespaces declaration.
+err:XQ0056
+
+    It is a static error if the target namespace specified in a module import is the same as the target namespace of the importing module.
+err:XQ0057
+
+    It is a static error if a schema import binds a namespace prefix but does not specify a target namespace other than a zero-length string.
+err:XQ0058
+
+    It is a static error if multiple schema imports specify the same target namespace.
+err:XQ0059
+
+    It is a static error if an implementation is unable to process a schema or module import by finding a schema or module with the specified target namespace.
+err:XQ0060
+
+    It is a static error if the name of a function in a function declaration is not in a namespace (expanded QName has an empty URI).
+err:XQ0061
+
+    It is a dynamic error if validity assessment is performed on a document node unless the children of the document node comprise exactly one element node, no text nodes, and zero or more comment and processing instruction nodes, in any order.
+err:XQ0062
+
+    It is a dynamic error if a document-level constraint is not satisfied when validity assessment is performed on a document node. Document-level constraints include identity constraints (xs:unique, xs:key, and xs:keyref) and ID/IDREF constraints.
+err:XQ0063
+
+    It is a static error if the URI specified by a default function namespace declaration is a zero-length string.
+err:XQ0064
+
+    It is a dynamic error if the value of the name expression in a computed processing instruction constructor is equal to "XML" (in any combination of upper and lower case).
+err:XQ0065
+
+    A static error is raised if a Prolog contains more than one ordering mode declaration.
+err:XQ0066
+
+    A static error is raised if a Prolog contains more than one default element/type namespace declaration, or more than one default function namespace declaration.
+err:XQ0067
+
+    A static error is raised if a Prolog contains more than one construction declaration.
+err:XQ0068
+
+    A static error is raised if a Prolog contains more than one Xmlspace declaration.
+err:XQ0069
+
+    A static error is raised if a Prolog contains more than one empty ordering declaration.
+err:XQ0070
+
+    A static error is raised if the predefined namespace prefix xml or xmlns is redeclared by a namespace declaration or namespace declaration attribute.
+err:XQ0071
+
+    A static error is raised if the namespace declaration attributes of a direct element constructor do not have distinct names.
+err:XQ0072
+
+    It is a dynamic error if the result of the content expression of a computed comment constructor contains two adjacent hyphens or ends with a hyphen.
+err:XQ0073
+
+    It is a static error if the graph of module imports contains a cycle (that is, if there exists a sequence of modules M1 ... Mn such that each Mi imports Mi+1 and Mn imports M1.)
+err:XQ0074
+
+    It is a dynamic error if the value of the name expression in a computed element constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found in statically known namespaces.
+
+
+
+
+###############################################################################
+## XQuery/XPath Functions and Operators errors
+###############################################################################
+err:FOER0000
+
+    Unidentified error.
+err:FOAR0001
+
+    This error is raised whenever an attempt is made to divide by zero.
+err:FOAR0002
+
+    This error is raised whenever numeric operations result in an overflow or underflow.
+err:FOCA0001
+
+    Input value too large for decimal
+err:FOCA0002
+
+    Invalid lexical value
+err:FOCA0003
+
+    Input value too large for integer
+err:FOCA0004
+
+    Error in casting to integer
+err:FOCA0005
+
+    NaN supplied as float/double value
+err:FOCH0001
+
+    Codepoint not valid
+err:FOCH0002
+
+    Unsupported collation
+err:FOCH0003
+
+    Unsupported normalization form
+err:FOCH0004
+
+    Collation does not support collation units
+err:FODC0001
+
+    No context document
+err:FODC0002
+
+    Error retrieving resource
+err:FODC0004
+
+    Invalid argument to fn:collection()
+err:FODC0005
+
+    Invalid argument to fn:doc
+err:FODT0001
+
+    Overflow in date/time arithmetic
+err:FODT0002
+
+    Overflow in duration arithmetic
+err:FODT0003
+
+    Invalid timezone value
+err:FONC0001
+
+    Undefined context item
+err:FONS0003
+
+    No prefix defined for namespace
+err:FONS0004
+
+    No namespace found for prefix
+err:FONS0005
+
+    Base uri not defined in the static context
+err:FORG0001
+
+    Invalid value for cast/constructor
+err:FORG0002
+
+    Invalid argument to fn:resolve-uri()
+err:FORG0003
+
+    fn:zero-or-one called with a sequence containing more than one item
+err:FORG0004
+
+    fn:one-or-more called with a sequence containing no items
+err:FORG0005
+
+    fn:exactly-one called with a sequence containing zero or more than one item
+err:FORG0006
+
+    Invalid argument type
+err:FORG0007
+
+    Invalid argument to aggregate function
+err:FORG0008
+
+    Both arguments to fn:dateTime have a speciified timezone.
+err:FORG0009
+
+    Base uri argument to fn:resolve-uri is not an absolute uri
+err:FORX0001
+
+    Invalid regular expression flags
+err:FORX0002
+
+    Invalid regular expression
+err:FORX0003
+
+    Regular expression matches zero-length string
+err:FORX0004
+
+    Invalid replacement string
+err:FOTY0011
+
+    Context item is not a node
+err:FOTY0012
+
+    Items not comparable
+
+
+###############################################################################
+## Define other user errors here
+## Start from sedna-err:SE1001
+###############################################################################
+sedna-err:SE1001
+
+    Stack overflow.
+sedna-err:SE1002
+
+    Feature is not implemented.
+sedna-err:SE1003
+
+    Sedna XQuery processor error.
+sedna-err:SE1004
+
+    Wrong physical plan representation.
+sedna-err:SE1005
+
+    Scheme parser error.
+sedna-err:SE1006
+
+    No document with this name in the specified collection.
+sedna-err:SE1007
+
+    Invalid position in fn:item-at.
+sedna-err:SE1008
+
+    Sedna index subsystem error.
+sedna-err:SE1009
+
+    Buffer overflow.
+
+
+
+
+sedna-err:SE1011
+
+    Data file has reached its maximum size.
+sedna-err:SE1012
+
+    Temporary file has reached its maximum size.
+sedna-err:SE1013
+
+    Cannot extend data file.
+sedna-err:SE1014
+
+    Cannot extend temporary file.
+sedna-err:SE1015
+
+    There is no enough memory to initialize buffers.
+sedna-err:SE1016
+
+    Cannot lock buffer memory.
+sedna-err:SE1017
+
+    Cannot mount ramfs.
+sedna-err:SE1018
+
+    Transaction with this id already exists.
+sedna-err:SE1019
+
+    There is no transaction with this id.
+sedna-err:SE1020
+
+    Transaction's limit on locked blocks in memory is exceeded.
+sedna-err:SE1021
+
+    Cannot lock block in memory because it is not in memory.
+sedna-err:SE1022
+
+    Cannot unlock block because it is not in memory.
+sedna-err:SE1023
+
+    Unexpected arguments in call to SM.
+
+
+
+
+
+sedna-err:SE1031
+
+    Cannot allocate enough address space segment.
+sedna-err:SE1032
+
+    Error setting up alternate stack.
+sedna-err:SE1033
+
+    Error setting up signal handler.
+sedna-err:SE1034
+
+    Connection with SM lost.
+sedna-err:SE1035
+
+    Memory mapping error.
+sedna-err:SE1036
+
+    Cannot (un)swap blocks (address is out of bounds).
+sedna-err:SE1037
+
+    Cannot open buffer memory.
+sedna-err:SE1038
+
+    Cannot close buffer memory.
+sedna-err:SE1039
+
+    Error waiting for VMM thread to shutdown.
+sedna-err:SE1040
+
+    Cannot determine enough address space segment.
+
+
+
+
+sedna-err:SE1051
+
+    Sedna query optimizer error.
+
+
+
+
+
+sedna-err:SE1061
+
+    No index with this name.
+
+
+
+sedna-err:SE1071
+
+    Expecting arguments of type xs:string.
+
+
+
+
+
+
+sedna-err:SE2001
+
+    Document with the same name already exists.
+sedna-err:SE2002
+
+    Collection with the same name already exists.
+sedna-err:SE2003
+
+    No collection with this name.
+sedna-err:SE2004
+
+    Document with the same name already exists in the collection.
+sedna-err:SE2005
+
+    Parse error at 
+sedna-err:SE2006
+
+    No document with this name.
+sedna-err:SE2007
+
+    Left sibling is not an attribute
+sedna-err:SE2008
+
+    Attribute with the same name exists in parent
+sedna-err:SE2009
+
+   Size of text should be grater then zero
+sedna-err:SE2010
+
+   Invalid result of the delete undeep argument: sequence contains non-persistent or document nodes
+sedna-err:SE2011
+
+   Invalid result of the delete  argument: sequence contains atomic values
+sedna-err:SE2012
+
+   Invalid result of the delete argument: sequence contains temporary nodes 
+sedna-err:SE2013
+
+   Invalid result of the second insert argument: sequence contains atomic values or atomic values
+sedna-err:SE2014
+
+   Invalid result of the first insert argument: bad sequence of nodes
+sedna-err:SE2015
+
+   Invalid result of the first insert argument: sequence contains atomic values
+sedna-err:SE2016
+
+  Attempt to insert element before attribute
+sedna-err:SE2017
+
+  Attempt to insert the node to it's descendant
+sedna-err:SE2018
+
+  Invalid result of the second insert argument: sequence contains either attribute, namespace, comment, PI or temporary node
+sedna-err:SE2019
+
+   Invalid result of the second insert argument: sequence contains atomic values
+sedna-err:SE2020
+
+   Invalid result of the rename argument: sequence contains atomic values or one of these nodes: tempory, text, comment,PI,namespace,document
+sedna-err:SE2021
+
+  Unknown node test
+sedna-err:SE2022
+
+  this node test is not yet implemented
+sedna-err:SE2023
+
+  [nid_assign] The length of prefix exceeds PSTRMAXSIZE
+sedna-err:SE2024
+
+  trying to store string exceeding maximum permited size
+sedna-err:SE2025
+
+  checkTreeConsistency:Ancestor-descendant error
+sedna-err:SE2026
+
+  checkTreeConsistency:First child pointer
+sedna-err:SE2027
+
+  checkTreeConsistency:sibling pointer errors
+sedna-err:SE2028
+
+  checkTreeConsistency:nid comparison error
+sedna-err:SE2029
+
+  checkTreeConsistency:wrong descriptor's order
+sedna-err:SE2030
+
+  checkTreeConsistency:Bad indirection table
+sedna-err:SE2031
+
+  atomic value as input for test engine
+sedna-err:SE2032
+
+  trying to create mixed content in the element whose value is used as key
+sedna-err:SE2033
+
+    Index with the same name already exists.
+sedna-err:SE2034
+
+    Invalid mode in index_scan function
+sedna-err:SE2035
+
+    Invalid mode in index_scan_between function
+sedna-err:SE2036
+
+    Document node deletion is prohibited by this function use DROP DOCUMENT in metadata API
+
+########### sql ####################
+sedna-err:SE2100
+
+  SQL:Bad connect option 
+sedna-err:SE2101
+
+  SQL:Bad handle
+sedna-err:SE2102
+
+  SQL:Failed to get executor
+sedna-err:SE2103
+
+  SQL:Unknown handle type
+sedna-err:SE2104
+
+  SQL:Invalid handle type
+sedna-err:SE2105
+
+  SQL:Failed to prepare statement
+sedna-err:SE2106
+
+  SQL:Failed to execute prepared statement
+sedna-err:SE2107
+
+  SQL:Not enough parameters for prepared statement
+sedna-err:SE2108
+
+  SQL:Disconnect failed
+sedna-err:SE2109
+
+  SQL:Commit failed
+sedna-err:SE2110
+
+  SQL:Rollback failed
+sedna-err:SE2111
+
+  SQL:Connect failed
+sedna-err:SE2112
+
+  SQL:Execute failed
+sedna-err:SE2113
+
+  SQL Connection support disabled
+
+########### udf ####################
+sedna-err:SE2200
+
+  External function initialization error
+sedna-err:SE2201
+
+  External function invocation error
+sedna-err:SE2202
+
+  External function de-initialization error
+sedna-err:SE2203
+
+  External function load error
+
+########### concerning sockets ####################
+sedna-err:SE3000
+
+    Failed to clean up socket library.
+sedna-err:SE3001
+
+    Failed to initialize a socket.
+sedna-err:SE3002
+
+    Failed to get local host name.
+sedna-err:SE3003
+
+    Failed to connect the host specified.
+sedna-err:SE3004
+
+    Failed to bind the socket to the port specified.
+sedna-err:SE3005
+
+    Failed to set the socket into the listening mode
+sedna-err:SE3006
+
+    Failed to send a message.
+sedna-err:SE3007
+
+    Failed to recieve a message.
+sedna-err:SE3008
+
+    Unknown message from server.
+sedna-err:SE3009
+
+    Unknown message from client.
+sedna-err:SE3010
+
+    Can't duplicate socket handle.
+
+sedna-err:SE3011
+
+    Failed to close a socket.
+sedna-err:SE3012
+
+    Message length exceeds available size.
+sedna-err:SE3013
+
+    Can't get file from client to be loaded.
+sedna-err:SE3014
+
+    Wrong client-server protocol version.
+sedna-err:SE3015
+
+    Too long login/password/db_name.
+sedna-err:SE3016
+
+    Failed to initialize socket library.
+
+sedna-err:SE3017
+
+    Can't open file with data to load.
+sedna-err:SE3018
+
+    Can't read file with data to load.
+sedna-err:SE3019
+
+    Can't close file with data to load.
+sedna-err:SE3020
+
+    Can't close tmp file.
+sedna-err:SE3021
+
+    Can't delete tmp file.
+sedna-err:SE3022
+
+    Invalid argument.
+sedna-err:SE3023
+
+    dbname is too long.
+sedna-err:SE3024
+
+    login is too long.
+sedna-err:SE3025
+
+    password is too long.
+sedna-err:SE3026
+
+    url is too long.
+sedna-err:SE3027
+
+    Failed to set socket option.
+sedna-err:SE3028
+
+    Connection with server is closed or have not been established yet.
+
+########### concerning sockets ####################
+
+
+########### concerning SSMMsg service ####################
+sedna-err:SE3030
+
+    Failed to initialize SSMMsg service (message service).
+sedna-err:SE3031
+
+    Failed to serve clients via SSMMsg service (message service).
+sedna-err:SE3032
+
+    Failed to stop serve clients via SSMMsg service (message service).
+sedna-err:SE3033
+
+    Failed to shutdown SSMMsg service (message service).
+sedna-err:SE3034
+
+    Can't send message via SSMMsg
+########### conserning SSMMsg service ####################
+
+########### concerning connection with gov ####################
+
+sedna-err:SE3040
+
+    Connection with Gov lost.
+sedna-err:SE3043
+    
+    Can not register session in Gov.
+sedna-err:SE3044
+    
+    Can not unregister session in Gov.
+sedna-err:SE3045
+    
+    Can not register SM in Gov.
+sedna-err:SE3046
+
+    Can't create new session (sessions number exceeds permissible threshold )
+
+
+########### concerning connection with gov ####################
+
+sedna-err:SE3051
+
+    Failed to set up ctrl handler.
+sedna-err:SE3052
+
+    Failed to run se_trn process.
+sedna-err:SE3053
+
+    Authentication failed.
+sedna-err:SE3054
+
+    Can't run session: system is busy
+
+########### concerning security ####################
+sedna-err:SE3060
+
+    Failed to create a new ACL.
+sedna-err:SE3061
+
+    Failed to set DACL to the data file security descriptor.
+sedna-err:SE3062
+
+    Failed to open process token.
+sedna-err:SE3063
+
+    Failed to release ACL.
+sedna-err:SE3064
+
+    You do not have enough permissions (you have to be root in UNIX and a member of Administrators group in Windows to run the application).
+
+sedna-err:SE3065
+
+    You do not have necessary privileges on this database object.
+
+sedna-err:SE3066
+
+    Failed to process authorization.
+sedna-err:SE3067
+
+    User name is not specified.
+sedna-err:SE3068
+
+    This statement is not supported because Sedna' database security feature is off.
+
+sedna-err:SE3069
+
+    Wrong privilege name.
+sedna-err:SE3070
+
+    Multiple parameters parted by commas are not supported in the current version of Sedna.
+sedna-err:SE3071
+
+    Failed to load authorization metadata.
+
+
+########### concerning security ####################
+
+
+
+######################################################################
+### Static query analysis error
+######################################################################
+sedna-err:SE4000
+
+    XQuery parser lexical error.
+sedna-err:SE4001
+
+    XQuery parser syntax error.
+sedna-err:SE4002
+
+    Unexpected type of the query given.
+
+sedna-err:SE4003
+
+    Unexpected number of statements given 
+sedna-err:SE4004
+
+    Scheme part unknown error   
+sedna-err:SE4005
+
+    Invalid list after scheme processing
+sedna-err:SE4006
+
+    Static query analisis error
+sedna-err:SE4007
+
+    Too long statement
+sedna-err:SE4008
+
+    Wrong logical plan representation
+sedna-err:SE4009
+
+    Too long input query
+
+######################################################################
+### OS primitives errors
+######################################################################
+sedna-err:SE4010
+
+    Can't create semaphore
+sedna-err:SE4011
+
+    Can't release semaphore
+sedna-err:SE4012
+
+    Can't open semaphore
+sedna-err:SE4013
+
+    Can't close semaphore
+sedna-err:SE4014
+
+    Can't up semaphore
+sedna-err:SE4015
+
+    Can't down semaphore
+sedna-err:SE4016
+
+    Can't create shared memory
+sedna-err:SE4020
+
+    Can't release shared memory
+sedna-err:SE4021
+
+    Can't open shared memory
+sedna-err:SE4022
+
+    Can't close shared memory
+sedna-err:SE4023
+
+    Can't attach to shared memory
+sedna-err:SE4024
+
+    Can't deattach from shared memory
+sedna-err:SE4025
+
+    Can't create pipe
+sedna-err:SE4030
+
+    Can't close pipe
+sedna-err:SE4031
+
+    Can't read pipe
+sedna-err:SE4032
+
+    Can't write pipe
+sedna-err:SE4040
+
+    Can't create file
+
+sedna-err:SE4041
+
+    Can't delete file
+
+sedna-err:SE4042
+
+    Can't open file
+sedna-err:SE4043
+
+    Can't close file
+sedna-err:SE4044
+
+    Can't read file
+sedna-err:SE4045
+
+    Can't write file
+sedna-err:SE4046
+
+    Can't set file pointer
+sedna-err:SE4047
+
+    Can't set end of file
+sedna-err:SE4048
+
+    Can't create directory
+sedna-err:SE4049
+
+    Can't copy file
+sedna-err:SE4050
+
+    Can't get file size
+sedna-err:SE4051
+
+    Can't get disk sector size
+sedna-err:SE4052
+ 
+    Can't get unique file name
+sedna-err:SE4053
+
+    Can't open directory
+sedna-err:SE4054
+
+    Can't close directory
+sedna-err:SE4060
+
+    Can't create thread
+sedna-err:SE4061
+
+    Can't suspend thread
+sedna-err:SE4062
+
+    Can't resume thread
+sedna-err:SE4063
+
+    Can't close thread
+sedna-err:SE4064
+
+    Can't exit thread
+sedna-err:SE4065
+
+    Can't sleep thread
+sedna-err:SE4070
+
+    Can't create process
+sedna-err:SE4071
+
+    Can't terminate process
+sedna-err:SE4072
+
+    Can't set environment variable
+sedna-err:SE4073
+
+    Can't get environment variable
+sedna-err:SE4074
+
+    Can't create memory mapping
+sedna-err:SE4075
+
+    Can't release memory mapping
+sedna-err:SE4076
+
+    Can't open memory mapping
+sedna-err:SE4077
+
+    Can't close memory mapping
+sedna-err:SE4078
+
+    Can't perform memory mapping
+sedna-err:SE4079
+
+    Can't perform memory unmapping
+sedna-err:SE4080
+
+    Can't set handles property
+
+
+###########################################################################
+#  Physical log errors
+###########################################################################
+sedna-err:SE4100
+
+   Physical log read buffer too small
+sedna-err:SE4101
+
+   Header of physical head exceeded sector size
+
+###########################################################################
+#  Logical log errors
+###########################################################################
+sedna-err:SE4150
+
+   Logical log read buffer too small
+sedna-err:SE4151
+
+   Too small shared memory size for logical log
+sedna-err:SE4152
+
+   Bad parameters: start LSN less then end LSN
+sedna-err:SE4153
+
+   Bad checkpoint record given
+sedna-err:SE4154
+
+   Bad record from logical log given
+sedna-err:SE4155
+
+   Bad transaction identifier given
+
+############################################################################
+# Storage Manager errors
+############################################################################
+sedna-err:SE4200
+
+   There is no database with the specified name
+sedna-err:SE4201
+
+   Not Well-Formed Config file
+sedna-err:SE4202
+
+   SM startup failure: SEDNA server is not running
+sedna-err:SE4203
+
+   Can't send message via SSMMsg
+sedna-err:SE4204
+
+   Can't register SM on Governor
+sedna-err:SE4205
+
+   Failed to run SM in the background mode
+sedna-err:SE4206
+
+   Failed to initialize system parameters    
+sedna-err:SE4207
+
+   Failed to set up ctrl handler 
+sedna-err:SE4208
+
+   Failed to shutdown SM: SEDNA server is not running
+sedna-err:SE4209
+
+   Failed to shutdown SM
+sedna-err:SE4210
+
+    Error waiting for checkpoint thread to shutdown.
+sedna-err:SE4211
+
+    Failed to create the database
+
+############################################################################
+# Create and Drop DataBase Utilities errors
+############################################################################
+sedna-err:SE4300
+
+   Path is not valid
+sedna-err:SE4301
+
+   Can not initialize system structures
+sedna-err:SE4302
+
+   Can not create persistent heap
+sedna-err:SE4303
+
+   Can not allocate memory from persistent heap
+sedna-err:SE4304
+
+   Can not close persistent heap
+sedna-err:SE4305
+
+    Can not release system structures
+sedna-err:SE4306
+
+    Can not back up PH
+sedna-err:SE4307
+
+    Failed to create a database
+sedna-err:SE4308
+
+    Failed to drop a database
+
+
+############################################################################
+# Governor errors
+############################################################################
+
+sedna-err:SE4400
+
+    SEDNA server is not running  
+sedna-err:SE4401
+
+    Failed to run GOVERNOR in the background mode
+sedna-err:SE4402
+  
+    Failed to run GOVERNOR
+sedna-err:SE4403
+
+    Failed to set up ctrl handler for GOVERNOR
+sedna-err:SE4404
+
+    Error occured during closing LISTENER
+sedna-err:SE4405
+
+    Session can't be closed
+sedna-err:SE4406
+
+    There is no any sign of the SEDNA server running in the system
+sedna-err:SE4408
+
+    Failed to run GOVERNOR: SEDNA server is running
+sedna-err:SE4409
+
+    Failed to open session: database is not started
+
+############################################################################
+# Recovery Utility errors
+############################################################################
+sedna-err:SE4500
+
+   bad logical record given from logical log
+
+############################################################################
+# Transaction general errors 
+############################################################################
+sedna-err:SE4600
+
+   One of the command line argumets is too long
+sedna-err:SE4601
+
+   Command line arguments are not correct
+sedna-err:SE4602
+
+   Can't get current working directory absolute path
+sedna-err:SE4603
+
+   Can't get absolute path to the file
+sedna-err:SE4604
+
+   Can't change working directory
+sedna-err:SE4605
+
+   Initialization of persistent heap failed
+sedna-err:SE4606
+
+   Release of persistent heap failed
+sedna-err:SE4607
+
+   Can't run transaction: system is busy
+sedna-err:SE4608
+
+   Transaction is rolled back because server is stopping
+sedna-err:SE4609
+
+   The database does not exist
+sedna-err:SE4610
+
+   There is no transaction to commit.
+sedna-err:SE4611
+
+   There is no transaction to rollback.
+sedna-err:SE4612
+
+   Commit current transaction before beginning a new one.
+sedna-err:SE4613
+
+   Since version 0.6 se_trn is an internal process and cannot be run manually. Use se_term instead.
+sedna-err:SE4614
+
+   There is no next item of the user's query.
+sedna-err:SE4615
+
+   Begin transaction before executing a query.
+
+######################################################################
+#  Lock manager errors
+######################################################################
+sedna-err:SE4700
+
+   Unknown resource identifier type 
+sedna-err:SE4701
+
+   Internal Lock Manager error
+sedna-err:SE4702
+
+   The resorce's name length is too long
+sedna-err:SE4703
+
+   The transaction is a victim of deadlock resolution procedure
+sedna-err:SE4704
+
+   Unknown reply from Lock Manager
+sedna-err:SE4705
+
+   Deadlock is detected
+
+######################################################################
+### Static (semantic) analyzer errors (SA)
+######################################################################
+sedna-err:SE5000
+
+    Unexpected number of arguments.
+sedna-err:SE5001
+
+    Prolog not found for query.
+sedna-err:SE5002
+
+    Body not found for query.
+sedna-err:SE5003
+
+    Empty or unexpected query.
+sedna-err:SE5004
+
+    Unexpected query.
+sedna-err:SE5005
+
+    Unexpected expression.
+sedna-err:SE5006
+
+    Operation not yet supported.
+sedna-err:SE5007
+   
+    Result of function body cannot be cast to function return type declared.
+sedna-err:SE5008
+
+    Unexpected namespace prefix.
+sedna-err:SE5009
+
+    Duplicate prefix declaration.
+sedna-err:SE5010
+
+    Duplicate default element prefix declaration.
+sedna-err:SE5011
+
+    Duplicate default function prefix declaration in XQuery prolog.
+sedna-err:SE5012
+
+    Declaration not supported.
+sedna-err:SE5013
+
+    Undeclared namespace prefix in QName.
+sedna-err:SE5014
+
+    Not a constant.
+sedna-err:SE5015
+
+    Not a proper QName.
+sedna-err:SE5016
+
+    Unknown item type.
+sedna-err:SE5017
+
+    Not a name specifier.
+sedna-err:SE5018
+
+    Not a type declaration.
+sedna-err:SE5019
+
+    Improper list of formal parameters.
+sedna-err:SE5020
+
+    Not a valid variable name.
+sedna-err:SE5021
+
+    Not a return type declaration.
+sedna-err:SE5022
+
+    Not a function body.
+sedna-err:SE5023
+
+    Malformed variable name.
+sedna-err:SE5024
+
+    Undeclared namespace prefix in variable.
+sedna-err:SE5025
+
+    Variable undeclared.
+sedna-err:SE5026
+
+    Type definition for constant not found.
+sedna-err:SE5027
+
+    Constant value is not compatible with the type definition.
+sedna-err:SE5028
+
+    Constant is not a proper QName.
+sedna-err:SE5029
+
+    Axis cannot be applied to atomic type.
+sedna-err:SE5030
+
+    Not a type specifier.
+sedna-err:SE5031
+
+    Argument of node comparison is not a node().
+sedna-err:SE5032
+
+    Not an anonimous function definition.
+sedna-err:SE5033
+
+    Too many arguments in a function.
+sedna-err:SE5034
+
+    DDO contains atomic values in its argument.
+sedna-err:SE5035
+
+    Not an ivar declaration.
+sedna-err:SE5036
+
+    No function name provided in the function call.
+sedna-err:SE5037
+
+    Undeclared XQuery function.
+sedna-err:SE5038
+
+    Number of arguments in the prototype and in the function call don't match.
+sedna-err:SE5039
+
+    Atomic argument cannot be converted to node-type formal parameter.
+sedna-err:SE5040
+
+    Empty or unexpected update operation.
+sedna-err:SE5041
+
+    Unknown update operation.
+sedna-err:SE5042
+
+    Insert is applied to a non-node type.
+sedna-err:SE5043
+
+    Rename is applied to a non-node type.
+sedna-err:SE5044
+
+    Delete is applied to a non-node type.
+sedna-err:SE5045
+
+    Empty or unexpected manage operation.
+sedna-err:SE5046
+
+    Unknown manage operation.
+sedna-err:SE5047
+
+    Empty or unexpected metadata operation.
+sedna-err:SE5048
+
+    Unknown metadata operation.
+sedna-err:SE5049
+
+    Not a structural XPath supplied.
+sedna-err:SE5050
+
+    Unknown mode supplied for index-scan function call.
+sedna-err:SE5051
+
+    Unknown range specified for index-scan-between function call.
+sedna-err:SE5052
+
+    Union, intersect or except expressions cannot be applied to non-node data types.
+sedna-err:SE5053
+
+    Context is not defined.
+sedna-err:SE5054
+
+    Unexpected value of the boundary-space declaration.
+sedna-err:SE5055
+
+    Unknown option in XQuery prolog.
+sedna-err:SE5100
+
+    Error in Scheme part.

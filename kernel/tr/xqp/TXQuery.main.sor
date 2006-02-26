@@ -1,0 +1,149 @@
+/**/
+#header <<
+
+#include "AST.h"
+#include "ASTNodeTypes.h"
+#include "SORAST.h"
+#include "context.h"
+#include "exceptions.h"
+#include "uutils.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+
+
+extern int var_count;
+
+>>
+
+<<int var_count =0;>> // the counter for congen1 variable
+
+class XQueryTreeParser {
+
+
+script!:
+	<<ASTBase* last_sib = NULL;
+	  ASTBase* res = NULL;
+	>>
+	#(AST_SCRIPT <<#script=#[AST_SCRIPT];>>
+	  (q:query 
+	    <<
+	      std::string QueryList;
+	      ((SORAST*)q)->preorder(&QueryList);
+	      res = #[QueryList];
+	      if (last_sib == NULL)
+	         #script->addChild(res);
+	      else
+	         last_sib->setRight(res);
+
+	      last_sib = res;
+
+	    >>
+	  )+
+	)
+;
+
+query!:
+	 <<out_context _out_c_;>>
+	 #(AST_QUERY #(AST_PROLOG p1:prolog)
+
+	             #(AST_EXPR {e:expr  [in_context(OUTSIDE_PREDICATE)]
+                                        >[_out_c_]
+	                        })
+	 )
+	
+	  <<#query=#(#["query"],
+	             #(#[], #["prolog"], p1),
+	             #(#[], #["query-body"], e)); 
+	  >>
+	                                  
+	| #(AST_UPDATE #(AST_PROLOG p2:prolog) upd:updateExpr )
+      <<#query=#(#["update"], #(#[], #["prolog"], p2), upd);>>
+
+	| #(AST_CREATE #(AST_PROLOG p3:prolog) cr:create)
+	  <<#query=#(#["manage"], #(#[], #["prolog"], p3), cr);>>
+
+	| #(AST_METADATA #(AST_PROLOG p4:prolog)  md:metadata)
+	  <<#query=#(#["retrieve-metadata"], #(#[], #["prolog"], p4), md);>>
+
+
+	| AST_COMMIT <<#query=#["commit"];>>
+
+	| AST_ROLLBACK <<#query=#["rollback"];>>
+
+;
+
+
+
+
+expr! [in_context in_c] >[out_context out_c]: 
+	<<out_context _out_c_;>>
+	(  #(AST_SEQUENCE (e1:exprSingle[in_c] >[_out_c_]
+	                   <<if(#expr == NULL)
+	                     {
+	                       #expr=e1;
+	                       out_c = _out_c_;
+	                     }
+	                     else
+	                     {
+	                      #expr->append(e1);
+	                      if ( _out_c_ > out_c )
+	                          out_c = _out_c_;
+	                     }    
+	                   >>
+	                  )*)
+	   <<#expr=#(#[], #["sequence"], #expr);>>
+
+	 | es:exprSingle[in_c] >[out_c] <<#expr=es;>>
+	)
+;
+
+exprSingle! [in_context in_c] >[out_context out_c]:
+//	  c:elemConstructor    <<#exprSingle=c;>>
+//	| a:attrConstructor    <<#exprSingle=a;>>
+	  ie:ifExpr[in_c] >[out_c]
+          <<#exprSingle=ie;>>
+
+	| alte:arithmLogicalTypeExpr[in_c] >[out_c]
+	  <<#exprSingle=alte;>>
+
+	| flwr:flwrExpr[in_c] >[out_c]
+	  <<#exprSingle=flwr;>>
+
+	| quant:quantifierExpr[in_c] >[out_c]
+	  <<#exprSingle=quant;>>
+
+;
+
+qname!:
+	#(AST_QNAME ln:AST_LOCAL_NAME {p:AST_PREFIX})
+	
+	<<
+	  if(p!=NULL)
+	  {
+	    #qname=#(#[std::string("\"")+p->getText()+"\""], #[std::string("\"")+ln->getText()+"\""]);
+	  }
+	  else
+	  {
+	    #qname=#(#["\"\""], #[std::string("\"")+ln->getText()+"\""]);
+	  }
+	  
+	  //#qname = #(#["\"\""], #[string("\"") + string(ln->getText()) + string("\"")]);
+	>>
+;
+
+
+vardecl!:
+	#(AST_VAR qn:qname)
+	<<
+	  //#vardecl = #(#["var"], #[((SORAST*)qn)->getText()], #[((SORAST*)(qn->down()))->getText()]);
+	  #vardecl = #(#["var"], qn);
+	>>
+;
+
+stringLiteral!:
+	s:AST_STRING_CONST
+	<<#stringLiteral = #[s->getText()];
+	>>
+;

@@ -1,0 +1,108 @@
+
+                          Readme for Sedna 0.5
+
+        Copyright (C) 2005 ISP RAS and others. All rights reserved.
+
+
+   _______________________________________________________________________
+
+                              Contents
+
+   Note
+   System Requirements
+   Installing Sedna from Source Code 
+   Installing Sedna from Precompiled Binaries
+   Installing Sedna from RPM or DEB Package
+   Sedna Quick Start
+   Support
+
+
+   _______________________________________________________________________
+
+                               Note
+
+   Please, read the LICENSE, before using the system. If you do not agree
+   to all the terms of the LICENSE, you must not install or use Sedna.
+
+
+   _______________________________________________________________________
+
+                       System Requirements
+
+   Sedna runs on the following platforms:
+   - Windows 2000/XP
+   - Linux x86 kernel version 2.4 or higher
+
+   Additional requirements:
+   - Java API driver requires Java Run-time Environment (JRE) version 1.4.
+   - Scheme API driver requires PLT version 200 or higher, or Chicken.
+
+
+   _______________________________________________________________________
+
+            Installing Sedna from Source Code 
+
+   See file INSTALL supplied with the source code package.
+
+
+   _______________________________________________________________________
+
+            Installing Sedna from Precompiled Binaries
+
+Windows platform:
+
+   Sedna is distributed as a single .tar.gz archive. 
+
+   The installation process consists of the following steps:
+
+   1) Unzip archive to any directory (for example "c:\sedna").
+   2) Add the bin subdirectory of sedna installation to the environment 
+      variable PATH.
+      Note: we recommend you to use an absolute path (in the previous 
+      example add "c:\sedna\bin" to the PATH variable).
+
+Linux platform:
+
+   Sedna is distributed as a single self-extracting script.
+   The installation process consists of running self-extracting script
+   and following its instruction.
+
+
+   _______________________________________________________________________
+
+              Installing Sedna from RPM or DEB Package
+
+   This type of installation is available only for Linux. See manual provided
+   with your package system to find about installing new packages.
+
+
+   _______________________________________________________________________
+
+                       Sedna Quick Start
+
+   Sedna is distributed with examples and instructions on how to run them. 
+   See Sedna Quick Start to start working with Sedna. Sedna Programmer's 
+   Guide contains instructions on how to run example applications using 
+   Sedna API. Sedna Quick Start and Sedna Programmer's Guide are available 
+   at "doc" subdirectory of the directory where Sedna is installed (or in
+   "/usr/share/doc/sedna-x.x.x" if you have installed Sedna from RPM or 
+   DEB package).
+
+
+   _______________________________________________________________________
+
+                           Support
+
+   Please, feel free to contact us with questions, suggestions, bug reports
+   and comments:
+
+modis@ispras.ru
+
+   For up-to-date information and new versions of Sedna visit the Sedna 
+   homepage:
+
+http://www.modis.ispras.ru/Development/sedna.htm
+
+   You can also join the Sedna mail lists at
+
+http://www.modis.ispras.ru/maillist.htm

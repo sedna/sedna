@@ -1,0 +1,774 @@
+
+% File:  AdminGuide.tex
+% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+
+\documentclass[a4paper,12pt]{article}
+\font\mmmm cmtt10
+\makeatletter
+\def\verbatim@font{\mmmm}
+\makeatother
+\usepackage[english]{babel}
+\usepackage[dvips]{epsfig}
+\usepackage[dvips]{graphics}
+\usepackage{epic}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{theorem}
+\newtheorem{definition}{Definition}
+{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
+\newtheorem{theo}{Theorem}
+\newtheorem{note}{Note}
+
+%\usepackage{tex4ht}
+
+\usepackage[dvips]{epsfig}
+
+\usepackage{multirow}
+
+\title{Sedna Administration Guide}
+%\author{Peter Pleshachkov}
+\date{}
+
+\begin{document}
+\sloppy
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This guide describes administration of the Sedna XML Database Management System (Sedna for short). Sedna has the following components.
+
+\emph{Governor} serves as  ``control center'' of the system. All other components register at the Governor. The Governor knows which other components (e.g. databases and sessions) are running in the system and controls them. Other components cannot function properly if the Governor is not running so you must start it to use Sedna. Besides, Governor is responsible for handling remote client's requests. For each request it creates a session which keeps the direct connection with client. Then the client interacts with the system via session. You may run only one instance of the Governor.
+
+
+\emph{Session} keeps the client's settings and allows client to run a sequence of transactions. The transactions within a session are strictly serial, that is one transaction ends before next one starts, there is only one active transaction per session. Transaction provides functionality required for execution of the client's queries. The query execution consists of several steps: (1) parsing of the query and translation of the query into its logical representation, (2) processing of the logical representation by optimizer that produces the optimal query execution plan, (3) execution of the optimal query plan and passing results to the client. Transaction is rolled back if error is occured during its execution.
+
+\emph{Storage manager} manages a database and provides memory management functionality to the executor. There is an instance of storage manager for each database run. 
+
+All the components described above are implemented as operating system processes.
+ 
+%Administrator can manage only Governor, listener, transaction and storage manager. All other components (such as connetion) are internal components and are managed by the system. 
+
+%There are two typical configurations of Sedna.
+
+One can run session locally via command line or as a remote client via remote request to Governor. In both cases, first of all the Governor and storage managers (one for each databases required) components should be run. For each client a session is created. In turn, within session client can run a sequence of transactions.
+
+%One is \emph{to work with remote clients} distributed over network. In this configuration first of all the Governor must be run. Then the listener and storage managers (one for each database required) should be run. In this case for each client a session is created. In turn, within session client can run a sequence of transactions.
+
+%Another typical configuration is \emph{to work locally via command line}. In this configuration, first of all the governer component should be run (the listener is not required), then storage managers (one for each database required) should be run. In this case client can create session and run transaction within it using command line utilities.
+
+There are a set of command line utitilies that allow you to administrate all aspects of Sedna.
+These utilities are described in detail in the following section.
+
+\section{Sedna Administration via Command Line}
+
+\subsection{Sedna Directory Structure}
+\label{sec:dir-structure}
+The Sedna directory hierarchy is fundamental to obtaining an overall understanding of the system. This section desribes 
+how the Sedna directory structure is set up and what it contains for different kinds of Sedna packages.
+
+\subsubsection{Sedna Installed from Precompiled Binaries}
+\label{sec:binary-pack}
+If you install Sedna from precompiled binaries, the directory structures are identical on Windows and Linux platforms.
+Below \verb!PREFIX! refers to the directory where Sedna is installed.
+
+\begin{verbatim}
+PREFIX/bin        command line utilities for managing 
+                  Sedna and databases, running queries, etc.
+PREFIX/cfg        database configuration files named 
+                  <db_name>_cfg.xml, where <db_name> is 
+                  the name of the corresponding database
+PREFIX/data       database data stored in subdirectories 
+                  named <db_name>_files, where <db_name> 
+                  is the name of the corresponding database 									
+PREFIX/lib        database-independent libraries of external 
+                  functions
+PREFIX/data/<db_name>_files/lib        
+                  database-specific libraries of external
+                  functions                  
+PREFIX/doc        Sedna documentation
+PREFIX/driver     API drivers for various programming languages
+PREFIX/include    include files
+PREFIX/etc        Sedna config file sednaconf.xml (optional)
+/etc              Sedna config file sednaconf.xml if it is not 
+                  found in PREFIX/etc (also optional)
+PREFIX/examples   example databases and applications for 
+                  the Sedna APIs
+\end{verbatim}
+
+\subsubsection{Sedna Installed from RPM or DEB Packages}
+\label{sec:rpm-deb-pack}
+If you install Sedna from RPM or DEB packages on Linux, the directory structure is as follows.
+Below \verb!PREFIX! refers to the directory where Sedna is installed. 
+\verb!SHARE_PREFIX! is defined as /usr/share if \verb!PREFIX! is \verb!/! and \verb!SHARE_PREFIX! is defined as \verb!PREFIX/share! otherwise.
+
+\begin{verbatim}
+PREFIX/bin/se_*                     command line utilities for managing 
+                                    Sedna and databases, running queries
+PREFIX/etc/sednaconf.xml            Sedna configuration file (optional)
+/etc/sednaconf.xml                  Sedna configuration file if it is not 
+                                    found in PREFIX/etc (also optional)
+PREFIX/include/libsedna.h           C API header file
+PREFIX/include/sedna_ef.h           Sedna C external function API header file
+PREFIX/lib/libsedna.a               C API driver for Sedna
+SHARE_PREFIX/doc/sedna-x.x.x        Sedna documentation
+SHARE_PREFIX/java/sednadriver.jar   Java API Driver for Sedna
+/var/lib/sedna/cfg                  database configuration files named 
+                                    <db_name>_cfg.xml, where <db_name> is
+                                    the name of the corresponding database
+/var/lib/sedna/data                 databases stored in subdirectories named
+                                    <db_name>_files, where <db_name> is the 
+                                    name of the corresponding database
+/var/lib/sedna/lib                  database-independent libraries of external 
+                                    functions
+/var/lib/sedna/data/<db_name>_files/lib
+                                    database-specific libraries of external
+                                    functions
+SHARE_PREFIX/sedna-x.x.x/examples   example databases and applications for 
+                                    the Sedna APIs
+SHARE_PREFIX/sedna-x.x.x/driver     additonal API drivers 
+\end{verbatim}
+
+\subsubsection{Sedna Installed from Source Code}
+If you install Sedna from source code using \verb!make install!, the directory structure is the same as described in Section \ref{sec:binary-pack}.
+If you install Sedna from source code using \verb!make dispersal_install!, the directory structure is the same as described in Section \ref{sec:rpm-deb-pack}. Note that the latter is available only on Linux. 
+
+\subsection{Managing Sedna}
+\subsubsection{Running Sedna}
+\label{StartSedna}
+
+To start the Sedna server one should start \emph{Governor} by executing the \verb!se_gov! command. This starts the main server component. After it Administrator can run databases (as discussed in Section \ref{RunDB}).
+
+
+The usage of the \verb!se_gov! command is as follows:
+
+\begin{verbatim}
+Usage: se_gov [options]
+
+options:
+  --help                   display this help and exit
+  -help                    display this help and exit
+  -version                 display product version and exit
+  -background-mode on/off  start the server in the background mode 
+                           (default on)
+  -port-number <int>       socket listening port
+                           (default 5050)
+\end{verbatim}
+
+The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_gov! command.
+The third option allows to get the version of the \emph{Governor}.
+The fourth option \verb!-background-mode! allows Administrator to start \emph{Governor} in the background mode. Finally, last option \verb!-port-number! allows to set up the Sedna connection port number. The default value is 5050.
+
+\subsubsection{Stopping Sedna}
+
+To stop Sedna, Administrator should use the \verb!se_stop! command. This command stops all Sedna components including all databases, which are run. The command should be run without input parameters. But the command has several optional parameters.
+
+The usage of the \verb!se_stop! command is as follows:
+
+\begin{verbatim}
+Usage: se_stop [options]
+
+options:
+  --help                   display this help and exit
+  -help                    display this help and exit
+  -version                 display product version and exit
+\end{verbatim}
+The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_stop! command. Option \verb!-version! allows to get the version of the \verb!se_stop!.
+
+Note that \verb!se_stop! command causes a roll back of all active transactions in the system.
+
+\subsubsection{Configuring Sedna}
+\label{sec:ConfigSedna}
+Sedna configuration parameters are stored in the configuration file \verb!sednaconf.xml! located in
+\verb![win:] PREFIX\etc! \verb![linux:] PREFIX/etc! or \verb![linux:]/etc!. On Linux, sednaconf.xml is searched in the following order: \verb!PREFIX/etc!, \verb!/etc!. The file is optional. If there is no such file, the default values are used.
+The file is an XML document, which satisfies the following DTD:
+
+\begin{verbatim}
+<!ELEMENT sednaconf (sedna_data)>
+<!ELEMENT sedna_data (#PCDATA)>
+\end{verbatim}
+
+The \verb!sedna_data! element contains the path to the directory where 
+database configuration files (in the \verb!cfg! subdirectory) and 
+databases (in the \verb!data! subdirectory) are stored. The path by default is
+\verb![win:] PREFIX! \verb![linux:] /var/lib/sedna!.
+ 
+To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file.
+
+\subsection{Managing Databases}
+\subsubsection{Creating a Database}
+\label{CreateDB}
+To create a database, use the \verb!se_cdb! command.
+
+Each database consists of the following files, which are located as described in Section \ref{sec:dir-structure}.
+
+\begin{itemize}
+\item The \verb!<db_name>.data! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions. 
+\item The \verb!<db_name>.tmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
+\item The \verb!<db_name>.ph! and \verb!<db_name>.ph.bu! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
+\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
+\end{itemize}
+
+Besides, for each database there are run-time configuration parameters, which are stored in the database configuration file (see Section \ref{ConfigDB}).
+
+The usage of the \verb!se_cdb! command is as follows:
+
+\begin{verbatim}
+Usage: se_cdb [options] db_name
+
+options:
+  -help                         display this help and exit
+  --help                        display this help and exit
+  -version                      display product version and exit
+  -data-file-max-size Mbs       the max size of data file (in Mb),
+                                infinite size by default
+  -tmp-file-max-size Mbs        the max size of tmp file (in Mb),
+                                infinite size by default
+  -data-file-ext-portion Mbs    the data file extending portion size 
+                                (in Mb), default 100Mb
+  -tmp-file-ext-portion Mbs     the tmp file extending portion size
+                                (in Mb), default 100Mb
+  -data-file-init-size Mbs      the data file initial size (in Mb),
+                                default 100Mb
+  -tmp-file-init-size Mbs       the tmp file initial size (in Mb),
+                                default 100Mb
+  -persistent-heap-size Mbs     the persistent heap size (in Mb),
+                                default 10Mb
+  -bufs-num N                   the number of buffers in main memory,
+                                default 1600
+  -max-trs-num N                the number of concurrent micro ransactions
+                                over database, default 10
+
+db_name         the name of the database to be created
+\end{verbatim}
+
+
+The first and second options are straightforward, typing one of these options Administrator can get the exhaustive information about the \verb!se_cdb! command.
+
+The third option allows to get the version of the \verb!se_cdb! command.
+
+The \verb!-data-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the persistent data are stored. The default value for this option is infinite.
+
+The \verb!-tmp-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the temporary data are stored. The default value for this option is infinite.
+
+The \verb!-data-file-ext-portion! option allows Administrator to set up the size (in Mb) of the portion to which the persistent data file will be extended as result of executing resize operation. Resize operation is applied to the persistent data file if its size is less than needed for storing XML documents. The default value is 100 Mb.
+
+The \verb!-tmp-file-ext-portion! option allows Administrator to set up the size of the portion to which the temporary data file will be extended as result of executing resize operation. The resize operation is applied to the temporary data file if its size is less than needed for storing temporary data (intermediate results of the query, for example). The default value is 100 Mb.
+
+The \verb!-data-file-init-size! option allows Administrator to set up the initial size (in Mb) of the persistent data file. It is obvious that the initial size can't be greater than the maximum size of the persistent data file. The default value is 100 Mb.
+
+The \verb!-tmp-file-init-size! option allows Administrator to set up the initial size (in Mb) of the temporary data file. It is obvious that the initial size can't be greater than the maximum size of the temporary data file. The default value is 100 Mb.
+
+The \verb!-persistent-heap-size! option allows Administrator to set up the size (in Mb) of the metadata file (for example the descriptive schema stores in this file) This file cannot be resized. The default value is 10 Mb.
+
+The \verb!-bufs-num! option allows Administrator to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is 1600 buffers, which is equal to 100Mb and we do not recommend to use less number of buffers. The size of one buffer is 64Kb and can't be customized by Administrator.
+
+The \verb!-max-trs-num! option is the parameter of the Sedna storage manager and we will not discuss the meaning of this parameter in this guide. We recommend to use default value.
+
+The last parameter \verb!db_name! is the name of the database to be created. Administrator can use the arbitrary sequence of latin characters and digits for database name. There  cannot be two databases with the same name.
+
+\subsubsection{Configuring a Database}
+\label{ConfigDB}
+For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] PREFIX\cfg! \verb![linux:] PREFIX/cfg! or \verb![linux:] /var/lib/sedna/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}) for both Windows and Linux. 
+
+The configuration file is an XML document, which satisfies the following DTD: 
+
+\begin{verbatim}
+<!ELEMENT db (name, bufs_num, max_trs_num)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT bufs_num (#PCDATA)>
+<!ELEMENT max_trs_num (#PCDATA)>
+\end{verbatim}
+
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element describes the name of the database. The \verb!bufs_num! element describes the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna.
+
+To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file.
+
+\subsubsection{Deleting a Database}
+
+To drop a database, use the \verb!se_ddb! command.
+
+The usage of the \verb!se_ddb! command is as follows:
+
+\begin{verbatim}
+Usage: se_ddb [options] dbname
+
+options:
+  --help                   display this help and exit
+  -help                    display this help and exit
+  -version                 display product version and exit
+   db-name                 The name of the database
+\end{verbatim}
+
+The first and second options are straightforward, typing one of these options Administrator can get the exhaustive information about the \verb!se_ddb! command.
+
+The third option allows to get the version of the \verb!se_ddb! command.
+
+The last parameter \verb!db_name! is the name of the database to be dropped.
+
+Note that Administrator must stop database firstly and then run \verb!se_ddb! utility. 
+
+\subsubsection{Running a Database}
+\label{RunDB}
+
+To run the database with name \verb!db_name! Administrator should use \verb!se_sm! command. The run-time configuration parameters of the database can be set by means of \verb!se_sm! command line options. If configuration parameter is not set via command line option, than the database storage manager retrieves the default value of this parameter from configuration file (see section \ref{ConfigDB}).
+
+The usage of the \verb!se_sm! command is as follows:
+
+\begin{verbatim}
+Usage: se_sm [options] dbname
+
+options:
+  -help                    display this help and exit
+  --help                   display this help and exit
+  -version                 display product version and exit
+  -background-mode on/off  start the server in the background mode (default on)
+  -bufs-num N              the number of buffers in main memory,
+                           (default value retrieved from config file)
+  -max-trs-num N           the number of concurrent micro transactions over
+                           database, (default value retrieved from config file)
+   db-name                 The name of the database
+\end{verbatim}
+
+
+The first and second options are straightforward, typing this option Administrator can get the exhaustive information about the \verb!se_sm! command.
+
+The third option allows to get the version of the \verb!se_sm! command.
+The \verb!-background-mode! option allows Administrator to start database in the background mode.
+
+The \verb!-bufs-num! option allows to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is retrieved from configuration file. The size of one buffer is 64Kb and can't be customized.
+
+
+The \verb!-max-trs-num! option is the parameter of the Sedna storage manager and we will not discuss the meaning of this parameter in the current version of Sedna. We recommend to use default value from configuration file.
+
+
+The last parameter \verb!dbname!  defines the name of the database to be started up. 
+
+
+Note: before running any database be sure that Sedna Server is strarted up (see section \ref{StartSedna}).
+
+\subsubsection{Stopping a Database}
+
+To stop the database with name \verb!db_name!, Administrator should use \verb!se_smsd! command. This command takes one input parameter, which defines the name of the database to be shut down. The usage of the \verb!se_smsd! command is as follows:
+
+\begin{verbatim}
+Usage: se_smsd [options] dbname
+
+options:
+  --help                   display this help and exit
+  -help                    display this help and exit
+  -version                 display product version and exit
+   db-name                 The name of the database
+\end{verbatim}
+
+The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_smsd! command.
+The third option allows to get the version of the \verb!se_smsd!.
+
+Note that \verb!se_smsd! command causes a roll back of all active transactions executed over \verb!db_name! database.
+\subsection{Running queries}
+\subsubsection{se\_trn utility}
+There are several ways to execute query over Sedna, but in this section we present the simplest way to do it. To execute the query over Sedna, the \verb!se_trn! command should be used. This command requries two input parameters. The first one is the name of the database, to which the query is addressed and the second one is the file with .xquery extension, which contains the user query. Besides, there are several options, which semantics will be explained below. About supported QUERY/UPDATE language see in the Sedna Programmer's Guide. The result of the query is directed to standard output stream (stdout). 
+
+The usage of the \verb!se_trn! is as follows:
+
+\begin{verbatim}
+Usage: se_trn [options] dbname filename
+options:
+  -help                   display this help and exit
+  --help                  display this help and exit
+  -version                display product version and exit
+  -show-time on/off       show time of query execution (default off)
+  -print-intermed on/off  print intermediate results for debug purposes
+                          (default off)
+  -query-type type        type of the query to execute (XQuery, POR),
+                          (default XQuery)
+  -name name              user name (default SYSTEM)
+  -pswd password          user password (default MANAGER)
+   db-name                database name
+   filename               file with an XQuery query
+\end{verbatim}
+
+The first and second options are straightforward, typing this option Administrator can get the exhaustive information about the \verb!se_trn! command.
+
+The third option allows to get the version of the \verb!se_trn! command.
+
+The \verb!-show-time! option allows to know how much time it took for the server to execute client's query.
+
+The \verb!-print-intermed! and \verb!-query-type! options are used for debug purposes and we don't recommend to use them.
+
+The \verb!-name! and \verb!-pswd! options are reserved for further Sedna features.
+
+\subsubsection{Sedna Terminal}
+\verb!se_term! is an interactive terminal to Sedna DBMS. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna DBMS. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
+
+The usage of the \verb!se_term! is as follows:
+
+\begin{verbatim}
+Usage: se_term [options] dbname
+options:
+  -help                 display this help and exit
+  --help                display this help and exit
+  -version              display product version and exit
+  -file filename        file with an XQuery query
+  -query query          XQuery query to execute
+  -echo on/off          display se_term output (default on)
+  -show-time on/off     show time of query execution (default off)
+  -host host            hostname of the machine with Sedna running
+  -port-number port     socket listening port  (default 5050)
+  -name name            user name (default SYSTEM)
+  -pswd password        user password (default MANAGER)
+   db-name              database name
+\end{verbatim}
+
+Typing \verb!-help! or \verb!--help! Administrator provides the exhaustive information about the \verb!se_term!.
+
+\verb!-version! option allows to get the version of the \verb!se_term!.
+
+\verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
+
+\verb!-query! option specifies the query to execute.
+
+The \verb!-echo! option specifies if \verb!se_term! output needs to be displayed or not. If the \verb!echo! is on, the output is displayed, if the \verb!echo! is off, the output is not displayed. By default, the \verb!echo! option is set to on.
+
+The \verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
+
+\verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
+
+\verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
+
+\verb!-name! and \verb!-password! options specify the user name and the password. If omitted, connects as a predifined user \verb!SYSTEM! with password \verb!MANAGER!.
+
+\verb!dbname! is a non-option argument. It specifies the name of the database to connect to.
+
+\verb!se_term! returns 0 to the shell if it finished normally, 1 if there were errors.
+
+When \verb!se_term! is used in the interactive mode it takes in query/update statements and meta-commands. To execute a query/update statement type in a statement and use semicolon and line feed to terminate it (\verb!;'\n'! terminates the query). An end of line does not terminate the query, thus queries can be spread over several lines for clarity. The first query/update statement automatically begins transaction. If the statement executed successfully, the results are displayed on the screen.
+
+Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_term! itself. A meta-command begins with a backslash and that differs it from the query/update statements. Thus, the format of \verb!se_term! meta-command is the backslash, followed immediately by a command, with no semicolon at the end. \verb!se_term! takes in the following meta-commands:
+
+\begin{verbatim}
+ \? - for help on internal slash commands
+ \commit - to commit transaction
+ \rollback - to rollback transaction
+ \showtime - to show the time of the latest query execution
+ \quit - to close session and quit the Sedna Terminal
+\end{verbatim}
+
+
+\subsection{The Examples of Using Command Line Utilities}
+
+In this section we present several examples of using the utilities described in the previous sections. These examples demonstrate how to create the database, run the Sedna server and the database, load documents into the database, run the query over the database, and finally stop Sedna.
+
+For creating a database named \verb!xmark! with default settings use the following command:
+
+\begin{verbatim}
+se_cdb xmark
+\end{verbatim}
+
+To run Sedna, type the following command:
+
+\begin{verbatim}
+se_gov
+\end{verbatim}
+
+After execution of these commands the created database can be started up. To do it, type the following command:
+
+\begin{verbatim}
+se_sm xmark
+\end{verbatim}
+
+After it the xmark database is ready for serving user queries. Below we show how to load an XML document to the xmark database and how to write a queries over this document.
+
+To load the XML document to the xmark database, pass the following steps:
+
+\begin{enumerate}
+\item Create the following file with name \verb!load.xquery!:
+
+\begin{verbatim}
+LOAD "<path>" "<name>"
+\end{verbatim}
+
+The \verb!<path>! is the path to the XML document to be loaded to the xmark database. The \verb!<name>! is the name of this document in the xmark database.
+
+\item Run the command: 
+
+\begin{verbatim}
+se_trn xmark load.xquery
+\end{verbatim}
+
+\item Create the following file with name \verb!query1.xquery!:
+
+\begin{verbatim}
+document("<name>")/*
+\end{verbatim}
+
+Where \verb!<name>! is the name of the loaded document in the xmark database.
+
+\item Type the command and enter it:
+\begin{verbatim}
+se_trn xmark query1.xquery
+\end{verbatim}
+\end{enumerate}
+
+To stop Sedna and all its components and databases, type and enter the following command:
+
+\begin{verbatim}
+se_stop
+\end{verbatim}
+
+\section{Sedna Database Users and Privileges}
+
+Every Sedna database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object. 
+
+This chapter describes how to create and manage users and introduces the privilege system.
+
+\subsection{Database Users}
+
+Database user names are global across a database (and not per all Sedna databases). \emph{Database users} interact with \emph{database objects}. Every database object has its \emph{owner} - the user that created it. Every user and \emph{role} (we will discuss roles in the Section \ref{roles}) has its \emph{creator}.
+
+There are following kinds of Sedna database objects:
+\begin{itemize}
+\item standalone document
+\item collection
+\item index
+\end{itemize}
+
+There are two types of Sedna database users:
+
+\begin{itemize}
+\item Sedna database administrator (DBA user)
+\item ordinary user (below we call "user")
+\end{itemize}
+
+Formally, DBA user is a user that has "DBA" role.
+
+DBA user
+\begin{itemize}
+\item has all possible privileges on any object in the database;
+\item can remove any object in the database;
+\item can remove any user of the database;
+\item can grant/revoke any privilege to/from any user of the database;
+\item can grant "DBA" role to a user, thus making that user also a DBA user (not recommended, as the database with multiple DBA users is hard to administrate). Any DBA user can also revoke the "DBA" role from any DBA user.
+\end{itemize}
+
+A user
+\begin{itemize}
+\item can act according to the privileges that he has;
+\item can grant and revoke any privileges on the database object that he owns to any user;
+\item can remove database objects that he owns and drop users that he has created. 
+\end{itemize}
+
+Every user has its name and password.
+
+To create a user use \verb!CREATE USER! statement:
+
+\begin{verbatim}
+CREATE USER "user-name" WITH PASSWORD "user-password"
+\end{verbatim}
+
+This statement creates a user with name \verb!user-name! with password \verb!user-password!.
+
+To remove an existing user, use \verb!DROP USER! statement:
+
+\begin{verbatim}
+DROP USER "user-name"
+\end{verbatim}
+
+To change user password use \verb!ALTER USER! statement. A user can change a password for himself or for a user he has created. DBA user can change a password for any user of the database.
+
+\begin{verbatim}
+ALTER USER "user-name" WITH PASSWORD "new-password"
+\end{verbatim}
+
+This statement changes the password of the user \verb!user-name! to \verb!new-password!.
+
+In order to bootstrap the database, a freshly created database always contains one predefined DBA user with name \verb!"SYSTEM"! and password \verb!"MANAGER"!. To start your work with the database, you first have to connect as this initial user, then you can create more users and change default password (if you care for preventing unauthorized access to your database).
+
+\subsection{Privileges and Roles}
+\label{roles}
+
+When a database object is created, it is assigned an owner. The owner is the user that executed the creation statement. By default, only an owner and DBA user can do anything with the database object. In order to allow other users to use it, \emph{privileges} must be granted.
+
+There are several different privileges: 
+\begin{itemize}
+\item CREATE-USER
+\item CREATE-DOCUMENT
+\item CREATE-COLLECTION
+\item CREATE-INDEX
+\item LOAD
+\item DROP
+\item QUERY
+\item INSERT
+\item DELETE
+\item RENAME
+\item RETRIEVE-METADATA
+\end{itemize}
+
+Privileges are assigned to database objects or to the whole database. The table below for every privilege lists all kinds of database objects or the whole database it can be assigned to.
+
+\begin{tabular}{|l|l|}
+\hline
+\hline
+Privilege            & can be assigned to             \\
+\hline
+\hline
+CREATE-USER          & DATABASE                       \\
+\hline
+CREATE-DOCUMENT      & DATABASE, COLLECTION           \\
+\hline
+CREATE-COLLECTION    & DATABASE                       \\
+\hline
+CREATE-INDEX         & DOCUMENT,COLLECTION            \\
+\hline
+RETRIEVE-METADATA    & DATABASE                       \\
+\hline
+LOAD                 & DATABASE, COLLECTION           \\
+\hline
+DROP                 & DOCUMENT, COLLECTION, INDEX    \\
+\hline
+QUERY                & DOCUMENT, COLLECTION           \\
+\hline
+INSERT               & DOCUMENT, COLLECTION           \\
+\hline
+DELETE               & DOCUMENT, COLLECTION           \\
+\hline
+RENAME               & DOCUMENT, COLLECTION           \\
+\hline
+\end{tabular}
+
+Plus there is the key word \verb!ALL! that denotes all possible privilege that can be granted to the specified object.
+
+Note, \verb!DROP! privilege on collection is granted to a user, this means that the user can drop any document in this collection (there is no such kind of database object as 'document in collection'). \verb!LOAD! privilege on database allows user to load standalone documents; \verb!LOAD! privilege on a collection allows user to load documents into the collection.
+
+\emph{Role} is a named group of related privileges. Roles provide easy and controlled way to manage privileges. To create role \verb!CREATE ROLE! statement is used:
+
+\begin{verbatim}
+CREATE ROLE "role-name"
+\end{verbatim}
+
+This statement creates role with name "role-name". When created role does not contain any privileges. It is not recommeded to created a role with a name of an existing user (in this case privileges will be granted both to this user and to this role).
+
+It is not allowed to use "DBA" and "PUBLIC" for naming roles as they are reserved by the system.
+
+\subsection{Granting privileges}
+
+Privileges are granted to users so that users can access and operate with database objects or to process some tasks with a database.
+
+A user can receive a privilege in two different ways: privileges can be granted to user explicitly; or privileges can be granted to role, and the role can be granted to one or more users. Roles allow easier and better management of privileges, thus privileges are normally granted to roles and not to specific users. Roles can be granted both to users and to roles.
+
+A user who has granted a privilege or a role is \emph{grantor} of this privilege (role).
+
+To grant a privilege on a database object you must be an owner of this object or DBA user. To grant one or more privileges on a database object to one or more users or roles use:
+
+%\begin{verbatim}
+%GRANT "privilege" [, "privilege"] | ALL
+%ON [DOCUMENT|COLLECTION] "database-object-name" 
+%TO "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+GRANT "privilege" | ALL
+ON [DOCUMENT|COLLECTION] "database-object-name" 
+TO "user-name|role-name" | PUBLIC
+\end{verbatim}
+
+The key word \verb!PUBLIC! is used when the privileges are to be granted to all users, including those that may be created later. \verb!PUBLIC! may be thought of as an implicitly defined role that every user has.
+
+If the kind of the database object (\verb!DOCUMENT! or \verb!COLLECTION!) is not specified, database object is considered to be a document.
+
+To grant a privilege on a database you must be DBA user. To grant one or more privileges on a database to one or more users or roles use:
+
+%\begin{verbatim}
+%GRANT "privilege" [, "privilege"] | ALL
+%ON DATABASE 
+%TO "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+GRANT "privilege" | ALL
+ON DATABASE 
+TO "user-name|role-name" | PUBLIC
+\end{verbatim}
+
+To grant a role you must be allowed to grant every privilege of the role: to be owner of every database object of privileges of the role, or to be DBA user. To grant a role to one or more users or roles use:
+
+%\begin{verbatim}
+%GRANT "role-name" 
+%TO "user-name|role_name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+GRANT "role-name" 
+TO "user-name|role_name" | PUBLIC
+\end{verbatim}
+
+\subsection{Revoking privileges}
+
+Privileges or roles can be revoked from the user or role. Only grantor of the privilege (role) or DBA user can revoke privilege (role).
+
+\verb!REVOKE! statements are similar to \verb!GRANT! statements.
+
+To revoke one or more privileges on a database object from one or more users or roles use:
+
+%\begin{verbatim}
+%REVOKE "privilege" [, "privilege"] | ALL
+%ON [DOCUMENT|COLLECTION] "database-object-name" 
+%FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+REVOKE "privilege" | ALL
+ON [DOCUMENT|COLLECTION] "database-object-name" 
+FROM "user-name|role-name" | PUBLIC
+\end{verbatim}
+
+If the kind of the database object (\verb!DOCUMENT! or \verb!COLLECTION!) is not specified, database object is considered to be a document.
+
+To revoke one or more privileges on a database from one or more users or roles use:
+
+%\begin{verbatim}
+%REVOKE "privilege" [, "privilege"] | ALL
+%ON DATABASE 
+%FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+REVOKE "privilege" | ALL
+ON DATABASE 
+FROM "user-name|role-name" | PUBLIC
+\end{verbatim}
+
+To revoke a role from one or more users or roles use:
+
+%\begin{verbatim}
+%REVOKE "role-name" 
+%FROM "user-name|role-name" [, "user-name|role-name"] | PUBLIC
+%\end{verbatim}
+
+\begin{verbatim}
+REVOKE "role-name" 
+FROM "user-name|role-name" | PUBLIC
+\end{verbatim}
+
+As mentioned above DBA user is a user that has a "DBA" role. Thus, "DBA" is a reserved name for a role: a role with name "DBA" can not be created, privileges or roles cannot be granted to "DBA" role.
+
+A DBA user can grant "DBA" role to another user, thus making that user also a DBA user. This is not recommended, as multiple powerful users of a database can lead to hard database administration, and can cause unsecure usage of the database and database objects.
+
+
+\subsection{Client Authentication}
+
+When a client application connects to the database server, it specifies which Sedna database user name it wants to connect as. Database user name determines access privileges to database objects, therefore, it is essential to restrict which database users can connect.
+
+\emph{Authentication} is the process by which the database server establishes the identity of the client and determines whether the client application (or the user who runs the client application) is permitted to connect with the user name that was requested.
+
+Currently, Sedna uses password authentication: client application that connects to the database must specify user name and user password (in \verb!se_term! utility use \verb!-pswd! and \verb!-name! options; for client application that works through Sedna API see "Sedna Programmer's Guide"). Authentication process consists in checking the password correctness.
+
+A newly created database always contains one predefined DBA user with name \verb!"SYSTEM"! and password \verb!"MANAGER"!. To start your work with the database, you first have to connect as this initial user.
+
+\section{Localization}
+In the current version of Sedna all character data are stored internally in UTF-8.
+All input queries and XML documents must be encoded in UTF-8.
+All output is also encoded in UTF-8.
+
+
+\end{document}
+

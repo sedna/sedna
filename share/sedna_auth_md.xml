@@ -1,0 +1,22 @@
+<db_security_data>
+<users>
+    <user>
+         <user_name>SYSTEM</user_name>
+         <user_psw>MANAGER</user_psw>
+         <user_creator>SYSTEM</user_creator>
+         <privileges/>
+         <role role_name="DBA" grantor="SYSTEM"/>
+         <role role_name="PUBLIC" grantor="SYSTEM"/>
+    </user>
+</users>
+ <roles>
+   <role>
+    <role_name>DBA</role_name>
+    <privileges/>
+   </role>
+   <role>
+    <role_name>PUBLIC</role_name>
+    <privileges/>
+   </role>
+ </roles>
+</db_security_data>

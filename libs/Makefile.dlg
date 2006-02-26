@@ -1,0 +1,61 @@
+#
+# Makefile for DLG 1.33
+# Terence Parr
+# Purdue University, U of MN, Parr Research Corporation
+# 1989-1994
+#
+# Ported to IBM C-Set/2 and Microsoft 6.0 by
+# Ed Harfmann
+# Micro Data Base Systems
+# Lafayette, Indiana
+#
+SET=../support/set
+PCCTS_H=../h
+
+#
+#   Cygwin build using MSVC
+#
+CC=cl
+ANTLR=../bin/Antlr.exe
+DLG=../bin/Dlg.exe
+INTDIR=.
+CPP_PROJ=/nologo /MT /W3 /O2 /I "$(PCCTS_H)" /I "$(SET)" /D "__STDC__" /D "NDEBUG" /D "LONGFILENAMES" /D "PC" /D "USER_ZZSYN" /D ZZLEXBUFSIZE=65536 /D "_DEBUG" /D "WIN32" /D "_CONSOLE" /D "_MBCS" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CFLAGS= $(CPP_PROJ) $(COPT)
+OUT_OBJ = -Fo
+OBJ_EXT=.obj
+
+LINK32=link.exe
+LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:"Dlg.pdb" /machine:I386 /out:"Dlg.exe" 
+LINK32_OBJS= automata.obj dlg_a.obj dlg_p.obj err.obj \
+	main.obj output.obj relabel.obj set.obj support.obj
+
+%$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS) $<
+
+
+Dlg.exe: $(LINK32_OBJS)
+	$(LINK32) $(LINK32_FLAGS) $(LINK32_OBJS)
+	cp Dlg.exe $(DLG)
+
+
+SRC = dlg_p.c dlg_a.c main.c err.c $(SET)/set.c support.c output.c \
+        relabel.c automata.c
+
+dlg_p.c parser.dlg err.c tokens.h: dlg_p.g
+	$(ANTLR) dlg_p.g
+
+dlg_a.c mode.h : parser.dlg
+	$(DLG) -C2 parser.dlg dlg_a.c
+
+dlg_p.$(OBJ_EXT) : dlg_p.c dlg.h tokens.h mode.h
+
+dlg_a.$(OBJ_EXT) : dlg_a.c dlg.h tokens.h mode.h
+
+main.$(OBJ_EXT) : main.c dlg.h
+
+set$(OBJ_EXT): $(SET)/set.c
+	$(CC) $(CFLAGS) -c $(OUT_OBJ)set$(OBJ_EXT) $(SET)/set.c
+
+#clean up all the intermediate files
+clean:
+	rm -f *.$(OBJ_EXT) core

@@ -1,0 +1,70 @@
+.TH SE_GOV 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_gov \- Sedna governor daemon
+
+.SH SYNOPSIS
+.B se_gov
+[options]
+
+.SH DESCRIPTION
+.I Governor
+serves as  "control center" of the system. All other components register at
+the Governor. The Governor knows which other components (e.g. databases and
+sessions) are running in the system and controls them. Other components cannot
+function properly if the Governor is not running so you must start it to use
+Sedna. Besides, Governor is responsible for handling remote client's requests.
+For each request it creates a session which keeps the direct connection with
+client. Then the client interacts with the system via session. You may run
+only one instance of the Governor.
+
+.I Session
+keeps the client's settings and allows client to run a sequence of
+transactions. The transactions within a session are strictly serial, that is
+one transaction ends before next one starts, there is only one active
+transaction per session. Transaction provides functionality required for
+execution of the client's queries. The query execution consists of several
+steps: (1) parsing of the query and translation of the query into its logical
+representation, (2) processing of the logical representation by optimizer that
+produces the optimal query execution plan, (3) execution of the optimal query
+plan and passing results to the client.
+
+
+To start the Sedna server one should start
+.I Governor
+by executing the
+.B se_gov
+command. This starts the main server component. After it
+Administrator can run databases. See
+.BR se_cdb (8)
+and
+.BR se_sm (8)
+for further deails.
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+\fB-background-mode\fR on|off
+start the server in the background mode (default on)
+.TP
+\fB-port-number\fR <int>
+socket listening port (default 5050)
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.SH "SEE ALSO"
+.BR se_cdb (8),
+.BR se_sm (8),
+.BR se_trn (8)
+

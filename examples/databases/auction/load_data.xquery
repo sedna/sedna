@@ -1,0 +1,1 @@
+LOAD "auction.xml" "auction"

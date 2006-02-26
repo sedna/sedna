@@ -1,0 +1,38 @@
+.TH SE_SM 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_sm \- stop Sedna DBMS storage manager utility
+
+.SH SYNOPSIS
+.B se_smsd
+[options] dbname
+
+.SH DESCRIPTION
+To stop the database with name
+.I db_name
+, Administrator should use
+.B se_smsd
+command. This command takes one input parameter, which defines the name of the
+database to be shut down.
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+parameter \fBdbname\fR  defines the name of the database to be shut down.
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.SH "SEE ALSO"
+.BR se_sm (8)
+

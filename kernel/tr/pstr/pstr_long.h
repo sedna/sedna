@@ -1,0 +1,287 @@
+/*
+ * File:  pstr_long.h
+ * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#ifndef _PSTR_LONG_H
+#define _PSTR_LONG_H
+
+#include "sm_vmm_data.h"
+#include "micro.h"
+
+//typedef int pstr_long_off_t;
+typedef __int64 pstr_long_off_t;
+typedef int pstr_long_map_size_t; //type for storing char count in blb map
+
+struct pstr_long_blk_hdr
+{
+	vmm_sm_blk_hdr sm_vmm;	// sm/vmm parameters
+	xptr	next_blk;
+	xptr	prev_blk;
+};
+#define PSTR_LONG_BLK_HDR_SIZE sizeof(struct pstr_long_blk_hdr)
+#define PSTR_LONG_BLK_HDR(blk) ( (struct pstr_long_blk_hdr *)(XADDR(blk)))
+
+struct pstr_long_last_blk_ftr
+{
+	xptr			start;					//xptr of string start (in the 1st blk)
+	int				first_blk_char_count;	//
+	int				char_count;				//valid only if cursor > 0
+	short			block_list_map_size;	//
+	short			block_list_size;		//size of block list in this block
+	int				cursor;					//byte offset of the end of the string in this block,
+											//if negative, there is no string data is this block,
+											//  and absolute value is byte offset of the end of the string in prev block
+											//  cursor < 0  ==>  block_list_size > 0
+	short			first_blb_gap_size;		//size of the gap in the first 'block list' block (0, if block_list_map_size == 0)
+	short			pred_blb_size;			//size of block list in the last 'block list' block (PSTR_LONG_FULL_BLOCK_LIST_SIZE, if block_list_map_size == 0)
+};
+#define PSTR_LONG_LAST_BLK_FTR_SIZE sizeof(struct pstr_long_last_blk_ftr)
+#define PSTR_LONG_LAST_BLK_FTR(blk) ( (struct pstr_long_last_blk_ftr *)((char*)XADDR(blk) + PAGE_SIZE - PSTR_LONG_LAST_BLK_FTR_SIZE) )
+
+struct pstr_long_block_list_entry
+{
+	xptr			str_blk;			//long string block
+	int				char_count;			//number of chars that start in this block
+};
+
+#define PSTR_LONG_BLOCK_LIST_ENTRY_SIZE sizeof(struct pstr_long_block_list_entry)
+
+#define PSTR_LONG_BLOCK_LIST_HDR_SIZE sizeof(struct vmm_sm_blk_hdr)
+const int PSTR_LONG_FULL_BLOCK_LIST_SIZE = ((PAGE_SIZE - PSTR_LONG_BLOCK_LIST_HDR_SIZE)/PSTR_LONG_BLOCK_LIST_ENTRY_SIZE);
+
+struct pstr_long_block_list_map_entry
+{
+	xptr					list_blk;
+	pstr_long_map_size_t	char_count;
+};
+#define PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE sizeof(struct pstr_long_block_list_map_entry)
+
+xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
+void pstr_long_delete_str(const xptr desc);
+void pstr_long_append_tail(const xptr desc, const void *data, pstr_long_off_t size, text_type ttype);
+void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc);
+void pstr_long_truncate(xptr desc, pstr_long_off_t size);
+
+void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, text_type ttype);
+void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
+
+void pstr_long_write(xptr desc,crmostream& crmout);
+void pstr_long_writextext(xptr desc, crmostream& crmout);
+void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
+void pstr_long_copy_to_buffer(char *buf, xptr desc);
+
+
+pstr_long_off_t pstr_long_length(const xptr data);
+
+#ifdef PSTR_LONG_TEST
+void pstr_long_str_info(xptr desc);
+#endif
+
+
+class pstr_long_cursor
+{
+	//TODO!!!!! blk should point to last_blk or last_blk->pred when pointer is at eof \
+	//			is cursor < 0, then blk should NEVER point to last_blk				   \   in get_blk/copy_blk
+	//			i.e. blk always points to block that contains some string data		   /  
+	//				& if position is not eos, current char is in blk				  /
+	friend void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0);
+	friend void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
+protected:
+	xptr m_start;
+	pstr_long_cursor() {} //dummy default constructor for pstr_long_iterator
+	//pre: CHECKP(_last_)
+	pstr_long_cursor(const xptr &_start_, const xptr &_last_) {
+		blk = BLOCKXPTR(_start_);
+		cursor = (PSTR_LONG_LAST_BLK_FTR(_last_))->cursor;
+		ofs = (char*)XADDR(_start_) - (char*)XADDR(blk);
+		last_blk = _last_;
+		m_start = _start_;//FIXME
+	}
+public:
+	pstr_long_cursor(const xptr &_ptr_) {
+		last_blk = _ptr_;
+		CHECKP(last_blk);
+		const xptr _start_ = (PSTR_LONG_LAST_BLK_FTR(last_blk))->start;
+		blk = BLOCKXPTR(_start_);
+		cursor = (PSTR_LONG_LAST_BLK_FTR(last_blk))->cursor;
+		ofs = (char*)XADDR(_start_) - (char*)XADDR(blk);
+		m_start = _start_;//FIXME
+	}
+
+	/// sets current position to the end of the string
+	pstr_long_cursor(const xptr &_ptr_, bool end_indicator);
+
+	//FIXME
+	xptr blk;
+	xptr last_blk;
+	int ofs;
+	int cursor;
+
+    // block oriented copy. buf must have size not less than a page size
+	// returns number of bytes copied, 0 if end of string reached.
+    int copy_blk(char *buf);
+	// get's a pointer to string part in the current block and moves cursor to the next block
+	// (same as copy_blk, but without copy)
+	// returns the length of the string part 
+	//     or 0 if end of string reached (*ptr is not modified in this case)
+	int get_blk(char **ptr);
+
+
+	// like get_blk, but gets data from the first byte in the current block till 
+	// the cursor position (excluding byte, pointed by cursor)
+	// and moves cursor after the end of the previous block (thus making it incompatible with iterator functions)
+	// or to the string beginning
+	int get_blk_rev(char **ptr);
+	bool eos() {return blk == XNULL; } //FIXME
+
+
+};
+
+class pstr_long_iterator : public pstr_long_cursor
+{
+protected:
+	pstr_long_off_t m_pos;
+public:
+	/// creates NULL iterator (i.e. not equal to any valid iterator)
+	pstr_long_iterator() : pstr_long_cursor()
+	{
+		m_pos = -1;
+	}
+	/// creates iterator pointing to string beginning
+	pstr_long_iterator(const xptr &_ptr_) : pstr_long_cursor(_ptr_)
+	{
+		m_pos = 0;
+	}
+
+	/// creates iterator pointing to the end of string
+	/// size MUST be exactly the string size in bytes
+	pstr_long_iterator(const xptr &_ptr_, pstr_long_off_t _size_) : pstr_long_cursor(_ptr_, true)
+	{
+		m_pos = _size_;
+	}
+
+	unsigned char operator *() const
+	{
+		ASSERT(blk != XNULL);
+		CHECKP(blk);
+		return *((char*)XADDR(blk) + ofs);
+	}
+
+	pstr_long_iterator &operator ++()
+	{
+		//no error checks here, TODO - add some assertions
+		//we don't care if we go after the end of string too far
+		++m_pos;
+		if (++ofs >= PAGE_SIZE)
+		{
+			CHECKP(blk);
+			if (PSTR_LONG_BLK_HDR(blk)->next_blk != XNULL &&
+				((PSTR_LONG_BLK_HDR(blk)->next_blk != last_blk) || (cursor >= 0)))
+			{
+				blk = PSTR_LONG_BLK_HDR(blk)->next_blk;
+				ofs = PSTR_LONG_BLK_HDR_SIZE;
+			}
+		}
+		return *this;
+	}
+
+	pstr_long_iterator &operator --()
+	{
+		//no error checks here, TODO - add some assertions
+		//we don't care if we go before the start of string too far
+		--m_pos;
+		if (--ofs < PSTR_LONG_BLK_HDR_SIZE)
+		{
+			CHECKP(blk);
+			if (PSTR_LONG_BLK_HDR(blk)->prev_blk != XNULL)
+			{
+				blk = PSTR_LONG_BLK_HDR(blk)->prev_blk;
+				ofs = PAGE_SIZE - 1;
+			}
+		}
+		return *this;
+	}
+	inline pstr_long_off_t get_pos() const { return m_pos; }
+
+	//FIXME!
+	pstr_long_iterator operator ++(int) {pstr_long_iterator old(*this); ++(*this); return old; }
+	pstr_long_iterator operator --(int) {pstr_long_iterator old(*this); --(*this); return old; }
+
+	pstr_long_iterator &operator +=(int x)
+	{
+		//no error checks here, TODO - add some assertions
+		//we don't care if we go after the end of string too far
+		m_pos += x;
+		while (((int)ofs+x) >= (int)PAGE_SIZE)
+		{
+			CHECKP(blk);
+			if (PSTR_LONG_BLK_HDR(blk)->next_blk != XNULL &&
+				((PSTR_LONG_BLK_HDR(blk)->next_blk != last_blk) || (cursor >= 0)))
+			{
+				blk = PSTR_LONG_BLK_HDR(blk)->next_blk;
+				x -= PAGE_SIZE - ofs;
+				ofs = PSTR_LONG_BLK_HDR_SIZE;
+			}
+			else
+				break;
+		}
+		ofs += x;
+		return *this;
+	}
+	pstr_long_iterator &operator -=(int x)
+	{
+		//no error checks here, TODO - add some assertions
+		//we don't care if we go before the start of string too far
+		m_pos -= x;
+		while (((int)ofs - x) < (int)PSTR_LONG_BLK_HDR_SIZE)
+		{
+			CHECKP(blk);
+			if (PSTR_LONG_BLK_HDR(blk)->prev_blk != XNULL)
+			{
+				blk = PSTR_LONG_BLK_HDR(blk)->prev_blk;
+				x -= 1 + ofs - PSTR_LONG_BLK_HDR_SIZE;
+				ofs = PAGE_SIZE - 1;
+			}
+			else
+				break;
+		}
+		ofs -= x;
+		return *this;
+	}
+
+	//default `=` operator is ok
+};
+
+inline bool operator ==(const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() == it2.get_pos();
+}
+inline bool operator !=(const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() != it2.get_pos();
+}
+inline bool operator <=(const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() <= it2.get_pos();
+}
+inline bool operator < (const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() < it2.get_pos();
+}
+inline bool operator >=(const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() >= it2.get_pos();
+}
+inline bool operator > (const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() > it2.get_pos();
+}
+//FIXME: int
+inline int operator - (const pstr_long_iterator& it1, const pstr_long_iterator& it2)
+{
+	return it1.get_pos() - it2.get_pos();
+}
+
+#endif //_PSTR_LONG_H
+

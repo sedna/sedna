@@ -1,0 +1,11 @@
+ifeq ("$(OS)", "CYGWIN_NT")
+# Win32
+DEPACT = for x in  `find . -name "*.c*"`  ;    \
+         do gcc $(INCLUDE_DIRECTIVES_GCC) -nostdinc -D_WIN32 -MM -MG $$x | sed s/.o:/.obj:/; \
+         done 2>depend.errors | tee depend
+else
+# UNIX
+DEPACT = for x in  `find . -name "*.c*"`  ;    \
+         do gcc $(INCLUDE_DIRECTIVES_GCC) -MM -MG $$x;   \
+         done 2>depend.errors | tee depend
+endif

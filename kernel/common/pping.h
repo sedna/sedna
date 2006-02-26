@@ -1,0 +1,79 @@
+/*
+ * File:  pping.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
+#ifndef _PPING_H
+#define _PPING_H
+
+
+#include "usocket.h"
+#include "uthread.h"
+#include "exceptions.h"
+#include "usem.h"
+
+
+#define PPING_ON
+
+class pping_client
+{
+private:
+    char *failure_str;
+    int port;
+    char* host;
+    USOCKET sock;
+    bool stop_keep_alive;
+    bool initialized;
+    UTHANDLE client_thread_handle;
+    UUnnamedSemaphore sem;
+
+    void throw_exception(SednaUserException& e, bool is_soft);
+    void startup(SednaUserException& e, bool is_soft);
+
+public:
+    pping_client(const char *_failure_str_, int _port_, const char* _host_ = NULL);
+    ~pping_client();
+
+    void startup(SednaUserException& e);
+    void startup(SednaUserSoftException& e);
+    void shutdown();
+
+    friend U_THREAD_PROC(pping_client_thread_proc, arg);
+};
+
+
+#define PPING_SERVER_THREAD_TABLE_SIZE		100
+
+class pping_server
+{
+public:
+    struct thread_table_t
+    {
+        UTHANDLE handle;
+        bool is_running;
+        bool is_empty;
+    };
+
+private:
+    char *failure_str;
+    int port;
+    USOCKET sock;
+    bool initialized;
+    UTHANDLE server_lstn_thread_handle;
+    bool close_lstn_thread;
+    thread_table_t thread_table[PPING_SERVER_THREAD_TABLE_SIZE];
+
+public:
+    pping_server(const char *_failure_str_, int _port_);
+    ~pping_server();
+
+    void startup();
+    void shutdown();
+
+    friend U_THREAD_PROC(pping_server_cli_thread_proc, arg);
+    friend U_THREAD_PROC(pping_server_lstn_thread_proc, arg);
+};
+
+
+#endif

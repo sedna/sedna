@@ -1,0 +1,262 @@
+#
+# Common part for almost all Makefiles
+#
+
+# Configuration constants
+
+# options: Release configuration - Release
+#          Debug   configuration - Debug
+ifndef ACTIVE_CONFIGURATION
+ACTIVE_CONFIGURATION = Debug
+endif
+
+# options: auth is on  - 1
+#          auth is off - 0
+ifndef AUTH_SWITCH
+AUTH_SWITCH = 1
+endif
+
+# options: Compile latex files        - 1
+#          Do not compile latex files - 0
+ifndef DOCUMENTATION
+DOCUMENTATION = 1
+endif
+
+# options: debug is on  - 1
+#          debug is off - 0
+ifndef EL_DEBUG
+EL_DEBUG = 1
+endif
+
+# options: Compile java files        - 1
+#          Do not compile java files - 0
+ifndef JAVA_DRIVER
+JAVA_DRIVER = 1
+endif
+
+# options: SQL connection is on  - 1
+#          SQL connection is off - 0
+ifndef SQL_CONNECTION
+SQL_CONNECTION = 0
+endif
+
+# options: Static system libraries is on  - 1
+#          Static system libraries is off - 0
+ifndef STATIC_SYS_LIBS
+STATIC_SYS_LIBS = 0
+endif
+
+
+# options: Enable gcov coverage tests  - 1
+#          Disable gcov coverage tests - 0
+ifndef SE_ENABLE_GCOV
+SE_ENABLE_GCOV = 0
+endif
+
+# options: Enable dtsearch  - 1
+#          Disable dfsearch - 0
+ifndef ENABLE_DTSEARCH
+ENABLE_DTSEARCH = 0
+endif
+
+
+
+# SEDNA_BUILD is defined outside when release version is made
+ifndef SEDNA_BUILD
+SEDNA_BUILD = $(shell if test -e $(PP)/build; then cat $(PP)/build; else echo 0; fi)
+endif
+
+
+SEDNA_VERSION := $(shell cat $(PP)/ver)
+
+# options: static libodbc - 1
+#          shared libodbc - 0
+LIBODBC_STATIC = 0
+
+
+# INCLUDE_DIRS should be defined
+INCLUDE_DIRECTIVES_VC = $(foreach inc, $(INCLUDE_DIRS), /I$(inc))
+INCLUDE_DIRECTIVES_GCC = $(foreach inc, $(INCLUDE_DIRS), -I$(inc))
+
+M4 = m4
+MKDIR = mkdir
+INSTALL = install
+REMOVE = rm -f
+REMOVE_DIR = rm -f -r
+COPY = cp -r
+LATEX = latex
+DVIPS = dvips
+DVIPDF = dvipdfm
+
+include $(PP)/Makefile.platform
+
+
+ifeq ("$(OS)", "CYGWIN_NT")
+# Win32
+CC = cl /c
+CCX = cl /c
+LD = link
+LB = lib
+LIBFLAGS = /NOLOGO
+LDOUT = /out:
+LIBOUT = /OUT:
+OBJ_EXT = .obj
+LIB_EXT = .lib
+EXE_EXT = .exe
+ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
+CFLAGS_ST   = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+CPPFLAGS_ST = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /GX /GR /D _CONSOLE 					\
+           /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) 								\
+           /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"									\
+           /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+CFLAGS = $(CFLAGS_ST) /MT
+CPPFLAGS = $(CPPFLAGS_ST) /MT
+LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
+           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
+           libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+           /STACK:104857600 /debug /profile
+ifeq ($(ENABLE_DTSEARCH),1)
+LFLAGS_DTS = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB	 /NODEFAULTLIB:Nafxcw.lib \
+           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
+           libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+           /STACK:104857600 /debug /profile /NOD:LIBCMT.LIB
+endif
+else
+CFLAGS_ST   = /nologo /O2 /Ob2 /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+CPPFLAGS_ST = /nologo /O2 /Ob2 /EHa /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /GX /GR /D _CONSOLE				\
+           /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG)								\
+           /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"				\
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+CFLAGS = $(CFLAGS_ST) /MT
+CPPFLAGS = $(CPPFLAGS_ST) /MT
+LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
+           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
+           libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+           /STACK:104857600
+endif
+LSLIBS   = 
+ifeq ($(SQL_CONNECTION),1)
+CPPFLAGS+= /DSQL_CONNECTION
+endif
+ifeq ($(ENABLE_DTSEARCH),1)
+CPPFLAGS+= /DSE_ENABLE_FTSEARCH
+endif
+
+CFLAGS_CHICKEN_EXE = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
+                     /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
+LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB 					\
+                     /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib				
+LSLIBS_CHICKEN_EXE =
+ANTLR = $(PP)/libs/pg/Antlr.exe -CC -gt -k 2 -w2
+DLG = $(PP)/libs/pg/Dlg.exe -CC
+SORCERER = $(PP)/libs/pg/Sorcerer.exe -CPP -transform
+CHICKEN_HOME = $(PP)/libs/chicken
+CHICKEN = $(CHICKEN_HOME)/chicken-static.exe
+CHICKEN_INCLUDE = $(CHICKEN_HOME)
+PS2PDF = ps2pdf.bat
+else
+# UNIX
+CC = gcc -c
+CCX = g++ -c
+LD = g++
+LB = ar
+LIBFLAGS = rcs
+LDOUT = -o 
+LIBOUT = 
+OBJ_EXT = .o
+LIB_EXT = .a
+EXE_EXT =
+ifeq ("$(STATIC_SYS_LIBS)","1")
+STATIC_FLAG = -static
+else
+STATIC_FLAG =
+endif
+ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
+CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
+           -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized	\
+           -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
+           -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH)						\
+           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
+LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+else
+CFLAGS   = -DC_NO_PIC_NO_DLL -O3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
+           -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized	\
+           -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+CPPFLAGS = -O3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
+           -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH)						\
+           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
+LFLAGS   = -O3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+endif
+LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl
+
+ifeq ("$(SUB_PLATFORM)","Linux")
+LSLIBS  += -lnsl -lrt -pthread
+endif
+
+ifeq ("$(SUB_PLATFORM)","SunOS")
+LSLIBS  += -lnsl -lrt -lsocket
+endif
+
+ifeq ($(SQL_CONNECTION),1)
+ifeq ($(LIBODBC_STATIC),1)
+LSLIBS  += -lodbc -lltdl
+CPPFLAGS+= -DLIBODBC_STATIC
+endif
+CPPFLAGS+= -DSQL_CONNECTION
+endif
+
+ifeq ($(SE_ENABLE_GCOV),1)
+CFLAGS  += -fprofile-arcs -ftest-coverage
+CPPFLAGS+= -fprofile-arcs -ftest-coverage
+endif
+
+CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer -fno-strict-aliasing -Wall	\
+                     -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS 
+LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken
+LSLIBS_CHICKEN_EXE = -lchicken
+ANTLR = $(PP)/libs/pg/antlr -CC -gt -k 4 -w2 -nopurify
+DLG = $(PP)/libs/pg/dlg -CC
+SORCERER = $(PP)/libs/pg/sor -CPP -transform
+CHICKEN_HOME = $(PP)/libs/chicken
+CHICKEN = $(CHICKEN_HOME)/chicken
+CHICKEN_INCLUDE = $(CHICKEN_HOME)
+#LD_LIBRARY_PATH+=$(CHICKEN_HOME)
+PS2PDF = ps2pdf
+endif
+
+
+
+
+CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
+
+
+%$(OBJ_EXT): %.cpp
+	$(CCX) $(CPPFLAGS) $<
+
+%$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS) $<
+
+%.c: %.scm
+	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
+
+%.pdf: %.ps
+	$(PS2PDF) $< $@
+
+%.ps: %.dvi
+	$(DVIPS) -o $@ $<
+
+%.dvi: %.tex
+	$(LATEX) $<
+	$(LATEX) $<
+
+ifeq ($(MAKECMDGOALS),clean)
+
+generic_clean: 
+	-$(REMOVE) *.bb
+	-$(REMOVE) *.bbg
+	-$(REMOVE) *.da
+
+endif

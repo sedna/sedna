@@ -1,0 +1,43 @@
+<?xml version="1.0"  encoding="UTF-8" ?>
+
+  <regions>
+
+    <africa>
+
+      <id_region>afr</id_region>
+
+    </africa>
+
+    <asia>
+
+      <id_region>asi</id_region>
+
+    </asia>
+
+    <australia>
+
+      <id_region>aus</id_region>
+
+    </australia>
+
+    <europe>
+
+      <id_region>eur</id_region>
+
+    </europe>
+
+    <namerica>
+
+      <id_region>nam</id_region>
+
+    </namerica>
+
+    <samerica>
+
+      <id_region>sam</id_region>
+
+    </samerica>
+
+  </regions>
+
+

@@ -1,0 +1,118 @@
+
+% File:  QuickStart.tex
+% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+
+\documentclass[a4paper,12pt]{article}
+\font\mmmm cmtt10
+\makeatletter
+\def\verbatim@font{\mmmm}
+\makeatother
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{theorem}
+\newtheorem{definition}{Definition}
+{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
+\newtheorem{theo}{Theorem}
+\newtheorem{note}{Note}
+
+\usepackage[dvips]{epsfig}
+
+\usepackage{multirow}
+
+\title{Sedna Quick Start\footnote{In case of differences between the Windows and Linux versions of Sedna they are marked out with [win:] and [linux:] respectively.}}
+\date{}
+%\author{Dmitry Lizorkin}
+
+\begin{document}
+
+\sloppy
+
+\maketitle
+
+Sedna packages come with an example that allows you to investigate the features of Sedna easily. 
+Section \ref{sec:how-to-run} describes how to run the example. Section \ref{sec:example-description} gives a brief overview of the example.
+
+\section{How to run the example}
+\label{sec:how-to-run}
+Before runing the example you should install Sedna. See \verb!README! in your Sedna package for the instructions.
+In the remainder of this guide \verb!INSTALL_DIR! refers to the directory where Sedna is installed.  
+The example is located in the directory:
+
+\begin{verbatim}
+[win:] INSTALL_DIR\examples\databases\auction
+[linux:] INSTALL_DIR/examples/databases/auction
+\end{verbatim}
+
+To run the example, type the following commands in the command prompt:
+\begin{enumerate}
+\item Change the current directory to the directory where the example is located by typing in a command line:
+\begin{verbatim}
+[win:] cd INSTALL_DIR\examples\databases\auction
+[linux:] cd INSTALL_DIR/examples/databases/auction
+\end{verbatim}
+\item Start Sedna by runing the following command: 
+\begin{verbatim}
+se_gov 
+\end{verbatim}
+If Sedna is started successfully it prints "\verb!GOVERNOR has been! \verb!started in! \verb!the background mode!".
+\item Create a new database \verb!auction! by running the following command: 
+\begin{verbatim}
+se_cdb auction
+\end{verbatim}
+If the database is created successfully it prints "\verb!The database 'auction'! \verb!has been! \verb!created successfully!". 
+\item Start the \verb!auction! database by running the following command:
+\begin{verbatim}
+se_sm auction
+\end{verbatim}
+If the database is started successfully it prints "\verb!SM has been! \verb!started in! \verb!the background mode!".
+\item Load the sample XML document into the \verb!auction! database by typing the command:
+\begin{verbatim}
+se_trn auction load_data.xquery 
+\end{verbatim}
+If the document is loaded successfully it prints "\verb!UPDATE! \verb!is executed! \verb!successfully!".
+\item Now you can execute the sample queries by typing the command:
+\begin{verbatim}
+se_trn auction <query_name>.xquery 
+\end{verbatim}
+where \verb!<query_name>.xquery! is the name of a file with the sample query.
+For instance, to execute \verb!sample01.xquery! you should type 
+\begin{verbatim}
+se_trn auction sample01.xquery
+\end{verbatim}
+It prints the query result.
+\item Stop Sedna by running the following command:
+\begin{verbatim}
+se_stop
+\end{verbatim}
+\end{enumerate}
+
+
+\section{Example Description}
+\label{sec:example-description}
+The example consists of a sample XML document and a set of sample XQuery queries to this document. The example is located in the directory \verb![win:] INSTALL_DIR\examples\databases\auction! \verb![linux:] INSTALL_DIR/examples/databases/auction!. The example is based on the XMark XML benchmark \cite{xmark}.
+
+The sample document named \verb!auction.xml! contains sample information from an Internet auction site. The main elements of the document are: \emph{person}, \emph{bid}, \emph{open auction}, \emph{closed auction}, \emph{item}, \emph{category}, and \emph{mail}. The short description of these elements is as follows. \emph{Items} are the objects that are on for sale or that already have been sold. \emph{Auctions} can be of two types \emph{closed auction} when all items have been sold or \emph{open auction} when there are items on offer. \emph{Persons} make \emph{bids} increasing prices of items and interested in some \emph{categories} of items. Categories are linked into network. There are also some \emph{mails}, concerning items. 
+
+We also provide ten sample XQuery queries to the document, that give a good illustration of the Sedna functionality. The semantics of the queries is given below for your convenience:
+\begin{enumerate}
+\item Return the name of the person with ID `person0' registered in North
+ America.
+\item Return the initial increases of all open auctions.
+\item Return the number of sold items that cost more than 40.
+\item Return the number of items listed on all continents.
+\item Return the number of pieces of prose in the database.
+\item List the names of items registered in Australia along with their
+ descriptions.
+\item For each richer-than-average person, list the number of items currently
+ on sale whose price does not exceed 0.02 of the person's income.
+\item Group customers by their income and output the cardinality of each group.
+\item Inserts a new person description into the auction.
+\item Delete the person John Smith from auction description.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+\bibitem{xmark} The XML benchmark project - XMark, www.xml-benchmark.org
+\end{thebibliography}
+
+\end{document}
+

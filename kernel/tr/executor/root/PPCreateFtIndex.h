@@ -1,0 +1,48 @@
+/*
+ * File:  PPCreateFtIndex.h
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#ifndef _PPCREATEFTINDEX_H
+#define _PPCREATEFTINDEX_H
+
+#include "PPBase.h"
+#include "XPathOnSchema.h"
+#include "ft_index_data.h"
+
+ft_index_type str2index_type(const char *str);
+std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules);
+void delete_cust_rules_vector(std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* &v);
+
+class PPCreateFtIndex : public PPUpdate
+{
+    // given parameters
+    PathExpr *object_path;
+	ft_index_type index_type;
+	PPOpIn cust_rules;
+    counted_ptr<db_entity> db_ent;
+    PPOpIn index_name;
+
+    // obtained parameters and local data
+    schema_node *root;
+public:
+    void open();
+    void close();
+    void execute();
+
+    PPCreateFtIndex(PathExpr *_object_path_,
+                  char* _index_type_,
+                  counted_ptr<db_entity> _db_ent_,
+                  PPOpIn _index_name_,
+				  PPOpIn _cust_rules_);
+    PPCreateFtIndex(PathExpr *_object_path_,
+                  char *_index_type_,
+                  counted_ptr<db_entity> _db_ent_,
+                  PPOpIn _index_name_);
+
+    ~PPCreateFtIndex();
+};
+
+
+
+#endif

@@ -1,0 +1,108 @@
+.TH SE_CDB 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_cdb \- Sedna database creation utility
+
+.SH SYNOPSIS
+.B se_cdb
+[options] dbname
+
+.SH DESCRIPTION
+
+To create a database, use the \fBse_cdb\fR command. 
+
+Each database consists of the following files:
+.IP "\fB<db_name>.data\fR file"
+used for storing persistent XML data, which
+are loaded to the database by user using LOAD/UPDATE expressions. 
+.IP "\fB<db_name>.tmp\fR file"
+used for storing temporary XML data. It
+appears in the database during query execution and contains intermediate
+results.
+.IP "\fB<db_name>.ph\fR and \fB<db_name>.ph.bu\fR files"
+used for storing
+XML metadata (for example, the descriptive scheme of XML documents).
+.IP "\fBbuf\fR directory"
+contains some intermidiate data. It is created when
+the database is run and removed when the database is stopped.
+
+.P
+Besides, for each database there are run-time configuration parameters, which
+are stored in the database configuration file.
+
+.SH OPTIONS
+
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+\fB-data-file-max-size\fR Mbs
+allows Administrator to set up the maximum size (in Mb) of the file where the
+persistent data are stored. The default value for this option is infinite.
+.TP								
+\fB-tmp-file-max-size\fR Mbs
+allows Administrator to set up the maximum size (in Mb) of the file where the
+temporary data are stored. The default value for this option is infinite.
+.TP
+\fB-data-file-ext-portion\fR Mbs
+allows Administrator to set up the size (in Mb) of the portion to which the
+persistent data file will be extended as result of executing resize operation.
+Resize operation is applied to the persistent data file if its size is less
+than needed for storing XML documents. The default value is 100 Mb.
+.TP								
+\fB-tmp-file-ext-portion\fR Mbs
+allows Administrator to set up the size (in Mb) of the portion to which the
+temporary data file will be extended as result of executing resize operation.
+The resize operation is applied to the temporary data file if its size is less
+than needed for storing temporary data (intermediate results of the query, for
+example). The default value is 100 Mb.
+.TP
+\fB-data-file-init-size\fR Mbs
+allows Administrator to set up the initial size (in Mb) of the persistent data
+file. It is obvious that the initial size can't be greater than the maximum
+size of the persistent data file. The default value is 100 Mb.
+.TP
+\fB-tmp-file-init-size\fR Mbs
+the tmp file initial size (in Mb), default 100Mb
+allows Administrator to set up the initial size (in Mb) of the temporary data file. It is obvious that the initial size can't be greater than the maximum size of the temporary data file. The default value is 100 Mb.
+.TP
+\fB-persistent-heap-size\fR Mbs
+allows Administrator to set up the size (in Mb) of the metadata file (for
+example the descriptive schema stores in this file) This file cannot be
+resized. The default value is 10 Mb.
+.TP
+\fB-bufs-num\fR N
+allows Administrator to set up the number of buffers in main memory. This
+number is connected with the size of the main memory, but the performance
+of the database depends of this number very much. The default value is 1600
+buffers, which is equal to 100Mb and we do not recommend to use less number of
+buffers. The size of one buffer is 64Kb and can't be customized by
+Administrator.
+.TP
+\fB-max-trs-num\fR N
+the number of concurrent micro ransactions over database, default 10.
+We recommend to use default value.
+.TP 
+db_name
+the name of the database to be created. Administrator can use the arbitrary
+sequence of latin characters and digits for database name. There cannot be two
+databases with the same name.
+
+
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.SH "SEE ALSO"
+.BR se_gov (8),
+.BR se_sm (8),
+.BR se_trn (8)
+

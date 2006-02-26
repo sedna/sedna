@@ -1,0 +1,33 @@
+.TH SE_STOP 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_stop \- stop all Sedna daemons
+
+.SH SYNOPSIS
+.B se_stop
+[options]
+
+.SH DESCRIPTION
+To stop Sedna, Administrator should use the \fBse_stop\fR command. This
+command stops all Sedna components including all databases, which are run.
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.SH "SEE ALSO"
+.BR se_gov (8),
+.BR se_sm (8)
+

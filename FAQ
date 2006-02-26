@@ -1,0 +1,96 @@
+
+                                Sedna FAQ
+
+
+     _________________________________________________________________
+
+                            General Questions
+
+     _________________________________________________________________
+
+G1.  How to drop a database?
+
+     _________________________________________________________________
+
+                        Windows Specific Questions
+
+     _________________________________________________________________
+
+W1.
+
+
+     _________________________________________________________________
+
+                         Linux Specific Questions
+
+     _________________________________________________________________
+
+L1.  I got the following error trying to run se_gov:
+     SE1000
+     Environment error. This error is caused by environment (operating system).
+     Details: Failed to bind socket
+
+     Is it a bug?
+
+L2.  I have downloaded a binary version and tried to use SQL Connection.
+     I got the following error:
+
+     SE2113
+     SQL Connection support disabled
+
+L3.  I got the following error trying to run se_gov:
+     SE4074
+     Can't create memory mapping
+     Details: See file FAQ shipped with the distribution
+
+     Am I able to run Sedna on my computer?
+
+
+
+
+     _________________________________________________________________
+
+                                 Answers
+
+     _________________________________________________________________
+
+
+G1.  Suppose, you have created a database named 'x'. Now you want to drop it. 
+     Firstly, shutdown sm for database 'x' if any (issue 'se_smsd x' command).
+     Secondly, delete $SEDNA_HOME/cfg/x_cfg.xml (configuration file for the
+     database 'x') and $SEDNA_HOME/data/x_files (data, temporary and log files
+     for the database 'x'). Now database x is dropped.
+
+
+L1.  Actually, not. Wait for several minutes and try again. 
+     The problem is in sockets. The following is what socket FAQ says:
+
+     When you issue the close() system call, you are closing your interface to 
+     the socket, not the socket itself. It is up to the kernel to close the 
+     socket. Sometimes, for really technical reasons, the socket is kept alive 
+     for a few minutes after you close it. It is normal, for example for the 
+     socket to go into a TIME_WAIT state, on the server side, for a few minutes. 
+     People have reported ranges from 20 seconds to 4 minutes to me. The 
+     official standard says that it should be 4 minutes. On my Linux system it 
+     is about 2 minutes.
+
+
+L2.  A binary Linux version does not have support for SQL Connection. This is 
+     due to the problems of linking Sedna executables with static odbc library.
+     But you can download Sedna sources and compile Sedna yourself
+     with SQL_CONNECTION variable set to 1. See INSTALL file provided with
+     Sedna sources for additional information.
+
+L3.  Hopefully, you are. The desribed situation happens when your Linux 
+     installation does not turn on support for shm fs. Without it, it is not
+     POSIX compatible. The problem can be fixed by mounting /dev/shm:
+
+     mount -t tmpfs tmpfs /dev/shm
+
+     If you have no /dev/shm, just create it:
+
+     mkdir /dev/shm
+
+     The problem is known to happen on ALT Linux, some Debian installations
+     (possibly with kernel 2.4).
+

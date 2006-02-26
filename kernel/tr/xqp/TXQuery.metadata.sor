@@ -1,0 +1,43 @@
+/**/
+
+
+metadata!:
+
+	<<bool exist_statistics = false;
+	  PCCTS_AST* stat;
+	>>
+	<<in_context in_c(OUTSIDE_PREDICATE) ; out_context out_c;>>
+
+
+	(  #(AST_RETRIEVE_METADATA_DOCS {e1:exprSingle[in_c] >[out_c]} {AST_STATISTICS <<exist_statistics = true;>>})
+	   <<
+         if (exist_statistics) stat = #(#["const"], #(#["type"], #["!xs!boolean"]), #["true"]);
+         else stat = #(#["const"], #(#["type"], #["!xs!boolean"]), #["false"]);
+	     
+	     if (e1 != NULL)
+	        #metadata=#(#["retrieve-metadata-documents"], e1, stat);
+	     else
+	        #metadata=#(#["retrieve-metadata-documents"], stat);
+	   >>
+
+	 | #(AST_RETRIEVE_METADATA_COLLS {AST_STATISTICS <<exist_statistics = true;>>} )
+	   <<
+         if (exist_statistics) stat = #(#["const"], #(#["type"], #["!xs!boolean"]), #["true"]);
+         else stat = #(#["const"], #(#["type"], #["!xs!boolean"]), #["false"]);
+	     #metadata=#(#[], #["retrieve-metadata-collections"], stat);
+	   >>
+
+	 | #(AST_DESCR_SCHEMA e2:exprSingle[in_c] >[out_c] {e3:exprSingle[in_c] >[out_c]})
+	   <<
+	     if (e3 != NULL)
+	        #metadata=#(#["retrieve-descr-scheme"], e2, e3);
+	     else
+	        #metadata=#(#["retrieve-descr-scheme"], e2);
+	   >>
+
+
+	| #(AST_DESCR_SCHEMA_FOR_COL, e4:exprSingle[in_c] >[out_c])
+	   << #metadata=#(#["retrieve-descr-scheme-collection"], e4);>>
+
+	)
+;

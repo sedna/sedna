@@ -1,0 +1,431 @@
+/*
+ * File:  cl_client.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include <string>
+#include <list>
+#include <fstream>
+#include <stdio.h>
+
+#include "cl_client.h"
+#include "exceptions.h"
+#include "base.h"
+#include "ipc_ops.h"
+#include "tr_globals.h"
+#include "tr_functions.h"
+#include "uhdd.h"
+#include "version.h"
+
+#define BATCH_DELIMITER "\\"
+
+using namespace std;
+
+
+command_line_client::command_line_client(int argc, char** argv)
+{
+  char buf[1024];
+
+  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) == 0)
+  {//!!! metadata transaction case !!!
+     if (argc != 2)
+        throw SYSTEM_EXCEPTION("Bad number of input parameters to load metadata");
+
+     strcpy(db_name, argv[1]);
+     strcpy(filename, "dummy");
+     strcpy(q_type, "XQuery");
+     s = NULL;
+
+  }
+  else
+  {
+     //parse command line arguments
+     if (is_command_line_args_length_overflow(argc, argv))
+        throw USER_EXCEPTION(SE4600);
+
+     if (argc == 1)
+        print_tr_usage();
+     else
+     {
+        int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
+        char errmsg[1000];
+        arg_scan_ret_val = arg_scanargv(argc, argv, tr_argtable, narg, NULL, errmsg, NULL);
+        if (tr_s_help == 1 || tr_l_help == 1) print_tr_usage();
+        if (tr_version == 1) { print_version_and_copyright("Sedna Transaction"); throw USER_SOFT_EXCEPTION(""); }
+        if (arg_scan_ret_val == 0)
+           throw USER_EXCEPTION2(SE4601, errmsg);
+     }
+     s = NULL;
+  }
+}
+
+
+void command_line_client::init()
+{
+//  u_timeb ttt1, ttt2;
+//  u_ftime(&ttt1);
+
+   //check the correctness of input parameters from command line
+   if (string(filename) == "???" || string(db_name) == "???")
+     throw USER_EXCEPTION(SE4601);
+
+
+   if (string(q_type) == "XQuery") query_type = TL_XQuery;
+   else if (string(q_type) == "POR") query_type = TL_POR;
+   else if (string(q_type) == "LR") query_type = TL_ForSemAnal;
+   else throw USER_EXCEPTION(SE4002);
+
+
+   string plain_batch_text;
+
+   char buf[1024];
+   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) != 0)
+   {
+
+      //read batch text in string
+      FILE *f;
+      if ((f = fopen(filename, "r")) == NULL)
+        throw USER_EXCEPTION2(SE4042, filename);
+
+      char buf[1000000];
+      plain_batch_text.reserve(100000);
+
+      while(!feof(f)){
+     
+        size_t len= fread(buf, sizeof(char), sizeof(buf), f);
+
+        plain_batch_text.append(buf, len);
+      }
+   }
+   else 
+   {
+#if (AUTH_SWITCH == 1)
+      string path_to_security_file; 
+#ifdef _WIN32
+      path_to_security_file = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+
+      int i;
+      for (i=0; i<path_to_security_file.size(); i++)
+        if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
+#else
+      path_to_security_file = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+
+      if(!uIsFileExist(path_to_security_file.c_str()))
+         path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
+#endif
+
+
+      plain_batch_text = string("LOAD ") +
+                         string("\"") + path_to_security_file + string("\" ") +
+                         string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
+#else
+      plain_batch_text = "0";
+#endif
+   }
+
+//   StringVector stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
+   stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
+
+
+   //add 'coomit' command if there is not end of transaction (coommit or rollback) command
+   if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&
+       stmnts_array.back().substr(0, 6).find("commit") == string::npos)
+       stmnts_array.push_back("commit");
+
+   cl_command cmd;
+
+   //!!!init stack!!!
+   //put close session on buttom
+   cmd.type = se_CloseConnection;
+   cmd.length = 0;
+   cl_cmds.push_front(cmd);
+
+   //put terminate transaction cmd
+   if (stmnts_array.back().substr(0, 8).find("rollback") == string::npos &&
+       stmnts_array.back().substr(0, 6).find("commit") == string::npos)
+   {
+      cmd.type = 220;//commit
+   }
+   else //commit or rollback exists in script
+   {
+      if (stmnts_array.back().substr(0, 6).find("commit") != string::npos)
+         cmd.type = se_CommitTransaction;//commit
+      else
+         cmd.type = se_RollbackTransaction;//rollback
+
+      stmnts_array.pop_back();//delete terminate command
+   }
+
+   cmd.length = 0;
+    
+   cl_cmds.push_front(cmd);
+
+   //put queries to stack   
+   for (int i=stmnts_array.size()-1; i>=0; i--)
+   {
+      cmd.type = se_Execute;
+      cmd.length = stmnts_array[i].size();
+      cl_cmds.push_front(cmd);
+
+   }
+
+   statement_index = 0;
+   //put tr begin
+   cmd.type = se_BeginTransaction;
+   cmd.length = 0;
+   cl_cmds.push_front(cmd);
+
+   //put authenticate transaction on top of stack
+
+   cmd.type = se_CommitTransaction;//commit tr
+   cmd.length = 0;
+   cl_cmds.push_front(cmd);
+
+   cmd.type = se_Authenticate;//authenticate
+   cmd.length = 0;
+   cl_cmds.push_front(cmd);
+
+   cmd.type = se_BeginTransaction;//begin tr
+   cmd.length = 0;
+   cl_cmds.push_front(cmd);
+   
+   s = new crmstdostream();
+//  u_ftime(&ttt2);
+//  cerr << "init!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
+}
+
+
+void command_line_client::release()
+{
+   if (s != NULL) 
+   {
+       delete s;
+       s = NULL;
+   }
+}
+
+void command_line_client::read_msg(msg_struct *msg)
+{
+  if (is_stop_session())//session closed forcedly by se_stop utility
+  {
+     clear_stack_for_stop_signal();
+  }
+
+  msg->instruction = cl_cmds.front().type;
+  msg->length = cl_cmds.front().length;
+  cl_cmds.pop_front();
+}
+
+char* command_line_client::get_query_string(msg_struct *msg)
+{
+   return (char*)stmnts_array[statement_index++].c_str();
+}
+
+t_print command_line_client::get_result_type(msg_struct *msg)
+{
+	return xml;
+}
+
+
+QueryType command_line_client::get_query_type()
+{
+  if (query_type == TL_POR) return TL_POR;
+  else return TL_ForSemAnal;
+}
+
+crmostream* command_line_client::get_crmostream()
+{
+  return s;
+}
+
+client_file command_line_client::get_file_from_client(const char* client_filename)
+{
+  client_file cf;
+  char buf[1024];
+
+  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) == 0)
+  {//load metadata case (client_filename must be absolute path)
+     if ((cf.f = fopen (client_filename, "r")) == NULL)
+        throw USER_EXCEPTION2(SE4042, client_filename);
+     strcpy(cf.name, client_filename);
+     return cf;
+  }
+
+
+  char *cur_dir_abspath = new char[4096];
+  char *qfile_abspath = new char[4096];
+  char *cfile_abspath = new char[4096];
+  char *dir = new char[4096];
+
+  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, 4096);
+  if (cur_dir_abspath == NULL)
+     throw USER_EXCEPTION(SE4602);
+
+  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, 4096);
+  if (qfile_abspath == NULL)
+     throw USER_EXCEPTION2(SE4603, filename);
+
+  char* new_dir;
+  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, 4096);
+  
+  if (uChangeWorkingDirectory(new_dir) != 0)
+     throw USER_EXCEPTION2(SE4604, new_dir);
+
+  
+  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096);
+
+  if (uChangeWorkingDirectory(cur_dir_abspath) != 0)
+     throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
+
+  
+  if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
+  {
+     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096);
+     if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
+        throw USER_EXCEPTION2(SE4042, client_filename);
+  }
+  
+/*
+  cf.f = fopen(cfile_abspath, "r");
+
+  cf.f = fopen(client_filename, "r");
+
+  if (cf.f == NULL)
+	  throw CharismaException("#????: Can't open file to be loaded");
+*/
+  strcpy(cf.name, client_filename);
+
+ 
+  delete [] cur_dir_abspath;
+  delete [] qfile_abspath;
+  delete [] cfile_abspath;
+  delete [] dir;
+
+  return cf;
+
+
+}
+
+void command_line_client::close_file_from_client(client_file cf)
+{
+    if (fclose(cf.f) != 0) throw USER_EXCEPTION(SE3020);
+}
+
+void command_line_client::respond_to_client(int instruction)
+{
+    switch (instruction)
+    {
+        case se_UpdateSucceeded:
+            printf("\nUPDATE is executed successfully\n");
+            break;
+        case se_BulkLoadSucceeded:
+            d_printf1("\nBulk load succeeded\n");
+            break;
+        case se_BeginTransactionOk:
+            d_printf1("\nTr is started successfully\n");
+            break;
+        case se_CommitTransactionOk:
+            d_printf1("\nTr is committed successfully\n");
+            break;
+        case se_RollbackTransactionOk:
+            d_printf1("\nTr is rolled back successfully\n");
+            break;
+        case se_TransactionRollbackBeforeClose:
+            d_printf1("\nTr is rolled back successfully\n");
+            d_printf1("\nSession is closed successfully\n");
+            break;
+        case se_CloseConnectionOk:
+            d_printf1("\nSession is closed successfully\n");
+            break;
+        default:
+            d_printf2("\nUnknown instruction = %d\n", instruction);
+            break; 
+    }
+}
+
+void command_line_client::begin_item()
+{
+}
+
+void command_line_client::end_of_item(bool exist_next)
+{
+  
+  if (exist_next)
+  {//put next portion on top of stack
+     cl_command cmd;
+     cmd.type = se_GetNextItem;
+     cmd.length = 0;
+     cl_cmds.push_front(cmd);
+  }
+}
+
+void command_line_client::authentication_result(bool res, const string& body)
+{
+   if (res)
+      d_printf1("\nAuthentication is passed successfully\n");
+   else
+      d_printf2("\nAuthentication failed: %s\n", body.c_str()); 
+}
+
+
+
+
+void command_line_client::get_session_parameters()
+{
+}
+
+void command_line_client::process_unknown_instruction(int instruction, bool in_transaction)
+{
+    throw USER_ENV_EXCEPTION("Command line client got unknown instruction.", true);
+}
+
+
+void command_line_client::error(int code, const string& body)
+{
+  //erase all commands from stack and push close session to stack
+  //  (last transaction to this point already finished)
+  cl_cmds.clear();
+
+  cl_command cmd;
+  cmd.type = se_CloseConnection;
+  cmd.length = 0;
+
+  cl_cmds.push_front(cmd);
+}
+
+void command_line_client::clear_stack_for_stop_signal()
+{
+   cl_command cmd;
+
+   if (cl_cmds.front().type == se_Execute || //exexute query
+       cl_cmds.front().type == se_GetNextItem || //next portion
+       cl_cmds.front().type == se_Authenticate  || //authenticate
+       cl_cmds.front().type == se_CommitTransaction || //commit
+       cl_cmds.front().type == se_RollbackTransaction    //rollback
+      )
+   {//exist not finished transaction
+    //put rollback (for not finished transaction) and close session
+      cl_cmds.clear();
+      cmd.type = se_CloseConnection;
+      cmd.length = 0;
+      cl_cmds.push_front(cmd);
+
+      cmd.type = se_RollbackTransaction;
+      cmd.length = 0;
+      cl_cmds.push_front(cmd);
+   }
+   else
+   {//there is not active transaction
+    //put close session on stack
+      cl_cmds.clear();
+      cmd.type = se_CloseConnection;
+      cmd.length = 0;
+      cl_cmds.push_front(cmd);
+   }
+}
+
+void command_line_client::show_time(string qep_time)
+{
+	d_printf2("Execution time of the latest query %s\n",qep_time.c_str());
+}
+

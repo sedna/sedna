@@ -1,0 +1,16 @@
+/* */
+ifExpr! [in_context in_c] >[out_context out_c]:
+	<<out_context _out_c1_, _out_c2_, _out_c3_;>>
+
+	#(AST_IF cond:expr[in_c] >[_out_c1_]
+	         e1:expr[in_c] >[_out_c2_]
+	         e2:expr[in_c] >[_out_c3_])
+
+	<<#ifExpr=#(#["if@"], cond, e1, e2);
+
+	  if ( _out_c1_ > _out_c2_)
+	     out_c = max_out_context (_out_c1_, _out_c3_);
+	  else
+	     out_c = max_out_context (_out_c2_, _out_c3_);
+	>>
+;

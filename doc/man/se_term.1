@@ -1,0 +1,114 @@
+.TH SE_TERM 1 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_term \- Sedna terminal
+
+.SH SYNOPSIS
+.B se_term
+[options] dbname
+
+.SH DESCRIPTION
+\fBse_term\fR is an interactive terminal to Sedna DBMS. It is a C application
+that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna
+DBMS. It enables you to open a session to one of the Sedna database, type in
+queries interactively, issue them to the database and see the query results.
+Alternatively, input can be from a file, or a single query can be passed for
+execution as a command line parameter. In addition, it provides a number of
+meta-commands.
+
+\fBse_term\fR returns 0 to the shell if it finished normally, 1 if there
+were errors.
+
+
+When \fBse_term\fR is used in the interactive mode it takes in query/update
+statements and meta-commands. To execute a query/update statement type in a
+statement and use semicolon and line feed to terminate it (\fI;'\\n'\fR
+terminates the query). An end of line does not terminate the query, thus
+queries can be spread over several lines for clarity. The first query/update
+statement automatically begins transaction. If the statement executed
+successfully, the results are displayed on the screen.
+
+Meta-commands are commands for \fBse_term\fR that proccessed by the
+\fBse_term\fR itself. A meta-command begins with a backslash and that differs
+it from the query/update statements. Thus, the format of \fBse_term\fR
+meta-command is the backslash, followed immediately by a command, with no
+semicolon at the end. \fBse_term\fR takes in the following meta-commands:
+
+.TP
+\\?
+for help on internal slash commands
+.TP
+\\commit
+to commit transaction
+.TP
+\\rollback
+to rollback transaction
+.TP
+\\showtime
+to show the time of the latest query execution
+.TP
+\\quit
+to close session and quit the Sedna Terminal
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+\fB-file\fR filename
+specifies the name of the file that contains any number of queries and
+meta-commands. \fBse_term\fR uses this file as the source of queries and
+meta-commands instead of reading them interactively. \fBse_term\fR executes
+the queries and meta-commands from file consequently and exit.
+.TP
+\fB-query\fR query
+specifies the XQuery query to execute.
+.TP
+\fB-show-time\fR on/off
+show time of query execution (default off). Allows to get the time of the
+latest query execution. If used with the \fB-query\fR option provides the
+time of the specified query execution; if used with the \fB-file\fR option
+provides the time of the execution of the last query in file.
+.TP
+\fB-host\fR host
+specifies the name of the machine with Sedna DBMS running. If not used,
+default value \fIlocalhost\fR is used.
+.TP
+\fB-port-number\fR port
+specifies the TCP port on which Sedna server is listening to client
+applications. If omitted, port number 5050 is used by default.
+.TP
+\fB-name\fR name
+user name (default SYSTEM)
+.TP
+\fB-pswd\fR password
+user password (default MANAGER)
+.TP
+db-name
+specifies the name of the database to connect to.
+
+.SH NOTES
+Before running any transactions be sure that Sedna storage manager is strarted
+for the corresponding database (see \fBse_gov\fR (8) for further details)
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.RE
+.I /usr/share/doc/sedna/ProgGuide.pdf.gz
+.RS
+Sedna Programmer's Guide
+.SH "SEE ALSO"
+.BR se_cdb (8),
+.BR se_gov (8),
+.BR se_sm (8),
+.BR se_trn (8)
+

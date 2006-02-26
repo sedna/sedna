@@ -1,0 +1,170 @@
+/* */
+
+elemConstructor! [in_context in_c] >[out_context out_c]:
+	<<SORASTBase *atts=NULL, *ecnt=NULL, *elname=NULL;
+	  out_context _out_c1_, _out_c2_, _out_c3_;
+	>>
+
+	#(AST_ELEMENT 
+	  #(AST_ELEMENT_NAME 
+            (   qn:qname
+
+	        <<elname=#(#["const"], #(#["type"], #["!xs!QName"]), qn);>>
+
+	      |  e:expr[in_c] >[_out_c1_] <<elname=e;>>
+	    )
+	   )
+	   #(AST_ELEMENT_ATTRIBUTES 
+	     ( ats:attrConstructor[in_c] >[_out_c2_] //_out_c2 must be max 
+	       <<if(atts==NULL) atts=ats; else atts->append(ats);>>
+
+	      | nc:namespaceConstructor[in_c] >[_out_c2_] 
+	       <<if(atts==NULL) atts=nc; else atts->append(nc);>>
+
+	     )*)
+
+	   #(AST_CONTENT 
+	     (ec:elemContent[in_c] >[_out_c3_] 
+	      <<if(ecnt==NULL) ecnt=ec; else ecnt->append(ec); >>)*)
+	 )
+
+	 <<if(atts!=NULL){
+	     if(ecnt!=NULL)
+	       if(ecnt->nsiblings()>1)
+	         #elemConstructor=
+	            #(#["element"], elname, #(#["sequence"], atts, ecnt));
+	       else
+	         #elemConstructor=
+	            #(#["element"], elname, #(#["sequence"], atts, ecnt));
+
+	     else
+	       #elemConstructor=
+	         #(#["element"], elname, #(#["sequence"], atts));
+	   }
+	   else{//atts==NULL
+	     if(ecnt!=NULL){
+	       if(ecnt->nsiblings()>1)
+	         #elemConstructor=
+	            #(#["element"], elname, #(#["sequence"], ecnt));
+	       else
+	         #elemConstructor=
+	            #(#["element"], elname, ecnt);
+	     }
+	     else
+	       #elemConstructor=
+	         #(#["element"], elname, #(#[], #["sequence"]));
+
+	   }
+
+	   if ( _out_c1_ > _out_c2_ )
+	      out_c = max_out_context(_out_c1_, _out_c3_);
+	   else
+	      out_c = max_out_context(_out_c2_, _out_c3_);
+	 >> 
+;
+
+attrConstructor! [in_context in_c] >[out_context out_c]:
+	<<SORASTBase *cnt=NULL, *attr_name=NULL;
+	  out_context _out_c1_, _out_c2_;
+	>>
+	#(AST_ATTRIBUTE
+	  #(AST_ATTRIBUTE_NAME  
+            (  qn:qname 
+	       <<attr_name=#(#["const"], #(#["type"], #["!xs!QName"]), qn);
+	              	     >>
+  	     | e:expr[in_c] >[_out_c1_]
+  	       <<attr_name=e;>>
+  	    )   
+  	   )
+
+	  #(AST_CONTENT 
+	    (ac:attrContent[in_c] >[_out_c2_]
+	     <<if(cnt==NULL) cnt=ac; else cnt->append(ac); >>)*
+	   )                                                                
+	 )
+
+	<<if(cnt!=NULL)
+	    if(cnt->nsiblings()>1)
+	      #attrs=#(#["attribute"], attr_name, #(#["sequence"], cnt));
+	    else
+	      #attrs=#(#["attribute"], attr_name, cnt);
+	  else 
+	    #attrs=#(#["attribute"], attr_name, #(#[], #["sequence"]));
+
+	  out_c = max_out_context(_out_c1_, _out_c2_);
+	>>
+;
+
+attrContent! [in_context in_c] >[out_context out_c]:
+	<<SORASTBase *att_cont=NULL;>>
+	(	
+	  cs:AST_CHAR_SEQ 
+
+	  <<att_cont=#(#["const"], 
+	               #(#["type"], #["!xs!string"]),
+	               #[std::string("\"")+cs->getText()+"\""]);
+
+	    out_c = out_context(NOT_EXIST_POS_BASED_FNS);
+	  >>
+
+	| e:expr[in_c] >[out_c]
+	  << att_cont=#(#["spaceseq"], e); >>
+
+	)
+	<<#attrContent=att_cont;>>
+;
+
+elemContent! [in_context in_c] >[out_context out_c]:
+	<<SORASTBase *elm_cont=NULL;>>
+	(
+	  cs:AST_CHAR_SEQ 
+
+	  <<elm_cont=#(#["const"], 
+	                #(#["type"], #["!xs!string"]),
+	                #[std::string("\"")+cs->getText()+"\""]);
+
+	    out_c = out_context(NOT_EXIST_POS_BASED_FNS);
+	  >>
+
+	| e:expr[in_c] >[out_c]
+	<<elm_cont=e;>>
+
+	| ec:elemConstructor[in_c] >[out_c]    
+	  <<elm_cont=ec;>>
+
+	| ac:attrConstructor[in_c] >[out_c]    
+	  <<elm_cont=ac;>>
+
+	)
+	<<#elemContent=elm_cont;>>
+;
+
+namespaceConstructor! [in_context in_c] >[out_context out_c]:
+	<<SORASTBase *cnt=NULL, *nc_name=NULL;
+	  out_context  _out_c2_;
+	>>
+	#(AST_NAMESPACE
+	  #(AST_NAMESPACE_NAME  
+             pr:AST_PREFIX
+	      <<nc_name=#(#["const"], #(#["type"], #["!xs!NCName"]), #[pr->getText()]);>>
+  	       
+  	   )
+
+	  #(AST_CONTENT 
+	    (ac:attrContent[in_c] >[_out_c2_]
+	     <<if(cnt==NULL) cnt=ac; else cnt->append(ac); >>)*
+	   )                                                                
+	 )
+
+	<<if(cnt!=NULL)
+	    if(cnt->nsiblings()>1)
+	      #attrs=#(#["namespace"], nc_name, #(#["sequence"], cnt));
+	    else
+	      #attrs=#(#["namespace"], nc_name, cnt);
+	  else 
+	    #attrs=#(#["namespace"], nc_name, #(#[], #["sequence"]));
+
+	  out_c =_out_c2_;
+	>>
+;
+	

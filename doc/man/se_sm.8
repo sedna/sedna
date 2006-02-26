@@ -1,0 +1,57 @@
+.TH SE_SM 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_sm \- Sedna storage manager daemon
+
+.SH SYNOPSIS
+.B se_sm
+[options] dbname
+
+.SH DESCRIPTION
+.I Storage manager
+manages a database and provides memory management functionality to the
+executor. There is an instance of storage manager for each database run.
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+\fB-background-mode\fR on|off
+start the server in the background mode (default on)
+.TP
+\fB-bufs-num\fR N
+allows to set up the number of buffers in main memory. This number is
+connected with the size of the main memory, but the performance of the
+database depends of this number very much. The default value is retrieved from
+configuration file. The size of one buffer is 64Kb and can't be customized.
+
+.TP
+\fB-max-trs-num\fR N
+the number of concurrent micro transactions over
+database. We recommend to use default value from configuration file.
+
+.TP
+parameter \fBdbname\fR  defines the name of the database to be started up.
+
+
+.SH NOTES
+Before running any database be sure that Sedna Server is strarted up (see
+\fBse_gov\fR (8) for further details).
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.SH "SEE ALSO"
+.BR se_cdb (8),
+.BR se_gov (8),
+.BR se_trn (8)
+

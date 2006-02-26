@@ -1,0 +1,249 @@
+/* */
+
+create!:
+	<<in_context in_c(OUTSIDE_PREDICATE) ; out_context out_c;>>
+	(  #(AST_CREATE_COLLECTION e1:exprSingle[in_c] >[out_c])
+	   <<#create=#(#["create-collection"], e1); >>
+
+	 | #(AST_CREATE_DOCUMENT   e2:exprSingle[in_c] >[out_c] {e2_1:exprSingle[in_c] >[out_c]})
+	   <<
+	     if (e2_1 == NULL)
+	        #create=#(#["create-document"], e2);
+	     else
+	        #create=#(#["create-document"], e2, e2_1);
+	   >>
+
+	 | #(AST_CREATE_ROLE s12:AST_STRING_CONST)
+	   <<
+	     #create=#(#["create-role"],
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[s12->getText()]));
+	   >>
+
+	 | #(AST_CREATE_USER s24:AST_STRING_CONST s25:AST_STRING_CONST)
+	   <<
+	     #create=#(#["create-user"],
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[s24->getText()]),
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[s25->getText()]));
+
+	   >>
+
+	 | #(AST_CREATE_INDEX q1:exprSingle[in_c] >[out_c]
+	     p1:relativePathExpr[in_c] >[out_c]
+	     p2:relativePathExpr[in_c] >[out_c]
+	     t:singleType)
+	   <<
+	     #create=#(#["create-index"], q1, p1, p2, t);
+	   >>
+
+	 | #(AST_CREATE_FULLTEXT_INDEX q2_1:exprSingle[in_c] >[out_c]
+	     p3_1:relativePathExpr[in_c] >[out_c]
+	     s25_1:AST_STRING_CONST
+	     {e_1:expr[in_c] >[out_c]}
+	    )
+	   <<if (e_1 != NULL)
+	       #create=#(#["create-fulltext-index"],
+	                    q2_1,
+	                    p3_1,
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[s25_1->getText()]),
+	                    e_1);
+	     else
+	       #create=#(#["create-fulltext-index"],
+	                    q2_1,
+	                    p3_1,
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[s25_1->getText()]));
+
+	   >>
+
+
+	 | #(AST_DROP_COLLECTION   e3:exprSingle[in_c] >[out_c])
+	   <<#create=#(#["drop-collection"], e3);>>
+
+	 | #(AST_DROP_DOCUMENT     e4:exprSingle[in_c] >[out_c] {e4_1:exprSingle[in_c] >[out_c]})
+	   <<if (e4_1 == NULL)
+	        #create=#(#["drop-document"],e4);
+	     else
+	        #create=#(#["drop-document"],e4, e4_1);
+	   >>
+
+	 | #(AST_DROP_ROLE s13:AST_STRING_CONST)
+	   <<
+	     #create=#(#["drop-role"],
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[s13->getText()]));
+	   >>
+
+	 | #(AST_DROP_USER s26:AST_STRING_CONST)
+	   <<
+	     #create=#(#["drop-user"],
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[s26->getText()]));
+	   >>
+
+	 | #(AST_DROP_INDEX q5:exprSingle[in_c] >[out_c])
+	   <<
+	     #create=#(#["drop-index"], q5);
+	   >>
+
+	 | #(AST_DROP_FULLTEXT_INDEX q5_1:exprSingle[in_c] >[out_c])
+	   <<
+	     #create=#(#["drop-fulltext-index"], q5_1);
+	   >>
+
+
+	 | #(AST_ALTER_USER s27:AST_STRING_CONST s28:AST_STRING_CONST)
+	   <<#create=#(#["alter-user"],
+	                   #(#["const"],
+	                     #(#["type"], #["!xs!string"]),
+	                     #[s27->getText()]),
+	                   #(#["const"],
+	                     #(#["type"], #["!xs!string"]),
+	                     #[s28->getText()]));
+	   >>
+
+
+	| #(AST_LOAD_FILE s9:stringLiteral s10:stringLiteral {s11:stringLiteral})
+	  <<
+
+	    std::string str=s9->getText();
+	    std::string::iterator it;
+	    
+	    for(it = str.begin(); it != str.end(); it++)
+	    {
+	       if((*it) == '\\' ) *it = '/';
+	    }
+
+	    if (s11 != NULL)
+	    {
+	       #create=#(#["load"], 
+	                 #(#["const"],
+	                   #(#["type"], #["!xs!string"]),
+	                   #[str.c_str()]),
+
+	                 #(#["const"],
+	                   #(#["type"], #["!xs!string"]),
+	                   #[s10->getText()]),
+
+	                 #(#["const"],
+	                   #(#["type"], #["!xs!string"]),
+                       #[s11->getText()]));
+	    }
+	    else
+	    {
+	       #create=#(#["load"], 
+	                 #(#["const"],
+	                   #(#["type"], #["!xs!string"]),
+	                   #[str.c_str()]),
+
+	                 #(#["const"],
+	                   #(#["type"], #["!xs!string"]),
+	                   #[s10->getText()]));
+	     }
+
+	  >>
+
+	| #(AST_LOAD_FILE_EX e9:exprSingle[in_c] >[out_c] e10:exprSingle[in_c] >[out_c] {e11:exprSingle[in_c] >[out_c]})
+	  <<
+	     if (e11 != NULL)
+	        #create=#(#["load"], e9, e10, e11);
+	     else
+	        #create=#(#["load"], e9, e10);
+	  >>
+
+
+	| #(AST_GRANT_PRIV_ON_DOC p14:privList s15:AST_STRING_CONST u16:userList)
+	  <<
+	    #create=#(#["grant-priv-on-doc"],
+                  p14,
+	              #(#["const"],
+	                #(#["type"], #["!xs!string"]),
+	                #[s15->getText()]),
+	                u16);
+	  >>
+
+	| #(AST_GRANT_PRIV_ON_COL p14_2:privList s15_2:AST_STRING_CONST u16_2:userList)
+	  <<
+	    #create=#(#["grant-priv-on-col"],
+	              p14_2,
+	              #(#["const"],
+	                #(#["type"], #["!xs!string"]),
+	                #[s15_2->getText()]),
+	                u16_2);
+	  >>
+
+	| #(AST_GRANT_PRIV p14_1:privList u15_1:userList)
+	  <<
+	    #create=#(#["grant-priv"], p14_1, u15_1);
+	  >>
+
+
+	| #(AST_GRANT_ROLE p17:privList u18:userList)
+	  <<
+	    #create=#(#["grant-role"], p17, u18);
+	  >>
+
+	| #(AST_REVOKE_PRIV p19:privList u20:userList)
+	  <<
+	    #create=#(#["revoke-priv"], p19, u20);
+	  >>
+
+	| #(AST_REVOKE_PRIV_FR_DOC p19_1:privList s20_1:AST_STRING_CONST u21_1:userList)
+	  <<
+	    #create=#(#["revoke-priv-from-doc"],
+	              p19_1,
+	              #(#["const"],
+	                #(#["type"], #["!xs!string"]),
+	                #[s20_1->getText()]),
+	              u21_1);
+	  >>
+
+	| #(AST_REVOKE_PRIV_FR_COL p19_2:privList s20_2:AST_STRING_CONST u21_2:userList)
+	  <<
+	    #create=#(#["revoke-priv-from-col"], p19_2,
+	              #(#["const"],
+	                #(#["type"], #["!xs!string"]),
+	                #[s20_2->getText()]),
+	              u21_2);
+	  >>
+
+	| #(AST_REVOKE_ROLE p22:privList u23:userList)
+	  <<
+	    #create=#(#["revoke-role"], p22, u23);
+	  >>
+
+	)
+
+
+;
+
+privList!:
+	#(AST_PRIV_LIST 
+	  
+	   s1:AST_STRING_CONST <<#privList = #(#[], #(#["const"], #(#["type"], #["!xs!string"]), #[s1->getText()]));>>
+	   (s2:AST_STRING_CONST<<#privList->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[s2->getText()]));>>)*
+	 )
+	 | AST_PRIV_ALL
+	  <<#privList=#(#[], #(#["const"], #(#["type"], #["!xs!string"]), #["\"ALL\""]));>>
+	 
+;
+
+userList!:
+	#(AST_USER_LIST 
+	   s1:AST_STRING_CONST <<#privList = #(#[], #(#["const"], #(#["type"], #["!xs!string"]), #[s1->getText()]));>>
+	   (s2:AST_STRING_CONST<<#privList->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[s2->getText()]));>>)*
+	  )
+	  | AST_USER_PUBLIC
+	    <<#privList=#(#[], #(#["const"], #(#["type"], #["!xs!string"]), #["\"PUBLIC\""]));>>
+	 
+;

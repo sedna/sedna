@@ -1,0 +1,67 @@
+
+; File:  sedna-low.scm
+; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+
+;; Low-level Scheme-specific functions for working with a TCP connection
+; This part of code is much borrowed from Oleg Kiselyov's "http.scm"
+
+; Low-level functions are:
+;
+;  1. (sedna:open-tcp-connection host port-number)
+; establishes the TCP connection and creates a pipe for communication with
+; the server.
+; Returns: (cons input-port output-port)
+;
+;  2. (sedna:flush-output-port output-port)
+; Flushes the output port
+;
+;  3. (sedna:close-tcp-connection output-port)
+; Closes the TCP connection
+;
+;  4. (sedna:port-position input-port)
+; Returns the current position in the input port
+
+(cond-expand
+ 
+ (plt  
+  (define (sedna:open-tcp-connection host port-number)
+    (let-values*
+     (((input-port output-port)
+       (tcp-connect host port-number)))
+     (cons input-port output-port)))
+  (define sedna:flush-output-port flush-output)
+  (define sedna:close-tcp-connection close-output-port)
+  (define sedna:port-position file-position))
+ 
+ ; Chicken implementation has much the same with a PLT one, since Chicken
+ ; supports PLT API for TCP connections
+ (chicken
+  (define (sedna:open-tcp-connection host port-number)
+    (let-values*
+     (((input-port output-port)
+       (tcp-connect host port-number)))
+     (cons input-port output-port)))
+  (define sedna:flush-output-port flush-output)
+  (define sedna:close-tcp-connection close-output-port)
+  (define (sedna:port-position input-port)
+    (receive (row col) (port-position input-port)
+             (+ (* 80 row) col))))
+ 
+ (gambit
+  (define (sedna:open-tcp-connection host port-number)
+    (let ((p (open-tcp-client
+              (list server-address: host
+                    port-number: port-number))))
+      (cons p p)))    
+  (define sedna:flush-output-port force-output)
+  (define sedna:close-tcp-connection close-port)
+  (define (sedna:port-position input-port)
+    ;(input-port-byte-position input-port)
+    (+ (* 80 (input-port-line input-port))
+       (input-port-column input-port)))
+  )
+ 
+ (else
+  #f)
+ 
+)

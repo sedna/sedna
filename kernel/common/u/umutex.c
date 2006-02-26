@@ -1,0 +1,119 @@
+/*
+ * File:  umutex.c
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
+#include "umutex.h"
+
+
+int uMutexInit(uMutexType *mutex)
+{
+#ifdef _WIN32
+    InitializeCriticalSection(mutex);
+    return 0;
+#else
+    pthread_mutexattr_t attr;
+    int res = pthread_mutexattr_init(&attr);
+    if (res != 0) return res;
+    return pthread_mutex_init(mutex, &attr);
+#endif
+}
+
+int uMutexLock(uMutexType *mutex)
+{
+#ifdef _WIN32
+    EnterCriticalSection(mutex);
+    return 0;
+#else
+    return pthread_mutex_lock(mutex);
+#endif
+}
+
+int uMutexUnlock(uMutexType *mutex)
+{
+#ifdef _WIN32
+    LeaveCriticalSection(mutex);
+    return 0;
+#else
+    return pthread_mutex_unlock(mutex);
+#endif
+}
+
+int uMutexDestroy(uMutexType *mutex)
+{
+#ifdef _WIN32
+    DeleteCriticalSection(mutex);
+    return 0;
+#else
+    return pthread_mutex_destroy(mutex);
+#endif
+}
+
+
+
+
+
+/*
+int uMutex2Create(uMutex2Type *mutex, int inheritable)
+{
+#ifdef _WIN32
+    SECURITY_ATTRIBUTES sa;
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.lpSecurityDescriptor = NULL;
+    sa.bInheritHandle = inheritable ? TRUE : FALSE;
+    *mutex = CreateMutex(
+                   &sa,
+                   TRUE,	// initial owner
+                   NULL		// object name
+             );
+    if (*mutex == NULL) return 1;
+    return 0;
+#else
+#error The platform is unsupported now
+#endif
+}
+
+int uMutex2Lock(uMutex2Type *mutex)
+{
+#ifdef _WIN32
+    DWORD res = WaitForSingleObject(
+                    *mutex,        // handle to object
+                    INFINITE   // time-out interval
+                );
+
+    if (res == WAIT_FAILED) return 1;
+    return 0;
+#else
+#error The platform is unsupported now
+#endif
+}
+
+int uMutex2Unlock(uMutex2Type *mutex)
+{
+#ifdef _WIN32
+    BOOL res = ReleaseMutex(
+                      *mutex   // handle to mutex
+               );
+
+    if (res == 0) return 1;
+    return 0;
+#else
+#error The platform is unsupported now
+#endif
+}
+
+int uMutex2Destroy(uMutex2Type *mutex)
+{
+#ifdef _WIN32
+    BOOL res = CloseHandle(
+                    *mutex   // handle to mutex
+               );
+
+    if (res == 0) return 1;
+    return 0;
+#else
+#error The platform is unsupported now
+#endif
+}
+*/

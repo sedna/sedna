@@ -1,0 +1,39 @@
+Readme for 
+
+Persistent Heap implementation
+Copyright (c) 2003, 2004 ISP RAS. All rights reserved.
+
+
+This is persistent heap implementation based on Mike Haertel's malloc 
+implementation written by him in 1993. What is persistent heap? It's a memory 
+heap (like almost everyone understands it) that allows you to save everything 
+inside it between program runs.
+
+Because I developed this library in the period of absence of time, the 
+implementation is "quick and dirty". One disadvantage is that 
+persistent heap works only under Windows and Linux. I've tested it on Windows 
+2000 and Red Hat Linux 9.0. Another disadvantage is that the library was 
+sharpened for my special purpose, but it can be easily modified for others 
+needs.
+
+Use MS VC++ 7.0 or GCC to build the library.
+
+
+Bug reports to Andrey Fomichev, fomichev@ispras.ru
+This version is dated November 10, 2004; 
+include this date with your bug report.
+
+Original version of malloc is available at 
+http://www.cs.colorado.edu/~zorn/Malloc.html#gnumalloc
+
+And the last thing. The original version is under GNU Library General 
+Public License, so I have to provide this sofrware under the same license.
+So, 
+
+   You may redistribute this library under the terms of the
+   GNU Library General Public License (version 2 or any later
+   version) as published by the Free Software Foundation.
+   THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY EXPRESS OR IMPLIED
+   WARRANTY.  IN PARTICULAR, THE AUTHOR MAKES NO REPRESENTATION OR
+   WARRANTY OF ANY KIND CONCERNING THE MERCHANTABILITY OF THIS
+   SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.

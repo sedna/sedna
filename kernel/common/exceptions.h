@@ -1,0 +1,280 @@
+/*
+ * File:  exceptions.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
+
+/**
+The following primary exceptions are defined for Sedna (later referred as 
+"the system").
+
+                         SednaException
+                         //          \\
+                        //            \\
+                       //              \\
+       SednaSystemException            SednaUserException
+               ||                            //       \\
+               ||                           //         \\
+     SednaSystemEnvException   SednaUserEnvException SednaUserSoftException
+
+
+SednaException -- abstract base exception class. You cannot use it for raising
+exceptions
+
+SednaSystemException -- use it when some system error happens. This error means
+that the system is completely malfunction. The reaction on this error is hard 
+stopping of all components currently running.
+
+SednaSystemEnvException -- the same as SednaSystemException except one point.
+The output to a user produced as the reaction to this error says that it was 
+environment (operating system) fault and the system can not be longer running.
+For the previous exception responsibility is on the developers.
+
+SednaUserException -- use it in when some kind of error happens but this error
+is not fatal for the system but rather a recoverable error. Most errors of 
+this type are errors caused by users (wrong queries they sends). But they can
+be other errors such as "can not connect to sm because sm is not running"
+caused by trn. The reaction on this error is to produce correct message to the
+user with an explanation of the problem. Error codes and descriptions of errors
+are defined in error.codes file, which is in the same directory as the file you
+are reading now.
+
+SednaUserEnvException -- the same as SednaUserException with a bit different
+semantics.  Use this exception to notify the user that the system cannot do
+something because of the environment (operating system). You need not define 
+error code for this kind of error (it is already defined), but you
+rather need to provide a correct description. This exception is needed to
+simplify the life of the developers, because it allow them not to define
+enormous number of error codes for routine operations such as semaphore
+creation.
+The example of using this exception is the following:
+
+if (<cannot create semaphore during startup>)
+   throw USER_ENV_EXCEPTION("Cannot create semaphore <the name of the semaphore>",
+                            false);
+
+SednaUserSoftException -- this exception class rather differs from other 
+exceptions. It is used for correct program termination instead of signaling
+some error condition. Its purpose can be clarified by the following example.
+Suppose you have to parse command line arguments for already started (and 
+initialized) process. If you find some error in command line parameters its your
+obligatory to finish the process and bring the error message to the user. If you
+just simply write error message to console and exit from the process, it may
+crash the system because in this case you avoid process deinitialization, which
+is performed by the program code somewhere else in the program. From the other
+hand, if you raise SednaUserException then you have to supply error code and,
+what is more important, the error message that is identified by this error
+code will be enlarged with additional information such as error code and a 
+comment. The solution to this problem is to use SednaUserSoftException for raising
+the error. In this case process deinitialization will be completed as a part
+of the standard error handling mechanism and the user will see exactly the same
+error message that you have supplied.
+
+
+
+
+For raising exception it is better to use these macroses:
+
+#define SYSTEM_EXCEPTION(msg)				SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_ENV_EXCEPTION(msg)			SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define USER_EXCEPTION(code)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
+#define USER_EXCEPTION2(code, details)		SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define USER_ENV_EXCEPTION(msg, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
+#define USER_SOFT_EXCEPTION(msg)			SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
+
+Their names are straightfoward. Parameters are:
+msg      -- a textual message (some kind of error description)
+code     -- the code for user defined error (use constants defined in 
+            error_codes.h; example is SE1001)
+details  -- details for user error
+rollback -- does the error leads to rollback?
+
+*/
+
+
+
+#ifndef __EXCEPTIONS_H
+#define __EXCEPTIONS_H
+
+#include <string>
+#include <stdlib.h>
+#include "utils.h"
+#include "d_printf.h"
+#include "error_codes.h"
+
+// only for MSDEV 6.0
+#if (_MSC_VER == 1200)
+#define __FUNCTION__			" "
+#endif
+
+
+#define SYSTEM_EXCEPTION(msg)				SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_ENV_EXCEPTION(msg)			SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define USER_EXCEPTION(code)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
+#define USER_EXCEPTION2(code, details)		SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define USER_ENV_EXCEPTION(msg, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
+#define USER_SOFT_EXCEPTION(msg)			SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
+
+
+
+class SednaException
+{
+protected:
+    std::string file; 
+    std::string function;
+    int line;
+    std::string err_msg;
+
+public:
+    SednaException(const char* _file_, 
+                   const char* _function_,
+                   int _line_,
+                   const std::string& _err_msg_) : file(_file_),
+                                                   function(_function_),
+                                                   line(_line_),
+                                                   err_msg(_err_msg_) {}
+    virtual ~SednaException() {}
+
+    virtual std::string getMsg() const = 0;
+};
+
+class SednaSystemException : public SednaException
+{
+public:
+    SednaSystemException(const char* _file_, 
+                         const char* _function_,
+                         int _line_,
+                         const std::string& _err_msg_) : SednaException(_file_,
+                                                                        _function_,
+                                                                        _line_,
+                                                                        _err_msg_) {}
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += "System error. This error means system malfunction.\n";
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]: " + err_msg;
+        return res;
+    }
+};
+
+class SednaSystemEnvException : public SednaSystemException
+{
+public:
+    SednaSystemEnvException(const char* _file_, 
+                            const char* _function_,
+                            int _line_,
+                            const std::string& _err_msg_) : SednaSystemException(_file_, 
+                                                                                 _function_, 
+                                                                                 _line_, 
+                                                                                 _err_msg_) {}
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += "Environment error. This error is caused by environment (operating system) and \n";
+        res += "it means that the system cannot continue execution anymore.\n";
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]: " + err_msg;
+        return res;
+    }
+};
+
+class SednaUserException : public SednaException
+{
+protected:
+    int internal_code;
+
+public:
+    SednaUserException(const char* _file_, 
+                       const char* _function_,
+                       int _line_,
+                       int _internal_code_) : SednaException(_file_,
+                                                             _function_,
+                                                             _line_,
+                                                             ""), 
+                                              internal_code(_internal_code_) {}
+    SednaUserException(const char* _file_, 
+                       const char* _function_,
+                       int _line_,
+                       const std::string& _err_msg_,
+                       int _internal_code_) : SednaException(_file_,
+                                                             _function_,
+                                                             _line_,
+                                                             _err_msg_), 
+                                              internal_code(_internal_code_) {}
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += std::string(user_error_code_entries[internal_code].code) + "\n";
+        res += std::string(user_error_code_entries[internal_code].descr);
+        if (err_msg.length() != 0)
+        {
+            res += "\nDetails: " + err_msg;
+        }
+#if (EL_DEBUG == 1)
+        res += "\nPosition: [" + file + ":" + function + ":" + int2string(line) + "]: internal error code = " + 
+               int2string(internal_code);
+#endif
+        return res;
+    }
+
+    virtual int  get_code() const { return internal_code; }
+    virtual bool need_rollback() { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
+};
+
+class SednaUserEnvException : public SednaUserException
+{
+protected:
+    bool rollback;
+public:
+    SednaUserEnvException(const char* _file_, 
+                          const char* _function_,
+                          int _line_,
+                          const std::string& _err_msg_,
+                          bool _rollback_) : SednaUserException(_file_,
+                                                                _function_,
+                                                                _line_,
+                                                                _err_msg_,
+                                                                0),
+                                             rollback(_rollback_) {}
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += std::string(user_error_code_entries[internal_code].code) + "\n";
+        res += std::string(user_error_code_entries[internal_code].descr);
+#if (EL_DEBUG == 1)
+        res += "\nPosition: [" + file + ":" + function + ":" + int2string(line) + "]";
+#endif
+        res += "\nDetails: " + err_msg;
+        return res;
+    }
+
+    virtual bool need_rollback() { return rollback; }
+};
+
+class SednaUserSoftException : public SednaUserException
+{
+public:
+    SednaUserSoftException(const char* _file_, 
+                           const char* _function_,
+                           int _line_,
+                           const std::string& _err_msg_) : SednaUserException(_file_,
+                                                                              _function_,
+                                                                              _line_,
+                                                                              _err_msg_,
+                                                                              -1) {}
+    virtual std::string getMsg() const { return err_msg; }
+
+    virtual bool need_rollback() { return false; }
+};
+
+
+
+
+
+void sedna_soft_fault(const SednaException &e);
+void sedna_soft_fault();
+
+
+
+
+#endif

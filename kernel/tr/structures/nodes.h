@@ -1,0 +1,281 @@
+/*
+ * File:  nodes.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
+#ifndef _NODES_H
+#define _NODES_H
+
+/*
+ structures describing internal representation of XML data 
+*/
+
+#include "base.h"
+#include "sm_vmm_data.h"
+#include "numb_scheme.h"
+#include "sm_vmm_data.h"
+#include <string.h>
+
+struct schema_node;
+struct xml_ns;
+
+struct node_blk_hdr 
+{
+    vmm_sm_blk_hdr sm_vmm;	/* sm/vmm parameters */
+    xptr pblk;				/* previoius block */
+    xptr nblk;				/* next block */
+
+    schema_node*	snode;	/* pointer to the scm node; 0 for text blocks */
+    shft dsc_size;			/* size of the descriptor in bytes */
+    shft	desc_first;		/* shift to the first descriptor in block */
+    shft	desc_last;		/* shift to the last descriptor in block */
+    shft    count;          /* total number of descriptors in block */    
+    shft	free_first;		/* shift to the first empty space in block */
+	static void init(void *p, shft dsc_size);
+};
+
+
+
+/* Decriptor classification
+   ------------------------
+                  n_dsc                        s_dsc
+                 /  |  \  \___
+                /   |   \     \
+           e_dsc  t_dsc  a_dsc d_dsc
+             
+ */
+/* type of schema node (item) */
+enum t_item {
+	element,
+	text,
+	attribute,
+	document,
+	virtual_root,
+	xml_namespace,
+	comment,
+	pr_ins,
+	cdata
+};
+
+/* node descriptor (abstract structure) */
+struct n_dsc {
+    
+    t_nid	    nid;		/* ordering scheme number */
+    xptr			pdsc;		/* pointer to the record in the table of indirect addresses */
+    xptr			ldsc;		/* pointer to the descriptor of left sibling item */
+    xptr			rdsc;		/* pointer to the descriptor of right sibling item */
+	xptr	        indir;      /* record in indirection table*/
+    shft		desc_next;		/* shift to the next descriptor in block */
+    shft		desc_prev;		/* shift to the previous descriptor in block */
+
+};
+
+
+int xmlscm_type_size(xmlscm_type t);
+
+// Abstract base types
+#define xs_anyType				0
+#define xs_anySimpleType		1
+#define xs_anyAtomicType		2
+
+// Built-in simple, non-atomic types
+#define xs_IDREFS				3
+#define xs_NMTOKENS				4
+#define xs_ENTITIES				5
+
+// Built-in complex types
+#define xdt_untyped				6
+
+// Built-in atomic types
+#define xdt_untypedAtomic		10
+#define xs_dateTime				11
+#define xs_date					12
+#define xs_time					13
+#define xs_duration				14
+#define xdt_yearMonthDuration	15
+#define xdt_dayTimeDuration		16
+#define xs_float				17
+#define xs_double				18
+#define xs_string				19
+#define xs_normalizedString		20
+#define xs_token				21
+#define xs_language				22
+#define xs_NMTOKEN				23
+#define xs_Name					24
+#define xs_NCName				25
+#define xs_ID					26
+#define xs_IDREF				27
+#define xs_ENTITY				28
+#define xs_decimal				29
+#define xs_integer				30
+#define xs_gYearMonth			31
+#define xs_gYear				32
+#define xs_gMonthDay			33
+#define xs_gDay					34
+#define xs_gMonth				35
+#define xs_boolean				36
+#define xs_base64Binary			37
+#define xs_hexBinary			38
+#define xs_anyURI				39
+#define xs_QName				40
+#define xs_NOTATION				41
+#define se_separator		    42
+
+
+
+/* Descriptor of element node */
+struct e_dsc : public n_dsc {
+	xmlscm_type		type;		/* element type according to the scheme */	
+
+	static void init(void *p);
+    static void init(void *p, xmlscm_type t);
+};
+
+/* Descriptor of text-enabled node */
+struct t_dsc : public n_dsc {
+	int				size;		/* size of the text node */
+	xptr			data;		/* pointer to the content of that item */
+
+	static void init(void *p);
+};
+
+/* Descriptor of namespace node */
+struct ns_dsc : public n_dsc {
+	xml_ns* ns;
+	static void init(void *p);
+};
+/* Descriptor of attribute node */
+struct a_dsc : public t_dsc {
+	xmlscm_type		type;		/* attribute type according to the scheme */	
+	
+	static void init(void *p);
+	static void init(void *p, xmlscm_type t);
+};
+
+/* Descriptor of document node  */
+struct d_dsc : public t_dsc {
+    
+    static void init(void *p);
+};
+
+/* Descriptor of processing instruction node */
+struct pi_dsc : public t_dsc {
+	shft			target;		/* size of the target part */
+	static void init(void *p);
+};
+
+
+/* the pointer to the first free space in parent indirection table*/
+extern int* indirection_fs;
+
+/*calculates the shift of the first address relatively to the second one */
+#define CALCSHIFT(p1,p2) (shft)((char*)(p1)-(char*)(p2))
+
+
+/* ============================================================================ 
+  In all the following macros p and s is 'xptr*' pointer 
+ */
+#define UPDATELEFTPOINTER(p,s) ((n_dsc*)XADDR(p))->ldsc=s;
+#define UPDATERIGHTPOINTER(p,s) ((n_dsc*)XADDR(p))->rdsc=s;
+/* ============================================================================ 
+  In all the following macros b is 'node_blk_hdr *' pointer and n is 'n_dsc*' pointer
+ */
+#define GETPREVIOUSDESCRIPTOR_BL(b,n) (n_dsc*)((char*)b+((n_dsc*)n)->desc_prev)
+#define GETNEXTDESCRIPTOR_BL(b,n) (n_dsc*)((char*)b+((n_dsc*)n)->desc_next)
+/* ============================================================================ 
+  In all the following macros b is 'node_blk_hdr *' pointer and s is structure name
+ */
+#define COUNTREFERENCES(b,s) ((int)((b->dsc_size-s)/ sizeof(xptr)))
+
+#define CHILDCOUNT(p) COUNTREFERENCES((GETBLOCKBYNODE(p)),size_of_node(GETBLOCKBYNODE(p)))
+/* ============================================================================ 
+  In all the following macros b is 'n_dsc *' pointer 
+ */
+#define GETNEXTDESCRIPTOR(b) GETNEXTDESCRIPTOR_BL((node_blk_hdr*)((int)(b) & PAGE_BIT_MASK),b)
+#define GETPREVIOUSDESCRIPTOR(b) GETPREVIOUSDESCRIPTOR_BL((node_blk_hdr*)((int)(b) & PAGE_BIT_MASK),b)
+
+#define GETSCHEMENODE(b) GETBLOCKBYNODE_ADDR(b)->snode
+/* returns the pointer to the node block header*/
+#define GETBLOCKBYNODE_ADDR(p) ((node_blk_hdr*)((int)p & PAGE_BIT_MASK))
+ /* ============================================================================ 
+  In all the following macros b is 'node_blk_hdr *' pointer and s is shift
+ */
+#define GETPOINTERTODESC(b,s) (n_dsc*)((char*)b+s)
+/* ============================================================================ 
+  In all the following macros p is 'shft*' pointer to inside of some block, s is shift in the block 
+ */
+#define MAKEFREESPACE(p,s) *((shft*)p)=s
+
+/* ============================================================================ 
+  In all the following macros p is 'xptr*' pointer to inside of some block, s is shift in the block 
+ */
+#define UPDATENEXTDESCRIPTOR(p,s) ((n_dsc*)XADDR(p))->desc_next=((shft) s)
+#define UPDATEPREVIOUSDESCRIPTOR(p,s) ((n_dsc*)XADDR(p))->desc_prev=((shft) s)
+/* ============================================================================ 
+  In all the following macros p is 'xptr*' pointer to inside of some block 
+ */
+/* returns the pointer to the block header*/
+#define GETBLOCKBYNODE(p) (node_blk_hdr*)((int)XADDR(p) & PAGE_BIT_MASK)
+/* adress of the left sibling of the node*/
+#define GETLEFTPOINTER(p) ( ((n_dsc*)XADDR(p))->ldsc)
+/* adress of the right sibling of the node*/
+#define GETRIGHTPOINTER(p) (((n_dsc*)XADDR(p))->rdsc)
+/*address of the parent indirection*/
+#define GETPARENTPOINTER(p) (((n_dsc*)XADDR(p))->pdsc)
+/*returns the pointer to schema node*/
+#define GETSCHEMENODEX(b) (GETBLOCKBYNODE(b))->snode
+
+/* ============================================================================
+  In all the following macros p is 'shft*' pointer inside the block 
+ */
+/*address of the next free space*/
+#define GETPOINTERTONEXTFREESPACE(p) *((shft*)(p))
+/* ============================================================================
+  In all the following macros p is 'node_blk_hdr*' pointer to the begining of block 
+ */
+/* first free space in block*/
+#define GETBLOCKFIRSTFREESPACE(p) (((node_blk_hdr*)XADDR(p))->free_first)
+/* Descriptor size*/
+#define GETDESCRIPTORSIZE(p) (((node_blk_hdr*)XADDR(p))->dsc_size)
+/* ============================================================================
+  In all the following macros p is 'node_blk_hdr*' pointer  
+ */
+/* increments the number of node descriptors in block*/
+#define INCREMENTCOUNT(p) (((node_blk_hdr*)(p))->count++)
+/* address of the first descriptor in the block */
+//#define getBlockFirstDescriptorAbsolute(p)((void*)((char*)(p) + ((node_blk_hdr*)(p))->desc_first)))
+/* address of the first free space in the block */
+#define GETBLOCKFIRSTFREESPACEABSOLUTE(p)( (n_dsc*) ( (char*)p + ((node_blk_hdr*)p)->free_first)) 
+/* address of the last descriptor in the block */
+#define GETBLOCKLASTDESCRIPTORABSOLUTE(p)  ((n_dsc*) ((char*)(p) + ((node_blk_hdr*)(p))->desc_last)) 
+#define GETBLOCKFIRSTDESCRIPTORABSOLUTE(p) (ADDR2XPTR((char*)(p) + ((node_blk_hdr*)(p))->desc_first))
+
+
+/* ============================================================================
+  In all the following macros p is the pointer to the begining of block  and s shft
+ */
+/* sets the pointe to the first free space in the block*/
+#define UPDATEPOINTERTOFIRSTFREESPACEINBLOCK(p,s) ((node_blk_hdr*)(p))->free_first=((shft)s);
+#define UPDATEPOINTERTOLASTDESCRIPTOR(p,s) ((node_blk_hdr*)(p))->desc_last=((shft)s);
+
+
+
+
+#define N_DSC(p)		((n_dsc*)(XADDR(p)))
+#define E_DSC(p)		((e_dsc*)(XADDR(p)))
+#define T_DSC(p)		((t_dsc*)(XADDR(p)))
+#define A_DSC(p)		((a_dsc*)(XADDR(p)))
+#define D_DSC(p)		((d_dsc*)(XADDR(p)))
+#define NS_DSC(p)		((ns_dsc*)(XADDR(p)))
+#define PI_DSC(p)		((pi_dsc*)(XADDR(p)))
+
+
+int inline my_strcmp(const char* c1, const char* c2)
+{
+ if (c1==NULL && c2==NULL) return 0;
+ if (c1==NULL||c2==NULL) return (c1==NULL)?-1:1;
+ return strcmp(c1,c2);
+}
+
+#endif

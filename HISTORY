@@ -1,0 +1,260 @@
+
+                              Release Notes
+
+     _________________________________________________________________
+
+             Stable shapshot of version 0.5 being developed
+
+     Release date: 2005-??-??, current as of 2005-05-16
+
+     _________________________________________________________________
+
+New:
+- Bug fixes
+- Directory structure and file names changed according to "Filesystem 
+Hierarchy Standard" (http://www.pathname.com/fhs/pub/fhs-2.3.html)
+
+     _________________________________________________________________
+
+                               Release 0.4
+
+     Release date: 2005-04-26
+
+     _________________________________________________________________
+
+New:
+- Support for value indices based on B-tree
+- Support for regular expressions (based on PCRE-library) for processing
+structured textual data that are not marked up
+- Support for SQL connection from XQuery
+- Apache HTTP server module for Sedna
+- Terminal utility to work with Sedna interactively
+- Source code distributive for Linux is now independent of binary libraries
+
+
+Features:
+- Available for free in open source form under Apache License 2.0
+- Native XML DBMS implemented from scratch in C/C++ and Scheme
+- Support for the W3C XQuery language (partial support for the latest
+working drafts of 4th April 2005)
+- Support for a declarative update language
+- Native XML data storage structures designed for efficient support for both
+queries and updates (no underlying relational or another DBMS). The XML data
+storage is based on descriptive schema (derived from data, also called
+DataGuide)
+- Efficient support for stand-alone XML documents with arbitrary structures
+and collections of XML documents with similar structures
+- Structural indices (based on descriptive schema) and value indices (based
+on B-tree)
+- Support for regular expressions (based on PCRE-library) for processing
+structured textual data that are not marked up
+- Support for SQL connection from XQuery
+- Java API, Scheme API and C API for application development
+- Open client/server protocol over sockets that allows implementing APIs for
+other programming languages
+- Integration with Apache HTTP server (via Apache module)
+- Administration via easy-to-use command line utilities
+- Supplied with extensive documentation including Quick Start
+- Support for Windows and Linux platforms
+
+Please, notice that using the client/server protocol you can easily
+implement APIs for your favorite programming language. We will be happy to
+support you in doing this.
+
+Sedna version 0.4, documentation, benchmarks, papers, etc. can be found at
+http://www.modis.ispras.ru/Development/sedna.htm
+
+     _________________________________________________________________
+
+                               Release 0.3.1
+
+     Release date: 2005-02-25
+
+     _________________________________________________________________
+
+New:
+- Listener is now a part of Governor
+- Bug fixes
+
+     _________________________________________________________________
+
+                               Release 0.3
+
+     Release date: 2005-01-28
+
+     _________________________________________________________________
+
+New: 
+- Support for Linux platform
+- Support for document collections (that allows effective querying over a 
+large collection of similar XML documents)
+- XQuery support extensions: XML namespaces, user-defined XQuery functions
+- C API for application development
+
+Features:
+- Available for free in open source form under Apache License 2.0
+- Native XML DBMS implemented from scratch in C/C++ and Scheme
+- Support for the W3C XQuery language (partial support for the latest
+working drafts of 29th October 2004)
+- Support for a declarative update language
+- Native XML data storage structures designed for efficient support for 
+both queries and updates (no underlying relational or another DBMS). 
+The XML data storage is based on descriptive schema (derived from data, also 
+called DataGuide)
+- Efficient support for stand-alone XML documents with arbitrary structures
+and collections of XML documents with similar structures
+- Java API, Scheme API and C API for application development
+- Open client/server protocol over sockets that allows implementing APIs 
+for other programming languages
+- A data definition language that allows creating/droping XML documents and
+collections, printing the names of the documents stored in database, printing
+the descriptive schema of XML documents.
+- Administration via easy-to-use command line utilities
+- Supplied with extensive documentation including Quick Start
+- Support for Windows and Linux platforms
+
+Please, notice that using the client/server protocol you can easily implement 
+APIs for your favorite programming language. We will be happy to support you 
+in doing this.
+
+Sedna version 0.3, documentation, benchmarks, papers, etc. can be found at 
+http://www.modis.ispras.ru/Development/sedna.htm
+
+     _________________________________________________________________
+
+                           Open Source Release 
+
+     Release date: 2004-11-18
+
+     _________________________________________________________________
+
+Sedna XML DBMS is now available in source code under Apache License 2.0. 
+You can find the source code and build of the currently developed version 0.3 
+from http://www.modis.ispras.ru/Development/sedna.htm. Please note that 
+the build is unstable and we do not recommend to use it in production projects,
+for benchmarking Sedna, etc.
+
+Going free and open source with Sedna, we aim at getting more people involved 
+in using Sedna, giving us feedback and contributing to the actual development 
+of the code and documentation. Everybody's input is welcome!
+
+Features under development are: 
+- Support for Linux
+- Document collections (that allows effective querying over a large collection 
+  of similar XML documents)
+- XQuery support extensions: user-defined XQuery functions
+- XML namespaces 
+- Database Security 
+- C API
+- Unicode
+- Regular Expression Library for XQuery
+- XQuery library for querying relational databases in SQL
+- ACID Transactions and Recovery
+
+Features:
+- Available for free in open source form
+- Native XML DBMS implemented from scratch in C/C++ and Scheme
+- Support for the W3C XQuery language (partial support for the latest
+working drafts of 29th October 2004)
+- Support for a declarative update language
+- Native XML data storage structures designed for efficient support for both 
+  queries and updates (no underlying relational or another DBMS). The XML 
+  data storage is based on descriptive schema (derived from data, 
+  also called DataGuide)
+- Efficient support for stand-alone XML documents with arbitrary structures 
+  and collections of XML documents with similar structures
+- Java API and Scheme API for application development
+- Open client/server protocol over sockets that allows implementing APIs 
+  for other programming languages
+- A data definition language that allows creating/droping XML documents and 
+  collections, printing the names of the documents stored in database, 
+  printing the descriptive schema of XML documents.
+- Administration via easy-to-use command line utilities
+- Supplied with extensive documentation including Quick Start
+
+Please, notice that using the client/server protocol you can easily implement 
+APIs for your favorite programming language. We will be happy to support you 
+in doing this.
+
+     _________________________________________________________________
+
+                               Release 0.2
+
+     Release date: 2004-06-10 
+
+     _________________________________________________________________
+
+New:
+- Java API and Scheme API for application development
+- Open and fully specified client/server protocol over sockets that allows 
+  easily implementing APIs for other programming languages
+- Many bugfixes
+- Good performance improvement
+  (see our benchmark page with versions performance comparison:
+  http://www.modis.ispras.ru/Development/Benchmarks/sedna_benchmark.htm)
+- XQuery support extensions: node comparisons (<<,>>,is), fn:contains
+- A data definition language that allows creating/droping XML documents, 
+  printing the names of the documents stored in database, printing descriptive 
+  schema of XML documents.
+
+Please, notice that using the client/server protocol you can easily
+implement APIs for your favorite programming language. We will be happy 
+to support you in doing this.
+
+Features:
+- Available for free for commercial and non-commercial usage.
+- Native XML DBMS implemented from scratch in C/C++ and Scheme
+- Support for the W3C XQuery language (partial support for the latest
+  working drafts of 12 November 2003)
+- Support for a declarative update language
+- Native XML data storage structures designed for efficient support for both 
+  queries and updates (no underlying relational or another DBMS). The XML data
+  storage is based on descriptive schema (derived from data, also called 
+  DataGuide) 
+- Java API and Scheme API for application development
+- Open client/server protocol over sockets that allows implementing APIs for 
+  other programming languages
+- Administration via easy-to-use command line utilities
+- Supplied with extensive documentation including Quick Start
+
+Sedna version 0.2, documentation, benchmarks, papers are available at
+http://www.modis.ispras.ru/Development/sedna.htm
+
+     _________________________________________________________________
+
+                               Release 0.1
+
+     Release date: 2004-04-12 
+     _________________________________________________________________
+
+
+Sedna is a native XML DBMS implemented from scratch in C/C++ and Scheme. It
+is designed having the following main goals in mind:
+1) support for all traditional DBMS features (such as update and query
+languages, query optimization, fine-grain concurrency control, various
+indexing techniques, recovery and security)
+2) efficient support for unlimited volumes of document-centric and
+data-centric XML documents that may have a complex and irregular structure
+3) support for the W3C XQuery language in such a way that the system can be
+efficiently used for solving problems from different domains such as XML
+data querying, XML data transformations and even business logic computation
+(in this case XQuery is regarded as a general-purpose functional programming
+language)
+
+The first release of Sedna v0.1 is a ready-to-use system that provides the
+following fundamental features:
+- Support for the W3C XQuery language (partial support for the latest
+  working drafts of 12 November 2003)
+- Support for a declarative update language (it is based on the XQuery
+  update proposal by Patrick Lehti)
+- Native XML data storage structures designed for efficient support for
+  XQuery and its data model
+  (no underlying relational or another DBMS). The XML data storage is based 
+  on descriptive schema (also called DataGuide)
+- Administration via easy-to-use command line utilities
+- Supplied with extensive documentation including Quick Start
+
+Sedna is available for free for commercial and non-commercial usage.
+
+Have a look at our web site
+(http://www.modis.ispras.ru/Development/sedna.htm) and download Sedna.

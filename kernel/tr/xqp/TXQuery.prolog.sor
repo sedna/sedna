@@ -1,0 +1,110 @@
+/**/
+
+prolog!:
+	<<SORASTBase* prolog_ = NULL;>>
+	(  fd:functionDefn
+	   <<if (prolog_ == NULL) prolog_ =fd; else prolog_->append(fd);>>
+	 | nd:namespaceDecl
+	   <<if (prolog_ == NULL) prolog_ =nd; else prolog_->append(nd);>>
+	 | dnd:defaultNamaspaceDecl
+	   <<if (prolog_ == NULL) prolog_ =dnd; else prolog_->append(dnd);>>
+	 | bsd:boundarySpaceDecl
+	   <<if (prolog_ == NULL) prolog_ =bsd; else prolog_->append(bsd);>>
+	 | dopt:declareOption
+	   <<if (prolog_ == NULL) prolog_ =dopt; else prolog_->append(dopt);>>
+	)*
+	<<#prolog= prolog_;>>
+;
+
+functionDefn!:
+	 <<out_context _out_c_;>>
+	 #(AST_FUNCTION qn1:qname 
+	   pl1:paramList
+	   #(AST_RETURNED_TYPE st1:sequenceType)
+	   #(AST_BODY_FUNC {e:expr[in_context(OUTSIDE_PREDICATE)] >[_out_c_]}))
+
+	 <<
+	   if (e != NULL)
+	      #functionDefn=#(#["declare-function"],
+	                      #(#["const"],
+	                        #(#["type"], #["!xs!QName"]),
+	                        qn1),
+	                      pl1,
+	                      #(#[], #["result-type"], st1),
+	                      #(#["body"], e));
+	   else
+	      #functionDefn=#(#["declare-external-function"],
+	                      #(#["const"],
+	                        #(#["type"], #["!xs!QName"]),
+	                        qn1),
+	                      pl1,
+	                      #(#[], #["result-type"], st1));
+
+	 >>
+;
+
+
+paramList!:
+	<<#paramList=#[];>>
+	#(AST_FPARAMS (p:param <<#paramList->addChild(p);>>)*)
+	<<if(p==NULL) //there is no params
+	    #paramList->addChild(#[]);
+	>>
+;
+
+
+param!:
+	#(AST_PARAM v:vardecl st:sequenceType)
+
+	<<#param=#(#[], st, v);>>
+;
+
+namespaceDecl!:
+	#(AST_DECL_NSP p:AST_PREFIX s:AST_STRING_CONST)
+
+	<<#namespaceDecl=#(#["declare-namespace"], 
+	                   #[p->getText()],
+	                   #(#["const"], 
+	                     #(#["type"], #["!xs!string"]),
+	                     #[s->getText()]));
+	>>
+;
+
+defaultNamaspaceDecl!:
+	(#(AST_DECL_DEF_ELEM_NSP s:AST_STRING_CONST)
+
+	 <<#defaultNamaspaceDecl=#(#["declare-default-element-namespace"],
+	                           #(#["const"], 
+	                             #(#["type"], #["!xs!string"]),
+	                             #[s->getText()]));   
+	 >>
+	|
+	 #(AST_DECL_DEF_FUNC_NSP s2:AST_STRING_CONST)
+	 <<#defaultNamaspaceDecl=#(#["declare-default-function-namespace"],
+	                           #(#["const"], 
+	                             #(#["type"], #["!xs!string"]),
+	                             #[s2->getText()]));   
+	 >>
+
+	)
+;
+
+boundarySpaceDecl!:
+	(  AST_BSPACE_P <<#boundarySpaceDecl = #(#["boundary-space-decl"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"preserve\""]));>>
+	 | AST_BSPACE_S <<#boundarySpaceDecl = #(#["boundary-space-decl"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"strip\""]));>>
+	)
+;
+
+declareOption!:
+	#(AST_DECLARE_OPT qn:qname s:AST_STRING_CONST)
+	<<
+	  #declareOption = #(#["declare-option"],
+	                     #(#["const"],
+	                       #(#["type"], #["!xs!QName"]),
+	                       qn),
+	                     #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[s->getText()]));
+	>>
+;
+

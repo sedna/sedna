@@ -1,0 +1,93 @@
+/*
+ * File:  ipc_ops.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
+#include "sp.h"
+#include "d_printf.h"
+
+
+/* returns zero - if succeeded;                        
+   returns 1 - if Message length exceeds available size
+   returns U_SOCKET_ERROR if error */
+int sp_recv_msg(USOCKET s, struct msg_struct *msg)
+{
+    int rc = 0, got = 0;
+    char ptr[8];
+
+    while (got < 8)
+    {
+        rc = urecv(s, ptr + got, 8 - got);
+        if ((rc == U_SOCKET_ERROR) || (rc == 0))
+            return U_SOCKET_ERROR;
+        got += rc;
+    }
+
+    msg->instruction = ntohl(*(__int32 *) ptr);
+    msg->length = ntohl(*(__int32 *) (ptr + 4));
+    if (msg->length > SE_SOCKET_MSG_BUF_SIZE)
+    {
+        return 1;               /* Message length exceeds available size */
+    }
+
+    got = 0;
+    while (got < msg->length)
+    {
+        rc = urecv(s, msg->body + got, msg->length - got);
+        if ((rc == U_SOCKET_ERROR) || (rc == 0))
+            return U_SOCKET_ERROR;
+        got += rc;
+    }
+    return 0;
+}
+
+
+/* returns zero if succeeded
+   returns U_SOCKET_ERROR if error */
+int sp_send_msg(USOCKET s, const struct msg_struct *msg)
+{
+    char ptr[8];
+    int rc = 0, sent = 0;
+
+    *(__int32*)ptr = htonl(msg->instruction);
+    *((__int32*)(ptr + 4)) = htonl(msg->length);
+    
+    while (sent < 8)
+    {
+        rc = usend(s, ptr + sent, 8 - sent);
+        if (rc == U_SOCKET_ERROR)
+            return U_SOCKET_ERROR;
+        sent += rc;
+    }
+
+    sent = rc = 0;
+    while (sent < msg->length)
+    {
+        rc = usend(s, (const char *) (msg->body + sent), msg->length - sent);
+        if (rc == U_SOCKET_ERROR)
+            return U_SOCKET_ERROR;
+        sent += rc;
+    }
+
+    return 0;
+}
+
+/*  sends error message to client. 
+    Error message contains message instruction, message length, error code, error info.
+    returns zero if succeeded, U_SOCKET_ERROR if failed */
+int sp_error_message_handler(USOCKET s, int error_ins, int error_code, const char *error_info)
+{
+    struct msg_struct server_msg;
+    int err_length = strlen(error_info);
+
+    server_msg.instruction = error_ins;
+    server_msg.length = err_length + 5 + 4;
+    *(__int32*)server_msg.body = htonl(error_code);  /* this is error code */
+    server_msg.body[4] = 0;
+    *(__int32*)(server_msg.body + 5) = htonl(err_length);  /* this is error_info length */
+    memcpy(server_msg.body + 9, error_info, err_length);
+
+    return sp_send_msg(s, &server_msg);
+
+}

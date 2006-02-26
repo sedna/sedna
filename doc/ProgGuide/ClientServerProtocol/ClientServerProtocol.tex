@@ -1,0 +1,594 @@
+
+% File:  ClientServerProtocol.tex
+% Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+
+\documentclass[a4paper,12pt]{article}
+%\font\mmmm cmtt10
+%\makeatletter
+%\def\verbatim@font{\mmmm}
+%\makeatother
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{theorem}
+\newtheorem{definition}{Definition}
+{\theorembodyfont{\rmfamily} \newtheorem{proof}{Proof}}
+\newtheorem{theo}{Theorem}
+\newtheorem{note}{Note}
+
+\usepackage[dvips]{epsfig}
+
+\usepackage{multirow}
+
+\title{Sedna Client/Server Protocol}
+\date{}
+%\author{Maria Rekouts}
+
+\begin{document}
+\maketitle
+Sedna uses a message-based protocol for communication between clients and the Sedna server through the TCP/IP sockets. Higher level application programming interfaces are built over this protocol (see for example the Java API and Scheme API in the Sedna programmer's guide).
+
+This document describes version 1.0 of the protocol. 
+
+By default the server listens clients to connect to port number 5050. Port number can be changed from the default (for more detail see the Sedna administration guide).
+
+%The server launches a new "connection" process for each user session. 
+
+\section{Message Structure}
+In messages values of the following three data types are used:
+\begin{enumerate}
+\item \verb!byte!
+\item \verb!int! --- four bytes presented in the network byte order (most significant byte first).
+\item \verb!string! --- has the following structure: the first byte identifies the string format, the next four bytes (int) specify the length of the string in bytes and the next 'length' bytes is the string. The only supported string format is C-string without trailing null character. The first byte equal zero identifies C-string. 
+\end{enumerate}
+
+The common message structure is as follows:
+\begin{itemize} 
+\item the first four bytes (int) is instruction 
+\item the next four bytes (int) is the length of a body in bytes
+\item the next 'length' bytes is the body 
+\end{itemize} 
+
+The body of the message is determined by the instruction. In general the body of all messages is a sequence of values of the three types listed above. The position of a value in the sequence determines its meaning. 
+
+In the current version of Sedna the size of the message body must not exceed 10240 bytes.
+\section{Message Flow}
+
+\subsection{Start-Up}
+
+To begin a session, a client creates a connection to the server and sends a startup message. The server launches a new process that is associated with the session. If launching a new process causes some errors, the server sends the ErrorResponse message, if not, it sends the SendSessionParameters message to the client. Then client sends the session parameters in the SessionParameters message. This message includes the particular protocol version to be used, the name of the user and of the database the user wants to connect to. The server then uses this information to determine whether the connection is acceptable. If not, it sends the error message (ErrorResponse). If the connection is acceptable the server then sends an authentication request message, to which the client must reply with an appropriate authentication response message. In principle the authentication request/response cycle could require multiple iterations, but the present authentication method uses exactly one request (SendAuthParameters) and response (AuthenticationParameters). The authentication cycle ends with the server either rejecting the connection attempt (AuthenticationFailed), or sending AuthenticationOk. 
+
+The possible instructions from the client in this phase are:
+\begin{itemize} 
+\item Start-Up. Does not contain the body.
+\item SessionParameters. The body contains the protocol version, user name and db name.
+\item AuthenticationParameters. The body contains password.
+\end{itemize} 
+
+The possible instructions from the server in this phase are:
+\begin{itemize} 
+\item SendSessionParameters. Does not contain the body.
+\item SendAuthParameters. Does not contain the body.
+\item AuthenticationOK. Does not contain the body.
+\item AuthenticationFailed. Body contains info.
+\end{itemize}
+
+\subsection{Transaction}
+
+After the start-up phase has succeeded and session is begun, client can run zero or more transactions in the session.
+
+Transactions must be run sequentially, that is the client must commit a transaction before starting a new one.
+
+To begin a transaction client sends the BeginTransaction message. If the transaction begins Ok, the server answers BeginTransactionOk. If the transaction fails to begin, the server answers BeginTransactionFailed.
+
+To commit the transaction client sends the CommitTransaction message. If the transaction commits Ok, the server answers CommitTransactionOk. If the transaction fails to commit, the server does rollback for the transaction and answers CommitTransactionFailed.
+
+To rollback the transaction client sends the RollbackTransaction message. If the transaction rollbacks Ok, the server answers RollbackTransactionOk. If the transaction failed to rollback, the server sends RollbackTransactionFailed and closes the session.
+
+The possible instructions from the client in this phase are:
+\begin{itemize} 
+\item BeginTransaction. Does not contain a body.
+\item CommitTransaction. Does not contain a body.
+\item RollbackTransaction. Does not contain a body.
+\end{itemize}
+
+The possible instructions from the server in this phase are:
+\begin{itemize}
+\item BeginTransactionOk. Does not contain a body.
+\item BeginTransactionFailed. The body contains the error code and error info.
+\item CommitTransactionOk. Does not contain a body.
+\item CommitTransactionFailed. The body contains the error code and error info.
+\item RollbackTransactionOk. Does not contain a body.
+\item RollbackTransactionFailed. The body contains the error code and error info.
+\end{itemize} 
+
+\subsection{Query Execution}
+
+Queries are executed via different subprotocols depending on the type of the query and the query length. There are three types of queries: query, update, bulk load. 
+
+If the query is not longer than the message body (10240 bytes) the client sends the Execute message that contains a query statement to the server. 
+If the query is longer than the message body the client must send the query in parts: each part is in the body of ExecuteLong message. After all parts of the query are sent, client must send LongQueryEnd message (with the empty body), thus to make the server understand that the whole query is sent.
+
+
+The server analyzes the query text to identify the type of the query and runs the corresponding subprotocol. The following sections describe these subprotocols. 
+
+\subsubsection{Querying Data }
+
+The client sends a query in the Execute message, or in the ExecuteLong messages plus the LongQueryEnd message.
+
+The server processes the query. If the query succeeds the server sends the QuerySucceeded message to the client and then sends a number of messages that contain the first item of the result sequence to the client in the way described below.
+
+When the client needs to get the next item of the result sequence it sends the GetNextItem message. The server then sends the next item of the result sequence.
+
+Server may send every item in parts. Every part of the item is enveloped in the ItemPart message. When the whole item is sent, the server sends the ItemEnd message or ResultEnd message if it was the last item.
+
+When the result sequence has ended, server on recieving GetNextItem from client sends the ResultEnd message without prior sending the ItemPart message.
+
+Client is not required to get all the items of the result sequence. It can send next query for execution before all the items of the result sequence are recieved from the server.
+ 
+If the query failed, the server sends message QueryFailed to the client.
+
+The possible instructions from the client in this phase are:
+\begin{itemize} 
+\item Execute. The body contains an XQuery query text.
+\item ExecuteLong. The body contains a part of a long XQuery query.
+\item LongQueryEnd. Does not contain a body.
+\item GetNextItem. Does not contain a body.
+\end{itemize}
+
+The possible instructions from the server in this phase are:
+\begin{itemize} 
+\item QuerySucceeded. Does not contain a body.
+\item QueryFailed. The body contains the error code and error info.
+\item ItemPart. The body contains the part of the item.
+\item ItemEnd. Does not contain a body.
+\end{itemize}
+
+\subsubsection{Updating Data}
+
+The client sends the Execute message (or the ExecuteLong messages plus the LongQueryEnd message) that contains an update statement. The server processes the update. If the update succeeded the server sends the UpdateSucceeded message to the client. If the update failed, the server sends the UpdateFailed message.
+
+The possible instructions from the client in this phase are:
+\begin{itemize}
+\item Execute. The body contains an update statement.
+\item ExecuteLong. The body contains a part of a long XQuery query.
+\item LongQueryEnd. Does not contain a body.
+\end{itemize}
+
+The possible instructions from the server in this phase are:
+\begin{itemize}
+\item UpdateSucceeded. Does not contain a body.
+\item UpdateFailed. The body contains the error code and error info.
+\end{itemize}
+
+\subsubsection{Bulk Load}
+
+The client sends the Execute message that contains a bulk load statement. The server picks out the name of the file and sends the BulkLoadFileName message that contains the name.
+
+The client reads the file specified. If there is no such file or some access errors occur, the client sends BulkLoadError message to the server. Else the client transfers the data from the file to the server by portions. Each portion is sent in the BulkLoadPortion message.
+
+When the whole file is sent, the client sends the BulkLoadEnd message. The server answers with the BulkLoadSucceeded or BulkLoadFailed message.
+
+The possible instructions from the client in this phase are:
+\begin{itemize}
+\item Execute. The body contains a query for bulk load.
+\item BulkLoadError. Does not contain the body.    
+\item BulkLoadPortion. The body contains portion of data.
+\item BulkLoadEnd. Does not contain the body.
+\end{itemize}
+
+The possible instructions from the server in this phase are:
+\begin{itemize}
+\item BulkLoadFileName. The body contains file name.
+\item BulkLoadSucceeded. Does not contain the body.
+\item BulkLoadFailed. The body contains the error code and error info.
+\end{itemize}
+
+\subsection{Termination}
+Termination can be initiated by the client (for example when it closed the session) or by the server (for example in case of an administrator-commanded database shutdown or some failure). 
+
+The normal termination procedure is that the client closes the session after transaction commit. In this case the client sends the CloseConnection message. The server processes its closing procedure. If no errors occur the server sends the CloseConnectionOk message and closes the connection.
+
+If the client sends the CloseConnection message before committing the on-going transaction, the server does rollback for the transaction, sends the TransactionRollbackBeforeClose message and closes the connection.
+
+If on receipt of the CloseConnection message, some errors on server occur the server sends the ErrorResponse message and closes.
+
+While an administrator-commanded database shutdown or some failure occurs the server may disconnect without any client request to do so. Before closing the connection the server sends the ErrorResponse message that contains error code and error info. 
+
+The possible instructions from the client in this phase are:
+\begin{itemize}
+\item CloseConnection. Does not contain the body. 
+\end{itemize}
+
+The possible instructions from the server in this phase are:
+\begin{itemize}
+\item CloseConnectionOk. Does not contain the body. 
+\item TransactionRollbackBeforeClose. Does not contain the body.
+\end{itemize}
+
+\subsection{Server Error Handling}
+
+In all phases of client/server interaction an error can occur on the server. In this case the server answers to a client request message by sending the ErrorResponse message that contains the error code and the error info.
+
+\begin{itemize}
+\item ErrorResponse. The body contains the error code and the error info. 
+\end{itemize}
+
+
+
+\section{Message Formats}
+
+This section describes the detailed format of each message. Each is marked to indicate that it may be sent by a client (C), a server (S).
+
+\begin{verbatim}
+Start-Up (C).
+  head:
+   110 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}   
+
+\begin{verbatim}
+SessionParameters (C).
+   head:
+    120 (int)
+    body length (int)
+  body:
+   major protocol version number (byte);
+   minor protocol version number (byte);
+   user name (string);
+   database name (string);
+\end{verbatim}   
+
+\begin{verbatim}
+AuthenticationParameters (C).
+  head:
+   130 (int)
+   body length (int)
+  body:
+   password (string)
+\end{verbatim}   
+
+\begin{verbatim}
+SendSessionParameters (S).
+  head:
+   140 (int)
+   body length = 0 (int)
+  body:
+   empty 
+\end{verbatim}
+   
+\begin{verbatim}
+SendAuthParameters (S).
+  head:
+   150 (int)
+   body length = 0 (int)
+  body:
+   empty
+\end{verbatim}   
+  
+\begin{verbatim}  
+AuthenticationOK (S).
+  head:
+   160 (int)
+   body length = 0 (int)
+  body:
+   empty
+\end{verbatim}   
+
+\begin{verbatim}
+AuthenticationFailed (S).
+  head:
+   170 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+ErrorResponse (S).
+  head:
+   100 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}   
+
+\begin{verbatim}
+BeginTransaction (C).
+  head:
+   210 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}   
+
+\begin{verbatim}
+CommitTransaction (C).
+  head:
+   220 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}   
+
+\begin{verbatim}
+RollbackTransaction (C).
+  head:
+   225 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}   
+
+\begin{verbatim}
+BeginTransactionOk (S).
+  head:
+   230 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+   
+\begin{verbatim}
+BeginTransactionFailed (S).
+  head:
+   240 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+CommitTransactionOk (S).
+  head:
+   250 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+CommitTransactionFailed (S).
+  head:
+   260 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+RollbackTransactionOk (S).
+  head:
+   255 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+RollbackTransactionFailed (S).
+  head:
+   265 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+Execute (C).
+  head:
+   300 (int)
+   body length (int)
+  body:
+   query text (string)
+\end{verbatim}
+
+\begin{verbatim}
+ExecuteLong (C).
+  head:
+   301 (int)
+   body length (int)
+  body:
+   query text (string)
+\end{verbatim}
+
+\begin{verbatim}
+LongQueryEnd (C).
+  head:
+   302 (int)
+   body length = 0 (int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+GetNextItem (C).
+  head:
+   310 (int)
+   body length = 0 (int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+QuerySucceeded (S).
+  head:
+   320 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+QueryFailed (S).
+  head:
+   330 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+UpdateSucceeded (S).
+  head:
+   340 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+UpdateFailed (S).
+  head:
+   350 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+ItemPart (S).
+  head:
+   360 (int)
+   body length (int)
+  body:
+   result part (string)
+\end{verbatim}
+
+\begin{verbatim}
+ItemEnd (S).
+  head:
+   370 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+ResultEnd (S).
+  head:
+   375 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadError (C).
+  head:
+   400 (int)
+   body length (int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadPortion (C).
+  head:
+   410 (int)
+   body length (int)
+  body:
+   data portion (string)
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadEnd (C).
+  head:
+   420 (int)
+   body length = 0 (int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadFileName (S).
+  head:
+   430 (int)
+   body length (int)
+  body:
+   file name (string)
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadFromStream (S).
+  head:
+   431 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadSucceeded (S).
+  head:
+   440 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+BulkLoadFailed (S).
+  head:
+   450 (int)
+   body length(int)
+  body:
+   error code (int)
+   error info (string)
+\end{verbatim}
+
+\begin{verbatim}
+ShowTime (C).
+  head:
+   451 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+LastQueryTime (S).
+  head:
+   452 (int)
+   body length(int)
+  body:
+   time (string)
+\end{verbatim}
+
+\begin{verbatim}
+CloseConnection (C).
+  head:
+   500 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+CloseConnectionOk (S).
+  head:
+   510 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\begin{verbatim}
+TransactionRollbackBeforeClose (S).
+  head:
+   520 (int)
+   body length = 0(int)
+  body:
+   empty
+\end{verbatim}
+
+\end{document}

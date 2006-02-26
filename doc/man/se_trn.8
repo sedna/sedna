@@ -1,0 +1,67 @@
+.TH SE_TRN 8 "June 2005" "Sedna" "Sedna Native XML DBMS"
+
+.SH NAME
+se_trn \- execute Sedna transactions
+
+.SH SYNOPSIS
+.B se_trn
+[options] dbname filename
+
+.SH DESCRIPTION
+There are several ways to execute query over Sedna. The simplest way to do it
+is using the \fBse_trn\fR command. This command requries two input parameters.
+The first one is the name of the database, to which the query is addressed and
+the second one is the file with .xquery extension, which contains the user
+query. Besides, there are several options, which semantics will be explained
+below. About supported QUERY/UPDATE language see in the Sedna Programmer's
+Guide. The result of the query is directed to standard output stream (stdout).
+
+
+.SH OPTIONS
+.TP
+\fB--help\fR, \fB-help\fR
+display help and exit
+.TP
+\fB-version\fR
+display product version and exit
+.TP
+\fB-show-time\fR on/off
+show time of query execution (default off)
+.TP
+\fB-print-intermed\fR on/off
+print intermediate results for debug purposes (default off)
+.TP
+\fB-query-type\fR type
+type of the query to execute (XQuery, POR), default is XQuery
+.TP
+\fB-name\fR name
+user name (default SYSTEM)
+\fB-pswd\fR password
+user password (default MANAGER)
+.TP
+\fBdb-name\fR is database name
+.TP
+\fBfilename\fR is the file with an XQuery query
+
+.SH NOTES
+Before running any transactions be sure that Sedna storage manager is strarted
+for the corresponding database (see \fBse_gov\fR (8) for further details)
+
+.SH FILES
+.I /etc/sednaconf.xml
+.RS
+Sedna configuration file (optional)
+.RE
+.I /var/lib/sedna/
+.RS
+Default location of database files
+.RE
+.I /usr/share/doc/sedna/ProgGuide.pdf.gz
+.RS
+Sedna Programmer's Guide
+.SH "SEE ALSO"
+.BR se_cdb (8),
+.BR se_gov (8),
+.BR se_sm (8),
+.BR se_term (1)
+
