@@ -323,9 +323,9 @@ void bm_allocate_data_block(session_id sid,
 
 //d_printf1("allocate 3\n");
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
+	vmm_sm_blk_hdr::init(hdr);
     hdr->p = *p;
     hdr->roffs = *offs;
-    hdr->is_changed = false;
 
 //d_printf1("allocate 4\n");
     //d_printf1("bm_allocate_data_block: end\n");
@@ -351,9 +351,9 @@ void bm_allocate_tmp_block(session_id sid,
     //used_mem.push(*offs);
 
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
+	vmm_sm_blk_hdr::init(hdr);
     hdr->p = *p;
     hdr->roffs = *offs;
-    hdr->is_changed = false;
 }
 
 void bm_delete_block(session_id sid,

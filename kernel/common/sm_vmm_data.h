@@ -30,8 +30,19 @@ struct vmm_sm_blk_hdr
 #ifdef LRU
     LRU_stamp lru;
 #endif
-//    int last_read;	// for timestamps (needed???)
-//    int last_write;	// for timestamps (needed???)
+	static void init(vmm_sm_blk_hdr* hdr)
+	{
+		int i = 0;
+		hdr->p = XNULL;
+		hdr->roffs = 0;
+		hdr->is_changed = false;
+		hdr->lsn = NULL_LSN;
+		for (i = 0; i < BLOCK_PARTS; ++i)
+			hdr->cntrs[i] = 0;
+#ifdef LRU
+		hdr->lru = 0;
+#endif
+	}
 };
 
 

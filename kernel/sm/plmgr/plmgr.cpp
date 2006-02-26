@@ -102,6 +102,8 @@ void ll_phys_log_flush_blk(void *p, bool sync)
 #ifdef PHYS_LOG
   log_flush_log_times++;
  //phys_log_mgr->logFlush(GETBLOCKHDR_ADDR(p)->lsn);
+  d_printf2("in flush func lsn=%d\n", GETBLOCKHDR_ADDR(p)->lsn);
+  ADDR2XPTR(p).print(); 
   phys_log_mgr->logFlushPortionOfRecords(GETBLOCKHDR_ADDR(p)->lsn, sync);
 
   string str = string("ll_phys_log_flush_blk finished\n");

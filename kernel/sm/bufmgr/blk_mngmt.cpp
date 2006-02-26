@@ -231,6 +231,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
         throw USER_EXCEPTION(SE1011);
 
     ll_phys_log_decrease(mb->data_file_cur_size);
+    ll_phys_log_flush();
 
     int res = 0;
     __int64 dsk_offs = 0;
@@ -259,17 +260,9 @@ void extend_data_file(int extend_portion) throw (SednaException)
 #endif
     if (p == NULL) throw SYSTEM_ENV_EXCEPTION("Cannot allocate enough memory");
 
+	int i = 0;
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)p;
-
-    hdr->roffs = 0;
-    hdr->is_changed = false;
-    hdr->lsn = NULL_LSN;
-    
-    int i = 0;
-    for (i = 0; i < BLOCK_PARTS; i++)
-    {
-      hdr->cntrs[i] = 0;
-    }
+	vmm_sm_blk_hdr::init(hdr);
 
     for (i = 0; i < extend_portion; i++)
     {
@@ -336,18 +329,9 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
 #endif
     if (p == NULL) throw SYSTEM_ENV_EXCEPTION("Cannot allocate enough memory");
 
+	int i = 0;
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)p;
-
-    hdr->roffs = 0;
-    hdr->is_changed = false;
-    hdr->lsn = NULL_LSN;
-
-    int i = 0;
-    for (i = 0; i < BLOCK_PARTS; i++)
-    {
-      hdr->cntrs[i] = 0;
-    }
-
+	vmm_sm_blk_hdr::init(hdr);
 
     for (i = 0; i < extend_portion; i++)
     {

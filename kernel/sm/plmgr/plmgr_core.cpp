@@ -467,6 +467,8 @@ void plmgr_core::logInsert(const void* p, int size, __int8 op, bool sync)
      //log_head.p = GETBLOCKHDR_ADDR(p)->p;
 	 log_head.p = ADDR2XPTR(p);
      GETBLOCKHDR_ADDR(p)->lsn = log_head.lsn;
+     d_printf2("written lsn=%d ", log_head.lsn);
+     ADDR2XPTR(p).print(); 
   }
   else
      log_head.p = XNULL;

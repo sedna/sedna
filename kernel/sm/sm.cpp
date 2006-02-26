@@ -88,9 +88,9 @@ int sm_server_handler(void *arg)
 
                          //d_printf1("case 3 (obtain lock)\n");
 
-                         d_printf1("lock table before lock operation\n");
-                         lm_table.print();
-                         d_printf1("\n");
+//                         d_printf1("lock table before lock operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");
 
                          //d_printf1("trans table before lock operation\n");
                          //tr_table.print();
@@ -114,9 +114,9 @@ int sm_server_handler(void *arg)
                          else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(true)) msg->data.data[0] = '0';
                          else msg->data.data[0] = '2';
                           
-                         d_printf1("lock table after lock operation\n");
-                         lm_table.print();
-                         d_printf1("\n");
+//                         d_printf1("lock table after lock operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");
 
                          //d_printf1("trans table after lock operation\n");
                          //tr_table.print();
@@ -127,10 +127,10 @@ int sm_server_handler(void *arg)
                      }
 
             case 4:  {//release all transaction's locks
-                         d_printf1("case4 (release all locks)\n");
-                         d_printf1("lock table before release locks operation\n");
-                         lm_table.print();
-                         d_printf1("\n");      
+//                         d_printf1("case4 (release all locks)\n");
+//                         d_printf1("lock table before release locks operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");      
 
                          //d_printf1("trans table before release lock operation\n");
                          //tr_table.print();
@@ -138,9 +138,9 @@ int sm_server_handler(void *arg)
 
                          lm_table.release_tr_locks(msg->trid);
 
-                         d_printf1("lock table after release locks operation\n");
-                         lm_table.print();
-                         d_printf1("\n");
+//                         d_printf1("lock table after release locks operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");
 
                          //d_printf1("trans table after release lock operation\n");
                          //tr_table.print();
@@ -150,10 +150,10 @@ int sm_server_handler(void *arg)
                          break;
                      }  
             case 5:  {
-                         d_printf2("case 5(release lock on doc=%s)\n", (msg->data.data)+2);
-                         d_printf1("lock table before release locks operation\n");
-                         lm_table.print();
-                         d_printf1("\n");      
+//                         d_printf2("case 5(release lock on doc=%s)\n", (msg->data.data)+2);
+//                         d_printf1("lock table before release locks operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");      
 
                          //d_printf1("trans table before release lock operation\n");
                          //tr_table.print();
@@ -171,9 +171,9 @@ int sm_server_handler(void *arg)
                          lock_reply r = lm_table.unlock(msg->trid, *r_id);
 
 
-                         d_printf1("lock table after release locks operation\n");
-                         lm_table.print();
-                         d_printf1("\n");
+//                         d_printf1("lock table after release locks operation\n");
+//                         lm_table.print();
+//                         d_printf1("\n");
 
                          //d_printf1("trans table after release lock operation\n");
                          //tr_table.print();
