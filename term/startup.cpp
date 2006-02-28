@@ -1,10 +1,12 @@
 /*
- * 
+ * File:  startup.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
     
 #include <stdio.h>
 #include <iostream>
 #include <ostream>
+#include <sys/types.h>
 
 #include "libsedna.h"
 
@@ -13,9 +15,6 @@
 #include "d_printf.h"
 #include "version.h"
 #include "exceptions.h"
-
-#include <sys/types.h>
-
 #include "term_globals.h"
 #include "term_funcs.h"
 #include "mainloop.h"
@@ -23,11 +22,6 @@
 
 using namespace std;
 
-/*
- *
- * main
- *
- */
 void print_term_usage()
 {
     printf("Usage: se_term [options] dbname\n\n");
@@ -35,7 +29,9 @@ void print_term_usage()
     exit(0);
 }
 
-
+/*
+ * main
+ */
 int main(int argc, char *argv[])
 {
 	int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
@@ -46,9 +42,8 @@ int main(int argc, char *argv[])
 	
 	try{
 		if (arg_scan_ret_val == 0)
-		{
 			throw USER_ENV_EXCEPTION(errmsg, false);
-		}
+
         if (argc == 1) { print_term_usage(); return 0; }
 		
         //d_printf2("params:help=%d, mode=%d", lstnr_help, background_mode);
@@ -57,13 +52,12 @@ int main(int argc, char *argv[])
         
         if (term_version == 1) {print_version_and_copyright("Sedna Terminal");  return 0; }
         
-        if (socket_port == 0) {socket_port = 5050;}
-        if (strcmp(host, "???") == 0 ){ strcpy(host, "localhost"); }
+        if (socket_port == 0) socket_port = 5050;
+        if (strcmp(host, "???") == 0 ) strcpy(host, "localhost"); 
         
         if (strcmp(db_name, "???") == 0 )
-        {
             throw USER_EXCEPTION(SE4601);
-        }
+/*
 #ifdef AUTH_SWITCH
 #  if (AUTH_SWITCH == 1)
         if (strcmp(login,"???") == 0)           //
@@ -89,43 +83,38 @@ int main(int argc, char *argv[])
        }
 #  endif
 #  endif
+*/
+        if (strcmp(login,"???") == 0)
+            strcpy(login,"SYSTEM");
 
-        if (strcmp(login,"???") == 0)           //
-        {                                       // security is OFF
-        	strcpy(login,"SYSTEM");             //
-        }                                       //
-                                                // 
-        if (strcmp(password,"???") == 0)        //
-        {
-        	strcpy(password,"MANAGER");
-        }
+        if (strcmp(password,"???") == 0)
+            strcpy(password,"MANAGER");
         
-        if (strcmp(filename,"???")!=0)
-        {
-        	ret_code = process_file_commands();
-        	return ret_code;
-        }
-        else if (strcmp(query, "???")!=0)
-        {
-        	term_output2("%s> ",db_name);
-        	ret_code = process_commandline_query();
-        	return ret_code;
-        }
-        else 
-        {
-        	ret_code = MainLoop(stdin);
-        }
+        if (strcmp(output_file, "STDOUT") == 0)
+            res_os = stdout;
+        else
+            res_os = fopen(output_file, "w");
         
+        if (strcmp(filename,"???") != 0)
+            ret_code = process_file_commands();
+        else if (strcmp(query, "???") != 0)
+            ret_code = process_commandline_query();
+        else
+            ret_code = MainLoop(stdin);
         
+        if (strcmp(output_file, "STDOUT") != 0)
+            fclose(res_os);
+
         return ret_code;
         
     } catch (SednaUserException &e) {
-    	cout << e.getMsg().c_str() << endl;
+        if (strcmp(output_file, "STDOUT") != 0) fclose(res_os);
+    	fprintf(stderr, "%s\n", e.getMsg().c_str());
     } catch (SednaException &e) {
-    	cout << "System error" << endl;
+    	fprintf(stderr, "System error\n");
         sedna_soft_fault(e);
     } catch (...) {
-       	cout << "System error" << endl;
+       	fprintf(stderr, "System error\n");
        	sedna_soft_fault();
     }
 

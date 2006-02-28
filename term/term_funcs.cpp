@@ -11,7 +11,7 @@
 
 void term_output1(const char *buf)
 {
-    if (echo) printf("%s", buf);
+    if (echo) fprintf(res_os, "%s", buf);
 }
 
 void term_output2(const char *buf, const void* arg1)
@@ -20,7 +20,7 @@ void term_output2(const char *buf, const void* arg1)
     {
     	char echo_buf[256];
     	sprintf(echo_buf,buf,arg1);
-    	printf("%s", echo_buf);
+    	fprintf(res_os, "%s", echo_buf);
     }
 }
 
@@ -30,85 +30,95 @@ void term_output3(const char *buf, const void* arg1, const void* arg2)
     {
     	char echo_buf[256];
     	sprintf(echo_buf,buf,arg1,arg2);
-    	printf("%s", echo_buf);
+    	fprintf(res_os, "%s", echo_buf);
     }
 }
 
 int process_commandline_query()
 {
     SednaConnection conn;
+    char buf[RESULT_MSG_SIZE+1];
     
-    char buf[1024];
-//    char* hosttemp;
-//    strcpy(hosttemp, string(host).c_str());
+   	term_output2("%s> ",db_name);
     strcat(strcat(host,":"),std::string(itoa(socket_port, buf, 10)).c_str());
-//    d_printf2("host: %s\n", host);
     
     int res = SEconnect(&conn, host, db_name, login, password);
 	
     if(res != SEDNA_SESSION_OPEN){
-    	printf("failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
-    	return -1;
+    	fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
+    	return 1;
     }
 	
     //begin transaction
     res = SEbegin(&conn);
     if(res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
     {
-    	term_output2("failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
-    	return -1;
+    	fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+    	return 1;
     }
     
     // execute XQuery query	or update
     res = SEexecute(&conn, query); 
     if(res == SEDNA_QUERY_FAILED) 
     {
-    	printf("Query failed \n%s\n%s", SEgetLastErrorMsg(&conn), query);
+    	fprintf(stderr, "Query failed \n%s\n%s", SEgetLastErrorMsg(&conn), query);
     	//closing session
     	SEclose(&conn);
-    	return -1;
+    	return 1;
     }
     if(res == SEDNA_UPDATE_FAILED) 
     {
-    	printf("Update failed \n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "Update failed \n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
-    	return -1;
+    	return 1;
     }
     if(res == SEDNA_BULK_LOAD_FAILED) 
     {
-    	printf("Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
-    	return -1;
+    	return 1;
     }
     if(res == SEDNA_ERROR) 
     {
-    	printf("Error \n%s\n%s", SEgetLastErrorMsg(&conn),query);
+    	fprintf(stderr, "Error \n%s\n%s", SEgetLastErrorMsg(&conn),query);
     	//closing session
     	SEclose(&conn);
-    	return -1;
+    	return 1;
     }
     if(res == SEDNA_QUERY_SUCCEEDED) 
     {
     	//iterate over the result sequece and retrieve the result data
     	int bytes_read;
     	res = SEnext(&conn);
-    	
+
     	while((res != SEDNA_RESULT_END)&&(res != SEDNA_ERROR))
     	{
-    		bytes_read = SEgetData(&conn, buf, 1024);
+    		bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
             if (bytes_read == SEDNA_ERROR)
             {
-   	            printf("%s\n", SEgetLastErrorMsg(&conn));
        	        //closing session
     	        SEclose(&conn);
-    	        return -1;
+    	        return 1;
             }
-    		buf[bytes_read] = '\0';
-    		printf("%s\n", buf);
+    		while(bytes_read > 0)
+    		{
+	    		buf[bytes_read] = '\0';
+    			fprintf(res_os, "%s", buf);
+    			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
+                if (bytes_read == SEDNA_ERROR)
+                {
+       	           //closing session
+    	           SEclose(&conn);
+    	           return 1;
+                }
+    		}
     		res = SEnext(&conn);
     	}
+		fprintf(res_os, "\n");
     }
     if(res == SEDNA_UPDATE_SUCCEEDED) 
     {
@@ -129,16 +139,18 @@ int process_commandline_query()
     res = SEcommit(&conn);
     if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
     {
-	term_output2("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
-	return -1;
+	    fprintf(stderr, "failed to commit transaction \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+	    return 1;
     }
 	
     //closing session
     res = SEclose(&conn);
     if(res != SEDNA_SESSION_CLOSED) 
     {
-	term_output2("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
-	return -1;
+	   fprintf(stderr, "session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
+	   return 1;
     }
 
 return 0;

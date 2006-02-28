@@ -8,7 +8,6 @@
 
 // variables for parsing command line 
 
-
 int term_s_help = 0;
 int term_l_help = 0;
 int term_version = 0;
@@ -16,10 +15,6 @@ int term_version = 0;
 int show_time = 0;
 int socket_port = 0;
 int echo = 1;
-//int write_phys_log = 1;
-//int user_id = 0;
-//int auth =AUTH_SWITCH;
-//int is_run_remote = 0;
 
 char host[TERM_ARGSTRLEN];
 char db_name[TERM_ARGSTRLEN];
@@ -29,19 +24,18 @@ char query[TERM_ARGSTRLEN];
 //QueryType query_type = TL_XQuery;
 char login[TERM_ARGSTRLEN];
 char password[TERM_ARGSTRLEN];
+FILE* res_os; //otput stream of term results (result of the user's queres)
 
-const size_t narg = 12;
+const size_t narg = 13;
 
 arg_rec term_argtable[] =
 {
 {"-help",            NULL,       arg_lit,   &term_s_help,                 "0",       "\t\t\t  display this help and exit"},
 {"--help",           NULL,       arg_lit,   &term_l_help,                 "0",       "\t\t  display this help and exit"},
 {"-version",         NULL,       arg_lit,   &term_version,                "0",       "\t\t  display product version and exit"},
-/* {"-rewriter",       " on/off",   arg_bool,  &run_rewriter,           "on",      "\t  run rewriter (default on)"}, */
-/* {"-server-mode",    " on/off",   arg_bool,  &server_mode,            "off",     "\t  work in server mode (output result to pipe)\n\t\t\t  (default off)"}, */
-//{"-query-type",     " type",     arg_str,   &q_type,                  "XQuery",  "\t  type of the query to execute (XQuery, POR),\n\t\t\t  (default XQuery)"},
 {"-file",           " filename", arg_str,   &filename,                  "???",     "\t  file with an XQuery query\t\t\t  "},
-{"-query",          " \"query\"",    arg_str,   &query,                     "???",     "\t\t  XQuery query to execute\t\t"},
+{"-output",         " filename",     arg_str,   &output_file,               "STDOUT",  "\t\t  outputfile (default stdout)"},
+{"-query",          " \"query\"",    arg_str,   &query,                   "???",     "\t\t  XQuery query to execute\t\t"},
 {"-echo",           " on/off",   arg_bool,  &echo,                      "on",      "\t\t  display se_term output  (default on)"},
 {"-showtime",       " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of the latest query execution (default off)"},
 {"-host",           " host",     arg_str,   &host,                      "???",     "\t\t  hostname of the machine with Sedna running (default localhost)\n\t\t"},

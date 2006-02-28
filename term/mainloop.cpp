@@ -1,3 +1,8 @@
+/*
+ * File:  mainloop.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include <stdio.h>
 
 
@@ -10,9 +15,6 @@
 #include "term_globals.h"
 #include "term_funcs.h"
 
-#define RESULT_BUF_SIZE 10235
-//using namespace std;
-
 int quit_term()
 {
 	term_output1("Closing session...");
@@ -21,8 +23,8 @@ int quit_term()
     int res = SEclose(&conn);
     if(res != SEDNA_SESSION_CLOSED) 
     {
-	term_output2("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
-	return 1;
+ 	   term_output2("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
+	   return 1;
     }
 	term_output1("Ok\n");
     
@@ -84,7 +86,7 @@ MainLoop(FILE *source)
 	int successResult = EXIT_SUCCESS;
 	if(source == NULL) 
 	{
-		printf("Failed to get input file\n");
+		fprintf(stderr, "Failed to get input file\n");
 		return 1;
 	}
 	
@@ -105,9 +107,10 @@ MainLoop(FILE *source)
    // strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
     int res = SEconnect(&conn, host, db_name, login, password);
 	
-    if(res != SEDNA_SESSION_OPEN){
-	printf("failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
-	return 1;
+    if(res != SEDNA_SESSION_OPEN)
+    {
+	   fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
+	   return 1;
     }
 
 	set_sedna_data();
@@ -156,7 +159,7 @@ MainLoop(FILE *source)
         		    res = SEcommit(&conn);
 	            	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 		    		{
-		    			term_output2("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+		    			fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
 	    			}
 					term_output1("Ok\n");
 				}
@@ -196,7 +199,7 @@ int process_command(char* buffer)
 	    res = SEcommit(&conn);
 	    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 	    {
-	    	term_output2("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+	    	fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
 	    	if(!in_transaction) return EXIT_SUCCESS;
 	    	return EXIT_COMMIT_FAILED;
 	    }
@@ -213,7 +216,7 @@ int process_command(char* buffer)
 	    res = SErollback(&conn);
 	    if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED) 
 	    {
-	    	term_output2("Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+	    	fprintf(stderr, "Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
 	    	if(!in_transaction) return EXIT_SUCCESS;
 	    	return EXIT_ROLLBACK_FAILED;
 	    }
@@ -232,7 +235,7 @@ int process_command(char* buffer)
     	    res = SEcommit(&conn);
 		    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 	    	{
-	    		term_output2("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+	    		fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
 	    		return EXIT_COMMIT_FAILED;
 	    	}
 	    	in_transaction = false;
@@ -243,7 +246,7 @@ int process_command(char* buffer)
 	}
 	else 
 	{
-		term_output1("Unknown command. Print \\? - for help on internal slash commands\n");
+		fprintf(stderr, "Unknown command. Print \\? - for help on internal slash commands\n");
 		
 		return EXIT_NOT_COMMAND;
 	}
@@ -252,7 +255,7 @@ int process_command(char* buffer)
 int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 {
 	int result;
-	char buf[RESULT_BUF_SIZE];
+	char buf[RESULT_MSG_SIZE+1];
 	FILE* long_query;
 	
 	if(!in_transaction) //begin transaction
@@ -261,7 +264,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 		result = SEbegin(&conn);
 		if(result != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
 		{
-			term_output2("failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
+			fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
 			return EXIT;
 		}
 		in_transaction = true;
@@ -281,31 +284,31 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     
     if(result == SEDNA_QUERY_FAILED) 
     {
-    	printf("Query failed: \n%s\n", SEgetLastErrorMsg(&conn));
-    	printf("Rollback transaction...Ok \n");
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	term_output1("Rollback transaction...Ok \n");
     	in_transaction = false;
     	return EXIT_SUCCESS;
     }
     else if(result == SEDNA_UPDATE_FAILED) 
     {
-    	printf("Update failed: \n%s\n", SEgetLastErrorMsg(&conn));
-    	printf("Rollback transaction...Ok \n");
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	term_output1("Rollback transaction...Ok \n");
     	in_transaction = false;
     	return EXIT_SUCCESS;
     }
     else if(result == SEDNA_BULK_LOAD_FAILED) 
     {
-    	printf("Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
-    	printf("Rollback transaction...Ok \n");
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	term_output1("Rollback transaction...Ok \n");
     	in_transaction = false;
     	return EXIT_SUCCESS;
     }
     else if(result == SEDNA_ERROR) 
     {
-    	printf("Failed: \n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "Failed: \n%s\n", SEgetLastErrorMsg(&conn));
         int res = SEgetLastErrorCode(&conn);
     	if ((res == 206) || (res == 207)) return EXIT;
-    	printf("Rollback transaction...Ok \n");
+    	term_output1("Rollback transaction...Ok \n");
     	in_transaction = false;
     	return EXIT_SUCCESS;
     }
@@ -318,42 +321,41 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	
     	while((result != SEDNA_RESULT_END)&&(result != SEDNA_ERROR))
     	{
-    		bytes_read = SEgetData(&conn, buf, RESULT_BUF_SIZE);
+    		bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
             if (bytes_read == SEDNA_ERROR)
             {
-       	        printf("\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
-            	printf("Rollback transaction...Ok \n");
+       	        fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
+            	term_output1("Rollback transaction...Ok \n");
     	        in_transaction = false;
                 return EXIT_SUCCESS;
             }
     		while(bytes_read > 0)
     		{
 	    		buf[bytes_read] = '\0';
-    			printf("%s",buf);
-    			bytes_read = SEgetData(&conn, buf, RESULT_BUF_SIZE);
+    			fprintf(res_os, "%s", buf);
+    			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
                 if (bytes_read == SEDNA_ERROR)
                 {
-       	            printf("\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
-                	printf("Rollback transaction...Ok \n");
+       	            fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
+                	term_output1("Rollback transaction...Ok \n");
     	            in_transaction = false;
                     return EXIT_SUCCESS;
                 }
     		}
     		result = SEnext(&conn);
     	}
-		printf("\n");
+		fprintf(res_os, "\n");
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
-    	term_output1("Update succeeded\n");
-    }
+    	term_output1("Update succeeded\n");    }
     else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
     	term_output1("Bulk load succeeded\n");
     }
     else 
     {
-    	printf("Unknown message from server\n");
+    	fprintf(stderr, "Unknown message from server\n");
     }
 	return EXIT_SUCCESS;
 }

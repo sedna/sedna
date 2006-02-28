@@ -1,15 +1,20 @@
+/*
+ * File:  tr_globals.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #ifndef _TERM_GLOBALS_H
 #define _TERM_GLOBALS_H
+
+#include <stdio.h>
 
 #include "base.h"
 #include "argtable.h"
 	
 #include "libsedna.h"
 	
-//#include "tr_functions.h"
-
-#define TERM_ARGSTRLEN 200
+#define TERM_ARGSTRLEN 511
+#define RESULT_MSG_SIZE 10235
 
 extern int term_s_help;
 extern int term_l_help;
@@ -23,10 +28,10 @@ extern char host[];
 extern char db_name[];
 extern char filename[];
 extern char query[];
-//extern char q_type[];
-//extern QueryType query_type;
 extern char login[];
 extern char password[];
+extern char output_file[];
+extern FILE* res_os; //output stream of term results (result of the user's queres)
 
 extern const size_t narg;
 extern arg_rec term_argtable[];

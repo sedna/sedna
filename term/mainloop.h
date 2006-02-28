@@ -1,4 +1,6 @@
 /*
+ * File:  mainloop.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 #ifndef MAINLOOP_H
 #define MAINLOOP_H

@@ -165,7 +165,6 @@ char* socket_client::get_query_string(msg_struct *msg)
 	   		if (res == 1) throw USER_EXCEPTION(SE3012);
 		}
 		long_query_stream[query_size] = '\0';
-//		d_printf2("Query: %s\n", long_query_stream);
 		return long_query_stream;
 		}
 	else						//get one-socket-msg-length query
@@ -173,7 +172,6 @@ char* socket_client::get_query_string(msg_struct *msg)
 		net_int2int(&query_portion_length, (*msg).body+2);
 		memcpy(query_string, (*msg).body+6, query_portion_length);
 		query_string[query_portion_length] = '\0';
-//		d_printf2("Query : %s\n ---------------------------\n", query_string);
 		return query_string;
 	}
 }
@@ -202,18 +200,14 @@ client_file socket_client::get_file_from_client(const char* filename)
 {
   string tmp_file_path_str;
 
- // msg_struct msg;
-
   file_struct fs;
   client_file cf;
 
   int i, got, written = 0, cmd_bl, len_int;
   __int64 res_pos;
-//  d_printf1("in bulk_load\n");
 
      try
-     {  //d_printf2("trn: filename %s\n", string(filename).c_str());
-     
+     { 
         // first transaction && security_is_on: load metadata from locally stored file sedna_auth_md.xml
         if(!auth && AUTH_SWITCH)
         {
@@ -316,7 +310,6 @@ void socket_client::end_of_item(bool res) //res variable is ignored
 
 void socket_client::get_session_parameters()
 {
- // msg_struct msg;
   sp_msg.instruction = se_SendSessionParameters;// SendSessionParameters message
   sp_msg.length = 0;
   if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
@@ -473,10 +466,10 @@ void socket_client::error(int code, const string& body)
 	try{
 	if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));  //ErrorResponse
      } catch (SednaException &e) {
-          cout << e.getMsg().c_str() << endl;
-          cout << "Connection with client broken" << endl;
+          fprintf(stderr, "%s\n", e.getMsg().c_str());
+          fprintf(stderr, "Connection with client broken\n");
      } catch (...) {
-          cout << "Unknown error" << endl;
+          fprintf(stderr, "Unknown error\n");
           sedna_soft_fault();
      }
 }
@@ -486,10 +479,10 @@ void socket_client::error()
 	try{
 	if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
      } catch (SednaException &e) {
-          cout << e.getMsg().c_str() << endl;
-          cout << "Connection with client broken" << endl;
+          fprintf(stderr, "%s\n", e.getMsg().c_str());
+          fprintf(stderr, "Connection with client broken\n");
      } catch (...) {
-          cout << "Unknown error" << endl;
+          fprintf(stderr, "Unknown error\n");
           sedna_soft_fault();
      }
 }
@@ -497,7 +490,6 @@ void socket_client::error()
 void socket_client::show_time(string qep_time)
 {
    d_printf2("Show time. Time %s\n",qep_time.c_str());
- //  msg_struct time_msg;
 
    sp_msg.instruction = se_LastQueryTime;// LastQueryTime message
    sp_msg.length = 1+4+qep_time.length();
