@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <stdio.h>
 #include "tr_globals.h"
 #include "tr_functions.h"
 #include "base.h"
@@ -32,6 +33,8 @@ char q_type[TR_ARG_MAX_LENGTH+1];
 QueryType query_type = TL_XQuery;
 char login[SE_MAX_LOGIN_LENGTH+1];
 char password[SE_MAX_PASSWORD_LENGTH+1];
+char output_file[TR_ARG_MAX_LENGTH+1];
+FILE* res_os; //otput stream of transaction results (result of the user's query)
 
 const size_t narg = 11;
 
@@ -40,6 +43,7 @@ arg_rec tr_argtable[] =
 {"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
 {"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
 {"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
+{"-output",         " file",     arg_str,   &output_file,               "STDOUT",  "\t\t  outputfile (default STDOUT)"},
 {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
 /* {"-rewriter",       " on/off",   arg_bool,  &run_rewriter,              "on",      "\t  run rewriter (default on)"}, */
 {"-popt",  			" on/off",	 arg_bool,  &run_popt, 					"off",	   "\t\t  run physical optimizer (default off)"},
