@@ -110,7 +110,7 @@ int uCreateSA(int AccessPermissions, USECURITY_ATTRIBUTES ** sa)        /*Access
 
 #endif
 #endif
-
+    return 0;
 }
 
 int uReleaseSA(USECURITY_ATTRIBUTES * sa)
@@ -128,6 +128,7 @@ int uReleaseSA(USECURITY_ATTRIBUTES * sa)
 #endif
 #endif
 #endif
+    return 0;
 }
 
 #define MAX_NAME 256

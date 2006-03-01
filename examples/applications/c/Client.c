@@ -24,11 +24,6 @@ int main()
 
     printf("Client started.\n");
     
-   	if(SEtransactionStatus(&conn) == SEDNA_NO_TRANSACTION) printf("SEtransactionStatus == SEDNA_NO_TRANSACTION\n");
-   	else {printf("Wrong SEtransactionStatus\n"); return -1;}
-   	if(SEconnectionStatus(&conn) == SEDNA_CONNECTION_CLOSED) printf("SEconnectionStatus == SEDNA_CONNECTION_CLOSED\n");
-   	else {printf("Wrong SEconnectionStatus\n"); return -1;}
-
     //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
 	
@@ -47,7 +42,6 @@ int main()
         SEclose(&conn);
         return -1;
     }
-
    
     // load data from file "region.xml" into the document "regions"
     res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 
@@ -94,7 +88,6 @@ int main()
         res = SEnext(&conn);
         printf("next returned %d\n", res);
     }
-
 
     if(res == SEDNA_RESULT_END) 
     {

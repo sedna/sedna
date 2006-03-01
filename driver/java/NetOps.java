@@ -259,7 +259,7 @@ static Object currentStatement = null;
     {
     	if (Debug.DEBUG)
     	{
-    		System.out.print(str);
+    		System.err.print(str);
     	}
     }
     

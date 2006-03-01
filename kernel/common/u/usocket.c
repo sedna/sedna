@@ -160,9 +160,9 @@ int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optle
 int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen)
 {
 #ifdef _WIN32
-    return getsockopt(s, level, optname, (char*)optval, optlen);
+    return getsockopt(s, level, optname, (char*)optval, &optlen);
 #else
-    return getsockopt(s, level, optname, optval, optlen);
+    return getsockopt(s, level, optname, optval, &optlen);
 #endif
 }
 
@@ -324,12 +324,12 @@ int uselect_read(USOCKET s, struct timeval *timeout)
 #endif
 }
 
-static char se_socket_error_buf[1024];
-
 /* retrieves the last socket error description */
 const char *usocket_error_translator()
 {
 #ifdef _WIN32
+    static char se_socket_error_buf[1024];
+    
     if (!FormatMessage( 
         FORMAT_MESSAGE_FROM_SYSTEM | 
         FORMAT_MESSAGE_IGNORE_INSERTS,

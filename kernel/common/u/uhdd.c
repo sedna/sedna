@@ -509,7 +509,6 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
 #ifdef _WIN32
 
     WIN32_FIND_DATA find_data;
-    struct file_struct fs;
     UFile tmphanldle;
     char buf[20];
 
