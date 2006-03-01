@@ -481,7 +481,7 @@ PPIterator* PPLMGeneralComparison::copy(variable_context *_cxt_)
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
 }
- void PPLMGeneralComparison::next   (tuple &t)
+ /*void PPLMGeneralComparison::next   (tuple &t)
 {
 	if (first_time)
     {
@@ -589,7 +589,7 @@ PPIterator* PPLMGeneralComparison::copy(variable_context *_cxt_)
         first_time = true;
         t.set_eos();
     }
-}
+}*/
 void PPNEQGeneralComparison::next   (tuple &t)
 {
 	if (first_time)
@@ -759,6 +759,93 @@ void PPEQLGeneralComparison::next   (tuple &t)
 				tuple_cell res2=(*it).cells[0];
 				generalNodePrepare(res1,res2);
 				if (value_comp_eq(res1,res2).get_xs_boolean())
+				{
+					t.copy(tuple_cell::atomic(true));
+					return;
+				}
+				it++;
+			}
+			while (it!=seq.end());
+			seq2.op->next(cont2);
+		}
+		eos_reached2 = true;
+		t.copy(tuple_cell::atomic(false));
+		return;
+
+	}
+	else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+void PPLMGeneralComparison::next   (tuple &t)
+{
+	if (first_time)
+    {
+		first_time = false;
+		tuple_cell (*comp_op) (const tuple_cell&,const tuple_cell&);
+		if (strict)
+		{
+			if (more)
+				comp_op=value_comp_gt;
+			else
+				comp_op=value_comp_lt;
+		}
+		else
+		{
+			if (more)
+				comp_op=value_comp_ge;
+			else
+				comp_op=value_comp_le;
+		}
+		//INSERT CODE HERE
+		if (!eos_reached1) seq1.op->reopen();
+		if (!eos_reached2) seq2.op->reopen();
+		eos_reached2 = false;
+		eos_reached1 = false;
+		tuple cont1(seq1.ts);
+		tuple cont2(seq2.ts);
+		seq1.op->next(cont1);
+		sequence seq(1);
+		tuple at_tup(1);
+		seq2.op->next(cont2);
+		if (cont2.is_eos())
+		{
+			eos_reached2 = true;
+			t.copy(tuple_cell::atomic(false));
+			return;
+		}
+		tuple_cell res1=getAtomizedCell(cont2);
+		while (!cont1.is_eos())
+		{
+			tuple_cell res=getAtomizedCell(cont1);
+			at_tup.cells[0]=res;
+			generalNodePrepare(res,res1);
+			if (comp_op(res,res1).get_xs_boolean())
+			{
+				t.copy(tuple_cell::atomic(true));
+				return;
+			}
+			seq.add(at_tup);
+			seq1.op->next(cont1);
+		}
+		eos_reached1 = true;
+		if (seq.size()<1)
+		{
+			t.copy(tuple_cell::atomic(false));
+			return;
+		}
+		seq2.op->next(cont2);
+		while (!cont2.is_eos())
+		{
+			tuple_cell res1=getAtomizedCell(cont2);
+			sequence::iterator it=seq.begin();
+			do
+			{
+				tuple_cell res2=(*it).cells[0];
+				generalNodePrepare(res1,res2);
+				if (comp_op(res2,res1).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
 					return;
