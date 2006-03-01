@@ -88,7 +88,7 @@ token Tokenizer::get_string()
             else if (c == 'n') str += "\n";
             else if (c == 't') str += "\t";
             else if (c == 'r') str += "\r";
-            else { /*printf("symbol !%c!, position %d\n", c, pos);*/ throw USER_EXCEPTION2(SE1005, "Tokenizer bad string error (3)"); }
+            else { /*d_printf3("symbol !%c!, position %d\n", c, pos);*/ throw USER_EXCEPTION2(SE1005, "Tokenizer bad string error (3)"); }
         } else str += c;
         c = getch();
     }

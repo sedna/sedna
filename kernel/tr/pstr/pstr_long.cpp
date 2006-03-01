@@ -2005,20 +2005,20 @@ pstr_long_off_t pstr_long_length(const xptr data)
 #ifdef PSTR_LONG_TEST
 void pstr_long_str_info(xptr desc)
 {
-	printf("long_str: desc = 0x%08lx %08lx\n", desc.layer, desc.addr);
+	d_printf3("long_str: desc = 0x%08lx %08lx\n", desc.layer, desc.addr);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
-	printf("long_str: last_blk = 0x%08lx %08lx\n", intl_last_blk.layer, intl_last_blk.addr);
-	printf("long_str: bytesize = %ld\n", ((struct t_dsc *)XADDR(desc))->size);
+	d_printf3("long_str: last_blk = 0x%08lx %08lx\n", intl_last_blk.layer, intl_last_blk.addr);
+	d_printf2("long_str: bytesize = %ld\n", ((struct t_dsc *)XADDR(desc))->size);
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
-	printf("long_str: cursor=%ld\n", ftr->cursor);
-	printf("long_str: char_count=%ld\n", ftr->char_count);
-	printf("long_str: map_size=%ld\n", ftr->block_list_map_size);
-	printf("long_str: block_list_size=%ld\n", ftr->block_list_size);
-	printf("long_str: first_blb_gap_s=%ld\n", ftr->first_blb_gap_size);
-	printf("long_str: pred_blbs=%ld/%ld\n", ftr->pred_blb_size, PSTR_LONG_FULL_BLOCK_LIST_SIZE);
-	printf("long_str: first_blk_char_count=%ld\n", ftr->first_blk_char_count);
-	printf("long_str: length=%ld\n", pstr_long_length(desc));
+	d_printf1("long_str: cursor=%ld\n", ftr->cursor);
+	d_printf1("long_str: char_count=%ld\n", ftr->char_count);
+	d_printf1("long_str: map_size=%ld\n", ftr->block_list_map_size);
+	d_printf1("long_str: block_list_size=%ld\n", ftr->block_list_size);
+	d_printf1("long_str: first_blb_gap_s=%ld\n", ftr->first_blb_gap_size);
+	d_printf2("long_str: pred_blbs=%ld/%ld\n", ftr->pred_blb_size, PSTR_LONG_FULL_BLOCK_LIST_SIZE);
+	d_printf2("long_str: first_blk_char_count=%ld\n", ftr->first_blk_char_count);
+	d_printf2("long_str: length=%ld\n", pstr_long_length(desc));
 }
 #endif

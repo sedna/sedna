@@ -309,10 +309,10 @@ void bm_allocate_data_block(session_id sid,
                             xptr /*out*/ *swapped) throw (SednaException)
 {
     //d_printf1("bm_allocate_data_block: begin\n");
-//printf("allocate 1\n");
+//d_printf1("allocate 1\n");
     new_data_block(p);
 
-//printf("allocate 2\n");
+//d_printf1("allocate 2\n");
     *swapped = put_block_to_buffer(sid, *p, offs, false);
 
     //d_printf2("offset %d\n", *offs);
@@ -321,13 +321,13 @@ void bm_allocate_data_block(session_id sid,
     //buffer_table.insert(*p, *offs);
     //used_mem.push(*offs);
 
-//printf("allocate 3\n");
+//d_printf1("allocate 3\n");
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
     hdr->p = *p;
     hdr->roffs = *offs;
     hdr->is_changed = false;
 
-//printf("allocate 4\n");
+//d_printf1("allocate 4\n");
     //d_printf1("bm_allocate_data_block: end\n");
 }
 
@@ -359,7 +359,7 @@ void bm_allocate_tmp_block(session_id sid,
 void bm_delete_block(session_id sid,
                      xptr p) throw (SednaException)
 {
-    //printf("sm_delete_block: begin\n");
+    //d_printf1("sm_delete_block: begin\n");
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
@@ -381,7 +381,7 @@ void bm_delete_block(session_id sid,
     {
         // we will delete it on unregister transaction or by calling special method using list of allocated tmp blocks
     }
-    //printf("sm_delete_block: end\n");
+    //d_printf1("sm_delete_block: end\n");
 }
 
 void bm_get_block(session_id sid,

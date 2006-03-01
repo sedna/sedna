@@ -39,14 +39,6 @@ logical_log_file_head llmgr_core::read_log_file_header()
   if (res == 0 || sizeof(logical_log_file_head) != already_read)
      throw USER_EXCEPTION2(SE4044, "logical log file header");
 
-  //for debug
-  //char buf[50];
-  //printf("::last_checkpoint_lsn=%s\n",  _i64toa(file_head.last_checkpoint_lsn, buf, 16));
-  //printf("::last_commit_lsn=%s\n",  _i64toa(file_head.last_commit_lsn, buf, 16));
-  //printf("::next_lsn=%s\n",  _i64toa(file_head.next_lsn, buf, 16));
-
-  //end for debug
-
 
   return file_head;
 }

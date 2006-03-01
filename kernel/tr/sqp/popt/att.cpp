@@ -238,98 +238,98 @@ void xp_op::print()
             path_expr->print();
             if (op1)
             {
-                printf("(");
+                d_printf1("(");
                 op1->print();
-                printf(")");
+                d_printf1(")");
             }
             break;
         case xp_op_pred		:
-            printf("pred");
+            d_printf1("pred");
             break;
         case xp_op_and		:
-            printf("(");
+            d_printf1("(");
             ops[0]->print();
             for (i = 1; i < ops_size; i++)
             {
-                printf(") and (");
+                d_printf1(") and (");
                 ops[i]->print();
             }
-            printf(")");
+            d_printf1(")");
             break;
         case xp_op_or		:
-            printf("(");
+            d_printf1("(");
             ops[0]->print();
             for (i = 1; i < ops_size; i++)
             {
-                printf(") or (");
+                d_printf1(") or (");
                 ops[i]->print();
             }
-            printf(")");
+            d_printf1(")");
             break;
         case xp_op_const	:
             tc->print(false);
             break;
         case xp_op_gen_eq	: 
             op1->print(); 
-            printf(" = "); 
+            d_printf1(" = "); 
             op2->print();
             break;
         case xp_op_gen_ne	:
             op1->print(); 
-            printf(" != "); 
+            d_printf1(" != "); 
             op2->print(); 
             break;
         case xp_op_gen_lt	:
             op1->print(); 
-            printf(" < "); 
+            d_printf1(" < "); 
             op2->print(); 
             break;
         case xp_op_gen_gt	:
             op1->print(); 
-            printf(" > "); 
+            d_printf1(" > "); 
             op2->print(); 
             break;
         case xp_op_gen_le	:
             op1->print(); 
-            printf(" <= "); 
+            d_printf1(" <= "); 
             op2->print(); 
             break;
         case xp_op_gen_ge	:
             op1->print(); 
-            printf(" >= "); 
+            d_printf1(" >= "); 
             op2->print(); 
             break;
         case xp_op_val_eq	:
             op1->print(); 
-            printf(" eq "); 
+            d_printf1(" eq "); 
             op2->print(); 
             break;
         case xp_op_val_ne	:
             op1->print(); 
-            printf(" ne "); 
+            d_printf1(" ne "); 
             op2->print(); 
             break;
         case xp_op_val_lt	:
             op1->print(); 
-            printf(" lt "); 
+            d_printf1(" lt "); 
             op2->print(); 
             break;
         case xp_op_val_gt	:
             op1->print(); 
-            printf(" gt "); 
+            d_printf1(" gt "); 
             op2->print(); 
             break;
         case xp_op_val_le	:
             op1->print(); 
-            printf(" <= "); 
+            d_printf1(" <= "); 
             op2->print(); 
             break;
         case xp_op_val_ge	:
             op1->print(); 
-            printf(" >= "); 
+            d_printf1(" >= "); 
             op2->print(); 
             break;
-        default: printf("UNKNOWN");
+        default: d_printf1("UNKNOWN");
     }
 }
 

@@ -1943,10 +1943,10 @@ void appendTextValue(xptr node,const void* text, int size,text_type ttype)
 			char* z=new char[size+cur_size];
 			memcpy(z,data,cur_size);
 			copy_to_buffer(z+cur_size,text,size,ttype);
-			//printf("bm");fflush(stdout);
+			//d_printf1("bm");fflush(stdout);
 			//Index update
 			pstr_modify(node, z, size+cur_size);
-			//printf("am");fflush(stdout);
+			//d_printf1("am");fflush(stdout);
 			delete []z;
 
 		}

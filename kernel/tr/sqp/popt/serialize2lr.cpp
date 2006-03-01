@@ -696,7 +696,7 @@ void specify_xp_tree_strategy_line(std::ostream &s,
 
                     break;
                 }
-            default              : printf("UNKNOWN");
+            default              : d_printf1("UNKNOWN");
         }
 
         if (cur.get() == strategy.get()) break;

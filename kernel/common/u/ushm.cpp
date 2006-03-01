@@ -12,7 +12,7 @@
 int uCreateShMem(UShMem *id, global_name name, int size)
 #ifdef _WIN32
 {
-    //printf("uCreateShMem name = %s\n", name);
+    //d_printf2("uCreateShMem name = %s\n", name);
     *id = CreateFileMapping(INVALID_HANDLE_VALUE,
                             NULL,
                             PAGE_READWRITE,
@@ -21,12 +21,11 @@ int uCreateShMem(UShMem *id, global_name name, int size)
                             name
                            );
 
-    //printf("CreateFileMapping %s\n", name);
+    //d_printf2("CreateFileMapping %s\n", name);
  
     if (*id == NULL) 
     {
-        d_printf1("CreateFileMapping failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("CreateFileMapping");
         return 1;
     }
 
@@ -44,7 +43,6 @@ int uCreateShMem(UShMem *id, global_name name, int size)
 
 	if(*id == -1)
 	{
-		d_printf1("uCreateShMem failed\n");
         d_perror("shmget");
 		//d_printf2("Error %d\n", perror(semget));
 		return 1;
@@ -58,7 +56,7 @@ int uCreateShMem(UShMem *id, global_name name, int size)
 
 	if (shmctl(*id, IPC_SET, &info) == -1)
 	{
-		printf("uCreateShMem failed\n");
+        d_perror("shmctl");
 		return 1;
 	}
 */
@@ -69,18 +67,17 @@ int uCreateShMem(UShMem *id, global_name name, int size)
 int uOpenShMem(UShMem *id, global_name name, int size)
 #ifdef _WIN32
 {
-    //printf("uOpenShMem name = %s\n", name);
+    //d_printf2("uOpenShMem name = %s\n", name);
     *id = OpenFileMapping(FILE_MAP_ALL_ACCESS,				// Read/write permission. 
                           FALSE,							// Do not inherit the name
                           name								// of the mapping object. 
                          );
 
-    //printf("OpenFileMapping %s\n", name);
+    //d_printf2("OpenFileMapping %s\n", name);
  
     if (*id == NULL) 
     {
-        d_printf1("OpenFileMapping failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("OpenFileMapping");
         return 1;
     }
 
@@ -99,7 +96,6 @@ int uOpenShMem(UShMem *id, global_name name, int size)
 
 	if(*id == -1)
 	{
-		d_printf1("uOpenShMem failed\n");
         d_perror("shmget");
 		//d_printf2("Error %d\n", perror(semget));
 		return 1;
@@ -116,8 +112,7 @@ int uReleaseShMem(UShMem id)
     res = CloseHandle(id);
     if (res == 0) 
 	{
-		d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("CloseHandle");
 		return 1;
 	}
 
@@ -127,7 +122,7 @@ int uReleaseShMem(UShMem id)
 {
 	if(id < 0)
 	{
-		d_printf1("uReleaseShMem failed\n");
+		fprintf(stderr, "uReleaseShMem failed\n");
 		//d_printf2("Error %d\n", perror(semget));
 		return 1;
 	}
@@ -137,8 +132,7 @@ int uReleaseShMem(UShMem id)
 		{
 			// if shared memory already destroyed don't raise an error
 			if (errno == EINVAL) return 0;
-			d_printf1("uReleaseShMem failed\n");
-		        d_perror("shmctl");
+            d_perror("shmctl");
 			return 1;
 		}
 	}
@@ -153,8 +147,7 @@ int uCloseShMem(UShMem id)
     res = CloseHandle(id);
     if (res == 0) 
 	{
-		d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("CloseHandle");
 		return 1;
 	}
 
@@ -180,8 +173,7 @@ void* uAttachShMem(UShMem id, void *ptr, int size)
 
     if (res == NULL) 
     {
-        d_printf1("MapViewOfFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("MapViewOfFileEx");
         return NULL;
     }
 
@@ -192,7 +184,6 @@ void* uAttachShMem(UShMem id, void *ptr, int size)
 	void *res = NULL;
 	if ((int)(res = shmat(id, ptr, 0)) == -1)
 	{
-		d_printf1("shmat failed\n");
         d_perror("shmat");
     	return NULL;
 	}
@@ -207,8 +198,7 @@ int uDettachShMem(UShMem id, void * ptr)
      res = UnmapViewOfFile(ptr);
     if (res == 0) 
 	{
-		d_printf1("UnmapViewOfFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        d_perror("UnmapViewOfFile");
 		return 1;
 	}
 
@@ -218,7 +208,7 @@ int uDettachShMem(UShMem id, void * ptr)
 {
 	if(shmdt(ptr) < 0)
 	{
-		d_printf1("uDettachShMem failed\n");
+        d_perror("shmdt");
 		//d_printf2("Error %d\n", perror(semget));
 		return 1;
 	}

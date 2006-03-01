@@ -21,10 +21,10 @@ t_prefix NULLPREFIX = t_prefix(NULL,0);
 
 void lex_print(t_prefix p) {
 	for (int i=0; i<p.size; i++)
-		printf("%d=", (int)(unsigned char)p.prefix[i]);
+		d_printf2("%d=", (int)(unsigned char)p.prefix[i]);
 	//	cout << (int)(unsigned char)p.prefix[i]<<"=";
 	//cout << "\n";
-	//printf("\n");
+	//d_printf1("\n");
 }
 
 void lex_error(char* msg) {

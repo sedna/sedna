@@ -19,14 +19,14 @@ TransCB::TransCB(transaction_id _tr_id_)
 void TransCB::print()
 {
 #ifdef LOCK_MGR_ON
-  cout << "transaction_id=" << tr_id << endl;
+  d_printf2("transaction_id=%d\n", tr_id);
   
   lock_request *request;
 
   for(request = locks; request != NULL; request = request->tran_next)
   {
     request->print();
-    cout << endl;
+    d_printf1("\n");
   }
 #endif
 }

@@ -773,11 +773,11 @@ try{
 
 void print_value(const char* value, int value_size)
 {
-   printf("value=");
+   d_printf1("value=");
    for (int i=0; i<value_size; i++)
-     printf("%c", value[i]);
+     d_printf2("%c", value[i]);
 
-   printf("#\n");
+   d_printf1("#\n");
 }
 
 void rcv_allocate_blocks(const vector<xptr> &arr)
@@ -788,7 +788,6 @@ void rcv_allocate_blocks(const vector<xptr> &arr)
     int i = 0;
     xptr cur;
 
-	//d_printf1("rcv_allocate_blocks:\n");
 
     for (i = 0; i < arr.size(); i++)
         s.insert(arr[i]);

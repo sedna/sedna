@@ -25,7 +25,7 @@ char db_name[100];
 int main(int argc, char ** argv) 
 {
     strcpy(db_name, "xmark");
-    printf("VMM_TEST STARTED\n");
+    d_printf1("VMM_TEST STARTED\n");
 
     //getc(stdin);
 
@@ -51,20 +51,20 @@ int main(int argc, char ** argv)
                          U_INFINITE);
 
 
-        printf("Connecting to SM...");
+        d_printf1("Connecting to SM...");
         if (sm_server.init() != 0)
             throw USER_EXCEPTION(1);
-        printf("OK\n");
+        d_printf1("OK\n");
 
 
-        printf("Initializing VMM...");
+        d_printf1("Initializing VMM...");
         vmm_init(&sm_server);
-        printf("OK\n");
+        d_printf1("OK\n");
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /*
-        printf("basicTest...");
+        d_printf1("basicTest...");
         msg.cmd = 23; // sm_allocate_data_block
         msg.trid = trid;
 
@@ -98,7 +98,7 @@ int main(int argc, char ** argv)
             blks.push_back(p);
             if (i * 100 / num > proc)
             {
-                printf("%d%\n", proc);
+                d_printf2("%d%\n", proc);
                 proc++;
             }
         }
@@ -109,18 +109,18 @@ int main(int argc, char ** argv)
             vmm_delete_block(*it);
         }
 */
-        printf("OK\n");
+        d_printf1("OK\n");
 
 ///////////////////////////////////////////////////////////////////////////////
 
-        printf("Releasing VMM...");
+        d_printf1("Releasing VMM...");
         vmm_release();
-        printf("OK\n");
+        d_printf1("OK\n");
 
-        printf("Releasing SM...");
+        d_printf1("Releasing SM...");
         if (sm_server.shutdown() != 0)
             throw USER_EXCEPTION(1);
-        printf("OK\n");
+        d_printf1("OK\n");
 
 
     } catch (SednaException &e) {

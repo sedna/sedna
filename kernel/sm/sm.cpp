@@ -68,7 +68,6 @@ void SMCtrlHandler(int signo)
 
 int sm_server_handler(void *arg)
 {
-    //printf("query received\n");   
     sm_msg_struct *msg = (sm_msg_struct*)arg;
 
     try {
@@ -187,19 +186,19 @@ int sm_server_handler(void *arg)
 #endif
 
             case 10: {
-                         //printf("query 10: soft shutdown\n");
+                         //d_printf1("query 10: soft shutdown\n");
                          USemaphoreUp(wait_for_shutdown);
                          msg->cmd = 0;
                          break;
                      }
             case 11: {
-                         //printf("query 11: hard shutdown\n");
+                         //d_printf1("query 11: hard shutdown\n");
                          USemaphoreUp(wait_for_shutdown);
                          msg->cmd = 0;
                          break;
                      }
             case 21: {
-                         //printf("query 21: bm_register_session\n");
+                         //d_printf1("query 21: bm_register_session\n");
                          persistent_db_data* pdb;
                          bm_register_session(msg->sid, &pdb);
                          msg->data.num = bufs_num;
@@ -208,13 +207,13 @@ int sm_server_handler(void *arg)
                          break;
                      }
             case 22: {
-                         //printf("query 22: bm_unregister_session\n");
+                         //d_printf1("query 22: bm_unregister_session\n");
                          bm_unregister_session(msg->sid);
                          msg->cmd = 0;
                          break;
                      }
             case 23: {
-                         //printf("query 23: bm_allocate_data_block\n");
+                         //d_printf1("query 23: bm_allocate_data_block\n");
                          bm_allocate_data_block(msg->sid, 
                                                 (xptr*)(&(msg->data.swap_data.ptr)), 
                                                 (ramoffs*)(&(msg->data.swap_data.offs)), 
@@ -223,7 +222,7 @@ int sm_server_handler(void *arg)
                          break;
                      }
             case 24: {
-                         //printf("query 24: bm_allocate_tmp_block\n");
+                         //d_printf1("query 24: bm_allocate_tmp_block\n");
                          bm_allocate_tmp_block(msg->sid, 
                                                (xptr*)(&(msg->data.swap_data.ptr)), 
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
@@ -232,13 +231,13 @@ int sm_server_handler(void *arg)
                          break;
                      }
             case 25: {
-                         //printf("query 25: bm_delete_block\n");
+                         //d_printf1("query 25: bm_delete_block\n");
                          bm_delete_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 26: {
-                         //printf("query 26: bm_get_block\n");
+                         //d_printf1("query 26: bm_get_block\n");
                          bm_get_block(msg->sid, 
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
@@ -247,67 +246,67 @@ int sm_server_handler(void *arg)
                          break;
                      }
             case 27: {
-                         //printf("query 27: bm_enter_exclusive_mode\n");
+                         //d_printf1("query 27: bm_enter_exclusive_mode\n");
                          bm_enter_exclusive_mode(msg->sid, &(msg->data.num));
                          msg->cmd = 0;
                          break;
                      }
             case 28: {
-                         //printf("query 28: bm_exit_exclusive_mode\n");
+                         //d_printf1("query 28: bm_exit_exclusive_mode\n");
                          bm_exit_exclusive_mode(msg->sid);
                          msg->cmd = 0;
                          break;
                      }
             case 29: {
-                         //printf("query 29: bm_memlock_block\n");
+                         //d_printf1("query 29: bm_memlock_block\n");
                          bm_memlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 30: {
-                         //printf("query 30: bm_memunlock_block\n");
+                         //d_printf1("query 30: bm_memunlock_block\n");
                          bm_memunlock_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 31: {
-                         //printf("query 31: bm_block_statistics\n");
+                         //d_printf1("query 31: bm_block_statistics\n");
                          bm_block_statistics(&(msg->data.stat));
                          msg->cmd = 0;
                          break;
                      }
             case 32: {
-                         //printf("query 32: bm_pseudo_allocate_data_block\n");
+                         //d_printf1("query 32: bm_pseudo_allocate_data_block\n");
                          bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 33: {
-                         //printf("query 33: bm_pseudo_delete_data_block\n");
+                         //d_printf1("query 33: bm_pseudo_delete_data_block\n");
                          bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 34: {
-                         //printf("query 34: bm_delete_tmp_blocks\n");
+                         //d_printf1("query 34: bm_delete_tmp_blocks\n");
                          bm_delete_tmp_blocks(msg->sid);
                          msg->cmd = 0;
                          break;
                      }
             case 35: {
-                         //printf("query 35: bm_register_transaction\n");
+                         //d_printf1("query 35: bm_register_transaction\n");
                          bm_register_transaction(msg->sid, msg->trid);
                          msg->cmd = 0;
                          break;
                      }
             case 36: {
-                         //printf("query 36: bm_unregister_transaction\n");
+                         //d_printf1("query 36: bm_unregister_transaction\n");
                          bm_unregister_transaction(msg->sid, msg->trid);
                          msg->cmd = 0;
                          break;
                      }
             default: {
-                         //printf("query unknown (%d)\n", msg->cmd);
+                         //d_printf2("query unknown (%d)\n", msg->cmd);
                          msg->cmd = 1;
                          break;
                      }
@@ -455,12 +454,12 @@ int main(int argc, char **argv)
             ppc.shutdown();
             if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
            
-            printf("SM has been started in the background mode\n"); 
-            fflush(stdout);
+            fprintf(res_os, "SM has been started in the background mode\n"); 
+            fflush(res_os);
             return 0;
 
         } catch (SednaUserException &e) {
-            cout << e.getMsg().c_str() << endl;
+            fprintf(stderr, "%s\n", e.getMsg().c_str());
             ppc.shutdown();
             return 1;
         } catch (SednaException &e) {
@@ -506,8 +505,6 @@ int main(int argc, char **argv)
         //disable write to phys log
         ll_phys_log_set_phys_log_flag(false);
         //recover data base by phisical log
-
-        printf("");
 
         if (!is_stopped_correctly) ll_phys_log_recover_db();
         d_printf1("db recovered by phys log successfully\n");
@@ -595,8 +592,8 @@ int main(int argc, char **argv)
             register_sm_on_gov();
 
       
-            printf("\nSM has been started\n");
-            fflush(stdout);
+            fprintf(res_os, "\nSM has been started\n");
+            fflush(res_os);
 
             USemaphoreDown(wait_for_shutdown);
 
@@ -650,7 +647,7 @@ int main(int argc, char **argv)
         return 0;
  
     } catch (SednaUserException &e) {
-        cout << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         if (!is_ppc_closed) ppc.shutdown();
         return 1;
     } catch (SednaException &e) {

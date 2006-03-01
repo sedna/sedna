@@ -673,7 +673,7 @@ tcost popt_optimize_level(xp_tree *tree, int level, tsel initial_sel, int pl, in
     tsel cur_sel = initial_sel;
 
 #ifdef POPT_DEBUG
-    printf("\n*** Level optimization ***\n");
+    d_printf1("\n*** Level optimization ***\n");
 #endif
 
     for (j = pl; j <= pr; j++)
@@ -757,7 +757,7 @@ tcost popt_optimize_level(xp_tree *tree, int level, tsel initial_sel, int pl, in
     }
 
 #ifdef POPT_DEBUG
-    printf("**************************\n");
+    d_printf1("**************************\n");
 #endif
 
     return cost;
@@ -828,10 +828,10 @@ xpath_popt_plan popt_optimize_att_xpath_pred(counted_ptr<db_entity> db_ent, xp_o
     res.db_ent = db_ent;
 
 #ifdef POPT_DEBUG
-    printf("\n");
-    printf("++++++++++ BEST ++++++++++\n");
+    d_printf1("\n");
+    d_printf1("++++++++++ BEST ++++++++++\n");
     res.print();
-    printf("++++++++++ BEST ++++++++++\n");
+    d_printf1("++++++++++ BEST ++++++++++\n");
 #endif
 
     return res;

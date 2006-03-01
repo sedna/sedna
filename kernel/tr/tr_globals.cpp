@@ -34,9 +34,8 @@ QueryType query_type = TL_XQuery;
 char login[SE_MAX_LOGIN_LENGTH+1];
 char password[SE_MAX_PASSWORD_LENGTH+1];
 char output_file[TR_ARG_MAX_LENGTH+1];
-FILE* res_os; //otput stream of transaction results (result of the user's query)
 
-const size_t narg = 11;
+const size_t narg = 12;
 
 arg_rec tr_argtable[] =
 {

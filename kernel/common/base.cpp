@@ -6,6 +6,7 @@
 
 #include <string>
 #include <fstream>
+#include <stdio.h>
 #include "base.h"
 #include "exceptions.h"
 #include "uhdd.h"
@@ -229,6 +230,7 @@ global_name SEDNA_LOCK_MANAGER_SEM;
 
 char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
 bool is_init_sedna_data = false;
+FILE* res_os = stdout; //otput stream of transaction results (result of the user's query)
 
 
 global_name SM_TO_VMM_CALLBACK_SEM1_BASE_STR(transaction_id id, const char* db_name, char* buf, int size)
@@ -388,7 +390,7 @@ void set_global_names()
 {
     set_sedna_data();
 
-    //printf("SEDNA_DATA = %s\n", SEDNA_DATA);
+    //s_printf2("SEDNA_DATA = %s\n", SEDNA_DATA);
 
 #ifdef _WIN32
     string tmp;

@@ -42,9 +42,9 @@ xptr pstr_create_blk(bool persistent) {
 	else
 		vmm_alloc_tmp_block(&result);
 	VMM_SIGNAL_MODIFICATION(result);
-    //printf("bm\n");fflush(stdout);
+    //d_printf1("bm\n");fflush(stdout);
 	pstr_blk_markup(result);
-    //printf("am\n");fflush(stdout);
+    //d_printf1("am\n");fflush(stdout);
 	return result;
 }
 
@@ -111,12 +111,12 @@ CHECKP(blk);
 xptr pstr_allocate(xptr blk, xptr node, const char* s, int s_size) {
 	
 	xptr result = pstr_do_allocate(blk, s, s_size);
-    //printf("da");fflush(stdout);
+    //d_printf1("da");fflush(stdout);
 	if (result == XNULL)
     {
-        //printf("bmigr");fflush(stdout);
+        //d_printf1("bmigr");fflush(stdout);
 		result = pstr_migrate(blk, node, s, s_size);
-        //printf("amigr");fflush(stdout);
+        //d_printf1("amigr");fflush(stdout);
     }
 #ifndef PSTR_NO_CHECKP
 	CHECKP(node);
@@ -327,9 +327,9 @@ CHECKP(node);
 	xptr data=((t_dsc*)XADDR(node))->data;
 	int	size = ((t_dsc*)XADDR(node))->size;
 	pstr_do_deallocate(BLOCKXPTR(data), data, size, false);
-    //printf("dd");fflush(stdout);
+    //d_printf1("dd");fflush(stdout);
 	result = pstr_allocate(BLOCKXPTR(data), node, s, s_size);
-    //printf("al");fflush(stdout);
+    //d_printf1("al");fflush(stdout);
 	return result;
 }
 
@@ -642,22 +642,20 @@ return debug_result; */
 	xptr	new_blk=XNULL;
 	xptr	tmp;
 	bool	first_iteration=true;
-    //printf("\npstr_migrate\n");fflush(stdout);
+    //d_printf1("\npstr_migrate\n");fflush(stdout);
 #ifndef PSTR_NO_CHECKP
 	CHECKP(blk);
 #endif	
 	bool	is_data_block=IS_DATA_BLOCK(blk);
 	/* if new node is the last one in the sequence of descriptors, just allocate new string in new block */
 	if (rbd == node) {
-        //printf("before pstr_create_blk\n");fflush(stdout);
 		new_blk = pstr_create_blk(is_data_block);
-        //printf("after pstr_create_blk\n");fflush(stdout);
 		return pstr_do_allocate(new_blk, s, s_size);
 	}
 
 	/* run through descriptors from lbd to rbd, distributing their string contents into
 	   new pstr blocks */
-    //printf("cycle\n");
+    //d_printf1("cycle\n");
    // node.print();
    // rbd.print();
    // next_node.print();
@@ -689,7 +687,7 @@ return debug_result; */
 			/* if the string fits into initial block, it means that some strings were transfered
 			   from it. In this case allocate new string in initial block and mark block modified.
 			   Otherwise allocate new string in new block */
-            //printf("next_node == node ");fflush(stdout);
+            //d_printf1("next_node == node ");fflush(stdout);
 			if (pstr_fit_into_blk(blk, s_size)) {
 				return pstr_do_allocate(blk, s, s_size);
 			} else {

@@ -198,7 +198,7 @@ persistent_db_data* entry_point;
 void init() {
 
 	char *db_name = "xmark";
-    printf("TR STARTED\n");
+    d_printf1("TR STARTED\n");
 
     int ret_code = 0;
     sm_msg_struct msg;
@@ -207,49 +207,49 @@ void init() {
         string ssmmsg_sm_id = string(CHARISMA_SSMMSG_SM_ID) + string(db_name);
         SSMMsg sm_server(SSMMsg::Client, sizeof (sm_msg_struct), ssmmsg_sm_id.c_str(), SM_NUMBER_OF_SERVER_THREADS);
 
-        printf("Connecting to SM...");
+        d_printf1("Connecting to SM...");
         if (sm_server.init() != 0)
             throw CharismaException("????: Connection to SM failed");
-        printf("OK\n");
+        d_printf1("OK\n");
 
-        printf("Initializing PH...");
+        d_printf1("Initializing PH...");
         string ph_shared_memory = string(CHARISMA_PH_SHARED_MEMORY_NAME) + string(db_name);
         string pers_heap_semaphore = string(PERS_HEAP_SEMAPHORE_STR) + string(db_name);
         if (0 != pers_init(ph_shared_memory.c_str(), pers_heap_semaphore.c_str(), PH_ADDRESS_SPACE_START_ADDR))
             throw CharismaException("????: Initialization of persistent heap failed");
-        printf("OK\n");
+        d_printf1("OK\n");
 
 
-        printf("Initializing VMM...");
+        d_printf1("Initializing VMM...");
         entry_point = vmm_init(&sm_server, db_name);
-        printf("OK\n");
+        d_printf1("OK\n");
 
-		printf("Initializing indirection table...");
+		d_printf1("Initializing indirection table...");
         init_indirection_table(db_name);
-        printf("OK\n");
+        d_printf1("OK\n");
 
-        printf("Initializing metadata...");
+        d_printf1("Initializing metadata...");
 #ifdef NO_PERSISTENCY
 		//metainfo_ptr= new metadata_cell*;
 		//*metainfo_ptr=NULL;
 #endif 
         init_metadata(&(entry_point->metadata), db_name);
-        printf("OK\n");
+        d_printf1("OK\n");
 
 		test3();
 
-		printf("Releasing metadata...");
+		d_printf1("Releasing metadata...");
         release_indirection_table();
-        printf("OK\n");
+        d_printf1("OK\n");
 
-        printf("Releasing VMM...		");
+        d_printf1("Releasing VMM...		");
         vmm_destroy();
-        printf("OK\n");
+        d_printf1("OK\n");
 
-        printf("Releasing PH... ");
+        d_printf1("Releasing PH... ");
         if (pers_release() != 0)
             throw CharismaException("????: Release of persistent heap failed");
-        printf("OK\n");
+        d_printf1("OK\n");
 
 	} catch (CharismaException &e) {
         cout << "Charisma exception" << endl;

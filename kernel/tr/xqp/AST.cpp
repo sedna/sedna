@@ -65,7 +65,7 @@ void free_ast_vector()
 // called when #[string, tokentype] is seen in an action
 AST::AST(char *s, ANTLRTokenType tok)
 {
-  //printf("constructor\n"); 
+  //d_printf1("constructor\n"); 
   token = new ANTLRToken(tok,s); 
 }
 
@@ -74,7 +74,7 @@ AST::AST(char *s, ASTNodeType type) {
   token = new ANTLRToken();
   token->setText(s);
   token->setType(ANTLRTokenType(type));
-  //printf("constructor text=%s\n\n", s);
+  //d_printf2("constructor text=%s\n\n", s);
 }
 
 // called when #[string, ASTNodeType] is seen in an action
@@ -83,7 +83,7 @@ AST::AST(string str, ASTNodeType type){
   token->setText(str.c_str());
   token->setType(ANTLRTokenType(type));
 
-  //printf("constructor\n");
+  //d_printf1("constructor\n");
 }
 
 // constructor called by parser for token references in grammar
@@ -93,21 +93,21 @@ AST::AST(string str, ASTNodeType type){
 AST::AST(const char *s) {
   token = new ANTLRToken();
   token->setText(s);
-  //printf("constructor for char*=%s\n",s);
+  //d_printf1("constructor for char*=%s\n",s);
 }
 
 //caled when #[string] is seen in an action
 AST::AST(string str){
   token = new ANTLRToken();
   token->setText(str.c_str());
-  //printf("constructor string=%s\n", str.c_str());
+  //d_printf2("constructor string=%s\n", str.c_str());
 }
 
 // caled when #[ASTNodeType] is seen in an action
 AST::AST(ASTNodeType type) {
   token = new ANTLRToken();
   token->setType((ANTLRTokenType)type);
-  //printf("constructor\n");
+  //d_printf1("constructor\n");
 }
 
 
@@ -116,7 +116,7 @@ AST::AST() {
   token = new ANTLRToken();
   token->setType((ANTLRTokenType)-1);
 
-  //printf("constructor\n");
+  //d_printf1("constructor\n");
 }
 
 // copy constructor
@@ -127,18 +127,18 @@ AST::AST (const AST &t) {
 //  *token = *(t.token);
   setDown(NULL);
   setRight(NULL);
-  //printf("copy constructor\n");
+  //d_printf1("copy constructor\n");
 }
 
 AST::~AST()
 {
-  //printf("destructor for AST called\n");
+  //d_printf1("destructor for AST called\n");
   delete token;
-  //printf("destructor finished\n");
+  //d_printf1("destructor finished\n");
 }
 
 void* AST::operator new (size_t  size) {
-  //printf("caled begin AST::new size=%d\n", size);
+  //d_printf2("caled begin AST::new size=%d\n", size);
   void * p = malloc(size);
 
   if (ast_massive_pos < ast_massive_cells)
@@ -160,7 +160,7 @@ void AST::operator delete (void *p){;};
 PCCTS_AST*
 AST::shallowCopy()
 {
-  //printf("shallow copy\n");
+  //d_printf1("shallow copy\n");
   return new AST(*this);
 }
 
@@ -186,12 +186,12 @@ AST::setText(string text)
 void
 AST::preorder_action(void* p) {
 
-//  printf("[");
+//  d_printf1("[");
 //  print_ast_type(token->getType());
-//  if(strcmp(token->getText(),"")!=0) printf(" %s] ",token->getText());
-//  else printf("] ");
+//  if(strcmp(token->getText(),"")!=0) d_printf2(" %s] ",token->getText());
+//  else d_printf1("] ");
 
-//  printf("%s",token->getText());
+//  d_printf2("%s",token->getText());
 
   ((string *)p)->append(token->getText());
   ((string *)p)->append(" ");
@@ -203,7 +203,7 @@ AST::preorder_before_action(void* p){
 
 
   ((string *)p)->append("(");
-//  printf("( ");
+//  d_printf1("( ");
 }
 
 void
@@ -211,5 +211,5 @@ AST::preorder_after_action(void* p){
 
 
   ((string *)p)->append(")");
-//  printf(") ");
+//  d_printf1(") ");
 }

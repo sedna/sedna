@@ -1234,7 +1234,7 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns)
 }
 xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,int size,text_type ttype)
 {
-    //printf("bit");fflush(stdout);
+    //d_printf1("bit");fflush(stdout);
     #ifdef _MYDEBUG
 		crm_out<<" insert_text";
 	#endif
@@ -1280,7 +1280,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 	else if (parent!=truep && truep!=XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
 	if (IS_DATA_BLOCK(parent))
 		down_concurrent_micro_ops_number();
-    //printf("0");fflush(stdout);
+    //d_printf1("0");fflush(stdout);
 	int ins_type=0;
 	if (left_sib!=XNULL)
 	{
@@ -1290,13 +1290,13 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 		#ifdef _MYDEBUG
 			crm_out<<" insert_text->3";
 		#endif
-            //printf("1");fflush(stdout);
+            //d_printf1("1");fflush(stdout);
 			//fillLogOfTextNodeChanged(left_sib);
-            //printf("!");fflush(stdout);
+            //d_printf1("!");fflush(stdout);
 			appendTextValue(left_sib,value,size,ttype);
-            //printf("@");fflush(stdout);
+            //d_printf1("@");fflush(stdout);
 			result=left_sib; 
-            //printf("#");fflush(stdout);
+            //d_printf1("#");fflush(stdout);
 			ins_type=1;
 		}
 	}
@@ -1311,7 +1311,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 		 	#ifdef _MYDEBUG
 				crm_out<<" insert_text->5";
 			#endif
-            //printf("2");fflush(stdout);
+            //d_printf1("2");fflush(stdout);
 			//fillLogOfTextNodeChanged(right_sib);
 			insertTextValue(right_sib,value, size,ttype);
 			result=right_sib;
@@ -1323,7 +1323,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 		#ifdef _MYDEBUG
 			crm_out<<" insert_text->6";
 		#endif
-        //printf("3");fflush(stdout);
+        //d_printf1("3");fflush(stdout);
 		xptr tmp=thirdElementAndTextInsertProcedure( left_sib, right_sib,  parent, NULL, 0,text,NULL);
 		//NODE STATISTICS
 		if (IS_DATA_BLOCK(parent))
@@ -1334,7 +1334,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 	#ifdef _MYDEBUG
 		crm_out<<"end of insert_text";
 	#endif
-    //printf("4");fflush(stdout);
+    //d_printf1("4");fflush(stdout);
     if (result==XNULL)
 	{
 		result=textInsertProcedure(parent, value, size,ins_type,ttype);
@@ -1391,7 +1391,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 			up_concurrent_micro_ops_number();
 	}
 
-    //printf("ait\n");fflush(stdout);
+    //d_printf1("ait\n");fflush(stdout);
 	return result;
 }
 void delete_node_inner_2 (xptr nodex, t_item type)

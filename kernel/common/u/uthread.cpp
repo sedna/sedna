@@ -36,24 +36,18 @@ uResVal uCreateThread(
     if (hndl != 0) return 0;
     else return (void*)-1;
 #else
-    //printf("01\n");
     pthread_attr_t attr;
     int set_res = 0;
     set_res = pthread_attr_init(&attr);
-    //printf("02\n");
     if (set_res != 0) return set_res;
-    //printf("03\n");
     set_res = pthread_attr_setstacksize(&attr, size);
-    //printf("04\n");
     if (set_res != 0) return set_res;
-    //printf("05\n");
     pthread_t threadId = 0;
     int     res = pthread_create(
                       &threadId,
                       &attr,
                       proc,
                       arg);
-    //printf("06\n");
     *id = threadId;
     return res;
 #endif
@@ -130,7 +124,7 @@ int uTerminateThread(UTHANDLE id)
     res = TerminateThread(id, 0);
     if (res == 0)
     {
-        d_printf1("TerminateThread failed\n");
+        d_perror("TerminateThread");
         return 1;
     }
 
@@ -147,7 +141,7 @@ int uCloseThreadHandle(UTHANDLE id)
     res = CloseHandle(id);
     if (res == 0)
     {
-        d_printf1("CloseHandle failed\n");
+        d_perror("CloseHandle");
         return 1;
     }
 

@@ -22,7 +22,7 @@ using namespace std;
 void print_resource_id(std::string r_id)
 {
 #ifdef LOCK_MGR_ON
-  printf("%s", r_id.c_str());
+  d_printf2("%s", r_id.c_str());
 #endif
 
 }
@@ -125,11 +125,11 @@ void lock_request::print()
 {
 
 #ifdef LOCK_MGR_ON
-  cout << "lock_status=" << status << ", lock_mode=" << mode;
-  cout << ", convert_mode=" << convert_mode << ", count=" << count;
-  cout << ", lock_class=" << class_; 
-  cout << ", resource_id=" << head->r_id.get_res_name().c_str();
-  cout << ", transaction_id=" << tran->tr_id  << endl;
+  d_printf3("lock_status=%d, lock_mode=%d", status, mode);
+  d_printf3(", convert_mode=%d, count=%d", convert_mode, count);
+  d_printf2(", lock_class=%d", class_);
+  d_printf2(", resource_id=%s", head->r_id.get_res_name().c_str());
+  d_printf2(", transaction_id=%d\n", tran->tr_id);
 #endif
 }
 
@@ -158,12 +158,12 @@ lock_head::~lock_head()
 void lock_head::print()
 {
 #ifdef LOCK_MGR_ON
-   cout << "group_mode=" << granted_mode << ", waiting=" << waiting << endl;
+   d_printf3("group_mode=%d, waiting=%d\n", granted_mode, waiting);
    lock_request *it;
    for (it = queue; it != NULL ;it = it->queue)
    {
      it->print();
-     cout << endl;
+     d_printf1("\n");
    }
 #endif
 }
@@ -566,7 +566,7 @@ void lock_table::print(bool sync)
 
   lock_iter it;
 
-  printf("================= Lock Table ==================\n");
+  d_printf1("================= Lock Table ==================\n");
 
   down_sem(sync);
 
@@ -574,14 +574,14 @@ void lock_table::print(bool sync)
   {
     //it->first.print();
     print_resource_id(it->first);
-    printf(": ");
+    d_printf1(": ");
     it->second->print();
-    printf("\n");
+    d_printf1("\n");
   }  
 
   up_sem(sync);
 
-  printf("===============================================\n\n\n");
+  d_printf1("===============================================\n\n\n");
 
 #endif
 

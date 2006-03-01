@@ -187,13 +187,13 @@ int main(int argc, char** argv)
                 throw USER_EXCEPTION(SE4401);
 
 
-            printf("GOVERNOR has been started in the background mode\n");
-            fflush(stdout);
+            fprintf(res_os, "GOVERNOR has been started in the background mode\n");
+            fflush(res_os);
 
             return 0;
 
         } catch (SednaUserException &e) {
-            cout << e.getMsg().c_str() << endl;
+            fprintf(stderr, "%s\n", e.getMsg().c_str());
             return 1;            
         } catch (SednaException &e) {
             sedna_soft_fault(e);
@@ -246,12 +246,12 @@ int main(int argc, char** argv)
       release_global_memory_mapping();
 
 
-      printf("GOVERNOR has been shut down successfully\n");
-      fflush(stdout);
+      fprintf(res_os, "GOVERNOR has been shut down successfully\n");
+      fflush(res_os);
       return 0;
 
     } catch (SednaUserException &e) {
-        cout << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         if (!is_pps_close) { pps.shutdown();}
         return 1;
     } catch (SednaException &e) {

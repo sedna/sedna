@@ -101,7 +101,7 @@ int main(int argc, char **argv)
             res = ushutdown_close_socket(sock);
             if (res != 0) throw USER_EXCEPTION(SE3011);
 
-            printf("%s\n", msg.body);
+            fprintf(res_os, "%s\n", msg.body);
 
         }
         else
@@ -112,11 +112,11 @@ int main(int argc, char **argv)
         
 
     } catch (SednaUserSoftException &e) {
-        cout << endl << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         ppc.shutdown();
         return 0;        
     } catch (SednaUserException &e) { 
-        cout << endl << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         ppc.shutdown();
         return 1;
     } catch (SednaException &e) { 

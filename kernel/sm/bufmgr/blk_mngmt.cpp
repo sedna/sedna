@@ -39,7 +39,7 @@ void free_blk_hdr::init(void *p)
 
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
 {
-    //printf("push_to_persistent_free_blocks_stack: begin\n");
+    //d_printf1("push_to_persistent_free_blocks_stack: begin\n");
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
 
@@ -95,7 +95,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
 
     put_block_to_buffer(-1, *hd, &offs);
     blk = (free_blk_hdr*)OFFS2ADDR(offs);
-    //if (blk->sm_vmm.p == NULL) printf("!!!pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p) 1\n");
+    //if (blk->sm_vmm.p == NULL) d_printf1("!!!pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p) 1\n");
 
     if (blk->num == 0)
     {
@@ -353,7 +353,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
     {
         // fill header of the block
         hdr->p = xptr_cursor;
-        //printf("xptr_cursor: "); xptr_cursor.print();
+        //d_printf1("xptr_cursor: "); xptr_cursor.print();
         int number_of_bytes_written = 0;
 
         res = uWriteFile(tmp_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written);

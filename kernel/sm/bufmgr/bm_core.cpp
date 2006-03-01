@@ -174,7 +174,7 @@ void calculate_offset_and_file_handler(const xptr &p,
 {
     if (IS_DATA_BLOCK(p)) 
     {
-        //printf("calculate_offset_and_file_handler: data block\n");
+        //d_printf1("calculate_offset_and_file_handler: data block\n");
         *dsk_offs = ABS_DATA_OFFSET(p) + (__int64)PAGE_SIZE;
         
         if (!((__int64)PAGE_SIZE <= *dsk_offs && *dsk_offs <= mb->data_file_cur_size - (__int64)PAGE_SIZE))
@@ -193,7 +193,7 @@ void calculate_offset_and_file_handler(const xptr &p,
     }
     else 
     {
-        //printf("calculate_offset_and_file_handler: tmp block\n");
+        //d_printf1("calculate_offset_and_file_handler: tmp block\n");
         *dsk_offs = ABS_TMP_OFFSET(p);
         if (!((__int64)0 <= *dsk_offs && *dsk_offs <= mb->tmp_file_cur_size - (__int64)PAGE_SIZE))
         {
@@ -324,25 +324,25 @@ xptr put_block_to_buffer(session_id sid,
 {
     int res = 0;
 
-//printf("put 1\n");
+//d_printf1("put 1\n");
     res = buffer_table.find(p, *offs);
     if (res == 0) return xptr(); // we have found the block in memory
 
-//printf("put 2\n");
+//d_printf1("put 2\n");
     // this block is not in memory
     // try to find free buffer for the block
     xptr swapped = get_free_buffer(sid, offs);
     //since that offs references free buffer
           
-//printf("put 3\n");
+//d_printf1("put 3\n");
     buffer_table.insert(p, *offs);
     used_mem.push(*offs);
 
-//printf("put 4\n");
+//d_printf1("put 4\n");
     // read block from disk
     if (read_block_from_disk) read_block(p, *offs);
 
-//printf("put 5\n");
+//d_printf1("put 5\n");
     return swapped;
 }
 

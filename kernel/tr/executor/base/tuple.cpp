@@ -15,86 +15,86 @@ tuple_cell EMPTY_STRING_TC(tuple_cell::atomic_deep(xs_string, ""));
 
 void tuple_cell::print(bool b) const
 {
-    if (b) printf("Tuple cell: ");
+    if (b) d_printf1("Tuple cell: ");
 
     switch(type)
     {
-        case tc_eos				: if (b) printf("type = ");
-                                  printf("eos");
+        case tc_eos				: if (b) d_printf1("type = ");
+                                  d_printf1("eos");
                                   break;
-        case tc_node			: if (b) printf("type = node ");
+        case tc_node			: if (b) d_printf1("type = node ");
                                   get_node().print();
                                   break;
         case tc_light_atomic	: if (b) 
                                   {
-                                      printf("type = light_atomic ");
-                                      printf("xtype = %d ", xtype);
+                                      d_printf1("type = light_atomic ");
+                                      d_printf2("xtype = %d ", xtype);
                                   }
                                   switch (xtype)
                                   {
-                                      case xdt_untypedAtomic	: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_dateTime			: printf("[xs_dateTime]"); break;
+                                      case xdt_untypedAtomic	: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_dateTime			: d_printf1("[xs_dateTime]"); break;
                                       case xs_date				: get_xs_date().print(); break;
-                                      case xs_time				: printf("[xs_time]"); break;
-                                      case xs_duration			: printf("[xs_duration]"); break;
-                                      case xdt_yearMonthDuration: printf("[xdt_yearMonthDuration]"); break;
-                                      case xdt_dayTimeDuration	: printf("[xdt_dayTimeDuration]"); break;
-                                      case xs_float				: printf("%g", get_xs_float()); break;
-                                      case xs_double			: printf("%g", get_xs_double()); break;
-                                      case xs_string			: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_normalizedString	: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_token				: printf("[xs_token]"); break;
-                                      case xs_language			: printf("[xs_language]"); break;
-                                      case xs_NMTOKEN			: printf("[xs_NMTOKEN]"); break;
-                                      case xs_Name				: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_NCName			: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_ID				: printf("[xs_ID]"); break;
-                                      case xs_IDREF				: printf("[xs_IDREF]"); break;
-                                      case xs_ENTITY			: printf("[xs_ENTITY]"); break;
+                                      case xs_time				: d_printf1("[xs_time]"); break;
+                                      case xs_duration			: d_printf1("[xs_duration]"); break;
+                                      case xdt_yearMonthDuration: d_printf1("[xdt_yearMonthDuration]"); break;
+                                      case xdt_dayTimeDuration	: d_printf1("[xdt_dayTimeDuration]"); break;
+                                      case xs_float				: d_printf2("%g", get_xs_float()); break;
+                                      case xs_double			: d_printf2("%g", get_xs_double()); break;
+                                      case xs_string			: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_normalizedString	: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_token				: d_printf1("[xs_token]"); break;
+                                      case xs_language			: d_printf1("[xs_language]"); break;
+                                      case xs_NMTOKEN			: d_printf1("[xs_NMTOKEN]"); break;
+                                      case xs_Name				: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_NCName			: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_ID				: d_printf1("[xs_ID]"); break;
+                                      case xs_IDREF				: d_printf1("[xs_IDREF]"); break;
+                                      case xs_ENTITY			: d_printf1("[xs_ENTITY]"); break;
                                       case xs_decimal			: get_xs_decimal().print(); break;
-                                      case xs_integer			: printf("%d", get_xs_integer()); break;
-                                      case xs_gYearMonth		: printf("[xs_gYearMonth]"); break;
-                                      case xs_gYear				: printf("[xs_gYear]"); break;
-                                      case xs_gMonthDay			: printf("[xs_gMonthDay]"); break;
-                                      case xs_gDay				: printf("[xs_gDay]"); break;
-                                      case xs_gMonth			: printf("[xs_gMonth]"); break;
-                                      case xs_boolean			: printf("%s", (get_xs_boolean() ? "true" : "false"));
-                                      case xs_base64Binary		: printf("[xs_base64Binary]"); break;
-                                      case xs_hexBinary			: printf("[xs_hexBinary]"); break;
-                                      case xs_anyURI			: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_QName				: printf("\"%s\"", get_str_mem()); break;
-                                      case xs_NOTATION			: printf("[xs_NOTATION]"); break;
-                                      default					: printf("UNKNOWN");
+                                      case xs_integer			: d_printf2("%d", get_xs_integer()); break;
+                                      case xs_gYearMonth		: d_printf1("[xs_gYearMonth]"); break;
+                                      case xs_gYear				: d_printf1("[xs_gYear]"); break;
+                                      case xs_gMonthDay			: d_printf1("[xs_gMonthDay]"); break;
+                                      case xs_gDay				: d_printf1("[xs_gDay]"); break;
+                                      case xs_gMonth			: d_printf1("[xs_gMonth]"); break;
+                                      case xs_boolean			: d_printf2("%s", (get_xs_boolean() ? "true" : "false"));
+                                      case xs_base64Binary		: d_printf1("[xs_base64Binary]"); break;
+                                      case xs_hexBinary			: d_printf1("[xs_hexBinary]"); break;
+                                      case xs_anyURI			: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_QName				: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_NOTATION			: d_printf1("[xs_NOTATION]"); break;
+                                      default					: d_printf1("UNKNOWN");
                                   }
                                   break;
         case tc_heavy_atomic_estr:
                                   if (b)
                                   {
-                                      printf("type = heavy_atomic_estr ");
-                                      printf("xtype = %d\n", xtype);
+                                      d_printf1("type = heavy_atomic_estr ");
+                                      d_printf2("xtype = %d\n", xtype);
                                   }
-                                  else printf("heavy_atomic_estr");
+                                  else d_printf1("heavy_atomic_estr");
                                   break;
         case tc_heavy_atomic_pstr_short	: 
                                   if (b)
                                   {
-                                      printf("type = heavy_atomic_pstr ");
-                                      printf("xtype = %d\n", xtype);
+                                      d_printf1("type = heavy_atomic_pstr ");
+                                      d_printf2("xtype = %d\n", xtype);
                                   }
-                                  else printf("heavy_atomic_pstr");
+                                  else d_printf1("heavy_atomic_pstr");
                                   break;
         case tc_heavy_atomic_pstr_long	: 
                                   if (b)
                                   {
-                                      printf("type = heavy_atomic_pstr_long ");
-                                      printf("xtype = %d\n", xtype);
+                                      d_printf1("type = heavy_atomic_pstr_long ");
+                                      d_printf2("xtype = %d\n", xtype);
                                   }
-                                  else printf("heavy_atomic_pstr_long");
+                                  else d_printf1("heavy_atomic_pstr_long");
                                   break;
-        default					: printf("unknown type %d\n", type);
+        default					: d_printf2("unknown type %d\n", type);
     }
 
-    if (b) printf("\n");
+    if (b) d_printf1("\n");
 }
 
 tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
@@ -137,7 +137,7 @@ void tuple_cell::copy_string(char *buf)
 
 tuple::tuple(const tuple& t)
 { 
-    //printf("tuple::tuple(const tuple &t) begin\n");
+    //d_printf1("tuple::tuple(const tuple &t) begin\n");
 
     eos = t.eos;
     cells_number = t.cells_number; 
@@ -148,12 +148,12 @@ tuple::tuple(const tuple& t)
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
-    //printf("tuple::tuple(const tuple &t) end\n");
+    //d_printf1("tuple::tuple(const tuple &t) end\n");
 }
 
 tuple& tuple::operator=(const tuple& t)
 {
-    //printf("tuple::operator=(const tuple& t) begin\n");
+    //d_printf1("tuple::operator=(const tuple& t) begin\n");
 
     clear();
 
@@ -166,17 +166,17 @@ tuple& tuple::operator=(const tuple& t)
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
-    //printf("tuple::operator=(const tuple& t) end\n");
+    //d_printf1("tuple::operator=(const tuple& t) end\n");
 
     return *this;
 }
 
 void tuple::print() const
 {
-    printf("Tuple: eos = %d; cells_number = %d\n", eos, cells_number);
+    d_printf3("Tuple: eos = %d; cells_number = %d\n", eos, cells_number);
     for (int i = 0; i < cells_number; i++)
     {
-        printf("tuple_cell[%d] ", i);
+        d_printf2("tuple_cell[%d] ", i);
         cells[i].print();
     }
 }

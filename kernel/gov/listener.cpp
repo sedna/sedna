@@ -31,8 +31,8 @@ int client_listener(bool is_background_mode)
    if (!is_background_mode)
    {	   
      d_printf1("OK\n");
-     printf("GOVERNOR has been started successfully\n");
-     fflush(stdout);
+     fprintf(res_os, "GOVERNOR has been started successfully\n");
+     fflush(res_os);
    }
 
 
@@ -255,14 +255,14 @@ try{
 
 
    } catch (SednaUserException &e) {
-       cout << e.getMsg().c_str() << endl;
+       fprintf(stderr, "%s\n", e.getMsg().c_str());
        sp_error_message_handler(socknew, 100, e.get_code(), e.getMsg().c_str());
    } catch (SednaException &e) {
-       cout << "System error" << endl;
+       fprintf(stderr, "System error");
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault(e);
    } catch (...) {
-       cout << "System error" << endl;
+       fprintf(stderr, "System error");
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault();
    }
@@ -400,7 +400,6 @@ int sm_registering(USOCKET s, char* msg_buf)
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
         if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
-//        if (res2 == U_SOCKET_ERROR) d_printf1("The answer to database that system is busy have not sent\n");
     }
     else if (res == -3)
     {
@@ -408,7 +407,6 @@ int sm_registering(USOCKET s, char* msg_buf)
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
         if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
-//       if (res2 == U_SOCKET_ERROR) d_printf1("The answer to database that such database already exists have not sent\n");
     }
     else if (res == -4)
     {
@@ -416,7 +414,6 @@ int sm_registering(USOCKET s, char* msg_buf)
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
         if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
-//       if (res2 == U_SOCKET_ERROR) d_printf1("The answer to session that pid is not valid have not sent\n");
     }
 
     ushutdown_close_socket(s);

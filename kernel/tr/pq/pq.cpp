@@ -149,7 +149,7 @@ extern void scm_debug(int code, char* message, char* component);
 
 void scm_error(int code, char* message, char* component)
 {
-//    printf("error: %s\n", message);
+//    d_printf2("error: %s\n", message);
 //      error(code, message, component);
 //      free(message);
 //      free(component);
@@ -157,7 +157,7 @@ void scm_error(int code, char* message, char* component)
 
 void scm_debug(int code, char* message, char* component)
 {
-//    printf("debug: %s\n", message);
+//    d_printf2("debug: %s\n", message);
 //      debug(code, message, component);
 //      free(message);
 //      free(component);

@@ -108,13 +108,13 @@ void trans_table::print()
 #ifdef LOCK_MGR_ON
   Trans_It it;
 
-  cout << "============== Trans Table=================" << endl;
+  d_printf1("============== Trans Table=================\n");
   for (it = _tr_table_.begin(); it != _tr_table_.end(); it++)
   {
     (*it).second->print();
-    cout << endl;
+    d_printf1("\n");
   }
 
-  cout << "============================================" << endl;
+  d_printf1("============================================\n");
 #endif
 }

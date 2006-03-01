@@ -226,7 +226,7 @@ int main(int argc, char * argv[])
                         }
                         case se_ExecuteSchemeProgram://Execute Scheme program
                         {                                                       
-                            printf("Scheme program from file=%s is executed\n", client_msg.body);
+                            d_printf2("Scheme program from file=%s is executed\n", client_msg.body);
 							break;
                         }
 
@@ -366,12 +366,13 @@ int main(int argc, char * argv[])
                     on_transaction_end(sm_server, false/*ROLLBACK*/);
                     ret_code = 1;
 
-                    printf("\nTr is rolled back successfully\n");
+                    d_printf1("\nTr is rolled back successfully\n");
 
                     if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009)//session must be closed
                         {ret_code = 1; throw;}
 
-                    cout << e.getMsg().c_str() << endl;
+                    fprintf(stderr, "%s\n", e.getMsg().c_str());
+
                     client->error(e.get_code(), e.getMsg());
                     
                  } catch (SednaException &e) {
@@ -441,7 +442,8 @@ int main(int argc, char * argv[])
    d_printf1("Transaction has been closed\n\n");
 
    } catch (SednaUserException &e) {
-       cout << e.getMsg().c_str() << endl;
+      fprintf(stderr, "%s\n", e.getMsg().c_str());
+
        on_session_end(sm_server);
        if (client != NULL) {
           if (e.get_code() == SE3053)

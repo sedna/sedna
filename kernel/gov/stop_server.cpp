@@ -99,12 +99,12 @@ int main(int argc, char** argv)
 
 end:
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-        printf("SEDNA server has been shut down successfully\n");
-        fflush(stdout);
+        fprintf(res_os, "SEDNA server has been shut down successfully\n");
+        fflush(res_os);
         return 0;
 
       } catch(SednaUserException &e) {
-          cout << e.getMsg().c_str() << endl;
+          fprintf(stderr, "%s\n", e.getMsg().c_str());
           return -1;
       } catch(SednaException &e) {
           sedna_soft_fault(e);

@@ -108,7 +108,6 @@ bool PPCalculate::result(PPIterator* cur, variable_context *cxt, void*& r)
         //if (ch_s[i]) //!!! debug
         //{
         //    sequence *s = (sequence*)(ch_r[i]);
-        //    printf("hi\n");
         //}
     }
 

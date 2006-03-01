@@ -411,7 +411,7 @@ t_scmnodes_const execute_node_test(const schema_node *node, const NodeTest& nt)
 
 t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const PathExpr &pe)
 {
-    //printf("PPAbsPath::execute_abs_path_expr_rec\n");
+    //d_printf1("PPAbsPath::execute_abs_path_expr_rec\n");
     t_scmnodes_const n1 = nodes, n2;
 
     for (int p = 0; p < pe.s; p++)
@@ -442,7 +442,7 @@ t_scmnodes_const execute_abs_path_expr(const schema_node *root, const PathExpr *
     scmnodes.push_back(root);
     scmnodes = execute_abs_path_expr_rec(scmnodes, *path_expr);
 
-    //printf("PPAbsPath::execute_abs_path_expr: size of scmnodes %d\n", scmnodes.size());
+    //d_printf2("PPAbsPath::execute_abs_path_expr: size of scmnodes %d\n", scmnodes.size());
 
     // Eliminate duplicates
     int ar_size = scmnodes.size();

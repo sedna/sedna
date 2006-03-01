@@ -2673,11 +2673,11 @@ PPQueryEssence *build_qep(const char* por, crmostream& s, t_print print_mode)
     scheme_list *qep_tree_in_scheme_lst = NULL;
 
     // parse LR (extended representation by C++ part)
-    //printf("\nmake_tree_from_scheme_list...\n");
+    //d_printf1("\nmake_tree_from_scheme_list...\n");
     qep_tree_in_scheme_lst = make_tree_from_scheme_list(por);
 
     // constructs QEP tree
-    //printf("scheme_list2qep...\n");
+    //d_printf1("scheme_list2qep...\n");
     PPQueryEssence *qep = scheme_list2qep(qep_tree_in_scheme_lst, s, print_mode);
 
     delete_scheme_list(qep_tree_in_scheme_lst);
@@ -2688,7 +2688,7 @@ PPQueryEssence *build_qep(const char* por, crmostream& s, t_print print_mode)
 PPQueryEssence *build_qep(scheme_list *por, crmostream& s, t_print print_mode)
 {
     // constructs QEP tree
-    //printf("scheme_list2qep...\n");
+    //d_printf1("scheme_list2qep...\n");
     PPQueryEssence *qep = scheme_list2qep(por, s, print_mode);
     return qep;
 }

@@ -34,6 +34,7 @@ extern char q_type[];
 extern QueryType query_type;
 extern char login[];
 extern char password[];
+extern char output_file[];
 
 extern const size_t narg;
 extern arg_rec tr_argtable[];

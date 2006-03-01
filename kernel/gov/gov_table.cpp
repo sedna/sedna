@@ -603,12 +603,12 @@ void info_table::print_info_table()
 {
   s_table_iter c_it;
   
-  printf("\n\n=============== SESSION TABLE ====================\n");
+  d_printf1("\n\n=============== SESSION TABLE ====================\n");
   for(c_it = _session_table_.begin(); c_it!=_session_table_.end(); c_it++)
   {
-    printf("%d", c_it->first);
+    d_printf2("%d", c_it->first);
     c_it->second.print_session();
-    printf("\n\n");
+    d_printf1("\n\n");
   }
-  printf("==================================================\n\n");
+  d_printf1("==================================================\n\n");
 }

@@ -126,15 +126,15 @@ end:
         if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
         if (exist_db)
-           printf("The database '%s' has been successfully shut down\n", db_name);
+           fprintf(res_os, "The database '%s' has been successfully shut down\n", db_name);
         else
-           printf("There is no database with name '%s'\n", db_name);
+           fprintf(res_os, "There is no database with name '%s'\n", db_name);
 
-        fflush(stdout);
+        fflush(res_os);
 
         
     } catch (SednaUserException &e) { 
-        cout << endl << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         ppc.shutdown();
         return 1;
     } catch (SednaException &e) {

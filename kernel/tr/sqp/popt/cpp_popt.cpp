@@ -15,7 +15,7 @@ const char *cpp_popt(const char * str)
     popt_plan plan;
     std::ostrstream s;
 
-    //printf("\n%s\n\n", str);
+    //d_printf1("\n%s\n\n", str);
 
     att_in_scheme_lst = make_tree_from_scheme_list(str);
     att = make_att_attr(att_in_scheme_lst);
@@ -42,9 +42,9 @@ const char *cpp_popt(const char * str)
     res[size] = '\0';
 
 #ifdef POPT_DEBUG
-    printf("\n========== Optimized plan ==========\n");
-    printf("%s", res);
-    printf("\n========== Optimized plan ==========\n");
+    d_printf1("\n========== Optimized plan ==========\n");
+    d_printf2("%s", res);
+    d_printf1("\n========== Optimized plan ==========\n");
 #endif
 
     return res;

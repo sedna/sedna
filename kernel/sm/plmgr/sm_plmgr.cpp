@@ -117,9 +117,9 @@ LONG_LSN sm_plmgr::recoverDataBase()
      tmp_buf = new char[(log_head->len)+1];
      memcpy(tmp_buf, read_buf+sizeof(phys_log_head), log_head->len);
      tmp_buf[log_head->len]='\0';
-     //printf("Phys log len=%d\n", log_head->len);
-     //printf("Phys log body=%s\n", tmp_buf);
-     //printf("debug =%d\n", debug);
+     //d_printf2("Phys log len=%d\n", log_head->len);
+     //d_printf2("Phys log body=%s\n", tmp_buf);
+     //d_printf2("debug =%d\n", debug);
      delete [] tmp_buf;
      #endif
 
@@ -190,6 +190,6 @@ end:
 
   bm_rcv_tmp_file();
 
-  std::cout <<"Logical log checkpoint lsn=" << pl_head_for_rcv->last_checkpoint_lsn << endl;
+//  std::cout <<"Logical log checkpoint lsn=" << pl_head_for_rcv->last_checkpoint_lsn << endl;
   return pl_head_for_rcv->last_checkpoint_lsn;
 }

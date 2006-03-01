@@ -23,21 +23,21 @@ PPQueryRoot::PPQueryRoot(variable_context *_cxt_,
 
 PPQueryRoot::~PPQueryRoot()
 {
-//    printf("PPQueryRoot::~PPQueryRoot() begin\n");
+//    d_printf1("PPQueryRoot::~PPQueryRoot() begin\n");
     delete child.op;
     child.op = NULL;
     delete cxt;
     cxt = NULL;
-//    printf("PPQueryRoot::~PPQueryRoot() end\n");
+//    d_printf1("PPQueryRoot::~PPQueryRoot() end\n");
 }
 
 void PPQueryRoot::open()
 {
-//    printf("PPQueryRoot::open() begin\n");
+//    d_printf1("PPQueryRoot::open() begin\n");
     local_lock_mrg->lock(lm_s);
 	first=true;
     child.op->open();
-//    printf("PPQueryRoot::open() end\n");
+//    d_printf1("PPQueryRoot::open() end\n");
 }
 
 void PPQueryRoot::close()

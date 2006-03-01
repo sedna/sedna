@@ -229,7 +229,7 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
 #else
     if (meth == U_FILE_BEGIN)
     {
-        /*printf("Calling ftruncate64...\n");*/
+        /*d_printf1("Calling ftruncate64...\n");*/
         if (ftruncate64(fd, offs) == -1)
             return 0;
     }
@@ -382,16 +382,14 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 
     if (lstat(path, &path_buf) == -1)
     {
-        printf("lstat error\n");
-        perror("lstat");
+        d_perror("lstat");
         return 0;
     }
 
     n = scandir("/dev", &dir, 0, alphasort);
     if (n == -1)
     {
-        printf("scandir error\n");
-        perror("scandir");
+        d_perror("scandir");
         return 0;
     }
 
@@ -403,21 +401,20 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
         memset(buf + 5, '\0', DSS_BUF_SIZE - 5);
         if (strlen(dir[i]->d_name) > DSS_BUF_SIZE - 6)
         {
-            printf("buffer overflow error\n");
+            fprintf(stderr, "buffer overflow error\n");
             return 0;
         }
         strcpy(buf + 5, dir[i]->d_name);
         if (lstat(buf, &dev_buf) == -1)
         {
-            printf("lstat error\n");
-            perror("lstat");
+            d_perror("lstat");
             return 0;
         }
 
         if ((major(path_buf.st_dev) == major(dev_buf.st_rdev)) && (minor(path_buf.st_dev) == minor(dev_buf.st_rdev)) && (!S_ISCHR(dev_buf.st_mode)) && strlen(dir[i]->d_name) > 1 && dir[i]->d_name[0] == 'h' && dir[i]->d_name[1] == 'd')
             break;
 /*              {*/
-/*                  printf("%s    %d/%d\n", buf, major(dev_buf.st_dev), minor(dev_buf.st_dev));*/
+/*                  d_printf4("%s    %d/%d\n", buf, major(dev_buf.st_dev), minor(dev_buf.st_dev));*/
 /*              }*/
     }
 
@@ -428,15 +425,13 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
     fd = open(buf, 0);
     if (fd == -1)
     {
-        printf("Error opening device\n");
-        perror("open");
+        d_perror("open");
         return 0;
     }
 
     if (ioctl(fd, BLKSSZGET, sector_size) == -1)
     {
-        printf("Error obtaining sector size\n");
-        perror("ioctl");
+        d_perror("ioctl");
         return 0;
     }
 

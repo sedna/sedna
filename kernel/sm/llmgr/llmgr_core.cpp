@@ -1004,7 +1004,7 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
 
   ll_log_unlock(sync);
 
-  std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
+  //std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
 
   return ret_lsn;
 /*

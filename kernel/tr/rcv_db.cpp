@@ -40,7 +40,7 @@ int main (int argc, char** argv)
 {
   if (argc != 3)
   {
-     printf("bad number of paprameters\n");
+     d_printf1("bad number of paprameters\n");
      return -1;
   }
 
@@ -105,7 +105,7 @@ int main (int argc, char** argv)
       d_printf1("OK\n");
 
       LONG_LSN last_cp_lsn = _atoi64(argv[2]);
-      std::cout << "last checkpoint lsn=" << last_cp_lsn << endl;
+//      std::cout << "last checkpoint lsn=" << last_cp_lsn << endl;
 
       recover_db_by_logical_log(last_cp_lsn);
 
@@ -147,9 +147,9 @@ int main (int argc, char** argv)
 
   } catch(SednaUserException &e) {
 	  ppc.shutdown();
-      cout << e.getMsg() << endl;
+      fprintf(stderr, "%s\n", e.getMsg());
   } catch(...) {
-      cout << "unknown error" << endl;
+      fprintf(stderr, "unknown error");
   }
 
   return 0;

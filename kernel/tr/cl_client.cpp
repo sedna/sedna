@@ -75,6 +75,10 @@ void command_line_client::init()
    else if (string(q_type) == "LR") query_type = TL_ForSemAnal;
    else throw USER_EXCEPTION(SE4002);
 
+   if (string(output_file) == "STDOUT") res_os = stdout;
+   else if ((res_os = fopen(output_file, "w")) == NULL) throw USER_EXCEPTION2(SE4040, output_file);
+             
+
 
    string plain_batch_text;
 
@@ -316,7 +320,7 @@ void command_line_client::respond_to_client(int instruction)
     switch (instruction)
     {
         case se_UpdateSucceeded:
-            printf("\nUPDATE is executed successfully\n");
+            fprintf(res_os, "\nUPDATE is executed successfully\n");
             break;
         case se_BulkLoadSucceeded:
             d_printf1("\nBulk load succeeded\n");

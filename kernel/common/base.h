@@ -223,6 +223,7 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* 
 void set_sedna_data();
 void set_global_names();
 void set_global_names(const char *db_name, bool must_exist = false);
+extern FILE* res_os;
 
 /**
  * Type of query that executed by query processor

@@ -149,14 +149,14 @@ int main(int argc, char** argv)
 
        
         if (res_clenup_db == 1)
-           printf("The database '%s' has been dropped\n", db_name);
+           fprintf(res_os, "The database '%s' has been dropped\n", db_name);
         else
            throw USER_EXCEPTION2(SE4308, "Database files sharing violation");
 
 		if (sedna_work) ppc.shutdown();
 
   } catch (SednaUserException &e) { 
-      cout << endl << e.getMsg().c_str() << endl;
+      fprintf(stderr, "%s\n", e.getMsg().c_str());
       if (sedna_work) ppc.shutdown();
       return 1;
   } catch (SednaException &e) {

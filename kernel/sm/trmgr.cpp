@@ -107,7 +107,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     cp_lsn = ll_logical_log_checkpoint();
     d_printf1("checkpoint record written\n");
 
-    std::cout << "last checkpoint lsn=" << cp_lsn << endl;
+    d_printf2("last checkpoint lsn=%d\n", cp_lsn);
 
     //flush logical log
     ll_logical_log_flush();

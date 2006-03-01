@@ -82,9 +82,10 @@ int main (int argc, char** argv)
           throw USER_EXCEPTION(SE4606);
       d_printf1("OK\n");
   } catch(CharismaException &e) {
-      cout << e.getMsg() << endl;
+      fprintf(stderr, "%s\n", e.getMsg());
+
   } catch(...) {
-      cout << "unknown error" << endl;
+      fprintf(stderr, "unknown error\n");
   }
 
 

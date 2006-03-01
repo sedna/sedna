@@ -462,7 +462,7 @@ int main(int argc, char **argv)
         }
         ////////////////////////////////////////////////////////////////////////
 
-        printf("Creating a data base (it can take a few minutes)...\n");
+        fprintf(res_os, "Creating a data base (it can take a few minutes)...\n");
 
 
         //!!! Now all parameters checked
@@ -547,8 +547,8 @@ int main(int argc, char **argv)
 
              if (load_res == 0)
              {
-                printf("The database '%s' has been created successfully\n", db_name);
-                fflush(stdout);
+                fprintf(res_os, "The database '%s' has been created successfully\n", db_name);
+                fflush(res_os);
              }
              else
                 throw USER_EXCEPTION2(SE4211, db_name);
@@ -561,7 +561,7 @@ int main(int argc, char **argv)
         } catch (SednaUserException &e) {
              if (!is_ppc_closed) ppc.shutdown();
              cleanup_db(db_name);
-             cout << e.getMsg().c_str() << endl;
+             fprintf(stderr, "%s\n", e.getMsg().c_str());
              return 1;
         } catch (SednaException &e) {
              cleanup_db(db_name);
@@ -573,7 +573,7 @@ int main(int argc, char **argv)
 
 
     } catch (SednaUserException &e) {
-        cout << e.getMsg().c_str() << endl;
+        fprintf(stderr, "%s\n", e.getMsg().c_str());
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e);

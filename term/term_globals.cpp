@@ -29,7 +29,6 @@ char query[TERM_ARGSTRLEN];
 //QueryType query_type = TL_XQuery;
 char login[TERM_ARGSTRLEN];
 char password[TERM_ARGSTRLEN];
-FILE* res_os; //otput stream of term results (result of the user's queres)
 
 const size_t narg = 12;
 

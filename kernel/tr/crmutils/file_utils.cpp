@@ -158,7 +158,7 @@ void processWP(const char** s, int& len)
 			}
 #ifdef SE_ENABLE_FTSEARCH
 			if (is_coll)
-				update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+				update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 			mark=0;
 			left=new_node;
@@ -308,7 +308,7 @@ static void start(void *data, const char *el, const char **attr)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 if (is_coll)
- update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+ update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
     //printf("ae\n"); fflush(stdout);
 	//checkChildReferenceValidity(new_node);
@@ -346,7 +346,7 @@ if (is_coll)
 		att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xdt_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
 #ifdef SE_ENABLE_FTSEARCH
 		if (is_coll)
-			update_insert_sequence(att,(GETBLOCKBYNODE(att))->snode->ft_index_object); 
+			update_upsert_sequence(att,(GETBLOCKBYNODE(att))->snode->ft_index_object); 
 #endif
 		//checkChildReferenceValidity(att);
 	}
@@ -428,7 +428,7 @@ void data(void *userData, const char *s, int len)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	//checkTextNodeCorrectness(new_node);
 	//checkChildReferenceValidity(new_node);
@@ -594,7 +594,7 @@ void dt_comment (void *userData, const char *data)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
@@ -631,7 +631,7 @@ void dt_cdata_end (void *userData)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
@@ -659,7 +659,7 @@ void dt_pi (void *userData, const char *target, const char *data)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
@@ -880,7 +880,7 @@ xptr loadfile(FILE* f, const char* uri,const char * collection, bool stripped,in
 	sc_parent=(GETBLOCKBYNODE(docnode))->snode;
 #ifdef SE_ENABLE_FTSEARCH
 clear_ft_sequences();
-update_insert_sequence(docnode,sc_parent->ft_index_object); 
+update_upsert_sequence(docnode,sc_parent->ft_index_object); 
 #endif
 	try{
 	parse_schema(f);

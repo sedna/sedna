@@ -86,18 +86,18 @@ PPAbsPath::PPAbsPath(variable_context *_cxt_,
 
 PPAbsPath::~PPAbsPath()
 {
-//    printf("PPAbsPath::~PPAbsPath() begin\n");
+//    d_printf1("PPAbsPath::~PPAbsPath() begin\n");
     if (name.op)
     {
         delete name.op;
         name.op = NULL;
     }
-//    printf("PPAbsPath::~PPAbsPath() end\n");
+//    d_printf1("PPAbsPath::~PPAbsPath() end\n");
 }
 
 void PPAbsPath::open ()
 {
-//    printf("PPAbsPath::open () begin\n");
+//    d_printf1("PPAbsPath::open () begin\n");
     merged_seq_arr = NULL;
     scmnodes_num = -1;
 
@@ -106,7 +106,7 @@ void PPAbsPath::open ()
         name.op->open();
         root = NULL;
     }
-//    printf("PPAbsPath::open () end\n");
+//    d_printf1("PPAbsPath::open () end\n");
 }
 
 
@@ -136,12 +136,12 @@ void PPAbsPath::close ()
 
 void PPAbsPath::next(tuple &t)
 {
-//    printf("++++++++++++\n");
+//    d_printf1("++++++++++++\n");
 //    path_expr->print();
-//    printf("\n");
+//    d_printf1("\n");
 //    path_expr->print_to_lr();
-//    printf("\n");
-//    printf("++++++++++++\n");
+//    d_printf1("\n");
+//    d_printf1("++++++++++++\n");
     
 
     if (!root) 
@@ -152,14 +152,14 @@ void PPAbsPath::next(tuple &t)
         }
        
 /*
-    printf("PPAbsPath::next 1\n");
+    d_printf1("PPAbsPath::next 1\n");
     crm_out<<root->bblk.addr;
 	CHECKP(root->bblk);
     crm_out<<"\nFIRST="<<((node_blk_hdr*)XADDR(root->bblk))->desc_first <<"\n";
     crm_out<<"\nnode="<<GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(root->bblk)).addr;
-	printf("PPAbsPath::next 2\n");
+	d_printf1("PPAbsPath::next 2\n");
     print_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(root->bblk)), crm_out);
-    printf("PPAbsPath::next 3\n");
+    d_printf1("PPAbsPath::next 3\n");
 */
 
     if (scmnodes_num < 0)
@@ -167,7 +167,7 @@ void PPAbsPath::next(tuple &t)
     else
         elim_disturb(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
 
-    //printf("scmnodes_num = %d\n", scmnodes_num);
+    //d_printf2("scmnodes_num = %d\n", scmnodes_num);
 
     xptr res = (scmnodes_num == 0) ? XNULL : merged_seq_arr[0];
     if (res == NULL)
@@ -249,9 +249,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
         if (first_blk == NULL) merged_seq_arr[i] = XNULL;
         else
         {
-            //printf("before CHECKP\n");
             CHECKP(first_blk);
-            //printf("after CHECKP\n");
             merged_seq_arr[i] = GETBLOCKFIRSTDESCRIPTORABSOLUTE(XADDR(first_blk));
         }
     }

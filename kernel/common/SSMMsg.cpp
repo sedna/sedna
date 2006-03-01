@@ -97,18 +97,16 @@ SSMMsg::SSMMsg(mode _m_,
 
 int SSMMsg::init()
 {
-    //printf("!!!!!!!! SSMMsg::init() !!!!!!!\n");
+    //d_printf1("!!!!!!!! SSMMsg::init() !!!!!!!\n");
 
     if (m == Server)
     {
-        //printf("10\n");
         if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size))
         {
             d_printf1("uCreateShMem failed\n");
             return 1;
         }
 
-        //printf("11\n");
         shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size);
         if (shar_mem == NULL)
         {
@@ -116,9 +114,8 @@ int SSMMsg::init()
             return 1;
         }
 
-        //printf("12\n");
-        //printf("shar_mem 0x%x\n", shar_mem);
-        //printf("shared_memory_size %d\n", shared_memory_size);
+        //d_printf2("shar_mem 0x%x\n", shar_mem);
+        //d_printf2("shared_memory_size %d\n", shared_memory_size);
 
         int *init_values = new int[sems_num];
 
@@ -132,14 +129,12 @@ int SSMMsg::init()
         for (i = NAMED_SEMS_NUM; i < sems_num; i++)
             init_values[i] = 0;
 
-        //printf("13\n");
         if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems))
         {
             d_printf1("USemaphoreArrCreate failed\n");
             return 1;
         }
 
-        //printf("14\n");
         delete [] init_values;
 
 
@@ -158,7 +153,7 @@ int SSMMsg::init()
     }
     else if (m == Client)
     {
-        //printf("!!!!!!!!!!! Client initialization !!!!!!!!!!!!!!!!!!!!!!!!!\n");
+        //d_printf1("!!!!!!!!!!! Client initialization !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
         if (0 != uOpenShMem(&sh_mem, g_name_shmem, shared_memory_size))
         {
@@ -173,8 +168,8 @@ int SSMMsg::init()
             return 1;
         }
 
-        //printf("shar_mem 0x%x\n", shar_mem);
-        //printf("shared_memory_size %d\n", shared_memory_size);
+        //d_printf2("shar_mem 0x%x\n", shar_mem);
+        //d_printf2("shared_memory_size %d\n", shared_memory_size);
 
         if (0 != USemaphoreArrOpen(&sems, sems_num, g_name_sems))
         {
@@ -265,49 +260,49 @@ int SSMMsg::send_msg(void * buf)
 {
 //    static int i = 0;
 
-//    printf("send_msg called %d times\n", ++i); fflush(stdout);
+//    d_printf2("send_msg called %d times\n", ++i); fflush(stdout);
 
     int server_num = 0;
 
-//    printf("down sem_mutex %d\n", (int)sem_mutex); fflush(stdout);
+//    d_printf2("down sem_mutex %d\n", (int)sem_mutex); fflush(stdout);
     down2(sems, sem_mutex, millisec, 1); 
-//    printf("down sem_mutex %d\n", (int)sem_mutex); fflush(stdout);
+//    d_printf2("down sem_mutex %d\n", (int)sem_mutex); fflush(stdout);
     if (*waiting < MESSAGES_IN_QUEUE && *process_messages == 1)
     {
         *waiting += 1;
 
-//        printf("*waiting = %d\n", *waiting); fflush(stdout);
-//        printf("*process_messages = %d\n", *process_messages); fflush(stdout);
+//        d_printf2("*waiting = %d\n", *waiting); fflush(stdout);
+//        d_printf2("*process_messages = %d\n", *process_messages); fflush(stdout);
 
         up(sems, sem_clients, 1);
         up(sems, sem_mutex, 1);
-//        printf("down sem_servers\n"); fflush(stdout);
+//        d_printf1("down sem_servers\n"); fflush(stdout);
         down2(sems, sem_servers, millisec, 1);
 
-//        printf("down sem_pact_written\n"); fflush(stdout);
+//        d_printf1("down sem_pact_written\n"); fflush(stdout);
         down2(sems, sem_pact_written, millisec, 1);
         server_num = *slot;
         up(sems, sem_pact_read, 1);
 
-//        printf("server_num %d\n", server_num); fflush(stdout);
-//        printf("cell 0x%x\n", (void*)((char*)buf_addr + server_num * real_block_size)); fflush(stdout);
+//        d_printf2("server_num %d\n", server_num); fflush(stdout);
+//        d_printf2("cell 0x%x\n", (void*)((char*)buf_addr + server_num * real_block_size)); fflush(stdout);
         memcpy((void*)((char*)buf_addr + server_num * real_block_size), buf, msg_size);
         up(sems, sem_data_written + server_num, 1);
-//        printf("down sem_data_processed[%d]\n", server_num); fflush(stdout);
+//        d_printf2("down sem_data_processed[%d]\n", server_num); fflush(stdout);
         down2(sems, sem_data_processed + server_num, millisec, 1);
-//        printf("after down sem_data_processed\n");
+//        d_printf1("after down sem_data_processed\n");
         memcpy(buf, (void*)((char*)buf_addr + server_num * real_block_size), msg_size);
-//        printf("up sem_data_read[%d]\n", server_num); fflush(stdout);
+//        d_printf2("up sem_data_read[%d]\n", server_num); fflush(stdout);
         up(sems, sem_data_read + server_num, 1);
 
-//        printf("client: msg sent\n"); fflush(stdout);
+//        d_printf1("client: msg sent\n"); fflush(stdout);
     }
     else 
     {
-//        if (!(*waiting < MESSAGES_IN_QUEUE)) printf("Deny of service: server is busy (queue is too long) %d\n", *waiting);
-//        if (!(*process_messages == 1)) printf("Deny of service: server is being shutdown %d\n", *process_messages);
+//        if (!(*waiting < MESSAGES_IN_QUEUE)) d_printf2("Deny of service: server is busy (queue is too long) %d\n", *waiting);
+//        if (!(*process_messages == 1)) d_printf2("Deny of service: server is being shutdown %d\n", *process_messages);
         up(sems, sem_mutex, 1);
-//        printf("Deny of service: server is busy or is being shutdown\n");
+//        d_printf1("Deny of service: server is busy or is being shutdown\n");
         return 1;
     }
 
@@ -332,19 +327,14 @@ U_THREAD_PROC(SSMMsg_server_proc, arg)
 
     while (true)
     {
-        //printf("cycle iteration\n"); fflush(stdout);
+        //d_printf1("cycle iteration\n"); fflush(stdout);
         up(ssmmsg->sems, sem_servers, (THREAD_FUN_RET_TYPE)-1);
-        //printf("01\n"); fflush(stdout);
         down1(ssmmsg->sems, sem_clients, (THREAD_FUN_RET_TYPE)-1);
-        //printf("02\n"); fflush(stdout);
         if (ssmmsg->shutdown_server_proc) break;
-        //printf("03\n"); fflush(stdout);
         down1(ssmmsg->sems, sem_mutex, (THREAD_FUN_RET_TYPE)-1);
-        //printf("04\n"); fflush(stdout);
         *(ssmmsg->waiting) -= 1;
         *(ssmmsg->busy_servers_amount) += 1;
         up(ssmmsg->sems, sem_mutex, (THREAD_FUN_RET_TYPE)-1);
-        //printf("05\n"); fflush(stdout);
 
         down1(ssmmsg->sems, sem_pact, (THREAD_FUN_RET_TYPE)-1);
         *(ssmmsg->slot) = i;
@@ -357,9 +347,9 @@ U_THREAD_PROC(SSMMsg_server_proc, arg)
         // user activity
         func((void*)((char*)(ssmmsg->buf_addr) + i * ssmmsg->real_block_size));
 
-//        printf("up sem_data_processed[%d]\n", i); fflush(stdout);
+//      d_printf2("up sem_data_processed[%d]\n", i); fflush(stdout);
         up(ssmmsg->sems, sem_data_processed2(ssmmsg) + i, (THREAD_FUN_RET_TYPE)-1);
-//        printf("down sem_data_read[%d]\n", i); fflush(stdout);
+//      d_printf2("down sem_data_read[%d]\n", i); fflush(stdout);
         down1(ssmmsg->sems, sem_data_read2(ssmmsg) + i, (THREAD_FUN_RET_TYPE)-1);
 
         down1(ssmmsg->sems, sem_mutex, (THREAD_FUN_RET_TYPE)-1);
@@ -377,11 +367,10 @@ int SSMMsg::serve_clients(process_msg_func func)
     server_param = new SSMMsg_server_thread_param;
     server_param->func = func;
     server_param->ssmmsg = this;
-    //printf("\n");
     thread_handles = new UTHANDLE[servers_amount];
     for (int i = 0; i < servers_amount; i++)
     {
-        //printf("server thread number %d started\n", i);
+        //d_printf2("server thread number %d started\n", i);
         UTHANDLE id;
         server_param->i = i;
         uResVal res = uCreateThread(SSMMsg_server_proc, server_param, &id, PROCESS_METHOD_THREAD_STACK_SIZE);

@@ -41,9 +41,9 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
         {
             if (!ppc->stop_keep_alive)
             {
-                if (ppc->failure_str) printf("%s\n", ppc->failure_str);
-                else printf("System failure\n");
-                printf("pping_client_thread_proc\n");
+                if (ppc->failure_str) fprintf(stderr, "%s\n", ppc->failure_str);
+                else fprintf(stderr, "System failure\n");
+                fprintf(stderr, "pping_client_thread_proc\n");
                 d_flush();
                 uExitProcess(1);
             }
@@ -196,9 +196,9 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     return 0;
 
 sys_failure:
-    if (pps->failure_str) printf("%s\n", pps->failure_str);
-    else printf("System failure\n");
-    printf("pping_server_cli+thread_proc\n");
+    if (pps->failure_str) fprintf(stderr, "%s\n", pps->failure_str);
+    else fprintf(stderr, "System failure\n");
+    fprintf(stderr, "pping_server_cli+thread_proc\n");
     d_flush();
     uExitProcess(1);
 
@@ -276,9 +276,9 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
     return 0;
 
 sys_failure:
-    if (pps->failure_str) printf("%s\n", pps->failure_str);
-    else printf("System failure\n");
-    printf("pping_server_lstn_thread_proc\n");
+    if (pps->failure_str) fprintf(stderr, "%s\n", pps->failure_str);
+    else fprintf(stderr, "System failure\n");
+    fprintf(stderr, "pping_server_lstn_thread_proc\n");
     uExitProcess(1);
 
     return 0;
