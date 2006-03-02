@@ -176,6 +176,8 @@ typedef union _LARGE_INTEGER
 #endif
 
 
+char* ustrerror(int errnum);
+void uperror(const char *s);
 
 #ifdef __cplusplus
 extern "C"

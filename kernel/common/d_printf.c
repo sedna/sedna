@@ -37,7 +37,7 @@ int el_debug_printf(const char *s, ...)
     int res = 0;
 
     va_start(ap, s);
-    res = vprintf(s, ap);
+    res = vfprintf(stderr, s, ap);
     va_end(ap);
 
     return res;
@@ -47,15 +47,24 @@ int el_debug_printf(const char *s, ...)
 void el_debug_perror(const char *s)
 {
 #ifdef EL_DEBUG_SYNC
-# ifdef _WIN32
-# else
-    perror(s);
-# endif
+    el_debug_sync_lock();
+
+    if (SEDNA_EL_DEBUG_DUPLICATE_TO_STDERR)
+        uperror(s);
+
+    if (el_debug_sync_output_stream)
+    {
+        int res = fseek(el_debug_sync_output_stream, 0, SEEK_END);
+        if (res < 0)
+            goto el_debug_perror_exit;
+
+        res = fprintf(stderr, "%s: %s\n", s, ustrerror(errno));
+    }
+
+  el_debug_perror:
+    el_debug_sync_unlock();
 #else
-# ifdef _WIN32
-# else
-    perror(s);
-# endif
+    uperror(s);
 #endif
 }
 
@@ -75,6 +84,7 @@ void el_debug_flush()
     }
     el_debug_sync_unlock();
 #else
+    /* to improve peformance we should leave the body empty */
 #endif
 }
 

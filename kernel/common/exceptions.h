@@ -76,18 +76,20 @@ error message that you have supplied.
 
 For raising exception it is better to use these macroses:
 
-#define SYSTEM_EXCEPTION(msg)				SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define SYSTEM_ENV_EXCEPTION(msg)			SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define USER_EXCEPTION(code)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
-#define USER_EXCEPTION2(code, details)		SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
-#define USER_ENV_EXCEPTION(msg, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
-#define USER_SOFT_EXCEPTION(msg)			SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_EXCEPTION(msg)						SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
+#define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
+#define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
+#define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
 
 Their names are straightfoward. Parameters are:
 msg      -- a textual message (some kind of error description)
 code     -- the code for user defined error (use constants defined in 
             error_codes.h; example is SE1001)
 details  -- details for user error
+expl     -- explanation of error
 rollback -- does the error leads to rollback?
 
 */
@@ -109,12 +111,13 @@ rollback -- does the error leads to rollback?
 #endif
 
 
-#define SYSTEM_EXCEPTION(msg)				SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define SYSTEM_ENV_EXCEPTION(msg)			SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define USER_EXCEPTION(code)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
-#define USER_EXCEPTION2(code, details)		SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
-#define USER_ENV_EXCEPTION(msg, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
-#define USER_SOFT_EXCEPTION(msg)			SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_EXCEPTION(msg)						SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
+#define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
+#define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
+#define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
 
 
 
@@ -225,6 +228,7 @@ class SednaUserEnvException : public SednaUserException
 {
 protected:
     bool rollback;
+    std::string explanation;
 public:
     SednaUserEnvException(const char* _file_, 
                           const char* _function_,
@@ -236,6 +240,18 @@ public:
                                                                 _err_msg_,
                                                                 0),
                                              rollback(_rollback_) {}
+    SednaUserEnvException(const char* _file_, 
+                          const char* _function_,
+                          int _line_,
+                          const std::string& _err_msg_,
+                          const std::string& _explanation_,
+                          bool _rollback_) : SednaUserException(_file_,
+                                                                _function_,
+                                                                _line_,
+                                                                _err_msg_,
+                                                                0),
+                                             explanation(_explanation_),
+                                             rollback(_rollback_) {}
     virtual std::string getMsg() const
     {
         std::string res;
@@ -245,6 +261,10 @@ public:
         res += "\nPosition: [" + file + ":" + function + ":" + int2string(line) + "]";
 #endif
         res += "\nDetails: " + err_msg;
+        if (explanation.length() != 0)
+        {
+            res += " (" + explanation + ")";
+        }
         return res;
     }
 

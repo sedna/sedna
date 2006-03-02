@@ -319,7 +319,7 @@ void pping_server::startup()
     sock = usocket(AF_INET, SOCK_STREAM, 0);
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
 
-    if (ubind_tcp(sock, port) == U_SOCKET_ERROR) {printf(usocket_error_translator());throw USER_ENV_EXCEPTION("Failed to bind socket", false);}
+    if (ubind_tcp(sock, port) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION2("Failed to bind socket", usocket_error_translator(), false);
 
     if (ulisten(sock, PPING_LSTNR_QUEUE_LEN) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
 
