@@ -19,7 +19,7 @@ INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c	\
                $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/structures          	\
                $(PP)/kernel/tr/executor/base $(PP)/kernel/tr/nid				\
                $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/idx				\
-               $(PP)/kernel/tr/idx/btree $(PP)/kernel/tr/pstr $(PP)/kernel/tr/strings $(PP)/kernel/tr/ft
+               $(PP)/kernel/tr/idx/btree $(PP)/kernel/tr/pstr $(PP)/libs/dtsearch/include $(PP)/kernel/tr/strings $(PP)/kernel/tr/ft
 
 
 VPATH = .

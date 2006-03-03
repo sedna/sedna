@@ -100,9 +100,11 @@ bool inline is_next_node_attribute (xptr node)
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences();
 void execute_modifications();
-void update_upsert_sequence(xptr node,ft_index_cell* icell);
+void update_insert_sequence(xptr node,ft_index_cell* icell);
+void update_update_sequence(xptr node,ft_index_cell* icell);
 void update_delete_sequence(xptr node,ft_index_cell* icell);
-void update_upsert_sequence(xptr node,schema_ft_ind_cell* icell);
+void update_update_sequence(xptr node,schema_ft_ind_cell* icell);
+void update_insert_sequence(xptr node,schema_ft_ind_cell* icell);
 void update_delete_sequence(xptr node,schema_ft_ind_cell* icell);
 void init_ft_sequences (xptr& left, xptr& right, xptr& parent);
 #endif

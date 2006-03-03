@@ -3,6 +3,7 @@
 
 #include "dm_accessors.h"
 #include "strings.h"
+#include "e_string.h"
 #include "e_string_iterator.h"
 #include "ft_index_data.h"
 
@@ -87,6 +88,17 @@ private:
 	xptr_sequence * seq;
 	xptr_sequence::iterator it;
 };
+class SednaConvertJob :public dtSearch::DFileConvertJob
+{
+public:
+	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);		
+	void convert_node(xptr& node,long* ht,long ht_cnt);
+	virtual void OnOutput(const char * txt, int length);
+	static e_str_buf result;
+private:
+	SednaTextInputStream *tis;
+	dtsFileInfo fileInfo;
+};
 class SednaSearchJob : public dtSearch::DSearchJob {
      public:
            
@@ -94,8 +106,8 @@ class SednaSearchJob : public dtSearch::DSearchJob {
            virtual void OnFound(long totalFiles,
                  long totalHits, const char *name, long hitsInFile, dtsSearchResultsItem& item);
 		   virtual void OnSearchingIndex(const char * indexPath);
-		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);		   
-		   SednaSearchJob();		   
+		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false);		   
+		   SednaSearchJob(bool _hilight_=false);		   
 		   void set_request(tuple_cell& request);
 		   void get_next_result(tuple &t);
 		   void set_index(tuple_cell& name);
@@ -107,7 +119,10 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		  UTHANDLE dtth;
 		  UUnnamedSemaphore sem1,sem2;
 		  xptr res;
+		  bool hilight;
+		  SednaConvertJob * hl;
 
      };
+
 
 #endif

@@ -179,12 +179,16 @@ public:
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
   void ll_log_flush_last_record(bool sync);
-  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);
-  void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
+ #ifdef SE_ENABLE_FTSEARCH
+  void recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+#else
+void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+#endif
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
 
-  int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
+int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
 
 private:
 

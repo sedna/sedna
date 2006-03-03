@@ -18,7 +18,7 @@ INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c		\
                $(PP)/kernel/tr/vmm $(PP)/kernel/tr/executor/xqops			\
                $(PP)/kernel/common/ph btree $(PP)/kernel/tr/executor/base	\
                $(PP)/kernel/tr/executor/fo $(PP)/kernel/sm/plmgr			\
-               $(PP)/kernel/tr/structures $(PP)/kernel/tr/nid				\
+               $(PP)/kernel/tr/structures $(PP)/kernel/tr/nid $(PP)/kernel/tr/ft \
                $(PP)/kernel/tr/mo $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/log 				\
                $(PP)/kernel/sm/llmgr $(PP)/kernel/tr/executor/por2qep		\
                $(PP)/kernel/tr/pstr

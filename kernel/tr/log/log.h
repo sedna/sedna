@@ -13,6 +13,9 @@
 #include "llmgr_core.h"
 #include <string>
 #include "PPBase.h"
+#ifdef SE_ENABLE_FTSEARCH
+#include "ft_index_data.h"
+#endif
 
 void hl_phys_log_on_session_begin(std::string phys_log_path);
 void hl_phys_log_on_transaction_begin();
@@ -42,6 +45,9 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
 void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool inserted); 
 //void hl_logical_log_text_edit(const xptr &self,xptr source,bool begin); 
 //void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,bool inserted); 
+#ifdef SE_ENABLE_FTSEARCH
+ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted); 
+#endif
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted); 
 void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted); 
 void hl_logical_log_document(const xptr &self,const  char* name,const  char* collection,bool inserted);

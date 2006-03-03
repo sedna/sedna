@@ -299,6 +299,13 @@ xptr e_str::append_mstr(const char *src)
     return dest;
 }
 
+xptr e_str::append_mstr(const char *src, int count)
+{
+    xptr dest = xptr_for_data();
+    copy_text_mstr(dest, src, count);
+    return dest;
+}
+
 
 xptr e_str::append_estr(const xptr &src, int count)
 {
@@ -349,12 +356,12 @@ xptr e_str::xptr_for_data()
     return last_blk + E_STR_BLK_HDR(last_blk)->cursor;
 }
 
-void e_str::copy_text_mstr(xptr dest, const char *src)
+void e_str::copy_text_mstr(xptr dest, const char *src, int count)
 {
     CHECKP(dest);
 
     int dest_spc_blk = E_STR_BLK_FREE_SPACE(E_STR_BLK_HDR(dest));
-    int src_len = strlen(src);
+    int src_len = count;
     int real_count = s_min(dest_spc_blk, src_len);
 
     memcpy(XADDR(dest), src, real_count);
@@ -386,7 +393,12 @@ void e_str::copy_text_mstr(xptr dest, const char *src)
 		VMM_SIGNAL_MODIFICATION(last_blk);
 	}
 
-    copy_text_mstr(last_blk + sizeof(e_str_blk_hdr), src + real_count);
+    copy_text_mstr(last_blk + sizeof(e_str_blk_hdr), src + real_count, count - real_count);
+}
+
+void e_str::copy_text_mstr(xptr dest, const char *src)
+{
+	e_str::copy_text_mstr(dest, src, strlen(src));
 }
 
 void e_str::copy_text_estr(xptr dest, xptr src, int count)

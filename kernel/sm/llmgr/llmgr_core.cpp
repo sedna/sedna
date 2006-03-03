@@ -1518,6 +1518,16 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
 
 //this function is run from the special recovery process
+#ifdef SE_ENABLE_FTSEARCH
+void llmgr_core::recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),
+										   void (*exec_micro_op) (const char*, int, bool),
+                                           void(*switch_indirection)(int),
+                                           void (*_rcv_allocate_blocks)(const std::vector<xptr>&),
+                                           const LONG_LSN& last_cp_lsn,
+                                           int undo_indir_mode,
+                                           int redo_indir_mode,
+                                           bool sync)
+#else
 void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
                                            void(*switch_indirection)(int),
                                            void (*_rcv_allocate_blocks)(const std::vector<xptr>&),
@@ -1525,6 +1535,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
                                            int undo_indir_mode,
                                            int redo_indir_mode,
                                            bool sync)
+#endif
 {
   ll_log_lock(sync);
 
@@ -1602,9 +1613,11 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
                        last_commit_lsn,
                        exec_micro_op);
   }
+#ifdef SE_ENABLE_FTSEARCH
+  index_op(undo_redo_trns_map);
+#endif
   ll_log_unlock(sync);
 }
-
 void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (const char*, int, bool))
 {
   LONG_LSN lsn = start_undo_lsn;

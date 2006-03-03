@@ -78,12 +78,14 @@ struct ft_index_cell
 	{
 		return my_strcmp(this->index_title,(char*)p1)==0;
 	}
-	static ft_index_cell* create_index (PathExpr *object_path,ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ);
-	static void delete_index (const char *index_title);
+	static ft_index_cell* create_index (PathExpr *object_path,ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ, bool just_heap=false);
+	static void delete_index (const char *index_title, bool just_heap=false);
 	static void delete_custom_tree (pers_sset<ft_custom_cell,unsigned short> * custom_tree);
 	static ft_index_cell* find_index(const char* title);
 	void update_index(xptr_sequence* upserted);
+	void insert_to_index(xptr_sequence* upserted);
 	void delete_from_index(xptr_sequence* deleted);
+	void change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted);
 
 };
 

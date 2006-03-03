@@ -11,7 +11,7 @@
 #include "vmm.h"
 #include "tuple.h"
 #include "FTIndex.h"
-//#include "btree.h"
+#include "log.h"
 #include "schema.h"
 #include "casting_operations.h"
 //#include "indexes.h"
@@ -106,7 +106,7 @@ bool ft_index_cell::fits_to_index(schema_node* snode)
 	}
 	return false;
 }
-ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ)
+ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type it, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc,std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* templ, bool just_heap)
 {
 	// I. Create and fill new index cell
 	ft_index_sem_down();
@@ -144,43 +144,49 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 	*indexdata = idc;*/
 	ft_indexdata->put(idc);
 	ft_index_sem_up();
-
+    hl_logical_log_ft_index(object_path, it,(char *) index_title, doc_name,is_doc,idc->custom_tree,true);
+	up_concurrent_micro_ops_number();
 	// ALGORITHM: indexing data
 	//II. Execute abs path (object_path) on the desriptive schema
-    t_scmnodes sobj = execute_abs_path_expr(schemaroot, object_path);
-	//III. For each schema node found (sn_obj)
-	std::vector<xptr> start_nodes;
-	for (int i = 0; i < sobj.size(); i++)
-	{	
-		xptr blk= sobj[i]->bblk;
-		sobj[i]->add_ft_index(idc);
-		CHECKP(blk);
-		start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+	if (!just_heap)
+	{
+		t_scmnodes sobj = execute_abs_path_expr(schemaroot, object_path);
+		//III. For each schema node found (sn_obj)
+		std::vector<xptr> start_nodes;
+		for (int i = 0; i < sobj.size(); i++)
+		{	
+			xptr blk= sobj[i]->bblk;
+			sobj[i]->add_ft_index(idc);
+			CHECKP(blk);
+			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+		}
 		
+		SednaIndexJob sij(idc);
+		sij.create_index(&start_nodes);
 	}
-	//hl_logical_log_index(object_path, key_path, keytype,index_title, doc_name,is_doc,true);
-	//up_concurrent_micro_ops_number();
-	SednaIndexJob sij(idc);
-	sij.create_index(&start_nodes);
 	return idc;
 }
-void ft_index_cell::delete_index (const char *index_title)
+void ft_index_cell::delete_index (const char *index_title, bool just_heap)
 {
 	ft_index_sem_down();
 	pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* idc=search_ft_indexdata_cell(index_title);
 	if (idc!=NULL)
 	{
-		//down_concurrent_micro_ops_number();
-		SednaIndexJob sij(idc->obj);
-		sij.clear_index();		
-	//	hl_logical_log_index((idc->obj)->object,(idc->obj)->key,(idc->obj)->keytype, (idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,false);
+		
+		if (!just_heap)
+		{
+			SednaIndexJob sij(idc->obj);
+			sij.clear_index();		
+		}
+		down_concurrent_micro_ops_number();
+		hl_logical_log_ft_index((idc->obj)->object,(idc->obj)->ftype,(idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,(idc->obj)->custom_tree,false);
 		ft_index_cell* ic=idc->obj;
 		doc_schema_node* sm=(idc->obj)->schemaroot;
 		free_ft_indexdata_cell(idc);
 		(*ft_idx_counter)--;
 		sm->delete_ft_index(ic);
 		ft_index_sem_up();
-		//up_concurrent_micro_ops_number();
+		up_concurrent_micro_ops_number();
 	}
 	else
 		ft_index_sem_up();
@@ -207,8 +213,21 @@ void ft_index_cell::update_index(xptr_sequence* upserted)
 	sij.update_index(upserted);
 
 }
+void ft_index_cell::insert_to_index(xptr_sequence* upserted)
+{
+	SednaIndexJob sij(this);
+	sij.insert_into_index(upserted);
+
+}
 void ft_index_cell::delete_from_index(xptr_sequence* deleted)
 {
 	SednaIndexJob sij(this);
+	sij.delete_from_index(deleted);
+}
+void ft_index_cell::change_index(xptr_sequence* inserted,xptr_sequence* updated,xptr_sequence* deleted)
+{
+	SednaIndexJob sij(this);
+	sij.insert_into_index(inserted);
+	sij.update_index(updated);
 	sij.delete_from_index(deleted);
 }

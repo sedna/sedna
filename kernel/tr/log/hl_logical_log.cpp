@@ -14,6 +14,10 @@
 #include "trmgr.h"
 #include "pstr_long.h"
 #include "rcv_funcs.h"
+#ifdef SE_ENABLE_FTSEARCH
+#include "FTindex.h"
+#endif
+
 #include <sstream>
 
 
@@ -98,11 +102,20 @@ void hl_logical_log_on_transaction_end(bool is_commit)
   {
      if (is_commit)
      {
-        hl_logical_log_commit(trid);
+#ifdef SE_ENABLE_FTSEARCH
+		 SednaIndexJob::start_commit();
+#endif
+		 hl_logical_log_commit(trid);
+#ifdef SE_ENABLE_FTSEARCH
+		 SednaIndexJob::fix_commit();
+#endif
      }
      else
      {
         rollback_tr_by_logical_log(trid);
+#ifdef SE_ENABLE_FTSEARCH
+		SednaIndexJob::rollback();
+#endif
         hl_logical_log_rollback(trid); 
      }
 
@@ -455,3 +468,55 @@ void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type
 
 #endif
 }
+#ifdef SE_ENABLE_FTSEARCH
+void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted)
+{
+	#ifdef LOGICAL_LOG
+	std::ostringstream obj_str(std::ios::out | std::ios::binary);
+	PathExpr2lr(object_path, obj_str);
+
+	int custom_tree_count = 0;
+	int custom_tree_size = 0;
+	char *custom_tree_buf = tr_globals::e_string_buf;
+
+	if (custom_tree != NULL)
+	{
+		pers_sset<ft_custom_cell,unsigned short>::pers_sset_entry *tmp;
+		tmp = custom_tree->rb_minimum(custom_tree->root);
+
+		while (tmp != NULL)
+		{
+			int len;
+
+			custom_tree_count++;
+
+			U_ASSERT(custom_tree_size + sizeof(ft_index_type) <= sizeof(tr_globals::e_string_buf));
+			memcpy(custom_tree_buf + custom_tree_size, &tmp->obj->cm, sizeof(ft_index_type));
+			custom_tree_size += sizeof(ft_index_type);
+
+#define PUT_STR(str) \
+	if (str == NULL) {\
+		U_ASSERT(custom_tree_size < sizeof(tr_globals::e_string_buf));\
+		custom_tree_buf[custom_tree_size] = '\x0';\
+		custom_tree_size++;\
+	} else {\
+		len = strlen(str);\
+		U_ASSERT(custom_tree_size + len + 1 <= sizeof(tr_globals::e_string_buf));\
+		memcpy(custom_tree_buf + custom_tree_size, str, len + 1);\
+		custom_tree_size += len + 1;\
+	}
+
+			PUT_STR(tmp->obj->ns->uri);
+			PUT_STR(tmp->obj->ns->prefix);
+			PUT_STR(tmp->obj->local);
+#undef PUT_STR
+
+			tmp = custom_tree->rb_successor(tmp);
+		}
+	}
+
+	//TODO: call something
+
+	#endif
+}
+#endif

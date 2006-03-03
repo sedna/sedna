@@ -57,6 +57,7 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks);
 extern int indir_block_count;
 extern int indir_node_count;
 extern bool delete_mode ;
+bool is_rolled_back();
 
 #endif
 

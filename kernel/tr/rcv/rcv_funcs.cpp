@@ -15,6 +15,7 @@
 #include "rcv_funcs.h"
 #include "tr_globals.h"
 #include "log.h"
+#include "FTindex.h"
 #include "d_printf.h"
 #include "tr_debug.h"
 #include "XPath.h"
@@ -39,9 +40,14 @@ void rollback_tr_by_logical_log(transaction_id _trid)
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
 #ifdef LOGICAL_LOG
-  tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, rcv_allocate_blocks, last_cp_lsn,  MODE_UNDO, MODE_REDO, true);
+ #ifdef SE_ENABLE_FTSEARCH
+  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, switch_to_rollback_mode, rcv_allocate_blocks, last_cp_lsn,  MODE_UNDO, MODE_REDO, true);  
+#else
+  tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, rcv_allocate_blocks, last_cp_lsn,  MODE_UNDO, MODE_REDO, true);	
+#endif
   string str = string("recover+db_by_logical_log finished\n");
   WRITE_DEBUG_LOG(str.c_str());
+
 
 #endif
 }

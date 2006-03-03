@@ -41,7 +41,10 @@ int indir_node_count=0;
 static bool indirection_session_initialized = false;
 static bool indirection_transaction_initialized = false;
 static bool indirection_statement_initialized = false;
-
+bool is_rolled_back()
+{
+	return rollback_mode != MODE_NORMAL;
+}
 xptr indir_blk_hdr::init(xptr p)
 {
 	
@@ -286,6 +289,9 @@ void del_record_from_data_indirection_table(xptr p)
 			
 
 	}
+	CHECKP(p);
+	hl_phys_log_change(XADDR(p),sizeof(xptr));
+	*((xptr*)XADDR(p))=XNULL;
 	
 }
 void clear_ind_sequence(xptr& p)

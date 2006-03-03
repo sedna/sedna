@@ -14,10 +14,10 @@ endif
 
 
 INCLUDE_DIRS = $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c		\
-               $(PP)/kernel/common/ph                                                           \
+               $(PP)/kernel/common/ph $(PP)/kernel/tr/ft                                                          \
                $(PP)/kernel/sm/plmgr $(PP)/kernel/tr $(PP)/kernel/sm/llmgr			\
                $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/ft $(PP)/kernel/tr/strings                                                         \
-               $(PP)/kernel/tr/executor/base                                                    \
+               $(PP)/kernel/tr/executor/base  $(PP)/libs/dtsearch/include                                                   \
                $(PP)/kernel/tr/mo $(PP)/kernel/tr/vmm $(PP)/kernel/sm $(PP)/kernel/tr/structures	\
                $(PP)/kernel/tr/nid $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/pstr $(PP)/kernel/tr/rcv
 

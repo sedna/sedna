@@ -317,10 +317,13 @@ UpdateSednaDataSource::UpdateSednaDataSource(ft_index_type _cm_,pers_sset<ft_cus
 }
 xptr UpdateSednaDataSource::get_next_doc()
 {
-	if (it==seq->end())
-		return XNULL;
-	else
-		return removeIndirection(*it++);
+	while (it!=seq->end())
+	{
+		xptr ptr = removeIndirection(*it++);
+		if (ptr != XNULL)
+			return ptr;
+	}
+	return XNULL;
 }
 int UpdateSednaDataSource::rewind()
 {
@@ -358,18 +361,21 @@ void SednaSearchJob::OnFound(long totalFiles,
 	DSearchJob::OnFound(totalFiles, totalHits, name, hitsInFile, item);
 	DSearchJob::VetoThisItem();
 	res = SednaDataSource::filenameToRecord(name);
+	if (hilight)
+		hl->convert_node(SednaDataSource::filenameToRecord(name),item.hits,item.hitCount);
 	UUnnamedSemaphoreUp(&sem1);
 	UUnnamedSemaphoreDown(&sem2);
 }
-SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_):seq(_seq_)
+SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_):seq(_seq_), hilight(_hilight_)
 {
 	AttachDataSource(new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
 	dtth=NULL;
-	
+	if (hilight)
+		hl=new SednaConvertJob(_cm_,_custom_tree_);	
 }
-SednaSearchJob::SednaSearchJob():seq(NULL)
+SednaSearchJob::SednaSearchJob(bool _hilight_):seq(NULL),hilight(_hilight_)
 {
-	dtth=NULL;	
+	dtth=NULL;		
 }
 void SednaSearchJob::set_request(tuple_cell& request)
 {
@@ -398,7 +404,10 @@ void SednaSearchJob::get_next_result(tuple &t)
 	}
 	else
 	{
-		t.copy(tuple_cell::node(res));
+		if (!hilight)
+			t.copy(tuple_cell::node(res));
+		else
+			t.copy(SednaConvertJob::result.content());
 		UUnnamedSemaphoreUp(&sem2);
 	}
 }
@@ -411,6 +420,8 @@ void SednaSearchJob::set_index(tuple_cell& name)
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
+	if (hilight)
+		hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree);
 	
 }
 
@@ -442,3 +453,37 @@ void SednaSearchJob::OnSearchingIndex(const char * indexPath)
 }
 
 
+SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_)
+{
+	tis = new SednaTextInputStream(&fileInfo, _cm_ ,_custom_tree_);	
+	SetOutputToCallback();	
+	SetOutputFormat();
+	SetFlags(dtsConvertInputIsNotHtml);
+	BeforeHit.setU8("<span style=\"background-color: #FFFF00\">"); 
+	AfterHit.setU8("</span>");
+	Footer.setU8("");
+	Header.setU8("");
+	HtmlHead.setU8(""); 
+	
+}
+void SednaConvertJob::convert_node(xptr &node,long* ht,long ht_cnt)
+{
+	CHECKP(node);
+	SednaDataSource::recordToFilename(fileInfo.filename,node);
+//	fileInfo.size = strlen(f);
+    fileInfo.modified.year = 1996;
+    fileInfo.modified.month = 1;
+    fileInfo.modified.day = 1;	
+	dtsInputStream dest;
+	tis->makeInterface(dest,node);
+	SetInputStream(dest);
+	SetHits(ht,ht_cnt);
+	result.reinit();
+	Execute();
+}
+void SednaConvertJob::OnOutput(const char * txt, int length)
+{
+	result.append_mstr(txt,length);
+}
+
+e_str_buf SednaConvertJob::result;

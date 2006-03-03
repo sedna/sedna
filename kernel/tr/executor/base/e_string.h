@@ -71,6 +71,7 @@ private:
 
     void init();
     xptr xptr_for_data();
+    void copy_text_mstr(xptr dest, const char *src, int count);
     void copy_text_mstr(xptr dest, const char *src);
     void copy_text_estr(xptr dest, xptr src, int count);
     void copy_text_pstr_long(xptr dest, xptr src);
@@ -92,6 +93,7 @@ public:
     }
 
     xptr append_mstr(const char *src); // memory strings
+    xptr append_mstr(const char *src, int count); // memory strings
     xptr append_estr(const xptr &src, int count); // e_str 
     xptr append_pstr_short(const xptr &src, int count) { return append_estr(src, count); }
     xptr append_pstr_long(const xptr &src);
@@ -201,14 +203,20 @@ public:
         else m_start = m_str->append_mstr(src);
         m_size += m_str->size() - old_size;
     }
-
+	void append_mstr(const char *src, int count) // e_str
+    {
+        int old_size = m_str->size();
+        if (m_size) m_str->append_mstr(src, count);
+        else m_start = m_str->append_mstr(src, count);
+        m_size += m_str->size() - old_size;
+	}
     void append_estr(const xptr &src, int count) // e_str
     {
         if (m_size) m_str->append_estr(src, count);
         else m_start = m_str->append_estr(src, count);
         m_size += count;
     }
-
+	
     void append_pstr_short(const xptr &src, int count)
     {
         append_estr(src, count);

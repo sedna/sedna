@@ -13,20 +13,28 @@
 #include "PPConstructors.h"
 #define IGNORE_UPDATE_ERRORS
 #ifdef SE_ENABLE_FTSEARCH
-std::map<ft_index_cell*,xptr_sequence*> upserted_nodes;
+std::map<ft_index_cell*,xptr_sequence*> updated_nodes;
+std::map<ft_index_cell*,xptr_sequence*> inserted_nodes;
 std::map<ft_index_cell*,xptr_sequence*> deleted_nodes;
 #endif
 static bool carrier=false;
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences()
 {
-	std::map<ft_index_cell*,xptr_sequence*>::iterator it=upserted_nodes.begin();
-	while (it!=upserted_nodes.end())
+	std::map<ft_index_cell*,xptr_sequence*>::iterator it=updated_nodes.begin();
+	while (it!=updated_nodes.end())
 	{
 		delete it->second;
 		it++;
 	}
-	upserted_nodes.clear();
+	updated_nodes.clear();
+	it=inserted_nodes.begin();
+	while (it!=inserted_nodes.end())
+	{
+		delete it->second;
+		it++;
+	}
+	inserted_nodes.clear();
 	it=deleted_nodes.begin();
 	while (it!=deleted_nodes.end())
 	{
@@ -37,8 +45,15 @@ void clear_ft_sequences()
 }
 void execute_modifications()
 {
-	std::map<ft_index_cell*,xptr_sequence*>::iterator it=upserted_nodes.begin();
-	while (it!=upserted_nodes.end())
+	if (is_rolled_back()) return;
+	std::map<ft_index_cell*,xptr_sequence*>::iterator it=inserted_nodes.begin();
+	while (it!=inserted_nodes.end())
+	{
+		it->first->insert_to_index(it->second);
+		it++;
+	}
+	it=updated_nodes.begin();
+	while (it!=updated_nodes.end())
 	{
 		it->first->update_index(it->second);
 		it++;
@@ -50,14 +65,27 @@ void execute_modifications()
 		it++;
 	}		
 }
-void update_upsert_sequence(xptr node,ft_index_cell* icell)
+void update_insert_sequence(xptr node,ft_index_cell* icell)
 {
-	std::map<ft_index_cell*,xptr_sequence*>::iterator it=upserted_nodes.find(icell);
-	if (it==upserted_nodes.end())
+	std::map<ft_index_cell*,xptr_sequence*>::iterator it=inserted_nodes.find(icell);
+	if (it==inserted_nodes.end())
 	{
 		xptr_sequence* seq=new xptr_sequence();
 		seq->add(node);
-		upserted_nodes[icell]=seq;
+		inserted_nodes[icell]=seq;
+	}
+	else
+		it->second->add(node);
+				
+}
+void update_update_sequence(xptr node,ft_index_cell* icell)
+{
+	std::map<ft_index_cell*,xptr_sequence*>::iterator it=updated_nodes.find(icell);
+	if (it==updated_nodes.end())
+	{
+		xptr_sequence* seq=new xptr_sequence();
+		seq->add(node);
+		updated_nodes[icell]=seq;
 	}
 	else
 		it->second->add(node);
@@ -75,7 +103,7 @@ void update_delete_sequence(xptr node,ft_index_cell* icell)
 	else
 		it->second->add(node);
 }
-void update_upsert_sequence(xptr node,schema_ft_ind_cell* icell)
+void update_insert_sequence(xptr node,schema_ft_ind_cell* icell)
 {
 	if (icell==NULL) return;
 	schema_ft_ind_cell* obj=icell;
@@ -83,14 +111,27 @@ void update_upsert_sequence(xptr node,schema_ft_ind_cell* icell)
 	xptr ind=((n_dsc*)XADDR(node))->indir;
 	while (obj!=NULL)
 	{
-		update_upsert_sequence(ind,obj->index);
+		update_insert_sequence(ind,obj->index);
+		obj=obj->next;
+	}
+	CHECKP(node);
+}
+void update_update_sequence(xptr node,schema_ft_ind_cell* icell)
+{
+	if (icell==NULL) return;
+	schema_ft_ind_cell* obj=icell;
+	CHECKP(node);
+	xptr ind=((n_dsc*)XADDR(node))->indir;
+	while (obj!=NULL)
+	{
+		update_update_sequence(ind,obj->index);
 		obj=obj->next;
 	}
 	CHECKP(node);
 }
 void update_delete_sequence(xptr node,schema_ft_ind_cell* icell)
 {
-	if (delete_mode ||icell==NULL) return;
+	if (delete_mode ||icell==NULL ) return;
 	schema_ft_ind_cell* obj=icell;
 	CHECKP(node);
 	xptr ind=((n_dsc*)XADDR(node))->indir;
@@ -127,7 +168,7 @@ void init_ft_sequences (xptr& left, xptr& right, xptr& parent)
 			tmp=getNodeAncestorIndirectionByScheme(tmp,scn);
 			while (obj!=NULL)
 			{
-				update_upsert_sequence(tmp,obj->index);
+				update_update_sequence(tmp,obj->index);
 				obj=obj->next;
 			}
 			tmp=removeIndirection(tmp);
@@ -278,7 +319,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 	
  CHECKP(res);
  #ifdef SE_ENABLE_FTSEARCH
- update_upsert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
+ update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
  CHECKP(res);
  return res;
@@ -475,7 +516,7 @@ case xml_namespace:
  }
 	CHECKP(res);
 #ifdef SE_ENABLE_FTSEARCH
- update_upsert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
+ update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
  CHECKP(res);
 	return res;
