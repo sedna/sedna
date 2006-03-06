@@ -15,7 +15,9 @@
 #include "rcv_funcs.h"
 #include "tr_globals.h"
 #include "log.h"
+#ifdef SE_ENABLE_FTSEARCH
 #include "FTindex.h"
+#endif
 #include "d_printf.h"
 #include "tr_debug.h"
 #include "XPath.h"
