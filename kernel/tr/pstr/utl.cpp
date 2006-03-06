@@ -164,7 +164,7 @@ sort_item* utl_merge(sort_item* one, sort_item* two) {
 void utl_print(sort_item* head) {
 	sort_item*	cur = head;
 	while (cur) {
-		cout << "item slot:" << cur->item_shft <<  " type:" << cur->item_type << " item begining:" << cur->sort_value << endl;
+        d_printf4("item slot:%d type:%d item begining:%d\n", (int)cur->item_shft, cur->item_type, (int)cur->sort_value);
 		cur=cur->next_item;
 	}
 }

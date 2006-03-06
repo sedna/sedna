@@ -109,9 +109,9 @@ void hh_heapify(xptr blk, int i) {
 		*HH_SLOT(blk, largest) = tmp;
 		hh_heapify(blk, largest);
 	}
-	/*cout << "hh_heapify(" << i<< "):"<< endl;
-	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
-	pstr_print_blk(blk);
-	cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+	/*d_printf2("hh_heapify(%d):\n", i);
+      d_printf2("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+	  pstr_print_blk(blk);
+      d_printf2("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	*/
 }

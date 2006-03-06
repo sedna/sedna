@@ -79,7 +79,6 @@ LONG_LSN sm_plmgr::recoverDataBase()
   // !!! recover persistent heap;
   bm_rcv_ph(pl_head_for_rcv->ph_bu_to_ph);
 
-//  std::cout << "PH_BU_TO_PH=" << pl_head_for_rcv->ph_bu_to_ph << endl;
 
   #endif
 

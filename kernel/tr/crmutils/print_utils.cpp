@@ -16,18 +16,12 @@
 #include "e_string.h"
 #include "casting_operations.h"
 #include <map>
-crmstdostream crm_out;
+se_stdlib_ostream crm_out(std::cerr);
 typedef  std::map<  std::string,int> nspt_map;
 static nspt_map  xm_nsp;
-/* initialization of standard output*/
-void init_output()
-{
-	crmstdostream* s= new crmstdostream();
-	crm_out=*s;
-}
 
 /* prints information in  descriptor */
-void print_descriptor(n_dsc* node,int shift, crmostream& crmout)
+void print_descriptor(n_dsc* node,int shift, se_ostream& crmout)
 {
 	crmout << "\n====================";
 	crmout << "\n Shift = " << shift;
@@ -43,7 +37,7 @@ void print_descriptor(n_dsc* node,int shift, crmostream& crmout)
 }
 
 /* prints information in element descriptor */
-void print_element(e_dsc* node,int shift, shft size, schema_node* scm, crmostream& crmout)
+void print_element(e_dsc* node,int shift, shft size, schema_node* scm, se_ostream& crmout)
 {
 	print_descriptor(node,shift,crmout);
 	crmout << "\n Type = " << convertTypeToName(node->type);
@@ -65,7 +59,7 @@ void print_element(e_dsc* node,int shift, shft size, schema_node* scm, crmostrea
 }
 
 /* prints information in document descriptor */
-void print_document(d_dsc* node,int shift, shft size, schema_node* scm, crmostream& crmout)
+void print_document(d_dsc* node,int shift, shft size, schema_node* scm, se_ostream& crmout)
 {
 	print_descriptor(node,shift,crmout);
 	crmout << "\nName position = " << XADDR(node->data);
@@ -87,7 +81,7 @@ void print_document(d_dsc* node,int shift, shft size, schema_node* scm, crmostre
 }
 
 /* prints information in text descriptor */
-void print_text(t_dsc* node,int shift,  crmostream& crmout,t_item xq_type)
+void print_text(t_dsc* node,int shift,  se_ostream& crmout,t_item xq_type)
 {
 	print_descriptor(node,shift,crmout);
 	crmout << "\n Text position = " << XADDR(node->data);
@@ -99,7 +93,7 @@ void print_text(t_dsc* node,int shift,  crmostream& crmout,t_item xq_type)
 }
 
 /* prints information in attribute descriptor */
-void print_attribute(a_dsc* node,int shift,  crmostream& crmout)
+void print_attribute(a_dsc* node,int shift,  se_ostream& crmout)
 {
 	print_descriptor(node,shift,crmout);
 	crmout << "\n Type = " << convertTypeToName(node->type);
@@ -112,7 +106,7 @@ void print_attribute(a_dsc* node,int shift,  crmostream& crmout)
 }
 
 /* prints information in block header */
-void print_desc_block_hdr(node_blk_hdr* block, crmostream& crmout)
+void print_desc_block_hdr(node_blk_hdr* block, se_ostream& crmout)
 {
 	crmout <<"\nBLOCK address = " << block;
 	crmout <<"\nTotal descriptors = " << block->count;
@@ -125,7 +119,7 @@ void print_desc_block_hdr(node_blk_hdr* block, crmostream& crmout)
 }
 
 /* prints information in block */
-void print_desc_block(xptr block, crmostream& crmout)
+void print_desc_block(xptr block, se_ostream& crmout)
 {
 	CHECKP(block);
 	node_blk_hdr* header= (node_blk_hdr*)XADDR(block);
@@ -227,7 +221,7 @@ char* convert_type(t_item type)
 	return "unknown";
 }
 /* prints information in  schema node */
-void print_schema(schema_node* node, crmostream& crmout)
+void print_schema(schema_node* node, se_ostream& crmout)
 {
 	crmout << "\n============================================================================";
 	crmout << "\n Schema node. Address= " << node;
@@ -259,12 +253,12 @@ void print_schema(schema_node* node, crmostream& crmout)
 	}
 }
 
-void inline print_indent( crmostream& crmout,int indent)
+void inline print_indent( se_ostream& crmout,int indent)
 {
  for (int i=0;i<indent;i++) crmout << " ";
 }
 /* prints information in  schema node */
-void print_descriptive(schema_node* node, crmostream& crmout, int indent)
+void print_descriptive(schema_node* node, se_ostream& crmout, int indent)
 {
 	crmout << "\n";
 	print_indent(crmout,indent);
@@ -302,7 +296,7 @@ void print_descriptive(schema_node* node, crmostream& crmout, int indent)
 	crmout << "</NODE>";
 }
 /* prints descriptive schema  of stand-alone document*/
-void print_descriptive_schema(const char * docname, crmostream& crmout)
+void print_descriptive_schema(const char * docname, se_ostream& crmout)
 {
 	if (docname==NULL)
 		throw USER_EXCEPTION(SE2006);
@@ -318,7 +312,7 @@ void print_descriptive_schema(const char * docname, crmostream& crmout)
  
 }
 
-void printNameSpace(xml_ns* nsd,crmostream& crmout,t_print ptype)
+void printNameSpace(xml_ns* nsd,se_ostream& crmout,t_print ptype)
 {
 	if (ptype==xml )
 	{
@@ -329,7 +323,7 @@ void printNameSpace(xml_ns* nsd,crmostream& crmout,t_print ptype)
 	}
 }
 /* prints descriptive schema  of collection*/
-void print_descriptive_schema_col(const char * colname, crmostream& crmout)
+void print_descriptive_schema_col(const char * colname, se_ostream& crmout)
 {
 	if (colname==NULL)
 		throw USER_EXCEPTION(SE2003);
@@ -347,7 +341,7 @@ inline const std::string pref_to_str(const char* pref)
 {
 	return std::string((pref!=NULL)?pref:"");
 }
-void print_node_with_indent(xptr node, crmostream& crmout,bool wi, int indent,t_print ptype)
+void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_print ptype)
 {
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
@@ -612,7 +606,7 @@ nsfree:
 		}
 	}
 }
-void print_node_with_prefixes(xptr node, crmostream& crmout, int indent)
+void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent)
 {
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
@@ -672,13 +666,13 @@ void print_node_with_prefixes(xptr node, crmostream& crmout, int indent)
 		}
 	}
 }
-void print_node(xptr node, crmostream& crmout,t_print ptype)
+void print_node(xptr node, se_ostream& crmout,t_print ptype)
 { 
 	CHECKP(node);
 	print_node_with_indent(node,crmout,false,0,ptype);
 }
 
-void print_node_indent(xptr node, crmostream& crmout,t_print ptype)
+void print_node_indent(xptr node, se_ostream& crmout,t_print ptype)
 { 
 	CHECKP(node);
 	print_node_with_indent(node,crmout,true,0,ptype);
@@ -687,7 +681,7 @@ void print_node_indent(xptr node, crmostream& crmout,t_print ptype)
 
 
 //TEMPORARY UNREALIZED!!!
-void print_text(xptr txt, crmostream& crmout,t_print ptype, t_item xq_type)
+void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 {
 	int size =((t_dsc*)XADDR(txt))->size;
 	if (size<=PSTRMAXSIZE)
@@ -725,7 +719,7 @@ void print_text(xptr txt, crmostream& crmout,t_print ptype, t_item xq_type)
 	
 		
 }
-void print_tuple(const tuple &tup, crmostream& crmout,bool ind,t_print ptype,bool is_first)
+void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,bool is_first)
 {
 	if (tup.is_eos()) return;
 	if (ind && !is_first) crmout<<"\n";
@@ -797,13 +791,13 @@ void print_tuple(const tuple &tup, crmostream& crmout,bool ind,t_print ptype,boo
 		if (ind && i<(tup.cells_number-1)) crmout<<" ,";
 	}
 }
-void print_tuple(const tuple &tup, crmostream& crmout,t_print ptype)
+void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype)
 {print_tuple(tup,crmout,false,ptype,false);}
 
-void print_tuple_indent(const tuple &tup, crmostream& crmout,t_print ptype,bool is_first)
+void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first)
 {print_tuple(tup,crmout,true,ptype,is_first);}
 /* prints the list of metadata features*/
-void print_metadata(crmostream& crmout)
+void print_metadata(se_ostream& crmout)
 {
 	crmout << "<?xml version=\"1.0\" standalone=\"yes\"?>";
 	crmout << "\n<METADATA>";
@@ -831,7 +825,7 @@ void print_metadata(crmostream& crmout)
 }
 
 /* prints the list of documents*/
-void print_documents(crmostream& crmout, bool ps)
+void print_documents(se_ostream& crmout, bool ps)
 {
 	crmout << "<?xml version=\"1.0\" standalone=\"yes\"?>";
 	crmout << "\n<XML_DOCUMENTS>";
@@ -853,7 +847,7 @@ void print_documents(crmostream& crmout, bool ps)
 }
 
 /* prints the list of documents in the selected collection*/
-void print_documents_in_collection(crmostream& crmout,const char* collection)
+void print_documents_in_collection(se_ostream& crmout,const char* collection)
 {
 	crmout << "<?xml version=\"1.0\" standalone=\"yes\"?>";
 	crmout << "\n<XML_DOCUMENTS_Collection=\"";
@@ -878,7 +872,7 @@ void print_documents_in_collection(crmostream& crmout,const char* collection)
 }
 
 /* prints the list of collections*/
-void print_collections(crmostream& crmout, bool ps)
+void print_collections(se_ostream& crmout, bool ps)
 {
 	crmout << "<?xml version=\"1.0\" standalone=\"yes\"?>";
 	crmout << "\n<COLLECTIONS>";
@@ -903,7 +897,7 @@ void print_collections(crmostream& crmout, bool ps)
 // Print descriptive schema in SXML
 
 /* prints information in  schema node */
-void sxml_print_descriptive(schema_node* node, crmostream& crmout, int indent)
+void sxml_print_descriptive(schema_node* node, se_ostream& crmout, int indent)
 {
  	crmout << " (NODE (@";
         if (node->name!=NULL)
@@ -936,7 +930,7 @@ void sxml_print_descriptive(schema_node* node, crmostream& crmout, int indent)
 	crmout << ")";
 }
 /* prints descriptive schema  of stand-alone document*/
-void sxml_print_descriptive_schema(const char * docname, crmostream& crmout)
+void sxml_print_descriptive_schema(const char * docname, se_ostream& crmout)
 {
 	if (docname==NULL)
 		throw USER_EXCEPTION(SE2006);
@@ -952,7 +946,7 @@ void sxml_print_descriptive_schema(const char * docname, crmostream& crmout)
  
 }
 /* prints descriptive schema  of collection*/
-void sxml_print_descriptive_schema_col(const char * colname, crmostream& crmout)
+void sxml_print_descriptive_schema_col(const char * colname, se_ostream& crmout)
 {
 	if (colname==NULL)
 		throw USER_EXCEPTION(SE2003);

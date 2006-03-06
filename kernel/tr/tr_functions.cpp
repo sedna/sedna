@@ -194,7 +194,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit)
 }
 
 PPQueryEssence* on_kernel_statement_begin(scheme_list *por,
-                                          crmostream* s, 
+                                          se_ostream* s, 
                                           t_print output_type)
 {
     PPQueryEssence* qep_tree = build_qep(por, *s, output_type);
@@ -221,14 +221,14 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
 
 void on_user_statement_begin(QueryType query_type,
                              t_print output_type,
-                             crmostream* s,
+                             se_ostream* s,
                              const char* query_str,
                              PPQueryEssence* &qep_tree, 
                              StmntsArray* &st)
 {
     st = prepare_stmnt(query_type, query_str); //parse and build phys representation
     is_stmt_built = true;
-    crmnullostream auth_s;
+    se_nullostream auth_s;
 
     if (AUTH_SWITCH) auth = BLOCK_AUTH_CHECK; //turn off security checkings
 
@@ -373,7 +373,7 @@ void authentication()
    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 1 (1 (PPIf (1 (PPFnNot (1 (PPFnEmpty (1 (PPDDO (1 (PPReturn (0)  (1 (PPAbsPath (document \""+ security_metadata_document +"\") (((PPAxisChild qname (\"\" \"db_security_data\"))) ((PPAxisChild qname (\"\" \"users\"))) ((PPAxisChild qname (\"\" \"user\")))))) (1 (PPIf (1 (PPCalculate (BinaryOpAnd (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) (1 (PPGeneralCompEQ (1 (PPDDO (1 (PPAxisChild qname (\"\" \"user_name\") (1 (PPVariable 0)))))) (1 (PPConst \"" +string(login) + "\" !xs!string)))) (1 (PPGeneralCompEQ (1 (PPDDO (1 (PPAxisChild qname (\"\" \"user_psw\") (1 (PPVariable 0)))))) (1 (PPConst \"" + string(password) +  "\" !xs!string)))))) (1 (PPVariable 0)) (1 (PPNil)))))))))))) (1 (PPNil)) (1 (PPFnError (1 (PPConst \"Authentication failed\" !xs!string))))))))";
    scheme_list *auth_query_in_scheme_lst = NULL;
    PPQueryEssence *qep_tree = NULL;
-   crmnullostream s;
+   se_nullostream s;
 
    auth_query_in_scheme_lst = make_tree_from_scheme_list(auth_query_in_por.c_str());
 

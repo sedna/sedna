@@ -16,7 +16,7 @@ class PPRetrieveMetadata : public PPQueryEssence
     db_entity_type type;
     PPOpIn collection;
     bool output_statistics;
-    crmostream& s;
+    se_ostream& s;
 
 public:
     void open();
@@ -29,7 +29,7 @@ public:
     PPRetrieveMetadata(db_entity_type _type_,
                        PPOpIn _collection_,
                        bool _output_statistics_,
-                       crmostream& _s_);
+                       se_ostream& _s_);
 
     ~PPRetrieveMetadata();
 };

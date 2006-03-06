@@ -100,26 +100,18 @@ xptr nid_get_blk(shft p_size, bool persistent) {
 		if (nid_holder->ext_nids_block == XNULL) {
 			nid_holder->ext_nids_block = pstr_create_blk(true);
 			nid_block_count++;
-			//cout << "nid_get_blk() created persistent block" << XADDR(NIDBLK);
-			//gets(ss);
 		}
 		if (!pstr_fit_into_blk(nid_holder->ext_nids_block, p_size)) {
 				nid_holder->ext_nids_block = pstr_create_blk(true);
 				nid_block_count++;
-				//cout << "nid_get_blk() created persistent block" << XADDR(NIDBLK);
-				//gets(ss);
 		}
 		return nid_holder->ext_nids_block;
 	} else {
 		if (TMPNIDBLK == XNULL) {
 			TMPNIDBLK = pstr_create_blk(false);
-			//cout << "nid_get_blk() created temporary block" << XADDR(TMPNIDBLK);
-			//gets(ss);
 		}
 		if (!pstr_fit_into_blk(TMPNIDBLK, p_size)) {
 				TMPNIDBLK = pstr_create_blk(false);
-				//cout << "nid_get_blk() created temporary block" << XADDR(TMPNIDBLK);
-				//gets(ss);
 		}
 		return TMPNIDBLK;
 	}
@@ -816,7 +808,7 @@ void	nid_print(xptr node)
 }
 
 /* */
-void	nid_print(xptr node, crmostream& c)
+void	nid_print(xptr node, se_ostream& c)
 {
 	t_nid	the_nid = nid_get_nid(node);
 	t_prefix p	= nid_get_prefix(the_nid);

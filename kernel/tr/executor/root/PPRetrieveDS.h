@@ -14,7 +14,7 @@ class PPRetrieveDS : public PPQueryEssence
     // given parameters
     PPOpIn name;
     db_entity_type type;
-    crmostream& s;
+    se_ostream& s;
 
 public:
     void open();
@@ -26,7 +26,7 @@ public:
 
     PPRetrieveDS(PPOpIn _name_,
                  db_entity_type _type_,
-                 crmostream& _s_);
+                 se_ostream& _s_);
     ~PPRetrieveDS();
 };
 

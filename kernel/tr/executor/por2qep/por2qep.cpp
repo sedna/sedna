@@ -2082,7 +2082,7 @@ void make_pp_fun(scheme_list *lst, function_declaration &fd)
     fd.op = make_pp_op(NULL, lst->at(4).internal.list).op;
 }
 
-PPQueryEssence *make_pp_qe(scheme_list *qe, crmostream &s, t_print print_mode)
+PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
 {
     if (   qe->size() < 1 
         || qe->at(0).type != SCM_SYMBOL)
@@ -2232,7 +2232,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, crmostream &s, t_print print_mode)
     }
     else if (op == "PPBulkLoad")
     {
-        if (   !(qe->size() == 5 || qe->size() == 7 || qe->size() == 6)
+        if (   !(qe->size() == 5 || qe->size() == 7 )
             || qe->at(1).type != SCM_NUMBER
             || qe->at(2).type != SCM_LIST
             || qe->at(3).type != SCM_NUMBER
@@ -2258,14 +2258,11 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, crmostream &s, t_print print_mode)
             collection = make_pp_op(cxt3, qe->at(6).internal.list);
         }
 
-        bool print_progress = true;
-        if ( qe->size() == 6 ) print_progress = false;
 
         return new PPBulkLoad(make_pp_op(cxt1, qe->at(2).internal.list),
                               make_pp_op(cxt2, qe->at(4).internal.list),
                               collection,
-                              s,
-                              print_progress);
+                              s);
     }
     else if (op == "PPCreateDocument")
     {
@@ -2517,7 +2514,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, crmostream &s, t_print print_mode)
     return NULL;
 }
 
-PPQueryEssence *scheme_list2qep(scheme_list *lst, crmostream &s, t_print print_mode)
+PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_mode)
 {
     int i = 0;
 
@@ -2668,7 +2665,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, crmostream &s, t_print print_m
     return make_pp_qe(qe, s, print_mode);
 }
 
-PPQueryEssence *build_qep(const char* por, crmostream& s, t_print print_mode)
+PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)
 {
     scheme_list *qep_tree_in_scheme_lst = NULL;
 
@@ -2685,7 +2682,7 @@ PPQueryEssence *build_qep(const char* por, crmostream& s, t_print print_mode)
     return qep;
 }
 
-PPQueryEssence *build_qep(scheme_list *por, crmostream& s, t_print print_mode)
+PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode)
 {
     // constructs QEP tree
     //d_printf1("scheme_list2qep...\n");

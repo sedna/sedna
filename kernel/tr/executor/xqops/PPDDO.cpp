@@ -77,12 +77,12 @@ void PPDDO::next  (tuple &t)
         }
 
         u_timeb t_sort1, t_sort2;
-        cerr << "Before sorting: size = " << s->size() << endl;
+        d_printf2("Before sorting: size = %d\n", s->size());
         u_ftime(&t_sort1);
         //s->sort();
         s->merge_sort();
         u_ftime(&t_sort2);
-        cerr << "After sorting: time = " << to_string(t_sort2 - t_sort1).c_str() << endl;
+        d_printf2("After sorting: time = %s\n", to_string(t_sort2 - t_sort1).c_str());
     }
 
     if (pos < s->size()) t.copy(tuple_cell::node(s->get(pos++)));

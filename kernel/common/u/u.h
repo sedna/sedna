@@ -176,12 +176,17 @@ typedef union _LARGE_INTEGER
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 char* ustrerror(int errnum);
 void uperror(const char *s);
+int uNotInheritDescriptor(UHANDLE h);
 
 #ifdef __cplusplus
-extern "C"
+}
 #endif
-int uNotInheritDescriptor(UHANDLE h);
 
 #endif

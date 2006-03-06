@@ -215,7 +215,7 @@ t_str_buf::~t_str_buf()
 	if (m_buf_size > 0)
 		free(m_buf);
 }
-static void print_estr(crmostream& crmout, xptr src, int count) // or pstr,  FIXME: int count
+static void print_estr(se_ostream& crmout, xptr src, int count) // or pstr,  FIXME: int count
 { //FIXME - use e_str_cursor
 	while (count > 0)
 	{
@@ -232,7 +232,7 @@ static void print_estr(crmostream& crmout, xptr src, int count) // or pstr,  FIX
 		count = count - real_count;
 	}
 }
-void print_tuple_cell(crmostream& crmout,const tuple_cell& tc)
+void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 {
 	tuple_cell cell = cast_to_xs_string(tc);
 

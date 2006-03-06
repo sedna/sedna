@@ -45,10 +45,6 @@ void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_siz
     }
     else throw SYSTEM_EXCEPTION("Wrong physical log record (for tmp file)");
 
-    //std::cout << "xptr layer=" << (int)(xaddr.layer) << ", addr=" << (int)(xaddr.addr) << ", _dsk_offs=" << _dsk_offs << endl;
-    //if (_dsk_offs >= 524288 && _dsk_offs <= 589824)
-    //   std::cout << "_dsk_offs=" << _dsk_offs << endl;
-
     // restore backup
     if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");

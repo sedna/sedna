@@ -53,7 +53,7 @@ void socket_client::init()
       }
 
       
-      stream = new crmsocketostream(Sock);
+      stream = new se_socketostream(Sock);
       char* long_query_stream = NULL;
 
 }
@@ -190,7 +190,7 @@ QueryType socket_client::get_query_type()
 }
 
 
-crmostream* socket_client::get_crmostream()
+se_ostream* socket_client::get_se_ostream()
 {
 	return stream;
 }

@@ -62,7 +62,7 @@ ifeq ("$(PLATFORM)", "WIN32")
 	$(CC) $(CFLAGS) $<
 
 libsednamt$(LIB_EXT): libsedna$(OBJ_EXT) usocket$(OBJ_EXT) uhdd$(OBJ_EXT) sp$(OBJ_EXT) uutils$(OBJ_EXT) \
-                      usecurity$(OBJ_EXT) d_printf$(OBJ_EXT) error_codes$(OBJ_EXT)
+                      usecurity$(OBJ_EXT) d_printf$(OBJ_EXT) error_codes$(OBJ_EXT) u$(OBJ_EXT)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 
@@ -83,10 +83,12 @@ d_printfst$(OBJ_EXT):$(PP)/kernel/common/d_printf.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)d_printfst$(OBJ_EXT)  $<
 error_codesst$(OBJ_EXT):$(PP)/kernel/common/error_codes.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)error_codesst$(OBJ_EXT)  $<
+ust$(OBJ_EXT):$(PP)/kernel/common/u/u.c
+		$(CC) $(CFLAGS_ST) $(OBJ_NAME)ust$(OBJ_EXT)  $<
 
 
 libsedna$(LIB_EXT): libsednast$(OBJ_EXT) usocketst$(OBJ_EXT) uhddst$(OBJ_EXT) spst$(OBJ_EXT) uutilsst$(OBJ_EXT) \
-                      usecurityst$(OBJ_EXT) d_printfst$(OBJ_EXT) error_codes$(OBJ_EXT)
+                      usecurityst$(OBJ_EXT) d_printfst$(OBJ_EXT) error_codesst$(OBJ_EXT) ust$(OBJ_EXT)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 else
 # UNIX 
@@ -98,7 +100,7 @@ else
 	$(CC) $(CFLAGS) $<
 
 libsedna$(LIB_EXT): usocket$(OBJ_EXT) libsedna$(OBJ_EXT) uhdd$(OBJ_EXT) sp$(OBJ_EXT) uutils$(OBJ_EXT) \
-                      usecurity$(OBJ_EXT) d_printf$(OBJ_EXT) error_codes$(OBJ_EXT)
+                      usecurity$(OBJ_EXT) d_printf$(OBJ_EXT) error_codes$(OBJ_EXT) u$(OBJ_EXT)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 endif
 

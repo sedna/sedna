@@ -11,7 +11,7 @@
 
 PPQueryRoot::PPQueryRoot(variable_context *_cxt_,
                          PPOpIn _child_,
-                         crmostream& _s_,
+                         se_ostream& _s_,
                          t_print _print_mode_) : PPQueryEssence(),
                                                  cxt(_cxt_),
                                                  child(_child_),

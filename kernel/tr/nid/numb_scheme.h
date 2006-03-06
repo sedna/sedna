@@ -75,7 +75,7 @@ void		nid_create_root(xptr result, bool persistent);
 void		nid_delete(xptr node);
 
 /* prints nid */
-void		nid_print(xptr node, crmostream& c);
+void		nid_print(xptr node, se_ostream& c);
 void		nid_print(xptr node);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/

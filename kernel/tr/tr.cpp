@@ -183,7 +183,7 @@ int main(int argc, char * argv[])
 //u_ftime(&t_test1);
     on_session_begin(sm_server);
 //u_ftime(&t_test2);
-//cout << "TEST1: " << to_string(t_test2 - t_test1).c_str() << endl;
+//d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
 
 
 #if (AUTH_SWITCH == 1)//if security is on
@@ -243,7 +243,7 @@ int main(int argc, char * argv[])
 
                             on_user_statement_begin(client->get_query_type(),
                                                     client->get_result_type(&client_msg),
-                                                    client->get_crmostream(),
+                                                    client->get_se_ostream(),
                                                     client->get_query_string(&client_msg),
                                                     qep_tree,
                                                     st);
@@ -252,6 +252,7 @@ int main(int argc, char * argv[])
                             if (qep_tree->is_update())
                             {
                                 GET_TIME(&t1_exec);
+//getchar();
                                 execute(qep_tree);
                                 GET_TIME(&t2_exec);
                                 client->respond_to_client(se_UpdateSucceeded);

@@ -29,7 +29,7 @@ void on_transaction_begin(SSMMsg* &sm_server);
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit);
 void on_user_statement_begin(QueryType query_type,
                              t_print output_type,
-                             crmostream* s,
+                             se_ostream* s,
                              const char* query_str,
                              PPQueryEssence* &qep_tree, 
                              StmntsArray* &st);

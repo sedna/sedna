@@ -18,8 +18,8 @@ struct auth_qep_tree
 };
 
 
-PPQueryEssence *build_qep(const char* por, crmostream& s, t_print print_mode = xml);
-PPQueryEssence *build_qep(scheme_list *por, crmostream& s, t_print print_mode = xml);
+PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode = xml);
+PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode = xml);
 auth_qep_tree  *build_qep(const char* por, int cxt_size);
 
 void delete_qep(PPQueryEssence *qep);

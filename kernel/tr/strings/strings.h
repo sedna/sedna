@@ -114,7 +114,7 @@ public:
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 };
-void print_tuple_cell(crmostream& crmout,const tuple_cell& cell);
+void print_tuple_cell(se_ostream& crmout,const tuple_cell& cell);
 extern CharsetHandler	*charset_handler;
 extern CollationHandler	*collation_handler;
 

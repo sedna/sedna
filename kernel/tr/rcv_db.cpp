@@ -22,7 +22,7 @@
 using namespace std;
 
 persistent_db_data* entry_point;
-char db_name[1000];
+char db_name[SE_MAX_DB_NAME_LENGTH+1];
 transaction_id trid;
 int sid;
 

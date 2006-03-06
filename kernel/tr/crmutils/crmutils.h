@@ -17,7 +17,7 @@
 #include "strings.h"
 
 
-extern crmstdostream crm_out;
+extern se_stdlib_ostream crm_out;
 typedef std::pair<int,int> stat_pair;
 
 /* type of print */
@@ -65,53 +65,53 @@ struct debug_info
 
 /* initialization of standard output*/
 void init_output();
-void print_tuple(const tuple &tup, crmostream& crmout,t_print ptype);
-void print_tuple_indent(const tuple &tup, crmostream& crmout,t_print ptype,bool is_first);
-void print_node(xptr node, crmostream& crmout,t_print ptype);
-void print_node_indent(xptr node, crmostream& crmout,t_print ptype);
-void print_node_with_prefixes(xptr node, crmostream& crmout, int indent);
+void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype);
+void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first);
+void print_node(xptr node, se_ostream& crmout,t_print ptype);
+void print_node_indent(xptr node, se_ostream& crmout,t_print ptype);
+void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent);
 
 /* prints information in block header */
-void print_desc_block_hdr(node_blk_hdr* block, crmostream& crmout);
+void print_desc_block_hdr(node_blk_hdr* block, se_ostream& crmout);
 
 /* prints information in element descriptor */
-void print_element(e_dsc* node,int shift,shft size,schema_node* scm, crmostream& crmout);
+void print_element(e_dsc* node,int shift,shft size,schema_node* scm, se_ostream& crmout);
 
 /* prints information in document descriptor */
-void print_document(d_dsc* node,int shift,shft size,schema_node* scm, crmostream& crmout);
+void print_document(d_dsc* node,int shift,shft size,schema_node* scm, se_ostream& crmout);
 
 /* prints information in text descriptor */
-void print_text(t_dsc* node,int shift,  crmostream& crmout, t_item xq_type);
+void print_text(t_dsc* node,int shift,  se_ostream& crmout, t_item xq_type);
 
 /* prints information in attribute descriptor */
-void print_attribute(a_dsc* node,int shift,  crmostream& crmout);
+void print_attribute(a_dsc* node,int shift,  se_ostream& crmout);
 
 /* prints information in  descriptor */
-void print_descriptor(n_dsc* node,int shift, crmostream& crmout);
+void print_descriptor(n_dsc* node,int shift, se_ostream& crmout);
 
 /* prints information in  schema node */
-void print_schema(schema_node* node, crmostream& crmout);
+void print_schema(schema_node* node, se_ostream& crmout);
 /* prints descriptive schema  of stand-alone document*/
-void print_descriptive_schema(const char * docname, crmostream& crmout);
+void print_descriptive_schema(const char * docname, se_ostream& crmout);
 
 /* prints descriptive schema  of collection*/
-void print_descriptive_schema_col(const char * colname, crmostream& crmout);
+void print_descriptive_schema_col(const char * colname, se_ostream& crmout);
 
 // SXML analogues
-void sxml_print_descriptive_schema(const char * docname, crmostream& crmout);
-void sxml_print_descriptive_schema_col(const char * colname, crmostream& crmout);
+void sxml_print_descriptive_schema(const char * docname, se_ostream& crmout);
+void sxml_print_descriptive_schema_col(const char * colname, se_ostream& crmout);
 
 /* prints the list of metadata features*/
-void print_metadata(crmostream& crmout);
+void print_metadata(se_ostream& crmout);
 
 /* prints the list of documents*/
-void print_documents(crmostream& crmout, bool ps=true);
+void print_documents(se_ostream& crmout, bool ps=true);
 
 /* prints the list of documents in the selected collection*/
-void print_documents_in_collection(crmostream& crmout, const char* collection);
+void print_documents_in_collection(se_ostream& crmout, const char* collection);
 
 /* prints the list of collections*/
-void print_collections(crmostream& crmout, bool ps=true);
+void print_collections(se_ostream& crmout, bool ps=true);
 
 
 /* returns type of  node */
@@ -119,12 +119,12 @@ char* convert_type(t_item type);
 
 
 /* prints information in block */
-void print_desc_block(xptr block, crmostream& crmout);
+void print_desc_block(xptr block, se_ostream& crmout);
 void basicTest();
-xptr loadfile(FILE* f, const char* uri,bool stripped,int& need_cp, bool print_progress);
-xptr loadfile(FILE* f, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress);
-void print_text(xptr text, crmostream& crmout,t_print ptype,t_item xq_type);
-void print_text_block(xptr block, crmostream& crmout);
+xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress);
+xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress);
+void print_text(xptr text, se_ostream& crmout,t_print ptype,t_item xq_type);
+void print_text_block(xptr block, se_ostream& crmout);
 
 //DEBUGUTILS
 void getDebugInfo(schema_node* snode, debug_info* d_in);
@@ -132,9 +132,9 @@ void getSimpleDebugInfo(schema_node* snode, debug_info* d_in);
 void checkTextNodeCorrectness(xptr node);
 void checkChildReferenceValidity(xptr node);
 #ifdef VMM_GATHER_STATISTICS
-void printDebugInfo(schema_node* snode, crmostream& crmout);
+void printDebugInfo(schema_node* snode, se_ostream& crmout);
 #endif
-void printSimpleDebugInfo(schema_node* snode, crmostream& crmout);
+void printSimpleDebugInfo(schema_node* snode, se_ostream& crmout);
 void getDebugInfo(schema_node* snode, xptr& node);
 void printMFO (schema_node* node,std::map<schema_node*, std::pair<int,int> >  &mfo,int par_pref,int indent);
 

@@ -11,9 +11,8 @@
 
 class PPBulkLoad : public PPUpdate
 {
-    crmostream& s;
+    se_ostream& s;
     PPOpIn filename, document, collection;
-    bool print_progress;
 
 public:
     void open();
@@ -23,8 +22,7 @@ public:
     PPBulkLoad(PPOpIn _filename_,
                PPOpIn _document_,
                PPOpIn _collection_,
-               crmostream& _s_,
-               bool _print_progress_);
+               se_ostream& _s_);
     ~PPBulkLoad();
 };
 

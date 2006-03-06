@@ -26,7 +26,7 @@ private:
   std::list<cl_command> cl_cmds;//stack of client commands to be executed
   StringVector stmnts_array;    //vector of statements to be executed
   int statement_index;
-  crmostream *s;
+  se_ostream *s;
 
   void clear_stack_for_stop_signal();
 
@@ -39,12 +39,13 @@ public:
   virtual char* get_query_string(msg_struct *msg);
   virtual t_print get_result_type(msg_struct *msg);
   virtual QueryType get_query_type();
-  virtual crmostream* get_crmostream();
+  virtual se_ostream* get_se_ostream();
   virtual client_file get_file_from_client(const char* filename);
   virtual void close_file_from_client(client_file fs);
   virtual void respond_to_client(int instruction);
   virtual void begin_item();
   virtual void end_of_item(bool exist_next);
+  virtual bool is_print_progress() { return true; }
 /*  
   virtual void update_result(bool res);
   virtual void bulk_load_result(bool res, const std::string& body);

@@ -119,8 +119,8 @@ struct PathExpr
     NodeTestOr *nto;  // NodeTestOr array
     int s;            // size
 
-    void print(std::ostream& str = std::cout);
-    void print_to_lr(std::ostream& str = std::cout);
+    void print(std::ostream& str = std::cerr);
+    void print_to_lr(std::ostream& str = std::cerr);
 };
 
 typedef PathExpr RelPath;

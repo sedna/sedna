@@ -11,9 +11,7 @@ using namespace std;
 
 void print_version_and_copyright(const char *prog_name)
 {
-    cout << prog_name << " ";
-    cout << "Version " << SEDNA_VERSION;
-    cout << "." << SEDNA_BUILD << endl;
-    cout << "Copyright (C) 2004 ISP RAS and others. All rights reserved." << endl;
-    cout << "See file COPYRIGHT provided with the distribution." << endl << endl;
+    fprintf(stdout, "%s Version %g.%d\n", prog_name, SEDNA_VERSION, SEDNA_BUILD);
+    fprintf(stdout, "Copyright (C) 2004-2006 ISP RAS and others. All rights reserved.\n"); 
+    fprintf(stdout, "See file COPYRIGHT provided with the distribution.\n\n");   
 }

@@ -22,13 +22,6 @@ t_prefix NULLPREFIX = t_prefix(NULL,0);
 void lex_print(t_prefix p) {
 	for (int i=0; i<p.size; i++)
 		d_printf2("%d=", (int)(unsigned char)p.prefix[i]);
-	//	cout << (int)(unsigned char)p.prefix[i]<<"=";
-	//cout << "\n";
-	//d_printf1("\n");
-}
-
-void lex_error(char* msg) {
-	//cout << "Exception: " << msg << endl;
 }
 
 /*	compute "p*factor"
@@ -256,10 +249,6 @@ t_prefix lex_next(t_prefix p, t_prefix b) {
 		lex_extend(p, fnumber(0,1));
 		result = p;
 	}
-//cout << "[lex_next] ";
-//lex_print(p);
-//lex_print(b);
-//lex_print(result);
 	return result;
 }
 

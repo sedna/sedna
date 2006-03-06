@@ -17,7 +17,7 @@ class PPQueryRoot : public PPQueryEssence
 private:
     PPOpIn child;
     tuple data;
-    crmostream& s;
+    se_ostream& s;
     variable_context *cxt;
     t_print print_mode;
 	bool first;
@@ -26,7 +26,7 @@ private:
 public:
     PPQueryRoot(variable_context *_cxt_,
                 PPOpIn _child_,
-                crmostream& _s_,
+                se_ostream& _s_,
                 t_print _print_mode_);
     virtual ~PPQueryRoot();
 	

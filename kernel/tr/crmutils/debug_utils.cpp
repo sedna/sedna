@@ -73,7 +73,7 @@ void getNIDNEWDistribution(std::map<schema_node*,int> &xsfo,
 		sc=sc->next;
 	}		
 }
-void printNIDVariation(xptr root, crmostream& crmout)
+void printNIDVariation(xptr root, se_ostream& crmout)
 {
 	std::map<int,int> nidsz;
 	std::map<schema_node*,int> xsfo;
@@ -206,7 +206,7 @@ void printNIDVariation(xptr root, crmostream& crmout)
 	*/
 
 }
-void printFullNIDVariation(xptr broot, crmostream& crmout)
+void printFullNIDVariation(xptr broot, se_ostream& crmout)
 {
 	std::map<int,int> nidsz;
 	std::map<int,int> strsz;
@@ -543,7 +543,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 
 }
 #ifdef VMM_GATHER_STATISTICS
-void printDebugInfo(schema_node* snode, crmostream& crmout)
+void printDebugInfo(schema_node* snode, se_ostream& crmout)
 {
 	debug_info d_in;
 	getDebugInfo(snode,(debug_info*)&d_in);
@@ -646,7 +646,7 @@ void getDebugInfo(schema_node* snode, xptr& node)
 	}
 	
 }
-void printSimpleDebugInfo(schema_node* snode, crmostream& crmout)
+void printSimpleDebugInfo(schema_node* snode, se_ostream& crmout)
 {
 	debug_info d_in;
 	getSimpleDebugInfo(snode,(debug_info*)&d_in);
@@ -867,11 +867,11 @@ void checkChildReferenceValidity(xptr node)
 	CHECKP(node);
 }
 
-void error_msg(char * ermsg,crmostream& crmout)
+void error_msg(char * ermsg,se_ostream& crmout)
 {
 	crmout<< ermsg;
 }
-void checkBlockSequenceConsistency(schema_node* snode, crmostream& crmout)
+void checkBlockSequenceConsistency(schema_node* snode, se_ostream& crmout)
 {
 	xptr block=snode->bblk;
 	while (block!=XNULL)
@@ -897,7 +897,7 @@ void checkBlockSequenceConsistency(schema_node* snode, crmostream& crmout)
 		sc=sc->next;
 	}
 }
-void checkTreeConsistency(xptr node,crmostream& crmout)
+void checkTreeConsistency(xptr node,se_ostream& crmout)
 {
 	CHECKP(node);
 	n_dsc* node_d=(n_dsc*)XADDR(node);

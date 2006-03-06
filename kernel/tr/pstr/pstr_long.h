@@ -66,8 +66,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size);
 void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, text_type ttype);
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
 
-void pstr_long_write(xptr desc,crmostream& crmout);
-void pstr_long_writextext(xptr desc, crmostream& crmout);
+void pstr_long_write(xptr desc,se_ostream& crmout);
+void pstr_long_writextext(xptr desc, se_ostream& crmout);
 void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
 void pstr_long_copy_to_buffer(char *buf, xptr desc);
 

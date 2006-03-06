@@ -1871,12 +1871,12 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 	charset_handler->free_char_counter(intl_char_counter);
 }
 
-static void pstr_long_write_suffix(xptr start, crmostream& crmout)
+static void pstr_long_write_suffix(xptr start, se_ostream& crmout)
 {
 	//TODO
 }
 
-void pstr_long_write(xptr desc, crmostream& crmout)
+void pstr_long_write(xptr desc, se_ostream& crmout)
 {
 	//TODO : use pstr_long_write_suffix
 	CHECKP(desc);
@@ -1905,7 +1905,7 @@ void pstr_long_write(xptr desc, crmostream& crmout)
 	}
 }
 
-void pstr_long_writextext(xptr desc, crmostream& crmout)
+void pstr_long_writextext(xptr desc, se_ostream& crmout)
 {
 	//TODO : use pstr_long_write_suffix
 	CHECKP(desc);

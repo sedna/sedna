@@ -75,9 +75,7 @@ void command_line_client::init()
    else if (string(q_type) == "LR") query_type = TL_ForSemAnal;
    else throw USER_EXCEPTION(SE4002);
 
-   if (string(output_file) == "STDOUT") res_os = stdout;
-   else if ((res_os = fopen(output_file, "w")) == NULL) throw USER_EXCEPTION2(SE4040, output_file);
-             
+           
 
 
    string plain_batch_text;
@@ -85,6 +83,10 @@ void command_line_client::init()
    char buf[1024];
    if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) != 0)
    {
+      //init output res
+      if (string(output_file) == "STDOUT") res_os = stdout;
+      else if ((res_os = fopen(output_file, "w")) == NULL) throw USER_EXCEPTION2(SE4040, output_file);
+
 
       //read batch text in string
       FILE *f;
@@ -193,7 +195,7 @@ void command_line_client::init()
    cmd.length = 0;
    cl_cmds.push_front(cmd);
    
-   s = new crmstdostream();
+   s = new se_stdlib_ostream(std::cout);
 //  u_ftime(&ttt2);
 //  cerr << "init!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
 }
@@ -237,7 +239,7 @@ QueryType command_line_client::get_query_type()
   else return TL_ForSemAnal;
 }
 
-crmostream* command_line_client::get_crmostream()
+se_ostream* command_line_client::get_se_ostream()
 {
   return s;
 }

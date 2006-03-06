@@ -179,14 +179,6 @@ void calculate_offset_and_file_handler(const xptr &p,
         
         if (!((__int64)PAGE_SIZE <= *dsk_offs && *dsk_offs <= mb->data_file_cur_size - (__int64)PAGE_SIZE))
         {
-#ifdef EL_DEBUG
-#  if (EL_DEBUG == 1)
-            std::cout << "lower bound: (" << (__int64)PAGE_SIZE << std::endl;
-            std::cout << "upper bound: (" << mb->data_file_cur_size - (__int64)PAGE_SIZE << std::endl;
-            std::cout << "xptr       : (" << p.layer << ", " << p.addr << ")" << std::endl;
-            std::cout << "offset     : " << *dsk_offs << std::endl;
-#  endif
-#endif
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
         *file_handler = data_file_handler;
@@ -197,12 +189,6 @@ void calculate_offset_and_file_handler(const xptr &p,
         *dsk_offs = ABS_TMP_OFFSET(p);
         if (!((__int64)0 <= *dsk_offs && *dsk_offs <= mb->tmp_file_cur_size - (__int64)PAGE_SIZE))
         {
-#ifdef EL_DEBUG
-#  if (EL_DEBUG == 1)
-            std::cout << "xptr  : (" << p.layer << ", " << p.addr << ")" << std::endl;
-            std::cout << "offset: " << *dsk_offs << std::endl;
-#  endif
-#endif
             throw SYSTEM_EXCEPTION("Offset is out of range");
         }
         *file_handler = tmp_file_handler;

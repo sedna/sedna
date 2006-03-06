@@ -220,8 +220,11 @@ virtual void errstd(const char *s){
 >>
 #token RBRACE "\}"
 <<
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+  if (!Lexical_Analizer_State.empty())
+  {
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+  }
 >>
 
 #token COMMA ","
@@ -284,8 +287,12 @@ virtual void errstd(const char *s){
 >>
 #token EMPTYTAGCLOSE "\/\>"
 <<
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+ 
+  if (!Lexical_Analizer_State.empty())
+  {
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+  }
 >>
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*"
 #token XMLNS "xmlns"
@@ -375,8 +382,11 @@ virtual void errstd(const char *s){
 
 #token CLOSECDATA "\]\]\>"
 <<
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+  if (!Lexical_Analizer_State.empty())
+  {
+     mode (Lexical_Analizer_State.top());
+     Lexical_Analizer_State.pop();
+  }
 >>
 #token RBRACK "\]"
 #token RBRANGL "\>" 
@@ -396,9 +406,12 @@ virtual void errstd(const char *s){
 
 #token ENDTAGCLOSE "\>"
 <<
-  mode (Lexical_Analizer_State.top());
+  if (!Lexical_Analizer_State.empty())
+  {
+     mode (Lexical_Analizer_State.top());
 //  printf("transition to mode=%d\n",Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+     Lexical_Analizer_State.pop();
+  }
 >>
 #token LBRACE "\{"
 <<
@@ -496,9 +509,12 @@ virtual void errstd(const char *s){
                      >>
 
 #token "\:\)"        << 
-                        mode (Lexical_Analizer_State.top());
-                        Lexical_Analizer_State.pop();
-                        skip ();
+                        if (!Lexical_Analizer_State.empty())
+                        {
+                            mode (Lexical_Analizer_State.top());
+                            Lexical_Analizer_State.pop();
+                            skip ();
+                        }
                      >>
 #token "\:"          << skip (); >>
 #token "\("          << skip (); >>

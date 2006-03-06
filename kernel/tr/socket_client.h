@@ -35,7 +35,7 @@ private:
     bool is_on_stop;
 	char query_string[SE_SOCKET_MSG_BUF_SIZE+1];
 	
-	crmsocketostream *stream;
+	se_socketostream *stream;
     char* long_query_stream;
 	
     struct timeval timeout;
@@ -50,13 +50,14 @@ public:
     virtual char* get_query_string(msg_struct *msg);
     virtual QueryType get_query_type();
     virtual t_print get_result_type(msg_struct *msg);
-    virtual crmostream* get_crmostream();
+    virtual se_ostream* get_se_ostream();
     virtual client_file get_file_from_client(const char* filename);
     virtual void close_file_from_client(client_file cf);
     virtual void get_session_parameters();
     virtual void respond_to_client(int instruction);
     virtual void begin_item();
     virtual void end_of_item(bool res);
+    virtual bool is_print_progress() { return false; }
 /*    
     virtual void update_result(bool res);
     virtual void bulk_load_result(bool res, const std::string& body);

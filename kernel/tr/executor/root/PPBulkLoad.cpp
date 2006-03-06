@@ -17,12 +17,10 @@ extern client_core *client;
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        PPOpIn _document_,
                        PPOpIn _collection_,
-                       crmostream& _s_,
-                       bool _print_progress_) : filename(_filename_),
+                       se_ostream& _s_) : filename(_filename_),
                                                 document(_document_),
                                                 collection(_collection_),
-                                                s(_s_),
-                                                print_progress(_print_progress_)
+                                                s(_s_)
 {
 }
 
@@ -96,7 +94,7 @@ void PPBulkLoad::execute()
         { 
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
             hl_disable_log();
-            doc_root = loadfile(cf.f, tc_document.get_str_mem(), boundary_space_strip, need_cp, print_progress);
+            doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             hl_enable_log();
             hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
@@ -116,7 +114,7 @@ void PPBulkLoad::execute()
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
             hl_disable_log();
-            doc_root = loadfile(cf.f, tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, print_progress);
+            doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             hl_enable_log();
             hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }

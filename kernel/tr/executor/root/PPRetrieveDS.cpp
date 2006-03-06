@@ -12,7 +12,7 @@
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,
                            db_entity_type _type_,
-                           crmostream& _s_) : name(_name_),
+                           se_ostream& _s_) : name(_name_),
                                               type(_type_),
                                               s(_s_)
 {

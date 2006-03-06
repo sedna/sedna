@@ -13,7 +13,6 @@
  **********************************************************************/
 void		lex_print(t_prefix p);
 bool lex_ispref(t_prefix p1, t_prefix p2);
-void		lex_error(char* msg);
 t_prefix	lex_multiply(t_prefix p, int factor);
 t_prefix	lex_divide(t_prefix p, int divisor);
 t_prefix	lex_sum(t_prefix p1, t_prefix p2);

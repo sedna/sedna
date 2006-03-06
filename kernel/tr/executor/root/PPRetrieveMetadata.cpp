@@ -12,7 +12,7 @@
 PPRetrieveMetadata::PPRetrieveMetadata(db_entity_type _type_,
                                        PPOpIn _collection_,
                                        bool _output_statistics_,
-                                       crmostream& _s_) : type(_type_),
+                                       se_ostream& _s_) : type(_type_),
                                                           collection(_collection_),
                                                           output_statistics(_output_statistics_),
                                                           s(_s_)

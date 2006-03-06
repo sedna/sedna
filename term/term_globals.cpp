@@ -16,15 +16,13 @@ int show_time = 0;
 int socket_port = 0;
 int echo = 1;
 
-char host[TERM_ARGSTRLEN];
-char db_name[TERM_ARGSTRLEN];
-char filename[TERM_ARGSTRLEN];
-char query[TERM_ARGSTRLEN];
-//char q_type[1000];
-//QueryType query_type = TL_XQuery;
-char login[TERM_ARGSTRLEN];
-char password[TERM_ARGSTRLEN];
-FILE* res_os; //otput stream of term results (result of the user's queres)
+char host[TERM_ARGSTRLEN+1];
+char db_name[TERM_ARGSTRLEN+1];
+char filename[TERM_ARGSTRLEN+1];
+char query[TERM_ARGSTRLEN+1];
+char login[TERM_ARGSTRLEN+1];
+char password[TERM_ARGSTRLEN+1];
+char output_file[TERM_ARGSTRLEN+1];
 
 const size_t narg = 13;
 

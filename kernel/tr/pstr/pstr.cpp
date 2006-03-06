@@ -79,19 +79,19 @@ void pstr_print_blk(xptr blk) {
 CHECKP(blk);
 #endif
 	if (blk == XNULL) return;
-	cout << " Block #"<< XADDR(blk) << endl;
-	cout << "============================================" << endl;
-	cout << "PSTRNUM[" << (int)PSTRNUM_ADDR(blk) <<"]=" << PSTRNUM(blk) << endl;
-	cout << "SITB[" << (int)SITB_ADDR(blk) <<"]=" << SITB(blk) << endl;
-	cout << "SITH[" << (int)SITH_ADDR(blk) <<"]=" << SITH(blk) << endl;
-	cout << "SSB[" << (int)SSB_ADDR(blk) <<"]=" << SSB(blk) << endl;
-	cout << "BFS[" << (int)BFS_ADDR(blk) <<"]=" << BFS(blk) << endl;
-	cout << "HHSIZE[" << (int)HHSIZE_ADDR(blk) <<"]=" << HHSIZE(blk) << endl;
-	cout << "----------------------"<< endl;
+    d_printf2(" Block #0x%x\n", XADDR(blk));
+    d_printf1("============================================\n");
+    d_printf3("PSTRNUM[%d]=%d\n", (int)PSTRNUM_ADDR(blk), (int)PSTRNUM(blk));
+    d_printf3("SITB[%d]=%d\n", (int)SITB_ADDR(blk), (int)SITB(blk));
+    d_printf3("SITH[%d]=%d\n", (int)SITH_ADDR(blk), (int)SITH(blk));
+    d_printf3("SSB[%d]=%d\n", (int)SSB_ADDR(blk), (int)SSB(blk));
+    d_printf3("BFS[%d]=%d\n", (int)BFS_ADDR(blk), (int)BFS(blk));
+    d_printf3("HHSIZE[%d]=%d\n", (int)HHSIZE_ADDR(blk), (int)HHSIZE(blk));
+    d_printf1("----------------------\n");
 	int i;
 	/*for(i=0; i<HHSIZE(blk); i++) {
 		hh_slot* s = (hh_slot*)HH_ADDR(blk, i);
-		cout <<"HOLE[" << i << "]=(" <<s->hole_shft <<", " <<s->hole_size <<")" << endl;
+        d_printf4("HOLE[%d]=(%d, %d)\n", i, (int)(s->hole_shft), (int)(s->hole_size));
 	} 
 
 	i=0;
@@ -100,10 +100,10 @@ CHECKP(blk);
 		// the highest slot is not-used, reserved
 		sit+=sizeof(shft);
 		char* tmp = (char*)XADDR(blk)+sit;
-		cout <<"SIT[" << i <<"]="<< *(shft*)((char*)XADDR(blk)+sit) << endl;
+        d_printf3("SIT[%d]=%d\n", i, (int)*(shft*)((char*)XADDR(blk)+sit));
 		i++;
 	}
-	cout << "============================================" << endl;
+    d_printf1("============================================\n");
 	*/
 
 }
