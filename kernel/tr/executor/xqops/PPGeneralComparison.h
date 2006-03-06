@@ -7,6 +7,7 @@
 #define _PPGENERALCOMP_H
 #include "tuple.h"
 #include "PPUtils.h"
+
 inline tuple_cell getAtomizedCell(tuple& tup)
 {
 	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XP0006, "Name argument of Constructor is not a single atomic value");
@@ -66,26 +67,31 @@ protected:
 	tuple_cell min_ut_num_cell;
 	bool min_ut_dat;
 	tuple_cell min_ut_dat_cell;
+
 	bool min_num;
 	tuple_cell min_num_cell;
 	bool min_dat;
 	tuple_cell min_dat_cell;
 	bool min_str;
 	tuple_cell min_str_cell;
+
 	bool max_ut_num;
 	tuple_cell max_ut_num_cell;
 	bool max_ut_dat;
 	tuple_cell max_ut_dat_cell;
+
 	bool max_num;
 	tuple_cell max_num_cell;
 	bool max_dat;
 	tuple_cell max_dat_cell;
 	bool max_str;
 	tuple_cell max_str_cell;
+
 	bool min_dat_cast;
 	bool min_num_cast;
 	bool max_dat_cast;
 	bool max_num_cast;
+
 	xmlscm_type fill_minimums(tuple_cell value);
 	xmlscm_type fill_maximums(tuple_cell value);
 	bool compare_minmax(xmlscm_type type_info,bool min_changed);

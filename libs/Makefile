@@ -55,6 +55,8 @@ ifeq ("$(BIN_CHICKEN)", "1")
 chicken/chicken.h: $(BIN_LIBS)/chicken
 	cp -pR $(BIN_LIBS)/chicken .
 	touch chicken/chicken.h
+	-chmod a+x chicken/chicken
+
 
 build_chicken: chicken/chicken.h
 
@@ -114,6 +116,9 @@ ifeq ("$(BIN_PCCTS)", "1")
 pg/COPYRIGHT: $(BIN_LIBS)/pg
 	cp -pR $(BIN_LIBS)/pg .
 	touch pg/COPYRIGHT
+v v v v v v v
+	-chmod a+x pg/antlr pg/dlg pg/sor
+^ ^ ^ ^ ^ ^ ^
 
 build_pccts: pg/COPYRIGHT
 
