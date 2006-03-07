@@ -10,13 +10,6 @@
    In terminal type (substitute <install-path> with the path to a directory
    for which you have read/write permissions):
 
-export ACTIVE_CONFIGURATION=Release
-export AUTH_SWITCH=0
-export DOCUMENTATION=1
-export EL_DEBUG=0
-export JAVA_DRIVER=1
-export SQL_CONNECTION=1
-export STATIC_SYS_LIBS=0
 export SEDNA_INSTALL=<install-path>
 make
 make install
