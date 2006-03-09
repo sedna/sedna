@@ -1754,13 +1754,13 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
 		if (lst->size() == 4)
 			opit = new PPFtScan(cxt,
-				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(3).internal.list));
 		else
 			opit = new PPFtScan(cxt,
-				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list), 
 				make_pp_op(cxt, lst->at(3).internal.list),
 				make_pp_op(cxt, lst->at(4).internal.list));
     }
@@ -1775,10 +1775,22 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 			make_pp_op(cxt, lst->at(1).internal.list), 
 			make_pp_op(cxt, lst->at(2).internal.list));
     }
+	else if (op == "PPFtHighlight")
+    {
+        if (   lst->size() != 3
+			|| lst->at(1).type != SCM_LIST
+			|| lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION(SE1004);
+
+		opit = new PPFtHighlight(cxt,
+			make_pp_op(cxt, lst->at(1).internal.list), 
+			make_pp_op(cxt, lst->at(2).internal.list));
+    }
 
 #else
  else if (   op == "PPFtScan"
-	      || op == "PPFtIndexScan")
+	      || op == "PPFtIndexScan"
+		  || op == "PPFtHighlight")
     {
 		throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
     }

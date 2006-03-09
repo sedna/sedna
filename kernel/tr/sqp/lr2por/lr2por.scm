@@ -779,6 +779,11 @@
               `(1 (PPFtScan ,@(map l2p:any-lr-node2por node)))
              )                 
              
+			; *** !fn!fthighlight ***
+             ((eq? op-name '!fn!fthighlight)
+              `(1 (PPFtHighlight ,@(map l2p:any-lr-node2por node)))
+             )                 
+			 
              ; *** scan ***
              ((eq? op-name 'scan)
               (let* ((entity (if (eq? (car (cadr node)) '!fn!document) 'document 'collection))

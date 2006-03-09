@@ -195,6 +195,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	in_buf.clear();
 	dest.pData = this;
     dest.filename = fileInfo->filename;
+	//dest.typeId = it_Utf8;
 	CHECKP(node);
 	print_node_to_buffer(node,in_buf,cm,custom_tree);
 	pos = 0;
@@ -332,7 +333,6 @@ int UpdateSednaDataSource::rewind()
 }
 OperationSednaDataSource::OperationSednaDataSource(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,PPOpIn* _op_):SednaDataSource(_cm_,_custom_tree_),op(_op_),t(1)
 {
-	
 }
 xptr OperationSednaDataSource::get_next_doc()
 {
@@ -367,11 +367,19 @@ void SednaSearchJob::OnFound(long totalFiles,
 	UUnnamedSemaphoreDown(&sem2);
 }
 SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_):seq(_seq_), hilight(_hilight_)
-{
+{		
 	AttachDataSource(new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
 	dtth=NULL;
 	if (hilight)
+	{
+		dtsOptions opts;
+		short result;
+		dtssGetOptions(opts, result);
+		save_field_flags = opts.fieldFlags;
+		opts.fieldFlags = dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames;
+		dtssSetOptions(opts, result);
 		hl=new SednaConvertJob(_cm_,_custom_tree_);	
+	}
 }
 SednaSearchJob::SednaSearchJob(bool _hilight_):seq(NULL),hilight(_hilight_)
 {
@@ -397,6 +405,11 @@ void SednaSearchJob::get_next_result(tuple &t)
 	UUnnamedSemaphoreDown(&sem1);
     if (res==XNULL)
 	{
+		dtsOptions opts;
+		short result;
+		dtssGetOptions(opts, result);
+		opts.fieldFlags = save_field_flags;
+		dtssSetOptions(opts, result);
 		t.set_eos();
 		dtth = NULL;
 		UUnnamedSemaphoreRelease(&sem1);
@@ -457,10 +470,15 @@ SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,uns
 {
 	tis = new SednaTextInputStream(&fileInfo, _cm_ ,_custom_tree_);	
 	SetOutputToCallback();	
-	SetOutputFormat();
-	SetFlags(dtsConvertInputIsNotHtml);
-	BeforeHit.setU8("<span style=\"background-color: #FFFF00\">"); 
-	AfterHit.setU8("</span>");
+	SetOutputFormat(it_XML);
+	//SetFlags(dtsConvertInputIsNotHtml);
+	SetFlags(dtsConvertXmlToXml);
+	//SetFlags(dtsoFfXmlSkipAttributes);
+	//SetFlags(dtsoFfXmlHideFieldNames);
+//	BeforeHit.setU8("<span style=\"background-color: #FFFF00\">"); 
+//	AfterHit.setU8("</span>");
+	BeforeHit.setU8("<hit>"); 
+	AfterHit.setU8("</hit>");
 	Footer.setU8("");
 	Header.setU8("");
 	HtmlHead.setU8(""); 

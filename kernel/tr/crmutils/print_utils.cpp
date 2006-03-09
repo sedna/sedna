@@ -1133,6 +1133,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 						tbuf <<" "<< scn->name << "=\"";
 					print_text(node,tbuf,attribute);
 					tbuf <<"\"";
+					break;
 				}
 			case ft_string_value:print_text(node,tbuf,attribute);break;
 			case ft_delimited_value:tbuf<<" ";break;			

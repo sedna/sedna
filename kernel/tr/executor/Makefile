@@ -124,6 +124,7 @@ endif
 ifeq ($(ENABLE_DTSEARCH),1)
 EXECUTOR_OBJECTS  +=   PPFtIndexScan$(OBJ_EXT) \
 					   PPFtScan$(OBJ_EXT) \
+					   PPFtHighlight$(OBJ_EXT) \
 					   PPCreateFtIndex$(OBJ_EXT) \
 					   PPDropFtIndex$(OBJ_EXT)
 endif

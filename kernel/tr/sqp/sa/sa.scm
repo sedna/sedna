@@ -517,6 +517,9 @@
 	(,sa:fn-ns "ftscan" 3 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftscan)
+	(,sa:fn-ns "fthighlight" 2 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-nodes !fn!fthighlight)
     ;----------------------------------------
     ; Legacy
     (,sa:fn-ns "item-at" 2 2

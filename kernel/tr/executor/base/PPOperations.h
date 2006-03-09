@@ -29,6 +29,7 @@
 #ifdef SE_ENABLE_FTSEARCH
 #include "PPFtIndexScan.h"
 #include "PPFtScan.h"
+#include "PPFtHighlight.h"
 #include "PPCreateFtIndex.h"
 #include "PPDropFtIndex.h"
 #endif

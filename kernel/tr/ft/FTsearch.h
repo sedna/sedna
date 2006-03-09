@@ -118,6 +118,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		  PPOpIn* seq;
 		  UTHANDLE dtth;
 		  UUnnamedSemaphore sem1,sem2;
+		  long save_field_flags;
 		  xptr res;
 		  bool hilight;
 		  SednaConvertJob * hl;
