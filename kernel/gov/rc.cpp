@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
     char *db_name;
     program_name_argv_0 = argv[0];
-    pping_client ppc("System error. This error means system malfunction.\n", 5151);
+    pping_client ppc(5151);
     int port_number;
     USOCKET sock;
     int res;

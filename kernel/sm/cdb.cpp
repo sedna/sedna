@@ -407,7 +407,7 @@ int main(int argc, char **argv)
     int persistent_heap_size = 0xA00000;		// = 10Mb
     int phys_log_size = 0xA00000;                       // = 10Mb
     int phys_log_ext_portion = 0xA00000;                // = 10Mb
-    pping_client ppc("System error. This error means system malfunction.\n", 5151);
+    pping_client ppc(5151);
     bool is_ppc_closed = true;
 
 

@@ -19,7 +19,6 @@
 class pping_client
 {
 private:
-    char *failure_str;
     int port;
     char* host;
     USOCKET sock;
@@ -32,7 +31,7 @@ private:
     void startup(SednaUserException& e, bool is_soft);
 
 public:
-    pping_client(const char *_failure_str_, int _port_, const char* _host_ = NULL);
+    pping_client(int _port_, const char* _host_ = NULL);
     ~pping_client();
 
     void startup(SednaUserException& e);
@@ -56,7 +55,6 @@ public:
     };
 
 private:
-    char *failure_str;
     int port;
     USOCKET sock;
     bool initialized;
@@ -65,7 +63,7 @@ private:
     thread_table_t thread_table[PPING_SERVER_THREAD_TABLE_SIZE];
 
 public:
-    pping_server(const char *_failure_str_, int _port_);
+    pping_server(int _port_);
     ~pping_server();
 
     void startup();

@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     int command = STOP;
 
 
-    pping_client ppc("System error. This error means system malfunction.\n", 5151);
+    pping_client ppc(5151);
 
  
     try {

@@ -83,7 +83,7 @@ int main(int argc, char * argv[])
 {
   int ret_code = 0;
   program_name_argv_0 = argv[0];
-  pping_client ppc("System error. This error means system malfunction.\n", 5151);
+  pping_client ppc(5151);
   char buf[1024];
   SSMMsg *sm_server = NULL;
   int determine_vmm_region = 0;

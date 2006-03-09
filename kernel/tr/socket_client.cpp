@@ -467,9 +467,7 @@ void socket_client::error(int code, const string& body)
 	if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));  //ErrorResponse
      } catch (SednaException &e) {
           fprintf(stderr, "%s\n", e.getMsg().c_str());
-          fprintf(stderr, "Connection with client broken\n");
      } catch (...) {
-          fprintf(stderr, "Unknown error\n");
           sedna_soft_fault();
      }
 }
@@ -480,9 +478,7 @@ void socket_client::error()
 	if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
      } catch (SednaException &e) {
           fprintf(stderr, "%s\n", e.getMsg().c_str());
-          fprintf(stderr, "Connection with client broken\n");
      } catch (...) {
-          fprintf(stderr, "Unknown error\n");
           sedna_soft_fault();
      }
 }

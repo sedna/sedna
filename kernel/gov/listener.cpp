@@ -258,11 +258,9 @@ try{
        fprintf(stderr, "%s\n", e.getMsg().c_str());
        sp_error_message_handler(socknew, 100, e.get_code(), e.getMsg().c_str());
    } catch (SednaException &e) {
-       fprintf(stderr, "System error");
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault(e);
    } catch (...) {
-       fprintf(stderr, "System error");
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault();
    }

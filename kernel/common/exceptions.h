@@ -92,6 +92,30 @@ details  -- details for user error
 expl     -- explanation of error
 rollback -- does the error leads to rollback?
 
+
+
+
+Errors could be outputted to the user in the format of <sedna-message>:
+
+<sedna-message. ::=
+"SEDNA Message: " <problem> <line-break>
+<description> <line-break>
+[ "Details: " <details> <line-break> ]
+[ "Position: [" <file> ":" <function> ":" <line> "]" <line-break> ]
+
+<problem> ::= "ERROR " <code>
+            | "FATAL ERROR"
+
+<description> ::= <string-without-without-line-break>
+
+<file> ::= <string-without-without-line-break>
+
+<function> ::= <string-without-without-line-break>
+
+<line> ::= <integer>
+
+<code> ::= <code-from-(error.codes)>
+
 */
 
 
@@ -139,7 +163,12 @@ public:
                                                    err_msg(_err_msg_) {}
     virtual ~SednaException() {}
 
-    virtual std::string getMsg() const = 0;
+    virtual std::string getMsg()         const = 0;
+    virtual std::string getDescription() const { return err_msg; }
+    virtual std::string getFile()        const { return file; }
+    virtual std::string getFunction()    const { return function; }
+    virtual int         getLine()        const { return line; }
+
 };
 
 class SednaSystemException : public SednaException
@@ -155,8 +184,12 @@ public:
     virtual std::string getMsg() const
     {
         std::string res;
+        res += "SEDNA Message: FATAL ERROR\n";
         res += "System error. This error means system malfunction.\n";
-        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]: " + err_msg;
+        res += "Details: " + err_msg + "\n";
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
         return res;
     }
 };
@@ -174,9 +207,13 @@ public:
     virtual std::string getMsg() const
     {
         std::string res;
-        res += "Environment error. This error is caused by environment (operating system) and \n";
+        res += "SEDNA Message: FATAL ERROR\n";
+        res += "Environment error. This error is caused by environment (operating system) and ";
         res += "it means that the system cannot continue execution anymore.\n";
-        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]: " + err_msg;
+        res += "Details: " + err_msg + "\n";
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
         return res;
     }
 };
@@ -207,15 +244,15 @@ public:
     virtual std::string getMsg() const
     {
         std::string res;
+        res += "SEDNA Message: ERROR ";
         res += std::string(user_error_code_entries[internal_code].code) + "\n";
-        res += std::string(user_error_code_entries[internal_code].descr);
+        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
         if (err_msg.length() != 0)
         {
-            res += "\nDetails: " + err_msg;
+            res += "Details: " + err_msg + "\n";
         }
 #if (EL_DEBUG == 1)
-        res += "\nPosition: [" + file + ":" + function + ":" + int2string(line) + "]: internal error code = " + 
-               int2string(internal_code);
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
 #endif
         return res;
     }
@@ -252,19 +289,28 @@ public:
                                                                 0),
                                              explanation(_explanation_),
                                              rollback(_rollback_) {}
+    virtual std::string getDescription() const 
+    { 
+        return err_msg + 
+               (explanation.length() != 0 ? " (" + explanation + ")"
+                                          : ""); 
+    }
+
     virtual std::string getMsg() const
     {
         std::string res;
+        res += "SEDNA Message: ERROR ";
         res += std::string(user_error_code_entries[internal_code].code) + "\n";
-        res += std::string(user_error_code_entries[internal_code].descr);
-#if (EL_DEBUG == 1)
-        res += "\nPosition: [" + file + ":" + function + ":" + int2string(line) + "]";
-#endif
-        res += "\nDetails: " + err_msg;
+        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
+        res += "Details: " + err_msg;
         if (explanation.length() != 0)
         {
             res += " (" + explanation + ")";
         }
+        res += "\n";
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
         return res;
     }
 

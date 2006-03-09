@@ -41,28 +41,17 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
         {
             if (!ppc->stop_keep_alive)
             {
-                if (ppc->failure_str) fprintf(stderr, "%s\n", ppc->failure_str);
-                else fprintf(stderr, "System failure\n");
-                fprintf(stderr, "pping_client_thread_proc\n");
-                d_flush();
-                uExitProcess(1);
+                sedna_soft_fault(SYSTEM_ENV_EXCEPTION("SEDNA GOVERNOR is down"));
             }
         }
-//        uSleep(1);
         UUnnamedSemaphoreDown(&(ppc->sem), 1000);
     }
     return 0;
 }
 
-pping_client::pping_client(const char *_failure_str_, int _port_, const char* _host_)
+pping_client::pping_client(int _port_, const char* _host_)
 {
 #ifdef PPING_ON
-    if (_failure_str_)
-    {
-        failure_str = new char[strlen(_failure_str_) + 1];
-        strcpy(failure_str, _failure_str_);
-    }
-    else failure_str = NULL;
     port = _port_;
     if (_host_)
     {
@@ -79,7 +68,6 @@ pping_client::~pping_client()
 {
 #ifdef PPING_ON
     if (host) delete [] host;
-    if (failure_str) delete [] failure_str;
 #endif
 }
 
@@ -196,11 +184,7 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     return 0;
 
 sys_failure:
-    if (pps->failure_str) fprintf(stderr, "%s\n", pps->failure_str);
-    else fprintf(stderr, "System failure\n");
-    fprintf(stderr, "pping_server_cli+thread_proc\n");
-    d_flush();
-    uExitProcess(1);
+    sedna_soft_fault(SYSTEM_ENV_EXCEPTION("One of SEDNA processes is down"));
 
     return 0;
 }
@@ -276,23 +260,14 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
     return 0;
 
 sys_failure:
-    if (pps->failure_str) fprintf(stderr, "%s\n", pps->failure_str);
-    else fprintf(stderr, "System failure\n");
-    fprintf(stderr, "pping_server_lstn_thread_proc\n");
-    uExitProcess(1);
+    sedna_soft_fault(SYSTEM_ENV_EXCEPTION("Malfunction in SEDNA GOVERNOR"));
 
     return 0;
 }
 
-pping_server::pping_server(const char *_failure_str_, int _port_)
+pping_server::pping_server(int _port_)
 {
 #ifdef PPING_ON
-    if (_failure_str_)
-    {
-        failure_str = new char[strlen(_failure_str_) + 1];
-        strcpy(failure_str, _failure_str_);
-    }
-    else failure_str = NULL;
     port = _port_;
     close_lstn_thread = false;
     initialized = false;
@@ -309,7 +284,6 @@ pping_server::pping_server(const char *_failure_str_, int _port_)
 pping_server::~pping_server()
 {
 #ifdef PPING_ON
-    if (failure_str) delete [] failure_str;
 #endif
 }
 

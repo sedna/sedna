@@ -94,7 +94,7 @@ void GOVCtrlHandler(int signo)
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
-    pping_server pps("System error. This error means system malfunction.\n", 5151);
+    pping_server pps(5151);
 
     bool is_pps_close = true;
 

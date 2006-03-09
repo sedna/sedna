@@ -120,7 +120,7 @@ bool is_first_start_of_gov()
 {
   try
   {
-    pping_client ppc("System error. This error means system malfunction.\n", 5151);
+    pping_client ppc(5151);
 
     SednaUserException e = USER_EXCEPTION(SE4400);
     ppc.startup(e);
