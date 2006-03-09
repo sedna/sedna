@@ -50,7 +50,7 @@ xptr_sequence *ftlog_file::read_xptr_sequence()
 
 void ftlog_file::close_and_delete_file(const char *index_name)
 {
-	if (uCloseFile(file) == 0);
+	if (uCloseFile(file) == 0)
 		throw USER_EXCEPTION(SE4043);
 
 	char fn[32];
@@ -201,6 +201,7 @@ ftlog_file *SednaIndexJob::get_log_file(const char *index_name)
 		lf->file = create_log(index_name);
 		lf->last_lsn = 0;
 		log_files_map[index_name_str] = lf;
+		return lf;
 	}
 	else
 		return it->second;
@@ -212,6 +213,7 @@ void SednaIndexJob::start_commit()
 	while (it != log_files_map.end())
 	{
 		it->second->start_new_record(FTLOG_COMMIT_START);
+		it++;
 	}
 }
 void SednaIndexJob::fix_commit()
@@ -221,6 +223,7 @@ void SednaIndexJob::fix_commit()
 	{
 		it->second->close_and_delete_file(it->first.c_str());
 		delete it->second;
+		it++;
 	}
 	log_files_map.clear();
 }
@@ -347,6 +350,7 @@ void SednaIndexJob::rollback()
 		log_file->seek_start();
 		rollback_index(log_file, it->first.c_str());
 		delete log_file;
+		it++;
 	//1. read the logindex file and crate the ordered list of index operations
 	//2. if 0x0001 or 0x0002 operations are existed ->3 else 8
 	//3. if the first operation is 0x0001 find index by title in persistent heap
