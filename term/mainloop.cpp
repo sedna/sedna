@@ -499,7 +499,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	{
 		buffer[i] = (char)getc(source);
 		
-		if((!isCommand)&&(buffer[i-1] == (char)';')&&(buffer[i] == (char)'\n'))
+		if((!isCommand)&&((buffer[i-1] == (char)';')||(buffer[i-1] == (char)'&'))&&(buffer[i] == (char)'\n'))
 		{
 			*item_len = i-1;
 			buffer[*item_len] = '\0';
