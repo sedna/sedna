@@ -46,7 +46,7 @@ int process_commandline_query()
 	
     if(res != SEDNA_SESSION_OPEN){
     	fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 	
     //begin transaction
@@ -56,7 +56,7 @@ int process_commandline_query()
     	fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
         //closing session
         SEclose(&conn);
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     
     // execute XQuery query	or update
@@ -66,28 +66,28 @@ int process_commandline_query()
     	fprintf(stderr, "Query failed \n%s\n%s", SEgetLastErrorMsg(&conn), query);
     	//closing session
     	SEclose(&conn);
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_UPDATE_FAILED) 
     {
     	fprintf(stderr, "Update failed \n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_BULK_LOAD_FAILED) 
     {
     	fprintf(stderr, "Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_ERROR) 
     {
     	fprintf(stderr, "Error \n%s\n%s", SEgetLastErrorMsg(&conn),query);
     	//closing session
     	SEclose(&conn);
-    	return 1;
+    	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_QUERY_SUCCEEDED) 
     {
@@ -102,7 +102,7 @@ int process_commandline_query()
             {
        	        //closing session
     	        SEclose(&conn);
-    	        return 1;
+    	        return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
     		while(bytes_read > 0)
     		{
@@ -113,7 +113,7 @@ int process_commandline_query()
                 {
        	           //closing session
     	           SEclose(&conn);
-    	           return 1;
+    	           return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
     		res = SEnext(&conn);
@@ -142,7 +142,7 @@ int process_commandline_query()
 	    fprintf(stderr, "failed to commit transaction \n%s\n", SEgetLastErrorMsg(&conn));
         //closing session
         SEclose(&conn);
-	    return 1;
+	    return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 	
     //closing session
@@ -150,16 +150,9 @@ int process_commandline_query()
     if(res != SEDNA_SESSION_CLOSED) 
     {
 	   fprintf(stderr, "session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
-	   return 1;
+	   return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 
-return 0;
+return EXIT_SUCCESS;
 }
-
-int process_file_commands()
-{
-	int ret_code = MainLoop(fopen(filename, "r"));
-    return ret_code;
-}
-
 

@@ -16,13 +16,15 @@ int show_time = 0;
 int socket_port = 0;
 int echo = 1;
 
-char host[TERM_ARGSTRLEN+1];
-char db_name[TERM_ARGSTRLEN+1];
-char filename[TERM_ARGSTRLEN+1];
-char query[TERM_ARGSTRLEN+1];
-char login[TERM_ARGSTRLEN+1];
-char password[TERM_ARGSTRLEN+1];
-char output_file[TERM_ARGSTRLEN+1];
+char host[TERM_ARGSTRLEN];
+char db_name[TERM_ARGSTRLEN];
+char filename[TERM_ARGSTRLEN];
+char query[TERM_ARGSTRLEN];
+//char q_type[1000];
+//QueryType query_type = TL_XQuery;
+char login[TERM_ARGSTRLEN];
+char password[TERM_ARGSTRLEN];
+FILE* res_os; //otput stream of term results (result of the user's queres)
 
 const size_t narg = 13;
 
@@ -34,7 +36,7 @@ arg_rec term_argtable[] =
 {"-file",           " filename", arg_str,   &filename,                  "???",     "\t  file with an XQuery query\t\t\t  "},
 {"-output",         " filename",     arg_str,   &output_file,               "STDOUT",  "\t\t  outputfile (default stdout)"},
 {"-query",          " \"query\"",    arg_str,   &query,                   "???",     "\t\t  XQuery query to execute\t\t"},
-{"-echo",           " on/off",   arg_bool,  &echo,                      "on",      "\t\t  display se_term output  (default on)"},
+{"-echo",           " on/off",   arg_str,   &echo_str,                      "???",      "\t\t  display se_term output  (default on)"},
 {"-showtime",       " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of the latest query execution (default off)"},
 {"-host",           " host",     arg_str,   &host,                      "???",     "\t\t  hostname of the machine with Sedna running (default localhost)\n\t\t"},
 {"-port-number",    " port",     arg_int,   &socket_port,               "5050",    "\t  socket listening port  (default 5050)"},
@@ -43,5 +45,5 @@ arg_rec term_argtable[] =
 {NULL,              " db-name",  arg_str,   &db_name,                   "???",     "\t\t  database name"}
 };
 
-bool in_transaction = false; // in the scope of transaction
-SednaConnection conn;
+bool on_error_stop = false;
+SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;

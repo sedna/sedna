@@ -49,6 +49,43 @@ static void connectionFailure(struct SednaConnection *conn, int error_code, char
     conn->isConnectionOk = SEDNA_CONNECTION_FAILED;
 }
 
+/* returns 1 if the document is currently loading [into the collection], 0 otherwise */
+static char isBulkLoadStarted(struct SednaConnection *conn)
+{
+    return conn->cbl.bulk_load_started;
+}
+/* returns 1 if this document is currently loading [into this collection], 0 otherwise */
+static char isBulkLoadOf(struct SednaConnection *conn, const char* doc_name, const char* col_name)
+{
+    if ((conn->cbl.bulk_load_started) && (strcmp(conn->cbl.doc_name, doc_name) == 0))
+      if (col_name)
+           if (strcmp(conn->cbl.col_name, col_name) == 0)
+              return 1;
+           else
+              return 0;
+      else 
+          return 1;
+   
+    return 0;
+}
+
+/* sets bulk load of the document [into the collection] is started */
+static void setBulkLoadStarted(struct SednaConnection *conn, const char* doc_name, const char* col_name)
+{
+    conn->cbl.bulk_load_started = 1;
+    strcpy(conn->cbl.doc_name, doc_name);
+    if (col_name)
+        strcpy(conn->cbl.col_name, col_name);
+}
+
+/* sets bulk load of the document [into the collection] is finished */
+static void setBulkLoadFinished(struct SednaConnection *conn)
+{
+    conn->cbl.bulk_load_started = 0;
+    strcpy(conn->cbl.doc_name, "");
+    strcpy(conn->cbl.col_name, "");
+}
+
 /*return 1 - clean ok*/
 /*error - SEDNA_ERROR*/
 static int cleanSocket(struct SednaConnection *conn)
@@ -145,6 +182,131 @@ static int resultQueryHandler(struct SednaConnection *conn)
 
 }
 
+static int begin_handler(struct SednaConnection *conn)
+{
+    /* send 210 - BeginTransaction*/
+    conn->msg.instruction = se_BeginTransaction;
+    conn->msg.length = 0;
+    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3006, NULL);
+        return SEDNA_ERROR;
+    }
+
+    /* read 100 or 230 - BeginTransactionOk or 240 - BeginTransactionFailed*/
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL);
+        return SEDNA_ERROR;
+    }
+
+    if (conn->msg.instruction == se_ErrorResponse)
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_BEGIN_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_BeginTransactionFailed)        /* BeginTransactionFailed */
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_BEGIN_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_BeginTransactionOk)    /* BeginTransactionOk */
+    {
+        conn->in_query = 0;
+        conn->isInTransaction = SEDNA_TRANSACTION_ACTIVE;
+        return SEDNA_BEGIN_TRANSACTION_SUCCEEDED;
+    }
+    else
+    {
+        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        return SEDNA_BEGIN_TRANSACTION_FAILED;
+    }
+}
+
+static int commit_handler(struct SednaConnection *conn)
+{
+    conn->isInTransaction = SEDNA_NO_TRANSACTION;
+
+    /* send 220 - CommitTransaction*/
+    conn->msg.instruction = se_CommitTransaction;
+    conn->msg.length = 0;
+    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3006, NULL);
+        return SEDNA_ERROR;
+    }
+
+    /* read 100 or 250 - CommitTransactionOk or 260 - CommitTransactionFailed*/
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL);
+        return SEDNA_ERROR;
+    }
+
+    if (conn->msg.instruction == se_ErrorResponse)
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_COMMIT_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_CommitTransactionFailed)    /* CommitTransactionFailed */
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_COMMIT_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_CommitTransactionOk)   /* CommitTransactionOk */
+    {
+        conn->in_query = 0;
+        return SEDNA_COMMIT_TRANSACTION_SUCCEEDED;
+    }
+    else
+    {
+        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        return SEDNA_COMMIT_TRANSACTION_FAILED;
+    }
+}
+
+static int rollback_handler(struct SednaConnection *conn)
+{
+    conn->isInTransaction = SEDNA_NO_TRANSACTION;
+
+    /* send 225 - RollbackTransaction*/
+    conn->msg.instruction = se_RollbackTransaction;
+    conn->msg.length = 0;
+    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3006, NULL);
+        return SEDNA_ERROR;
+    }
+
+    /* read 100 or 255 - RollbackTransactionOk or 265 - RollbackTransactionFailed*/
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL);
+        return SEDNA_ERROR;
+    }
+
+    if (conn->msg.instruction == se_ErrorResponse)
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_RollbackTransactionFailed)     /* RollbackTransactionFailed */
+    {
+        setServerErrorMsg(conn, conn->msg.body);
+        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
+    }
+    else if (conn->msg.instruction == se_RollbackTransactionOk)         /* RollbackTransactionOk */
+    {
+        conn->in_query = 0;
+        return SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED;
+    }
+    else
+    {
+        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
+    }
+}
+
 static void release(struct SednaConnection *conn)
 {
     /* release*/
@@ -184,6 +346,12 @@ static int execute(struct SednaConnection *conn)
     else if (conn->msg.instruction == se_UpdateSucceeded)       /*UpdateSucceeded*/
     {
         conn->in_query = 0;
+        if (conn->autocommit)
+        {
+            int comm_res = commit_handler(conn);
+            if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                return SEDNA_UPDATE_FAILED;
+        }
         return SEDNA_UPDATE_SUCCEEDED;
     }
     else if (conn->msg.instruction == se_UpdateFailed)  /*UpdateFailed*/
@@ -289,6 +457,12 @@ static int execute(struct SednaConnection *conn)
         else if ((conn->msg.instruction == se_BulkLoadSucceeded) || (conn->msg.instruction == se_UpdateSucceeded))
         {
             conn->in_query = 0;
+            if (conn->autocommit)
+            {
+               int comm_res = commit_handler(conn);
+               if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                   return SEDNA_BULK_LOAD_FAILED;
+            }
             return SEDNA_BULK_LOAD_SUCCEEDED;
         }
         else if ((conn->msg.instruction == se_UpdateFailed) || (conn->msg.instruction == se_BulkLoadFailed))
@@ -526,9 +700,9 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         conn->socket_keeps_data = 0;    
         conn->result_end = 0;   
         conn->in_query = 0;     
-        conn->bulk_load_started = 0;
         conn->local_data_length = 0;
         conn->local_data_offset = 0;
+        conn->cbl.bulk_load_started = 0;
 
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_OK;
@@ -625,48 +799,17 @@ int SEbegin(struct SednaConnection *conn)
     
     clearLastError(conn);
 
+    if (conn->autocommit)
+    {
+        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        return SEDNA_ERROR;
+    }
+
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
-
-    /* send 210 - BeginTransaction*/
-    conn->msg.instruction = se_BeginTransaction;
-    conn->msg.length = 0;
-    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3006, NULL);
-        return SEDNA_ERROR;
-    }
-
-    /* read 100 or 230 - BeginTransactionOk or 240 - BeginTransactionFailed*/
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, NULL);
-        return SEDNA_ERROR;
-    }
-
-    if (conn->msg.instruction == se_ErrorResponse)
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_BEGIN_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_BeginTransactionFailed)        /* BeginTransactionFailed */
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_BEGIN_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_BeginTransactionOk)    /* BeginTransactionOk */
-    {
-        conn->in_query = 0;
-        conn->isInTransaction = SEDNA_TRANSACTION_ACTIVE;
-        return SEDNA_BEGIN_TRANSACTION_SUCCEEDED;
-    }
-    else
-    {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
-        return SEDNA_BEGIN_TRANSACTION_FAILED;
-    }
-
+    
+    return begin_handler(conn);
 }
 
 int SErollback(struct SednaConnection *conn)
@@ -679,50 +822,19 @@ int SErollback(struct SednaConnection *conn)
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
         return SEDNA_ERROR;
 
+    if (conn->autocommit)
+    {
+        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        return SEDNA_ERROR;
+    }
+
     clearLastError(conn);
 
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
-
-    conn->isInTransaction = SEDNA_NO_TRANSACTION;
-
-    /* send 225 - RollbackTransaction*/
-    conn->msg.instruction = se_RollbackTransaction;
-    conn->msg.length = 0;
-    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3006, NULL);
-        return SEDNA_ERROR;
-    }
-
-    /* read 100 or 255 - RollbackTransactionOk or 265 - RollbackTransactionFailed*/
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, NULL);
-        return SEDNA_ERROR;
-    }
-
-    if (conn->msg.instruction == se_ErrorResponse)
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_RollbackTransactionFailed)     /* RollbackTransactionFailed */
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_RollbackTransactionOk)         /* RollbackTransactionOk */
-    {
-        conn->in_query = 0;
-        return SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED;
-    }
-    else
-    {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
-        return SEDNA_ROLLBACK_TRANSACTION_FAILED;
-    }
+    
+    return rollback_handler(conn);
 }
 
 int SEcommit(struct SednaConnection *conn)
@@ -735,50 +847,19 @@ int SEcommit(struct SednaConnection *conn)
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
         return SEDNA_ERROR;
 
+    if (conn->autocommit)
+    {
+        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        return SEDNA_ERROR;
+    }
+
     clearLastError(conn);
 
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
 
-    conn->isInTransaction = SEDNA_NO_TRANSACTION;
-
-    /* send 220 - CommitTransaction*/
-    conn->msg.instruction = se_CommitTransaction;
-    conn->msg.length = 0;
-    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3006, NULL);
-        return SEDNA_ERROR;
-    }
-
-    /* read 100 or 250 - CommitTransactionOk or 260 - CommitTransactionFailed*/
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, NULL);
-        return SEDNA_ERROR;
-    }
-
-    if (conn->msg.instruction == se_ErrorResponse)
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_COMMIT_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_CommitTransactionFailed)    /* CommitTransactionFailed */
-    {
-        setServerErrorMsg(conn, conn->msg.body);
-        return SEDNA_COMMIT_TRANSACTION_FAILED;
-    }
-    else if (conn->msg.instruction == se_CommitTransactionOk)   /* CommitTransactionOk */
-    {
-        conn->in_query = 0;
-        return SEDNA_COMMIT_TRANSACTION_SUCCEEDED;
-    }
-    else
-    {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
-        return SEDNA_COMMIT_TRANSACTION_FAILED;
-    }
+    return commit_handler(conn);
 }
 
 int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
@@ -798,6 +879,14 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
+
+    /* if autocommit is on - begin transaction implicitly */
+    if ((conn->autocommit) && (conn->isInTransaction == SEDNA_NO_TRANSACTION))
+    {
+        int begin_res = begin_handler(conn);
+        if (begin_res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
+            return SEDNA_ERROR;
+    }
 
     while ((read < SE_SOCKET_MSG_BUF_SIZE - 6) && (!feof(query_file)))
     {
@@ -872,6 +961,14 @@ int SEexecute(struct SednaConnection *conn, const char *query)
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
+
+    /* if autocommit is on - begin transaction implicitly */
+    if ((conn->autocommit) && (conn->isInTransaction == SEDNA_NO_TRANSACTION))
+    {
+        int begin_res = begin_handler(conn);
+        if (begin_res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
+            return SEDNA_ERROR;
+    }
 
     query_length = strlen(query);
     if (query_length > SE_SOCKET_MSG_BUF_SIZE - 6)
@@ -1103,16 +1200,25 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
     if ((bytes_to_load <= 0) || (buf == NULL) || (doc_name == NULL) || (strlen(doc_name) == 0) || ((col_name != NULL) && (strlen(col_name) == 0)))
     {
         setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
-        conn->result_end = 1;   /* tell result is finished*/
+        conn->result_end = 1;                   /* tell result is finished*/
         conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
+        setBulkLoadFinished(conn);
         return SEDNA_ERROR;
     }
-
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
 
-    if (!conn->bulk_load_started)
+    /* if autocommit is on - begin transaction implicitly */
+    if ((conn->autocommit) && (conn->isInTransaction == SEDNA_NO_TRANSACTION))
+    {
+        int begin_res = begin_handler(conn);
+        if (begin_res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED)
+            return SEDNA_ERROR;
+    }
+
+    /* if bulk load of exactly this document is not started yet */
+    if (!isBulkLoadStarted(conn))
     {
         char *query_str = NULL;
         int query_size = 0;
@@ -1163,14 +1269,36 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
             return SEDNA_ERROR;
         }
 
-        conn->bulk_load_started = 1;
-    }                           /* bulk load started*/
+        setBulkLoadStarted(conn, doc_name, col_name);
+    }     /* bulk load started*/
+
+    /* if another document is currently loading */
+    if(!isBulkLoadOf(conn, doc_name, col_name))
+    {
+        conn->msg.instruction = se_BulkLoadError;     /*BulkLoadError*/
+        int2net_int(SE4616, conn->msg.body);
+        conn->msg.length = 4;
+
+        if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+        {
+            connectionFailure(conn, SE3006, NULL);
+            return SEDNA_ERROR;
+        }
+        if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+        {
+            connectionFailure(conn, SE3007, NULL);
+            return SEDNA_ERROR;
+        }
+        setBulkLoadFinished(conn);
+        setDriverErrorMsg(conn, SE4616); /* Can't load a document because the session is loading another document. Finish current loading before beginning a new one. */
+        return SEDNA_ERROR;
+    }
 
     i = 0;
     while (i < bytes_to_load)
     {
         conn->msg.instruction = se_BulkLoadPortion;     /*BulkLoadPortion*/
-        conn->msg.body[0] = 0;
+        conn->msg.length = 0;
         bl_portion_size = ((bytes_to_load - i) >= (SE_SOCKET_MSG_BUF_SIZE - 5)) ? (SE_SOCKET_MSG_BUF_SIZE - 5) : (bytes_to_load - i);
         int2net_int(bl_portion_size, conn->msg.body + 1);
 
@@ -1215,7 +1343,8 @@ int SEendLoadData(struct SednaConnection *conn)
         connectionFailure(conn, SE3006, NULL);
         return SEDNA_ERROR;
     }
-    conn->bulk_load_started = 0;
+    
+    setBulkLoadFinished(conn);
 
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
@@ -1232,6 +1361,12 @@ int SEendLoadData(struct SednaConnection *conn)
     else if ((conn->msg.instruction == se_BulkLoadSucceeded) || (conn->msg.instruction == se_UpdateSucceeded))  /*BulkLoadSucceeded*/
     {
         conn->in_query = 0;
+        if (conn->autocommit)
+        {
+            int comm_res = commit_handler(conn);
+            if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                return SEDNA_BULK_LOAD_FAILED;
+        }
         return SEDNA_BULK_LOAD_SUCCEEDED;
     }
     else if ((conn->msg.instruction == se_BulkLoadFailed) || (conn->msg.instruction == se_UpdateFailed))        /*BulkLoadFailed*/
@@ -1277,10 +1412,14 @@ const char *SEshowTime(struct SednaConnection *conn)
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
         setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
-        return SEDNA_ERROR;
+        strcpy(conn->query_time, "not available");
+        return conn->query_time;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
-        return SEDNA_ERROR;
+    {
+        strcpy(conn->query_time, "not available");
+        return conn->query_time;
+    }
 
     conn->msg.instruction = se_ShowTime;        /*ShowTime*/
     conn->msg.length = 0;
@@ -1316,4 +1455,54 @@ const char *SEshowTime(struct SednaConnection *conn)
         strcpy(conn->query_time, "not available");
         return conn->query_time;
     }
+}
+
+int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const void* attrValue, int attrValueLength)
+{
+    int *value;
+    
+    clearLastError(conn);
+    
+    switch (attr){
+        case SEDNA_ATTR_AUTOCOMMIT:
+            value = (int*) attrValue;
+            if ((*value != SEDNA_AUTOCOMMIT_OFF) && (*value != SEDNA_AUTOCOMMIT_ON))
+            {
+               setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+               return SEDNA_ERROR;
+            }
+            conn->autocommit = (*value == SEDNA_AUTOCOMMIT_ON) ? 1: 0;
+            if ((*value == SEDNA_AUTOCOMMIT_ON) && (conn->isInTransaction == SEDNA_TRANSACTION_ACTIVE))
+            {
+                int comm_res = commit_handler(conn);
+                if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                    return SEDNA_ERROR;
+            }
+            return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+         default: 
+             setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+             return SEDNA_ERROR;
+    }
+    
+    return SEDNA_ERROR;
+}
+
+int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* attrValue, int* attrValueLength)
+{
+    int *value;
+    
+    clearLastError(conn);
+    
+    switch (attr){
+        case SEDNA_ATTR_AUTOCOMMIT:
+            *value = (conn->autocommit) ? SEDNA_AUTOCOMMIT_ON: SEDNA_AUTOCOMMIT_OFF;
+            memcpy(attrValue, value, 4);
+            *attrValueLength = 4;
+            return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
+         default: 
+             setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+             return SEDNA_ERROR;
+    }
+    
+    return SEDNA_ERROR;
 }

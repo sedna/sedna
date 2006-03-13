@@ -45,18 +45,24 @@ int main(int argc, char *argv[])
 			throw USER_ENV_EXCEPTION(errmsg, false);
 
         if (argc == 1) { print_term_usage(); return 0; }
-		
+
         //d_printf2("params:help=%d, mode=%d", lstnr_help, background_mode);
-        
+
         if ((term_s_help == 1)||(term_l_help == 1)){print_term_usage(); return 0; }
-        
+
         if (term_version == 1) {print_version_and_copyright("Sedna Terminal");  return 0; }
-        
+
         if (socket_port == 0) socket_port = 5050;
         if (strcmp(host, "???") == 0 ) strcpy(host, "localhost"); 
-        
+
         if (strcmp(db_name, "???") == 0 )
             throw USER_EXCEPTION(SE4601);
+
+        if (strcmp(echo_str, "???") != 0)
+        {
+            if ((strcmp(echo_str, "on") != 0) && (strcmp(echo_str, "off") != 0)) throw USER_EXCEPTION(SE4601);
+            echo = (strcmp(echo_str, "on") == 0) ? 1 : 0;
+        }
 /*
 #ifdef AUTH_SWITCH
 #  if (AUTH_SWITCH == 1)
@@ -96,9 +102,19 @@ int main(int argc, char *argv[])
             res_os = fopen(output_file, "w");
         
         if (strcmp(filename,"???") != 0)
-            ret_code = process_file_commands();
+        {
+            if (strcmp(echo_str, "???") == 0)
+                echo = 0;                          // echo is off when in batch mode
+            FILE* script_file = fopen(filename, "r");
+            ret_code = MainLoop(script_file);
+            fclose(script_file);
+        }
         else if (strcmp(query, "???") != 0)
+        {
+            if (strcmp(echo_str, "???") == 0)
+                echo = 1;                          // echo is on when in interactive mode
             ret_code = process_commandline_query();
+        }
         else
             ret_code = MainLoop(stdin);
         
@@ -117,5 +133,6 @@ int main(int argc, char *argv[])
        	fprintf(stderr, "System error\n");
        	sedna_soft_fault();
     }
-
+    
+    return 1;
 }

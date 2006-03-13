@@ -10,8 +10,6 @@ void term_output2(const char *buf, const void* arg);
 
 void term_output3(const char *buf, const void* arg1, const void* arg2);
 
-int process_file_commands();
-
 int process_commandline_query();
 
 #endif

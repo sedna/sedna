@@ -69,6 +69,21 @@ extern "C"
 #define SEDNA_CONNECTION_CLOSED                    28
 #define SEDNA_CONNECTION_FAILED                  (-29)
 
+#define SEDNA_AUTOCOMMIT_OFF                       30
+#define SEDNA_AUTOCOMMIT_ON                        31
+
+#define SEDNA_SET_ATTRIBUTE_SUCCEEDED              32
+#define SEDNA_GET_ATTRIBUTE_SUCCEEDED              33
+    
+    enum SEattr {SEDNA_ATTR_AUTOCOMMIT};
+    
+    struct conn_bulk_load
+    {
+        char bulk_load_started;
+        char doc_name[SE_MAX_DOCUMENT_NAME_LENGTH+1];
+        char col_name[SE_MAX_COLLECTION_NAME_LENGTH+1];
+    };
+    
     struct SednaConnection
     {
         char url[SE_HOSTNAMELENGTH + 1];
@@ -88,10 +103,12 @@ extern "C"
         char first_next;
         char result_end;
         char in_query;
-        char bulk_load_started;
+        struct conn_bulk_load cbl;
 
         int isInTransaction;
         int isConnectionOk;
+
+        char autocommit;
 
         int local_data_length;
         int local_data_offset;
@@ -100,8 +117,7 @@ extern "C"
         struct msg_struct msg;
     };
 
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", -1, -1, "", "", 0, 0, 0, 0, 0, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 0, 0, "", {0, 0, ""}}
-
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}}
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
 
@@ -143,6 +159,9 @@ extern "C"
 
     const char *SEshowTime(struct SednaConnection *conn);
 
+    int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const void* attrValue, int attrValueLength);
+
+    int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* attrValue, int* attrValueLength);
 
 
 #ifdef __cplusplus

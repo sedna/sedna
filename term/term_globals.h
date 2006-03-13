@@ -31,25 +31,24 @@ extern char query[];
 extern char login[];
 extern char password[];
 extern char output_file[];
+extern char echo_str[];
 extern FILE* res_os; //output stream of term results (result of the user's queres)
 
 extern const size_t narg;
 extern arg_rec term_argtable[];
 
-extern bool in_transaction;
-
+extern bool on_error_stop;
 extern SednaConnection conn;
 
-#define EXIT_SUCCESS                    0
-#define EXIT_GOT_QUERY                  1
-#define EXIT_GOT_COMMAND                2
-#define EXIT_EOF                        3
-#define EXIT_GOT_LONG_QUERY             4
-#define EXIT_ERROR                      5
-#define EXIT_USER                       6
-#define EXIT_COMMIT_FAILED              7
-#define EXIT_ROLLBACK_FAILED            8
-#define EXIT_NOT_COMMAND                9
-#define EXIT                           10
+#define EXIT_SUCCESS                       0
+#define EXIT_TERM_FAILED                   1
+#define EXIT_CONNECTION_BROKEN             2
+#define EXIT_STATEMENT_OR_COMMAND_FAILED   3
+#define EXIT_GOT_QUERY                     3
+#define EXIT_GOT_COMMAND                   4
+#define EXIT_EOF                           5
+#define EXIT_GOT_LONG_QUERY                6
+#define EXIT_ERROR                         7
+#define EXIT_USER                          8
 
 #endif

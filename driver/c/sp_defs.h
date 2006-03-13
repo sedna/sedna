@@ -11,6 +11,8 @@
 #define SE_MAX_LOGIN_LENGTH                                511
 #define SE_MAX_PASSWORD_LENGTH                             511
 #define SE_MAX_DB_NAME_LENGTH                              511
+#define SE_MAX_DOCUMENT_NAME_LENGTH                        511
+#define SE_MAX_COLLECTION_NAME_LENGTH                      511
 #define SE_HOSTNAMELENGTH                                  255
 
 #define SE_SOCKET_MSG_BUF_SIZE                             10240

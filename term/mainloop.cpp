@@ -80,7 +80,7 @@ int
 MainLoop(FILE *source)
 {
 	char buffer[SE_SOCKET_MSG_BUF_SIZE];
-	int item_len;
+	int item_len, error_code;
 	char tmp_file_name[1024];
 
 	int successResult = EXIT_SUCCESS;
@@ -123,64 +123,91 @@ MainLoop(FILE *source)
 	while(successResult == EXIT_SUCCESS)
 	{
 		term_output2("\n%s> ",db_name);
-		
+
 		successResult = get_input_item(source, buffer, &item_len, tmp_file_name);
-		if(successResult == EXIT_GOT_COMMAND)
-		{
+
+		switch (successResult) {
+        case EXIT_GOT_COMMAND:
 			res = process_command(buffer);
-            if((res == EXIT_USER) || (res == EXIT_COMMIT_FAILED) || (res == EXIT_ROLLBACK_FAILED))
+            if(res == EXIT_USER)                      // normal exit
 			{
 				quit_term();
-				break;
+				goto OUT_OF_CYCLE;
 			}
-			successResult = EXIT_SUCCESS;
-		}
-		else if(successResult == EXIT_GOT_QUERY)
-		{
-			res = process_query(buffer, false, tmp_file_name);
-			successResult = res;
-		}
-		else if(successResult == EXIT_GOT_LONG_QUERY)
-		{
-			res = process_query(buffer, true, tmp_file_name);
-			successResult = res;
-		}
-		else if(successResult == EXIT_EOF)
-		{
+            else if(res == EXIT_CONNECTION_BROKEN)     // socket connection is broken
+            {
+                quit_term();
+                return EXIT_CONNECTION_BROKEN;
+            }
+            else if((res == EXIT_STATEMENT_OR_COMMAND_FAILED) && (on_error_stop))
+            {
+                quit_term();
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;  // statement or command failed and on_error_stop is on
+            }
+			successResult = EXIT_SUCCESS;                 // cycle continues
+            break;
+            
+		case EXIT_GOT_QUERY:
+        case EXIT_GOT_LONG_QUERY:
+			res = (successResult == EXIT_GOT_QUERY) ? process_query(buffer, false, tmp_file_name) : process_query(buffer, true, tmp_file_name);
+            if((res == EXIT_STATEMENT_OR_COMMAND_FAILED) && (on_error_stop))
+            {
+                quit_term();
+				return EXIT_STATEMENT_OR_COMMAND_FAILED;  // statement or command failed and on_error_stop is on
+            }
+            else if(res == EXIT_CONNECTION_BROKEN)
+            {
+                quit_term();
+                return EXIT_CONNECTION_BROKEN;            // socket connection is broken
+            }
+            else if(res == EXIT_TERM_FAILED)
+            {
+                quit_term();
+                return EXIT_TERM_FAILED;                  // terminal failed
+            }
+			successResult = EXIT_SUCCESS;                 // cycle continues
+            break;
+            
+		case EXIT_EOF:
 			if(show_time != 0)
 			{
 				term_output2("Time: %s\n",SEshowTime(&conn));
 			}
 			if(source != stdin)
 			{
-				if(in_transaction)
+				if((SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE) && (conn.autocommit))
 				{
 					term_output1("Committing transaction...");
         		    res = SEcommit(&conn);
 	            	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 		    		{
 		    			fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                        error_code = SEgetLastErrorCode(&conn);
+                        // if socket is broken
+                        if((error_code == 207) || (error_code == 208))
+                            return EXIT_CONNECTION_BROKEN;           // socket connection is broken
+                        else
+                            return EXIT_STATEMENT_OR_COMMAND_FAILED; // statement or command failed and on_error_stop is on
 	    			}
 					term_output1("Ok\n");
 				}
 				quit_term();
 			}
-			break;
-		}
-		else if(successResult == EXIT)
-		{
-			quit_term();
-			break;
-		}
-
-	}
+			goto OUT_OF_CYCLE;
+            break;
+            
+         default: 
+            break;
+        }// end of switch
+	} //end of while
 	
-	return 0;
+OUT_OF_CYCLE:	return EXIT_SUCCESS;
 }
 
+// returns: EXIT_SUCCESS; EXIT_USER; EXIT_STATEMENT_OR_COMMAND_FAILED; EXIT_CONNECTION_BROKEN
 int process_command(char* buffer)
 {
-    int res;
+    int res, error_code;
 
    	if(strcmp(buffer,"?") == 0)
 	{
@@ -194,88 +221,163 @@ int process_command(char* buffer)
 	}
 	if(strcmp(buffer,"commit") == 0)
 	{
-		term_output1("Committing transaction...");
-	
-	    res = SEcommit(&conn);
-	    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
-	    {
-	    	fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
-	    	if(!in_transaction) return EXIT_SUCCESS;
-	    	return EXIT_COMMIT_FAILED;
-	    }
-	    in_transaction = false;
-	
-		term_output1("Ok\n");
-	    
-	    return EXIT_SUCCESS;
+        if(conn.autocommit)
+        {
+		    term_output1("This session is in the autocommit mode.\nTo commit transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+            term_output1("Committing transaction...");
+            if(SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
+            {
+                res = SEcommit(&conn);
+                if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+                {
+                    fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                    error_code = SEgetLastErrorCode(&conn);
+                    // if socket is broken
+                    if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                    else return EXIT_STATEMENT_OR_COMMAND_FAILED;
+                }
+            }
+            term_output1("Ok\n");
+            return EXIT_SUCCESS;
+        }
 	}
 	else if(strcmp(buffer,"rollback") == 0)
 	{
-    	term_output1("Rollback transaction...");
-
-	    res = SErollback(&conn);
-	    if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED) 
-	    {
-	    	fprintf(stderr, "Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
-	    	if(!in_transaction) return EXIT_SUCCESS;
-	    	return EXIT_ROLLBACK_FAILED;
-	    }
-	    in_transaction = false;
-
-		term_output1("Ok\n");
-
-	    return EXIT_SUCCESS;
+        if(conn.autocommit)
+        {
+		    term_output1("This session is in the autocommit mode.\n To rollback transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+            term_output1("Rollback transaction...");
+            if(SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
+            {
+               res = SErollback(&conn);
+               if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED) 
+               {
+                   fprintf(stderr, "Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                   error_code = SEgetLastErrorCode(&conn);
+                   // if socket is broken
+                   if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                   return EXIT_STATEMENT_OR_COMMAND_FAILED;
+               }
+            }
+            term_output1("Ok\n");
+            return EXIT_SUCCESS;
+        }
 	}
 	else if(strcmp(buffer,"quit") == 0)
 	{
-		if(in_transaction)
-		{
+       if((SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE) && (!conn.autocommit))
+       {
 			term_output1("Committing transaction...");
 
     	    res = SEcommit(&conn);
 		    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 	    	{
 	    		fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
-	    		return EXIT_COMMIT_FAILED;
+                error_code = SEgetLastErrorCode(&conn);
+                // if socket is broken
+                if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+	    		return EXIT_STATEMENT_OR_COMMAND_FAILED;
 	    	}
-	    	in_transaction = false;
-	
 			term_output1("Ok\n");
 		}
 		return EXIT_USER;
 	}
+	else if(strncmp(buffer,"set",3) == 0)
+	{
+        if((strcmp(buffer+4, "AUTOCOMMIT") != 0) && (strcmp(buffer+4, "ON_ERROR_STOP") != 0))
+        {
+	    	fprintf(stderr, "Unknown variable.\n");
+		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        }
+        if(strcmp(buffer+4, "AUTOCOMMIT") == 0)
+        {
+            int value = SEDNA_AUTOCOMMIT_ON;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+            term_output1("Autocommit mode is on.");
+            return EXIT_SUCCESS;
+        }
+        else if(strcmp(buffer+4, "ON_ERROR_STOP") == 0)
+        {
+            on_error_stop = true;
+            term_output1("Variable is set.");
+            return EXIT_SUCCESS;
+        }
+	}
+	else if(strncmp(buffer,"unset",5) == 0)
+	{
+        if((strcmp(buffer+6, "AUTOCOMMIT") != 0) && (strcmp(buffer+6, "ON_ERROR_STOP") != 0))
+        {
+	    	fprintf(stderr, "Unknown variable.\n");
+		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        }
+        if(strcmp(buffer+6, "AUTOCOMMIT") == 0)
+        {
+            int value = SEDNA_AUTOCOMMIT_OFF;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+            term_output1("Autocommit mode is off.");
+            return EXIT_SUCCESS;
+        }
+        if(strcmp(buffer+6, "ON_ERROR_STOP") == 0)
+        {
+            on_error_stop = false;
+            term_output1("Variable is unset.");
+            return EXIT_SUCCESS;
+        }
+    }
 	else 
 	{
 		fprintf(stderr, "Unknown command. Print \\? - for help on internal slash commands\n");
 		
-		return EXIT_NOT_COMMAND;
+		return EXIT_STATEMENT_OR_COMMAND_FAILED;
 	}
 }
 
 int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 {
-	int result;
+	int result, error_code;
 	char buf[RESULT_MSG_SIZE+1];
 	FILE* long_query;
 	
-	if(!in_transaction) //begin transaction
-	{
+    if((SEtransactionStatus(&conn) == SEDNA_NO_TRANSACTION) && (!conn.autocommit))
+    {
 		//begin transaction
 		result = SEbegin(&conn);
 		if(result != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
 		{
 			fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
-			return EXIT;
+            error_code = SEgetLastErrorCode(&conn);
+            // if socket is broken
+            if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+            else return EXIT_STATEMENT_OR_COMMAND_FAILED;
 		}
-		in_transaction = true;
 	}
     // execute XQuery query	or update
     if(is_query_from_file)
     {
-    	long_query = fopen(tmp_file_name, "r");
-    	result = SEexecuteLong(&conn, long_query); 
-    	fclose(long_query);
-    	uDeleteFile(tmp_file_name);
+    	if( (long_query = fopen(tmp_file_name, "r")) == NULL)
+        {
+            fprintf(stderr,"failed to open file\n");
+            return EXIT_TERM_FAILED;
+        }
+        result = SEexecuteLong(&conn, long_query); 
+    	if(0 != fclose(long_query))
+        {
+            fprintf(stderr,"failed to close file\n");
+            return EXIT_TERM_FAILED;
+        }
+    	if(0 == uDeleteFile(tmp_file_name))
+        {
+            fprintf(stderr,"failed to delete file\n");
+            return EXIT_TERM_FAILED;
+        }
     }
     else
     {
@@ -285,32 +387,38 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     if(result == SEDNA_QUERY_FAILED) 
     {
     	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
-    	term_output1("Rollback transaction...Ok \n");
-    	in_transaction = false;
-    	return EXIT_SUCCESS;
+        if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+        error_code = SEgetLastErrorCode(&conn);
+        // if socket is broken
+        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_UPDATE_FAILED) 
     {
     	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
-    	term_output1("Rollback transaction...Ok \n");
-    	in_transaction = false;
-    	return EXIT_SUCCESS;
+    	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+        error_code = SEgetLastErrorCode(&conn);
+        // if socket is broken
+        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_BULK_LOAD_FAILED) 
     {
     	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
-    	term_output1("Rollback transaction...Ok \n");
-    	in_transaction = false;
-    	return EXIT_SUCCESS;
+    	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+        error_code = SEgetLastErrorCode(&conn);
+        // if socket is broken
+        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_ERROR) 
     {
-    	fprintf(stderr, "Failed: \n%s\n", SEgetLastErrorMsg(&conn));
-        int res = SEgetLastErrorCode(&conn);
-    	if ((res == 206) || (res == 207)) return EXIT;
-    	term_output1("Rollback transaction...Ok \n");
-    	in_transaction = false;
-    	return EXIT_SUCCESS;
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+        error_code = SEgetLastErrorCode(&conn);
+        // if socket is broken
+        if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+        else return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     else if(result == SEDNA_QUERY_SUCCEEDED) 
     {
@@ -325,9 +433,11 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             if (bytes_read == SEDNA_ERROR)
             {
        	        fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
-            	term_output1("Rollback transaction...Ok \n");
-    	        in_transaction = false;
-                return EXIT_SUCCESS;
+            	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+                error_code = SEgetLastErrorCode(&conn);
+                // if socket is broken
+                if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                else return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
     		while(bytes_read > 0)
     		{
@@ -337,9 +447,11 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                 if (bytes_read == SEDNA_ERROR)
                 {
        	            fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
-                	term_output1("Rollback transaction...Ok \n");
-    	            in_transaction = false;
-                    return EXIT_SUCCESS;
+                	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+                    error_code = SEgetLastErrorCode(&conn);
+                    // if socket is broken
+                    if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
+                    else return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
     		result = SEnext(&conn);
@@ -348,7 +460,8 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
-    	term_output1("Update succeeded\n");    }
+    	term_output1("Update succeeded\n");
+    }
     else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
     	term_output1("Bulk load succeeded\n");
@@ -356,6 +469,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else 
     {
     	fprintf(stderr, "Unknown message from server\n");
+        return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 	return EXIT_SUCCESS;
 }

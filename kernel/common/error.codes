@@ -768,6 +768,9 @@ sedna-err:SE3027
 sedna-err:SE3028
 
     Connection with server is closed or have not been established yet.
+sedna-err:SE3029
+
+    This function call is prohibited as the connection is in the autocommit mode.
 
 ########### concerning sockets ####################
 
@@ -1250,6 +1253,9 @@ sedna-err:SE4614
 sedna-err:SE4615
 
    Begin transaction before executing a query.
+sedna-err:SE4616
+
+   Can't load a document because the session is loading another document. Finish current loading before beginning a new one.
 
 ######################################################################
 #  Lock manager errors
