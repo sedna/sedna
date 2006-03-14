@@ -381,6 +381,17 @@ template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T
 	}
 	return x;
 }
+template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T,X>::rb_maximum(pers_sset_entry* entry)
+{
+	pers_sset_entry* x=entry;
+	pers_sset_entry* y=(x!=NULL)?entry->right(mem_pool):NULL;
+	while (y!=NULL)
+	{
+		x=y;
+		y=x->right(mem_pool);
+	}
+	return x;
+}
 template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T,X>::rb_successor(pers_sset_entry* entry)
 {
 	pers_sset_entry* x=entry->right(mem_pool);
@@ -389,6 +400,21 @@ template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T
 	x=entry;
 	pers_sset_entry* y=x->parent(mem_pool);
 	while (y!=NULL && x==y->right(mem_pool))
+	{
+		x=y;
+		y=x->parent(mem_pool);
+	}
+	return y;
+
+}
+template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T,X>::rb_predecessor(pers_sset_entry* entry)
+{
+	pers_sset_entry* x=entry->left(mem_pool);
+	if (x!=NULL)
+		return rb_maximum(x);
+	x=entry;
+	pers_sset_entry* y=x->parent(mem_pool);
+	while (y!=NULL && x==y->left(mem_pool))
 	{
 		x=y;
 		y=x->parent(mem_pool);

@@ -159,7 +159,7 @@ void init_ft_sequences (xptr& left, xptr& right, xptr& parent)
 		CHECKP(tmp);
 		scn=(GETBLOCKBYNODE(tmp))->snode->parent;
 	}
-	if (scn->root==NULL || scn->root->sc_ft_idx==NULL) return;
+	if (scn->root==scn || scn->root->sc_ft_idx==NULL) return;
 	while (scn!=NULL)
 	{
 		schema_ft_ind_cell* obj=scn->ft_index_object;
