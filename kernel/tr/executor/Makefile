@@ -36,6 +36,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        ext_sort$(OBJ_EXT)				\
                        compare$(OBJ_EXT)				\
                        merge$(OBJ_EXT)					\
+                       xptrChanneledMerge$(OBJ_EXT)					\
                        PPStaticContext$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
                        PPUtils$(OBJ_EXT)				\
@@ -69,8 +70,11 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPStore$(OBJ_EXT)				\
                        PPAxisSelf$(OBJ_EXT)				\
                        PPAxisChild$(OBJ_EXT)			\
+                       PPAxisFP$(OBJ_EXT)			\
+                       PPAxisSibling$(OBJ_EXT)			\
                        PPAxisAttribute$(OBJ_EXT)		\
                        PPAxisDescendant$(OBJ_EXT)		\
+                       PPAxisAncestor$(OBJ_EXT)		\
                        PPAxisParent$(OBJ_EXT)			\
                        PPCalculate$(OBJ_EXT)			\
                        PPConGen$(OBJ_EXT)				\

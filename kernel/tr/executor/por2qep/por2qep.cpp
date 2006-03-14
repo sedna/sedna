@@ -739,6 +739,22 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                     nt_type,
                                     nt_data);
     }
+	 else if (op == "PPAxisAncestor")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "28");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisAncestor(cxt,
+                                    child,
+                                    nt_type,
+                                    nt_data);
+    }
     else if (op == "PPAxisDescendantOrSelf")
     {
         if (   lst->size() != 4)
@@ -754,6 +770,86 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                           child,
                                           nt_type,
                                           nt_data);
+    }
+	else if (op == "PPAxisAncestorOrSelf")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "29");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisAncestorOrSelf(cxt,
+                                          child,
+                                          nt_type,
+                                          nt_data);
+    }
+	else if (op == "PPAxisFollowing")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "29");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisFP(cxt,
+                                          child,
+                                          nt_type,
+                                          nt_data,true);
+    }
+	else if (op == "PPSiblingFollowing")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "29");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisSibling(cxt,
+                                          child,
+                                          nt_type,
+                                          nt_data,true);
+    }
+	else if (op == "PPSiblingPreceding")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "29");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisSibling(cxt,
+                                          child,
+                                          nt_type,
+                                          nt_data,false);
+    }
+	else if (op == "PPAxisPreceeding")
+    {
+        if (   lst->size() != 4)
+            throw USER_EXCEPTION2(SE1004, "29");
+
+        PPOpIn child;
+        NodeTestType nt_type;
+        NodeTestData nt_data;
+
+        set_axis_parameters(lst, cxt, child, nt_type, nt_data, false);
+        
+        opit = new PPAxisFP(cxt,
+                                          child,
+                                          nt_type,
+                                          nt_data,false);
     }
     else if (op == "PPAxisDescendantAttr")
     {

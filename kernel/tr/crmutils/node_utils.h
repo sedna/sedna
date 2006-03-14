@@ -69,11 +69,25 @@ n_dsc* getNextDescriptorOfSameSort(n_dsc* node);
 
 /* returns the next in document order descriptor corresponding to the same scheme node in xptr*/
 xptr getNextDescriptorOfSameSortXptr(xptr nodex);
-
+xptr getPreviousDescriptorOfSameSortXptr(xptr nodex);
 /* returns the next in document order sibling corresponding to the same scheme node in xptr*/
 xptr getNextSiblingOfSameSortXptr(xptr nodex);
 n_dsc* getNextSiblingOfSameSort(n_dsc* node);
+/*returns the next non-descendant node in document*/
+xptr getNextNDNode(xptr node);
+/*returns the next node in document*/
+xptr getNextDONode(xptr node);
+/*returns the previous node in document*/
+xptr getPreviousDONode(xptr node);
 
+/*returns the next non-descendant node in document that fits input schema_node */
+xptr getNextNDNode(xptr node,schema_node* scn);
+/*returns the next sibling node in document that fits input schema_node */
+xptr getNextSiblingNode(xptr node,schema_node* scn);
+/*returns the previous sibling node in document that fits input schema_node */
+xptr getPreviousSiblingNode(xptr node,schema_node* scn);
+/*returns the previous node in document that fits input schema_node*/
+xptr getPreviousDONode(xptr node,schema_node* scn);
 
 /* returns the xptr to the nearest left neighboring descriptor of the element*/
 xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xml_ns* ns);
@@ -191,6 +205,33 @@ bool dm_attribute_accessor_filter(t_item t);
 bool is_pnk_element(t_item t);
 bool is_pnk_attribute(t_item t);
 */
-
+bool inline is_element (xptr node)
+{
+	return (GETSCHEMENODEX(node)->type==element);
+}
+bool inline is_node_attribute (xptr node)
+{
+ return (GETSCHEMENODEX(node)->type==attribute);
+}
+bool inline is_node_child (xptr node)
+{
+	return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
+}
+bool inline is_node_in_collection (xptr node)
+{
+	CHECKP(node);
+	return ((schema_node*)(GETSCHEMENODEX(node))->root)->nodecnt > 1;
+}
+//checks whether the right sibling of the node is  attribute
+bool inline is_next_node_attribute (xptr node)
+{
+	node=GETRIGHTPOINTER(node);
+	if (node!=XNULL)
+	{
+		CHECKP(node);
+		return is_node_attribute (node);
+	}
+	return false;
+}
 #endif
 

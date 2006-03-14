@@ -419,7 +419,7 @@ xptr find_document(const char *collection_name,const char *document_name)
 	if 	(mdc!=NULL)
 	{
 		pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=((col_schema_node*)mdc->obj->snode)->search_metadata_cell(document_name);
-		xptr res=(dc!=NULL)?res=dc->obj->root:res=XNULL;
+		xptr res=(dc!=NULL)?dc->obj->root:XNULL;
 		metadata_sem_up();
 		return res;
 	}

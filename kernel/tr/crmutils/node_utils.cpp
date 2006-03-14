@@ -645,6 +645,26 @@ xptr getNextDescriptorOfSameSortXptr(xptr nodex)
 	} 
 
 }
+/* returns the previous in document order descriptor corresponding to the same scheme node in xptr*/
+xptr getPreviousDescriptorOfSameSortXptr(xptr nodex)
+{
+	CHECKP(nodex);
+	n_dsc* node= (n_dsc*)XADDR(nodex);
+	if (node->desc_prev!=0) return ADDR2XPTR(GETPREVIOUSDESCRIPTOR(node));
+	else 
+	{
+		xptr new_block = GETBLOCKBYNODE_ADDR(node)->pblk;
+		if (new_block==XNULL) return XNULL;
+		node_blk_hdr* bl_head=(node_blk_hdr*)XADDR(new_block);
+		lockRead(bl_head);
+		CHECKP(new_block);
+		if (bl_head->desc_last!=0)
+			return ADDR2XPTR(GETPOINTERTODESC(bl_head,bl_head->desc_last));
+		else
+			throw SYSTEM_EXCEPTION("Bad Consistency: Empty block");
+	} 
+
+}
 
 xptr getNextSiblingOfSameSortXptr(xptr nodex)
 {
@@ -903,3 +923,248 @@ bool dm_attribute_accessor_filter(t_item t)
 {
     return t == attribute;
 }
+/*returns the next non-descendant node in document*/
+xptr getNextNDNode(xptr node)
+{
+	xptr tmp=node;	
+	while(true)
+	{
+		CHECKP(node);
+		if (((n_dsc*)XADDR(tmp))->rdsc!=XNULL)
+		{
+			if ((GETBLOCKBYNODE(tmp))->snode->parent->type=virtual_root) return XNULL;
+			else
+				return ((n_dsc*)XADDR(tmp))->rdsc;
+		}
+		else
+		{
+			tmp=((n_dsc*)XADDR(tmp))->pdsc;
+			if (tmp==XNULL)
+				return XNULL;
+			else
+				tmp=removeIndirection(tmp);
+		}
+	}
+}
+/*returns the next node in document */
+xptr getNextDONode(xptr node)
+{
+	xptr tmp=getFirstByOrderChildNode(node);
+	if (tmp!=XNULL) return tmp;
+	else
+		return getNextNDNode(node);	
+
+}
+/*prereq: node is checked*/
+bool hasLeftSiblingDM(xptr node)
+{
+	if (((n_dsc*)XADDR(node))->ldsc==XNULL)return false;
+	xptr tmp=((n_dsc*)XADDR(node))->ldsc;
+	CHECKP(tmp);
+	bool res= dm_children_accessor_filter((GETBLOCKBYNODE(tmp))->snode->type);
+	CHECKP(node);
+	return res;
+}
+/*returns the previous node in document*/
+xptr getPreviousDONode(xptr node)
+{
+	xptr tmp=node;	
+	while(true)
+	{
+		CHECKP(tmp);
+		if (hasLeftSiblingDM(tmp))
+		{
+			if ((GETBLOCKBYNODE(tmp))->snode->parent->type=virtual_root) 
+				return XNULL;
+			else
+				break;
+		}
+		else
+		{
+			tmp=((n_dsc*)XADDR(tmp))->pdsc;
+			if (tmp==XNULL)
+				return XNULL;
+			else
+				tmp=removeIndirection(tmp);
+
+		}		
+	}
+    tmp=((n_dsc*)XADDR(tmp))->ldsc;
+	xptr tmp2;
+	while(true)
+	{		
+		CHECKP(tmp);
+		tmp2=getLastByOrderChildNode(tmp);
+		if (tmp2==XNULL || !dm_children_accessor_filter((GETBLOCKBYNODE(tmp2))->snode->type))
+		{
+			CHECKP(tmp);
+			return tmp;
+		}
+		else
+			tmp=tmp2;
+	}
+}
+int getMedianDescriptor(int s,int r,node_blk_hdr* block,n_dsc* end, n_dsc** res)
+{
+	int cnt=(r-s)/2;
+	*res=end;
+	for (int i=0;i<cnt;i++)
+		*res=GETPOINTERTODESC(block,(*res)->desc_prev);
+	return r-cnt;
+}
+int getMedianDescriptor2(int s,int r,node_blk_hdr* block,n_dsc* start, n_dsc** res)
+{
+	int cnt=(r-s)/2;
+	*res=start;
+	for (int i=0;i<cnt;i++)
+		*res=GETPOINTERTODESC(block,(*res)->desc_next);
+	return s+cnt;
+}
+/*returns the next non-descendant node in document that fits input schema_node */
+xptr getNextNDNode(xptr node,schema_node* scn)
+{
+	xptr blk=scn->bblk;
+	node_blk_hdr* block;
+	//1.finding block
+	while (blk!=XNULL)
+	{
+		CHECKP(blk);
+		block=((node_blk_hdr*)XADDR(blk));
+		n_dsc* nd=GETPOINTERTODESC(block,block->desc_last);
+		if (nid_cmp_effective(ADDR2XPTR(nd),node)==1)
+			break;
+		else
+		{
+			CHECKP(blk);
+			blk=block->nblk;
+			if (blk==XNULL) return XNULL;
+		}			
+	}
+    //2. finding node in block
+	CHECKP(blk);
+	if (nid_cmp_effective(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)),node)==1)
+	{
+		CHECKP(blk);
+		return ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first));
+	}
+	CHECKP(blk);
+	int s=0;
+	int r=block->count;
+	//n_dsc* left=GETPOINTERTODESC(block,block->desc_first);
+	n_dsc* right=GETPOINTERTODESC(block,block->desc_last);
+	n_dsc* med;
+	while (s<r-1)
+	{
+		int i=getMedianDescriptor(s,r,block,right,&med);
+		if (nid_cmp_effective(ADDR2XPTR(med),node)==1)
+		{
+			r=i;
+			right=med;
+		}
+		else
+		{
+			s=i;
+		}
+		CHECKP(blk);
+	}
+	return ADDR2XPTR(right);
+}
+/*returns the previous node in document that fits input schema_node*/
+xptr getPreviousDONode(xptr node,schema_node* scn)
+{
+	xptr blk=scn->bblk;
+	node_blk_hdr* block;
+	//1.finding block
+	while (blk!=XNULL)
+	{
+		CHECKP(blk);
+		block=((node_blk_hdr*)XADDR(blk));
+		n_dsc* nd=GETPOINTERTODESC(block,block->desc_last);
+		if (nid_cmp_effective(ADDR2XPTR(nd),node)>=0)
+			break;
+		else
+		{
+			CHECKP(blk);
+			blk=block->nblk;
+			if (blk==XNULL) 
+			{
+				return ADDR2XPTR(GETPOINTERTODESC(block,block->desc_last));
+			}
+		}			
+	}
+    //2. finding node in block
+	CHECKP(blk);
+	if (nid_cmp_effective(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)),node)>=0)
+	{
+		CHECKP(blk);
+		return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));		
+	}
+	CHECKP(blk);
+	int s=0;
+	int r=block->count;
+	n_dsc* left=GETPOINTERTODESC(block,block->desc_first);
+	//n_dsc* right=GETPOINTERTODESC(block,block->desc_last);
+	n_dsc* med;
+	while (s<r-1)
+	{
+		int i=getMedianDescriptor2(s,r,block,left,&med);
+		if (nid_cmp_effective(ADDR2XPTR(med),node)>=0)
+		{
+			r=i;			
+		}
+		else
+		{
+			s=i;
+			left=med;
+		}
+		CHECKP(blk);
+	}
+	return ADDR2XPTR(left);
+}
+/*returns the next sibling node in document that fits input schema_node */
+xptr getNextSiblingNode(xptr node,schema_node* scn)
+{
+	CHECKP(node);
+	xptr indir=((n_dsc*)XADDR(node))->pdsc;
+	xptr parent;
+	if (indir!=XNULL) 
+		parent=removeIndirection(indir);
+	else
+		return XNULL;
+	xptr child=getChildPointerXptr(parent,scn->name,scn->type,scn->xmlns);
+	while (child!=XNULL)
+	{
+		if (nid_cmp_effective(child,node)>0)return child;
+		else
+		{
+			child=getNextDescriptorOfSameSortXptr(child);
+			if (child!=XNULL && ((n_dsc*)XADDR(child))->pdsc!=indir)
+				return XNULL;
+		}
+	}
+	return XNULL;
+
+}
+/*returns the previous sibling node in document that fits input schema_node */
+xptr getPreviousSiblingNode(xptr node,schema_node* scn)
+{
+	CHECKP(node);
+	xptr indir=((n_dsc*)XADDR(node))->pdsc;
+	xptr parent;
+	if (indir!=XNULL) 
+		parent=removeIndirection(indir);
+	else
+		return XNULL;
+	xptr child=getChildPointerXptr(parent,scn->name,scn->type,scn->xmlns);
+	
+	while (child!=XNULL)
+	{
+		xptr child2=getNextDescriptorOfSameSortXptr(child);
+		if (child2==XNULL || (((n_dsc*)XADDR(child2))->pdsc!=indir ||nid_cmp_effective(child2,node)>=0))
+			return child;
+		else
+			child=child2;		
+	}
+	return XNULL;
+}
+

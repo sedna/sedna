@@ -84,7 +84,9 @@ template<class T, class X> struct pers_sset
 	void rb_delete(pers_sset_entry* entry);
 	void rb_fixup(pers_sset_entry* entry,pers_sset_entry* parent);
 	pers_sset_entry* rb_minimum(pers_sset_entry* entry);
+	pers_sset_entry* rb_maximum(pers_sset_entry* entry);
 	pers_sset_entry* rb_successor(pers_sset_entry* entry);
+	pers_sset_entry* rb_predecessor(pers_sset_entry* entry);
 	inline bool less(typename pers_sset<T,X>::pers_sset_entry* p1,typename pers_sset<T,X>::pers_sset_entry* p2)
 		{
 			return (p1->obj->less(p2->obj));

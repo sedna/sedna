@@ -68,14 +68,8 @@ bool inline is_node_document (xptr node)
 
 
 //checks whether the node is  attribute
-bool inline is_node_attribute (xptr node)
-{
- return (GETSCHEMENODEX(node)->type==attribute);
-}
-bool inline is_node_child (xptr node)
-{
-	return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
-}
+
+
 bool inline is_node_xml_namespace (xptr node)
 {
  return (GETSCHEMENODEX(node)->type==xml_namespace);
@@ -86,17 +80,7 @@ t_item inline get_node_type (xptr node)
 }
 
 
-//checks whether the right sibling of the node is  attribute
-bool inline is_next_node_attribute (xptr node)
-{
-	node=GETRIGHTPOINTER(node);
-	if (node!=XNULL)
-	{
-		CHECKP(node);
-		return is_node_attribute (node);
-	}
-	return false;
-}
+
 #ifdef SE_ENABLE_FTSEARCH
 void clear_ft_sequences();
 void execute_modifications();
