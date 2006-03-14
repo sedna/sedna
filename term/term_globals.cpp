@@ -34,7 +34,7 @@ arg_rec term_argtable[] =
 {"--help",           NULL,       arg_lit,   &term_l_help,                 "0",       "\t\t  display this help and exit"},
 {"-version",         NULL,       arg_lit,   &term_version,                "0",       "\t\t  display product version and exit"},
 {"-file",           " filename", arg_str,   &filename,                  "???",     "\t  file with an XQuery query\t\t\t  "},
-{"-output",         " filename",     arg_str,   &output_file,               "STDOUT",  "\t\t  outputfile (default stdout)"},
+{"-output",         " filename",     arg_str,   &output_file,               "STDOUT",  "\t  outputfile (default stdout)"},
 {"-query",          " \"query\"",    arg_str,   &query,                   "???",     "\t\t  XQuery query to execute\t\t"},
 {"-echo",           " on/off",   arg_str,   &echo_str,                      "???",      "\t\t  display se_term output  (default on)"},
 {"-showtime",       " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of the latest query execution (default off)"},

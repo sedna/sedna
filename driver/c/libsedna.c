@@ -17,12 +17,14 @@
 
 ***********************************************************************************************************/
 
-static void setServerErrorMsg(struct SednaConnection *conn, char *msg_body)
+static void setServerErrorMsg(struct SednaConnection *conn, struct msg_struct msg)
 {
     int length;
-    net_int2int(&(conn->last_error), msg_body);
-    net_int2int(&length, msg_body + 5);
-    memcpy(conn->last_error_msg, msg_body + 9, length);
+    if (msg.length <= 0) return;
+    net_int2int(&(conn->last_error), msg.body);
+    net_int2int(&length, msg.body + 5);
+    if (length <= 0) return;
+    memcpy(conn->last_error_msg, msg.body + 9, length);
     conn->last_error_msg[length] = '\0';
 }
 
@@ -39,10 +41,10 @@ static void clearLastError(struct SednaConnection *conn)
     conn->last_error = SEDNA_OPERATION_SUCCEEDED;
 }
 
-static void connectionFailure(struct SednaConnection *conn, int error_code, char *msg_body)
+static void connectionFailure(struct SednaConnection *conn, int error_code, struct msg_struct* msg)
 {
-    if (msg_body != NULL)
-        setServerErrorMsg(conn, msg_body);
+    if (msg != NULL)
+        setServerErrorMsg(conn, *msg);
     else
         setDriverErrorMsg(conn, error_code);
     conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -104,7 +106,7 @@ static int cleanSocket(struct SednaConnection *conn)
     {
         if (conn->msg.instruction == se_ErrorResponse)
         {
-            connectionFailure(conn, 0, conn->msg.body);
+            connectionFailure(conn, 0, &(conn->msg));
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
@@ -131,7 +133,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
         conn->result_end = 1;   /*set the flag - there are items*/
         conn->in_query = 0;
@@ -202,12 +204,12 @@ static int begin_handler(struct SednaConnection *conn)
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_BEGIN_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_BeginTransactionFailed)        /* BeginTransactionFailed */
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_BEGIN_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_BeginTransactionOk)    /* BeginTransactionOk */
@@ -245,12 +247,12 @@ static int commit_handler(struct SednaConnection *conn)
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_COMMIT_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_CommitTransactionFailed)    /* CommitTransactionFailed */
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_COMMIT_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_CommitTransactionOk)   /* CommitTransactionOk */
@@ -287,12 +289,12 @@ static int rollback_handler(struct SednaConnection *conn)
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_ROLLBACK_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_RollbackTransactionFailed)     /* RollbackTransactionFailed */
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_ROLLBACK_TRANSACTION_FAILED;
     }
     else if (conn->msg.instruction == se_RollbackTransactionOk)         /* RollbackTransactionOk */
@@ -325,7 +327,7 @@ static int execute(struct SednaConnection *conn)
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_ERROR;
     }
@@ -338,7 +340,7 @@ static int execute(struct SednaConnection *conn)
     }
     else if (conn->msg.instruction == se_QueryFailed)   /*QueryFailed*/
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->in_query = 0;
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_QUERY_FAILED;
@@ -356,7 +358,7 @@ static int execute(struct SednaConnection *conn)
     }
     else if (conn->msg.instruction == se_UpdateFailed)  /*UpdateFailed*/
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->in_query = 0;
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_UPDATE_FAILED;
@@ -450,7 +452,7 @@ static int execute(struct SednaConnection *conn)
         }
         if (conn->msg.instruction == se_ErrorResponse)
         {
-            setServerErrorMsg(conn, conn->msg.body);
+            setServerErrorMsg(conn, conn->msg);
             conn->isInTransaction = SEDNA_NO_TRANSACTION;
             return SEDNA_ERROR;
         }
@@ -467,7 +469,7 @@ static int execute(struct SednaConnection *conn)
         }
         else if ((conn->msg.instruction == se_UpdateFailed) || (conn->msg.instruction == se_BulkLoadFailed))
         {
-            setServerErrorMsg(conn, conn->msg.body);
+            setServerErrorMsg(conn, conn->msg);
             conn->in_query = 0;
             conn->isInTransaction = SEDNA_NO_TRANSACTION;
             return SEDNA_BULK_LOAD_FAILED;
@@ -596,7 +598,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, conn->msg.body);
+        connectionFailure(conn, 0, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -646,7 +648,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, conn->msg.body);
+        connectionFailure(conn, 0, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -680,7 +682,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, conn->msg.body);
+        connectionFailure(conn, 0, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -740,6 +742,13 @@ int SEclose(struct SednaConnection *conn)
         return SEDNA_ERROR;
     }
 
+	if ((conn->autocommit) && (conn->isInTransaction == SEDNA_TRANSACTION_ACTIVE))
+    {
+        int comm_res = commit_handler(conn);
+        if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+             return SEDNA_CLOSE_SESSION_FAILED;        
+    }
+
     /* send 500 - CloseConnection*/
     conn->msg.instruction = se_CloseConnection;
     conn->msg.length = 0;
@@ -763,17 +772,16 @@ int SEclose(struct SednaConnection *conn)
     }
 
     release(conn);
-    conn->isInTransaction = SEDNA_NO_TRANSACTION;
     conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_CLOSE_SESSION_FAILED;
     }
     else if (conn->msg.instruction == se_TransactionRollbackBeforeClose)        /*TransactionRollbackBeforeClose*/
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         return SEDNA_SESSION_CLOSED;
     }
     else if (conn->msg.instruction == se_CloseConnectionOk)     /*CloseConnectionOk*/
@@ -1134,7 +1142,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
             }
             if (conn->msg.instruction == se_ErrorResponse)
             {
-                setServerErrorMsg(conn, conn->msg.body);
+                setServerErrorMsg(conn, conn->msg);
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
                 conn->result_end = 1;   /* tell result is finished*/
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
@@ -1259,7 +1267,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         
         if (conn->msg.instruction == se_ErrorResponse)
         {
-            setServerErrorMsg(conn, conn->msg.body);
+            setServerErrorMsg(conn, conn->msg);
             conn->isInTransaction = SEDNA_NO_TRANSACTION;
             return SEDNA_ERROR;
         }
@@ -1354,7 +1362,7 @@ int SEendLoadData(struct SednaConnection *conn)
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_ERROR;
     }
@@ -1372,7 +1380,7 @@ int SEendLoadData(struct SednaConnection *conn)
     else if ((conn->msg.instruction == se_BulkLoadFailed) || (conn->msg.instruction == se_UpdateFailed))        /*BulkLoadFailed*/
     {
         conn->in_query = 0;
-        setServerErrorMsg(conn, conn->msg.body);
+        setServerErrorMsg(conn, conn->msg);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_BULK_LOAD_FAILED;
     }

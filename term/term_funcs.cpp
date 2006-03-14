@@ -135,14 +135,17 @@ int process_commandline_query()
     }
 	
 
-    //commiting the transaction
-    res = SEcommit(&conn);
-    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+    if(!conn.autocommit)
     {
-	    fprintf(stderr, "failed to commit transaction \n%s\n", SEgetLastErrorMsg(&conn));
-        //closing session
-        SEclose(&conn);
-	    return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        //commiting the transaction
+        res = SEcommit(&conn);
+        if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+        {
+            fprintf(stderr, "failed to commit transaction \n%s\n", SEgetLastErrorMsg(&conn));
+            //closing session
+            SEclose(&conn);
+            return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        }
     }
 	
     //closing session

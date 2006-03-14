@@ -103,20 +103,33 @@ int main(int argc, char *argv[])
         
         if (strcmp(filename,"???") != 0)
         {
+            FILE* script_file;
             if (strcmp(echo_str, "???") == 0)
                 echo = 0;                          // echo is off when in batch mode
-            FILE* script_file = fopen(filename, "r");
+            if((script_file = fopen(filename, "r")) == NULL)
+            {
+                fprintf(stderr, "Can't open file %s\n", filename);
+                return EXIT_TERM_FAILED;
+            }
             ret_code = MainLoop(script_file);
-            fclose(script_file);
+            if(fclose(script_file) != 0)
+            {
+                fprintf(stderr, "Can't close file %s\n", filename);
+                return EXIT_TERM_FAILED;
+            }
         }
         else if (strcmp(query, "???") != 0)
         {
             if (strcmp(echo_str, "???") == 0)
-                echo = 1;                          // echo is on when in interactive mode
+                echo = 0;                          // echo is off when execute command line query
             ret_code = process_commandline_query();
         }
         else
+        {
+           if (strcmp(echo_str, "???") == 0)
+                echo = 1;                          // echo is on when in interactive mode
             ret_code = MainLoop(stdin);
+        }
         
         if (strcmp(output_file, "STDOUT") != 0)
             fclose(res_os);
