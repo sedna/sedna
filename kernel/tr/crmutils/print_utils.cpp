@@ -974,6 +974,7 @@ void print_name_space(xml_ns* nsd,t_str_buf& tbuf,ft_index_type type)
 	switch (type)
 			{
 			case ft_xml: 
+			case ft_xml_hl: 
 				{
 			if (nsd->prefix==NULL)
 				tbuf<<" xmlns=\""<<	nsd->uri<<"\"";
@@ -1023,26 +1024,26 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 		{
 			switch (type)
 			{
-			case ft_xml: tbuf<<"<?xml version=\"1.0\" standalone=\"yes\""; break;
+			case ft_xml:case ft_xml_hl: tbuf<<"<?xml version=\"1.0\" standalone=\"yes\""; break;
 			case ft_string_value:break;
 			case ft_customized_value: ft_delimited_value:tbuf<<" ";break;			
 			}			
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
 			if(child==XNULL)
 			{
-				if (type==ft_xml) tbuf<<"?>";
+				if (type==ft_xml || type==ft_xml_hl) tbuf<<"?>";
 				return;			
 			}
 			else CHECKP(child);
 			while (GETTYPE(GETSCHEMENODEX(child))==attribute)
 			{	
 				
-				if (type==ft_xml) print_node_to_buffer(child,tbuf,type,custom_tree);
+				if (type==ft_xml || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL) break;
 				CHECKP(child);
 			}
-			if (type==ft_xml) tbuf<<"?>";
+			if (type==ft_xml || type==ft_xml_hl) tbuf<<"?>";
 			while (child!=XNULL)
 			{
 				CHECKP(child);
@@ -1064,26 +1065,28 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			}
 			switch (type)
 			{
-			case ft_xml: tbuf<<"<"; break;
+			case ft_xml:tbuf<<"<"; break;
+			case ft_xml_hl: tbuf<<"<"; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;			
 			}	
 			//std::vector<std::string> *att_ns=NULL;
 			char* name=GETNAME(scn);
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-				if (type==ft_xml) tbuf<<scn->xmlns->prefix<<":";
-			if (type==ft_xml) tbuf<<name;
+				if (type==ft_xml || type==ft_xml_hl) tbuf<<scn->xmlns->prefix<<":";
+			if (type==ft_xml || type==ft_xml_hl) tbuf<<name;
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
 			if(child==XNULL)
 			{
 				if (type==ft_xml) tbuf<<"/>";			
+				if (type==ft_xml_hl) tbuf<<"/> ";			
 				return;			
 			}
 			else
 				CHECKP(child);			
 			while (GETTYPE(GETSCHEMENODEX(child))==attribute)
 			{	
-				if (type==ft_xml) print_node_to_buffer(child,tbuf,type,custom_tree);
+				if (type==ft_xml || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL)  break;
@@ -1092,11 +1095,15 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			if (child==XNULL)
 			{
 				if (type==ft_xml) tbuf<<"/>";
+				if (type==ft_xml_hl) tbuf<<"/> ";
 				return;
 				
 			}
 			else
-			if (type==ft_xml) tbuf<<">";
+			{
+				if (type==ft_xml) tbuf<<">";
+				if (type==ft_xml_hl) tbuf<<"> ";
+			}
 			bool cit=false;
 			while (child!=XNULL)
 			{
@@ -1109,10 +1116,13 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			}
 			if (type==ft_xml) tbuf<<"</";
 			else
+			if (type==ft_xml_hl) tbuf<<"</";
+			else
 			if (type==ft_delimited_value && !cit) tbuf<<" ";
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-				if (type==ft_xml) tbuf<<scn->xmlns->prefix<<":";
+				if (type==ft_xml || type==ft_xml_hl) tbuf<<scn->xmlns->prefix<<":";
 			if (type==ft_xml) tbuf<<name<<">";			
+			if (type==ft_xml_hl) tbuf<<name<<"> ";			
 			break;
 		}
 	case xml_namespace:
@@ -1126,6 +1136,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			switch (type)
 			{
 			case ft_xml: 
+			case ft_xml_hl: 
 				{
 					if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
 						tbuf <<" "<<scn->xmlns->prefix<<":"<< scn->name << "=\"";
@@ -1150,36 +1161,36 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			
 	switch (type)
 			{
-			case ft_xml: tbuf<< "<!--"; break;
+			case ft_xml:case ft_xml_hl: tbuf<< "<!--"; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
 			}			
 			print_text(node,tbuf,text);
-			if (type==ft_xml) tbuf<< "-->";
+			if (type==ft_xml || type==ft_xml_hl) tbuf<< "-->";
 			break;
 		}
 	case cdata:
 		{
 			switch (type)
 			{
-			case ft_xml: tbuf<< "<![CDATA["; break;
+			case ft_xml:case ft_xml_hl: tbuf<< "<![CDATA["; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
 			}
 			print_text(node,tbuf,cdata);
-			if (type==ft_xml) tbuf<< "]]>";
+			if (type==ft_xml || type==ft_xml_hl) tbuf<< "]]>";
 			break;
 		}
 	case pr_ins:
 		{			
 			switch (type)
 			{
-			case ft_xml: tbuf<< "<?"; break;
+			case ft_xml:case ft_xml_hl: tbuf<< "<?"; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
 			}
 			print_text(node,tbuf,pr_ins);
-			if (type==ft_xml) tbuf<< "?>";
+			if (type==ft_xml || type==ft_xml_hl) tbuf<< "?>";
 			break;
 		}		
 	}

@@ -79,7 +79,7 @@ void PPFtHighlight::next(tuple &t)
 	{
 		tuple_cell tc;
 
-		sj=new SednaSearchJob(&seq, ft_xml, NULL, true);
+		sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true);
 
 		query.op->next(t);
 		if (t.is_eos())

@@ -88,16 +88,30 @@ private:
 	xptr_sequence * seq;
 	xptr_sequence::iterator it;
 };
-class SednaConvertJob :public dtSearch::DFileConvertJob
+class SednaConvertJob
 {
 public:
-	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);		
+	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);
 	void convert_node(xptr& node,long* ht,long ht_cnt);
 	virtual void OnOutput(const char * txt, int length);
 	static e_str_buf result;
 private:
+	static t_str_buf in_buf;
 	SednaTextInputStream *tis;
 	dtsFileInfo fileInfo;
+
+	int current_word;
+	int current_ht_idx;
+	int ht_cnt;
+	long *ht;
+	ft_index_type cm;
+	pers_sset<ft_custom_cell,unsigned short>* custom_tree;
+	template <class Iterator> void parse_doc(Iterator &str_it, Iterator &str_end);
+	template <class Iterator> int getch(Iterator &str_it, Iterator &str_end);
+	void putch(const int ch);
+	int cur_ch;
+	static const int EOF_ch = -1;
+	template <class Iterator> void parse_tag(Iterator &str_it, Iterator &str_end);
 };
 class SednaSearchJob : public dtSearch::DSearchJob {
      public:
