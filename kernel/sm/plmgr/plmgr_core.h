@@ -19,7 +19,7 @@ enum  {PL_CHANGE, PL_CHANGE_MASTER, PL_DECREASE, PL_CREATE_NODE_BLK};
 
 //#define PHYS_LOG_TEST
 //must be uncommented for recovery
-//#define PHYS_LOG
+#define PHYS_LOG
 
 #define  PHYS_LOG_READ_BUF_LENGTH 131072 
 //128kb
