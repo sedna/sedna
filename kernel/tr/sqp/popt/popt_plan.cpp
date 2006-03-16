@@ -49,9 +49,9 @@ void xp_tree::rec_print(counted_ptr<xp_tree_strategy> cur, int indent)
                     for (i = 0; i < indent + 3; ++i) d_printf1(" ");
                     switch (cur->group[j].es)
                     {
-                        case xpes_top_down : d_printf1("%d. xpes_top_down: ", j + 1); break;
-                        case xpes_bottom_up: d_printf1("%d. xpes_bottom_up: ", j + 1); break;
-                        case xpes_ad_filter: d_printf1("%d. xpes_ad_filter: ", j + 1); break;
+                        case xpes_top_down : d_printf2("%d. xpes_top_down: ", j + 1); break;
+                        case xpes_bottom_up: d_printf2("%d. xpes_bottom_up: ", j + 1); break;
+                        case xpes_ad_filter: d_printf2("%d. xpes_ad_filter: ", j + 1); break;
                         default            : d_printf1("UNKNOWN");
                     }
                     cur->group[j].pred->pred_op->print();

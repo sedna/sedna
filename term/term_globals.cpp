@@ -24,7 +24,7 @@ char login[TERM_ARGSTRLEN+1];
 char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
-FILE* res_os; // output stream of term results (result of the user's queres)
+
 
 const size_t narg = 13;
 

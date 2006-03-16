@@ -5,6 +5,7 @@
 #else
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #endif
 
 static char ustrerror_buf[256];
@@ -31,7 +32,7 @@ char* ustrerror(int errnum)
 
     return ustrerror_buf;
 #else
-    return pstrerror(errnum);
+    return strerror(errnum);
 #endif
 }
 
@@ -40,7 +41,7 @@ void uperror(const char *s)
 #ifdef _WIN32
     fprintf(stderr, "%s: %s\n", s, ustrerror(errno));
 #else
-    perror();
+    perror(s);
 #endif
 }
 

@@ -245,13 +245,13 @@ void walk_scheme_list(scheme_list *node, string sp)
             case SCM_BOOL:   d_printf2("%s", sp.c_str());
                              if (i->internal.b) d_printf1("true\n"); else d_printf1("false\n");   
                              break;
-            case SCM_SYMBOL: d_printf2("%s%s\n", sp.c_str(), i->internal.symb);
+            case SCM_SYMBOL: d_printf3("%s%s\n", sp.c_str(), i->internal.symb);
                              break;
-            case SCM_CHAR:   d_printf2("%s%c\n", sp.c_str(), i->internal.ch);
+            case SCM_CHAR:   d_printf3("%s%c\n", sp.c_str(), i->internal.ch);
                              break;
-            case SCM_NUMBER: d_printf2("%s%s\n", sp.c_str(), i->internal.num);
+            case SCM_NUMBER: d_printf3("%s%s\n", sp.c_str(), i->internal.num);
                              break;
-            case SCM_STRING: d_printf2("%s%s\n", sp.c_str(), i->internal.str);
+            case SCM_STRING: d_printf3("%s%s\n", sp.c_str(), i->internal.str);
                              break;
             case SCM_LIST:   string new_sp = sp;
                              new_sp += "  ";
