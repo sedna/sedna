@@ -158,7 +158,7 @@ void processWP(const char** s, int& len)
 			}
 #ifdef SE_ENABLE_FTSEARCH
 			if (is_coll)
-				update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+				update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 			mark=0;
 			left=new_node;
@@ -273,9 +273,9 @@ void clear_text()
 	text_inserted=false;
 	wptailsize=0;
 }
-static void start(void *data, const char *el, const char **attr)
+static void start(void *s, const char *el, const char **attr)
 {
-    //printf("bs");fflush(stdout);
+    //d_printf1("bs");fflush(stdout);
 //	crm_out<<"\n In Start PARSING ELEMENT"<<el <<endl;
 //	test_cnt++;
 	const char* uri;
@@ -295,10 +295,10 @@ static void start(void *data, const char *el, const char **attr)
 	}
 	/*if (my_strcmp(local,"asia")==0)
 	{
-		printf("be"); fflush(stdout);
+		d_printf1("be"); fflush(stdout);
 
 	}*/
-    //printf("be"); fflush(stdout);
+    //d_printf1("be"); fflush(stdout);
 	if (mark)
 		new_node=insert_element(XNULL,XNULL,parent,local,xdt_untyped,ns);
 	else
@@ -308,9 +308,9 @@ static void start(void *data, const char *el, const char **attr)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 if (is_coll)
- update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+ update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
-    //printf("ae\n"); fflush(stdout);
+    //d_printf1("ae\n"); fflush(stdout);
 	//checkChildReferenceValidity(new_node);
 	xptr par_ind=((n_dsc*)XADDR(new_node))->indir;
 	stat_pair* pr=&max_fo[(GETBLOCKBYNODE(new_node))->snode];
@@ -331,7 +331,7 @@ if (is_coll)
 	}
     
 //	TEMP PLEASE UNCOMMENT NEXT THREE LINES
-    //printf("ba"); fflush(stdout);
+    //d_printf1("ba"); fflush(stdout);
     for (int i = 0; attr[i]; i += 2) 
 	{
 		separateName((char*)attr[i],uri,local,prefix);
@@ -346,11 +346,11 @@ if (is_coll)
 		att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xdt_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
 #ifdef SE_ENABLE_FTSEARCH
 		if (is_coll)
-			update_upsert_sequence(att,(GETBLOCKBYNODE(att))->snode->ft_index_object); 
+			update_insert_sequence(att,(GETBLOCKBYNODE(att))->snode->ft_index_object); 
 #endif
 		//checkChildReferenceValidity(att);
 	}
-    //printf("aa\n"); fflush(stdout);
+    //d_printf1("aa\n"); fflush(stdout);
 
 	if (att!=XNULL) 
 	{
@@ -362,12 +362,12 @@ if (is_coll)
 	if ((curcnt*100.)/nodescnt>curproc)
 	{
 	 if(print_p)
-	  crm_out<<curproc<<"%"<<endl;
+	  *(se_ostream*)s << curproc <<"%"<<endl;
 	 curproc++;
 	}
-    //printf("as\n");fflush(stdout);
+    //d_printf1("as\n");fflush(stdout);
 }
-static void end(void *data, const char *el)
+static void end(void *s, const char *el)
 {
   /*crm_out<<"\n In End PARSING ELEMENT"<<el <<endl;
   if ( my_strcmp( ((node_blk_hdr*)((int)parent.addr & 0xFFFF0000))->snode->name,el)!=0)
@@ -391,7 +391,7 @@ static void end(void *data, const char *el)
 
 void data(void *userData, const char *s, int len)
 {
-    //printf("bd");fflush(stdout);
+    //d_printf1("bd");fflush(stdout);
 	//return;
 	//test_cnt++;
 	if (cdata_mode)
@@ -416,7 +416,7 @@ void data(void *userData, const char *s, int len)
 	if (wpstrip) 
 	{
 		processWP(&s,len);
-		if (len==0) {/*printf("ad\n");fflush(stdout);*/return; }
+		if (len==0) {/*d_printf1("ad\n");fflush(stdout);*/return; }
 	}
 	text_inserted=true;
 	xptr new_node;
@@ -428,7 +428,7 @@ void data(void *userData, const char *s, int len)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	//checkTextNodeCorrectness(new_node);
 	//checkChildReferenceValidity(new_node);
@@ -454,7 +454,7 @@ void data(void *userData, const char *s, int len)
 	 }
 	}*/
 	//mark=0;
-    //printf("ad\n");fflush(stdout);
+    //d_printf1("ad\n");fflush(stdout);
 }
 static void sc_start(void *data, const char *el, const char **attr)
 {
@@ -475,7 +475,7 @@ static void sc_start(void *data, const char *el, const char **attr)
 	//statistics
 	/*if (my_strcmp(sc_parent->name,"asia")==0)
 	{
-		printf("be"); fflush(stdout);
+		d_printf1("be"); fflush(stdout);
 	}*/
 	child->cl_hint++;
 	curr_fo.back()++;
@@ -594,7 +594,7 @@ void dt_comment (void *userData, const char *data)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
@@ -631,7 +631,7 @@ void dt_cdata_end (void *userData)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
@@ -659,17 +659,17 @@ void dt_pi (void *userData, const char *target, const char *data)
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
-		update_upsert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
+		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
 #endif
 	mark=0;
 	left=new_node;
     xptr par_ind=((n_dsc*)XADDR(left))->pdsc;
 	parent=removeIndirection(par_ind);
 }
-void parse_load(FILE* f)
+void parse_load(FILE* f, se_ostream &s)
 {
 	XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
-    if (! p) throw USER_ENV_EXCEPTION("file_utils.cpp,508,Couldn't allocate memory for parser\n",true);
+    if (! p) throw USER_ENV_EXCEPTION("Couldn't allocate memory for parser\n",true);
 	XML_SetReturnNSTriplet(p,1);
 	int done;
     int len;
@@ -679,12 +679,14 @@ void parse_load(FILE* f)
 	XML_SetProcessingInstructionHandler(p, dt_pi);
 	XML_SetCharacterDataHandler(p, data);
 	//XML_SetCdataSectionHandler(p,dt_cdata_start,dt_cdata_end);
+
+    XML_SetUserData (p, &s);
 	cdata_mode=false;
 	len = fread(Buff, 1, BUFFSIZE, f);
     if (ferror(f)) 
 	{
 		XML_ParserFree(p);
-        throw USER_ENV_EXCEPTION("file_utils.cpp,518,Read error",true);
+        throw USER_ENV_EXCEPTION("Read error",true);
 	}
 	done = feof(f);
     while (!done) 
@@ -695,7 +697,7 @@ void parse_load(FILE* f)
 			if (ferror(f)) 
 			{
 				XML_ParserFree(p);
-				throw USER_ENV_EXCEPTION("file_utils.cpp,525,Read error",true);
+				throw USER_ENV_EXCEPTION("Read error",true);
 			}
 			done = feof(f);
 		}
@@ -816,7 +818,7 @@ void parse_schema(FILE* f)
 
 }
 
-xptr loadfile(FILE* f, const char* uri,bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp, bool print_progress)
 {
 	//test_cnt=0;
 	bool is_coll=false;
@@ -835,12 +837,12 @@ xptr loadfile(FILE* f, const char* uri,bool stripped,int& need_cp, bool print_pr
 		//isSchemaPCAllRight(sc_parent);
 		//print_descriptive_schema(uri,  crm_out);
 	docnode=((n_dsc*)XADDR(docnode))->indir;
-	parse_load(f);
+	parse_load(f, s);
 		
 		//printDebugInfo(sc_parent, crm_out);
 		//print_descriptive_schema(uri,  crm_out);
 	if(print_p)
-		crm_out<<"100%"<<endl;
+		s <<"100%" << endl;
 	//printDebugInfo(sc_parent, crm_out);
 	nodescnt=0;
 	curcnt=0;
@@ -864,7 +866,7 @@ xptr loadfile(FILE* f, const char* uri,bool stripped,int& need_cp, bool print_pr
 	return ((n_dsc*)XADDR(docnode))->indir;
 }
 
-xptr loadfile(FILE* f, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
+xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
 {
 	bool is_coll=true;
 	if (!print_progress) print_p = print_progress;
@@ -880,7 +882,7 @@ xptr loadfile(FILE* f, const char* uri,const char * collection, bool stripped,in
 	sc_parent=(GETBLOCKBYNODE(docnode))->snode;
 #ifdef SE_ENABLE_FTSEARCH
 clear_ft_sequences();
-update_upsert_sequence(docnode,sc_parent->ft_index_object); 
+update_insert_sequence(docnode,sc_parent->ft_index_object); 
 #endif
 	try{
 	parse_schema(f);
@@ -888,9 +890,9 @@ update_upsert_sequence(docnode,sc_parent->ft_index_object);
 		//	printDebugInfo(sc_parent, crm_out);
 		//isSchemaPCAllRight(sc_parent);
 	docnode=((n_dsc*)XADDR(docnode))->indir;
-	parse_load(f);
+	parse_load(f, s);
 	if (print_p)
-	  crm_out<<"100%"<<endl;
+	  s <<"100%" << endl;
 	//printDebugInfo(sc_parent, crm_out);
 	nodescnt=0;
 	curcnt=0;
@@ -918,7 +920,7 @@ update_upsert_sequence(docnode,sc_parent->ft_index_object);
 
 void basicTest()
 {
-/*	init_output();
+/*	
 	FILE* fl= fopen("c:\\test.xml","r");
 	xptr docnode=loadfile(fl,"Testdoc");
 	crm_out<<"OK DONE"<<endl;
