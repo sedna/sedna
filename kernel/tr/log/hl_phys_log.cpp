@@ -108,7 +108,7 @@ void hl_phys_log_change(const /*xptr &*/void *p, shft size)
      //d_printf1("after Xptr Hash blk\n");
 
      char data = '\0';
-     vmm_sm_blk_hdr *hdr = GETBLOCKHDR_ADDR(p);
+     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)(ALIGN_ADDR(p));
      shft offs = (shft)((int)p- (int)p & PAGE_BIT_MASK);
 
 //d_printf2("before res offs=%d\n", ((int)p- ((int)p & PAGE_BIT_MASK)));
@@ -163,14 +163,14 @@ void hl_phys_log_change_blk(const /*xptr &*/void *p)
      }
 
      char data ='\0';
-     int res = pl_hm.find(GETBLOCKHDR_ADDR(p)->p, data);
+     int res = pl_hm.find(((vmm_sm_blk_hdr*)(ALIGN_ADDR(p)))->p, data);
      if (res != 0)
      {
          log_change_blk_times++;
 
          int i;
          char* addr = (char*)ALIGN_ADDR(p);
-         vmm_sm_blk_hdr *hdr = GETBLOCKHDR_ADDR(p);
+         vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)(ALIGN_ADDR(p));
 
          for (i = 0; i < BLOCK_PARTS; i++)
          {
@@ -202,7 +202,7 @@ void hl_phys_log_create_node_blk(const void* p)
     log_create_node_blk_times++;
 
    // time(&t_1);
-    pl_hm.insert(GETBLOCKHDR_ADDR(p)->p, '\0');
+    pl_hm.insert(((vmm_sm_blk_hdr*)(ALIGN_ADDR(p)))->p, '\0');
 
     //d_printf1("hl_phys_log_create_node_blk end\n");
     //cout << "create block xptr=";

@@ -34,7 +34,6 @@
 #define ADDR2XPTR(a)			xptr(*(t_layer*)(((uint32)(a)) & PAGE_BIT_MASK),					\
                                      (void*)(*(uint32*)((((uint32)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + (((uint32)(a)) & PAGE_REVERSE_BIT_MASK)))
 
-
 #define TEST_XPTR(p)			(*(t_layer*)((uint32)((p).addr) & PAGE_BIT_MASK) == (p).layer)
 // old and don't work   !!!
 //#define TEST_XPTR(p)			(*(xptr*)((uint32)((p).addr) & PAGE_BIT_MASK) == (p))

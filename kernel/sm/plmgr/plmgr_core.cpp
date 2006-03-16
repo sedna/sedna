@@ -464,11 +464,10 @@ void plmgr_core::logInsert(const void* p, int size, __int8 op, bool sync)
   #ifndef PHYS_LOG_TEST
   if ( op == PL_CHANGE || op == PL_CREATE_NODE_BLK)
   {
-     //log_head.p = GETBLOCKHDR_ADDR(p)->p;
-	 log_head.p = ADDR2XPTR(p);
-     GETBLOCKHDR_ADDR(p)->lsn = log_head.lsn;
+	 log_head.p = this->addr2xptr(p);
+     this->get_block_hdr(p)->lsn = log_head.lsn;
      d_printf2("written lsn=%d ", log_head.lsn);
-     ADDR2XPTR(p).print(); 
+     this->addr2xptr(p).print(); 
   }
   else
      log_head.p = XNULL;
@@ -502,7 +501,6 @@ void plmgr_core::logInsert(const void* p, int size, __int8 op, bool sync)
   //d_printf2("Inserted phys log record lsn=%d\n", mem_head->prev_lsn);
   //d_printf4("num of records after cp =%d, total num=%d, last_lsn=%d\n", mem_head->num_of_records_after_cp,  mem_head->num_of_records, log_head.lsn);
   
-  //(ADDR2XPTR(p)).print();
   //d_printf1("logInsert\n");
   
   UpSemaphore(sync);

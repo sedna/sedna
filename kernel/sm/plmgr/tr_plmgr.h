@@ -8,6 +8,11 @@
 
 #include "plmgr_core.h"
 
-typedef plmgr_core tr_plmgr;
+class tr_plmgr : public plmgr_core
+{
+protected:
+  xptr addr2xptr(const void *addr) { return ADDR2XPTR(addr); }
+  vmm_sm_blk_hdr* get_block_hdr(const void *addr) { return (vmm_sm_blk_hdr*)(ALIGN_ADDR(addr)); }
+};
 
 #endif

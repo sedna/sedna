@@ -12,6 +12,7 @@
 #include "ushm.h"
 #include "uhdd.h"
 #include "trmgr.h"
+#include "sm_vmm_data.h"
 #include <string>
 
 enum  {PL_CHANGE, PL_CHANGE_MASTER, PL_DECREASE, PL_CREATE_NODE_BLK};
@@ -158,7 +159,8 @@ protected://helpers
   void writeSharedMemory(const void* p, int size, sector_head& old_sect_h, sector_head& new_sect_h);//write data to the shared memory (inserts sector heads and fills them, reinits share memory head)
   int _min2(int x1, int x2);
   int _min3(int x1, int x2, int x3);
-
+  virtual xptr addr2xptr(const void *addr) = 0;
+  virtual vmm_sm_blk_hdr* get_block_hdr(const void *addr) = 0;
 };
 
 inline int plmgr_core::_min2 (int x1, int x2)

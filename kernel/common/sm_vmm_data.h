@@ -9,8 +9,6 @@
 
 #include "xptr.h"
 
-/* return the pointer to the block header */
-#define GETBLOCKHDR_ADDR(p)   ((vmm_sm_blk_hdr*)((int)p & PAGE_BIT_MASK))
 #define BLOCK_PARTS           16
 #define BLOCK_PART_SIZE (PAGE_SIZE/BLOCK_PARTS)
 
