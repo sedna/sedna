@@ -25,7 +25,6 @@ char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
 
-
 const size_t narg = 13;
 
 arg_rec term_argtable[] =
