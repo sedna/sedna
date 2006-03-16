@@ -364,7 +364,84 @@ The first and second options are straightforward, typing these options Administr
 The third option allows to get the version of the \verb!se_smsd!.
 
 Note that \verb!se_smsd! command causes a roll back of all active transactions executed over \verb!db_name! database.
-\subsection{Running queries}
+
+
+\subsection{Running Queries}
+Sedna provides two utilities to run queries: the Sedna Terminal \verb!se_term! and \verb!se_trn!. Below the description of the two is provided.
+
+\subsubsection{Sedna Terminal}
+\verb!se_term! is an interactive terminal to Sedna. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
+
+The usage of the \verb!se_term! is as follows:
+
+\begin{verbatim}
+Usage: se_term [options] dbname
+
+options:
+  -help			      display this help and exit
+  --help		      display this help and exit
+  -version		      display product version and exit
+  -file filename	  file with an XQuery query			  
+  -output filename	  output file (default stdout)
+  -query "query"	  XQuery query to execute		
+  -echo on/off		  display se_term output  (default: on for interactive mode,
+                                                        off for batch mode)
+  -showtime on/off	  show time of the latest query execution (default off)
+  -host host		  hostname of the machine with Sedna running (default localhost)
+		
+  -port-number port	  socket listening port  (default 5050)
+  -name name		  user name 
+  -pswd password	  user password 
+   db-name		      database name
+\end{verbatim}
+
+\begin{itemize}
+\item \verb!-help! or \verb!--help! provides the exhaustive information about the \verb!se_term!.
+
+\verb!-version! option allows to get the version of the \verb!se_term!.
+
+\verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
+
+\verb!-output! option specifies a filename of a file to redirect all \verb!se_term! output to. 
+
+\verb!-query! option specifies the query to execute.
+
+\verb!-echo! option specifies if \verb!se_term! output needs to be displayed or not. If the \verb!echo! is on, the output is displayed, if the \verb!echo! is off, the output is not displayed. By default, the \verb!echo! option is set to on when using \verb!se_term! in an interactive mode, and the \verb!echo! option is set to off when using \verb!se_term! in a batch mode (running queries/commands from file).
+
+\verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
+
+\verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
+
+\verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
+
+\verb!-name! and \verb!-password! options specify the user name and the password. If omitted, connects as a predifined user \verb!SYSTEM! with password \verb!MANAGER!.
+
+\verb!dbname! is a non-option argument. It specifies the name of the database to connect to.
+
+When \verb!se_term! is used in the interactive mode it takes in query/update statements and meta-commands from stdin. To execute a query/update statement type in a statement and use ampersand and line feed to terminate it (\verb!&'\n'! terminates the query). An end of line does not terminate the query, thus queries can be spread over several lines for clarity. Alternatively, \verb!se_term! can be used in a batch mode, then query/update statements and meta-commands are taken from the input file specified by the \verb!-file! option. By default, \verb!se_term! session is run in the \emph{autocommit mode}, that is, each statement is run in a separate transaction. To switch to a \emph{manual-commit mode} use \verb!unset! meta-command (\verb!se_term! meta-comands are described below in this section). If the statement executed successfully, the results are displayed on the screen.
+
+\verb!se_term! returns 0 to the shell if it finished normally, 1 if a fatal error of its own (out of memory, file not
+found) occurs, 2 if the connection to the Sedna server went bad and the session is not interactive, and 3 if
+a statement or a command failed and the variable \verb!ON_ERROR_STOP! was set (\verb!se_term! internal variables are described below in this section).
+
+Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_term! itself. A meta-command begins with a backslash and that differs it from the query/update statements. Thus, the format of \verb!se_term! meta-command is the backslash, followed immediately by a command, with no ampersand at the end. \verb!se_term! takes in the following meta-commands:
+
+\begin{verbatim}
+ \? - for help on internal slash commands
+ \commit - to commit transaction
+ \rollback - to rollback transaction
+ \showtime - to show the time of the latest query execution
+ \set - to set the terminal internal variable
+ \unset - to unset the terminal internal variable
+ \quit - to close session and quit the Sedna Terminal
+\end{verbatim}
+
+\verb!set! and \verb!unset! meta-commands are used for managing \verb!se_term! internal variables. There are following \verb!se_term! internal varibales:
+
+\verb!AUTOCOMMIT! - when set, autocommit mode is on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
+
+\verb!ON_ERROR_STOP! - when set, \verb!se_term! returns with the code 3 when statement or meta-command fails. When unset \verb!se_term! processing continues, unless it is the connection failure.
+
 \subsubsection{se\_trn utility}
 There are several ways to execute query over Sedna, but in this section we present the simplest way to do it. To execute the query over Sedna, the \verb!se_trn! command should be used. This command requries two input parameters. The first one is the name of the database, to which the query is addressed and the second one is the file with .xquery extension, which contains the user query. Besides, there are several options, which semantics will be explained below. About supported QUERY/UPDATE language see in the Sedna Programmer's Guide. The result of the query is directed to standard output stream (stdout). 
 
@@ -397,61 +474,6 @@ The \verb!-print-intermed! and \verb!-query-type! options are used for debug pur
 
 The \verb!-name! and \verb!-pswd! options are reserved for further Sedna features.
 
-\subsubsection{Sedna Terminal}
-\verb!se_term! is an interactive terminal to Sedna DBMS. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna DBMS. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
-
-The usage of the \verb!se_term! is as follows:
-
-\begin{verbatim}
-Usage: se_term [options] dbname
-options:
-  -help                 display this help and exit
-  --help                display this help and exit
-  -version              display product version and exit
-  -file filename        file with an XQuery query
-  -query query          XQuery query to execute
-  -echo on/off          display se_term output (default on)
-  -show-time on/off     show time of query execution (default off)
-  -host host            hostname of the machine with Sedna running
-  -port-number port     socket listening port  (default 5050)
-  -name name            user name (default SYSTEM)
-  -pswd password        user password (default MANAGER)
-   db-name              database name
-\end{verbatim}
-
-Typing \verb!-help! or \verb!--help! Administrator provides the exhaustive information about the \verb!se_term!.
-
-\verb!-version! option allows to get the version of the \verb!se_term!.
-
-\verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
-
-\verb!-query! option specifies the query to execute.
-
-The \verb!-echo! option specifies if \verb!se_term! output needs to be displayed or not. If the \verb!echo! is on, the output is displayed, if the \verb!echo! is off, the output is not displayed. By default, the \verb!echo! option is set to on.
-
-The \verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
-
-\verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
-
-\verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
-
-\verb!-name! and \verb!-password! options specify the user name and the password. If omitted, connects as a predifined user \verb!SYSTEM! with password \verb!MANAGER!.
-
-\verb!dbname! is a non-option argument. It specifies the name of the database to connect to.
-
-\verb!se_term! returns 0 to the shell if it finished normally, 1 if there were errors.
-
-When \verb!se_term! is used in the interactive mode it takes in query/update statements and meta-commands. To execute a query/update statement type in a statement and use semicolon and line feed to terminate it (\verb!;'\n'! terminates the query). An end of line does not terminate the query, thus queries can be spread over several lines for clarity. The first query/update statement automatically begins transaction. If the statement executed successfully, the results are displayed on the screen.
-
-Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_term! itself. A meta-command begins with a backslash and that differs it from the query/update statements. Thus, the format of \verb!se_term! meta-command is the backslash, followed immediately by a command, with no semicolon at the end. \verb!se_term! takes in the following meta-commands:
-
-\begin{verbatim}
- \? - for help on internal slash commands
- \commit - to commit transaction
- \rollback - to rollback transaction
- \showtime - to show the time of the latest query execution
- \quit - to close session and quit the Sedna Terminal
-\end{verbatim}
 
 
 \subsection{The Examples of Using Command Line Utilities}

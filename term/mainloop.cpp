@@ -67,8 +67,10 @@ int slash_commands_help()
 	term_output1("    \\commit - to commit transaction\n");
 	term_output1("    \\rollback - to rollback transaction\n");
 	term_output1("    \\showtime - to show the time of the latest query execution\n");
+	term_output1("    \\set - to set the terminal internal variable\n");
+	term_output1("    \\unset - to unset the terminal internal variable\n");
 	term_output1("    \\quit - to close session and quit the Sedna Terminal\n");
-	term_output1("    XQuery/Update statements ended with semicolon+line feed\n ");
+	term_output1("    XQuery/Update statements ended with ampersand+line feed\n ");
 	return 0;
 }
 
@@ -249,7 +251,7 @@ int process_command(char* buffer)
 	{
         if(conn.autocommit)
         {
-		    term_output1("This session is in the autocommit mode.\n To rollback transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
+		    term_output1("This session is in the autocommit mode.\nTo rollback transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
             return EXIT_SUCCESS;
         }
         else

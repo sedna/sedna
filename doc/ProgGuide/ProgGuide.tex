@@ -397,7 +397,7 @@ if Sedna DBMS is running on the same computer you do not need to edit this param
 \subsection{C API}
 libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
 
-libsedna library is supplied with header file: \verb!"libsedna.h"!. Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the directory where \verb!"libsedna.h"! files are stored.   
+libsedna library is supplied with two header files: \verb!"libsedna.h"!, \verb!"sp_defs.h"!. Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the directory where \verb!"libsedna.h"!, \verb!sp_defs.h! files are stored.   
 
 Sedna XML DBMS is supplied with libsednamt library also. libsednamt library is libsedna library compiled in multithreaded mode. Applications that need to be compiled in multithreaded mode must link with libsednamt library.
 
@@ -412,7 +412,7 @@ Before working with Sedna an application has to declare variable of the \verb!Se
 \begin{note}
 The initialization with \verb!SEDNA_CONNECTION_INITIALIZER! is not mandatory if you are using Sedna version 0.5 or earlier. 
 \end{note}
-To start working with Sedna an application has to open a session via establishing an authenticated connection with the server using SEconnect:
+To start working with Sedna an application has to open a session via establishing an authenticated connection with the server using \verb!SEconnect!:
 \begin{verbatim}
 int SEconnect(SednaConnection* conn, 
               const char* url, 
@@ -434,7 +434,7 @@ default port number (5050) is used.
 
 \verb!password! - user password.
 
-SEconnect returns:
+\verb!SEconnect! returns:
 
 positive values:
 
@@ -451,7 +451,7 @@ negative values:
 
 To access multiple databases at one time or to better process its complex logic an application can have several sessions open at one time.
 
-When the application finishes its work with the database, it must close the session. SEclose finishes the session and closes the connection to the server. SEclose also frees resourses that were equipped by the call to SEconnect function, that is for every successful call to SEconnect there must be a call to SEclose in the client program. You must call SEclose both when application finishes its work with the database, and when application cannot work with the database anymore due to some error.
+When an application finishes its work with the database, it must close the session. \verb!SEclose! finishes the session and closes the connection to the server. \verb!SEclose! also frees resourses that were equipped by the call to \verb!SEconnect! function, that is for every successful call to \verb!SEconnect! there must be a call to \verb!SEclose! in the client program. You must call \verb!SEclose! both when application finishes its work with the database, and when application cannot work with the database anymore due to some error.
 
 \begin{verbatim}int SEclose(SednaConnection* conn)\end{verbatim}
 
@@ -459,21 +459,106 @@ parameters:
 
 \verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
 
-SEclose returns:
+\verb!SEclose! returns:
+
+positive value:
 
 \verb!SEDNA_SESSION_CLOSED! - session is closed succeffully.
+
+negative values:
 
 \verb!SEDNA_CLOSE_SESSION_FAILED! - session was closed with errors.
 
 \verb!SEDNA_ERROR! - some error occured.
+
+An application can set attributes that govern aspects of a session using \verb!SEsetConnectionAttr!:
+
+\begin{verbatim}
+int SEsetConnectionAttr(struct SednaConnection *conn, 
+                                    enum SEattr attr,
+                               const void* attrValue, 
+                                 int attrValueLength)
+\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
+
+\verb!attr! - an attribute to set (one the predifined Sedna connection attributes lited below).
+
+\verb!attrValue! - a pointer to the value to be associated with the attribute.
+
+\verb!attrValueLength! - a length of the value in bytes.
+
+\verb!SEsetConnectionAttr! returns:
+
+positive value:
+
+\verb!SEDNA_SET_ATTRIBUTE_SUCCEEDED! - the attribute was set successfully.
+
+negative value:
+
+\verb!SEDNA_ERROR! - some error occured.
+
+\begin{figure}
+\begin{center}
+{\footnotesize\begin{tabular}{|r|r|r|}
+\hline
+$Attribute$&$Attribute Value$&$Attribute Value Length$\\
+\hline
+\verb!SEDNA_ATTR_AUTOCOMMIT! & \verb!SEDNA_AUTOCOMMIT_ON!,	 & sizeof(int)\\
+							 & \verb!SEDNA_AUTOCOMMIT_OFF! 	 & \\
+\hline
+\end{tabular}}
+\end{center}
+\end{figure}
+
+An application can get connection attributes using \verb!SEgetConnectionAttr!:
+
+\begin{verbatim}
+int SEgetConnectionAttr(struct SednaConnection *conn,
+                                    enum SEattr attr, 
+                                     void* attrValue, 
+                                int* attrValueLength);
+\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
+
+\verb!attr! - an attribute to retrieve.
+
+\verb!attrValue! - a pointer to memory in which to return the current value of the attribute specified by \verb!attr!. 
+
+\verb!attrValueLength! - a length of the retrieved value in bytes.
+
+\verb!SEgetConnectionAttr! returns:
+
+positive value:
+
+\verb!SEDNA_GET_ATTRIBUTE_SUCCEEDED! - the attribute was retrieved successfully.
+
+negative value:
+
+\verb!SEDNA_ERROR! - some error occured.
+
 
 
 
 %---------------------------------------------------------------------------
 
 \subsubsection{Transactions}
-Application can execute queries and updates against the specified database only in the scope of a transaction. That is, once a session has been opened, application can begin a transaction, execute statements and commit this transaction. 
-In a session transactions are processed sequentially. That is, application must commit a begun transaction before beginning a new one. To specify transaction boundaries application uses functions \verb!SEbegin!, \verb!SEcommit!:
+An application can execute queries and updates against the specified database only in the scope of a transaction. That is, once a session has been opened, an application can begin a transaction, execute statements and commit this transaction. In a session transactions are processed sequentially. That is, application must commit an ongoing transaction before beginning a new one.
+
+There are two ways to manage transactions in Sedna sessions: \emph{autocommit mode} and \emph{manual-commit mode}:
+\begin{itemize}
+\item Autocommit mode. Each individual statement is committed when it completes successfully. When running in autocommit mode no other transaction management functions are needed. By default, Sedna sessions are run in autocommit mode.
+\item Manual-commit mode. Transaction boundaries are specified explicitly by means of \verb!SEbegin!, \verb!SEcommit! and \verb!SErollback! functions. All statements between the call to \verb!SEbegin! and \verb!SEcommit!/\verb!SErollback! are included in the same transaction.
+\end{itemize}
+
+An applcation can switch between the two modes using \verb!SEsetConnectionAttr! and \verb!SEgetConnectionAttr! functions for \verb!SEDNA_ATTR_AUTOCOMMIT! attribute
+ 
+To specify transaction boundaries application uses \verb!SEbegin!, \verb!SEcommit! \verb!SErollback! functions:
 
 \begin{verbatim}int SEbegin(SednaConnection* conn)\end{verbatim}
 
@@ -511,8 +596,6 @@ negative value:
 
 \verb!SEDNA_ERROR! - some error occured.
 
-To rollback transaction use \verb!SErollback! function:
-
 \begin{verbatim}int SErollback(SednaCommection* conn)\end{verbatim}
 
 parameters:
@@ -530,6 +613,7 @@ negative value:
 \verb!SEDNA_ROLLBACK_TRANSACTION_FAILED! - failed to rollback transaction.
 
 \verb!SEDNA_ERROR! - some error occured.
+
 
 
 %---------------------------------------------------------------------------
@@ -648,7 +732,7 @@ a string. Use the SEnext function to iterate over the sequence and SEgetData fun
 
 \begin{verbatim}int SEnext(SednaConnection* conn)\end{verbatim}
 
- parameters:
+parameters:
  
 \verb!conn! - a pointer to an instance of the SednaConnection type.
 
@@ -756,7 +840,12 @@ negative values:
 
 \subsubsection{Error Handling}
 
-If the function returns negative value, application can get the error info in the form of string using \verb!SEgetLastErrorMsg! function:
+If the function returns negative value, application can get the error message and code.
+
+
+To get last error message use:
+
+\verb!SEgetLastErrorMsg! function:
 
 \begin{verbatim}char* SEgetLastErrorMsg(SednaConnection* conn)\end{verbatim}
 
@@ -766,6 +855,20 @@ parameters:
 
 The function returns the information about the last error occured in this session.
 
+To get last error code use:
+
+\verb!SEgetLastErrorCode! function:
+
+\begin{verbatim}int SEgetLastErrorCode(struct SednaConnection *conn)\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type.
+
+The function returns the code of a last error occured in this session.
+
+
+
 
 
 %---------------------------------------------------------------------------
@@ -774,16 +877,6 @@ The function returns the information about the last error occured in this sessio
 
 \small{
 \begin{verbatim}
-
-/* This is an example application that works with Sedna XML DBMS through 
- * C-API using libsedna library.
- * The application opens a session to "sample-db" database, 
- * begins a transaction, loads document
- * "region.xml" to "sample-db" database, executes XQuery query, 
- * retrieves every item of the 
- * result data, commits the  transaction and closes the session.
- */
-
 #include "libsedna.h"
 #include <stdio.h>
 
@@ -797,7 +890,7 @@ int main()
     const char* db_name = "sample-db";
     const char* login = "SYSTEM";
     const char* password = "MANAGER";
-    
+
     printf("Client started.\n");
     
     //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
@@ -818,7 +911,7 @@ int main()
         SEclose(&conn);
         return -1;
     }
-    
+   
     // load data from file "region.xml" into the document "regions"
     res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 
     if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
@@ -839,18 +932,32 @@ int main()
         return -1;
     }
  
-    //iterate over the result sequece and retrieve the result data
+    //iterate over the result sequence and retrieve the result data
     res = SEnext(&conn);
-
+    
     while((res != SEDNA_RESULT_END)&&(res != SEDNA_ERROR))
     {
-        bytes_read = SEgetData(&conn, buf, 1024-1);
-        buf[bytes_read] = '\0';
-        printf("result item: %s\n", buf);
+     printf("result item:\n");
+        do
+        {
+            bytes_read = SEgetData(&conn, buf, 1024 - 1);
+            if((bytes_read == SEDNA_ERROR) || (bytes_read == SEDNA_GET_DATA_FAILED))
+            {
+                printf("Failed to get result from server\n%s\n", SEgetLastErrorMsg(&conn));
+                //closing session
+                SEclose(&conn);
+                return -1;
+            }
+           	buf[bytes_read] = '\0';
+         	printf("%s", buf);
+
+        }while(bytes_read > 0);
+        
+    	printf("\n");
         res = SEnext(&conn);
+        printf("next returned %d\n", res);
     }
-    
-    
+
     if(res == SEDNA_RESULT_END) 
     {
         printf("Result end \n");
@@ -873,9 +980,8 @@ int main()
         printf("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
         return -1;
     }
-    return 1;
-}
-
+    return 0;
+} 	
 \end{verbatim}
 }
 
