@@ -137,7 +137,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
         conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
         conn->result_end = 1;   /*set the flag - there are items*/
         conn->in_query = 0;
-
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_QUERY_FAILED;
     }
     else if (conn->msg.instruction == se_ItemPart)      /* ItemPart */
@@ -178,6 +178,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
         conn->local_data_length = 0;
         conn->result_end = 1;   /*set the flag - there are no items*/
         conn->in_query = 0;
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
 
         return SEDNA_QUERY_FAILED;
     }
