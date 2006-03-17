@@ -177,7 +177,7 @@ MainLoop(FILE *source)
 			}
 			if(source != stdin)
 			{
-				if((SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE) && (conn.autocommit))
+				if((SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE) && (!conn.autocommit))
 				{
 					term_output1("Committing transaction...");
         		    res = SEcommit(&conn);
