@@ -6,14 +6,19 @@
 #include "os_exceptions.h"
 #include "exceptions.h"
 #include "vmm.h"
-//#include "sym_engine.h"
 #include <iostream>
+
+
+//#define PRINT_STACK_TRACE
 
 
 bool OS_exceptions_handler::critical_section = false;
 
 
 #ifdef _WIN32
+#ifdef PRINT_STACK_TRACE
+#include "sym_engine.h"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 /// WIN32 SECTION
@@ -42,18 +47,24 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
                     throw win32_access_violation();
                 else
 				{
-//					sym_engine::stack_trace(std::cout, info->ContextRecord);
+#ifdef PRINT_STACK_TRACE
+                			sym_engine::stack_trace(std::cout, info->ContextRecord);
+#endif
 					throw SYSTEM_EXCEPTION("Access violation");
 				}
             }
         case STATUS_STACK_OVERFLOW		: 
             {
-//		sym_engine::stack_trace(std::cout, info->ContextRecord);
+#ifdef PRINT_STACK_TRACE
+            	sym_engine::stack_trace(std::cout, info->ContextRecord);
+#endif
                 throw USER_EXCEPTION(SE1001);
             }
         default							:
             {
-//		sym_engine::stack_trace(std::cout, info->ContextRecord);
+#ifdef PRINT_STACK_TRACE
+            	sym_engine::stack_trace(std::cout, info->ContextRecord);
+#endif
                 throw SYSTEM_EXCEPTION("Unknown system error");
             }
     }
@@ -80,6 +91,12 @@ void OS_exceptions_handler::leave_stack_overflow_critical_section()
 /// UNIX SECTION
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifdef PRINT_STACK_TRACE
+#include <ucontext.h>
+#include <dlfcn.h>
+#include "d_printf.h"
+#endif
+
 jmp_buf stack_overflow_env;
 jmp_buf access_violation_env;
 jmp_buf vmm_is_busy_env;
@@ -102,6 +119,43 @@ static void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
     else
     {
         // stack overflow or access violation
+#ifdef PRINT_STACK_TRACE
+        int
+            f = 0;
+        ucontext_t *
+            ucontext = (ucontext_t *) cxt;
+        Dl_info dlinfo;
+        void **
+            bp = 0;
+        void *
+            ip = 0;
+        d_printf1("Segmentation fault!\n");
+        d_printf2("   signo = %d\n", signo);
+        d_printf2("   errno = %d\n", info->si_errno);
+        d_printf2("   code  = %d\n", info->si_code);
+        d_printf2("   addr  = %p\n", info->si_addr);
+
+        ip = (void *) ucontext->uc_mcontext.gregs[REG_EIP];
+        bp = (void **) ucontext->uc_mcontext.gregs[REG_EBP];
+
+        d_printf1(" Stack trace:\n");
+        while (bp && ip)
+        {
+            if (!dladdr(ip, &dlinfo))
+                break;
+            d_printf3("  % 2d: %p", ++f, ip);
+            if (dlinfo.dli_sname)
+                d_printf3("<%s+%u>", dlinfo.dli_sname, (unsigned) ((char *) ip - (char *) dlinfo.dli_saddr));
+            d_printf2("(%s)", dlinfo.dli_fname);
+
+            d_printf1("\n");
+            if (dlinfo.dli_sname && !strcmp(dlinfo.dli_sname, "main"))
+                break;
+            ip = bp[1];
+            bp = (void **) bp[0];
+        }
+        d_printf1(" End of stack trace.\n");
+#endif
         if (OS_exceptions_handler::is_in_stack_overflow_critical_section())
             longjmp(stack_overflow_env, 0);
         else 
