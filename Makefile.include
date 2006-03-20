@@ -13,7 +13,7 @@ endif
 # options: auth is on  - 1
 #          auth is off - 0
 ifndef AUTH_SWITCH
-AUTH_SWITCH = 0
+AUTH_SWITCH = 1
 endif
 
 # options: Compile latex files        - 1
