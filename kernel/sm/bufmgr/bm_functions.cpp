@@ -326,10 +326,7 @@ void bm_allocate_data_block(session_id sid,
 	vmm_sm_blk_hdr::init(hdr);
     hdr->p = *p;
     hdr->roffs = *offs;
-d_printf1("Allocated xptr ");
-p->print();
-
-//d_printf1("allocate 4\n");
+//printf("allocate 4\n");
     //d_printf1("bm_allocate_data_block: end\n");
 }
 

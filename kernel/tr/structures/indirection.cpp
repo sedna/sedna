@@ -75,7 +75,6 @@ xptr fill_empty_block(xptr p)
     }
 	*(xptr*)(XADDR(pred)) = XNULL;
     VMM_SIGNAL_MODIFICATION(p);
-   
     return p + sizeof(indir_blk_hdr);
 }
 
@@ -316,13 +315,11 @@ xptr add_record_to_tmp_indirection_table(xptr p)
         vmm_alloc_tmp_block(&tmp);
         tmp_indirection_table_free_entry = fill_empty_block(tmp);
     }
-    
-    tmp_indirection_table_free_entry.print();
+
     CHECKP(tmp_indirection_table_free_entry);
-    
+
     xptr res = tmp_indirection_table_free_entry;
     tmp_indirection_table_free_entry = *(xptr*)(XADDR(res));
-    
     *(xptr*)(XADDR(res)) = p;
 
     VMM_SIGNAL_MODIFICATION(res);
