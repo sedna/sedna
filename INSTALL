@@ -7,7 +7,7 @@
 
                                Short Version
 
-   In terminal type (substitute <install-path> with the path to a directory
+   In a terminal type (substitute <install-path> with the path to a directory
    for which you have read/write permissions):
 
 export SEDNA_INSTALL=<install-path>
@@ -38,17 +38,17 @@ make install
    Windows 95/98/ME.
 
    Sedna is expected to build and run on the following platforms:
-   1. Microsoft Windows 2000, XP (and possibly Windows NT)
+   1. Microsoft Windows 2000, XP, 2003 (and possibly Windows NT)
    2. Linux with kernel version 2.4.xxx and 2.6.xxx
 
-   A modern Unix-compatible platform should be able to run Sedna potentially, 
+   A modern POSIX-compatible platform should be able to run Sedna potentially, 
    but some effort should be made.
 
 
    The following software packages are required for building Sedna:
 
      * A Unix console and a set of widely known Unix tools such as rm, mkdir,
-       m4, etc are required. They are usually present in any Linux 
+       m4, etc are required. They are usually present in any Unix 
        installation. For the Windows platform you need the Cygwin package.
      * GNU make is required; other make programs will *not* work. 
      * You need a C/C++ compiler. For the Windows platform Microsoft C/C++ 
@@ -73,6 +73,11 @@ make install
        available in the source code at the sites of their respective 
        developers. Actually, you need not know about them until you got 
        problems with them or you are going to port Sedna to other platforms.
+
+   Note: We neither support nor plan to support MinGW environment for building
+   Sedna on Windows. If you do not have Microsoft Visual C++ consider using
+   free building tools from Microsoft: Microsoft Visual C++ Toolkit 2003 
+   togeter with Microsoft Windows Platform SDK.
 
 
    Also check that you have sufficient disk space. You will need about 100
