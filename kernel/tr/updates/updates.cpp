@@ -144,7 +144,7 @@ void update_delete_sequence(xptr node,schema_ft_ind_cell* icell)
 }
 void init_ft_sequences (xptr& left, xptr& right, xptr& parent)
 {
-	if (delete_mode) return;
+	if (delete_mode || IS_TMP_BLOCK(left)||IS_TMP_BLOCK(right)||IS_TMP_BLOCK(parent)) return;
 	xptr tmp;
 	schema_node* scn;
 	if (parent!=XNULL)
