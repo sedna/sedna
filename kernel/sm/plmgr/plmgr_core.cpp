@@ -464,10 +464,8 @@ void plmgr_core::logInsert(const void* p, int size, __int8 op, bool sync)
   #ifndef PHYS_LOG_TEST
   if ( op == PL_CHANGE || op == PL_CREATE_NODE_BLK)
   {
-	 log_head.p = this->addr2xptr(p);
-     this->get_block_hdr(p)->lsn = log_head.lsn;
-     d_printf2("written lsn=%d ", log_head.lsn);
-     this->addr2xptr(p).print(); 
+     log_head.p = this->addr2xptr(p);
+     this->get_block_hdr(p)->lsn = log_head.lsn;      
   }
   else
      log_head.p = XNULL;

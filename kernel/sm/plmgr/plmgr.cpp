@@ -90,7 +90,7 @@ void ll_phys_log_create_node_blk(void *p)
      log_create_node_blk_times++;
      phys_log_mgr->logInsert(p, 0, PL_CREATE_NODE_BLK);
 
-     d_printf1("ll_create node blk=\n");
+     //d_printf1("ll_create node blk=\n");
      string str = string("ll_phys_log_create_node_blk\n");
      WRITE_DEBUG_LOG(str.c_str());
 #endif
@@ -102,8 +102,8 @@ void ll_phys_log_flush_blk(void *p, bool sync)
 #ifdef PHYS_LOG
   log_flush_log_times++;
  //phys_log_mgr->logFlush(GETBLOCKHDR_ADDR(p)->lsn);
-  d_printf2("in flush func lsn=%d\n", sm_get_block_hdr(p)->lsn);
-  sm_addr2xptr(p).print(); 
+  //d_printf2("in flush func lsn=%d\n", sm_get_block_hdr(p)->lsn);
+  //sm_addr2xptr(p).print(); 
   phys_log_mgr->logFlushPortionOfRecords(sm_get_block_hdr(p)->lsn, sync);
 
   string str = string("ll_phys_log_flush_blk finished\n");

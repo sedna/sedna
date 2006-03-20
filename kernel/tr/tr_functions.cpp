@@ -197,6 +197,8 @@ PPQueryEssence* on_kernel_statement_begin(scheme_list *por,
                                           se_ostream* s, 
                                           t_print output_type)
 {
+    // !!! Additional code review is needed
+    indirection_table_on_statement_begin();
     PPQueryEssence* qep_tree = build_qep(por, *s, output_type);
     is_qep_built = true;
     qep_tree->open();
@@ -215,6 +217,18 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
     if (is_qep_built)
     {
        delete_qep(qep_tree);
+
+       tr_globals::st_ct.clear_context();
+
+       e_string_first_blk = XNULL;
+       e_string_last_blk = XNULL;
+
+       PathExpr_local_free();
+       PathExpr_reset_pers();
+
+       vmm_delete_tmp_blocks();
+       indirection_table_on_statement_end();
+
        is_qep_built = false;
     }
 }

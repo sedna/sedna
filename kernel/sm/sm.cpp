@@ -66,8 +66,11 @@ void SMCtrlHandler(int signo)
 }
 #endif
 
+
+
 int sm_server_handler(void *arg)
 {
+    //printf("query received\n");   
     sm_msg_struct *msg = (sm_msg_struct*)arg;
 
     try {

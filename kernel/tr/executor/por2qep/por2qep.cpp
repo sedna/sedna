@@ -2713,17 +2713,6 @@ void delete_qep(PPQueryEssence *qep)
     tr_globals::qp.fun_decls = NULL;
 
     tr_globals::qp.size = 0;
-
-    tr_globals::st_ct.clear_context();
-
-    e_string_first_blk = XNULL;
-    e_string_last_blk = XNULL;
-
-    PathExpr_local_free();
-    PathExpr_reset_pers();
-
-    vmm_delete_tmp_blocks();
-    indirection_table_on_statement_end();
 }
 
 void delete_qep(auth_qep_tree *qep)
