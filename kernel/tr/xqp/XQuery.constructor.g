@@ -45,7 +45,11 @@ elementContent!:
 	<<std::string val = "";
 	  ASTBase* cnt = NULL;
 	>>
-	( ce:CHAR_ELEM              << val += $ce->getText();>>
+	( ce:CHAR_ELEM              
+	  << if (($ce->getText())[0] == '\"') val += "\\\"";
+	     else if (($ce->getText())[0] == '\\') val += "\\\\";
+	     else val += $ce->getText();
+	  >>
 	| DOUBLELBRACE              << val += "{"; >>
 	| DOUBLERBRACE              << val += "}"; >>
 	| dec:dirElemConstructor
@@ -130,6 +134,8 @@ elementContent!:
 	)*
 
 	<<   
+	  //d_printf2("XQParser: constr_val=%s\n", val.c_str());
+
 	  if ( !(val.empty()) )
 	  {
 	     bool isBoundWhiteSpace = true;
@@ -253,9 +259,14 @@ quotAttrValueContent!:
 	  ASTBase *cnt = NULL;
 	>>
 
-	( ca:CHAR_ATTR <<val +=$ca->getText();>>
+	( ca:CHAR_ATTR
+	  << if (($ca->getText())[0] == '\"') val += "\\\"";
+	     else if (($ca->getText())[0] == '\\') val += "\\\\";
+	     else val += $ca->getText();
+	  >>
+
 	| APOS << val += "\'"; >>
-	| DOUBLEQUOT <<val += "\"";>>
+	| DOUBLEQUOT <<val += "\\\"";>>
 	| DOUBLELBRACE <<val += "{";>>
 	| DOUBLERBRACE <<val += "}";>>
 	| per:predefinedEntityRef <<val += #per->getText();>>
@@ -309,8 +320,14 @@ aposAttrValueContent!:
 	  ASTBase *cnt = NULL;
 	>>
 
-	( ca:CHAR_ATTR <<val +=$ca->getText();>>
-	| QUOT << val += "\""; >>
+	( ca:CHAR_ATTR
+
+	  << if (($ca->getText())[0] == '\"') val += "\\\"";
+	     else if (($ca->getText())[0] == '\\') val += "\\\\";
+	     else val += $ca->getText();
+	  >>
+
+	| QUOT << val += "\\\""; >>
 	| DOUBLEAPOS <<val += "\'";>>
 	| DOUBLELBRACE <<val += "{";>>
 	| DOUBLERBRACE <<val += "}";>>
@@ -365,7 +382,7 @@ predefinedEntityRef!:
 	( AMPLT <<#0 = #["<", AST_CHAR_SEQ];>>
 	| AMPGT <<#0 = #[">", AST_CHAR_SEQ];>>
 	| AMPAMP <<#0 = #["&", AST_CHAR_SEQ];>>
-	| AMPEQUOT <<#0 = #["\"", AST_CHAR_SEQ];>>
+	| AMPEQUOT <<#0 = #["\\\"", AST_CHAR_SEQ];>>
 	| AMPEAPOS <<#0 = #["\'", AST_CHAR_SEQ];>>
 	)
 ;	
