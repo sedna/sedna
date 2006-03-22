@@ -1060,17 +1060,24 @@
 )
 
 (define (l2p:lr-axis2por-axis axis)
-  (cond ((eq? axis 'child) 'PPAxisChild)
-        ((eq? axis 'attr-axis) 'PPAxisAttribute)
-        ((eq? axis 'parent) 'PPAxisParent)
-        ((eq? axis 'self) 'PPAxisSelf)
-        ((eq? axis 'descendant) 'PPAxisDescendant)
-        ((eq? axis 'descendant-or-self) 'PPAxisDescendantOrSelf)
-        ((eq? axis 'descendant-attr) 'PPAxisDescendantAttr)
-        (else (cl:signal-input-error SE4008 (string-append "unknown axis given: "
-                                       (symbol->string axis))))
-        )
-)
+  (case axis
+    ((child) 'PPAxisChild)
+    ((attr-axis) 'PPAxisAttribute)
+    ((parent) 'PPAxisParent)
+    ((self) 'PPAxisSelf)
+    ((descendant) 'PPAxisDescendant)
+    ((descendant-or-self) 'PPAxisDescendantOrSelf)
+    ((descendant-attr) 'PPAxisDescendantAttr)
+    ; New axes implemented
+    ((ancestor) 'PPAxisAncestor)
+    ((ancestor-or-self) 'PPAxisAncestorOrSelf)
+    ((following) 'PPAxisFollowing)
+    ((following-sibling) 'PPAxisFollowingSibling)
+    ((preceding) 'PPAxisPreceding)
+    ((preceding-sibling) 'PPAxisPrecedingSibling)
+    (else
+     (cl:signal-input-error SE4008
+                            (string-append "unknown axis given: " (symbol->string axis))))))
 
 (define (l2p:lr-test2por-test test-type)
   (cond ((eq? test-type 'text-test) 'text)
