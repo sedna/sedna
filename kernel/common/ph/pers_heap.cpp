@@ -28,7 +28,7 @@
 static UFile 		ph_file;
 static UMMap		ph_file_mapping;
 static USemaphore	ph_semaphore;
-static void			*ph_start_address;
+static void			*ph_start_address = NULL;
 
 
 
@@ -113,12 +113,26 @@ int pers_release()
 
 int pers_flush()
 {
-    if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 1;
+    if (ph_start_address)
+    {
+        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 1;
+    }
+    else
+    {
+        ph_start_address = uMapViewOfFile(ph_file_mapping, 0, 0, 0);
+        if (ph_start_address == NULL) return 2;
+
+        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 3;
+
+        if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 4;
+
+        ph_start_address = NULL;
+    }
 
     return 0;
 }
 
-int pers_open(const char *file_name, const char *fm_name, global_name sph_name, const void *addr, int mem_release)
+int pers_open(const char *file_name, const char *fm_name, global_name sph_name, const void *addr, int should_map, int mem_release)
 {
     // when opening file check that is size greater then 0 and less then max
     // file size for persistent heap
@@ -138,13 +152,24 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
     ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
-    ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0);
-    if (ph_start_address == NULL) return 4;
+    if (should_map)
+    {
+        ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0);
+        if (ph_start_address == NULL) return 4;
+    }
 
     if (USemaphoreCreate(&ph_semaphore, 1, 1, sph_name) != 0) return 5;
 
-    ph_mb = (struct ph_masterblock*)ph_start_address;
-    _vars = &(ph_mb->vars);
+    if (should_map)
+    {
+        ph_mb = (struct ph_masterblock*)ph_start_address;
+        _vars = &(ph_mb->vars);
+    }
+    else 
+    {
+        ph_mb = NULL;
+        _vars = NULL;
+    }
 
     return 0;
 }
@@ -153,7 +178,11 @@ int pers_close()
 {
     if (USemaphoreRelease(ph_semaphore) != 0) return 1;
 
-    if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 2;
+    if (ph_start_address)
+    {
+       if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 2;
+       ph_start_address = NULL;
+    }
 
     if (uReleaseFileMapping(ph_file_mapping, NULL) != 0) return 3;
 

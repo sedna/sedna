@@ -48,7 +48,7 @@ arg_rec tr_argtable[] =
 {"-popt",  			" on/off",	 arg_bool,  &run_popt, 					"off",	   "\t\t  run physical optimizer (default off)"},
 {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
 /* {"-server-mode",    " on/off",   arg_bool,  &server_mode,               "off",     "\t  work in server mode (output result to pipe)\n\t\t\t  (default off)"}, */
-{"-query-type",     " type",     arg_str,   &q_type,                    "XQuery",  "\t  type of the query to execute (XQuery, POR, Scheme, LR),\n\t\t\t  (default XQuery)"},
+{"-query-type",     " type",     arg_str,   &q_type,                    "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
 {"-name",           " name",     arg_str,   &login,                     "SYSTEM",  "\t\t  user name (default SYSTEM)"},
 {"-pswd",           " password", arg_str,   &password,                  "MANAGER", "\t  user password (default MANAGER)"},
 {NULL,              " db-name",  arg_str,   &db_name,                   "???",     "\t\t  database name"},

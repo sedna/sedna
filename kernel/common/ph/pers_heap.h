@@ -25,7 +25,7 @@ int pers_init(const char *file_name, const char *fm_name, global_name sph_name, 
 int pers_release();
 int pers_flush();
 
-int pers_open(const char *file_name, const char *fm_name, global_name sph_name, const void *addr, int mem_release = 0);
+int pers_open(const char *file_name, const char *fm_name, global_name sph_name, const void *addr, int should_map = 1, int mem_release = 0);
 int pers_close();
 
 int pers_create(const char *file_name, const char *fm_name, const void *addr, int heap_size, USECURITY_ATTRIBUTES *sa);

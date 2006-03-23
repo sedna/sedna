@@ -89,7 +89,6 @@ int main(int argc, char * argv[])
   int determine_vmm_region = 0;
 
 
-
   try {
 
      INIT_TOTAL_TIME_VARS

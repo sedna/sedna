@@ -29,7 +29,7 @@ arg_rec exp_argtable[] =
  /*   {"-port-number",    " port",     arg_int,   &socket_port,               "5050",      "\t  socket listening port  (default 5050)"},*/
 	{"-name",           " name",     arg_str,   &login,                     "-",         "\t\t  user name "},
 	{"-pswd",           " password", arg_str,   &password,                  "-",         "\t  user password "},
-	{NULL,              " command",  arg_str,   &command,                   "-",         "\t\t  'export'-to export data/'restore'-to restore data/'import'-to import data"},
+	{NULL,              " command",  arg_str,   &command,                   "-",         "\t\t  'export' - to export data;\n\t\t\t  'restore' - to restore data;\n\t\t\t  'import' - to import data"},
 	{NULL,              " db-name",  arg_str,   &db_name,                   "-",         "\t\t  database name"},
 	{NULL,              " path",     arg_str,   &path,                      "-",         "\t\t\t  path with exported/imported data"}
 

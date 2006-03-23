@@ -29,16 +29,25 @@ using namespace std;
 ********************************************************************************
 *******************************************************************************/
 
+#if (defined(_WIN32) && defined(REQUIRE_ROOT))
 #define EBS_WORKING_SET_SIZE	(20 * 1024 * 1024)
+SIZE_T MinimumWorkingSetSize_orig = 0, MaximumWorkingSetSize_orig = 0;
+#endif
 
 void _bm_init_buffer_pool()
 {
-#ifdef _WIN32
+#if (defined(_WIN32) && defined(REQUIRE_ROOT))
     int working_set_size = bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
-
     BOOL res = 0;
 
-#ifdef REQUIRE_ROOT
+    res = GetProcessWorkingSetSize(
+                    GetCurrentProcess(),        // handle to the process
+                    &MinimumWorkingSetSize_orig,// minimum working set size
+                    &MaximumWorkingSetSize_orig // maximum working set size
+          );
+    if (res == 0) 
+        throw USER_EXCEPTION(SE1015);
+
     res = SetProcessWorkingSetSize(
                     GetCurrentProcess(),		// handle to process
                     working_set_size,			// minimum working set size
@@ -46,7 +55,6 @@ void _bm_init_buffer_pool()
           );
     if (res == 0) 
         throw USER_EXCEPTION(SE1015);
-#endif
 #endif
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME);
@@ -82,6 +90,18 @@ void _bm_release_buffer_pool()
 
     if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+
+#if (defined(_WIN32) && defined(REQUIRE_ROOT))
+    BOOL res = 0;
+
+    res = SetProcessWorkingSetSize(
+                    GetCurrentProcess(),       // handle to the process
+                    MinimumWorkingSetSize_orig,// minimum working set size
+                    MaximumWorkingSetSize_orig // maximum working set size
+          );
+    if (res == 0)
+        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+#endif
 }
 
 void bm_startup() throw (SednaException)
@@ -146,7 +166,7 @@ void bm_startup() throw (SednaException)
 
     string ph_file_name = string(db_files_path) + string(db_name) + ".ph";
     if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
-                  PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR) != 0)
+                  PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
 

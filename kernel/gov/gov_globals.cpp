@@ -38,6 +38,6 @@ arg_rec gov_argtable[] =
 {"-help",             NULL,        arg_lit,  &gov_help_s,                  "0",   "\t\t           display this help and exit"},
 {"-version",          NULL,        arg_lit,  &gov_version,                 "0",   "\t\t   display product version and exit"},
 {"-background-mode", " on/off",   arg_bool, &background_mode,              "on",  "  start the server in the background mode (default on)"},
-{"-port",             " number",    arg_int,  &socket_port,                 "5050","\t   socket listening port\n\t\t\t   (default 5050)"}
+{"-port",             " number",    arg_int,  &socket_port,                 "5050","\t\t   socket listening port (default 5050)"}
 };
 
