@@ -21,6 +21,7 @@ protected:
 
     // obtained parameters and local data
     xptr cur;
+	xptr base;
 	bool is_col;
     t_next_fun next_fun;   
 	std::map<schema_node*,std::vector<schema_node*> > desc_sch;	

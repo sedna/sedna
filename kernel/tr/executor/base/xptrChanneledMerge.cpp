@@ -16,41 +16,39 @@ xptr xptrChanneledMerge::getNextNode()
 		if(!top) return XNULL;
 	}
 	xptr tmp=(nodeFN)(top->obj->node);
+	xptr res=top->obj->node;
 	if (tmp!=XNULL)
 	{
-			pers_sset<node_cell,unsigned short>::pers_sset_entry* nxt=(forward)?merge_tree->rb_successor(top):merge_tree->rb_predecessor(top);
-			if (nxt)
+		pers_sset<node_cell,unsigned short>::pers_sset_entry* nxt=(forward)?merge_tree->rb_successor(top):merge_tree->rb_predecessor(top);
+		if (nxt)
+		{
+			tmp_cell->node=tmp;
+			if ((forward && tmp_cell->less(nxt->obj))||(!forward&&nxt->obj->less(tmp_cell)))
 			{
-				tmp_cell->node=tmp;
-				if ((forward && tmp_cell->less(nxt->obj))||(!forward&&nxt->obj->less(tmp_cell)))
-				{
-					top->obj->node=tmp;
-					return tmp;
-				}
-				else
-				{
-					node_cell* nc=top->obj;
-					nc->node=tmp;
-					merge_tree->rb_delete(top);
-					merge_tree->put(nc);
-					top=nxt;//(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);
-					return top->obj->node;
-				}
+				top->obj->node=tmp;	
 			}
 			else
-			{			
-				top->obj->node=tmp;
-				return tmp;
-			}			
+			{
+				node_cell* nc=top->obj;
+				nc->node=tmp;
+				merge_tree->rb_delete(top);
+				merge_tree->put(nc);
+				top=nxt;//(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);				
+			}
 		}
 		else
 		{			
-			pers_sset<node_cell,unsigned short>::pers_sset_entry* nxt=(forward)?merge_tree->rb_successor(top):merge_tree->rb_predecessor(top);
-			merge_tree->rb_delete(top);
-			top=nxt;
-			//top=(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);
-			return (top)?top->obj->node:XNULL;	
-		}
+			top->obj->node=tmp;		
+		}			
+	}
+	else
+	{			
+		pers_sset<node_cell,unsigned short>::pers_sset_entry* nxt=(forward)?merge_tree->rb_successor(top):merge_tree->rb_predecessor(top);
+		merge_tree->rb_delete(top);
+		top=nxt;
+		//top=(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);
+	}
+	return res;
 }
 xptrChanneledMerge::xptrChanneledMerge(next_node_fn _nodeFN_, bool _forward_):nodeFN(_nodeFN_), forward(_forward_)
 {
@@ -78,5 +76,5 @@ void xptrChanneledMerge::clear_merge  ()
 }
 void xptrChanneledMerge::addChannel(xptr node)
 {
-	merge_tree->put(node_cell::init(node));
+	if (node!=XNULL) merge_tree->put(node_cell::init(node));
 }

@@ -57,6 +57,7 @@ void PPAxisFP::open  ()
     child.op->open();
 
     cur = XNULL;
+	base=XNULL;
 }
 
 void PPAxisFP::reopen()
@@ -67,6 +68,7 @@ void PPAxisFP::reopen()
 		merge_tree->clear_merge();
 	}
     cur = XNULL;
+	base=XNULL;
 }
 
 void PPAxisFP::close ()
@@ -116,20 +118,39 @@ void PPAxisFP::next_node(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-
+        if (t.is_eos()) 		
+			return;
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 		if (following)
 			cur = getNextNDNode(child.get(t).get_node());
 		else
-			cur=getPreviousDONode(child.get(t).get_node());
+		{
+			base=child.get(t).get_node();
+			cur=getPreviousDONode(base);
+			while (cur!=XNULL)
+			{
+				if (nid_cmp_effective(cur,base)==-2)
+					cur=getPreviousDONode(cur);
+				else
+					break;
+			}
+		}
     }
 
     t.copy(tuple_cell::node(cur));
     if (following)
 			cur = getNextDONode(cur);
 		else
+		{
 			cur=getPreviousDONode(cur);
+			while (cur!=XNULL)
+			{
+				if (nid_cmp_effective(cur,base)==-2)
+					cur=getPreviousDONode(cur);
+				else
+					break;
+			}
+		}
 }
 
 void PPAxisFP::next_string(tuple &t)
@@ -152,10 +173,10 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 		
-        cur = child.get(t).get_node();
+        base = child.get(t).get_node();
 		if (following)
 		{
-			cur = getNextNDNode(cur);
+			cur = getNextNDNode(base);
 			while (true)
 			{
 				if (cur==XNULL || is_element(cur))
@@ -166,13 +187,25 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 		}
 		else
 		{
-			cur=getPreviousDONode(cur);
+
+			cur=getPreviousDONode(base);
 			while (true)
 			{
 				if (cur==XNULL || is_element(cur))
+				{
+					while (cur!=XNULL)
+					{
+						if (nid_cmp_effective(cur,base)==-2)
+							cur=getPreviousDONode(cur);
+						else
+							break;
+					}
 					break;
+				}
 				else
+				{
 					cur = getPreviousDONode(cur);
+				}
 			}
 		}		
     }
@@ -194,7 +227,16 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 		while (true)
 		{
 			if (cur==XNULL || is_element(cur))
+			{
+				while (cur!=XNULL)
+				{
+					if (nid_cmp_effective(cur,base)==-2)
+						cur=getPreviousDONode(cur);
+					else
+						break;
+				}
 				break;
+			}
 			else
 				cur = getPreviousDONode(cur);
 		}
@@ -244,13 +286,13 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 		
-        cur = child.get(t).get_node();
-		is_col=is_node_in_collection(cur);
+        base = child.get(t).get_node();
+		is_col=is_node_in_collection(base);
 		if (is_col)
 		{
 			if (following)
 			{
-				cur = getNextNDNode(cur);
+				cur = getNextNDNode(base);
 				while (true)
 				{
 					if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
@@ -261,11 +303,20 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 			}
 			else
 			{
-				cur=getPreviousDONode(cur);
+				base=getPreviousDONode(cur);
 				while (true)
 				{
 					if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
+					{
+						while (cur!=XNULL)
+						{
+							if (nid_cmp_effective(cur,base)==-2)
+								cur=getPreviousDONode(cur);
+							else
+								break;
+						}
 						break;
+					}
 					else
 						cur = getPreviousDONode(cur);
 				}
@@ -273,8 +324,8 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 		}		
 		else
 		{
-			CHECKP(cur);
-			schema_node* scm=(GETSCHEMENODEX(cur))->root;
+			CHECKP(base);
+			schema_node* scm=(GETSCHEMENODEX(base))->root;
 			if (desc_sch.find(scm)==desc_sch.end())
 			{
 				std::vector<schema_node*> vscm;
@@ -286,7 +337,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 			if (merge_tree==NULL) merge_tree=new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
 			while (it!=cv->end())
 			{
-				xptr tmp=(following)?getNextNDNode(cur,*it):getPreviousDONode(cur,*it);
+				xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);
 				if (tmp!=XNULL) merge_tree->addChannel(tmp);
 				it++;
 			}
@@ -314,7 +365,16 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 				while (true)
 				{
 					if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
+					{
+						while (cur!=XNULL)
+						{
+							if (nid_cmp_effective(cur,base)==-2)
+								cur=getPreviousDONode(cur);
+							else
+								break;
+						}
 						break;
+					}
 					else
 						cur = getPreviousDONode(cur);
 				}

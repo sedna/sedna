@@ -929,10 +929,10 @@ xptr getNextNDNode(xptr node)
 	xptr tmp=node;	
 	while(true)
 	{
-		CHECKP(node);
+		CHECKP(tmp);
 		if (((n_dsc*)XADDR(tmp))->rdsc!=XNULL)
 		{
-			if ((GETBLOCKBYNODE(tmp))->snode->parent->type=virtual_root) return XNULL;
+			if ((GETBLOCKBYNODE(tmp))->snode->parent->type==virtual_root) return XNULL;
 			else
 				return ((n_dsc*)XADDR(tmp))->rdsc;
 		}
@@ -974,7 +974,7 @@ xptr getPreviousDONode(xptr node)
 		CHECKP(tmp);
 		if (hasLeftSiblingDM(tmp))
 		{
-			if ((GETBLOCKBYNODE(tmp))->snode->parent->type=virtual_root) 
+			if ((GETBLOCKBYNODE(tmp))->snode->parent->type==virtual_root) 
 				return XNULL;
 			else
 				break;
@@ -1109,6 +1109,58 @@ xptr getPreviousDONode(xptr node,schema_node* scn)
 	{
 		int i=getMedianDescriptor2(s,r,block,left,&med);
 		if (nid_cmp_effective(ADDR2XPTR(med),node)>=0)
+		{
+			r=i;			
+		}
+		else
+		{
+			s=i;
+			left=med;
+		}
+		CHECKP(blk);
+	}
+	return ADDR2XPTR(left);
+}
+/*returns the previous non-ancestor node in document that fits input schema_node*/
+xptr getPreviousNANode(xptr node,schema_node* scn)
+{
+	xptr blk=scn->bblk;
+	node_blk_hdr* block;
+	//1.finding block
+	while (blk!=XNULL)
+	{
+		CHECKP(blk);
+		block=((node_blk_hdr*)XADDR(blk));
+		n_dsc* nd=GETPOINTERTODESC(block,block->desc_last);
+		if (nid_cmp_effective(ADDR2XPTR(nd),node)!=-1)
+			break;
+		else
+		{
+			CHECKP(blk);
+			blk=block->nblk;
+			if (blk==XNULL) 
+			{
+				return ADDR2XPTR(GETPOINTERTODESC(block,block->desc_last));
+			}
+		}			
+	}
+    //2. finding node in block
+	CHECKP(blk);
+	if (nid_cmp_effective(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)),node)!=-1)
+	{
+		CHECKP(blk);
+		return getPreviousDescriptorOfSameSortXptr(ADDR2XPTR(GETPOINTERTODESC(block,block->desc_first)));		
+	}
+	CHECKP(blk);
+	int s=0;
+	int r=block->count;
+	n_dsc* left=GETPOINTERTODESC(block,block->desc_first);
+	//n_dsc* right=GETPOINTERTODESC(block,block->desc_last);
+	n_dsc* med;
+	while (s<r-1)
+	{
+		int i=getMedianDescriptor2(s,r,block,left,&med);
+		if (nid_cmp_effective(ADDR2XPTR(med),node)!=-1)
 		{
 			r=i;			
 		}

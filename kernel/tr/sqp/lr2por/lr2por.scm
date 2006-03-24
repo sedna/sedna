@@ -273,6 +273,8 @@
                   (eq? op-name 'parent)
                   (eq? op-name 'descendant)
                   (eq? op-name 'self)
+                  (eq? op-name 'following)
+                  (eq? op-name 'preceding)
                   (eq? op-name 'descendant-or-self)
                   (eq? op-name 'descendant-attr))
               (let ((AbsPath (l2p:findPPAbsPath `(,op-name ,@node))))

@@ -88,6 +88,8 @@ xptr getNextSiblingNode(xptr node,schema_node* scn);
 xptr getPreviousSiblingNode(xptr node,schema_node* scn);
 /*returns the previous node in document that fits input schema_node*/
 xptr getPreviousDONode(xptr node,schema_node* scn);
+/*returns the previous non-ancestor node in document that fits input schema_node*/
+xptr getPreviousNANode(xptr node,schema_node* scn);
 
 /* returns the xptr to the nearest left neighboring descriptor of the element*/
 xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr parent, const char* name,t_item node_type,xml_ns* ns);
@@ -207,6 +209,7 @@ bool is_pnk_attribute(t_item t);
 */
 bool inline is_element (xptr node)
 {
+	CHECKP(node);
 	return (GETSCHEMENODEX(node)->type==element);
 }
 bool inline is_node_attribute (xptr node)
