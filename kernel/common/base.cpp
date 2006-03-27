@@ -585,8 +585,11 @@ void set_sedna_data()
 
 #ifndef _WIN32
   if (is_inside_lib)
-   if (uMkDir(SEDNA_DATA) == 0)
-      throw USER_EXCEPTION2(SE4300, SEDNA_DATA);
+  {
+      USECURITY_ATTRIBUTES sa = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
+      if (uMkDir(SEDNA_DATA, &sa) == 0)
+          throw USER_EXCEPTION2(SE4300, SEDNA_DATA);
+  }
 #endif  
 
   is_init_sedna_data = true;
