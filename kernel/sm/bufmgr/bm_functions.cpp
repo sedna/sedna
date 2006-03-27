@@ -57,7 +57,7 @@ void _bm_init_buffer_pool()
         throw USER_EXCEPTION(SE1015);
 #endif
 
-    file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME);
+    file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL);
     if (U_INVALID_FILEMAPPING(file_mapping))
         throw USER_EXCEPTION(SE1015);
 
@@ -122,34 +122,34 @@ void bm_startup() throw (SednaException)
     // buffer pool has been created
 
     // create semaphores
-    if (USemaphoreCreate(&vmm_sm_sem, 1, 1, VMM_SM_SEMAPHORE_STR) != 0)
+    if (USemaphoreCreate(&vmm_sm_sem, 1, 1, VMM_SM_SEMAPHORE_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "VMM_SM_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&xmode, 1, 1, VMM_SM_EXCLUSIVE_MODE_SEM_STR) != 0)
+    if (USemaphoreCreate(&xmode, 1, 1, VMM_SM_EXCLUSIVE_MODE_SEM_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
-    if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR) != 0)
+    if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "INDIRECTION_TABLE_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&metadata_sem, 1, 1, METADATA_SEMAPHORE_STR) != 0)
+    if (USemaphoreCreate(&metadata_sem, 1, 1, METADATA_SEMAPHORE_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "METADATA_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&index_sem, 1, 1, INDEX_SEMAPHORE_STR) != 0)
+    if (USemaphoreCreate(&index_sem, 1, 1, INDEX_SEMAPHORE_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "INDEX_SEMAPHORE_STR");
 #ifdef SE_ENABLE_FTSEARCH
-    if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR) != 0)
+    if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR, NULL) != 0)
         throw USER_EXCEPTION2(SE4010, "FT_INDEX_SEMAPHORE_STR");
 #endif
 
     // Create shared memory
-    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr)) != 0)
+    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), NULL) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
     p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr)); 
     if (p_sm_callback_data == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-    if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp)) != 0)
+    if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), NULL) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
     lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp)); 
@@ -157,7 +157,7 @@ void bm_startup() throw (SednaException)
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
-    if (uCreateShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr)) != 0)
+    if (uCreateShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), NULL) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
     indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr));
@@ -251,10 +251,10 @@ void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaE
 
     d_printf2("Register session with sid = %d\n", sid);
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100)) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100), NULL) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100)) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100), NULL) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
     tr_info *ti = new tr_info;

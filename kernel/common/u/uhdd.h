@@ -61,8 +61,6 @@ typedef DWORD UShareMode;
 #define U_FILE_END				SEEK_END
 #define U_FILE_CURRENT			SEEK_CUR
 
-#define U_MODE                  00660
-
 typedef int UFile;
 typedef int UFlag;
 typedef int UAccess;
@@ -85,7 +83,7 @@ extern "C"
 /*UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr);*/
 
 /* return U_INVALID_FD in the case of error*/
-    UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES * sa);
+    UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa);
 
 /* return U_INVALID_FD in the case of error*/
     UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr);
@@ -118,7 +116,7 @@ extern "C"
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uMkDir(const char *name);
+    int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/

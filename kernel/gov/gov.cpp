@@ -169,10 +169,10 @@ int main(int argc, char** argv)
 
             USemaphore started_sem;
 
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY, NULL))
                 throw USER_EXCEPTION(SE4401);
 
-            if (uCreateProcess(command_line_str, false, NULL, U_NO_WINDOW, NULL, NULL, NULL, NULL) != 0)
+            if (uCreateProcess(command_line_str, false, NULL, U_NO_WINDOW, NULL, NULL, NULL, NULL, NULL) != 0)
                 throw USER_EXCEPTION(SE4401);
 
             int res;

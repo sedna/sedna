@@ -149,7 +149,7 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
     ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING);
     if (ph_file == U_INVALID_FD) return 2;
 
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, NULL);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
     if (should_map)
@@ -158,7 +158,7 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
         if (ph_start_address == NULL) return 4;
     }
 
-    if (USemaphoreCreate(&ph_semaphore, 1, 1, sph_name) != 0) return 5;
+    if (USemaphoreCreate(&ph_semaphore, 1, 1, sph_name, NULL) != 0) return 5;
 
     if (should_map)
     {
@@ -202,7 +202,7 @@ int pers_create(const char *file_name, const char *fm_name, const void *addr, in
     if (uSetEndOfFile(ph_file, (__int64)(heap_size + BLOCKSIZE), U_FILE_BEGIN) == 0) return 3;
 
     // Create file mapping
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, sa);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 4;
 
     void *_addr = (void*)addr;

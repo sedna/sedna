@@ -166,7 +166,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 void start_chekpoint_thread()
 {
 #ifdef CHECKPOINT_ON
-  if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE))
+  if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE, NULL))
      throw USER_EXCEPTION2(SE4060, "checkpoint thread");
 
   string str = string("start_checkpoint_thread finished\n");
@@ -178,13 +178,13 @@ void start_chekpoint_thread()
 void init_checkpoint_sems()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT) != 0)
+  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
-  if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM) != 0)
+  if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreCreate(&concurrent_ops_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_LOGICAL_OPERATION_ATOMICITY) != 0)
+  if (USemaphoreCreate(&concurrent_ops_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_LOGICAL_OPERATION_ATOMICITY, NULL) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 #endif
 }
@@ -230,7 +230,7 @@ void release_checkpoint_sems()
 void execute_recovery_by_logical_log_process()
 {
 #ifdef RECOVERY_ON
-  if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG) != 0)
+  if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
 
   //create recovery process
@@ -248,6 +248,7 @@ void execute_recovery_by_logical_log_process()
                   false,
                   NULL,
                   /*U_NO_WINDOW*/0,
+                  NULL,
                   NULL,
                   NULL,
                   NULL,
@@ -272,7 +273,7 @@ void execute_recovery_by_logical_log_process()
 void init_transaction_ids_table()
 {
 #ifdef TRMGR_ON
-  if (0 != USemaphoreCreate(&trn_table_ids_sync_sem, 1, 1, CHARISMA_SYNC_TRN_IDS_TABLE))
+  if (0 != USemaphoreCreate(&trn_table_ids_sync_sem, 1, 1, CHARISMA_SYNC_TRN_IDS_TABLE, NULL))
      throw USER_EXCEPTION2(SE4010, "CHARISMA_SYNC_TRN_IDS_TABLE");
 
   for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)

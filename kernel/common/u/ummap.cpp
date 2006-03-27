@@ -7,14 +7,14 @@
 #include "ummap.h"
 #include "d_printf.h"
 
-#define RIGHTS		00660
+//#define RIGHTS		00660
 
-UMMap uCreateFileMapping(UFile fd, int size, const char* name)
+UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBUTES* sa)
 {
 #ifdef _WIN32
     UMMap m;
     m.fd = fd;
-    m.map = CreateFileMapping(fd, NULL, PAGE_READWRITE, 0, size, name);
+    m.map = CreateFileMapping(fd, sa, PAGE_READWRITE, 0, size, name);
     if (m.map == NULL || GetLastError() == ERROR_ALREADY_EXISTS) m.map = NULL;
 
     return m;
@@ -22,7 +22,9 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name)
     UMMap m;
     if (fd == U_INVALID_FD)
     {
-        m.map = shm_open(name, O_RDWR | O_CREAT | O_EXCL, RIGHTS);
+        USECURITY_ATTRIBUTES mmap_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
+        if (sa) mmap_access_mode = *sa;
+        m.map = shm_open(name, O_RDWR | O_CREAT | O_EXCL, mmap_access_mode);
         m.size = size;
         m.to_file = 0;
         if (m.map == -1)

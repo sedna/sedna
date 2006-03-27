@@ -144,6 +144,7 @@ int load_metadata_in_database(const char* db_name)
                           &proc_h,
                           NULL,
                           &pid,
+                          NULL,
                           NULL
                          ))
      throw SYSTEM_EXCEPTION("Can't stratup SM to load metadata");
@@ -174,6 +175,7 @@ int load_metadata_in_database(const char* db_name)
                           &proc_h,
                           NULL,
                           &pid,
+                          NULL,
                           NULL
                          ))
      throw SYSTEM_EXCEPTION("Can't load metadata");
@@ -201,6 +203,7 @@ int load_metadata_in_database(const char* db_name)
                           &proc_h,
                           NULL,
                           &pid,
+                          NULL,
                           NULL
                          ))
      throw SYSTEM_EXCEPTION("Can't run smsd utility");

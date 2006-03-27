@@ -10,6 +10,8 @@
 
 #include "u.h"
 #include "uthread.h"
+#include "usecurity.h"
+
 #include <string>
 
 // return value 0 indicates success
@@ -44,7 +46,8 @@ int uCreateProcess(
            UPHANDLE *process_handle,
            UTHANDLE *thread_handle,
            UPID *process_id,
-           UTID *thread_id
+           UTID *thread_id,
+           USECURITY_ATTRIBUTES* sa
     );
 
 //return value 0 indicates success

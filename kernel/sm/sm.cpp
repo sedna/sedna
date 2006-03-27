@@ -438,10 +438,10 @@ int main(int argc, char **argv)
 
 
             USemaphore started_sem;
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(__db_name__, buf, 1024)))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), NULL))
                 throw USER_EXCEPTION(SE4205);
            
-            if (uCreateProcess(command_line_str, false, NULL, U_NO_WINDOW, NULL, NULL, NULL, NULL) != 0)
+            if (uCreateProcess(command_line_str, false, NULL, U_NO_WINDOW, NULL, NULL, NULL, NULL, NULL) != 0)
                 throw USER_EXCEPTION(SE4205);
 
              int res;
@@ -478,7 +478,7 @@ int main(int argc, char **argv)
 
 
 
-        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN) != 0)
+        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL) != 0)
             throw USER_EXCEPTION(SE4206);
 
         //setup_globals();

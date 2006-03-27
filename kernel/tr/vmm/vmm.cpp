@@ -745,7 +745,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 
 
         main_thread = uGetCurrentThread();
-        uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE);
+        uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE, NULL);
         if (res != 0) throw USER_EXCEPTION2(SE4060, "VMM thread");
 
 #ifdef VMM_TRACE

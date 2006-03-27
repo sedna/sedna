@@ -85,7 +85,7 @@ void LocalLockMgr::Init_LocalLockMgr(SSMMsg* _sm_server_)
 #ifdef LOCK_MGR_ON
   char buf[1024];
 
-  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(sid, db_name, buf, 1024)))
+  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(sid, db_name, buf, 1024), NULL))
      throw USER_EXCEPTION2(SE4010, "SEDNA_TRANSACTION_LOCK");
 
   sm_server = _sm_server_;

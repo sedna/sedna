@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #ifdef _WIN32
-#include <windows.h>
 #include <Accctrl.h>
 #include <aclapi.h>
 #endif
@@ -19,16 +18,20 @@
 
 #define REQUIRE_ROOT
 
-
 #ifdef _WIN32
+#define U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK             GENERIC_ALL
+#define U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK           GENERIC_ALL
+#define U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK           GENERIC_ALL
 typedef SECURITY_ATTRIBUTES USECURITY_ATTRIBUTES;
-/*union USECURITY_ATTRIBUTES {NULL; SECURITY_ATTRIBUTES};*/
 typedef ACL UACL;
 typedef PSID UPSID;
+typedef DWORD UAccess_Permissions;
 #else
-typedef int USECURITY_ATTRIBUTES;
-typedef int UACL;
-typedef int UPSID;
+#define U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP  /* 00660 */
+#define U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK           00777
+#define U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK           00777
+typedef mode_t USECURITY_ATTRIBUTES;
+typedef mode_t UAccess_Permissions;
 #endif
 
 #ifdef __cplusplus
@@ -36,14 +39,14 @@ extern "C"
 {
 #endif
 
-    int uCreateSA(int AccessPermissions, USECURITY_ATTRIBUTES ** sa);
+    int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle);
 
-    int uReleaseSA(USECURITY_ATTRIBUTES * sa);
+    int uReleaseSA(USECURITY_ATTRIBUTES* sa);
 
-/* returns true if */
-/*   Windows: current user is in the Administrators Group*/
-/*   Unix: current user is root*/
-/* returns false otherwise (including errors)*/
+/* returns true if 
+   Windows: current user is in the Administrators Group
+   Unix: current user is root
+   returns false otherwise (including errors) */
     int uIsAdmin(void);
 
 #ifdef __cplusplus

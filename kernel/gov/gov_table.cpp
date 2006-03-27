@@ -52,7 +52,8 @@ void info_table::init(int lstnr_port_number)
 
    if (0 != uCreateShMem(&gov_shm_service_dsc,
                          GOVERNOR_SHARED_MEMORY_NAME,
-                         GOV_SHM_SIZE))
+                         GOV_SHM_SIZE,
+                         NULL))
       throw USER_EXCEPTION2(SE4016, "GOVERNOR_SHARED_MEMORY_NAME");
 
 

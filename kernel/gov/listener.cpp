@@ -215,6 +215,15 @@ try{
 #endif
 
     uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1");
+
+    // create security attributes for the new process
+    USECURITY_ATTRIBUTES *sa;	
+    if(0 != uCreateSA(&sa, 
+                      U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 
+                      0                  // new process will not inherit handle returned by CreateProcess
+                      )) 
+    throw USER_EXCEPTION(SE3060);
+
     // Spawn the child process.
     // Socket HANDLE are passed throught a environment variable
                  	 
@@ -234,7 +243,8 @@ try{
                             &proc_h,
                             NULL,
                             &pid,
-                            NULL
+                            NULL,
+                            sa
                            ))
     {
 #ifdef _WIN32                  
@@ -245,6 +255,8 @@ try{
        throw SYSTEM_EXCEPTION("Can't create process");
     }
 
+   // release security attributes
+   if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
 
    uclose_socket(socknew);
 #ifdef _WIN32

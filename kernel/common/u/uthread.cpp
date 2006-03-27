@@ -20,13 +20,14 @@ uResVal uCreateThread(
   uThreadProc proc,
   uArg        arg,
   UTHANDLE    *id,
-  uStackSize  size
+  uStackSize  size,
+  USECURITY_ATTRIBUTES* sa
 )
 {
 #ifdef _WIN32
     DWORD threadId = 0;
     HANDLE hndl = CreateThread(
-                      NULL,
+                      sa,
                       size,
                       proc,
                       arg,
@@ -141,7 +142,7 @@ int uCloseThreadHandle(UTHANDLE id)
     res = CloseHandle(id);
     if (res == 0)
     {
-        d_perror("CloseHandle");
+        d_perror("CloseHandle failed\n");
         return 1;
     }
 
@@ -222,4 +223,3 @@ int uTime()
 #endif
 }
 */
-

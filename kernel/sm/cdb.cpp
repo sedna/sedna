@@ -42,7 +42,7 @@ void create_db(__int64 data_file_max_size,
 
     // create files
     USECURITY_ATTRIBUTES *sa;	
-    if(uCreateSA(U_ALL_ACCESS, &sa)!=0) throw USER_EXCEPTION(SE3060);
+    if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
     
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
     data_file_handler = uCreateFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
@@ -192,7 +192,7 @@ void create_phys_log(int phys_log_size)
   
   string phys_log_file_name = string(db_files_path) + string(db_name) + ".plog";
 
-  if(uCreateSA(U_ALL_ACCESS, &sa)!=0) throw USER_EXCEPTION(SE3060);
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
   //create phys log file
   phys_log_handle = uCreateFile(
                             phys_log_file_name.c_str(),
@@ -351,7 +351,7 @@ void create_logical_log()
   USECURITY_ATTRIBUTES *sa;
 
   string logical_log_file_name = string(db_files_path) + string(db_name) + ".llog";
-  if(uCreateSA(U_ALL_ACCESS, &sa)!=0) throw USER_EXCEPTION(SE3060);
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
 
   //create phys log file
   logical_log_dsc = uCreateFile(

@@ -77,7 +77,8 @@ int uCreateProcess(
            UPHANDLE *process_handle,
            UTHANDLE *thread_handle,
            UPID *process_id,
-           UTID *thread_id
+           UTID *thread_id,
+           USECURITY_ATTRIBUTES* sa
     )
 {
 #ifdef _WIN32
@@ -92,8 +93,8 @@ int uCreateProcess(
     BOOL res = CreateProcess(
                      NULL,								// name of executable module
                      command_line,						// command line string
-                     NULL,								// SD
-                     NULL,								// SD
+                     sa,								// Security attributes for the new process
+                     sa,								// Security attributes for the main thread
                      inherit_handles ? TRUE : FALSE,	// handle inheritance option
                      flags,//CREATE_NEW_CONSOLE,//flags,								// creation flags
                      NULL,								// use parent's environment 

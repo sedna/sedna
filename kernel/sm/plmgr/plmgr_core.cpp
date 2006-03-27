@@ -34,7 +34,7 @@ bool plmgr_core::create_phys_log(string DbFilesPath)
 {
   int r;
   //init phys log protection semaphore
-  r = USemaphoreCreate(&sem, 1, 1, PHYS_LOG_PROTECTION_SEMAPHORE_NAME);
+  r = USemaphoreCreate(&sem, 1, 1, PHYS_LOG_PROTECTION_SEMAPHORE_NAME, NULL);
 
   if ( r != 0)
   {
@@ -183,7 +183,7 @@ void plmgr_core::create_shared_mem(int ext_portion)
 
   res = uCreateShMem(&file_mapping,
                      PHYS_LOG_SHARED_MEM_NAME,
-                     sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM
+                     sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM, NULL
                     );
 
 

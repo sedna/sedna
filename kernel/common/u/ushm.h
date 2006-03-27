@@ -7,6 +7,7 @@
 #define _USHMEM_H
 
 #include "u.h"
+#include "usecurity.h"
 
 #ifdef _WIN32
 
@@ -22,7 +23,7 @@ typedef int UShMem;
 
 
 
-int uCreateShMem(UShMem *id, global_name name, int size);
+int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* sa);
 
 int uOpenShMem(UShMem *id, global_name key, int size);
 

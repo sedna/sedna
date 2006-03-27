@@ -101,7 +101,7 @@ int SSMMsg::init()
 
     if (m == Server)
     {
-        if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size))
+        if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size, NULL))
         {
             d_printf1("uCreateShMem failed\n");
             return 1;
@@ -129,7 +129,7 @@ int SSMMsg::init()
         for (i = NAMED_SEMS_NUM; i < sems_num; i++)
             init_values[i] = 0;
 
-        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems))
+        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems, NULL))
         {
             d_printf1("USemaphoreArrCreate failed\n");
             return 1;
@@ -373,7 +373,7 @@ int SSMMsg::serve_clients(process_msg_func func)
         //d_printf2("server thread number %d started\n", i);
         UTHANDLE id;
         server_param->i = i;
-        uResVal res = uCreateThread(SSMMsg_server_proc, server_param, &id, PROCESS_METHOD_THREAD_STACK_SIZE);
+        uResVal res = uCreateThread(SSMMsg_server_proc, server_param, &id, PROCESS_METHOD_THREAD_STACK_SIZE, NULL);
         if (res != 0) 
         {
             d_printf1("Failed to create thread\n");

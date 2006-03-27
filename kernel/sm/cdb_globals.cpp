@@ -133,25 +133,26 @@ void create_cfg_file(char *db_name,
                     )
 {
    UFile cfg_file_handle;
-   USECURITY_ATTRIBUTES *sa;
+   USECURITY_ATTRIBUTES *def_sa, *dir_sa;
    
    string cfg_files_path = string(SEDNA_DATA)+"/cfg";
    string cfg_file_name  = cfg_files_path + "/" + string(db_name) + "_cfg.xml";
 
-
-   if (uMkDir(cfg_files_path.c_str()) == 0)
+   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+   if (uMkDir(cfg_files_path.c_str(), dir_sa) == 0)
       throw USER_EXCEPTION2(SE4300, cfg_files_path.c_str());
 
-   if(uCreateSA(U_ALL_ACCESS, &sa)!=0) throw USER_EXCEPTION(SE3060);
+   if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
    cfg_file_handle = uCreateFile(cfg_file_name.c_str(),
   	                            0,
   	                            U_READ_WRITE,
   	                            U_WRITE_THROUGH,
-  	                            sa);
+  	                            def_sa);
    if (cfg_file_handle == U_INVALID_FD)
       throw USER_EXCEPTION2(SE4040, "database configuration file");
 
-   uReleaseSA(sa);
+   uReleaseSA(def_sa);
+   uReleaseSA(dir_sa);
 	  
 //   if ( (cfg_file=fopen(cfg_file_name.c_str(), "w")) == NULL)
 //      throw CharismaException(string("???: Can't create file ") + cfg_file_name);
@@ -193,14 +194,20 @@ void create_cfg_file(char *db_name,
 void create_data_directory()
 {
    string data_files_path = string(SEDNA_DATA) + string("/data/");
+   USECURITY_ATTRIBUTES *dir_sa;
 
-   if (uMkDir(data_files_path.c_str()) == 0)
+   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+
+   if (uMkDir(data_files_path.c_str(), dir_sa) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
 
    data_files_path += ( string(db_name) + "_files" );
 
-   if (uMkDir(data_files_path.c_str()) == 0)
+   if (uMkDir(data_files_path.c_str(), dir_sa) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
+
+   uReleaseSA(dir_sa);
+   
 }
 
 

@@ -8,6 +8,7 @@
 #define UTHREAD_H
 
 #include "u.h"
+#include "usecurity.h"
 
 
 #ifdef _WIN32
@@ -52,7 +53,8 @@ uResVal uCreateThread(
     uThreadProc proc,
     uArg        arg,
     UTHANDLE    *id,
-    uStackSize  size
+    uStackSize  size,
+    USECURITY_ATTRIBUTES* sa
 );
 
 int uEnableSuspend();

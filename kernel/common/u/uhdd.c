@@ -64,39 +64,28 @@ WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceTo
 #endif
 
 
-UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES * sa)
+UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa)
 {
 #ifdef _WIN32
     return CreateFile(name, accs, share, sa, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | attr, NULL);
 #else
     int fd;
-    fd = open(name, accs | O_CREAT | O_EXCL | O_LARGEFILE | attr, U_MODE);
+    USECURITY_ATTRIBUTES file_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
+    if (sa) file_access_mode = *sa;
+    fd = open(name, accs | O_CREAT | O_EXCL | O_LARGEFILE | attr, file_access_mode);
 /*    if (fd == -1) return -1;*/
-    if (fd == -1 || fchmod(fd, U_MODE) == -1)
+    if (fd == -1 || fchmod(fd, file_access_mode) == -1)
         return -1;
     return fd;
 #endif
 }
-
-/*
-UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
-{
-#ifdef _WIN32
-	return CreateFile(name, accs, share, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | attr, NULL);
-#else
-	int fd = open(name, accs | O_CREAT | O_EXCL | O_LARGEFILE | attr, U_MODE);
-    if (fd == -1 || fchmod(fd, 00666) == -1) return -1;
-    return fd;
-#endif
-}
-*/
 
 UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
 {
 #ifdef _WIN32
     return CreateFile(name, accs, share, NULL, OPEN_EXISTING, attr, NULL);
 #else
-    return open(name, accs | O_LARGEFILE | attr, U_MODE);
+    return open(name, accs | O_LARGEFILE | attr, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
 #endif
 }
 
@@ -229,7 +218,7 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
 #else
     if (meth == U_FILE_BEGIN)
     {
-        /*d_printf1("Calling ftruncate64...\n");*/
+        /*printf("Calling ftruncate64...\n");*/
         if (ftruncate64(fd, offs) == -1)
             return 0;
     }
@@ -256,7 +245,7 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
 #endif
 }
 
-int uMkDir(const char *name)
+int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa)
 {
     int res;
 #ifdef _WIN32
@@ -268,7 +257,10 @@ int uMkDir(const char *name)
     else
         return 1;
 #else
-    res = mkdir(name, 00770);
+    USECURITY_ATTRIBUTES dir_access_mode = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
+    if (sa) dir_access_mode = *sa;
+    
+    res = mkdir(name, dir_access_mode);
     if (res == -1 && errno == ENOENT)
         return 0;
     if (res == -1 && errno == EEXIST)
@@ -303,14 +295,14 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
     __int64 src_file_size = (__int64) 0;
 
     if (fail_if_exists)
-        des = open(new_file, O_CREAT | O_EXCL | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_MODE);
+        des = open(new_file, O_CREAT | O_EXCL | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
     else
-        des = open(new_file, O_CREAT | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_MODE);
+        des = open(new_file, O_CREAT | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
 
     if (des == -1)
         return 0;
 
-    src = open(existing_file, O_LARGEFILE | O_RDONLY, U_MODE);
+    src = open(existing_file, O_LARGEFILE | O_RDONLY, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
     if (src == -1)
         return 0;
 
@@ -382,14 +374,16 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 
     if (lstat(path, &path_buf) == -1)
     {
-        d_perror("lstat");
+        printf("lstat error\n");
+        perror("lstat");
         return 0;
     }
 
     n = scandir("/dev", &dir, 0, alphasort);
     if (n == -1)
     {
-        d_perror("scandir");
+        printf("scandir error\n");
+        perror("scandir");
         return 0;
     }
 
@@ -401,20 +395,21 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
         memset(buf + 5, '\0', DSS_BUF_SIZE - 5);
         if (strlen(dir[i]->d_name) > DSS_BUF_SIZE - 6)
         {
-            fprintf(stderr, "buffer overflow error\n");
+            printf("buffer overflow error\n");
             return 0;
         }
         strcpy(buf + 5, dir[i]->d_name);
         if (lstat(buf, &dev_buf) == -1)
         {
-            d_perror("lstat");
+            printf("lstat error\n");
+            perror("lstat");
             return 0;
         }
 
         if ((major(path_buf.st_dev) == major(dev_buf.st_rdev)) && (minor(path_buf.st_dev) == minor(dev_buf.st_rdev)) && (!S_ISCHR(dev_buf.st_mode)) && strlen(dir[i]->d_name) > 1 && dir[i]->d_name[0] == 'h' && dir[i]->d_name[1] == 'd')
             break;
 /*              {*/
-/*                  d_printf4("%s    %d/%d\n", buf, major(dev_buf.st_dev), minor(dev_buf.st_dev));*/
+/*                  printf("%s    %d/%d\n", buf, major(dev_buf.st_dev), minor(dev_buf.st_dev));*/
 /*              }*/
     }
 
@@ -425,13 +420,15 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
     fd = open(buf, 0);
     if (fd == -1)
     {
-        d_perror("open");
+        printf("Error opening device\n");
+        perror("open");
         return 0;
     }
 
     if (ioctl(fd, BLKSSZGET, sector_size) == -1)
     {
-        d_perror("ioctl");
+        printf("Error obtaining sector size\n");
+        perror("ioctl");
         return 0;
     }
 
@@ -475,7 +472,7 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
             return 0;
     }
 
-    if (uCreateSA(U_ALL_ACCESS, &sa) != 0)
+    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0) != 0)
         return 0;
 
     fs->f = uCreateFile(fs->name, 0, U_READ_WRITE, 0, sa);
@@ -509,6 +506,7 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
 #ifdef _WIN32
 
     WIN32_FIND_DATA find_data;
+    struct file_struct fs;
     UFile tmphanldle;
     char buf[20];
 

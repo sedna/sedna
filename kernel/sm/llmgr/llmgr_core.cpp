@@ -24,7 +24,7 @@ void llmgr_core::ll_log_create(string db_files_path)
 {
   int res;
   //!!!init logical log protection semaphore!!!
-  res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);  
+  res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL);  
 
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -90,7 +90,8 @@ void llmgr_core::ll_log_create_shared_mem()
 
    res = uCreateShMem(&shared_mem_dsc,
                       CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME,
-                      CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
+                      CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE,
+                      NULL
                      );
 
    if (res != 0)

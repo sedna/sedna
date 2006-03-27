@@ -107,11 +107,11 @@ void pping_client::startup(SednaUserException& e, bool is_soft)
             //throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
     }
 
-    if (UUnnamedSemaphoreCreate(&sem, 0) != 0)
+    if (UUnnamedSemaphoreCreate(&sem, 0, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to create semaphore", false);
 
 
-    uResVal res = uCreateThread(pping_client_thread_proc, this, &client_thread_handle, PPING_STACK_SIZE);
+    uResVal res = uCreateThread(pping_client_thread_proc, this, &client_thread_handle, PPING_STACK_SIZE, NULL);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping client thread", false);
 
     initialized = true;
@@ -254,7 +254,8 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
         uResVal res = uCreateThread(pping_server_cli_thread_proc, 
                                     pps_arg, 
                                     &(pps->thread_table[pps_arg->id].handle), 
-                                    PPING_STACK_SIZE);
+                                    PPING_STACK_SIZE,
+                                    NULL);
         if (res != 0) goto sys_failure;
     }
     return 0;
@@ -297,7 +298,7 @@ void pping_server::startup()
 
     if (ulisten(sock, PPING_LSTNR_QUEUE_LEN) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
 
-    uResVal res = uCreateThread(pping_server_lstn_thread_proc, this, &server_lstn_thread_handle, PPING_STACK_SIZE);
+    uResVal res = uCreateThread(pping_server_lstn_thread_proc, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping server thread", false);
     initialized = true;
 #endif

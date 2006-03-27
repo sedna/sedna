@@ -11,17 +11,14 @@
 
 using namespace std;
 
-#define RIGHTS		0x1FF
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name)
+int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa)
 #ifdef _WIN32
 {
-    *sem = CreateSemaphore(NULL, init_value, max_value, name);
+    *sem = CreateSemaphore(sa, init_value, max_value, name);
 
     if (*sem == NULL)
     {
@@ -54,7 +51,9 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 		return 1;
 	}
 
-    int res = semget(name, SEM_AMOUNT, IPC_CREAT | IPC_EXCL | RIGHTS);
+    USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
+    if (sa) sem_access_mode = *sa;
+    int res = semget(name, SEM_AMOUNT, IPC_CREAT | IPC_EXCL | sem_access_mode);
     *sem = res;
 
     if (*sem < 0)
@@ -288,7 +287,7 @@ int USemaphoreUp(USemaphore sem)
 // Array of semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name)
+int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa)
 #ifdef _WIN32
 {
     int i = 0;
@@ -297,7 +296,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 
     for (i = 0; i < size; i++)
     {
-        (*sem)[i] = CreateSemaphore(NULL,
+        (*sem)[i] = CreateSemaphore(sa,
                                     init_values[i],
                                     INT_MAX,
                                     (base_name + int2string(i)).c_str());
@@ -334,7 +333,9 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 		return 1;
 	}
 
-    *sem = semget(name, size, IPC_CREAT | IPC_EXCL | RIGHTS);
+    USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
+    if (sa) sem_access_mode = *sa;
+    *sem = semget(name, size, IPC_CREAT | IPC_EXCL | sem_access_mode);
 
     if (*sem < 0)
     {
@@ -597,10 +598,10 @@ int USemaphoreArrUp(USemaphoreArr sem, int i)
 // Unnamed semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value)
+int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_ATTRIBUTES* sa)
 #ifdef _WIN32
 {
-    *sem = CreateSemaphore(NULL, init_value, INT_MAX, NULL);
+    *sem = CreateSemaphore(sa, init_value, INT_MAX, NULL);
 
     if (*sem == NULL)
     {

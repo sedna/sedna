@@ -8,6 +8,7 @@
 #define _USEM_H
 
 #include "u.h"
+#include "usecurity.h"
 
 #ifdef _WIN32
 
@@ -35,8 +36,8 @@ typedef struct {
 #endif
 
 // functions return 0 on success
-
-int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name);
+// sa - Security Attributes for the new semaphore
+int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa);
 int USemaphoreOpen(USemaphore *sem, global_name name);
 int USemaphoreRelease(USemaphore sem);
 int USemaphoreClose(USemaphore sem);
@@ -49,8 +50,8 @@ int USemaphoreDown(USemaphore sem, unsigned int millisec);
 int USemaphoreUp(USemaphore sem);
 
 
-
-int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name);
+// sa - Security Attributes for the new semaphores
+int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa);
 int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name);
 int USemaphoreArrRelease(USemaphoreArr sem, int size);
 int USemaphoreArrClose(USemaphoreArr sem, int size);
@@ -60,7 +61,8 @@ int USemaphoreArrUp(USemaphoreArr sem, int i);
 
 
 
-int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value);
+// sa - Security Attributes for the new unnamed semaphore
+int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_ATTRIBUTES* sa);
 int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem);
 int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem);
 // down with timout

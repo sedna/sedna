@@ -175,7 +175,7 @@ void lock_head::print()
 void lock_table::init_lock_table()
 {
 #ifdef LOCK_MGR_ON
-   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM) != 0) 
+   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM, NULL) != 0) 
       throw USER_EXCEPTION2(SE4010, "SEDNA_LOCK_MANAGER_SEM");
 #endif
 }

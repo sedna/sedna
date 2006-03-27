@@ -8,6 +8,7 @@
 #define _UMMAP_H
 
 #include "uhdd.h"
+#include "usecurity.h"
 
 #ifdef _WIN32
 
@@ -35,7 +36,7 @@ typedef struct {
 
 // check the result by U_INVALID_FILEMAPPING macros
 // pass U_INVALID_FD as fd if you want to create object in swap file
-UMMap uCreateFileMapping(UFile fd, int size, const char* name);
+UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBUTES* sa);
 UMMap uOpenFileMapping(UFile fd, int size, const char *name);
 /*
 UMMap uCreateFileMapping(const char* file_name, UShareMode share, UFlag attr, global_name g_name);

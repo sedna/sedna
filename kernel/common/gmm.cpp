@@ -20,7 +20,7 @@ void create_global_memory_mapping()
     vmm_region_values v;
 
 
-    global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING);
+    global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL);
     if (U_INVALID_FILEMAPPING(global_memory_mapping))
         throw USER_EXCEPTION2(SE4074, "See file FAQ shipped with the distribution");
 
@@ -42,7 +42,7 @@ void create_global_memory_mapping()
 #endif
     if (!uIsFileExist(buf))
     {
-        if (uMkDir(buf) == 0)
+        if (uMkDir(buf, NULL) == 0)
             throw USER_EXCEPTION2(SE4300, buf);
     }
 
@@ -99,9 +99,8 @@ void create_global_memory_mapping()
                            &process_handle,
                            NULL,
                            &pid,
-                           NULL
-                           /*NULL,
-                           0*/) != 0)
+                           NULL,
+                           NULL) != 0)
             throw SYSTEM_ENV_EXCEPTION("Can't create process");
 
         int status;
