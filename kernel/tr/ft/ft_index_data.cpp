@@ -115,7 +115,7 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 		ft_index_sem_up();	
 		throw USER_EXCEPTION(SE2033);
 	}
-	//down_concurrent_micro_ops_number();
+	down_concurrent_micro_ops_number();
 	ft_index_cell* idc=(ft_index_cell*)scm_malloc(sizeof(ft_index_cell),true);
     idc->id = *ft_idx_counter;
     (*ft_idx_counter)++;

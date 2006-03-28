@@ -835,7 +835,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                           nt_type,
                                           nt_data,false);
     }
-	else if (op == "PPAxisPreceeding")
+	else if (op == "PPAxisPreceding")
     {
         if (   lst->size() != 4)
             throw USER_EXCEPTION2(SE1004, "29");

@@ -981,12 +981,7 @@ xptr getPreviousDONode(xptr node)
 		}
 		else
 		{
-			tmp=((n_dsc*)XADDR(tmp))->pdsc;
-			if (tmp==XNULL)
-				return XNULL;
-			else
-				tmp=removeIndirection(tmp);
-
+			return removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
 		}		
 	}
     tmp=((n_dsc*)XADDR(tmp))->ldsc;

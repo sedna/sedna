@@ -191,21 +191,10 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 			cur=getPreviousDONode(base);
 			while (true)
 			{
-				if (cur==XNULL || is_element(cur))
-				{
-					while (cur!=XNULL)
-					{
-						if (nid_cmp_effective(cur,base)==-2)
-							cur=getPreviousDONode(cur);
-						else
-							break;
-					}
+				if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2)) 
 					break;
-				}
-				else
-				{
+				else			
 					cur = getPreviousDONode(cur);
-				}
 			}
 		}		
     }
@@ -226,18 +215,9 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 		cur=getPreviousDONode(cur);
 		while (true)
 		{
-			if (cur==XNULL || is_element(cur))
-			{
-				while (cur!=XNULL)
-				{
-					if (nid_cmp_effective(cur,base)==-2)
-						cur=getPreviousDONode(cur);
-					else
-						break;
-				}
+			if (cur==XNULL || (is_element(cur) && nid_cmp_effective(cur,base)!=-2)) 
 				break;
-			}
-			else
+			else			
 				cur = getPreviousDONode(cur);
 		}
 	}		   
@@ -306,20 +286,11 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 				base=getPreviousDONode(cur);
 				while (true)
 				{
-					if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
-					{
-						while (cur!=XNULL)
-						{
-							if (nid_cmp_effective(cur,base)==-2)
-								cur=getPreviousDONode(cur);
-							else
-								break;
-						}
+					if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2)) 
 						break;
-					}
-					else
+					else			
 						cur = getPreviousDONode(cur);
-				}
+				}				
 			}
 		}		
 		else
@@ -364,20 +335,11 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 				cur=getPreviousDONode(cur);
 				while (true)
 				{
-					if (cur==XNULL || cfun(GETSCHEMENODEX(cur),uri,name,type))
-					{
-						while (cur!=XNULL)
-						{
-							if (nid_cmp_effective(cur,base)==-2)
-								cur=getPreviousDONode(cur);
-							else
-								break;
-						}
+					if (cur==XNULL || (cfun(GETSCHEMENODEX(cur),uri,name,type) && nid_cmp_effective(cur,base)!=-2)) 
 						break;
-					}
-					else
+					else			
 						cur = getPreviousDONode(cur);
-				}
+				}	
 			}
 		}		
 	else
