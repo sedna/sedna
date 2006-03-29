@@ -68,8 +68,8 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
-	uMkDir(index_path1.c_str());
-	uMkDir(index_path.c_str());
+	uMkDir(index_path1.c_str(),NULL);
+	uMkDir(index_path.c_str(),NULL);
 	this->IndexPath.set(index_path.c_str());
 
 	this->SuppressMessagePump();
@@ -181,7 +181,7 @@ UFile SednaIndexJob::create_log(const char *index_name)
 	std::string log_path = log_path1 + std::string(fn);
 
 	USECURITY_ATTRIBUTES *sa;
-	if(uCreateSA(U_ALL_ACCESS, &sa)!=0) throw USER_EXCEPTION(SE3060);
+	if(uCreateSA(&sa,U_ALL_ACCESS, 0)!=0) throw USER_EXCEPTION(SE3060);
 	UFile log_file = uCreateFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, sa);
 	if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
 

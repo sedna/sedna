@@ -129,7 +129,7 @@ void PPAxisAncestor::next_node(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-		cur = get_parent_node(cur);
+		if (!self) cur = get_parent_node(cur);
     }
 
     t.copy(tuple_cell::node(cur));
@@ -149,7 +149,7 @@ void PPAxisAncestor::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-        cur = get_parent_node(cur);
+        if (!self) cur = get_parent_node(cur);
         CHECKP(cur);
         while (cur!=XNULL)
 		{
@@ -185,7 +185,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-		cur = get_parent_node(cur);
+		if (!self) cur = get_parent_node(cur);
         CHECKP(cur);
 		while (cur!=XNULL)
 		{
@@ -221,7 +221,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-        cur = get_parent_node(cur);
+        if (!self) cur = get_parent_node(cur);
         CHECKP(cur);
 		char* uri=st_ct.get_uri_by_prefix(nt_data.ncname,element);
         while (cur!=XNULL)
@@ -259,7 +259,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-        cur = get_parent_node(cur);
+        if (!self) cur = get_parent_node(cur);
         CHECKP(cur);
 		while (cur!=XNULL)
 		{

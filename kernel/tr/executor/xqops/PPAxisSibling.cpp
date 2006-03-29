@@ -291,7 +291,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
         cur = child.get(t).get_node();
 		CHECKP(cur);
 		schema_node* scm=(GETSCHEMENODEX(cur))->parent;
-		if (scm->type=virtual_root)
+		if (scm->type==virtual_root)
 		{
 			cur=XNULL;
 			continue;
@@ -321,9 +321,14 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
 	CHECKP(cur);
 	xptr ind=((n_dsc*)XADDR(cur))->pdsc;
 	xptr tmp=merge_tree->getNextNode();
-	CHECKP(tmp);
-	if (ind==((n_dsc*)XADDR(tmp))->pdsc)
-		cur=tmp;
+	if (tmp!=XNULL)
+	{
+		CHECKP(tmp);
+		if (ind==((n_dsc*)XADDR(tmp))->pdsc)
+			cur=tmp;
+		else
+			cur=XNULL;			 
+	}
 	else
-		cur=XNULL;			 
+		cur=XNULL;
 }

@@ -803,7 +803,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                           nt_type,
                                           nt_data,true);
     }
-	else if (op == "PPSiblingFollowing")
+	else if (op == "PPAxisFollowingSibling")
     {
         if (   lst->size() != 4)
             throw USER_EXCEPTION2(SE1004, "29");
@@ -819,7 +819,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                           nt_type,
                                           nt_data,true);
     }
-	else if (op == "PPSiblingPreceding")
+	else if (op == "PPAxisPrecedingSibling")
     {
         if (   lst->size() != 4)
             throw USER_EXCEPTION2(SE1004, "29");

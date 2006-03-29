@@ -397,13 +397,13 @@ void SednaSearchJob::get_next_result(tuple &t)
 {
 	if (dtth==NULL)
 	{
-		UUnnamedSemaphoreCreate(&sem1, 0);
-		UUnnamedSemaphoreCreate(&sem2, 0);
+		UUnnamedSemaphoreCreate(&sem1, 0, NULL);
+		UUnnamedSemaphoreCreate(&sem2, 0, NULL);
         uCreateThread(
         ThreadFunc,                  // thread function 
         this,						 // argument to thread function 
         &dtth,                       // use default creation flags 
-        0);
+        0, NULL);
 	}
 
 	UUnnamedSemaphoreDown(&sem1);
