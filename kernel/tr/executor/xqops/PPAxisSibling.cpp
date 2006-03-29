@@ -327,7 +327,10 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
 		if (ind==((n_dsc*)XADDR(tmp))->pdsc)
 			cur=tmp;
 		else
+		{
 			cur=XNULL;			 
+			merge_tree->clear_merge();
+		}
 	}
 	else
 		cur=XNULL;

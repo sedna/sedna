@@ -11,6 +11,7 @@
 #include "XPath.h"
 #include <vector>
 #include "node_utils.h"
+#include "xptrChanneledMerge.h"
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisDescendant
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,8 +31,9 @@ protected:
     t_next_fun next_fun;
 	std::vector<xptr> descstack;
 	std::map<schema_node*,std::vector<schema_node*> > desc_sch;
+	xptrChanneledMerge* merge_tree;
 	std::vector<schema_node*> * curvect;
-	int curpos;
+	//int curpos;
 	xptr ancestor;
 	void init_function();
     void children(PPOpIn &_child_) { _child_ = child; }

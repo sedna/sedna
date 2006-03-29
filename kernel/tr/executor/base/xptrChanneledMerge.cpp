@@ -73,6 +73,7 @@ void xptrChanneledMerge::clear_merge  ()
 		tmp=merge_tree->rb_successor(tmp);
 	}	
 	top=NULL;
+	merge_tree->clear();
 }
 void xptrChanneledMerge::addChannel(xptr node)
 {

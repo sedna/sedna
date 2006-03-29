@@ -28,6 +28,7 @@ void PPAxisDescendant::init_function()
         case node_test_function_call			: next_fun = &PPAxisDescendant::next_function_call; break;
 		default									: throw USER_EXCEPTION2(SE1003, "in AxisDescandant");
     }
+	merge_tree=NULL;
 }
 PPAxisDescendant::PPAxisDescendant(variable_context *_cxt_, 
                          PPOpIn _child_,
@@ -56,6 +57,10 @@ PPAxisDescendant::~PPAxisDescendant()
 {
     delete child.op;
     child.op = NULL;
+	if (merge_tree)
+	{
+		delete merge_tree;
+	}
 }
 
 void PPAxisDescendant::open  ()
@@ -70,6 +75,10 @@ void PPAxisDescendant::reopen()
     child.op->reopen();
 
     cur = XNULL;
+	if (merge_tree)
+	{
+		merge_tree->clear_merge();
+	}
 }
 
 void PPAxisDescendant::close ()
@@ -200,17 +209,30 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 			}
 			else
 				curvect=&desc_sch[scm];
-			int i;
-			for (i=0;i<curvect->size();i++)
+			std::vector<schema_node*>::iterator it=curvect->begin();
+			if (merge_tree==NULL) merge_tree=new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
+			while (it!=curvect->end())
+			{
+				//xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);
+				cur=getFirstDescandantByScheme(tmp,*it);				
+				if (cur!=XNULL) merge_tree->addChannel(cur);
+				it++;
+			}
+			
+			cur=merge_tree->getNextNode();			
+			ancestor=tmp;
+			/*for (i=0;i<curvect->size();i++)
 			{
 				cur=getFirstDescandantByScheme(tmp,(*curvect)[i]);
 				if (cur!=XNULL)
 				{
 					curpos=i;
-					ancestor=tmp;
+					
 					break;
 				}
-			}
+			}*/
+
+
 		}
 		/*if (cur==XNULL)
 		{
@@ -219,18 +241,13 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 		}*/
 	}
     t.copy(tuple_cell::node(cur));
-	xptr tmp=getNextDescandantofSameSort(ancestor,cur);
-	while (tmp==XNULL)
+	cur=merge_tree->getNextNode();
+	if (cur!=XNULL && nid_cmp_effective(cur,ancestor)!=2)
 	{
-		curpos++;
-		if (curvect->size()<=curpos)
-		{
-			cur=XNULL;
-			return;
-		}
-		tmp=getFirstDescandantByScheme(ancestor,(*curvect)[curpos]);
+		cur=XNULL;
+		merge_tree->clear_merge();
 	}
-	cur=tmp;
+	
     
 }
 void PPAxisDescendant::next_text(tuple &t)

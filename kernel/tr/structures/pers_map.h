@@ -87,6 +87,7 @@ template<class T, class X> struct pers_sset
 	pers_sset_entry* rb_maximum(pers_sset_entry* entry);
 	pers_sset_entry* rb_successor(pers_sset_entry* entry);
 	pers_sset_entry* rb_predecessor(pers_sset_entry* entry);
+	void clear();
 	inline bool less(typename pers_sset<T,X>::pers_sset_entry* p1,typename pers_sset<T,X>::pers_sset_entry* p2)
 		{
 			return (p1->obj->less(p2->obj));
@@ -437,6 +438,13 @@ template<class T, class X> void pers_sset<T,X>::free(pers_sset<T,X>* set)
 {
 	scm_free(set->mem_pool,IS_PH_PTR(set));
 	scm_free(set,IS_PH_PTR(set));	
+}
+
+template<class T, class X> void pers_sset<T,X>::clear()
+{
+	mem_pool_cnt=0;
+	mem_free_place=0;
+	root=NULL;
 }
 
 template<class T, class X> typename pers_sset<T,X>::pers_sset_entry* pers_sset<T,X>::get (void const* p1, void const* p2)
