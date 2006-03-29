@@ -149,7 +149,7 @@ bool ll_phys_log_startup()
 {
 #ifdef PHYS_LOG
   phys_log_mgr = new sm_plmgr();
-  return phys_log_mgr->create_phys_log(db_files_path);
+  return phys_log_mgr->create_phys_log(db_files_path, phys_log_size);
 #else
   return true;
 #endif

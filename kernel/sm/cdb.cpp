@@ -405,8 +405,8 @@ int main(int argc, char **argv)
     int data_file_initial_size = 1600;			// = 10Mb (in pages)
     int tmp_file_initial_size = 1600;			// = 10Mb (in pages)
     int persistent_heap_size = 0xA00000;		// = 10Mb
-    int phys_log_size = 0xA00000;                       // = 10Mb
-    int phys_log_ext_portion = 0xA00000;                // = 10Mb
+//    int phys_log_size = 0xA00000;                       // = 10Mb
+//    int phys_log_ext_portion = 0xA00000;                // = 10Mb
     pping_client ppc(5151);
     bool is_ppc_closed = true;
 

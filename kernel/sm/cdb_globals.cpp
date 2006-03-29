@@ -38,7 +38,7 @@ int _max_trs_num_ =10;
 char _db_name_[MAX_ARGS_LENGTH];
 
 
-const size_t cdb_narg = 13;
+const size_t cdb_narg = 15;
 
 arg_rec cdb_argtable[] =
 {
@@ -54,10 +54,9 @@ arg_rec cdb_argtable[] =
 {"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb),\n\t\t\t\tdefault 10Mb"},
 {"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
-/*
-{"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "10", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 10Mb" },
+{"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
 {"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
-*/
+
 {NULL,                     "\ndb_name", arg_str, _db_name_,               "???", "\t\tthe name of the database to be created"}
 };
 

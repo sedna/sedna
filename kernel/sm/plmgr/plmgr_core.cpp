@@ -30,7 +30,7 @@ int pure_size = 0; //for DEBUG
 
 ******************************************************************************/
 
-bool plmgr_core::create_phys_log(string DbFilesPath)
+bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 {
   int r;
   //init phys log protection semaphore
@@ -119,6 +119,8 @@ bool plmgr_core::create_phys_log(string DbFilesPath)
   pl_head_for_rcv->is_stopped_successfully = false;
   _writeFile(pl_head_for_rcv, sizeof(file_head), 0);
 
+  log_file_size = _phys_log_size_;
+
 
   d_printf2("pl_head_fro_rcv.version=%d\n", pl_head_for_rcv->version);
 
@@ -126,7 +128,7 @@ bool plmgr_core::create_phys_log(string DbFilesPath)
 }
 
 
-void plmgr_core::open_phys_log(string db_phys_log_path)
+void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 {
 
   //open semaphore fpr protecting phys log
@@ -160,6 +162,8 @@ void plmgr_core::open_phys_log(string db_phys_log_path)
   read_buf = new char[PHYS_LOG_READ_BUF_LENGTH];
 
   this->init_phys_log_open_state();
+
+  log_file_size = _phys_log_size_; 
 
 }
 
@@ -580,9 +584,11 @@ void plmgr_core::logFlushPortionOfRecords(LSN& lsn, bool sync)
   //end for debug
 
   //extend Log File if it is needed
-  int free_size;//for debug
+  int free_size;
+//  if ((free_size = getLogFileSize(false) - getPhysLogSize(false)) < (0.33 * getLogFileSize(false)))
   if ((free_size = getLogFileSize(false) - getPhysLogSize(false)) < drbl_len)
-  {
+  {//need the checkpoint
+
 #ifdef CHECKPOINT_ON
      if (drbl_len > mem_head->extend_portion_size)
      {
@@ -599,8 +605,10 @@ void plmgr_core::logFlushPortionOfRecords(LSN& lsn, bool sync)
         mem_head->checkpoint_on = true;
      }
 #endif
-
-     extendLog(false);
+//     if ( free_size < drbl_len)
+//     {//need to extend phys log file since there is not enough space in phys log to write shared mememory on disk
+        extendLog(false);
+//     }
   }
 
 
@@ -734,6 +742,26 @@ void plmgr_core::logClear(const LONG_LSN& last_cp_lsn, bool sync)
   //flush phys log header
   d_printf2("FLUSH pl_head.version=%d", mem_head->pl_head.version);
   _writeFile(&(mem_head->pl_head), sizeof(file_head), 0);
+
+
+
+  //compress the phys log size to the initial value (phys_log_size)
+  int res;
+  res = uSetFilePointer(
+                    pl_file_handler,
+                    log_file_size,
+                    NULL,
+                    U_FILE_BEGIN  
+                   );
+
+  if (res == 0)
+     throw SYSTEM_EXCEPTION("Can't Set File Pointer to the begin of file");
+
+  res = uSetEndOfFile(pl_file_handler, 0, U_FILE_CURRENT);
+
+  if (res == 0)
+      throw USER_EXCEPTION2(SE4047, "physical log");
+
 
   //reinit memory head
   //mem_head->begin_offs = sizeof(shared_mem_head);

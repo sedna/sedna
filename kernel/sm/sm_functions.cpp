@@ -77,6 +77,12 @@ void endElement_sm_cfg(void *cnt, const char *name)
     phys_log_ext_portion = atoi(_content_.c_str()) * 0x100000;
   }
 
+  if ( _tag_name_ == "init_phys_log_size")
+  {
+    phys_log_size = atoi(_content_.c_str()) * 0x100000;
+  }
+
+
   ((CfgParserContext*)cnt)->tag_name = "";
   ((CfgParserContext*)cnt)->content = "";
   

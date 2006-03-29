@@ -29,6 +29,8 @@ extern int max_trs_num;
 //phys log extending portion
 extern int phys_log_ext_portion;
 
+//phys log size (retrieved from cfg file)
+extern int phys_log_size;
 
 // database name
 extern char* db_name;

@@ -113,11 +113,12 @@ protected:
   USemaphore wait_for_checkpoint_sem;//semaphore for initing checkpoint
   UShMem file_mapping;//share memory
   void* share_mem;
+  int log_file_size;
 
 
 public:
-  bool create_phys_log(std::string db_files_path);
-  void open_phys_log(std::string db_phys_log_path);
+  bool create_phys_log(std::string db_files_path, int _log_file_size_);
+  void open_phys_log(std::string db_phys_log_path, int _log_file_size_ = 100);
   void init_phys_log_open_state();
   void create_shared_mem(int ext_portion);
   void open_shared_mem();

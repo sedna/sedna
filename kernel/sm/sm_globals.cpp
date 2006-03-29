@@ -31,6 +31,7 @@ using namespace std;
 int bufs_num;
 int max_trs_num;
 int phys_log_ext_portion;
+int phys_log_size;
 
 char* db_name = NULL;
 char *db_files_path;
