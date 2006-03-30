@@ -78,7 +78,8 @@ tuple_cell getStringParameter(PPOpIn content)
 	while (!(value.is_eos()))
 	{
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPConstructor");
-		at_vals.add(value);		
+		at_vals.add(value);
+		content.op->next(value);
 	}
 	sequence::iterator it=at_vals.begin();
 	do
@@ -86,10 +87,11 @@ tuple_cell getStringParameter(PPOpIn content)
 		tuple_cell res=atomize((*it).cells[0]);
 		res=cast_to_xs_string(res);
 		res=tuple_cell::make_sure_light_atomic(res);
-		if (it!=at_vals.begin())
+	/*	if (it!=at_vals.begin())
 		{
 			str_val.append(" ");				
 		}
+		*/
 		str_val.append(res);
 		it++;
         
@@ -357,10 +359,10 @@ void PPElementConstructor::next  (tuple &t)
 					sequence::iterator it=at_vals.begin();
 					do
 					{
-						if (it!=at_vals.begin())
+						/*if (it!=at_vals.begin())
 						{
 							str_val.append(" ");						
-						}
+						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
 						tcc=cast_to_xs_string(tcc);
 						str_val.append(tcc);
@@ -428,10 +430,10 @@ void PPElementConstructor::next  (tuple &t)
 					sequence::iterator it=at_vals.begin();
 					do
 					{
-						if (it!=at_vals.begin())
+						/*if (it!=at_vals.begin())
 						{
 							str_val.append(" ");						
-						}
+						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
 						tcc=cast_to_xs_string(tcc);
 						str_val.append(tcc);
