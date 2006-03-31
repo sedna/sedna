@@ -54,7 +54,7 @@ void socket_client::init()
 
       
       stream = new se_socketostream(Sock);
-      long_query_stream = NULL;
+      char* long_query_stream = NULL;
 
 }
 
