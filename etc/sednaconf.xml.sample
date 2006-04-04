@@ -1,0 +1,8 @@
+<?xml version="1.0" standalone="yes"?>
+
+<!-- Sample configuration file for Sedna database -->
+<sednaconf>
+  <!-- Path to database files
+       Note: In Windows use '/' for separating directories (example: c:/sedna) -->
+  <sedna_data>/var/lib/sedna</sedna_data>
+</sednaconf>

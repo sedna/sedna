@@ -135,6 +135,7 @@ endif
 	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/myenv.scm $(SEDNA_INSTALL)/sedna/driver/scheme/libs/chicken/myenv.scm
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-api.scm
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-low.scm
+	$(INSTALL) -Dp $(PERM3) etc/sednaconf.xml.sample $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml.sample
 	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/client.scm $(SEDNA_INSTALL)/sedna/examples/applications/scheme/client.scm
 	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/region.xml $(SEDNA_INSTALL)/sedna/examples/applications/scheme/region.xml
 	$(INSTALL) -Dp $(PERM3) examples/applications/c/region.xml $(SEDNA_INSTALL)/sedna/examples/applications/c/region.xml
@@ -160,13 +161,16 @@ endif
 ifndef PREFIX
 SHARE_PREFIX := /usr/share
 INCLUDE_PREFIX := /usr/include
+ETC_PREFIX := /etc
 else
 ifeq ($(PREFIX), /)
 SHARE_PREFIX := /usr/share
 INCLUDE_PREFIX := /usr/include
+ETC_PREFIX := /etc
 else
 SHARE_PREFIX := $(PREFIX)/share
 INCLUDE_PREFIX := $(PREFIX)/include
+ETC_PREFIX := $(PREFIX)/etc
 endif
 endif
 
@@ -212,6 +216,7 @@ endif
 	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/myenv.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/chicken/myenv.scm
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/sedna-api/sedna-api.scm
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/sedna-api/sedna-low.scm
+	$(INSTALL) -Dp $(PERM3) etc/sednaconf.xml.sample $(ETC_PREFIX)/sednaconf.xml.sample
 	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/client.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/scheme/client.scm
 	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/region.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/scheme/region.xml
 	$(INSTALL) -Dp $(PERM3) examples/applications/c/region.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/c/region.xml
