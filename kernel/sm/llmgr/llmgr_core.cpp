@@ -20,8 +20,9 @@ using namespace std;
 ******************************************************************************/
 
 /*                 !!!These Functions called on sm !!!                         */
-void llmgr_core::ll_log_create(string db_files_path)
+void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_)
 {
+
   int res;
   //!!!init logical log protection semaphore!!!
   res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL);  
@@ -29,22 +30,34 @@ void llmgr_core::ll_log_create(string db_files_path)
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-#ifndef LOGICAL_LOG_TEST
-  string log_file_name = string(db_files_path) + string(db_name) + ".llog";
-#else
-  string log_file_name = "x.llog";
-#endif
+  db_files_path = _db_files_path_;
+  db_name = _db_name_;
 
-  //!!!init logical log file descriptor; !!!
 
-  ll_file_dsc = uOpenFile(
-                      log_file_name.c_str(),
-                      U_SHARE_READ | U_SHARE_WRITE,
-                      U_READ_WRITE,
-                      U_WRITE_THROUGH 
-                     );
-  if ( ll_file_dsc == U_INVALID_FD )
-     throw USER_EXCEPTION2(SE4042, log_file_name.c_str());
+  //this functio opens existing log files and the order in vector corresponds to the order of files
+  open_all_log_files();
+
+  logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
+  int valid_number = file_head.valid_number;
+
+
+  //delete unnessary files
+  int i,j;
+  char buf[20];
+  std::string log_file_name;
+  for (i=0; i< ll_open_files.size(); i++)
+  {
+      if (ll_open_files[i].name_number == valid_number) break;
+
+      log_file_name = _db_files_path_ + _db_name_ + "." + _itoa(ll_open_files[i].name_number, buf, 10) + "llog";
+      if ( uDeleteFile(log_file_name.c_str()) == 0)
+         throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
+  }
+
+  //shift files to left
+  for (j=0; j <i; j++)
+       ll_open_files.erase(ll_open_files.begin());
+  
 
   if (sizeof(small_read_buf) < sizeof(logical_log_head))
      throw USER_EXCEPTION(SE4150);
@@ -70,11 +83,7 @@ void llmgr_core::ll_log_release()
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-  res = uCloseFile(ll_file_dsc);
-  
-  if (res == 0)
-     throw USER_EXCEPTION2(SE4043, "logical log file");
-
+  close_all_log_files();
 }
 
 
@@ -90,8 +99,7 @@ void llmgr_core::ll_log_create_shared_mem()
 
    res = uCreateShMem(&shared_mem_dsc,
                       CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME,
-                      CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE,
-                      NULL
+                      CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
                      );
 
    if (res != 0)
@@ -116,11 +124,12 @@ void llmgr_core::ll_log_create_shared_mem()
    mem_head->keep_bytes = 0;
    mem_head->size = (int)CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE;
       
-   logical_log_file_head file_head = read_log_file_header();
+   logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
    mem_head->next_lsn =  file_head.next_lsn;
-   mem_head->next_durable_lsn = file_head.next_lsn;
+   mem_head->next_durable_lsn = mem_head->next_lsn;
    
-   for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+   int i;
+   for (i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
    {
        mem_head->t_tbl[i].last_lsn = NULL_LSN; 
        mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
@@ -128,6 +137,34 @@ void llmgr_core::ll_log_create_shared_mem()
        mem_head->t_tbl[i].num_of_log_records = 0;
 
    }
+
+   for (i=0; i< ll_open_files.size(); i++)
+       mem_head->ll_files_arr[i] = ll_open_files[i].file_number;
+
+   mem_head->ll_files_num = ll_open_files.size();
+
+   //!!! init ll_free_files_arr and ll_free_files_num
+   int j, ind = 0;
+   bool is_exist; 
+
+   for (i = MAX_LL_LOG_FILES_NUMBER; i >= 0; i--)
+   {
+      is_exist = false;
+
+      for(j=0; i< ll_open_files.size(); i++)
+         if (ll_open_files[j].name_number == i) 
+         {
+            is_exist = true;
+            break;
+         }
+
+      if (!is_exist)
+         mem_head->ll_free_files_arr[ind++]=i; 
+  }
+
+  mem_head->ll_free_files_num = ind;
+
+  mem_head->base_addr = file_head.base_addr;//here base addr of tail log file
 
 }
 
@@ -149,7 +186,7 @@ void llmgr_core::ll_log_release_shared_mem()
 
 /*               !!! These fuctions are called on session !!!                */ 
 
-void llmgr_core::ll_log_open(string db_files_path, bool rcv_active)
+void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, bool rcv_active)
 {
   int res;
 
@@ -158,15 +195,21 @@ void llmgr_core::ll_log_open(string db_files_path, bool rcv_active)
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-  ll_file_dsc = uOpenFile(
+
+  db_files_path = _db_files_path_;
+  db_name = _db_name_;
+
+/*
+  ll_file_curr_dsc = uOpenFile(
                        db_files_path.c_str(),
                        U_SHARE_READ | U_SHARE_WRITE,
                        U_READ_WRITE,
                        U_WRITE_THROUGH 
                      );
 
-  if ( ll_file_dsc == U_INVALID_FD )
+  if ( ll_file_curr_dsc == U_INVALID_FD )
      throw USER_EXCEPTION2(SE4042, db_files_path.c_str());  
+*/
 }
 
 
@@ -213,12 +256,12 @@ void llmgr_core::ll_log_close()
 
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
-
-  res = uCloseFile(ll_file_dsc);
+/*
+  res = uCloseFile(ll_file_curr_dsc);
   
   if (res == 0)
      throw USER_EXCEPTION2(SE4043, "logical log file");
-
+*/
 
 }
 
@@ -242,6 +285,7 @@ void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &tr
      throw USER_EXCEPTION2(SE4155, int2string(trid));
 
   mem_head->t_tbl[trid].last_lsn = NULL_LSN;
+  mem_head->t_tbl[trid].first_lsn = NULL_LSN;
   mem_head->t_tbl[trid].last_rec_mem_offs  = NULL_OFFS;
   mem_head->t_tbl[trid].is_ended = false;
   mem_head->t_tbl[trid].num_of_log_records = 0;
@@ -261,9 +305,12 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
      throw USER_EXCEPTION2(SE4155, int2string(trid));
 
   mem_head->t_tbl[trid].last_lsn = NULL_LSN;
+  mem_head->t_tbl[trid].first_lsn = NULL_LSN;
   mem_head->t_tbl[trid].last_rec_mem_offs  = NULL_OFFS;
   mem_head->t_tbl[trid].is_ended = false;
   mem_head->t_tbl[trid].num_of_log_records = 0;
+
+  close_all_log_files();
 
   ll_log_unlock(sync);
 }
@@ -995,6 +1042,14 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
   log_head.prev_trn_offs = NULL_OFFS;
   log_head.body_len = rec_len;
 
+  //check that log file will not be overflowed
+  if ((LOG_FILE_PORTION_SIZE - (mem_head->next_lsn % LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + rec_len))
+  {//current log must be flushed and new file created
+     ll_log_flush(false);
+     extend_logical_log(false);
+  }
+
+
   //insert log record into shared memory
   writeSharedMemory(&log_head, sizeof(logical_log_head));
   writeSharedMemory(tmp_rec, rec_len);
@@ -1122,6 +1177,13 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
   int rec_offs = mem_head->end_offs;
 
+  //check that log file will not be overflowed
+  if ((LOG_FILE_PORTION_SIZE - (mem_head->next_lsn % LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + len))
+  {//current log must be flushed and new file created
+     ll_log_flush(false);
+     extend_logical_log(false);
+  }
+
   //insert log record into shared memory
   writeSharedMemory(&log_head, sizeof(logical_log_head));
   writeSharedMemory(addr, len);
@@ -1130,6 +1192,10 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   //reinit shared memory header (only lsns)
   mem_head->t_tbl[trid].last_rec_mem_offs = rec_offs;
   mem_head->t_tbl[trid].last_lsn = mem_head->next_lsn;
+
+  if (mem_head->t_tbl[trid].first_lsn == NULL_LSN) 
+     mem_head->t_tbl[trid].first_lsn = mem_head->next_lsn;
+
   mem_head->next_lsn+= sizeof(logical_log_head) + len;
   mem_head->t_tbl[trid].num_of_log_records +=1;
   
@@ -1263,7 +1329,7 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
   //flush needed records;
   while (rmndr_len > 0)
   {
-     res = uWriteFile(ll_file_dsc,
+     res = uWriteFile(ll_file_curr_dsc,
                       (char*)shared_mem + offs,
                       to_write,
                       &written
@@ -1358,7 +1424,7 @@ void llmgr_core::ll_log_flush_last_record(bool sync)
   //flush needed records;
   while (rmndr_len > 0)
   {
-     res = uWriteFile(ll_file_dsc,
+     res = uWriteFile(ll_file_curr_dsc,
                       (char*)shared_mem + offs,
                       to_write,
                       &written
@@ -1540,7 +1606,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 {
   ll_log_lock(sync);
 
-  logical_log_file_head file_head = read_log_file_header();
+  logical_log_file_head file_head =
+                  read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
   LONG_LSN last_checkpoint_lsn = last_cp_lsn;
   LONG_LSN last_commit_lsn = file_head.last_commit_lsn;
@@ -1558,6 +1625,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   { 
      //none transactions have been commited and there was not checkpoints
      //then recovery by physical log quite enough
+     close_all_log_files();
      ll_log_unlock(sync);
      return;//all already recovered
   }
@@ -1617,6 +1685,9 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_redo_trns_map);
 #endif
+
+  //close all open log files
+  close_all_log_files();
   ll_log_unlock(sync);
 }
 void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (const char*, int, bool))
@@ -1837,4 +1908,95 @@ int llmgr_core::get_num_of_records_written_by_trn(transaction_id &trid)
 
   return mem_head->t_tbl[trid].num_of_log_records; 
 
+}
+
+void llmgr_core::commit_trn(transaction_id& trid, bool sync)
+{
+  ll_log_lock(sync);
+
+  LONG_LSN commit_lsn = ll_log_commit(_trid, false);
+  ll_log_flush(_trid, false);
+  flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
+
+  ll_log_unlock(sync);
+}
+
+void llmgr_core::ll_truncate_log(bool sync)
+{
+  ll_log_lock(sync);
+
+  //execute minLSN
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  LONG_LSN minLSN = NULL_LSN;
+  int i;
+
+  for(i = 0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+  {
+     if (minLSN == NULL_LSN) 
+        minLSN = mem_head->t_tbl[i].first_lsn;
+     else
+     {
+        if (mem_head->t_tbl[i].first_lsn != NULL_LSN && mem_head->t_tbl[i].first_lsn < minLSN)
+           minLSN = mem_head->t_tbl[i].first_lsn;
+     }
+  }
+
+  //determine files to be trancated
+  int num_files_to_trancate;
+  if (minLSN == NULL_LSN)
+     num_files_to_trancate = mem_head->ll_files_num - 1;
+  else
+    num_files_to_trancate = (minLSN - mem_head->base_addr)/LOG_FILE_PORTION_SIZE;
+
+  //!!!!rewrite base_addr and valid_number atomically
+  __int64 new_base_addr = mem_head->base_addr + num_files_to_trancate*LOG_FILE_PORTION_SIZE;
+  int valid_number = mem_head->ll_files_arr[num_files_to_trancate];
+  
+  //set file pointer to header (begin of valid number) of last log file
+  set_file_pointer(((mem_head->next_lsn / LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE) +
+                    2*sizeof(LONG_LSN) + sizeof(int));
+
+
+
+  int res;
+  int written;
+  char buf[sizeof(__int64) + sizeof(int)];
+  memcpy(buf, &new_base_addr, sizeof(__int64));
+  memcpy(buf+sizeof(__int64), &valid_number, sizeof(int));
+
+  //write base addr and valid number atomically
+  res = uWriteFile(ll_file_curr_dsc,
+                   buf,
+                   sizeof(__int64) + sizeof(int),
+                   &written
+                    );
+  if (res == 0 || written != (sizeof(__int64) + sizeof(int)))
+     throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
+
+  //!!!Delete unnecceary files
+  int i;
+  std::string log_file_name;
+  char buf[20];
+  for (i=0; i< num_files_to_truncate; i++)
+  {
+      log_file_name = db_files_path + db_name + "." + _itoa(mem_head->ll_files_arr[i], buf, 10) + "llog";
+      if (uDeleteFile(log_file_name.c_str()) == 0)
+         throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
+  }
+
+  //reinit memory header
+  memcpy((char*)ll_free_files_arr + mem_head->ll_free_files_num*sizeof(int),
+         (char*)ll_files_arr,
+         num_files_to_trancate*sizeof(int));
+
+  memcpy((char*)ll_files_arr,
+         (char*)ll_files_arr+num_files_to_trancate*sizeof(int),
+         mem_head->ll_files_num - num_files_to_trancate);
+
+  mem_head->ll_files_num -= num_files_to_trancate;
+  mem_head->ll_free_files_num += num_files_to_trancate;
+  mem_head->base_addr = new_base_addr;
+  
+
+  ll_log_unlock(sync);
 }

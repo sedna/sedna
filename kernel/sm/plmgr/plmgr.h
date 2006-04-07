@@ -9,9 +9,10 @@
 
 #include "base.h"
 #include "plmgr_core.h"
+#include "sm_plmgr.h"
 
 extern bool is_write_to_phys_log;
-
+extern sm_plmgr* phys_log_mgr;
 
 // block change
 void ll_phys_log_change(void *p, shft size);

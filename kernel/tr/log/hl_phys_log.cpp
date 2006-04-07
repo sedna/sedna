@@ -216,7 +216,12 @@ void hl_phys_log_create_node_blk(const void* p)
 #endif
 }
 
-
+void activate_checkpoint()
+{
+#ifdef CHECKPOINT_ON
+     phys_log_mgr->activate_checkpoint(true);
+#endif
+}
 
 int get_phys_record_block_parts(const void * p, int size)
 {

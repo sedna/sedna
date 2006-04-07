@@ -130,6 +130,8 @@ public:
   void release_phys_log(file_head& head);
   void release_shared_mem();
 
+  void activate_checkpoint(bool sync);
+
   void set_checkpoint_flag(bool flag, bool sync = true);
   bool get_checkpoint_flag(bool sync = true);
   int get_cp_num();//returns checkpoint's number (used to check whether we need to write blocks' part in phys log)

@@ -74,3 +74,10 @@ void ll_logical_log_flush_last_record()
 #endif
 }
 
+void ll_truncate_logical_log()
+{
+#ifdef LOGICAL_LOG
+  logical_log_mgr->ll_truncate_log(true);
+#endif
+
+}

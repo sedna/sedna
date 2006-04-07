@@ -77,7 +77,7 @@ void on_session_begin(SSMMsg* &sm_server)
    d_printf1("OK\n");
 
    d_printf1("Initializing logical log...");
-   hl_logical_log_on_session_begin(log_files_path + string(db_name) + string(".llog"));
+   hl_logical_log_on_session_begin(log_files_path);
    d_printf1("OK\n");
 }
 

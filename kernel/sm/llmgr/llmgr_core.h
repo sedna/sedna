@@ -16,6 +16,7 @@
 #include "uhdd.h"
 #include "usem.h"
 #include "ushm.h"
+#include "plmgr.h"
 
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
@@ -23,6 +24,14 @@
 #define LOGICAL_LOG_FLUSH_PORTION (128*1024) // 128 Kb
 #define CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE (1024*1024) //10Mb
 #define LOGICAL_LOG_UNDO_READ_PORTION 1024 //1Kb
+#define MAX_LL_LOG_FILES_NUMBER 1000
+#define MAX_LOG_FILE_NAME_LENGTH 20
+#define COMMIT_LOG_RECORD_LEN (sizeof(logical_log_head) + sizeof(char) + sizeof(transaction_id))
+
+//this parameter must be more than CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
+#define LOG_FILE_PORTION_SIZE (100 * (1024*1024))
+#define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 10
+//#define MAX_ALL_LOG_FILE_SIZE 10*LOG_FILE_PORTION_SIZE
 
 enum {LL_INSERT_ELEM,
       LL_INDIR_INSERT_ELEM,
@@ -78,8 +87,11 @@ struct logical_log_head
 struct logical_log_file_head
 {
   LONG_LSN last_commit_lsn;//last record of the last committed trn
-  LONG_LSN next_lsn; //lsn of the next record after last_commit
+  LONG_LSN next_lsn; //lsn of the next record after last_commit (or just next lsn of recrd if there is no any commit)
 //  LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
+  int prev_file_number;//-1 indicates NULL
+  __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
+  int valid_number;//identifier of log file from which the needed log records are begin. It is consistent with base addr
 
   //new gield must be appended in the end of structure
 };
@@ -88,6 +100,7 @@ struct logical_log_file_head
 struct trn_cell
 {
   LONG_LSN last_lsn;
+  LONG_LSN first_lsn;//lsn of first transaction's record in log
   int last_rec_mem_offs;//NULL_OFFS -> last record on disk
   bool is_ended; //true if commit or rollback record has been added in the logical log of the transaction
   int num_of_log_records; //used for debug
@@ -110,6 +123,8 @@ typedef std::map<transaction_id, trn_cell_analysis> trns_analysis_map;
 typedef std::pair <transaction_id, trn_cell_analysis> trn_pair;
 
 
+
+
 struct logical_log_sh_mem_head
 {
   int end_offs; //the end byte (offset) of the log in buffer
@@ -120,13 +135,24 @@ struct logical_log_sh_mem_head
   LONG_LSN next_lsn;//lsn of next record
   LONG_LSN next_durable_lsn; //next lsn to be recorded in durable storage
   trn_tbl t_tbl;//transaction table
+  int ll_files_arr[MAX_LL_LOG_FILES_NUMBER];//list of logical log files numbers (last element in the list is a tail of log)
+  int ll_files_num;//indicates number of elements in ll_files_array
+  int ll_free_files_arr[MAX_LL_LOG_FILES_NUMBER];
+  int ll_free_files_num;
+  __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
+};
+
+struct log_file_dsc
+{
+  UFile dsc;
+  int name_number;
 };
 
 
 class llmgr_core
 {
 private:
-  UFile ll_file_dsc;
+  UFile ll_curr_file_dsc;
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
   void *shared_mem;
@@ -138,17 +164,24 @@ private:
 
   char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
   int indir_rec_len;
+  std::vector<log_file_dsc> ll_open_files;//this structure is ordered in sm and is unordered in transaction (may contain duplicates)
+
+//  stack<int> ll_free_file_name_numbers;//used for creating next log file name (prefix + number)
+//  !!!int log_file_portion_size;//size of one physical log file (must be ininted via input papram)
+
+  std::string db_files_path;
+  std::string db_name;
 
 public:
   //create and release functions; called in sm
-  void ll_log_create(std::string db_files_path);
+  void ll_log_create(std::string _db_files_path_, std::string _db_name_);
   void ll_log_create_shared_mem();
   void ll_log_release();
   void ll_log_release_shared_mem();
 
 
   //on session functions
-  void ll_log_open(std::string db_files_path, bool rcv_active = false);
+  void ll_log_open(std::string db_files_path, std::string db_name, bool rcv_active = false);
   void ll_log_open_shared_mem();
   void ll_log_close();
   void ll_log_close_shared_mem();
@@ -179,24 +212,36 @@ public:
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
   void ll_log_flush_last_record(bool sync);
+  void ll_truncate_log(bool sync);
+
+  void commit_trn(transaction_id& trid, bool sync);
   void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
  #ifdef SE_ENABLE_FTSEARCH
   void recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 #else
 void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 #endif
-  void flush_last_commit_lsn(LONG_LSN &commit_lsn);
+  void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
 
 int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
+
+  void open_all_log_files();//fills ll_open_files structure
+  void close_all_log_files();//close file descriptors of all log files
+  void extend_logical_log(bool sync);
+
 
 private:
 
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
   void writeSharedMemory(const void*, int len);
-  logical_log_file_head read_log_file_header();
-  void flush_log_file_header(const logical_log_file_head &head);
-  void set_file_pointer(__int64 file_pos);
+//  logical_log_file_head read_log_file_header();
+//  logical_log_file_head read_tail_log_file_header();
+  logical_log_file_head read_log_file_header(UFile file_dsc);
+  UFile get_log_file_descriptor(int log_file_number);
+
+//  void flush_log_file_header(const logical_log_file_head &head);
+  void set_file_pointer(LONG_LSN &lsn);
   const char* get_record_from_disk(LONG_LSN& lsn);
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
@@ -204,6 +249,12 @@ private:
   void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
   void redo_commit_trns(trns_analysis_map& lst, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
   trns_analysis_map get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks);//last parameter is out
+
+  void activate_checkpoint()
+  {
+    //here phys_log_mgr is a global variable
+    phys_log_mgr->activate_checkpoint(true);
+  };
 
   inline void ll_log_lock(bool sync)
   {

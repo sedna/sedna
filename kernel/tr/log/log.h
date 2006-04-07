@@ -25,6 +25,7 @@ void hl_phys_log_on_transaction_end();
 void hl_phys_log_change(const /*xptr &*/void *p, shft size);
 void hl_phys_log_change_blk(const /*xptr &*/void *p);
 void hl_phys_log_create_node_blk(const void* p);
+void activate_checkpoint();
 int get_phys_record_block_parts(const void * p, int size);
 
 /* Logical journal records */
