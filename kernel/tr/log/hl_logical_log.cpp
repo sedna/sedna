@@ -419,10 +419,12 @@ void hl_logical_log_commit(transaction_id _trid)
 {
 #ifdef LOGICAL_LOG
   number_of_records++;
-  LONG_LSN commit_lsn;
-  commit_lsn = tr_llmgr->ll_log_commit(_trid, true);
-  tr_llmgr->ll_log_flush(_trid, true);
-  tr_llmgr->flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
+//  LONG_LSN commit_lsn;
+  tr_llmgr->commit_trn(_trid, true);
+
+//  commit_lsn = tr_llmgr->ll_log_commit(_trid, true);
+//  tr_llmgr->ll_log_flush(_trid, true);
+//  tr_llmgr->flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
   //d_printf3("num of records written by transaction id=%d, num=%d\n", trid, tr_llmgr->get_num_of_records_written_by_trn(trid)); 
   string str = string("hl_logical_log_comment finished\n");
   WRITE_DEBUG_LOG(str.c_str());

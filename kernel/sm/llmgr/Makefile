@@ -14,7 +14,7 @@ endif
 
 
 INCLUDE_DIRS = $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c ..  \
-               $(PP)/kernel/common/ph
+               $(PP)/kernel/common/ph $(PP)/kernel/sm/plmgr $(PP)/kernel/sm/bufmgr
 
 VPATH = .
 

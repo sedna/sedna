@@ -128,6 +128,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     ll_phys_log_set_empty_bulk_load_blks();
 
+    ll_truncate_logical_log();
+
     d_printf2("checkpoint finished times=%d\n", times);
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
         if (USemaphoreUp(concurrent_ops_sem) !=0 )
@@ -266,6 +268,14 @@ void execute_recovery_by_logical_log_process()
 
 #endif
 }
+
+
+/*****************************************************************************
+      Thread which handles Read and Write operations to logical log file
+******************************************************************************/
+
+
+
 
 /*****************************************************************************
                         Transaction identifiers table functions

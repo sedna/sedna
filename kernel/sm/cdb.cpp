@@ -343,19 +343,26 @@ void create_phys_log(int phys_log_size)
 #endif
 }
 
-void create_logical_log()
+//log_file_name is a full path to file to be created
+//prev_log_file_name is a previous log file (only the name without path)
+UFile create_logical_log(const char* log_file_name,
+                         int valid_file_number,
+                         int _prev_file_number_,
+                         LONG_LSN commit_lsn,
+                         LONG_LSN next_after_commit_lsn 
+                        )
 {
 #ifdef LOGICAL_LOG
 
   UFile logical_log_dsc;
   USECURITY_ATTRIBUTES *sa;
 
-  string logical_log_file_name = string(db_files_path) + string(db_name) + ".llog";
+//  string logical_log_file_name = string(db_files_path) + string(db_name) + ".llog";
   if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
 
   //create phys log file
   logical_log_dsc = uCreateFile(
-                            logical_log_file_name.c_str(),
+                            log_file_name,
                             0,
                             U_READ_WRITE,
                             U_WRITE_THROUGH,
@@ -369,8 +376,11 @@ void create_logical_log()
 
   logical_log_file_head ll_head;
 
-  ll_head.last_commit_lsn = NULL_LSN;
-  ll_head.next_lsn = sizeof(logical_log_file_head);
+  ll_head.last_commit_lsn = commit_lsn;
+  ll_head.next_lsn = next_after_commit_lsn;
+  ll_head.valid_number = valid_file_number;
+  ll_head.prev_file_number = _prev_file_number_; 
+ 
 
   int nbytes_written;
 
@@ -502,10 +512,15 @@ int main(int argc, char **argv)
 
              d_printf1("create_phys_log call successful\n");
 
-             create_logical_log();
+
+             create_logical_log((string(db_files_path) + string(db_name) + ".llog0").c_str(),
+                                0,
+                                NULL_FILE,
+                                NULL_LSN,
+                                sizeof(logical_log_file_head) 
+                               );
+
              d_printf1("create_logical_log call successful\n");
-
-
 
 
              init_checkpoint_sems();

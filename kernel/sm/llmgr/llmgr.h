@@ -18,6 +18,7 @@ void ll_logical_log_flush();
 
 void ll_logical_log_flush_last_record();
 
+void ll_truncate_logical_log();
 
 #endif
 

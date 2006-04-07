@@ -26,7 +26,8 @@ typedef int ramoffs;
 typedef long LSN;
 typedef __int64 LONG_LSN;
 typedef uint32 CP_counter;
-#define  NULL_LSN -1
+#define  NULL_LSN (-1)
+#define  NULL_FILE (-1)
 
 
 typedef int session_id;

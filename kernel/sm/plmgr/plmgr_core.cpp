@@ -597,6 +597,7 @@ void plmgr_core::logFlushPortionOfRecords(LSN& lsn, bool sync)
      }
 
      //d_printf2("free_size=%d\n", free_size);
+/*
      if (mem_head->checkpoint_flag == true && !(mem_head->checkpoint_on))
      {
         if (USemaphoreUp(wait_for_checkpoint_sem) != 0)
@@ -604,6 +605,8 @@ void plmgr_core::logFlushPortionOfRecords(LSN& lsn, bool sync)
 
         mem_head->checkpoint_on = true;
      }
+*/   
+     activate_checkpoint(false);
 #endif
 //     if ( free_size < drbl_len)
 //     {//need to extend phys log file since there is not enough space in phys log to write shared mememory on disk
@@ -929,4 +932,20 @@ int plmgr_core::get_cp_num()
 bool plmgr_core::is_stopped_correctly()
 {
    return pl_head_for_rcv->is_stopped_successfully;
+}
+
+void plmgr_core::activate_checkpoint(bool sync)
+{
+   DownSemaphore(sync);
+
+   shared_mem_head* mem_head = (shared_mem_head*)share_mem;
+   if (mem_head->checkpoint_flag == true && !(mem_head->checkpoint_on))
+   {
+       if (USemaphoreUp(wait_for_checkpoint_sem) != 0)
+          throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
+
+       mem_head->checkpoint_on = true;
+   }
+
+   UpSemaphore(sync);
 }
