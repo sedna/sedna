@@ -300,6 +300,11 @@ public:
         size = 0;
     }
 
+	/// never use this function unless you know what you are doing
+	void _reset_str_ptr()
+	{
+		memset(&str_ptr, 0, sizeof(str_ptr));
+	}
 
     ////////////////////////////////////////////////////////////////////////////
     /// ADDITIONAL FUNCTIONS

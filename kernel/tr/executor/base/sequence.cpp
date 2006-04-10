@@ -131,6 +131,7 @@ int sequence::add(const tuple &t)
     for (int i = 0; i < tuple_size; i++)
     {
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
+        ((tuple_cell*)(dest_addr + i))->_reset_str_ptr();
 
         if (t.cells[i].is_string_type() && (copy_vmm_strings || t.cells[i].is_light_atomic()))
         {
