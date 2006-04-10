@@ -808,7 +808,7 @@ void parse_schema(FILE* f)
 	{
 		int cnt=s_max(it->second.first,1);
 		it->second.first=(int)ceil(s_max (log10(1.*cnt)/log10((double)MAX_LETTER),1.));
-		it->second.second=s_min(DEF_LETTER,((int)pow(MAX_LETTER,it->second.first))/(2+cnt));
+		it->second.second=s_min(DEF_LETTER,((int)pow((double)MAX_LETTER,it->second.first))/(2+cnt));
 		it++;
 	}
 	curp.push_back(&max_fo[sc_parent]);
