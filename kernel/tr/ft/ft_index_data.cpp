@@ -157,8 +157,11 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 		{	
 			xptr blk= sobj[i]->bblk;
 			sobj[i]->add_ft_index(idc);
+			if (blk!=XNULL)
+			{
 			CHECKP(blk);
 			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+			}
 		}
 		
 		SednaIndexJob sij(idc);
