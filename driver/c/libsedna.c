@@ -28,12 +28,17 @@ static void setServerErrorMsg(struct SednaConnection *conn, struct msg_struct ms
     conn->last_error_msg[length] = '\0';
 }
 
-static void setDriverErrorMsg(struct SednaConnection *conn, int error_code)
+static void setDriverErrorMsg(struct SednaConnection *conn, int error_code, const char* details)
 {
     conn->last_error = error_code;
     strcpy(conn->last_error_msg, user_error_code_entries[conn->last_error].code);
     strcat(conn->last_error_msg, "\n");
     strcat(conn->last_error_msg, user_error_code_entries[conn->last_error].descr);
+    if (details != NULL)
+    {
+        strcat(conn->last_error_msg, "\nDetails: ");
+        strcat(conn->last_error_msg, details);
+    }
 }
 
 static void clearLastError(struct SednaConnection *conn)
@@ -41,12 +46,12 @@ static void clearLastError(struct SednaConnection *conn)
     conn->last_error = SEDNA_OPERATION_SUCCEEDED;
 }
 
-static void connectionFailure(struct SednaConnection *conn, int error_code, struct msg_struct* msg)
+static void connectionFailure(struct SednaConnection *conn, int error_code, const char* details, struct msg_struct* msg)
 {
     if (msg != NULL)
         setServerErrorMsg(conn, *msg);
     else
-        setDriverErrorMsg(conn, error_code);
+        setDriverErrorMsg(conn, error_code, details);
     conn->isInTransaction = SEDNA_NO_TRANSACTION;
     conn->isConnectionOk = SEDNA_CONNECTION_FAILED;
 }
@@ -98,7 +103,7 @@ static int cleanSocket(struct SednaConnection *conn)
         return 0;
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -106,12 +111,12 @@ static int cleanSocket(struct SednaConnection *conn)
     {
         if (conn->msg.instruction == se_ErrorResponse)
         {
-            connectionFailure(conn, 0, &(conn->msg));
+            connectionFailure(conn, 0, NULL, &(conn->msg));
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL);
+            connectionFailure(conn, SE3007, NULL, NULL);
             return SEDNA_ERROR;
         }
     }
@@ -128,7 +133,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
 {
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
     if (conn->msg.instruction == se_ErrorResponse)
@@ -172,7 +177,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
         conn->local_data_offset = 0;
         conn->local_data_length = 0;
@@ -192,14 +197,14 @@ static int begin_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 230 - BeginTransactionOk or 240 - BeginTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -221,7 +226,7 @@ static int begin_handler(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_BEGIN_TRANSACTION_FAILED;
     }
 }
@@ -235,14 +240,14 @@ static int commit_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 250 - CommitTransactionOk or 260 - CommitTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -263,7 +268,7 @@ static int commit_handler(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_COMMIT_TRANSACTION_FAILED;
     }
 }
@@ -277,14 +282,14 @@ static int rollback_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 255 - RollbackTransactionOk or 265 - RollbackTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -305,7 +310,7 @@ static int rollback_handler(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_ROLLBACK_TRANSACTION_FAILED;
     }
 }
@@ -323,7 +328,7 @@ static int execute(struct SednaConnection *conn)
     /* or 430 - BulkLoadFileName, 431 - BulkLoadFromStream, 100 - ErrorResponse.*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
     if (conn->msg.instruction == se_ErrorResponse)
@@ -380,13 +385,13 @@ static int execute(struct SednaConnection *conn)
             conn->msg.length = 0;
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL);
+                connectionFailure(conn, SE3006, NULL, NULL);
                 return SEDNA_ERROR;
             }
-            setDriverErrorMsg(conn, SE3017);
+            setDriverErrorMsg(conn, SE3017, filename);
             if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3007, NULL);
+                connectionFailure(conn, SE3007, NULL, NULL);
                 return SEDNA_ERROR;
             }
             conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -404,16 +409,16 @@ static int execute(struct SednaConnection *conn)
                 uCloseFile(file_handle);
                 if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
                 {
-                    connectionFailure(conn, SE3006, NULL);
+                    connectionFailure(conn, SE3006, NULL, NULL);
                     return SEDNA_ERROR;
                 }
                 if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
                 {
-                    connectionFailure(conn, SE3007, NULL);
+                    connectionFailure(conn, SE3007, NULL, NULL);
                     return SEDNA_ERROR;
                 }
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
-                setDriverErrorMsg(conn, SE3018);
+                setDriverErrorMsg(conn, SE3018, NULL);
                 return SEDNA_BULK_LOAD_FAILED;
             }
 
@@ -426,7 +431,7 @@ static int execute(struct SednaConnection *conn)
 
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL);
+                connectionFailure(conn, SE3006, NULL, NULL);
                 uCloseFile(file_handle);
                 return SEDNA_ERROR;
             }
@@ -434,7 +439,7 @@ static int execute(struct SednaConnection *conn)
 
         if (!uCloseFile(file_handle))
         {
-            setDriverErrorMsg(conn, SE3019);
+            setDriverErrorMsg(conn, SE3019, NULL);
             return SEDNA_ERROR;
         }
 
@@ -442,13 +447,13 @@ static int execute(struct SednaConnection *conn)
         conn->msg.length = 0;
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
 
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL);
+            connectionFailure(conn, SE3007, NULL, NULL);
             return SEDNA_ERROR;
         }
         if (conn->msg.instruction == se_ErrorResponse)
@@ -484,7 +489,7 @@ static int execute(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_ERROR;
     }
     return SEDNA_ERROR;
@@ -511,22 +516,22 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
     if (db_name_len > SE_MAX_DB_NAME_LENGTH)
     {
-        connectionFailure(conn, SE3023, NULL);
+        connectionFailure(conn, SE3023, db_name, NULL);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     if (login_len > SE_MAX_LOGIN_LENGTH)
     {
-        connectionFailure(conn, SE3024, NULL);
+        connectionFailure(conn, SE3024, login, NULL);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     if (password_len > SE_MAX_PASSWORD_LENGTH)
     {
-        connectionFailure(conn, SE3025, NULL);
+        connectionFailure(conn, SE3025, password, NULL);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     if (url_len > SE_HOSTNAMELENGTH)
     {
-        connectionFailure(conn, SE3026, NULL);
+        connectionFailure(conn, SE3026, url, NULL);
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
@@ -535,21 +540,21 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
     if (uSocketInit() != 0)
     {
-        connectionFailure(conn, SE3016, NULL);  /* Can't initialize socket library.*/
+        connectionFailure(conn, SE3016, NULL, NULL);  /* Can't initialize socket library.*/
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
     conn->socket = usocket(AF_INET, SOCK_STREAM, 0);
     if (conn->socket == U_INVALID_SOCKET)
     {
-        connectionFailure(conn, SE3001, NULL);  /* Failed to initialize a socket.*/
+        connectionFailure(conn, SE3001, NULL, NULL);  /* Failed to initialize a socket.*/
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
     if (usetsockopt(conn->socket, IPPROTO_TCP, TCP_NODELAY, (char *) &socket_optval, socket_optsize) == U_SOCKET_ERROR)
     {
-        connectionFailure(conn, SE3027, NULL);  /* Failed to set socket option.*/
+        connectionFailure(conn, SE3027, NULL, NULL);  /* Failed to set socket option.*/
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -574,7 +579,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
     if (uconnect_tcp(conn->socket, port, host) != 0)
     {
-        connectionFailure(conn, SE3003, NULL);  /* "Failed to connect to host specified"*/
+        connectionFailure(conn, SE3003, url, NULL);  /* "Failed to connect to host specified"*/
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -585,7 +590,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -593,13 +598,13 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* send protocol version, login, dbname. SessionParameters - 120*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, &(conn->msg));
+        connectionFailure(conn, 0, NULL, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -631,7 +636,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             release(conn);
             return SEDNA_OPEN_SESSION_FAILED;
         }
@@ -642,14 +647,14 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* read - error or SendAuthenticationParameters - 150*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, &(conn->msg));
+        connectionFailure(conn, 0, NULL, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -666,7 +671,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             release(conn);
             return SEDNA_OPEN_SESSION_FAILED;
         }
@@ -677,19 +682,19 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* read AuthenticationOk - 160 or AuthenticationFailed - 170.*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
-        connectionFailure(conn, 0, &(conn->msg));
+        connectionFailure(conn, 0, NULL, &(conn->msg));
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
     else if (conn->msg.instruction == se_AuthenticationFailed)
     {
-        connectionFailure(conn, SE3053, NULL);  /* "Authentication failed"*/
+        connectionFailure(conn, SE3053, NULL, NULL);  /* "Authentication failed"*/
         release(conn);
         return SEDNA_AUTHENTICATION_FAILED;
     }
@@ -714,7 +719,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     }
 
   UnknownMsg:
-    connectionFailure(conn, SE3008, NULL);      /* "Unknown message from server"*/
+    connectionFailure(conn, SE3008, NULL, NULL);      /* "Unknown message from server"*/
     release(conn);
     return SEDNA_OPEN_SESSION_FAILED;
 
@@ -755,7 +760,7 @@ int SEclose(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
         release(conn);
@@ -765,7 +770,7 @@ int SEclose(struct SednaConnection *conn)
     /* read 100 or 510 - CloseConnectionOk or 520 - TransactionRollbackBeforeClose*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
         release(conn);
@@ -791,7 +796,7 @@ int SEclose(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_CLOSE_SESSION_FAILED;
     }
 }
@@ -800,7 +805,7 @@ int SEbegin(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -810,7 +815,7 @@ int SEbegin(struct SednaConnection *conn)
 
     if (conn->autocommit)
     {
-        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        setDriverErrorMsg(conn, SE3029, NULL);        /* "This function call is prohibited as the connection is in the autocommit mode." */
         return SEDNA_ERROR;
     }
 
@@ -825,7 +830,7 @@ int SErollback(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -833,7 +838,7 @@ int SErollback(struct SednaConnection *conn)
 
     if (conn->autocommit)
     {
-        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        setDriverErrorMsg(conn, SE3029, NULL);        /* "This function call is prohibited as the connection is in the autocommit mode." */
         return SEDNA_ERROR;
     }
 
@@ -850,7 +855,7 @@ int SEcommit(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -858,7 +863,7 @@ int SEcommit(struct SednaConnection *conn)
 
     if (conn->autocommit)
     {
-        setDriverErrorMsg(conn, SE3029);        /* "This function call is prohibited as the connection is in the autocommit mode." */
+        setDriverErrorMsg(conn, SE3029, NULL);        /* "This function call is prohibited as the connection is in the autocommit mode." */
         return SEDNA_ERROR;
     }
 
@@ -877,7 +882,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -913,7 +918,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
         /* string*/
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
     }
@@ -932,7 +937,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
             /* string*/
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL);
+                connectionFailure(conn, SE3006, NULL, NULL);
                 return SEDNA_ERROR;
             }
             if (feof(query_file))
@@ -945,7 +950,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
     }
@@ -959,7 +964,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -999,7 +1004,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
             /* string*/
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL);
+                connectionFailure(conn, SE3006, NULL, NULL);
                 return SEDNA_ERROR;
             }
 
@@ -1011,7 +1016,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1030,7 +1035,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
         memcpy(conn->msg.body + 6, query, query_length);
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1044,7 +1049,7 @@ int SEnext(struct SednaConnection *conn)
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -1076,7 +1081,7 @@ int SEnext(struct SednaConnection *conn)
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -1095,7 +1100,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -1108,7 +1113,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
     if ((bytes_to_read < 0) || (buf == NULL))
     {
-        setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+        setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
         conn->result_end = 1;   /* tell result is finished*/
         conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
         return SEDNA_ERROR;
@@ -1138,7 +1143,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
             if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3007, NULL);
+                connectionFailure(conn, SE3007, NULL, NULL);
                 return SEDNA_ERROR;
             }
             if (conn->msg.instruction == se_ErrorResponse)
@@ -1179,7 +1184,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
             }
             else
             {
-                connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
                 conn->result_end = 1;   /* tell result is finished*/
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -1198,7 +1203,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -1208,7 +1213,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
     if ((bytes_to_load <= 0) || (buf == NULL) || (doc_name == NULL) || (strlen(doc_name) == 0) || ((col_name != NULL) && (strlen(col_name) == 0)))
     {
-        setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+        setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
         conn->result_end = 1;                   /* tell result is finished*/
         conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
         setBulkLoadFinished(conn);
@@ -1257,12 +1262,12 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL);
+            connectionFailure(conn, SE3007, NULL, NULL);
             return SEDNA_ERROR;
         }
         
@@ -1274,7 +1279,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         }
         else if (conn->msg.instruction != se_BulkLoadFromStream)        /*BulkLoadFromStream*/
         {
-            connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+            connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
             return SEDNA_ERROR;
         }
 
@@ -1290,16 +1295,16 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL);
+            connectionFailure(conn, SE3007, NULL, NULL);
             return SEDNA_ERROR;
         }
         setBulkLoadFinished(conn);
-        setDriverErrorMsg(conn, SE4616); /* Can't load a document because the session is loading another document. Finish current loading before beginning a new one. */
+        setDriverErrorMsg(conn, SE4616, NULL); /* Can't load a document because the session is loading another document. Finish current loading before beginning a new one. */
         return SEDNA_ERROR;
     }
 
@@ -1319,7 +1324,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         /* string*/
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL);
+            connectionFailure(conn, SE3006, NULL, NULL);
             return SEDNA_ERROR;
         }
 
@@ -1332,7 +1337,7 @@ int SEendLoadData(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         return SEDNA_ERROR;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
@@ -1349,7 +1354,7 @@ int SEendLoadData(struct SednaConnection *conn)
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         return SEDNA_ERROR;
     }
     
@@ -1357,7 +1362,7 @@ int SEendLoadData(struct SednaConnection *conn)
 
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL);
+        connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
 
@@ -1387,7 +1392,7 @@ int SEendLoadData(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_BULK_LOAD_FAILED;
     }
@@ -1420,7 +1425,7 @@ const char *SEshowTime(struct SednaConnection *conn)
 {
     if (conn->isConnectionOk == SEDNA_CONNECTION_CLOSED)
     {
-        setDriverErrorMsg(conn, SE3028);        /* "Connection with server is closed or have not been established yet." */
+        setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         strcpy(conn->query_time, "not available");
         return conn->query_time;
     }
@@ -1442,14 +1447,14 @@ const char *SEshowTime(struct SednaConnection *conn)
     }
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         strcpy(conn->query_time, "not available");
         return conn->query_time;
     }
 
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL);
+        connectionFailure(conn, SE3006, NULL, NULL);
         strcpy(conn->query_time, "not available");
         return conn->query_time;
     }
@@ -1477,7 +1482,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             value = (int*) attrValue;
             if ((*value != SEDNA_AUTOCOMMIT_OFF) && (*value != SEDNA_AUTOCOMMIT_ON))
             {
-               setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+               setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
                return SEDNA_ERROR;
             }
             conn->autocommit = (*value == SEDNA_AUTOCOMMIT_ON) ? 1: 0;
@@ -1489,7 +1494,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
          default: 
-             setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+             setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
     }
     
@@ -1509,7 +1514,7 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             *attrValueLength = 4;
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
          default: 
-             setDriverErrorMsg(conn, SE3022);        /* "Invalid argument."*/
+             setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
     }
     
