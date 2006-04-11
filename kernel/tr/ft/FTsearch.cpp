@@ -366,28 +366,23 @@ void SednaSearchJob::OnFound(long totalFiles,
 	UUnnamedSemaphoreUp(&sem1);
 	UUnnamedSemaphoreDown(&sem2);
 }
-SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_):seq(_seq_), hilight(_hilight_)
+SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_)
 {
 	AttachDataSource(new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
 	dtth=NULL;
 	this->SuppressMessagePump();
 	if (hilight)
 	{
-		dtsOptions opts;
-		short result;
-		dtssGetOptions(opts, result);
-		save_field_flags = opts.fieldFlags;
-		opts.fieldFlags = dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames;
-		dtssSetOptions(opts, result);
 		if (_cm_ == ft_xml_hl)
-			hl=new SednaConvertJob(ft_xml,_custom_tree_);	
+			hl=new SednaConvertJob(ft_xml,_custom_tree_, hl_fragment);	
 		else
-			hl=new SednaConvertJob(_cm_,_custom_tree_);	
+			hl=new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
 }
-SednaSearchJob::SednaSearchJob(bool _hilight_):seq(NULL),hilight(_hilight_)
+SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hilight(_hilight_),hl_fragment(_hl_fragment_)
 {
-	dtth=NULL;		
+	dtth=NULL;
+	this->SuppressMessagePump();
 }
 void SednaSearchJob::set_request(tuple_cell& request)
 {
@@ -409,11 +404,12 @@ void SednaSearchJob::get_next_result(tuple &t)
 	UUnnamedSemaphoreDown(&sem1);
     if (res==XNULL)
 	{
+		/*
 		dtsOptions opts;
 		short result;
 		dtssGetOptions(opts, result);
 		opts.fieldFlags = save_field_flags;
-		dtssSetOptions(opts, result);
+		dtssSetOptions(opts, result);*/
 		t.set_eos();
 		dtth = NULL;
 		UUnnamedSemaphoreRelease(&sem1);
@@ -438,7 +434,7 @@ void SednaSearchJob::set_index(tuple_cell& name)
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
 	if (hilight)
-		hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree);
+		hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
 	
 }
 
@@ -452,6 +448,18 @@ SednaSearchJob::~SednaSearchJob()
 }
 DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
 {
+	
+	//if (((SednaSearchJob*)lpParam)->hilight)
+	{
+		
+		dtsOptions opts;
+		short result;
+		dtssGetOptions(opts, result);
+		((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
+		//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
+		opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+		dtssSetOptions(opts, result);
+	}
 	((SednaSearchJob*)lpParam)->Execute();
 	if (((SednaSearchJob*)lpParam)->GetErrorCount()>0)
 	{
@@ -470,27 +478,62 @@ void SednaSearchJob::OnSearchingIndex(const char * indexPath)
 }
 
 
-SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_) :
-			cm(_cm_), custom_tree(_custom_tree_)
+template <class Iterator>
+SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it_, 
+														 const Iterator &_str_end_, 
+														 long* _ht_,
+														 long _ht_cnt_, 
+														 bool _hl_fragment_, 
+														 e_str_buf *_result_) :
+									str_it(_str_it_),
+									str_end(_str_end_),
+									ht(_ht_),
+									ht_cnt(_ht_cnt_),
+									hl_fragment(_hl_fragment_),
+									result(_result_)
+
 {
+	result->reinit();
+	qsort(ht, ht_cnt, sizeof(long), cmp_long);
 }
 
-template <class Iterator>
-void SednaConvertJob::parse_tag(Iterator &str_it, Iterator &str_end)
-{
-	//TODO: implement it!!!
 
-	do
-	{
-		putch(cur_ch);
-		cur_ch = getch(str_it, str_end);
-	} while (cur_ch != EOF_ch && cur_ch != '>');
-	putch(cur_ch);
+template <typename Iterator>
+void SednaStringHighlighter<Iterator>::run()
+{
+	current_word = 0;
+	current_word_tok = 0;
+	current_ht_idx = 0;
+	tag_l = 0;
+	tag_w = 0;
+
 	cur_ch = getch(str_it, str_end);
+	if (hl_fragment)
+{
+		parse_doc();
+		if (fragment_pref_ch == 0)
+			cur_ch = getch(fragment_start, fragment_end);
+		else
+			cur_ch = fragment_pref_ch;
+		current_word_tok = fragment_start_word_tok_num;
+		current_ht_idx = 0; //FIXME?
+		if (fragment_start_split)
+			result->append_mstr("...");
+		copy_doc(fragment_start, fragment_end);
+		if (fragment_end_split)
+			result->append_mstr("...");
+	}
+	else
+		copy_doc(str_it, str_end);
+}
+
+SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_) :
+						cm(_cm_), custom_tree(_custom_tree_), hl_fragment(_hl_fragment_)
+	{
 }
 
 template <class Iterator>
-int SednaConvertJob::getch(Iterator &str_it, Iterator &str_end)
+int SednaStringHighlighter<Iterator>::getch(Iterator &str_it, Iterator &str_end)
 {
 	unsigned char ch=*(str_it);
 	int r;
@@ -504,17 +547,20 @@ int SednaConvertJob::getch(Iterator &str_it, Iterator &str_end)
 	if (ch < 128)
 	{
 			r = ch;
+			last_ch_len = 1;
 	}
 	else if (ch < 224) //FIXME: ch mustbe >= 192
 	{
 		r = ch - 192; r <<= 6;
 		ch = *(str_it); r += ch - 128; ++str_it;
+		last_ch_len = 2;
 	}
 	else if (ch < 240)
 	{
 		r = ch - 224; r <<= 6;
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; ++str_it;
+		last_ch_len = 3;
 	}
 	else if (ch < 248)
 	{
@@ -522,6 +568,7 @@ int SednaConvertJob::getch(Iterator &str_it, Iterator &str_end)
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; ++str_it;
+		last_ch_len = 4;
 	}
 	else if (ch < 252)
 	{
@@ -530,6 +577,7 @@ int SednaConvertJob::getch(Iterator &str_it, Iterator &str_end)
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; ++str_it;
+		last_ch_len = 5;
 	}
 	else // ch mustbe < 254
 	{
@@ -539,38 +587,148 @@ int SednaConvertJob::getch(Iterator &str_it, Iterator &str_end)
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; r <<= 6; ++str_it;
 		ch = *(str_it); r += ch - 128; ++str_it;
+		last_ch_len = 6;
 	}
 	return r;
 }
 
-void SednaConvertJob::putch(const int ch)
+template <class Iterator>
+void SednaStringHighlighter<Iterator>::putch(const int ch)
 {
 	char x;
 	if (ch < (1 << 7)) {
-		x = ch; result.append_mstr(&x, 1);
+		x = ch; result->append_mstr(&x, 1);
     } else if (ch < (1 << 11)) {
-		x = ((ch >> 6) | 0xc0); result.append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result.append_mstr(&x, 1);
+		x = ((ch >> 6) | 0xc0); result->append_mstr(&x, 1);
+		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
     } else if (ch < (1 << 16)) {
-		x = ((ch >> 12) | 0xe0); result.append_mstr(&x, 1);
-		x = (((ch >> 6) & 0x3f) | 0x80); result.append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result.append_mstr(&x, 1);
+		x = ((ch >> 12) | 0xe0); result->append_mstr(&x, 1);
+		x = (((ch >> 6) & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
     } else if (ch < (1 << 21)) {
-		x = ((ch >> 18) | 0xf0); result.append_mstr(&x, 1);
-		x = (((ch >> 12) & 0x3f) | 0x80); result.append_mstr(&x, 1);
-		x = (((ch >> 6) & 0x3f) | 0x80); result.append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result.append_mstr(&x, 1);
+		x = ((ch >> 18) | 0xf0); result->append_mstr(&x, 1);
+		x = (((ch >> 12) & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		x = (((ch >> 6) & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
     }
 }
 
+
+
+static inline bool is_tag_char(int ch)
+{
+	return ((!iswpunct(ch) && !iswspace(ch) && ch != '<' && ch != SednaStringHighlighter<char*>::EOF_ch) || ch == '-');
+}
+
 template <class Iterator>
-void SednaConvertJob::parse_doc(Iterator &str_it, Iterator &str_end)
+void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_end, bool copy)
+{
+	//TODO: implement
+
+	U_ASSERT(cur_ch == '<');
+	if (copy && !hl_fragment)
+		putch(cur_ch);
+	cur_ch = getch(str_it, str_end);
+	if (cur_ch == '/')
+	{
+		if (copy && !hl_fragment)
+			putch(cur_ch);
+		cur_ch = getch(str_it, str_end);
+		
+		tag_l--;
+		if (tag_l == 1)
+		{
+			current_word_tok += tag_w;
+			while (current_ht_idx < ht_cnt && ht[current_ht_idx] <= current_word_tok)
+					current_ht_idx++;
+			tag_w = 0;
+		}
+	}
+	else
+	{
+		tag_l++;
+//		tag_w++;
+		/*
+		current_word_tok ++;
+		while (current_ht_idx < ht_cnt && ht[current_ht_idx] <= current_word_tok)
+				current_ht_idx++;*/
+	}
+
+
+	if (is_tag_char(cur_ch))
+	{
+		while (is_tag_char(cur_ch))
+		{
+			if (copy && !hl_fragment)
+				putch(cur_ch);
+			cur_ch = getch(str_it, str_end);
+		}
+	}
+	do
+	{
+		if (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+		{
+			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			{
+				if (copy && !hl_fragment)
+					putch(cur_ch);
+				cur_ch = getch(str_it, str_end);
+			}
+			
+			while (iswspace(cur_ch) && cur_ch != EOF_ch)
+			{
+				if (copy && !hl_fragment)
+					putch(cur_ch);
+				cur_ch = getch(str_it, str_end);
+			}
+			//if (cur_ch == '=')
+			{
+//		tag_w++;
+				/*
+		current_word_tok ++;
+		while (current_ht_idx < ht_cnt && ht[current_ht_idx] <= current_word_tok)
+				current_ht_idx++;*/
+			}
+		}
+		else if (cur_ch == '/')
+		{
+			if (copy && !hl_fragment)
+				putch(cur_ch);
+			cur_ch = getch(str_it, str_end);
+			if (cur_ch == '>')
+			{
+				tag_l--;//FIXME
+				break;
+			}
+		}
+		else
+		{
+			if (cur_ch == EOF_ch || cur_ch == '>')
+				break;
+			if (copy && !hl_fragment)
+				putch(cur_ch);
+			cur_ch = getch(str_it, str_end);
+		}
+	} while (true);
+	if (copy && !hl_fragment)
+		putch(cur_ch);
+	cur_ch = getch(str_it, str_end);
+}
+
+template <class Iterator>
+void SednaStringHighlighter<Iterator>::parse_tag()
+{
+	copy_tag(str_it, str_end, false);
+}
+
+template <class Iterator>
+void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_end)
 {
 	while (cur_ch != EOF_ch)
 	{
 		if (cur_ch == (int)'<')
 		{
-			parse_tag(str_it, str_end);
+			copy_tag(str_it, str_end);
 		}
 		else if (iswpunct(cur_ch) || iswspace(cur_ch))
 		{
@@ -581,24 +739,114 @@ void SednaConvertJob::parse_doc(Iterator &str_it, Iterator &str_end)
 		{
 			bool hl_word = false;
 			current_word++;
-			if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word)
+			current_word_tok++;
+			if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word_tok)
 			{
 				hl_word = true;
 				current_ht_idx++;
 			}
 			if (hl_word)
-				result.append_mstr("<hit>");
+				result->append_mstr("<hit>");
 			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
 			{
 				putch(cur_ch);
 				cur_ch = getch(str_it, str_end);
 			}
 			if (hl_word)
-				result.append_mstr("</hit>");
+				result->append_mstr("</hit>");
 		}
 	}
 }
 
+
+template <class Iterator>
+void SednaStringHighlighter<Iterator>::parse_doc()
+{
+	fragment_pref_ch = 0;
+	fragment_start = str_it;
+	fragment_start_split = false;
+	fragment_start_word_tok_num = current_word_tok;
+	fragment_start_word_num = current_word;
+	last_eff_ch = 0;
+	ht0 = -1;
+
+	while (cur_ch != EOF_ch)
+	{
+		if (cur_ch == (int)'<')
+		{
+			parse_tag();
+		}
+		else if (iswpunct(cur_ch) || iswspace(cur_ch))
+		{
+			if (!iswspace(cur_ch))
+				last_eff_ch = cur_ch;
+			cur_ch = getch(str_it, str_end);
+		}
+		else
+		{
+			bool hl_word = false;
+			current_word++;
+			current_word_tok++;
+			if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word_tok)
+			{
+				if (ht0 == -1)
+					ht0 = current_word;
+				current_ht_idx++;
+			}
+			if ((last_eff_ch == '.' && iswupper(cur_ch)) || last_eff_ch == 0)
+			{ //sentence start
+				if (current_word_tok <= ht[0]) //FIXME
+				{
+					fragment_start = str_it;
+					fragment_start_word_tok_num = current_word_tok-1;
+					fragment_start_word_num = current_word-1;
+					fragment_pref_ch = cur_ch;
+					fragment_start_split = false;
+				}
+				else
+				{
+					//cut here
+					fragment_end = str_it;
+					fragment_end -= last_ch_len;
+					fragment_end_split = false;
+					//FIXME: return should return through recursive calls (but there are none of these here, for now)
+					return;
+				}
+			}
+			else
+			{
+				if (current_word_tok <= ht[0]) //FIXME
+				{
+					if (current_word == ht0 - 10) //FIXME
+					{
+						fragment_start = str_it;
+						fragment_start_word_tok_num = current_word_tok-1;
+						fragment_start_word_num = current_word-1;
+						fragment_pref_ch = cur_ch;
+						fragment_start_split = true;
+					}
+				}
+				else
+				{
+					if (current_word == fragment_start_word_num + 20) //FIXME
+					{
+						//cut here
+						fragment_end = str_it;
+						fragment_end -= last_ch_len;
+						fragment_end_split = true;
+						//FIXME: return should return through recursive calls (but there are none of these here, for now)
+						return;
+					}
+				}
+			}
+			last_eff_ch = cur_ch; //no need to update it in the loop, we only need to know it's not punctuation
+			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+				cur_ch = getch(str_it, str_end);
+		}
+	}
+	fragment_end = str_it;
+	fragment_end_split = false;
+}
 
 static int cmp_long(const void *a, const void *b)
 {
@@ -610,25 +858,19 @@ void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 	in_buf.clear();
 	CHECKP(node);
 	print_node_to_buffer(node,in_buf,cm,custom_tree);
-	result.reinit();
-	current_word = 0;
-	current_ht_idx = 0;
-	ht_cnt = _ht_cnt_;
-	ht = _ht_;
-	qsort(ht, ht_cnt, sizeof(long), cmp_long);
 	if (in_buf.get_type() == text_mem)
 	{
 		char *str_it = (char*)in_buf.get_ptr_to_text();
 		char *str_it_end = str_it + in_buf.get_size();
-		cur_ch = getch(str_it, str_it_end);
-		parse_doc(str_it, str_it_end);
+		SednaStringHighlighter<char *> hl(str_it, str_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
+		hl.run();
 	}
 	else
 	{
 		e_string_iterator_first estr_it(in_buf.get_size(), *(xptr*)in_buf.get_ptr_to_text());
 		e_string_iterator_first estr_it_end(0, *(xptr*)in_buf.get_ptr_to_text());
-		cur_ch = getch(estr_it, estr_it_end);
-		parse_doc(estr_it, estr_it_end);
+		SednaStringHighlighter<e_string_iterator> hl(estr_it, estr_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
+		hl.run();
 	}
 
 }

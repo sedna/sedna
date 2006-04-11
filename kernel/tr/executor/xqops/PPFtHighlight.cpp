@@ -3,10 +3,12 @@
 
 PPFtHighlight::PPFtHighlight(variable_context *_cxt_,
                 PPOpIn _seq_,
-				PPOpIn _query_) :
+				PPOpIn _query_,
+				bool _hl_fragment_) :
 						PPIterator(_cxt_),
 						seq(_seq_),
 						query(_query_),
+						hl_fragment(_hl_fragment_),
 						sj(NULL), ptr(NULL)
 {
 }
@@ -79,7 +81,7 @@ void PPFtHighlight::next(tuple &t)
 	{
 		tuple_cell tc;
 
-		sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true);
+		sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
 
 		query.op->next(t);
 		if (t.is_eos())
@@ -108,7 +110,7 @@ void PPFtHighlight::next(tuple &t)
 PPIterator*  PPFtHighlight::copy(variable_context *_cxt_)
 {
 	PPFtHighlight *res;
-	res = new PPFtHighlight(_cxt_, seq, query);
+	res = new PPFtHighlight(_cxt_, seq, query, hl_fragment);
     res->seq.op = seq.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 

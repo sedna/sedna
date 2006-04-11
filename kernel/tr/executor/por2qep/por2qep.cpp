@@ -1880,13 +1880,27 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
 		opit = new PPFtHighlight(cxt,
 			make_pp_op(cxt, lst->at(1).internal.list), 
-			make_pp_op(cxt, lst->at(2).internal.list));
+			make_pp_op(cxt, lst->at(2).internal.list),
+			false);
+    }
+	else if (op == "PPFtHighlight2")
+    {
+        if (   lst->size() != 3
+			|| lst->at(1).type != SCM_LIST
+			|| lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION(SE1004);
+
+		opit = new PPFtHighlight(cxt,
+			make_pp_op(cxt, lst->at(1).internal.list), 
+			make_pp_op(cxt, lst->at(2).internal.list),
+			true);
     }
 
 #else
  else if (   op == "PPFtScan"
 	      || op == "PPFtIndexScan"
-		  || op == "PPFtHighlight")
+		  || op == "PPFtHighlight"
+		  || op == "PPFtHighlight2")
     {
 		throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
     }

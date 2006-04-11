@@ -1060,7 +1060,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			switch (type)
 			{
 			case ft_xml:tbuf<<"<"; break;
-			case ft_xml_hl: tbuf<<"<"; break;
+			case ft_xml_hl: tbuf<<"<_"; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;			
 			}	
@@ -1110,7 +1110,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			}
 			if (type==ft_xml) tbuf<<"</";
 			else
-			if (type==ft_xml_hl) tbuf<<"</";
+			if (type==ft_xml_hl) tbuf<<"</_";
 			else
 			if (type==ft_delimited_value && !cit) tbuf<<" ";
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)

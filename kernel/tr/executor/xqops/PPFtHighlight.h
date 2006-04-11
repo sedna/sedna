@@ -14,6 +14,7 @@ protected:
 	bool first_time;
 	SednaSearchJob *sj;
 	pers_sset<ft_custom_cell,unsigned short>* ptr;
+	bool hl_fragment;
 
 public:
     virtual void open   ();
@@ -26,7 +27,8 @@ public:
 
     PPFtHighlight(variable_context *_cxt_,
                 PPOpIn _seq_,
-                PPOpIn _query_);
+                PPOpIn _query_,
+				bool _hl_fragment_);
 
     virtual ~PPFtHighlight();
 

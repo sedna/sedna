@@ -520,6 +520,9 @@
 	(,sa:fn-ns "fthighlight" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight)
+	(,sa:fn-ns "fthighlight-blocks" 2 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-nodes !fn!fthighlight2)
     ;----------------------------------------
     ; Legacy
     (,sa:fn-ns "item-at" 2 2
