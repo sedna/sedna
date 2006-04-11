@@ -994,6 +994,8 @@ void print_text(xptr txt, t_str_buf& tbuf, t_item xq_type)
 {
 	int size =((t_dsc*)XADDR(txt))->size;
 	xptr ind_ptr=((t_dsc*)XADDR(txt))->data;
+	if (size == 0)
+		return;
 	if (size<=PSTRMAXSIZE)
 	{
 		CHECKP(ind_ptr);
