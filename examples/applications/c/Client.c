@@ -14,7 +14,7 @@
 int main()
 {
     struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
-    int bytes_read, res, value;
+    int bytes_read, res;
     char buf[1024];
 
     const char* url = "localhost";
@@ -23,9 +23,6 @@ int main()
     const char* password = "MANAGER";
 
     printf("Client started.\n");
-    
-    value = SEDNA_AUTOCOMMIT_OFF;
-    res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
     
     //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
