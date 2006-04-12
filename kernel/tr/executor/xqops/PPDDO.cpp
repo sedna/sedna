@@ -128,7 +128,7 @@ bool PPDDO::result(PPIterator* cur, variable_context *cxt, void*& r)
     return strict_op_result(cur, (sequence*)child_r, cxt, r);
 #endif
 }
-int PPDDO::compare_less (xptr& v1,xptr& v2)
+int PPDDO::compare_less (xptr v1,xptr v2)
 {
 	return 0;
 }

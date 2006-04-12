@@ -15,7 +15,7 @@
 class PPDDO : public PPIterator
 {
 private:
-	static int compare_less (xptr& v1,xptr& v2);
+	static int compare_less (xptr v1,xptr v2);
 	static int get_size (tuple& t);
 	static void serialize (tuple& t,xptr v1);
 	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2);

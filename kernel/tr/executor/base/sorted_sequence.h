@@ -8,7 +8,7 @@
 #define GET_FREE_SPACE(p) (shft)(PAGE_SIZE - (uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)
 
 
-typedef int (*compare_fn)(xptr& v1,xptr& v2);
+typedef int (*compare_fn)(xptr v1,xptr v2);
 typedef int (*get_size_fn)(tuple& t);
 typedef void (*serialize_fn)(tuple& t,xptr v1);
 typedef void (*serialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2);
