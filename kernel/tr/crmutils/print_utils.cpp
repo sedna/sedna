@@ -1138,6 +1138,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 						tbuf <<" "<<scn->xmlns->prefix<<":"<< scn->name << "=\"";
 					else
 						tbuf <<" "<< scn->name << "=\"";
+					CHECKP(node);
 					print_text(node,tbuf,attribute);
 					tbuf <<"\"";
 					break;
@@ -1160,7 +1161,8 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			case ft_xml:case ft_xml_hl: tbuf<< "<!--"; break;
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
-			}			
+			}
+			CHECKP(node);
 			print_text(node,tbuf,text);
 			if (type==ft_xml || type==ft_xml_hl) tbuf<< "-->";
 			break;
@@ -1173,6 +1175,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
 			}
+			CHECKP(node);
 			print_text(node,tbuf,cdata);
 			if (type==ft_xml || type==ft_xml_hl) tbuf<< "]]>";
 			break;
@@ -1185,6 +1188,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			case ft_string_value:break;
 			case ft_delimited_value:tbuf<<" ";break;
 			}
+			CHECKP(node);
 			print_text(node,tbuf,pr_ins);
 			if (type==ft_xml || type==ft_xml_hl) tbuf<< "?>";
 			break;

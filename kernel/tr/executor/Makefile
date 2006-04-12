@@ -31,6 +31,7 @@ include $(PP)/Makefile.include
 EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        sequence$(OBJ_EXT)				\
                        xptr_sequence$(OBJ_EXT)			\
+                       sorted_sequence$(OBJ_EXT)			\
                        dm_accessors$(OBJ_EXT)			\
                        e_string$(OBJ_EXT)				\
                        ext_sort$(OBJ_EXT)				\

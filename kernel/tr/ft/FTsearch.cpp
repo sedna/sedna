@@ -400,7 +400,8 @@ void SednaSearchJob::get_next_result(tuple &t)
         &dtth,                       // use default creation flags 
         0, NULL);
 	}
-
+	else
+		UUnnamedSemaphoreUp(&sem2);    
 	UUnnamedSemaphoreDown(&sem1);
     if (res==XNULL)
 	{
@@ -421,7 +422,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 			t.copy(tuple_cell::node(res));
 		else
 			t.copy(SednaConvertJob::result.content());
-		UUnnamedSemaphoreUp(&sem2);
+		
 	}
 }
 void SednaSearchJob::set_index(tuple_cell& name)

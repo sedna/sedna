@@ -8,12 +8,18 @@
 #define _PPDDO_H
 
 #include "PPBase.h"
-#include "xptr_sequence.h"
+#include "sorted_sequence.h"
 
 //#define TURN_ON_DDO
 
 class PPDDO : public PPIterator
 {
+private:
+	static int compare_less (xptr& v1,xptr& v2);
+	static int get_size (tuple& t);
+	static void serialize (tuple& t,xptr v1);
+	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2);
+	static tuple deserialize (xptr& v1);
 protected:
     // Inhereted through PPIterator
     // query_prolog_type *qp;
@@ -21,7 +27,7 @@ protected:
 
 #ifdef TURN_ON_DDO
     int pos;
-    xptr_sequence *s;
+    sorted_sequence *s;
 #endif
 
     // given parameters
@@ -30,6 +36,7 @@ protected:
     void children(PPOpIn& _child_) { _child_ = child; }
 
 public:
+
     virtual void open   ();
     virtual void reopen ();
     virtual void close  ();

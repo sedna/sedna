@@ -30,7 +30,7 @@ void PPDDO::open  ()
 #ifdef TURN_ON_DDO
     child.op->open();
     pos = 0;
-    s = new xptr_sequence();
+    s = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize);
 #else
     child.op->open();
 #endif
@@ -72,7 +72,7 @@ void PPDDO::next  (tuple &t)
             {
                 tuple_cell tc = child.get(t);
                 if (!tc.is_node()) throw USER_EXCEPTION2(SE1003, "Argument of PPDDO is not a node");
-                s->add(tc.get_node());
+                s->add(t);
             }
         }
 
@@ -80,12 +80,12 @@ void PPDDO::next  (tuple &t)
         d_printf2("Before sorting: size = %d\n", s->size());
         u_ftime(&t_sort1);
         //s->sort();
-        s->merge_sort();
+        s->sort();
         u_ftime(&t_sort2);
         d_printf2("After sorting: time = %s\n", to_string(t_sort2 - t_sort1).c_str());
     }
 
-    if (pos < s->size()) t.copy(tuple_cell::node(s->get(pos++)));
+    if (pos < s->size()) t.copy(s->get(pos++));
     else 
     {
         t.set_eos();
@@ -127,4 +127,27 @@ bool PPDDO::result(PPIterator* cur, variable_context *cxt, void*& r)
 
     return strict_op_result(cur, (sequence*)child_r, cxt, r);
 #endif
+}
+int PPDDO::compare_less (xptr& v1,xptr& v2)
+{
+	return 0;
+}
+int PPDDO::get_size (tuple& t)
+{
+	xptr node=t.cells[0].get_node();
+	CHECKP(node);
+	int sz=((n_dsc*)XADDR(node))->nid.size;
+	if (!sz)sz=*(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));
+	sz+=(sizeof(xptr)+sizeof(shft));
+	return (sz>DATA_BLK_SIZE)?2*sizeof(xptr)+sizeof(shft):sz;	
+}
+void PPDDO::serialize (tuple& t,xptr v1)
+{
+}
+void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2)
+{
+}
+tuple PPDDO::deserialize (xptr& v1)
+{
+	return tuple(1);
 }
