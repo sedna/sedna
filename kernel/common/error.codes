@@ -810,6 +810,9 @@ sedna-err:SE3045
 sedna-err:SE3046
 
     Can't create new session (sessions number exceeds permissible threshold )
+sedna-err:SE3047
+
+    Can't open session (client failed to send authentication parameters on time)
 
 
 ########### concerning connection with gov ####################
