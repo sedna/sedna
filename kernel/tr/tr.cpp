@@ -372,10 +372,9 @@ int main(int argc, char * argv[])
                         {ret_code = 1; throw;}
 
                     fprintf(stderr, "%s\n", e.getMsg().c_str());
-
                     client->error(e.get_code(), e.getMsg());
-                    
                  } catch (SednaException &e) {
+                     
                     sedna_soft_fault(e);
                  } catch (...) {
                     sedna_soft_fault();
@@ -431,13 +430,13 @@ int main(int argc, char * argv[])
 	               PRINT_DEBUG_TIME_RESULTS
                     }
 
-
    ppc.shutdown(); 
+   
    set_session_finished();
+   
    close_gov_shm(gov_shm_dsc, gov_shared_mem);
+   
    uSocketCleanup();
-
- 
 
    d_printf1("Transaction has been closed\n\n");
 
@@ -445,14 +444,18 @@ int main(int argc, char * argv[])
       fprintf(stderr, "%s\n", e.getMsg().c_str());
 
        on_session_end(sm_server);
-       if (client != NULL) {
-          if (e.get_code() == SE3053)
-             client->authentication_result(false, e.getMsg());
-          else
-          	 if ((e.get_code()!= SE3007) &&(e.get_code()!= SE3006))
-          	  client->error(e.get_code(), e.getMsg());
-          client->release();
-		  delete client;
+       try{
+          if (client != NULL) {
+             if (e.get_code() == SE3053)
+                client->authentication_result(false, e.getMsg());
+             else
+          	    if ((e.get_code()!= SE3007) &&(e.get_code()!= SE3006))
+          	      client->error(e.get_code(), e.getMsg());
+             client->release();
+		     delete client;
+             }
+       } catch (...){
+          d_printf1("Connection with client has been broken\n");
        }
        ppc.shutdown();   
        set_session_finished();

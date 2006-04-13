@@ -312,8 +312,14 @@ void socket_client::get_session_parameters()
 {
   sp_msg.instruction = se_SendSessionParameters;// SendSessionParameters message
   sp_msg.length = 0;
-  if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
-  if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+  if (sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
+  
+  timeout.tv_sec = 50;
+  timeout.tv_usec = 0;
+  int select_res = uselect_read(Sock, &timeout);
+  if (select_res == 0) throw USER_EXCEPTION(SE3047);
+  if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+  if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
 
   if (sp_msg.instruction != se_SessionParameters) //SessionParameters
    {
@@ -366,8 +372,15 @@ void socket_client::get_session_parameters()
       
   sp_msg.instruction = se_SendAuthParameters;// SendAuthenticationParameters message
   sp_msg.length = 0;
-  sp_send_msg(Sock, &sp_msg);
-  if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+  if (sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));  
+  
+  timeout.tv_sec = 50;
+  timeout.tv_usec = 0;
+  select_res = uselect_read(Sock, &timeout);
+  if (select_res == 0) throw USER_EXCEPTION(SE3047);
+  if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+  if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+
   if (sp_msg.instruction != se_AuthenticationParameters) //AuthenticationParameters
   {
     error(SE3009, string("Error: Unknown Instruction from client. Authentication failed.")); 
