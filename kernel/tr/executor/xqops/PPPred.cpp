@@ -8,6 +8,514 @@
 #include "PPUtils.h"
 #include "PPSLStub.h"
 #include "PPSResLStub.h"
+#include <algorithm>
+#include <functional>
+#include "casting_operations.h"
+#include "math.h"
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPPredRange
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+class int_less : public std::unary_function<int, bool> 
+{
+	int v;
+public:
+	explicit int_less(const int& _v_): v(_v_) {}
+	bool operator( ) ( int& val ) {	return val < v; }
+};
+
+class int_greater : public std::unary_function<int, bool> 
+{
+	int v;
+public:
+	explicit int_greater(const int& _v_): v(_v_) {}
+	bool operator( ) ( int& val ) {	return val > v; }
+};
+
+class int_less_equal : public std::unary_function<int, bool> 
+{
+	int v;
+public:
+	explicit int_less_equal(const int& _v_): v(_v_) {}
+	bool operator( ) ( int& val ) {	return val <= v; }
+};
+
+class int_greater_equal : public std::unary_function<int, bool> 
+{
+	int v;
+public:
+	explicit int_greater_equal(const int& _v_): v(_v_) {}
+	bool operator( ) ( int& val ) {	return val >= v; }
+};
+
+
+  
+PPPredRange::PPPredRange()
+{
+	upper_bound = 0;
+	lower_bound = 1;
+	state = RS_INITIAL;
+}
+
+int PPPredRange::reinit_with_position(double position)
+{
+    reinit();
+    int integer_value = (position == ceil(position)) ? (int) position : -1;	
+    if(is_position_in_range(integer_value)) 
+    {
+    	state = RS_POINTS;
+        points.push_back(integer_value);
+    }
+    else
+    	state = RS_EMPTY;
+    return state;
+}
+
+
+void PPPredRange::reinit()
+{
+	upper_bound = 0;
+	lower_bound = 1;
+	state = RS_INITIAL;
+	points.clear();
+	except_points.clear();
+}
+
+int PPPredRange::get_max_posible_position()
+{
+	switch(state)
+	{
+		case RS_INITIAL: return 0; 
+		case RS_EMPTY: return -1;
+		case RS_RANGE: 
+		{
+			if(upper_bound == 0) return 0;
+			int temp = upper_bound;
+			while(temp >= lower_bound)
+			{
+				if(is_position_in_range(temp)) return temp;
+				temp--;
+			}
+			return -1;
+		}
+		case RS_POINTS: return points.size() > 0 ? *max_element(points.begin(), points.end()) : -1; 
+		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}                                                                                                                                    
+}
+
+int PPPredRange::get_min_posible_position()
+{
+	switch(state)
+	{
+		case RS_INITIAL: return 1; 
+		case RS_EMPTY: return -1;
+		case RS_RANGE: 
+		{
+			int temp = lower_bound;
+			while(upper_bound == 0 ? true : temp <= upper_bound )
+			{
+				if(is_position_in_range(temp)) return temp;
+				temp++;
+			}
+			return -1;
+		}
+		case RS_POINTS: return points.size() > 0 ? *min_element(points.begin(), points.end()) : -1;
+		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}                                                                                                                                    
+}
+
+
+int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpIn &conjunct)
+{
+	if(state == RS_EMPTY) return state;
+    
+    tuple t(conjunct.ts);
+    
+    if(is_occ_value(occ))
+    {
+   		conjunct.op->next(t);
+   		
+   		if(t.is_eos()) state = RS_EMPTY;
+   		else 
+   		{
+			double double_value;
+   			int integer_value;
+
+   			tuple_cell tc = t.cells[0];
+			tc = atomize(tc);
+   			if(tc.is_numeric_type())
+    		{
+    			switch(tc.get_atomic_type())
+    			{
+    				case xs_integer: 
+    				    double_value = tc.get_xs_integer(); break;
+    				case xs_decimal:
+			            double_value = tc.get_xs_decimal().to_double(); break;
+			        case xs_double:
+			           	double_value = tc.get_xs_double(); break;
+    				case xs_float:
+    			    	double_value = tc.get_xs_float(); break;
+			        default: 
+			            throw USER_EXCEPTION2(SE1003, "Invalid numeric type in PPPRed");
+			       }
+	        }
+			else
+   				//must be XPTY004
+   				throw USER_EXCEPTION2(XP0006, "There is a not valid combination of types in value comparison");
+            
+			switch(occ)
+	        {
+    	    	
+    	    	case OCC_VALUE_EQUAL:
+
+   		     		integer_value = (double_value == ceil(double_value)) ? (int) double_value : -1;
+   		     		if(!is_position_in_range(integer_value))
+						state = RS_EMPTY;
+					else
+					{
+						points.clear();
+	   			     	points.push_back(integer_value);
+	   		 	    	state = RS_POINTS;
+		   		    }
+		       		break;
+
+				case OCC_VALUE_NOT_EQUAL:
+
+				    integer_value = (double_value == ceil(double_value)) ? (int) double_value : -1;
+				    if(!is_position_in_range(integer_value)) break;
+				    else
+				    {
+				    	if(state != RS_POINTS) 
+				    	{
+				    		except_points.push_back(integer_value);
+				    		state = RS_RANGE;
+				    	}
+				    	else
+				    		points.remove(integer_value);
+				    }
+				    break;
+
+				case OCC_VALUE_LESS:
+
+					position_less_than(double_value);
+					break;
+
+				case OCC_VALUE_GREATER:
+
+					position_greater_than(double_value);
+					break;
+				
+				case OCC_VALUE_LESS_EQUAL:
+					
+					position_less_equal_than(double_value);
+					break;
+
+				case OCC_VALUE_GREATER_EQUAL:
+				    
+				    position_greater_equal_than(double_value);
+				    break;
+
+				default: 
+					throw USER_EXCEPTION2(SE1003, "Unexpected value comparison type in PPPredRange");
+			}
+		}
+    }
+    else if(is_occ_general(occ))
+    {
+    	std::vector<double> double_values;
+		std::list<int> integer_values;
+   		
+   		int integer_value;
+		double double_value;
+
+
+   		while(true)
+   		{
+   			conjunct.op->next(t);
+   			if(t.is_eos()) break;
+	   		tuple_cell tc = t.cells[0];
+			tc = atomize(tc);
+			if(tc.is_numeric_type())
+    		{
+    			switch(tc.get_atomic_type())
+    			{
+    				case xs_integer: 
+    				    double_values.push_back(tc.get_xs_integer()); break;
+    				case xs_decimal:
+			            double_values.push_back(tc.get_xs_decimal().to_double()); break;
+			        case xs_double:
+			           	double_values.push_back(tc.get_xs_double()); break;
+    				case xs_float:
+    			    	double_values.push_back(tc.get_xs_float()); break;
+			        default: 
+			            throw USER_EXCEPTION2(SE1003, "Invalid numeric type in PPPRedRange");
+			       }
+	        }
+			else if(tc.get_atomic_type() == xdt_untypedAtomic)
+			{
+				tc = cast_to_xs_double(tc);
+				double_values.push_back(tc.get_xs_double());
+			}
+        }   
+    	
+    	if(double_values.size() == 0) state = RS_EMPTY;
+    	else
+    	{
+    		int i;
+    		switch(occ)
+	    	{
+    			case OCC_GENERAL_EQUAL:
+    			
+    			  	for(i = 0; i < double_values.size(); i++)
+    				{
+   			     		double_value = double_values[i];
+   		    	 		integer_value = (double_value == ceil(double_value)) ? (int) double_value : -1;
+ 		     			if(is_position_in_range(integer_value)) integer_values.push_back(integer_value);
+			       	}
+			       	if(integer_values.size() == 0) state = RS_EMPTY;
+			       	else
+			       	{
+			       		state = RS_POINTS;
+			       		integer_values.unique();
+			       		points = integer_values;
+			       	}
+			       	break;
+
+				case OCC_GENERAL_NOT_EQUAL:
+
+					for(i = 0; i < double_values.size(); i++)
+    				{
+   			     		double_value = double_values[i];
+   		    	 		integer_value = (double_value == ceil(double_value)) ? (int) double_value : -1;
+ 		     			if(!is_position_in_range(integer_value)) break;
+ 		     			else integer_values.push_back(integer_value);
+			       	}
+			       	integer_values.unique();
+			       	if(integer_values.size() == 0) state = RS_EMPTY;
+			       	else if(integer_values.size() > 1) break;
+			       	else  
+			       	{
+			       		if(state != RS_POINTS) 
+				    	{
+				    		except_points.push_back(*integer_values.begin());
+				    		state = RS_RANGE;
+				    	}
+				    	else
+				    		points.remove(*integer_values.begin());
+			       	}
+			       	break;	
+					
+				case OCC_GENERAL_LESS:
+
+					double_value = *max_element(double_values.begin(), double_values.end());
+					position_less_than(double_value);
+					break;
+
+				case OCC_GENERAL_GREATER:
+
+					double_value = *min_element(double_values.begin(), double_values.end());
+					position_greater_than(double_value);
+					break;
+
+				case OCC_GENERAL_LESS_EQUAL:
+
+					double_value = *max_element(double_values.begin(), double_values.end());
+					position_less_equal_than(double_value);
+					break;
+
+				case OCC_GENERAL_GREATER_EQUAL:
+
+					double_value = *min_element(double_values.begin(), double_values.end());
+					position_greater_equal_than(double_value);
+					break;
+
+				default:
+					throw USER_EXCEPTION2(SE1003, "Unexpected general comparison type in PPPredRange");
+
+    	   	}
+       	}
+    }
+    else 
+    	throw USER_EXCEPTION2(SE1003, "Unexpected operation compare condition in PPPredRange");
+
+    conjunct.op->reopen();
+    if(is_empty()) state = RS_EMPTY; 	
+    return state;
+}
+
+
+void PPPredRange::position_less_than(double double_value)
+{
+	if(double_value <= 1) state = RS_EMPTY;
+	else
+	{
+		int integer_value = (int) ceil(double_value);
+		int max_position = get_max_posible_position();
+		int min_position = get_min_posible_position();
+		if( max_position != 0 && max_position < integer_value) return;
+		if( integer_value <= min_position ) { state = RS_EMPTY; return; }  
+		
+		if(state == RS_POINTS)
+			points.remove_if(int_greater_equal(integer_value));		
+		else
+		{
+		    if(state == RS_RANGE) except_points.remove_if(int_greater_equal(integer_value));
+		    state = RS_RANGE;
+		    upper_bound = integer_value - 1;
+		}
+	}
+}
+
+void PPPredRange::position_greater_than(double double_value)
+{
+	if(double_value < 1) return;
+	else
+	{
+		int integer_value = (int) floor(double_value);
+		int max_position = get_max_posible_position();
+		int min_position = get_min_posible_position();
+		if( max_position != 0 && max_position <= integer_value) { state = RS_EMPTY; return; }  
+		if( integer_value < min_position ) return;
+		
+		if(state == RS_POINTS)
+			points.remove_if(int_less_equal(integer_value));		
+		else
+		{
+		    if(state == RS_RANGE) except_points.remove_if(int_less_equal(integer_value));
+		    state = RS_RANGE;
+		    lower_bound = integer_value + 1;
+		}
+	}
+}
+
+void PPPredRange::position_less_equal_than(double double_value)
+{
+	if(double_value < 1) state = RS_EMPTY;
+	else
+	{
+		int integer_value = (int) floor(double_value);
+		int max_position = get_max_posible_position();
+		int min_position = get_min_posible_position();
+		if( max_position != 0 && max_position <= integer_value) return;
+		if( integer_value < min_position ) { state = RS_EMPTY; return; }  
+	
+		if(state == RS_POINTS)
+		points.remove_if(int_greater(integer_value));		
+			else
+		{
+		    if(state == RS_RANGE) except_points.remove_if(int_greater(integer_value));
+		    state = RS_RANGE;
+		    upper_bound = integer_value;
+		}
+	}
+}
+
+void PPPredRange::position_greater_equal_than(double double_value)
+{
+    if(double_value <= 1) return;
+	else
+	{
+		int integer_value = (int) ceil(double_value);
+		int max_position = get_max_posible_position();
+		int min_position = get_min_posible_position();
+		if( max_position != 0 && max_position < integer_value) { state = RS_EMPTY; return; }  
+		if( integer_value <= min_position ) return;
+
+		if(state == RS_POINTS)
+			points.remove_if(int_less(integer_value));		
+		else
+		{
+		    if(state == RS_RANGE) except_points.remove_if(int_less(integer_value));
+		    state = RS_RANGE;
+		    lower_bound = integer_value;
+		}
+	}
+}
+
+bool PPPredRange::is_position_in_range(int pos)
+{
+	if(pos <= 0) return false;
+
+	switch(state)
+	{
+		case RS_INITIAL: return true; 
+		case RS_EMPTY: return false;
+		case RS_RANGE: return (pos >= lower_bound) && 
+		                      (upper_bound == 0 ? true : pos <= upper_bound) && 
+		                      find(except_points.begin(), except_points.end(), pos) == except_points.end();
+		case RS_POINTS: return points.size() > 0 ? find(points.begin(), points.end(), pos) != points.end()
+		                                         : false;
+  		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}                                                                                                                                    
+}
+
+bool PPPredRange::is_empty()
+{
+	switch(state)
+	{
+		case RS_INITIAL: return false; 
+		case RS_EMPTY: return true;
+		case RS_RANGE: 
+		{
+			if(upper_bound == 0) return false;
+			int power = upper_bound - lower_bound + 1;
+			if(power > except_points.size()) return false;
+			else return true;
+		}
+		case RS_POINTS: return points.size() > 0 ? false : true;
+		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}                                                                                                                                    	
+}
+
+bool PPPredRange::is_any()
+{
+	switch(state)
+	{
+		case RS_INITIAL: return true; 
+		case RS_EMPTY: return false;
+		case RS_RANGE: 
+			if(upper_bound == 0 && 
+			   lower_bound == 1 && 
+			   except_points.size() == 0) return true;
+			else return false;
+		case RS_POINTS: return false;
+		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}                                                                                                                                    	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -18,37 +526,37 @@
 PPPred1::PPPred1(variable_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
+                 arr_of_PPOpIn _conjuncts_,
+                 arr_of_comp_cond _conditions_,
                  PPOpIn _data_child_,
-                 var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
+                 bool _once_,
+                 var_dsc _pos_dsc_ ): PPVarIterator(_cxt_),
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
+                                      conjuncts(_conjuncts_),
+                                      conditions(_conditions_),
                                       data_child(_data_child_),
                                       data(_data_child_.ts),
+                                      once(_once_),
                                       pos_dsc(_pos_dsc_)
+                                      
 {
+	if(conjuncts.size() != conditions.size()) 
+		throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred1");
 }
-/*
-PPPred1::PPPred1(variable_context *_cxt_,
-                   arr_of_var_dsc _var_dscs_, 
-                   PPOpIn _source_child_, 
-                   PPOpIn _data_child_,
-                   tuple _source_) : PPVarIterator(_cxt_),
-                                     var_dscs(_var_dscs_),
-                                     source_child(_source_child_),
-                                     data_child(_data_child_),
-                                     data(_data_child_.ts),
-                                     source(_source_)
-{
-    first_time = false;
-    eos_reached = true;
-    standard = false;
-}
-*/
+
 PPPred1::~PPPred1()
 {
     delete source_child.op;
     source_child.op = NULL;
-    delete data_child.op;
+    
+    for( int i = 0; i < conjuncts.size(); i++)
+    {
+    	delete (conjuncts[i].op);
+    	conjuncts[i].op = NULL;
+    }
+    
+    delete data_child.op;            
     data_child.op = NULL;
 }
 
@@ -60,7 +568,7 @@ void PPPred1::open ()
     pos = 0;
     cur_tuple = NULL;
     first_time = true;
-    eos_reached = true;
+    result_ready = false;
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
@@ -80,48 +588,152 @@ void PPPred1::open ()
         p.tuple_pos = 0;
     }
 
+    for(int i = 0; i < conjuncts.size(); i++)
+		(conjuncts[i].op) -> open();
+    
     data_child.op->open();
+    
 }
 
-void PPPred1::reopen ()
+void PPPred1::reopen ()   											
 {
     pos = 0;
+    first_time = true;
+    result_ready = false;
     source_child.op->reopen();
 }
 
 void PPPred1::close ()
 {
     source_child.op->close();
+    
+    for( int i = 0; i < conjuncts.size(); i++)
+        (conjuncts[i].op) -> close();
+     
     data_child.op->close();
 }
-
+                                              							  
 void PPPred1::next(tuple &t)
 {
-    while (true)
+    bool eos_reached;
+			
+	if(first_time)
+	{
+		if(once)
+		{
+			if(conjuncts.size() != 0) 
+			{
+   		 		tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, 0);
+	   		  	if( tc.get_xs_boolean() )
+	   		  	{
+	   		  		range.reinit();
+       				for(int i = 0; i < conjuncts.size(); i++)
+    					range.add_new_constraint(conditions[i], conjuncts[i]);	
+    			    if(range.is_empty()) { t.set_eos(); return;}
+   			 	    else if(range.is_any()) result_ready = true; 
+	   		  	}
+   			 	else { t.set_eos(); return;} 
+       		}
+			else
+			{
+				bool is_numeric;
+				double value;
+				tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value);
+				if(is_numeric)
+				{
+				    range.reinit_with_position(value);
+				    if(range.is_empty()) { t.set_eos(); return;}
+				}                                       
+				else if( tc.get_xs_boolean() ) result_ready = true;
+				else { t.set_eos(); return;}
+			}
+		
+			if(!eos_reached) data_child.op->reopen();
+		   	reinit_consumer_table();
+		}
+		else 
+		{
+   		 	range.reinit();
+	       	for(int i = 0; i < conjuncts.size(); i++)
+   	    		range.add_new_constraint(conditions[i], conjuncts[i]);	
+   	    	if(range.is_empty()) { t.set_eos(); return;} 
+    	}
+    	
+    	first_time = false;
+    	
+    	if(!result_ready)
+    	{
+    		any = range.is_any();
+	    	if( !any )
+    		{
+    			lower_bound = range.get_min_posible_position();
+			    upper_bound = range.get_max_posible_position();
+    		}
+    	}
+	}
+
+	if(result_ready)	
+	{
+		source_child.op->next(t);
+		++pos;
+		cur_tuple = &t;
+		if(!t.is_eos()) return;
+	}	
+    else    
     {
-        source_child.op->next(t);
-        ++pos;
-        cur_tuple = &t;
-
-        if (t.is_eos()) { pos = 0; return; }
-
-        if (first_time) first_time = false;
-        else
-        {
-            reinit_consumer_table();
-            if (!eos_reached) data_child.op->reopen();
-        }
-
-        tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, pos);
-
-        if (tc.get_xs_boolean()) return;
+    	while (true)
+	    {
+    	    source_child.op->next(t);
+	        ++pos;
+    	    cur_tuple = &t;
+	
+    	    if(t.is_eos()) break;
+	
+    	    if( !any )
+	        {
+    	    	if(upper_bound != 0 && pos > upper_bound) 
+	    	    { 
+      	    	    source_child.op->reopen(); 
+    	        	break;
+	    	    }
+    	       	if(pos < lower_bound || !range.is_position_in_range(pos)) continue;
+	    	}
+	        
+    	    if( !once )
+        	{
+        		tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
+	        											  predicate_boolean_value(data_child, data, eos_reached, 0);
+    	    	if(tc.get_xs_boolean()) return;
+        		reinit_consumer_table();
+	        	if ( !eos_reached ) data_child.op->reopen();
+	        }
+    	    else return;
+	    }
     }
+    
+    pos = 0;
+	result_ready = false;
+	first_time = true; 
+   	t.set_eos();
 }
 
-PPIterator* PPPred1::copy(variable_context *_cxt_)
+PPIterator* PPPred1::copy(variable_context *_cxt_)						
 {
-    PPPred1 *res = new PPPred1(_cxt_, var_dscs, source_child, data_child, pos_dsc);
-    res->source_child.op = source_child.op->copy(_cxt_);
+    
+    PPPred1 *res = new PPPred1(_cxt_, 
+                               var_dscs, 
+                               source_child, 
+                               conjuncts, 
+                               conditions,
+                               data_child,
+                               once,
+                               pos_dsc);
+    
+    for (int i = 0; i < conjuncts.size(); i++)
+        res->conjuncts[i].op = conjuncts[i].op->copy(_cxt_);
+
+    
+    res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
 }
@@ -132,7 +744,7 @@ var_c_id PPPred1::register_consumer(var_dsc dsc)
     return cxt->producers[dsc].svc->size() - 1;
 }
 
-void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
+void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)           	       
 {
     producer &p = cxt->producers[dsc];
 
@@ -274,20 +886,31 @@ bool PPPred1::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPPred2
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
 PPPred2::PPPred2(variable_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
-                 PPOpIn _source_child_, 
+                 PPOpIn _source_child_,
+                 arr_of_PPOpIn _conjuncts_, 
+                 arr_of_comp_cond _conditions_,
                  PPOpIn _data_child_,
+                 bool _once_,
                  var_dsc _pos_dsc_,
                  var_dsc _lst_dsc_) : PPVarIterator(_cxt_),
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
+                                      conjuncts(_conjuncts_),
+                                      conditions(_conditions_),
                                       data_child(_data_child_),
                                       data(_data_child_.ts),
+                                      once(_once_),
                                       pos_dsc(_pos_dsc_),
                                       lst_dsc(_lst_dsc_)
 {
+	if(conjuncts.size() != conditions.size()) 
+		throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred2");
+
 }
+
 /*
 PPPred2::PPPred2(variable_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
@@ -309,6 +932,13 @@ PPPred2::~PPPred2()
 {
     delete source_child.op;
     source_child.op = NULL;
+
+    for( int i = 0; i < conjuncts.size(); i++)
+    {
+    	delete (conjuncts[i].op);
+    	conjuncts[i].op = NULL;
+    }
+        
     delete data_child.op;
     data_child.op = NULL;
 }
@@ -319,11 +949,11 @@ void PPPred2::open ()
     source_child.op->open();
 
     s = new sequence(source_child.ts);
-
+    first_time = true;
+    result_ready = false;
     pos = 0;
     cur_tuple = NULL;
     first_time = true;
-    eos_reached = true;
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
@@ -333,7 +963,6 @@ void PPPred2::open ()
         p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
-
     {
         producer &p = cxt->producers[pos_dsc];
         p.type = pt_lazy_simple;
@@ -349,12 +978,17 @@ void PPPred2::open ()
         p.tuple_pos = 0;
     }
 
+    for(int i = 0; i < conjuncts.size(); i++)
+		(conjuncts[i].op) -> open();
+   
     data_child.op->open();
 }
 
 void PPPred2::reopen ()
 {
     source_child.op->reopen();
+    first_time = true;
+    result_ready = false;
     s->clear();
     pos = 0;
 }
@@ -362,39 +996,117 @@ void PPPred2::reopen ()
 void PPPred2::close ()
 {
     source_child.op->close();
+
+    for( int i = 0; i < conjuncts.size(); i++)
+	    (conjuncts[i].op) -> close();
+
     data_child.op->close();
     delete s;
 }
 
 void PPPred2::next(tuple &t)
 {
-    if (pos == 0)
-    {
-        while (true)
+    bool eos_reached;
+        	
+    if(first_time)
+	{
+	    while (true)
         {
             source_child.op->next(t);
             if (t.is_eos()) break;
             else s->add(t);
         }
+        if(s->size() == 0) return;
+
+		if(once)
+		{
+			if(conjuncts.size() != 0) 
+			{
+   		 		tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, 0);
+	   		  	if( tc.get_xs_boolean() )
+	   		  	{
+	   		  		range.reinit();
+       				for(int i = 0; i < conjuncts.size(); i++)
+    					range.add_new_constraint(conditions[i], conjuncts[i]);	
+    			    if(range.is_empty()) { t.set_eos(); s->clear(); return; }
+   			 	    else if(range.is_any()) result_ready = true; 
+	   		  	}
+   			 	else { t.set_eos(); s->clear(); return; }
+       		}
+			else
+			{
+				bool is_numeric;
+				double value;
+				tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value);
+				if(is_numeric)
+				{
+				    range.reinit_with_position(value);
+				    if(range.is_empty()) { t.set_eos(); s->clear(); return; }
+				}
+				else if( tc.get_xs_boolean() ) result_ready = true;
+				else { t.set_eos(); s->clear(); return; }
+			}
+		
+			if(!eos_reached) data_child.op->reopen();
+		   	reinit_consumer_table();
+		}
+		else
+		{
+   		 	range.reinit();
+	       	for(int i = 0; i < conjuncts.size(); i++)
+   	    		range.add_new_constraint(conditions[i], conjuncts[i]);	
+   	    	if(range.is_empty()) { t.set_eos(); s->clear(); return; } 
+    	}
+    	
+    	first_time = false;
+
+    	if(!result_ready)
+    	{
+    		any = range.is_any();
+	    	if( !any )
+    		{
+    			lower_bound = range.get_min_posible_position();
+			    upper_bound = range.get_max_posible_position();
+    		}
+    	}
+	}
+
+	if(result_ready)	
+	{
+		if(pos < s->size()) 
+		{
+			s->get(t, pos++);
+	        cur_tuple = &t;
+	        return;
+	    }
+	}	
+    else
+    {    
+    	while (pos < s->size())
+	    {
+        	s->get(t, pos++);
+    	    cur_tuple = &t;
+
+	        if( !any )
+    	    {
+        		if(upper_bound != 0 && pos > upper_bound) break;
+        	   	if(pos < lower_bound || !range.is_position_in_range(pos)) continue;
+		    }
+    	    
+        	if( !once )
+	        {
+    	    	tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
+        												  predicate_boolean_value(data_child, data, eos_reached, 0);
+        		if(tc.get_xs_boolean()) return;
+	        	reinit_consumer_table();
+		        if ( !eos_reached ) data_child.op->reopen();
+        	}
+	        else return;
+    	}
     }
-
-    while (pos < s->size())
-    {
-        s->get(t, pos++);
-        cur_tuple = &t;
-
-        if (first_time) first_time = false;
-        else
-        {
-            reinit_consumer_table();
-            if (!eos_reached) data_child.op->reopen();
-        }
-
-        tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, pos);
-
-        if (tc.get_xs_boolean()) return;
-    }
-
+    
+    result_ready = false;
+    first_time = true;
     t.set_eos();
     s->clear();
     pos = 0;
@@ -402,8 +1114,20 @@ void PPPred2::next(tuple &t)
 
 PPIterator* PPPred2::copy(variable_context *_cxt_)
 {
-    PPPred2 *res = new PPPred2(_cxt_, var_dscs, source_child, data_child, pos_dsc, lst_dsc);
-    res->source_child.op = source_child.op->copy(_cxt_);
+    PPPred2 *res = new PPPred2(_cxt_, 
+                               var_dscs, 
+                               source_child, 
+                               conjuncts, 
+                               conditions,
+                               data_child,
+                               once,
+                               pos_dsc,
+                               lst_dsc);
+    
+    for (int i = 0; i < conjuncts.size(); i++)
+        res->conjuncts[i].op = conjuncts[i].op->copy(_cxt_);
+    
+    res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
 }

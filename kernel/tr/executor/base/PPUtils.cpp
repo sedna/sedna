@@ -135,6 +135,63 @@ tuple_cell _pred_and_effect_boolean_value(const PPOpIn &child, tuple &t, bool &e
     throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
 }
 
+
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value)
+{
+	is_numeric = false;
+
+	child.op->next(t);
+
+    if (t.is_eos())
+    {
+        eos_reached = true;
+        return tuple_cell::atomic(false);
+    }
+
+    if (child.get(t).is_node())
+    {
+        eos_reached = false;
+        return tuple_cell::atomic(true);
+    }
+
+    if (child.get(t).is_atomic())
+    {
+        tuple_cell tc = child.get(t);
+
+        child.op->next(t);
+
+        if (t.is_eos())
+        {
+            eos_reached = true;
+         	if(tc.is_numeric_type())
+    		{
+    			is_numeric = true;
+    			switch(tc.get_atomic_type())
+    			{
+    				case xs_integer: 
+    				    value = tc.get_xs_integer(); break;
+    				case xs_decimal:
+			            value = tc.get_xs_decimal().to_double(); break;
+			        case xs_double:
+			           	value = tc.get_xs_double(); break;
+    				case xs_float:
+    			    	value = tc.get_xs_float(); break;
+			        default: 
+			            throw USER_EXCEPTION2(SE1003, "Invalid numeric type in predicate_numeric_or_boolean_value");
+			    }
+	        }
+	        return effective_boolean_value(tc);
+        }
+        else
+        {
+            eos_reached = false;
+            return tuple_cell::atomic(true);
+        }
+    }
+
+    throw USER_EXCEPTION2(SE1003, "Impossible case in predicate_numeric_or_boolean_value");
+}
+
 tuple_cell effective_boolean_value(const sequence *s)
 {
     if (s->size() == 0) return tuple_cell::atomic(false);

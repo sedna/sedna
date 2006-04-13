@@ -1466,16 +1466,20 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     }
     else if (op == "PPPred1")
     {
-        if (   lst->size() < 4
-            || lst->size() > 5
+        if (   lst->size() < 6
+            || lst->size() > 7
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
             || lst->at(3).type != SCM_LIST
+            || lst->at(4).type != SCM_LIST
+            || lst->at(5).type != SCM_NUMBER
            ) throw USER_EXCEPTION2(SE1004, "84");
 
+        int i = 0;
+           
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "85");
@@ -1484,37 +1488,86 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             vars.push_back(var);
         }
 
-        if (lst->size() == 5)
+        arr_of_comp_cond _conditions_;
+        arr_of_PPOpIn _conjuncts_;
+        scheme_list *conjuncts_list = lst->at(3).internal.list;
+        for (i = 0; i < conjuncts_list->size(); i++)
         {
-            if (lst->at(4).type != SCM_NUMBER)
+            if (conjuncts_list->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "85.1");
+            scheme_list *conjunct = conjuncts_list->at(i).internal.list;
+            
+            if (   conjunct->size() != 2 
+                || conjunct->at(0).type != SCM_SYMBOL 
+                || conjunct->at(1).type != SCM_LIST
+               )
+                throw USER_EXCEPTION2(SE1004, "85.2");
+
+            string occ_string = string(conjunct->at(0).internal.symb);
+        	operation_compare_condition occ;
+	        if (occ_string == "eqv")            occ = OCC_VALUE_EQUAL;
+    	    else if (occ_string == "nev")	    occ = OCC_VALUE_NOT_EQUAL;
+	        else if (occ_string == "lev")	    occ = OCC_VALUE_LESS_EQUAL;
+    	    else if (occ_string == "gtv")	    occ = OCC_VALUE_GREATER;
+	        else if (occ_string == "gev")	    occ = OCC_VALUE_GREATER_EQUAL;
+    	    else if (occ_string == "ltv")	    occ = OCC_VALUE_LESS;
+      	    else if (occ_string == "eqg")       occ = OCC_GENERAL_EQUAL;
+    	    else if (occ_string == "neg")	    occ = OCC_GENERAL_NOT_EQUAL;
+	        else if (occ_string == "leg")	    occ = OCC_GENERAL_LESS_EQUAL;
+    	    else if (occ_string == "gtg")	    occ = OCC_GENERAL_GREATER;
+	        else if (occ_string == "geg")	    occ = OCC_GENERAL_GREATER_EQUAL;
+    	    else if (occ_string == "ltg")	    occ = OCC_GENERAL_LESS;
+	        else throw USER_EXCEPTION2(SE1004, "85.3");
+    
+            _conditions_.push_back(occ);
+            _conjuncts_.push_back(make_pp_op(cxt, conjunct->at(1).internal.list));
+        }
+
+
+        bool _once_ = (atoi(lst->at(5).internal.num) == 1);
+
+
+        if (lst->size() == 7)
+        {
+            if (lst->at(6).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "86");
-            var_dsc pos = atoi(lst->at(4).internal.num);
+            var_dsc pos = atoi(lst->at(6).internal.num);
 
             opit = new PPPred1(cxt,
                                vars,
                                make_pp_op(cxt, lst->at(2).internal.list),
-                               make_pp_op(cxt, lst->at(3).internal.list),
+                               _conjuncts_,
+                               _conditions_,
+                               make_pp_op(cxt, lst->at(4).internal.list),
+                               _once_,
                                pos);
         }
         else
             opit = new PPPred1(cxt,
                                vars,
                                make_pp_op(cxt, lst->at(2).internal.list),
-                               make_pp_op(cxt, lst->at(3).internal.list));
+                               _conjuncts_,
+                               _conditions_,
+                               make_pp_op(cxt, lst->at(4).internal.list),
+                               _once_);
     }
     else if (op == "PPPred2")
     {
-        if (   lst->size() != 6
+        if (   lst->size() != 8
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
             || lst->at(3).type != SCM_LIST
-            || lst->at(4).type != SCM_NUMBER
+            || lst->at(4).type != SCM_LIST
             || lst->at(5).type != SCM_NUMBER
+            || lst->at(6).type != SCM_NUMBER
+            || lst->at(7).type != SCM_NUMBER
            ) throw USER_EXCEPTION2(SE1004, "87");
+
+        int i = 0;
 
         arr_of_var_dsc vars;
         scheme_list *_vars_ = lst->at(1).internal.list;
-        for (int i = 0; i != _vars_->size(); i++)
+        for (i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
                 throw USER_EXCEPTION2(SE1004, "88");
@@ -1523,13 +1576,53 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             vars.push_back(var);
         }
 
-        var_dsc pos  = atoi(lst->at(4).internal.num);
-        var_dsc last = atoi(lst->at(5).internal.num);
+        arr_of_comp_cond _conditions_;
+        arr_of_PPOpIn _conjuncts_;
+        scheme_list *conjuncts_list = lst->at(3).internal.list;
+        for (i = 0; i < conjuncts_list->size(); i++)
+        {
+            if (conjuncts_list->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "88.1");
+            scheme_list *conjunct = conjuncts_list->at(i).internal.list;
+            
+            if (   conjunct->size() != 2 
+                || conjunct->at(0).type != SCM_SYMBOL 
+                || conjunct->at(1).type != SCM_LIST
+               )
+                throw USER_EXCEPTION2(SE1004, "88.2");
+
+            string occ_string = string(conjunct->at(0).internal.symb);
+        	operation_compare_condition occ;
+	        if (occ_string == "eqv")            occ = OCC_VALUE_EQUAL;
+    	    else if (occ_string == "nev")	    occ = OCC_VALUE_NOT_EQUAL;
+	        else if (occ_string == "lev")	    occ = OCC_VALUE_LESS_EQUAL;
+    	    else if (occ_string == "gtv")	    occ = OCC_VALUE_GREATER;
+	        else if (occ_string == "gev")	    occ = OCC_VALUE_GREATER_EQUAL;
+    	    else if (occ_string == "ltv")	    occ = OCC_VALUE_LESS;
+      	    else if (occ_string == "eqg")       occ = OCC_GENERAL_EQUAL;
+    	    else if (occ_string == "neg")	    occ = OCC_GENERAL_NOT_EQUAL;
+	        else if (occ_string == "leg")	    occ = OCC_GENERAL_LESS_EQUAL;
+    	    else if (occ_string == "gtg")	    occ = OCC_GENERAL_GREATER;
+	        else if (occ_string == "geg")	    occ = OCC_GENERAL_GREATER_EQUAL;
+    	    else if (occ_string == "ltg")	    occ = OCC_GENERAL_LESS;
+	        else throw USER_EXCEPTION2(SE1004, "88.3");
+    
+            _conditions_.push_back(occ);
+            _conjuncts_.push_back(make_pp_op(cxt, conjunct->at(1).internal.list));
+        }
+
+
+        bool _once_ = (atoi(lst->at(5).internal.num) == 1);
+        var_dsc pos  = atoi(lst->at(6).internal.num);
+        var_dsc last = atoi(lst->at(7).internal.num);
 
         opit = new PPPred2(cxt,
                            vars,
                            make_pp_op(cxt, lst->at(2).internal.list),
-                           make_pp_op(cxt, lst->at(3).internal.list),
+                           _conjuncts_,
+                           _conditions_,
+                           make_pp_op(cxt, lst->at(4).internal.list),
+                           _once_,
                            pos,
                            last);
     }
