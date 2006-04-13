@@ -131,7 +131,6 @@ int sequence::add(const tuple &t)
     for (int i = 0; i < tuple_size; i++)
     {
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
-        ((tuple_cell*)(dest_addr + i))->_reset_str_ptr();
 
         if (t.cells[i].is_string_type() && (copy_vmm_strings || t.cells[i].is_light_atomic()))
         {
@@ -140,10 +139,14 @@ int sequence::add(const tuple &t)
             xptr txt_ptr = t.cells[i].is_light_atomic() ? copy_text(t.cells[i].get_str_mem(), &txt_eblk, &new_blks_num) :
                                                           copy_text(t.cells[i].get_str_vmm(), t.cells[i].get_strlen_vmm(), &txt_eblk, &new_blks_num);
             (dest_addr + i)->set_xptr(txt_ptr);
-            (dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
+			if (t.cells[i].is_light_atomic())
+				(dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
+			(dest_addr + i)->_reset_str_ptr();
             txt_blks_num += new_blks_num;
             CHECKP(eblk);
         }
+		else
+			(dest_addr + i)->_reset_str_ptr();
     }
 
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
