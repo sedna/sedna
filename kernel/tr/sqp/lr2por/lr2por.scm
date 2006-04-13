@@ -1548,15 +1548,18 @@
                    (l2p:replace-pos-last2numbers
                     (cons 'and@ (reverse others))
                     pos-num last-num))))
-              ,@(cond
-                  (requires-last?
-                   (list (not (or requires-node? requires-pos?))
-                         pos-num last-num))
-                  (requires-pos?
-                   (list #f  ; is to be evaluated multiple times, since depends on position()
-                         pos-num))
-                  (else
-                   (list (not requires-node?)))))))))
+              ,@((lambda (lst)
+                   (cons (if (car lst) 1 0)
+                         (cdr lst)))
+                 (cond
+                   (requires-last?
+                    (list (not (or requires-node? requires-pos?))
+                          pos-num last-num))
+                   (requires-pos?
+                    (list #f  ; is to be evaluated multiple times, since depends on position()
+                          pos-num))
+                   (else
+                    (list (not requires-node?))))))))))
         ((l2p:whether-pos-cmp-smth (car conjunctors) context-node-var-name)
          => (lambda (pair)
               (loop (cdr conjunctors)
