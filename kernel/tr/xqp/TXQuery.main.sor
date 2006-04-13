@@ -13,11 +13,9 @@
 #include <string>
 
 
-extern int var_count;
 
 >>
 
-<<int var_count =0;>> // the counter for congen1 variable
 
 class XQueryTreeParser {
 
@@ -48,7 +46,7 @@ query!:
 	 <<out_context _out_c_;>>
 	 #(AST_QUERY #(AST_PROLOG p1:prolog)
 
-	             #(AST_EXPR {e:expr  [in_context(OUTSIDE_PREDICATE)]
+	             #(AST_EXPR {e:expr  [in_context()]
                                         >[_out_c_]
 	                        })
 	 )
@@ -78,18 +76,14 @@ query!:
 
 
 expr! [in_context in_c] >[out_context out_c]: 
-	<<out_context _out_c_;>>
-	(  #(AST_SEQUENCE (e1:exprSingle[in_c] >[_out_c_]
+	(  #(AST_SEQUENCE (e1:exprSingle[in_c] >[out_c]
 	                   <<if(#expr == NULL)
 	                     {
 	                       #expr=e1;
-	                       out_c = _out_c_;
 	                     }
 	                     else
 	                     {
 	                      #expr->append(e1);
-	                      if ( _out_c_ > out_c )
-	                          out_c = _out_c_;
 	                     }    
 	                   >>
 	                  )*)

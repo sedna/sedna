@@ -21,7 +21,7 @@ functionDefn!:
 	 #(AST_FUNCTION qn1:qname 
 	   pl1:paramList
 	   #(AST_RETURNED_TYPE st1:sequenceType)
-	   #(AST_BODY_FUNC {e:expr[in_context(OUTSIDE_PREDICATE)] >[_out_c_]}))
+	   #(AST_BODY_FUNC {e:expr[in_context()] >[_out_c_]}))
 
 	 <<
 	   if (e != NULL)

@@ -1,18 +1,13 @@
 /* */
 
 arithmLogicalTypeExpr![in_context in_c] >[out_context out_c]:
-	  <<out_context _out_c1_, _out_c2_;>>
 
-	  #(op:AST_B_OP eb1:expr[in_c] >[_out_c1_] eb2:expr[in_c] >[_out_c2_])
+	  #(op:AST_B_OP eb1:expr[in_c] >[out_c] eb2:expr[in_c] >[out_c])
 	  <<
 	    #arithmLogicalExpr=
 	        #(#[std::string(op->getText())+"@"], eb1, eb2);
 
 
-	    if ( _out_c1_ > _out_c2_ )
-	       out_c = _out_c1_;
-            else
-	       out_c = _out_c2_; 
 	  >>
 	| #(op:AST_UNARY_OP eu:expr[in_c] >[out_c])
 	  <<#arithmLogicalExpr=

@@ -1,10 +1,9 @@
 /* */
 
 quantifierExpr! [in_context in_c] >[out_context out_c]:
-	  <<out_context _out_c1_, _out_c2_;>>
 
-	 ( #(AST_SOME #(AST_VAR_DECL v1:vardecl  {st1:sequenceType}  ie1:expr[in_c] >[_out_c1_])
-	             e1:expr[in_c] >[_out_c2_])
+	 ( #(AST_SOME #(AST_VAR_DECL v1:vardecl  {st1:sequenceType}  ie1:expr[in_c] >[out_c])
+	             e1:expr[in_c] >[out_c])
 
 	  <<ASTBase *var_type;
 	    if(st1==NULL)
@@ -17,12 +16,10 @@ quantifierExpr! [in_context in_c] >[out_context out_c]:
 	                      #(#["fun-def"], 
 	                        #(#[], #(#[], var_type, v1)),
 	                        e1));
-
-	    out_c = max_out_context(_out_c1_, _out_c2_);
 	  >>
 
-	| #(AST_EVERY #(AST_VAR_DECL v2:vardecl st2:sequenceType  ie2:expr[in_c] >[_out_c1_])
-	              e2:expr[in_c] >[_out_c2_])
+	| #(AST_EVERY #(AST_VAR_DECL v2:vardecl st2:sequenceType  ie2:expr[in_c] >[out_c])
+	              e2:expr[in_c] >[out_c])
 
 	  <<ASTBase *var_type;
 	    if(st1==NULL)
@@ -35,8 +32,6 @@ quantifierExpr! [in_context in_c] >[out_context out_c]:
 	                      #(#["fun-def"], 
 	                        #(#[], #(#[], var_type, v2)),
 	                        e2));
-
-	    out_c = max_out_context(_out_c1_, _out_c2_);
 	  >>
 	)
 

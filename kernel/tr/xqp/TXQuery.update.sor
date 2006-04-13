@@ -19,8 +19,8 @@ updateExpr!:
 
 insertExpr!:
 	<<out_context out_c;>>
-	#(AST_INSERT e1:expr[in_context(OUTSIDE_PREDICATE)] >[out_c]
-	             e2:expr[in_context(OUTSIDE_PREDICATE)] >[out_c]
+	#(AST_INSERT e1:expr[in_context()] >[out_c]
+	             e2:expr[in_context()] >[out_c]
 	  (  AST_INTO       <<#insertExpr=#(#["insert-into"], e1, e2);>>
 	   | AST_PRECEDING  <<#insertExpr=#(#["insert-preceding"], e1, e2);>> 
 	   | AST_FOLLOWING  <<#insertExpr=#(#["insert-following"], e1, e2);>>
@@ -30,21 +30,21 @@ insertExpr!:
 
 deleteExpr!:
 	<<out_context out_c;>>
-	#(AST_DELETE e:expr[in_context(OUTSIDE_PREDICATE)] >[out_c])
+	#(AST_DELETE e:expr[in_context()] >[out_c])
 	<<#deleteExpr=#(#["delete"], e);>>
 ;
 
 delete_undeepExpr!:
 	<<out_context out_c;>>
-	#(AST_DELETE_UNDEEP e:expr[in_context(OUTSIDE_PREDICATE)] >[out_c])
+	#(AST_DELETE_UNDEEP e:expr[in_context()] >[out_c])
 	<<#delete_undeepExpr=#(#["delete_undeep"], e);>>
 ;
 
 replaceExpr!:
 	<<out_context out_c;>>
 	#(AST_REPLACE v:vardecl st:sequenceType 
-	              e1:expr[in_context(OUTSIDE_PREDICATE)] >[out_c]
-	              e2:expr[in_context(OUTSIDE_PREDICATE)] >[out_c])
+	              e1:expr[in_context()] >[out_c]
+	              e2:expr[in_context()] >[out_c])
 
 	<<
       PCCTS_AST* v_copy = #(#["var"], #(#[((SORAST*)(v->down()))->getText()], #[((SORAST*)(v->down()->down()))->getText()]));
@@ -62,14 +62,14 @@ replaceExpr!:
 
 renameExpr!:
 	<<out_context out_c;>>
-	#(AST_RENAME e:expr[in_context(OUTSIDE_PREDICATE)] >[out_c] qn:qname)
+	#(AST_RENAME e:expr[in_context()] >[out_c] qn:qname)
 	<<#renameExpr=#(#["rename"], e, qn);>>
 ;
 
 moveExpr!:
 	<<out_context out_c;>>
-	#(AST_MOVE v:vardecl st:sequenceType e:expr[in_context(OUTSIDE_PREDICATE)] >[out_c] 
-	           rpe:relativePathExpr[in_context(OUTSIDE_PREDICATE)] >[out_c]
+	#(AST_MOVE v:vardecl st:sequenceType e:expr[in_context()] >[out_c] 
+	           rpe:relativePathExpr[in_context()] >[out_c]
 	           (  AST_INTO 
 	              <<#moveExpr=#(#["move-into"], e,
 	                            #(#["fun-def"], 

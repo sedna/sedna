@@ -2,7 +2,6 @@
 
 elemConstructor! [in_context in_c] >[out_context out_c]:
 	<<SORASTBase *atts=NULL, *ecnt=NULL, *elname=NULL;
-	  out_context _out_c1_, _out_c2_, _out_c3_;
 	>>
 
 	#(AST_ELEMENT 
@@ -11,20 +10,20 @@ elemConstructor! [in_context in_c] >[out_context out_c]:
 
 	        <<elname=#(#["const"], #(#["type"], #["!xs!QName"]), qn);>>
 
-	      |  e:expr[in_c] >[_out_c1_] <<elname=e;>>
+	      |  e:expr[in_c] >[out_c] <<elname=e;>>
 	    )
 	   )
 	   #(AST_ELEMENT_ATTRIBUTES 
-	     ( ats:attrConstructor[in_c] >[_out_c2_] //_out_c2 must be max 
+	     ( ats:attrConstructor[in_c] >[out_c] //_out_c2 must be max 
 	       <<if(atts==NULL) atts=ats; else atts->append(ats);>>
 
-	      | nc:namespaceConstructor[in_c] >[_out_c2_] 
+	      | nc:namespaceConstructor[in_c] >[out_c] 
 	       <<if(atts==NULL) atts=nc; else atts->append(nc);>>
 
 	     )*)
 
 	   #(AST_CONTENT 
-	     (ec:elemContent[in_c] >[_out_c3_] 
+	     (ec:elemContent[in_c] >[out_c] 
 	      <<if(ecnt==NULL) ecnt=ec; else ecnt->append(ec); >>)*)
 	 )
 
@@ -55,30 +54,24 @@ elemConstructor! [in_context in_c] >[out_context out_c]:
 	         #(#["element"], elname, #(#[], #["sequence"]));
 
 	   }
-
-	   if ( _out_c1_ > _out_c2_ )
-	      out_c = max_out_context(_out_c1_, _out_c3_);
-	   else
-	      out_c = max_out_context(_out_c2_, _out_c3_);
 	 >> 
 ;
 
 attrConstructor! [in_context in_c] >[out_context out_c]:
 	<<SORASTBase *cnt=NULL, *attr_name=NULL;
-	  out_context _out_c1_, _out_c2_;
 	>>
 	#(AST_ATTRIBUTE
 	  #(AST_ATTRIBUTE_NAME  
             (  qn:qname 
 	       <<attr_name=#(#["const"], #(#["type"], #["!xs!QName"]), qn);
 	              	     >>
-  	     | e:expr[in_c] >[_out_c1_]
+  	     | e:expr[in_c] >[out_c]
   	       <<attr_name=e;>>
   	    )   
   	   )
 
 	  #(AST_CONTENT 
-	    (ac:attrContent[in_c] >[_out_c2_]
+	    (ac:attrContent[in_c] >[out_c]
 	     <<if(cnt==NULL) cnt=ac; else cnt->append(ac); >>)*
 	   )                                                                
 	 )
@@ -90,8 +83,6 @@ attrConstructor! [in_context in_c] >[out_context out_c]:
 	      #attrs=#(#["attribute"], attr_name, cnt);
 	  else 
 	    #attrs=#(#["attribute"], attr_name, #(#[], #["sequence"]));
-
-	  out_c = max_out_context(_out_c1_, _out_c2_);
 	>>
 ;
 
@@ -103,8 +94,6 @@ attrContent! [in_context in_c] >[out_context out_c]:
 	  <<att_cont=#(#["const"], 
 	               #(#["type"], #["!xs!string"]),
 	               #[std::string("\"")+cs->getText()+"\""]);
-
-	    out_c = out_context(NOT_EXIST_POS_BASED_FNS);
 	  >>
 
 	| e:expr[in_c] >[out_c]
@@ -122,8 +111,6 @@ elemContent! [in_context in_c] >[out_context out_c]:
 	  <<elm_cont=#(#["const"], 
 	                #(#["type"], #["!xs!string"]),
 	                #[std::string("\"")+cs->getText()+"\""]);
-
-	    out_c = out_context(NOT_EXIST_POS_BASED_FNS);
 	  >>
 
 	| e:expr[in_c] >[out_c]
@@ -140,9 +127,7 @@ elemContent! [in_context in_c] >[out_context out_c]:
 ;
 
 namespaceConstructor! [in_context in_c] >[out_context out_c]:
-	<<SORASTBase *cnt=NULL, *nc_name=NULL;
-	  out_context  _out_c2_;
-	>>
+	<<SORASTBase *cnt=NULL, *nc_name=NULL;>>
 	#(AST_NAMESPACE
 	  #(AST_NAMESPACE_NAME  
              pr:AST_PREFIX
@@ -151,7 +136,7 @@ namespaceConstructor! [in_context in_c] >[out_context out_c]:
   	   )
 
 	  #(AST_CONTENT 
-	    (ac:attrContent[in_c] >[_out_c2_]
+	    (ac:attrContent[in_c] >[out_c]
 	     <<if(cnt==NULL) cnt=ac; else cnt->append(ac); >>)*
 	   )                                                                
 	 )
@@ -163,8 +148,6 @@ namespaceConstructor! [in_context in_c] >[out_context out_c]:
 	      #attrs=#(#["namespace"], nc_name, cnt);
 	  else 
 	    #attrs=#(#["namespace"], nc_name, #(#[], #["sequence"]));
-
-	  out_c =_out_c2_;
 	>>
 ;
 	

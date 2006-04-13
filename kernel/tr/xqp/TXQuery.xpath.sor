@@ -1,10 +1,7 @@
 /**/
 
 relativePathExpr![in_context in_c] >[out_context out_c]:
-	<<SORASTBase *test=NULL;
-	  out_context _out_c_, _out_c1_, _out_c2_;
-	  out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	>>
+	<<SORASTBase *test=NULL;>>
 	#(AST_RELATIVE_PATH 
 	  (
 	    <<kt=NULL; nt=NULL;>>
@@ -14,7 +11,7 @@ relativePathExpr![in_context in_c] >[out_context out_c]:
 	        #(AST_TEST (kt:kindTest |
 	                    nt:nameTest)))
 
-	      p1:predicates[in_c] >[_out_c_]
+	      p1:predicates[in_c] >[out_c]
 	     )
 	     
 	   <<if(#relativePathExpr==NULL) //the begin of relative path
@@ -38,67 +35,37 @@ relativePathExpr![in_context in_c] >[out_context out_c]:
 	              #(a, #relativePathExpr, test));
 	     else //step with predicates
 	     {
-	       if (_out_c_.p_fns == NOT_EXIST_POS_BASED_FNS)
-	       {
+
+			 SORASTBase* it;
+			 SORASTBase* inner_preds = 
+   	                  #(#["predicate"], 
+				        #(a, #(#["var"], #(#["\"\""], #["\"$%v\""])), test),
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(p1->down()->down())));
+
+	 		 for (it = p1->down()->right(); it != NULL; it = it->right())
+			      inner_preds = 
+   	                  #(#["predicate"], 
+				        inner_preds,
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(it->down())));
+
 	         #relativePathExpr=
 	              #(#["ddo"],
 	                #(#["return"], 
-	                  #(a, #relativePathExpr, test),
+			          #relativePathExpr,
+
 	                  #(#["fun-def"], 
 	                    #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                    #(#["if@"], p1, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"])))));
-	       }
-	       else
-	       if (_out_c_.p_fns == EXIST_FN_POSITION)
-	       {
-	         std::string ivar;
-                 char buf[1000];
-	         itoa(var_count, buf, 10);
-	         ivar=std::string("\"$m")+buf + std::string("\"");
-
-	         #relativePathExpr=
-	              #(#["ddo"],
-	                #(#["return"],
-	                  #relativePathExpr, 
-	                  #(#["fun-def"], 
-	                    #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                    #(#["return"],
-	                      #(#["congen1"],
-	                        #(a, #(#["var"], #(#["\"\""], #["\"$%v\""])), test),
-	                        #(#["ivar"], #(#["\"\""], #[ivar]))),
-	                      #(#["fun-def"],
-	                        #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer!"], #(#["var"], #(#["\"\""], #["\"$i\""])))),
-	                        #(#["if@"], p1, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"])))))));
-
-	          var_count += 1;
-
-	       }
-	       else
-	       if (_out_c_.p_fns == EXIST_FN_LAST) // EXIST_FN_LAST
-	       {
-	         #relativePathExpr=
-	              #(#["ddo"],
-	                #(#["return"],
-	                  #relativePathExpr, 
-	                  #(#["fun-def"], 
-	                    #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                    #(#["return"],
-	                      #(#["congen2"],
-	                        #(a, #(#["var"], #(#["\"\""], #["\"$%v\""])), test)),
-	                      #(#["fun-def"],
-	                        #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer!"], #(#["var"], #(#["\"\""], #["\"$i\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$c\""])))),
-	                        #(#["if@"], p1, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"])))))));
-	
-	       }
-	       else {printf("Unexpected out_context\n");}//must throw appropriate exception
+			            inner_preds))); 
 	     }
 
 	   >>
 	  
 	   |
 	    #(AST_FILTER_PATH_STEP 
-	      pe:primaryExpr[in_c] >[_out_c2_]
-	      p2:predicates[in_c] >[_out_c1_]
+	      pe:primaryExpr[in_c] >[out_c]
+	      p2:predicates[in_c] >[out_c]
 	     ) 
 
 	    <<if(#relativePathExpr == NULL) // the begin of the path
@@ -109,103 +76,59 @@ relativePathExpr![in_context in_c] >[out_context out_c]:
 	        }
 	        else
 	        {
-	          if(_out_c1_.p_fns == NOT_EXIST_POS_BASED_FNS)
-	          {
-	            #relativePathExpr=
-	              #(#["return"],
-	                pe,
-	                #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                  #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"]))));
-	          }
-	          else
-	          if(_out_c1_.p_fns == EXIST_FN_POSITION)
-	          {
-	            std::string ivar;
-                    char buf[1000];
-	            itoa(var_count, buf, 10);
-	            ivar=std::string("\"$m")+buf + std::string("\"");
+			    SORASTBase* it;
+			    SORASTBase* inner_preds = 
+   	                  #(#["predicate"], 
+				        pe,
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(p2->down()->down())));
 
-	            #relativePathExpr=
-	              #(#["return"],
-	                #(#["congen1"], pe, #(#["ivar"], #(#["\"\""], #[ivar]))),
-	                #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$i\""])))),
-	                  #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"]))));
+	 		    for (it = p2->down()->right(); it != NULL; it = it->right())
+			      inner_preds = 
+   	                  #(#["predicate"], 
+				        inner_preds,
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(it->down())));
 
-	            var_count +=1;
-	          }
-	          else
-	          if(_out_c1_.p_fns == EXIST_FN_LAST) // EXIST_FN_LAST
-	          {
-	            #relativePathExpr=
-	              #(#["return"],
-	                #(#["congen2"], pe),
-	                #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$i\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$c\""])))),
-	                  #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"]))));
-	         
-	          }
-	          else {printf("Unexpected out_context\n");}//must throw exception
+	            #relativePathExpr= inner_preds;
 	        } 
 	      }
 	      else //relativePathExpr != NULL
 	      {
-                if (p2 == NULL)
-                {
+            if (p2 == NULL)
+            {
 	           #relativePathExpr=
 	                #(#["return"],
 	                  #relativePathExpr,
 	                  #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))), pe));	                   
-                   
-                }
-                else
-                {
-  	          if(_out_c1_.p_fns == NOT_EXIST_POS_BASED_FNS)
-	          {
+                 
+            }
+            else
+            {
+			   SORASTBase* it;
+			   SORASTBase* inner_preds = 
+   	                  #(#["predicate"], 
+				        pe,
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(p2->down()->down())));
+
+			   for (it = p2->down()->right(); it != NULL; it = it->right())
+			      inner_preds = 
+   	                  #(#["predicate"], 
+				        inner_preds,
+	                    #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
+			              (SORAST*)(it->down())));
+				   
+
+
 	           #relativePathExpr=
 	             #(#["return"],
-	                #(#["return"], #relativePathExpr,
-	                  #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))), pe)),
-	      
+			        #relativePathExpr,
 	                #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))), 
-	                  #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"]))));
-	          }
-	          else
-                  if(_out_c1_.p_fns == EXIST_FN_POSITION)
-	          {
-	           std::string ivar;
-                   char buf[1000];
-	           itoa(var_count, buf, 10);
-	           ivar=std::string("\"$m")+buf + std::string("\"");
-
-	           #relativePathExpr=
-	             #(#["ddo"],
-	                #(#["return"], #relativePathExpr,
-	                  #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                    #(#["return"], #(#["congen1"], pe, #(#["ivar"], #(#["\"\""], #[ivar]))),
+				      inner_preds));
+			}
+  	      }
 	
-	                      #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$i\""])))), 
-	                        #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"])))))));
-
-	           var_count += 1;
-
-	          }
-	          else 
-                  if(_out_c1_.p_fns == EXIST_FN_LAST)
-	          {
-	           #relativePathExpr=
-	             #(#["ddo"],
-	                #(#["return"], #relativePathExpr,
-	                  #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""])))),
-	                    #(#["return"], #(#["congen2"], pe),
-	
-	                      #(#["fun-def"], #(#[], #(#["!xs!anyType"], #(#["var"], #(#["\"\""], #["\"$%v\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$i\""]))), #(#["!xs!integer"], #(#["var"], #(#["\"\""], #["\"$c\""])))), 
-	                        #(#["if@"], p2, #(#["var"], #(#["\"\""], #["\"$%v\""])), #(#[], #["sequence"])))))));
-
-	          }
-	          else {printf("Unexpected out_context\n");}//must throw exception
-               }
-	      }
-	
-	      out_c = _out_c2_;//result from primary expr
 	    >>
 
 
@@ -215,19 +138,11 @@ relativePathExpr![in_context in_c] >[out_context out_c]:
 ;
 
 predicates![in_context in_c] >[out_context out_c]:
-	<<SORASTBase *pred=NULL;
-          out_context _out_c_;
-	  out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	>>
+	<<SORASTBase *pred=NULL;>>
 
-	#(AST_PREDICATES (e:expr[in_context(INSIDE_PREDICATE)] >[_out_c_]
-	                  <<if(pred==NULL) pred=e;
-	                    else
-                            {
-                               pred=#(#["and@"], pred, e);
-	                    } 
-	                    if (_out_c_ > out_c)
-	                       out_c = _out_c_;
+	#(AST_PREDICATES (e:expr[in_c] >[out_c]
+	                  <<if(pred==NULL) pred=#(#[], #(#[], e));
+	                    else pred->addChild(#(#[], e));
 	                  >>
 	                 )*
 	 )
@@ -323,40 +238,29 @@ wildcard!:
 
 primaryExpr![in_context in_c] >[out_context out_c]:
 	<<SORASTBase* f_params=NULL;
-	  out_context _out_c_, _out_c1_;
 	>>
 
 	(  v:vardecl
-	   <<#primaryExpr=v;
-	     out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	   >>
+	   <<#primaryExpr=v; >>
 	 | l:literal
-	   <<#primaryExpr=l;
-	     out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	   >> 	
+	   <<#primaryExpr=l; >> 	
 	 | e:expr[in_c] >[out_c]    <<#primaryExpr=e;>>
 
 	 | AST_CONTEXT_ITEM  
-	   <<#primaryExpr=#(#["var"], #(#["\"\""], #["\"$%v\""]));
-	     out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	   >>
+	   <<#primaryExpr=#(#["var"], #(#["\"\""], #["\"$%v\""])); >>
 
 	 | AST_EMPTY_SEQUENCE
-	   <<#primaryExpr=#(#[], #["sequence"]);
-	     out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-	   >>
+	   <<#primaryExpr=#(#[], #["sequence"]); >>
 
 	 | #(AST_FCALL qn:qname 
-             (e:exprSingle[in_c] >[_out_c1_] 
+             (e:exprSingle[in_c] >[out_c] 
 	      <<if(f_params == NULL)
 	        { 
 	           f_params=e;
-	           _out_c_ = _out_c1_;
 	        }
 	        else 
 	        {
 	           f_params->append(e);
-	           _out_c_ = max_out_context(_out_c_, _out_c1_);
 	        }
               >>
 	     )*
@@ -366,28 +270,14 @@ primaryExpr![in_context in_c] >[out_context out_c]:
 	    SORASTBase* loc_name = qn->down();
 
 	    
-        if (std::string(((SORAST *)loc_name)->getText()) == "\"position\"")
-        {
-           #primaryExpr=#(#["var"], #(#["\"\""], #["\"$i\""]));
-           out_c = out_context(EXIST_FN_POSITION);
-        }
-        else
-        if (std::string(((SORAST *)loc_name)->getText()) == "\"last\"")
-        {
-           #primaryExpr=#(#["var"], #(#["\"\""], #["\"$c\""]));
-           out_c = out_context(EXIST_FN_LAST);
-        }
-        else
         if (std::string(((SORAST *)loc_name)->getText()) == "\"true\"")
         {
            #primaryExpr=#(#["const"], #(#["type"], #["!xs!boolean"]), #["true"]);
-           out_c = out_context(NOT_EXIST_POS_BASED_FNS);
         }
         else
         if (std::string(((SORAST *)loc_name)->getText()) == "\"false\"")
         {
            #primaryExpr=#(#["const"], #(#["type"], #["!xs!boolean"]), #["false"]);
-           out_c = out_context(NOT_EXIST_POS_BASED_FNS);
         }
         else
         {
@@ -395,10 +285,6 @@ primaryExpr![in_context in_c] >[out_context out_c]:
                           #(#["const"], #(#["type"], #["!xs!QName"]), qn),
                           f_params);
            
-           if(f_params == NULL)
-             out_c = out_context(NOT_EXIST_POS_BASED_FNS);
-           else 
-             out_c = _out_c_;
         }
 	
 	  >>

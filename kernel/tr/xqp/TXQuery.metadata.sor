@@ -6,7 +6,7 @@ metadata!:
 	<<bool exist_statistics = false;
 	  PCCTS_AST* stat;
 	>>
-	<<in_context in_c(OUTSIDE_PREDICATE) ; out_context out_c;>>
+	<<in_context in_c ; out_context out_c;>>
 
 
 	(  #(AST_RETRIEVE_METADATA_DOCS {e1:exprSingle[in_c] >[out_c]} {AST_STATISTICS <<exist_statistics = true;>>})

@@ -1,7 +1,7 @@
 /* */
 
 create!:
-	<<in_context in_c(OUTSIDE_PREDICATE) ; out_context out_c;>>
+	<<in_context in_c; out_context out_c;>>
 	(  #(AST_CREATE_COLLECTION e1:exprSingle[in_c] >[out_c])
 	   <<#create=#(#["create-collection"], e1); >>
 

@@ -65,10 +65,6 @@ flwrExpr! [in_context in_c] >[out_context out_c]:
 
 	  }// end LR for letClause
 
-	 if( _out_c1_ > _out_c2_)
-	    out_c = max_out_context (_out_c1_, _out_c3_);
-	 else
-	    out_c = max_out_context (_out_c2_, _out_c3_);
 	>>
 ;
 
