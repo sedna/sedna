@@ -63,6 +63,8 @@ inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &e
     return _pred_and_effect_boolean_value(child, t, eos_reached, pos);
 }
 
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
+
 
 /*******************************************************************************
  * TYPE CONVERSION: END
