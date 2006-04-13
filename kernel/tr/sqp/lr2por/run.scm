@@ -73,3 +73,47 @@
       (sequence (const (type !xs!string) "hui") (const (type !xs!string) "zhui"))
       (sequence (const (type !xs!string) "hui") (const (type !xs!string) "zhui"))))))
 
+(l2p:lr2por
+ '(query
+   (prolog)
+   (query-body
+    (ddo
+     (return
+      (ddo
+       (child
+        (ddo
+         (child
+          (!fn!document (const (type !xs!string) "s"))
+          (type
+           (elem-test
+            (ename
+             (const (type !xs!QName) ("" "site"))
+             (type *)
+             (const (type !xs!string) "non-nil"))))))
+        (type
+         (elem-test
+          (ename
+           (const (type !xs!QName) ("" "people"))
+           (type *)
+           (const (type !xs!string) "non-nil"))))))
+      (fun-def
+       ((!xs!anyType (var ("" "$%v"))))
+       (predicate
+        (child
+         (var ("" "$%v"))
+         (type
+          (elem-test
+           (ename
+            (const (type !xs!QName) ("" "person"))
+            (type *)
+            (const (type !xs!string) "non-nil")))))
+        (fun-def
+         ((!xs!anyType (var ("" "$%v"))))
+         (and@
+          (=@ (!fn!position) (const (type !xs!integer) 1))
+          (le@ (!fn!last) (!fn!position))
+          (return
+           (var ("" "$%v"))
+           (fun-def
+            ((!xs!anyType (var ("" "$%v"))))
+            (!fn!min (var ("" "$%v")) (!fn!position)))))))))))))

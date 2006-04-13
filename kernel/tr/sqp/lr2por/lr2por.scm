@@ -230,6 +230,10 @@
               )
              )
              
+             ; *** predicate ***
+             ((eq? op-name 'predicate)
+              (l2p:predicate2por node))
+             
              ; *** lreturn ***
              ((eq? op-name 'lreturn)
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
@@ -1352,3 +1356,223 @@
 ;(define init-var-param 1)
 
 ;(define (l2p:new-var-name))
+
+
+;=========================================================================
+; Predicate
+
+; Combines map and apply append
+(define (l2p:map-append f lst)
+  (if (null? lst)
+      lst
+      (append (f (car lst))
+              (l2p:map-append f (cdr lst)))))
+
+;; Applies `or' to arg-lst
+;(define (l2p:apply-or arg-lst)
+;  (cond
+;    ((null? arg-lst) #f)
+;    ((car arg-lst) #t)
+;    (else (l2p:apply-or (cdr arg-lst)))))
+
+; Returns (listof subexpr)
+; where conjunction of all `subexpr's forms the original `expr'
+(define (l2p:extract-conjunctors expr)
+  (if (and (pair? expr)
+           (eq? (car expr) 'and@))
+      (l2p:map-append l2p:extract-conjunctors (cdr expr))
+      (list expr)))
+
+; For a comparison operation, returns the equivalent one with commuted arguments
+(define (l2p:commute-comparison-op expr)
+  (cond
+    ((not (pair? expr))  ; ill-formed expr
+     expr)
+    ((memq (car expr) '(=@ !=@ eq@ ne@ is@))
+     (list (car expr)  ; the same operation
+           (caddr expr)
+           (cadr expr)))
+    ((assq (car expr)
+           '((<@ >@) (<=@ >=@) (>@ <@) (>=@ <=@)
+             (le@ ge@) (ge@ le@) (gt@ lt@) (lt@ gt@)
+             (<<@ >>@) (>>@ <<@)))
+     => (lambda (pair)
+          (list (cadr pair)
+                (caddr expr)
+                (cadr expr))))
+    (else  ; a different operation
+     expr)))
+
+; Returns: (values depends-on-context-node?
+;                  depends-on-position?
+;                  depends-on-last? )
+(define (l2p:expr-depends-on expr context-node-var-name)
+  (if
+   (not (pair? expr))  ; leaf node
+   (values #f #f #f)
+   (case (car expr)
+     ((var)
+      (values (equal? (cadr expr)  ; variable name
+                      context-node-var-name)
+              #f #f))
+     ((!fn!position)
+      (values #f #t #f))
+     ((!fn!last)
+      (values #f #f #t))
+     (else
+      (let loop ((node? #f)
+                 (pos? #f)
+                 (last? #f)
+                 (args expr))
+        (if
+         (null? args)  ; all arguments scanned
+         (values node? pos? last?)
+         (call-with-values
+          (lambda ()
+            (l2p:expr-depends-on (car args) context-node-var-name))
+          (lambda (n? p? l?)
+            (loop (or n? node?)
+                  (or p? pos?)
+                  (or l? last?)
+                  (cdr args))))))))))
+  
+; For a comparison operation, returns its code for PPPred
+(define (l2p:comparison-op->ppred-code op)
+  (cond
+    ((assq op '((eq@ eqv) (ne@ nev) (gt@ gtv) (lt@ ltv) (ge@ gev) (le@ lev)
+                (=@ eqg) (!=@ neg) (>@ gtg) (<@ ltg) (>=@ geg) (<=@ leg)))
+     => cadr)
+    (else #f)))
+
+; Replaces function calls to position() and last() with variable numbers
+(define (l2p:replace-pos-last2numbers expr pos-num last-num)
+  (cond
+    ((not (pair? expr))  ; leaf node
+     expr)
+    ((eq? (car expr) '!fn!position)
+     `(var ,pos-num))
+    ((eq? (car expr) '!fn!last)
+     `(var ,last-num))
+    (else
+     (map
+      (lambda (kid)
+        (l2p:replace-pos-last2numbers kid pos-num last-num))
+      expr))))
+
+; If `expr' has the form "position() cmp-op smth", returns
+; (cons (list cmp-op for-smth) requires-last?)
+; Otherwise, returns #f
+(define (l2p:whether-pos-cmp-smth expr context-node-var-name)
+  (let ((pos-on-left
+         (lambda (expr)
+           (let ((left (cadr expr))   ; left argument of comparison operation
+                 (right (caddr expr)))
+             (if
+              (and (pair? left)
+                   (eq? (car left) '!fn!position))
+              (call-with-values
+               (lambda ()
+                 (l2p:expr-depends-on right context-node-var-name))
+               (lambda (node? pos? last?)
+                 (if (not (or node? pos?))  ; right part can be evaluated just once
+                     (cons
+                      (list (car expr)  ; operation name
+                            right)
+                      last?)
+                     #f)))
+              #f)))))
+    (cond
+      ((not (and (pair? expr)
+                 (memv (car expr)
+                       '(=@ >@ <@ >=@ <=@ !=@ eq@ ne@ gt@ ge@ lt@ le@ ne@))))
+       #f)
+      ((pos-on-left expr)
+       => (lambda (x) x))
+      (else
+       (pos-on-left (l2p:commute-comparison-op expr))))))
+
+(define (l2p:predicate2por arg-lst)
+  (let ((new-fun-def (l2p:rename-vars2unique-numbers (cadr arg-lst)))
+        (source-child (l2p:any-lr-node2por (car arg-lst))))
+    (let ((context-node-var-name
+           (cadr  ; argument unique number
+            (car  ; 1st argument
+             (cadr  ; function arguments
+              new-fun-def)))))
+      (let loop ((conjunctors (l2p:extract-conjunctors
+                               (caddr new-fun-def)  ; function body
+                               ))
+                 (cmp-pos-lst '())  ; position() cmp-op smth
+                 (others '())   ; the other conjunctors
+                 (requires-node? #f)
+                 (requires-pos? #f)
+                 (requires-last? #f))
+      (cond
+        ((null? conjunctors)  ; all scanned
+         (let*  ; Contains side effects!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+             ((pos-num (if requires-pos?
+                           (l2p:gen-var)
+                           666  ; we don't care
+                           ))
+              (last-num (if requires-last?
+                            (l2p:gen-var)
+                            667  ; we don't care
+                            )))
+           ;(pp source-child)
+           ((lambda (x)
+             ;(pp x)
+             x)
+           `(,(l2p:tuple-size source-child)
+             (,(if requires-last? 'PPPred2 'PPPred1)
+              ,(map
+                cadr               
+                (cadr   ; function arguments
+                 new-fun-def))
+              ,source-child
+              ,(map
+                (lambda (pair)
+                  (list
+                   (l2p:comparison-op->ppred-code (car pair))
+                   (l2p:any-lr-node2por
+                    (l2p:replace-pos-last2numbers (cadr pair) pos-num last-num))))
+                (reverse cmp-pos-lst))
+              ,(cond
+                 ((null? others)
+                  '(1 (PPFnTrue)))
+                 ((null? (cdr others))  ; a single member
+                  (l2p:any-lr-node2por
+                   (l2p:replace-pos-last2numbers (car others)
+                                                 pos-num last-num)))
+                 (else
+                  (l2p:any-lr-node2por
+                   (l2p:replace-pos-last2numbers
+                    (cons 'and@ (reverse others))
+                    pos-num last-num))))
+              ,@(cond
+                  (requires-last?
+                   (list (not (or requires-node? requires-pos?))
+                         pos-num last-num))
+                  (requires-pos?
+                   (list #f  ; is to be evaluated multiple times, since depends on position()
+                         pos-num))
+                  (else
+                   (list (not requires-node?)))))))))
+        ((l2p:whether-pos-cmp-smth (car conjunctors) context-node-var-name)
+         => (lambda (pair)
+              (loop (cdr conjunctors)
+                    (cons (car pair) cmp-pos-lst)
+                    others
+                    requires-node?
+                    requires-pos?
+                    (or requires-last? (cdr pair)))))
+        (else
+         (call-with-values
+          (lambda ()
+            (l2p:expr-depends-on (car conjunctors) context-node-var-name))
+          (lambda (node? pos? last?)
+            (loop (cdr conjunctors)
+                  cmp-pos-lst
+                  (cons (car conjunctors) others)
+                  (or requires-node? node?)
+                  (or requires-pos? pos?)
+                  (or requires-last? last?))))))))))

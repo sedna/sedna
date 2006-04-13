@@ -272,7 +272,7 @@
      ; 2.10 FLWOR Operations
      ((let@)
       (sa:analyze-let@ expr vars funcs ns-binding default-ns))
-     ((return)
+     ((return predicate)
       (sa:analyze-return expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.11 Quantifiers
@@ -788,7 +788,7 @@
                                           ns-binding
                                           (or default-elem-ns "")))
                  (return-type
-                  (sa:analyze-return-type (caddr (sa:op-args expr))
+                  (sa:analyze-ret-type (caddr (sa:op-args expr))
                                           ns-binding
                                           (or default-elem-ns ""))))
              (and
@@ -828,7 +828,7 @@
                                           ns-binding
                                           (or default-elem-ns "")))
                  (return-type
-                  (sa:analyze-return-type (caddr (sa:op-args expr))
+                  (sa:analyze-ret-type (caddr (sa:op-args expr))
                                           ns-binding
                                           (or default-elem-ns "")))
                  (body
@@ -1051,7 +1051,7 @@
 
 ; Function return type
 ; Returns that type or #f
-(define (sa:analyze-return-type expr ns-binding default-ns)
+(define (sa:analyze-ret-type expr ns-binding default-ns)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'result-type)))
      (cl:signal-input-error SE5021 expr))
