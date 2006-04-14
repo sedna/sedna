@@ -8,7 +8,7 @@
 
 #include "tuple.h"
 #include "PPUtils.h"
-//#define DESC_CONSIST
+#define DESC_CONSIST
 #define PSTR_CONSIST
 ///////////////////////////////////////////////////////////////////////////////
 /// PPTest

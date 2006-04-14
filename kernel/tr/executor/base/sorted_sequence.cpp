@@ -1,7 +1,5 @@
 #include "sorted_sequence.h"
-#ifndef min
-#define min(x,y) ((x) < (y) ? (x) : (y))
-#endif
+
 sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
 								 serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_): compareFN(_compareFN_),getSizeFN(_getSizeFN_),serializeFN(_serializeFN_),serialize2FN(_serialize2FN_),deserializeFN(_deserializeFN_)
 {

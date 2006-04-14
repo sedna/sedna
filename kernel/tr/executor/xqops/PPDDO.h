@@ -19,7 +19,24 @@ private:
 	static int get_size (tuple& t);
 	static void serialize (tuple& t,xptr v1);
 	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2);
-	static tuple deserialize (xptr& v1);
+	static tuple deserialize (xptr& v1);	
+	static int get_size_ser(xptr& v1);
+	static xptr get_ptr_ser(xptr& v1,int sz);
+	static void copy_data_ser_to_buffer(xptr v1,int sz);
+
+	inline static void copy_to_buffer(xptr addr, shft size)
+	{
+		CHECKP(addr);
+		copy_to_buffer(XADDR(addr),size);
+	}
+	static void copy_to_buffer(xptr addr, shft shift,shft size)
+	{
+		CHECKP(addr);
+		copy_to_buffer(XADDR(addr),shift,size);
+	}
+	static void copy_to_buffer(const void* addr, shft size);
+	static void copy_to_buffer(const void* addr, shft shift,shft size);
+	static void copy_from_buffer(xptr addr, shft shift,shft size);
 protected:
     // Inhereted through PPIterator
     // query_prolog_type *qp;

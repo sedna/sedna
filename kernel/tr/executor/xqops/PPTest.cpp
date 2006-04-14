@@ -298,7 +298,7 @@ void PPTest::checkTreeConsistency(xptr node)
 			check_blk_consistency(*((xptr*)nd.prefix));
 	//5.2 nid pstr consistency
 	CHECKP(node);
-	if (scn->textcnt&& is_last_shft_in_blk(((t_dsc*)node_d)->data))
+	if (scn->textcnt&& ((t_dsc*)node_d)->data!=XNULL && is_last_shft_in_blk(((t_dsc*)node_d)->data))
 	{
 		CHECKP(node);
 		check_blk_consistency(((t_dsc*)node_d)->data);	

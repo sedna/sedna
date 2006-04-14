@@ -6,7 +6,9 @@
 
 #define MAX_BLOCKS_IN_CHAIN 1000 //should be changed after meeting with Andrey
 #define GET_FREE_SPACE(p) (shft)(PAGE_SIZE - (uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)
-
+#ifndef min
+#define min(x,y) ((x) < (y) ? (x) : (y))
+#endif
 
 typedef int (*compare_fn)(xptr v1,xptr v2);
 typedef int (*get_size_fn)(tuple& t);
