@@ -51,10 +51,9 @@ void socket_client::init()
 #endif
         throw USER_EXCEPTION(SE3001); 
       }
-
       
       stream = new se_socketostream(Sock);
-      char* long_query_stream = NULL;
+      long_query_stream = NULL;
 
 }
 
