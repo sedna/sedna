@@ -115,6 +115,11 @@ private:
 	int tag_w;
 	int current_ht_idx;
 
+	static const int min_words_before = 10;
+	static const int max_words_before = 20;
+	static const int min_words_after = 10;
+	static const int max_words_after = 20;
+
 	typename Iterator fragment_start;
 	typename Iterator fragment_end;
 	int fragment_start_word_tok_num;

@@ -508,10 +508,27 @@ void SednaStringHighlighter<Iterator>::run()
 	tag_l = 0;
 	tag_w = 0;
 
-	cur_ch = getch(str_it, str_end);
 	if (hl_fragment)
-{
+	{
+		ht0 = -1;
+		Iterator str_it_save = str_it;
+		Iterator str_end_save = str_end;
+		//first parse_doc pass: compute ht0
+		cur_ch = getch(str_it, str_end);
 		parse_doc();
+
+		//second pass: get the fragment
+		str_it = str_it_save;
+		str_end = str_end_save;
+		current_word = 0;
+		current_word_tok = 0;
+		current_ht_idx = 0;
+		tag_l = 0;
+		tag_w = 0;
+
+		cur_ch = getch(str_it, str_end);
+		parse_doc();
+
 		if (fragment_pref_ch == 0)
 			cur_ch = getch(fragment_start, fragment_end);
 		else
@@ -525,7 +542,10 @@ void SednaStringHighlighter<Iterator>::run()
 			result->append_mstr("...");
 	}
 	else
+	{
+		cur_ch = getch(str_it, str_end);
 		copy_doc(str_it, str_end);
+	}
 }
 
 SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_) :
@@ -766,10 +786,11 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 	fragment_pref_ch = 0;
 	fragment_start = str_it;
 	fragment_start_split = false;
-	fragment_start_word_tok_num = current_word_tok;
-	fragment_start_word_num = current_word;
+	U_ASSERT(current_word_tok == 0);
+	U_ASSERT(current_word == 0);
+	fragment_start_word_tok_num = -1;
+	fragment_start_word_num = -1;
 	last_eff_ch = 0;
-	ht0 = -1;
 
 	while (cur_ch != EOF_ch)
 	{
@@ -791,12 +812,16 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 			if (current_ht_idx < ht_cnt && ht[current_ht_idx] == current_word_tok)
 			{
 				if (ht0 == -1)
+				{
 					ht0 = current_word;
+					//FIXME: return should return through recursive calls (but there are none of these here, for now)
+					return; //end of the first pass
+				}
 				current_ht_idx++;
 			}
 			if ((last_eff_ch == '.' && iswupper(cur_ch)) || last_eff_ch == 0)
 			{ //sentence start
-				if (current_word_tok <= ht[0]) //FIXME
+				if (current_word <= ht0 - min_words_before || fragment_start_word_num == -1)
 				{
 					fragment_start = str_it;
 					fragment_start_word_tok_num = current_word_tok-1;
@@ -806,19 +831,22 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 				}
 				else
 				{
-					//cut here
-					fragment_end = str_it;
-					fragment_end -= last_ch_len;
-					fragment_end_split = false;
-					//FIXME: return should return through recursive calls (but there are none of these here, for now)
-					return;
+					if (current_word >= ht0 + min_words_after)
+					{
+						//cut here
+						fragment_end = str_it;
+						fragment_end -= last_ch_len;
+						fragment_end_split = false;
+						//FIXME: return should return through recursive calls (but there are none of these here, for now)
+						return;
+					}
 				}
 			}
 			else
 			{
-				if (current_word_tok <= ht[0]) //FIXME
+				if (current_word <= ht0)
 				{
-					if (current_word == ht0 - 10) //FIXME
+					if (current_word == ht0 - max_words_before) //FIXME
 					{
 						fragment_start = str_it;
 						fragment_start_word_tok_num = current_word_tok-1;
@@ -829,7 +857,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 				}
 				else
 				{
-					if (current_word == fragment_start_word_num + 20) //FIXME
+					if (current_word == fragment_start_word_num + max_words_after) //FIXME
 					{
 						//cut here
 						fragment_end = str_it;
