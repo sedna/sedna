@@ -819,6 +819,8 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 				}
 				current_ht_idx++;
 			}
+			if (ht0 != -1) //FIXME?
+			{
 			if ((last_eff_ch == '.' && iswupper(cur_ch)) || last_eff_ch == 0)
 			{ //sentence start
 				if (current_word <= ht0 - min_words_before || fragment_start_word_num == -1)
@@ -857,7 +859,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 				}
 				else
 				{
-					if (current_word == fragment_start_word_num + max_words_after) //FIXME
+					if (current_word == ht0 + max_words_after) //FIXME
 					{
 						//cut here
 						fragment_end = str_it;
@@ -867,6 +869,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 						return;
 					}
 				}
+			}
 			}
 			last_eff_ch = cur_ch; //no need to update it in the loop, we only need to know it's not punctuation
 			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
