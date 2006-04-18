@@ -13,6 +13,8 @@
 #include "llmgr_core.h"
 #include <string>
 #include "PPBase.h"
+#include "tr_plmgr.h"
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "ft_index_data.h"
 #endif
@@ -63,5 +65,6 @@ void hl_enable_log();
 void hl_disable_log();
 
 extern llmgr_core* tr_llmgr;
+extern tr_plmgr* phys_log_mgr;
 #endif
 

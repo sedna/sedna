@@ -16,7 +16,8 @@
 #include "uhdd.h"
 #include "usem.h"
 #include "ushm.h"
-#include "plmgr.h"
+#include "plmgr_core.h"
+//#include "plmgr.h"
 
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
@@ -29,8 +30,8 @@
 #define COMMIT_LOG_RECORD_LEN (sizeof(logical_log_head) + sizeof(char) + sizeof(transaction_id))
 
 //this parameter must be more than CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
-#define LOG_FILE_PORTION_SIZE (100 * (1024*1024))
-#define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 10
+#define LOG_FILE_PORTION_SIZE (100 * (1024*1024)) //was 2
+#define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 5 //was 3
 //#define MAX_ALL_LOG_FILE_SIZE 10*LOG_FILE_PORTION_SIZE
 
 enum {LL_INSERT_ELEM,
@@ -166,6 +167,7 @@ private:
   int indir_rec_len;
   std::vector<log_file_dsc> ll_open_files;//this structure is ordered in sm and is unordered in transaction (may contain duplicates)
 
+  plmgr_core* _phys_log_mgr_; //used to activate checkpoint
 //  stack<int> ll_free_file_name_numbers;//used for creating next log file name (prefix + number)
 //  !!!int log_file_portion_size;//size of one physical log file (must be ininted via input papram)
 
@@ -174,14 +176,14 @@ private:
 
 public:
   //create and release functions; called in sm
-  void ll_log_create(std::string _db_files_path_, std::string _db_name_);
+  void ll_log_create(std::string _db_files_path_, std::string _db_name_, plmgr_core* _phys_log_mgr_);
   void ll_log_create_shared_mem();
   void ll_log_release();
   void ll_log_release_shared_mem();
 
 
   //on session functions
-  void ll_log_open(std::string db_files_path, std::string db_name, bool rcv_active = false);
+  void ll_log_open(std::string db_files_path, std::string db_name, plmgr_core* _phys_log_mgr_, bool rcv_active = false);
   void ll_log_open_shared_mem();
   void ll_log_close();
   void ll_log_close_shared_mem();
@@ -250,11 +252,7 @@ private:
   void redo_commit_trns(trns_analysis_map& lst, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
   trns_analysis_map get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks);//last parameter is out
 
-  void activate_checkpoint()
-  {
-    //here phys_log_mgr is a global variable
-    phys_log_mgr->activate_checkpoint(true);
-  };
+  void activate_checkpoint();
 
   inline void ll_log_lock(bool sync)
   {
@@ -294,5 +292,15 @@ private:
     else return x3;
   };	
 };
+
+UFile create_logical_log(const char* log_file_name,
+                         int valid_file_number,
+                         LONG_LSN base_addr,
+                         int _prev_file_number_,
+                         LONG_LSN commit_lsn,
+                         LONG_LSN next_after_commit_lsn,
+                         bool is_close_file = false 
+                        );
+
 
 #endif

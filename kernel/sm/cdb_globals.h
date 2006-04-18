@@ -8,6 +8,7 @@
 
 #include "u.h"
 #include "argtable.h"
+#include "base.h"
 
 #define MAX_ARGS_LENGTH 1000
 
@@ -37,6 +38,7 @@ void setup_cdb_globals(int, char**, __int64 &, __int64 &, int &, int &, int &, i
 void create_cfg_file(char *, int, int, int, int);
 
 void create_data_directory();
+
 
 #endif
 

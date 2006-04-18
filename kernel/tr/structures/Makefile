@@ -19,7 +19,8 @@ INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c	\
                $(PP)/kernel/tr/nid $(PP)/kernel/tr/crmutils					\
                $(PP)/kernel/tr/log $(PP)/kernel/sm/llmgr $(PP)/kernel/tr/strings				\
                $(PP)/kernel/tr/idx/btree $(PP)/kernel/tr/locks $(PP)/kernel/tr/idx					\
-               $(PP)/kernel/tr/updates $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/ft
+               $(PP)/kernel/tr/updates $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/ft \
+               $(PP)/kernel/sm/plmgr
 
 VPATH = .
 

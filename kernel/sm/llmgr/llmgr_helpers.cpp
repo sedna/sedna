@@ -7,9 +7,22 @@
 #include "llmgr_core.h"
 #include "uhdd.h"
 #include "exceptions.h"
+#include "cdb_globals.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <map>
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <sys/types.h>
+#include <dirent.h>
+#endif
+
+
+using namespace std;
 
 
 logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
@@ -30,7 +43,7 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
   int already_read;
 
   res = uReadFile(
-              ll_file_curr_dsc,
+              file_dsc,
               &file_head,
               sizeof(logical_log_file_head),
               &already_read
@@ -47,7 +60,8 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
 {
   //get tail log dsc;
   //set pointer to the begin of last file 
-  set_file_pointer((commit_lsn/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE);
+  LONG_LSN lsn = (commit_lsn/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+  set_file_pointer(lsn);
 
   int res;
   int written;
@@ -58,7 +72,7 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
   memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
 
   //flush last commit lsn
-  res = uWriteFile(ll_file_curr_dsc,
+  res = uWriteFile(ll_curr_file_dsc,
                    buf,
                    2*sizeof(LONG_LSN),
                    &written
@@ -75,7 +89,7 @@ void llmgr_core::flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn)
   int res;
   int written;
 
-  res = uWriteFile(ll_file_curr_dsc,
+  res = uWriteFile(ll_curr_file_dsc,
                    &checkpoint_lsn,
                    sizeof(LONG_LSN),
                    &written
@@ -91,28 +105,31 @@ void llmgr_core::set_file_pointer(LONG_LSN &lsn)
   //calculate the log file in which this recird stored
 
   __int64 addr;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-  addr = lsn - base_addr;
+  addr = lsn - mem_head->base_addr;
 
   int portions = (int)(addr / LOG_FILE_PORTION_SIZE);
   int rmndr = addr - portions*LOG_FILE_PORTION_SIZE;
-  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   int log_file_number = mem_head->ll_files_arr[portions]; 
   
-  ll_file_curr_dsc = get_log_file_descriptor(log_file_number);//this function open file if it was not opened before
+  ll_curr_file_dsc = get_log_file_descriptor(log_file_number);//this function open file if it was not opened before
   
   int res;
 
   res = uSetFilePointer(
-                    ll_file_curr_dsc,
+                    ll_curr_file_dsc,
                     rmndr,
                     NULL,
                     U_FILE_BEGIN
                   );
 
   if (res == 0)
+  {
+     d_printf2("Error=%d\n", GetLastError());
      throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
+  }
 
 }
 
@@ -127,7 +144,7 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
   int bytes_read;
 
   res = uReadFile(
-               ll_file_curr_dsc,
+               ll_curr_file_dsc,
                small_read_buf,
                sizeof(small_read_buf),
                &bytes_read
@@ -150,7 +167,7 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
      set_file_pointer(lsn);
   
      res = uReadFile(
-                 ll_file_curr_dsc,
+                 ll_curr_file_dsc,
                  large_read_buf,
                  rec_len,
                  &bytes_read
@@ -225,9 +242,10 @@ void llmgr_core::extend_logical_log(bool sync)
   if (mem_head->ll_free_files_num <= 0)
      throw SYSTEM_EXCEPTION("Too long logical log");
 
-  int new_file_number = mem_head->ll_free_files_num - 1; 
-  string new_log_name = db_files_path + db_name + "." + 
-                        mem_head->ll_free_files_arr[new_file_number] + "llog";
+  int new_file_number = mem_head->ll_free_files_arr[mem_head->ll_free_files_num - 1]; 
+  char buf[20];
+  string new_log_name = db_files_path + db_name +string(".") + 
+                        string(_itoa(new_file_number, buf, 10)) + "llog";
 
   //get header of previous file
   UFile dsc = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
@@ -235,9 +253,11 @@ void llmgr_core::extend_logical_log(bool sync)
 
   new_logical_log_dsc = create_logical_log(new_log_name.c_str(),
                                            prev_file_head.valid_number,
+                                           prev_file_head.base_addr,
                                            mem_head->ll_files_arr[mem_head->ll_files_num - 1],//prev file number
                                            prev_file_head.last_commit_lsn,
-                                           prev_file_head.next_lsn   
+                                           prev_file_head.next_lsn,
+                                           false                                              
                                           );
 
   //modify shared memory
@@ -274,7 +294,7 @@ void llmgr_core::open_all_log_files()
   logical_log_file_head file_head;
   map<int, log_file_dsc> tmp_map;
   typedef pair <int, log_file_dsc> dsc_pair;
-  typedef map <int, log_file_dsc>::iterator it, it2;
+  map<int, log_file_dsc>::iterator it, it2;
 
 
 #ifdef _WIN32
@@ -301,7 +321,7 @@ void llmgr_core::open_all_log_files()
   {
      log_number = log_file.name;
      log_number = log_number.erase(0, db_name.size() + 1);
-     log_number.erase(log_number.end() - 4, log_number.end() -1);
+     log_number.erase(log_number.end() - 4, log_number.end());
      number = atoi(log_number.c_str());
      d_printf3("log_number=%s, %d\n", log_number.c_str(), number);
 
@@ -421,32 +441,38 @@ void llmgr_core::close_all_log_files()
       if (res == 0)
         throw USER_EXCEPTION2(SE4043, "logical log file");
   }
+
+  ll_open_files.clear();
 }
 
 UFile llmgr_core::get_log_file_descriptor(int log_file_number)
 {
   //firstly search on the top of vector 
-  if (ll_open_files.back().name_number == log_file_number)
-     return ll_open_files.back().dsc;
-
-  //search is file opened
-  int i,j;
-  vector<log_file_dsc>::iterator it;
-  for (i = ll_open_files.size() - 2; i>=0; i++)
+  if (!ll_open_files.empty())
   {
-    if (ll_open_files[i].name_number == log_file_number)
-    {//find case
-       ll_open_files.push_back(ll_open_files[i]);//put on the top
-       //eliminate duplicate
-       it = ll_open_files.begin()
-       for (j= 0; j<i; j++) it++;
-       ll_open_files.erase(it);
-       return ll_open_files.back().dsc;
-    }
+     if (ll_open_files.back().name_number == log_file_number)
+        return ll_open_files.back().dsc;
+
+     //search is file opened
+     int i,j;
+     vector<log_file_dsc>::iterator it;
+     for (i = ll_open_files.size() - 2; i>=0; i++)
+     {
+       if (ll_open_files[i].name_number == log_file_number)
+       {//find case
+          ll_open_files.push_back(ll_open_files[i]);//put on the top
+          //eliminate duplicate
+          it = ll_open_files.begin();
+          for (j= 0; j<i; j++) it++;
+          ll_open_files.erase(it);
+          return ll_open_files.back().dsc;
+       }
+     }
   }
 
   //log file dsc not found
   UFile dsc;
+  char buf[20];
   std::string log_file_name = db_files_path + db_name + "." + _itoa(log_file_number, buf, 10) + "llog";
 
   dsc = uOpenFile(log_file_name.c_str(),
@@ -455,7 +481,85 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
                   U_WRITE_THROUGH 
                  );
 
-  if ( dsr == U_INVALID_FD )
-      throw USER_EXCEPTION2(SE4042, log_file_name.c_str());
+  if ( dsc == U_INVALID_FD )
+  {
+    d_printf2("Error = %d\n", GetLastError());
+    throw USER_EXCEPTION2(SE4042, log_file_name.c_str());
+  }
+
+  log_file_dsc file_dsc;
+  file_dsc.dsc = dsc;
+  file_dsc.name_number = log_file_number;
+  ll_open_files.push_back(file_dsc);
+
+
+  return dsc;
 }
 
+
+
+//log_file_name is a full path to file to be created
+//prev_log_file_name is a previous log file (only the name without path)
+UFile create_logical_log(const char* log_file_name,
+                         int valid_file_number,
+                         LONG_LSN base_addr,
+                         int _prev_file_number_,
+                         LONG_LSN commit_lsn,
+                         LONG_LSN next_after_commit_lsn,
+						 bool is_close_file
+                        )
+{
+#ifdef LOGICAL_LOG
+
+  UFile logical_log_dsc;
+  USECURITY_ATTRIBUTES *sa;
+
+//  string logical_log_file_name = string(db_files_path) + string(db_name) + ".llog";
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+
+  //create phys log file
+  logical_log_dsc = uCreateFile(
+                            log_file_name,
+                            U_SHARE_READ | U_SHARE_WRITE,
+                            U_READ_WRITE,
+                            U_WRITE_THROUGH,
+                            sa
+                           );
+
+  if (logical_log_dsc == U_INVALID_FD)
+     throw USER_EXCEPTION2(SE4040, "logical log file");
+  
+  if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+
+  logical_log_file_head ll_head;
+
+  ll_head.last_commit_lsn = commit_lsn;
+  ll_head.next_lsn = next_after_commit_lsn;
+  ll_head.prev_file_number = _prev_file_number_; 
+  ll_head.base_addr = base_addr;
+  ll_head.valid_number = valid_file_number;
+
+  
+ 
+
+  int nbytes_written;
+
+  int res;
+  res = uWriteFile(
+               logical_log_dsc,
+               &ll_head,
+               sizeof(logical_log_file_head),
+               &nbytes_written
+              );
+
+
+  if ( res == 0 || nbytes_written != sizeof(logical_log_file_head))
+     throw USER_EXCEPTION2(SE4045, "logical log file");
+
+  if (is_close_file)
+     if (uCloseFile(logical_log_dsc) == 0)
+        throw USER_EXCEPTION2(SE4043, "logical log file");
+
+  return logical_log_dsc;
+#endif
+}
