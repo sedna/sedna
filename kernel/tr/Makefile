@@ -20,7 +20,7 @@ INCLUDE_DIRS = . .. $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c		\
                idx/btree locks log mo nid pq pstr updates vmm		\
                $(PP)/kernel/sm/plmgr $(PP)/kernel/common/ph xqp     \
                $(PP)/kernel/sm/llmgr ft rcv structures strings \
-			   $(PP)/libs/dtsearch/include
+			   $(PP)/libs/dtsearch/include $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr
 
 VPATH = .
 

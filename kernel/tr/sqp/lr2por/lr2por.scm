@@ -671,6 +671,12 @@
               `(1 (PPFnError ,(l2p:any-lr-node2por (car node))))
              )
              
+             ; *** checkpoint ***
+             ((eq? op-name '!fn!checkpoint) 
+              `(1 (PPFnCheckpoint))
+             )
+             
+             
              ; *** !fn!replace ***
              ((eq? op-name '!fn!replace) 
               `(1 (PPPatMatch  pm_replace

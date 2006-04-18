@@ -11,7 +11,7 @@
 #include "tr_globals.h"
 #include "d_printf.h"
 #include "tr_debug.h"
-#include "trmgr.h"
+//#include "trmgr.h"
 #include "pstr_long.h"
 #include "rcv_funcs.h"
 #ifdef SE_ENABLE_FTSEARCH
@@ -51,7 +51,7 @@ void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 
 #ifdef LOGICAL_LOG
   tr_llmgr = new llmgr_core();
-  tr_llmgr->ll_log_open(logical_log_path, rcv_active);
+  tr_llmgr->ll_log_open(logical_log_path, string(db_name), phys_log_mgr, rcv_active);
   tr_llmgr->ll_log_open_shared_mem();
   is_ll_on_session_initialized = true; 
 #endif
@@ -452,6 +452,9 @@ void hl_disable_log()
 {
    enable_log = false;
 }
+
+
+
 void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted)
 {
 #ifdef LOGICAL_LOG

@@ -83,6 +83,7 @@ UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, 
 UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
 {
 #ifdef _WIN32
+    //d_printf2("uOpenFile=%s opened\n", name);
     return CreateFile(name, accs, share, NULL, OPEN_EXISTING, attr, NULL);
 #else
     return open(name, accs | O_LARGEFILE | attr, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
@@ -92,6 +93,7 @@ UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
 int uCloseFile(UFile fd)
 {
 #ifdef _WIN32
+    //d_printf1("File Closed\n");
     return CloseHandle(fd);
 #else
     return (close(fd) == -1 ? 0 : 1);
@@ -102,6 +104,7 @@ int uCloseFile(UFile fd)
 int uDeleteFile(const char *name)
 {
 #ifdef _WIN32
+    //d_printf2("uDeleteFile=%s deleted\n", name);
     return DeleteFile(name);
 #else
     return (remove(name) == -1 ? 0 : 1);
@@ -190,6 +193,7 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth)
     BOOL res;
     _offs.QuadPart = offs;
     res = SetFilePointerEx(fd, _offs, &_res_pos, meth);
+//d_printf2("SetFIlePointer Error=%d\n", GetLastError());
     if (res_pos)
         *res_pos = _res_pos.QuadPart;
     return res;

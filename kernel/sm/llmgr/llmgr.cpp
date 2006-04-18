@@ -10,6 +10,7 @@
 #include "d_printf.h"
 #include "tr_debug.h"
 #include "base.h"
+#include "plmgr.h"
 
 using namespace std;
 
@@ -20,7 +21,7 @@ void ll_logical_log_startup()
 #ifdef LOGICAL_LOG
   d_printf2("db_files_path=%s\n", db_files_path);
   logical_log_mgr = new llmgr_core();
-  logical_log_mgr->ll_log_create(db_files_path);
+  logical_log_mgr->ll_log_create(db_files_path, db_name, phys_log_mgr);
   logical_log_mgr->ll_log_create_shared_mem();
 
   string str = string("ll_logical_log_startup finished\n");

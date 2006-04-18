@@ -45,10 +45,10 @@ int cleanup_db(const char* db_name)
    }
 
    //delete llog file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str()))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str());
       if (res == 0)
          return 2;
    }

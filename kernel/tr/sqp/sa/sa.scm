@@ -274,8 +274,6 @@
       (sa:analyze-let@ expr vars funcs ns-binding default-ns))
      ((return)
       (sa:analyze-return expr vars funcs ns-binding default-ns))
-     ((predicate)
-      (sa:analyze-predicate expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.11 Quantifiers
      ((some every)
@@ -790,7 +788,7 @@
                                           ns-binding
                                           (or default-elem-ns "")))
                  (return-type
-                  (sa:analyze-ret-type (caddr (sa:op-args expr))
+                  (sa:analyze-return-type (caddr (sa:op-args expr))
                                           ns-binding
                                           (or default-elem-ns ""))))
              (and
@@ -830,7 +828,7 @@
                                           ns-binding
                                           (or default-elem-ns "")))
                  (return-type
-                  (sa:analyze-ret-type (caddr (sa:op-args expr))
+                  (sa:analyze-return-type (caddr (sa:op-args expr))
                                           ns-binding
                                           (or default-elem-ns "")))
                  (body
@@ -1053,7 +1051,7 @@
 
 ; Function return type
 ; Returns that type or #f
-(define (sa:analyze-ret-type expr ns-binding default-ns)
+(define (sa:analyze-return-type expr ns-binding default-ns)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'result-type)))
      (cl:signal-input-error SE5021 expr))
@@ -1498,21 +1496,6 @@
                   (car new-value)
                   (car new-fun))
             (cdr new-fun))))))
-
-; Clone of Return except for return value
-(define (sa:analyze-predicate expr vars funcs ns-binding default-ns)
-  (and
-   (sa:assert-num-args expr 2)
-   (let ((new-value
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
-         (new-fun
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
-     (and
-      new-value new-fun
-      (cons (list (sa:op-name expr)  ; ='predicate
-                  (car new-value)
-                  (car new-fun))
-            (cdr new-value))))))
 
 ; A call to fun-def.
 ; It's argument always has the type 'sa:nodes
