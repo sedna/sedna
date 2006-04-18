@@ -86,10 +86,8 @@ int main()
          	printf("%s", buf);
 
         }while(bytes_read > 0);
-        
     	printf("\n");
         res = SEnext(&conn);
-        printf("next returned %d\n", res);
     }
 
     if(res == SEDNA_RESULT_END) 

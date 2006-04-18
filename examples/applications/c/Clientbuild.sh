@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ -f ../../../driver/c/libsedna.a ];
 then
-gcc -I../../../driver/c -osocket-test socket-test.cpp ../../../driver/c/libsedna.a
+gcc -I../../../driver/c -oClient Client.c ../../../driver/c/libsedna.a
 else
-gcc -I../../../include -osocket-test socket-test.cpp ../../../lib/libsedna.a
+gcc -I../../../include -oClient Client.c ../../../lib/libsedna.a
 fi
