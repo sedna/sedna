@@ -95,11 +95,15 @@ int main(int argc, char *argv[])
 
         if (strcmp(password,"???") == 0)
             strcpy(password,"MANAGER");
-        
+
         if (strcmp(output_file, "STDOUT") == 0)
             res_os = stdout;
         else
-            res_os = fopen(output_file, "w");
+            if((res_os = fopen(output_file, "w")) == NULL)
+            {
+                fprintf(stderr, "Can't open file %s\n", output_file);
+                return EXIT_TERM_FAILED;
+            } 
         
         if (strcmp(filename,"???") != 0)
         {
