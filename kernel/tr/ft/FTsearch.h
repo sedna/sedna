@@ -33,7 +33,7 @@ class SednaTextInputStream {
     protected:
         long idTextInputStream;
         long pos;
-		e_string_iterator estr_it;
+		e_string_iterator_first *estr_it;
         dtsFileInfo* fileInfo;
 		t_str_buf in_buf;
 		ft_index_type cm;
