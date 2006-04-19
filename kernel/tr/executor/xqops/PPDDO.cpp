@@ -9,10 +9,10 @@
 #include <iostream>
 
 using namespace std;
-//#ifdef TURN_ON_DDO
+
 static char* temp_buffer=NULL;//new char[MAXINTERNALPREFIX];
 static int buf_lgth=0;//MAXINTERNALPREFIX;
-//#endif
+
 
 PPDDO::PPDDO(variable_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
@@ -83,12 +83,12 @@ void PPDDO::next  (tuple &t)
         }
 
         u_timeb t_sort1, t_sort2;
-        d_printf2("Before sorting: size = %d\n", s->size());
+        d_printf1("Before sorting: \n");
         u_ftime(&t_sort1);
         //s->sort();
         s->sort();
         u_ftime(&t_sort2);
-        d_printf2("After sorting: time = %s\n", to_string(t_sort2 - t_sort1).c_str());
+        d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());
     }
 
     if (pos < s->size()) t.copy(s->get(pos++));
@@ -137,38 +137,56 @@ bool PPDDO::result(PPIterator* cur, variable_context *cxt, void*& r)
 int PPDDO::get_size_ser(xptr& v1)
 {
 	CHECKP(v1);
-	if (GET_FREE_SPACE(v1)<(sizeof(xptr)+sizeof(shft)))
+	xptr ptr=(GET_FREE_SPACE(v1)<=sizeof(xptr))?
+		((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+(sizeof(seq_blk_hdr)+sizeof(xptr)-GET_FREE_SPACE(v1)):v1+sizeof(xptr);
+	if (GET_FREE_SPACE(ptr)<sizeof(shft))
 	{
-		copy_to_buffer(XADDR(v1),GET_FREE_SPACE(v1));
-		xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
+		copy_to_buffer(XADDR(ptr),GET_FREE_SPACE(ptr));
+		xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->nblk+sizeof(seq_blk_hdr);
 		CHECKP(nblk);
-		copy_to_buffer(XADDR(nblk),GET_FREE_SPACE(v1),sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1));
-		return *((int*)(temp_buffer+sizeof(xptr)));
+		copy_to_buffer(XADDR(nblk),GET_FREE_SPACE(ptr),sizeof(shft)-GET_FREE_SPACE(ptr));
+		return *((shft*)temp_buffer);
 	}
 	else
 	{
-		return *((int*)XADDR((v1+sizeof(xptr))));
+#ifdef ALIGNMENT_REQUIRED
+			copy_to_buffer(XADDR(ptr),sizeof(shft));
+			return *((shft*)temp_buffer);
+#else
+			return *((shft*)XADDR(ptr));		
+#endif		
 	}
 }
 xptr PPDDO::get_ptr_ser(xptr& v1,int sz)
 {
 	CHECKP(v1);
-	bool nc=(sz+sizeof(xptr)+sizeof(shft))>DATA_BLK_SIZE;	
-	if ((GET_FREE_SPACE(v1)<(2*sizeof(xptr)+sizeof(shft))) ||! (!nc && GET_FREE_SPACE(v1)>(sizeof(xptr)+sizeof(shft)) ) )
+	xptr ptr=(GET_FREE_SPACE(v1)<=sizeof(xptr)+sizeof(shft))?
+		((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+(sizeof(seq_blk_hdr)+sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1)):v1+(sizeof(xptr)+sizeof(shft));
+	bool nc=(sz+sizeof(xptr)+sizeof(shft))>DATA_BLK_SIZE;
+	if (nc)
 	{
-		copy_to_buffer(XADDR(v1),GET_FREE_SPACE(v1));
-		xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
-		CHECKP(nblk);
-		copy_to_buffer(XADDR(nblk),GET_FREE_SPACE(v1),2*sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1));
-		if (nc) 
-			return *((xptr*)(temp_buffer+sizeof(shft)+sizeof(xptr)));
+		CHECKP(ptr);
+		if (GET_FREE_SPACE(ptr)<sizeof(xptr))
+		{
+			copy_to_buffer(XADDR(ptr),GET_FREE_SPACE(ptr));
+			xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->nblk+sizeof(seq_blk_hdr);
+			CHECKP(nblk);
+			copy_to_buffer(XADDR(nblk),GET_FREE_SPACE(ptr),sizeof(xptr)-GET_FREE_SPACE(ptr));
+			return *((xptr*)temp_buffer);
+
+		}
 		else
-			return nblk+(sizeof(xptr)+sizeof(shft)-GET_FREE_SPACE(v1));
+		{
+#ifdef ALIGNMENT_REQUIRED
+			copy_to_buffer(XADDR(ptr),sizeof(xptr));
+			return *((xptr*)temp_buffer);
+#else
+			return *((xptr*)XADDR(ptr));		
+#endif
+		}
 	}
 	else
-	{
-		return (nc)?*((xptr*)XADDR((v1+sizeof(shft)+sizeof(xptr)))):v1+(sizeof(shft)+sizeof(xptr));
-	}
+		return ptr;	
 }
 void PPDDO::copy_data_ser_to_buffer(xptr v1,int sz)
 {
@@ -184,10 +202,33 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1,int sz)
 		copy_to_buffer(v1,sz);
 	}	
 }
+void PPDDO::copy_data_ser_to_buffer(xptr v1,shft shift,int sz)
+{
+	if (sz>GET_FREE_SPACE(v1))
+	{
+		copy_to_buffer(v1,shift,GET_FREE_SPACE(v1));
+		xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
+		CHECKP(nblk);
+		copy_to_buffer(XADDR(nblk),shift+GET_FREE_SPACE(v1),sz-GET_FREE_SPACE(v1));
+	}
+	else
+	{
+		copy_to_buffer(v1,shift,sz);
+	}	
+}
 int PPDDO::compare_less (xptr v1,xptr v2)
 {
 	int s1=get_size_ser(v1);
 	int s2=get_size_ser(v2);
+	/*copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
+	copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s1,s2);
+	int res=memcmp(temp_buffer,temp_buffer+s1,min(s1,s2));
+	if (res) return res;
+	else
+	{
+		return (s1-s2);
+	}*/
+
 	if (s1<s2)
 	{
 		copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
@@ -195,13 +236,13 @@ int PPDDO::compare_less (xptr v1,xptr v2)
 		int s2_p1=min(GET_FREE_SPACE(data),s2);
 		CHECKP(data);
 		int res=memcmp(temp_buffer,XADDR(data),min(s1,s2_p1));
-		if (res) return res;
+		if (res) return -res;
 		else
 		{
-			if (s1<=s2_p1) return -1;
+			if (s1<s2_p1) return 1;
 			else
 			{
-				if (s2_p1==s2) return 1;
+				if (s2_p1==s2) return (s2-s1);
 				else
 				{
 					xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v2)))->nblk+sizeof(seq_blk_hdr);
@@ -209,7 +250,7 @@ int PPDDO::compare_less (xptr v1,xptr v2)
 					memcmp(temp_buffer+s2_p1,XADDR(data),min(s1,s2)-s2_p1);
 					if (res) return res;
 					else
-						return (s1-s2);
+						return (s2-s1);
 				}
 
 			}
@@ -222,21 +263,21 @@ int PPDDO::compare_less (xptr v1,xptr v2)
 		int s1_p1=min(GET_FREE_SPACE(data),s1);
 		CHECKP(data);
 		int res=memcmp(temp_buffer,XADDR(data),min(s2,s1_p1));
-		if (res) return res;
+		if (res) return -res;
 		else
 		{
-			if (s2<=s1_p1) return 1;
+			if (s2<s1_p1) return -1;
 			else
 			{
-				if (s1_p1==s1) return -1;
+				if (s1_p1==s1) return (s1-s2);
 				else
 				{
 					xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(nblk);
 					memcmp(temp_buffer+s1_p1,XADDR(data),min(s1,s2)-s1_p1);
-					if (res) return res;
+					if (res) return -res;
 					else
-						return (s1-s2);
+						return (s2-s1);
 				}
 
 			}
@@ -266,6 +307,7 @@ void PPDDO::serialize (tuple& t,xptr v1)
 	if ((sz+(sizeof(xptr)+sizeof(shft)))>DATA_BLK_SIZE)
 	{		
 		CHECKP(v1);
+		VMM_SIGNAL_MODIFICATION(v1);
 		*((xptr*)((char*)XADDR(v1)+sizeof(xptr)+sizeof(shft)))=addr;		
 	}
 	else
@@ -315,7 +357,12 @@ tuple PPDDO::deserialize (xptr& v1)
 	{
 		CHECKP(v1);
 		tuple t(1);
+#ifdef ALIGNMENT_REQUIRED
+		copy_to_buffer(XADDR(v1),sizeof(xptr));
+		t.copy(tuple_cell::node(*((xptr*)temp_buffer)));
+#else
 		t.copy(tuple_cell::node(*((xptr*)XADDR(v1))));
+#endif		
 		return t;
 	}
 }
@@ -329,12 +376,14 @@ void PPDDO::copy_to_buffer(const void* addr, shft size)
 			delete [] temp_buffer;
 		}
 		temp_buffer=new char[size];
+		buf_lgth=size;
 	}	
 	memcpy(temp_buffer,addr,size);
 }
 void PPDDO::copy_from_buffer(xptr addr, shft shift,shft size)
 {
 	CHECKP(addr);
+	VMM_SIGNAL_MODIFICATION(addr);
 	memcpy(XADDR(addr),temp_buffer+shift,size);
 }
 void PPDDO::copy_to_buffer(const void* addr, shft shift,shft size)
@@ -350,6 +399,7 @@ void PPDDO::copy_to_buffer(const void* addr, shft shift,shft size)
 		}		
 		else
 			temp_buffer=new char[size+shift];
+		buf_lgth=size+shift;
 	}
 	memcpy(temp_buffer+shift,addr,size);
 }

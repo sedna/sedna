@@ -23,6 +23,7 @@ private:
 	static int get_size_ser(xptr& v1);
 	static xptr get_ptr_ser(xptr& v1,int sz);
 	static void copy_data_ser_to_buffer(xptr v1,int sz);
+	static void copy_data_ser_to_buffer(xptr v1,shft shift,int sz);
 
 	inline static void copy_to_buffer(xptr addr, shft size)
 	{

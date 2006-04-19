@@ -20,7 +20,7 @@ struct data_ptr
 	xptr value;
 	shft size;
 }; 
-#define PTR_BLK_SIZE (PAGE_SIZE-sizeof(seq_blk_hdr))/sizeof(data_ptr)
+#define PTR_BLK_SIZE ((PAGE_SIZE-sizeof(seq_blk_hdr))/sizeof(data_ptr))
 #define DATA_BLK_SIZE (PAGE_SIZE-sizeof(seq_blk_hdr))
 class sorted_sequence
 {
