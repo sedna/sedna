@@ -241,7 +241,7 @@
      (let-values*
       (((info dummy)
         (sedna:extract-string (list-tail body-chars 4))))
-      (string-append info ".\nError code: " (number->string code))))))
+      (string-append info ".\n")))))
 
 ; Raises an exception with a given `msg' and the error info in the return
 ; package
@@ -261,8 +261,7 @@
       (((info dummy)
         (sedna:extract-string (list-tail body-chars 4))))
       (sedna:raise-exn
-       msg ": " info
-       "\nError code: " (number->string code))
+       msg ": " info)
       #f))))
 
 ; Reaction on server ErrorResponse

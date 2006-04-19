@@ -31,7 +31,8 @@ static void setServerErrorMsg(struct SednaConnection *conn, struct msg_struct ms
 static void setDriverErrorMsg(struct SednaConnection *conn, int error_code, const char* details)
 {
     conn->last_error = error_code;
-    strcpy(conn->last_error_msg, user_error_code_entries[conn->last_error].code);
+    strcpy(conn->last_error_msg, "SEDNA Message: ERROR ");        
+    strcat(conn->last_error_msg, user_error_code_entries[conn->last_error].code);
     strcat(conn->last_error_msg, "\n");
     strcat(conn->last_error_msg, user_error_code_entries[conn->last_error].descr);
     if (details != NULL)

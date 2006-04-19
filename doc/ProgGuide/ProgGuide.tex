@@ -1417,19 +1417,19 @@ Otherwise, an error is raised.
 
 \emph{INSERT}
 
-The insert statement inserts content at positions identified by the \verb!INTO!, \verb!PRECEDING! and \verb!FOLLOWING! clauses. 
+The insert statement inserts content at positions identified by the \verb!into!, \verb!preceding! and \verb!following! clauses. 
 
 \begin{verbatim}
 UPDATE
-insert Expr1 (INTO|PRECEEDING|FOLLOWING) Expr2
+insert Expr1 (into|preceding|following) Expr2
 \end{verbatim}
 
-\verb!Expr1! identifies the ordered sequence of the nodes to be inserted. The \verb!INTO!, \verb!PRECEDING! or \verb!FOLLOWING! clause identifies the position. For each node in the result sequence of \verb!Expr2!, the result sequence of \verb!Expr1! is inserted to the position identified by the \verb!INTO!, \verb!PRECEDING! or \verb!FOLLOWING! clauses. 
-If the \verb!INTO! clause is specified, the sequence is appended to the random position of the child sequence for each node in the result of \verb!Expr2!. If the \verb!PRECEDING! clause is specified, the sequence is appended before each node in the result of \verb!Expr2!. If the \verb!FOLLOWING! clause is specified, the sequence is appended after each node in the result of \verb!Expr2!.
+\verb!Expr1! identifies the ordered sequence of the nodes to be inserted. The \verb!into!, \verb!preceding! or \verb!following! clause identifies the position. For each node in the result sequence of \verb!Expr2!, the result sequence of \verb!Expr1! is inserted to the position identified by the \verb!into!, \verb!preceding! or \verb!following! clauses. 
+If the \verb!into! clause is specified, the sequence is appended to the random position of the child sequence for each node in the result of \verb!Expr2!. If the \verb!preceding! clause is specified, the sequence is appended before each node in the result of \verb!Expr2!. If the \verb!following! clause is specified, the sequence is appended after each node in the result of \verb!Expr2!.
 
 If one of the following conditions is met an error occurs:
 \begin{itemize}
-\item There are non-element nodes in the result of \verb!Expr2! in case of the \verb!INTO! clause
+\item There are non-element nodes in the result of \verb!Expr2! in case of the \verb!into! clause
 \item There are temporary nodes in  \verb!Expr2! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
 \end{itemize}
 
@@ -1565,7 +1565,7 @@ the file to be loaded is taken from the input stream. Characters in the input st
 By default, the standard input stream is used. You can redirect a different input stream to be used as an input for bulk load. For example, an XML document produced by some program as its output can be loaded to a Sedna database in a stream-wise fashion. To redirect the input when working from a command line, you can use the functionality provided by your operation system.
 Java and Scheme APIs provide additional wrappers for bulk load from stream, such that the input stream can be specified by an additional argument of a function call.
 
-By default, Sedna removes boundary whitespaces according to the boundary-space policy defined in \cite{paper:query-language}. To control boundary whitespaces processing, use \emph{boundary-space declaration} in the prolog of the \verb!LOAD! statement as specified in \cite{paper:query-language}.  The following example illustrates a boundary-space declaration that instructs Sedna to preserve whitespaces:
+By default, Sedna removes boundary whitespaces according to the boundary-space policy defined in \cite{paper:query-language}. To control boundary whitespaces processing, use \emph{boundary-space declaration} \cite{paper:query-language} in the prolog of the \verb!LOAD! statement.  The following example illustrates a boundary-space declaration that instructs Sedna to preserve whitespaces:
 \begin{verbatim}
 declare boundary-space preserve;
 \end{verbatim}
@@ -1751,12 +1751,12 @@ these functions are similar to \verb!sql:execute!, but return the number
 of rows affected by an update query (instead of an empty sequence returned by
 \verb!sql:execute! for update-queries). Function arguments are same as for \verb!sql:execute!.
 
-The behaivor of this function is undefined for non-update queries.
+The behaviour of this function is undefined for non-update queries.
 
 
 
 \subsubsection*{Prepared Statements}
-Sometimes it is more convenient or more efficient to use prepared SQL statemets
+Sometimes it is more convenient or more efficient to use prepared SQL statements
 instead of direct query execution. In most cases, when a SQL statement is
 prepared it will be sent to the DBMS right away, where it will be compiled.
 This means that the DBMS does not have to compile a prepared statement each time
@@ -1980,7 +1980,7 @@ The fields of this structure may be used in your implementation:
 	\item \verb!sedna_malloc! is a pointer to a malloc function which must be used to 
 	allocate memory for 
 	function results, this memory will be automatically freed by the query executor.
-	It may also be used to allocate memory for iternal use, such memory must be
+	It may also be used to allocate memory for internal use, such memory must be
 	freed manually using the \verb!sedna_free! function.
 	\item \verb!sedna_free! is a pointer to free function that releases memory
 	allocated using \verb!sedna_malloc! function.
@@ -2169,7 +2169,7 @@ name that is the result of \verb!doc-name-expr!.
 Sedna provides a mechanism of organizing multiple documents into a collection.
 Collection provides a uniform way of writing XQuery and XML update statements
 addressed to multiple documents at once.
-Collections are preferrable for situations when a group of documents is to be
+Collections are preferable for situations when a group of documents is to be
 queried/updated by means of not referring to their individual document names,
 but according to some conditions over their content.
 
@@ -2227,7 +2227,7 @@ If the collection contains any documents, these documents are dropped as well.
 
 \subsubsection{Managing Indices}
 \label{sec:managing-indices}
-Sedna supports value indicies based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indicies.
+Sedna supports value indices based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indices.
 
 \begin{verbatim}
 CREATE INDEX title-expr
@@ -2259,8 +2259,8 @@ DROP INDEX title-expr
 
 The DROP INDEX statement removes the index named \verb!title-expr! from the database.
 
-\begin{note}In the current version of Sedna, query executor does not use indicies automatically. You can enforce the executor to employ indices by
-using the XQuery index-scan funtions specified in Section \ref{sec:index-scan-fun}.
+\begin{note}In the current version of Sedna, query executor does not use indices automatically. You can enforce the executor to employ indices by
+using the XQuery index-scan functions specified in Section \ref{sec:index-scan-fun}.
 \end{note}
 
 \subsubsection{Retrieving Metadata}
@@ -2279,7 +2279,7 @@ The \verb!RETRIEVE! \verb!METADATA! statement retrieves the metadata information
 <!ATTLIST Collection name CDATA #REQUIRED >                   
 \end{verbatim}
 
-The value of the \verb!name! attribute is the name of the document or collection. If the \verb!WITH! \verb!STATISTICS! command is stated, the following statictical information is retrieved as the content of the \verb!Document! or \verb!Collection! elements:
+The value of the \verb!name! attribute is the name of the document or collection. If the \verb!WITH! \verb!STATISTICS! command is stated, the following statistical information is retrieved as the content of the \verb!Document! or \verb!Collection! elements:
 
 \begin{itemize}
 \item \verb!TOTAL NODES IN SCHEMA!. The number of the nodes of the descriptive schema.

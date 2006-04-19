@@ -500,7 +500,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	while(successResult==EXIT_SUCCESS)
 	{
 		buffer[i] = (char)getc(source);
-		
+
 		if((!isCommand)&&((buffer[i-1] == (char)';')||(buffer[i-1] == (char)'&'))&&(buffer[i] == (char)'\n'))
 		{
 			*item_len = i-1;
