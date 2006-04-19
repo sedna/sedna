@@ -1464,7 +1464,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPTuple(cxt, arr);
     }
-    else if (op == "PPPred1")
+    /*else if (op == "PPPred1")
     {
         if (   lst->size() < 6
             || lst->size() > 7
@@ -1550,18 +1550,33 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                _conditions_,
                                make_pp_op(cxt, lst->at(4).internal.list),
                                _once_);
-    }
-    else if (op == "PPPred2")
+    }*/
+    
+    else if (op == "PPPred1" || op == "PPPred2")	//PPPred1 and PPPred2 have much in common; hence, they are joined in one "if"
     {
-        if (   lst->size() != 8
-            || lst->at(1).type != SCM_LIST
-            || lst->at(2).type != SCM_LIST
-            || lst->at(3).type != SCM_LIST
-            || lst->at(4).type != SCM_LIST
-            || lst->at(5).type != SCM_NUMBER
-            || lst->at(6).type != SCM_NUMBER
-            || lst->at(7).type != SCM_NUMBER
-           ) throw USER_EXCEPTION2(SE1004, "87");
+        if(op == "PPPred1")
+        {
+        	if (   lst->size() < 6
+            	|| lst->size() > 7
+            	|| lst->at(1).type != SCM_LIST
+            	|| lst->at(2).type != SCM_LIST
+            	|| lst->at(3).type != SCM_LIST
+            	|| lst->at(4).type != SCM_LIST
+            	|| lst->at(5).type != SCM_NUMBER
+				) throw USER_EXCEPTION2(SE1004, "84");
+        }
+        else
+        {
+			if (   lst->size() < 7 
+           		|| lst->size() > 8
+           		|| lst->at(1).type != SCM_LIST
+            	|| lst->at(2).type != SCM_LIST
+            	|| lst->at(3).type != SCM_LIST
+            	|| lst->at(4).type != SCM_LIST
+            	|| lst->at(5).type != SCM_NUMBER
+            	|| lst->at(6).type != SCM_NUMBER
+           		) throw USER_EXCEPTION2(SE1004, "85");
+        }
 
         int i = 0;
 
@@ -1570,7 +1585,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         for (i = 0; i != _vars_->size(); i++)
         {
             if (_vars_->at(i).type != SCM_NUMBER)
-                throw USER_EXCEPTION2(SE1004, "88");
+                throw USER_EXCEPTION2(SE1004, "86");
 
             var_dsc var = atoi(_vars_->at(i).internal.num);
             vars.push_back(var);
@@ -1582,14 +1597,14 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         for (i = 0; i < conjuncts_list->size(); i++)
         {
             if (conjuncts_list->at(i).type != SCM_LIST)
-                throw USER_EXCEPTION2(SE1004, "88.1");
+                throw USER_EXCEPTION2(SE1004, "86.1");
             scheme_list *conjunct = conjuncts_list->at(i).internal.list;
             
             if (   conjunct->size() != 2 
                 || conjunct->at(0).type != SCM_SYMBOL 
                 || conjunct->at(1).type != SCM_LIST
                )
-                throw USER_EXCEPTION2(SE1004, "88.2");
+                throw USER_EXCEPTION2(SE1004, "86.2");
 
             string occ_string = string(conjunct->at(0).internal.symb);
         	operation_compare_condition occ;
@@ -1605,7 +1620,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     	    else if (occ_string == "gtg")	    occ = OCC_GENERAL_GREATER;
 	        else if (occ_string == "geg")	    occ = OCC_GENERAL_GREATER_EQUAL;
     	    else if (occ_string == "ltg")	    occ = OCC_GENERAL_LESS;
-	        else throw USER_EXCEPTION2(SE1004, "88.3");
+	        else throw USER_EXCEPTION2(SE1004, "86.3");
     
             _conditions_.push_back(occ);
             _conjuncts_.push_back(make_pp_op(cxt, conjunct->at(1).internal.list));
@@ -1613,18 +1628,63 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
 
         bool _once_ = (atoi(lst->at(5).internal.num) == 1);
-        var_dsc pos  = atoi(lst->at(6).internal.num);
-        var_dsc last = atoi(lst->at(7).internal.num);
+        
+        if(op == "PPPred1")
+        {
+        	if (lst->size() == 7)
+	        {
+    	        if (lst->at(6).type != SCM_NUMBER)
+        	        throw USER_EXCEPTION2(SE1004, "87");
+            	var_dsc pos = atoi(lst->at(6).internal.num);
+	
+    	        opit = new PPPred1(cxt,
+        	                       vars,
+            	                   make_pp_op(cxt, lst->at(2).internal.list),
+                	               _conjuncts_,
+                    	           _conditions_,
+                        	       make_pp_op(cxt, lst->at(4).internal.list),
+                            	   _once_,
+	                               pos);
+    	    }
+	        else
+    	        opit = new PPPred1(cxt,
+        	                       vars,
+            	                   make_pp_op(cxt, lst->at(2).internal.list),
+                	               _conjuncts_,
+                    	           _conditions_,
+                        	       make_pp_op(cxt, lst->at(4).internal.list),
+                            	   _once_);
+        }
+        else
+        {
+        	var_dsc last = atoi(lst->at(6).internal.num);
 
-        opit = new PPPred2(cxt,
-                           vars,
-                           make_pp_op(cxt, lst->at(2).internal.list),
-                           _conjuncts_,
-                           _conditions_,
-                           make_pp_op(cxt, lst->at(4).internal.list),
-                           _once_,
-                           pos,
-                           last);
+        	if (lst->size() == 8)
+        	{
+            	if (lst->at(7).type != SCM_NUMBER)
+                	throw USER_EXCEPTION2(SE1004, "88");
+	            var_dsc pos = atoi(lst->at(6).internal.num);
+		
+        		opit = new PPPred2(cxt,
+            		               vars,
+               			           make_pp_op(cxt, lst->at(2).internal.list),
+               	    		       _conjuncts_,
+                        		   _conditions_,
+                           		   make_pp_op(cxt, lst->at(4).internal.list),
+	                           	   _once_,
+    	                           last,
+        	                       pos);
+	        }
+    	    else
+        		opit = new PPPred2(cxt,
+            	               vars,
+                	           make_pp_op(cxt, lst->at(2).internal.list),
+                    	       _conjuncts_,
+                        	   _conditions_,
+	                           make_pp_op(cxt, lst->at(4).internal.list),
+    	                       _once_,
+        	                   last);
+    	}
     }
     else if (op == "PPUnion")
     {

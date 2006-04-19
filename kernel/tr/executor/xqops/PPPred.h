@@ -71,7 +71,8 @@ private:
 	void PPPredRange::position_greater_than(double double_value);
 	void PPPredRange::position_less_equal_than(double double_value);
 	void PPPredRange::position_greater_equal_than(double double_value);
-
+	
+	void PPPredRange::print_state();
 
 public:
 	
@@ -116,12 +117,13 @@ private:
     bool first_time;
     bool once;
     bool result_ready;
+    bool eos_reached;
+    bool need_reopen;
+    bool any;
 
     int pos;
-    bool any;
     int upper_bound;
     int lower_bound;
-
     var_dsc pos_dsc;
 
     void children(PPOpIn& _source_child_,
@@ -191,6 +193,9 @@ private:
     bool once;
     bool result_ready;
     bool any;
+    bool eos_reached;
+    bool need_reopen;
+
     int upper_bound;
     int lower_bound;
 
@@ -230,8 +235,8 @@ public:
 	        arr_of_comp_cond _conditions_,
             PPOpIn _data_child_,
    	        bool _once_,
-            var_dsc _pos_dsc_,
-            var_dsc _lst_dsc_);
+            var_dsc _lst_dsc_,
+            var_dsc _pos_dsc_ = -1);
 
     virtual ~PPPred2();
 
