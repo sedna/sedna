@@ -100,7 +100,8 @@ SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,
     cm(_cm_),
     custom_tree(_custom_tree_),
     idTextInputStream(TextInputStreamID),
-	fileInfo(info)
+	fileInfo(info),
+	estr_it(NULL)
 	{   
 	 
     
@@ -108,6 +109,8 @@ SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,
 
 SednaTextInputStream::~SednaTextInputStream()
 {   
+	if (estr_it != NULL)
+		delete estr_it;
 }
 
 int SednaTextInputStream::read_mem(void *dest, long bytes)
@@ -132,9 +135,9 @@ int SednaTextInputStream::read_estr(void *dest, long bytes)
 	long bytes_left = bytes;
     while (bytes_left-- > 0)
 	{
-		*(char*)dest = *estr_it;
+		*(char*)dest = **estr_it;
 		dest = (char*)dest + 1;
-		++estr_it;
+		++(*estr_it);
 	}
     pos += bytes;
     return bytes;
@@ -143,9 +146,9 @@ int SednaTextInputStream::read_estr(void *dest, long bytes)
 void SednaTextInputStream::seek_estr(long where)
 {   
 	if (pos > where)
-		estr_it -= (pos - where);
+		(*estr_it) -= (pos - where);
 	else
-		estr_it += (where - pos);
+		(*estr_it) += (where - pos);
 	pos = where;
 }
 
@@ -208,7 +211,9 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	}
 	else
 	{
-		estr_it = e_string_iterator_first(dest.size, *(xptr*)in_buf.get_ptr_to_text());
+		if (estr_it != NULL)
+			delete estr_it;
+		estr_it = new e_string_iterator_first(dest.size, *(xptr*)in_buf.get_ptr_to_text());
 	    dest.read = SednaTextInputStream::readCBestr;
 		dest.seek = SednaTextInputStream::seekCBestr;
 	}
