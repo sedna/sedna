@@ -1553,8 +1553,10 @@
                          (cdr lst)))
                  (cond
                    (requires-last?
-                    (list (not (or requires-node? requires-pos?))
-                          pos-num last-num))
+                    (if requires-pos?
+                        (list #f  ; is to be evaluated multiple times, since depends on position()
+                              last-num pos-num)
+                        (list (not requires-node?) last-num)))
                    (requires-pos?
                     (list #f  ; is to be evaluated multiple times, since depends on position()
                           pos-num))
