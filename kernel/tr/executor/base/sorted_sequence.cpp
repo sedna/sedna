@@ -481,7 +481,7 @@ void sorted_sequence::set_next_ptr_with_free(xptr& ptr)
 	if (pos+1<PTR_BLK_SIZE)
 	{
 		CHECKP(ptr);
-		if (pos+1<((seq_blk_hdr*)XADDR(ptr))->cursor)
+		if (pos+1<((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->cursor)
 			ptr+=sizeof(data_ptr);
 		else
 		{
@@ -493,7 +493,7 @@ void sorted_sequence::set_next_ptr_with_free(xptr& ptr)
 	{
 		CHECKP(ptr);
 		empty_blk_arr.push_back(BLOCKXPTR(ptr));
-		ptr=((seq_blk_hdr*)XADDR(ptr))->nblk;
+		ptr=((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->nblk;
 		if (ptr!=XNULL)ptr+=sizeof(seq_blk_hdr);		
 	}
 }
@@ -527,7 +527,8 @@ xptr sorted_sequence::get_data(int pos)
 	 int ps=pos/PTR_BLK_SIZE;
 	 int md=pos % PTR_BLK_SIZE;
 	 CHECKP(ptr_blk_arr[ps]);
-	 return deserializeFN(((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->value);
+	 xptr val=((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->value;
+	 return deserializeFN(val);
  }
  void sorted_sequence::clear()
  {
