@@ -61,6 +61,7 @@ void sorted_sequence::add(tuple& p)
 		if (GET_FREE_SPACE(val_place)==0)
 		{
 			//1.b.a data block is full
+			val_place-=PAGE_SIZE;
 			set_next_block_in_chain(val_place);			
 		}
 		CHECKP(ptr_place);
@@ -135,6 +136,7 @@ xptr sorted_sequence::get_free_block()
 	}
 	blk_cnt++;
 	seq_blk_hdr::init(XADDR(blk));
+	((seq_blk_hdr*)XADDR(blk))->cursor=0;
 	//VMM_SIGNAL_MODIFICATION(blk);
 	//lock
 	return blk;
@@ -184,13 +186,13 @@ void sorted_sequence::sort1(int off, int len)
 	// Establish Invariant: v* (<v)* (>v)* v*
 	int a = off, b = a, c = off + len - 1, d = c;
 	while(true) {
-	    while (b <= c && compareFN( get_ptr(b), v)<=0) {
-		if (get_ptr(b) == v)
+	    while (b <= c && compareFN( v,get_ptr(b))>=0) {
+		if (!compareFN(get_ptr(b), v))
 		    swap(a++, b);
 		b++;
 	    }
 	    while (c >= b && compareFN(v,get_ptr(c))<=0) {
-		if (get_ptr(c) == v)
+		if (!compareFN(get_ptr(c),v))
 		    swap(c, d--);
 		c--;
 	    }
@@ -257,7 +259,7 @@ void sorted_sequence::in_mem_order_data()
 	int sz=get_size_in_mem();
 	if (!sz) return;
 	//xptr cur=get_data(0);
-	xptr new_chain=get_free_block();	
+	xptr new_chain=get_free_block()+sizeof(seq_blk_hdr);	
 	//1.copying to new place
 	for (int i=0;i<sz;i++)	
 		copy_data_to_new_place(get_data(i),new_chain);
@@ -283,7 +285,10 @@ void sorted_sequence::set_next_block_in_chain(xptr& place, bool marking)
 void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 {
 	if (!GET_FREE_SPACE(place))
+	{
+		place-=PAGE_SIZE;
 		set_next_block_in_chain(place);	
+	}
 	CHECKP(ptr);
 	data_ptr* dpr=(data_ptr*)XADDR(ptr);	
 	xptr val_ptr=dpr->value;
@@ -303,7 +308,7 @@ void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 	memcpy(temp_buffer,XADDR(val_ptr),fpart);
 	if (spart>0)
 	{
-		xptr tmp=((seq_blk_hdr*)XADDR(val_ptr))->nblk;
+		xptr tmp=((seq_blk_hdr*)XADDR((BLOCKXPTR(val_ptr))))->nblk;
 		CHECKP(tmp);
 		memcpy(temp_buffer+fpart,XADDR((tmp+sizeof(seq_blk_hdr))),spart);	
 	}
@@ -532,6 +537,14 @@ xptr sorted_sequence::get_data(int pos)
 			res_seq=ptr_blk_arr[0]+sizeof(seq_blk_hdr);
 	 else
 	 {
+		 if (!sorted_seqs_arr.size())
+		 {
+			  bblk_in_chain=XNULL;
+			  blk_cnt=0;	
+			  sorted_seqs_arr.clear();
+			  finalized=false;
+			  return;
+		 }
 		 res_seq=sorted_seqs_arr.back().first+sizeof(seq_blk_hdr);
 		 sorted_seqs_arr.pop_back();	
 	 }
@@ -553,4 +566,5 @@ xptr sorted_sequence::get_data(int pos)
 	 blk_cnt=0;	
 	 sorted_seqs_arr.clear();
 	 ptr_blk_arr.clear();
+	 finalized=false;
  }
