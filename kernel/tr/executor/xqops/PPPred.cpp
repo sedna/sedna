@@ -13,6 +13,7 @@
 #include "casting_operations.h"
 #include <math.h>
 
+using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -144,6 +145,8 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
    		if(t.is_eos()) state = RS_EMPTY;
    		else 
    		{
+			conjunct.op->reopen();
+			
 			double double_value;
    			int integer_value;
 
@@ -166,7 +169,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
 			       }
 	        }
 			else
-   				//must be XPTY004
+   				//must be XPTY004!
    				throw USER_EXCEPTION2(XP0006, "There is a not valid combination of types in value comparison");
             
 			switch(occ)
@@ -234,7 +237,6 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
    		int integer_value;
 		double double_value;
 
-
    		while(true)
    		{
    			conjunct.op->next(t);
@@ -282,6 +284,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
 			       	else
 			       	{
 			       		state = RS_POINTS;
+			       		integer_values.sort();
 			       		integer_values.unique();
 			       		points = integer_values;
 			       	}
@@ -296,9 +299,10 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
  		     			if(!is_position_in_range(integer_value)) break;
  		     			else integer_values.push_back(integer_value);
 			       	}
+			       	if(integer_values.size() != double_values.size()) break;
+			       	integer_values.sort();
 			       	integer_values.unique();
-			       	if(integer_values.size() == 0) state = RS_EMPTY;
-			       	else if(integer_values.size() > 1) break;
+			       	if(integer_values.size() > 1) break;
 			       	else  
 			       	{
 			       		if(state != RS_POINTS) 
@@ -344,8 +348,8 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
     else 
     	throw USER_EXCEPTION2(SE1003, "Unexpected operation compare condition in PPPredRange");
 
-    conjunct.op->reopen();
     if(is_empty()) state = RS_EMPTY; 	
+    //print_state();   //if you want to try to debug this hell :))
     return state;
 }
 
@@ -492,7 +496,51 @@ bool PPPredRange::is_any()
 	}                                                                                                                                    	
 }
 
+void PPPredRange::print_state()
+{
+	cout << "\n";
+	std::list<int>::iterator itr;
+	cout << "======================================================\n";
+	switch(state)
+	{
+		case RS_INITIAL: 
+			cout << "State is RS_INITIAL\n";
+			break;
+		case RS_EMPTY: 
+			cout << "State is RS_EMPTY\n";
+			break;
+		case RS_RANGE: 
+			cout << "State is RS_RANGE\n";
+			cout << "lower bound   >> " << lower_bound << "\n";
+			cout << "upper bound   >> " << upper_bound << "\n";
+			cout << "except points >> ";
+			itr = except_points.begin();
+			while(itr != except_points.end())
+			{
+				cout << *itr << "  ";
+				itr++;
+			}
+        	cout << "\n";
+			break;
 
+		case RS_POINTS:
+			cout << "State is RS_POINTS\n";
+			cout << "points >> ";
+			itr = points.begin();
+			while(itr != points.end())
+			{
+				cout << *itr << "  ";
+				itr++;
+			}
+        	cout << "\n";
+			break;
+
+		default:
+			throw USER_EXCEPTION2(SE1003, "Unexpected state of the PPPredRange instance");
+	}
+	cout << "======================================================\n";
+	cout << "\n";
+}
 
 
 
@@ -569,6 +617,8 @@ void PPPred1::open ()
     cur_tuple = NULL;
     first_time = true;
     result_ready = false;
+    eos_reached = true;
+    need_reopen = false;
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
@@ -615,9 +665,14 @@ void PPPred1::close ()
                                               							  
 void PPPred1::next(tuple &t)
 {
-    bool eos_reached;
-			
-	if(first_time)
+    if(need_reopen)
+    {
+	    need_reopen = false;
+	    if(!eos_reached) data_child.op->reopen();
+	   	reinit_consumer_table();
+    }
+    
+    if(first_time)
 	{
 		if(once)
 		{
@@ -647,9 +702,7 @@ void PPPred1::next(tuple &t)
 				else if( tc.get_xs_boolean() ) result_ready = true;
 				else { t.set_eos(); return;}
 			}
-		
-			if(!eos_reached) data_child.op->reopen();
-		   	reinit_consumer_table();
+			need_reopen = true;		
 		}
 		else 
 		{
@@ -701,12 +754,17 @@ void PPPred1::next(tuple &t)
 	        
     	    if( !once )
         	{
+        		if(need_reopen)
+    			{
+				    if(!eos_reached) data_child.op->reopen();
+				   	reinit_consumer_table();
+			    }
+        		
         		tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
 	        											  predicate_boolean_value(data_child, data, eos_reached, 0);
+	        	need_reopen = true;
     	    	if(tc.get_xs_boolean()) return;
-        		reinit_consumer_table();
-	        	if ( !eos_reached ) data_child.op->reopen();
-	        }
+        	}
     	    else return;
 	    }
     }
@@ -894,8 +952,8 @@ PPPred2::PPPred2(variable_context *_cxt_,
                  arr_of_comp_cond _conditions_,
                  PPOpIn _data_child_,
                  bool _once_,
-                 var_dsc _pos_dsc_,
-                 var_dsc _lst_dsc_) : PPVarIterator(_cxt_),
+                 var_dsc _lst_dsc_,
+                 var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
                                       var_dscs(_var_dscs_),
                                       source_child(_source_child_),
                                       conjuncts(_conjuncts_),
@@ -943,7 +1001,6 @@ PPPred2::~PPPred2()
     data_child.op = NULL;
 }
 
-
 void PPPred2::open ()
 {
     source_child.op->open();
@@ -954,6 +1011,9 @@ void PPPred2::open ()
     pos = 0;
     cur_tuple = NULL;
     first_time = true;
+    eos_reached = true;
+    need_reopen = false;
+
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
@@ -963,6 +1023,7 @@ void PPPred2::open ()
         p.svc = new simple_var_consumption;
         p.tuple_pos = i;
     }
+    if(pos_dsc >= 0)
     {
         producer &p = cxt->producers[pos_dsc];
         p.type = pt_lazy_simple;
@@ -986,6 +1047,9 @@ void PPPred2::open ()
 
 void PPPred2::reopen ()
 {
+    reinit_consumer_table();	//In PPPred2 conjucts can use lst_dsc to get last().
+    							//Every conjunct is reopend in the PPPredRange::add_new_constraint(), but
+    							//we must also reinit table.
     source_child.op->reopen();
     first_time = true;
     result_ready = false;
@@ -1006,8 +1070,13 @@ void PPPred2::close ()
 
 void PPPred2::next(tuple &t)
 {
-    bool eos_reached;
-        	
+    if(need_reopen)
+    {
+	    need_reopen = false;
+	    if(!eos_reached) data_child.op->reopen();
+	   	reinit_consumer_table();
+    }
+    
     if(first_time)
 	{
 	    while (true)
@@ -1046,9 +1115,7 @@ void PPPred2::next(tuple &t)
 				else if( tc.get_xs_boolean() ) result_ready = true;
 				else { t.set_eos(); s->clear(); return; }
 			}
-		
-			if(!eos_reached) data_child.op->reopen();
-		   	reinit_consumer_table();
+			need_reopen = true;
 		}
 		else
 		{
@@ -1095,11 +1162,15 @@ void PPPred2::next(tuple &t)
     	    
         	if( !once )
 	        {
+    	    	if(need_reopen)
+    			{
+				    if(!eos_reached) data_child.op->reopen();
+				   	reinit_consumer_table();
+			    }
     	    	tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
         												  predicate_boolean_value(data_child, data, eos_reached, 0);
-        		if(tc.get_xs_boolean()) return;
-	        	reinit_consumer_table();
-		        if ( !eos_reached ) data_child.op->reopen();
+                need_reopen = true;
+           		if(tc.get_xs_boolean()) return;
         	}
 	        else return;
     	}
@@ -1121,8 +1192,8 @@ PPIterator* PPPred2::copy(variable_context *_cxt_)
                                conditions,
                                data_child,
                                once,
-                               pos_dsc,
-                               lst_dsc);
+                               lst_dsc,
+                               pos_dsc);
     
     for (int i = 0; i < conjuncts.size(); i++)
         res->conjuncts[i].op = conjuncts[i].op->copy(_cxt_);
@@ -1169,7 +1240,7 @@ inline void PPPred2::reinit_consumer_table()
         producer &p = cxt->producers[var_dscs[i]];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
-
+    if(pos_dsc >= 0)
     {
         producer &p = cxt->producers[pos_dsc];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
