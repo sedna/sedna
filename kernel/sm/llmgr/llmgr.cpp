@@ -21,9 +21,11 @@ void ll_logical_log_startup()
 #ifdef LOGICAL_LOG
   d_printf2("db_files_path=%s\n", db_files_path);
   logical_log_mgr = new llmgr_core();
+//d_printf1("1\n");
   logical_log_mgr->ll_log_create(db_files_path, db_name, phys_log_mgr);
+//d_printf1("2\n");
   logical_log_mgr->ll_log_create_shared_mem();
-
+//d_printf1("3\n");
   string str = string("ll_logical_log_startup finished\n");
   WRITE_DEBUG_LOG(str.c_str());
 

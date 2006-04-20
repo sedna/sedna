@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "tr_debug.h"
 #include "plmgr_core.h"
+#include "uutils.h"
 //#include "trmgr.h"
 
 using namespace std;
@@ -283,6 +284,7 @@ void llmgr_core::ll_log_close()
 
 void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &trid, bool sync)
 {
+  large_read_buf = NULL;
   rollback_active = false;
   recovery_active = rcv_active;
 
@@ -1561,7 +1563,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
                         ((logical_log_head*)rec_beg)->body_len,
 
 						true);
-
      if (log_head->prev_trn_offs == NULL_OFFS)
         break;//all operations rolled back
 
@@ -1575,8 +1576,11 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 		else//next record is not contiguous
 		{
            delete_large_read_buf();
+
 		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
+
            offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
+
 		}			 
         rmndr_mem_len -= log_head->prev_trn_offs;
 		lsn -= log_head->prev_trn_offs;
@@ -1585,6 +1589,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 	 }
      else
      {//next record on disk
+
         lsn -= log_head->prev_trn_offs;
         delete_large_read_buf();
         rec_beg = get_record_from_disk(lsn);
@@ -1593,7 +1598,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
         rmndr_mem_len = 0;
      }
 
-     //cout << "rollback record lsn=" << lsn << endl;
+//     cout << "rollback record lsn=" << lsn << endl;
 
   }
 
@@ -2002,7 +2007,7 @@ void llmgr_core::ll_truncate_log(bool sync)
       log_file_name = db_files_path + db_name + "." + itoa(mem_head->ll_files_arr[i], buf2, 10) + "llog";
       if (uDeleteFile(log_file_name.c_str()) == 0)
       {
-         d_printf3("Delete File=%s, Error=%d\n", log_file_name.c_str(), GetLastError());
+//         d_printf3("Delete File=%s, Error=%d\n", log_file_name.c_str(), GetLastError());
          throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
       }
   }

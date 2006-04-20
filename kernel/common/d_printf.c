@@ -27,7 +27,7 @@ int el_debug_printf(const char *s, ...)
         res = vfprintf(el_debug_sync_output_stream, s, ap);
     }
 
-  el_debug_printf_exit:
+el_debug_printf_exit:
     va_end(ap);
     el_debug_sync_unlock();
 
@@ -61,7 +61,7 @@ void el_debug_perror(const char *s)
         res = fprintf(stderr, "%s: %s\n", s, ustrerror(errno));
     }
 
-  el_debug_perror:
+el_debug_perror_exit:
     el_debug_sync_unlock();
 #else
     uperror(s);
