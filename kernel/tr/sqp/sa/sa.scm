@@ -1,5 +1,3 @@
-v v v v v v v
-
 ; File:  sa.scm
 ; Copyright (C) 2004 The Institute for System Programming
 ; of the Russian Academy of Sciences (ISP RAS)
@@ -2168,4 +2166,3 @@ v v v v v v v
                         'sa:atomic  ; dummy
                         )))
       (and new (car new)))))
-^ ^ ^ ^ ^ ^ ^
