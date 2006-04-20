@@ -1663,7 +1663,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         	{
             	if (lst->at(7).type != SCM_NUMBER)
                 	throw USER_EXCEPTION2(SE1004, "88");
-	            var_dsc pos = atoi(lst->at(6).internal.num);
+	            var_dsc pos = atoi(lst->at(7).internal.num);
 		
         		opit = new PPPred2(cxt,
             		               vars,
