@@ -1023,7 +1023,8 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			case ft_xml:case ft_xml_hl: tbuf<<"<?xml version=\"1.0\" standalone=\"yes\""; break;
 			case ft_string_value:break;
 			case ft_customized_value: ft_delimited_value:tbuf<<" ";break;			
-			}			
+			}	
+			CHECKP(node);
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
 			if(child==XNULL)
 			{
@@ -1035,6 +1036,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			{	
 				
 				if (type==ft_xml || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree);
+				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL) break;
 				CHECKP(child);
@@ -1071,6 +1073,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
 				if (type==ft_xml || type==ft_xml_hl) tbuf<<scn->xmlns->prefix<<":";
 			if (type==ft_xml || type==ft_xml_hl) tbuf<<name;
+			CHECKP(node);
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(e_dsc)));
 			if(child==XNULL)
 			{
