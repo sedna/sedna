@@ -17,7 +17,7 @@ using namespace std;
 
 const shft	PSTRBLK_HEADER_SIZE = sizeof(struct vmm_sm_blk_hdr) + 5*sizeof(shft) + HHMAXSIZE*sizeof(hh_slot);
 /* the maximum string storable in our block - the case of single sting occupying whole block */
-const shft	PSTRMAXSIZE = PAGE_SIZE - PSTRBLK_HEADER_SIZE - sizeof(shft);
+const shft	PSTRMAXSIZE = PAGE_SIZE - PSTRBLK_HEADER_SIZE - 2*sizeof(shft);
 
 //#define PSTR_NO_CHECKP
 void checkPointer(xptr blk, char* ptr, int size)
