@@ -15,6 +15,7 @@
 #include "rcv_funcs.h"
 #include "tr_globals.h"
 #include "log.h"
+#include "d_printf.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "FTindex.h"
 #endif
@@ -284,7 +285,6 @@ try{
      {
        if (op == LL_INDIR_INSERT_TEXT)
           set_redo_hint(cl_hint, &indir_blocks);
-
 
        set_rollback_record(self);
        insert_text(removeIndirection(left),

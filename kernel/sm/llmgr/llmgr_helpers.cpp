@@ -8,6 +8,7 @@
 #include "uhdd.h"
 #include "exceptions.h"
 #include "cdb_globals.h"
+#include "uutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -127,7 +128,7 @@ void llmgr_core::set_file_pointer(LONG_LSN &lsn)
 
   if (res == 0)
   {
-     d_printf2("Error=%d\n", GetLastError());
+//     d_printf2("Error=%d\n", GetLastError());
      throw SYSTEM_EXCEPTION("Can't set file pointer for logical log file");
   }
 
@@ -245,7 +246,7 @@ void llmgr_core::extend_logical_log(bool sync)
   int new_file_number = mem_head->ll_free_files_arr[mem_head->ll_free_files_num - 1]; 
   char buf[20];
   string new_log_name = db_files_path + db_name +string(".") + 
-                        string(_itoa(new_file_number, buf, 10)) + "llog";
+                        string(itoa(new_file_number, buf, 10)) + "llog";
 
   //get header of previous file
   UFile dsc = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
@@ -356,38 +357,40 @@ void llmgr_core::open_all_log_files()
   DIR *dir;
   struct dirent* dent;
 
-  dir = opendir(db_file_path.c_str());
+  dir = opendir(db_files_path.c_str());
 
   if (dir == NULL)
      throw USER_EXCEPTION(SE4604); 
-
 
   string ext;
   string is_llog;
   while ( NULL != (dent = readdir (dir)) )
   {
-
      is_llog = (log_number = dent->d_name);
+     if (is_llog.size() < 7) continue;
+//d_printf2("IS_LLOG=%s\n", is_llog.c_str());
 
-     if ( is_llog.substr(is_llog.size()-3, 4) != "llog") continue;
-
+     if ( is_llog.substr(is_llog.size()-4, 4) != "llog") continue;
 
      log_number = log_number.erase(0, db_name.size() + 1);
-     log_number.erase(log_number.end() - 4, log_number.end() -1);
+//d_printf2("7log_number =%s\n", log_number.c_str());
+     log_number.erase(log_number.end() - 4, log_number.end());
+//d_printf2("8log_number=%s\n", log_number.c_str());
      number = atoi(log_number.c_str());
-     d_printf3("log_number=%s, %d\n", log_number.c_str(), number);
+//     d_printf3("log_number=%s, %d\n", log_number.c_str(), number);
 
 
      descr = uOpenFile(
-                      dent->d_name,
+                      (db_files_path + dent->d_name).c_str(),
                       U_SHARE_READ | U_SHARE_WRITE,
                       U_READ_WRITE,
                       U_WRITE_THROUGH 
                      );
 
      if ( descr == U_INVALID_FD )
-         throw USER_EXCEPTION2(SE4042, log_file.name);
+         throw USER_EXCEPTION2(SE4042, dent->d_name);
 
+//d_printf2("Opened log file=%s\n", dent->d_name);
      file_dsc.dsc = descr;
      file_dsc.name_number = number;
 
@@ -397,7 +400,7 @@ void llmgr_core::open_all_log_files()
   }
 
   if (0 != closedir(dir))
-     throw USER_EXCEPTION2(SE4054, cfg_files_dir.c_str());
+     throw USER_EXCEPTION2(SE4054, db_files_path.c_str());
 #endif  
 
   //sort tmp map and fill ll_open_files
@@ -473,7 +476,7 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
   //log file dsc not found
   UFile dsc;
   char buf[20];
-  std::string log_file_name = db_files_path + db_name + "." + _itoa(log_file_number, buf, 10) + "llog";
+  std::string log_file_name = db_files_path + db_name + "." + itoa(log_file_number, buf, 10) + "llog";
 
   dsc = uOpenFile(log_file_name.c_str(),
                   U_SHARE_READ | U_SHARE_WRITE,
@@ -483,7 +486,7 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
 
   if ( dsc == U_INVALID_FD )
   {
-    d_printf2("Error = %d\n", GetLastError());
+//    d_printf2("Error = %d\n", GetLastError());
     throw USER_EXCEPTION2(SE4042, log_file_name.c_str());
   }
 
