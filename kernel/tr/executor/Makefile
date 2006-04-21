@@ -4,26 +4,7 @@
 
 PP = ../../..
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-ifeq ($(words $(wildcard depend)), 0)
-ifneq ($(findstring depend, $(MAKECMDGOALS)), depend)
-$(error Type "make depend" first)
-endif
-endif
-endif
-
-
-INCLUDE_DIRS = . .. $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c	\
-               $(PP)/kernel/tr/vmm $(PP)/kernel/common/ph					\
-               $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/updates base xqops	\
-               fo root por2qep $(PP)/libs/chicken $(PP)/libs/dtsearch/include $(PP)/kernel/tr/mo		\
-               $(PP)/kernel/tr/pstr $(PP)/kernel/tr/locks					\
-               $(PP)/kernel/tr/idx $(PP)/kernel/tr/idx/btree				\
-               $(PP)/kernel/sm/plmgr $(PP)/libs $(PP)/kernel/tr/structures	\
-               $(PP)/kernel/tr/nid $(PP)/kernel/tr/strings					\
-               $(PP)/kernel/tr/auth $(PP)/kernel/tr/log  $(PP)/kernel/sm/llmgr $(PP)/kernel/tr/ft
-
-VPATH = . base xqops fo root por2qep
+VPATH = base fo por2qep root xqops $(PP)/kernel/tr
 
 
 include $(PP)/Makefile.include
@@ -31,13 +12,13 @@ include $(PP)/Makefile.include
 EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        sequence$(OBJ_EXT)				\
                        xptr_sequence$(OBJ_EXT)			\
-                       sorted_sequence$(OBJ_EXT)			\
+                       sorted_sequence$(OBJ_EXT)		\
                        dm_accessors$(OBJ_EXT)			\
                        e_string$(OBJ_EXT)				\
                        ext_sort$(OBJ_EXT)				\
                        compare$(OBJ_EXT)				\
                        merge$(OBJ_EXT)					\
-                       xptrChanneledMerge$(OBJ_EXT)					\
+                       xptrChanneledMerge$(OBJ_EXT)		\
                        PPStaticContext$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
                        PPUtils$(OBJ_EXT)				\
@@ -71,11 +52,11 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPStore$(OBJ_EXT)				\
                        PPAxisSelf$(OBJ_EXT)				\
                        PPAxisChild$(OBJ_EXT)			\
-                       PPAxisFP$(OBJ_EXT)			\
+                       PPAxisFP$(OBJ_EXT)				\
                        PPAxisSibling$(OBJ_EXT)			\
                        PPAxisAttribute$(OBJ_EXT)		\
                        PPAxisDescendant$(OBJ_EXT)		\
-                       PPAxisAncestor$(OBJ_EXT)		\
+                       PPAxisAncestor$(OBJ_EXT)			\
                        PPAxisParent$(OBJ_EXT)			\
                        PPCalculate$(OBJ_EXT)			\
                        PPConGen$(OBJ_EXT)				\
@@ -140,15 +121,12 @@ all: libexecutor$(LIB_EXT)
 	@echo EXECUTOR DONE
 	@echo ===================================================================
 
-include $(PP)/Makefile.depend
-
-depend:
-	$(DEPACT)
 
 
-ifneq ($(words $(wildcard depend)), 0)
-include depend
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+include $(PP)/kernel/tr/depend
 endif
+
 
 gen_num_ops$(OBJ_EXT): gen_num_ops.c
 	$(CC) $(CFLAGS_CHICKEN_EXE) $<
@@ -195,16 +173,9 @@ clean: generic_clean
 	-$(REMOVE) *$(LIB_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
 	-$(REMOVE) gen_num_ops$(EXE_EXT)
 	-$(REMOVE) gen_compar_ops$(EXE_EXT)
 	-$(REMOVE) gen_calc_altern$(EXE_EXT)
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
 	-$(REMOVE) numeric_operations.h 
 	-$(REMOVE) numeric_operations.cpp
 	-$(REMOVE) comparison_operations.h

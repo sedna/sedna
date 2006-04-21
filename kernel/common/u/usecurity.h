@@ -6,8 +6,6 @@
 #ifndef __USECURITY_H
 #define __USECURITY_H
 
-#include <stdlib.h>
-
 #ifdef _WIN32
 #include <Accctrl.h>
 #include <aclapi.h>
@@ -35,8 +33,7 @@ typedef mode_t UAccess_Permissions;
 #endif
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
     int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle);

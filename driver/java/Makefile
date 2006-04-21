@@ -28,48 +28,49 @@ all: $(OUTPUT) sednadriver.jar
 $(OUTPUT): 
 	-$(MKDIR) $(OUTPUT)
 
-
-sednadriver.jar: $(OUTPUT_PATH)/$(PACKAGE_PATH)/DriverException.class \
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/Debug.class \
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/NetOps.class\
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResult.class\
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResultImpl.class\
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatement.class \
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatementImpl.class \
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnection.class\
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnectionImpl.class\
-            $(OUTPUT_PATH)/$(PACKAGE_PATH)/DatabaseManager.class
+sednadriver.jar: DriverException.java \
+                 Debug.java \
+                 NetOps.java \
+                 SednaSerializedResult.java \
+                 SednaSerializedResultImpl.java \
+                 SednaStatement.java \
+                 SednaStatementImpl.java \
+                 SednaConnection.java \
+                 SednaConnectionImpl.java \
+                 DatabaseManager.java
+	$(JAVAC) $^
 	jar cvf sednadriver.jar -C $(OUTPUT) ru
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/DriverException.class: DriverException.java
-	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/Debug.class: Debug.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/DriverException.class: DriverException.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/NetOps.class: NetOps.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/Debug.class: Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResult.class: SednaSerializedResult.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/NetOps.class: NetOps.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResultImpl.class: SednaSerializedResultImpl.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResult.class: SednaSerializedResult.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatement.class: SednaStatement.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaSerializedResultImpl.class: SednaSerializedResultImpl.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatementImpl.class: SednaStatementImpl.java 
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatement.class: SednaStatement.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnection.class: SednaConnection.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaStatementImpl.class: SednaStatementImpl.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnectionImpl.class: SednaConnectionImpl.java 
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnection.class: SednaConnection.java Debug.java
+#	$(JAVAC) $<
 
-$(OUTPUT_PATH)/$(PACKAGE_PATH)/DatabaseManager.class: DatabaseManager.java
-	$(JAVAC) $<
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/SednaConnectionImpl.class: SednaConnectionImpl.java Debug.java
+#	$(JAVAC) $<
+
+#$(OUTPUT_PATH)/$(PACKAGE_PATH)/DatabaseManager.class: DatabaseManager.java Debug.java
+#	$(JAVAC) $<
 
 Debug.java: Debug.java.m4
 	$(M4) -DEL_DEBUG=$(EL_DEBUG) $^ >$@

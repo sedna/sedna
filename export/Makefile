@@ -9,8 +9,6 @@ endif
 endif
 
 
-INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c
-
 VPATH = .
 
 include $(PP)/Makefile.include
@@ -63,11 +61,4 @@ clean: generic_clean
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 

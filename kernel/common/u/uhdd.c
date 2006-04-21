@@ -11,12 +11,9 @@
 
 #include "uhdd.h"
 #include "d_printf.h"
-#include "usecurity.h"
 #include "uutils.h"
 
 #ifdef _WIN32
-#include <errno.h>
-#include <stdlib.h>
 #include <direct.h>
 #else
 #ifdef LINUX
@@ -26,8 +23,6 @@
 #endif
 #include <fcntl.h>
 #include <dirent.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <libgen.h>
 #endif

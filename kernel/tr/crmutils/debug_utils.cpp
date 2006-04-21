@@ -446,7 +446,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 	}
 	xptr parent=insert_element(node,XNULL,XNULL,"NID",xdt_untyped,NULL);
 	char buf[20];
-	itoa(maxfo,buf,10);
+	_itoa(maxfo,buf,10);
 	xptr left=insert_attribute(XNULL,XNULL,parent,"max_fan_out",xdt_untypedAtomic,buf,strlen(buf),NULL);
 	_gcvt((1.*midfo/cnt),10,buf);
 	left=insert_attribute(left,XNULL,XNULL,"mid_fan_out",xdt_untypedAtomic,buf,strlen(buf),NULL);
@@ -479,9 +479,9 @@ void printFullNIDVariation(xptr broot, xptr node)
 		if (it!=nidsz.end())
 		{
 			lf=insert_element(lf,XNULL,left,"bucket",xdt_untyped,NULL);
-			itoa(i,buf,10);
+			_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xdt_untypedAtomic,buf,strlen(buf),NULL);
-			itoa(it->second,buf,10);
+			_itoa(it->second,buf,10);
 			att=insert_attribute(att,XNULL,XNULL,"total",xdt_untypedAtomic,buf,strlen(buf),NULL);
 			_gcvt((100.*it->second/cnt),10,buf);
 			insert_attribute(att,XNULL,XNULL,"percentage",xdt_untypedAtomic,buf,strlen(buf),NULL);
@@ -489,7 +489,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 		else
 		{
 			lf=insert_element(lf,XNULL,left,"bucket",xdt_untyped,NULL);
-			itoa(i,buf,10);
+			_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xdt_untypedAtomic,buf,strlen(buf),NULL);
 			att=insert_attribute(att,XNULL,XNULL,"total",xdt_untypedAtomic,"0",1,NULL);
 			insert_attribute(att,XNULL,XNULL,"percentage",xdt_untypedAtomic,"0",1,NULL);
@@ -509,7 +509,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 	parent=insert_element(parent,XNULL,XNULL,"STRINGS",xdt_untyped,NULL);
 	_gcvt((cnt_sz/1024./1024.),10,buf);
 	left=insert_attribute(XNULL,XNULL,parent,"total_size",xdt_untypedAtomic,buf,strlen(buf),NULL);
-	itoa(strcnt,buf,10);
+	_itoa(strcnt,buf,10);
 	left=insert_attribute(left,XNULL,XNULL,"total_count",xdt_untypedAtomic,buf,strlen(buf),NULL);
 	left=insert_element(left,XNULL,XNULL,"histogram",xdt_untyped,NULL);
 	lf=XNULL;
@@ -519,9 +519,9 @@ void printFullNIDVariation(xptr broot, xptr node)
 		if (it!=strsz.end())
 		{
 			lf=insert_element(lf,XNULL,left,"bucket",xdt_untyped,NULL);
-			itoa(i,buf,10);
+			_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xdt_untypedAtomic,buf,strlen(buf),NULL);
-			itoa(it->second,buf,10);
+			_itoa(it->second,buf,10);
 			att=insert_attribute(att,XNULL,XNULL,"total",xdt_untypedAtomic,buf,strlen(buf),NULL);
 			_gcvt((100.*it->second/strcnt),10,buf);
 			insert_attribute(att,XNULL,XNULL,"percentage",xdt_untypedAtomic,buf,strlen(buf),NULL);
@@ -531,7 +531,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 		else
 		{
 			lf=insert_element(lf,XNULL,left,"bucket",xdt_untyped,NULL);
-			itoa(i,buf,10);
+			_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xdt_untypedAtomic,buf,strlen(buf),NULL);
 			att=insert_attribute(att,XNULL,XNULL,"total",xdt_untypedAtomic,"0",1,NULL);
 			insert_attribute(att,XNULL,XNULL,"percentage",xdt_untypedAtomic,"0",1,NULL);
@@ -615,7 +615,7 @@ void getDebugInfo(schema_node* snode, xptr& node)
 	char buf[40];
 	
 	xptr left=insert_element(XNULL,XNULL,node,"total_schema_nodes",xdt_untyped,NULL);
-	itoa(d_in.schema_count,buf,10);
+	_itoa(d_in.schema_count,buf,10);
 	insert_text(XNULL,XNULL,left,buf,strlen(buf));
 
 	left=fillStatistics(left,"total_schema_text_nodes",buf,d_in.schema_str_count);

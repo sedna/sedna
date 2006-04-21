@@ -1,3 +1,8 @@
+/*
+ * File:  sedna_ef.h
+ * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _SEDNA_EF_H
 #define _SEDNA_EF_H
 
@@ -44,4 +49,4 @@ typedef struct sedna_ef_args
 
 
 
-#endif //_SEDNA_EF_H
+#endif /* _SEDNA_EF_H */

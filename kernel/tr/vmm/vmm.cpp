@@ -213,10 +213,10 @@ inline int __vmm_unmap(void *addr)
 void _vmm_preinit_region()
 {
 #ifdef VMM_ACCURATE
-    uint32 cur;
+    __uint32 cur;
     for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
          cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-         cur += (uint32)PAGE_SIZE)
+         cur += (__uint32)PAGE_SIZE)
     {
         if (__vmm_map((void*)cur, default_ram) == -1)
             throw USER_EXCEPTION(SE1031);
@@ -496,14 +496,14 @@ void vmm_determine_region(bool log) throw (SednaException)
         open_global_memory_mapping(SE4400);
     }
 
-    uint32 cur = 0, cur_right = 0;
-    uint32 res_left = 0, res_right = 0;
+    __uint32 cur = 0, cur_right = 0;
+    __uint32 res_left = 0, res_right = 0;
     bool is_free = false;
     void *p = NULL;
 
-    for (cur = VMM_REGION_SEARCH_RIGHT_BOUND - (uint32)PAGE_SIZE; 
-         cur >= VMM_REGION_SEARCH_LEFT_BOUND - (uint32)PAGE_SIZE; 
-         cur -= (uint32)PAGE_SIZE)
+    for (cur = VMM_REGION_SEARCH_RIGHT_BOUND - (__uint32)PAGE_SIZE; 
+         cur >= VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE; 
+         cur -= (__uint32)PAGE_SIZE)
     {
         //check cur page 
         if (log) fprintf(f_se_trn_log, "Probing address 0x%x... ", cur);
@@ -517,7 +517,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         if (p)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
-            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (uint32)PAGE_SIZE) is_free = false;
+            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
             else is_free = true;
 
             VirtualFree(p, 0, MEM_RELEASE);
@@ -532,7 +532,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         if (p)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
-            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (uint32)PAGE_SIZE) is_free = false;
+            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
             else is_free = true;
 
             munmap(p, PAGE_SIZE);
@@ -553,14 +553,14 @@ void vmm_determine_region(bool log) throw (SednaException)
             if (cur_right != 0)
             {
                 d_printf4("vmm segment found: left = 0x%x, right = 0x%x, size = %d\n", 
-                       cur + (uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (uint32)PAGE_SIZE);
+                       cur + (__uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (__uint32)PAGE_SIZE);
 
                 if (log) fprintf(f_se_trn_log, "vmm segment found: left = 0x%x, right = 0x%x, size = %d\n", 
-                                 cur + (uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (uint32)PAGE_SIZE);
+                                 cur + (__uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (__uint32)PAGE_SIZE);
 
-                if ((cur_right - cur) > (res_right - res_left + (uint32)PAGE_SIZE))
+                if ((cur_right - cur) > (res_right - res_left + (__uint32)PAGE_SIZE))
                 {
-                    res_left = cur + (uint32)PAGE_SIZE;
+                    res_left = cur + (__uint32)PAGE_SIZE;
                     res_right = cur_right;
                 }
                 cur_right = 0;
@@ -590,13 +590,13 @@ void vmm_determine_region(bool log) throw (SednaException)
         }
     }
 
-    uint32 segment_size = res_right - res_left + (uint32)PAGE_SIZE;
+    __uint32 segment_size = res_right - res_left + (__uint32)PAGE_SIZE;
 
     d_printf4("\nvmm_determine_region:\nres_left = 0x%x\nres_right = 0x%x\nregion size (in pages) = %d\n", 
-              res_left, res_right, segment_size / (uint32)PAGE_SIZE);
+              res_left, res_right, segment_size / (__uint32)PAGE_SIZE);
 
     if (log) fprintf(f_se_trn_log, "\nvmm_determine_region:\nres_left = 0x%x\nres_right = 0x%x\nregion size (in pages) = %d\n", 
-                     res_left, res_right, segment_size / (uint32)PAGE_SIZE);
+                     res_left, res_right, segment_size / (__uint32)PAGE_SIZE);
 
 
     if (PH_SIZE + VMM_REGION_MIN_SIZE > segment_size)
@@ -967,10 +967,10 @@ void vmm_delete_tmp_blocks() throw (SednaException)
 
         // TODO: This may be ineffective. Think about other ways (AF)
 /*
-        uint32 cur;
+        __uint32 cur;
         for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
              cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-             cur += (uint32)PAGE_SIZE)
+             cur += (__uint32)PAGE_SIZE)
         {
             //if (IS_TMP_BLOCK(*(xptr*)cur)) 
             _vmm_unmap_severe((void*)cur);

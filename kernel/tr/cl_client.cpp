@@ -107,15 +107,14 @@ void command_line_client::init()
    {
 #if (AUTH_SWITCH == 1)
       string path_to_security_file; 
-#ifdef _WIN32
-      path_to_security_file = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+      char path_buf[U_MAX_PATH + 32];
+      path_to_security_file = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
+#ifdef _WIN32
       int i;
       for (i=0; i<path_to_security_file.size(); i++)
         if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
 #else
-      path_to_security_file = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
-
       if(!uIsFileExist(path_to_security_file.c_str()))
          path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
 #endif

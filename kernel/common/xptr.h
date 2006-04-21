@@ -25,23 +25,23 @@
 // address space
 #define XADDR(p)				((p).addr)
 #define CONSTRUCT_XPTR(l, a)	(xptr(l, a))
-#define BLOCKXPTR(a)			xptr(a.layer,(void*)((uint32)((a).addr) & PAGE_BIT_MASK))
+#define BLOCKXPTR(a)			xptr(a.layer,(void*)((__uint32)((a).addr) & PAGE_BIT_MASK))
 
 // works only in transaction, does not work is SM
-//#define ADDR2XPTR(a)			xptr(*(t_layer*)(((uint32)(a)) & PAGE_BIT_MASK), (void*)(a))
+//#define ADDR2XPTR(a)			xptr(*(t_layer*)(((__uint32)(a)) & PAGE_BIT_MASK), (void*)(a))
 // this one works both in transaction and SM
-//#define ADDR2XPTR(a)			xptr(*(xptr*)(((uint32)(a)) & PAGE_BIT_MASK) + (((uint32)(a)) & PAGE_REVERSE_BIT_MASK))
-#define ADDR2XPTR(a)			xptr(*(t_layer*)(((uint32)(a)) & PAGE_BIT_MASK),					\
-                                     (void*)(*(uint32*)((((uint32)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + (((uint32)(a)) & PAGE_REVERSE_BIT_MASK)))
+//#define ADDR2XPTR(a)			xptr(*(xptr*)(((__uint32)(a)) & PAGE_BIT_MASK) + (((__uint32)(a)) & PAGE_REVERSE_BIT_MASK))
+#define ADDR2XPTR(a)			xptr(*(t_layer*)(((__uint32)(a)) & PAGE_BIT_MASK),					\
+                                     (void*)(*(__uint32*)((((__uint32)(a)) & PAGE_BIT_MASK) + sizeof(t_layer)) + (((__uint32)(a)) & PAGE_REVERSE_BIT_MASK)))
 
-#define TEST_XPTR(p)			(*(t_layer*)((uint32)((p).addr) & PAGE_BIT_MASK) == (p).layer)
+#define TEST_XPTR(p)			(*(t_layer*)((__uint32)((p).addr) & PAGE_BIT_MASK) == (p).layer)
 // old and don't work   !!!
-//#define TEST_XPTR(p)			(*(xptr*)((uint32)((p).addr) & PAGE_BIT_MASK) == (p))
+//#define TEST_XPTR(p)			(*(xptr*)((__uint32)((p).addr) & PAGE_BIT_MASK) == (p))
 
 
-#define ALIGN_ADDR(a)			((void*)((uint32)(a) & PAGE_BIT_MASK))
+#define ALIGN_ADDR(a)			((void*)((__uint32)(a) & PAGE_BIT_MASK))
 // new wave in VMM :)
-//#define ALIGN_XADDR(p)			((void*)((uint32)((p).addr) & PAGE_BIT_MASK))
+//#define ALIGN_XADDR(p)			((void*)((__uint32)((p).addr) & PAGE_BIT_MASK))
 //#define TEST_XPTR(p, a)			((*(t_layer*)a == (p).layer) && (((xptr*)a)->addr == a))
 
 
@@ -105,10 +105,10 @@ inline xptr operator-(const xptr &p, int n)
     return new_p;
 }
 
-inline uint32 operator-(const xptr &p1, const xptr &p2)
+inline __uint32 operator-(const xptr &p1, const xptr &p2)
 {
     if (p1.layer != p2.layer) throw USER_EXCEPTION2(SE1003, "Bad paramters in xptr operator-(const xptr &p1, const xptr &p2)");
-    return (uint32)(p1.addr) - (uint32)(p2.addr);
+    return (__uint32)(p1.addr) - (__uint32)(p2.addr);
 }
 
 inline bool operator==(const xptr &p1, const xptr &p2)
@@ -123,7 +123,7 @@ inline bool operator!=(const xptr &p1, const xptr &p2)
 
 inline bool operator<(const xptr &p1, const xptr &p2)
 {
-    return (p1.layer != p2.layer ? p1.layer < p2.layer : (uint32)(p1.addr) < (uint32)(p2.addr));
+    return (p1.layer != p2.layer ? p1.layer < p2.layer : (__uint32)(p1.addr) < (__uint32)(p2.addr));
 }
 
 inline bool operator==(const xptr &p, void* addr)
@@ -148,8 +148,7 @@ inline bool operator!=(void *addr, const xptr &p)
 
 inline xptr block_xptr(const xptr &p)
 {
-    return xptr(p.layer, (void*)((uint32)(p.addr) & PAGE_BIT_MASK));
-
+    return xptr(p.layer, (void*)((__uint32)(p.addr) & PAGE_BIT_MASK));
 }
 
 inline void shed_state(xptr &p)

@@ -49,6 +49,24 @@ typedef pthread_spinlock_t     uspinlock;
 #endif
 #endif
 
+#ifdef _WIN32
+#define uSpinInit(sl)		((*(sl) = FALSE), 0)
+#define uSpinDestroy(sl)	0
+#define uSpinLock(sl)		while (InterlockedExchange(sl, TRUE) == TRUE) Sleep(0)
+#define uSpinUnlock(sl)		InterlockedExchange(sl, FALSE)
+#else
+#define uSpinInit(sl)		pthread_spin_init(sl, 0)
+#define uSpinDestroy(sl)	pthread_spin_destroy(sl)
+#define uSpinLock(sl)		pthread_spin_lock(sl)
+#define uSpinUnlock(sl)		pthread_spin_unlock(sl)
+#endif
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uResVal uCreateThread(
     uThreadProc proc,
     uArg        arg,
@@ -65,22 +83,12 @@ int uCloseThreadHandle(UTHANDLE id);
 int uThreadJoin(UTHANDLE id);
 // use UEXITTHREAD_OK or UEXITTHREAD_FAIL as arguments to uExitThread
 void uExitThread(int rc);
-void uSleep(unsigned int secs);
 UTHANDLE uGetCurrentThread();
-
-#ifdef _WIN32
-#define uSpinInit(sl)		((*(sl) = FALSE), 0)
-#define uSpinDestroy(sl)	0
-#define uSpinLock(sl)		while (InterlockedExchange(sl, TRUE) == TRUE) Sleep(0)
-#define uSpinUnlock(sl)		InterlockedExchange(sl, FALSE)
-#else
-#define uSpinInit(sl)		pthread_spin_init(sl, 0)
-#define uSpinDestroy(sl)	pthread_spin_destroy(sl)
-#define uSpinLock(sl)		pthread_spin_lock(sl)
-#define uSpinUnlock(sl)		pthread_spin_unlock(sl)
-#endif
-
 int uThreadBlockAllSignals();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

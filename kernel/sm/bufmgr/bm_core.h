@@ -28,17 +28,17 @@
 
 #define ABS_DATA_OFFSET(p)		((__int64)((p).layer) *												\
                                  (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
-                                 (__int64)((uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
+                                 (__int64)((__uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
 
 #define ABS_TMP_OFFSET(p)		((__int64)((p).layer - TMP_LAYER_STARTS_WITH) *						\
                                  (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
-                                 (__int64)((uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
+                                 (__int64)((__uint32)((p).addr) - LAYER_ADDRESS_SPACE_START_ADDR_INT))
 
 #define DATA_FILE_OFFS2XPTR(s)	xptr((t_layer)((__int64)(s) / (__int64)(LAYER_ADDRESS_SPACE_SIZE)),								\
-                                     (void*)((uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
+                                     (void*)((__uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
 
 #define TMP_FILE_OFFS2XPTR(s)	xptr((t_layer)((__int64)(s) / (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + TMP_LAYER_STARTS_WITH,		\
-                                     (void*)((uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
+                                     (void*)((__uint32)((__int64)(s) % (__int64)(LAYER_ADDRESS_SPACE_SIZE)) + LAYER_ADDRESS_SPACE_START_ADDR_INT))
 
 #define OFFS2ADDR(offs)			((char*)buf_mem_addr + (offs))
 

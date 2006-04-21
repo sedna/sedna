@@ -237,16 +237,16 @@ void execute_recovery_by_logical_log_process()
 
   //create recovery process
   int res;
+  char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
 
   //string command_line = string(SEDNA_DATA) + string("/bin/rcv_db.exe ") + string(db_name);
 
-  string command_line = uGetImageProcPath() + string("/se_rcv_db.exe ") + string(db_name) ;
-  char *command_line_str = new char[command_line.size() + 1];
-  strcpy(command_line_str, command_line.c_str());
+  string command_line = uGetImageProcPath(buf) + string("/se_rcv_db.exe ") + string(db_name) ;
+  strcpy(buf, command_line.c_str());
 
 #ifndef TEST_RECOVERY_ON
   res = uCreateProcess(
-                  command_line_str,
+                  buf,
                   false,
                   NULL,
                   /*U_NO_WINDOW*/0,

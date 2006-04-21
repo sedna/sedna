@@ -106,7 +106,7 @@ int main(int argc, char **argv)
              sm_pid = ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->sm_pid;
 
 
-             res = uOpenProcess(sm_pid, proc_handle);
+             res = uOpenProcess(sm_pid, &proc_handle);
              if (res !=0) goto end;//sm already stopped
 
              ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->is_stop = 1;

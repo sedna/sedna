@@ -477,7 +477,7 @@ void sorted_sequence::merge_stack(bool final)
 }
 void sorted_sequence::set_next_ptr_with_free(xptr& ptr)
 {
-	int pos=((uint32)ptr.addr-((uint32)ptr.addr & PAGE_BIT_MASK)-sizeof(seq_blk_hdr))/sizeof(data_ptr);
+	int pos=((__uint32)ptr.addr-((__uint32)ptr.addr & PAGE_BIT_MASK)-sizeof(seq_blk_hdr))/sizeof(data_ptr);
 	if (pos+1<PTR_BLK_SIZE)
 	{
 		CHECKP(ptr);

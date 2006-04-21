@@ -11,17 +11,17 @@
 
 inline xptr sm_addr2xptr(const void *addr) 
 { 
-    char *hdr = ((char*)buf_mem_addr + ((uint32)addr - (uint32)buf_mem_addr) / (uint32)PAGE_SIZE * (uint32)PAGE_SIZE);
+    char *hdr = ((char*)buf_mem_addr + ((__uint32)addr - (__uint32)buf_mem_addr) / (__uint32)PAGE_SIZE * (__uint32)PAGE_SIZE);
     return CONSTRUCT_XPTR(
             *(t_layer*)hdr,
-            (void*)(*(uint32*)(hdr + sizeof(t_layer)) + 
-                    ((uint32)addr - (uint32)hdr)));
+            (void*)(*(__uint32*)(hdr + sizeof(t_layer)) + 
+                    ((__uint32)addr - (__uint32)hdr)));
 }
 
 inline vmm_sm_blk_hdr* sm_get_block_hdr(const void *addr) 
 { 
     return (vmm_sm_blk_hdr*)((char*)buf_mem_addr + 
-                             ((uint32)addr - (uint32)buf_mem_addr) / (uint32)PAGE_SIZE * (uint32)PAGE_SIZE);
+                             ((__uint32)addr - (__uint32)buf_mem_addr) / (__uint32)PAGE_SIZE * (__uint32)PAGE_SIZE);
 }
 
 

@@ -228,7 +228,7 @@ try{
     // Socket HANDLE are passed throught a environment variable
                  	 
     char buf[U_MAX_PATH + 10];
-    string con_path_str = uGetImageProcPath() + string("/") + SESSION_EXE;
+    string con_path_str = uGetImageProcPath(buf) + string("/") + SESSION_EXE;
     strcpy(buf, con_path_str.c_str());
  
     if (is_background_mode)

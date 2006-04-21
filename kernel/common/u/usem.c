@@ -6,10 +6,7 @@
 
 #include "usem.h"
 #include "d_printf.h"
-#include "utils.h"
-#include <string>
 
-using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Semaphore implementation
@@ -53,7 +50,7 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
-    int res = semget(name, SEM_AMOUNT, IPC_CREAT | IPC_EXCL | sem_access_mode);
+    int res = semget(name, 1, IPC_CREAT | IPC_EXCL | sem_access_mode);
     *sem = res;
 
     if (*sem < 0)
@@ -202,7 +199,7 @@ int USemaphoreDown(USemaphore sem)
 #endif
 
 
-int USemaphoreDown(USemaphore sem, unsigned int millisec)
+int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec)
 #ifdef _WIN32
 {
     DWORD res;
@@ -287,22 +284,40 @@ int USemaphoreUp(USemaphore sem)
 // Array of semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
+#define SIZE_OF_BUF_FOR_ADJUSTED_NAME 128
+
 int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa)
 #ifdef _WIN32
 {
     int i = 0;
-    *sem = new HANDLE[size];
-    string base_name(name);
+    char buf[SIZE_OF_BUF_FOR_ADJUSTED_NAME];
+    int name_len = strlen(name);
+
+    /*
+     * We concatenate name with a number and put the result to buf. 
+     * Because int2c_str requieres 20 bytes the length of the name
+     * must not be greater than (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20)
+     */
+    if (name_len > (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20))
+    {
+        return 1;
+    }
+    strcpy(buf, name);
+
+    *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
+        int2c_str(i, buf + name_len);
+
         (*sem)[i] = CreateSemaphore(sa,
                                     init_values[i],
                                     INT_MAX,
-                                    (base_name + int2string(i)).c_str());
+                                    buf);
 
         if ((*sem)[i] == NULL)
         {
+            free(*sem);
             d_printf1("CreateSemaphore failed\n");
             d_printf2("Error %d\n", GetLastError());
             return 1;
@@ -311,6 +326,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
         {
             if (GetLastError() == ERROR_ALREADY_EXISTS)
             {
+                free(*sem);
                 d_printf1("CreateSemaphore: already exists\n");
                 return 1;
             }	
@@ -364,17 +380,33 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
 #ifdef _WIN32
 {
     int i = 0;
-    *sem = new HANDLE[size];
-    string base_name(name);
+    char buf[SIZE_OF_BUF_FOR_ADJUSTED_NAME];
+    int name_len = strlen(name);
+
+    /*
+     * We concatenate name with a number and put the result to buf. 
+     * Because int2c_str requieres 20 bytes the length of the name
+     * must not be greater than (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20)
+     */
+    if (name_len > (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20))
+    {
+        return 1;
+    }
+    strcpy(buf, name);
+
+    *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
+        int2c_str(i, buf + name_len);
+
         (*sem)[i] = OpenSemaphore(SEMAPHORE_ALL_ACCESS, 
                                   FALSE, 
-                                  (base_name + int2string(i)).c_str());
+                                  buf);
 
         if ((*sem)[i] == NULL)
         {
+            free(*sem);
             d_printf1("OpenSemaphore failed\n");
             d_printf2("Error %d\n", GetLastError());
             return 1;
@@ -408,9 +440,10 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
 int USemaphoreArrRelease(USemaphoreArr sem, int size)
 #ifdef _WIN32
 {
+    int i = 0;
     BOOL res;
 
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
         res = CloseHandle(sem[i]);
 
@@ -422,7 +455,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size)
         }
     }
 
-    delete [] sem;
+    free(sem);
 
     return 0;
 }
@@ -457,9 +490,10 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size)
 int USemaphoreArrClose(USemaphoreArr sem, int size)
 #ifdef _WIN32
 {
+    int i = 0;
     BOOL res;
 
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
         res = CloseHandle(sem[i]);
 
@@ -471,7 +505,7 @@ int USemaphoreArrClose(USemaphoreArr sem, int size)
         }
     }
 
-    delete [] sem;
+    free(sem);
 
     return 0;
 }
@@ -519,7 +553,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i)
 #endif
 
 
-int USemaphoreArrDown(USemaphoreArr sem, int i, unsigned int millisec)
+int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec)
 #ifdef _WIN32
 {
     DWORD res;
@@ -731,7 +765,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
 // return values: 0 - success
 //                1 - falure
 //                2 - timeout
-int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem, unsigned int millisec)
+int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
 #ifdef _WIN32
 {
     DWORD res;

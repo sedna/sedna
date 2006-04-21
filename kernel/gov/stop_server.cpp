@@ -87,7 +87,7 @@ int main(int argc, char** argv)
         port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
         
-        res = uOpenProcess(gov_pid, proc_handle);
+        res = uOpenProcess(gov_pid, &proc_handle);
         if (res  != 0) goto end;
 
         send_command_to_gov(port_number, STOP);

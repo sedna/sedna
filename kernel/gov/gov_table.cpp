@@ -206,7 +206,7 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
   
   if (h_p == NULL)
   {
-     if (uOpenProcess(pid, proc_handle) != 0)
+     if (uOpenProcess(pid, &proc_handle) != 0)
         return -4;
   }
   else proc_handle = *h_p;
@@ -250,7 +250,7 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
 {
   int i = 0;
   UPHANDLE proc_handle;
-  if (uOpenProcess(pid, proc_handle) != 0)
+  if (uOpenProcess(pid, &proc_handle) != 0)
      return -4;
 
 
@@ -562,7 +562,7 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
   else
   {
 
-    if (uOpenProcess(pid, proc_handle) == 0)
+    if (uOpenProcess(pid, &proc_handle) == 0)
     {
 //       uTerminateProcess(pid, proc_handle, 1);
 

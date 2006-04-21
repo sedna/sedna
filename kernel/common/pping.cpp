@@ -44,7 +44,7 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
                 sedna_soft_fault(SYSTEM_ENV_EXCEPTION("SEDNA GOVERNOR is down"));
             }
         }
-        UUnnamedSemaphoreDown(&(ppc->sem), 1000);
+        UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000);
     }
     return 0;
 }

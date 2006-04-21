@@ -1,14 +1,23 @@
+/*
+ * File:  u.c
+ * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #include "u.h"
 #include "d_printf.h"
 
-#ifdef _WIN32
-#else
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#endif
 
 static char ustrerror_buf[256];
+
+
+void uSleep(unsigned int secs)
+{
+#ifdef _WIN32
+    Sleep(secs * 1000);
+#else
+    sleep(secs);
+#endif
+}
 
 /* FIXME: it is not thread safe */
 char* ustrerror(int errnum)

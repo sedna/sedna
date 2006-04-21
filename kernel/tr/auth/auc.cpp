@@ -26,8 +26,9 @@ void getSednaAuthMetadataPath(char* path)
 {
 #ifdef AUTH_SWITCH
 # if (AUTH_SWITCH == 1)
+    char path_buf[U_MAX_PATH + 32];
 #ifdef _WIN32
-	string pstring = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+	string pstring = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 	strcpy(path, pstring.c_str());
 	int i=0;
 	while(i<=pstring.length())
@@ -36,7 +37,7 @@ void getSednaAuthMetadataPath(char* path)
 		i++;
 	}
 #else
-	string sedna_auth_metadata_file_path = uGetImageProcPath() + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+	string sedna_auth_metadata_file_path = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 	if(uIsFileExist(sedna_auth_metadata_file_path.c_str()))
 		strcpy(path, sedna_auth_metadata_file_path.c_str());
 	else

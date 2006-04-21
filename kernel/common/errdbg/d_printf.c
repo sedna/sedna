@@ -1,3 +1,7 @@
+/*
+ * File:  d_printf.c
+ * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #include "d_printf.h"
 

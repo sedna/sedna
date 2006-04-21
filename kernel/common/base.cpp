@@ -6,7 +6,6 @@
 
 #include <string>
 #include <fstream>
-#include <stdio.h>
 #include "base.h"
 #include "exceptions.h"
 #include "uhdd.h"
@@ -19,20 +18,20 @@ using namespace std;
 void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL; //((void*)0x30000000);
 void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL; //((void*)0x60000000);
 void  *PH_ADDRESS_SPACE_START_ADDR        = NULL; //((void*)0x2BC00000);
-uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((uint32)0x30000000);
-uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((uint32)0x60000000);
-uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((uint32)0x2BC00000);
+__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((__uint32)0x30000000);
+__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((__uint32)0x60000000);
+__uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((__uint32)0x2BC00000);
 
-uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
+__uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #else
 void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL; //((void*)0x60000000);
 void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL; //((void*)0x90000000);
 void  *PH_ADDRESS_SPACE_START_ADDR        = NULL; //((void*)0x59C00000);
-uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((uint32)0x60000000);
-uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((uint32)0x90000000);
-uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((uint32)0x59C00000);
+__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((__uint32)0x60000000);
+__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((__uint32)0x90000000);
+__uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((__uint32)0x59C00000);
 
-uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
+__uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #endif
 
 
@@ -103,6 +102,10 @@ uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _SEDNA_LOCK_MANAGER_SEM						"SEDNA_LOCK_MANAGER_SEM"
 #define _SEDNA_TRANSACTION_LOCK						"SEDNA_TRANSACTION_LOCK"
 
+#define _SE_EVENT_LOG_SHARED_MEMORY_NAME			"SE_EVENT_LOG_SHARED_MEMORY_NAME"
+#define _SE_EVENT_LOG_SEMAPHORES_NAME				"SE_EVENT_LOG_SEMAPHORES_NAME"
+
+
 #else
 /// UNIX
 #define _CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME	'b'
@@ -169,6 +172,10 @@ uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _FT_INDEX_SEMAPHORE_STR					    'V'
 #endif
 
+#define _SE_EVENT_LOG_SHARED_MEMORY_NAME			'X'
+#define _SE_EVENT_LOG_SEMAPHORES_NAME				'Y'
+
+
 #endif
 
 
@@ -226,6 +233,10 @@ global_name CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME;
 global_name GOVERNOR_SHARED_MEMORY_NAME;
 
 global_name SEDNA_LOCK_MANAGER_SEM;
+
+global_name SE_EVENT_LOG_SHARED_MEMORY_NAME;
+global_name SE_EVENT_LOG_SEMAPHORES_NAME;
+
 
 
 char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
@@ -408,6 +419,10 @@ void set_global_names()
     WIN_GN_INIT2(CHARISMA_GOV_WAIT_FOR_SHUTDOWN);
     
     WIN_GN_INIT2(GOVERNOR_SHARED_MEMORY_NAME);
+
+    WIN_GN_INIT2(SE_EVENT_LOG_SHARED_MEMORY_NAME);
+    WIN_GN_INIT2(SE_EVENT_LOG_SEMAPHORES_NAME);
+
 #else
     key_t key;
     string path2 = string(SEDNA_DATA);
@@ -427,6 +442,9 @@ void set_global_names()
     UNIX_GN_INIT2(CHARISMA_GOV_WAIT_FOR_SHUTDOWN);
 
     UNIX_GN_INIT2(GOVERNOR_SHARED_MEMORY_NAME);
+
+    UNIX_GN_INIT2(SE_EVENT_LOG_SHARED_MEMORY_NAME);
+    UNIX_GN_INIT2(SE_EVENT_LOG_SEMAPHORES_NAME);
 #endif
 }
 
@@ -526,7 +544,8 @@ void set_sedna_data()
      return;
 
 
-  std::string proc_path = uGetImageProcPath();
+  char proc_buf[U_MAX_PATH + 1];
+  std::string proc_path = uGetImageProcPath(proc_buf);
   std::string sedna_cfg_file;
   bool is_inside_lib = true;
 

@@ -7,14 +7,6 @@
 #include "d_printf.h"
 #include "uthread.h"
 
-#ifdef _WIN32
-#include <time.h>
-#else
-#include <unistd.h>
-#include <sys/types.h>
-#include <time.h>
-#include <string.h>
-#endif
 
 uResVal uCreateThread(
   uThreadProc proc,
@@ -113,7 +105,6 @@ int uResumeThread(UTHANDLE id)
 #ifdef _WIN32
     return ResumeThread(id) == -1 ? 1 : 0;
 #else
-    uSleep(2);
     return pthread_kill(id, SIGUSR2);
 #endif
 }
@@ -171,26 +162,19 @@ void uExitThread(int rc)
 #endif
 }
 
-void uSleep(unsigned int secs)
-{
-#ifdef _WIN32
-    Sleep(secs * 1000);
-#else
-    sleep(secs);
-#endif
-}
-
 UTHANDLE uGetCurrentThread()
 {
 #ifdef _WIN32
 	UTHANDLE result;
-	DuplicateHandle(GetCurrentProcess(), 
-                    GetCurrentThread(), 
-                    GetCurrentProcess(), 
-                    &result, 
-                    NULL, 
-                    FALSE, 
+
+	DuplicateHandle(GetCurrentProcess(),
+                    GetCurrentThread(),
+                    GetCurrentProcess(),
+                    &result,
+                    0,
+                    FALSE,
                     DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+
 	return result;
 #else
     return pthread_self();

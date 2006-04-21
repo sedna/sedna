@@ -13,10 +13,7 @@ endif
 endif
 
 
-INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c	\
-               $(PP)/kernel/common/ph $(PP)/libs/expat bufmgr plmgr	llmgr lm
-
-VPATH = . bufmgr
+VPATH = . bufmgr plmgr llmgr lm
 
 
 include $(PP)/Makefile.include
@@ -35,9 +32,6 @@ include $(PP)/Makefile.depend
 
 depend:
 	$(DEPACT)
-	$(MAKE) -C plmgr depend
-	$(MAKE) -C llmgr depend
-	$(MAKE) -C lm depend
 
 
 ifneq ($(words $(wildcard depend)), 0)
@@ -155,20 +149,10 @@ libraries:
 .PHONY: clean
 
 clean: generic_clean
+	$(MAKE) -C plmgr clean
+	$(MAKE) -C llmgr clean
+	$(MAKE) -C lm clean
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) sm_register_test$(EXE_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) sm.SUP
-	-$(REMOVE) cdb.map
-	-$(REMOVE) cdb.pdb
-	-$(REMOVE) cdb.SUP
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
-	$(MAKE) -C plmgr clean
-	$(MAKE) -C llmgr clean
-	$(MAKE) -C lm clean
