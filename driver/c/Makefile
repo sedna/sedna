@@ -98,6 +98,9 @@ else
 %$(OBJ_EXT): $(PP)/kernel/common/u/%.c
 	$(CC) $(CFLAGS) $<
 
+%$(OBJ_EXT): $(PP)/kernel/common/errdbg/%.c
+	$(CC) $(CFLAGS) $<
+
 %$(OBJ_EXT): $(PP)/kernel/common/%.c
 	$(CC) $(CFLAGS) $<
 

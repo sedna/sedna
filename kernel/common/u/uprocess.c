@@ -31,7 +31,7 @@ int uSetEnvironmentVariable(const char* name, const char* value)
 #else
     int name_len = strlen(name);
     int value_len = strlen(value);
-    char *str = new char[name_len + value_len + 2]; /* This string will become the part */
+    char *str = (char*)malloc(name_len + value_len + 2); /* This string will become the part */
                                                     /* of the environment, so we must not delete it */
     memcpy(str, name, name_len);
     str[name_len] = '=';
@@ -170,7 +170,7 @@ int uCreateProcess(
 
             if (pred < cur)
             {
-                args[args_num] = new char[cur - pred + 1];
+                args[args_num] = (char*)malloc(cur - pred + 1);
                 args[args_num][cur - pred] = '\0';
                 memcpy(args[args_num], pred, cur - pred);
                 args_num++;
@@ -186,7 +186,7 @@ int uCreateProcess(
             exit(1);
         }
 
-        for (args_num = 0; args[args_num] != NULL; args_num++) delete [] args[args_num];
+        for (args_num = 0; args[args_num] != NULL; args_num++) free(args[args_num]);
     }
     else
     {
@@ -252,9 +252,12 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
 #else
 #ifdef HAVE_PROC
     int dsc;
-    std::string path="/proc/" + int2string(pid);
+    char buf[U_MAX_PATH];
 
-    dsc = open(path.c_str(), O_RDONLY);     
+    strcpy(buf, "/proc/");
+    int2c_str(pid, buf + strlen("/proc/"));
+
+    dsc = open(buf, O_RDONLY);     
     if (dsc == -1) return 0;
 
     close(dsc);

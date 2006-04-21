@@ -246,7 +246,7 @@ void llmgr_core::extend_logical_log(bool sync)
   int new_file_number = mem_head->ll_free_files_arr[mem_head->ll_free_files_num - 1]; 
   char buf[20];
   string new_log_name = db_files_path + db_name +string(".") + 
-                        string(itoa(new_file_number, buf, 10)) + "llog";
+                        string(_itoa(new_file_number, buf, 10)) + "llog";
 
   //get header of previous file
   UFile dsc = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
@@ -476,7 +476,7 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
   //log file dsc not found
   UFile dsc;
   char buf[20];
-  std::string log_file_name = db_files_path + db_name + "." + itoa(log_file_number, buf, 10) + "llog";
+  std::string log_file_name = db_files_path + db_name + "." + _itoa(log_file_number, buf, 10) + "llog";
 
   dsc = uOpenFile(log_file_name.c_str(),
                   U_SHARE_READ | U_SHARE_WRITE,

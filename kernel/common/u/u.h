@@ -41,7 +41,7 @@
 #endif
 
 
-#if (defined(DARWIN) || defined(FreeBSD))
+#if (defined(DARWIN) || defined(FreeBSD) || defined(LINUX))
 /* don't have spinlocks */
 #else
 #define HAVE_SPINLOCKS
@@ -338,8 +338,8 @@ typedef union _LARGE_INTEGER
 #ifdef __cplusplus
 extern "C"
 #endif
-extern int se_ExceptionalCondition(char *conditionName, char *errorType,
-                                   char *fileName, int lineNumber);
+int se_ExceptionalCondition(char *conditionName, char *errorType,
+                            char *fileName, int lineNumber);
 
 
 

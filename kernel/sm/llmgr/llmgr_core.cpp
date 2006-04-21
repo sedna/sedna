@@ -54,7 +54,7 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   {
       if (ll_open_files[i].name_number == valid_number) break;
 
-      log_file_name = _db_files_path_ + _db_name_ + "." + itoa(ll_open_files[i].name_number, buf, 10) + "llog";
+      log_file_name = _db_files_path_ + _db_name_ + "." + _itoa(ll_open_files[i].name_number, buf, 10) + "llog";
       if ( uDeleteFile(log_file_name.c_str()) == 0)
          throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
   }
@@ -2004,7 +2004,7 @@ void llmgr_core::ll_truncate_log(bool sync)
   char buf2[20];
   for (i=0; i< num_files_to_truncate; i++)
   {
-      log_file_name = db_files_path + db_name + "." + itoa(mem_head->ll_files_arr[i], buf2, 10) + "llog";
+      log_file_name = db_files_path + db_name + "." + _itoa(mem_head->ll_files_arr[i], buf2, 10) + "llog";
       if (uDeleteFile(log_file_name.c_str()) == 0)
       {
 //         d_printf3("Delete File=%s, Error=%d\n", log_file_name.c_str(), GetLastError());

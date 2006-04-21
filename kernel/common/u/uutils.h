@@ -28,7 +28,7 @@ extern "C"
     char *_gcvt(double value, int digits, char *buf);
     int _stricmp(const char *str1, const char *str2);
     int _strnicmp(const char *str1, const char *str2, size_t n);
-    int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
+    int _vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #endif
 
     void int2net_int(__int32 i, char *buf);
