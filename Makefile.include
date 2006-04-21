@@ -73,10 +73,44 @@ SEDNA_VERSION := $(shell cat $(PP)/ver)
 #          shared libodbc - 0
 LIBODBC_STATIC = 0
 
+SEDNA_DIRS = $(PP)/kernel/common $(PP)/kernel/common/errdbg \
+             $(PP)/kernel/common/mmgr $(PP)/kernel/common/ph \
+             $(PP)/kernel/common/u $(PP)/kernel/gov \
+             $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr \
+             $(PP)/kernel/sm/llmgr $(PP)/kernel/sm/lm \
+             $(PP)/kernel/sm/plmgr \
+             $(PP)/kernel/tr $(PP)/kernel/tr/auth \
+             $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/executor \
+             $(PP)/kernel/tr/executor/base $(PP)/kernel/tr/executor/fo \
+             $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/executor/root \
+             $(PP)/kernel/tr/executor/xqops $(PP)/kernel/tr/ft \
+             $(PP)/kernel/tr/idx $(PP)/kernel/tr/idx/btree \
+             $(PP)/kernel/tr/locks $(PP)/kernel/tr/log $(PP)/kernel/tr/mo \
+             $(PP)/kernel/tr/nid $(PP)/kernel/tr/pq \
+             $(PP)/kernel/tr/pstr $(PP)/kernel/tr/rcv \
+             $(PP)/kernel/tr/sqp/popt $(PP)/kernel/tr/strings \
+             $(PP)/kernel/tr/structures $(PP)/kernel/tr/updates \
+             $(PP)/kernel/tr/vmm $(PP)/kernel/tr/xqp \
+             $(PP)/driver/c $(PP)/export $(PP)/term \
+             $(PP)/driver/c $(PP)/export $(PP)/term \
+             $(PP)/libs/chicken $(PP)/libs/dtsearch/include $(PP)/libs/expat \
+             $(PP)/libs/pcre $(PP)/libs/pg $(PP)/libs/pg/h
+
+
+ifndef INCLUDE_DIRS
+INCLUDE_DIRS = $(SEDNA_DIRS)
+endif
+
+
+ifndef VPATH
+VPATH = $(SEDNA_DIRS)
+endif
+
 
 # INCLUDE_DIRS should be defined
 INCLUDE_DIRECTIVES_VC = $(foreach inc, $(INCLUDE_DIRS), /I$(inc))
 INCLUDE_DIRECTIVES_GCC = $(foreach inc, $(INCLUDE_DIRS), -I$(inc))
+
 
 M4 = m4
 MKDIR = mkdir
@@ -105,11 +139,11 @@ LIB_EXT = .lib
 EXE_EXT = .exe
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
-CPPFLAGS_ST = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /GX /GR /D _CONSOLE 					\
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
+CPPFLAGS_ST = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE 					\
            /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) 								\
            /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"									\
-           /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+           /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
 CFLAGS = $(CFLAGS_ST) /MT
 CPPFLAGS = $(CPPFLAGS_ST) /MT
 LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
@@ -124,11 +158,11 @@ LFLAGS_DTS = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB
 endif
 else
 CFLAGS_ST   = /nologo /O2 /Ob2 /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
-CPPFLAGS_ST = /nologo /O2 /Ob2 /EHa /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /GX /GR /D _CONSOLE				\
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
+CPPFLAGS_ST = /nologo /O2 /Ob2 /EHa /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE				\
            /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG)								\
            /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"				\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH)
+           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
 CFLAGS = $(CFLAGS_ST) /MT
 CPPFLAGS = $(CPPFLAGS_ST) /MT
 LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
@@ -258,5 +292,10 @@ generic_clean:
 	-$(REMOVE) *.bb
 	-$(REMOVE) *.bbg
 	-$(REMOVE) *.da
+	-$(REMOVE) *.map
+	-$(REMOVE) *.pdb
+	-$(REMOVE) vc*.idb
+	-$(REMOVE) *.SUP
+
 
 endif

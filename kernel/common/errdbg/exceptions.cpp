@@ -3,30 +3,27 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <stdio.h>
+#include "sedna.h"
 #include "exceptions.h"
 #include "uprocess.h"
 
 
 void sedna_soft_fault(const SednaException &e)
 {
-    fprintf(stderr, "SEDNA Message: FATAL ERROR\n");
-    fprintf(stderr, "System error. This error means system malfunction.\n");
+    SEDNA_SOFT_FAULT_BASE_MSG;
+
     if (e.getDescription().length() != 0)
         fprintf(stderr, "Details: %s\n", e.getDescription().c_str());
 #if (EL_DEBUG == 1)
     fprintf(stderr, "Position: [%s:%s:%d]\n", e.getFile().c_str(), e.getFunction().c_str(), e.getLine());
 #endif
-    fflush(stderr);
-    uExitProcess(1);
+
+    SEDNA_SOFT_FAULT_FINALIZER;
 }
 
 void sedna_soft_fault()
 {
-    fprintf(stderr, "SEDNA Message: FATAL ERROR\n");
-    fprintf(stderr, "System error. This error means system malfunction.\n");
-    fflush(stderr);
-    uExitProcess(1);
-
+    SEDNA_SOFT_FAULT_BASE_MSG;
+    SEDNA_SOFT_FAULT_FINALIZER;
 }
 

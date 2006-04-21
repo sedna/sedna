@@ -15,7 +15,6 @@ endif
 endif
 
 
-INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u
 
 VPATH = .
 include $(PP)/Makefile.include
@@ -58,6 +57,9 @@ ifeq ("$(PLATFORM)", "WIN32")
 %$(OBJ_EXT): $(PP)/kernel/common/u/%.c
 	$(CC) $(CFLAGS) $<
 
+%$(OBJ_EXT): $(PP)/kernel/common/errdbg/%.c
+	$(CC) $(CFLAGS) $<
+
 %$(OBJ_EXT): $(PP)/kernel/common/%.c
 	$(CC) $(CFLAGS) $<
 
@@ -79,7 +81,7 @@ uutilsst$(OBJ_EXT):$(PP)/kernel/common/u/uutils.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)uutilsst$(OBJ_EXT)  $<
 usecurityst$(OBJ_EXT):$(PP)/kernel/common/u/usecurity.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)usecurityst$(OBJ_EXT)  $<
-d_printfst$(OBJ_EXT):$(PP)/kernel/common/d_printf.c
+d_printfst$(OBJ_EXT):$(PP)/kernel/common/errdbg/d_printf.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)d_printfst$(OBJ_EXT)  $<
 error_codesst$(OBJ_EXT):$(PP)/kernel/common/error_codes.c
 		$(CC) $(CFLAGS_ST) $(OBJ_NAME)error_codesst$(OBJ_EXT)  $<
@@ -114,11 +116,5 @@ clean: generic_clean
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
 	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 

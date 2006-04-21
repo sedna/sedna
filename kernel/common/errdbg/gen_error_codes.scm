@@ -32,7 +32,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 
 (define (nl) (newline port))
 
-(define input-port (open-input-file "error.codes"))
+(define input-port (open-input-file "errdbg/error.codes"))
 
 (define (pick-out-code code)
   (define (f lst)
@@ -145,7 +145,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 ;;########################################################################################
 ;;########################################################################################
 
-(define input-port (open-input-file "error.codes"))
+(define input-port (open-input-file "errdbg/error.codes"))
 
 (define (rollback? p) #t)
 
@@ -196,7 +196,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 ;;########################################################################################
 ;;########################################################################################
 
-(define input-port (open-input-file "error.codes"))
+(define input-port (open-input-file "errdbg/error.codes"))
 
 (define (process-scm group-id)
   (let ((record (read-record)))

@@ -4,7 +4,6 @@
  */
 
 
-#include <stdio.h>
 #include "d_printf.h"
 #include "xptr.h"
 

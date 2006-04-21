@@ -9,8 +9,6 @@ endif
 endif
 
 
-INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c
-
 VPATH = .
 
 include $(PP)/Makefile.include

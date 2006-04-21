@@ -4,12 +4,9 @@
  */
 
 
-#include <stdlib.h>
-#include <string.h>
-#include <string>
 #include "uprocess.h"
 #include "d_printf.h"
-#include "utils.h"
+#include "uutils.h"
 
 #ifdef _WIN32
 #else
@@ -26,22 +23,21 @@ int uSetEnvironmentVariable(const char* name, const char* value)
 {
 #ifdef _WIN32
     BOOL res = SetEnvironmentVariable(
-                  name,			// environment variable name
-                  value			// new value for variable
+                  name,			/* environment variable name */
+                  value			/* new value for variable */
                );
     if (res == 0) return 1;
     return 0;
 #else
     int name_len = strlen(name);
     int value_len = strlen(value);
-    char *str = new char[name_len + value_len + 2]; // This string will become the part 
-                                                    // of the environment, so we must not delete it
+    char *str = new char[name_len + value_len + 2]; /* This string will become the part */
+                                                    /* of the environment, so we must not delete it */
     memcpy(str, name, name_len);
     str[name_len] = '=';
     memcpy(str + name_len + 1, value, value_len);
     str[name_len + value_len + 1] = '\0';
     int res = putenv(str);
-    //delete [] str;
     if (res != 0) return 1;
     return 0;
 #endif
@@ -50,12 +46,13 @@ int uSetEnvironmentVariable(const char* name, const char* value)
 int uGetEnvironmentVariable(const char* name, char* buf, int size)
 {
 #ifdef _WIN32
+    DWORD res = 0;
     memset(buf, 0, size);
-    DWORD res = GetEnvironmentVariable(
-                   name,		// environment variable name
-                   buf,
-                   size - 1
-                );
+    res = GetEnvironmentVariable(
+             name,		/* environment variable name */
+             buf,
+             size - 1
+          );
     if (res == 0) return 1;
     if (res > size - 1) return 1;
     return 0;
@@ -68,11 +65,11 @@ int uGetEnvironmentVariable(const char* name, char* buf, int size)
 #endif
 }
 
-// return value 0 indicates success
+/* return value 0 indicates success */
 int uCreateProcess(
-           char *command_line,		// command line string
-           bool inherit_handles,	// handle inheritance option
-           const char *cur_dir,		// current directory name
+           char *command_line,		/* command line string */
+           bool inherit_handles,	/* handle inheritance option */
+           const char *cur_dir,		/* current directory name */
            UFlag flags,
            UPHANDLE *process_handle,
            UTHANDLE *thread_handle,
@@ -85,23 +82,24 @@ int uCreateProcess(
 
     PROCESS_INFORMATION piProcInfo; 
     STARTUPINFO siStartInfo; 
+    BOOL res;
 
     ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
     ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO); 
 
-    BOOL res = CreateProcess(
-                     NULL,								// name of executable module
-                     command_line,						// command line string
-                     sa,								// Security attributes for the new process
-                     sa,								// Security attributes for the main thread
-                     inherit_handles ? TRUE : FALSE,	// handle inheritance option
-                     flags,//CREATE_NEW_CONSOLE,//flags,								// creation flags
-                     NULL,								// use parent's environment 
-                     cur_dir,							// use parent's current directory 
-                     &siStartInfo,						// STARTUPINFO pointer 
-                     &piProcInfo						// receives PROCESS_INFORMATION 
-               );
+    res = CreateProcess(
+                NULL,								/* name of executable module */
+                command_line,						/* command line string */
+                sa,									/* Security attributes for the new process */
+                sa,									/* Security attributes for the main thread */
+                inherit_handles ? TRUE : FALSE,		/* handle inheritance option */
+                flags,                              /* creation flags */
+                NULL,								/* use parent's environment */
+                cur_dir,							/* use parent's current directory */
+                &siStartInfo,						/* STARTUPINFO pointer */
+                &piProcInfo						    /* receives PROCESS_INFORMATION */
+          );
 
     if (process_handle) *process_handle = piProcInfo.hProcess;
     else CloseHandle(piProcInfo.hProcess);
@@ -121,12 +119,12 @@ int uCreateProcess(
     pid_t pid = 0;
 
     if ((pid = fork()) == 0)
-    { // child process
+    { /* child process */
 
         if (flags == U_NO_WINDOW)
         {
 #warning U_NO_WINDOW flag in uCreateProcess function is not implemented yet
-            // close stdout and stderr to avoid output to console
+            /* close stdout and stderr to avoid output to console */
             int null_dev;
             null_dev = open("/dev/null", O_RDWR);
             if (null_dev == -1) return 1;
@@ -141,7 +139,7 @@ int uCreateProcess(
 
         if (cur_dir != NULL)
         {
-            // change current directory to cur_dir
+            /* change current directory to cur_dir */
             if (chdir(cur_dir) != 0)
             {
                 d_printf1("Error changing directory\n");
@@ -152,7 +150,7 @@ int uCreateProcess(
         if (!inherit_handles)
         {
 #warning Only 'true' is supported as a value of inherit_handles parameter in uCreateProcess function
-            // change current directory to cur_dir
+            /* change current directory to cur_dir */
         }
 
         char *args[MAX_NUMBER_OF_ARGS];
@@ -207,8 +205,8 @@ int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code)
 {
 #ifdef _WIN32
     BOOL res = TerminateProcess(
-                        h, //handle to the process
-                        exit_code  //exit code for the process
+                        h,         /*handle to the process */
+                        exit_code  /* exit code for the process */
                );
 
     if (res == 0) return 1;
@@ -262,7 +260,7 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
     close(dsc);
     return 1; 
 #else
-    // !!!   check for errno   !!!
+    /* !!!   check for errno   !!! */
     int res = kill(pid, 0);
     if (res == 0) return 1;
     else return 0;
@@ -270,11 +268,11 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
 #endif
 }
 
-int uOpenProcess(UPID pid, UPHANDLE &h)
+int uOpenProcess(UPID pid, UPHANDLE *h)
 {
 #ifdef _WIN32
-    h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
-    if (h == NULL) return -1;
+    *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
+    if (*h == NULL) return -1;
     else return 0;
 #else
     return 0;
@@ -292,40 +290,7 @@ int uCloseProcess(UPHANDLE h)
     return 0;
 #endif
 }
-/*
-int uWaitForProcess(UPID pid, UPHANDLE h, bool is_child_process)
-{
-#ifdef _WIN32
-    DWORD res;    
-    res = WaitForSingleObject(h, INFINITE);
 
-    if (res == WAIT_FAILED)
-       return -1;
-    else
-       return 0;
-#else
-	int status = 0;
-
-    if (is_child_process)
-    {
-       waitpid(pid, &status, 0);
-    }
-    else
-    {
-       for (;;)
-       {
-          status = uIsProcessExist(pid, h);
-          if (status == -1) return -1;
-
-          if (status) uSleep(1);
-          else break;
-       }
-    }
-
-    return 0;
-#endif
-}
-*/
 int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status)
 {
 #ifdef _WIN32
@@ -540,49 +505,54 @@ int find_executable(const char *name, char *buf, int size)
     return -1;
 }
 
-#endif // (!defined(_WIN32) && !(defined(HAVE_PROC_EXE)))
+#endif /* (!defined(_WIN32) && !(defined(HAVE_PROC_EXE))) */
 
 
 char *program_name_argv_0 = NULL;
 
 
-std::string uGetImageProcPath()
+char* uGetImageProcPath(char *buf)
 {
 #ifdef _WIN32
-    char buf[U_MAX_PATH+1];
-    if(GetModuleFileName(0, buf, U_MAX_PATH+1) != 0)
+    char *p = buf;
+    if (GetModuleFileName(0, buf, U_MAX_PATH + 1) != 0)
     {
-       std::string tmp = buf;
-       tmp = tmp.substr(0, tmp.find_last_of('\\'));
-       return tmp;
+        p = strrchr(buf, '\\');
+        if (!p) p = buf;
     }
-    else 
-      return "";     
+
+    *p = '\0';
+    return buf;
 #else
 #ifdef HAVE_PROC_EXE
-    std::string link="/proc/" + int2string(getpid()) + PROC_EXE_SUFFIX;
+    char *p = buf;
+    int len = 0;
+    char tmp[U_MAX_PATH + 1];
 
-    int len;
-    char buf[U_MAX_PATH+1];
+    strcpy(tmp, "/proc/");
+    int2c_str(getpid(), tmp + strlen("/proc/"));
+    strcat(tmp, PROC_EXE_SUFFIX);
 
-    len = readlink(link.c_str(), buf, U_MAX_PATH);
-    if (len == -1) return "";
-	
-    buf[len] = '\x0';
-    std::string tmp = buf;
-
-    tmp = tmp.substr(0, tmp.find_last_of('/'));
-    return tmp;
-#else
-    char buf[U_MAX_PATH+1];
-    if (find_executable(program_name_argv_0, buf, U_MAX_PATH+1) == 0)
+    len = readlink(tmp, buf, U_MAX_PATH);
+    if (len != -1)
     {
-        std::string tmp = buf;
-        tmp = tmp.substr(0, tmp.find_last_of('/'));
-        return tmp;
+        buf[len] = '\0';
+        p = strrchr(buf, '/');
+        if (!p) p = buf;
     }
-    else 
-      return "";     
+    
+    *p = '\0';
+    return buf;
+#else
+    char *p = buf;
+    if (find_executable(program_name_argv_0, buf, U_MAX_PATH + 1) == 0)
+    {
+        p = strrchr(buf, '/');
+        if (!p) p = buf;
+    }
+
+    *p = '\0';
+    return buf;
 #endif
 #endif
 }

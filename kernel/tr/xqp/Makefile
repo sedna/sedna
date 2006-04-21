@@ -2,9 +2,6 @@
 PP = ../../..
 
 
-INCLUDE_DIRS = . .. $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c		\
-               $(PP)/libs/pg/h $(PP)/kernel/tr/executor/por2qep                         \
-
 VPATH = .
 
 include $(PP)/Makefile.include
@@ -33,7 +30,7 @@ COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
 
 
 XQueryparser.dlg XQuerytokens.h XQueryParser.cpp XQuery.main.cpp XQuery.common.cpp XQuery.constructor.cpp XQuery.xpath.cpp XQuery.seqtype.cpp XQuery.create.cpp XQuery.metadata.cpp XQuery.update.cpp XQuery.arthLgTypeOps.cpp XQuery.flwr.cpp XQuery.prolog.cpp XQuery.quantifier.cpp  XQuery.condition.cpp XQueryParser.h: \
- XQuery.main.g  XQuery.common.g  XQuery.constructor.g  XQuery.condition.g  XQuery.prolog.g  XQuery.xpath.g  XQuery.arthLgTypeOps.g  XQuery.seqtype.g XQuery.create.g XQuery.metadata.g  XQuery.update.g XQuery.flwr.g XQuery.prolog.g XQuery.quantifier.g  XQuery.condition.g XQuery.lexer.g  XQuery.include.g  AST.h ASTNodeTypes.h  $(PP)/kernel/common/exceptions.h
+ XQuery.main.g  XQuery.common.g  XQuery.constructor.g  XQuery.condition.g  XQuery.prolog.g  XQuery.xpath.g  XQuery.arthLgTypeOps.g  XQuery.seqtype.g XQuery.create.g XQuery.metadata.g  XQuery.update.g XQuery.flwr.g XQuery.prolog.g XQuery.quantifier.g  XQuery.condition.g XQuery.lexer.g  XQuery.include.g  AST.h ASTNodeTypes.h  $(PP)/kernel/common/errdbg/exceptions.h
 	$(ANTLR) -w2 -k 2 -e3 -fl XQueryparser.dlg -ft XQuerytokens.h  XQuery.include.g  XQuery.lexer.g  XQuery.main.g  XQuery.common.g  XQuery.constructor.g  XQuery.xpath.g XQuery.create.g XQuery.metadata.g  XQuery.update.g  XQuery.arthLgTypeOps.g XQuery.condition.g XQuery.flwr.g XQuery.quantifier.g  XQuery.prolog.g  XQuery.seqtype.g
 
 
@@ -108,14 +105,7 @@ clean: generic_clean
 	-$(REMOVE) $(XQUERYPARSER_LIB)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 	-$(REMOVE) xqp_test$(EXE_EXT)
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
 	-$(REMOVE) XQuery.arithmOps.cpp 
 	-$(REMOVE) XQuery.common.cpp 
 	-$(REMOVE) XQuery.compare.cpp 

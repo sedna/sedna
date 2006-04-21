@@ -3,18 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-/*
- * File:  usecurity.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
- */
-
 #include "usecurity.h"
 
 #ifdef _WIN32
 #include <Accctrl.h>
 #include <aclapi.h>
 #include <windows.h>
-#else
 #endif
 
 #include "d_printf.h"

@@ -1,8 +1,6 @@
 
-#SEDNA_VERSION :=$(shell cat ../ver)
-#REMOVE = rm -f
 
-all: guides
+all: 
 	@echo ===================================================================
 	@echo Building Documentation
 	@echo ===================================================================
@@ -13,18 +11,8 @@ all: guides
 	@echo Documentation has been done
 	@echo ===================================================================
 
-#readme.txt: readme.txt.m4
-#	m4 -DSEDNA_VERSION="$(SEDNA_VERSION)" $^ >$@
-
-guides:
-	$(MAKE) -C AdminGuide
-	$(MAKE) -C ProgGuide
-	$(MAKE) -C QuickStart
-
-
 clean:
 	$(MAKE) -C AdminGuide clean
 	$(MAKE) -C ProgGuide clean
 	$(MAKE) -C QuickStart clean
 
-#	-$(REMOVE) readme.txt

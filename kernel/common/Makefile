@@ -13,10 +13,7 @@ endif
 endif
 
 
-INCLUDE_DIRS = . u ph $(PP)/libs/chicken $(PP)/driver/c
-
-
-VPATH = . u ph
+VPATH = . u ph mmgr errdbg
 
 
 include $(PP)/Makefile.include
@@ -40,7 +37,8 @@ endif
 ################################################################################
 # common_files                                                                 #
 ################################################################################
-libcommon_files$(LIB_EXT): base$(OBJ_EXT)				\
+libcommon_files$(LIB_EXT): sedna$(OBJ_EXT)              \
+                           base$(OBJ_EXT)				\
                            xptr$(OBJ_EXT)				\
                            argtable$(OBJ_EXT)			\
                            SSMMsg$(OBJ_EXT)				\
@@ -59,7 +57,7 @@ libcommon_files$(LIB_EXT): base$(OBJ_EXT)				\
                            utils$(OBJ_EXT)				\
                            exceptions$(OBJ_EXT)			\
                            ipc_ops$(OBJ_EXT)			\
-                           sp$(OBJ_EXT)				\
+                           sp$(OBJ_EXT)                 \
                            pers_free$(OBJ_EXT)			\
                            pers_heap$(OBJ_EXT)			\
                            pers_malloc$(OBJ_EXT)		\
@@ -71,7 +69,11 @@ libcommon_files$(LIB_EXT): base$(OBJ_EXT)				\
                            error_codes_scm$(OBJ_EXT)	\
                            tr_debug$(OBJ_EXT)			\
                            gmm$(OBJ_EXT)				\
-                           d_printf$(OBJ_EXT)
+                           d_printf$(OBJ_EXT)           \
+                           assert$(OBJ_EXT)             \
+                           aset$(OBJ_EXT)               \
+                           mcxt$(OBJ_EXT)               \
+                           event_log$(OBJ_EXT)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 
@@ -95,16 +97,10 @@ clean: generic_clean
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) libcommon_files.map
-	-$(REMOVE) libcommon_files.pdb
 	-$(REMOVE) libcommon_files$(LIB_EXT)
 	-$(REMOVE) error_codes.h
 	-$(REMOVE) error_codes.c
-	-$(REMOVE) gen_error_codes.c
+	-$(REMOVE) errdbg/gen_error_codes.c
 	-$(REMOVE) gen_error_codes$(EXE_EXT)
 	-$(REMOVE) error_codes_scm.scm
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 

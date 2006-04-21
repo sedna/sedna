@@ -12,14 +12,6 @@
 #include "uthread.h"
 #include "usecurity.h"
 
-#include <string>
-
-// return value 0 indicates success
-int uSetEnvironmentVariable(const char* name, const char* value);
-
-// return value 0 indicates success
-int uGetEnvironmentVariable(const char* name, char* buf, int size);
-
 
 #ifdef _WIN32
 #define U_NO_WINDOW			CREATE_NO_WINDOW
@@ -37,11 +29,23 @@ typedef int    UFlag;
 #endif
 
 
-// return value 0 indicates success
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* return value 0 indicates success */
+int uSetEnvironmentVariable(const char* name, const char* value);
+
+/* return value 0 indicates success */
+int uGetEnvironmentVariable(const char* name, char* buf, int size);
+
+
+/* return value 0 indicates success */
 int uCreateProcess(
-           char *command_line,		// command line string
-           bool inherit_handles,	// handle inheritance option
-           const char *cur_dir,		// current directory name
+           char *command_line,		/* command line string */
+           bool inherit_handles,	/* handle inheritance option */
+           const char *cur_dir,		/* current directory name */
            UFlag flags,
            UPHANDLE *process_handle,
            UTHANDLE *thread_handle,
@@ -50,16 +54,16 @@ int uCreateProcess(
            USECURITY_ATTRIBUTES* sa
     );
 
-//return value 0 indicates success
-int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code = 0);
-// momently terminates current process
+/* return value 0 indicates success */
+int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code);
+/* momently terminates current process */
 void uExitProcess(int exit_code);
 
 UPID uGetCurrentProcessId();
-// return value: 1 - exists, 0 - does not exist, -1 - error
+/* return value: 1 - exists, 0 - does not exist, -1 - error */
 int uIsProcessExist(UPID pid, UPHANDLE h);
 
-int uOpenProcess(UPID pid, UPHANDLE &h);
+int uOpenProcess(UPID pid, UPHANDLE /*out*/ *h);
 
 int uCloseProcess(UPHANDLE h);
 
@@ -68,8 +72,13 @@ int uWaitForProcess(UPID pid, UPHANDLE h);
 
 
 extern char *program_name_argv_0;
-std::string uGetImageProcPath();
+/* The result if written to buf. The size of the buf should be
+ * not less than U_MAX_PATH + 1. The function return buf. */
+char* uGetImageProcPath(char *buf);
 
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

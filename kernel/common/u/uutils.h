@@ -22,18 +22,19 @@ extern "C"
 #endif
 
 #ifndef _WIN32
-    char *itoa(int value, char *str, int radix);
+    char *_itoa(int value, char *str, int radix);
     char *_ltoa(long value, char *str, int radix);
     char *_ultoa(unsigned long value, char *str, int radix);
     char *_gcvt(double value, int digits, char *buf);
     int _stricmp(const char *str1, const char *str2);
     int _strnicmp(const char *str1, const char *str2, size_t n);
+    int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
 #endif
 
     void int2net_int(__int32 i, char *buf);
-    void net_int2int(__int32 * i, char *buf);
+    void net_int2int(__int32 *i, char *buf);
 
-/*buf length must not less than 20*/
+    /* buf length must not be less than 20 */
     char *int2c_str(int value, char *buf);
 
 

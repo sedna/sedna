@@ -6,10 +6,10 @@
 #ifndef _IPC_H
 #define _IPC_H
 
-#include "upipe.h"
 #include "base.h"
 #include "ushm.h"
 #include "uutils.h"
+#include "upipe.h"
 
 
 

@@ -1,6 +1,5 @@
 #include "uhdd.h"
 #include "base.h"
-#include "error_codes.h"
 #include "exceptions.h"
 #include "usem.h"
 #include <string>

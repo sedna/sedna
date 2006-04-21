@@ -86,7 +86,7 @@ void create_global_memory_mapping()
         uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1");
 
         char path_buf[U_MAX_PATH + 10];
-        std::string path_str = uGetImageProcPath() + std::string("/") + SESSION_EXE;
+        std::string path_str = uGetImageProcPath(path_buf) + std::string("/") + SESSION_EXE;
         strcpy(path_buf, path_str.c_str());
 
                

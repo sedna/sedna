@@ -13,17 +13,7 @@ endif
 endif
 
 
-
-INCLUDE_DIRS = . .. $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c		\
-               crmutils auth executor/por2qep executor/base				\
-               executor/xqops executor/fo executor/root idx			\
-               idx/btree locks log mo nid pq pstr updates vmm		\
-               $(PP)/kernel/sm/plmgr $(PP)/kernel/common/ph xqp     \
-               $(PP)/kernel/sm/llmgr ft rcv structures strings \
-			   $(PP)/libs/dtsearch/include $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr
-
-VPATH = .
-
+VPATH = . structures
 
 include $(PP)/Makefile.include
 
@@ -40,36 +30,19 @@ all: $(PP)/bin/se_trn$(EXE_EXT)
 
 include $(PP)/Makefile.depend
 
-depend:
+depend: $(PP)/kernel/tr/depend
+
+$(PP)/kernel/tr/depend:
 	$(DEPACT)
-	$(MAKE) -C crmutils depend
-	$(MAKE) -C executor depend
-	$(MAKE) -C idx depend
-	$(MAKE) -C locks depend
-	$(MAKE) -C log depend
-	$(MAKE) -C mo depend
-	$(MAKE) -C nid depend
-	$(MAKE) -C pq depend
-	$(MAKE) -C pstr depend
-	$(MAKE) -C sqp depend
-	$(MAKE) -C strings depend
-	$(MAKE) -C structures depend
-	$(MAKE) -C updates depend
-	$(MAKE) -C vmm depend
-	$(MAKE) -C auth depend
-	$(MAKE) -C rcv depend
-ifeq ($(ENABLE_DTSEARCH), 1)
-	$(MAKE) -C ft depend
+
+
+
+
+ifneq ($(words $(wildcard $(PP)/kernel/tr/depend)), 0)
+include $(PP)/kernel/tr/depend
 endif
 
-
-
-
-ifneq ($(words $(wildcard depend)), 0)
-include depend
-endif
-
-.PHONY: clean libraries
+.PHONY: clean libraries depend
 
 COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
 ifeq ($(PLATFORM), WIN32)
@@ -590,12 +563,5 @@ endif
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 	-$(REMOVE) STACKTRACE
 

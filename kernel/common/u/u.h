@@ -7,6 +7,11 @@
 #ifndef __U_H
 #define __U_H
 
+
+/*=============================================================================
+ *                         Config Section
+ *                         ~~~~~~~~~~~~~~
+ *===========================================================================*/
 #if (defined(_WIN32) && !defined(WIN32))
 #define WIN32
 #endif
@@ -90,32 +95,45 @@
 #endif
 
 
-typedef unsigned int uint32;
+// only for MSDEV 6.0
+#if (_MSC_VER == 1200)
+#define __SE_FUNCTION__ "<unknown>"
+#else 
+#define __SE_FUNCTION__ __FUNCTION__
+#endif
 
-#define s_min(a, b)  (((a) < (b)) ? (a) : (b))
-#define s_max(a, b)  (((a) > (b)) ? (a) : (b))
+
+
+#define HAVE_STRINGIZE
+
+#define ALIGNOF_SHORT    2
+#define ALIGNOF_INT      4
+#define ALIGNOF_LONG     4
+#define ALIGNOF_DOUBLE   8
+#define MAXIMUM_ALIGNOF  4
+
+
+
+/*=============================================================================
+ *                         System File Includes Section
+ *                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *===========================================================================*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <float.h>
+#include <limits.h>
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 
 #ifdef _WIN32
-
 #include <windows.h>
-#include <float.h>
-typedef const char *global_name;
-
-#define U_INFINITE			INFINITE
-
-typedef HANDLE UHANDLE;
-
-#define U_MAX_PATH			_MAX_PATH
-#define U_MAX_FNAME         _MAX_FNAME
-#define U_MAX_DIR           _MAX_DIR
-
-
 #else
-
-#include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -125,29 +143,101 @@ typedef HANDLE UHANDLE;
 #include <signal.h>
 #include <ucontext.h>
 #include <setjmp.h>
-#include <limits.h>
-#include <float.h>
-#include <stdarg.h>
+#include <fcntl.h>
+#endif /* _WIN32 */
 
 
+
+
+/*=============================================================================
+ *                             Types
+ *                             ~~~~~
+ *===========================================================================*/
+
+/*
+ * signed integers types definition
+ */
+#ifdef _WIN32
+/*
+ * Already defined
+ */
+#else
+typedef signed char          __int8;
+typedef signed short int     __int16;
+typedef signed int           __int32;
+typedef signed long long int __int64;
+#endif
+
+
+/*
+ * unsigned integers types definition
+ */
+typedef unsigned char          __uint8;
+typedef unsigned short int     __uint16;
+typedef unsigned int           __uint32;
+
+
+/*
+ * usize_t
+ *		Size of any memory resident object, as returned by sizeof
+ */
+typedef size_t usize_t;
+
+
+/*
+ * bool
+ *		Boolean value, either true or false.
+ *
+ * for C++ compilers, we assume the compiler has a compatible
+ * built-in definition of bool
+ */
+#ifndef __cplusplus
+
+#ifndef bool
+typedef char bool;
+#endif
+
+#ifndef true
+#define true	((bool) 1)
+#endif
+
+#ifndef false
+#define false	((bool) 0)
+#endif
+#endif   /* not C++ */
+
+
+/*
+ * global_name
+ *     Interprocess name for IPC resources
+ */
+#ifdef _WIN32
+typedef const char *global_name;
+#else
 typedef key_t global_name;
+#endif /* _WIN32 */
 
-#define U_INFINITE			INT_MAX
 
+/*
+ * UHANDLE
+ *     Handle (identifier) for resources
+ */
+#ifdef _WIN32
+typedef HANDLE UHANDLE;
+#else
 typedef int UHANDLE;
-
-#define U_MAX_PATH			PATH_MAX
-#define U_MAX_FNAME         NAME_MAX
-#define U_MAX_DIR           NAME_MAX
+#endif /* _WIN32 */
 
 
-typedef long long int __int64;
-typedef int __int32;
-typedef short int __int16;
-typedef char __int8;
-
-
-
+/*
+ * LARGE_INTEGER
+ *     Union for manipulating 64-bit integers as a whole or as 32-bit parts
+ */
+#ifdef _WIN32
+/*
+ * Already defined
+ */
+#else
 typedef union _LARGE_INTEGER
 {
     struct
@@ -162,25 +252,312 @@ typedef union _LARGE_INTEGER
     } u;
     __int64 QuadPart;
 } LARGE_INTEGER;
-
-#endif
-
+#endif /* _WIN32 */
 
 
-/*/ Asserts*/
-#ifdef _WIN32
-#include <crtdbg.h>
-#define U_ASSERT _ASSERT
+
+
+
+/*=============================================================================
+ *                       IsValid macros for system types
+ *                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *===========================================================================*/
+
+/*
+ * BoolIsValid
+ *		True iff bool is valid.
+ */
+#define BoolIsValid(boolean)	((boolean) == false || (boolean) == true)
+
+/*
+ * PointerIsValid
+ *		True iff pointer is valid.
+ */
+#define PointerIsValid(pointer) ((void*)(pointer) != NULL)
+
+/*
+ * PointerIsAligned
+ *		True iff pointer is properly aligned to point to the given type.
+ */
+#define PointerIsAligned(pointer, type) \
+		(((long)(pointer) % (sizeof (type))) == 0)
+
+
+
+
+
+/*=============================================================================
+ *                       Assert, Trap, etc. macros
+ *                       ~~~~~~~~~~~~~~~~~~~~~~~~~
+ *===========================================================================*/
+
+/*
+ * Trap
+ *     Traps if the given condition is true
+ *
+ */
+#define Trap(condition, errorType) \
+        do { \
+            if (condition) \
+                se_ExceptionalCondition(CppAsString(condition), (errorType), \
+                                        __FILE__, __LINE__); \
+        } while (0)
+
+/*
+ *	TrapMacro is the same as Trap but it's intended for use in macros:
+ *
+ *		#define foo(x) (AssertMacro(x != 0) && bar(x))
+ *
+ *	Isn't CPP fun?
+ */
+#define TrapMacro(condition, errorType) \
+        ((bool) (!(condition) || \
+                 (se_ExceptionalCondition(CppAsString(condition), (errorType), \
+                                          __FILE__, __LINE__))))
+
+/*
+ * Define SE_ASSERT_CHECK if you want assert checking
+ */
+#define SE_ASSERT_CHECK
+/*
+ * Define SE_SLEEP_ON_ASSERT if you want a process to hang on on assert macro
+ */
+#define SE_SLEEP_ON_ASSERT
+
+
+#if (defined(SE_ASSERT_CHECK) && defined(EL_DEBUG) && (EL_DEBUG == 1))
+#define U_ASSERT(condition)          Trap(!(condition), "FailedAssertion")
+#define U_ASSERT_MACRO(condition)    ((void)TrapMacro(!(condition), "FailedAssertion"))
 #else
-#define U_ASSERT(x)
-#endif
+#define U_ASSERT(condition)
+#define U_ASSERT_MACRO(condition)    ((void)true)
+#endif   /* defined(SE_ASSERT_CHECK) && defined(EL_DEBUG) && (EL_DEBUG == 1) */
 
+
+
+#ifdef __cplusplus
+extern "C"
+#endif
+extern int se_ExceptionalCondition(char *conditionName, char *errorType,
+                                   char *fileName, int lineNumber);
+
+
+
+
+/*=============================================================================
+ *                             Other macros
+ *                             ~~~~~~~~~~~~
+ *===========================================================================*/
+
+/*
+ * min/max macros definition
+ */
+#define s_min(a, b)  (((a) < (b)) ? (a) : (b))
+#define s_max(a, b)  (((a) > (b)) ? (a) : (b))
+
+
+/*
+ * Constants for maximum path length, file name length, etc.
+ */
+#ifdef _WIN32
+#define U_MAX_PATH          _MAX_PATH
+#define U_MAX_FNAME         _MAX_FNAME
+#define U_MAX_DIR           _MAX_DIR
+#else
+#define U_MAX_PATH          PATH_MAX
+#define U_MAX_FNAME         NAME_MAX
+#define U_MAX_DIR           NAME_MAX
+#endif /* _WIN32 */
+
+/*
+ * Designation of infinite value for some system calls
+ */
+#ifdef _WIN32
+#define U_INFINITE          INFINITE
+#else
+#define U_INFINITE          INT_MAX
+#endif /* _WIN32 */
+
+
+/*
+ * CppAsString
+ *		Convert the argument to a string, using the C preprocessor
+ * CppConcat
+ *		Concatenate two arguments together, using the C preprocessor
+ *
+ * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
+ * whether #identifier works, but if we have that we likely have ## too
+ */
+#if defined(HAVE_STRINGIZE)
+
+#define CppAsString(identifier) #identifier
+#define CppConcat(x, y)			x##y
+#else
+
+#define CppAsString(identifier) "identifier"
+
+/*
+ * CppIdentity -- On Reiser based cpp's this is used to concatenate
+ *		two tokens.  That is
+ *				CppIdentity(A)B ==> AB
+ *		We renamed it to _private_CppIdentity because it should not
+ *		be referenced outside this file.  On other cpp's it
+ *		produces  A  B.
+ */
+#define _priv_CppIdentity(x)x
+#define CppConcat(x, y)			_priv_CppIdentity(x)y
+#endif   /* HAVE_STRINGIZE */
+
+
+
+/*
+ * Alignment macros: align a length or address appropriately for a given type.
+ *
+ * NOTE: TYPEALIGN will not work if ALIGNVAL is not a power of 2.
+ * That case seems extremely unlikely to occur in practice, however.
+ *
+ */
+#define TYPEALIGN(ALIGNVAL,LEN)  \
+	(((long) (LEN) + ((ALIGNVAL) - 1)) & ~((long) ((ALIGNVAL) - 1)))
+
+#define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
+#define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
+
+
+
+/*
+ * StrNCpy
+ *	Like standard library function strncpy(), except that result string
+ *	is guaranteed to be null-terminated --- that is, at most N-1 bytes
+ *	of the source string will be kept.
+ *	Also, the macro returns no result (too hard to do that without
+ *	evaluating the arguments multiple times, which seems worse).
+ *
+ *	BTW: when you need to copy a non-null-terminated string (like a text
+ *	datum) and add a null, do not do it with StrNCpy(..., len+1).  That
+ *	might seem to work, but it fetches one byte more than there is in the
+ *	text object.  One fine day you'll have a SIGSEGV because there isn't
+ *	another byte before the end of memory.	Don't laugh, we've had real
+ *	live bug reports from real live users over exactly this mistake.
+ *	Do it honestly with "memcpy(dst,src,len); dst[len] = '\0';", instead.
+ */
+#define StrNCpy(dst,src,len) \
+	do \
+	{ \
+		char * _dst = (dst); \
+		usize_t _len = (len); \
+\
+		if (_len > 0) \
+		{ \
+			strncpy(_dst, (src), _len); \
+			_dst[_len-1] = '\0'; \
+		} \
+	} while (0)
+
+
+/* Get a bit mask of the bits set in non-int32 aligned addresses */
+#define INT_ALIGN_MASK (sizeof(__int32) - 1)
+
+/*
+ * MemSet
+ *	Exactly the same as standard library function memset(), but considerably
+ *	faster for zeroing small word-aligned structures (such as parsetree nodes).
+ *	This has to be a macro because the main point is to avoid function-call
+ *	overhead.	However, we have also found that the loop is faster than
+ *	native libc memset() on some platforms, even those with assembler
+ *	memset() functions.  More research needs to be done, perhaps with
+ *	platform-specific MEMSET_LOOP_LIMIT values or tests in configure.
+ *
+ *	bjm 2002-10-08
+ */
+#define MemSet(start, val, len) \
+	do \
+	{ \
+		/* must be void* because we don't know if it is integer aligned yet */ \
+		void   *_vstart = (void *) (start); \
+		int		_val = (val); \
+		usize_t	_len = (len); \
+\
+		if ((((long) _vstart) & INT_ALIGN_MASK) == 0 && \
+			(_len & INT_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT) \
+		{ \
+			__int32 *_start = (__int32 *) _vstart; \
+			__int32 *_stop = (__int32 *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset(_vstart, _val, _len); \
+	} while (0)
+
+#define MEMSET_LOOP_LIMIT  1024
+
+/*
+ * MemSetAligned is the same as MemSet except it omits the test to see if
+ * "start" is word-aligned.  This is okay to use if the caller knows a-priori
+ * that the pointer is suitably aligned (typically, because he just got it
+ * from palloc(), which always delivers a max-aligned pointer).
+ */
+#define MemSetAligned(start, val, len) \
+	do \
+	{ \
+		__int32  *_start = (__int32 *) (start); \
+		int		_val = (val); \
+		usize_t	_len = (len); \
+\
+		if ((_len & INT_ALIGN_MASK) == 0 && \
+			_val == 0 && \
+			_len <= MEMSET_LOOP_LIMIT) \
+		{ \
+			__int32 *_stop = (__int32 *) ((char *) _start + _len); \
+			while (_start < _stop) \
+				*_start++ = 0; \
+		} \
+		else \
+			memset(_start, _val, _len); \
+	} while (0)
+
+
+/*
+ * MemSetTest/MemSetLoop are a variant version that allow all the tests in
+ * MemSet to be done at compile time in cases where "val" and "len" are
+ * constants *and* we know the "start" pointer must be word-aligned.
+ * If MemSetTest succeeds, then it is okay to use MemSetLoop, otherwise use
+ * MemSetAligned.  Beware of multiple evaluations of the arguments when using
+ * this approach.
+ */
+#define MemSetTest(val, len) \
+	( ((len) & INT_ALIGN_MASK) == 0 && \
+	(len) <= MEMSET_LOOP_LIMIT && \
+	(val) == 0 )
+
+#define MemSetLoop(start, val, len) \
+	do \
+	{ \
+		__int32 * _start = (__int32 *) (start); \
+		__int32 * _stop = (__int32 *) ((char *) _start + (usize_t) (len)); \
+	\
+		while (_start < _stop) \
+			*_start++ = 0; \
+	} while (0)
+
+
+
+/*=============================================================================
+ *                           Functions
+ *                           ~~~~~~~~~
+ *===========================================================================*/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
+void uSleep(unsigned int secs);
 char* ustrerror(int errnum);
 void uperror(const char *s);
 int uNotInheritDescriptor(UHANDLE h);
@@ -189,4 +566,4 @@ int uNotInheritDescriptor(UHANDLE h);
 }
 #endif
 
-#endif
+#endif /* u.h */

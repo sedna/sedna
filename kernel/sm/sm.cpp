@@ -444,8 +444,8 @@ int main(int argc, char **argv)
             if (uCreateProcess(command_line_str, false, NULL, U_NO_WINDOW, NULL, NULL, NULL, NULL, NULL) != 0)
                 throw USER_EXCEPTION(SE4205);
 
-             int res;
-             res = USemaphoreDown(started_sem, SM_BACKGROUND_MODE_TIMEOUT);
+            int res;
+            res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT);
 
             USemaphoreRelease(started_sem);
             delete [] command_line_str;

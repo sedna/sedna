@@ -6,7 +6,6 @@
 #ifndef _LM_BASE_H
 #define _LM_BASE_H
 
-#include <stdio.h>
 #include <string>
 #include "base.h"
 #include "exceptions.h"

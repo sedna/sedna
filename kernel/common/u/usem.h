@@ -29,10 +29,12 @@ typedef struct {
     int              count;
 } UUnnamedSemaphore;              // unnamed semaphore (intraprocess semaphore)
 
-// Amount of new created semaphores. Only for Unix. 
-#define SEM_AMOUNT 1 
-#define WAIT_FR 1
 
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 // functions return 0 on success
@@ -46,7 +48,7 @@ int USemaphoreDown(USemaphore sem);
 // return values: 0 - success
 //                1 - falure
 //                2 - timeout
-int USemaphoreDown(USemaphore sem, unsigned int millisec);
+int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec);
 int USemaphoreUp(USemaphore sem);
 
 
@@ -56,7 +58,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name);
 int USemaphoreArrRelease(USemaphoreArr sem, int size);
 int USemaphoreArrClose(USemaphoreArr sem, int size);
 int USemaphoreArrDown(USemaphoreArr sem, int i);
-int USemaphoreArrDown(USemaphoreArr sem, int i, unsigned int millisec);
+int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec);
 int USemaphoreArrUp(USemaphoreArr sem, int i);
 
 
@@ -69,9 +71,12 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem);
 // return values: 0 - success
 //                1 - falure
 //                2 - timeout
-int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem, unsigned int millisec);
+int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec);
 int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

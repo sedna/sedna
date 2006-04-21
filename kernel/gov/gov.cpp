@@ -176,7 +176,7 @@ int main(int argc, char** argv)
                 throw USER_EXCEPTION(SE4401);
 
             int res;
-            res = USemaphoreDown(started_sem, GOV_BACKGROUND_MODE_TIMEOUT);
+            res = USemaphoreDownTimeout(started_sem, GOV_BACKGROUND_MODE_TIMEOUT);
 
 
             USemaphoreRelease(started_sem);

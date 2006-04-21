@@ -132,11 +132,11 @@ int load_metadata_in_database(const char* db_name)
   string run_command;
   int ret_status;
   int res;
-  char buf[1024];
+  char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
 
-  run_command = uGetImageProcPath() + string("/se_sm ") + db_name; 
-
+  run_command = uGetImageProcPath(buf) + string("/se_sm ") + db_name; 
   strcpy(buf, run_command.c_str());
+
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,
@@ -161,7 +161,7 @@ int load_metadata_in_database(const char* db_name)
 
    //!!! Load Security Document !!!  
 
-  run_command = uGetImageProcPath() + string("/") + SESSION_EXE +
+  run_command = uGetImageProcPath(buf) + string("/") + SESSION_EXE +
                 string(" ") + db_name;
 
 
@@ -193,9 +193,9 @@ int load_metadata_in_database(const char* db_name)
 
 
   //!!! Stop SM !!!
-  run_command = uGetImageProcPath() + string("/se_smsd ") + db_name; 
-
+  run_command = uGetImageProcPath(buf) + string("/se_smsd ") + db_name; 
   strcpy(buf, run_command.c_str());
+
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,

@@ -10,6 +10,7 @@
 #include "ummap.h"
 #include "d_printf.h"
 #include "ugc.h"
+#include "event_log.h"
 
 
 #define SEMAPHORE_CLEANUP(name)					if (USemaphoreOpen(&sem, name) == 0)										\
@@ -61,7 +62,10 @@ void gov_ugc(bool background_off_from_background_on)
     SHAREDMEM_CLEANUP(CHARISMA_SSMMSG_GOV_ID, 8192);
     SEMAPHORE_CLEANUP(CHARISMA_STOP_GOV);
     SEMAPHORE_CLEANUP(CHARISMA_GOVERNOR_IS_READY);
-  
+
+    SEMAPHORE_CLEANUP(SE_EVENT_LOG_SEMAPHORES_NAME);
+    SHAREDMEM_CLEANUP(SE_EVENT_LOG_SHARED_MEMORY_NAME, sizeof(event_log_msg));
+
     SHAREDMEM_CLEANUP(GOVERNOR_SHARED_MEMORY_NAME, GOV_SHM_SIZE);
     FILE_MAPPING_CLEANUP(SEDNA_GLOBAL_MEMORY_MAPPING);
  

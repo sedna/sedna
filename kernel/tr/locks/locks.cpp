@@ -185,7 +185,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
       d_printf1("Transaction is blocked\n");
       for (;;)
       {
-         res = USemaphoreDown(sem, 1000);
+         res = USemaphoreDownTimeout(sem, 1000);
          if (res == 0) 
             break;//unblocked
          else if (res == 2)

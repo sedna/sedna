@@ -14,11 +14,7 @@ include $(PP)/Makefile.include
 ################################################################################
 .PHONY: clean
 
-clean: 
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
+clean: generic_clean
 	-$(REMOVE) se_cdb$(EXE_EXT)
 	-$(REMOVE) se_ddb$(EXE_EXT)
 	-$(REMOVE) se_gov$(EXE_EXT)
@@ -30,8 +26,5 @@ clean:
 	-$(REMOVE) se_term$(EXE_EXT)
 	-$(REMOVE) se_rcv_db$(EXE_EXT)
 	-$(REMOVE) se_exp$(EXE_EXT)
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
 	-$(REMOVE) intermed*.*
 

@@ -22,6 +22,9 @@ typedef int UShMem;
 #endif
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* sa);
 
@@ -35,7 +38,9 @@ void* uAttachShMem(UShMem id, void *ptr, int size);
 
 int uDettachShMem(UShMem id, void * ptr);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

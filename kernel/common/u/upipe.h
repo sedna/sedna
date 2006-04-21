@@ -9,7 +9,7 @@
 
 #include <string>
 #include "u.h"
-#include "exceptions.h"
+
 
 #ifdef _WIN32
 typedef HANDLE	UPIPE;

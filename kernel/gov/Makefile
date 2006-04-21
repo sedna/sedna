@@ -13,8 +13,6 @@ endif
 endif
 
 
-INCLUDE_DIRS = . $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c
-
 VPATH = .
 
 
@@ -93,11 +91,4 @@ clean: generic_clean
 	-$(REMOVE) *$(OBJ_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
 

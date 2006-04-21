@@ -129,19 +129,14 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #include "d_printf.h"
 #include "error_codes.h"
 
-// only for MSDEV 6.0
-#if (_MSC_VER == 1200)
-#define __FUNCTION__			" "
-#endif
 
-
-#define SYSTEM_EXCEPTION(msg)						SednaSystemException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
-#define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
-#define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
-#define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
-#define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
-#define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
+#define SYSTEM_EXCEPTION(msg)						SednaSystemException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#define USER_EXCEPTION(code)						SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, code)
+#define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, code)
+#define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, rollback)
+#define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, expl, rollback)
+#define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
 
 
 

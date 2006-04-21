@@ -9,12 +9,9 @@
 
 #include <string>
 #include <vector>
+#include "sedna.h"
 #include "utils.h"
 #include "uprocess.h"
-#include "sp_defs.h"
-
-#define SEDNA_DATA_VAR_SIZE								1024
-extern char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
 
 
 // buffer memory offset; this type is used for addressing buffers in buffer
@@ -25,7 +22,7 @@ typedef int ramoffs;
 
 typedef long LSN;
 typedef __int64 LONG_LSN;
-typedef uint32 CP_counter;
+typedef __uint32 CP_counter;
 #define  NULL_LSN (-1)
 #define  NULL_FILE (-1)
 
@@ -49,8 +46,8 @@ typedef __int16 xmlscm_type;
 typedef unsigned short int shft;
 
 #define PAGE_SIZE										65536
-#define PAGE_BIT_MASK									(uint32)0xFFFF0000
-#define PAGE_REVERSE_BIT_MASK							(uint32)0x0000FFFF
+#define PAGE_BIT_MASK									(__uint32)0xFFFF0000
+#define PAGE_REVERSE_BIT_MASK							(__uint32)0x0000FFFF
 //#define PAGE_SIZE										4096
 //#define PAGE_BIT_MASK									0xFFFFF000
 //#define PAGE_REVERSE_BIT_MASK							0x00000FFF
@@ -59,31 +56,31 @@ typedef unsigned short int shft;
 extern void  *LAYER_ADDRESS_SPACE_START_ADDR;
 extern void  *LAYER_ADDRESS_SPACE_BOUNDARY;
 extern void  *PH_ADDRESS_SPACE_START_ADDR;
-extern uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
-extern uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-extern uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
+extern __uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
+extern __uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+extern __uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
 
-extern uint32 LAYER_ADDRESS_SPACE_SIZE;
+extern __uint32 LAYER_ADDRESS_SPACE_SIZE;
 
 struct vmm_region_values
 {
-    uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
-    uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
-    uint32 LAYER_ADDRESS_SPACE_SIZE;
+    __uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT;
+    __uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+    __uint32 PH_ADDRESS_SPACE_START_ADDR_INT;
+    __uint32 LAYER_ADDRESS_SPACE_SIZE;
 };
 
 #ifdef _WIN32
-#define VMM_REGION_SEARCH_LEFT_BOUND                    ((uint32)0x20000000)
-#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((uint32)0x80000000)
+#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
+#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x80000000)
 #else
-#define VMM_REGION_SEARCH_LEFT_BOUND                    ((uint32)0x40000000)
-#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((uint32)0xB0000000)
+#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x40000000)
+#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0xB0000000)
 #endif
 
-#define PH_SIZE                                         ((uint32)0x6400000)
-#define VMM_REGION_MIN_SIZE                             ((uint32)0x4000000)
-#define VMM_REGION_MAX_SIZE                             ((uint32)0x40000000)
+#define PH_SIZE                                         ((__uint32)0x6400000)
+#define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
+#define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
 
 
 
@@ -121,9 +118,9 @@ struct vmm_region_values
 #define LAYER_ADDRESS_SPACE_START_ADDR					((void*)0x60000000)
 #define LAYER_ADDRESS_SPACE_BOUNDARY					((void*)0x90000000)
 #define PH_ADDRESS_SPACE_START_ADDR						((void*)0x59C00000)
-#define LAYER_ADDRESS_SPACE_START_ADDR_INT				((uint32)0x60000000)
-#define LAYER_ADDRESS_SPACE_BOUNDARY_INT				((uint32)0x90000000)
-#define PH_ADDRESS_SPACE_START_ADDR_INT					((uint32)0x59C00000)
+#define LAYER_ADDRESS_SPACE_START_ADDR_INT				((__uint32)0x60000000)
+#define LAYER_ADDRESS_SPACE_BOUNDARY_INT				((__uint32)0x90000000)
+#define PH_ADDRESS_SPACE_START_ADDR_INT					((__uint32)0x59C00000)
 
 #endif
 */
@@ -201,6 +198,9 @@ extern global_name CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME;
 extern global_name GOVERNOR_SHARED_MEMORY_NAME;
 
 extern global_name SEDNA_LOCK_MANAGER_SEM;
+
+extern global_name SE_EVENT_LOG_SHARED_MEMORY_NAME;
+extern global_name SE_EVENT_LOG_SEMAPHORES_NAME;
 
 
 global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* buf, int size);
@@ -316,10 +316,10 @@ struct sm_msg_struct
 
 
 /// the following parameters are related to kernel<-->transaction protocol
-#define  ERR_SYMBOL		((char)254)
-#define  DELIM_SYMBOL	((char)250)
-#define  EOD_SYMBOL		((char)253)
-#define  EOALL_SYMBOL     ((char)252) 
+#define  ERR_SYMBOL     ((char)254)
+#define  DELIM_SYMBOL   ((char)250)
+#define  EOD_SYMBOL     ((char)253)
+#define  EOALL_SYMBOL   ((char)252) 
 
 // definitions for governor
 

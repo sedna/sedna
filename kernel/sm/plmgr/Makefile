@@ -4,19 +4,8 @@
 
 PP = ../../..
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-ifeq ($(words $(wildcard depend)), 0)
-ifneq ($(findstring depend, $(MAKECMDGOALS)), depend)
-$(error Type "make depend" first)
-endif
-endif
-endif
 
-
-INCLUDE_DIRS = $(PP)/kernel/common $(PP)/kernel/common/u $(PP)/driver/c $(PP)/kernel/sm	\
-               $(PP)/kernel/common/ph $(PP)/kernel/sm/bufmgr
-
-VPATH = .
+VPATH = $(PP)/kernel/sm
 
 
 include $(PP)/Makefile.include
@@ -31,15 +20,11 @@ test: plmgr_test$(EXE_EXT) sector_test$(EXE_EXT)
 	@echo PLMGR TEST HAS BEEN DONE
 	@echo ===================================================================
 
-include $(PP)/Makefile.depend
 
-depend:
-	$(DEPACT)
-
-
-ifneq ($(words $(wildcard depend)), 0)
-include depend
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+include $(PP)/kernel/sm/depend
 endif
+
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 
@@ -75,13 +60,6 @@ clean: generic_clean
 	-$(REMOVE) *$(LIB_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
-	-$(REMOVE) vc60.idb
-	-$(REMOVE) vc60.pdb
-	-$(REMOVE) vc70.idb
-	-$(REMOVE) vc70.pdb
 	-$(REMOVE) plmgr_test$(EXE_EXT)
 	-$(REMOVE) sector_test$(EXE_EXT)
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) *.SUP
 

@@ -1,8 +1,46 @@
 ifeq ("$(OS)", "CYGWIN_NT")
 # Win32
 DEPACT = for x in  `find . -name "*.c*"`  ;    \
-         do gcc $(INCLUDE_DIRECTIVES_GCC) -nostdinc -D_WIN32 -MM -MG $$x | sed s/.o:/.obj:/; \
-         done 2>depend.errors | tee depend
+         do gcc $(INCLUDE_DIRECTIVES_GCC) -D_WIN32 -MM -MG -nostdinc $$x; \
+         done | sed -e s/.o:/.obj:/ \
+                    -e 's% string.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% string\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% vector\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% list\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% map\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% set\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% fstream\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% iostream\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% ostream\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% ios\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% strstream\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% sstream\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% algorithm\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% functional\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% iterator\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% stdio.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% io.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% stdlib.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% ctype.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% errno.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% windows.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% float.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% sys/types.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% sys/timeb.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% sys/stat.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% time.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% Accctrl.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% aclapi.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% limits.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% stddef.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% math.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% stdarg.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% setjmp.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% jmp.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% unistd.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% direct.h\( \|\(\\\|\$\)\)% \2%' \
+                    -e 's% crtdbg.h\( \|\(\\\|\$\)\)% \2%' \
+                     2>depend.errors | tee depend
 else
 # UNIX
 DEPACT = for x in  `find . -name "*.c*"`  ;    \

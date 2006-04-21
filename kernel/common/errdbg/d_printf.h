@@ -9,7 +9,6 @@
 
 //#define EL_DEBUG_SYNC
 
-#include <stdio.h>
 #include "u.h"
 
 #ifdef EL_DEBUG

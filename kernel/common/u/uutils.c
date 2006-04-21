@@ -11,7 +11,7 @@
 
 #ifndef _WIN32
 
-char *itoa(int value, char *str, int radix)
+char *_itoa(int value, char *str, int radix)
 {
     if (radix != 10)
         return NULL;
@@ -88,6 +88,14 @@ int _strnicmp(const char *str1, const char *str2, size_t n)
     return strncasecmp(str1, str2, n);
 }
 
+int _vsnprintf(char *str, size_t size, const char *format, va_list ap)
+{
+    int res = vsnprintf(str, size, format, ap);
+    if (res >= size) return -1;
+    return res;
+}
+
+
 #endif
 
 void int2net_int(__int32 i, char *buf)
@@ -104,6 +112,6 @@ void net_int2int(__int32 * i, char *buf)
 
 char *int2c_str(int value, char *buf)
 {
-    itoa(value, buf, 10);
+    _itoa(value, buf, 10);
     return buf;
 }

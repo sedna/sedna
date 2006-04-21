@@ -2,7 +2,7 @@
  * Copyright (c) Yonat Sharon (yonat@ootips.org)
  *
  * This is the file originated from http://ootips.org/yonat/4dev/counted_ptr.h
- * Its author is Yonat Sharon. He tells "fill free to use it".
+ * Its author is Yonat Sharon. He says "fill free to use it".
  */
 
 /*

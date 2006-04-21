@@ -40,7 +40,7 @@ int process_commandline_query()
     char buf[RESULT_MSG_SIZE+1];
     
    	term_output2("%s> ",db_name);
-    strcat(strcat(host,":"),std::string(itoa(socket_port, buf, 10)).c_str());
+    strcat(strcat(host,":"),std::string(_itoa(socket_port, buf, 10)).c_str());
     
     int res = SEconnect(&conn, host, db_name, login, password);
 	
