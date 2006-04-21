@@ -7,7 +7,6 @@
 #include "usem.h"
 #include "d_printf.h"
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
@@ -342,6 +341,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 	    struct semid_sd *buf;
 	    ushort *array;
 	} semctl_arg;
+    int i = 0;
 
 	if (name == IPC_PRIVATE)
 	{
@@ -360,7 +360,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
         return 1;
     }
 
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
     {
 	    semctl_arg.val = init_values[i];
 
@@ -787,7 +787,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
 {
     int res = 0;
 
-    timespec timeout;
+    struct timespec timeout;
     timeout.tv_sec = time(NULL) + millisec / 1000;
     timeout.tv_nsec = 0;
 
