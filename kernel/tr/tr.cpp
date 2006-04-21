@@ -88,7 +88,6 @@ int main(int argc, char * argv[])
   SSMMsg *sm_server = NULL;
   int determine_vmm_region = 0;
 
-
   try {
 
      INIT_TOTAL_TIME_VARS
@@ -138,13 +137,11 @@ int main(int argc, char * argv[])
 
 //  u_ftime(&ttt2);
 //  cerr << "TEST!!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
-
      //get session parameters (from socket or from cmd line)
      client->get_session_parameters();
 
      if(!check_database_existence(db_name))//check database consistency (all files exists)
        throw USER_EXCEPTION2(SE4609, db_name);
-
 
      //init global names
      set_global_names();
@@ -153,7 +150,6 @@ int main(int argc, char * argv[])
      gov_shared_mem = open_gov_shm(&gov_shm_dsc);
      is_init_gov_shm = true;
      socket_port = ((gov_header_struct*)gov_shared_mem)->lstnr_port_number;
-
 
      //register session on governer
      register_session_on_gov();
@@ -467,8 +463,6 @@ int main(int argc, char * argv[])
    } catch (...) {
        sedna_soft_fault();
    }
-
-
 
   return ret_code;
 }
