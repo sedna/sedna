@@ -7,7 +7,7 @@
 #ifndef _D_PRINTF_H
 #define _D_PRINTF_H
 
-#define EL_DEBUG_SYNC
+//#define EL_DEBUG_SYNC
 
 #include <stdio.h>
 #include "u.h"
