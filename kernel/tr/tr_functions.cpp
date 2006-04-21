@@ -491,7 +491,7 @@ void register_session_on_gov()
 //returns true if all database files exists
 bool check_database_existence(const char* db_name)
 {
-   bool res1, res2, res3, res4, res5, res6;
+   bool res1 = false, res2 = false, res3 = false, res4 = false, res5 = false, res6 = false;
 
    set_sedna_data();
    //delete cfg file
@@ -513,6 +513,6 @@ bool check_database_existence(const char* db_name)
    res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str());
 
 
-   if (res1 && res2 && res3 && res4 && res5 && res6) return true;
+   if (res1 && res2 && res3/*!!! && res4*/ && res5 && res6) return true;
    else return false;
 }	
