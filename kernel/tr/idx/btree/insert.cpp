@@ -332,11 +332,13 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     /* right -> */
     (*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
     VMM_SIGNAL_MODIFICATION(rpg);
-
-    CHECKP(next_for_rpg);
-    /* right <- */
-    (*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
-    VMM_SIGNAL_MODIFICATION(next_for_rpg);
+	if (next_for_rpg!=XNULL)
+	{
+		CHECKP(next_for_rpg);
+		/* right <- */
+		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
+		VMM_SIGNAL_MODIFICATION(next_for_rpg);
+	}
 }
 
 /* for given non-leaf page insert a given pair (key, big_ptr) 
