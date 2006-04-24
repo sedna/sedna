@@ -58,7 +58,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		{
 			xptr node=t2.cells[0].get_node();
 			CHECKP(node);
-			if (!( is_node_attribute(node) && (prev_item!=attribute && prev_item!=xml_namespace)))
+			if (!(is_node_document(node) || (is_node_attribute(node) && (prev_item!=attribute && prev_item!=xml_namespace))))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
 				if (is_node_persistent(node))
@@ -248,7 +248,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		{
 			xptr node=t2.cells[0].get_node();
 			CHECKP(node);
-			if (!( is_node_attribute(node) && prev_item!=attribute))
+			if (!(is_node_document(node)|| (is_node_attribute(node) && prev_item!=attribute)))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
 				if (is_node_persistent(node))
@@ -426,7 +426,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		{
 			xptr node=t2.cells[0].get_node();
 			CHECKP(node);
-			if (!( is_node_attribute(node) && prev_item!=attribute))
+			if (!(is_node_document(node)||( is_node_attribute(node) && prev_item!=attribute)))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
 				if (is_node_persistent(node))
