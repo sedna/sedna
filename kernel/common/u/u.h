@@ -559,6 +559,7 @@ extern "C" {
 
 void uSleep(unsigned int secs);
 char* ustrerror(int errnum);
+int ustrerror_r(int errnum, char *buf, size_t n);
 void uperror(const char *s);
 int uNotInheritDescriptor(UHANDLE h);
 
