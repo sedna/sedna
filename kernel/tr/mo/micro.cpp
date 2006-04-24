@@ -1472,13 +1472,14 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 							pstr_long_append_tail(left_sib, right_sib);
 							CHECKP(left_sib);
 							hl_logical_log_text_edit(text_node->indir,size,false,true); 
-							CHECKP(right_sib);
-							delete_node_inner_2 (right_sib, text);
 							if (IS_DATA_BLOCK(left_sib))
 							{
 								up_concurrent_micro_ops_number();
 								update_idx_add_txt(left_sib);
 							}
+							CHECKP(right_sib);
+							delete_node_inner_2 (right_sib, text);
+							
 
 						}
 						else
