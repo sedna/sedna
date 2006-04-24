@@ -370,7 +370,6 @@ int main(int argc, char * argv[])
                     fprintf(stderr, "%s\n", e.getMsg().c_str());
                     client->error(e.get_code(), e.getMsg());
                  } catch (SednaException &e) {
-                     
                     sedna_soft_fault(e);
                  } catch (...) {
                     sedna_soft_fault();
@@ -427,7 +426,6 @@ int main(int argc, char * argv[])
                     }
 
    ppc.shutdown(); 
-   
    set_session_finished();
    
    close_gov_shm(gov_shm_dsc, gov_shared_mem);
