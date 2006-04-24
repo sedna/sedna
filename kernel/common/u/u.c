@@ -4,6 +4,7 @@
  */
 
 #include "u.h"
+/*#include "event_log.h"*/
 #include "d_printf.h"
 
 
@@ -19,25 +20,24 @@ void uSleep(unsigned int secs)
 #endif
 }
 
-/* FIXME: it is not thread safe */
+/* ustrerror is not thread safe */
 char* ustrerror(int errnum)
 {
 #ifdef _WIN32
     DWORD res = 0;
-    DWORD code = GetLastError();
    
     res = FormatMessage( 
                 FORMAT_MESSAGE_FROM_SYSTEM | 
                 FORMAT_MESSAGE_IGNORE_INSERTS,
                 NULL,
-                code,
+                errnum,
                 MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
                 (LPTSTR)ustrerror_buf,
                 255,
                 NULL);
 
     if (!res) 
-        sprintf(ustrerror_buf, "unrecognized error code (%d)", code);
+        sprintf(ustrerror_buf, "unrecognized error code (%d)", errnum);
 
     return ustrerror_buf;
 #else
@@ -45,33 +45,64 @@ char* ustrerror(int errnum)
 #endif
 }
 
+int ustrerror_r(int errnum, char *buf, size_t n)
+{
+#ifdef _WIN32
+    DWORD res = 0;
+   
+    res = FormatMessage( 
+                FORMAT_MESSAGE_FROM_SYSTEM | 
+                FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL,
+                errnum,
+                MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+                (LPTSTR)buf,
+                n - 1,
+                NULL);
+
+    if (!res) 
+        sprintf(buf, "unrecognized error code (%d)", errnum);
+
+    return 0;
+#else
+    return strerror_r(errnum, buf, n);
+#endif
+}
+
 void uperror(const char *s)
 {
 #ifdef _WIN32
-    fprintf(stderr, "%s: %s\n", s, ustrerror(errno));
+    char buf[256];
+    ustrerror_r(GetLastError(), buf, 256);
+    fprintf(stderr, "%s: %s\n", s, buf);
 #else
     perror(s);
 #endif
 }
 
-elog(elevel, rest)
-
-#define sys_call_error(sys_call) \
-
+void sys_call_error(const char *sys_call)
 {
+/*
+    char buf[256];
+#ifdef _WIN32
+    int code = GetLastError();
+#else
+    int code = errno;
+#endif
+*/
+    d_perror(sys_call);
+/*
+    ustrerror_r(code, buf, 256);
+    elog(EL_SYS, ("%s (code = %d): %s", sys_call, code, buf));
+*/
 }
-
-d_perror(sys_call);
-elog(EL_SYS, ("%s: %s", sys_call, ustrerror(errno)));
-
-
 
 int uNotInheritDescriptor(UHANDLE h)
 {
 #ifdef _WIN32
     if (SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0) == 0)
     {
-        elog(EL_SYS, ("SetHandleInformation returned %d", GetLastError()));
+        sys_call_error("SetHandleInformation");
         return -1;
     }
     else
@@ -80,7 +111,7 @@ int uNotInheritDescriptor(UHANDLE h)
 
     if (fcntl(h, F_SETFD, FD_CLOEXEC) == -1)
     {
-        d_perror("fcntl (1)");
+        sys_call_error("fcntl");
         return -1;
     }
     else
