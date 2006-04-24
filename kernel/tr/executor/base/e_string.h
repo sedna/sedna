@@ -79,6 +79,13 @@ private:
 public:
     e_str() : m_blks(0), m_size(0) {}
     void reset();
+	void clear()
+	{
+		m_blks = 0;
+		m_size = 0;
+		first_blk = XNULL;
+		last_blk = XNULL;
+	}
 
     xptr append(const tuple_cell& tc)
     {
