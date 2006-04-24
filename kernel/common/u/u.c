@@ -54,11 +54,26 @@ void uperror(const char *s)
 #endif
 }
 
+elog(elevel, rest)
+
+#define sys_call_error(sys_call) \
+
+{
+}
+
+d_perror(sys_call);
+elog(EL_SYS, ("%s: %s", sys_call, ustrerror(errno)));
+
+
+
 int uNotInheritDescriptor(UHANDLE h)
 {
 #ifdef _WIN32
     if (SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0) == 0)
+    {
+        elog(EL_SYS, ("SetHandleInformation returned %d", GetLastError()));
         return -1;
+    }
     else
         return 0;
 #else
