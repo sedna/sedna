@@ -160,6 +160,7 @@ int xmlscm_type_size(xmlscm_type t)
         case xs_float	: return sizeof(float);
         case xs_double	: return sizeof(double);
         case xs_string	: return 0;
+		case xs_boolean	: return sizeof(bool);
         default			: throw USER_EXCEPTION2(SE1003, "Unexpected case in xmlscm_type_size");
     }
 }
