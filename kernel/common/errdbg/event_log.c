@@ -460,7 +460,6 @@ int event_log_short_msg(int elevel,
                         const char *filename, 
                         int lineno, 
                         const char *funcname, 
-                        int content_len, 
                         const char *s, 
                         ...)
 {
