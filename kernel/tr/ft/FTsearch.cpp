@@ -692,9 +692,9 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 	}
 	do
 	{
-		if (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+		if (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
 		{
-			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
 			{
 				if (copy && !hl_fragment)
 					putch(cur_ch);
@@ -756,7 +756,7 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 		{
 			copy_tag(str_it, str_end);
 		}
-		else if (iswpunct(cur_ch) || iswspace(cur_ch))
+		else if (!iswordchar(cur_ch))
 		{
 			putch(cur_ch);
 			cur_ch = getch(str_it, str_end);
@@ -773,7 +773,7 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 			}
 			if (hl_word)
 				result->append_mstr("<hit>");
-			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
 			{
 				putch(cur_ch);
 				cur_ch = getch(str_it, str_end);
@@ -784,6 +784,97 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 	}
 }
 
+inline static bool iswordchar(int ch)
+{
+	//TODO: try to use pcre tables
+	return (((!(iswpunct(ch) || iswspace(ch)
+		|| (ch >= 127 && ch <= 159)
+		|| ch == 697 || ch == 698
+		||(ch >= 706 && ch <= 719)
+		||(ch >= 722 && ch <= 735)
+		||(ch >= 741 && ch <= 749)
+		|| ch == 884 || ch == 885 || ch == 900 || ch == 901 || ch == 1154
+		|| ch == 1160 || ch == 1161 || ch == 1757 || ch == 1758
+		|| ch == 1769 || ch == 1789 || ch == 1790 || ch == 1807
+		|| ch == 2546 || ch == 2547 || ch == 2554 || ch == 2928
+		|| ch == 3647 || ch == 3841 || ch == 3842 || ch == 3843
+		|| (ch >= 3859 && ch <= 3863)
+		|| (ch >= 3866 && ch <= 3871)
+		|| ch == 3892 || ch == 3894 || ch == 3896
+		|| (ch >= 4030 && ch <= 4037)
+		|| (ch >= 4039 && ch <= 4044)
+		|| ch == 4047 || ch == 6107
+		|| ch == 6155 || ch == 6156 || ch == 6157 || ch == 6158
+		|| ch == 8125 || ch == 8127 || ch == 8128 || ch == 8129
+		|| ch == 8141 || ch == 8142 || ch == 8143
+		|| ch == 8157 || ch == 8158 || ch == 8159
+		|| ch == 8173 || ch == 8174 || ch == 8175
+		|| ch == 8189 || ch == 8190
+		|| (ch >= 8204 && ch <= 8207)
+		|| (ch >= 8234 && ch <= 8238)
+		|| ch == 8260
+		|| (ch >= 8298 && ch <= 8303)
+		|| (ch >= 8314 && ch <= 8316)
+		|| (ch >= 8330 && ch <= 8332)
+		|| (ch >= 8352 && ch <= 8367)
+		|| (ch >= 8413 && ch <= 8416)
+		|| ch == 8418 || ch == 8419
+		|| ch == 8448 || ch == 8449
+		|| (ch >= 8451 && ch <= 8454)
+		|| ch == 8456 || ch == 8457 || ch == 8468
+		|| (ch >= 8470 && ch <= 8472)
+		|| (ch >= 8478 && ch <= 8483)
+		|| ch == 8485 || ch == 8487 || ch == 8489 || ch == 8494 || ch == 8498 || ch == 8506
+		|| (ch >= 8592 && ch <= 8691)
+		|| (ch >= 8704 && ch <= 8945)
+		|| (ch >= 8960 && ch <= 9000)
+		|| (ch >= 9003 && ch <= 9083)
+		|| (ch >= 9085 && ch <= 9114)
+		|| (ch >= 9216 && ch <= 9254)
+		|| (ch >= 9280 && ch <= 9290)
+		|| (ch >= 9372 && ch <= 9449)
+		|| (ch >= 9472 && ch <= 9621)
+		|| (ch >= 9632 && ch <= 9719)
+		|| (ch >= 9728 && ch <= 9747)
+		|| (ch >= 9753 && ch <= 9841)
+		|| (ch >= 9985 && ch <= 9988)
+		|| (ch >= 9990 && ch <= 9993)
+		|| (ch >= 9996 && ch <= 10023)
+		|| (ch >= 10025 && ch <= 10059)
+		|| ch == 10061
+		|| (ch >= 10063 && ch <= 10066)
+		|| ch == 10070
+		|| (ch >= 10072 && ch <= 10078)
+		|| (ch >= 10081 && ch <= 10087)
+		|| ch == 10132
+		|| (ch >= 10136 && ch <= 10159)
+		|| (ch >= 10161 && ch <= 10174)
+		|| (ch >= 10240 && ch <= 10495)
+		|| (ch >= 11904 && ch <= 11929)
+		|| (ch >= 11931 && ch <= 12019)
+		|| (ch >= 12032 && ch <= 12245)
+		|| (ch >= 12272 && ch <= 12283)
+		|| ch == 12292 || ch == 12306 || ch == 12307 || ch == 12320
+		|| ch == 12342 || ch == 12343 || ch == 12350 || ch == 12351
+		|| ch == 12443 || ch == 12444 || ch == 12688 || ch == 12689
+		|| (ch >= 12694 && ch <= 12703)
+		|| (ch >= 12800 && ch <= 12828)
+		|| (ch >= 12842 && ch <= 12867)
+		|| (ch >= 12896 && ch <= 12923)
+		|| ch == 12927
+		|| (ch >= 12938 && ch <= 12976)
+		|| (ch >= 12992 && ch <= 13003)
+		|| (ch >= 13008 && ch <= 13054)
+		|| (ch >= 13056 && ch <= 13174)
+		|| (ch >= 13179 && ch <= 13277)
+		|| (ch >= 13280 && ch <= 13310)
+		))
+		|| ch == '_' || ch == '@' || ch == 170
+		|| ch == 178 || ch == 179 || ch == 181
+		|| ch == 185 || ch == 186
+		|| ch == 188 || ch == 189 || ch == 190
+		));
+}
 
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::parse_doc()
@@ -803,7 +894,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 		{
 			parse_tag();
 		}
-		else if (iswpunct(cur_ch) || iswspace(cur_ch))
+		else if (!iswordchar(cur_ch))
 		{
 			if (!iswspace(cur_ch))
 				last_eff_ch = cur_ch;
@@ -877,7 +968,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 			}
 			}
 			last_eff_ch = cur_ch; //no need to update it in the loop, we only need to know it's not punctuation
-			while (!iswpunct(cur_ch) && !iswspace(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
 				cur_ch = getch(str_it, str_end);
 		}
 	}
