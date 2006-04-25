@@ -1,4 +1,4 @@
-#include <stdafx.h>
+#include <StdAfx.h>
 #ifndef DFILE_H
 #	include <dfile.h>
 #endif

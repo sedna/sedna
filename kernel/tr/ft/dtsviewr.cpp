@@ -1,4 +1,4 @@
-#include <stdafx.h>
+#include <StdAfx.h>
 #include <stdlib.h>
 #include <string.h>
 #if defined(_Windows) && !defined(_INC_WINDOWS)

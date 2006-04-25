@@ -10,7 +10,7 @@
 #include "node_utils.h"
 #include "vmm.h"
 #include "tuple.h"
-#include "FTIndex.h"
+#include "FTindex.h"
 #include "log.h"
 #include "schema.h"
 #include "casting_operations.h"
