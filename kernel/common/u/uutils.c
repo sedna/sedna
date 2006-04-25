@@ -11,7 +11,7 @@
 
 #ifndef _WIN32
 
-char *_itoa(int value, char *str, int radix)
+char *u_itoa(int value, char *str, int radix)
 {
     if (radix != 10)
         return NULL;
@@ -44,7 +44,7 @@ char *_itoa(int value, char *str, int radix)
     return str;
 }
 
-char *_ltoa(long value, char *str, int radix)
+char *u_ltoa(long value, char *str, int radix)
 {
     if (radix != 10)
     {
@@ -56,7 +56,7 @@ char *_ltoa(long value, char *str, int radix)
     return str;
 }
 
-char *_ultoa(unsigned long value, char *str, int radix)
+char *u_ultoa(unsigned long value, char *str, int radix)
 {
     if (radix != 10)
     {
@@ -68,7 +68,7 @@ char *_ultoa(unsigned long value, char *str, int radix)
     return str;
 }
 
-char *_gcvt(double value, int digits, char *buf)
+char *u_gcvt(double value, int digits, char *buf)
 {
 #ifdef HAVE_GCVT
     return gcvt(value, digits, buf);
@@ -112,6 +112,6 @@ void net_int2int(__int32 * i, char *buf)
 
 char *int2c_str(int value, char *buf)
 {
-    _itoa(value, buf, 10);
+    u_itoa(value, buf, 10);
     return buf;
 }
