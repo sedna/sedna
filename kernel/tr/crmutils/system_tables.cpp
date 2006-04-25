@@ -69,13 +69,13 @@ xptr fill_schema(schema_node* scm, xptr& node,xptr& neighb)
 		left=insert_attribute(left,XNULL,XNULL,"uri",xdt_untypedAtomic,scm->xmlns->uri,(scm->xmlns->uri==NULL)?0:strlen(scm->xmlns->uri),NULL);
 	}
 	char buf[20];
-	_itoa(scm->nodecnt,buf,10);
+	u_itoa(scm->nodecnt,buf,10);
 	left=insert_attribute(left,XNULL,XNULL,"total_nodes",xdt_untypedAtomic,buf,strlen(buf),NULL);
-	_itoa(scm->blockcnt,buf,10);
+	u_itoa(scm->blockcnt,buf,10);
 	left=insert_attribute(left,XNULL,XNULL,"total_blocks",xdt_untypedAtomic,buf,strlen(buf),NULL);
-	_itoa(scm->extnids,buf,10);
+	u_itoa(scm->extnids,buf,10);
 	left=insert_attribute(left,XNULL,XNULL,"total_ext_nids",xdt_untypedAtomic,buf,strlen(buf),NULL);
-	_itoa(scm->indir_blk_cnt,buf,10);
+	u_itoa(scm->indir_blk_cnt,buf,10);
 	left=insert_attribute(left,XNULL,XNULL,"total_indir_blocks",xdt_untypedAtomic,buf,strlen(buf),NULL);
 	#ifdef WIN32
 	_i64toa(scm->textcnt,buf,10);

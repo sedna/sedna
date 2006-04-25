@@ -173,47 +173,47 @@ public:
                                               return *this; }
                                               
     virtual se_ostream& operator<<(short n)	{ flush();
-    										 _ltoa((long)n,res_msg.body+res_msg.length,10); 
+    										  u_ltoa((long)n,res_msg.body+res_msg.length,10); 
                                               res_msg.length += strlen(res_msg.body+5);
                                               return *this; }
                                               
     virtual se_ostream& operator<<(unsigned short n){flush();
-    												_ultoa((unsigned long)n,res_msg.body+res_msg.length,10);
+    												u_ultoa((unsigned long)n,res_msg.body+res_msg.length,10);
                                                     res_msg.length += strlen(res_msg.body+5);
                                                     return *this; }
                                                     
     virtual se_ostream& operator<<(int n)		{ flush();	
-    											  _ltoa((long)n,res_msg.body+res_msg.length,10);
+    											  u_ltoa((long)n,res_msg.body+res_msg.length,10);
                                                   res_msg.length += strlen(res_msg.body+5);
                                                   return *this; }
                                                    
     virtual se_ostream& operator<<(unsigned int n)	{ flush();
-                                                      _ultoa((long)n,res_msg.body+res_msg.length,10); 
+                                                      u_ultoa((long)n,res_msg.body+res_msg.length,10); 
                                                       res_msg.length += strlen(res_msg.body+5);
                                                       return *this; }
                                                       
     virtual se_ostream& operator<<(long n)		{ flush();
-                                                  _ltoa((long)n,res_msg.body+res_msg.length,10); 
+                                                  u_ltoa((long)n,res_msg.body+res_msg.length,10); 
                                                   res_msg.length += strlen(res_msg.body+5);
                                                   return *this; }
                                                     
     virtual se_ostream& operator<<(unsigned long n)	{flush();
-    												 _ultoa((long)n,res_msg.body+res_msg.length,10);
+    												 u_ultoa((long)n,res_msg.body+res_msg.length,10);
                                                      res_msg.length += strlen(res_msg.body+5);
                                                      return *this; }
                                                      
     virtual se_ostream& operator<<(float n)		{ flush();
-    											  _gcvt((double)n,10,res_msg.body+res_msg.length);
+    											  u_gcvt((double)n,10,res_msg.body+res_msg.length);
                                                   res_msg.length += strlen(res_msg.body+5);
                                                   return *this;  }
                                                   
     virtual se_ostream& operator<<(double n)		{ flush();
-    												  _gcvt(n,10,res_msg.body+res_msg.length);
+    												  u_gcvt(n,10,res_msg.body+res_msg.length);
                                                       res_msg.length += strlen(res_msg.body+5);
                                                       return *this;}
                                                       
 	virtual se_ostream& operator<<(long double n)	{ flush();
-													  _gcvt((long double)n,10,res_msg.body+res_msg.length);
+													  u_gcvt((long double)n,10,res_msg.body+res_msg.length);
                                                       res_msg.length += strlen(res_msg.body+5);
 	                                                  return *this; }
 	                                                  

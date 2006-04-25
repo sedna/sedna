@@ -21,11 +21,16 @@ extern "C"
 {
 #endif
 
-#ifndef _WIN32
-    char *_itoa(int value, char *str, int radix);
-    char *_ltoa(long value, char *str, int radix);
-    char *_ultoa(unsigned long value, char *str, int radix);
-    char *_gcvt(double value, int digits, char *buf);
+#ifdef _WIN32
+#define u_itoa _itoa
+#define u_ltoa _ltoa
+#define u_ultoa _ultoa
+#define u_gcvt _gcvt
+#else
+    char *u_itoa(int value, char *str, int radix);
+    char *u_ltoa(long value, char *str, int radix);
+    char *u_ultoa(unsigned long value, char *str, int radix);
+    char *u_gcvt(double value, int digits, char *buf);
     int _stricmp(const char *str1, const char *str2);
     int _strnicmp(const char *str1, const char *str2, size_t n);
     int _vsnprintf(char *str, size_t size, const char *format, va_list ap);
