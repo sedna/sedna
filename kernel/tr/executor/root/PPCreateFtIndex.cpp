@@ -4,7 +4,7 @@
  */
 
 
-#include "PPCreateFTIndex.h"
+#include "PPCreateFtIndex.h"
 #include "PPUtils.h"
 #include "PPBase.h"
 

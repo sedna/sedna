@@ -4,7 +4,7 @@
  */
 
 
-#include "PPDropFTIndex.h"
+#include "PPDropFtIndex.h"
 #include "PPUtils.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_) :	index_name(_index_name_)
