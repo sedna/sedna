@@ -154,12 +154,12 @@ void PPAxisParent::next_wildcard_star(tuple &t)
 
         cur = child.get(t).get_node();
 		cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
-        if (!(cur != NULL && 
-              comp_type(GETSCHEMENODEX(cur), 
+        if (!comp_type(GETSCHEMENODEX(cur), 
                         NULL,
                         NULL, 
-                        element))) cur = XNULL;
+                        element)) cur = XNULL;
     }
 
     t.copy(tuple_cell::node(cur));
@@ -177,12 +177,13 @@ void PPAxisParent::next_wildcard_ncname_star(tuple &t)
 
         cur = child.get(t).get_node();
         cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
-        if (!(cur != NULL &&
+        if (!
               comp_uri_type(GETSCHEMENODEX(cur),
                             tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname, element),
                             NULL, 
-                            element)))
+                            element))
             cur = XNULL;
     }
 
@@ -202,11 +203,12 @@ void PPAxisParent::next_wildcard_star_ncname(tuple &t)
         cur = child.get(t).get_node();
         cur = get_parent_node(cur);
         CHECKP(cur);
-        if (!(cur != NULL &&
+		if (cur==XNULL) continue;
+        if (!
               comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
                               nt_data.ncname.n, 
-                              element)))
+                              element))
             cur = XNULL;
     }
 

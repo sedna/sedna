@@ -178,9 +178,9 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj)
     {
         rc = bt_leaf_find_obj(insert_xpg, obj, key_idx, obj_idx);
 
-        if (rc) throw USER_EXCEPTION2(SE1008, "The key/object pair already exists in btree");
+      /*  if (rc) throw USER_EXCEPTION2(SE1008, "The key/object pair already exists in btree");
         else
-        {
+        {*/
             CHECKP(insert_xpg);
             insert_pg = (char*)XADDR(insert_xpg);
 
@@ -188,7 +188,7 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj)
                 obj_idx = *((shft*)BT_CHNK_TAB_AT(insert_pg, key_idx) + 1);
 
             bt_leaf_insert(root, insert_pg, key_idx, false, key, obj, obj_idx);
-        }
+        /*}*/
     } 
     else
     {

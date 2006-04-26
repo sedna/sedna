@@ -150,6 +150,7 @@ void PPAxisAncestor::next_qname(tuple &t)
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
         while (cur!=XNULL)
 		{
@@ -186,6 +187,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
 		while (cur!=XNULL)
 		{
@@ -222,6 +224,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
 		char* uri=st_ct.get_uri_by_prefix(nt_data.ncname,element);
         while (cur!=XNULL)
@@ -260,6 +263,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
 		while (cur!=XNULL)
 		{
