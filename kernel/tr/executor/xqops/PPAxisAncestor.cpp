@@ -130,6 +130,12 @@ void PPAxisAncestor::next_node(tuple &t)
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);
+		if (cur!=XNULL)
+		{
+			CHECKP(cur);
+			if (GETSCHEMENODEX(cur)->type==virtual_root)
+				cur=XNULL;
+		}
     }
 
     t.copy(tuple_cell::node(cur));
