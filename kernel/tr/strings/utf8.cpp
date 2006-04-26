@@ -319,9 +319,15 @@ void CollationHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, t
 	{
 		throw USER_EXCEPTION2(FORX0003, e.what());
 	}
+	catch (const PcreException &e)
+	{
+		//FIXME FORX0002 - is not ok here
+		throw USER_EXCEPTION2(FORX0002, e.what());
+	}
 	catch (const std::exception &e)
 	{
 		//FIXME FORX0002 - is not ok here
+		//FIXME: is this barch possible??
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
 }
