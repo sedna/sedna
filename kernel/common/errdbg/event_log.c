@@ -71,8 +71,10 @@ static void __event_log_set_msg_attrs(int elevel, const char *filename, int line
     el_msg->elevel = elevel;
     el_msg->component = el_component;
 
-    if (el_component_detail)
+    if (el_component_detail && *el_component_detail)
         strcpy(el_msg->component_detail, el_component_detail);
+    else
+        el_msg->component_detail[0] = '\0';
 
     el_msg->lineno = lineno;
 
@@ -224,7 +226,10 @@ static int __event_log_write_hdr(int elevel,
     {
         if (filename && funcname)
         {
-            res = fprintf(el_ostr, " [%s:%s:%d]", filename, funcname, lineno);
+            char buf[U_MAX_PATH];
+
+            uGetFileNameFromFilePath(filename, buf, U_MAX_PATH);
+            res = fprintf(el_ostr, " [%s:%s:%d]", buf, funcname, lineno);
 
             if (res == -1) return res;
             else el_cur_file_size += res;
@@ -252,10 +257,9 @@ event_log_init_file:
         strcat(buf, SE_EVENT_LOG_FILENAME);
 
         if (stat(buf, &st) == 0) 
-        {
             el_cur_file_size = st.st_size;
-        }
-        else return;
+        else 
+            el_cur_file_size = 0;
         
         el_ostr = fopen(buf, "at");
         if (!el_ostr) return;
@@ -345,6 +349,8 @@ static void __event_log_write_short_msg()
     res = fprintf(el_ostr, ": %s\n", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res;
+
+    fflush(el_ostr);
 }
 
 static void __event_log_write_long_msg_start()
@@ -372,7 +378,10 @@ static bool __event_log_write_long_msg_next_end()
     if (!el_ostr)
     {
         if (el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
+        {
             res = fprintf(el_ostr, "%s\n", el_msg->content);
+            fflush(el_ostr);
+        }
         else
             res = fprintf(el_ostr, "%s", el_msg->content);
     

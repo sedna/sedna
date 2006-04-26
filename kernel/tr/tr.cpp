@@ -157,6 +157,9 @@ int main(int argc, char * argv[])
      SednaUserException e = USER_EXCEPTION(SE4400);
      ppc.startup(e);
 
+     // sid is known
+     event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+
 
 #ifdef _WIN32
      BOOL fSuccess; 
@@ -179,7 +182,7 @@ int main(int argc, char * argv[])
     on_session_begin(sm_server);
 //u_ftime(&t_test2);
 //d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
-
+     elog(EL_LOG, ("Session is ready"));
 
 #if (AUTH_SWITCH == 1)//if security is on
 	 if(entry_point->is_first_transaction())
@@ -397,6 +400,7 @@ int main(int argc, char * argv[])
         } //end for(;;) by transactions
 
     on_session_end(sm_server);
+    elog(EL_LOG, ("Session is closed"));
 
 
                     u_ftime(&t_total2);
@@ -425,6 +429,7 @@ int main(int argc, char * argv[])
 	               PRINT_DEBUG_TIME_RESULTS
                     }
 
+   event_logger_release();
    ppc.shutdown(); 
    set_session_finished();
    
@@ -438,6 +443,7 @@ int main(int argc, char * argv[])
       fprintf(stderr, "%s\n", e.getMsg().c_str());
 
        on_session_end(sm_server);
+       elog(EL_LOG, ("Session is closed"));
        try{
           if (client != NULL) {
              if (e.get_code() == SE3053)
@@ -451,6 +457,7 @@ int main(int argc, char * argv[])
        } catch (...){
           d_printf1("Connection with client has been broken\n");
        }
+       event_logger_release();
        ppc.shutdown();   
        set_session_finished();
        if (is_init_gov_shm)close_gov_shm(gov_shm_dsc, gov_shared_mem);

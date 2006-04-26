@@ -80,9 +80,6 @@ extern "C"
 #endif
 
 /* return U_INVALID_FD in the case of error*/
-/*UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr);*/
-
-/* return U_INVALID_FD in the case of error*/
     UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa);
 
 /* return U_INVALID_FD in the case of error*/
@@ -95,6 +92,10 @@ extern "C"
 /* If the function succeeds to delete the file, it returns nonzero.*/
 /* If the function fails to detele file, it returns zero.*/
     int uDeleteFile(const char *name);
+
+/* If the function succeeds, the return value is nonzero.*/
+/* If the function fails, the return value is zero.*/
+    int uDelDir(const char *dir);
 
 /* If the function succeeds, the return value is nonzero. If the return value */
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
@@ -117,10 +118,6 @@ extern "C"
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
     int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa);
-
-/* If the function succeeds, the return value is nonzero.*/
-/* If the function fails, the return value is zero.*/
-    int uDelDir(const char *dir);
 
 /* Returns true if the file exists*/
     int uIsFileExist(const char *name);
@@ -159,7 +156,9 @@ extern "C"
 /* If the function fails, the return value is -1*/
     int uChangeWorkingDirectory(const char *path);
 
-    char *uGetDirectoryFromFilePath(const char *path, char *extr_dir, int dirLength);
+    char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len);
+
+    char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len);
 
 #ifdef __cplusplus
 }

@@ -11,6 +11,7 @@
 #include "u.h"
 #include "sp_defs.h"
 #include "se_alloc.h"
+#include "event_log.h"
 
 
 #ifdef __cplusplus

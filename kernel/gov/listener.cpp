@@ -28,6 +28,8 @@ int client_listener(bool is_background_mode)
 
    if (ulisten(sockfd, 100) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't set socket to a listening mode");
 
+   elog(EL_LOG, ("GOVERNOR is ready"));
+
    if (!is_background_mode)
    {	   
      d_printf1("OK\n");
@@ -329,7 +331,7 @@ int sess_registering(USOCKET s, char* msg_buf)
 	    __int32 tmp = s_id;
 	    memcpy(reg_msg.body,(char*)&(tmp),4);
 
-	    if(sp_send_msg(s,&reg_msg)!=0) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));
+	    if(sp_send_msg(s,&reg_msg)!=0) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
 
         gov_table->remove_pid(sess_pid);
     }
@@ -339,7 +341,7 @@ int sess_registering(USOCKET s, char* msg_buf)
         reg_msg.instruction = 171;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else if (res == -2)
     {
@@ -347,7 +349,7 @@ int sess_registering(USOCKET s, char* msg_buf)
 		reg_msg.instruction = 172;
 		reg_msg.length = 0;
         res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else if (res == -3)
     {
@@ -355,7 +357,7 @@ int sess_registering(USOCKET s, char* msg_buf)
    	    reg_msg.instruction = 173;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else
     {
@@ -402,28 +404,28 @@ int sm_registering(USOCKET s, char* msg_buf)
         reg_msg.instruction = 181;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else if (res == -2)
     {
         reg_msg.instruction = 182;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else if (res == -3)
     {
         reg_msg.instruction = 182;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
     else if (res == -4)
     {
         reg_msg.instruction = 182;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
-        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()));  
+        if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
 
     ushutdown_close_socket(s);

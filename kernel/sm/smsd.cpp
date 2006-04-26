@@ -87,6 +87,9 @@ int main(int argc, char **argv)
 
         ppc.startup(e);
 
+        event_logger_init(EL_SMSD, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+        elog(EL_LOG, ("Request for SM shutdown issued"));
+
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
         port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
@@ -120,6 +123,7 @@ int main(int argc, char **argv)
 
 
 end:
+        elog(EL_LOG, ("Request for SM shutdown satisfied"));
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         ppc.shutdown();
 
@@ -135,6 +139,7 @@ end:
         
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        event_logger_release();
         ppc.shutdown();
         return 1;
     } catch (SednaException &e) {

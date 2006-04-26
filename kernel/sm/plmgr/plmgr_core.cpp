@@ -575,7 +575,7 @@ void plmgr_core::logFlushPortionOfRecords(LSN& lsn, bool sync)
 
   //!!! check for debug !!!
   if (drbl_len > mem_head->keep_bytes )
-     throw SYSTEM_EXCEPTION(string("unpredictable lenegth of records to be flushed in phys log") + "drbl_len=" + int2string(drbl_len) + " keep_bytes="+ int2string(mem_head->keep_bytes));
+     throw SYSTEM_EXCEPTION((string("unpredictable lenegth of records to be flushed in phys log") + "drbl_len=" + int2string(drbl_len) + " keep_bytes="+ int2string(mem_head->keep_bytes)).c_str());
 
   //for debug
   //string str = string("logFlushPortionOf Records before possible extend free_size=") + int2string(getLogFileSize(false) - getPhysLogSize(false)) +"\n";

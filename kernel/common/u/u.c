@@ -4,8 +4,11 @@
  */
 
 #include "u.h"
-/*#include "event_log.h"*/
 #include "d_printf.h"
+
+#if !(defined(SE_NO_EVENT_LOG))
+#include "event_log.h"
+#endif
 
 
 static char ustrerror_buf[256];
@@ -62,6 +65,11 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 
     if (!res) 
         sprintf(buf, "unrecognized error code (%d)", errnum);
+    else
+    {
+        if ((res > 1) && (buf[res - 1] == (char)10) && (buf[res - 2] == (char)13))
+            buf[res - 1] = buf[res - 2] = '\0';
+    }
 
     return 0;
 #else
@@ -80,21 +88,31 @@ void uperror(const char *s)
 #endif
 }
 
-void sys_call_error(const char *sys_call)
+
+void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call)
 {
-/*
+#if !(defined(SE_NO_EVENT_LOG))
     char buf[256];
 #ifdef _WIN32
     int code = GetLastError();
 #else
     int code = errno;
 #endif
-*/
+#endif
+
     d_perror(sys_call);
-/*
+
+#if !(defined(SE_NO_EVENT_LOG))
     ustrerror_r(code, buf, 256);
-    elog(EL_SYS, ("%s (code = %d): %s", sys_call, code, buf));
-*/
+    event_log_short_msg(EL_SYS, 
+                        filename, 
+                        lineno, 
+                        funcname, 
+                        "%s (code = %d): %s", 
+                        sys_call, 
+                        code, 
+                        buf);
+#endif
 }
 
 int uNotInheritDescriptor(UHANDLE h)

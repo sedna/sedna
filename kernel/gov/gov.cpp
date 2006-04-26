@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 
+#include "sedna.h"
 
 #include "SSMMsg.h"
 #include "usem.h"
@@ -118,7 +119,8 @@ int main(int argc, char** argv)
            throw USER_SOFT_EXCEPTION("");
         }
 
-        if (uSocketInit() == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
+        if (uSocketInit() == U_SOCKET_ERROR) 
+            throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
@@ -203,6 +205,11 @@ int main(int argc, char** argv)
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
 
+        if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
+            throw SYSTEM_EXCEPTION("Failed to initialize event log");
+
+        elog(EL_LOG, ("SEDNA event log is ready"));
+
 
       gov_table = new info_table();
       gov_table->init(socket_port);
@@ -245,6 +252,9 @@ int main(int argc, char** argv)
 
       release_global_memory_mapping();
 
+      elog(EL_LOG, ("SEDNA event log is down"));
+      event_logger_shutdown_daemon();
+
 
       fprintf(res_os, "GOVERNOR has been shut down successfully\n");
       fflush(res_os);
@@ -252,6 +262,7 @@ int main(int argc, char** argv)
 
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        event_logger_release();
         if (!is_pps_close) { pps.shutdown();}
         return 1;
     } catch (SednaException &e) {

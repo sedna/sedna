@@ -81,6 +81,8 @@ int main(int argc, char **argv)
 #endif
         ppc.startup(ex);
 
+        event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+        elog(EL_LOG, ("Request for runtime configuration issued"));
 
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
         port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
@@ -101,11 +103,14 @@ int main(int argc, char **argv)
             res = ushutdown_close_socket(sock);
             if (res != 0) throw USER_EXCEPTION(SE3011);
 
-            fprintf(res_os, "%s\n", msg.body);
+            elog(EL_LOG, ("Request for runtime configuration satisfied"));
 
+            fprintf(res_os, "%s\n", msg.body);
         }
         else
             throw USER_EXCEPTION(SE3003);
+
+        event_logger_release();
 
         ppc.shutdown();
         if (uSocketCleanup() == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
@@ -113,10 +118,12 @@ int main(int argc, char **argv)
 
     } catch (SednaUserSoftException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        event_logger_release();
         ppc.shutdown();
         return 0;        
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        event_logger_release();
         ppc.shutdown();
         return 1;
     } catch (SednaException &e) { 
