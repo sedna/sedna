@@ -42,17 +42,15 @@ ifneq ($(words $(wildcard depend)), 0)
 include depend
 endif
 
-# define CPPFLAGSST fot single threaded library - libsedna
-ifeq ("$(PLATFORM)", "WIN32")
-# Win32
-OBJ_NAME = /Fo
-endif
-
 
 
 ifeq ("$(PLATFORM)", "WIN32")
 # WIN32
-# multi threaded library libsednamt
+
+
+OBJ_NAME = /Fo
+CFLAGS += /DSE_NO_EVENT_LOG
+CFLAGS_ST += /DSE_NO_EVENT_LOG
 
 %$(OBJ_EXT): $(PP)/kernel/common/u/%.c
 	$(CC) $(CFLAGS) $<
@@ -63,6 +61,7 @@ ifeq ("$(PLATFORM)", "WIN32")
 %$(OBJ_EXT): $(PP)/kernel/common/%.c
 	$(CC) $(CFLAGS) $<
 
+# multi threaded library - libsednamt
 libsednamt$(LIB_EXT): libsedna$(OBJ_EXT) usocket$(OBJ_EXT) uhdd$(OBJ_EXT) sp$(OBJ_EXT) uutils$(OBJ_EXT) \
                       usecurity$(OBJ_EXT) d_printf$(OBJ_EXT) error_codes$(OBJ_EXT) u$(OBJ_EXT)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
@@ -94,7 +93,9 @@ libsedna$(LIB_EXT): libsednast$(OBJ_EXT) usocketst$(OBJ_EXT) uhddst$(OBJ_EXT) sp
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 else
 # UNIX 
-# single threaded library - libsedna
+
+CFLAGS += -DSE_NO_EVENT_LOG
+
 %$(OBJ_EXT): $(PP)/kernel/common/u/%.c
 	$(CC) $(CFLAGS) $<
 

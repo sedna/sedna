@@ -472,6 +472,10 @@ int main(int argc, char **argv)
         }
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
+        event_logger_init(EL_SM, __db_name__, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+        elog(EL_LOG, ("SM event log is ready"));
+
+
         setup_sm_globals(__db_name__);//setup default values from config file
 
 //        INIT_DEBUG_LOG(__db_name__); 
@@ -595,6 +599,7 @@ int main(int argc, char **argv)
             register_sm_on_gov();
 
       
+            elog(EL_LOG, ("SM is ready"));
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
 
@@ -640,6 +645,8 @@ int main(int argc, char **argv)
 #ifdef LOCK_MGR_ON
         lm_table.release_lock_table();
 #endif
+
+        event_logger_release();
    
         ppc.shutdown();
         is_ppc_closed = true;
@@ -651,6 +658,7 @@ int main(int argc, char **argv)
  
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        event_logger_release();
         if (!is_ppc_closed) ppc.shutdown();
         return 1;
     } catch (SednaException &e) {

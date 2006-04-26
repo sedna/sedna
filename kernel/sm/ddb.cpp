@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 
             }
 
-            //!!!Here gov aleredy closed listening socket (=>all databases already stopped) or database stopped 
+            //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
         }
 
 	d_printf2("db_name=%s\n", db_name);

@@ -128,15 +128,48 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #include "utils.h"
 #include "d_printf.h"
 #include "error_codes.h"
+#include "event_log.h"
 
 
-#define SYSTEM_EXCEPTION(msg)						SednaSystemException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
-#define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
-#define USER_EXCEPTION(code)						SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, code)
-#define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, code)
-#define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, rollback)
-#define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, expl, rollback)
-#define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
+#define SYSTEM_EXCEPTION(msg) \
+    (elog(EL_FATAL, (msg)), \
+     SednaSystemException(__FILE__, __SE_FUNCTION__, __LINE__, msg))
+
+#define SYSTEM_ENV_EXCEPTION(msg) \
+    (elog(EL_FATAL, (msg)), \
+     SednaSystemEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg))
+
+#define USER_EXCEPTION(internal_code) \
+    (elog(EL_ERROR, ("%s %s", \
+                     user_error_code_entries[internal_code].code, \
+                     user_error_code_entries[internal_code].descr)), \
+     SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code))
+
+#define USER_EXCEPTION2(internal_code, details) \
+    (elog(EL_ERROR, ("%s %s Details: %s", \
+                     user_error_code_entries[internal_code].code, \
+                     user_error_code_entries[internal_code].descr, \
+                     details)), \
+     SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code))
+
+#define USER_ENV_EXCEPTION(msg, rollback) \
+    (elog(EL_ERROR, ("%s %s Details: %s", \
+                     user_error_code_entries[0].code, \
+                     user_error_code_entries[0].descr, \
+                     msg)), \
+     SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, rollback))
+
+
+#define USER_ENV_EXCEPTION2(msg, expl, rollback) \
+    (elog(EL_ERROR, ("%s %s Details: %s (%s)", \
+                     user_error_code_entries[0].code, \
+                     user_error_code_entries[0].descr, \
+                     msg, \
+                     expl)), \
+     SednaUserEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg, expl, rollback))
+
+#define USER_SOFT_EXCEPTION(msg) \
+     SednaUserSoftException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
 
 
 

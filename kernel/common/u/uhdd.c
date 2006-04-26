@@ -62,15 +62,26 @@ WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceTo
 UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa)
 {
 #ifdef _WIN32
-    return CreateFile(name, accs, share, sa, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | attr, NULL);
+    UFile fd = CreateFile(name, accs, share, sa, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | attr, NULL);
+    if (fd == U_INVALID_FD) 
+        sys_call_error("CreateFile");
+    return fd;
 #else
     int fd;
     USECURITY_ATTRIBUTES file_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
     if (sa) file_access_mode = *sa;
     fd = open(name, accs | O_CREAT | O_EXCL | O_LARGEFILE | attr, file_access_mode);
-/*    if (fd == -1) return -1;*/
-    if (fd == -1 || fchmod(fd, file_access_mode) == -1)
+    if (fd == -1)
+    {
+        sys_call_error("open");
         return -1;
+    }
+    else if (fchmod(fd, file_access_mode) == -1)
+    {
+        sys_call_error("fchmod");
+        return -1;
+    }
+
     return fd;
 #endif
 }
@@ -78,52 +89,61 @@ UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, 
 UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
 {
 #ifdef _WIN32
-    //d_printf2("uOpenFile=%s opened\n", name);
-    return CreateFile(name, accs, share, NULL, OPEN_EXISTING, attr, NULL);
+    UFile fd = CreateFile(name, accs, share, NULL, OPEN_EXISTING, attr, NULL);
+    if (fd == U_INVALID_FD) 
+        sys_call_error("CreateFile");
+    return fd;
 #else
-    return open(name, accs | O_LARGEFILE | attr, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
+    UFile fd = open(name, accs | O_LARGEFILE | attr, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
+    if (fd == U_INVALID_FD) 
+        sys_call_error("open");
+    return fd;   
 #endif
 }
 
 int uCloseFile(UFile fd)
 {
 #ifdef _WIN32
-    //d_printf1("File Closed\n");
-    return CloseHandle(fd);
+    int res = CloseHandle(fd);
+    if (res == 0)
+        sys_call_error("CloseHandle");
+    return res;
 #else
-    return (close(fd) == -1 ? 0 : 1);
+    int res = close(fd);
+    if (res == -1)
+        sys_call_error("close");
+    return (res == -1 ? 0 : 1);
 #endif
 }
-
 
 int uDeleteFile(const char *name)
 {
 #ifdef _WIN32
-    //d_printf2("uDeleteFile=%s deleted\n", name);
-    return DeleteFile(name);
+    int res = DeleteFile(name);
+    if (res == 0)
+        sys_call_error("DeleteFile");
+    return res;
+
 #else
-    return (remove(name) == -1 ? 0 : 1);
+    int res = remove(name);
+    if (res == -1)
+        sys_call_error("remove");
+    return (res == -1 ? 0 : 1);
 #endif
 }
-
 
 int uDelDir(const char *dir)
 {
 #ifdef _WIN32
-    int res;
-    res = _rmdir(dir);
+    int res = _rmdir(dir);
     if (res != 0)
-        return 0;
-    else
-        return 1;
+        sys_call_error("_rmdir");
+    return (res != 0 ? 0 : 1);
 #else
-    int res;
-    res = rmdir(dir);
+    int res = rmdir(dir);
     if (res != 0)
-        return 0;
-    else
-        return 1;
-
+        sys_call_error("rmdir");
+    return (res != 0 ? 0 : 1);
 #endif
 }
 
@@ -135,22 +155,16 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read)
 {
 #ifdef _WIN32
     BOOL res = ReadFile(fd, buf, to_read, (LPDWORD) already_read, NULL);
-#ifdef EL_DEBUG
-#  if (EL_DEBUG == 1)
     if (res == 0)
-    {
-        d_printf1("ReadFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
-    }
-#  endif
-#endif
+        sys_call_error("ReadFile");
     return res;
 #else
     int res = read(fd, buf, to_read);
     if (res == -1)
-        return 0;
-    *already_read = res;
-    return 1;
+        sys_call_error("read");
+    else 
+        *already_read = res;
+    return (res == -1 ? 0 : 1);
 #endif
 }
 
@@ -160,22 +174,16 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written)
 {
 #ifdef _WIN32
     BOOL res = WriteFile(fd, buf, to_write, (LPDWORD) already_written, NULL);
-#ifdef EL_DEBUG
-#  if (EL_DEBUG == 1)
     if (res == 0)
-    {
-        d_printf1("WriteFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
-    }
-#  endif
-#endif
+        sys_call_error("WriteFile");
     return res;
 #else
     int res = write(fd, buf, to_write);
     if (res == -1)
-        return 0;
-    *already_written = res;
-    return 1;
+        sys_call_error("write");
+    else 
+        *already_read = res;
+    return (res == -1 ? 0 : 1);
 #endif
 }
 
@@ -188,7 +196,8 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth)
     BOOL res;
     _offs.QuadPart = offs;
     res = SetFilePointerEx(fd, _offs, &_res_pos, meth);
-//d_printf2("SetFIlePointer Error=%d\n", GetLastError());
+    if (res == 0)
+        sys_call_error("SetFilePointerEx");
     if (res_pos)
         *res_pos = _res_pos.QuadPart;
     return res;
@@ -196,8 +205,11 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth)
     __int64 _res_pos = lseek64(fd, offs, meth);
     if (res_pos)
         *res_pos = _res_pos;
-    if (_res_pos == (__off64_t) - 1)
+    if (_res_pos == (__off64_t) -1)
+    {
+        sys_call_error("lseek64");
         return 0;
+    }
     return 1;
 #endif
 }
@@ -212,31 +224,52 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
     _offs.QuadPart = offs;
     res = SetFilePointerEx(fd, _offs, &_res_pos, meth);
     if (res == 0)
-        return res;
-    return SetEndOfFile(fd);
+        sys_call_error("SetFilePointerEx");
+    else
+    {
+        res = SetEndOfFile(fd);
+        if (res == 0)
+            sys_call_error("SetEndOfFile");
+    }
+
+    return res;
 #else
     if (meth == U_FILE_BEGIN)
     {
-        /*printf("Calling ftruncate64...\n");*/
         if (ftruncate64(fd, offs) == -1)
+        {
+            sys_call_error("ftruncate64");
             return 0;
+        }
     }
     else if (meth == U_FILE_END)
     {
         struct stat64 buf;
         if (fstat64(fd, &buf) == -1)
+        {
+            sys_call_error("fstat64");
             return 0;
+        }
         if (ftruncate64(fd, buf.st_size + offs) == -1)
+        {
+            sys_call_error("ftruncate64");
             return 0;
+        }
     }
     else if (meth == U_FILE_CURRENT)
     {
         __int64 cur_pos = lseek64(fd, offs, U_FILE_CURRENT);
         if (cur_pos == (__off64_t) - 1)
+        {
+            sys_call_error("lseek64");
             return 0;
+        }
         
         if (ftruncate64(fd, cur_pos + offs) == -1)
+        {
+            sys_call_error("ftruncate64");
             return 0;
+        }
     }
     else return 0;
 
@@ -249,40 +282,53 @@ int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa)
     int res;
 #ifdef _WIN32
     res = _mkdir(name);
-    if (res == -1 && errno == ENOENT)
+    if (res == -1 && errno != EEXIST)
+    {
+        sys_call_error("_mkdir");
         return 0;
-    if (res == -1 && errno == EEXIST)
-        return -1;
-    else
-        return 1;
+    }
+    return 1;
 #else
     USECURITY_ATTRIBUTES dir_access_mode = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
     if (sa) dir_access_mode = *sa;
     
     res = mkdir(name, dir_access_mode);
-    if (res == -1 && errno == ENOENT)
+    if (res == -1 && errno != EEXIST)
+    {
+        sys_call_error("mkdir");
         return 0;
-    if (res == -1 && errno == EEXIST)
-        return -1;
-    else
-        return 1;
+    }
+    return 1;
 #endif
 }
 
 int uIsFileExist(const char *name)
 {
 #ifdef _WIN32
-    return (GetFileAttributes(name) != INVALID_FILE_ATTRIBUTES);
+    if (GetFileAttributes(name) == INVALID_FILE_ATTRIBUTES)
+    {
+        sys_call_error("GetFileAttributes");
+        return 0;
+    }
+    return 1;
 #else
     struct stat64 buf;
-    return (stat64(name, &buf) != -1);
+    if (stat64(name, &buf) == -1)
+    {
+        sys_call_error("stat64");
+        return 0;
+    }
+    return 1;
 #endif
 }
 
 int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exists)
 {
 #ifdef _WIN32
-    return CopyFile(existing_file, new_file, fail_if_exists);
+    BOOL res = CopyFile(existing_file, new_file, fail_if_exists);
+    if (res == 0)
+        sys_call_error("CopyFile");
+    return res;
 #else
 
 #define BUFFLEN 32768
@@ -299,11 +345,17 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
         des = open(new_file, O_CREAT | O_LARGEFILE | O_WRONLY | O_SYNC | O_TRUNC, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
 
     if (des == -1)
+    {
+        sys_call_error("open");
         return 0;
+    }
 
     src = open(existing_file, O_LARGEFILE | O_RDONLY, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK);
     if (src == -1)
+    {
+        sys_call_error("open");
         return 0;
+    }
 
     if (uGetFileSize(src, &src_file_size) == 0)
         return 0;
@@ -314,14 +366,14 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
     {
         if (write(des, buf, c) != c)
         {
-            d_printf1("uCopyFile: write error\n");
+            sys_call_error("write");
             return 0;
         }
     }
 
     if (c < 0)
     {
-        d_printf1("uCopyFile: read error\n");
+        sys_call_error("read");
         return 0;
     }
     return 1;
@@ -333,13 +385,18 @@ int uGetFileSize(UFile fd, __int64 * file_size)
 #ifdef _WIN32
     LARGE_INTEGER size;
     BOOL res = GetFileSizeEx(fd, &size);
-    if (res != 0)
+    if (res == 0)
+        sys_call_error("GetFileSizeEx");
+    else
         *file_size = size.QuadPart;
     return res;
 #else
     struct stat64 buf;
     if (fstat64(fd, &buf) == -1)
+    {
+        sys_call_error("fstat64");
         return 0;
+    }
     *file_size = buf.st_size;
     return 1;
 #endif
@@ -356,9 +413,8 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 
     res = GetDiskFreeSpace(buf, NULL, (LPDWORD) sector_size, NULL, NULL);
     if (res == 0)
-        return 0;
-    else
-        return 1;
+        sys_call_error("GetDiskFreeSpace");
+    return res;
 #else
 #ifdef PREDEFINED_DISK_SECTOR_SIZE
     *sector_size = PREDEFINED_DISK_SECTOR_SIZE;
@@ -373,16 +429,14 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 
     if (lstat(path, &path_buf) == -1)
     {
-        printf("lstat error\n");
-        perror("lstat");
+        sys_call_error("lstat");
         return 0;
     }
 
     n = scandir("/dev", &dir, 0, alphasort);
     if (n == -1)
     {
-        printf("scandir error\n");
-        perror("scandir");
+        sys_call_error("lstat");
         return 0;
     }
 
@@ -394,22 +448,33 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
         memset(buf + 5, '\0', DSS_BUF_SIZE - 5);
         if (strlen(dir[i]->d_name) > DSS_BUF_SIZE - 6)
         {
-            printf("buffer overflow error\n");
+            sys_call_error("<buffer overflow error>");
+
+            for (i = 0; i < n; i++)
+                free(dir[i]);
+            free(dir);
+
             return 0;
         }
         strcpy(buf + 5, dir[i]->d_name);
         if (lstat(buf, &dev_buf) == -1)
         {
-            printf("lstat error\n");
-            perror("lstat");
+            sys_call_error("lstat");
+
+            for (i = 0; i < n; i++)
+                free(dir[i]);
+            free(dir);
+
             return 0;
         }
 
-        if ((major(path_buf.st_dev) == major(dev_buf.st_rdev)) && (minor(path_buf.st_dev) == minor(dev_buf.st_rdev)) && (!S_ISCHR(dev_buf.st_mode)) && strlen(dir[i]->d_name) > 1 && dir[i]->d_name[0] == 'h' && dir[i]->d_name[1] == 'd')
+        if ((major(path_buf.st_dev) == major(dev_buf.st_rdev)) && 
+            (minor(path_buf.st_dev) == minor(dev_buf.st_rdev)) && 
+            (!S_ISCHR(dev_buf.st_mode)) && 
+            (strlen(dir[i]->d_name) > 1) && 
+            (dir[i]->d_name[0] == 'h') && 
+            (dir[i]->d_name[1] == 'd'))
             break;
-/*              {*/
-/*                  printf("%s    %d/%d\n", buf, major(dev_buf.st_dev), minor(dev_buf.st_dev));*/
-/*              }*/
     }
 
     for (i = 0; i < n; i++)
@@ -419,15 +484,13 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
     fd = open(buf, 0);
     if (fd == -1)
     {
-        printf("Error opening device\n");
-        perror("open");
+        sys_call_error("open");
         return 0;
     }
 
     if (ioctl(fd, BLKSSZGET, sector_size) == -1)
     {
-        printf("Error obtaining sector size\n");
-        perror("ioctl");
+        sys_call_error("ioctl");
         return 0;
     }
 
@@ -439,17 +502,16 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid)
 {
 #ifdef _WIN32
-
     WIN32_FIND_DATA find_data;
     char buf[20];
-    UFile tmphanldle;
+    UFile tmphandle;
     USECURITY_ATTRIBUTES *sa;
 
     strcpy(fs->name, directoryName);
     strcat(fs->name, "/tmp.*");
 
-    tmphanldle = FindFirstFile(buf, &find_data);
-    if (tmphanldle == U_INVALID_FD)
+    tmphandle = FindFirstFile(buf, &find_data);
+    if (tmphandle == U_INVALID_FD)
     {
         strcpy(fs->name, directoryName);
         strcat(fs->name, "/tmp.1");
@@ -459,7 +521,7 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
         int found = 1;
         while (found)
         {
-            found = FindNextFile(tmphanldle, &find_data);
+            found = FindNextFile(tmphandle, &find_data);
         }
         strcpy(fs->name, directoryName);
         strcat(fs->name, "/tmp.");
@@ -467,7 +529,7 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
         strncat(fs->name, buf, strlen(buf));
         int2c_str(sid, buf);
         strncat(fs->name, buf, strlen(buf));
-        if (FindClose(tmphanldle) == 0)
+        if (FindClose(tmphandle) == 0)
             return 0;
     }
 
@@ -488,7 +550,10 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
     strcpy(tmp_template, "tmpXXXXXX");
     fs->f = mkstemp(tmp_template);
     if (fs->f == -1)
+    {
+        sys_call_error("mkstemp");
         return 0;
+    }
 
     if (tmp_template == NULL)
         return 0;               /*failed*/
@@ -506,13 +571,13 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
 
     WIN32_FIND_DATA find_data;
     struct file_struct fs;
-    UFile tmphanldle;
+    UFile tmphandle;
     char buf[20];
 
     strcpy(buf, directoryName);
     strcat(buf, "/tmp.*");
-    tmphanldle = FindFirstFile(buf, &find_data);
-    if (tmphanldle == U_INVALID_FD)
+    tmphandle = FindFirstFile(buf, &find_data);
+    if (tmphandle == U_INVALID_FD)
     {
         strcpy(file_name, directoryName);
         strcat(file_name, "/tmp.1");
@@ -522,13 +587,13 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
         int found = 1;
         while (found)
         {
-            found = FindNextFile(tmphanldle, &find_data);
+            found = FindNextFile(tmphandle, &find_data);
         }
         strcpy(file_name, directoryName);
         strcat(file_name, "/tmp.");
         int2c_str(atoi(find_data.cFileName + 4) + 1, buf);
         strncat(file_name, buf, strlen(buf));
-        if (FindClose(tmphanldle) == 0)
+        if (FindClose(tmphandle) == 0)
             return 0;
     }
     return 1;
@@ -540,7 +605,10 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
     strcpy(tmp_template, "tmpXXXXXX");
     f = mkstemp(tmp_template);
     if (f == -1)
+    {
+        sys_call_error("mkstemp");
         return 0;
+    }
     if (tmp_template == NULL)
         return 0;               /*failed*/
 
@@ -554,53 +622,115 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
 char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength)
 {
 #ifdef _WIN32
-    return _fullpath(absPath, relPath, maxLength);
+    char *p = _fullpath(absPath, relPath, maxLength);
+    if (p == NULL)
+        sys_call_error("_fullpath");
+    return p;
 #else
-    return realpath(relPath, absPath);
+    char *p = realpath(relPath, absPath);
+    if (p == NULL)
+        sys_call_error("realpath");
+    return p;
 #endif
 }
 
 char *uGetCurrentWorkingDirectory(char *buf, int maxLength)
 {
 #ifdef _WIN32
-    return _getcwd(buf, maxLength);
+    char *p = _getcwd(buf, maxLength);
+    if (p == NULL)
+        sys_call_error("_getcwd");
+    return p;
 #else
-    return getcwd(buf, maxLength);
+    char *p = getcwd(buf, maxLength);
+    if (p == NULL)
+        sys_call_error("getcwd");
+    return p;
+
 #endif
 }
 
 int uChangeWorkingDirectory(const char *path)
 {
 #ifdef _WIN32
-    return _chdir(path);
+    int res = _chdir(path);
+    if (res != 0)
+        sys_call_error("_chdir");
+    return res;
 #else
-    return chdir(path);
+    int res = chdir(path);
+    if (res != 0)
+        sys_call_error("chdir");
+    return res;
 #endif
 }
 
-char *uGetDirectoryFromFilePath(const char *path, char *extr_dir, int dirLength)
+char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len)
 {
 #ifdef _WIN32
     char drive[_MAX_DRIVE];
     char dir[_MAX_DIR];
-    char *path2;
+    char *tmp_path = NULL;
 
-    path2 = (char *) malloc(sizeof(char) * (strlen(path) + 1));
-    strcpy(path2, path);
-    _splitpath(path2, drive, dir, NULL, NULL);
+    tmp_path = strdup(path);
+    _splitpath(tmp_path, drive, dir, NULL, NULL);
+    if (strlen(drive) + strlen(dir) + 1 > buf_len)
+    {
+        free(tmp_path);
+        return NULL;
+    }
+    strcpy(buf, drive);
+    strcat(buf, dir);
+    free(tmp_path);
 
-    memcpy(extr_dir, drive, strlen(drive));
-    memcpy(extr_dir + strlen(drive), dir, strlen(dir) + 1);
-    free(path2);
-    return extr_dir;
+    return buf;
 #else
-    char *path2;
+    char *tmp_path = NULL, *dir_name = NULL;
+    tmp_path = strdup(path);
+    dir_name = dirname(tmp_path);
+    if (strlen(dir_name) + 1 > buf_len)
+    {
+        free(tmp_path);
+        return NULL;
+    }
+    strcpy(buf, dir_name);
+    free(tmp_path);
 
-    path2 = (char *) malloc(sizeof(char) * (strlen(path) + 1));
-    strcpy(path2, path);
-    strcpy(extr_dir, dirname(path2));
-    free(path2);
+    return buf;
+#endif
+}
 
-    return extr_dir;
+char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len)
+{
+#ifdef _WIN32
+    char fname[_MAX_FNAME];
+    char ext[_MAX_EXT];
+    char *tmp_path = NULL;
+
+    tmp_path = strdup(path);
+    _splitpath(tmp_path, NULL, NULL, fname, ext);
+    if (strlen(fname) + strlen(ext) + 1 > buf_len)
+    {
+        free(tmp_path);
+        return NULL;
+    }
+    strcpy(buf, fname);
+    strcat(buf, ext);
+    free(tmp_path);
+
+    return buf;
+#else
+    char *tmp_path = NULL, *file_name = NULL;
+    tmp_path = strdup(path);
+    file_name = basename(tmp_path);
+    if (strlen(file_name) + 1 > buf_len)
+    {
+        free(tmp_path);
+        return NULL;
+    }
+    strcpy(buf, file_name);
+    free(tmp_path);
+
+    return buf;
 #endif
 }

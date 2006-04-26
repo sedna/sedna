@@ -81,6 +81,10 @@ void create_db(__int64 data_file_max_size,
     set_global_names();
     set_global_names(db_name);
 
+    event_logger_init(EL_CDB, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+    elog(EL_LOG, ("Request for database creation"));
+
+
     cdb_ugc(db_name);
 
 
@@ -512,12 +516,16 @@ int main(int argc, char **argv)
              else
                 throw USER_EXCEPTION2(SE4211, db_name);
 
+             elog(EL_LOG, ("Request for database creation satisfied"));
+             event_logger_release();
+
              ppc.shutdown();
              is_ppc_closed = true;
              if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
 
         } catch (SednaUserException &e) {
+             event_logger_release();
              if (!is_ppc_closed) ppc.shutdown();
              cleanup_db(db_name);
              fprintf(stderr, "%s\n", e.getMsg().c_str());
