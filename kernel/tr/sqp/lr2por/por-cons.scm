@@ -142,6 +142,8 @@
        (list (car expr)  ; number - tuple size
              (car new))
        (cdr new))))
+    ((pair? (car expr))  ; a-la SXPath nodeset
+     (porc:map porc:process-phys-op expr copy? ns-prefix))
     (else  ; propagate
      (porc:propagate porc:process-phys-op expr copy? ns-prefix))))
      
