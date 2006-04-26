@@ -465,7 +465,7 @@ DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
 	
 	//if (((SednaSearchJob*)lpParam)->hilight)
 	{
-		
+		//FIXME
 		dtsOptions opts;
 		short result;
 		dtssGetOptions(opts, result);

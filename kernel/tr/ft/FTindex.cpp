@@ -83,6 +83,13 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 	this->SuppressMessagePump();
 	//Create file with trid if already exists abort
 	log_file = get_log_file(ft_idx->index_title);
+
+	//FIXME
+	dtsOptions opts;
+	short result;
+	dtssGetOptions(opts, result);
+	opts.fieldFlags = dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+	dtssSetOptions(opts, result);
 }
 void SednaIndexJob::set_index_name(tuple_cell& request)
 {
