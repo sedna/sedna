@@ -12,6 +12,7 @@ void ftlog_file::write_xptr_sequence(xptr_sequence* seq)
 	while (it!=seq->end())
 	{
 		xptr ptr = *it;
+		it++;
 		this->write_data(&ptr, sizeof(ptr));
 	}
 }
