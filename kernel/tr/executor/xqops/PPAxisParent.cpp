@@ -136,12 +136,12 @@ void PPAxisParent::next_qname(tuple &t)
 
         cur = child.get(t).get_node();
         cur = get_parent_node(cur);
+		if (cur==XNULL) continue;
         CHECKP(cur);
-        if (!(cur != NULL &&
-              comp_qname_type(GETSCHEMENODEX(cur),
+        if (!comp_qname_type(GETSCHEMENODEX(cur),
                               tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
                               nt_data.qname.LocalPart.n, 
-                              element)))
+                              element))
             cur = XNULL;
     }
 
