@@ -8,9 +8,10 @@
 
 #include <string>
 #include <map>
+
+#include "sedna.h"
+
 #include "base.h"
-#include "exceptions.h"
-#include "uprocess.h"
 #include "ushm.h"
 
 #define GOV_SHM (gov_shared_mem)

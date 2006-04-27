@@ -78,7 +78,7 @@ StringVector parse_batch(QueryType type, const char* batch)
 
 //  getchar();
 
-     malloc_ast_vector();
+//     malloc_ast_vector();
 
      if (type == TL_XQuery)
      {
@@ -94,7 +94,7 @@ StringVector parse_batch(QueryType type, const char* batch)
         array.push_back(string(batch));
      }
 
-     free_ast_vector();
+//     free_ast_vector();
      GET_TIME(&t2_parser);
 
      ADD_TIME(t_total_parser, t1_parser, t2_parser);
@@ -102,7 +102,7 @@ StringVector parse_batch(QueryType type, const char* batch)
 
      return array;
  } catch(SednaUserException &e) {
-     free_ast_vector();
+//     free_ast_vector();
      GET_TIME(&t2_parser);
      ADD_TIME(t_total_parser, t1_parser, t2_parser);
 

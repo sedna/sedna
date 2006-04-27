@@ -70,15 +70,11 @@ extern "C" {
  */
 extern MemoryContext TopMemoryContext;
 extern MemoryContext ErrorContext;
-extern MemoryContext PostmasterContext;
-extern MemoryContext CacheMemoryContext;
-extern MemoryContext MessageContext;
-extern MemoryContext TopTransactionContext;
-extern MemoryContext CurTransactionContext;
 
-/* These two are transient links to contexts owned by other objects: */
-extern MemoryContext QueryContext;
-extern MemoryContext PortalContext;
+extern MemoryContext TransactionContext;
+extern MemoryContext UserStatementContext;
+extern MemoryContext KernelStatementContext;
+extern MemoryContext XQParserContext;
 
 
 /*

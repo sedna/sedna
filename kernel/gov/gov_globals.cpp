@@ -3,21 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <map>
-#include <list>
-#include <string>
-#include <iostream>
-#include "base.h"
-#include "uprocess.h"
-#include "exceptions.h"
+#include "sedna.h"
+
 #include "gov_globals.h"
-#include "gov_table.h"
-#include "utils.h"
-#include "argtable.h"
-#include "d_printf.h"
 
-
-using namespace std;
 
 
 info_table *gov_table;

@@ -6,22 +6,14 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <stdio.h>
 #include <iostream>
+
+#include "sedna.h"
+
 #include "gov_table.h"
-#include "exceptions.h"
-#include "usem.h"
-#include "base.h"
 #include "d_printf.h"
-#include "gov_globals.h"
-#include "gov_functions.h"
 #include "SSMMsg.h"
 
-#ifdef _WIN32
-#else
-#include <sys/types.h> 
-#include <sys/wait.h>
-#endif
 
 
 

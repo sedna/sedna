@@ -4,19 +4,14 @@
  */
 
 
+#include "sedna.h"
 
-#include <iostream>
-#include <stdio.h>
-#include <string.h>
-#include "SSMMsg.h"
-#include "base.h"
-#include "exceptions.h"
 #include "argtable.h"
 #include "version.h"
 #include "pping.h"
-#include "usecurity.h"
 #include "listener.h"
 #include "sp.h"
+#include "ipc_ops.h"
 
 using namespace std;
 

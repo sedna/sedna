@@ -4,19 +4,20 @@
  */
 
 #include <string>
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <dirent.h>
+#endif
+
+#include "sedna.h"
+
 #include "gov_globals.h"
 #include "gov_table.h"
 #include "d_printf.h"
 #include "uhdd.h"
-#include "exceptions.h"
 #include "ugc.h"
 #include "pping.h"
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <sys/types.h>
-#include <dirent.h>
-#endif
 
 using namespace std;
 

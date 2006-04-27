@@ -3,19 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <iostream>
-#include "SSMMsg.h"
-#include "base.h"
-#include "exceptions.h"
-#include "usem.h"
-#include "usocket.h"
+#include "sedna.h"
+
 #include "d_printf.h"
 #include "argtable.h"
 #include "version.h"
 #include "pping.h"
-#include "usecurity.h"
 #include "ipc_ops.h"
-#include "listener.h"
 
 using namespace std;
 

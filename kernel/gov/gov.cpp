@@ -12,7 +12,6 @@
 #include "SSMMsg.h"
 #include "usem.h"
 #include "base.h"
-#include "exceptions.h"
 #include "gov_globals.h"
 #include "gov_functions.h"
 #include "d_printf.h"
@@ -21,9 +20,10 @@
 #include "ugc.h"
 #include "gov_table.h"
 #include "listener.h"
-#include "usecurity.h"
 #include "uprocess.h"
 #include "gmm.h"
+#include "ipc_ops.h"
+#include "memutils.h"
 
 
 #define GOV_BACKGROUND_MODE_TIMEOUT					15000
@@ -67,7 +67,6 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
 } 
 
 #else
-#include <signal.h>
 
 void GOVCtrlHandler(int signo)
 {
@@ -100,7 +99,7 @@ int main(int argc, char** argv)
     bool is_pps_close = true;
 
     try {
-
+        MemoryContextInit();
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
         char buf[1024];
