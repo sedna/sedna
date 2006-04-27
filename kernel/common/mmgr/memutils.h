@@ -57,6 +57,11 @@ typedef struct StandardChunkHeader
 #define STANDARDCHUNKHEADERSIZE  MAXALIGN(sizeof(StandardChunkHeader))
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /*
  * Standard top-level memory contexts.
  *
@@ -101,9 +106,9 @@ extern bool MemoryContextContains(MemoryContext context, void *pointer);
  * specific creation routines, and noplace else.
  */
 extern MemoryContext MemoryContextCreate(usize_t size,
-					MemoryContextMethods *methods,
-					MemoryContext parent,
-					const char *name);
+                                         MemoryContextMethods *methods,
+                                         MemoryContext parent,
+                                         const char *name);
 
 
 /*
@@ -112,10 +117,14 @@ extern MemoryContext MemoryContextCreate(usize_t size,
 
 /* aset.c */
 extern MemoryContext AllocSetContextCreate(MemoryContext parent,
-					  const char *name,
-					  usize_t minContextSize,
-					  usize_t initBlockSize,
-					  usize_t maxBlockSize);
+                                           const char *name,
+                                           usize_t minContextSize,
+                                           usize_t initBlockSize,
+                                           usize_t maxBlockSize);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts
