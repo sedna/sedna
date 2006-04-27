@@ -15,6 +15,8 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
     UMMap m;
     m.fd = fd;
     m.map = CreateFileMapping(fd, sa, PAGE_READWRITE, 0, size, name);
+    if (m.map == NULL) sys_call_error("CreateFileMapping");
+
     if (m.map == NULL || GetLastError() == ERROR_ALREADY_EXISTS) m.map = NULL;
 
     return m;
@@ -29,13 +31,13 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
         m.to_file = 0;
         if (m.map == -1)
         {
-            d_perror("shm_open");
+            sys_call_error("shm_open");
             return m;
         }
 
         if (ftruncate(m.map, size) == -1)
         {
-            d_perror("ftruncate");
+            sys_call_error("ftruncate");
             m.map = -1;
             return m;
         }
@@ -45,7 +47,7 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
         struct stat buf;
         if (fstat(fd, &buf) == -1)
         {
-            d_perror("fstat");
+            sys_call_error("fstat");
             m.map = -1;
             return m;
         }
@@ -65,6 +67,7 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name)
     UMMap m;
     m.fd = INVALID_HANDLE_VALUE;
     m.map = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
+    if (m.map == NULL) sys_call_error("OpenFileMapping");
     return m;
 #else
     UMMap m;
@@ -75,7 +78,7 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name)
         m.to_file = 0;
         if (m.map == -1)
         {
-            d_perror("shm_open");
+            sys_call_error("shm_open");
             return m;
         }
     }
@@ -84,7 +87,7 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name)
         struct stat buf;
         if (fstat(fd, &buf) == -1)
         {
-            d_perror("fstat");
+            sys_call_error("fstat");
             m.map = -1;
             return m;
         }
@@ -101,13 +104,18 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name)
 int uReleaseFileMapping(UMMap m, const char *name)
 {
 #ifdef _WIN32
-    return (CloseHandle(m.map) == 0 ? -1 : 0);
+    if( CloseHandle(m.map) == 0)
+    {
+      sys_call_error("CloseHandle");
+      return -1;
+    }
+    else return 0;
 #else
     if (name)
     {
         if (shm_unlink(name) == -1)
         {
-            perror("shm_unlink");
+            sys_call_error("shm_unlink");
             return -1;
         }
     }
@@ -119,7 +127,12 @@ int uReleaseFileMapping(UMMap m, const char *name)
 int uCloseFileMapping(UMMap m)
 {
 #ifdef _WIN32
-    return (CloseHandle(m.map) == 0 ? -1 : 0);
+    if (CloseHandle(m.map) == 0)
+    {
+       sys_call_error("CloseHandle");
+       return -1;
+    }
+    else return 0;
 #else
     return 0;
 #endif
@@ -128,35 +141,79 @@ int uCloseFileMapping(UMMap m)
 void *uMapViewOfFile(UMMap m, void *addr, int size, int offs)
 {
 #ifdef _WIN32
-    return MapViewOfFileEx(m.map, FILE_MAP_ALL_ACCESS, 0, offs, size, addr);
+    void *ret_val;
+    if ((ret_val = MapViewOfFileEx(m.map, FILE_MAP_ALL_ACCESS, 0, offs, size, addr)) == NULL)
+    {
+       sys_call_error("MapViewOfFileEx");
+       return ret_val;
+    }
+    else return ret_val;
 #else
     if (size == 0) size = m.size;
+    void* ret_val;
 
-    if (addr) return mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m.map, offs);
-    else return mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m.map, offs);
+    if (addr)
+    { 
+      ret_val = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m.map, offs);
+      if (ret_val == MAP_FAILED)
+         sys_call_error("mmap");
+
+      return ret_val;
+    }
+    else
+    {
+      ret_val= mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m.map, offs);
+      if (ret_val == MAP_FAILED)
+         sys_call_error("mmap");
+
+      return ret_val;
+
+    }
 #endif
 }
 
 int uUnmapViewOfFile(UMMap m, void *addr, int size)
 {
 #ifdef _WIN32
-    return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
+    if (UnmapViewOfFile(addr) == 0)
+    {
+       sys_call_error("UnmapViewOfFile");
+       return -1;
+    }
+    else return 0;
 #else
     if (size == 0) size = m.size;
 
-    return munmap(addr, size);
+    int res;
+    if ((res = munmap(addr, size)) == -1)
+    {
+       sys_call_error("munmap");
+       return res;
+    }
+    else return res;
 #endif
 }
 
 int uFlushViewOfFile(UMMap m, void *addr, int size)
 {
 #ifdef _WIN32
-    return (FlushViewOfFile(addr, size) == 0 ? -1 : 0);
+    if (FlushViewOfFile(addr, size) == 0)
+    {
+       sys_call_error("FlushViewOfFile");
+       return -1;
+    }
+    else return 0;
 #else
     if (m.to_file)
     {
+        int res;
         if (size == 0) size = m.size;
-        return msync(addr, size, MS_SYNC);
+        if ((res = msync(addr, size, MS_SYNC)) == -1)
+        {
+          sys_call_error("msync");
+          return res;
+        }
+        else return res;
     }
     else return 0;
 #endif
@@ -165,10 +222,15 @@ int uFlushViewOfFile(UMMap m, void *addr, int size)
 int uMemLock(void *addr, size_t size)
 {
 #ifdef _WIN32
-    return (VirtualLock(addr, size) == 0 ? -1 : 0);
+    if (VirtualLock(addr, size) == 0)
+    {
+       sys_call_error("VirtualLock");
+       return -1;
+    }
+    else return 0;
 #else
     int res = mlock(addr, size);
-    if (res == -1) d_perror("mlock");
+    if (res == -1) sys_call_error("mlock");
     return res;
 #endif
 }
@@ -176,10 +238,16 @@ int uMemLock(void *addr, size_t size)
 int uMemUnlock(void *addr, size_t size)
 {
 #ifdef _WIN32
-    return (VirtualUnlock(addr, size) == 0 ? -1 : 0);
+    if (VirtualUnlock(addr, size) == 0)
+    {
+       sys_call_error("VirtualUnlock");
+       return -1;
+    }
+    else return 0;
 #else
     int res = munlock(addr, size);
-    if (res == -1) d_perror("munlock");
+    if (res == -1) 
+       sys_call_error("munlock");
     return res;
 #endif
 }

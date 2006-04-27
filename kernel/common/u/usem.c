@@ -18,8 +18,7 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 
     if (*sem == NULL)
     {
-        d_printf1("CreateSemaphore failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CreateSemaphore");
         return 1;
     }
     else
@@ -54,14 +53,14 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 
     if (*sem < 0)
     {
-        d_perror("semget");
+        sys_call_error("semget");
         return 1;
     }
 	semctl_arg.val = init_value;
 
 	if(semctl(*sem, 0, SETVAL, semctl_arg) < 0)
 	{
-        d_perror("semctl");
+        sys_call_error("semctl");
 		return 1;
 	}
 
@@ -77,8 +76,7 @@ int USemaphoreOpen(USemaphore *sem, global_name name)
 
     if (*sem == NULL)
     {
-        //d_printf1("OpenSemaphore failed\n");
-        //d_printf2("Error %d\n", GetLastError());
+        sys_call_error("OpenSemaphore");
         return 1;
     }
 
@@ -96,7 +94,7 @@ int USemaphoreOpen(USemaphore *sem, global_name name)
 
     if (*sem < 0)
     {
-        d_perror("semget");
+        sys_call_error("semget");
         return 1;
     }
 
@@ -111,8 +109,7 @@ int USemaphoreRelease(USemaphore sem)
 
     if (res == 0)
     {
-        d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CloseHandle");
         return 1;
     }
 
@@ -134,7 +131,7 @@ int USemaphoreRelease(USemaphore sem)
 	{
 		if (semctl(sem, 0, IPC_RMID) < 0)
 		{
-            d_perror("semctl");
+            sys_call_error("semctl");
 			return 1;
 		}
 	}
@@ -150,8 +147,7 @@ int USemaphoreClose(USemaphore sem)
 
     if (res == 0)
     {
-        d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CloseHandle");
         return 1;
     }
 
@@ -170,7 +166,7 @@ int USemaphoreDown(USemaphore sem)
     res = WaitForSingleObject(sem, INFINITE);
     if (res == WAIT_FAILED || res != WAIT_OBJECT_0)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
 
@@ -190,7 +186,7 @@ int USemaphoreDown(USemaphore sem)
         else if (errno == EINTR) continue;
         else 
         {
-            d_perror("semop");
+            sys_call_error("semop");
             return 1;
         }
     }
@@ -206,7 +202,7 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec)
 
     if (res == WAIT_FAILED)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
  
@@ -234,7 +230,7 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec)
         }
         else 
         {
-            d_perror("semop");
+            sys_call_error("semop");
             return 1;
         }
     }
@@ -252,7 +248,7 @@ int USemaphoreUp(USemaphore sem)
 
     if (res == 0) 
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("ReleaseSemaphore");
         return 1;
     }
 
@@ -267,7 +263,7 @@ int USemaphoreUp(USemaphore sem)
 	res = semop(sem, &op_op[0], 1);	
 	if(res < 0)
 	{
-        d_perror("semop");
+        sys_call_error("semop");
 		return 1;	
 	}
 	return 0;
@@ -317,8 +313,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
         if ((*sem)[i] == NULL)
         {
             free(*sem);
-            d_printf1("CreateSemaphore failed\n");
-            d_printf2("Error %d\n", GetLastError());
+            sys_call_error("CreateSemaphore");
             return 1;
         }
         else
@@ -355,8 +350,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 
     if (*sem < 0)
     {
-        d_printf1("USemaphoreArrCreate failed\n");
-        //d_printf2("Error %d\n", perror(semget));
+        sys_call_error("semget");
         return 1;
     }
 
@@ -367,8 +361,9 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
         if(semctl(*sem, i, SETVAL, semctl_arg) < 0)
         {
 		    //d_printf3("ERRROR: %d. Can't set initial value for %x semaphore\n", perror(semctl), (int)name);
-		    d_printf2("Can't set initial value for %x semaphore\n", (int)name);
-		     return 1;
+		    //d_printf2("Can't set initial value for %x semaphore\n", (int)name);
+            sys_call_error("semctl");
+		    return 1;
     	}
     }
 
@@ -407,8 +402,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
         if ((*sem)[i] == NULL)
         {
             free(*sem);
-            d_printf1("OpenSemaphore failed\n");
-            d_printf2("Error %d\n", GetLastError());
+            sys_call_error("OpenSemaphore");
             return 1;
         }
     }
@@ -427,8 +421,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
 
     if (*sem < 0)
     {
-        d_printf1("USemaphoreArrOpen failed\n");
-        //d_printf2("Error %d\n", perror(semget));
+        sys_call_error("semget"); 
         return 1;
     }
 
@@ -449,8 +442,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size)
 
         if (res == 0)
         {
-            d_printf1("CloseHandle failed\n");
-            d_printf2("Error %d\n", GetLastError());
+            sys_call_error("CloseHandle");
             return 1;
         }
     }
@@ -478,7 +470,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size)
 		//semctl_arg.val = 0;
 		if (semctl(sem, 0, IPC_RMID/*, semctl_arg*/) < 0)
 		{
-			d_printf1("Can't do IPC_RMID\n");
+            sys_call_error("semctl");
 			return 1;
 		}
 	}
@@ -499,8 +491,7 @@ int USemaphoreArrClose(USemaphoreArr sem, int size)
 
         if (res == 0)
         {
-            d_printf1("CloseHandle failed\n");
-            d_printf2("Error %d\n", GetLastError());
+            sys_call_error("CloseHandle");
             return 1;
         }
     }
@@ -523,7 +514,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i)
 
     if (res == WAIT_FAILED || res != WAIT_OBJECT_0)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
 
@@ -544,8 +535,8 @@ int USemaphoreArrDown(USemaphoreArr sem, int i)
         else if (errno == EINTR) continue;
         else 
         {
-            perror("semop");
-            d_printf2("USemaphoreArrDown error (index - %d)\n", i);
+            sys_call_error("semop");
+            //d_printf2("USemaphoreArrDown error (index - %d)\n", i);
             return 1;
         }
     }
@@ -561,7 +552,7 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec)
 
     if (res == WAIT_FAILED)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
  
@@ -583,7 +574,17 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec)
     {    
     	res = semop(sem, &op_op[0], 1);
 	
-    	if(res == 0) return 0; 
+    	if (res == 0) return 0; 
+        else if (errno == EAGAIN)
+        {
+            sleep(1);
+        }
+        else 
+        {
+            sys_call_error("semop");
+            return 1;
+        }
+
     	//else sleep(1);
     }
 
@@ -600,7 +601,7 @@ int USemaphoreArrUp(USemaphoreArr sem, int i)
 
     if (res == 0) 
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("ReleaseSemaphore");
         return 1;
     }
 
@@ -617,8 +618,7 @@ int USemaphoreArrUp(USemaphoreArr sem, int i)
 	
 	if(res < 0)
 	{
-		d_printf1("Error decremetning\n");
-		//d_printf2("Error decremetning %x\n", perror(semop));
+        sys_call_error("semop");
 		return 1;	
 	}
 	return 0;
@@ -639,8 +639,7 @@ int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_AT
 
     if (*sem == NULL)
     {
-        d_printf1("CreateSemaphore failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CreateSemaphore");
         return 1;
     }
 
@@ -653,17 +652,16 @@ int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_AT
     res = pthread_mutex_init(&(sem->mutex), NULL);
     if (res != 0)
     {
-        d_printf1("pthread_mutex_init failed\n");
-        d_perror("pthread_mutex_init");
+        sys_call_error("pthread_mutex_init");
         return 1;
     }
 
     res = pthread_cond_init(&(sem->condition), NULL);
     if (res != 0)
     {
-        d_printf1("pthread_cond_init failed\n");
-        d_perror("pthread_cond_init");
-        pthread_mutex_destroy(&(sem->mutex));
+        sys_call_error("pthread_cond_init"); 
+        if (pthread_mutex_destroy(&(sem->mutex)) != 0) 
+           sys_call_error("pthread_mutex_destroy");
         return 1;
     }
 
@@ -680,8 +678,7 @@ int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem)
 
     if (res == 0)
     {
-        d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CloseHandle");
         return 1;
     }
 
@@ -693,16 +690,14 @@ int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem)
     res = pthread_mutex_destroy(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_destroy failed\n");
-        d_perror("pthread_mutex_destroy");
+        sys_call_error("pthread_mutex_destroy");
         return 1;
     }
 
     res = pthread_cond_destroy(&(sem->condition));
     if (res != 0)
     {
-        d_printf1("pthread_cond_destroy failed\n");
-        d_perror("pthread_cond_destroy");
+        sys_call_error("pthread_cond_destroy");
         return 1;
     }
 
@@ -718,7 +713,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
 
     if (res == WAIT_FAILED || res != WAIT_OBJECT_0)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
 
@@ -731,8 +726,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
     res = pthread_mutex_lock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_lock failed\n");
-        d_perror("pthread_mutex_lock");
+        sys_call_error("pthread_mutex_lock");
         return 1;
     }
 
@@ -741,8 +735,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
         res = pthread_cond_wait(&(sem->condition), &(sem->mutex));
         if (res != 0)
         {
-            d_printf1("pthread_cond_wait failed\n");
-            d_perror("pthread_cond_wait");
+            sys_call_error("pthread_cond_wait");
             return 1;
         }
     }
@@ -752,8 +745,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
     res = pthread_mutex_unlock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_unlock failed\n");
-        d_perror("pthread_mutex_unlock");
+        sys_call_error("pthread_mutex_unlock");
         return 1;
     }
 
@@ -773,7 +765,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
 
     if (res == WAIT_FAILED)
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("WaitForSingleObject");
         return 1;
     }
  
@@ -794,8 +786,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
     res = pthread_mutex_lock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_lock failed\n");
-        d_perror("pthread_mutex_lock");
+        sys_call_error("pthread_mutex_lock");
         return 1;
     }
 
@@ -808,8 +799,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
             res = pthread_mutex_unlock(&(sem->mutex));
             if (res != 0)
             {
-                d_printf1("pthread_mutex_unlock failed\n");
-                d_perror("pthread_mutex_unlock");
+                sys_call_error("pthread_mutex_unlock");
                 return 1;
             }
             //d_printf1("timedwait: timeout\n");
@@ -817,8 +807,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
         }
         else if (res != 0)
         {
-            d_printf1("pthread_cond_wait failed\n");
-            d_perror("pthread_cond_wait");
+            sys_call_error("pthread_cond_timedwait");
             return 1;
         }
     }
@@ -828,8 +817,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
     res = pthread_mutex_unlock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_unlock failed\n");
-        d_perror("pthread_mutex_unlock");
+        sys_call_error("pthread_mutex_unlock");
         return 1;
     }
 
@@ -847,7 +835,7 @@ int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem)
 
     if (res == 0) 
     {
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("ReleaseSemaphore");
         return 1;
     }
 
@@ -860,8 +848,7 @@ int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem)
     res = pthread_mutex_lock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_lock failed\n");
-        d_perror("pthread_mutex_lock");
+        sys_call_error("pthread_mutex_lock");
         return 1;
     }
 
@@ -870,16 +857,14 @@ int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem)
     res = pthread_mutex_unlock(&(sem->mutex));
     if (res != 0)
     {
-        d_printf1("pthread_mutex_unlock failed\n");
-        d_perror("pthread_mutex_unlock");
+        sys_call_error("pthread_mutex_unlock");
         return 1;
     }
 
     res = pthread_cond_signal(&(sem->condition));
     if (res != 0)
     {
-        d_printf1("pthread_cond_signal failed\n");
-        d_perror("pthread_cond_signal");
+        sys_call_error("pthread_cond_signal");
         return 1;
     }
 

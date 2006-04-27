@@ -25,10 +25,16 @@ int uPipe(UPIPE* rpipe, /*read pipe*/
                );
 
     if (res != 0) return 0;
-    else return -1;
+    else
+    {
+      sys_call_error("CreatePipe");
+      return -1;
+    }
 #else
     int fildes[2];
     int res = pipe(fildes);
+    if (res == -1) sys_call_error("pipe");
+
     *rpipe = fildes[0];
     *wpipe = fildes[1];
     return res;
@@ -55,13 +61,17 @@ int uReadPipe(UPIPE rpipe,	/*read pipe*/
         if (GetLastError() == 109) return bytes_read;
         else
         {
-            d_printf2("Read Pipe error %d\n", GetLastError());
+            sys_call_error("ReadFile");
             return -1;
         }
     }
     else return bytes_read;
 #else
-    return read(rpipe, buf, nbyte);
+    int res;
+    if ((res = read(rpipe, buf, nbyte)) == -1)
+       sys_call_error("read");
+
+    return res;
 #endif
 }
 
@@ -133,12 +143,16 @@ int uWritePipe(UPIPE wpipe,	/*write pipe*/
 
     if (res == 0) 
     {
-        d_printf2("Write Pipe error %d\n", GetLastError());
+        sys_call_error("WriteFile");
         return -1;
     }
     else return bytes_written;
 #else
-    return write(wpipe, buf, nbyte);
+    int res;
+    if ((res = write(wpipe, buf, nbyte)) == -1)
+       sys_call_error("write");
+ 
+    return res;
 #endif
 }
 
@@ -168,10 +182,18 @@ int uClosePipe(UPIPE upipe)
                );
 
 
-    if (res == 0) return -1;
+    if (res == 0)
+    {
+       sys_call_error("CloseHandle");
+       return -1;
+    }
     else return 0;
 #else
-    return close(upipe);
+    int res;
+    if ((res = close(upipe)) == -1)
+       sys_call_error("close");
+
+    return res;
 #endif
 }
 
@@ -192,6 +214,7 @@ int uReadPipeAll(UPIPE rpipe, std::string &str)
     return 0;
 }
 
+/*
 int uPipeDoNotInherit(UPIPE *upipe)
 {
 #ifdef _WIN32
@@ -213,3 +236,4 @@ int uPipeDoNotInherit(UPIPE *upipe)
     return 0;
 #endif
 }
+*/
