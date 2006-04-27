@@ -403,7 +403,7 @@ void backup_ph()
     string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false) == 0)
-        throw USER_EXCEPTION2(SE4049, ph_file_name + " to " + ph_bu_file_name);
+        throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
 }
 
 

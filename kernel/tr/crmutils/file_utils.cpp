@@ -708,7 +708,7 @@ void parse_load(FILE* f, se_ostream &s)
 				XML_GetCurrentLineNumber(p),
 				XML_ErrorString(XML_GetErrorCode(p)));
 			XML_ParserFree(p);
-			throw USER_EXCEPTION2(SE2005, std::string(tmp));
+			throw USER_EXCEPTION2(SE2005, tmp);
 		}
 	}
 	if (XML_Parse(p, Buff, len, done)== XML_STATUS_ERROR)
@@ -718,7 +718,7 @@ void parse_load(FILE* f, se_ostream &s)
 			XML_GetCurrentLineNumber(p),
 			XML_ErrorString(XML_GetErrorCode(p)));
 		XML_ParserFree(p);
-		throw USER_EXCEPTION2(SE2005, std::string(tmp));
+		throw USER_EXCEPTION2(SE2005, tmp);
 	}
 	sizehnt=NULL;
 	XML_ParserFree(p);
@@ -771,7 +771,7 @@ void parse_schema(FILE* f)
 				XML_GetCurrentLineNumber(p),
 				XML_ErrorString(XML_GetErrorCode(p)));
 			XML_ParserFree(p);
-			throw USER_EXCEPTION2(SE2005, std::string(tmp));
+			throw USER_EXCEPTION2(SE2005, tmp);
 			
 		}
 	}
@@ -782,7 +782,7 @@ void parse_schema(FILE* f)
 			XML_GetCurrentLineNumber(p),
 			XML_ErrorString(XML_GetErrorCode(p)));
 		XML_ParserFree(p);
-		throw USER_EXCEPTION2(SE2005, std::string(tmp));
+		throw USER_EXCEPTION2(SE2005, tmp);
 	}
     /*it_map= xm_nsp.begin();
 	while (it_map!=xm_nsp.end())

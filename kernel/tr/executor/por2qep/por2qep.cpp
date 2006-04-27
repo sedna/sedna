@@ -2218,7 +2218,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                  make_pp_op(gqid, qp, asqV, lst->at(3).internal.list));
     }
 */
-    else throw USER_EXCEPTION2(SE1004, "Wrong plan representation, unknown operation " + op);
+    else throw USER_EXCEPTION2(SE1004, ("Wrong plan representation, unknown operation " + op).c_str());
 
     return PPOpIn(opit, ts);
 }

@@ -152,7 +152,7 @@ int load_metadata_in_database(const char* db_name)
   res = uWaitForChildProcess(pid, proc_h, &ret_status);
 
   if (res == 0 && ret_status != 0)
-      throw USER_EXCEPTION2(SE4211, string(db_name) + string(" (may be because there is no enough RAM)"));
+      throw USER_EXCEPTION2(SE4211, (string(db_name) + string(" (may be because there is no enough RAM)")).c_str());
   else if (res != 0 || ret_status != 0)
   {
      throw SYSTEM_EXCEPTION("Can't startup SM to load metadata");

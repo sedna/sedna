@@ -156,6 +156,170 @@ calc_altern.cpp: gen_calc_altern$(EXE_EXT)
 	./gen_calc_altern$(EXE_EXT)
 
 
+calc_altern$(OBJ_EXT): calc_altern.cpp \
+  ../../kernel/tr/executor/fo/boolean_operations.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/base/sequence.h \
+  ../../kernel/tr/executor/base/compare.h \
+  ../../kernel/tr/executor/base/tuple.h ../../kernel/common/counted_ptr.h \
+  ../../kernel/tr/structures/nodes.h ../../kernel/common/base.h \
+  ../../kernel/common/sedna.h ../../kernel/common/u/u.h \
+  ../../driver/c/sp_defs.h \
+  ../../kernel/common/mmgr/se_alloc.h \
+  ../../kernel/common/errdbg/event_log.h ../../kernel/common/sedna.h \
+  ../../kernel/common/utils.h \
+  ../../kernel/common/u/uprocess.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/usecurity.h \
+  ../../kernel/common/sm_vmm_data.h \
+  ../../kernel/common/xptr.h ../../kernel/common/base.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/common/utils.h \
+  ../../kernel/common/errdbg/d_printf.h ../../kernel/common/u/u.h \
+  ../../kernel/common/error_codes.h \
+  ../../kernel/common/errdbg/event_log.h \
+  ../../kernel/tr/nid/numb_scheme.h ../../kernel/common/xptr.h \
+  ../../kernel/tr/crmutils/exec_output.h \
+  ../../kernel/common/u/usocket.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
+  ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
+  ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/executor/base/decimal.h \
+  ../../kernel/tr/executor/base/date.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
+  ../../kernel/tr/executor/base/SequenceType.h \
+  ../../kernel/tr/executor/base/XPath.h \
+  ../../kernel/tr/executor/por2qep/scheme_tree.h \
+  ../../kernel/tr/vmm/vmm.h ../../kernel/common/xptr.h \
+  ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/vmm/os_exceptions.h ../../kernel/common/u/u.h \
+  ../../kernel/common/SSMMsg.h ../../kernel/common/u/usem.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
+  ../../kernel/common/persistent_db_data.h \
+  ../../kernel/common/u/uthread.h \
+  ../../kernel/tr/executor/base/PPStaticContext.h \
+  ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
+  ../../kernel/tr/structures/pers_map.h \
+  ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/usecurity.h numeric_operations.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  comparison_operations.h \
+  ../../kernel/tr/executor/fo/string_operations.h \
+  ../../kernel/tr/executor/xqops/PPCalculate.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/base/PPUtils.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/crmutils/node_utils.h ../../kernel/common/xptr.h \
+  ../../kernel/tr/structures/nodes.h ../../kernel/tr/vmm/vmm.h \
+  ../../kernel/tr/structures/schema.h \
+  ../../kernel/tr/executor/base/dm_accessors.h \
+  ../../kernel/tr/executor/fo/boolean_operations.h \
+  ../../kernel/tr/executor/por2qep/scheme_tree.h
+
+comparison_operations$(OBJ_EXT): comparison_operations.cpp \
+  comparison_operations.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/base/sequence.h \
+  ../../kernel/tr/executor/base/compare.h \
+  ../../kernel/tr/executor/base/tuple.h ../../kernel/common/counted_ptr.h \
+  ../../kernel/tr/structures/nodes.h ../../kernel/common/base.h \
+  ../../kernel/common/sedna.h ../../kernel/common/u/u.h \
+  \
+  ../../driver/c/sp_defs.h \
+  ../../kernel/common/mmgr/se_alloc.h \
+  ../../kernel/common/errdbg/event_log.h ../../kernel/common/sedna.h \
+  ../../kernel/common/utils.h \
+  ../../kernel/common/u/uprocess.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/usecurity.h \
+  ../../kernel/common/sm_vmm_data.h \
+  ../../kernel/common/xptr.h ../../kernel/common/base.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/common/utils.h \
+  ../../kernel/common/errdbg/d_printf.h ../../kernel/common/u/u.h \
+  ../../kernel/common/error_codes.h \
+  ../../kernel/common/errdbg/event_log.h \
+  ../../kernel/tr/nid/numb_scheme.h ../../kernel/common/xptr.h \
+  ../../kernel/tr/crmutils/exec_output.h \
+  ../../kernel/common/u/usocket.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
+  ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
+  ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/executor/base/decimal.h \
+  ../../kernel/tr/executor/base/date.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
+  ../../kernel/tr/executor/base/SequenceType.h \
+  ../../kernel/tr/executor/base/XPath.h \
+  ../../kernel/tr/executor/por2qep/scheme_tree.h \
+  ../../kernel/tr/vmm/vmm.h ../../kernel/common/xptr.h \
+  ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/vmm/os_exceptions.h ../../kernel/common/u/u.h \
+  ../../kernel/common/SSMMsg.h ../../kernel/common/u/usem.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
+  ../../kernel/common/persistent_db_data.h \
+  ../../kernel/common/u/uthread.h \
+  ../../kernel/tr/executor/base/PPStaticContext.h \
+  ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
+  ../../kernel/tr/structures/pers_map.h \
+  ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/usecurity.h numeric_operations.h \
+  ../../kernel/tr/executor/fo/boolean_operations.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/fo/string_operations.h \
+  ../../kernel/tr/executor/fo/casting_operations.h \
+  ../../kernel/tr/nid/numb_scheme.h
+
+numeric_operations$(OBJ_EXT): numeric_operations.cpp \
+  numeric_operations.h ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/base/sequence.h \
+  ../../kernel/tr/executor/base/compare.h \
+  ../../kernel/tr/executor/base/tuple.h ../../kernel/common/counted_ptr.h \
+  ../../kernel/tr/structures/nodes.h ../../kernel/common/base.h \
+  ../../kernel/common/sedna.h ../../kernel/common/u/u.h \
+  \
+  ../../driver/c/sp_defs.h \
+  ../../kernel/common/mmgr/se_alloc.h \
+  ../../kernel/common/errdbg/event_log.h ../../kernel/common/sedna.h \
+  ../../kernel/common/utils.h \
+  ../../kernel/common/u/uprocess.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/usecurity.h \
+  ../../kernel/common/sm_vmm_data.h \
+  ../../kernel/common/xptr.h ../../kernel/common/base.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/common/utils.h \
+  ../../kernel/common/errdbg/d_printf.h ../../kernel/common/u/u.h \
+  ../../kernel/common/error_codes.h \
+  ../../kernel/common/errdbg/event_log.h \
+  ../../kernel/tr/nid/numb_scheme.h ../../kernel/common/xptr.h \
+  ../../kernel/tr/crmutils/exec_output.h \
+  ../../kernel/common/u/usocket.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
+  ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
+  ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/executor/base/decimal.h \
+  ../../kernel/tr/executor/base/date.h \
+  ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
+  ../../kernel/tr/executor/base/SequenceType.h \
+  ../../kernel/tr/executor/base/XPath.h \
+  ../../kernel/tr/executor/por2qep/scheme_tree.h \
+  ../../kernel/tr/vmm/vmm.h ../../kernel/common/xptr.h \
+  ../../kernel/common/errdbg/exceptions.h \
+  ../../kernel/tr/vmm/os_exceptions.h ../../kernel/common/u/u.h \
+  ../../kernel/common/SSMMsg.h ../../kernel/common/u/usem.h \
+  ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
+  ../../kernel/common/persistent_db_data.h \
+  ../../kernel/common/u/uthread.h \
+  ../../kernel/tr/executor/base/PPStaticContext.h \
+  ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
+  ../../kernel/tr/structures/pers_map.h \
+  ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \
+  ../../kernel/common/u/usecurity.h \
+  ../../kernel/tr/executor/fo/casting_operations.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/executor/base/PPUtils.h \
+  ../../kernel/tr/executor/base/PPBase.h \
+  ../../kernel/tr/crmutils/node_utils.h ../../kernel/common/xptr.h \
+  ../../kernel/tr/structures/nodes.h ../../kernel/tr/vmm/vmm.h \
+  ../../kernel/tr/structures/schema.h \
+  ../../kernel/tr/executor/base/dm_accessors.h
+
+
+
 ################################################################################
 # EXECUTOR                                                                     #
 ################################################################################

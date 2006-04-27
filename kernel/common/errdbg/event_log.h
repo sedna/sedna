@@ -52,6 +52,8 @@ typedef struct event_log_msg
     int  elevel;
     int  component;
     char component_detail[SE_MAX_DB_NAME_LENGTH + 1];
+    int  sid;
+    int  trid;
     int  lineno;
     char filename[SE_EVENT_LOG_FILENAME_LEN];
     char funcname[SE_EVENT_LOG_FUNCNAME_LEN];
@@ -168,6 +170,23 @@ int event_logger_shutdown_daemon();
  */
 int event_logger_init(int component, const char* component_detail, global_name shm_name, global_name sems_name);
 int event_logger_release();
+
+
+/* ============================================================================
+ * Set/get functions
+ * ============================================================================
+ */
+
+/*
+ * Set session id for trn process
+ */
+int event_logger_set_sid(int sid);
+
+/*
+ * Set transaction id for trn process
+ */
+int event_logger_set_trid(int trid);
+
 
 #ifdef __cplusplus
 }

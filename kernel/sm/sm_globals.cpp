@@ -140,9 +140,9 @@ void register_sm_on_gov()
 
     memmove(msg.body+5+strlen(db_name),ptr,4);
 
-    if(sp_send_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
+    if(sp_send_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
 
-    if(sp_recv_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
+    if(sp_recv_msg(s,&msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
 //    if(msg.instruction == 181)
 //    	d_printf2("se_sm: SM with %d registered on gov successfully\n", sm_id);
     if(msg.instruction == 182)

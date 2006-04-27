@@ -37,7 +37,7 @@ ExtFunction::ExtFunction(const std::string &fname, ULibrary lib)
 
 	fcxt->func = (sedna_ext_func_t) uGetProcAddress(lib, fname.c_str());
 	if (fcxt->func == NULL)
-		throw USER_EXCEPTION2(SE2203, std::string("failed to load function '") + fname + "'");
+		throw USER_EXCEPTION2(SE2203, (std::string("failed to load function '") + fname + "'").c_str());
 	//NULL is ok here
 	fcxt->func_init = (sedna_ext_func_init_t) uGetProcAddress(lib, (fname + "_init").c_str());
 	fcxt->func_deinit = (sedna_ext_func_deinit_t) uGetProcAddress(lib, (fname + "_deinit").c_str());
@@ -380,7 +380,7 @@ PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, variable_context *c
 	load_func_list();
 	ext_function_desc *fdesc = func_list[name_str];
 	if (fdesc == NULL)
-		throw USER_EXCEPTION2(SE1003, std::string("exeternal function implementation not found: '") + name_str + "'");
+		throw USER_EXCEPTION2(SE1003, (std::string("external function implementation not found: '") + name_str + "'").c_str());
 	
 	ExtFunction *fn;
 	if (fdesc->fn == NULL)

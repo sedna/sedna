@@ -140,20 +140,20 @@ Errors could be outputted to the user in the format of <sedna-message>:
      SednaSystemEnvException(__FILE__, __SE_FUNCTION__, __LINE__, msg))
 
 #define USER_EXCEPTION(internal_code) \
-    (elog(EL_ERROR, ("%s %s", \
+    (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
      SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code))
 
 #define USER_EXCEPTION2(internal_code, details) \
-    (elog(EL_ERROR, ("%s %s Details: %s", \
+    (elog(EL_ERROR, ("(%s) %s Details: %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr, \
                      details)), \
      SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code))
 
 #define USER_ENV_EXCEPTION(msg, rollback) \
-    (elog(EL_ERROR, ("%s %s Details: %s", \
+    (elog(EL_ERROR, ("(%s) %s Details: %s", \
                      user_error_code_entries[0].code, \
                      user_error_code_entries[0].descr, \
                      msg)), \
@@ -161,7 +161,7 @@ Errors could be outputted to the user in the format of <sedna-message>:
 
 
 #define USER_ENV_EXCEPTION2(msg, expl, rollback) \
-    (elog(EL_ERROR, ("%s %s Details: %s (%s)", \
+    (elog(EL_ERROR, ("(%s) %s Details: %s (%s)", \
                      user_error_code_entries[0].code, \
                      user_error_code_entries[0].descr, \
                      msg, \
@@ -185,10 +185,10 @@ public:
     SednaException(const char* _file_, 
                    const char* _function_,
                    int _line_,
-                   const std::string& _err_msg_) : file(_file_),
-                                                   function(_function_),
-                                                   line(_line_),
-                                                   err_msg(_err_msg_) {}
+                   const char* _err_msg_) : file(_file_),
+                                            function(_function_),
+                                            line(_line_),
+                                            err_msg(_err_msg_) {}
     virtual ~SednaException() {}
 
     virtual std::string getMsg()         const = 0;
@@ -205,7 +205,7 @@ public:
     SednaSystemException(const char* _file_, 
                          const char* _function_,
                          int _line_,
-                         const std::string& _err_msg_) : SednaException(_file_,
+                         const char* _err_msg_) : SednaException(_file_,
                                                                         _function_,
                                                                         _line_,
                                                                         _err_msg_) {}
@@ -228,7 +228,7 @@ public:
     SednaSystemEnvException(const char* _file_, 
                             const char* _function_,
                             int _line_,
-                            const std::string& _err_msg_) : SednaSystemException(_file_, 
+                            const char* _err_msg_) : SednaSystemException(_file_, 
                                                                                  _function_, 
                                                                                  _line_, 
                                                                                  _err_msg_) {}
@@ -263,7 +263,7 @@ public:
     SednaUserException(const char* _file_, 
                        const char* _function_,
                        int _line_,
-                       const std::string& _err_msg_,
+                       const char* _err_msg_,
                        int _internal_code_) : SednaException(_file_,
                                                              _function_,
                                                              _line_,
@@ -298,7 +298,7 @@ public:
     SednaUserEnvException(const char* _file_, 
                           const char* _function_,
                           int _line_,
-                          const std::string& _err_msg_,
+                          const char* _err_msg_,
                           bool _rollback_) : SednaUserException(_file_,
                                                                 _function_,
                                                                 _line_,
@@ -308,8 +308,8 @@ public:
     SednaUserEnvException(const char* _file_, 
                           const char* _function_,
                           int _line_,
-                          const std::string& _err_msg_,
-                          const std::string& _explanation_,
+                          const char* _err_msg_,
+                          const char* _explanation_,
                           bool _rollback_) : SednaUserException(_file_,
                                                                 _function_,
                                                                 _line_,
@@ -351,11 +351,11 @@ public:
     SednaUserSoftException(const char* _file_, 
                            const char* _function_,
                            int _line_,
-                           const std::string& _err_msg_) : SednaUserException(_file_,
-                                                                              _function_,
-                                                                              _line_,
-                                                                              _err_msg_,
-                                                                              -1) {}
+                           const char* _err_msg_) : SednaUserException(_file_,
+                                                                       _function_,
+                                                                       _line_,
+                                                                       _err_msg_,
+                                                                       -1) {}
     virtual std::string getMsg() const { return err_msg; }
 
     virtual bool need_rollback() { return false; }

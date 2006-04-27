@@ -38,8 +38,8 @@ arg_rec ddb_argtable[] =
 
 void print_ddb_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_ddb [options] dbname \n\n") +
-                             string("options:\n") + string(arg_glossary(ddb_argtable, narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_ddb [options] dbname \n\n") +
+                              string("options:\n") + string(arg_glossary(ddb_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
         set_global_names();
 	
         if (!exist_db(db_name))
-           throw USER_EXCEPTION2(SE4308 , string("There is no database: ") + db_name);
+           throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
 
 
         

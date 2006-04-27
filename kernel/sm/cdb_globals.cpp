@@ -62,8 +62,8 @@ arg_rec cdb_argtable[] =
 
 void print_cdb_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_cdb [options] dbname\n\n") +
-                               string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_cdb [options] dbname\n\n") +
+                              string("options:\n") + string(arg_glossary(cdb_argtable, cdb_narg, "  ")) + string("\n")).c_str());
 
 }
 

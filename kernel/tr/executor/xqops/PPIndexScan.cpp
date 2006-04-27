@@ -87,10 +87,10 @@ void PPIndexScan::open ()
 
     // Find B-Tree root
     btree = find_btree(index_name.c_str());
-    if (btree == NULL) throw USER_EXCEPTION2(SE1061, index_name);
+    if (btree == NULL) throw USER_EXCEPTION2(SE1061, index_name.c_str());
 
     idx_type = get_index_xmlscm_type(index_name.c_str());
-    if (idx_type == -1) throw USER_EXCEPTION2(SE1061, index_name);
+    if (idx_type == -1) throw USER_EXCEPTION2(SE1061, index_name.c_str());
 
     switch (isc)
     {

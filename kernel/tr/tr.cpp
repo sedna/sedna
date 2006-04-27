@@ -159,6 +159,7 @@ int main(int argc, char * argv[])
 
      // sid is known
      event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+     event_logger_set_sid(sid);
 
 
 #ifdef _WIN32
@@ -432,6 +433,7 @@ int main(int argc, char * argv[])
    event_logger_release();
    ppc.shutdown(); 
    set_session_finished();
+   event_logger_set_sid(-1);
    
    close_gov_shm(gov_shm_dsc, gov_shared_mem);
    

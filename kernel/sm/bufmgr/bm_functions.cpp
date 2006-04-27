@@ -110,12 +110,12 @@ void bm_startup() throw (SednaException)
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
     if (data_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, data_file_name);
+        throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
     string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
     if (tmp_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, tmp_file_name);
+        throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 
     // create buffer pool
     _bm_init_buffer_pool();

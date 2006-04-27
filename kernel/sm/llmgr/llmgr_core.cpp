@@ -296,7 +296,7 @@ void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &tr
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   if (trid > CHARISMA_MAX_TRNS_NUMBER || trid < 0)
-     throw USER_EXCEPTION2(SE4155, int2string(trid));
+     throw USER_EXCEPTION2(SE4155, int2string(trid).c_str());
 
   mem_head->t_tbl[trid].last_lsn = NULL_LSN;
   mem_head->t_tbl[trid].first_lsn = NULL_LSN;
@@ -316,7 +316,7 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   if (trid > CHARISMA_MAX_TRNS_NUMBER || trid < 0)
-     throw USER_EXCEPTION2(SE4155, int2string(trid));
+     throw USER_EXCEPTION2(SE4155, int2string(trid).c_str());
 
   mem_head->t_tbl[trid].last_lsn = NULL_LSN;
   mem_head->t_tbl[trid].first_lsn = NULL_LSN;

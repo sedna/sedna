@@ -142,6 +142,8 @@ void on_transaction_begin(SSMMsg* &sm_server)
    trid = get_transaction_id(sm_server);
    d_printf1("OK\n");
 
+   event_logger_set_trid(trid);
+
    d_printf1("Phys log on transaction begin...");
    hl_phys_log_on_transaction_begin();
    d_printf1("OK\n");
@@ -191,6 +193,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit)
    release_transaction_id(sm_server);
    d_printf1("OK\n");
 
+   event_logger_set_trid(-1);
 }
 
 PPQueryEssence* on_kernel_statement_begin(scheme_list *por,
@@ -380,8 +383,8 @@ bool is_command_line_args_length_overflow(int argc, char ** argv)
 
 void print_tr_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_trn [options] dbname filename\n\n") +
-                               string("options:\n") + string(arg_glossary(tr_argtable, narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_trn [options] dbname filename\n\n") +
+                              string("options:\n") + string(arg_glossary(tr_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 void authentication()
@@ -455,9 +458,9 @@ void register_session_on_gov()
 
     memcpy(sp_msg.body+1+sizeof(__int32)+strlen(db_name),ptr,sizeof(UPID));
 
-    if(sp_send_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3006,string(usocket_error_translator()));
+    if(sp_send_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
 
-    if(sp_recv_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3007,string(usocket_error_translator()));
+    if(sp_recv_msg(s,&sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
     if(sp_msg.instruction == 161)
     {
     	d_printf2("se_trn: Trn with %d registered on gov successfully\n", s_pid);

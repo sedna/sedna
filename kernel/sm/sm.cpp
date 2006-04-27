@@ -356,8 +356,8 @@ int sm_server_handler(void *arg)
 
 void print_sm_usage()
 {
-  throw USER_SOFT_EXCEPTION(string("Usage: se_sm [options] dbname\n\n") +
-                            string("options:\n") + string(arg_glossary(sm_argtable, narg, "  ")) + string("\n"));
+  throw USER_SOFT_EXCEPTION((string("Usage: se_sm [options] dbname\n\n") +
+                             string("options:\n") + string(arg_glossary(sm_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 

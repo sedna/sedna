@@ -26,7 +26,7 @@ STACK_INT Lexical_Analizer_State;
 #lexmember
 <<
 virtual void errstd(const char *s){
-  throw USER_EXCEPTION2(SE4000, std::string("unknown token: ")+"\'" + lextext()+ "\'" + ", " + "line: " + int2string(line()));
+  throw USER_EXCEPTION2(SE4000, (std::string("unknown token: ")+"\'" + lextext()+ "\'" + ", " + "line: " + int2string(line())).c_str());
 }
 
 >>
@@ -518,7 +518,7 @@ virtual void errstd(const char *s){
                      >>
 #token "\:"          << skip (); >>
 #token "\("          << skip (); >>
-#token "@"           <<throw USER_EXCEPTION2(SE4000, std::string("bad comments, ") + "line: " + int2string(line()));>>
+#token "@"           <<throw USER_EXCEPTION2(SE4000, (std::string("bad comments, ") + "line: " + int2string(line())).c_str());>>
 #token "~[\:\(\n@]+"  << skip (); >>
 
 //#token LEXERROR "~[]*"  <<printf("\n\nLexical error!!!\n\n");>>

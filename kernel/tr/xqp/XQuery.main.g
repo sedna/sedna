@@ -26,7 +26,7 @@ script![XQueryDLGLexer* lexer_] :
 	  if(LA(1) != eofToken)
 	  {
 	    if (LA(1) == eofToken) LT(1)->setText("Eof");
-		throw USER_EXCEPTION2(SE4001, std::string("unexpected token: ")+ "\'" + LT(1)->getText() + "\'" + ", line: " + int2string(LT(1)->getLine()));
+		throw USER_EXCEPTION2(SE4001, (std::string("unexpected token: ")+ "\'" + LT(1)->getText() + "\'" + ", line: " + int2string(LT(1)->getLine())).c_str());
 	  }
 	>>
 
@@ -39,7 +39,7 @@ exception
 	  std::string text = "";
 	  if (LA(1) == eofToken) text= "Eof";
 	  else text = LT(1)->getText();
-	  throw USER_EXCEPTION2(SE4001, std::string("unexpected token: ") + "\'" + text + "\'" + ", line: " + int2string(LT(1)->getLine()));
+	  throw USER_EXCEPTION2(SE4001, (std::string("unexpected token: ") + "\'" + text + "\'" + ", line: " + int2string(LT(1)->getLine())).c_str());
 	}
 	>>
 	default: 
@@ -49,7 +49,7 @@ exception
 	  if (LA(1) == eofToken) text = "Eof";
 	  else if (LA(2) != eofToken) text = LT(2)->getText(); 
 	  else text = LT(1)->getText();
-	  throw USER_EXCEPTION2(SE4001, std::string("syntax error at token: ") + "\'" + text + "\'" + ", line: " +  int2string(LT(1)->getLine()));
+	  throw USER_EXCEPTION2(SE4001, (std::string("syntax error at token: ") + "\'" + text + "\'" + ", line: " +  int2string(LT(1)->getLine())).c_str());
 	}
 	>>
 
