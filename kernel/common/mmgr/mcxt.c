@@ -186,7 +186,7 @@ MemoryContextDelete(MemoryContext context)
 			}
 		}
 	}
-	(*context->methods->delete) (context);
+	(*context->methods->del) (context);
 	se_free(context);
 }
 

@@ -245,7 +245,7 @@ void on_user_statement_begin(QueryType query_type,
                              PPQueryEssence* &qep_tree, 
                              StmntsArray* &st)
 {
-    elog_long(EL_LOG, "User query:", query_str);
+    elog_long(EL_LOG, "User query:\n", query_str);
     st = prepare_stmnt(query_type, query_str); //parse and build phys representation
     is_stmt_built = true;
     se_nullostream auth_s;

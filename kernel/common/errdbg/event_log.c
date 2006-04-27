@@ -382,7 +382,7 @@ static void __event_log_write_long_msg_start()
                                 el_msg->funcname);
     if (res == -1) return;
 
-    res = fprintf(el_ostr, ":\n%s", el_msg->content);
+    res = fprintf(el_ostr, ": %s", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res;
 }
@@ -390,7 +390,7 @@ static void __event_log_write_long_msg_start()
 static bool __event_log_write_long_msg_next_end()
 {
     int res = 0;
-    if (!el_ostr)
+    if (el_ostr)
     {
         if (el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
         {
@@ -432,10 +432,11 @@ static U_THREAD_PROC(__event_log_daemon, arg)
                 __event_log_write_long_msg_start();
                 while (long_msg_next)
                 {
+                    USemaphoreArrUp(el_sems, 2);
                     USemaphoreArrDown(el_sems, 3);
                     long_msg_next = __event_log_write_long_msg_next_end();
-                    USemaphoreArrUp(el_sems, 2);
                 }
+                long_msg_next = true;
                 break;
         }
 
@@ -610,7 +611,7 @@ int event_log_long_write_to_stderr(const char *short_str, const char *long_str)
  */
 int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems_name)
 {
-    int sems_init_values[SE_EVENT_LOG_SEMS_NUM] = {1, 0, 1, 0};
+    int sems_init_values[SE_EVENT_LOG_SEMS_NUM] = {1, 0, 0, 0};
 
     /* create shared memory */
     if (uCreateShMem(&el_shmem, shm_name, sizeof(event_log_msg), NULL) != 0)

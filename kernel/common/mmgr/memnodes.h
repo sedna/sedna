@@ -37,7 +37,7 @@ typedef struct MemoryContextMethods
 	void	   *(*realloc) (MemoryContext context, void *pointer, usize_t size);
 	void		(*init) (MemoryContext context);
 	void		(*reset) (MemoryContext context);
-	void		(*delete) (MemoryContext context);
+	void		(*del) (MemoryContext context);
 	usize_t		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
 	void		(*stats) (MemoryContext context);
