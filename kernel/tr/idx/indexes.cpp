@@ -178,7 +178,7 @@ counted_ptr<db_entity> find_entity(const char* title)
 	else 
 	{
 		index_sem_up();	
-        throw USER_EXCEPTION2(SE1061, std::string("Index '") + title + "'");
+        throw USER_EXCEPTION2(SE1061, (std::string("Index '") + title + "'").c_str());
 	}
 
 }

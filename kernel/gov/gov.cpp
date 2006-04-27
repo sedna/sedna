@@ -34,8 +34,8 @@ using namespace std;
 
 void print_gov_usage()
 {
-    throw USER_SOFT_EXCEPTION(string("Usage: se_gov [options]\n\n") +
-                              string("options:\n") + string(arg_glossary(gov_argtable, narg, "  ")) + string("\n"));
+    throw USER_SOFT_EXCEPTION((string("Usage: se_gov [options]\n\n") +
+                               string("options:\n") + string(arg_glossary(gov_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 #ifdef _WIN32

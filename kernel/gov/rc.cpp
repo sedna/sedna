@@ -35,8 +35,8 @@ arg_rec rc_argtable[] =
 
 void print_rc_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_rc [options]\n\n") +
-                               string("options:\n") + string(arg_glossary(rc_argtable, narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_rc [options]\n\n") +
+                              string("options:\n") + string(arg_glossary(rc_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 

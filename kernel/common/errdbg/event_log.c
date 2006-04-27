@@ -62,6 +62,8 @@ static FILE *el_ostr = NULL;
 static int el_cur_file_size = 0;
 static int el_component = EL_UNK;
 static const char *el_component_detail = NULL;
+static int el_sid = -1;
+static int el_trid = -1;
 
 
 
@@ -70,6 +72,8 @@ static void __event_log_set_msg_attrs(int elevel, const char *filename, int line
     el_msg->processed = 0;
     el_msg->elevel = elevel;
     el_msg->component = el_component;
+    el_msg->sid = el_sid;
+    el_msg->trid = el_trid;
 
     if (el_component_detail && *el_component_detail)
         strcpy(el_msg->component_detail, el_component_detail);
@@ -128,6 +132,8 @@ static int __event_log_short_write_to_stderr(const char *s, va_list ap)
 static int __event_log_write_hdr(int elevel, 
                                  int component, 
                                  const char *component_detail, 
+                                 int sid,
+                                 int trid,
                                  int lineno, 
                                  const char *filename, 
                                  const char *funcname)
@@ -214,7 +220,12 @@ static int __event_log_write_hdr(int elevel,
         }
     
         if (component_detail && *component_detail)
-            res = fprintf(el_ostr, " (%s %s)", component_c_str, component_detail);
+        {
+            if (component == EL_TRN)
+                res = fprintf(el_ostr, " (%s %s sid=%d trid=%d)", component_c_str, component_detail, sid, trid);
+            else
+                res = fprintf(el_ostr, " (%s %s)", component_c_str, component_detail);
+        }
         else
             res = fprintf(el_ostr, " (%s)", component_c_str);
 
@@ -341,6 +352,8 @@ static void __event_log_write_short_msg()
     res = __event_log_write_hdr(el_msg->elevel, 
                                 el_msg->component, 
                                 el_msg->component_detail,
+                                el_msg->sid,
+                                el_msg->trid,
                                 el_msg->lineno, 
                                 el_msg->filename, 
                                 el_msg->funcname);
@@ -363,6 +376,8 @@ static void __event_log_write_long_msg_start()
                                 el_msg->component, 
                                 el_msg->component_detail,
                                 el_msg->lineno, 
+                                el_msg->sid,
+                                el_msg->trid,
                                 el_msg->filename, 
                                 el_msg->funcname);
     if (res == -1) return;
@@ -705,3 +720,14 @@ int event_logger_release()
     return 0;
 }
 
+int event_logger_set_sid(int sid)
+{
+    el_sid = sid;
+    return 0;
+}
+
+int event_logger_set_trid(int trid)
+{
+    el_trid = trid;
+    return 0;
+}

@@ -13,6 +13,10 @@
 #include "se_alloc.h"
 #include "event_log.h"
 
+#ifdef __cplusplus
+#include "exceptions.h"
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {

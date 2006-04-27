@@ -248,9 +248,9 @@ char* descriptive_schema_to_scheme_list(const char* name, int is_collection)
     if (!root) 
     {
         if (is_collection)
-            throw USER_EXCEPTION2(SE2003, std::string("Collection '") + name + "'");
+            throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + name + "'").c_str());
         else
-            throw USER_EXCEPTION2(SE2006, std::string("Document '") + name + "'"); 
+            throw USER_EXCEPTION2(SE2006, (std::string("Document '") + name + "'").c_str()); 
     }
 
     std::ostringstream sstr;

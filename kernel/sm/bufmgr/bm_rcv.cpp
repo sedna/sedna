@@ -21,7 +21,7 @@ void bm_rcv_init()
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH);
     if (data_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, data_file_name);
+        throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 }
 
 void bm_rcv_release()
@@ -109,13 +109,13 @@ void bm_rcv_tmp_file()
     string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH);
     if (tmp_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION2(SE4042, tmp_file_name);
+        throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 
     if (uSetEndOfFile(tmp_file_handler, (__int64)0, U_FILE_BEGIN) == 0)
         throw USER_ENV_EXCEPTION("Cannot truncate tmp file", false);
 
     if (uCloseFile(tmp_file_handler) == 0)
-        throw USER_EXCEPTION2(SE4043, tmp_file_name);
+        throw USER_EXCEPTION2(SE4043, tmp_file_name.c_str());
 
     // reform tmp file
     bm_startup();
@@ -140,12 +140,12 @@ void bm_rcv_ph(bool ph_bu_to_ph)
     if (ph_bu_to_ph)
     {
         if (uCopyFile(ph_bu_file_name.c_str(), ph_file_name.c_str(), false) == 0)
-            throw USER_EXCEPTION2(SE4049, ph_bu_file_name + " to " + ph_file_name);
+            throw USER_EXCEPTION2(SE4049, (ph_bu_file_name + " to " + ph_file_name).c_str());
     }
     else
     {
         if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false) == 0)
-            throw USER_EXCEPTION2(SE4049, ph_file_name + " to " + ph_bu_file_name);
+            throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
     }
 }
 

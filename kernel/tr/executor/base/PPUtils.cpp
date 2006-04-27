@@ -226,9 +226,9 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
     if (!root) 
     {
         if (db_ent->type == dbe_document)
-            throw USER_EXCEPTION2(SE2006, std::string("Document '") + db_ent->name + "'");
+            throw USER_EXCEPTION2(SE2006, (std::string("Document '") + db_ent->name + "'").c_str());
         else 
-            throw USER_EXCEPTION2(SE2003, std::string("Collection '") + db_ent->name + "'");
+            throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
 
 

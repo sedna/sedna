@@ -36,8 +36,8 @@ arg_rec smsd_argtable[] =
 
 void print_smsd_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_smsd [options] dbname \n\n") +
-                               string("options:\n") + string(arg_glossary(smsd_argtable, narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_smsd [options] dbname \n\n") +
+                              string("options:\n") + string(arg_glossary(smsd_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 

@@ -83,10 +83,10 @@ void PPDocInCol::next(tuple &t)
         xptr res = find_document((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
         if (res == NULL)
         {
-            throw USER_EXCEPTION2(SE1006, std::string("Document '") + 
-                                          tc_doc.get_str_mem() + 
-                                          "' in collection '" + 
-                                          tc_col.get_str_mem() + "'");
+            throw USER_EXCEPTION2(SE1006, (std::string("Document '") + 
+                                           tc_doc.get_str_mem() + 
+                                           "' in collection '" + 
+                                           tc_col.get_str_mem() + "'").c_str());
         }
 
         t.copy(tuple_cell::node(res));

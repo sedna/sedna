@@ -34,8 +34,8 @@ arg_rec ss_argtable[] =
 
 void print_ss_usage()
 {
-   throw USER_SOFT_EXCEPTION(string("Usage: se_stop [options]\n\n") +
-                               string("options:\n") + string(arg_glossary(ss_argtable, narg, "  ")) + string("\n"));
+   throw USER_SOFT_EXCEPTION((string("Usage: se_stop [options]\n\n") +
+                              string("options:\n") + string(arg_glossary(ss_argtable, narg, "  ")) + string("\n")).c_str());
 }
 
 
