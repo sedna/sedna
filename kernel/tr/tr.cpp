@@ -8,21 +8,20 @@
 #include <string>
 #include <string.h>
 
+#include "sedna.h"
+
 #include "base.h"
 #include "utils.h"
-#include "exceptions.h"
 #include "SSMMsg.h"
 #include "tr_globals.h"
 #include "tr_functions.h"
 #include "pq.h"
-#include "persistent_db_data.h"
 #include "exec_output.h"
 #include "por2qep.h"
 #include "d_printf.h"
 #include "pping.h"
 #include "cl_client.h"
 #include "socket_client.h"
-#include "usecurity.h"
 #include "tr_utils.h"
 #include "auc.h"
 

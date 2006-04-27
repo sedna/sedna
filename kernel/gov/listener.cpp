@@ -1,11 +1,16 @@
-#include <iostream>
-#include <stdio.h>
+/*
+ * File:  listener.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
 #include "listener.h"
-#include "uprocess.h"
-#include "base.h"
 #include "d_printf.h"
 #include "gov_globals.h"
 #include "sp.h"
+#include "usem.h"
+#include "uutils.h"
 
 
 using namespace std;

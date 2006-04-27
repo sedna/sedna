@@ -1,15 +1,12 @@
+/*
+ * File:  listener.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _LST_H
 #define _LST_H
-#include "ipc_ops.h"
 
 #include "usocket.h"
-#ifdef _WIN32
-#else
-#include <sys/types.h> 
-#include <sys/wait.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#endif
 
 int sess_registering(USOCKET s, char* msg_buf);
 int sm_registering(USOCKET s, char* msg_buf);
