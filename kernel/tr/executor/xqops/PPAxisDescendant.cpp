@@ -120,13 +120,13 @@ void PPAxisDescendant::next_node(tuple &t)
 		if (cur!=XNULL)
 		{
 			CHECKP(cur);
-			if(!self)	cur=getFirstByOrderNNSChildNode(cur);
+			if(!self)	cur=getFirstByOrderChildNode(cur);
 		}
     }
 	descstack.push_back(cur);
     t.copy(tuple_cell::node(cur));
     CHECKP(cur);
-    xptr tmp = getFirstByOrderNNSChildNode(cur);
+    xptr tmp = getFirstByOrderChildNode(cur);
 	if (tmp!=XNULL) 
 	{
 		cur=tmp;
