@@ -155,11 +155,10 @@ void PPAxisAncestor::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-        if (!self) cur = get_parent_node(cur);
-		if (cur==XNULL) continue;
-        CHECKP(cur);
+        if (!self) cur = get_parent_node(cur);		
         while (cur!=XNULL)
 		{
+			CHECKP(cur);
 			if (comp_qname_type(GETSCHEMENODEX(cur),
                               tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
                               nt_data.qname.LocalPart.n, 
@@ -169,15 +168,16 @@ void PPAxisAncestor::next_qname(tuple &t)
 		}
     }
     t.copy(tuple_cell::node(cur));
-	while (true)
+	cur = get_parent_node(cur);
+	while (cur!=XNULL)
 	{
-		cur = get_parent_node(cur);
-		if (cur == XNULL ||
-              comp_qname_type(GETSCHEMENODEX(cur),
+		CHECKP(cur);		
+		if (comp_qname_type(GETSCHEMENODEX(cur),
                               tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
                               nt_data.qname.LocalPart.n, 
                               element))
 							  return;
+		cur = get_parent_node(cur);
 	}
     
 }
@@ -192,11 +192,10 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-		if (!self) cur = get_parent_node(cur);
-		if (cur==XNULL) continue;
-        CHECKP(cur);
+		if (!self) cur = get_parent_node(cur);		
 		while (cur!=XNULL)
 		{
+			CHECKP(cur);
 			if (comp_type(GETSCHEMENODEX(cur), 
                         NULL,
                         NULL, 
@@ -207,15 +206,16 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
     }
 
     t.copy(tuple_cell::node(cur));
-    while (true)
+	cur = get_parent_node(cur);
+    while (cur!=XNULL)
 	{
-		cur = get_parent_node(cur);
-		if (cur == XNULL ||
-              comp_type(GETSCHEMENODEX(cur), 
+		CHECKP(cur);		
+		if ( comp_type(GETSCHEMENODEX(cur), 
                         NULL,
                         NULL, 
                         element))
 							  return;
+		cur = get_parent_node(cur);
 	}
 }
 
@@ -230,11 +230,11 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
-		if (cur==XNULL) continue;
-        CHECKP(cur);
+		
 		char* uri=st_ct.get_uri_by_prefix(nt_data.ncname,element);
         while (cur!=XNULL)
 		{
+			CHECKP(cur);
 			if (comp_type(GETSCHEMENODEX(cur), 
                         uri,
                         NULL, 
@@ -246,15 +246,16 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
 
     t.copy(tuple_cell::node(cur));
 	char* uri=st_ct.get_uri_by_prefix(nt_data.ncname,element);
-    while (true)
+	cur = get_parent_node(cur);
+    while (cur!=XNULL)
 	{
-		cur = get_parent_node(cur);
-		if (cur == XNULL ||
-              comp_type(GETSCHEMENODEX(cur), 
+		CHECKP(cur);		
+		if (comp_type(GETSCHEMENODEX(cur), 
                         uri,
                         NULL, 
                         element))
 							  return;
+		cur = get_parent_node(cur);
 	}
 }
 
@@ -268,11 +269,10 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
 
         cur = child.get(t).get_node();
-        if (!self) cur = get_parent_node(cur);
-		if (cur==XNULL) continue;
-        CHECKP(cur);
+        if (!self) cur = get_parent_node(cur);        
 		while (cur!=XNULL)
 		{
+			CHECKP(cur);
 			if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
                               nt_data.ncname.n, 
@@ -283,15 +283,16 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
     }
 
     t.copy(tuple_cell::node(cur));
+	cur = get_parent_node(cur);
     while (true)
 	{
-		cur = get_parent_node(cur);
-		if (cur == XNULL ||
-              comp_local_type(GETSCHEMENODEX(cur),
+		CHECKP(cur);		
+		if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
                               nt_data.ncname.n, 
                               element))
 							  return;
+		cur = get_parent_node(cur);
 	}
 }
 
