@@ -27,20 +27,35 @@ uResVal uCreateThread(
                       &threadId);
     *id = hndl;
     if (hndl != 0) return 0;
-    else return (void*)-1;
+    else
+    {
+       sys_call_error("CreateThread");
+       return (void*)-1; 
+    }
 #else
     pthread_attr_t attr;
     int set_res = 0;
     set_res = pthread_attr_init(&attr);
-    if (set_res != 0) return set_res;
+    if (set_res != 0)
+    {  
+       sys_call_error("pthread_attr_init");
+       return set_res;
+    }
     set_res = pthread_attr_setstacksize(&attr, size);
-    if (set_res != 0) return set_res;
+    if (set_res != 0) 
+    {
+       sys_call_error("pthread_attr_setstacksize"); 
+       return set_res;
+    }
     pthread_t threadId = 0;
     int     res = pthread_create(
                       &threadId,
                       &attr,
                       proc,
                       arg);
+
+    if (res != 0) sys_call_error("pthread_create");
+
     *id = threadId;
     return res;
 #endif
@@ -53,8 +68,8 @@ static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt
     d_printf1("suspend\n");
     int sig = 0;
     sigset_t signalSet;
-    sigfillset(&signalSet);
-    sigwait(&signalSet, &sig);
+    if (sigfillset(&signalSet) == -1) sys_call_error("sigfillset");
+    if (sigwait(&signalSet, &sig) != 0) sys_call_error("sigwait");
 }
 static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
@@ -74,7 +89,7 @@ int uEnableSuspend()
     sigsegv_act.sa_flags = SA_SIGINFO;
     if (sigaction(SIGUSR1, &sigsegv_act, NULL) == -1)
     {
-        d_perror("sigaction");
+        sys_call_error("sigaction");
         return 1;
     }
                                                                                                                              
@@ -83,7 +98,7 @@ int uEnableSuspend()
     sigsegv_act.sa_flags = SA_SIGINFO;
     if (sigaction(SIGUSR2, &sigsegv_act, NULL) == -1)
     {
-        d_perror("sigaction");
+        sys_call_error("sigaction");
         return 1;
     }
 
@@ -94,18 +109,32 @@ int uEnableSuspend()
 int uSuspendThread(UTHANDLE id)
 {
 #ifdef _WIN32
-    return SuspendThread(id) == -1 ? 1 : 0;
+    if (SuspendThread(id) == -1)
+    {
+       sys_call_error("SuspendThread");
+       return 1;
+    }
+    else return 0;
 #else
-    return pthread_kill(id, SIGUSR1);
+    int res = pthread_kill(id, SIGUSR1);
+    if (res != 0) sys_call_error("pthread_kill");
+    return res;
 #endif
 }
 
 int uResumeThread(UTHANDLE id) 
 {
 #ifdef _WIN32
-    return ResumeThread(id) == -1 ? 1 : 0;
+    if (ResumeThread(id) == -1)
+    {
+       sys_call_error("ResumeThread");
+       return 1;
+    }
+    else return 0;
 #else
-    return pthread_kill(id, SIGUSR2);
+    int res = pthread_kill(id, SIGUSR2); 
+    if (res != 0) sys_call_error("pthread_kill");
+    return res;
 #endif
 }
 
@@ -116,13 +145,15 @@ int uTerminateThread(UTHANDLE id)
     res = TerminateThread(id, 0);
     if (res == 0)
     {
-        d_perror("TerminateThread");
+        sys_call_error("TerminateThread");
         return 1;
     }
 
     return 0;
 #else
-    return pthread_cancel(id);
+    int res = pthread_cancel(id);
+    if (res != 0) sys_call_error("pthread_cancel");
+    return res;
 #endif
 }
 
@@ -133,7 +164,7 @@ int uCloseThreadHandle(UTHANDLE id)
     res = CloseHandle(id);
     if (res == 0)
     {
-        d_perror("CloseHandle failed\n");
+        sys_call_error("CloseHandle");
         return 1;
     }
 
@@ -146,10 +177,15 @@ int uCloseThreadHandle(UTHANDLE id)
 int uThreadJoin(UTHANDLE id)
 {
 #ifdef _WIN32
-    if (WaitForSingleObject(id, INFINITE) != WAIT_OBJECT_0) return 1;
+    DWORD res = WaitForSingleObject(id, INFINITE);
+    if (res == WAIT_FAILED) sys_call_error("WaitForSingleObject");
+
+    if (res != WAIT_OBJECT_0) return 1;
     else return 0;
 #else
-    return pthread_join(id, NULL);
+    int res = pthread_join(id, NULL);
+    if (res != 0) sys_call_error("pthread_join");
+    return res;
 #endif
 }
 
@@ -167,13 +203,14 @@ UTHANDLE uGetCurrentThread()
 #ifdef _WIN32
 	UTHANDLE result;
 
-	DuplicateHandle(GetCurrentProcess(),
-                    GetCurrentThread(),
-                    GetCurrentProcess(),
-                    &result,
-                    0,
-                    FALSE,
-                    DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE);
+	if (DuplicateHandle(GetCurrentProcess(),
+                        GetCurrentThread(),
+                        GetCurrentProcess(),
+                        &result,
+                        0,
+                        FALSE,
+                        DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE) == 0)
+       sys_call_error("DuplicateHandle");
 
 	return result;
 #else
@@ -188,8 +225,16 @@ int uThreadBlockAllSignals()
     return 0;
 #else
     sigset_t new_sigset, old_sigset;
-    if (sigfillset(&new_sigset) == -1) return -1;
-    if (pthread_sigmask(SIG_SETMASK, &new_sigset, &old_sigset) == -1) return -1;
+    if (sigfillset(&new_sigset) == -1)
+    {
+      sys_call_error("sigfillset");
+      return -1;
+    }
+    if (pthread_sigmask(SIG_SETMASK, &new_sigset, &old_sigset) == -1)
+    {
+       sys_call_error("pthread_sigmask");
+       return -1;
+    }
     return 0;
 #endif
 }

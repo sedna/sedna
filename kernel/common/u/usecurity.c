@@ -50,7 +50,10 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
 
     /* get Current User SID */
     if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &hToken))
+    {
+        sys_call_error("OpenProcessToken");
         return -1;
+    }
 
     /* Call GetTokenInformation to get the buffer size. */
     if (!GetTokenInformation(hToken, TokenUser, NULL, token_info_size, &token_info_size))
@@ -58,7 +61,7 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
         res = GetLastError();
         if (res != ERROR_INSUFFICIENT_BUFFER)
         {
-             d_printf2("GetTokenInformation Error %u\n", res);
+             sys_call_error("GetTokenInformation");
              return -1;
          }
      }
@@ -68,14 +71,20 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
 
      /* Call GetTokenInformation again to get the user information. */
     if (!GetTokenInformation(hToken, TokenUser, puser_info, token_info_size, &token_info_size))
+    {
+         sys_call_error("GetTokenInformation");
          return -1;
+    }
 
     ea.Trustee.ptstrName = (LPTSTR) puser_info->User.Sid;
 
     /* Create a new ACL that contains the new ACEs.*/
     dwRes = SetEntriesInAcl(1, &ea, NULL, &pACL);
     if (ERROR_SUCCESS != dwRes)
+    {
+        sys_call_error("SetEntriesInAcl");
         return -1;
+    }
 
     /* Initialize a security descriptor.  */
     pSD = (PSECURITY_DESCRIPTOR) (malloc(SECURITY_DESCRIPTOR_MIN_LENGTH));
@@ -83,15 +92,21 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
         return -1;
 
     if (!InitializeSecurityDescriptor(pSD, SECURITY_DESCRIPTOR_REVISION))
+    {
+        sys_call_error("InitializeSecurityDescriptor");
         return -1;
+    }
 
     /* Add the ACL to the security descriptor. */
     if (!SetSecurityDescriptorDacl(pSD, TRUE,   /* bDaclPresent flag   */
                                    pACL, FALSE))        /* not a default DACL */
+    {
+        sys_call_error("SetSecurityDescriptorDacl");
         return -1;
+    }
 
     free(puser_info);
-    CloseHandle(hToken);
+    if (CloseHandle(hToken) == 0) sys_call_error("CloseHandle");
 
     /* Initialize a security attributes structure. */
     (*sa)->nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -142,12 +157,14 @@ int uIsAdmin(void)
     {
         if (!CheckTokenMembership(NULL, AdministratorsGroup, &b))
         {
-            b = FALSE;
+            b = (int)FALSE;
+            sys_call_error("CheckTokenMembership");
         }
         FreeSid(AdministratorsGroup);
     }
+    else sys_call_error("AllocateAndInitializeSid");
 
-    return (b);
+    return (int)b;
 #else
     if (geteuid() == 0)
         return 1;

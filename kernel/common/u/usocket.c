@@ -28,7 +28,9 @@ int uSocketInit()
 
     err = WSAStartup(wVersionRequested, &wsaData);
     if (err != 0)
+    {
         return U_SOCKET_ERROR;
+    }
 
     if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
     {

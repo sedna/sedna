@@ -15,8 +15,15 @@ int uMutexInit(uMutexType *mutex)
 #else
     pthread_mutexattr_t attr;
     int res = pthread_mutexattr_init(&attr);
-    if (res != 0) return res;
-    return pthread_mutex_init(mutex, &attr);
+    if (res != 0) 
+    {
+      sys_call_error("pthread_mutexattr_init");  
+      return res;
+    }
+
+    if ((res = pthread_mutex_init(mutex, &attr)) != 0)
+       sys_call_error("pthread_mutex_init");
+    return res;
 #endif
 }
 
@@ -26,7 +33,10 @@ int uMutexLock(uMutexType *mutex)
     EnterCriticalSection(mutex);
     return 0;
 #else
-    return pthread_mutex_lock(mutex);
+    int res;
+    if ((res = pthread_mutex_lock(mutex)) != 0)
+       sys_call_error("pthread_mutex_lock");
+    return res;
 #endif
 }
 
@@ -36,7 +46,11 @@ int uMutexUnlock(uMutexType *mutex)
     LeaveCriticalSection(mutex);
     return 0;
 #else
-    return pthread_mutex_unlock(mutex);
+    int res;
+    if ((res = pthread_mutex_unlock(mutex)) != 0)
+       sys_call_error("pthread_mutex_unlock");
+
+    return res;
 #endif
 }
 
@@ -46,7 +60,11 @@ int uMutexDestroy(uMutexType *mutex)
     DeleteCriticalSection(mutex);
     return 0;
 #else
-    return pthread_mutex_destroy(mutex);
+    int res;
+    if ((res = pthread_mutex_destroy(mutex)) != 0)
+       sys_call_error("pthread_mutex_destroy");
+
+    return res;
 #endif
 }
 

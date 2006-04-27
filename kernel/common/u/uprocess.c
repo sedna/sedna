@@ -26,7 +26,11 @@ int uSetEnvironmentVariable(const char* name, const char* value)
                   name,			/* environment variable name */
                   value			/* new value for variable */
                );
-    if (res == 0) return 1;
+    if (res == 0)
+    {
+       sys_call_error("SetEnvironmentVariable");
+       return 1;
+    }
     return 0;
 #else
     int name_len = strlen(name);
@@ -38,7 +42,11 @@ int uSetEnvironmentVariable(const char* name, const char* value)
     memcpy(str + name_len + 1, value, value_len);
     str[name_len + value_len + 1] = '\0';
     int res = putenv(str);
-    if (res != 0) return 1;
+    if (res != 0)
+    {
+       sys_call_error("putenv");
+       return 1;
+    }
     return 0;
 #endif
 }
@@ -53,12 +61,20 @@ int uGetEnvironmentVariable(const char* name, char* buf, int size)
              buf,
              size - 1
           );
-    if (res == 0) return 1;
+    if (res == 0)
+    {
+       sys_call_error("GetEnvironmentVariable");
+       return 1;
+    }
     if (res > size - 1) return 1;
     return 0;
 #else
     char *res = getenv(name);
-    if (res == NULL) return 1;
+    if (res == NULL)
+    {
+      sys_call_error("getenv");
+      return 1;
+    }
     if ((int)strlen(res) > size - 1) return 1;
     strcpy(buf, res);
     return 0;
@@ -101,10 +117,13 @@ int uCreateProcess(
                 &piProcInfo						    /* receives PROCESS_INFORMATION */
           );
 
+    if (res == 0) sys_call_error("CreateProcess");
+
     if (process_handle) *process_handle = piProcInfo.hProcess;
-    else CloseHandle(piProcInfo.hProcess);
+    else if (CloseHandle(piProcInfo.hProcess) == 0) sys_call_error("CloseHandle");
+
     if (thread_handle) *thread_handle = piProcInfo.hThread;
-    else CloseHandle(piProcInfo.hThread);
+    else if (CloseHandle(piProcInfo.hThread) == 0) sys_call_error("CloseHandle");
 
     if (process_id) *process_id = piProcInfo.dwProcessId;
     if (thread_id) *thread_id = piProcInfo.dwThreadId;
@@ -127,14 +146,14 @@ int uCreateProcess(
             /* close stdout and stderr to avoid output to console */
             int null_dev;
             null_dev = open("/dev/null", O_RDWR);
-            if (null_dev == -1) return 1;
-            if (close(STDOUT_FILENO) == -1) return 1;
-            if (close(STDERR_FILENO) == -1) return 1;
-            if (close(STDIN_FILENO)) return 1;
-            if (dup2(null_dev, STDOUT_FILENO) == -1) return 1;
-            if (dup2(null_dev, STDERR_FILENO) == -1) return 1;
-            if (dup2(null_dev, STDIN_FILENO) == -1) return 1;
-            if (close(null_dev) == -1) return 1;
+            if (null_dev == -1) { sys_call_error("open"); return 1; }
+            if (close(STDOUT_FILENO) == -1) { sys_call_error("close"); return 1;}
+            if (close(STDERR_FILENO) == -1){ sys_call_error("close"); return 1;}
+            if (close(STDIN_FILENO)) { sys_call_error("close"); return 1; }
+            if (dup2(null_dev, STDOUT_FILENO) == -1) { sys_call_error("dup2"); return 1;}
+            if (dup2(null_dev, STDERR_FILENO) == -1) { sys_call_error("dup2"); return 1;}
+            if (dup2(null_dev, STDIN_FILENO) == -1) { sys_call_error("dup2"); return 1; }
+            if (close(null_dev) == -1) { sys_call_error("close"); return 1; }
         }
 
         if (cur_dir != NULL)
@@ -142,7 +161,7 @@ int uCreateProcess(
             /* change current directory to cur_dir */
             if (chdir(cur_dir) != 0)
             {
-                d_printf1("Error changing directory\n");
+                sys_call_error("chdir");
                 exit(1);
             }
         }
@@ -182,7 +201,7 @@ int uCreateProcess(
 
         if (execvp(args[0], args) == -1)
         {
-            d_printf1("Error calling execvp()\n");
+            sys_call_error("execvp");
             exit(1);
         }
 
@@ -190,7 +209,11 @@ int uCreateProcess(
     }
     else
     {
-        if (pid == -1) return 1;
+        if (pid == -1)
+        {
+          sys_call_error("fork");
+          return 1;
+        }
 
         if (process_handle) *process_handle = 0;
         if (thread_handle) *thread_handle = 0;
@@ -209,10 +232,18 @@ int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code)
                         exit_code  /* exit code for the process */
                );
 
-    if (res == 0) return 1;
+    if (res == 0) 
+    {
+      sys_call_error("TerminateProcess");
+      return 1;
+    }
     return 0;     
 #else
-    if (kill(pid, SIGKILL) == -1) return 1;
+    if (kill(pid, SIGKILL) == -1)
+    {
+      sys_call_error("kill");
+      return 1;
+    }
     return 0;
 #endif
 }
@@ -243,8 +274,7 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
     res = GetExitCodeProcess(h, &status);
     if (res == 0)
     {
-        d_printf1("GetExitCodeProcess failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("GetExitCodeProcess");
         return -1;
     }
 
@@ -258,13 +288,19 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
     int2c_str(pid, buf + strlen("/proc/"));
 
     dsc = open(buf, O_RDONLY);     
-    if (dsc == -1) return 0;
+    if (dsc == -1)
+    {
+       sys_call_error("open");
+       return 0;
+    }
 
-    close(dsc);
+    if (close(dsc) == -1) sys_call_error("close");
     return 1; 
 #else
     /* !!!   check for errno   !!! */
     int res = kill(pid, 0);
+    if (res == -1) sys_call_error("kill");
+
     if (res == 0) return 1;
     else return 0;
 #endif
@@ -275,7 +311,11 @@ int uOpenProcess(UPID pid, UPHANDLE *h)
 {
 #ifdef _WIN32
     *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
-    if (*h == NULL) return -1;
+    if (*h == NULL) 
+    {
+      sys_call_error("OpenProcess"); 
+      return -1;
+    }
     else return 0;
 #else
     return 0;
@@ -288,7 +328,11 @@ int uCloseProcess(UPHANDLE h)
     int res;
     res = CloseHandle(h);
     if (res != 0) return 0;
-    else return -1;
+    else 
+    {
+       sys_call_error("CloseHandle");  
+       return -1;
+    }
 #else
     return 0;
 #endif
@@ -303,18 +347,28 @@ int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status)
 
     res1 = WaitForSingleObject(h, INFINITE);
     if (res1 == WAIT_FAILED)
+    {
+        sys_call_error("WaitForSingleObject");
         return -1;
+    }
 
     res2 = GetExitCodeProcess(h, &_status);
     if (res2 == 0)
-        return -1;
+    {
+       sys_call_error("GetExitCodeProcess");
+       return -1;
+    }
 
     if (status) *status = _status;
 
     return 0;
 #else
     int res = waitpid(pid, status, 0);
-    if (res == -1) return -1;
+    if (res == -1)
+    {
+      sys_call_error("waitpid");
+      return -1;
+    }
 
     if (status)
     {
@@ -334,7 +388,10 @@ int uWaitForProcess(UPID pid, UPHANDLE h)
     res = WaitForSingleObject(h, INFINITE);
 
     if (res == WAIT_FAILED)
+    {
+       sys_call_error("WaitForSingleObject");
        return -1;
+    }
     else
        return 0;
 #else
@@ -523,6 +580,8 @@ char* uGetImageProcPath(char *buf)
         p = strrchr(buf, '\\');
         if (!p) p = buf;
     }
+    else
+       sys_call_error("GetModuleFileName");
 
     *p = '\0';
     return buf;
@@ -543,6 +602,7 @@ char* uGetImageProcPath(char *buf)
         p = strrchr(buf, '/');
         if (!p) p = buf;
     }
+    else sys_call_error("uGetImageProcPath");
     
     *p = '\0';
     return buf;

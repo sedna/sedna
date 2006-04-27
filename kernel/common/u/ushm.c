@@ -25,8 +25,7 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
  
     if (*id == NULL) 
     {
-        d_printf1("CreateFileMapping failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CreateFileMapping");
         return 1;
     }
 
@@ -46,9 +45,7 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
 
 	if(*id == -1)
 	{
-		d_printf1("uCreateShMem failed\n");
-        d_perror("shmget");
-		//d_printf2("Error %d\n", perror(semget));
+        sys_call_error("shmget");
 		return 1;
 	}
 /* 
@@ -81,8 +78,7 @@ int uOpenShMem(UShMem *id, global_name name, int size)
  
     if (*id == NULL) 
     {
-        d_printf1("OpenFileMapping failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("OpenFileMapping");
         return 1;
     }
 
@@ -101,9 +97,7 @@ int uOpenShMem(UShMem *id, global_name name, int size)
 
 	if(*id == -1)
 	{
-		d_printf1("uOpenShMem failed\n");
-        d_perror("shmget");
-		//d_printf2("Error %d\n", perror(semget));
+        sys_call_error("shmget");
 		return 1;
 	}
 
@@ -118,8 +112,7 @@ int uReleaseShMem(UShMem id)
     res = CloseHandle(id);
     if (res == 0) 
 	{
-		d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CloseHandle");
 		return 1;
 	}
 
@@ -139,8 +132,8 @@ int uReleaseShMem(UShMem id)
 		{
 			// if shared memory already destroyed don't raise an error
 			if (errno == EINVAL) return 0;
-			d_printf1("uReleaseShMem failed\n");
-		        d_perror("shmctl");
+
+            sys_call_error("shmctl");
 			return 1;
 		}
 	}
@@ -155,8 +148,7 @@ int uCloseShMem(UShMem id)
     res = CloseHandle(id);
     if (res == 0) 
 	{
-		d_printf1("CloseHandle failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("CloseHandle");
 		return 1;
 	}
 
@@ -182,8 +174,7 @@ void* uAttachShMem(UShMem id, void *ptr, int size)
 
     if (res == NULL) 
     {
-        d_printf1("MapViewOfFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("MapViewOfFileEx");
         return NULL;
     }
 
@@ -194,8 +185,7 @@ void* uAttachShMem(UShMem id, void *ptr, int size)
 	void *res = NULL;
 	if ((int)(res = shmat(id, ptr, 0)) == -1)
 	{
-		d_printf1("shmat failed\n");
-        d_perror("shmat");
+        sys_call_error("shmat");
     	return NULL;
 	}
 	return res;
@@ -209,8 +199,7 @@ int uDettachShMem(UShMem id, void * ptr)
      res = UnmapViewOfFile(ptr);
     if (res == 0) 
 	{
-		d_printf1("UnmapViewOfFile failed\n");
-        d_printf2("Error %d\n", GetLastError());
+        sys_call_error("UnmapViewOfFile");
 		return 1;
 	}
 
@@ -220,8 +209,7 @@ int uDettachShMem(UShMem id, void * ptr)
 {
 	if(shmdt(ptr) < 0)
 	{
-		d_printf1("uDettachShMem failed\n");
-		//d_printf2("Error %d\n", perror(semget));
+        sys_call_error("shmdt");
 		return 1;
 	}
 	return 0;
