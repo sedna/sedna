@@ -1,4 +1,9 @@
+/*
+ * File:  popt_plan.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
+#include "sedna.h"
 #include "popt_plan.h"
 #include "PPUtils.h"
 

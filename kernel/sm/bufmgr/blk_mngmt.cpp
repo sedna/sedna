@@ -2,8 +2,7 @@
  * File:  blk_mngmt.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-
-
+#include "sedna.h"
 #include "sm_vmm_data.h"
 #include "bm_core.h"
 #include "blk_mngmt.h"

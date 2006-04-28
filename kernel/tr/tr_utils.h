@@ -1,6 +1,7 @@
 #ifndef _TR_UTILS_H_
 #define _TR_UTILS_H_
 
+#include "sedna.h"
 #include "utils.h"
 
 

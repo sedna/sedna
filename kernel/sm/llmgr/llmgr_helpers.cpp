@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+
+#include "sedna.h"
 #include "base.h"
 #include "llmgr_core.h"
 #include "uhdd.h"

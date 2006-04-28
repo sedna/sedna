@@ -5,6 +5,8 @@
 
 #ifndef _MICRO_H
 #define _MICRO_H
+
+#include "sedna.h"
 #include "xptr.h"
 #include "nodes.h"
 #include "node_utils.h"

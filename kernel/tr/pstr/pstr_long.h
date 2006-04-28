@@ -6,6 +6,7 @@
 #ifndef _PSTR_LONG_H
 #define _PSTR_LONG_H
 
+#include "sedna.h"
 #include "sm_vmm_data.h"
 #include "micro.h"
 

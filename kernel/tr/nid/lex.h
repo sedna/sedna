@@ -5,6 +5,8 @@
 
 #ifndef _LEX_H
 #define _LEX_H
+
+#include "sedna.h"
 #include "crmutils.h"
 #include "nid.h"
 

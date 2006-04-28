@@ -15,7 +15,7 @@
 //    are actually unsupported, but can appear...
 
 
-
+#include "sedna.h"
 #include <strstream>
 #include <list>
 #include "att_xpath.h"

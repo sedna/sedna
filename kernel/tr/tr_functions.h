@@ -6,6 +6,7 @@
 #ifndef _TR_FUNCTIONS
 #define _TR_FUNCTIONS
 
+#include "sedna.h"
 #include <string>
 #include "upipe.h"
 #include "exec_output.h"

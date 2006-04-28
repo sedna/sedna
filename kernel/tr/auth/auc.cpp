@@ -1,3 +1,9 @@
+/*
+ * File:  auc.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include "auc.h"
 #include "d_printf.h"
 #include "por2qep.h"

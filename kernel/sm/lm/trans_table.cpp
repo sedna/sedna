@@ -1,3 +1,9 @@
+/*
+ * File:  trans_table.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include <map>
 #include <iostream>
 #include "base.h"

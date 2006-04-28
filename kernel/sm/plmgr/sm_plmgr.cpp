@@ -2,6 +2,8 @@
  * File:  sm_plmgr.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
+
+#include "sedna.h"
 #include <iostream>
 #include "plmgr_core.h"
 #include "sm_plmgr.h"

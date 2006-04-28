@@ -5,6 +5,8 @@
 
 #ifndef _NID_H
 #define _NID_H
+
+#include "sedna.h"
 #include "exceptions.h"
 
 /*	number of symbols encodable in the cell of the alphabet;

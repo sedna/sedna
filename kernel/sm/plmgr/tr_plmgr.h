@@ -6,6 +6,7 @@
 #ifndef _TR_PLMGR_H
 #define _TR_PLMGR_H
 
+#include "sedna.h"
 #include "plmgr_core.h"
 
 class tr_plmgr : public plmgr_core

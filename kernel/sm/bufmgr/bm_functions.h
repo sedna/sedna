@@ -7,6 +7,7 @@
 #ifndef _BM_FUNCTIONS_H
 #define _BM_FUNCTIONS_H
 
+#include "sedna.h"
 #include "xptr.h"
 #include "exceptions.h"
 #include "persistent_db_data.h"

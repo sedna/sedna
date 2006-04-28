@@ -4,11 +4,11 @@
  */
 
 
+#include "sedna.h"
+
 #include <iostream>
 #include <string>
 #include <string.h>
-
-#include "sedna.h"
 
 #include "base.h"
 #include "utils.h"

@@ -6,6 +6,7 @@
 #ifndef _SM_PLMGR_H
 #define _SM_PLMGR_H
 
+#include "sedna.h"
 #include "plmgr_core.h"
 #include "bm_core.h"
 

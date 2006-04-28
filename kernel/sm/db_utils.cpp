@@ -1,3 +1,9 @@
+/*
+ * File:  db_utils.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include <string>
 #include "base.h"
 #include "uhdd.h"

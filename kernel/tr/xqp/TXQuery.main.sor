@@ -1,6 +1,7 @@
 /**/
 #header <<
 
+#include "sedna.h"
 #include "AST.h"
 #include "ASTNodeTypes.h"
 #include "SORAST.h"

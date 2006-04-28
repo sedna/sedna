@@ -5,7 +5,8 @@
 
 #ifndef _SOCKET_CLIENT_H
 #define _SOCKET_CLIENT_H
-	
+
+#include "sedna.h"	
 #include <list>
 #include <string>
 #include "exec_output.h"

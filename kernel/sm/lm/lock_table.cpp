@@ -1,4 +1,9 @@
-#include <stdio.h>
+/*
+ * File:  lock_table.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include <iostream>
 #include <string>
 #include "usem.h"

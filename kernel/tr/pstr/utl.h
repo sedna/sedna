@@ -6,6 +6,7 @@
 #ifndef _UTL_H
 #define _UTL_H
 
+#include "sedna.h"
 #include "nodes.h"
 
 /* types of items */

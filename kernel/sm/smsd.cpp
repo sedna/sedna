@@ -4,9 +4,8 @@
  */
 
 
-
+#include "sedna.h"
 #include <iostream>
-#include <stdio.h>
 #include <string.h>
 #include "base.h"
 #include "exceptions.h"

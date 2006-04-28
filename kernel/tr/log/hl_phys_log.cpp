@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include <string>
 #include <iostream>
 #include "log.h"
@@ -14,6 +15,7 @@
 #include "tr_globals.h"
 #include "tr_debug.h"
 #include "sm_vmm_data.h"
+#include "trmgr.h"
 
 using namespace std;
 

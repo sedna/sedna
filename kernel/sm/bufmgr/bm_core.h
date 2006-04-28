@@ -7,6 +7,7 @@
 #ifndef _BM_CORE_H
 #define _BM_CORE_H
 
+#include "sedna.h"
 #include <map>
 #include "exceptions.h"
 #include "XptrHash.h"

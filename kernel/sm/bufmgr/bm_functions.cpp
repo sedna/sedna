@@ -11,8 +11,9 @@ The following is left to implement:
 
 *******************************************************************************/
 
+
+#include "sedna.h"
 #include <string>
-#include <stdlib.h>
 #include "sm_vmm_data.h"
 #include "pers_heap.h"
 #include "bm_functions.h"

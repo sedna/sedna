@@ -3,7 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <stdio.h>
+#include "sedna.h"
 #include "tr_globals.h"
 #include "tr_functions.h"
 #include "base.h"

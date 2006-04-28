@@ -1,6 +1,7 @@
 
 #header
 <<
+#include "sedna.h"
 #include "ANTLRToken.h"
 #include "XQueryDLGLexer.h"
 #include "AST.h"

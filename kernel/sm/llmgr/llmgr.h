@@ -6,6 +6,7 @@
 #ifndef _LLMGR_H
 #define _LLMGR_H
 
+#include "sedna.h"
 #include "base.h"
 
 void ll_logical_log_startup();

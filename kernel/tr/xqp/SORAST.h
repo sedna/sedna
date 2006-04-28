@@ -6,6 +6,7 @@
 #ifndef SORAST_h
 #define SORAST_h
 
+#include "sedna.h"
 class AST;
 typedef AST SORAST;
 

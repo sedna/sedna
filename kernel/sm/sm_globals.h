@@ -7,6 +7,7 @@
 #ifndef _SM_GLOBALS_H
 #define _SM_GLOBALS_H
 
+#include "sedna.h"
 #include <string>
 #include "argtable.h"
 #include "usem.h"

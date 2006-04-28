@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include <string>
 #include <vector>
 #include "log.h"
@@ -11,7 +12,7 @@
 #include "tr_globals.h"
 #include "d_printf.h"
 #include "tr_debug.h"
-//#include "trmgr.h"
+#include "trmgr.h"
 #include "pstr_long.h"
 #include "rcv_funcs.h"
 #ifdef SE_ENABLE_FTSEARCH

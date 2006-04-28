@@ -6,6 +6,7 @@
 #ifndef _PLMGR_CORE_H
 #define _PLMGR_CORE_H
 
+#include "sedna.h"
 #include "base.h"
 #include "xptr.h"
 #include "usem.h"

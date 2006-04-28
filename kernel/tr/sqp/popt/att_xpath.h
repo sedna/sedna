@@ -6,6 +6,7 @@
 #ifndef _ATT_XPATH_H
 #define _ATT_XPATH_H
 
+#include "sedna.h"
 #include "popt_plan.h"
 
 popt_plan popt_att_xpath(xpath_attr *xpath);

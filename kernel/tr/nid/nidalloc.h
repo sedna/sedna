@@ -6,6 +6,7 @@
 #ifndef _NIDALLOC_H
 #define _NIDALLOC_H
 
+#include "sedna.h"
 #include "base.h"
 
 struct	nid_slot {

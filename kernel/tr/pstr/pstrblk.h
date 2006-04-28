@@ -6,6 +6,7 @@
 #ifndef _PSTRBLK_H
 #define _PSTRBLK_H
 
+#include "sedna.h"
 #include "sm_vmm_data.h"
 #include "nodes.h"
 
