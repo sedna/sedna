@@ -5,7 +5,9 @@
 
 #ifndef ASTNodeTypes_h
 #define ASTNodeTypes_h
-      
+
+#include "sedna.h"      
+
 enum ASTNodeType { 	 AST_QUERY=1,
 			 AST_FUNCDEFS,
 			 AST_SEQUENCE,

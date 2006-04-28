@@ -7,6 +7,7 @@
 #ifndef _ATT_H
 #define _ATT_H
 
+#include "sedna.h"
 #include "XPath.h"
 #include "PPBase.h"
 #include "scheme_tree.h"

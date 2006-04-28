@@ -7,6 +7,7 @@
 #ifndef _BLK_MNGMT_H
 #define _BLK_MNGMT_H
 
+#include "sedna.h"
 #include "xptr.h"
 #include "exceptions.h"
 

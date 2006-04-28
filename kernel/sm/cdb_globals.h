@@ -6,6 +6,7 @@
 #ifndef _CDB_GLOBALS_H
 #define _CDB_GLOBALS_H
 
+#include "sedna.h"
 #include "u.h"
 #include "argtable.h"
 #include "base.h"

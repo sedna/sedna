@@ -5,6 +5,8 @@
 
 #ifndef _NUMB_SCHEME_H
 #define _NUMB_SCHEME_H
+
+#include "sedna.h"
 #include "xptr.h"
 #include "exec_output.h"
 #include "nid.h"

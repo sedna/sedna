@@ -1,7 +1,13 @@
+/*
+ * File:  lock_table.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _LOCK_TABLE_H_
 #define _LOCK_TABLE_H_
 
 
+#include "sedna.h"
 #include <string>
 #include <map>
 #include "base.h"

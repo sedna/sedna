@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include <string>
 
 void erase_doublequot(char* lex_text);

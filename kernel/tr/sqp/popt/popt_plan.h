@@ -6,7 +6,7 @@
 #ifndef _POPT_PLAN_H
 #define _POPT_PLAN_H
 
-
+#include "sedna.h"
 #include "att.h"
 #include "XPathOnSchema.h"
 

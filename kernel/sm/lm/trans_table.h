@@ -1,6 +1,12 @@
+/*
+ * File:  trans_table.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _TRANS_TABLE_H_
 #define _TRANS_TABLE_H_
 
+#include "sedna.h"
 #include <map>
 #include "base.h"
 #include "usem.h"

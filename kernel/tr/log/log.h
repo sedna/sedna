@@ -7,6 +7,7 @@
 #ifndef _LOG_H
 #define _LOG_H
 
+#include "sedna.h"
 #include "xptr.h"
 #include "nodes.h"
 #include "micro.h"

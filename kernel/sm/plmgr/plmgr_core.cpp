@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include <string>
-
 #include "xptr.h"
 #include "sm_vmm_data.h"
 #include "bm_rcv.h"

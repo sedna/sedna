@@ -7,7 +7,7 @@
 #ifndef __PQ_H
 #define __PQ_H
 
-
+#include "sedna.h"
 #include <string>
 #include "base.h"
 #include "XQuerytoLR.h"

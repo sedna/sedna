@@ -6,6 +6,8 @@
 #ifndef _PSTR_H
 #define _PSTR_H
 
+#include "sedna.h"
+
 extern const shft	PSTRMAXSIZE;
 
 /* functions for persistent string management */

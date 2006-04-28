@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include "micro.h"
 #include "node_utils.h"
 #include "vmm.h"
@@ -14,7 +15,6 @@
 #include "updates.h"
 #include "pstr_long.h"
 #include "indirection.h"
-#include <stdlib.h>
 #include <string.h>
 //#include <iostream.h>
 #include "d_printf.h"

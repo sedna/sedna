@@ -6,6 +6,8 @@
 #ifndef ANTLRToken_h
 #define ANTLRToken_h
 
+#include "sedna.h"
+
 class ANTLRCommonToken;
 typedef ANTLRCommonToken ANTLRToken;
 #endif

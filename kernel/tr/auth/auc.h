@@ -1,6 +1,12 @@
+/*
+ * File:  auc.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _AUC
 #define _AUC
 
+#include "sedna.h"
 #include <map>
 #include <set>
 #include <iostream>

@@ -6,6 +6,7 @@
 #ifndef _LOCKS_H
 #define _LOCKS_H
 
+#include "sedna.h"
 #include <list>
 
 #include "nodes.h"

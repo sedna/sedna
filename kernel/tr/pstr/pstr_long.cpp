@@ -3,6 +3,7 @@
  * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include "vmm.h"
 #include "log.h"
 #include "strings.h"

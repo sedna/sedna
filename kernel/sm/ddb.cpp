@@ -1,5 +1,10 @@
+/*
+ * File:  ddb.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include <iostream>
-#include <stdio.h>
 #include "base.h"
 #include "exceptions.h"
 #include "d_printf.h"

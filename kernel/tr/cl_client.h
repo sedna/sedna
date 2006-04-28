@@ -6,6 +6,7 @@
 #ifndef _CL_CLIENT_H
 #define _CL_CLIENT_H
 
+#include "sedna.h"
 #include <vector>
 #include <string>
 #include "exec_output.h"

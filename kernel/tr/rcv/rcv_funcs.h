@@ -6,6 +6,7 @@
 #ifndef _RCV_FUNCS
 #define _RCV_FUNCS
 
+#include "sedna.h"
 #include <vector>
 #include "base.h"
 #include "xptr.h"

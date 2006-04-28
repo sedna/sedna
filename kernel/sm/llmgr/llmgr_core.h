@@ -6,6 +6,7 @@
 #ifndef _LLMGR_CORE_H
 #define _LLMGR_CORE_H
 
+#include "sedna.h"
 #include <string>
 #include <vector>
 #include <map>

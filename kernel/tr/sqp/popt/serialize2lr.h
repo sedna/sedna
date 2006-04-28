@@ -6,6 +6,7 @@
 #ifndef _SERIALIZE2LR_H
 #define _SERIALIZE2LR_H
 
+#include "sedna.h"
 #include "popt_plan.h"
 
 void serialize2lr_popt_plan(std::ostream &s, const popt_plan &plan);

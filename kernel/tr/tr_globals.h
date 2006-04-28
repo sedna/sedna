@@ -7,6 +7,7 @@
 #ifndef _TR_GLOBALS_H
 #define _TR_GLOBALS_H
 
+#include "sedna.h"
 #include "base.h"
 #include "client_core.h"
 #include "argtable.h"

@@ -1,6 +1,12 @@
+/*
+ * File:  TransCB.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _TRANS_CB_H_
 #define _TRANS_CB_H_
 
+#include "sedna.h"
 #include "base.h"
 #include "lock_table.h"
 #include "lm_base.h"

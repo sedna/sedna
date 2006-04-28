@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include <iostream>
 #include "utl.h"
 #include "pstrblk.h"
-#include <iostream>
 using namespace std;
 
 /* sort SIT array by values in slots (PSTR shfts) returning a sorted double-linked list */

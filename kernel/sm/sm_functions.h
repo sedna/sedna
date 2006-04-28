@@ -7,6 +7,7 @@
 #ifndef _SM_FUNCTIONS_H
 #define _SM_FUNCTIONS_H
 
+#include "sedna.h"
 #include "expat.h"
 
 /******************************************************************************/

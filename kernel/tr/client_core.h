@@ -5,6 +5,8 @@
 
 #ifndef _CLIENT_CORE_H
 #define _CLIENT_CORE_H
+
+#include "sedna.h"
 #include <string>
 #include "ipc_ops.h"
 #include "crmutils.h"

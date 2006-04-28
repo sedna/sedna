@@ -6,8 +6,8 @@
 #ifndef AST_h
 #define AST_h
 
+#include "sedna.h"
 #include <string>
-
 #include "XQuerytokens.h"
 #include "ATokPtr.h"
 #include "AToken.h"
