@@ -7,11 +7,15 @@
 #ifndef _PPAXISDESC_H
 #define _PPAXISDESC_H
 
+#include <vector>
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
-#include <vector>
 #include "node_utils.h"
 #include "xptrChanneledMerge.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisDescendant
 ///////////////////////////////////////////////////////////////////////////////

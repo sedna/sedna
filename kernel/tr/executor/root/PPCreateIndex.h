@@ -7,6 +7,8 @@
 #ifndef _PPCREATEINDEX_H
 #define _PPCREATEINDEX_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPathOnSchema.h"
 

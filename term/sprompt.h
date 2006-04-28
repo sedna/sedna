@@ -11,21 +11,5 @@
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
 
-//#ifdef HAVE_TERMIOS_H
-//#include <termios.h>
-//#else
-//#ifdef WIN32
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <termios.h>
-//#undef ERROR
-#endif
-//#endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-
 char *
 simple_prompt(const char *prompt, int maxlen, bool echo);

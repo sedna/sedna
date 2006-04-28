@@ -6,14 +6,10 @@
 #ifndef _IPC_H
 #define _IPC_H
 
-#include "base.h"
 #include "ushm.h"
 #include "uutils.h"
 #include "upipe.h"
 
-
-
-//#include "upipe.h"
 
 // return 0 indicates success
 // negative return values indicates an error

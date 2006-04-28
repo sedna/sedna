@@ -5,11 +5,13 @@
 
 #include "sedna.h"
 
+#include "base.h"
 #include "d_printf.h"
 #include "argtable.h"
 #include "version.h"
 #include "pping.h"
 #include "ipc_ops.h"
+#include "uprocess.h"
 
 using namespace std;
 

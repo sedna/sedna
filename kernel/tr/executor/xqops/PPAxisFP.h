@@ -1,6 +1,13 @@
+/*
+ * File:  PPAxisFP.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
 #ifndef _PPAXISFP_H
 #define _PPAXISFP_H
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 #include "node_utils.h"

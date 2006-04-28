@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPAbsPath.h"
 #include "PPUtils.h"
 #include "vmm.h"

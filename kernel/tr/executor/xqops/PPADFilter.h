@@ -7,6 +7,7 @@
 #ifndef _PPADFILTER_H
 #define _PPADFILTER_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPADFilter : public PPIterator

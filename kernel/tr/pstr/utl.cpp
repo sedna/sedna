@@ -7,6 +7,8 @@
 #include <iostream>
 #include "utl.h"
 #include "pstrblk.h"
+#include "d_printf.h"
+
 using namespace std;
 
 /* sort SIT array by values in slots (PSTR shfts) returning a sorted double-linked list */

@@ -1,3 +1,8 @@
+/*
+ * File:  scheme_utils.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef __SCHEME_UTILS_H
 #define __SCHEME_UTILS_H
 

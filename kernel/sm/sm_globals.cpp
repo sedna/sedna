@@ -11,7 +11,6 @@
 #include "ipc_ops.h"
 #include "sp.h"
 #include "uprocess.h"
-#include "exceptions.h"
 #include "sm_functions.h"
 #include "sm_globals.h"
 #include "SSMMsg.h"

@@ -7,6 +7,7 @@
 #ifndef _PPDELETEDEEP_H
 #define _PPDELETEDEEP_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPDeleteDeep : public PPUpdate

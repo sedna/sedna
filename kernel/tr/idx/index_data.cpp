@@ -4,8 +4,10 @@
  */
 
 #include <string.h>
+
+#include "sedna.h"
+
 #include "index_data.h"
-#include "exceptions.h"
 #include "xptr.h"
 #include "node_utils.h"
 #include "vmm.h"

@@ -8,6 +8,7 @@
 #define _DECIMAL_H
 
 #include <math.h>
+#include "sedna.h"
 
 class decimal
 {

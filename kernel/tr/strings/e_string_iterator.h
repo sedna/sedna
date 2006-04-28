@@ -5,8 +5,11 @@
 
 #ifndef _E_STRING_ITERATOR_H
 #define _E_STRING_ITERATOR_H
+
 #include <iterator>
 #include <list>
+
+#include "sedna.h"
 
 #include "vmm.h"
 #include "xptr.h"		

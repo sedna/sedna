@@ -6,6 +6,7 @@
 #ifndef _BTINTERN_H
 #define _BTINTERN_H
 
+#include "sedna.h"
 #include "btstruct.h"
 
 /** internal btree implementation fucntions */

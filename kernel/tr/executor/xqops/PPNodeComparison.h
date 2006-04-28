@@ -5,7 +5,10 @@
 
 #ifndef _PPNODECOMP_H
 #define _PPNODECOMP_H
+
+#include "sedna.h"
 #include "PPUtils.h"
+
 class PPNodeComparison : public PPIterator
 {
 protected:

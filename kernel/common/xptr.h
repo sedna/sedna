@@ -7,8 +7,8 @@
 #ifndef __XPTR_H
 #define __XPTR_H
 
+#include "sedna.h"
 #include "base.h"
-#include "exceptions.h"
 
 #ifndef NULL
 #define NULL_WAS_NOT_DEFINED

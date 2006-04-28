@@ -8,6 +8,9 @@
 #define _PPINDEXSCAN_H
 
 #include <string>
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "index_data.h"
 #include "btree.h"

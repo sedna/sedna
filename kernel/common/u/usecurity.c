@@ -8,7 +8,6 @@
 #ifdef _WIN32
 #include <Accctrl.h>
 #include <aclapi.h>
-#include <windows.h>
 #endif
 
 #include "d_printf.h"

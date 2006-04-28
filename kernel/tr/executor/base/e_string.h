@@ -7,6 +7,8 @@
 #ifndef _E_STRING_H
 #define _E_STRING_H
 
+#include "sedna.h"
+
 #include "sm_vmm_data.h"
 #include "vmm.h"
 #include "tuple.h"

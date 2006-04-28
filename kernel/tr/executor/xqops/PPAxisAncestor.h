@@ -1,5 +1,5 @@
 /*
- * File:  PPAxisDescendant.h
+ * File:  PPAxisAncestor.h
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
@@ -7,9 +7,12 @@
 #ifndef _PPAXISANCESTOR_H
 #define _PPAXISANCESTOR_H
 
+#include <vector>
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
-#include <vector>
 #include "node_utils.h"
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisAncestor

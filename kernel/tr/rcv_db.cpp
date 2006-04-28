@@ -7,7 +7,6 @@
 #include <string>
 #include "persistent_db_data.h"
 #include "base.h"
-#include "exceptions.h"
 #include "SSMMsg.h"
 #include "pers_heap.h"
 #include "vmm.h"

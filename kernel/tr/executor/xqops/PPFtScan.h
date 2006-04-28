@@ -1,5 +1,12 @@
+/*
+ * File:  PPFtScan.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _PPFTSCAN_H
 #define _PPFTSCAN_H
+
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "FTsearch.h"

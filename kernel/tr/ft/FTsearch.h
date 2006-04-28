@@ -1,5 +1,12 @@
+/*
+ * File:  FTsearch.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _FT_SEARCH_H
 #define _FT_SEARCH_H
+
+#include "sedna.h"
 
 #include "dm_accessors.h"
 #include "strings.h"
@@ -9,7 +16,6 @@
 
 #include <ios>
 #include <sstream>
-#include <windows.h>
 #define USE_DTSEARCH_NAMESPACE
 #include <dtsfc.h>
 #include "crmutils.h" 

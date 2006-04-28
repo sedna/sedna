@@ -6,8 +6,9 @@
 
 #include <iostream>
 
+#include "sedna.h"
 #include "scheme_tree.h"
-#include "exceptions.h"
+#include "d_printf.h"
 
 #define LEX_EOF			0
 #define LEX_LBR			1

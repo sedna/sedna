@@ -8,7 +8,6 @@
 #include <iostream>
 #include <string.h>
 #include "base.h"
-#include "exceptions.h"
 #include "d_printf.h"
 #include "argtable.h"
 #include "version.h"

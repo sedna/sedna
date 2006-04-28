@@ -28,7 +28,6 @@ STRINGS_LIB = libstrings$(LIB_EXT)
 ################################################################################
 $(STRINGS_LIB): strings$(OBJ_EXT) 	\
                 e_string_iterator$(OBJ_EXT) \
-                char_iterator$(OBJ_EXT) \
                 utf8$(OBJ_EXT)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 

@@ -5,7 +5,7 @@
 
 #include "sedna.h"
 #include "serialize2lr.h"
-
+#include "d_printf.h"
 
 enum xp_op_path_end_type
 {

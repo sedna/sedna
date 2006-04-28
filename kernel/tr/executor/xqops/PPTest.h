@@ -6,6 +6,7 @@
 #ifndef _PPTEST_H
 #define _PPTEST_H
 
+#include "sedna.h"
 #include "tuple.h"
 #include "PPUtils.h"
 #define DESC_CONSIST

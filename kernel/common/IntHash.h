@@ -7,7 +7,7 @@
 #ifndef _INTHASH_H
 #define _INTHASH_H
 
-//#include <stdio.h>
+#include "sedna.h"
 
 // T - value type
 // 32-bit integer is hashed by the following template:

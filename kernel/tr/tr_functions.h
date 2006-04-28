@@ -16,7 +16,6 @@
 #include "PPBase.h"
 #include "d_printf.h"
 #include "ipc_ops.h"
-#include "exceptions.h"
 #include "por2qep.h"
 #include "indirection.h"
 #include "tr_globals.h"

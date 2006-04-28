@@ -1,5 +1,13 @@
+/*
+ * File:  sorted_sequence.h
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _SORTED_SEQUENCE_H
 #define _SORTED_SEQUENCE_H
+
+#include "sedna.h"
+
 #include "tuple.h"
 #include "vmm.h"
 #include "seq_common.h"

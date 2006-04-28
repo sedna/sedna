@@ -12,6 +12,8 @@
 #include "listener.h"
 #include "sp.h"
 #include "ipc_ops.h"
+#include "base.h"
+#include "uprocess.h"
 
 using namespace std;
 

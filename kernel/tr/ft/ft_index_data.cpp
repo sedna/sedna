@@ -1,11 +1,12 @@
 /*
- * File:  index_data.cpp
+ * File:  ft_index_data.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <string.h>
+
+#include "sedna.h"
+
 #include "ft_index_data.h"
-#include "exceptions.h"
 #include "xptr.h"
 #include "node_utils.h"
 #include "vmm.h"

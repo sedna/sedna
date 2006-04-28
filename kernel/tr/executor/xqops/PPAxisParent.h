@@ -7,6 +7,8 @@
 #ifndef _PPAXISPARENT_H
 #define _PPAXISPARENT_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 

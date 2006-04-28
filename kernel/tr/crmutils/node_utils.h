@@ -6,11 +6,16 @@
 #ifndef __NODE_UTILS_H
 #define __NODE_UTILS_H
 /*Search utils*/
+
+#include <vector>
+
+#include "sedna.h"
+
 #include "xptr.h"
 #include "nodes.h"
 #include "vmm.h"
 #include "schema.h"
-#include <vector>
+
 typedef bool (*comp_schema)(const schema_node* scm,const char* uri,const char* name, t_item type);
 
 

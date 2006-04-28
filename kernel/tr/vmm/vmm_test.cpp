@@ -9,8 +9,9 @@
 #include <string>
 #include <vector>
 
+#include "sedna.h"
+
 #include "base.h"
-#include "exceptions.h"
 #include "SSMMsg.h"
 #include "vmm.h"
 #include "tr_globals.h"

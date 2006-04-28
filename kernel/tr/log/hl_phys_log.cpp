@@ -7,7 +7,6 @@
 #include <string>
 #include <iostream>
 #include "log.h"
-#include "exceptions.h"
 #include "d_printf.h"
 #include "tr_plmgr.h"
 #include "base.h"

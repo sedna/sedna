@@ -3,7 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
+#include "sedna.h"
 #include "PPVariable.h"
 
 PPVariable::PPVariable(variable_context *_cxt_, 

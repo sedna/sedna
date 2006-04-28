@@ -6,6 +6,8 @@
 #ifndef _PPDROPFTINDEX_H
 #define _PPDROPFTINDEX_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPathOnSchema.h"
 #include "ft_index_data.h"

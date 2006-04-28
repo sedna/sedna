@@ -7,6 +7,7 @@
 #ifndef __PPFUNCALL_H
 #define __PPFUNCALL_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

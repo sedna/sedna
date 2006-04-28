@@ -3,8 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include <float.h>
+
+#include "sedna.h"
+
 #include "PPUtils.h"
 #include "e_string.h"
 #include "casting_operations.h"

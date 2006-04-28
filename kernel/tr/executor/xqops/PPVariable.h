@@ -6,6 +6,7 @@
 #ifndef __PPVARIABLE_H
 #define __PPVARIABLE_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPVariable : public PPIterator

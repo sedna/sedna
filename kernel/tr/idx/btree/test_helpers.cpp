@@ -4,7 +4,7 @@
  */
 
 #include <iostream>
-#include <stdio.h>
+#include "sedna.h"
 #include "btintern.h"
 #include "time.h"
 

@@ -6,6 +6,7 @@
 #include "sedna.h"
 #include "att.h"
 #include "por2qep.h"
+#include "d_printf.h"
 
 using namespace std;
 

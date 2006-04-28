@@ -1,8 +1,13 @@
+/*
+ * File:  PPSQL.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 
 #include "PPSQL.h"
 #include "PPSQLODBC.h"
 
-#include <stdio.h>
 #include "schema.h"
 #include "PPUtils.h"
 #include "node_utils.h"

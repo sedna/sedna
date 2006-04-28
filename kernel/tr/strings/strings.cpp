@@ -1,8 +1,15 @@
+/*
+ * File:  strings.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 
 #include "utf8.h"
 #include "pstr.h"
 #include "pstr_long.h"
 #include "casting_operations.h"
+#include "d_printf.h"
 
 static CharsetHandler_utf8 utf8_charset_handler;
 CharsetHandler *charset_handler = &utf8_charset_handler;

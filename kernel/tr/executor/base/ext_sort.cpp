@@ -14,6 +14,7 @@
 
 */
 
+#include "sedna.h"
 #include "ext_sort.h"
 #include "vmm.h"
 

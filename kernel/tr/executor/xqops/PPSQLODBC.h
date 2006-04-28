@@ -1,13 +1,14 @@
+/*
+ * File:  PPSQLODBC.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef __PPSQLODBC_H
 #define __PPSQLODBC_H
 
 #define DEBUG_ODBC	1
 
-#ifdef WIN32
-
-#include <windows.h>
-
-#endif
+#include "sedna.h"
 
 #include <sql.h>
 #include <sqltypes.h>

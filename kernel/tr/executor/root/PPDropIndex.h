@@ -7,7 +7,7 @@
 #ifndef _PPDROPINDEX_H
 #define _PPDROPINDEX_H
 
-#include <string>
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPDropIndex : public PPUpdate

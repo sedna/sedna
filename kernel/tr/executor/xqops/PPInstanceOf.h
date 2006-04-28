@@ -7,6 +7,8 @@
 #ifndef _PPINSTANCEOF_H
 #define _PPINSTANCEOF_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "SequenceType.h"
 

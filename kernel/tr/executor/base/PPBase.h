@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <map>
+#include "sedna.h"
 #include "sequence.h"
 #include "SequenceType.h"
 #include "PPStaticContext.h"

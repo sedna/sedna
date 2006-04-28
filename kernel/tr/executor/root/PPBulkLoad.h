@@ -7,6 +7,7 @@
 #ifndef _PPBULKLOAD_H
 #define _PPBULKLOAD_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPBulkLoad : public PPUpdate

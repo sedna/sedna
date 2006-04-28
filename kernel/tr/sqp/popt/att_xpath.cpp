@@ -22,6 +22,7 @@
 #include "XPathOnSchema.h"
 #include "PPUtils.h"
 #include "pstrblk.h"
+#include "d_printf.h"
 
 
 /// CPU Factor

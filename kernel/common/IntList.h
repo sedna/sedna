@@ -7,8 +7,7 @@
 #ifndef _INTLIST_H
 #define _INTLIST_H
 
-#include <stdio.h>
-
+#include "sedna.h"
 #include "IntHash.h"
 
 
@@ -93,12 +92,8 @@ template <int middle_significan_bits, int right_zero_bits>
 IntList<middle_significan_bits, right_zero_bits>::~IntList() 
 {
     elem * p = start;
-	//printf("InitList destructor called !!!!\n");
-	//printf("vmm_num=%d\n", vmm_num);
-	//int i = 0;
     for (; p != NULL; )
     {
-		//printf("~InitList inside cycle %d\n", ++i);
         elem * tmp = p;
         p = p->next;
         delete tmp;

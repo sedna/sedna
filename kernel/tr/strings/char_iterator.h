@@ -5,8 +5,11 @@
 
 #ifndef _CHAR_ITERATOR_H
 #define _CHAR_ITERATOR_H
+
 #include <iterator>
 #include <list>
+
+#include "sedna.h"
 
 //#define ITERATOR_CHECK_BOUNDS
 

@@ -190,6 +190,8 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (nl)
 (out "// This file was generated. Don't edit it!!!")(nl)
 (nl)
+(out "#include \"sedna.h\"")(nl)
+(nl)
 (out "#include \"boolean_operations.h\"")(nl)
 (out "#include \"numeric_operations.h\"")(nl)
 (out "#include \"comparison_operations.h\"")(nl)

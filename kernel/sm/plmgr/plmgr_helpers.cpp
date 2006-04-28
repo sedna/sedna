@@ -7,7 +7,6 @@
 #include "plmgr_core.h"
 #include "xptr.h"
 #include "base.h"
-#include "exceptions.h"
 
 
 void plmgr_core::writeSector(void *p, int size, int file_pos, LSN& drbl_lsn)

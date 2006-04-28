@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPIf.h"
 #include "PPUtils.h"
 

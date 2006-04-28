@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 
+#include "sedna.h"
+
 enum scheme_type { SCM_BOOL, 
                    SCM_SYMBOL, 
                    SCM_CHAR, 

@@ -3,10 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <iostream>
+
+#include "sedna.h"
 
 #include "PPDDO.h"
 #include "numb_scheme.h"
-#include <iostream>
 
 using namespace std;
 

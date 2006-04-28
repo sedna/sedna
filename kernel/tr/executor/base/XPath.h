@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include "sedna.h"
+
 #include "scheme_tree.h"
 
 /*******************************************************************************

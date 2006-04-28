@@ -14,6 +14,8 @@
 #include "node_utils.h"
 #include "locks.h"
 #include "log.h"
+#include "d_printf.h"
+
 using namespace std;
 
 const shft	PSTRBLK_HEADER_SIZE = sizeof(struct vmm_sm_blk_hdr) + 5*sizeof(shft) + HHMAXSIZE*sizeof(hh_slot);

@@ -7,6 +7,8 @@
 #ifndef _PPAXISATTRIBUTE_H
 #define _PPAXISATTRIBUTE_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 #include "merge.h"

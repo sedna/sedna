@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPCreateFtIndex.h"
 #include "PPUtils.h"
 #include "PPBase.h"

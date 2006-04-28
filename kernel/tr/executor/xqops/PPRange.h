@@ -6,6 +6,7 @@
 #ifndef __PPRANGE_H
 #define __PPRANGE_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPRange : public PPIterator

@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "os_exceptions.h"
-#include "exceptions.h"
 #include "vmm.h"
-#include <iostream>
 
 
 //#define PRINT_STACK_TRACE

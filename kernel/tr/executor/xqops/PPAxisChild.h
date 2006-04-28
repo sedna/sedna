@@ -7,6 +7,8 @@
 #ifndef _PPAXISCHILD_H
 #define _PPAXISCHILD_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 #include "merge.h"

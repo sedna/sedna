@@ -4,12 +4,12 @@
  */
 
 
-#include "d_printf.h"
+#include "sedna.h"
+
 #include "xptr.h"
+#include "d_printf.h"
 
 xptr XNULL;
-
-//xptr XDUMMY(0, (void*)"");
 
 void xptr::print() const 
 { 

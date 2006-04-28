@@ -7,6 +7,7 @@
 #ifndef _SM_VMM_DATA_H
 #define _SM_VMM_DATA_H
 
+#include "sedna.h"
 #include "xptr.h"
 
 #define BLOCK_PARTS           16

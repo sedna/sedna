@@ -6,6 +6,8 @@
 #ifndef _BUFF_H
 #define _BUFF_H
 
+#include "sedna.h"
+
 #include "base.h"
 #include "btpage.h"
 #include "btstruct.h"

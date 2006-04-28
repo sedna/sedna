@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 #include "cl_client.h"
-#include "exceptions.h"
 #include "base.h"
 #include "ipc_ops.h"
 #include "tr_globals.h"

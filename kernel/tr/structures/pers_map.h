@@ -6,12 +6,13 @@
 #ifndef PERSMAP_H
 #define PERSMAP_H
 
+#include "sedna.h"
+
 #include "pers_heap.h"
 #include "base.h"
 
 inline void *scm_malloc(size_t size,bool persistent)
 {
-    
 	return (persistent)?pers_malloc(size):malloc(size);
 }
 

@@ -6,7 +6,7 @@
 #include "sedna.h"
 #include "att_xpath.h"
 #include "serialize2lr.h"
-
+#include "d_printf.h"
 
 const char *cpp_popt(const char * str)
 {

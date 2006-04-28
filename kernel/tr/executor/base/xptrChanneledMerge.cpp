@@ -1,4 +1,11 @@
+/*
+ * File:  xptrChanneledMerge.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include "xptrChanneledMerge.h"
+
 node_cell* node_cell::init(xptr node)
 {
 	node_cell* nc=(node_cell*)scm_malloc(sizeof(node_cell),false);

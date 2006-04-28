@@ -9,7 +9,9 @@
 
 #include <string>
 #include <vector>
+
 #include "sedna.h"
+
 #include "utils.h"
 #include "uprocess.h"
 

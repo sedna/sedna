@@ -100,7 +100,7 @@ clean: generic_clean
 	-$(REMOVE) libcommon_files$(LIB_EXT)
 	-$(REMOVE) error_codes.h
 	-$(REMOVE) error_codes.c
-	-$(REMOVE) errdbg/gen_error_codes.c
+	-$(REMOVE) gen_error_codes.c
 	-$(REMOVE) gen_error_codes$(EXE_EXT)
 	-$(REMOVE) error_codes_scm.scm
 

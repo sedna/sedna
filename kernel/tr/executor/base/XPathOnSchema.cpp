@@ -4,8 +4,10 @@
  */
 
 
-#include "PPBase.h"
+#include "sedna.h"
+
 #include "XPathOnSchema.h"
+#include "PPBase.h"
 #include "node_utils.h"
 #include "d_printf.h"
 

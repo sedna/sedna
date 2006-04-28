@@ -10,6 +10,9 @@
 // SSMMsg stands for Simple Shared Memory Messages Client/Server Architecture
 
 #include <string>
+
+#include "sedna.h"
+
 #include "usem.h"
 #include "uthread.h"
 #include "ushm.h"

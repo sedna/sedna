@@ -6,8 +6,9 @@
 #ifndef _BTPAGE_H
 #define _BTPAGE_H
 
+#include "sedna.h"
+
 #include "nodes.h"
-#include "exceptions.h"
 #include "xptr.h"
 #include "sm_vmm_data.h"
 

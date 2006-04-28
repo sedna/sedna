@@ -1,3 +1,12 @@
+/*
+ * File:  system_tables.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
+#include <sstream>
+
 #include "crmutils.h"
 #include "schema.h"
 #include "metadata.h"
@@ -6,8 +15,7 @@
 #include "vmm.h"
 #include "index_data.h"
 #include "indirection.h"
-#include "error_codes.h"
-#include <sstream>
+
 
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node*>* sys_schema=NULL;

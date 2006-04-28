@@ -7,6 +7,7 @@
 #ifndef _PPUP_H
 #define _PPUP_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPUp : public PPIterator

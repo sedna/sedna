@@ -1,4 +1,9 @@
-#include "strings.h"
+/*
+ * File:  utf8.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 #include "utf8.h"
 
 //neeeded for pcre includes

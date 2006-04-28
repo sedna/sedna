@@ -7,6 +7,7 @@
 #ifndef _PPCAST_H
 #define _PPCAST_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPCast : public PPIterator

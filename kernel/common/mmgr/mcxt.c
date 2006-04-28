@@ -13,8 +13,7 @@
  *
  */
 
-#include "u.h"
-#include "se_alloc.h"
+#include "sedna.h"
 #include "memutils.h"
 
 

@@ -7,6 +7,7 @@
 #ifndef __PPTUPLE_H
 #define __PPTUPLE_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPTuple : public PPIterator

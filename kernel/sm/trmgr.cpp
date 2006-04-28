@@ -10,7 +10,6 @@
 #include "usem.h"
 #include "uthread.h"
 #include "uprocess.h"
-#include "exceptions.h"
 #include "bm_core.h"
 #include "plmgr.h"
 #include "llmgr.h"

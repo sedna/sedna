@@ -7,6 +7,7 @@
 #define __PPSTORE_H
 
 #include <map>
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPStore : public PPIterator

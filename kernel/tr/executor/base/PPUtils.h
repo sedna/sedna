@@ -7,6 +7,8 @@
 #ifndef _PPUTILS_H
 #define _PPUTILS_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "node_utils.h"
 #include "dm_accessors.h"

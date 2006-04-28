@@ -11,9 +11,7 @@
 #include "sm_globals.h"
 #include "utils.h"
 #include "uprocess.h"
-#include "exceptions.h"
 #include "uhdd.h"
-#include "usecurity.h"
 #include "version.h"
 
 

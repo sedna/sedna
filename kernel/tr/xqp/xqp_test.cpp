@@ -7,11 +7,10 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
+
+#include "sedna.h"
 
 #include "XQuerytoLR.h"
-
-#include "exceptions.h"
 
 #include "XQueryTreeParser.h"
 #include "SORAST.h"

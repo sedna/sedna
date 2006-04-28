@@ -7,6 +7,7 @@
 #ifndef _STRING_OPERATIONS_H
 #define _STRING_OPERATIONS_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

@@ -7,6 +7,7 @@
 #ifndef _POR2QEP_H
 #define _POR2QEP_H
 
+#include "sedna.h"
 #include "PPOperations.h"
 #include "scheme_tree.h"
 #include "exec_output.h"

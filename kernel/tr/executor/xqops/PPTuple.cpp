@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include "sedna.h"
 #include "PPTuple.h"
 
 using namespace std;

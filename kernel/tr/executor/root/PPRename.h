@@ -7,6 +7,8 @@
 #ifndef _PPRENAME_H
 #define _PPRENAME_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 

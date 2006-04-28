@@ -6,6 +6,7 @@
 #ifndef __PPRETURN_H
 #define __PPRETURN_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

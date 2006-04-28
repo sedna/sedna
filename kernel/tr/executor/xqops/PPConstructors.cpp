@@ -3,14 +3,17 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <vector>
+
+#include "sedna.h"
+
 #include "PPConstructors.h"
-#include "exceptions.h"
 #include "PPUtils.h"
 #include "casting_operations.h"
 #include "updates.h"
 #include "crmutils.h"
-#include <vector>
 #include "e_string.h"
+
 using namespace std;
 using namespace tr_globals;
 bool PPConstructor::firstCons = true;

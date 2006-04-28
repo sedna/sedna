@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "crmutils.h"
 #include "metadata.h"
 #include "nodes.h"
@@ -15,7 +17,7 @@
 #include "pstr_long.h"
 #include "e_string.h"
 #include "casting_operations.h"
-#include <map>
+
 se_stdlib_ostream crm_out(std::cerr);
 typedef  std::map<  std::string,int> nspt_map;
 static nspt_map  xm_nsp;

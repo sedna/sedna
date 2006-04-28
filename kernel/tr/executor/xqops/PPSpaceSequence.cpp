@@ -4,6 +4,9 @@
  */
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "PPSLStub.h"
 #include "PPSpaceSequence.h"
 

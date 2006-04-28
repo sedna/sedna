@@ -3,8 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include <algorithm>
+
+#include "sedna.h"
+
 #include "xptr_sequence.h"
 #include "seq_common.h"
 #include "PPUtils.h"

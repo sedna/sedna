@@ -1,5 +1,12 @@
+/*
+ * File:  PPFtIndexScan.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _PPFTINDEXSCAN_H
 #define _PPFTINDEXSCAN_H
+
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "ft_index_data.h"

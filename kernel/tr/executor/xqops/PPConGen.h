@@ -7,6 +7,7 @@
 #ifndef _PPCONGEN_H
 #define _PPCONGEN_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

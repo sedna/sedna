@@ -5,7 +5,6 @@
 
 #include "sedna.h"
 #include <iostream>
-#include "exceptions.h"
 #include "pq.h"
 #include "d_printf.h"
 #include "XQuerytoLR.h"

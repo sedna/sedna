@@ -127,7 +127,7 @@ static inline int intl_move_block_list_part()
 		memcpy((char*)XADDR(intl_last_block_list_block) + PAGE_SIZE - (((int)intl_ftr.pred_blb_size)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE) - move_size,
 			intl_block_list_end_addr()-move_size, move_size);
 
-		ASSERT(intl_ftr.block_list_map_size > 0);
+		U_ASSERT(intl_ftr.block_list_map_size > 0);
 		char * ptr = intl_block_list_end_addr()-move_size;
 		for (int i = 0; i < move_cnt; i++)
 		{
@@ -197,7 +197,7 @@ static inline void intl_move_list_to_blb(const xptr desc)
 //post: intl_last_blk is in memory & may be modified
 static inline bool intl_append_str_pc(const xptr desc, const char *data, pstr_long_off_t size, bool plog)
 {
-	ASSERT(intl_ftr.cursor > 0);
+	U_ASSERT(intl_ftr.cursor > 0);
 	int avail = PAGE_SIZE - intl_ftr.cursor;
 
 	while (size > avail)
@@ -525,7 +525,7 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 			size -= avail;
 		}
 	}
-	ASSERT(intl_ftr.cursor > 0);
+	U_ASSERT(intl_ftr.cursor > 0);
 	int avail = PAGE_SIZE - intl_ftr.cursor - (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) - PSTR_LONG_LAST_BLK_FTR_SIZE;
 	int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 	if (avail >= size + bls)
@@ -583,7 +583,7 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 		bls -= move_size;
 		if (move_size > 0)
 		{
-			ASSERT(intl_ftr.block_list_map_size > 0);
+			U_ASSERT(intl_ftr.block_list_map_size > 0);
 			pstr_long_block_list_map_entry * const blk_me = (pstr_long_block_list_map_entry *)((char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
@@ -613,7 +613,7 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 		{
 			CHECKP(intl_last_blk);
 			VMM_SIGNAL_MODIFICATION(intl_last_blk);
-			ASSERT(move_size > 0);
+			U_ASSERT(move_size > 0);
 			if (intl_ftr.block_list_size > 0)
 			{
 				char *ptr = (char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - (intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
@@ -646,7 +646,7 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 	}
 
 	//at this place block list & map are loaded to intl bufs
-	ASSERT(intl_ftr.cursor > 0);
+	U_ASSERT(intl_ftr.cursor > 0);
 	CHECKP(intl_last_blk);
 
 	bool plog = intl_append_str_pc(desc, data, size, true); //FIXME: is plog really always true?
@@ -696,7 +696,7 @@ int  pstr_long_cursor::copy_blk(char *data_buf)
 	if (blk != last_blk)
 	{
 		int data_buf_cnt;
-		ASSERT(blk != XNULL);
+		U_ASSERT(blk != XNULL);
 		CHECKP(blk);
 		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == last_blk && cursor < 0)
 		{
@@ -734,7 +734,7 @@ int  pstr_long_cursor::get_blk(char **ptr)
 	if (blk != last_blk)
 	{
 		int data_buf_cnt;
-		ASSERT(blk != XNULL);
+		U_ASSERT(blk != XNULL);
 		CHECKP(blk);
 		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == last_blk && cursor < 0)
 		{
@@ -766,7 +766,7 @@ int  pstr_long_cursor::get_blk(char **ptr)
 
 int  pstr_long_cursor::get_blk_rev(char **ptr)
 {
-	ASSERT(blk != XNULL);
+	U_ASSERT(blk != XNULL);
 
 	if (blk != BLOCKXPTR(m_start))
 	{
@@ -775,7 +775,7 @@ int  pstr_long_cursor::get_blk_rev(char **ptr)
 		data_buf_cnt = ofs-PSTR_LONG_BLK_HDR_SIZE;
 		*ptr = (char*)XADDR(blk) + PSTR_LONG_BLK_HDR_SIZE;
 		blk = ((struct pstr_long_blk_hdr *)XADDR(blk))->prev_blk;
-		ASSERT(blk != XNULL);
+		U_ASSERT(blk != XNULL);
 		ofs = PAGE_SIZE;
 		return data_buf_cnt;
 	}
@@ -810,7 +810,7 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 		pstr_long_off_t size = size0;
 		CHECKP(dst_desc);
 		intl_last_blk = ((struct t_dsc *)XADDR(dst_desc))->data;
-		ASSERT(intl_last_blk != src);
+		U_ASSERT(intl_last_blk != src);
 
 		char *data_buf = (char *)malloc(PAGE_SIZE);
 		int data_buf_cnt=0, data_buf_ofs=0;
@@ -833,7 +833,7 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 			int cursor = abs(intl_ftr.cursor);
 			xptr prev = ((struct pstr_long_blk_hdr *)XADDR(intl_last_blk))->prev_blk;
 
-			ASSERT(avail < size);
+			U_ASSERT(avail < size);
 
 			while (avail > 0)
 			{
@@ -841,7 +841,7 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 				{
 					data_buf_cnt = src_cur.copy_blk(data_buf);
 					data_buf_ofs = 0;
-					ASSERT(data_buf_cnt > 0);
+					U_ASSERT(data_buf_cnt > 0);
 				}
 				const int sz = MIN(avail, data_buf_cnt - data_buf_ofs);
 				CHECKP(prev);
@@ -856,10 +856,10 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 
 			intl_ftr.cursor = PSTR_LONG_BLK_HDR_SIZE;
 		}
-		ASSERT(intl_ftr.cursor > 0);
+		U_ASSERT(intl_ftr.cursor > 0);
 		int avail = PAGE_SIZE - intl_ftr.cursor - (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) - PSTR_LONG_LAST_BLK_FTR_SIZE;
 		int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
-		ASSERT(avail < size + bls);
+		U_ASSERT(avail < size + bls);
 		CHECKP(intl_last_blk);
 		intl_last_block_list_entry = (struct pstr_long_block_list_entry*)(intl_block_list_end_addr() - bls);
 		memcpy(intl_last_block_list_entry, 
@@ -877,7 +877,7 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 
 		//FIXME!!
 		const int need_extra = MIN(PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE, intl_ftr.block_list_size > lblb_avail ? (intl_ftr.block_list_size - lblb_avail)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE : 0);
-		ASSERT(avail < size + need_extra);
+		U_ASSERT(avail < size + need_extra);
 
 		//at this place: (ftr_buf.cursor > 0) is true and block list is loaded to intl buf
 		CHECKP(intl_last_blk);
@@ -919,7 +919,7 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 //pre: dst_desc != src_desc
 void pstr_long_append_tail(const xptr dst_desc, const xptr src_desc)
 {
-	ASSERT(dst_desc != src_desc);
+	U_ASSERT(dst_desc != src_desc);
 	pstr_long_append_tail(dst_desc, ((struct t_dsc *)XADDR(src_desc))->data,  ((struct t_dsc *)XADDR(src_desc))->size);
 }
 
@@ -1012,8 +1012,8 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 			pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)((char*)XADDR(mapent->list_blk) + ble_ofs);
 
 			const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-			ASSERT(ofs_in_blk > 0);
-			ASSERT(ofs_in_blk < PAGE_SIZE);
+			U_ASSERT(ofs_in_blk > 0);
+			U_ASSERT(ofs_in_blk < PAGE_SIZE);
 			
 			res = ble->str_blk + ofs_in_blk;
 			blb_ind = ind + gap;
@@ -1033,8 +1033,8 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 
 		pstr_long_block_list_entry *ble = (pstr_long_block_list_entry *)(intl_block_list_end_addr() - (((int)skip_fb + 1)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE));
 		const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-		ASSERT(ofs_in_blk > 0);
-		ASSERT(ofs_in_blk < PAGE_SIZE);
+		U_ASSERT(ofs_in_blk > 0);
+		U_ASSERT(ofs_in_blk < PAGE_SIZE);
 
 		res = ble->str_blk + ofs_in_blk;
 		blb_ind = skip_fb;
@@ -1043,11 +1043,11 @@ void intl_seek_byteofs(xptr &res, pstr_long_block_list_map_entry *&mapent, int &
 	}
 	sz = skip_fb * (pstr_long_off_t)(PAGE_SIZE - PSTR_LONG_BLK_HDR_SIZE);
 	cur += sz;
-	ASSERT((int)skip_fb == intl_ftr.block_list_size);
-	ASSERT(intl_ftr.cursor > 0);
+	U_ASSERT((int)skip_fb == intl_ftr.block_list_size);
+	U_ASSERT(intl_ftr.cursor > 0);
 	const int ofs_in_blk = (int)(ofs-cur) + PSTR_LONG_BLK_HDR_SIZE;
-	ASSERT(ofs_in_blk > 0);
-	ASSERT(ofs_in_blk < PAGE_SIZE);
+	U_ASSERT(ofs_in_blk > 0);
+	U_ASSERT(ofs_in_blk < PAGE_SIZE);
 
 	res = intl_last_blk + ofs_in_blk;
 	blb_ind = skip_fb;
@@ -1062,11 +1062,11 @@ static inline void intl_remove_last_ble()
 //truncate size bytes from string end
 void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 {
-	ASSERT(size >= 0);
+	U_ASSERT(size >= 0);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
 	pstr_long_off_t trunc_ofs = ((struct t_dsc *)XADDR(desc))->size - size;
-	ASSERT(trunc_ofs > 0);
+	U_ASSERT(trunc_ofs > 0);
 
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
@@ -1077,7 +1077,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	if (intl_ftr.cursor < 0)
 	{
 		int cursor = -intl_ftr.cursor;
-		ASSERT(intl_ftr.block_list_size > 0);
+		U_ASSERT(intl_ftr.block_list_size > 0);
 		if (cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
 		{
 			intl_ftr.cursor += size;
@@ -1096,7 +1096,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 					bls);
 
 				intl_ftr.char_count = intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->char_count;
-				ASSERT(intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->str_blk == pred_blk);
+				U_ASSERT(intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->str_blk == pred_blk);
 
 				if (intl_ftr.block_list_map_size == 0)
 				{
@@ -1115,8 +1115,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				const int bl_start = map_start - bls;
 
 				intl_ftr.cursor = -intl_ftr.cursor;
-				ASSERT(intl_ftr.cursor == cursor - size);
-				ASSERT(map_start >= cursor);
+				U_ASSERT(intl_ftr.cursor == cursor - size);
+				U_ASSERT(map_start >= cursor);
 
 				intl_last_blk = pred_blk;
 
@@ -1169,7 +1169,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				const int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 				
 				pstr_long_block_list_entry *ent = intl_last_blk_last_ble(intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE, bls);
-				ASSERT(ent->str_blk == pred_blk);
+				U_ASSERT(ent->str_blk == pred_blk);
 
 				if (IS_DATA_BLOCK(intl_last_blk))
 				{
@@ -1248,8 +1248,8 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 	if (me == NULL)
 	{
-		ASSERT(bl_ind >= 0);
-		ASSERT(bl_ind < intl_ftr.block_list_size);//the case where trunc_ofs is in the last block is handled above
+		U_ASSERT(bl_ind >= 0);
+		U_ASSERT(bl_ind < intl_ftr.block_list_size);//the case where trunc_ofs is in the last block is handled above
 
 		while (intl_ftr.block_list_size > bl_ind + 1)
 		{
@@ -1277,7 +1277,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				intl_remove_last_ble();
 			}
 		}
-		ASSERT(intl_last_map_entry == me);
+		U_ASSERT(intl_last_map_entry == me);
 
 		if (me < intl_map_end())
 		{
@@ -1298,12 +1298,12 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			intl_ftr.char_count = intl_ftr.first_blk_char_count;
 		}
 	}
-	ASSERT(intl_last_blk == BLOCKXPTR(trunc_from));
+	U_ASSERT(intl_last_blk == BLOCKXPTR(trunc_from));
 
 	intl_ftr.cursor = (char*)XADDR(trunc_from) - (char*)XADDR(BLOCKXPTR(trunc_from));
 
 	CHECKP(intl_last_blk);
-	ASSERT(intl_last_blk + intl_ftr.cursor == trunc_from);
+	U_ASSERT(intl_last_blk + intl_ftr.cursor == trunc_from);
 	const int cnt = intl_char_counter->count_chars((char*)XADDR(trunc_from), PAGE_SIZE - intl_ftr.cursor);
 
 	intl_ftr.char_count -= cnt;
@@ -1329,7 +1329,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t size0)
 {
-	ASSERT(size0 >= 0);
+	U_ASSERT(size0 >= 0);
 	if (size0 == 0)
 		return;
 
@@ -1365,7 +1365,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		CHECKP(first_blk);
 		VMM_SIGNAL_MODIFICATION(first_blk);
 		//we don't overwrite data => no phys-log
-		ASSERT(BLOCKXPTR(intl_ftr.start) == first_blk); // we changed ftr->start
+		U_ASSERT(BLOCKXPTR(intl_ftr.start) == first_blk); // we changed ftr->start
 		memcpy(XADDR(intl_ftr.start), data, size);
 
 		CHECKP(desc);
@@ -1392,7 +1392,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 	
 	//write part1
-	ASSERT(part1 > 0);
+	U_ASSERT(part1 > 0);
 	xptr new_first_blk;
 	int new_first_blk_char_count;
 	intl_alloc_blk(desc, new_first_blk);
@@ -1432,7 +1432,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		//we will surely need space here for the old first block
 		if (intl_ftr.block_list_size >= next_bls)
 		{
-			ASSERT(intl_ftr.block_list_size == next_bls);
+			U_ASSERT(intl_ftr.block_list_size == next_bls);
 			if (new_gap == -1)
 				new_gap = PSTR_LONG_FULL_BLOCK_LIST_SIZE - intl_ftr.block_list_size;
 			last_bls = intl_ftr.block_list_size;
@@ -1461,7 +1461,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	VMM_SIGNAL_MODIFICATION(last_new_blk);
 	((pstr_long_blk_hdr*)XADDR(last_new_blk))->next_blk = first_blk;
 
-	ASSERT(size == first_blk_avail);
+	U_ASSERT(size == first_blk_avail);
 	CHECKP(first_blk);
 	VMM_SIGNAL_MODIFICATION(first_blk);
 	if (IS_DATA_BLOCK(first_blk))
@@ -1481,8 +1481,8 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 
 	if (intl_ftr.block_list_size >= next_bls)
 	{
-		ASSERT(intl_ftr.block_list_size == next_bls);
-		ASSERT(intl_ftr.first_blb_gap_size == 0);
+		U_ASSERT(intl_ftr.block_list_size == next_bls);
+		U_ASSERT(intl_ftr.first_blb_gap_size == 0);
 		
 		if (new_gap == -1)
 			new_gap = PSTR_LONG_FULL_BLOCK_LIST_SIZE - intl_ftr.block_list_size;
@@ -1502,10 +1502,10 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	}
 	else if (intl_ftr.first_blb_gap_size > 0)
 	{
-		ASSERT(intl_ftr.first_blb_gap_size >= intl_ftr.block_list_size);
-		ASSERT((intl_ftr.first_blb_gap_size == intl_ftr.block_list_size) || (new_gap == -1) );
+		U_ASSERT(intl_ftr.first_blb_gap_size >= intl_ftr.block_list_size);
+		U_ASSERT((intl_ftr.first_blb_gap_size == intl_ftr.block_list_size) || (new_gap == -1) );
 
-		ASSERT(old_first_blb != XNULL);
+		U_ASSERT(old_first_blb != XNULL);
 		CHECKP(old_first_blb);
 
 		VMM_SIGNAL_MODIFICATION(old_first_blb);
@@ -1522,7 +1522,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		CHECKP(intl_last_blk);
 		VMM_SIGNAL_MODIFICATION(intl_last_blk);
 
-		ASSERT(real_maps > 0);
+		U_ASSERT(real_maps > 0);
 		pstr_long_block_list_map_entry *first_me = (pstr_long_block_list_map_entry *)((char*)PSTR_LONG_LAST_BLK_FTR(intl_last_blk) - PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE);
 
 		if (IS_DATA_BLOCK(intl_last_blk))
@@ -1533,7 +1533,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	}
 	else
 	{
-		ASSERT(real_maps == 0);
+		U_ASSERT(real_maps == 0);
 
 		//TODO: merge block lists
 
@@ -1552,23 +1552,23 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		intl_set_empty_block_list();
 	}
 
-	ASSERT(intl_ftr.block_list_size == 0);
-	ASSERT(ftr == PSTR_LONG_LAST_BLK_FTR(intl_last_blk));
+	U_ASSERT(intl_ftr.block_list_size == 0);
+	U_ASSERT(ftr == PSTR_LONG_LAST_BLK_FTR(intl_last_blk));
 	intl_ftr.first_blk_char_count = new_first_blk_char_count;
 	
 	CHECKP(intl_last_blk);
 	VMM_SIGNAL_MODIFICATION(intl_last_blk);
 	if (new_gap != -1)
 	{
-		ASSERT(last_bls != -1);
-		ASSERT(intl_ftr.block_list_map_size > 0);
+		U_ASSERT(last_bls != -1);
+		U_ASSERT(intl_ftr.block_list_map_size > 0);
 		if (real_maps == 0)
 			intl_ftr.pred_blb_size = last_bls;
 		intl_ftr.first_blb_gap_size = new_gap;
 
 		const int mapsize_last_blk = real_maps * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
 		const int mapsize_new = intl_ftr.block_list_map_size * PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
-		ASSERT((char*)intl_last_map_entry == (char*)intl_map_buf + PAGE_SIZE - mapsize_new);
+		U_ASSERT((char*)intl_last_map_entry == (char*)intl_map_buf + PAGE_SIZE - mapsize_new);
 		intl_last_map_entry = (struct pstr_long_block_list_map_entry *) ((char*)intl_map_buf + PAGE_SIZE - mapsize_new - mapsize_last_blk);
 		if (mapsize_last_blk > 0)
 			memcpy(intl_last_map_entry,
@@ -1597,7 +1597,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 		charset_handler->free_char_counter(intl_char_counter);
 		return;
 	}
-	ASSERT(intl_ftr.block_list_map_size == 0);
+	U_ASSERT(intl_ftr.block_list_map_size == 0);
 	intl_ftr.block_list_map_size = real_maps;
 	intl_ftr.block_list_size = real_bls;
 
@@ -1663,10 +1663,10 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 {	
-	ASSERT(size >= 0);
+	U_ASSERT(size >= 0);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
-	ASSERT(size <= ((struct t_dsc *)XADDR(desc))->size);
+	U_ASSERT(size <= ((struct t_dsc *)XADDR(desc))->size);
 
 	CHECKP(intl_last_blk);
 	struct pstr_long_last_blk_ftr *ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
@@ -1689,8 +1689,8 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 
 	if (bl_ind == -1)
 	{
-		ASSERT(BLOCKXPTR(trunc_from) == BLOCKXPTR(intl_ftr.start));
-		ASSERT((char*)XADDR(trunc_from) - (char*)XADDR(intl_ftr.start) == size);
+		U_ASSERT(BLOCKXPTR(trunc_from) == BLOCKXPTR(intl_ftr.start));
+		U_ASSERT((char*)XADDR(trunc_from) - (char*)XADDR(intl_ftr.start) == size);
 
 		CHECKP(intl_ftr.start);
 		intl_ftr.first_blk_char_count -= intl_char_counter->count_chars((char*)XADDR(intl_ftr.start), size);
@@ -1751,8 +1751,8 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 			intl_delete_blk(blb);
 		}
 
-		ASSERT(intl_ftr.block_list_map_size == 0);
-		ASSERT(bl_ind <= intl_ftr.block_list_size);
+		U_ASSERT(intl_ftr.block_list_map_size == 0);
+		U_ASSERT(bl_ind <= intl_ftr.block_list_size);
 
 
 		intl_ftr.first_blb_gap_size = 0;
@@ -1767,14 +1767,14 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 		if (intl_ftr.block_list_size > 0)
 		{
 			cur_ent_addr -= PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
-			ASSERT((((pstr_long_block_list_entry*)cur_ent_addr)->str_blk) == BLOCKXPTR(trunc_from));
+			U_ASSERT((((pstr_long_block_list_entry*)cur_ent_addr)->str_blk) == BLOCKXPTR(trunc_from));
 			intl_ftr.first_blk_char_count = ((pstr_long_block_list_entry*)cur_ent_addr)->char_count;
 			intl_ftr.block_list_size--;
 		}
 		else
 		{
-			ASSERT(intl_ftr.block_list_size == 0);
-			ASSERT(BLOCKXPTR(trunc_from) == intl_last_blk);
+			U_ASSERT(intl_ftr.block_list_size == 0);
+			U_ASSERT(BLOCKXPTR(trunc_from) == intl_last_blk);
 			intl_ftr.first_blk_char_count = intl_ftr.char_count;
 		}
 	}
@@ -1811,9 +1811,9 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 			intl_delete_blk(blb);
 		}
 
-		ASSERT(me < intl_map_end());
-		ASSERT(intl_ftr.block_list_map_size > 0);
-		ASSERT(me_tmp == me);
+		U_ASSERT(me < intl_map_end());
+		U_ASSERT(intl_ftr.block_list_map_size > 0);
+		U_ASSERT(me_tmp == me);
 		const xptr blb = me_tmp->list_blk;
 		int bls;
 		if (intl_ftr.block_list_map_size == 1)
@@ -1831,13 +1831,13 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 			gap++;
 		}
 		CHECKP(blb);
-		ASSERT(((pstr_long_block_list_entry*)cur_ent_addr)->str_blk == BLOCKXPTR(trunc_from));
+		U_ASSERT(((pstr_long_block_list_entry*)cur_ent_addr)->str_blk == BLOCKXPTR(trunc_from));
 		intl_ftr.first_blk_char_count = ((pstr_long_block_list_entry*)cur_ent_addr)->char_count;
 		me->char_count -= ((pstr_long_block_list_entry*)cur_ent_addr)->char_count;
 		gap++;
 		if (gap >= bls)
 		{
-			ASSERT(gap == bls);
+			U_ASSERT(gap == bls);
 			intl_delete_blk(blb);
 			intl_ftr.block_list_map_size--;
 			intl_ftr.first_blb_gap_size = 0; //we just deleted the first blb, so gap = 0 (even if map_size = 0)

@@ -3,8 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include "PPStaticContext.h"
-#include "exceptions.h"
+
 static_context::static_context()
 {
         output_method = se_output_method_xml;

@@ -7,7 +7,6 @@
 #define _NID_H
 
 #include "sedna.h"
-#include "exceptions.h"
 
 /*	number of symbols encodable in the cell of the alphabet;
 	no more than 255

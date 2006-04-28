@@ -7,29 +7,19 @@
 #ifndef __UTILS_H
 #define __UTILS_H
 
-#include "u.h"
 #include <string>
 #include <vector>
-#include <stdlib.h>
+
+#include "sedna.h"
 
 
 std::string int2string(int value);
 
 /* datatypes and functions for working with time (time in sec + time in millisec)*/
 #ifndef _WIN32
-
-#include <sys/types.h>
-#include <sys/timeb.h>
-
 typedef  timeb u_timeb;
-
 #else
-
-#include <sys/types.h>
-#include <sys/timeb.h>
-
 typedef _timeb u_timeb;
-
 #endif
 
 void u_ftime(u_timeb *t);

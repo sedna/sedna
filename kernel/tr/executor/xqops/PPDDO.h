@@ -7,6 +7,8 @@
 #ifndef _PPDDO_H
 #define _PPDDO_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "sorted_sequence.h"
 

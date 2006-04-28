@@ -9,8 +9,10 @@
 
 #include <iostream>
 #include <strstream>
+
+#include "sedna.h"
+
 #include "usocket.h"
-#include "exceptions.h"
 #include "sp.h"
 #include "uutils.h"
 #include "base.h"

@@ -7,7 +7,7 @@
 #ifndef _PPRETRIEVEMETADATA_H
 #define _PPRETRIEVEMETADATA_H
 
-#include <string>
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPRetrieveMetadata : public PPQueryEssence

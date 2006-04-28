@@ -7,6 +7,8 @@
 #ifndef _PPCALCULATE_H
 #define _PPCALCULATE_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "PPUtils.h"
 #include "boolean_operations.h"

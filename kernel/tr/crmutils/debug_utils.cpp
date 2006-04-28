@@ -3,12 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "crmutils.h"
 #include "schema.h"
 #include "vmm.h"
 #include "pstrblk.h"
 #include "indirection.h"
-#include <map>
 #include "node_utils.h"
 #include "metadata.h"
 #include "micro.h"
