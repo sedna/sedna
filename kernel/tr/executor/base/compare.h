@@ -7,6 +7,7 @@
 #define _COMPARE_H
 
 #include <list>
+#include "sedna.h"
 #include "tuple.h"
 
 

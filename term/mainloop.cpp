@@ -3,13 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include <stdio.h>
-
+#include "sedna.h"
 
 #include "base.h"
 #include "d_printf.h"
 #include "uhdd.h"
-#include "exceptions.h"
 
 #include "mainloop.h"
 #include "term_globals.h"

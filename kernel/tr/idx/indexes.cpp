@@ -5,6 +5,9 @@
 
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "indexes.h"
 #include "schema.h"
 #include "vmm.h"

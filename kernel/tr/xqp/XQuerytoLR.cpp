@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "XQuerytokens.h"
 #include "XQueryDLGLexer.h"
 #include "ANTLRToken.h"
@@ -13,13 +15,11 @@
 #include "AST.h"
 #include "XQuerytoLR.h"
 #include "base.h"
-#include "exceptions.h"
 #include "d_printf.h"
 #include "tr_utils.h"
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdio.h>
 
 using namespace std;
 

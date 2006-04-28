@@ -1,5 +1,12 @@
+/*
+ * File:  PPExtFunCall.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _PPEXTFUNCALL_H
 #define _PPEXTFUNCALL_H
+
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "sedna_ef.h"

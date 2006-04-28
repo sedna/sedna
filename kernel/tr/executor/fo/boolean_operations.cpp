@@ -4,6 +4,7 @@
  */
 
 
+#include "sedna.h"
 #include "boolean_operations.h"
 
 

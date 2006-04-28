@@ -13,7 +13,6 @@
 #include "base.h"
 #include "lm_base.h"
 #include "usem.h"
-#include "exceptions.h"
 #include "TransCB.h"
 
 

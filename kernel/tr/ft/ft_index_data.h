@@ -1,11 +1,13 @@
 /*
- * File:  index_data.h
+ * File:  ft_index_data.h
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #ifndef _FT_INDEX_DATA_H
 #define _FT_INDEX_DATA_H
 
+
+#include "sedna.h"
 
 #include "usem.h"
 #include "nodes.h"

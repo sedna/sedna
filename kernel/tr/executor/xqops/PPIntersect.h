@@ -7,6 +7,7 @@
 #ifndef _PPINTERSECT_H
 #define _PPINTERSECT_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPIntersect : public PPIterator

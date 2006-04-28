@@ -1,5 +1,13 @@
+/*
+ * File:  FTindex.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _FT_INDEX_H
 #define _FT_INDEX_H
+
+#include "sedna.h"
+
 #include "FTsearch.h"
 #include "xptr_sequence.h"
 #include "llmgr_core.h"

@@ -4,6 +4,7 @@
  */
 
 
+#include "sedna.h"
 #include "PPNodeOps.h"
 #include "dm_accessors.h"
 #include "PPSLStub.h"

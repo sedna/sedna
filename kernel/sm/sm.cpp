@@ -13,7 +13,6 @@
 #include "llmgr.h"
 #include "usem.h"
 #include "SSMMsg.h"
-#include "exceptions.h"
 #include "d_printf.h"
 #include "trmgr.h"
 #include "pping.h"

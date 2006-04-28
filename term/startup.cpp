@@ -3,18 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
     
-#include <stdio.h>
 #include <iostream>
 #include <ostream>
-#include <sys/types.h>
+
+#include "sedna.h"
 
 #include "libsedna.h"
-
 #include "base.h"
 #include "argtable.h"
 #include "d_printf.h"
 #include "version.h"
-#include "exceptions.h"
 #include "term_globals.h"
 #include "term_funcs.h"
 #include "mainloop.h"

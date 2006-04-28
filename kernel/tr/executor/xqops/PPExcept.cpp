@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPExcept.h"
 #include "merge.h"
 

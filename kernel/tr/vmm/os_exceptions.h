@@ -6,7 +6,7 @@
 #ifndef _OS_EXCEPTIONS_H
 #define _OS_EXCEPTIONS_H
 
-#include "u.h"
+#include "sedna.h"
 
 #ifdef _WIN32
 

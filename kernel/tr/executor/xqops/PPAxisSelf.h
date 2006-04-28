@@ -7,6 +7,8 @@
 #ifndef _PPAXISSELF_H
 #define _PPAXISSELF_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPath.h"
 

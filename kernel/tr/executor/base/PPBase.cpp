@@ -4,6 +4,7 @@
  */
 
 
+#include "sedna.h"
 #include "PPBase.h"
 #include "PPSLStub.h"
 #include "PPFunCall.h"

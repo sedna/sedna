@@ -19,7 +19,7 @@
 #include "nidalloc.h"
 #include "persistent_db_data.h"
 #include "pers_heap.h"
-
+#include "d_printf.h"
 
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))

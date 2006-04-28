@@ -3,10 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 
 #include "PPAxisFP.h"
 #include "node_utils.h"
 #include "PPUtils.h"
+
 using namespace tr_globals;
 //#include "PPStaticContext.h"
 

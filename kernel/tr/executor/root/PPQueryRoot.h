@@ -7,6 +7,8 @@
 #ifndef _PPQUERYROOT_H
 #define _PPQUERYROOT_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "exec_output.h"
 #include "crmutils.h"

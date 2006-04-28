@@ -7,6 +7,7 @@
 #ifndef _CASTING_OPERATIONS_H
 #define _CASTING_OPERATIONS_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

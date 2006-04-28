@@ -9,7 +9,6 @@
 
 #include "sedna.h"
 #include "xptr.h"
-#include "exceptions.h"
 
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p);
 int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p);

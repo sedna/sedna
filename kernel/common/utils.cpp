@@ -3,14 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-#include <stdlib.h>
 #include <math.h>
-#include "u.h"
+
+#include "sedna.h"
+
 #include "utils.h"
 #include "uutils.h"
 #include "d_printf.h"
-#include "exceptions.h"
 #include "uhdd.h"
 
 #ifndef _WIN32

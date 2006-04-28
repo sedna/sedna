@@ -6,7 +6,7 @@
 #include "sedna.h"
 #include "popt_plan.h"
 #include "PPUtils.h"
-
+#include "d_printf.h"
 
 int xp_pred_compare(const void *p1, const void *p2)
 {

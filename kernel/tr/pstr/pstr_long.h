@@ -164,7 +164,7 @@ public:
 
 	unsigned char operator *() const
 	{
-		ASSERT(blk != XNULL);
+		U_ASSERT(blk != XNULL);
 		CHECKP(blk);
 		return *((char*)XADDR(blk) + ofs);
 	}

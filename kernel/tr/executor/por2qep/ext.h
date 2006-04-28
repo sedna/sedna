@@ -1,5 +1,12 @@
+/*
+ * File:  ext.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _EXT_H
 #define _EXT_H
+
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "sedna_ef.h"

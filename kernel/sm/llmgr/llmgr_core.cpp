@@ -6,7 +6,6 @@
 #include "sedna.h"
 #include <iostream>
 #include "base.h"
-#include "exceptions.h"
 #include "ushm.h"
 #include "xptr.h"
 #include "llmgr_core.h"
@@ -15,6 +14,7 @@
 #include "tr_debug.h"
 #include "plmgr_core.h"
 #include "uutils.h"
+#include "d_printf.h"
 //#include "trmgr.h"
 
 using namespace std;

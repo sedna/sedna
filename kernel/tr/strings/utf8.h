@@ -1,4 +1,9 @@
+/*
+ * File:  utf8.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
 
+#include "sedna.h"
 #include "strings.h"
 
 class CharsetHandler_utf8 : public CharsetHandler

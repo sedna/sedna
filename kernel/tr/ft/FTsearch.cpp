@@ -1,5 +1,13 @@
+/*
+ * File:  FTsearch.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
 #include "FTsearch.h"
 #include "tr_globals.h"
+
 using namespace dtSearch;
 
 /////////////////////////////////////////////////////////////

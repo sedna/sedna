@@ -1,3 +1,8 @@
+/*
+ * File:  tr_debug.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _TR_DEBUG_H_
 #define _TR_DEBUG_H_
 

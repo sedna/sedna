@@ -7,6 +7,8 @@
 #ifndef _INDIRECTION_H
 #define _INDIRECTION_H
 
+#include "sedna.h"
+
 #include "xptr.h"
 #include "schema.h"
 #include "sm_vmm_data.h"

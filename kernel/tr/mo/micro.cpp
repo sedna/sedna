@@ -8,7 +8,6 @@
 #include "node_utils.h"
 #include "vmm.h"
 #include "locks.h"
-#include "exceptions.h"
 #include "schema.h"
 #include "log.h"
 #include "pstr.h"

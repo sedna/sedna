@@ -6,7 +6,6 @@
 #ifndef PERSISTENT_DB_DATA_H
 #define PERSISTENT_DB_DATA_H
 
-#include "base.h"
 
 template<class T, class X> struct pers_sset;
 

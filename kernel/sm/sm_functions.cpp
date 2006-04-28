@@ -11,7 +11,6 @@
 #include "plmgr.h"
 #include "bm_core.h"
 #include "usem.h"
-#include "exceptions.h"
 #include "ipc_ops.h"
 
 using namespace std;

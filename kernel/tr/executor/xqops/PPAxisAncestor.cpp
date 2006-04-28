@@ -1,7 +1,15 @@
+/*
+ * File:  PPAxisAncestor.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
 #include "PPAxisAncestor.h"
 #include "node_utils.h"
 #include "PPUtils.h"
 #include "dm_accessors.h"
+
 using namespace tr_globals;
 void PPAxisAncestor::init_function()
 {

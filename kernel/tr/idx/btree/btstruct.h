@@ -6,6 +6,8 @@
 #ifndef _BTSTRUCT_H
 #define _BTSTRUCT_H
 
+#include "sedna.h"
+
 #include "nodes.h"
 #include "btpage.h"
 

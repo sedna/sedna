@@ -3,14 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 
+#include "ugc.h"
 #include "base.h"
 #include "ushm.h"
 #include "usem.h"
 #include "ummap.h"
 #include "d_printf.h"
-#include "ugc.h"
-#include "event_log.h"
+
 
 
 #define SEMAPHORE_CLEANUP(name)					if (USemaphoreOpen(&sem, name) == 0)										\

@@ -6,8 +6,10 @@
 #ifndef __PPPRED_H
 #define __PPPRED_H
 
-#include "PPBase.h"
 #include <list>
+
+#include "sedna.h"
+#include "PPBase.h"
 
 
 

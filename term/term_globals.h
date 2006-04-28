@@ -6,12 +6,10 @@
 #ifndef _TERM_GLOBALS_H
 #define _TERM_GLOBALS_H
 
-#include <stdio.h>
-
-#include "base.h"
+#include "sedna.h"
+#include "libsedna.h"
 #include "argtable.h"
 	
-#include "libsedna.h"
 	
 #define TERM_ARGSTRLEN 511
 #define RESULT_MSG_SIZE 10235

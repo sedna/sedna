@@ -10,8 +10,8 @@
 #include "lex.h"
 #include "nid.h"
 #include "crmutils.h"
-#include "exceptions.h"
 #include "nidalloc.h"
+#include "d_printf.h"
 
 t_prefix NULLPREFIX = t_prefix(NULL,0);
 

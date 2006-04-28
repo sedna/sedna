@@ -3,12 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
-
 #ifndef _PPSRESLSTUB_H
 #define _PPSRESLSTUB_H
 
-
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPSResLStub : public PPIterator

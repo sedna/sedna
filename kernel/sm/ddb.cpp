@@ -6,7 +6,6 @@
 #include "sedna.h"
 #include <iostream>
 #include "base.h"
-#include "exceptions.h"
 #include "d_printf.h"
 #include "argtable.h"
 #include "version.h"

@@ -10,7 +10,6 @@
 #include <string>
 
 #include "base.h"
-#include "exceptions.h"
 #include "SSMMsg.h"
 #include "vmm.h"
 #include "indirection.h"

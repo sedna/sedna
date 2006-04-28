@@ -6,6 +6,8 @@
 #ifndef _PPCREATEFTINDEX_H
 #define _PPCREATEFTINDEX_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "XPathOnSchema.h"
 #include "ft_index_data.h"

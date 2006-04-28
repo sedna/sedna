@@ -4,6 +4,7 @@
  */
 
 #include <iostream>
+#include "sedna.h"
 #include "btintern.h"
 #include "test.h"
 

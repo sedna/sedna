@@ -7,6 +7,7 @@
 #ifndef _PPREPLACE_H
 #define _PPREPLACE_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPReplace : public PPUpdate

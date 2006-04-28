@@ -7,6 +7,8 @@
 #ifndef _PPAGGRFUNCS_H
 #define _PPAGGRFUNCS_H
 
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "PPUtils.h"
 

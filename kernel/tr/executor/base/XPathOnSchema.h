@@ -8,6 +8,9 @@
 #define _XPATHONSCHEMA_H
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "schema.h"
 #include "XPath.h"
 

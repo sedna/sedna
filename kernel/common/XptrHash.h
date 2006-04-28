@@ -7,6 +7,7 @@
 #ifndef _XPTRHASH_H
 #define _XPTRHASH_H
 
+#include "sedna.h"
 #include "xptr.h"
 
 // T - value type

@@ -6,6 +6,8 @@
 #ifndef _E_STRING_O_ITERATOR_H
 #define _E_STRING_O_ITERATOR_H
 
+#include "sedna.h"
+
 template<class T> class e_string_o_iterator
 {
 public:

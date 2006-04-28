@@ -7,6 +7,7 @@
 #ifndef _PPDROPMETADATA_H
 #define _PPDROPMETADATA_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPDropDocument : public PPUpdate

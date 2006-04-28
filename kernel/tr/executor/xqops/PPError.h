@@ -6,6 +6,7 @@
 #ifndef _PPERROR_H
 #define _PPERROR_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPFnError : public PPIterator

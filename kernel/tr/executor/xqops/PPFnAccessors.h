@@ -6,6 +6,7 @@
 #ifndef _PPFNACCESSORS_H
 #define _PPFNACCESSORS_H
 
+#include "sedna.h"
 #include "PPAccessors.h"
 
 

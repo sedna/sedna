@@ -1,7 +1,15 @@
+/*
+ * File:  PPSQL.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef __PPSQL_H
 #define __PPSQL_H
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "PPConstructors.h"
 

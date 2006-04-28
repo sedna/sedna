@@ -7,7 +7,7 @@
 #ifndef _PPSLSTUB_H
 #define _PPSLSTUB_H
 
-
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPSLStub : public PPIterator

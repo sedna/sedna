@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 
 #include "PPSelect.h"
 #include "PPUtils.h"

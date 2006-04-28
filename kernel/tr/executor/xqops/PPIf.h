@@ -7,6 +7,7 @@
 #ifndef __PPIF_H
 #define __PPIF_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPIf : public PPIterator

@@ -11,8 +11,9 @@
 //              rather an expression which depends on vmm block that is in vmm memory
 
 
-
 #include <list>
+
+#include "sedna.h"
 
 #include "usem.h"
 #include "ushm.h"
@@ -21,11 +22,10 @@
 #include "sm_vmm_data.h"
 #include "vmm.h"
 #include "tr_globals.h"
-#include "os_exceptions.h"
 #include "pers_map.h"
 #include "schema.h"
 #include "gmm.h"
-
+#include "d_printf.h"
 
 
 using namespace std;

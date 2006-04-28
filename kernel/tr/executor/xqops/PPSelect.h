@@ -6,6 +6,7 @@
 #ifndef __PPSELECT_H
 #define __PPSELECT_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

@@ -4,10 +4,13 @@
  */
 
 
+#include "sedna.h"
+
 #include "tuple.h"
 #include "e_string.h"
 #include "pstr.h"
 #include "pstr_long.h"
+#include "d_printf.h"
 
 
 tuple_cell EMPTY_STRING_TC(tuple_cell::atomic_deep(xs_string, ""));

@@ -6,7 +6,7 @@
 #ifndef __PPSPACESEQUENCE_H
 #define __PPSPACESEQUENCE_H
 
-//#include "PPBase.h"
+#include "sedna.h"
 #include "PPSequence.h"
 
 class PPSpaceSequence : public PPSequence

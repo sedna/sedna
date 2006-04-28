@@ -4,8 +4,9 @@
  */
 
 
+#include "sedna.h"
+
 #include "pping.h"
-#include "uprocess.h"
 #include "d_printf.h"
 
 

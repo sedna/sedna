@@ -4,6 +4,7 @@
  */
 
 
+#include "sedna.h"
 #include "PPError.h"
 
 PPFnError::PPFnError(variable_context *_cxt_,

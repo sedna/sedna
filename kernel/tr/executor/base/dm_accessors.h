@@ -7,7 +7,8 @@
 #ifndef _DM_ACCESSORS_H
 #define _DM_ACCESSORS_H
 
-#include "PPBase.h"
+#include "sedna.h"
+#include "tuple.h"
 
 
 /// internal function for getting parent of a node

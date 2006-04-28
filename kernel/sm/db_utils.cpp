@@ -8,7 +8,6 @@
 #include "base.h"
 #include "uhdd.h"
 #include "cdb_globals.h"
-#include "exceptions.h"
 
 using namespace std;
 

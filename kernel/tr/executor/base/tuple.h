@@ -7,6 +7,8 @@
 #ifndef _TUPLE_H
 #define _TUPLE_H
 
+#include "sedna.h"
+
 #include "counted_ptr.h"
 #include "nodes.h"
 #include "decimal.h"

@@ -11,7 +11,6 @@
 #include "micro.h"
 #include "metadata.h"
 #include "indirection.h"
-#include "exceptions.h"
 #include "llmgr_core.h"
 #include "rcv_funcs.h"
 #include "tr_globals.h"

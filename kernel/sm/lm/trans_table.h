@@ -10,7 +10,6 @@
 #include <map>
 #include "base.h"
 #include "usem.h"
-#include "exceptions.h"
 #include "TransCB.h"
 #include "lm_base.h"
 

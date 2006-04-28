@@ -5,6 +5,9 @@
 
 #ifndef _PPCONSTRUCTORS_H
 #define _PPCONSTRUCTORS_H
+
+#include "sedna.h"
+
 #include "PPBase.h"
 #include "schema.h"
 #include "strings.h"

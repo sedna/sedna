@@ -7,7 +7,7 @@
 #ifndef _PPDOCINCOL_H
 #define _PPDOCINCOL_H
 
-
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "XPathOnSchema.h"

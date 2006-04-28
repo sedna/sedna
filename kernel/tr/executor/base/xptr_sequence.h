@@ -7,6 +7,8 @@
 #ifndef _XPTR_SEQUENCE_H
 #define _XPTR_SEQUENCE_H
 
+#include "sedna.h"
+
 #include "tuple.h"
 #include "vmm.h"
 

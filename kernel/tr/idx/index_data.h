@@ -6,6 +6,7 @@
 #ifndef _INDEX_DATA_H
 #define _INDEX_DATA_H
 
+#include "sedna.h"
 
 #include "usem.h"
 #include "nodes.h"

@@ -1,17 +1,20 @@
+/*
+ * File:  ext.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
 
 #include "PPUtils.h"
 #include "casting_operations.h"
 #include "ext.h"
 #include "sedna_ef.h"
-#include "udl.h"
 #include "PPExtFunCall.h"
 #include "tr_globals.h"
 #include "e_string.h"
 
 #ifdef _WIN32
-#include <windows.h>
 #else
-#include <sys/types.h>
 #include <dirent.h>
 #include <strings.h>
 #endif

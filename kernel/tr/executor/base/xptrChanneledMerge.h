@@ -1,7 +1,16 @@
+/*
+ * File:  xptrChanneledMerge.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _XPTRCHANELLEDMERGE_H
 #define _XPTRCHANELLEDMERGE_H
+
+#include "sedna.h"
+
 #include "numb_scheme.h"
 #include "pers_map.h"
+
 struct node_cell
 {
 	xptr node;

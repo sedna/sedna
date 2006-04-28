@@ -9,7 +9,6 @@
 #include "usem.h"
 #include "lm_base.h"
 #include "lm_globals.h"
-#include "exceptions.h"
 #include "lock_table.h"
 #include "trans_table.h"
 #include "d_printf.h"

@@ -3,9 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "schema.h"
 #include "nodes.h"
-#include "exceptions.h"
 #include "XPathOnSchema.h"
 #include "index_data.h"
 #ifdef SE_ENABLE_FTSEARCH

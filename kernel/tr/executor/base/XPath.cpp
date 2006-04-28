@@ -1,12 +1,19 @@
+/*
+ * File:  XPath.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include <list>
+
+#include "sedna.h"
 
 #include "base.h"
 #include "XPath.h"
 #include "pers_heap.h"
 #include "d_printf.h"
-#include "exceptions.h"
 #include "schema.h"
 #include "PPBase.h"
-#include <list>
+
 
 
 using namespace std;

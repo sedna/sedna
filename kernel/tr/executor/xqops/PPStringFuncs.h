@@ -6,6 +6,7 @@
 #ifndef _PPSTRINGFUNCS_H
 #define _PPSTRINGFUNCS_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

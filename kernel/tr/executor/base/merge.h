@@ -7,6 +7,8 @@
 #ifndef _MERGE_H
 #define _MERGE_H
 
+#include "sedna.h"
+
 #include "xptr.h"
 #include "node_utils.h"
 

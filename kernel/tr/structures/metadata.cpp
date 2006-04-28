@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
+
 #include "metadata.h"
 #include "xptr.h"
 #include "micro.h"
 #include "log.h"
-#include "exceptions.h"
 #include "indirection.h"
 #include "crmutils.h"
-#include <string.h>
 #include "locks.h"
 #include "indexes.h"
 #ifdef SE_ENABLE_FTSEARCH

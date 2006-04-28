@@ -5,14 +5,17 @@
 
 
 #include <string>
-#include "exceptions.h"
+#include <set>
+
+#include "sedna.h"
+
 #include "indirection.h"
 #include "usem.h"
 #include "vmm.h"
 #include "log.h"
 #include "sm_vmm_data.h"
-#include <set>
 #include "xptr_sequence.h"
+
 #define OTK_XPTR
 using namespace std;
 typedef std::pair<schema_node*,xptr> id_pair;

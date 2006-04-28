@@ -5,12 +5,16 @@
 
 #ifndef _UPDATES_H
 #define _UPDATES_H
+
+#include <map>
+
+#include "sedna.h"
+
 #include "xptr.h"
 #include "vmm.h"
 #include "nodes.h"
 #include "schema.h"
 #include "PPBase.h"
-#include <map>
 #ifdef SE_ENABLE_FTSEARCH
 #include "ft_index_data.h"
 #endif

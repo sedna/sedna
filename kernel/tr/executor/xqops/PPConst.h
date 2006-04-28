@@ -6,6 +6,7 @@
 #ifndef __PPCONST_H
 #define __PPCONST_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 class PPConst : public PPIterator

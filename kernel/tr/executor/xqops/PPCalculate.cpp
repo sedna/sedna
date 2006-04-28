@@ -5,6 +5,9 @@
 
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "PPCalculate.h"
 #include "PPSLStub.h"
 

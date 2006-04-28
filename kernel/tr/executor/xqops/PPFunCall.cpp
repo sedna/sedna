@@ -5,6 +5,9 @@
 
 
 #include <vector>
+
+#include "sedna.h"
+
 #include "PPFunCall.h"
 #include "PPUtils.h"
 #include "casting_operations.h"

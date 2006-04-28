@@ -3,8 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "sedna.h"
 #include "PPNodeComparison.h"
-#include "exceptions.h"
+
 PPNodeComparison* PPNodeComparison::PPGTNodeComparison(variable_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 

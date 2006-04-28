@@ -9,7 +9,6 @@
 
 #include "sedna.h"
 #include <map>
-#include "exceptions.h"
 #include "XptrHash.h"
 #include "IntList.h"
 #include "usem.h"

@@ -4,9 +4,11 @@
  */
 
 #include <string>
+
+#include "sedna.h"
+
 #include "gmm.h"
 #include "base.h"
-#include "exceptions.h"
 #include "xptr.h"
 
 

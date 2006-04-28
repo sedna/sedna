@@ -7,6 +7,7 @@
 #ifndef _PPABSPATH_H
 #define _PPABSPATH_H
 
+#include "sedna.h"
 #include "PPBase.h"
 #include "XPathOnSchema.h"
 

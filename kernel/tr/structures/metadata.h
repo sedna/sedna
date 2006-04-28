@@ -7,11 +7,14 @@
 #ifndef _META_DATA_H
 #define _META_DATA_H
 
+#include <string>
+
+#include "sedna.h"
+
 #include "xptr.h"
 #include "schema.h"
 #include "usem.h"
 #include "pers_map.h"
-#include <string>
 
 #define METADATA_NAME_SIZE			256
 //#define NOSEM 

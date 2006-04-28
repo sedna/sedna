@@ -3,6 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <math.h>
+
+#include "sedna.h"
 
 #include "PPPred.h"
 #include "PPUtils.h"
@@ -11,7 +14,6 @@
 #include <algorithm>
 #include <functional>
 #include "casting_operations.h"
-#include <math.h>
 
 using namespace std;
 

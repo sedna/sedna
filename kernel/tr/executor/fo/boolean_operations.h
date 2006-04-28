@@ -7,6 +7,7 @@
 #ifndef _BOOLEAN_OPERATIONS_H
 #define _BOOLEAN_OPERATIONS_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 /*******************************************************************************

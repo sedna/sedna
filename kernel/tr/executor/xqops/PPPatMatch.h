@@ -5,6 +5,9 @@
 
 #ifndef _PPPATMATCH_H
 #define _PPPATMATCH_H
+
+#include "sedna.h"
+
 #include "tuple.h"
 #include "PPUtils.h"
 

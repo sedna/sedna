@@ -1,5 +1,12 @@
+/*
+ * File:  PPFtHighlight.h
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #ifndef _PPFTHIGHLIGHT_H
 #define _PPFTHIGHLIGHT_H
+
+#include "sedna.h"
 
 #include "PPBase.h"
 #include "FTsearch.h"

@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPQueryRoot.h"
 #include "crmutils.h"
 #include "locks.h"

@@ -7,9 +7,9 @@
 #ifndef _VMM_H
 #define _VMM_H
 
+#include "sedna.h"
 
 #include "xptr.h"
-#include "exceptions.h"
 #include "os_exceptions.h"
 #include "SSMMsg.h"
 #include "persistent_db_data.h"

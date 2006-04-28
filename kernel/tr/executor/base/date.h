@@ -7,7 +7,7 @@
 #ifndef _DATE_H
 #define _DATE_H
 
-#include "exceptions.h"
+#include "sedna.h"
 
 class date
 {

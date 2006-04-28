@@ -7,6 +7,7 @@
 #ifndef __PPLET_H
 #define __PPLET_H
 
+#include "sedna.h"
 #include "PPBase.h"
 
 

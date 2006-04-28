@@ -7,6 +7,8 @@
 #ifndef _SEQUENCETYPE_H
 #define _SEQUENCETYPE_H
 
+#include "sedna.h"
+
 #include "XPath.h"
 #include "nodes.h"
 #include "tuple.h"

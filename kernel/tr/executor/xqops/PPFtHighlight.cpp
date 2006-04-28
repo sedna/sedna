@@ -1,3 +1,10 @@
+/*
+ * File:  PPFtHighlight.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
 #include "PPFtHighlight.h"
 #include "FTsearch.h"
 

@@ -4,9 +4,11 @@
  */
 
 
+#include "sedna.h"
+
+#include "e_string.h"
 #include "PPBase.h"
 #include "vmm.h"
-#include "e_string.h"
 #include "pstr_long.h"
 
 
@@ -273,8 +275,8 @@ e_str e_str_global;
 
 void e_str::init()
 {
-    ASSERT(first_blk == XNULL);
-    ASSERT(last_blk == XNULL);
+    U_ASSERT(first_blk == XNULL);
+    U_ASSERT(last_blk == XNULL);
 
 	vmm_alloc_tmp_block(&last_blk);
 	e_str_blk_hdr::init(XADDR(last_blk));

@@ -10,7 +10,7 @@
 #include "trans_table.h"
 #include "TransCB.h"
 #include "usem.h"
-#include "exceptions.h"
+#include "d_printf.h"
 
 using namespace std;
 

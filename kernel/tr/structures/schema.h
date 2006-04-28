@@ -6,6 +6,9 @@
 
 #ifndef _SCHEMA_H
 #define _SCHEMA_H
+
+#include "sedna.h"
+
 #include "nodes.h"
 #include "pers_map.h"
 

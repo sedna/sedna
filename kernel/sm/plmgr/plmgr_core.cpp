@@ -8,7 +8,6 @@
 #include "xptr.h"
 #include "sm_vmm_data.h"
 #include "bm_rcv.h"
-#include "exceptions.h"
 #include "plmgr_core.h"
 #include "sm_globals.h"
 #include "usem.h"

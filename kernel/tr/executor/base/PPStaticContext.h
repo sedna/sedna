@@ -7,6 +7,7 @@
 #define _PPSTATCONT_H
 
 #include <map>
+#include "sedna.h"
 #include "schema.h"
 #include "XPath.h"
 

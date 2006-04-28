@@ -8,6 +8,8 @@
 #include <iostream>
 #include "base.h"
 #include "TransCB.h"
+#include "d_printf.h"
+
 using namespace std;
 /*****************************************************************************
                TransCB class implementation

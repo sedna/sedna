@@ -124,11 +124,8 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #define __EXCEPTIONS_H
 
 #include <string>
-#include <stdlib.h>
 #include "utils.h"
-#include "d_printf.h"
 #include "error_codes.h"
-#include "event_log.h"
 
 
 #define SYSTEM_EXCEPTION(msg) \

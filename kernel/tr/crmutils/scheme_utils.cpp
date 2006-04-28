@@ -1,3 +1,10 @@
+/*
+ * File:  scheme_utils.cpp
+ * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "sedna.h"
+
 #include "scheme_utils.h"
 #include "vmm.h"
 #include "node_utils.h"

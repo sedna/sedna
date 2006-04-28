@@ -7,6 +7,7 @@
 #ifndef _SEQUENCE_H
 #define _SEQUENCE_H
 
+#include "sedna.h"
 #include "compare.h"
 
 

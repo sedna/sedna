@@ -8,12 +8,10 @@
 #include "base.h"
 #include "llmgr_core.h"
 #include "uhdd.h"
-#include "exceptions.h"
 #include "cdb_globals.h"
 #include "uutils.h"
+#include "d_printf.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string>
 #include <map>
 

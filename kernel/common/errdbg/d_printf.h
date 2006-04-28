@@ -9,7 +9,7 @@
 
 //#define EL_DEBUG_SYNC
 
-#include "u.h"
+#include "sedna.h"
 
 #ifdef EL_DEBUG
 #  if (EL_DEBUG == 1)

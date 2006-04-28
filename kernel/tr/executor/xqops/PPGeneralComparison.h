@@ -5,6 +5,9 @@
 
 #ifndef _PPGENERALCOMP_H
 #define _PPGENERALCOMP_H
+
+#include "sedna.h"
+
 #include "tuple.h"
 #include "PPUtils.h"
 

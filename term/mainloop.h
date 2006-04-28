@@ -5,8 +5,7 @@
 #ifndef MAINLOOP_H
 #define MAINLOOP_H
 
-#include <stdio.h>
-
+#include "sedna.h"
 #include "libsedna.h"
 
 

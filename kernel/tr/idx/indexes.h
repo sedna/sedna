@@ -7,6 +7,8 @@
 #ifndef __INDEXES_H
 #define __INDEXES_H
 
+#include "sedna.h"
+
 #include "index_data.h"
 #include "XPath.h"
 #include "tuple.h"

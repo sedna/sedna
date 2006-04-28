@@ -4,6 +4,8 @@
  */
 
 
+#include "sedna.h"
+
 #include "PPRetrieveMetadata.h"
 #include "crmutils.h"
 #include "locks.h"

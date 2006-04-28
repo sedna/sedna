@@ -5,16 +5,22 @@
 
 #ifndef _CRMUTILS_H
 #define _CRMUTILS_H
+
+#include <map>
+
+#include "sedna.h"
+
 #include "xptr.h"
 #include "exec_output.h"
 #include "nodes.h"
 #include "tuple.h"
-#include <stdio.h>
-#include <map>
+#include "strings.h"
+
 #ifdef SE_ENABLE_FTSEARCH
 #include "ft_index_data.h"
 #endif
-#include "strings.h"
+
+
 
 
 extern se_stdlib_ostream crm_out;
