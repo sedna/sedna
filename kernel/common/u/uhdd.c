@@ -182,7 +182,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written)
     if (res == -1)
         sys_call_error("write");
     else 
-        *already_read = res;
+        *already_written = res;
     return (res == -1 ? 0 : 1);
 #endif
 }
