@@ -5,7 +5,7 @@
 PP = ../../..
 
 
-VPATH = $(PP)/kernel/tr
+VPATH = $(PP)/kernel/tr $(PP)/libs/dtsearch/common
 
 
 include $(PP)/Makefile.include
