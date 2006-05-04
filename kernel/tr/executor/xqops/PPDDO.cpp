@@ -36,7 +36,7 @@ void PPDDO::open  ()
 #ifdef TURN_ON_DDO
     child.op->open();
     pos = 0;
-    s = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize);
+    s = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
 #else
     child.op->open();
 #endif
@@ -91,7 +91,7 @@ void PPDDO::next  (tuple &t)
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());
     }
 
-    if (pos < s->size()) t.copy(s->get(pos++));
+    if (pos < s->size()) s->get(t,pos++);
     else 
     {
         t.set_eos();
@@ -216,7 +216,7 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1,shft shift,int sz)
 		copy_to_buffer(v1,shift,sz);
 	}	
 }
-int PPDDO::compare_less (xptr v1,xptr v2)
+int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 {
 	int s1=get_size_ser(v1);
 	int s2=get_size_ser(v2);
@@ -284,7 +284,7 @@ int PPDDO::compare_less (xptr v1,xptr v2)
 		}
 	}
 }
-int PPDDO::get_size (tuple& t)
+int PPDDO::get_size (tuple& t, const void * Udata)
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
@@ -293,7 +293,7 @@ int PPDDO::get_size (tuple& t)
 	sz+=(sizeof(xptr)+sizeof(shft));
 	return (sz>DATA_BLK_SIZE)?2*sizeof(xptr)+sizeof(shft):sz;	
 }
-void PPDDO::serialize (tuple& t,xptr v1)
+void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
@@ -318,7 +318,7 @@ void PPDDO::serialize (tuple& t,xptr v1)
 	}
 
 }
-void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2)
+void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata)
 {
 	xptr node=t.cells[0].get_node();
 	CHECKP(node);
@@ -341,32 +341,31 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2)
 		copy_from_buffer(v2,size1,sz+sizeof(xptr)+sizeof(shft)-size1);
 	}
 }
-tuple PPDDO::deserialize (xptr& v1)
+void PPDDO::deserialize (tuple& t,xptr& v1, const void * Udata)
 {
 	if (GET_FREE_SPACE(v1)<sizeof(xptr))
 	{
 		copy_to_buffer(v1,GET_FREE_SPACE(v1));
 		xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
-		copy_to_buffer(v2+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(xptr)-GET_FREE_SPACE(v1));
-		tuple t(1);
+		copy_to_buffer(v2+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(xptr)-GET_FREE_SPACE(v1));		
 		t.copy(tuple_cell::node(*((xptr*)temp_buffer)));
-		return t;
-
 	}
 	else
 	{
-		CHECKP(v1);
-		tuple t(1);
+		CHECKP(v1);		
 #ifdef ALIGNMENT_REQUIRED
 		copy_to_buffer(XADDR(v1),sizeof(xptr));
 		t.copy(tuple_cell::node(*((xptr*)temp_buffer)));
 #else
 		t.copy(tuple_cell::node(*((xptr*)XADDR(v1))));
-#endif		
-		return t;
+#endif				
 	}
 }
 
+void PPDDO::deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata)
+{
+	deserialize (t,v1, Udata);
+}
 void PPDDO::copy_to_buffer(const void* addr, shft size)
 {
 	if (size>buf_lgth)

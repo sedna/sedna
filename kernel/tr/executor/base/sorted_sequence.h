@@ -10,11 +10,12 @@
 #define min(x,y) ((x) < (y) ? (x) : (y))
 #endif
 
-typedef int (*compare_fn)(xptr v1,xptr v2);
-typedef int (*get_size_fn)(tuple& t);
-typedef void (*serialize_fn)(tuple& t,xptr v1);
-typedef void (*serialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2);
-typedef tuple (*deserialize_fn)(xptr& v1);
+typedef int (*compare_fn)(xptr v1,xptr v2, const void *);
+typedef int (*get_size_fn)(tuple& t, const void *);
+typedef void (*serialize_fn)(tuple& t,xptr v1, const void *);
+typedef void (*serialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
+typedef void (*deserialize_fn)(tuple&,xptr& v1, const void *);
+typedef void (*deserialize_2_blks_fn)(tuple& t,xptr& v1,shft size1,xptr& v2, const void *);
 struct data_ptr
 {
 	xptr value;
@@ -75,6 +76,7 @@ private:
 	serialize_fn serializeFN;
 	serialize_2_blks_fn serialize2FN;
 	deserialize_fn deserializeFN;
+	deserialize_2_blks_fn deserialize2FN;
 	bool finalized;
 	xptr ptr_place;
 	xptr val_place;
@@ -109,13 +111,14 @@ private:
 	void set_next_block_in_chain(xptr& place, bool marking=false);	
 	char* temp_buffer;
 	shft buf_length;
+	const void * Udata;
 	
 
 
 public:
 
     sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
-	serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_);
+	serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_,deserialize_2_blks_fn _deserialize2FN_, const void * _Udata_);
     ~sorted_sequence();
 	
     int size() const { return seq_size; }
@@ -136,7 +139,8 @@ public:
 
     void add(tuple &p);
     tuple get(const iterator& it);
-    tuple get(int pos);    
+    tuple get(int pos);  
+	void get(tuple& t, int pos); 
     tuple operator[](int i)
     { 
         return get(i);

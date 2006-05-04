@@ -1,7 +1,8 @@
 #include "sorted_sequence.h"
 
 sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
-								 serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_): compareFN(_compareFN_),getSizeFN(_getSizeFN_),serializeFN(_serializeFN_),serialize2FN(_serialize2FN_),deserializeFN(_deserializeFN_)
+								 serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_,
+								 deserialize_2_blks_fn _deserialize2FN_,const void * _Udata_): compareFN(_compareFN_),getSizeFN(_getSizeFN_),serializeFN(_serializeFN_),serialize2FN(_serialize2FN_),deserializeFN(_deserializeFN_),deserialize2FN(_deserialize2FN_),Udata(_Udata_)
 {
 	finalized=false;
 	ptr_place=XNULL;
@@ -80,7 +81,7 @@ void sorted_sequence::add(tuple& p)
 	
 	//2.serializing data
 	//2.1 calc size of data
-	int size=getSizeFN(p);
+	int size=getSizeFN(p,Udata);
 	//2.2 bind pointers section to data section
 	CHECKP(ptr_place);
 	data_ptr* ptr=(data_ptr*)XADDR(ptr_place);
@@ -96,7 +97,7 @@ void sorted_sequence::add(tuple& p)
 		//2.3.a case of data that doesn't fits to block
 		xptr tmp=get_free_block();	
 		xptr param=tmp+sizeof(seq_blk_hdr);
-		serialize2FN(p,val_place,fp,param);
+		serialize2FN(p,val_place,fp,param,Udata);
 		CHECKP(val_place);
 		((seq_blk_hdr*)XADDR(BLOCKXPTR(val_place)))->nblk=tmp;
 		VMM_SIGNAL_MODIFICATION(val_place);
@@ -105,7 +106,7 @@ void sorted_sequence::add(tuple& p)
 	else
 	{
 		//2.3.a case of data that fits to block
-		serializeFN(p,val_place);
+		serializeFN(p,val_place,Udata);
 		val_place+=size;
 	}
 
@@ -163,7 +164,7 @@ void sorted_sequence::sort1(int off, int len)
 	// Insertion sort on smallest arrays
 	if (len < 7) {
 	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && compareFN(get_ptr(j),get_ptr(j-1))<0; j--)
+		for (int j=i; j>off && compareFN(get_ptr(j),get_ptr(j-1),Udata)<0; j--)
 		    swap( j, j-1);
 	    return;
 	}
@@ -186,13 +187,13 @@ void sorted_sequence::sort1(int off, int len)
 	// Establish Invariant: v* (<v)* (>v)* v*
 	int a = off, b = a, c = off + len - 1, d = c;
 	while(true) {
-	    while (b <= c && compareFN( v,get_ptr(b))>=0) {
-		if (!compareFN(get_ptr(b), v))
+	    while (b <= c && compareFN( v,get_ptr(b),Udata)>=0) {
+		if (!compareFN(get_ptr(b), v,Udata))
 		    swap(a++, b);
 		b++;
 	    }
-	    while (c >= b && compareFN(v,get_ptr(c))<=0) {
-		if (!compareFN(get_ptr(c),v))
+	    while (c >= b && compareFN(v,get_ptr(c),Udata)<=0) {
+		if (!compareFN(get_ptr(c),v,Udata))
 		    swap(c, d--);
 		c--;
 	    }
@@ -241,9 +242,9 @@ void sorted_sequence::swap(int a, int b)
  */
 int sorted_sequence::med3( int a, int b, int c) 
 {
-	return (compareFN(get_ptr(a),get_ptr(b))<0 ?
-		(compareFN(get_ptr(b),get_ptr(c))<0 ? b : compareFN(get_ptr(a),get_ptr(c))<0 ? c : a) :
-		(compareFN(get_ptr(c),get_ptr(b))<0 ? b : compareFN(get_ptr(c),get_ptr(a))<0 ? c : a));
+	return (compareFN(get_ptr(a),get_ptr(b),Udata)<0 ?
+		(compareFN(get_ptr(b),get_ptr(c),Udata)<0 ? b : compareFN(get_ptr(a),get_ptr(c),Udata)<0 ? c : a) :
+		(compareFN(get_ptr(c),get_ptr(b),Udata)<0 ? b : compareFN(get_ptr(c),get_ptr(a),Udata)<0 ? c : a));
 }
 
  /**
@@ -374,7 +375,7 @@ xptr sorted_sequence::merge_sequences(xptr s1,xptr s2, bool final)
 	while (true)
 	{
 		//3.comparing values
-		if ((first_seq!=XNULL) && (second_seq==XNULL ||compareFN(v1,v2)<0))
+		if ((first_seq!=XNULL) && (second_seq==XNULL ||compareFN(v1,v2,Udata)<0))
 		{
 			//1. copy value
 			copy_data_to_new_place(first_seq,val);
@@ -524,11 +525,21 @@ xptr sorted_sequence::get_data(int pos)
  }
  tuple sorted_sequence::get(int pos)
  {
+	 tuple t(1);
 	 int ps=pos/PTR_BLK_SIZE;
 	 int md=pos % PTR_BLK_SIZE;
 	 CHECKP(ptr_blk_arr[ps]);
 	 xptr val=((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->value;
-	 return deserializeFN(val);
+	 shft sz=((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->size;
+	 if (GET_FREE_SPACE(val)<sz)
+	 {
+		 CHECKP(val);
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk;
+		 deserialize2FN(t,val,GET_FREE_SPACE(val),v2,Udata);
+	 }
+	 else
+		 deserializeFN(t,val,Udata);
+	 return t;
  }
  void sorted_sequence::clear()
  {
@@ -568,4 +579,21 @@ xptr sorted_sequence::get_data(int pos)
 	 sorted_seqs_arr.clear();
 	 ptr_blk_arr.clear();
 	 finalized=false;
+ }
+
+ void sorted_sequence::get(tuple& t, int pos)
+ {
+	 int ps=pos/PTR_BLK_SIZE;
+	 int md=pos % PTR_BLK_SIZE;
+	 CHECKP(ptr_blk_arr[ps]);
+	 xptr val=((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->value;
+	 shft sz=((data_ptr*)XADDR((ptr_blk_arr[ps]+(md*sizeof(data_ptr)+sizeof(seq_blk_hdr)))))->size;
+	 if (GET_FREE_SPACE(val)<sz)
+	 {
+		 CHECKP(val);
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(val)))->nblk;
+		deserialize2FN(t,val,GET_FREE_SPACE(val),v2,Udata);
+	 }
+	 else
+		 deserializeFN(t,val,Udata);
  }
