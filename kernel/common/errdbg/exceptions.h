@@ -363,6 +363,7 @@ public:
 
 
 void sedna_soft_fault(const SednaException &e);
+void sedna_soft_fault(const char* s);
 void sedna_soft_fault();
 
 

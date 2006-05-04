@@ -21,6 +21,13 @@ void sedna_soft_fault(const SednaException &e)
     SEDNA_SOFT_FAULT_FINALIZER;
 }
 
+void sedna_soft_fault(const char* s)
+{
+    SEDNA_SOFT_FAULT_BASE_MSG;
+    fprintf(stderr, "Details: %s\n", s);
+    SEDNA_SOFT_FAULT_FINALIZER;
+}
+
 void sedna_soft_fault()
 {
     SEDNA_SOFT_FAULT_BASE_MSG;
