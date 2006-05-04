@@ -107,9 +107,11 @@ static void __event_log_set_msg_attrs(int elevel, const char *filename, int line
 
 static int __event_log_short_write_to_stderr(const char *s, va_list ap)
 {
+/* !!!
     fprintf(stderr, "EVENT LOG: ");
     vfprintf(stderr, s, ap);
     fprintf(stderr, "\n");
+*/
 
     return 0;
 }
@@ -599,7 +601,9 @@ int event_log_long_msg(int elevel,
 
 int event_log_long_write_to_stderr(const char *short_str, const char *long_str)
 {
+/* !!!
     fprintf(stderr, "EVENT LOG: %s%s\n", short_str, long_str);
+*/
 
     return 0;
 }
