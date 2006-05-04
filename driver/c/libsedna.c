@@ -1504,14 +1504,14 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
 
 int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* attrValue, int* attrValueLength)
 {
-    int *value;
+    int value;
     
     clearLastError(conn);
     
     switch (attr){
         case SEDNA_ATTR_AUTOCOMMIT:
-            *value = (conn->autocommit) ? SEDNA_AUTOCOMMIT_ON: SEDNA_AUTOCOMMIT_OFF;
-            memcpy(attrValue, value, 4);
+            value = (conn->autocommit) ? SEDNA_AUTOCOMMIT_ON: SEDNA_AUTOCOMMIT_OFF;
+            memcpy(attrValue, &value, 4);
             *attrValueLength = 4;
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
          default: 
