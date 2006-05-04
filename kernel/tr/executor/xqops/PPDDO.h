@@ -15,11 +15,12 @@
 class PPDDO : public PPIterator
 {
 private:
-	static int compare_less (xptr v1,xptr v2);
-	static int get_size (tuple& t);
-	static void serialize (tuple& t,xptr v1);
-	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2);
-	static tuple deserialize (xptr& v1);	
+	static int compare_less (xptr v1,xptr v2, const void * Udata);
+	static int get_size (tuple& t, const void * Udata);
+	static void serialize (tuple& t,xptr v1, const void * Udata);
+	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+	static void deserialize (tuple &t, xptr& v1, const void * Udata);
+	static void deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
 	static int get_size_ser(xptr& v1);
 	static xptr get_ptr_ser(xptr& v1,int sz);
 	static void copy_data_ser_to_buffer(xptr v1,int sz);
