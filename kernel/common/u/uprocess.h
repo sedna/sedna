@@ -14,14 +14,14 @@
 
 
 #ifdef _WIN32
-#define U_NO_WINDOW			CREATE_NO_WINDOW
+#define U_DETACHED_PROCESS			DETACHED_PROCESS
 
 typedef HANDLE UPHANDLE;
 typedef DWORD  UPID;
 typedef DWORD  UFlag;
 #else
 #include <signal.h>
-#define U_NO_WINDOW			1
+#define U_DETACHED_PROCESS			1
 
 typedef int    UPHANDLE;
 typedef pid_t  UPID;

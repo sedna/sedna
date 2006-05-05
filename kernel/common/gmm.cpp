@@ -97,7 +97,7 @@ void create_global_memory_mapping()
         if (uCreateProcess(path_buf,
                            false, // inherit handles
                            NULL,
-                           U_NO_WINDOW,
+                           U_DETACHED_PROCESS,
                            &process_handle,
                            NULL,
                            &pid,

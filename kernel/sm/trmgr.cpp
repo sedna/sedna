@@ -249,7 +249,7 @@ void execute_recovery_by_logical_log_process()
                   buf,
                   false,
                   NULL,
-                  /*U_NO_WINDOW*/0,
+                  /*U_DETACHED_PROCESS*/0,
                   NULL,
                   NULL,
                   NULL,
