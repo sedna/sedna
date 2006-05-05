@@ -537,7 +537,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 			buffer[*item_len] = '\0'; 
 			successResult = EXIT_GOT_QUERY;
 		}
-		else
+		else if(buffer[i] != '\r')
 		{
 			i++;
 		}
