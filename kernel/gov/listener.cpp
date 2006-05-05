@@ -17,9 +17,8 @@ using namespace std;
 
 static USOCKET sockfd;
 
-int client_listener(bool is_background_mode)
-{
-   
+int client_listener(bool background_off_from_background_on)
+{   
    msg_struct msg;
 
    USOCKET socknew;
@@ -35,7 +34,7 @@ int client_listener(bool is_background_mode)
 
    elog(EL_LOG, ("GOVERNOR is ready"));
 
-   if (!is_background_mode)
+   if (!background_off_from_background_on)
    {	   
      d_printf1("OK\n");
      fprintf(res_os, "GOVERNOR has been started successfully\n");
@@ -127,7 +126,7 @@ int client_listener(bool is_background_mode)
                ////////////////////////////////////
           case CREATE_NEW_SESSION:
           {
-              CreateNewSessionProcess(socknew, is_background_mode);
+              CreateNewSessionProcess(socknew, background_off_from_background_on);
               break;
           }
 
@@ -186,7 +185,7 @@ int client_listener(bool is_background_mode)
    return 0;
 }
 
-void CreateNewSessionProcess(USOCKET socknew, bool is_background_mode)
+void CreateNewSessionProcess(USOCKET socknew, bool background_off_from_background_on)
 {
 
 try{
@@ -238,8 +237,8 @@ try{
     string con_path_str = uGetImageProcPath(buf) + string("/") + SESSION_EXE;
     strcpy(buf, con_path_str.c_str());
  
-    if (is_background_mode)
-       window_mode = 0;//U_NO_WINDOW; //process has no window for output
+    if (background_off_from_background_on)
+       window_mode = U_DETACHED_PROCESS; //process has no window for output
     else
        window_mode = 0;           //process is created without flags
                 

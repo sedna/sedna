@@ -140,9 +140,9 @@ int uCreateProcess(
     if ((pid = fork()) == 0)
     { /* child process */
 
-        if (flags == U_NO_WINDOW)
+        if (flags == U_DETACHED_PROCESS)
         {
-#warning U_NO_WINDOW flag in uCreateProcess function is not implemented yet
+#warning U_DETACHED_PROCESS flag in uCreateProcess function is not implemented yet
             /* close stdout and stderr to avoid output to console */
             int null_dev;
             null_dev = open("/dev/null", O_RDWR);

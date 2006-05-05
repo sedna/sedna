@@ -145,7 +145,7 @@ int load_metadata_in_database(const char* db_name)
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,
-                          U_NO_WINDOW,
+                          U_DETACHED_PROCESS,
                           &proc_h,
                           NULL,
                           &pid,
@@ -176,7 +176,7 @@ int load_metadata_in_database(const char* db_name)
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,
-                          U_NO_WINDOW,
+                          U_DETACHED_PROCESS,
                           &proc_h,
                           NULL,
                           &pid,
@@ -204,7 +204,7 @@ int load_metadata_in_database(const char* db_name)
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,
-                          U_NO_WINDOW,
+                          U_DETACHED_PROCESS,
                           &proc_h,
                           NULL,
                           &pid,
