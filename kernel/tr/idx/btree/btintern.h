@@ -48,6 +48,7 @@ bool				bt_page_fit(char* pg, shft size);
 /* delete functions */
 void				bt_delete_obj(char* pg, shft key_idx, shft obj_idx);
 void				bt_leaf_delete_key(char* pg, shft key_idx);
+void bt_nleaf_delete_key(char* pg, shft key_idx);
 
 
 

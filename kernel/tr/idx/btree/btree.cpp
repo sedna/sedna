@@ -252,3 +252,53 @@ void bt_delete(xptr &root, bt_key* key)
         bt_leaf_delete_key(delete_pg, key_idx);
     }
 }
+/* drop empty page*/
+void           bt_drop_page(const btree_blk_hdr * pg)
+{
+	xptr page=ADDR2XPTR(pg);
+	btree_blk_hdr * page_hdr= (btree_blk_hdr*)XADDR(page);
+	xptr left=page_hdr->prev;
+	xptr right=page_hdr->next;
+	//1. fixing block chain
+	if (left!=XNULL)
+	{
+		CHECKP(left);
+		((btree_blk_hdr*)XADDR(left))->next=right;
+		VMM_SIGNAL_MODIFICATION(left);
+
+	}
+	if (right!=XNULL)
+	{
+		CHECKP(right);
+		((btree_blk_hdr*)XADDR(right))->prev=left;
+		VMM_SIGNAL_MODIFICATION(right);
+
+	}
+	//remove key from upper layers
+	xptr parent=page_hdr->parent;
+	vmm_delete_block(page);
+	if (parent==XNULL) 
+		return;
+	CHECKP(parent);
+	btree_blk_hdr * par_hdr= (btree_blk_hdr*)XADDR(parent);
+	// fix lmp
+	if (par_hdr->lmp==page) 
+		par_hdr->lmp=right;
+	//find key by xptr
+	int key_idx=-1;
+	for (int i=0;i<BT_KEY_NUM(par_hdr);i++)
+	{
+		if (page==( *(xptr*)BT_BIGPTR_TAB_AT((char*)par_hdr, i)))
+		{
+			key_idx=i;
+			break;
+		}
+	}
+	if (key_idx<0)
+		throw USER_EXCEPTION2(SE1008, "System error in indexes");
+    
+	bt_nleaf_delete_key((char*)par_hdr,key_idx);
+	//VMM_SIGNAL_MODIFICATION(parent);
+	//recursive walthrough
+	if (!BT_KEY_NUM(par_hdr))  bt_drop_page(par_hdr);	 
+}
