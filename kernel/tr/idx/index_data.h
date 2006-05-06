@@ -62,13 +62,13 @@ void index_on_session_end();
 void inline index_sem_down()
 {
 #ifndef NOSEM
-	USemaphoreDown(index_sem);
+	USemaphoreDown(index_sem, __sys_call_error);
 #endif
 }
 void inline index_sem_up()
 {
 #ifndef NOSEM
-	USemaphoreUp(index_sem);
+	USemaphoreUp(index_sem, __sys_call_error);
 #endif
 }
 

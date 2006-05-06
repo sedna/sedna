@@ -38,7 +38,7 @@ void socket_client::init()
  	  //  Takes Socket handle from Environment Variable 
       char buffer[ENV_BUF_SIZE + 1];
       memset(buffer, 0, ENV_BUF_SIZE + 1);
-      uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE);
+      uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
       //d_printf2("getenv variable %d \n",GetLastError());
 
       Sock = atoi(buffer);   // use Sock
@@ -60,7 +60,7 @@ void socket_client::init()
 
 void socket_client::release()
 {
-   	 if(ushutdown_close_socket(Sock)!=0)  throw USER_EXCEPTION(SE3011); 
+   	 if(ushutdown_close_socket(Sock, __sys_call_error)!=0)  throw USER_EXCEPTION(SE3011); 
    	 if(stream != NULL)
    	 {
    	 	 delete stream;
@@ -114,7 +114,7 @@ void socket_client::read_msg(msg_struct *msg)
 			}
                         timeout.tv_sec = 1;
                         timeout.tv_usec = 0;
-			res = uselect_read(Sock, &timeout);
+			res = uselect_read(Sock, &timeout, __sys_call_error);
  
 			if(res == 1) //ready to recv data
 			{
@@ -237,7 +237,7 @@ client_file socket_client::get_file_from_client(const char* filename)
 			// create tmpfile for bulkload
 			
 			tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
-		    int res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid);
+		    int res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
 	    	if(res == 0) throw USER_EXCEPTION(SE4052);
     	    if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION(SE3007);
 
@@ -249,20 +249,20 @@ client_file socket_client::get_file_from_client(const char* filename)
 	        	}
 	        	else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
 	        	{
-	        		got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written);
+	        		got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
 	        		if ((got == 0)||(written!=sp_msg.length-5)) throw USER_EXCEPTION(SE4045); 
 	        	}
 	        	else throw USER_EXCEPTION(SE3009);
 	        	if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
 	        } //end of while
 
-         	got = uCloseFile(fs.f);
+         	got = uCloseFile(fs.f, __sys_call_error);
          	cf.f = fopen(string(fs.name).c_str(), "r");
          	strcpy(cf.name, fs.name);
         } //end of else
      } catch (...) {
-      	  if(uCloseFile(fs.f) == 0) d_printf1("tmp file close error %d\n");
-          if(uDeleteFile(string(fs.name).c_str()) == 0) d_printf1("tmp file delete error");
+      	  if(uCloseFile(fs.f, __sys_call_error) == 0) d_printf1("tmp file close error %d\n");
+          if(uDeleteFile(string(fs.name).c_str(), __sys_call_error) == 0) d_printf1("tmp file delete error");
           throw;
      }
      
@@ -272,7 +272,7 @@ client_file socket_client::get_file_from_client(const char* filename)
 void socket_client::close_file_from_client(client_file cf)
 {
 	if(fclose(cf.f) != 0) throw USER_EXCEPTION(SE3020);
-	if(!uDeleteFile(cf.name)) throw USER_EXCEPTION(SE3021);
+	if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
 }
 
 void socket_client::respond_to_client(int instruction)
@@ -316,7 +316,7 @@ void socket_client::get_session_parameters()
   
   timeout.tv_sec = 50;
   timeout.tv_usec = 0;
-  int select_res = uselect_read(Sock, &timeout);
+  int select_res = uselect_read(Sock, &timeout, __sys_call_error);
   if (select_res == 0) throw USER_EXCEPTION(SE3047);
   if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
   if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
@@ -376,7 +376,7 @@ void socket_client::get_session_parameters()
   
   timeout.tv_sec = 50;
   timeout.tv_usec = 0;
-  select_res = uselect_read(Sock, &timeout);
+  select_res = uselect_read(Sock, &timeout, __sys_call_error);
   if (select_res == 0) throw USER_EXCEPTION(SE3047);
   if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
   if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());

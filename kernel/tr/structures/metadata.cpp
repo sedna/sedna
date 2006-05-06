@@ -28,7 +28,7 @@ void metadata_on_session_begin(pers_sset<sn_metadata_cell,unsigned short> *mdc)
 {
     metadata = mdc;
 	//SEMAPHOR INIT SECTION
-    if (USemaphoreOpen(&metadata_sem, METADATA_SEMAPHORE_STR) != 0)
+    if (USemaphoreOpen(&metadata_sem, METADATA_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "METADATA_SEMAPHORE_STR");
 
     metadata_initialized = true;
@@ -38,7 +38,7 @@ void metadata_on_session_end()
 {
     if (!metadata_initialized) return;
 	//SEMAPHOR RELEASE SECTION
-    if (USemaphoreClose(metadata_sem) != 0)
+    if (USemaphoreClose(metadata_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4013, "METADATA_SEMAPHORE_STR");
     metadata_initialized = false;
 }

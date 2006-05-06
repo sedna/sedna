@@ -23,14 +23,14 @@ int client_listener(bool background_off_from_background_on)
 
    USOCKET socknew;
 
-   sockfd = usocket(AF_INET, SOCK_STREAM, 0);
+   sockfd = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
    if (sockfd == U_INVALID_SOCKET) throw SYSTEM_EXCEPTION ("Can't init socket");
 
-   if (uNotInheritDescriptor(UHANDLE(sockfd)) != 0) throw USER_EXCEPTION(SE4080);
+   if (uNotInheritDescriptor(UHANDLE(sockfd), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
 
-   if (ubind_tcp(sockfd, socket_port) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
+   if (ubind_tcp(sockfd, socket_port, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
 
-   if (ulisten(sockfd, 100) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't set socket to a listening mode");
+   if (ulisten(sockfd, 100, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't set socket to a listening mode");
 
    elog(EL_LOG, ("GOVERNOR is ready"));
 
@@ -44,10 +44,10 @@ int client_listener(bool background_off_from_background_on)
 
    ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
    USemaphore started_sem;
-   if (0 == USemaphoreOpen(&started_sem, CHARISMA_GOVERNOR_IS_READY))
+   if (0 == USemaphoreOpen(&started_sem, CHARISMA_GOVERNOR_IS_READY, __sys_call_error))
    {
-       USemaphoreUp(started_sem);
-       USemaphoreClose(started_sem);
+       USemaphoreUp(started_sem, __sys_call_error);
+       USemaphoreClose(started_sem, __sys_call_error);
    }
    ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
 
@@ -60,7 +60,7 @@ int client_listener(bool background_off_from_background_on)
    {
   	   
        //accept a call from a client
-       socknew = uaccept(sockfd);
+       socknew = uaccept(sockfd, __sys_call_error);
 
        if (socknew == U_INVALID_SOCKET)
        {
@@ -68,10 +68,10 @@ int client_listener(bool background_off_from_background_on)
           continue;
        }
        
-       if (usetsockopt(socknew, IPPROTO_TCP, TCP_NODELAY, (char*)&socket_optval, socket_optsize) == U_SOCKET_ERROR)
+       if (usetsockopt(socknew, IPPROTO_TCP, TCP_NODELAY, (char*)&socket_optval, socket_optsize, __sys_call_error) == U_SOCKET_ERROR)
        {
           d_printf1("Can't accept client's connection: couldn't set socket option\n");
-          ushutdown_close_socket(socknew);
+          ushutdown_close_socket(socknew, __sys_call_error);
           continue;
        }
 
@@ -108,13 +108,13 @@ int client_listener(bool background_off_from_background_on)
           }
 
           //close session
-          ushutdown_close_socket(socknew);
+          ushutdown_close_socket(socknew, __sys_call_error);
           break;
        }
 
        if (stop_db == 1)
        {
-          ushutdown_close_socket(socknew);
+          ushutdown_close_socket(socknew, __sys_call_error);
           continue;
        }
 
@@ -170,7 +170,7 @@ int client_listener(bool background_off_from_background_on)
           default:
           {
              d_printf1("unknown message from client\n");
-             ushutdown_close_socket(socknew);
+             ushutdown_close_socket(socknew, __sys_call_error);
              break;
           }
         }
@@ -180,7 +180,7 @@ int client_listener(bool background_off_from_background_on)
 
 
 
-   if (uclose_socket(sockfd) != 0) throw SYSTEM_EXCEPTION("Can't close listening socket");
+   if (uclose_socket(sockfd, __sys_call_error) != 0) throw SYSTEM_EXCEPTION("Can't close listening socket");
 
    return 0;
 }
@@ -215,26 +215,26 @@ try{
     }
 
     // Sets SOCKET HANDLE to an evironment variable
-    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)DuplicateSock).c_str());
+    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)DuplicateSock).c_str(), __sys_call_error);
 #else           // no need to duplicate SOCKET HANDLE in Unix
-    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)socknew).c_str());
+    uSetEnvironmentVariable(CONNECTION_SOCKET_HANDLE,int2string((int)socknew).c_str(), __sys_call_error);
 #endif
 
-    uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1");
+    uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
 
     // create security attributes for the new process
     USECURITY_ATTRIBUTES *sa;	
     if(0 != uCreateSA(&sa, 
                       U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 
-                      0                  // new process will not inherit handle returned by CreateProcess
-                      )) 
+                      0,                  // new process will not inherit handle returned by CreateProcess
+                      __sys_call_error)) 
     throw USER_EXCEPTION(SE3060);
 
     // Spawn the child process.
     // Socket HANDLE are passed throught a environment variable
                  	 
     char buf[U_MAX_PATH + 10];
-    string con_path_str = uGetImageProcPath(buf) + string("/") + SESSION_EXE;
+    string con_path_str = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE;
     strcpy(buf, con_path_str.c_str());
  
     if (background_off_from_background_on)
@@ -250,7 +250,8 @@ try{
                             NULL,
                             &pid,
                             NULL,
-                            sa
+                            sa, 
+                            __sys_call_error
                            ))
     {
 #ifdef _WIN32                  
@@ -262,11 +263,11 @@ try{
     }
 
    // release security attributes
-   if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+   if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
 
-   uclose_socket(socknew);
+   uclose_socket(socknew, __sys_call_error);
 #ifdef _WIN32
-   uclose_socket(DuplicateSock);
+   uclose_socket(DuplicateSock, __sys_call_error);
 #endif
 
    gov_table->add_pid(pid, proc_h);
@@ -371,7 +372,7 @@ int sess_registering(USOCKET s, char* msg_buf)
     if (res != 0)
        gov_table->wait_remove_pid(sess_pid, is_child_process);
     
-    ushutdown_close_socket(s);
+    ushutdown_close_socket(s, __sys_call_error);
 
 	return 0;
 	
@@ -432,7 +433,7 @@ int sm_registering(USOCKET s, char* msg_buf)
         if (res2 == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
     }
 
-    ushutdown_close_socket(s);
+    ushutdown_close_socket(s, __sys_call_error);
 
 	return 0;
 }
@@ -452,7 +453,7 @@ void send_runtime_config(USOCKET s)
     if (msg.length > SE_SOCKET_MSG_BUF_SIZE)
     {
        d_printf1("Too large runtime configuration\n");
-       ushutdown_close_socket(s);
+       ushutdown_close_socket(s, __sys_call_error);
        return;
     }
 
@@ -466,7 +467,7 @@ void send_runtime_config(USOCKET s)
        d_printf1("Can't send reply to rc utility\n");
 
 
-    ushutdown_close_socket(s);
+    ushutdown_close_socket(s, __sys_call_error);
 }
 
 void check_sm_run(USOCKET s, char* msg_buf)
@@ -488,5 +489,5 @@ void check_sm_run(USOCKET s, char* msg_buf)
     if (res == U_SOCKET_ERROR)
        d_printf1("Can't send reply to ddb utility\n");
 
-    ushutdown_close_socket(s);
+    ushutdown_close_socket(s, __sys_call_error);
 }

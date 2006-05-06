@@ -85,7 +85,7 @@ void LocalLockMgr::Init_LocalLockMgr(SSMMsg* _sm_server_)
 #ifdef LOCK_MGR_ON
   char buf[1024];
 
-  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(sid, db_name, buf, 1024), NULL))
+  if ( 0 != USemaphoreCreate(&sem, 0, 1, SEDNA_TRANSACTION_LOCK(sid, db_name, buf, 1024), NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4010, "SEDNA_TRANSACTION_LOCK");
 
   sm_server = _sm_server_;
@@ -97,7 +97,7 @@ void LocalLockMgr::Init_LocalLockMgr(SSMMsg* _sm_server_)
 void LocalLockMgr::Release_LocalLockMgr()
 {
 #ifdef LOCK_MGR_ON
-  if (0 != USemaphoreRelease(sem))
+  if (0 != USemaphoreRelease(sem, __sys_call_error))
      throw USER_EXCEPTION2(SE4011, "SEDNA_TRANSACTION_LOCK");
 #endif
 }
@@ -185,7 +185,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
       d_printf1("Transaction is blocked\n");
       for (;;)
       {
-         res = USemaphoreDownTimeout(sem, 1000);
+         res = USemaphoreDownTimeout(sem, 1000, __sys_call_error);
          if (res == 0) 
             break;//unblocked
          else if (res == 2)

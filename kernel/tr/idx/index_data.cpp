@@ -33,7 +33,7 @@ void index_on_session_begin(pers_sset<index_cell,unsigned short> * _indexdata_, 
     indexdata = _indexdata_;
     idx_counter = _idx_counter_;
 	//SEMAPHOR INIT SECTION
-	if (USemaphoreOpen(&index_sem, INDEX_SEMAPHORE_STR) != 0)
+	if (USemaphoreOpen(&index_sem, INDEX_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "INDEX_SEMAPHORE_STR");
 
     index_initialized = true;
@@ -43,7 +43,7 @@ void index_on_session_end()
 {
     if (!index_initialized) return;
 	//SEMAPHOR RELEASE SECTION
-    if (USemaphoreClose(index_sem) != 0)
+    if (USemaphoreClose(index_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4013, "INDEX_SEMAPHORE_STR");
     index_initialized = false;
 }

@@ -74,13 +74,13 @@ schema_node *find_document(const char *document_name);
 void inline metadata_sem_down()
 {
 #ifndef NOSEM
-	USemaphoreDown(metadata_sem);
+	USemaphoreDown(metadata_sem, __sys_call_error);
 #endif
 }
 void inline metadata_sem_up()
 {
 #ifndef NOSEM
-	USemaphoreUp(metadata_sem);
+	USemaphoreUp(metadata_sem, __sys_call_error);
 #endif
 }
 

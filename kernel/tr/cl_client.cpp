@@ -26,7 +26,7 @@ command_line_client::command_line_client(int argc, char** argv)
 {
   char buf[1024];
 
-  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) == 0)
+  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
   {//!!! metadata transaction case !!!
      if (argc != 2)
         throw SYSTEM_EXCEPTION("Bad number of input parameters to load metadata");
@@ -81,7 +81,7 @@ void command_line_client::init()
    string plain_batch_text;
 
    char buf[1024];
-   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) != 0)
+   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
    {
       //init output res
       if (string(output_file) == "STDOUT") res_os = stdout;
@@ -108,7 +108,7 @@ void command_line_client::init()
 #if (AUTH_SWITCH == 1)
       string path_to_security_file; 
       char path_buf[U_MAX_PATH + 32];
-      path_to_security_file = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+      path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
 #ifdef _WIN32
       int i;
@@ -248,7 +248,7 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   client_file cf;
   char buf[1024];
 
-  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024) == 0)
+  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
   {//load metadata case (client_filename must be absolute path)
      if ((cf.f = fopen (client_filename, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
@@ -262,30 +262,30 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   char *cfile_abspath = new char[4096];
   char *dir = new char[4096];
 
-  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, 4096);
+  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, 4096, __sys_call_error);
   if (cur_dir_abspath == NULL)
      throw USER_EXCEPTION(SE4602);
 
-  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, 4096);
+  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, 4096, __sys_call_error);
   if (qfile_abspath == NULL)
      throw USER_EXCEPTION2(SE4603, filename);
 
   char* new_dir;
-  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, 4096);
+  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, 4096, __sys_call_error);
   
-  if (uChangeWorkingDirectory(new_dir) != 0)
+  if (uChangeWorkingDirectory(new_dir, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, new_dir);
 
   
-  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096);
+  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096, __sys_call_error);
 
-  if (uChangeWorkingDirectory(cur_dir_abspath) != 0)
+  if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
 
   
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {
-     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096);
+     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096, __sys_call_error);
      if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
   }

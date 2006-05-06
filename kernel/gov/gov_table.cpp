@@ -45,14 +45,15 @@ void info_table::init(int lstnr_port_number)
    if (0 != uCreateShMem(&gov_shm_service_dsc,
                          GOVERNOR_SHARED_MEMORY_NAME,
                          GOV_SHM_SIZE,
-                         NULL))
+                         NULL,
+                         __sys_call_error))
       throw USER_EXCEPTION2(SE4016, "GOVERNOR_SHARED_MEMORY_NAME");
 
 
    gov_shared_mem = uAttachShMem(gov_shm_service_dsc,
                                  NULL,
-                                 GOV_SHM_SIZE
-                                );
+                                 GOV_SHM_SIZE,
+                                 __sys_call_error);
 
    if (gov_shared_mem == NULL)
       throw USER_EXCEPTION2(SE4023, "GOVERNOR_SHARED_MEMORY_NAME");
@@ -62,7 +63,7 @@ void info_table::init(int lstnr_port_number)
    //init section
    ((gov_header_struct*)GOV_SHM)->is_server_stop = 0;
    ((gov_header_struct*)GOV_SHM)->lstnr_port_number = lstnr_port_number;
-   ((gov_header_struct*)GOV_SHM)->gov_pid = uGetCurrentProcessId();
+   ((gov_header_struct*)GOV_SHM)->gov_pid = uGetCurrentProcessId(__sys_call_error);
    
 
    for (i = 0; i<MAX_DBS_NUMBER; i++)
@@ -82,10 +83,10 @@ void info_table::init(int lstnr_port_number)
 
 void info_table::release()
 {
-  if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem))
+  if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
      throw USER_EXCEPTION2(SE4024, "GOVERNOR_SHARED_MEMORY_NAME");
 
-  if ( 0 != uReleaseShMem(gov_shm_service_dsc))
+  if ( 0 != uReleaseShMem(gov_shm_service_dsc, __sys_call_error))
      throw USER_EXCEPTION2(SE4020, "GOVERNOR_SHARED_MEMORY_NAME");
 }
 
@@ -158,9 +159,9 @@ void info_table::wait_erase_session(const session_id& s_id)
   this->get_session_info(s_id, pid, proc_handle, is_child);
 
   if (is_child)
-     res = uWaitForChildProcess(pid, proc_handle, NULL);
+     res = uWaitForChildProcess(pid, proc_handle, NULL, __sys_call_error);
   else
-     res = uWaitForProcess(pid, proc_handle);
+     res = uWaitForProcess(pid, proc_handle, __sys_call_error);
 
   if (res != 0)
      throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
@@ -168,7 +169,7 @@ void info_table::wait_erase_session(const session_id& s_id)
 
   _session_table_.erase(s_id);
   this->give_id(s_id);
-  uCloseProcess(proc_handle);
+  uCloseProcess(proc_handle, __sys_call_error);
 
   ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->stop = 0;
   ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->idfree = 0;
@@ -198,7 +199,7 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
   
   if (h_p == NULL)
   {
-     if (uOpenProcess(pid, &proc_handle) != 0)
+     if (uOpenProcess(pid, &proc_handle, __sys_call_error) != 0)
         return -4;
   }
   else proc_handle = *h_p;
@@ -206,14 +207,14 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
   //check is exist database
   if (_database_table_.count(db_name) == 0)
   {
-     if (!is_child)  uCloseProcess(proc_handle);
+     if (!is_child)  uCloseProcess(proc_handle, __sys_call_error);
      return -1;
   }
 
   s_id = this->get_id();
   if (s_id == -1)
   {
-     if (!is_child)  uCloseProcess(proc_handle);
+     if (!is_child)  uCloseProcess(proc_handle, __sys_call_error);
      return -2;
   }
 
@@ -228,7 +229,7 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
   if (!(it.second))
   { 
      this->give_id(s_id);
-     if (!is_child)  uCloseProcess(proc_handle);
+     if (!is_child)  uCloseProcess(proc_handle, __sys_call_error);
      return -3;
   }
 
@@ -242,7 +243,7 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
 {
   int i = 0;
   UPHANDLE proc_handle;
-  if (uOpenProcess(pid, &proc_handle) != 0)
+  if (uOpenProcess(pid, &proc_handle, __sys_call_error) != 0)
      return -4;
 
 
@@ -265,7 +266,7 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
 
   if (i== MAX_DBS_NUMBER)
   { 
-     uCloseProcess(proc_handle);
+     uCloseProcess(proc_handle, __sys_call_error);
      return -2;
   }
 
@@ -274,7 +275,7 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
   it = _database_table_.insert(db_record(db_name, db));
   if (!(it.second))
   {
-     uCloseProcess(proc_handle);
+     uCloseProcess(proc_handle, __sys_call_error);
      (((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] = '\0';
      ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop = 0;
      ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->sm_pid = -1;
@@ -329,7 +330,7 @@ void info_table::erase_all_closed_pids()
 
   for(it = _pids_table_.begin(); it != _pids_table_.end(); it++)
   {
-    if (uIsProcessExist(it->first, it->second.p) != 1)
+    if (uIsProcessExist(it->first, it->second.p, __sys_call_error) != 1)
        tmp.push_back(it->first);
   }
 
@@ -408,11 +409,11 @@ void info_table::stop_database(const database_id& db_id)
   delete sm_server;
   
 
-  res = uWaitForProcess(pid, proc_handle);
+  res = uWaitForProcess(pid, proc_handle, __sys_call_error);
   if (res != 0)
      throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
 
-  uCloseProcess(proc_handle);
+  uCloseProcess(proc_handle, __sys_call_error);
 
   return;
 }
@@ -541,28 +542,28 @@ void info_table::wait_remove_pid(UPID pid, bool is_child_process)
 ////////tmp
 //uOpenProcess(pid, proc_handle);
 /////////tmp
-    res = uWaitForChildProcess(pid, proc_handle, NULL);
+    res = uWaitForChildProcess(pid, proc_handle, NULL, __sys_call_error);
     if (res != 0)
     {
        throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
     }
 
-    uCloseProcess(proc_handle);
+    uCloseProcess(proc_handle, __sys_call_error);
 
     this->remove_pid(pid);    
   }
   else
   {
 
-    if (uOpenProcess(pid, &proc_handle) == 0)
+    if (uOpenProcess(pid, &proc_handle, __sys_call_error) == 0)
     {
 //       uTerminateProcess(pid, proc_handle, 1);
 
-       res = uWaitForProcess(pid, proc_handle);
+       res = uWaitForProcess(pid, proc_handle, __sys_call_error);
        if (res != 0)
           throw SYSTEM_EXCEPTION("Error, WaitForProcess failed");
 
-       uCloseProcess(proc_handle);
+       uCloseProcess(proc_handle, __sys_call_error);
     }
     else 
        d_printf1("Can't open process\n");
@@ -579,9 +580,9 @@ void info_table::wait_all_notregistered_sess()
 
   for(it = _pids_table_.begin(); it!=_pids_table_.end(); it++)
   {
-     uTerminateProcess(it->first, it->second.p, 1);    
-     uWaitForChildProcess(it->first, it->second.p, NULL);
-     uCloseProcess(it->second.p);
+     uTerminateProcess(it->first, it->second.p, 1, __sys_call_error);
+     uWaitForChildProcess(it->first, it->second.p, NULL, __sys_call_error);
+     uCloseProcess(it->second.p, __sys_call_error);
   }
 
   _pids_table_.clear();
