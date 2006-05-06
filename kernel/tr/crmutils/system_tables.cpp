@@ -198,8 +198,8 @@ void get_indexes (xptr node,const char* title)
 		index_cell* ic=mdc->obj;
 		xptr node=insert_attribute(XNULL,XNULL,left,"title",xdt_untypedAtomic,ic->index_title,
 						strlen(ic->index_title),NULL);
-		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xdt_untypedAtomic,(ic->is_doc)?"doc":"col",
-						3,NULL);
+		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xdt_untypedAtomic,(ic->is_doc)?"doc":"collection", 
+						(ic->is_doc)?3:10,NULL);
 		node=insert_attribute(node,XNULL,XNULL,"object_title",xdt_untypedAtomic,ic->doc_name,
 			strlen(ic->doc_name),NULL);
 		print_type_name(ic->keytype,buf);
