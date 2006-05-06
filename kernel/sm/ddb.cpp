@@ -80,7 +80,7 @@ int main(int argc, char** argv)
         SednaUserException e = USER_EXCEPTION(SE4400);
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
    
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
@@ -119,9 +119,9 @@ int main(int argc, char** argv)
             msg_struct msg;
             USOCKET sock;
 
-            sock = usocket(AF_INET, SOCK_STREAM, 0);
+            sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
-            if (uconnect_tcp(sock, port_number, "127.0.0.1") == 0)
+            if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
             {//connected successfully
                 msg.instruction = IS_RUN_SM;
                 if (strlen (db_name) > SE_MAX_DB_NAME_LENGTH)
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
                 msg.length = strlen(db_name)+1;
                 sp_send_msg(sock, &msg);
                 sp_recv_msg(sock, &msg);
-                ushutdown_close_socket(sock);
+                ushutdown_close_socket(sock, __sys_call_error);
    
                 if ((msg.body)[0] == 'y')//database run
                    throw USER_EXCEPTION2(SE4308, "Database must be stopped firstly");

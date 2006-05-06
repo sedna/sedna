@@ -34,7 +34,8 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
                    file_dsc,
                    0,
                    NULL,
-                   U_FILE_BEGIN
+                   U_FILE_BEGIN,
+                   __sys_call_error
                  );
 
   if (res == 0)
@@ -47,7 +48,8 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
               file_dsc,
               &file_head,
               sizeof(logical_log_file_head),
-              &already_read
+              &already_read,
+               __sys_call_error
              );
 
   if (res == 0 || sizeof(logical_log_file_head) != already_read)
@@ -76,7 +78,8 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
   res = uWriteFile(ll_curr_file_dsc,
                    buf,
                    2*sizeof(LONG_LSN),
-                   &written
+                   &written,
+                   __sys_call_error
                     );
   if (res == 0 || written != 2*sizeof(LONG_LSN))
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
@@ -123,7 +126,8 @@ void llmgr_core::set_file_pointer(LONG_LSN &lsn)
                     ll_curr_file_dsc,
                     rmndr,
                     NULL,
-                    U_FILE_BEGIN
+                    U_FILE_BEGIN,
+                    __sys_call_error
                   );
 
   if (res == 0)
@@ -148,7 +152,8 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
                ll_curr_file_dsc,
                small_read_buf,
                sizeof(small_read_buf),
-               &bytes_read
+               &bytes_read,
+               __sys_call_error
              );
 
   if (res == 0)
@@ -171,7 +176,8 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
                  ll_curr_file_dsc,
                  large_read_buf,
                  rec_len,
-                 &bytes_read
+                 &bytes_read,
+                 __sys_call_error
              );  
 
      if( res == 0 || bytes_read != rec_len)
@@ -303,10 +309,10 @@ void llmgr_core::open_all_log_files()
   char buf[4096];
   char buf2[4096];
   char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096);
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
 
 
-  if (uChangeWorkingDirectory(db_files_path.c_str()) != 0 )
+  if (uChangeWorkingDirectory(db_files_path.c_str(), __sys_call_error) != 0 )
      throw USER_EXCEPTION(SE4604); 
   
 
@@ -331,7 +337,8 @@ void llmgr_core::open_all_log_files()
                       log_file.name,
                       U_SHARE_READ | U_SHARE_WRITE,
                       U_READ_WRITE,
-                      U_WRITE_THROUGH 
+                      U_WRITE_THROUGH,
+                      __sys_call_error 
                      );
 
      if ( descr == U_INVALID_FD )
@@ -351,7 +358,7 @@ void llmgr_core::open_all_log_files()
     
   _findclose(dsc);
 
-  if (uChangeWorkingDirectory(cur_dir) != 0 )
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
      throw USER_EXCEPTION(SE4604); 
 #else
   DIR *dir;
@@ -384,7 +391,8 @@ void llmgr_core::open_all_log_files()
                       (db_files_path + dent->d_name).c_str(),
                       U_SHARE_READ | U_SHARE_WRITE,
                       U_READ_WRITE,
-                      U_WRITE_THROUGH 
+                      U_WRITE_THROUGH,
+                      __sys_call_error 
                      );
 
      if ( descr == U_INVALID_FD )
@@ -439,7 +447,7 @@ void llmgr_core::close_all_log_files()
   int i, res;
   for (i= 0; i < ll_open_files.size(); i++)
   {
-      res = uCloseFile(ll_open_files[i].dsc);
+      res = uCloseFile(ll_open_files[i].dsc, __sys_call_error);
   
       if (res == 0)
         throw USER_EXCEPTION2(SE4043, "logical log file");
@@ -481,7 +489,8 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
   dsc = uOpenFile(log_file_name.c_str(),
                   U_SHARE_READ | U_SHARE_WRITE,
                   U_READ_WRITE,
-                  U_WRITE_THROUGH 
+                  U_WRITE_THROUGH,
+                  __sys_call_error 
                  );
 
   if ( dsc == U_INVALID_FD )
@@ -518,7 +527,7 @@ UFile create_logical_log(const char* log_file_name,
   USECURITY_ATTRIBUTES *sa;
 
 //  string logical_log_file_name = string(db_files_path) + string(db_name) + ".llog";
-  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
 
   //create phys log file
   logical_log_dsc = uCreateFile(
@@ -526,13 +535,14 @@ UFile create_logical_log(const char* log_file_name,
                             U_SHARE_READ | U_SHARE_WRITE,
                             U_READ_WRITE,
                             U_WRITE_THROUGH,
-                            sa
+                            sa,
+                            __sys_call_error
                            );
 
   if (logical_log_dsc == U_INVALID_FD)
      throw USER_EXCEPTION2(SE4040, "logical log file");
   
-  if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+  if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
 
   logical_log_file_head ll_head;
 
@@ -552,7 +562,8 @@ UFile create_logical_log(const char* log_file_name,
                logical_log_dsc,
                &ll_head,
                sizeof(logical_log_file_head),
-               &nbytes_written
+               &nbytes_written,
+               __sys_call_error 
               );
 
 
@@ -560,7 +571,7 @@ UFile create_logical_log(const char* log_file_name,
      throw USER_EXCEPTION2(SE4045, "logical log file");
 
   if (is_close_file)
-     if (uCloseFile(logical_log_dsc) == 0)
+     if (uCloseFile(logical_log_dsc, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, "logical log file");
 
   return logical_log_dsc;

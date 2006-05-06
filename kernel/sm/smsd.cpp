@@ -61,7 +61,7 @@ int main(int argc, char **argv)
         SednaUserException e = USER_EXCEPTION(SE4400);
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
 
         set_global_names();
 
-        if (uSocketInit() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
         ppc.startup(e);
 
@@ -107,14 +107,14 @@ int main(int argc, char **argv)
              sm_pid = ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->sm_pid;
 
 
-             res = uOpenProcess(sm_pid, &proc_handle);
+             res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
              if (res !=0) goto end;//sm already stopped
 
              ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->is_stop = 1;
 
              send_command_to_gov(port_number, command);
-             uWaitForProcess(sm_pid, proc_handle);
-             uCloseProcess(proc_handle);
+             uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
+             uCloseProcess(proc_handle, __sys_call_error);
              break;
           }
         }
@@ -125,7 +125,7 @@ end:
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         ppc.shutdown();
 
-        if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
+        if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
         if (exist_db)
            fprintf(res_os, "The database '%s' has been successfully shut down\n", db_name);

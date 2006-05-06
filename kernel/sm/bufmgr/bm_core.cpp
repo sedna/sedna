@@ -135,11 +135,11 @@ void release_master_block()
 
 void read_master_block()
 {
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
 
     int number_of_bytes_read = 0;
-    int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read);
+    int res = uReadFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot read master block", false);
 
@@ -153,11 +153,11 @@ void flush_master_block(bool is_write_plog)
 	if (is_write_plog)
 		ll_phys_log_master_blk(mb, sizeof(bm_masterblock));
 
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written);
+    int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 }
@@ -202,13 +202,13 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
     calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
 
     // read block
-    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
     vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
 
     int number_of_bytes_read = 0;
-    int res = uReadFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_read);
+    int res = uReadFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_read, __sys_call_error);
     if (res == 0 || number_of_bytes_read != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot read block");
 
@@ -231,11 +231,11 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
     UFile file_handler;
     calculate_offset_and_file_handler(p, &dsk_offs, &file_handler);
 
-    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_written);
+    int res = uWriteFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot write block");
 }
@@ -281,8 +281,8 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
             {
                 *(xptr*)p_sm_callback_data = cur_p;
 
-                USemaphoreUp(it->second->sm_to_vmm_callback_sem1);
-                USemaphoreDown(it->second->sm_to_vmm_callback_sem2);
+                USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error);
+                USemaphoreDown(it->second->sm_to_vmm_callback_sem2, __sys_call_error);
 
                 if (!(*(bool*)p_sm_callback_data))
                 {
@@ -402,7 +402,7 @@ void backup_ph()
     string ph_file_name    = string(db_files_path) + string(db_name) + ".ph";
     string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
 
-    if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false) == 0)
+    if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
 }
 

@@ -56,7 +56,8 @@ void plmgr_core::_writeFile(void* p, int size, int file_pos)
                     pl_file_handler,
                     (__int64)file_pos,
                     NULL,
-                    U_FILE_BEGIN);
+                    U_FILE_BEGIN,
+                    __sys_call_error);
 
   if (res == 0)
       throw SYSTEM_EXCEPTION("Cant Set File Pointer in log file");
@@ -65,7 +66,8 @@ void plmgr_core::_writeFile(void* p, int size, int file_pos)
                pl_file_handler,
                p,
                size,
-               &nbytes_written
+               &nbytes_written,
+               __sys_call_error 
               );
 
   if ( res == 0 || nbytes_written != size )
@@ -84,7 +86,8 @@ void plmgr_core::readSector(void* p, int size)
               pl_file_handler,
               p,
               size,
-              &nbytes_read
+              &nbytes_read,
+              __sys_call_error
              );
 
   if ( res == 0 ) // nbytes_read != size (this condition does not work on the last sector when sector is not filled completely)
@@ -106,7 +109,8 @@ void plmgr_core::readLogRecordFromDisk(char* buf, LSN& lsn)
                     pl_file_handler,
                     file_pos,
                     NULL,
-                    U_FILE_BEGIN                    
+                    U_FILE_BEGIN,
+                    __sys_call_error                    
                    );
 
   if ( res == 0)
@@ -140,7 +144,8 @@ void plmgr_core::readLogRecordFromDisk(char* buf, LSN& lsn)
                pl_file_handler,
                tmp_buf,
                log_head_size,
-               &nbytes_read);
+               &nbytes_read,
+               __sys_call_error);
 
   if ( res == 0 || nbytes_read != log_head_size)  
      throw  SYSTEM_EXCEPTION("Can't read header of log record");
@@ -171,7 +176,8 @@ void plmgr_core::readLogRecordFromDisk(char* buf, LSN& lsn)
               pl_file_handler,
               tmp_buf,
               log_len_rmndr,
-              &nbytes_read
+              &nbytes_read,
+              __sys_call_error
              );           
 
   if ( res == 0 || nbytes_read != log_len_rmndr)  
@@ -394,7 +400,7 @@ int plmgr_core::getLogFileSize(bool sync)
   int res;
   __int64 file_size;
 
-  res = uGetFileSize(pl_file_handler, &file_size);  
+  res = uGetFileSize(pl_file_handler, &file_size, __sys_call_error);  
 
   if ( res == 0)
      throw SYSTEM_EXCEPTION("Can't get the phys log size");
@@ -428,7 +434,7 @@ void plmgr_core::DownSemaphore(bool sync)
 
   if (sync)
   {
-     r = USemaphoreDown(sem);
+     r = USemaphoreDown(sem, __sys_call_error);
 
      if (r != 0)
         throw SYSTEM_EXCEPTION("Can't down semaphore protected shared memory");
@@ -441,7 +447,7 @@ void plmgr_core::UpSemaphore(bool sync)
 
   if ( sync )
   {
-     r = USemaphoreUp(sem);
+     r = USemaphoreUp(sem, __sys_call_error);
 
      if(r != 0)
        throw SYSTEM_EXCEPTION("Can't up semaphore protected shared memory");

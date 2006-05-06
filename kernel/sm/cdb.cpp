@@ -42,39 +42,39 @@ void create_db(__int64 data_file_max_size,
 
     // create files
     USECURITY_ATTRIBUTES *sa;	
-    if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+    if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
     
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
-    data_file_handler = uCreateFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    data_file_handler = uCreateFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
     string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
-    tmp_file_handler = uCreateFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    tmp_file_handler = uCreateFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
     string ph_file_name = string(db_files_path) + string(db_name) + ".ph";
-    UFile ph_file_handler = uCreateFile(ph_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    UFile ph_file_handler = uCreateFile(ph_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
     string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
-    UFile ph_bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    UFile ph_bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_bu_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
     
     // close created files
-    if (uCloseFile(data_file_handler) == 0)
+    if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(tmp_file_handler) == 0)
+    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(ph_file_handler) == 0)
+    if (uCloseFile(ph_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(ph_bu_file_handler) == 0)
+    if (uCloseFile(ph_bu_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
     
     // set global names (exactly in this place after data/tmp file creation)
@@ -88,10 +88,10 @@ void create_db(__int64 data_file_max_size,
     cdb_ugc(db_name);
 
 
-    if (uDeleteFile(ph_file_name.c_str()) == 0)
+    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4041);
     
-    if (uDeleteFile(ph_bu_file_name.c_str()) == 0)
+    if (uDeleteFile(ph_bu_file_name.c_str(), __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4041);
 
 
@@ -124,14 +124,14 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION(SE4304);
 
     //backup persistent heap
-    UFile bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    UFile bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (bu_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(bu_file_handler) == 0)
+    if (uCloseFile(bu_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4305);
 
-    if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false) == 0)
+    if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4306);
 
 
@@ -152,11 +152,11 @@ void create_db(__int64 data_file_max_size,
     mb->pdb = pdb;
 
     // open files
-    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
+    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
+    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
@@ -165,7 +165,7 @@ void create_db(__int64 data_file_max_size,
     char tmp[PAGE_SIZE];
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, tmp, PAGE_SIZE, &number_of_bytes_written);
+    int res = uWriteFile(data_file_handler, tmp, PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
      if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw USER_EXCEPTION2(SE4045, "data file");
 
@@ -177,14 +177,14 @@ void create_db(__int64 data_file_max_size,
 
 
     // close opened files
-    if (uCloseFile(data_file_handler) == 0)
+    if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4305);
 
-    if (uCloseFile(tmp_file_handler) == 0)
+    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4305);
 
     release_master_block();
-    if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+    if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
 
 }
 
@@ -196,14 +196,15 @@ void create_phys_log(int phys_log_size)
   
   string phys_log_file_name = string(db_files_path) + string(db_name) + ".plog";
 
-  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
   //create phys log file
   phys_log_handle = uCreateFile(
                             phys_log_file_name.c_str(),
                             0,
                             U_READ_WRITE,
                             U_WRITE_THROUGH,
-                            sa
+                            sa,
+                            __sys_call_error
                             );
 
 
@@ -211,13 +212,13 @@ void create_phys_log(int phys_log_size)
      throw USER_EXCEPTION2(SE4040, "physical log file");
 
   
-  if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+  if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
   
   //write the header of phys log
   file_head pl_head;
   int res, sector_size;
 
-  res = uGetDiskSectorSize(&sector_size, db_files_path);
+  res = uGetDiskSectorSize(&sector_size, db_files_path, __sys_call_error);
   
 
   if ( res == 0 )
@@ -237,7 +238,8 @@ void create_phys_log(int phys_log_size)
                phys_log_handle,
                &pl_head,
                sizeof(file_head),
-               &nbytes_written
+               &nbytes_written,
+               __sys_call_error
               );
 
 
@@ -252,7 +254,8 @@ void create_phys_log(int phys_log_size)
                      phys_log_handle,
                      sector_size,
                      NULL,
-                     U_FILE_BEGIN
+                     U_FILE_BEGIN,
+                     __sys_call_error
                    );
 
   if ( res == 0 )
@@ -323,7 +326,8 @@ void create_phys_log(int phys_log_size)
                  phys_log_handle,
                  buf,
                  0x100000,
-                 &nbytes_written                 
+                 &nbytes_written,
+                 __sys_call_error                 
                 );
 
     if (res == 0 || nbytes_written != 0x100000)
@@ -334,12 +338,12 @@ void create_phys_log(int phys_log_size)
   delete [] buf;
 
 
-  res = uSetEndOfFile(phys_log_handle, 0, U_FILE_CURRENT);
+  res = uSetEndOfFile(phys_log_handle, 0, U_FILE_CURRENT, __sys_call_error);
 
   if (res == 0)
       throw USER_EXCEPTION2(SE4047, "physical log");
 
-  res = uCloseFile(phys_log_handle);
+  res = uCloseFile(phys_log_handle, __sys_call_error);
 
   if ( res == 0 )
       throw USER_EXCEPTION2(SE4043, "physical log");
@@ -399,7 +403,7 @@ int main(int argc, char **argv)
         }
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
         //////////// CHECK IF THE DATABASE ALREADY EXISTS //////////////////////
@@ -409,7 +413,7 @@ int main(int argc, char **argv)
         string cfg_file_name = string(SEDNA_DATA) + string("/cfg/");
         cfg_file_name += string(db_name) + "_cfg.xml";
 
-        if (uIsFileExist(data_files_path.c_str()) || uIsFileExist(cfg_file_name.c_str()))
+        if (uIsFileExist(data_files_path.c_str(), __sys_call_error) || uIsFileExist(cfg_file_name.c_str(), __sys_call_error))
         {
             string reason = "A database with the name '";
             reason +=  string(db_name);
@@ -424,7 +428,7 @@ int main(int argc, char **argv)
         //!!! Now all parameters checked
 
         try {
-             if (uSocketInit() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+             if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
              SednaUserException e = USER_EXCEPTION(SE4400);
              ppc.startup(e);
              is_ppc_closed = false;
@@ -521,7 +525,7 @@ int main(int argc, char **argv)
 
              ppc.shutdown();
              is_ppc_closed = true;
-             if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
+             if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
 
         } catch (SednaUserException &e) {

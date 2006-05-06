@@ -189,13 +189,13 @@ int sm_server_handler(void *arg)
 
             case 10: {
                          //d_printf1("query 10: soft shutdown\n");
-                         USemaphoreUp(wait_for_shutdown);
+                         USemaphoreUp(wait_for_shutdown, __sys_call_error);
                          msg->cmd = 0;
                          break;
                      }
             case 11: {
                          //d_printf1("query 11: hard shutdown\n");
-                         USemaphoreUp(wait_for_shutdown);
+                         USemaphoreUp(wait_for_shutdown, __sys_call_error);
                          msg->cmd = 0;
                          break;
                      }
@@ -393,10 +393,10 @@ int main(int argc, char **argv)
         set_global_names(__db_name__, true);
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
-        if (uSocketInit() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
         
         SednaUserException e = USER_EXCEPTION(SE4400);
         ppc.startup(e);
@@ -408,7 +408,7 @@ int main(int argc, char **argv)
         close_global_memory_mapping();
 
 
-        if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024) == 0)
+        if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
         {
             // we were started by command "se_sm -background-mode off" from "se_sm -background-mode on"
 #ifdef _WIN32
@@ -432,21 +432,21 @@ int main(int argc, char **argv)
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
 
-            if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1") != 0)
+            if (uSetEnvironmentVariable(SM_BACKGROUND_MODE, "1", __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4072, "SM_BACKGROUND_MODE");
 
 
             USemaphore started_sem;
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), NULL))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4205);
            
-            if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL) != 0)
+            if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
                 throw USER_EXCEPTION(SE4205);
 
             int res;
-            res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT);
+            res = USemaphoreDownTimeout(started_sem, SM_BACKGROUND_MODE_TIMEOUT, __sys_call_error);
 
-            USemaphoreRelease(started_sem);
+            USemaphoreRelease(started_sem, __sys_call_error);
             delete [] command_line_str;
           
 
@@ -454,7 +454,7 @@ int main(int argc, char **argv)
                 throw USER_EXCEPTION(SE4205);
 
             ppc.shutdown();
-            if (uSocketCleanup() == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
+            if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
            
             fprintf(res_os, "SM has been started in the background mode\n"); 
             fflush(res_os);
@@ -481,7 +481,7 @@ int main(int argc, char **argv)
 
 
 
-        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL) != 0)
+        if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
 
         //setup_globals();
@@ -589,10 +589,10 @@ int main(int argc, char **argv)
 
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
             USemaphore started_sem;
-            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY(__db_name__, buf, 1024)))
+            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), __sys_call_error))
             {
-                USemaphoreUp(started_sem);
-                USemaphoreClose(started_sem);
+                USemaphoreUp(started_sem, __sys_call_error);
+                USemaphoreClose(started_sem, __sys_call_error);
             }
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
             register_sm_on_gov();
@@ -602,7 +602,7 @@ int main(int argc, char **argv)
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
 
-            USemaphoreDown(wait_for_shutdown);
+            USemaphoreDown(wait_for_shutdown, __sys_call_error);
 
             //to this point all sessions are closed by governor
 
@@ -612,7 +612,7 @@ int main(int argc, char **argv)
             if (ssmmsg->shutdown() != 0)
                 throw USER_EXCEPTION(SE3033);
 
-            USemaphoreRelease(wait_for_shutdown);
+            USemaphoreRelease(wait_for_shutdown, __sys_call_error);
 
         } catch(...) {
             ssmmsg->stop_serve_clients();

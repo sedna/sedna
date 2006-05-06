@@ -54,7 +54,7 @@ lock_request::lock_request(transaction_id tr_id,
   //open process_sem
   char buf[1024];
 
-  if ( 0 != USemaphoreOpen(&process_xsem, SEDNA_TRANSACTION_LOCK(s_id, db_name, buf, 1024)))
+  if ( 0 != USemaphoreOpen(&process_xsem, SEDNA_TRANSACTION_LOCK(s_id, db_name, buf, 1024), __sys_call_error))
      throw USER_EXCEPTION2(SE4012, "SEDNA_TRANSACTION_LOCK");
 
   //maintain the transaction lock list
@@ -95,7 +95,7 @@ lock_request::~lock_request()
 {
 
 #ifdef LOCK_MGR_ON
-  if ( USemaphoreClose(process_xsem) != 0 )
+  if ( USemaphoreClose(process_xsem, __sys_call_error) != 0 )
      throw USER_EXCEPTION2(SE4013, "SEDNA_TRANSACTION_LOCK");
 
   tr_lock_head* tr_l_h = tr_table.find_tr_lock_head(tran->tr_id);
@@ -179,7 +179,7 @@ void lock_head::print()
 void lock_table::init_lock_table()
 {
 #ifdef LOCK_MGR_ON
-   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM, NULL) != 0) 
+   if(USemaphoreCreate(&xsem, 1, 1, SEDNA_LOCK_MANAGER_SEM, NULL, __sys_call_error) != 0) 
       throw USER_EXCEPTION2(SE4010, "SEDNA_LOCK_MANAGER_SEM");
 #endif
 }
@@ -189,7 +189,7 @@ void lock_table::release_lock_table()
 {
 
 #ifdef LOCK_MGR_ON
-   if ( USemaphoreRelease(xsem) != 0 )
+   if ( USemaphoreRelease(xsem, __sys_call_error) != 0 )
       throw USER_EXCEPTION2(SE4013, "SEDNA_LOCK_MANAGER_SEM");
    //plus release all lock_heads
 #endif
@@ -458,7 +458,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
              lock->granted_mode = lock_max(request->mode, lock->granted_mode);
              
              d_printf2("wake up transaction with id=%d\n", request->tran->tr_id);
-             if (0 != USemaphoreUp(request->process_xsem))
+             if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
                 throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
           }
           else //if request is incompatible then FIFO
@@ -493,7 +493,7 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
                 request->convert_mode = NULL_LOCK;
 
 			    d_printf2("wake up transaction with id=%d\n", request->tran->tr_id);
-                if (0 != USemaphoreUp(request->process_xsem))
+                if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
                     throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
              }
              else

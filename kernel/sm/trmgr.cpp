@@ -55,7 +55,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
   while (true)
   {
-    if (USemaphoreDown(wait_for_checkpoint) !=0 )
+    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
        throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
 
     string str;
@@ -67,7 +67,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     WRITE_DEBUG_LOG(str.c_str());
 
     //syn with all micro ops
-    if (USemaphoreDown(checkpoint_sem) != 0)
+    if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)
        throw SYSTEM_EXCEPTION("Can't down semaphore for beginning checkpoint");
 
     //!!!init global variable isCheckpoint with interlocked func to true!!!
@@ -79,7 +79,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     int i=0;
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     {
-        if (USemaphoreDown(concurrent_ops_sem) !=0 )
+        if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) !=0 )
          throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
 
         d_printf2("Sem %d acquired\n", i);
@@ -132,11 +132,11 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     d_printf2("checkpoint finished times=%d\n", times);
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
-        if (USemaphoreUp(concurrent_ops_sem) !=0 )
+        if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) !=0 )
          throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
 
 
-    if (USemaphoreUp(checkpoint_sem) != 0)
+    if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
        throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
 
     ll_phys_log_set_checkpoint_on_flag(false);
@@ -168,7 +168,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 void start_chekpoint_thread()
 {
 #ifdef CHECKPOINT_ON
-  if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE, NULL))
+  if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE, NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4060, "checkpoint thread");
 
   string str = string("start_checkpoint_thread finished\n");
@@ -180,13 +180,13 @@ void start_chekpoint_thread()
 void init_checkpoint_sems()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL) != 0)
+  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
-  if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL) != 0)
+  if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreCreate(&concurrent_ops_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_LOGICAL_OPERATION_ATOMICITY, NULL) != 0)
+  if (USemaphoreCreate(&concurrent_ops_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_LOGICAL_OPERATION_ATOMICITY, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 #endif
 }
@@ -196,14 +196,14 @@ void shutdown_chekpoint_thread()
 #ifdef CHECKPOINT_ON
   //shutdown thread
   shutdown_checkpoint_thread = true;
-  if (USemaphoreUp(wait_for_checkpoint) !=0)
+  if (USemaphoreUp(wait_for_checkpoint, __sys_call_error) !=0)
      throw SYSTEM_EXCEPTION("Can't Up WAIT_FOR_CHECKPOINT semaphore");
 
-  if (uThreadJoin(checkpoint_thread_dsc) != 0)
+  if (uThreadJoin(checkpoint_thread_dsc, __sys_call_error) != 0)
      throw USER_EXCEPTION(SE4210);
 
      
-  if (uCloseThreadHandle(checkpoint_thread_dsc) != 0)
+  if (uCloseThreadHandle(checkpoint_thread_dsc, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4063, "checkpoint thread");
 
   //string str = string("shutdown_checkpoint_thread finished\n");
@@ -216,13 +216,13 @@ void release_checkpoint_sems()
 {
 #ifdef CHECKPOINT_ON
   //release semaphores
-  if (USemaphoreRelease(wait_for_checkpoint) != 0)
+  if (USemaphoreRelease(wait_for_checkpoint, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
-  if (USemaphoreRelease(checkpoint_sem) != 0)
+  if (USemaphoreRelease(checkpoint_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreRelease(concurrent_ops_sem) != 0)
+  if (USemaphoreRelease(concurrent_ops_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHEKPOINT_THREAD_STACK_SIZE");
 
 
@@ -232,7 +232,7 @@ void release_checkpoint_sems()
 void execute_recovery_by_logical_log_process()
 {
 #ifdef RECOVERY_ON
-  if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL) != 0)
+  if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
 
   //create recovery process
@@ -254,7 +254,8 @@ void execute_recovery_by_logical_log_process()
                   NULL,
                   NULL,
                   NULL,
-                  NULL);
+                  NULL,
+                  __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4070,"recovery process");
@@ -263,7 +264,7 @@ void execute_recovery_by_logical_log_process()
   delete [] command_line_str;
   
 
-  if (USemaphoreDown(wait_for_recovery) != 0)
+  if (USemaphoreDown(wait_for_recovery, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4015, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
 
 #endif
@@ -283,7 +284,7 @@ void execute_recovery_by_logical_log_process()
 void init_transaction_ids_table()
 {
 #ifdef TRMGR_ON
-  if (0 != USemaphoreCreate(&trn_table_ids_sync_sem, 1, 1, CHARISMA_SYNC_TRN_IDS_TABLE, NULL))
+  if (0 != USemaphoreCreate(&trn_table_ids_sync_sem, 1, 1, CHARISMA_SYNC_TRN_IDS_TABLE, NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4010, "CHARISMA_SYNC_TRN_IDS_TABLE");
 
   for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
@@ -295,7 +296,7 @@ void init_transaction_ids_table()
 void release_transaction_ids_table()
 {
 #ifdef TRMGR_ON
-  if (0 != USemaphoreRelease(trn_table_ids_sync_sem))
+  if (0 != USemaphoreRelease(trn_table_ids_sync_sem, __sys_call_error))
      throw USER_EXCEPTION2(SE4011, "CHARISMA_SYNC_TRN_IDS_TABLE");
 #endif
 }
@@ -305,7 +306,7 @@ transaction_id get_transaction_id()
 #ifdef TRMGR_ON
 
 
-  if (USemaphoreDown(trn_table_ids_sync_sem) != 0)
+  if (USemaphoreDown(trn_table_ids_sync_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 
   
@@ -319,7 +320,7 @@ transaction_id get_transaction_id()
   }
 
 
-  if (USemaphoreUp(trn_table_ids_sync_sem) != 0)
+  if (USemaphoreUp(trn_table_ids_sync_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 
   d_printf2("get trid=%d\n", id);
@@ -334,7 +335,7 @@ void give_transaction_id(transaction_id& trid)
   d_printf2("return trid=%d\n", trid);
   
 
-  if (USemaphoreDown(trn_table_ids_sync_sem) != 0)
+  if (USemaphoreDown(trn_table_ids_sync_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 
   if (!(trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER))
@@ -349,7 +350,7 @@ void give_transaction_id(transaction_id& trid)
   }
 
 
-  if (USemaphoreUp(trn_table_ids_sync_sem) != 0)
+  if (USemaphoreUp(trn_table_ids_sync_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 #endif
 }
