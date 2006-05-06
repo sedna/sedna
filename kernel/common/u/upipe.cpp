@@ -9,7 +9,8 @@
 
 int uPipe(UPIPE* rpipe, /*read pipe*/
           UPIPE* wpipe, /*write pipe*/
-          int inheritable)
+          int inheritable,
+          sys_call_error_fun fun)
 {
 #ifdef _WIN32
     SECURITY_ATTRIBUTES sa;
@@ -43,7 +44,8 @@ int uPipe(UPIPE* rpipe, /*read pipe*/
 
 int uReadPipe(UPIPE rpipe,	/*read pipe*/
               void *buf,	/*buffer for data*/
-              int nbyte		/*size of the buffer*/
+              int nbyte,	/*size of the buffer*/
+              sys_call_error_fun fun
              )
 {
 #ifdef _WIN32
@@ -79,14 +81,15 @@ int uReadPipe(UPIPE rpipe,	/*read pipe*/
 // -1 indicates failure
 int uReadPipeAll(UPIPE rpipe, // read pipe
                  void* buf,   // buffer for data
-                 int nbyte    // size of the buffer
+                 int nbyte,    // size of the buffer
+                 sys_call_error_fun fun
                 )
 {
     int res = 0;
     int bytes_read = 0;
     while (true)
     {
-        res = uReadPipe(rpipe, (char*)buf + bytes_read, nbyte - bytes_read);
+        res = uReadPipe(rpipe, (char*)buf + bytes_read, nbyte - bytes_read, __sys_call_error);
         if (res == -1) return -1;
   
         if (res == 0 ) return bytes_read;
@@ -100,7 +103,7 @@ int uReadPipeAll(UPIPE rpipe, // read pipe
 
 /*
 int uReadPipeMsg(UPIPE rpipe,
-	             std::string &str)
+	             std::string &str, sys_call_error_fun fun)
 {
     char buf[2];
     DWORD bytes_read;
@@ -128,7 +131,8 @@ int uReadPipeMsg(UPIPE rpipe,
 
 int uWritePipe(UPIPE wpipe,	/*write pipe*/
                const void *buf,	/*pointer to data*/
-               int nbyte	/*size of the data*/
+               int nbyte,	/*size of the data*/
+               sys_call_error_fun fun
               )
 {
 #ifdef _WIN32
@@ -159,14 +163,15 @@ int uWritePipe(UPIPE wpipe,	/*write pipe*/
 // return value 0 indicates success
 int uWritePipeAll(UPIPE wpipe,	/*write pipe*/
                   const void *buf,	/*pointer to data*/
-                  int nbyte	/*size of the data*/
+                  int nbyte,	/*size of the data*/
+                  sys_call_error_fun fun
                  )
 {
     int res = 0;
     int bytes_written = 0;
     while (true)
     {
-        res = uWritePipe(wpipe, (char*)buf + bytes_written, nbyte - bytes_written);
+        res = uWritePipe(wpipe, (char*)buf + bytes_written, nbyte - bytes_written, __sys_call_error);
         if (res == -1) return -1;
         else bytes_written += res;
 
@@ -174,7 +179,7 @@ int uWritePipeAll(UPIPE wpipe,	/*write pipe*/
     }
 }
 
-int uClosePipe(UPIPE upipe)
+int uClosePipe(UPIPE upipe, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = CloseHandle(
@@ -199,14 +204,14 @@ int uClosePipe(UPIPE upipe)
 
 #define BUFSIZE 1024
 
-int uReadPipeAll(UPIPE rpipe, std::string &str)
+int uReadPipeAll(UPIPE rpipe, std::string &str, sys_call_error_fun fun)
 {
     char buf[BUFSIZE + 1];
     int bytes_read;
     for (;;)
     {
         memset(buf, (char)0, BUFSIZE + 1);
-        bytes_read = uReadPipe(rpipe, buf, BUFSIZE);
+        bytes_read = uReadPipe(rpipe, buf, BUFSIZE, __sys_call_error);
         if (bytes_read < 0) return -1;
         if (bytes_read == 0) break;
         str += std::string(buf);
@@ -215,7 +220,7 @@ int uReadPipeAll(UPIPE rpipe, std::string &str)
 }
 
 /*
-int uPipeDoNotInherit(UPIPE *upipe)
+int uPipeDoNotInherit(UPIPE *upipe, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     HANDLE tmp = *upipe;

@@ -72,19 +72,20 @@ uResVal uCreateThread(
     uArg        arg,
     UTHANDLE    *id,
     uStackSize  size,
-    USECURITY_ATTRIBUTES* sa
+    USECURITY_ATTRIBUTES* sa,
+    sys_call_error_fun fun
 );
 
-int uEnableSuspend();
-int uSuspendThread(UTHANDLE id);
-int uResumeThread(UTHANDLE id);
-int uTerminateThread(UTHANDLE id);
-int uCloseThreadHandle(UTHANDLE id);
-int uThreadJoin(UTHANDLE id);
+int uEnableSuspend(sys_call_error_fun fun);
+int uSuspendThread(UTHANDLE id, sys_call_error_fun fun);
+int uResumeThread(UTHANDLE id, sys_call_error_fun fun);
+int uTerminateThread(UTHANDLE id, sys_call_error_fun fun);
+int uCloseThreadHandle(UTHANDLE id, sys_call_error_fun fun);
+int uThreadJoin(UTHANDLE id, sys_call_error_fun fun);
 // use UEXITTHREAD_OK or UEXITTHREAD_FAIL as arguments to uExitThread
-void uExitThread(int rc);
-UTHANDLE uGetCurrentThread();
-int uThreadBlockAllSignals();
+void uExitThread(int rc, sys_call_error_fun fun);
+UTHANDLE uGetCurrentThread(sys_call_error_fun fun);
+int uThreadBlockAllSignals(sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

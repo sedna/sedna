@@ -13,7 +13,8 @@ uResVal uCreateThread(
   uArg        arg,
   UTHANDLE    *id,
   uStackSize  size,
-  USECURITY_ATTRIBUTES* sa
+  USECURITY_ATTRIBUTES* sa,
+  sys_call_error_fun fun
 )
 {
 #ifdef _WIN32
@@ -63,7 +64,7 @@ uResVal uCreateThread(
 
 #ifdef _WIN32
 #else
-static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt)
+static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt, sys_call_error_fun fun)
 {
     d_printf1("suspend\n");
     int sig = 0;
@@ -71,13 +72,13 @@ static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt
     if (sigfillset(&signalSet) == -1) sys_call_error("sigfillset");
     if (sigwait(&signalSet, &sig) != 0) sys_call_error("sigwait");
 }
-static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt)
+static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt, sys_call_error_fun fun)
 {
     d_printf1("resume\n");
 }
 #endif
 
-int uEnableSuspend()
+int uEnableSuspend(, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return 0;
@@ -106,7 +107,7 @@ int uEnableSuspend()
 #endif
 }
 
-int uSuspendThread(UTHANDLE id)
+int uSuspendThread(UTHANDLE id, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (SuspendThread(id) == -1)
@@ -122,7 +123,7 @@ int uSuspendThread(UTHANDLE id)
 #endif
 }
 
-int uResumeThread(UTHANDLE id) 
+int uResumeThread(UTHANDLE id, sys_call_error_fun fun) 
 {
 #ifdef _WIN32
     if (ResumeThread(id) == -1)
@@ -138,7 +139,7 @@ int uResumeThread(UTHANDLE id)
 #endif
 }
 
-int uTerminateThread(UTHANDLE id)
+int uTerminateThread(UTHANDLE id, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = 0;
@@ -157,7 +158,7 @@ int uTerminateThread(UTHANDLE id)
 #endif
 }
 
-int uCloseThreadHandle(UTHANDLE id)
+int uCloseThreadHandle(UTHANDLE id, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = 0;
@@ -174,7 +175,7 @@ int uCloseThreadHandle(UTHANDLE id)
 #endif
 }
 
-int uThreadJoin(UTHANDLE id)
+int uThreadJoin(UTHANDLE id, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res = WaitForSingleObject(id, INFINITE);
@@ -189,7 +190,7 @@ int uThreadJoin(UTHANDLE id)
 #endif
 }
 
-void uExitThread(int rc) 
+void uExitThread(int rc, sys_call_error_fun fun) 
 {
 #ifdef _WIN32
 	ExitThread(rc);
@@ -198,7 +199,7 @@ void uExitThread(int rc)
 #endif
 }
 
-UTHANDLE uGetCurrentThread()
+UTHANDLE uGetCurrentThread(sys_call_error_fun fun)
 {
 #ifdef _WIN32
 	UTHANDLE result;
@@ -219,7 +220,7 @@ UTHANDLE uGetCurrentThread()
 }
 
 
-int uThreadBlockAllSignals()
+int uThreadBlockAllSignals(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return 0;

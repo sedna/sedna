@@ -36,15 +36,15 @@ typedef mode_t UAccess_Permissions;
 extern "C" {
 #endif
 
-    int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle);
+    int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle, sys_call_error_fun fun);
 
-    int uReleaseSA(USECURITY_ATTRIBUTES* sa);
+    int uReleaseSA(USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
 
 /* returns true if 
    Windows: current user is in the Administrators Group
    Unix: current user is root
    returns false otherwise (including errors) */
-    int uIsAdmin(void);
+    int uIsAdmin(sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

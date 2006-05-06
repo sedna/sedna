@@ -13,7 +13,7 @@
 #include "d_printf.h"
 #include "uhdd.h"
 
-int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle)
+int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle, sys_call_error_fun fun)
 {
 #ifdef AUTH_SWITCH
 #if (AUTH_SWITCH == 0)          /*if security is off - Security attributes are set by default*/
@@ -123,7 +123,7 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
 
 }
 
-int uReleaseSA(USECURITY_ATTRIBUTES* sa)
+int uReleaseSA(USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
 #ifdef AUTH_SWITCH
 #if (AUTH_SWITCH == 0)
@@ -144,7 +144,7 @@ int uReleaseSA(USECURITY_ATTRIBUTES* sa)
 #endif
 }
 
-int uIsAdmin(void)
+int uIsAdmin(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     /* Open a handle to the access token for the calling process.*/

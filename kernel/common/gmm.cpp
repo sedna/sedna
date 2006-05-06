@@ -22,11 +22,11 @@ void create_global_memory_mapping()
     vmm_region_values v;
 
 
-    global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL);
+    global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(global_memory_mapping))
         throw USER_EXCEPTION2(SE4074, "See file FAQ shipped with the distribution");
 
-    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0);
+    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
     if (global_memory == NULL)
         throw USER_EXCEPTION(SE4078);
 
@@ -42,9 +42,9 @@ void create_global_memory_mapping()
 #else
     strcat(buf, "/data");
 #endif
-    if (!uIsFileExist(buf))
+    if (!uIsFileExist(buf, __sys_call_error))
     {
-        if (uMkDir(buf, NULL) == 0)
+        if (uMkDir(buf, NULL, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4300, buf);
     }
 
@@ -56,18 +56,18 @@ void create_global_memory_mapping()
 #endif
 
 
-    if (uIsFileExist(buf))
+    if (uIsFileExist(buf, __sys_call_error))
     {
-        UFile fd = uOpenFile(buf, U_SHARE_READ, U_READ, 0);
+        UFile fd = uOpenFile(buf, U_SHARE_READ, U_READ, 0, __sys_call_error);
         if (fd == U_INVALID_FD)
             throw USER_EXCEPTION2(SE4042, "vmm.dat");
 
         int bytes_read = 0;
-        int res = uReadFile(fd, &v, sizeof(vmm_region_values), &bytes_read);
+        int res = uReadFile(fd, &v, sizeof(vmm_region_values), &bytes_read, __sys_call_error);
         if (res == 0 || bytes_read != sizeof(vmm_region_values))
             throw USER_EXCEPTION2(SE4044, "vmm.dat");
 
-        if (uCloseFile(fd) == 0)
+        if (uCloseFile(fd, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4043, "vmm.dat");
 
         LAYER_ADDRESS_SPACE_START_ADDR_INT = v.LAYER_ADDRESS_SPACE_START_ADDR_INT;
@@ -85,10 +85,10 @@ void create_global_memory_mapping()
     }
     else
     {
-        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1");
+        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", __sys_call_error);
 
         char path_buf[U_MAX_PATH + 10];
-        std::string path_str = uGetImageProcPath(path_buf) + std::string("/") + SESSION_EXE;
+        std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
         strcpy(path_buf, path_str.c_str());
 
                
@@ -102,15 +102,16 @@ void create_global_memory_mapping()
                            NULL,
                            &pid,
                            NULL,
-                           NULL) != 0)
+                           NULL,
+                           __sys_call_error) != 0)
             throw SYSTEM_ENV_EXCEPTION("Can't create process");
 
         int status;
-        uWaitForChildProcess(pid, process_handle, &status);
+        uWaitForChildProcess(pid, process_handle, &status, __sys_call_error);
         if (status) SYSTEM_ENV_EXCEPTION("Can't determine VMM region");
-        uCloseProcess(process_handle);
+        uCloseProcess(process_handle, __sys_call_error);
 
-        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0");
+        uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "0", __sys_call_error);
 
         v = *(vmm_region_values*)((char*)global_memory + PAGE_SIZE - sizeof(vmm_region_values));
 
@@ -130,39 +131,39 @@ void create_global_memory_mapping()
         LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
         PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
-        UFile fd = uCreateFile(buf, 0, U_WRITE, 0, NULL);
+        UFile fd = uCreateFile(buf, 0, U_WRITE, 0, NULL, __sys_call_error);
         if (fd == U_INVALID_FD)
             throw USER_EXCEPTION2(SE4040, "vmm.dat");
 
         int bytes_written = 0;
-        int res = uWriteFile(fd, &v, sizeof(vmm_region_values), &bytes_written);
+        int res = uWriteFile(fd, &v, sizeof(vmm_region_values), &bytes_written, __sys_call_error);
         if (res == 0 || bytes_written != sizeof(vmm_region_values))
             throw USER_EXCEPTION2(SE4045, "vmm.dat");
 
-        if (uCloseFile(fd) == 0)
+        if (uCloseFile(fd, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4043, "vmm.dat");
     }
 }
 
 void release_global_memory_mapping()
 {
-    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE) == -1)
+    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4079);
 
-    if (uReleaseFileMapping(global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING) == -1)
+    if (uReleaseFileMapping(global_memory_mapping, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4076);
 }
 
 void open_global_memory_mapping(int err_code)
 {
-    global_memory_mapping = uOpenFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING);
+    global_memory_mapping = uOpenFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, __sys_call_error);
     if (U_INVALID_FILEMAPPING(global_memory_mapping))
         throw USER_EXCEPTION(err_code);
 }
 
 void close_global_memory_mapping()
 {
-    if (uCloseFileMapping(global_memory_mapping) == -1)
+    if (uCloseFileMapping(global_memory_mapping, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4077);
 }
 
@@ -173,7 +174,7 @@ UMMap get_global_memory_mapping()
 
 void get_vmm_region_values()
 {
-    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0);
+    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
     if (global_memory == NULL)
         throw USER_EXCEPTION(SE4078);
 
@@ -189,13 +190,13 @@ void get_vmm_region_values()
     LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
     PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
-    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE) == -1)
+    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4079);
 }
 
 void set_vmm_region_values()
 {
-    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0);
+    global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
     if (global_memory == NULL)
         throw USER_EXCEPTION(SE4078);
 
@@ -207,7 +208,7 @@ void set_vmm_region_values()
     v->PH_ADDRESS_SPACE_START_ADDR_INT = PH_ADDRESS_SPACE_START_ADDR_INT;
     v->LAYER_ADDRESS_SPACE_SIZE = LAYER_ADDRESS_SPACE_SIZE;
 
-    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE) == -1)
+    if (uUnmapViewOfFile(global_memory_mapping, global_memory, PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE4079);
 }
 

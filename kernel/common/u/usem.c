@@ -11,7 +11,7 @@
 // Semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa)
+int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     *sem = CreateSemaphore(sa, init_value, max_value, name);
@@ -69,7 +69,7 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 #endif
 
 
-int USemaphoreOpen(USemaphore *sem, global_name name)
+int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     *sem = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, name);
@@ -102,7 +102,7 @@ int USemaphoreOpen(USemaphore *sem, global_name name)
 }
 #endif
 
-int USemaphoreRelease(USemaphore sem)
+int USemaphoreRelease(USemaphore sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res =  CloseHandle(sem);
@@ -140,7 +140,7 @@ int USemaphoreRelease(USemaphore sem)
 #endif
 
 
-int USemaphoreClose(USemaphore sem)
+int USemaphoreClose(USemaphore sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res =  CloseHandle(sem);
@@ -159,7 +159,7 @@ int USemaphoreClose(USemaphore sem)
 }
 #endif
 
-int USemaphoreDown(USemaphore sem)
+int USemaphoreDown(USemaphore sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res; 
@@ -194,7 +194,7 @@ int USemaphoreDown(USemaphore sem)
 #endif
 
 
-int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec)
+int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -239,7 +239,7 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec)
 } 
 #endif
 
-int USemaphoreUp(USemaphore sem)
+int USemaphoreUp(USemaphore sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res;
@@ -281,7 +281,7 @@ int USemaphoreUp(USemaphore sem)
 
 #define SIZE_OF_BUF_FOR_ADJUSTED_NAME 128
 
-int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa)
+int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     int i = 0;
@@ -371,7 +371,7 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 }
 #endif
 
-int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
+int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     int i = 0;
@@ -430,7 +430,7 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name)
 #endif
 
 
-int USemaphoreArrRelease(USemaphoreArr sem, int size)
+int USemaphoreArrRelease(USemaphoreArr sem, int size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     int i = 0;
@@ -479,7 +479,7 @@ int USemaphoreArrRelease(USemaphoreArr sem, int size)
 #endif
 
 
-int USemaphoreArrClose(USemaphoreArr sem, int size)
+int USemaphoreArrClose(USemaphoreArr sem, int size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     int i = 0;
@@ -506,7 +506,7 @@ int USemaphoreArrClose(USemaphoreArr sem, int size)
 }
 #endif
 
-int USemaphoreArrDown(USemaphoreArr sem, int i)
+int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -544,7 +544,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i)
 #endif
 
 
-int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec)
+int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -592,7 +592,7 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec)
 } 
 #endif
 
-int USemaphoreArrUp(USemaphoreArr sem, int i)
+int USemaphoreArrUp(USemaphoreArr sem, int i, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res;
@@ -632,7 +632,7 @@ int USemaphoreArrUp(USemaphoreArr sem, int i)
 // Unnamed semaphore implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_ATTRIBUTES* sa)
+int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     *sem = CreateSemaphore(sa, init_value, INT_MAX, NULL);
@@ -671,7 +671,7 @@ int UUnnamedSemaphoreCreate(UUnnamedSemaphore *sem, int init_value, USECURITY_AT
 }
 #endif
 
-int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem)
+int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res =  CloseHandle(*sem);
@@ -705,7 +705,7 @@ int UUnnamedSemaphoreRelease(UUnnamedSemaphore *sem)
 }
 #endif
 
-int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
+int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -757,7 +757,7 @@ int UUnnamedSemaphoreDown(UUnnamedSemaphore *sem)
 // return values: 0 - success
 //                1 - falure
 //                2 - timeout
-int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
+int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     DWORD res;
@@ -827,7 +827,7 @@ int UUnnamedSemaphoreDownTimeout(UUnnamedSemaphore *sem, unsigned int millisec)
 #endif
 
 
-int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem)
+int UUnnamedSemaphoreUp(UUnnamedSemaphore *sem, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res;

@@ -9,7 +9,7 @@
 
 //#define RIGHTS		0666
 
-int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* sa)
+int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     //printf("uCreateShMem name = %s\n", name);
@@ -65,7 +65,7 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
 }
 #endif
 
-int uOpenShMem(UShMem *id, global_name name, int size)
+int uOpenShMem(UShMem *id, global_name name, int size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     //printf("uOpenShMem name = %s\n", name);
@@ -105,7 +105,7 @@ int uOpenShMem(UShMem *id, global_name name, int size)
 }
 #endif
 
-int uReleaseShMem(UShMem id)
+int uReleaseShMem(UShMem id, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res = 0;
@@ -141,7 +141,7 @@ int uReleaseShMem(UShMem id)
 }
 #endif
 
-int uCloseShMem(UShMem id)
+int uCloseShMem(UShMem id, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     BOOL res = 0;
@@ -160,7 +160,7 @@ int uCloseShMem(UShMem id)
 }
 #endif
 
-void* uAttachShMem(UShMem id, void *ptr, int size)
+void* uAttachShMem(UShMem id, void *ptr, int size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
     void *res = NULL;
@@ -192,7 +192,7 @@ void* uAttachShMem(UShMem id, void *ptr, int size)
 }
 #endif
 
-int uDettachShMem(UShMem id, void * ptr)
+int uDettachShMem(UShMem id, void * ptr, sys_call_error_fun fun)
 #ifdef _WIN32
 {
      BOOL res = 0;

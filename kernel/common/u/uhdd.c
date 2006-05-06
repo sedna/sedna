@@ -59,7 +59,7 @@ WINBASEAPI BOOL WINAPI SetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceTo
 #endif
 
 
-UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa)
+UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     UFile fd = CreateFile(name, accs, share, sa, CREATE_NEW, FILE_ATTRIBUTE_NORMAL | attr, NULL);
@@ -86,7 +86,7 @@ UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, 
 #endif
 }
 
-UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
+UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     UFile fd = CreateFile(name, accs, share, NULL, OPEN_EXISTING, attr, NULL);
@@ -101,7 +101,7 @@ UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr)
 #endif
 }
 
-int uCloseFile(UFile fd)
+int uCloseFile(UFile fd, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = CloseHandle(fd);
@@ -116,7 +116,7 @@ int uCloseFile(UFile fd)
 #endif
 }
 
-int uDeleteFile(const char *name)
+int uDeleteFile(const char *name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = DeleteFile(name);
@@ -132,7 +132,7 @@ int uDeleteFile(const char *name)
 #endif
 }
 
-int uDelDir(const char *dir)
+int uDelDir(const char *dir, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = _rmdir(dir);
@@ -151,7 +151,7 @@ int uDelDir(const char *dir)
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
 /* the current end of the file at the time of the read operation.*/
 /* If the function fails, the return value is zero*/
-int uReadFile(UFile fd, void *buf, int to_read, int *already_read)
+int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = ReadFile(fd, buf, to_read, (LPDWORD) already_read, NULL);
@@ -170,7 +170,7 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read)
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written)
+int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = WriteFile(fd, buf, to_write, (LPDWORD) already_written, NULL);
@@ -189,7 +189,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written)
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth)
+int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER _offs, _res_pos;
@@ -216,7 +216,7 @@ int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth)
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
+int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER _offs, _res_pos;
@@ -277,7 +277,7 @@ int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth)
 #endif
 }
 
-int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa)
+int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
     int res;
 #ifdef _WIN32
@@ -302,7 +302,7 @@ int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa)
 #endif
 }
 
-int uIsFileExist(const char *name)
+int uIsFileExist(const char *name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (GetFileAttributes(name) == INVALID_FILE_ATTRIBUTES)
@@ -322,7 +322,7 @@ int uIsFileExist(const char *name)
 #endif
 }
 
-int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exists)
+int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exists, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = CopyFile(existing_file, new_file, fail_if_exists);
@@ -380,7 +380,7 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
 #endif
 }
 
-int uGetFileSize(UFile fd, __int64 * file_size)
+int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LARGE_INTEGER size;
@@ -402,7 +402,7 @@ int uGetFileSize(UFile fd, __int64 * file_size)
 #endif
 }
 
-int uGetDiskSectorSize(int *sector_size, const char *path)
+int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res;
@@ -499,7 +499,7 @@ int uGetDiskSectorSize(int *sector_size, const char *path)
 #endif
 }
 
-int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid)
+int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     WIN32_FIND_DATA find_data;
@@ -533,15 +533,15 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
             return 0;
     }
 
-    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0) != 0)
+    if (uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error) != 0)
         return 0;
 
-    fs->f = uCreateFile(fs->name, 0, U_READ_WRITE, 0, sa);
+    fs->f = uCreateFile(fs->name, 0, U_READ_WRITE, 0, sa, __sys_call_error);
     if (fs->f == U_INVALID_FD)
     {
         return 0;
     }
-    if (uReleaseSA(sa) != 0)
+    if (uReleaseSA(sa, __sys_call_error) != 0)
         return 0;
 
     return 1;
@@ -565,7 +565,7 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
 }
 
 
-int uGetUniqueFileName(const char *directoryName, char *file_name)
+int uGetUniqueFileName(const char *directoryName, char *file_name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
 
@@ -619,7 +619,7 @@ int uGetUniqueFileName(const char *directoryName, char *file_name)
 #endif
 }
 
-char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength)
+char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char *p = _fullpath(absPath, relPath, maxLength);
@@ -634,7 +634,7 @@ char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength)
 #endif
 }
 
-char *uGetCurrentWorkingDirectory(char *buf, int maxLength)
+char *uGetCurrentWorkingDirectory(char *buf, int maxLength, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char *p = _getcwd(buf, maxLength);
@@ -650,7 +650,7 @@ char *uGetCurrentWorkingDirectory(char *buf, int maxLength)
 #endif
 }
 
-int uChangeWorkingDirectory(const char *path)
+int uChangeWorkingDirectory(const char *path, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = _chdir(path);
@@ -665,7 +665,7 @@ int uChangeWorkingDirectory(const char *path)
 #endif
 }
 
-char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len)
+char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char drive[_MAX_DRIVE];
@@ -700,7 +700,7 @@ char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len)
 #endif
 }
 
-char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len)
+char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char fname[_MAX_FNAME];

@@ -14,7 +14,7 @@
 static char ustrerror_buf[256];
 
 
-void uSleep(unsigned int secs)
+void uSleep(unsigned int secs, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     Sleep(secs * 1000);
@@ -115,7 +115,7 @@ void __sys_call_error(const char *filename, int lineno, const char *funcname, co
 #endif
 }
 
-int uNotInheritDescriptor(UHANDLE h)
+int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (SetHandleInformation(h, HANDLE_FLAG_INHERIT, 0) == 0)

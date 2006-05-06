@@ -80,85 +80,85 @@ extern "C"
 #endif
 
 /* return U_INVALID_FD in the case of error*/
-    UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa);
+    UFile uCreateFile(const char *name, UShareMode share, UAccess accs, UFlag attr, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
 
 /* return U_INVALID_FD in the case of error*/
-    UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr);
+    UFile uOpenFile(const char *name, UShareMode share, UAccess accs, UFlag attr, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uCloseFile(UFile fd);
+    int uCloseFile(UFile fd, sys_call_error_fun fun);
 
 /* If the function succeeds to delete the file, it returns nonzero.*/
 /* If the function fails to detele file, it returns zero.*/
-    int uDeleteFile(const char *name);
+    int uDeleteFile(const char *name, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uDelDir(const char *dir);
+    int uDelDir(const char *dir, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero. If the return value */
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
 /* the current end of the file at the time of the read operation.*/
 /* If the function fails, the return value is zero*/
-    int uReadFile(UFile fd, void *buf, int to_read, int *already_read);
+    int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written);
+    int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth);
+    int uSetFilePointer(UFile fd, __int64 offs, __int64 * res_pos, UFlag meth, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth);
+    int uSetEndOfFile(UFile fd, __int64 offs, UFlag meth, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa);
+    int uMkDir(const char *name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun);
 
 /* Returns true if the file exists*/
-    int uIsFileExist(const char *name);
+    int uIsFileExist(const char *name, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exists);
+    int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exists, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uGetFileSize(UFile fd, __int64 * file_size);
+    int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun);
 
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
-    int uGetDiskSectorSize(int *sector_size, const char *path);
+    int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun);
 
 /* If the function succeeds, it returns 0.*/
 /* If the function fails, it returns nonzero.*/
-    int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid);
+    int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int sid, sys_call_error_fun fun);
 
 /* If the function succeeds, it returns 0.*/
 /* If the function fails, it returns nonzero.*/
 /* FILE* f - open unique file in the directory directoryName*/
-    int uGetUniqueFileName(const char *directoryName, char *file_name);
+    int uGetUniqueFileName(const char *directoryName, char *file_name, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is pointer to the absolute path*/
 /* If the function fails, the return value is NULL*/
-    char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength);
+    char *uGetAbsoluteFilePath(const char *relPath, char *absPath, int maxLength, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is pointer to the absolute path of current working directory*/
 /* If the function fails, the return value is NULL*/
-    char *uGetCurrentWorkingDirectory(char *buf, int maxLength);
+    char *uGetCurrentWorkingDirectory(char *buf, int maxLength, sys_call_error_fun fun);
 
 /* If the function succeeds, the return value is 0*/
 /* If the function fails, the return value is -1*/
-    int uChangeWorkingDirectory(const char *path);
+    int uChangeWorkingDirectory(const char *path, sys_call_error_fun fun);
 
-    char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len);
+    char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
 
-    char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len);
+    char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

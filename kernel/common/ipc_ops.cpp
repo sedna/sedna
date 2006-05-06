@@ -14,14 +14,14 @@
 
 int WriteHead(UPIPE p, int *cmd, int *len)
 {
-   int res = uWritePipeAll(p, cmd, sizeof(int) );
+   int res = uWritePipeAll(p, cmd, sizeof(int), __sys_call_error);
    if(res < 0) 
    {
      d_printf1("Pipe error\n");
      return -1;
    }
 
-   res = uWritePipeAll(p, len, sizeof(int) );
+   res = uWritePipeAll(p, len, sizeof(int), __sys_call_error);
    if(res < 0) 
    {
       d_printf1("Pipe error\n");
@@ -32,14 +32,14 @@ int WriteHead(UPIPE p, int *cmd, int *len)
 
 int ReadHead(UPIPE p, int *cmd, int *len)
 {
-   int res = uReadPipeAll(p, cmd, sizeof(int));
+   int res = uReadPipeAll(p, cmd, sizeof(int), __sys_call_error);
    if (res < 0) 
    {
       d_printf1("Pipe error\n");
       return -1;
    }
 
-   res = uReadPipeAll(p, len, sizeof(int));
+   res = uReadPipeAll(p, len, sizeof(int), __sys_call_error);
    if (res < 0) 
    {
       d_printf1("Pipe error\n");
@@ -56,14 +56,16 @@ void* open_gov_shm(UShMem *gov_shm_service_dsc)
 
    if (0 != uOpenShMem(gov_shm_service_dsc,
                        GOVERNOR_SHARED_MEMORY_NAME,
-                       GOV_SHM_SIZE
+                       GOV_SHM_SIZE,
+                       __sys_call_error
                       ))
       throw USER_EXCEPTION(SE4400);
 
 
    gov_shared_mem = uAttachShMem(*gov_shm_service_dsc,
                                  NULL,
-                                 GOV_SHM_SIZE
+                                 GOV_SHM_SIZE,
+                                 __sys_call_error
                                 );
 
    if (gov_shared_mem == NULL)
@@ -77,10 +79,10 @@ void* open_gov_shm(UShMem *gov_shm_service_dsc)
 int close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem)
 {
 
-  if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem))
+  if ( 0 != uDettachShMem(gov_shm_service_dsc, gov_shared_mem, __sys_call_error))
      return -1;
 
-  if ( 0 != uCloseShMem(gov_shm_service_dsc))
+  if ( 0 != uCloseShMem(gov_shm_service_dsc, __sys_call_error))
      return -1;
 
   return 0;
@@ -94,24 +96,24 @@ void send_command_to_gov(int port_number, int cmd)
   char *ptr;
   __int32 tmp;
     
-  s = usocket(AF_INET, SOCK_STREAM, 0);
+  s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
-  if (uconnect_tcp(s, port_number, "127.0.0.1") == 0)
+  if (uconnect_tcp(s, port_number, "127.0.0.1", __sys_call_error) == 0)
   {
   	 tmp = htonl(cmd);
      ptr = (char*) &(tmp);	
      rc = 0;
      while(rc < 4)
      {
-     	 rc += usend(s, ptr+rc, 4-rc);
+     	 rc += usend(s, ptr+rc, 4-rc, __sys_call_error);
      }
      rc = 0;
      ptr = (char*) &(rc);	
      while(rc < 4)
      {
-     	 rc += usend(s, ptr+rc, 4-rc);
+     	 rc += usend(s, ptr+rc, 4-rc, __sys_call_error);
      }
-     ushutdown_close_socket(s);
+     ushutdown_close_socket(s, __sys_call_error);
   }
   else
   	 d_printf2("SOCKET ERROR: %s\n",usocket_error_translator());

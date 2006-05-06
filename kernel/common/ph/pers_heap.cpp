@@ -77,20 +77,21 @@ int pers_init(const char *file_name, const char *fm_name, global_name sph_name, 
         if (VirtualFree(_addr,					// address of region
                         0,						// size of region
                         MEM_RELEASE				// operation type
-                       ) == 0) return 1;
+                       ) == 0)
+           return 1;
 #endif
 
-    ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING);
+    ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (ph_file == U_INVALID_FD) return 2;
 
-    ph_file_mapping = uOpenFileMapping(ph_file, 0, fm_name);
+    ph_file_mapping = uOpenFileMapping(ph_file, 0, fm_name, __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
-    ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0);
+    ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0, __sys_call_error);
 
     if (ph_start_address == NULL) return 4;
 
-    if (USemaphoreOpen(&ph_semaphore, sph_name) != 0) return 5;
+    if (USemaphoreOpen(&ph_semaphore, sph_name, __sys_call_error) != 0) return 5;
 
     ph_mb = (struct ph_masterblock*)ph_start_address;
     _vars = &(ph_mb->vars);
@@ -100,13 +101,13 @@ int pers_init(const char *file_name, const char *fm_name, global_name sph_name, 
 
 int pers_release()
 {
-    if (USemaphoreClose(ph_semaphore) != 0) return 1;
+    if (USemaphoreClose(ph_semaphore, __sys_call_error) != 0) return 1;
 
-    if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 2;
+    if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 2;
 
-    if (uCloseFileMapping(ph_file_mapping) != 0) return 3;
+    if (uCloseFileMapping(ph_file_mapping, __sys_call_error) != 0) return 3;
 
-    if (uCloseFile(ph_file) == 0) return 4;
+    if (uCloseFile(ph_file, __sys_call_error) == 0) return 4;
 
     return 0;
 }
@@ -115,16 +116,16 @@ int pers_flush()
 {
     if (ph_start_address)
     {
-        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 1;
+        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 1;
     }
     else
     {
-        ph_start_address = uMapViewOfFile(ph_file_mapping, 0, 0, 0);
+        ph_start_address = uMapViewOfFile(ph_file_mapping, 0, 0, 0, __sys_call_error);
         if (ph_start_address == NULL) return 2;
 
-        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 3;
+        if (uFlushViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 3;
 
-        if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 4;
+        if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 4;
 
         ph_start_address = NULL;
     }
@@ -142,23 +143,24 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
     if (mem_release)
         if (VirtualFree(_addr,					// address of region
                         0,						// size of region
-                        MEM_RELEASE				// operation type
-                       ) == 0) return 1;
+                        MEM_RELEASE 			// operation type
+                       ) == 0)
+           return 1;
 #endif
 
-    ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING);
+    ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (ph_file == U_INVALID_FD) return 2;
 
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, NULL);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
     if (should_map)
     {
-        ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0);
+        ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0, __sys_call_error);
         if (ph_start_address == NULL) return 4;
     }
 
-    if (USemaphoreCreate(&ph_semaphore, 1, 1, sph_name, NULL) != 0) return 5;
+    if (USemaphoreCreate(&ph_semaphore, 1, 1, sph_name, NULL, __sys_call_error) != 0) return 5;
 
     if (should_map)
     {
@@ -176,17 +178,17 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
 
 int pers_close()
 {
-    if (USemaphoreRelease(ph_semaphore) != 0) return 1;
+    if (USemaphoreRelease(ph_semaphore, __sys_call_error) != 0) return 1;
 
     if (ph_start_address)
     {
-       if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 2;
+       if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 2;
        ph_start_address = NULL;
     }
 
-    if (uReleaseFileMapping(ph_file_mapping, NULL) != 0) return 3;
+    if (uReleaseFileMapping(ph_file_mapping, NULL, __sys_call_error) != 0) return 3;
 
-    if (uCloseFile(ph_file) == 0) return 4;
+    if (uCloseFile(ph_file, __sys_call_error) == 0) return 4;
 
     return 0;
 }
@@ -194,19 +196,19 @@ int pers_close()
 int pers_create(const char *file_name, const char *fm_name, const void *addr, int heap_size, USECURITY_ATTRIBUTES *sa)
 {
 
-    ph_file = uCreateFile(file_name, 0, U_READ_WRITE, U_NO_BUFFERING, sa);
+    ph_file = uCreateFile(file_name, 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_file == U_INVALID_FD) return 1;
 
     if (heap_size < HEAP) return 2;
 
-    if (uSetEndOfFile(ph_file, (__int64)(heap_size + BLOCKSIZE), U_FILE_BEGIN) == 0) return 3;
+    if (uSetEndOfFile(ph_file, (__int64)(heap_size + BLOCKSIZE), U_FILE_BEGIN, __sys_call_error) == 0) return 3;
 
     // Create file mapping
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, sa);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, sa, __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 4;
 
     void *_addr = (void*)addr;
-    ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0);
+    ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0, __sys_call_error);
     if (ph_start_address == NULL) return 5;
 
     /* Fill master block */
@@ -217,42 +219,42 @@ int pers_create(const char *file_name, const char *fm_name, const void *addr, in
     ph_mb->cur_pointer = ph_mb->low_boundary;
 
     // Close file mapping
-    if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0) != 0) return 6;
+    if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 6;
 
-    if (uReleaseFileMapping(ph_file_mapping, fm_name) != 0) return 7;
+    if (uReleaseFileMapping(ph_file_mapping, fm_name, __sys_call_error) != 0) return 7;
 
-    if (uCloseFile(ph_file) == 0) return 8;
+    if (uCloseFile(ph_file, __sys_call_error) == 0) return 8;
 
     return 0;
 }
 
 void * pers_malloc(size_t size)
 {
-    if (USemaphoreDown(ph_semaphore) != 0) return NULL;
+    if (USemaphoreDown(ph_semaphore, __sys_call_error) != 0) return NULL;
 
     void *ptr = _pers_malloc(size);
 
-    if (USemaphoreUp(ph_semaphore) != 0) return NULL;
+    if (USemaphoreUp(ph_semaphore, __sys_call_error) != 0) return NULL;
 
     return ptr;
 }
 
 void pers_free(void *ptr)
 {
-    if (USemaphoreDown(ph_semaphore) != 0) return;
+    if (USemaphoreDown(ph_semaphore, __sys_call_error) != 0) return;
 
     _pers_free(ptr);
 
-    if (USemaphoreUp(ph_semaphore) != 0) return;
+    if (USemaphoreUp(ph_semaphore, __sys_call_error) != 0) return;
 }
 
 void * pers_realloc(void *ptr, size_t size)
 {
-    if (USemaphoreDown(ph_semaphore) != 0) return NULL;
+    if (USemaphoreDown(ph_semaphore, __sys_call_error) != 0) return NULL;
 
     ptr = _pers_realloc(ptr, size);
 
-    if (USemaphoreUp(ph_semaphore) != 0) return NULL;
+    if (USemaphoreUp(ph_semaphore, __sys_call_error) != 0) return NULL;
 
     return ptr;
 }

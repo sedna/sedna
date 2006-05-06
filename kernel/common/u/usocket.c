@@ -17,7 +17,7 @@
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int uSocketInit()
+int uSocketInit(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     WORD wVersionRequested;
@@ -46,7 +46,7 @@ int uSocketInit()
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int uSocketCleanup()
+int uSocketCleanup(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return WSACleanup();
@@ -57,7 +57,7 @@ int uSocketCleanup()
 
 
 /* returns U_INVALID_SOCKET if failed */
-USOCKET usocket(int af, int type, int protocol)
+USOCKET usocket(int af, int type, int protocol, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return socket(af, type, protocol);
@@ -71,7 +71,7 @@ USOCKET usocket(int af, int type, int protocol)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ubind_tcp(USOCKET s, int port)
+int ubind_tcp(USOCKET s, int port, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     struct hostent *hp;
@@ -111,7 +111,7 @@ int ubind_tcp(USOCKET s, int port)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int uconnect_tcp(USOCKET s, int port, const char *hostname)
+int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     struct hostent *hp;
@@ -148,7 +148,7 @@ int uconnect_tcp(USOCKET s, int port, const char *hostname)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optlen)
+int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optlen, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return setsockopt(s, level, optname, (const char*)optval, optlen);
@@ -159,7 +159,7 @@ int usetsockopt(USOCKET s, int level, int optname, const void* optval, int optle
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen)
+int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return getsockopt(s, level, optname, (char*)optval, &optlen);
@@ -170,7 +170,7 @@ int ugetsockopt(USOCKET s, int level, int optname, void* optval, int optlen)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ulisten(USOCKET s, int backlog)
+int ulisten(USOCKET s, int backlog, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return listen(s, backlog);
@@ -180,7 +180,7 @@ int ulisten(USOCKET s, int backlog)
 }
 
 /* returns U_INVALID_SOCKET if failed */
-USOCKET uaccept(USOCKET s)
+USOCKET uaccept(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     struct sockaddr_in commonaddr;
@@ -208,7 +208,7 @@ USOCKET uaccept(USOCKET s)
 /* return value indicates number of bytes received
    returns zero if connection was gracefully closed
    returns U_SOCKET_ERROR in the case of error */
-int urecv(USOCKET s, char *buf, int len)
+int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res_len = recv(s, buf, len, 0);
@@ -234,7 +234,7 @@ int urecv(USOCKET s, char *buf, int len)
 
 /* return value indicates number of bytes send  
    returns U_SOCKET_ERROR in the case of error  */
-int usend(USOCKET s, const char *buf, int len)
+int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res_len = send(s, buf, len, 0);
@@ -262,7 +262,7 @@ int usend(USOCKET s, const char *buf, int len)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int uclose_socket(USOCKET s)
+int uclose_socket(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = closesocket(s);
@@ -275,7 +275,7 @@ int uclose_socket(USOCKET s)
 
 /* returns zero if succeeded
    returns U_SOCKET_ERROR if failed */
-int ushutdown_close_socket(USOCKET s)
+int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res = shutdown(s, 0x02);
@@ -293,7 +293,7 @@ int ushutdown_close_socket(USOCKET s)
 /* returns 1 (number of sockets ready to recv) if there is data pending in network connection
    returns 0 if timeout
    returns U_SOCKET_ERROR if failed */
-int uselect_read(USOCKET s, struct timeval *timeout)
+int uselect_read(USOCKET s, struct timeval *timeout, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     fd_set socks;

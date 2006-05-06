@@ -31,7 +31,7 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 	/*
 	 * Sleep for 10 days. It should be enough to find out the problem.
 	 */
-	uSleep(8640 * 10); 
+	uSleep(8640 * 10, __sys_call_error); 
 #endif
 
     SEDNA_SOFT_FAULT_BASE_MSG;

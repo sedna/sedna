@@ -35,10 +35,10 @@ extern "C" {
 #endif
 
 /* return value 0 indicates success */
-int uSetEnvironmentVariable(const char* name, const char* value);
+int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_fun fun);
 
 /* return value 0 indicates success */
-int uGetEnvironmentVariable(const char* name, char* buf, int size);
+int uGetEnvironmentVariable(const char* name, char* buf, int size, sys_call_error_fun fun);
 
 
 /* return value 0 indicates success */
@@ -51,30 +51,31 @@ int uCreateProcess(
            UTHANDLE *thread_handle,
            UPID *process_id,
            UTID *thread_id,
-           USECURITY_ATTRIBUTES* sa
+           USECURITY_ATTRIBUTES* sa,
+           sys_call_error_fun fun
     );
 
 /* return value 0 indicates success */
-int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code);
+int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code, sys_call_error_fun fun);
 /* momently terminates current process */
-void uExitProcess(int exit_code);
+void uExitProcess(int exit_code, sys_call_error_fun fun);
 
-UPID uGetCurrentProcessId();
+UPID uGetCurrentProcessId(sys_call_error_fun fun);
 /* return value: 1 - exists, 0 - does not exist, -1 - error */
-int uIsProcessExist(UPID pid, UPHANDLE h);
+int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 
-int uOpenProcess(UPID pid, UPHANDLE /*out*/ *h);
+int uOpenProcess(UPID pid, UPHANDLE /*out*/ *h, sys_call_error_fun fun);
 
-int uCloseProcess(UPHANDLE h);
+int uCloseProcess(UPHANDLE h, sys_call_error_fun fun);
 
-int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status);
-int uWaitForProcess(UPID pid, UPHANDLE h);
+int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status, sys_call_error_fun fun);
+int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 
 
 extern char *program_name_argv_0;
 /* The result if written to buf. The size of the buf should be
  * not less than U_MAX_PATH + 1. The function return buf. */
-char* uGetImageProcPath(char *buf);
+char* uGetImageProcPath(char *buf, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }
