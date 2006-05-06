@@ -560,6 +560,11 @@ extern "C" {
 
 #define sys_call_error(sys_call)  __sys_call_error(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
 
+/*
+#define sys_call_error(fun, sys_call)  fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
+sys_call_error_fun fun
+typedef void (*sys_call_error_fun)(const char *filename, int lineno, const char *funcname, const char *sys_call);
+*/
 
 void uSleep(unsigned int secs);
 char* ustrerror(int errnum);
