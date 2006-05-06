@@ -427,23 +427,23 @@ void register_session_on_gov()
 	UPID s_pid;
 //	msg_struct msg;
 
-	s_pid = uGetCurrentProcessId();
+	s_pid = uGetCurrentProcessId(__sys_call_error);
 	
-    s = usocket(AF_INET, SOCK_STREAM, 0);
+    s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
     if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
 
 	res = 1;
-	while(uconnect_tcp(s, socket_port, "127.0.0.1")!=0)
+	while(uconnect_tcp(s, socket_port, "127.0.0.1", __sys_call_error)!=0)
 	{
 		if(!utry_connect_again())
 		{
-			ushutdown_close_socket(s);
+			ushutdown_close_socket(s, __sys_call_error);
 			throw USER_EXCEPTION (SE3003);
 		}
 #ifdef _WIN32
 #else
-        if(ushutdown_close_socket(s)!=0) throw USER_EXCEPTION (SE3011);
-        s = usocket(AF_INET, SOCK_STREAM, 0);
+        if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
+        s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
         if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
 #endif
 	}
@@ -470,27 +470,27 @@ void register_session_on_gov()
         d_printf2("session sid=%d\n", sid);
 	 	if (sid == -1)
         {
-            ushutdown_close_socket(s);
+            ushutdown_close_socket(s, __sys_call_error);
             throw USER_EXCEPTION(SE4607); 
         }
     }
     if(sp_msg.instruction == 171)
     {
-        ushutdown_close_socket(s);
+        ushutdown_close_socket(s, __sys_call_error);
     	throw USER_EXCEPTION2(SE4409,db_name);                   //no db started
     }
     if(sp_msg.instruction == 172)
     {
-        ushutdown_close_socket(s);
+        ushutdown_close_socket(s, __sys_call_error);
     	throw USER_EXCEPTION(SE3046);                            //currently there are maximum number of session in the system
     }
     if(sp_msg.instruction == 173)
     {
-        ushutdown_close_socket(s);
+        ushutdown_close_socket(s, __sys_call_error);
     	throw USER_EXCEPTION(SE3043);                            //failed to register
     }
 
-    if(ushutdown_close_socket(s)!=0) throw USER_EXCEPTION (SE3011);
+    if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
 
 }
 
@@ -502,22 +502,22 @@ bool check_database_existence(const char* db_name)
 
    set_sedna_data();
    //delete cfg file
-   res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str());
+   res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
    //delete data file
-   res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str());
+   res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str(), __sys_call_error);
 
    //delete tmp file
-   res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str());
+   res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str(), __sys_call_error);
 
    //delete llog file
 //   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str());
 
    //delete ph.bu file
-   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str());
+   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str(), __sys_call_error);
 
    //delete ph file
-   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str());
+   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str(), __sys_call_error);
 
 
    if (res1 && res2 && res3/*!!! && res4*/ && res5 && res6) return true;

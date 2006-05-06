@@ -118,11 +118,11 @@ int main(int argc, char** argv)
            throw USER_SOFT_EXCEPTION("");
         }
 
-        if (uSocketInit() == U_SOCKET_ERROR) 
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) 
             throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
         set_global_names();
@@ -131,7 +131,7 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION(SE4408);
 
         bool background_off_from_background_on;
-        if (uGetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, buf, 1024) == 0)
+        if (uGetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, buf, 1024, __sys_call_error) == 0)
             // we were started by command "gov -background-mode off" from "gov -background-mode on"
             background_off_from_background_on = true;
         else 
@@ -165,22 +165,22 @@ int main(int argc, char** argv)
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
 
-            if (uSetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, "1") != 0)
+            if (uSetEnvironmentVariable(GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON, "1", __sys_call_error) != 0)
                 throw USER_EXCEPTION2(SE4073, "GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON");
 
             USemaphore started_sem;
 
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY, NULL))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY, NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4401);
 
-            if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL) != 0)
+            if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
                 throw USER_EXCEPTION(SE4401);
 
             int res;
-            res = USemaphoreDownTimeout(started_sem, GOV_BACKGROUND_MODE_TIMEOUT);
+            res = USemaphoreDownTimeout(started_sem, GOV_BACKGROUND_MODE_TIMEOUT, __sys_call_error);
 
 
-            USemaphoreRelease(started_sem);
+            USemaphoreRelease(started_sem, __sys_call_error);
 
             delete [] command_line_str;
 
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
       pps.shutdown();
       is_pps_close = true;
 
-      if (uSocketCleanup() == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
+      if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
       gov_table->release();
       delete gov_table;

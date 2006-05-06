@@ -373,7 +373,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             fprintf(stderr,"failed to close file\n");
             return EXIT_TERM_FAILED;
         }
-    	if(0 == uDeleteFile(tmp_file_name))
+    	if(0 == uDeleteFile(tmp_file_name, NULL))
         {
             fprintf(stderr,"failed to delete file\n");
             return EXIT_TERM_FAILED;
@@ -518,7 +518,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 			if(!number_of_msg_buf_size)
 			{
 				std::string tmp_file_path_str = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files");
-				if(!uGetUniqueFileName(tmp_file_path_str.c_str(), tmp_file_name)) throw USER_EXCEPTION(SE4052);
+				if(!uGetUniqueFileName(tmp_file_path_str.c_str(), tmp_file_name, NULL)) throw USER_EXCEPTION(SE4052);
 				f = fopen(tmp_file_name,"w+t");
 			}
 			number_of_msg_buf_size++;

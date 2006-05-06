@@ -93,7 +93,7 @@ int main(int argc, char * argv[])
   	  
      u_ftime(&t_total1);
 
-     if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024) != 0)
+     if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, __sys_call_error) != 0)
          determine_vmm_region = 0;
      else
          determine_vmm_region = atoi(buf);
@@ -110,10 +110,10 @@ int main(int argc, char * argv[])
      }
 
 #ifdef REQUIRE_ROOT
-     if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
+     if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
-     if (uGetEnvironmentVariable(SEDNA_SERVER_MODE, buf, 1024) != 0)
+     if (uGetEnvironmentVariable(SEDNA_SERVER_MODE, buf, 1024, __sys_call_error) != 0)
         server_mode = 0;
      else
         server_mode = atoi(buf);
@@ -129,7 +129,7 @@ int main(int argc, char * argv[])
      }
 
 
-     if(uSocketInit()!=0) throw USER_EXCEPTION(SE3001);
+     if(uSocketInit(__sys_call_error)!=0) throw USER_EXCEPTION(SE3001);
 
 //  u_ftime(&ttt1);
 	 client->init();
@@ -436,7 +436,7 @@ int main(int argc, char * argv[])
    
    close_gov_shm(gov_shm_dsc, gov_shared_mem);
    
-   uSocketCleanup();
+   uSocketCleanup(__sys_call_error);
 
    d_printf1("Transaction has been closed\n\n");
 
@@ -462,7 +462,7 @@ int main(int argc, char * argv[])
        ppc.shutdown();   
        set_session_finished();
        if (is_init_gov_shm)close_gov_shm(gov_shm_dsc, gov_shared_mem);
-       uSocketCleanup();
+       uSocketCleanup(__sys_call_error);
        ret_code = 1;   
    } catch (SednaException &e) {
        sedna_soft_fault(e);

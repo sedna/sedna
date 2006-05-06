@@ -34,7 +34,7 @@ void getSednaAuthMetadataPath(char* path)
 # if (AUTH_SWITCH == 1)
     char path_buf[U_MAX_PATH + 32];
 #ifdef _WIN32
-	string pstring = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+	string pstring = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 	strcpy(path, pstring.c_str());
 	int i=0;
 	while(i<=pstring.length())

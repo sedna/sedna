@@ -319,8 +319,8 @@ static int rollback_handler(struct SednaConnection *conn)
 static void release(struct SednaConnection *conn)
 {
     /* release*/
-    ushutdown_close_socket(conn->socket);
-    uSocketCleanup();
+    ushutdown_close_socket(conn->socket, NULL);
+    uSocketCleanup(NULL);
 }
 
 static int execute(struct SednaConnection *conn)
@@ -378,7 +378,7 @@ static int execute(struct SednaConnection *conn)
         int already_read = 1, res = 1;
         char *filename = conn->msg.body + 5;
         filename[s_min(conn->msg.length - 5, SE_SOCKET_MSG_BUF_SIZE - 6)] = '\0';
-        file_handle = uOpenFile(filename, 0, U_READ, 0);
+        file_handle = uOpenFile(filename, 0, U_READ, 0, NULL);
         if (file_handle == U_INVALID_FD)
         {
             /* send 400 - BulkLoadError*/
@@ -401,13 +401,13 @@ static int execute(struct SednaConnection *conn)
 
         while ((res > 0) && (already_read != 0))
         {
-            res = uReadFile(file_handle, conn->msg.body + 5, BULK_LOAD_PORTION, &already_read);
+            res = uReadFile(file_handle, conn->msg.body + 5, BULK_LOAD_PORTION, &already_read, NULL);
             if (res == 0)
             {
                 /* send 400 - BulkLoadError*/
                 conn->msg.instruction = se_BulkLoadError;
                 conn->msg.length = 0;
-                uCloseFile(file_handle);
+                uCloseFile(file_handle, NULL);
                 if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
                 {
                     connectionFailure(conn, SE3006, NULL, NULL);
@@ -433,12 +433,12 @@ static int execute(struct SednaConnection *conn)
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
                 connectionFailure(conn, SE3006, NULL, NULL);
-                uCloseFile(file_handle);
+                uCloseFile(file_handle, NULL);
                 return SEDNA_ERROR;
             }
         }
 
-        if (!uCloseFile(file_handle))
+        if (!uCloseFile(file_handle, NULL))
         {
             setDriverErrorMsg(conn, SE3019, NULL);
             return SEDNA_ERROR;
@@ -539,13 +539,13 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
     conn->isInTransaction = SEDNA_NO_TRANSACTION;
 
-    if (uSocketInit() != 0)
+    if (uSocketInit(NULL) != 0)
     {
         connectionFailure(conn, SE3016, NULL, NULL);  /* Can't initialize socket library.*/
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
-    conn->socket = usocket(AF_INET, SOCK_STREAM, 0);
+    conn->socket = usocket(AF_INET, SOCK_STREAM, 0, NULL);
     if (conn->socket == U_INVALID_SOCKET)
     {
         connectionFailure(conn, SE3001, NULL, NULL);  /* Failed to initialize a socket.*/
@@ -553,7 +553,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         return SEDNA_OPEN_SESSION_FAILED;
     }
 
-    if (usetsockopt(conn->socket, IPPROTO_TCP, TCP_NODELAY, (char *) &socket_optval, socket_optsize) == U_SOCKET_ERROR)
+    if (usetsockopt(conn->socket, IPPROTO_TCP, TCP_NODELAY, (char *) &socket_optval, socket_optsize, NULL) == U_SOCKET_ERROR)
     {
         connectionFailure(conn, SE3027, NULL, NULL);  /* Failed to set socket option.*/
         release(conn);
@@ -578,7 +578,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         host[host_len] = '\0';
     }
 
-    if (uconnect_tcp(conn->socket, port, host) != 0)
+    if (uconnect_tcp(conn->socket, port, host, NULL) != 0)
     {
         connectionFailure(conn, SE3003, url, NULL);  /* "Failed to connect to host specified"*/
         release(conn);

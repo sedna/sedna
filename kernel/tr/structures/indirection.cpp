@@ -388,14 +388,14 @@ void indirection_table_on_session_begin()
 {
     tmp_indirection_table_free_entry = XNULL;
 
-    if (uOpenShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr)) != 0)
+    if (uOpenShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4021, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
-    data_indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr));
+    data_indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr), __sys_call_error);
     if (data_indirection_table_free_entry == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
-    if (USemaphoreOpen(&indirection_table_sem, INDIRECTION_TABLE_SEMAPHORE_STR) != 0)
+    if (USemaphoreOpen(&indirection_table_sem, INDIRECTION_TABLE_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "INDIRECTION_TABLE_SEMAPHORE_STR");
 #ifndef OTK_XPTR
 	 deleted_cells = new std::map<id_pair,xptr_sequence *>;
@@ -431,13 +431,13 @@ void indirection_table_on_session_end()
     {
         // deinitialization
     
-        if (uDettachShMem(itfe_file_mapping, data_indirection_table_free_entry) != 0)
+        if (uDettachShMem(itfe_file_mapping, data_indirection_table_free_entry, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4024, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
     
-        if (uCloseShMem(itfe_file_mapping) != 0)
+        if (uCloseShMem(itfe_file_mapping, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4022, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
     
-        if (USemaphoreClose(indirection_table_sem) != 0)
+        if (USemaphoreClose(indirection_table_sem, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4013, "INDIRECTION_TABLE_SEMAPHORE_STR");
     
         indirection_session_initialized = false;

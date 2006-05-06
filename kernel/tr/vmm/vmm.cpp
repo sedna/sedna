@@ -342,7 +342,7 @@ U_THREAD_PROC(_vmm_thread, arg)
 
     while (true) 
     {
-        USemaphoreDown(sm_to_vmm_callback_sem1);
+        USemaphoreDown(sm_to_vmm_callback_sem1, __sys_call_error);
         //printf("vmm_thread");fflush(stdout);
 
         if (shutdown_vmm_thread) 
@@ -358,7 +358,7 @@ U_THREAD_PROC(_vmm_thread, arg)
 #endif
 
 //#ifdef _WIN32
-        uSuspendThread(main_thread);
+        uSuspendThread(main_thread, __sys_call_error);
 //#else
 //        uSpinLock(vmm_spin_lock);
 //#endif
@@ -372,12 +372,12 @@ U_THREAD_PROC(_vmm_thread, arg)
         }
 
 //#ifdef _WIN32
-        uResumeThread(main_thread);
+        uResumeThread(main_thread, __sys_call_error);
 //#else
 //        uSpinUnlock(vmm_spin_lock);
 //#endif
 
-        USemaphoreUp(sm_to_vmm_callback_sem2);
+        USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
     }
 }
 
@@ -648,10 +648,10 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 
     persistent_db_data *db_data_ptr = NULL;
 
-    if (USemaphoreOpen(&vmm_sm_sem, VMM_SM_SEMAPHORE_STR) != 0)
+    if (USemaphoreOpen(&vmm_sm_sem, VMM_SM_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_SEMAPHORE_STR");
 
-    if (USemaphoreOpen(&xmode, VMM_SM_EXCLUSIVE_MODE_SEM_STR) != 0)
+    if (USemaphoreOpen(&xmode, VMM_SM_EXCLUSIVE_MODE_SEM_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
 #ifndef _WIN32
@@ -671,7 +671,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 //#endif
 
 
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 
         ssmmsg = _ssmmsg_;
@@ -713,39 +713,39 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
        _vmm_init_region();
 
         // Open buffer memory
-        file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME);
+        file_mapping = uOpenFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error);
         if (U_INVALID_FILEMAPPING(file_mapping))
             throw USER_EXCEPTION(SE1037);
         // Buffer memory has been opened 
 
         char buf[100];
         if (USemaphoreOpen(&sm_to_vmm_callback_sem1, 
-                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100)) != 0)
+                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
         if (USemaphoreOpen(&sm_to_vmm_callback_sem2, 
-                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100)) != 0)
+                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
-        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr)) != 0)
+        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-        p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr));
+        p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
         if (p_sm_callback_data == NULL) 
             throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-        if (uOpenShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp)) != 0)
+        if (uOpenShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4021, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-        lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp));
+        lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp), __sys_call_error);
         if (lru_global_stamp_data == NULL) 
             throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
         is_exclusive_mode = false;
 
 
-        main_thread = uGetCurrentThread();
-        uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE, NULL);
+        main_thread = uGetCurrentThread(__sys_call_error);
+        uResVal res = uCreateThread(_vmm_thread, NULL, &vmm_thread_handle, VMM_THREAD_STACK_SIZE, NULL, __sys_call_error);
         if (res != 0) throw USER_EXCEPTION2(SE4060, "VMM thread");
 
 #ifdef VMM_TRACE
@@ -754,10 +754,10 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 #endif
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     vmm_session_initialized = true;
 
@@ -766,7 +766,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 
 void vmm_on_transaction_begin() throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 
         vmm_cur_ptr = NULL;
@@ -784,10 +784,10 @@ void vmm_on_transaction_begin() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     vmm_transaction_initialized = true;
 }
@@ -796,36 +796,36 @@ void vmm_on_session_end() throw (SednaException)
 {
     if (!vmm_session_initialized) return;
 
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         shutdown_vmm_thread = true;
-        USemaphoreUp(sm_to_vmm_callback_sem1);
+        USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
 
-        if (uThreadJoin(vmm_thread_handle) != 0)
+        if (uThreadJoin(vmm_thread_handle, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE1039);
 
 
-        if (uCloseThreadHandle(vmm_thread_handle) != 0)
+        if (uCloseThreadHandle(vmm_thread_handle, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4063, "VMM thread");
 
-        if (uCloseFileMapping(file_mapping) == -1)
+        if (uCloseFileMapping(file_mapping, __sys_call_error) == -1)
             throw USER_EXCEPTION(SE1038);
 
-        if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data) != 0)
+        if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-        if (uCloseShMem(p_sm_callback_file_mapping) != 0)
+        if (uCloseShMem(p_sm_callback_file_mapping, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4022, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-        if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data) != 0)
+        if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4024, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-        if (uCloseShMem(lru_global_stamp_file_mapping) != 0)
+        if (uCloseShMem(lru_global_stamp_file_mapping, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4022, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
 
-        USemaphoreClose(sm_to_vmm_callback_sem1);
-        USemaphoreClose(sm_to_vmm_callback_sem2);
+        USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);
+        USemaphoreClose(sm_to_vmm_callback_sem2, __sys_call_error);
 
         msg.cmd = 22; // bm_unregister_session
         msg.trid = trid;
@@ -837,17 +837,17 @@ void vmm_on_session_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
 //#ifndef _WIN32
 //    uSpinDestroy(vmm_spin_lock);
 //#endif
 
-    USemaphoreClose(vmm_sm_sem);
-    USemaphoreClose(xmode);
+    USemaphoreClose(vmm_sm_sem, __sys_call_error);
+    USemaphoreClose(xmode, __sys_call_error);
 
     close_global_memory_mapping();
 
@@ -862,7 +862,7 @@ void vmm_on_transaction_end() throw (SednaException)
 {
     if (!vmm_transaction_initialized) return;
 
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 
         msg.cmd = 36; // bm_unregister_transaction
@@ -875,10 +875,10 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     vmm_transaction_initialized = false;
 }
@@ -892,14 +892,14 @@ void vmm_on_transaction_end() throw (SednaException)
 
 void vmm_alloc_data_block(xptr *p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         _vmm_alloc_block(p, true);
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     CHECKP(*p);
 
@@ -909,14 +909,14 @@ void vmm_alloc_data_block(xptr *p) throw (SednaException)
 
 void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         _vmm_alloc_block(p, false);
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 
     CHECKP(*p);
 
@@ -926,7 +926,7 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 
 void vmm_delete_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         p = block_xptr(p);
 
@@ -954,15 +954,15 @@ void vmm_delete_block(xptr p) throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_delete_tmp_blocks() throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
 
         // TODO: This may be ineffective. Think about other ways (AF)
@@ -990,16 +990,16 @@ void vmm_delete_tmp_blocks() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw (SednaException)
 {
-    USemaphoreDown(xmode);
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(xmode, __sys_call_error);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         msg.cmd = 27; // bm_enter_exclusive_mode
@@ -1017,16 +1017,16 @@ void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw
         is_exclusive_mode = true;
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_exit_exclusive_mode() throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         msg.cmd = 28; // bm_exit_exclusive_mode
@@ -1041,17 +1041,17 @@ void vmm_exit_exclusive_mode() throw (SednaException)
         is_exclusive_mode = false;
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
-    USemaphoreUp(xmode);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    USemaphoreUp(xmode, __sys_call_error);
 }
 
 void vmm_memlock_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         p = block_xptr(p);
@@ -1072,16 +1072,16 @@ void vmm_memlock_block(xptr p) throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_memunlock_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         p = block_xptr(p);
@@ -1102,16 +1102,16 @@ void vmm_memunlock_block(xptr p) throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_pseudo_alloc_data_block(xptr /*out*/ *p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         msg.cmd = 32; // bm_pseudo_allocate_data_block
@@ -1126,16 +1126,16 @@ void vmm_pseudo_alloc_data_block(xptr /*out*/ *p) throw (SednaException)
         *p = *(xptr*)(&(msg.data.ptr));
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_pseudo_delete_block(xptr p) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         p = block_xptr(p);
 
@@ -1150,15 +1150,15 @@ void vmm_pseudo_delete_block(xptr p) throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException)
 {
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
         msg.cmd = 31; // bm_block_statistics
@@ -1173,11 +1173,11 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaExcepti
         *stat = msg.data.stat;
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 void vmm_unswap_block(xptr p) throw (SednaException)
@@ -1186,7 +1186,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
           (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
         throw USER_EXCEPTION(SE1036);
 
-    USemaphoreDown(vmm_sm_sem);
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
     try {
 
@@ -1215,11 +1215,11 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         _vmm_remap(XADDR(p), offs);
 
     } catch (...) {
-        USemaphoreUp(vmm_sm_sem);
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
 
-    USemaphoreUp(vmm_sm_sem);
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
 

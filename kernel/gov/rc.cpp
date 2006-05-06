@@ -73,8 +73,8 @@ int main(int argc, char **argv)
         set_global_names();
 
 #ifdef REQUIRE_ROOT
-        if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
-        if (uSocketInit() == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
+        if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 #endif
         ppc.startup(ex);
 
@@ -86,8 +86,8 @@ int main(int argc, char **argv)
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
 
-        sock = usocket(AF_INET, SOCK_STREAM, 0);
-        if (uconnect_tcp(sock, port_number, "127.0.0.1") == 0)
+        sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
+        if (uconnect_tcp(sock, port_number, "127.0.0.1", __sys_call_error) == 0)
         {
             msg.instruction = RUNTIME_CONFIG;
             msg.length = 0;
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
             res = sp_recv_msg(sock, &msg);
             if (res != 0) throw USER_EXCEPTION(SE3007);
 
-            res = ushutdown_close_socket(sock);
+            res = ushutdown_close_socket(sock, __sys_call_error);
             if (res != 0) throw USER_EXCEPTION(SE3011);
 
             elog(EL_LOG, ("Request for runtime configuration satisfied"));
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         event_logger_release();
 
         ppc.shutdown();
-        if (uSocketCleanup() == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
+        if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
         
 
     } catch (SednaUserSoftException &e) {

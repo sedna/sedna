@@ -39,14 +39,14 @@ void clean_resources(bool background_off_from_background_on)
   char buf[4096];
   char buf2[4096];
   char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096);
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
 
   cfg_files_dir = string(SEDNA_DATA) + string("\\cfg");
   d_printf2("cfg_files_dir=%s\n", cfg_files_dir.c_str());
 
-  if (uChangeWorkingDirectory(cfg_files_dir.c_str()) != 0 )
+  if (uChangeWorkingDirectory(cfg_files_dir.c_str(), __sys_call_error) != 0 )
   {
-     if (uChangeWorkingDirectory(cur_dir) != 0 )
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
         throw USER_EXCEPTION(SE4604); 
 
      return;//there is no any sign about databases
@@ -60,7 +60,7 @@ void clean_resources(bool background_off_from_background_on)
 
   if ( (dsc = _findfirst("*_cfg.xml", &cfg_file)) == -1L)
   {
-     if (uChangeWorkingDirectory(cur_dir) != 0 )
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
         throw USER_EXCEPTION(SE4604); 
 
      return;
@@ -83,7 +83,7 @@ void clean_resources(bool background_off_from_background_on)
      
   _findclose(dsc);
 
-  if (uChangeWorkingDirectory(cur_dir) != 0 )
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
      throw USER_EXCEPTION(SE4604); 
 #else
   DIR *dir;

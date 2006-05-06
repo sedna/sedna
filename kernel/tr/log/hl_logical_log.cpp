@@ -43,10 +43,10 @@ bool enable_log = true;
 void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreOpen(&checkpoint_sem, CHARISMA_CHECKPOINT_SEM) != 0)
+  if (USemaphoreOpen(&checkpoint_sem, CHARISMA_CHECKPOINT_SEM, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4012, "CHARISMA_CHECKPOINT_SEM");
 
-  if ( 0 != USemaphoreOpen(&concurrent_ops_sem, CHARISMA_LOGICAL_OPERATION_ATOMICITY))
+  if ( 0 != USemaphoreOpen(&concurrent_ops_sem, CHARISMA_LOGICAL_OPERATION_ATOMICITY, __sys_call_error))
      throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 #endif
 
@@ -74,10 +74,10 @@ void hl_logical_log_on_session_end()
 #ifdef CHECKPOINT_ON
  if (is_ll_on_session_initialized)
  {
-   if (USemaphoreClose(checkpoint_sem) != 0)
+   if (USemaphoreClose(checkpoint_sem, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_CHECKPOINT_SEM");
 
-   if (USemaphoreClose(concurrent_ops_sem) != 0)
+   if (USemaphoreClose(concurrent_ops_sem, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 
 //   d_printf2("down_nums=%d\n", down_nums);
@@ -186,13 +186,13 @@ void down_concurrent_micro_ops_number()
 
 //  d_printf1("down_concurrent_micro_ops_number() - begin\n");
 
-  if (USemaphoreDown(checkpoint_sem) != 0)  
+  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreUp(checkpoint_sem) != 0)
+  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreDown(concurrent_ops_sem) != 0)
+  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 
 //  down_nums++;
@@ -211,7 +211,7 @@ void up_concurrent_micro_ops_number()
 #ifdef CHECKPOINT_ON
 //  d_printf1("up_concurrent_micro_ops_number() - begin\n");
 
-  if (USemaphoreUp(concurrent_ops_sem) != 0)
+  if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
 
 //  up_nums++;
