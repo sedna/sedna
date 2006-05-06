@@ -48,7 +48,7 @@ extern int exp_verbose;
 
 
 //function bulkloads XML file with filename to Sedna with docname
-int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, FILE* log);
+int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, const char *colname, FILE* log);
 
 //function executes XQuery expression in query and outputs the result to file f
 int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE* log);

@@ -1,5 +1,5 @@
 #include "se_exp_common.h"
-extern const char check_db_empty_query[];
+#include "se_exp_queries.h"
 
 
 //function checks that the database db_name is empty
@@ -38,7 +38,7 @@ int restore_security(struct SednaConnection *conn, const char *path, FILE* log) 
   char strbuf[PATH_SIZE];
 
    sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,log) != 0) {
+   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,NULL,log) != 0) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"))
 	   return -1;
    } 
@@ -64,7 +64,7 @@ int restore_security(struct SednaConnection *conn, const char *path, FILE* log) 
 // se_import defines weather to import security information
 // if se_import equals to 1 it is rquired that the database is empty
 int import(const char *path,const char *url,const char *db_name,const char *login,const char *password, int sec_import) {
-  struct SednaConnection conn;
+  struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
   char strbuf[PATH_SIZE];
   char *cr_col_query = NULL;
   char *bl_docs_query = NULL;
@@ -73,6 +73,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   qbuf_t blq = {NULL,0,0};
   FILE *log = NULL;  
   int i,error_status=1;
+  int value;
 
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
@@ -95,6 +96,10 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		goto imp_error_no_conn;
 	}
 	FTRACE((log,"done\n"));
+
+	value = SEDNA_AUTOCOMMIT_OFF;
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+
 
 
     FTRACE((log,"Starting transaction..."));
@@ -134,7 +139,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if ((upd_sec_query = read_query(strbuf))==NULL)
 		goto imp_error;
 	*/
-	FTRACE((log,"done\n"));
+    FTRACE((log,"done\n"));
 
 	
 
@@ -150,23 +155,36 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if (split_query(bl_docs_query,&blq)!=0) 
 		goto imp_error;
     
-	for (i=0;i<blq.d_size;i++) {
+    for (i=0;i<blq.d_size;i++) {
+		char *docname=blq.buf[i];
+		char *colname=blq.buf[i];
+		// blq.buf[i] = "docname['colname]"
+		while (*colname!='\'' && *colname!='\0') colname++;
+		if (*colname=='\'') {
+			*colname='\0';
+			colname++;
+		} else {
+			colname=NULL;
+		}
 		sprintf(strbuf,"%s%d.xml",path,i+1);
-		FTRACE((log,"Bulkload document '%s'...",blq.buf[i]))	
-		if (bulkload_xml(&conn,strbuf,blq.buf[i],log)!=0)
+		if (colname==NULL)
+		  FTRACE((log,"Bulkload document '%s'...",docname))
+		else
+		  FTRACE((log,"Bulkload document '%s' into collection '%s'...",docname,colname))
+		if (bulkload_xml(&conn,strbuf,docname,colname,log)!=0)
 			goto imp_error;
 		FTRACE((log,"done\n"));
 	}
 
-	/* while Andrey fixing the bug in $indexes.xml
+	
 	FTRACE((log,"Creating indexes..."))
 	if (strlen(cr_indexes_query)==0)
 		FTRACE((log,"(no indexes in the database)")) 
 	else
-		if (execute_multiquery(&conn,cr_indexes_query)!=0) 
+		if (execute_multiquery(&conn,cr_indexes_query,log)!=0) 
 			goto imp_error;
 	FTRACE((log,"done\n"));
-	*/
+
 
 
 	// processing security information
@@ -214,3 +232,14 @@ imp_error_no_conn:
 	else
 		return 0;
 }
+
+
+
+
+const char check_db_empty_query[] = "let $docs := document(\"$documents.xml\")/DOCUMENTS/SA_DOCUMENT[ @name != \"db_security_data\"] \
+                                     let $cols := document(\"$collections.xml\")/COLLECTION/* \
+                                     let $ind  := document(\"$indexes.xml\")/INDEXES/* \
+                                     let $sec-users  := document(\"db_security_data\")/db_security_data/users/user[@user_name != \"SYSTEM\"] \
+                                     let $sec-roles  := document(\"db_security_data\")/db_security_data/roles/role[@role_name != \"DBA\" and @role_name != \"PUBLIC\"] \
+                                     let $all := ($docs, $cols, $ind, $sec-users, $sec-roles) \
+                                     return if (empty($all)) then 1 else 0 ";

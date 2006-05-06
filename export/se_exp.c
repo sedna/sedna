@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
 	} else
 	if (!strcmp(command,"restore")) {
 		printf("\nRESTORING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
+		// restore means to restore all data + security information
 		if (import(path,host,db_name,login,password,1)!=0) {
 			printf("\nIMPORT FAILED\n");
 			exit(-1);
@@ -82,9 +83,10 @@ int main(int argc, char* argv[]) {
 		}
 	} else {
 		printf("\nIMPORTING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
+		// import means to restore all data except security information
 		if (import(path,host,db_name,login,password,0)!=0) {
 			printf("\nIMPORT FAILED\n");
-			exit(-1);
+			//exit(-1);
 		} else {
 			printf("IMPORT SUCCEDED\n");
 		}

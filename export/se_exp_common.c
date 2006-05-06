@@ -91,7 +91,7 @@ char* execute_query_str(struct SednaConnection *conn, const char *query, FILE* l
 
    res = SEexecute(conn,query);
    if ((res != SEDNA_QUERY_SUCCEEDED) && (res != SEDNA_UPDATE_SUCCEEDED) && (res != SEDNA_BULK_LOAD_SUCCEEDED)) {
-		ETRACE((log, "ERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
+		ETRACE((log, "\nERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
 	    return NULL;
    }
    
@@ -106,7 +106,7 @@ char* execute_query_str(struct SednaConnection *conn, const char *query, FILE* l
 		 res = SEnext(conn);
       }
 	  if (res==SEDNA_ERROR) {
-		 ETRACE((log,"ERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
+		 ETRACE((log,"\nERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
 		 return NULL;
       }
    } else  {
@@ -126,7 +126,7 @@ int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE
 
    res = SEexecute(conn,query);
    if ((res != SEDNA_QUERY_SUCCEEDED) && (res != SEDNA_UPDATE_SUCCEEDED) && (res != SEDNA_BULK_LOAD_SUCCEEDED)) {
-		ETRACE((log, "ERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
+		ETRACE((log, "\nERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
 	    return -1;
    }
    
@@ -143,7 +143,7 @@ int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE
 		 res = SEnext(conn);
       }
 	  if (res==SEDNA_ERROR) {
-		 ETRACE((log,"ERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
+		 ETRACE((log,"\nERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
 		 return -1;
       }
    } else  {
@@ -166,7 +166,7 @@ int fill_qbuf(struct SednaConnection *conn, qbuf_t* qbuf, const char *query, FIL
 
 	res = SEexecute(conn,query);
 	if ((res != SEDNA_QUERY_SUCCEEDED) && (res != SEDNA_UPDATE_SUCCEEDED) && (res != SEDNA_BULK_LOAD_SUCCEEDED)) {
-		ETRACE((log,"ERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
+		ETRACE((log,"\nERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",query,SEgetLastErrorMsg(conn)))
 		return -1;
 	}
 
@@ -183,7 +183,7 @@ int fill_qbuf(struct SednaConnection *conn, qbuf_t* qbuf, const char *query, FIL
 		    }
 
 			if (res==SEDNA_ERROR) {
-				ETRACE((log,"ERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
+				ETRACE((log,"\nERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query))
 				return -1;
 		    }
 	} else  {
@@ -198,7 +198,7 @@ int write_xquery_script(qbuf_t *qbuf,const char * filename) {
   FILE* file;
   int i;
 	if ((file=fopen(filename,"w"))==NULL) {
-		  printf("ERROR: failed to open file %s for writing",filename);
+		  printf("\nERROR: failed to open file %s for writing",filename);
 		  return -1;
 	}
 	for (i=0;i<(qbuf->d_size-1);i++) 
@@ -224,7 +224,7 @@ int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log) {
 
 
 
-int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, FILE* log) {
+int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, const char *colname, FILE* log) {
   FILE *f=NULL;
   int real_read;
   char fr_buf[RF_PORTION_SIZE+1];
@@ -236,10 +236,11 @@ int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *d
 	do {
 		real_read = fread(fr_buf, sizeof(char), RF_PORTION_SIZE, f);
 		fr_buf[real_read]='\0';
-		if (SEloadData(conn,fr_buf,real_read,docname,"")!=SEDNA_DATA_CHUNK_LOADED) {
-			ETRACE((log,"\n\nERROR: failed while bulk load file '%s'\n%s\n",filename,SEgetLastErrorMsg(conn)))
-			return -1;
-		}
+		if (real_read>0) 
+		  if (SEloadData(conn,fr_buf,real_read,docname,colname)!=SEDNA_DATA_CHUNK_LOADED) {
+	      		ETRACE((log,"\n\nERROR: failed while bulk load file '%s'\n%s\n",filename,SEgetLastErrorMsg(conn)))
+	      		return -1;
+		  }
 	} while (real_read == RF_PORTION_SIZE); 
 	
 	if (SEendLoadData(conn)!=SEDNA_BULK_LOAD_SUCCEEDED) {

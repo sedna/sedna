@@ -1,15 +1,19 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 
+
+
+
 // function exports data from database to the specified directory
 int export(const char * path,const char *url,const char *db_name,const char *login,const char *password) {
-  struct SednaConnection conn;
+  struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
   qbuf_t exp_docs = {NULL,0,0};
   qbuf_t load_docs = {NULL,0,0};
   qbuf_t create_colls = {NULL,0,0};
   qbuf_t create_indexes = {NULL,0,0};
   qbuf_t create_sec = {NULL,0,0};
   int i,res,error_status=1;
+  int value;
   FILE *log,*f;
   char strbuf[PATH_SIZE];
 
@@ -27,6 +31,9 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		goto exp_error_no_conn;
 	}
 	FTRACE((log,"done\n"));
+	
+	value = SEDNA_AUTOCOMMIT_OFF;
+    SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
 	
     FTRACE((log,"Starting transaction..."));
 	if ((res = SEbegin(&conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
@@ -138,3 +145,39 @@ exp_error_no_conn:
 	else
 		return 0;
 }
+
+
+
+
+
+const char load_docs_query[] = "declare option output \"indent=no\"; \
+                                let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
+											    where $i/@name != \"db_security_data\" \
+												   return string-value($i/@name), \
+                                    $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
+                                                for $j in $i/DOCUMENT \
+                                                   return fn:concat($j/@name,\"'\",$i/@name) \
+                                return ($reg-docs,$col-docs)";
+ 
+
+const char exp_docs_query[] = "let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
+											   where $i/@name != \"db_security_data\" \
+                                                 return fn:concat(\"document('\",$i/@name,\"')\"), \
+                                   $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
+                                               for $j in $i/DOCUMENT \
+                                                 return fn:concat(\"document('\",$j/@name,\"','\",$i/@name,\"')\") \
+                               return ($reg-docs,$col-docs)";
+
+const char create_colls_query[] = "for $i in document(\"$collections.xml\")/*/COLLECTION \
+								   return fn:concat(\"CREATE COLLECTION '\",$i/@name,\"'\")";
+
+const char create_sec_query[] = "for $i in document(\"$collections.xml\")/NODATA \
+								 return fn:concat(\"CREATE COLLECTION '\",$i/@name,\"'\")";
+
+const char create_indexes_query[] = "for $i in document(\"$indexes.xml\")/INDEXES/INDEX \
+                                     return \
+                                       fn:concat(\"CREATE INDEX '\", $i/@title, \"' ON \", \
+                                       fn:concat($i/@indexed_object,\"('\",$i/@object_title,\"')\", \"/\", $i/@value_path), \
+                                       \" BY \", \
+									   $i/@key_path, \
+									   \" AS \",  $i/@key_type)";
