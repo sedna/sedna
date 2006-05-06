@@ -9,6 +9,7 @@
 #include "btintern.h"
 #include "btstruct.h"
 #include "buff.h"
+#include "btree.h"
 #include "vmm.h"
 
 
@@ -109,6 +110,53 @@ void bt_leaf_delete_key(char* pg, shft key_idx)
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
     (*BT_KEY_NUM_PTR(pg)) -= 1;
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+	if (!BT_KEY_NUM(pg))
+		bt_drop_page((const btree_blk_hdr*) pg);
+   
+}
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+void bt_nleaf_delete_key(char* pg, shft key_idx)
+{
+    shft    key_size = BT_KEY_SIZE(pg);
+    shft    key_tab_slot_size;
+    char*   dst = bt_tune_buffering(true, key_size);
+    char*   buf = dst;
+    char*   src = BT_KEY_TAB(pg);
+    shft    heap_shft;
+    int     i;
+
+    /* set the key table slot size */
+    if (!key_size)
+        key_tab_slot_size = 2*sizeof(shft);
+    else
+        key_tab_slot_size = key_size;
+
+    bt_buffer_header(pg, dst);
+    /* copy all but 'key_idx'-th keys */
+    for(i = 0; i < BT_KEY_NUM(pg); i++)
+    {
+        if (i == key_idx)
+        { /* move to next key tab slot */
+            src += key_tab_slot_size;
+            continue;
+        }
+        bt_buffer_key(pg, src, dst);
+    }
+    /* copy all but 'key_idx'-th chunks */
+    src = BT_CHNK_TAB(pg);
+    for (i = 0; i < BT_KEY_NUM(pg); i++)
+    {
+        if (i == key_idx)
+        { /* move to next chnk tab slot */
+            src += sizeof(xptr);
+            continue;
+        }
+		bt_buffer_bigptr(pg, src, dst);
+	}
+    /* copy buffers to the pages and actualize headers */
+    memcpy(pg, buf, PAGE_SIZE);
+    (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
+    (*BT_KEY_NUM_PTR(pg)) -= 1;
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));   
 }

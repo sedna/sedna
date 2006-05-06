@@ -28,6 +28,6 @@ void			bt_insert(xptr &root, const bt_key &key, const object &obj);
 void			bt_modify(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj);
 void			bt_delete(xptr &root, const bt_key &key, const object &obj);	/* delete key/obj pair */
 void			bt_delete(xptr &root, const bt_key &key);						/* delete key with all it's objects */
-
+void           bt_drop_page(const btree_blk_hdr * pg);
 #endif
 
