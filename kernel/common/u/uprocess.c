@@ -19,7 +19,7 @@
 #endif
 
 
-int uSetEnvironmentVariable(const char* name, const char* value)
+int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = SetEnvironmentVariable(
@@ -51,7 +51,7 @@ int uSetEnvironmentVariable(const char* name, const char* value)
 #endif
 }
 
-int uGetEnvironmentVariable(const char* name, char* buf, int size)
+int uGetEnvironmentVariable(const char* name, char* buf, int size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res = 0;
@@ -91,7 +91,8 @@ int uCreateProcess(
            UTHANDLE *thread_handle,
            UPID *process_id,
            UTID *thread_id,
-           USECURITY_ATTRIBUTES* sa
+           USECURITY_ATTRIBUTES* sa,
+           sys_call_error_fun fun
     )
 {
 #ifdef _WIN32
@@ -224,7 +225,7 @@ int uCreateProcess(
 #endif
 }
 
-int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code)
+int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = TerminateProcess(
@@ -248,7 +249,7 @@ int uTerminateProcess(UPID pid, UPHANDLE h, int exit_code)
 #endif
 }
 
-void uExitProcess(int exit_code)
+void uExitProcess(int exit_code, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     ExitProcess(exit_code);
@@ -257,7 +258,7 @@ void uExitProcess(int exit_code)
 #endif
 }
 
-UPID uGetCurrentProcessId()
+UPID uGetCurrentProcessId(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return GetCurrentProcessId();
@@ -266,7 +267,7 @@ UPID uGetCurrentProcessId()
 #endif
 }
 
-int uIsProcessExist(UPID pid, UPHANDLE h)
+int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = FALSE;
@@ -307,7 +308,7 @@ int uIsProcessExist(UPID pid, UPHANDLE h)
 #endif
 }
 
-int uOpenProcess(UPID pid, UPHANDLE *h)
+int uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     *h = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid); 
@@ -322,7 +323,7 @@ int uOpenProcess(UPID pid, UPHANDLE *h)
 #endif
 }
 
-int uCloseProcess(UPHANDLE h)
+int uCloseProcess(UPHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     int res;
@@ -338,7 +339,7 @@ int uCloseProcess(UPHANDLE h)
 #endif
 }
 
-int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status)
+int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res1 = 0;
@@ -381,7 +382,7 @@ int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status)
 #endif
 }
 
-int uWaitForProcess(UPID pid, UPHANDLE h)
+int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res;    
@@ -571,7 +572,7 @@ int find_executable(const char *name, char *buf, int size)
 char *program_name_argv_0 = NULL;
 
 
-char* uGetImageProcPath(char *buf)
+char* uGetImageProcPath(char *buf, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     char *p = buf;

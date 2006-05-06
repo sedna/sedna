@@ -558,20 +558,20 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 extern "C" {
 #endif
 
-#define sys_call_error(sys_call)  __sys_call_error(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
+//#define sys_call_error(sys_call)  __sys_call_error(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
 
-/*
-#define sys_call_error(fun, sys_call)  fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
-sys_call_error_fun fun
+
+#define sys_call_error(sys_call)  (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call) : (void)0)
+//sys_call_error_fun fun
 typedef void (*sys_call_error_fun)(const char *filename, int lineno, const char *funcname, const char *sys_call);
-*/
 
-void uSleep(unsigned int secs);
+
+void uSleep(unsigned int secs, sys_call_error_fun fun);
 char* ustrerror(int errnum);
 int ustrerror_r(int errnum, char *buf, size_t n);
 void uperror(const char *s);
 void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call);
-int uNotInheritDescriptor(UHANDLE h);
+int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

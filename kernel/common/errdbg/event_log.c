@@ -46,7 +46,7 @@ int event_log_truncate = 0;
 #define EVENT_LOG_START_MSG_PROCESSING \
     va_list ap; \
     int res = 0; \
-    USemaphoreArrDown(el_sems, 0); \
+    USemaphoreArrDown(el_sems, 0, __sys_call_error); \
     va_start(ap, s); \
     res = _vsnprintf(el_msg->content, SE_EVENT_LOG_CONTENT_LEN, s, ap); \
     va_end(ap);
@@ -419,7 +419,7 @@ static U_THREAD_PROC(__event_log_daemon, arg)
 
     while (1)
     {
-        USemaphoreArrDown(el_sems, 1);
+        USemaphoreArrDown(el_sems, 1, __sys_call_error);
 
         if (el_shutdown_daemon && el_msg->processed)
             return 0;
@@ -434,8 +434,8 @@ static U_THREAD_PROC(__event_log_daemon, arg)
                 __event_log_write_long_msg_start();
                 while (long_msg_next)
                 {
-                    USemaphoreArrUp(el_sems, 2);
-                    USemaphoreArrDown(el_sems, 3);
+                    USemaphoreArrUp(el_sems, 2, __sys_call_error);
+                    USemaphoreArrDown(el_sems, 3, __sys_call_error);
                     long_msg_next = __event_log_write_long_msg_next_end();
                 }
                 long_msg_next = true;
@@ -444,7 +444,7 @@ static U_THREAD_PROC(__event_log_daemon, arg)
 
         el_msg->processed = 1;
 
-        USemaphoreArrUp(el_sems, 0);
+        USemaphoreArrUp(el_sems, 0, __sys_call_error);
     }
 
     return 0;
@@ -472,7 +472,7 @@ int event_log_short_msg_macro(int elevel,
         el_msg->content[SE_EVENT_LOG_CONTENT_LEN - 1] = '\0';
     }
 
-    USemaphoreArrUp(el_sems, 1);
+    USemaphoreArrUp(el_sems, 1, __sys_call_error);
 
     return 0;
 }
@@ -535,7 +535,7 @@ int event_log_long_msg(int elevel,
     int short_str_len = 0, long_str_len = 0;
     bool copy = true;
 
-    USemaphoreArrDown(el_sems, 0);
+    USemaphoreArrDown(el_sems, 0, __sys_call_error);
 
     __event_log_set_msg_attrs(elevel, filename, lineno, funcname);
 
@@ -573,11 +573,11 @@ int event_log_long_msg(int elevel,
         }
     }
 
-    USemaphoreArrUp(el_sems, 1);
+    USemaphoreArrUp(el_sems, 1, __sys_call_error);
 
     while (copy)
     {
-        USemaphoreArrDown(el_sems, 2);
+        USemaphoreArrDown(el_sems, 2, __sys_call_error);
 
         portion_size = s_min(SE_EVENT_LOG_CONTENT_LEN - 1, long_str_len - pos);
         memcpy(el_msg->content, long_str + pos, portion_size);
@@ -592,7 +592,7 @@ int event_log_long_msg(int elevel,
             copy = false;
         }
 
-        USemaphoreArrUp(el_sems, 3);
+        USemaphoreArrUp(el_sems, 3, __sys_call_error);
     }
 
     return 0;
@@ -618,19 +618,19 @@ int event_logger_start_daemon(int elevel, global_name shm_name, global_name sems
     int sems_init_values[SE_EVENT_LOG_SEMS_NUM] = {1, 0, 0, 0};
 
     /* create shared memory */
-    if (uCreateShMem(&el_shmem, shm_name, sizeof(event_log_msg), NULL) != 0)
+    if (uCreateShMem(&el_shmem, shm_name, sizeof(event_log_msg), NULL, __sys_call_error) != 0)
         return 1;
 
-    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg));
+    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg), __sys_call_error);
     if (el_msg == NULL)
         return 2;
 
     /* create semaphores */
-    if (USemaphoreArrCreate(&el_sems, SE_EVENT_LOG_SEMS_NUM, sems_init_values, sems_name, NULL) != 0)
+    if (USemaphoreArrCreate(&el_sems, SE_EVENT_LOG_SEMS_NUM, sems_init_values, sems_name, NULL, __sys_call_error) != 0)
         return 3;
 
     /* start daemon thread */
-    if (uCreateThread(__event_log_daemon, NULL, &el_thread_handle, SE_EVENT_LOG_THREAD_STACK_SIZE, NULL) != 0)
+    if (uCreateThread(__event_log_daemon, NULL, &el_thread_handle, SE_EVENT_LOG_THREAD_STACK_SIZE, NULL, __sys_call_error) != 0)
         return 4;
 
     /* set actual event_log_elevel */
@@ -653,25 +653,25 @@ int event_logger_shutdown_daemon()
     
         /* stop daemon thread */
         el_shutdown_daemon = true;
-        USemaphoreArrUp(el_sems, 1);
+        USemaphoreArrUp(el_sems, 1, __sys_call_error);
     
-        if (uThreadJoin(el_thread_handle) != 0)
+        if (uThreadJoin(el_thread_handle, __sys_call_error) != 0)
             return 1;
     
-        if (uCloseThreadHandle(el_thread_handle) != 0)
+        if (uCloseThreadHandle(el_thread_handle, __sys_call_error) != 0)
            return 2;
     
         /* release semaphores */
-        if (USemaphoreArrRelease(el_sems, SE_EVENT_LOG_SEMS_NUM) != 0)
+        if (USemaphoreArrRelease(el_sems, SE_EVENT_LOG_SEMS_NUM, __sys_call_error) != 0)
             return 3;
     
         /* release shared memory */
-        if (uDettachShMem(el_shmem, el_msg) != 0)
+        if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
             return 4;
     
         el_msg = NULL;
     
-        if (uReleaseShMem(el_shmem) != 0)
+        if (uReleaseShMem(el_shmem, __sys_call_error) != 0)
             return 5;
     }
 
@@ -681,15 +681,15 @@ int event_logger_shutdown_daemon()
 int event_logger_init(int component, const char* component_detail, global_name shm_name, global_name sems_name)
 {
     /* open shared memory */
-    if (uOpenShMem(&el_shmem, shm_name, sizeof(event_log_msg)) != 0)
+    if (uOpenShMem(&el_shmem, shm_name, sizeof(event_log_msg), __sys_call_error) != 0)
         return 1;
 
-    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg));
+    el_msg = (event_log_msg*)uAttachShMem(el_shmem, NULL, sizeof(event_log_msg), __sys_call_error);
     if (el_msg == NULL) 
         return 2;
 
     /* open semaphores */    
-    if (USemaphoreArrOpen(&el_sems, SE_EVENT_LOG_SEMS_NUM, sems_name) != 0)
+    if (USemaphoreArrOpen(&el_sems, SE_EVENT_LOG_SEMS_NUM, sems_name, __sys_call_error) != 0)
         return 3;
 
     /* read actual event_log_elevel */
@@ -709,16 +709,16 @@ int event_logger_release()
         event_log_initialized = 0;
     
         /* close semaphores */
-        if (USemaphoreArrClose(el_sems, SE_EVENT_LOG_SEMS_NUM) != 0)
+        if (USemaphoreArrClose(el_sems, SE_EVENT_LOG_SEMS_NUM, __sys_call_error) != 0)
             return 1;
     
         /* close shared memory */
-        if (uDettachShMem(el_shmem, el_msg) != 0)
+        if (uDettachShMem(el_shmem, el_msg, __sys_call_error) != 0)
             return 2;
     
         el_msg = NULL;
     
-        if (uCloseShMem(el_shmem) != 0)
+        if (uCloseShMem(el_shmem, __sys_call_error) != 0)
             return 3;
     }
 

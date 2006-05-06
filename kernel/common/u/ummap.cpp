@@ -9,7 +9,7 @@
 
 //#define RIGHTS		00660
 
-UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBUTES* sa)
+UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     UMMap m;
@@ -61,7 +61,7 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
 #endif
 }
 
-UMMap uOpenFileMapping(UFile fd, int size, const char *name)
+UMMap uOpenFileMapping(UFile fd, int size, const char *name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     UMMap m;
@@ -101,7 +101,7 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name)
 #endif
 }
 
-int uReleaseFileMapping(UMMap m, const char *name)
+int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if( CloseHandle(m.map) == 0)
@@ -124,7 +124,7 @@ int uReleaseFileMapping(UMMap m, const char *name)
 #endif
 }
 
-int uCloseFileMapping(UMMap m)
+int uCloseFileMapping(UMMap m, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (CloseHandle(m.map) == 0)
@@ -138,7 +138,7 @@ int uCloseFileMapping(UMMap m)
 #endif
 }
 
-void *uMapViewOfFile(UMMap m, void *addr, int size, int offs)
+void *uMapViewOfFile(UMMap m, void *addr, int size, int offs, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     void *ret_val;
@@ -172,7 +172,7 @@ void *uMapViewOfFile(UMMap m, void *addr, int size, int offs)
 #endif
 }
 
-int uUnmapViewOfFile(UMMap m, void *addr, int size)
+int uUnmapViewOfFile(UMMap m, void *addr, int size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (UnmapViewOfFile(addr) == 0)
@@ -194,7 +194,7 @@ int uUnmapViewOfFile(UMMap m, void *addr, int size)
 #endif
 }
 
-int uFlushViewOfFile(UMMap m, void *addr, int size)
+int uFlushViewOfFile(UMMap m, void *addr, int size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (FlushViewOfFile(addr, size) == 0)
@@ -219,7 +219,7 @@ int uFlushViewOfFile(UMMap m, void *addr, int size)
 #endif
 }
 
-int uMemLock(void *addr, size_t size)
+int uMemLock(void *addr, size_t size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (VirtualLock(addr, size) == 0)
@@ -235,7 +235,7 @@ int uMemLock(void *addr, size_t size)
 #endif
 }
 
-int uMemUnlock(void *addr, size_t size)
+int uMemUnlock(void *addr, size_t size, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     if (VirtualUnlock(addr, size) == 0)

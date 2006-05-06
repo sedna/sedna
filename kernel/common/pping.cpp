@@ -29,7 +29,7 @@
 
 U_THREAD_PROC(pping_client_thread_proc, arg)
 {
-    if (uThreadBlockAllSignals() != 0)
+    if (uThreadBlockAllSignals(NULL) != 0)
         d_printf1("Failed to block signals for pping_client_thread_proc");
 
     pping_client *ppc = (pping_client*)arg;
@@ -38,14 +38,14 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
     while (true)
     {
         if (ppc->stop_keep_alive) return 0;
-        if (usend(ppc->sock, &c, sizeof(c)) != sizeof(c))
+        if (usend(ppc->sock, &c, sizeof(c), NULL) != sizeof(c))
         {
             if (!ppc->stop_keep_alive)
             {
                 sedna_soft_fault("SEDNA GOVERNOR is down");
             }
         }
-        UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000);
+        UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000, NULL);
     }
     return 0;
 }
@@ -91,12 +91,12 @@ void pping_client::throw_exception(SednaUserException& e, bool is_soft)
 void pping_client::startup(SednaUserException& e, bool is_soft)
 {
 #ifdef PPING_ON
-    sock = usocket(AF_INET, SOCK_STREAM, 0);
+    sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
     if (host)
     {
-        if (uconnect_tcp(sock, port, host) == U_SOCKET_ERROR) throw_exception(e, is_soft);
+        if (uconnect_tcp(sock, port, host, __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
             //throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
     }
     else
@@ -104,15 +104,15 @@ void pping_client::startup(SednaUserException& e, bool is_soft)
 //        std::string local_host;
 //        if (ulocalhost(&local_host) == U_SOCKET_ERROR)
 //            throw USER_ENV_EXCEPTION("Failed to obtain local host name", false);
-        if (uconnect_tcp(sock, port, "127.0.0.1") == U_SOCKET_ERROR) throw_exception(e, is_soft);
+        if (uconnect_tcp(sock, port, "127.0.0.1", __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
             //throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
     }
 
-    if (UUnnamedSemaphoreCreate(&sem, 0, NULL) != 0)
+    if (UUnnamedSemaphoreCreate(&sem, 0, NULL, __sys_call_error) != 0)
         throw USER_ENV_EXCEPTION("Failed to create semaphore", false);
 
 
-    uResVal res = uCreateThread(pping_client_thread_proc, this, &client_thread_handle, PPING_STACK_SIZE, NULL);
+    uResVal res = uCreateThread(pping_client_thread_proc, this, &client_thread_handle, PPING_STACK_SIZE, NULL, __sys_call_error);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping client thread", false);
 
     initialized = true;
@@ -125,22 +125,22 @@ void pping_client::shutdown()
     if (!initialized) return;
 
     stop_keep_alive = true;
-    if (UUnnamedSemaphoreUp(&sem) != 0)
+    if (UUnnamedSemaphoreUp(&sem, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to up semaphore", false);
 
-    if (uThreadJoin(client_thread_handle) != 0)
+    if (uThreadJoin(client_thread_handle, NULL) != 0)
         throw USER_ENV_EXCEPTION("Error waiting for pping client thread to shutdown", false);
 
-    if (uCloseThreadHandle(client_thread_handle) != 0)
+    if (uCloseThreadHandle(client_thread_handle, NULL) != 0)
         throw USER_EXCEPTION2(SE4063, "pping client_thread");
 
     char c = PPING_DISCONNECT_MSG;
-    if (usend(sock, &c, sizeof(char)) != sizeof(char))
+    if (usend(sock, &c, sizeof(char), NULL) != sizeof(char))
         throw SYSTEM_EXCEPTION("pping server is down");
-    if (uclose_socket(sock) == U_SOCKET_ERROR)
+    if (uclose_socket(sock, NULL) == U_SOCKET_ERROR)
         throw USER_ENV_EXCEPTION("Failed to close socket", false);
 
-    if (UUnnamedSemaphoreRelease(&sem) != 0)
+    if (UUnnamedSemaphoreRelease(&sem, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to release semaphore", false);
     
 #endif
@@ -162,7 +162,7 @@ struct pping_serv_arg
 
 U_THREAD_PROC(pping_server_cli_thread_proc, arg)
 {
-    if (uThreadBlockAllSignals() != 0)
+    if (uThreadBlockAllSignals(NULL) != 0)
         d_printf1("Failed to block signals for SSMMsg_server_proc");
 
     pping_server *pps = ((pping_serv_arg*)arg)->pps;
@@ -173,13 +173,13 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     char c = PPING_DISCONNECT_MSG;
     while (true)
     {
-        if (urecv(sock, &c, sizeof(c)) != sizeof(c)) goto sys_failure;
+        if (urecv(sock, &c, sizeof(c), NULL) != sizeof(c)) goto sys_failure;
         if (c == PPING_DISCONNECT_MSG) break;
         if (c != PPING_KEEP_ALIVE_MSG) goto sys_failure;
     }
 
     //d_printf1("pping_server's client is closed\n");
-    if (uclose_socket(sock) == U_SOCKET_ERROR) goto sys_failure;
+    if (uclose_socket(sock, NULL) == U_SOCKET_ERROR) goto sys_failure;
 
     pps->thread_table[id].is_running = false;
     return 0;
@@ -192,7 +192,7 @@ sys_failure:
 
 U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
 {
-    if (uThreadBlockAllSignals() != 0)
+    if (uThreadBlockAllSignals(NULL) != 0)
         d_printf1("Failed to block signals for SSMMsg_server_proc");
 
     pping_server *pps = (pping_server*)arg;
@@ -205,7 +205,7 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
         //accept a call from a client
         pps_arg->pps = pps;
         pps_arg->id = -1;
-        pps_arg->sock = uaccept(pps->sock);
+        pps_arg->sock = uaccept(pps->sock, NULL);
 
         if (pps_arg->sock == U_INVALID_SOCKET || pps->close_lstn_thread) 
         {
@@ -215,9 +215,9 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
                 {
                     if (!(pps->thread_table[i].is_empty))
                     {
-                        if (uThreadJoin(pps->thread_table[i].handle) != 0)
+                        if (uThreadJoin(pps->thread_table[i].handle, NULL) != 0)
                             goto sys_failure;
-                        if (uCloseThreadHandle(pps->thread_table[i].handle) != 0)
+                        if (uCloseThreadHandle(pps->thread_table[i].handle, NULL) != 0)
                             goto sys_failure;
 
                         pps->thread_table[i].handle = (UTHANDLE)0;
@@ -236,9 +236,9 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
             if (!(pps->thread_table[i].is_empty) &&
                 !(pps->thread_table[i].is_running))
             {
-                if (uThreadJoin(pps->thread_table[i].handle) != 0)
+                if (uThreadJoin(pps->thread_table[i].handle, NULL) != 0)
                     goto sys_failure;
-                if (uCloseThreadHandle(pps->thread_table[i].handle) != 0)
+                if (uCloseThreadHandle(pps->thread_table[i].handle, NULL) != 0)
                     goto sys_failure;
 
                 pps->thread_table[i].handle = (UTHANDLE)0;
@@ -256,6 +256,7 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
                                     pps_arg, 
                                     &(pps->thread_table[pps_arg->id].handle), 
                                     PPING_STACK_SIZE,
+                                    NULL,
                                     NULL);
         if (res != 0) goto sys_failure;
     }
@@ -292,14 +293,14 @@ pping_server::~pping_server()
 void pping_server::startup()
 {
 #ifdef PPING_ON
-    sock = usocket(AF_INET, SOCK_STREAM, 0);
+    sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
 
-    if (ubind_tcp(sock, port) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION2("Failed to bind socket", usocket_error_translator(), false);
+    if (ubind_tcp(sock, port, __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION2("Failed to bind socket", usocket_error_translator(), false);
 
-    if (ulisten(sock, PPING_LSTNR_QUEUE_LEN) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
+    if (ulisten(sock, PPING_LSTNR_QUEUE_LEN, __sys_call_error) == U_SOCKET_ERROR) throw USER_ENV_EXCEPTION("Failed to listen socket", false);
 
-    uResVal res = uCreateThread(pping_server_lstn_thread_proc, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL);
+    uResVal res = uCreateThread(pping_server_lstn_thread_proc, this, &server_lstn_thread_handle, PPING_STACK_SIZE, NULL, __sys_call_error);
     if (res != 0) throw USER_ENV_EXCEPTION("Failed to create pping server thread", false);
     initialized = true;
 #endif
@@ -313,27 +314,27 @@ void pping_server::shutdown()
     close_lstn_thread = true;
 
     // send closing message: begin
-    USOCKET s = usocket(AF_INET, SOCK_STREAM, 0);
+    USOCKET s = usocket(AF_INET, SOCK_STREAM, 0, NULL);
     if (s == U_INVALID_SOCKET) 
         throw USER_ENV_EXCEPTION("Failed to create socket", false);
 
-    if (uconnect_tcp(s, port, "127.0.0.1") == U_SOCKET_ERROR) 
+    if (uconnect_tcp(s, port, "127.0.0.1", NULL) == U_SOCKET_ERROR) 
         throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
 
     char c = PPING_KEEP_ALIVE_MSG;
-    usend(s, &c, sizeof(c));
+    usend(s, &c, sizeof(c), NULL);
 
-    if (uclose_socket(s) != 0)
+    if (uclose_socket(s, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to close socket", false);
     // send closin message: end
 
-    if (uclose_socket(sock) != 0)
+    if (uclose_socket(sock, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to close socket", false);
 
-    if (uThreadJoin(server_lstn_thread_handle) != 0)
+    if (uThreadJoin(server_lstn_thread_handle, NULL) != 0)
         throw USER_ENV_EXCEPTION("Error waiting for pping server_lstn thread to shutdown", false);
 
-    if (uCloseThreadHandle(server_lstn_thread_handle) != 0)
+    if (uCloseThreadHandle(server_lstn_thread_handle, NULL) != 0)
         throw USER_EXCEPTION2(SE4063, "pping server_lstn_thread");
 
 

@@ -18,7 +18,7 @@ int sp_recv_msg(USOCKET s, struct msg_struct *msg)
 
     while (got < 8)
     {
-        rc = urecv(s, ptr + got, 8 - got);
+        rc = urecv(s, ptr + got, 8 - got, __sys_call_error);
         if ((rc == U_SOCKET_ERROR) || (rc == 0))
             return U_SOCKET_ERROR;
         got += rc;
@@ -34,7 +34,7 @@ int sp_recv_msg(USOCKET s, struct msg_struct *msg)
     got = 0;
     while (got < msg->length)
     {
-        rc = urecv(s, msg->body + got, msg->length - got);
+        rc = urecv(s, msg->body + got, msg->length - got, __sys_call_error);
         if ((rc == U_SOCKET_ERROR) || (rc == 0))
             return U_SOCKET_ERROR;
         got += rc;
@@ -55,7 +55,7 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
     
     while (sent < 8)
     {
-        rc = usend(s, ptr + sent, 8 - sent);
+        rc = usend(s, ptr + sent, 8 - sent, __sys_call_error);
         if (rc == U_SOCKET_ERROR)
             return U_SOCKET_ERROR;
         sent += rc;
@@ -64,7 +64,7 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
     sent = rc = 0;
     while (sent < msg->length)
     {
-        rc = usend(s, (const char *) (msg->body + sent), msg->length - sent);
+        rc = usend(s, (const char *) (msg->body + sent), msg->length - sent, __sys_call_error);
         if (rc == U_SOCKET_ERROR)
             return U_SOCKET_ERROR;
         sent += rc;

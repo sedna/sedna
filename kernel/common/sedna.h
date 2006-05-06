@@ -40,7 +40,7 @@ extern char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
 
 #define SEDNA_SOFT_FAULT_FINALIZER \
     fflush(stderr); \
-    uExitProcess(1)
+    uExitProcess(1, __sys_call_error)
 
 
 

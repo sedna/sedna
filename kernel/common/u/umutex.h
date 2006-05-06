@@ -38,23 +38,23 @@ typedef pthread_mutex_t		uMutex2Type;
 #endif
 */
 
-int uMutexInit(uMutexType *mutex);
+int uMutexInit(uMutexType *mutex, sys_call_error_fun fun);
 
-int uMutexLock(uMutexType *mutex);
+int uMutexLock(uMutexType *mutex, sys_call_error_fun fun);
 
-int uMutexUnlock(uMutexType *mutex);
+int uMutexUnlock(uMutexType *mutex, sys_call_error_fun fun);
 
-int uMutexDestroy(uMutexType *mutex);
+int uMutexDestroy(uMutexType *mutex, sys_call_error_fun fun);
 
 
 /*
-int uMutex2Create(uMutex2Type *mutex, int inheritable);
+int uMutex2Create(uMutex2Type *mutex, int inheritable, sys_call_error_fun fun);
 
-int uMutex2Lock(uMutex2Type *mutex);
+int uMutex2Lock(uMutex2Type *mutex, sys_call_error_fun fun);
 
-int uMutex2Unlock(uMutex2Type *mutex);
+int uMutex2Unlock(uMutex2Type *mutex, sys_call_error_fun fun);
 
-int uMutex2Destroy(uMutex2Type *mutex);
+int uMutex2Destroy(uMutex2Type *mutex, sys_call_error_fun fun);
 */
 #ifdef __cplusplus
 }

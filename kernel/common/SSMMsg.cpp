@@ -101,13 +101,13 @@ int SSMMsg::init()
 
     if (m == Server)
     {
-        if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size, NULL))
+        if (0 != uCreateShMem(&sh_mem, g_name_shmem, shared_memory_size, NULL, __sys_call_error))
         {
             d_printf1("uCreateShMem failed\n");
             return 1;
         }
 
-        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size);
+        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size, __sys_call_error);
         if (shar_mem == NULL)
         {
             d_printf1("uAttachShMem failed\n");
@@ -129,7 +129,7 @@ int SSMMsg::init()
         for (i = NAMED_SEMS_NUM; i < sems_num; i++)
             init_values[i] = 0;
 
-        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems, NULL))
+        if (0 != USemaphoreArrCreate(&sems, sems_num, init_values, g_name_sems, NULL, __sys_call_error))
         {
             d_printf1("USemaphoreArrCreate failed\n");
             return 1;
@@ -155,13 +155,13 @@ int SSMMsg::init()
     {
         //d_printf1("!!!!!!!!!!! Client initialization !!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
-        if (0 != uOpenShMem(&sh_mem, g_name_shmem, shared_memory_size))
+        if (0 != uOpenShMem(&sh_mem, g_name_shmem, shared_memory_size, __sys_call_error))
         {
             d_printf1("uOpenShMem failed\n");
             return 1;
         }
 
-        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size);
+        shar_mem = uAttachShMem(sh_mem, NULL, shared_memory_size, __sys_call_error);
         if (shar_mem == NULL)
         {
             d_printf1("uAttachShMem failed\n");
@@ -171,7 +171,7 @@ int SSMMsg::init()
         //d_printf2("shar_mem 0x%x\n", shar_mem);
         //d_printf2("shared_memory_size %d\n", shared_memory_size);
 
-        if (0 != USemaphoreArrOpen(&sems, sems_num, g_name_sems))
+        if (0 != USemaphoreArrOpen(&sems, sems_num, g_name_sems, __sys_call_error))
         {
             d_printf1("USemaphoreArrOpen failed\n");
             return 1;
@@ -194,7 +194,7 @@ int SSMMsg::init()
 
 int SSMMsg::shutdown()
 {
-    if (0 != uDettachShMem(sh_mem, shar_mem))
+    if (0 != uDettachShMem(sh_mem, shar_mem, __sys_call_error))
     {
         d_printf1("uDettachShMem failed\n");
         return 1;
@@ -202,13 +202,13 @@ int SSMMsg::shutdown()
 
     if (m == Server)
     {
-        if (0 != uReleaseShMem(sh_mem))
+        if (0 != uReleaseShMem(sh_mem, __sys_call_error))
         {
             d_printf1("uReleaseShMem failed\n");
             return 1;
         }
 
-        if (0 != USemaphoreArrRelease(sems, sems_num))
+        if (0 != USemaphoreArrRelease(sems, sems_num, __sys_call_error))
         {
             d_printf1("USemaphoreArrRelease failed\n");
             return 1;
@@ -216,13 +216,13 @@ int SSMMsg::shutdown()
     }
     else if (m == Client)
     {
-        if (0 != uCloseShMem(sh_mem))
+        if (0 != uCloseShMem(sh_mem, __sys_call_error))
         {
             d_printf1("uCloseShMem failed\n");
             return 1;
         }
 
-        if (0 != USemaphoreArrClose(sems, sems_num))
+        if (0 != USemaphoreArrClose(sems, sems_num, __sys_call_error))
         {
             d_printf1("USemaphoreArrClose failed\n");
             return 1;
@@ -237,19 +237,19 @@ int SSMMsg::shutdown()
 }
 
 
-#define down1(sems, idx, ret)        if (0 != USemaphoreArrDown(sems, idx))					\
+#define down1(sems, idx, ret)        if (0 != USemaphoreArrDown(sems, idx, __sys_call_error))					\
                                      {														\
                                          d_printf1("USemaphoreArrDown1 failed\n");			\
                                          return ret;										\
                                      }
 
-#define down2(sems, idx, ms, ret)    if (0 != USemaphoreArrDown(sems, idx/*, ms*/))			\
+#define down2(sems, idx, ms, ret)    if (0 != USemaphoreArrDown(sems, idx/*, ms*/, __sys_call_error))			\
                                      {														\
                                          d_printf1("USemaphoreArrDown2 failed\n");			\
                                          return ret;										\
                                      }
 
-#define up(sems, idx, ret)           if (0 != USemaphoreArrUp(sems, idx))					\
+#define up(sems, idx, ret)           if (0 != USemaphoreArrUp(sems, idx, __sys_call_error))					\
                                      {														\
                                          d_printf1("USemaphoreArrUp failed\n");				\
                                          return ret;										\
@@ -318,7 +318,7 @@ int SSMMsg::send_msg(void * buf)
 
 U_THREAD_PROC(SSMMsg_server_proc, arg)
 {
-    if (uThreadBlockAllSignals() != 0)
+    if (uThreadBlockAllSignals(__sys_call_error) != 0)
         d_printf1("Failed to block signals for SSMMsg_server_proc");
 
     int i = ((SSMMsg_server_thread_param*)arg)->i;
@@ -373,7 +373,7 @@ int SSMMsg::serve_clients(process_msg_func func)
         //d_printf2("server thread number %d started\n", i);
         UTHANDLE id;
         server_param->i = i;
-        uResVal res = uCreateThread(SSMMsg_server_proc, server_param, &id, PROCESS_METHOD_THREAD_STACK_SIZE, NULL);
+        uResVal res = uCreateThread(SSMMsg_server_proc, server_param, &id, PROCESS_METHOD_THREAD_STACK_SIZE, NULL, __sys_call_error);
         if (res != 0) 
         {
             d_printf1("Failed to create thread\n");
@@ -406,13 +406,13 @@ int SSMMsg::stop_serve_clients()
 
             for (i = 0; i < servers_amount; i++)
             {
-                if (uThreadJoin(thread_handles[i]) != 0)
+                if (uThreadJoin(thread_handles[i], __sys_call_error) != 0)
                 {
                     d_printf1("uThreadJoin failed\n");
                     return 1;
                 }
 
-                if (uCloseThreadHandle(thread_handles[i]) != 0)
+                if (uCloseThreadHandle(thread_handles[i], __sys_call_error) != 0)
                 {
                     d_printf1("uCloseThreadHandle failed\n");
                     return 1;
@@ -423,7 +423,7 @@ int SSMMsg::stop_serve_clients()
         }
         else up(sems, sem_mutex, 1);
 
-        uSleep(1);
+        uSleep(1, __sys_call_error);
     }
 
     return 0;

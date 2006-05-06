@@ -7,7 +7,7 @@
 #include "umutex.h"
 
 
-int uMutexInit(uMutexType *mutex)
+int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     InitializeCriticalSection(mutex);
@@ -27,7 +27,7 @@ int uMutexInit(uMutexType *mutex)
 #endif
 }
 
-int uMutexLock(uMutexType *mutex)
+int uMutexLock(uMutexType *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     EnterCriticalSection(mutex);
@@ -40,7 +40,7 @@ int uMutexLock(uMutexType *mutex)
 #endif
 }
 
-int uMutexUnlock(uMutexType *mutex)
+int uMutexUnlock(uMutexType *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     LeaveCriticalSection(mutex);
@@ -54,7 +54,7 @@ int uMutexUnlock(uMutexType *mutex)
 #endif
 }
 
-int uMutexDestroy(uMutexType *mutex)
+int uMutexDestroy(uMutexType *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DeleteCriticalSection(mutex);
@@ -73,7 +73,7 @@ int uMutexDestroy(uMutexType *mutex)
 
 
 /*
-int uMutex2Create(uMutex2Type *mutex, int inheritable)
+int uMutex2Create(uMutex2Type *mutex, int inheritable, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     SECURITY_ATTRIBUTES sa;
@@ -92,7 +92,7 @@ int uMutex2Create(uMutex2Type *mutex, int inheritable)
 #endif
 }
 
-int uMutex2Lock(uMutex2Type *mutex)
+int uMutex2Lock(uMutex2Type *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     DWORD res = WaitForSingleObject(
@@ -107,7 +107,7 @@ int uMutex2Lock(uMutex2Type *mutex)
 #endif
 }
 
-int uMutex2Unlock(uMutex2Type *mutex)
+int uMutex2Unlock(uMutex2Type *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = ReleaseMutex(
@@ -121,7 +121,7 @@ int uMutex2Unlock(uMutex2Type *mutex)
 #endif
 }
 
-int uMutex2Destroy(uMutex2Type *mutex)
+int uMutex2Destroy(uMutex2Type *mutex, sys_call_error_fun fun)
 {
 #ifdef _WIN32
     BOOL res = CloseHandle(

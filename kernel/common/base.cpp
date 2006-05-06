@@ -544,7 +544,7 @@ void set_sedna_data()
 
 
   char proc_buf[U_MAX_PATH + 1];
-  std::string proc_path = uGetImageProcPath(proc_buf);
+  std::string proc_path = uGetImageProcPath(proc_buf, __sys_call_error);
   std::string sedna_cfg_file;
   bool is_inside_lib = true;
 
