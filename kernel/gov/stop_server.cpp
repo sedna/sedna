@@ -72,11 +72,12 @@ int main(int argc, char** argv)
         if (!uIsAdmin()) throw USER_EXCEPTION(SE3064);
 #endif
         ppc.startup(e);
-        ppc.shutdown();
 
         event_logger_init(EL_STOP, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for GOVERNOR shutdown issued"));
         event_logger_release();
+
+        ppc.shutdown();
 
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
 
