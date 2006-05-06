@@ -19,7 +19,7 @@ void bm_rcv_init()
 {
     // open data file
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
-    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH);
+    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 }
@@ -27,7 +27,7 @@ void bm_rcv_init()
 void bm_rcv_release()
 {
     // close data file
-    if (uCloseFile(data_file_handler) == 0)
+    if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".data file");
 }
 
@@ -46,18 +46,18 @@ void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_siz
     else throw SYSTEM_EXCEPTION("Wrong physical log record (for tmp file)");
 
     // restore backup
-    if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, p, size, &number_of_bytes_written);
+    int res = uWriteFile(data_file_handler, p, size, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != size)
         throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
 }
 
 void bm_rcv_decrease(__int64 old_size)
 {
-    if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN) == 0)
+    if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot decrease data file");
 }
 
@@ -82,11 +82,11 @@ void bm_rcv_master_block(const void* p)
     memset(n_p, '\0', MASTER_BLOCK_SIZE);
     memcpy(n_p, p, sizeof(bm_masterblock));
 
-    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, n_p, MASTER_BLOCK_SIZE, &number_of_bytes_written);
+    int res = uWriteFile(data_file_handler, n_p, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
@@ -107,14 +107,14 @@ void bm_rcv_tmp_file()
     // truncate tmp file up to zero size
     // open tmp file
     string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
-    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH);
+    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 
-    if (uSetEndOfFile(tmp_file_handler, (__int64)0, U_FILE_BEGIN) == 0)
+    if (uSetEndOfFile(tmp_file_handler, (__int64)0, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot truncate tmp file", false);
 
-    if (uCloseFile(tmp_file_handler) == 0)
+    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, tmp_file_name.c_str());
 
     // reform tmp file
@@ -139,12 +139,12 @@ void bm_rcv_ph(bool ph_bu_to_ph)
 
     if (ph_bu_to_ph)
     {
-        if (uCopyFile(ph_bu_file_name.c_str(), ph_file_name.c_str(), false) == 0)
+        if (uCopyFile(ph_bu_file_name.c_str(), ph_file_name.c_str(), false, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4049, (ph_bu_file_name + " to " + ph_file_name).c_str());
     }
     else
     {
-        if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false) == 0)
+        if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());
     }
 }

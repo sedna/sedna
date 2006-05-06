@@ -236,7 +236,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
     __int64 dsk_offs = 0;
 
     dsk_offs = (__int64)extend_portion * (__int64)PAGE_SIZE;
-    if (uSetEndOfFile(data_file_handler, dsk_offs, U_FILE_END) == 0)
+    if (uSetEndOfFile(data_file_handler, dsk_offs, U_FILE_END, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE1013);
 
 
@@ -244,7 +244,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
     mb->data_file_cur_size += (__int64)extend_portion * (__int64)PAGE_SIZE;
     xptr xptr_cursor = DATA_FILE_OFFS2XPTR(data_file_old_size - (__int64)PAGE_SIZE);
 
-    if (uSetFilePointer(data_file_handler, data_file_old_size, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(data_file_handler, data_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
 #ifdef _WIN32
@@ -269,7 +269,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
         hdr->p = xptr_cursor;
         int number_of_bytes_written = 0;
 
-        res = uWriteFile(data_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written);
+        res = uWriteFile(data_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written, __sys_call_error);
         if (res == 0 || number_of_bytes_written != VMM_SM_BLK_HDR_MAX_SIZE)
             throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
 
@@ -279,7 +279,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
         xptr_cursor += PAGE_SIZE;
 
         dsk_offs = data_file_old_size + (__int64)(i + 1) * (__int64)PAGE_SIZE;
-        if (uSetFilePointer(data_file_handler, dsk_offs, NULL, U_FILE_BEGIN) == 0)
+        if (uSetFilePointer(data_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
             throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
     }
 
@@ -305,7 +305,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
     __int64 dsk_offs = 0;
 
     dsk_offs = (__int64)extend_portion * (__int64)PAGE_SIZE;
-    if (uSetEndOfFile(tmp_file_handler, dsk_offs, U_FILE_END) == 0)
+    if (uSetEndOfFile(tmp_file_handler, dsk_offs, U_FILE_END, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE1014);
 
     __int64 tmp_file_old_size = mb->tmp_file_cur_size;
@@ -313,7 +313,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
 
     xptr xptr_cursor = TMP_FILE_OFFS2XPTR(tmp_file_old_size);
 
-    if (uSetFilePointer(tmp_file_handler, tmp_file_old_size, NULL, U_FILE_BEGIN) == 0)
+    if (uSetFilePointer(tmp_file_handler, tmp_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
 #ifdef _WIN32
@@ -339,7 +339,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
         //d_printf1("xptr_cursor: "); xptr_cursor.print();
         int number_of_bytes_written = 0;
 
-        res = uWriteFile(tmp_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written);
+        res = uWriteFile(tmp_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written, __sys_call_error);
         if (res == 0 || number_of_bytes_written != VMM_SM_BLK_HDR_MAX_SIZE)
             throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
 
@@ -350,7 +350,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
         xptr_cursor += PAGE_SIZE;
 
         dsk_offs = tmp_file_old_size + (__int64)(i + 1) * (__int64)PAGE_SIZE;
-        if (uSetFilePointer(tmp_file_handler, dsk_offs, NULL, U_FILE_BEGIN) == 0)
+        if (uSetFilePointer(tmp_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
             throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
     }
 
@@ -429,8 +429,8 @@ void delete_tmp_block(const xptr &p, tr_info *info)
         {
             *(xptr*)p_sm_callback_data = p;
 
-            USemaphoreUp(info->sm_to_vmm_callback_sem1);
-            USemaphoreDown(info->sm_to_vmm_callback_sem2);
+            USemaphoreUp(info->sm_to_vmm_callback_sem1, __sys_call_error);
+            USemaphoreDown(info->sm_to_vmm_callback_sem2, __sys_call_error);
         }
         ////////////////////////////////////
 

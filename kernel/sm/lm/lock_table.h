@@ -94,7 +94,7 @@ public:
    {
 #ifdef LOCK_MGR_ON
       if (sync)
-         if ( USemaphoreDown(xsem) != 0 )
+         if ( USemaphoreDown(xsem, __sys_call_error) != 0 )
             throw USER_EXCEPTION2(SE4015, "SEDNA_LOCK_MANAGER_SEM");
 #endif
    }
@@ -103,7 +103,7 @@ public:
    {
 #ifdef LOCK_MGR_ON
       if (sync)
-         if ( USemaphoreUp(xsem) != 0)
+         if ( USemaphoreUp(xsem, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4014, "SEDNA_LOCK_MANAGER_SEM");
 #endif
    }

@@ -58,16 +58,16 @@ void _bm_init_buffer_pool()
         throw USER_EXCEPTION(SE1015);
 #endif
 
-    file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL);
+    file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
         throw USER_EXCEPTION(SE1015);
 
-    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0);
+    buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION(SE1015);
 
 #ifdef REQUIRE_ROOT
-    if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE) == -1)
+    if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_EXCEPTION(SE1016);
 #endif
 
@@ -82,14 +82,14 @@ void _bm_release_buffer_pool()
     blocked_mem.clear();
 
 #ifdef REQUIRE_ROOT
-    if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE) == -1)
+    if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 #endif
 
-    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, bufs_num * PAGE_SIZE) == -1)
+    if (uUnmapViewOfFile(file_mapping, buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
-    if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME) == -1)
+    if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
 #if (defined(_WIN32) && defined(REQUIRE_ROOT))
@@ -109,12 +109,12 @@ void bm_startup() throw (SednaException)
 {
     // open data and tmp files
     string data_file_name = string(db_files_path) + string(db_name) + ".data";
-    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
+    data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
     string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
-    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING);
+    tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
 
@@ -123,45 +123,45 @@ void bm_startup() throw (SednaException)
     // buffer pool has been created
 
     // create semaphores
-    if (USemaphoreCreate(&vmm_sm_sem, 1, 1, VMM_SM_SEMAPHORE_STR, NULL) != 0)
+    if (USemaphoreCreate(&vmm_sm_sem, 1, 1, VMM_SM_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "VMM_SM_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&xmode, 1, 1, VMM_SM_EXCLUSIVE_MODE_SEM_STR, NULL) != 0)
+    if (USemaphoreCreate(&xmode, 1, 1, VMM_SM_EXCLUSIVE_MODE_SEM_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
-    if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR, NULL) != 0)
+    if (USemaphoreCreate(&indirection_table_sem, 1, 1, INDIRECTION_TABLE_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "INDIRECTION_TABLE_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&metadata_sem, 1, 1, METADATA_SEMAPHORE_STR, NULL) != 0)
+    if (USemaphoreCreate(&metadata_sem, 1, 1, METADATA_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "METADATA_SEMAPHORE_STR");
 
-    if (USemaphoreCreate(&index_sem, 1, 1, INDEX_SEMAPHORE_STR, NULL) != 0)
+    if (USemaphoreCreate(&index_sem, 1, 1, INDEX_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "INDEX_SEMAPHORE_STR");
 #ifdef SE_ENABLE_FTSEARCH
-    if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR, NULL) != 0)
+    if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "FT_INDEX_SEMAPHORE_STR");
 #endif
 
     // Create shared memory
-    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), NULL) != 0)
+    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr)); 
+    p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error); 
     if (p_sm_callback_data == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-    if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), NULL) != 0)
+    if (uCreateShMem(&lru_global_stamp_file_mapping, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, sizeof(LRU_stamp), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp)); 
+    lru_global_stamp_data = (LRU_stamp*)uAttachShMem(lru_global_stamp_file_mapping, NULL, sizeof(LRU_stamp), __sys_call_error); 
     if (lru_global_stamp_data == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
     *lru_global_stamp_data = 0;
 #endif
-    if (uCreateShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), NULL) != 0)
+    if (uCreateShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
-    indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr));
+    indirection_table_free_entry = (xptr*)uAttachShMem(itfe_file_mapping, NULL, sizeof(xptr), __sys_call_error);
     if (indirection_table_free_entry == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
@@ -187,44 +187,44 @@ void bm_shutdown() throw (SednaException)
     release_master_block();
     d_printf1("Release master block: complete\n");
 
-    if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data) != 0)
+    if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
-    if (uReleaseShMem(p_sm_callback_file_mapping) != 0)
+    if (uReleaseShMem(p_sm_callback_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
-    if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data) != 0)
+    if (uDettachShMem(lru_global_stamp_file_mapping, lru_global_stamp_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 
-    if (uReleaseShMem(lru_global_stamp_file_mapping) != 0)
+    if (uReleaseShMem(lru_global_stamp_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME");
 #endif
-    if (uDettachShMem(itfe_file_mapping, indirection_table_free_entry) != 0)
+    if (uDettachShMem(itfe_file_mapping, indirection_table_free_entry, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
-    if (uReleaseShMem(itfe_file_mapping) != 0)
+    if (uReleaseShMem(itfe_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
     d_printf1("Release shared memory: complete\n");
 
 
 
-    if (USemaphoreRelease(vmm_sm_sem) != 0)
+    if (USemaphoreRelease(vmm_sm_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "VMM_SM_SEMAPHORE_STR");
 
-    if (USemaphoreRelease(xmode) != 0)
+    if (USemaphoreRelease(xmode, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "VMM_SM_EXCLUSIVE_MODE_SEM_STR");
 
-    if (USemaphoreRelease(indirection_table_sem) != 0)
+    if (USemaphoreRelease(indirection_table_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "INDIRECTION_TABLE_SEMAPHORE_STR");
 
-    if (USemaphoreRelease(metadata_sem) != 0)
+    if (USemaphoreRelease(metadata_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "METADATA_SEMAPHORE_STR");
 
-    if (USemaphoreRelease(index_sem) != 0)
+    if (USemaphoreRelease(index_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "INDEX_SEMAPHORE_STR");
 #ifdef SE_ENABLE_FTSEARCH
-    if (USemaphoreRelease(ft_index_sem) != 0)
+    if (USemaphoreRelease(ft_index_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "FT_INDEX_SEMAPHORE_STR");
 #endif
     d_printf1("Release semaphores: complete\n");
@@ -234,10 +234,10 @@ void bm_shutdown() throw (SednaException)
     d_printf1("Release shared memory: complete\n");
 
 
-    if (uCloseFile(data_file_handler) == 0)
+    if (uCloseFile(data_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".data file");
 
-    if (uCloseFile(tmp_file_handler) == 0)
+    if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".tmp file");
     d_printf1("Close database files: complete\n");
 }
@@ -252,10 +252,10 @@ void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaE
 
     d_printf2("Register session with sid = %d\n", sid);
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100), NULL) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100), NULL, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100), NULL) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100), NULL, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
     tr_info *ti = new tr_info;
@@ -276,10 +276,10 @@ void bm_unregister_session(session_id sid) throw (SednaException)
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
-    if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem1) != 0)
+    if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot release SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
-    if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem2) != 0)
+    if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem2, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot release SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
 	tr_info *info = it->second;

@@ -30,7 +30,7 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
 
   int res;
   //!!!init logical log protection semaphore!!!
-  res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL);  
+  res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error);  
 
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -57,7 +57,7 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
       if (ll_open_files[i].name_number == valid_number) break;
 
       log_file_name = _db_files_path_ + _db_name_ + "." + u_itoa(ll_open_files[i].name_number, buf, 10) + "llog";
-      if ( uDeleteFile(log_file_name.c_str()) == 0)
+      if ( uDeleteFile(log_file_name.c_str(), __sys_call_error) == 0)
          throw USER_EXCEPTION2(SE4041, log_file_name.c_str());
   }
 
@@ -86,7 +86,7 @@ void llmgr_core::ll_log_release()
 {
   int res;
 
-  res = USemaphoreRelease(sem_dsc);  
+  res = USemaphoreRelease(sem_dsc, __sys_call_error);  
 
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -108,7 +108,8 @@ void llmgr_core::ll_log_create_shared_mem()
    res = uCreateShMem(&shared_mem_dsc,
                       CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME,
                       CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE,
-                      NULL
+                      NULL,
+                      __sys_call_error
                      );
 
    if (res != 0)
@@ -118,7 +119,8 @@ void llmgr_core::ll_log_create_shared_mem()
    //init shared memory pointer
    shared_mem = uAttachShMem(shared_mem_dsc,
                              NULL,
-                             CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
+                             CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE,
+                             __sys_call_error
                             );
 
    if (shared_mem == NULL)
@@ -185,12 +187,12 @@ void llmgr_core::ll_log_create_shared_mem()
 
 void llmgr_core::ll_log_release_shared_mem()
 {
-  int res = uDettachShMem(shared_mem_dsc, shared_mem);
+  int res = uDettachShMem(shared_mem_dsc, shared_mem, __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4024, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-  res = uReleaseShMem(shared_mem_dsc);
+  res = uReleaseShMem(shared_mem_dsc, __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4020, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
@@ -204,7 +206,7 @@ void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, plmgr_cor
 {
   int res;
 
-  res = USemaphoreOpen(&sem_dsc, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);
+  res = USemaphoreOpen(&sem_dsc, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, __sys_call_error);
 
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -235,14 +237,15 @@ void llmgr_core::ll_log_open_shared_mem()
 
    res = uOpenShMem(&shared_mem_dsc,
                     CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME,
-                    CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
+                    CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE,
+                    __sys_call_error
                    );
 
    if (res != 0)
       throw USER_EXCEPTION2(SE4021, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
    //init shared memory pointer
-   shared_mem = uAttachShMem(shared_mem_dsc, NULL, CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE);
+   shared_mem = uAttachShMem(shared_mem_dsc, NULL, CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE, __sys_call_error);
 
    if ( shared_mem == NULL)
       throw USER_EXCEPTION2(SE4023, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
@@ -251,12 +254,12 @@ void llmgr_core::ll_log_open_shared_mem()
 
 void llmgr_core::ll_log_close_shared_mem()
 {
-  int res = uDettachShMem(shared_mem_dsc, shared_mem);
+  int res = uDettachShMem(shared_mem_dsc, shared_mem, __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4024, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
 
-  res = uCloseShMem(shared_mem_dsc);
+  res = uCloseShMem(shared_mem_dsc, __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4022, "CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME");
@@ -267,7 +270,7 @@ void llmgr_core::ll_log_close()
 {
   int res;
 
-  res = USemaphoreClose(sem_dsc);  
+  res = USemaphoreClose(sem_dsc, __sys_call_error);  
 
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
@@ -1352,7 +1355,8 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
      res = uWriteFile(ll_curr_file_dsc,
                       (char*)shared_mem + offs,
                       to_write,
-                      &written
+                      &written,
+                      __sys_call_error
                     );
      if (res == 0 || to_write != written)
        throw SYSTEM_EXCEPTION("Can't write to logical log");
@@ -1447,7 +1451,8 @@ void llmgr_core::ll_log_flush_last_record(bool sync)
      res = uWriteFile(ll_curr_file_dsc,
                       (char*)shared_mem + offs,
                       to_write,
-                      &written
+                      &written,
+                      __sys_call_error
                     );
      if (res == 0 || to_write != written)
        throw SYSTEM_EXCEPTION("Can't write to logical log");
@@ -1996,7 +2001,8 @@ void llmgr_core::ll_truncate_log(bool sync)
   res = uWriteFile(ll_curr_file_dsc,
                    buf,
                    sizeof(__int64) + sizeof(int),
-                   &written
+                   &written,
+                    __sys_call_error
                     );
   if (res == 0 || written != (sizeof(__int64) + sizeof(int)))
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
@@ -2007,7 +2013,7 @@ void llmgr_core::ll_truncate_log(bool sync)
   for (i=0; i< num_files_to_truncate; i++)
   {
       log_file_name = db_files_path + db_name + "." + u_itoa(mem_head->ll_files_arr[i], buf2, 10) + "llog";
-      if (uDeleteFile(log_file_name.c_str()) == 0)
+      if (uDeleteFile(log_file_name.c_str(), __sys_call_error) == 0)
       {
 //         d_printf3("Delete File=%s, Error=%d\n", log_file_name.c_str(), GetLastError());
          throw USER_EXCEPTION2(SE4041, log_file_name.c_str());

@@ -31,7 +31,7 @@ LONG_LSN sm_plmgr::recoverDataBase()
   //get file size
   __int64 file_size;
   int res;
-  res = uGetFileSize(pl_file_handler, &file_size);
+  res = uGetFileSize(pl_file_handler, &file_size, __sys_call_error);
 
   if ( res == 0)
      throw USER_EXCEPTION2(SE4050, "phys log file");
@@ -41,7 +41,8 @@ LONG_LSN sm_plmgr::recoverDataBase()
                      pl_file_handler,
                      sector_size,
                      NULL,
-                     U_FILE_BEGIN);
+                     U_FILE_BEGIN,
+                     __sys_call_error);
 
   if ( res == 0)
      throw USER_EXCEPTION2(SE4046, "phys log file");

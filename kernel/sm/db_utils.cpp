@@ -20,20 +20,20 @@ int cleanup_db(const char* db_name)
    bool db_exist = false;
    //delete cfg file
 
-   if (uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str()))  
+   if (uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error))  
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
       if (res == 0)//failure
          return 2;
    }
    
 
    //delete data file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str())) 
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str(), __sys_call_error)) 
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
       
@@ -41,59 +41,59 @@ int cleanup_db(const char* db_name)
 
 
    //delete tmp file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str(), __sys_call_error))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
    }
 
    //delete llog file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str(), __sys_call_error))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
    }
 
 
    //delete plog file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".plog").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".plog").c_str(), __sys_call_error))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".plog").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".plog").c_str(), __sys_call_error);
       if (res == 0)
          return 2;   
    }
 
 
    //delete ph.bu file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str(), __sys_call_error))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
    }
 
 
    //delete ph file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str(), __sys_call_error))
    {
       db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str());
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
    }
 
 
    //delete db data directory
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str()))
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error))
    {
      db_exist = true;
-     res = uDelDir((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str());
+     res = uDelDir((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
 
@@ -107,19 +107,19 @@ bool exist_db(const char* db_name)
 {
    bool res1, res2, res3, res4, res5, res6, res7;
 
-   res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str());
+   res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
-   res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str());
+   res2 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".data").c_str(), __sys_call_error);
 
-   res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str());
+   res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str(), __sys_call_error);
 
-   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str());
+   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str(), __sys_call_error);
 
-   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str());
+   res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str(), __sys_call_error);
 
-   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str());
+   res6 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.bu").c_str(), __sys_call_error);
 
-   res7 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str());
+   res7 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error);
 
 
    if (res1 || res2 || res3 || res4 || res5 || res6 || res7) return true;
@@ -139,7 +139,7 @@ int load_metadata_in_database(const char* db_name)
   int res;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
 
-  run_command = uGetImageProcPath(buf) + string("/se_sm ") + db_name; 
+  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/se_sm ") + db_name; 
   strcpy(buf, run_command.c_str());
 
   if (0 != uCreateProcess(buf,
@@ -150,11 +150,12 @@ int load_metadata_in_database(const char* db_name)
                           NULL,
                           &pid,
                           NULL,
-                          NULL
+                          NULL,
+                          __sys_call_error
                          ))
      throw SYSTEM_EXCEPTION("Can't stratup SM to load metadata");
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status);
+  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
   if (res == 0 && ret_status != 0)
       throw USER_EXCEPTION2(SE4211, (string(db_name) + string(" (may be because there is no enough RAM)")).c_str());
@@ -166,11 +167,11 @@ int load_metadata_in_database(const char* db_name)
 
    //!!! Load Security Document !!!  
 
-  run_command = uGetImageProcPath(buf) + string("/") + SESSION_EXE +
+  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE +
                 string(" ") + db_name;
 
 
-  uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1");
+  uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", __sys_call_error);
 
   strcpy(buf, run_command.c_str());
   if (0 != uCreateProcess(buf,
@@ -181,12 +182,13 @@ int load_metadata_in_database(const char* db_name)
                           NULL,
                           &pid,
                           NULL,
-                          NULL
+                          NULL,
+                          __sys_call_error
                          ))
      throw SYSTEM_EXCEPTION("Can't load metadata");
 
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status);
+  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
   if (res != 0)
      throw SYSTEM_EXCEPTION("Can't load metadata");
@@ -198,7 +200,7 @@ int load_metadata_in_database(const char* db_name)
 
 
   //!!! Stop SM !!!
-  run_command = uGetImageProcPath(buf) + string("/se_smsd ") + db_name; 
+  run_command = uGetImageProcPath(buf, __sys_call_error) + string("/se_smsd ") + db_name; 
   strcpy(buf, run_command.c_str());
 
   if (0 != uCreateProcess(buf,
@@ -209,11 +211,12 @@ int load_metadata_in_database(const char* db_name)
                           NULL,
                           &pid,
                           NULL,
-                          NULL
+                          NULL,
+                          __sys_call_error
                          ))
      throw SYSTEM_EXCEPTION("Can't run smsd utility");
 
-  res = uWaitForChildProcess(pid, proc_h, &ret_status);
+  res = uWaitForChildProcess(pid, proc_h, &ret_status, __sys_call_error);
 
   if (res != 0 || ret_status != 0)
      throw SYSTEM_EXCEPTION("Can't stop Storage Manager");

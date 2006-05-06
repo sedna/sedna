@@ -33,14 +33,14 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 {
   int r;
   //init phys log protection semaphore
-  r = USemaphoreCreate(&sem, 1, 1, PHYS_LOG_PROTECTION_SEMAPHORE_NAME, NULL);
+  r = USemaphoreCreate(&sem, 1, 1, PHYS_LOG_PROTECTION_SEMAPHORE_NAME, NULL, __sys_call_error);
 
   if ( r != 0)
   {
      throw USER_EXCEPTION2(SE4010, "PHYS_LOG_PROTECTION_SEMAPHORE_NAME");
   }
 
-  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT) != 0) 
+  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
      throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
 
  
@@ -58,7 +58,8 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
                          log_file_name.c_str(),
                          U_SHARE_READ | U_SHARE_WRITE,
                          U_READ_WRITE,
-                         U_WRITE_THROUGH
+                         U_WRITE_THROUGH,
+                         __sys_call_error
                          );
 
   if ( pl_file_handler == U_INVALID_FD)
@@ -67,7 +68,7 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 
   int res;
   
-  res = uGetDiskSectorSize(&sector_size, DbFilesPath.c_str());  
+  res = uGetDiskSectorSize(&sector_size, DbFilesPath.c_str(), __sys_call_error);  
 
   if (res == 0) 
      throw USER_EXCEPTION(SE4051);
@@ -83,7 +84,8 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
                    pl_file_handler,
                    0,
                    NULL,
-                   U_FILE_BEGIN);
+                   U_FILE_BEGIN,
+                   __sys_call_error);
 
   if ( res3 == 0 )
      throw USER_EXCEPTION2(SE4046, log_file_name.c_str());
@@ -100,7 +102,8 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
                pl_file_handler,
                read_buf,
                sector_size,
-               &nbytes_read);
+               &nbytes_read,
+               __sys_call_error);
 
   if ( res3 == 0 || nbytes_read != sector_size)
      throw USER_EXCEPTION2(SE4044, log_file_name.c_str());
@@ -131,11 +134,11 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 {
 
   //open semaphore fpr protecting phys log
-  if( USemaphoreOpen(&sem, PHYS_LOG_PROTECTION_SEMAPHORE_NAME) != 0)
+  if( USemaphoreOpen(&sem, PHYS_LOG_PROTECTION_SEMAPHORE_NAME, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4012, "PHYS_LOG_PROTECTION_SEMAPHORE_NAME");
 
   //open wait for checkpoint sem
-  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT) != 0) 
+  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
      throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
 
   //init file handler 
@@ -143,7 +146,8 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
                          db_phys_log_path.c_str(),
                          U_SHARE_READ | U_SHARE_WRITE,
                          U_READ_WRITE,
-                         U_WRITE_THROUGH);
+                         U_WRITE_THROUGH,
+                         __sys_call_error);
 
   if(pl_file_handler == U_INVALID_FD )
      throw USER_EXCEPTION2(SE4042, db_phys_log_path.c_str());
@@ -151,7 +155,7 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 
   int res;
   
-  res = uGetDiskSectorSize(&sector_size, db_phys_log_path.c_str());  
+  res = uGetDiskSectorSize(&sector_size, db_phys_log_path.c_str(), __sys_call_error);  
 
   if (res == 0) 
      throw USER_EXCEPTION(SE4051);
@@ -186,7 +190,7 @@ void plmgr_core::create_shared_mem(int ext_portion)
 
   res = uCreateShMem(&file_mapping,
                      PHYS_LOG_SHARED_MEM_NAME,
-                     sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM, NULL
+                     sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM, NULL, __sys_call_error
                     );
 
 
@@ -197,7 +201,8 @@ void plmgr_core::create_shared_mem(int ext_portion)
   //init shared memory pointer
   share_mem = uAttachShMem(file_mapping,
                            NULL,
-                           sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM
+                           sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM,
+                           __sys_call_error
                           );
   
 
@@ -245,7 +250,8 @@ void plmgr_core::open_shared_mem()
 
   res = uOpenShMem(&file_mapping,
                    PHYS_LOG_SHARED_MEM_NAME,
-                   sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM
+                   sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM,
+                   __sys_call_error
                   );
 
 
@@ -255,7 +261,8 @@ void plmgr_core::open_shared_mem()
   //init shared_memory pointer
   share_mem = uAttachShMem(file_mapping,
                            NULL,
-                           sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM
+                           sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM,
+                           __sys_call_error
                           );
 
 
@@ -282,12 +289,12 @@ void plmgr_core::close_shared_mem()
 
   int res;
 
-  res = uDettachShMem(file_mapping, share_mem);
+  res = uDettachShMem(file_mapping, share_mem, __sys_call_error);
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4024, "PHYS_LOG_SHARED_MEM_NAME");
 
-  res = uCloseShMem(file_mapping);
+  res = uCloseShMem(file_mapping, __sys_call_error);
 
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4022, "PHYS_LOG_SHARED_MEM_NAME");
@@ -315,15 +322,15 @@ void plmgr_core::close_phys_log()
 
   this->close_phys_log_state();
 
-  res2 = USemaphoreClose(sem);
+  res2 = USemaphoreClose(sem, __sys_call_error);
 
   if ( res2 != 0 )
      throw USER_EXCEPTION2(SE4013, "PHYS_LOG_PROTECTION_SEMAPHORE_NAME");
 
-  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem))
+  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
      throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
-  res1 = uCloseFile(pl_file_handler);
+  res1 = uCloseFile(pl_file_handler, __sys_call_error);
 
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
@@ -349,16 +356,16 @@ void plmgr_core::release_phys_log(file_head& head)
   _writeFile(&head, sizeof(file_head), 0);
 
 
-  res2 = USemaphoreRelease(sem);
+  res2 = USemaphoreRelease(sem, __sys_call_error);
 
   if ( res2 != 0 )
      throw USER_EXCEPTION2(SE4011, "PHYS_LOG_PROTECTION_SEMAPHORE_NAME");
 
-  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem))
+  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
      throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
 
-  res1 = uCloseFile(pl_file_handler);
+  res1 = uCloseFile(pl_file_handler, __sys_call_error);
 
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
@@ -374,13 +381,13 @@ void plmgr_core::release_shared_mem()
 {
   int res;
 
-  res = uDettachShMem(file_mapping, share_mem);
+  res = uDettachShMem(file_mapping, share_mem, __sys_call_error);
 
 
   if (res != 0)
      throw USER_EXCEPTION2(SE4024, "PHYS_LOG_SHARED_MEM_NAME");
 
-  res = uReleaseShMem(file_mapping);
+  res = uReleaseShMem(file_mapping, __sys_call_error);
 
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4020, "PHYS_LOG_SHARED_MEM_NAME");
@@ -753,13 +760,14 @@ void plmgr_core::logClear(const LONG_LSN& last_cp_lsn, bool sync)
                     pl_file_handler,
                     log_file_size,
                     NULL,
-                    U_FILE_BEGIN  
+                    U_FILE_BEGIN,
+                    __sys_call_error  
                    );
 
   if (res == 0)
      throw SYSTEM_EXCEPTION("Can't Set File Pointer to the begin of file");
 
-  res = uSetEndOfFile(pl_file_handler, 0, U_FILE_CURRENT);
+  res = uSetEndOfFile(pl_file_handler, 0, U_FILE_CURRENT, __sys_call_error);
 
   if (res == 0)
       throw USER_EXCEPTION2(SE4047, "physical log");
@@ -804,7 +812,7 @@ void plmgr_core::extendLog(bool sync)
   int res;
   __int64 file_size;
 
-  res = uGetFileSize(pl_file_handler, &file_size);
+  res = uGetFileSize(pl_file_handler, &file_size, __sys_call_error);
 
   if (res == 0)
      throw SYSTEM_EXCEPTION("Can't get the phys log size");
@@ -815,7 +823,8 @@ void plmgr_core::extendLog(bool sync)
                     pl_file_handler,
                     pos_eof,
                     NULL,
-                    U_FILE_BEGIN  
+                    U_FILE_BEGIN,
+                    __sys_call_error  
                    );
 
   if (res == 0)
@@ -851,7 +860,8 @@ void plmgr_core::extendLog(bool sync)
                pl_file_handler,
                buf,
                sizeof(buf),
-               &nbytes_written                 
+               &nbytes_written,
+               __sys_call_error                 
               );
 
   if (res == 0 || nbytes_written != sizeof(buf))
@@ -878,7 +888,8 @@ void plmgr_core::extendLog(bool sync)
                  pl_file_handler,
                  buf,
                  0x100000,
-                 &nbytes_written                 
+                 &nbytes_written,
+                 __sys_call_error                 
                 );
 
     if (res == 0 || nbytes_written != 0x100000)
@@ -890,7 +901,7 @@ void plmgr_core::extendLog(bool sync)
 
 #endif
 
-  res = uSetEndOfFile(pl_file_handler, 0, U_FILE_CURRENT);
+  res = uSetEndOfFile(pl_file_handler, 0, U_FILE_CURRENT, __sys_call_error);
 
   if (res == 0)
       throw USER_EXCEPTION2(SE4047, "physical log");
@@ -940,7 +951,7 @@ void plmgr_core::activate_checkpoint(bool sync)
    shared_mem_head* mem_head = (shared_mem_head*)share_mem;
    if (mem_head->checkpoint_flag == true && !(mem_head->checkpoint_on))
    {
-       if (USemaphoreUp(wait_for_checkpoint_sem) != 0)
+       if (USemaphoreUp(wait_for_checkpoint_sem, __sys_call_error) != 0)
           throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
 
        mem_head->checkpoint_on = true;

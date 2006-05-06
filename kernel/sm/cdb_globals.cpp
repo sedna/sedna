@@ -136,21 +136,21 @@ void create_cfg_file(char *db_name,
    string cfg_files_path = string(SEDNA_DATA)+"/cfg";
    string cfg_file_name  = cfg_files_path + "/" + string(db_name) + "_cfg.xml";
 
-   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
-   if (uMkDir(cfg_files_path.c_str(), dir_sa) == 0)
+   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
+   if (uMkDir(cfg_files_path.c_str(), dir_sa, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4300, cfg_files_path.c_str());
 
-   if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+   if(uCreateSA(&def_sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
    cfg_file_handle = uCreateFile(cfg_file_name.c_str(),
   	                            0,
   	                            U_READ_WRITE,
   	                            U_WRITE_THROUGH,
-  	                            def_sa);
+  	                            def_sa, __sys_call_error);
    if (cfg_file_handle == U_INVALID_FD)
       throw USER_EXCEPTION2(SE4040, "database configuration file");
 
-   uReleaseSA(def_sa);
-   uReleaseSA(dir_sa);
+   uReleaseSA(def_sa, __sys_call_error);
+   uReleaseSA(dir_sa, __sys_call_error);
 	  
 //   if ( (cfg_file=fopen(cfg_file_name.c_str(), "w")) == NULL)
 //      throw CharismaException(string("???: Can't create file ") + cfg_file_name);
@@ -177,13 +177,13 @@ void create_cfg_file(char *db_name,
    res = uWriteFile(cfg_file_handle,
                     cfg_file_content.c_str(),
                     cfg_file_content.size(),
-                    &nbytes_written
+                    &nbytes_written, __sys_call_error
                     );
    
   if ( res == 0 || nbytes_written != cfg_file_content.size())
       throw USER_EXCEPTION2(SE4045,  cfg_file_name.c_str());
 
-   if (uCloseFile(cfg_file_handle) == 0)
+   if (uCloseFile(cfg_file_handle, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4043, "configuration file");
    return;
 
@@ -194,17 +194,17 @@ void create_data_directory()
    string data_files_path = string(SEDNA_DATA) + string("/data/");
    USECURITY_ATTRIBUTES *dir_sa;
 
-   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0)!=0) throw USER_EXCEPTION(SE3060);
+   if(uCreateSA(&dir_sa, U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
 
-   if (uMkDir(data_files_path.c_str(), dir_sa) == 0)
+   if (uMkDir(data_files_path.c_str(), dir_sa, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
 
    data_files_path += ( string(db_name) + "_files" );
 
-   if (uMkDir(data_files_path.c_str(), dir_sa) == 0)
+   if (uMkDir(data_files_path.c_str(), dir_sa, __sys_call_error) == 0)
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
 
-   uReleaseSA(dir_sa);
+   uReleaseSA(dir_sa, __sys_call_error);
    
 }
 

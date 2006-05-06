@@ -119,13 +119,13 @@ void register_sm_on_gov()
     close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
 
-	sm_id = uGetCurrentProcessId();
+	sm_id = uGetCurrentProcessId(__sys_call_error);
 	
-    s = usocket(AF_INET, SOCK_STREAM, 0);
+    s = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
     if(s == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
-    if(uconnect_tcp(s, port_number, "127.0.0.1")!=0)
+    if(uconnect_tcp(s, port_number, "127.0.0.1", __sys_call_error)!=0)
     {
-    	ushutdown_close_socket(s);
+    	ushutdown_close_socket(s, __sys_call_error);
     	throw USER_EXCEPTION (SE3003);
     }
                 
@@ -148,7 +148,7 @@ void register_sm_on_gov()
     if(msg.instruction == 182)
     	throw USER_EXCEPTION(SE3045);                            //failed to register
 
-    if(ushutdown_close_socket(s)!=0) throw USER_EXCEPTION (SE3011);
+    if(ushutdown_close_socket(s, __sys_call_error)!=0) throw USER_EXCEPTION (SE3011);
 
 }
 

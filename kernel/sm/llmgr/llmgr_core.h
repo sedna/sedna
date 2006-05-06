@@ -260,7 +260,7 @@ private:
      if(sync)
      {
         int res;
-        res = USemaphoreDown(sem_dsc);
+        res = USemaphoreDown(sem_dsc, __sys_call_error);
         if (res != 0)
             throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
      }
@@ -272,7 +272,7 @@ private:
      if(sync)
      {
         int res;
-        res = USemaphoreUp(sem_dsc);
+        res = USemaphoreUp(sem_dsc, __sys_call_error);
         if (res != 0)
             throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
