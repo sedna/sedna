@@ -162,7 +162,18 @@ void	nid_assign(xptr node, t_prefix p) {
 	else 
 	{
 		if (p.size > PSTRMAXSIZE)
+		{
+			//1. turn off loging
+			dsc->nid.prefix[0]=1;
+			dsc->nid.size=1;
+			hl_disable_log();
+			//2. delete node
+			delete_node(node);
+			//3. turn on logging
+			hl_enable_log();
+			up_concurrent_micro_ops_number();
 			throw USER_EXCEPTION(SE2023);
+		}
 		if (IS_DATA_BLOCK(node)) 
 			nid_holder=(GETBLOCKBYNODE(node))->snode->root;
 		blk = nid_get_blk(p.size, IS_DATA_BLOCK(node));
