@@ -89,7 +89,7 @@ void uperror(const char *s)
 }
 
 
-void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call)
+void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
 {
 #if !(defined(SE_NO_EVENT_LOG))
     char buf[256];
