@@ -219,6 +219,87 @@ void get_indexes (xptr node,const char* title)
 	}
 	index_sem_up();
 }
+#ifdef SE_ENABLE_FTSEARCH
+void print_ft_type_name(ft_index_type ftype, char* buf)
+{	
+	switch(ftype)
+	{
+		case ft_xml	: strcpy(buf,"ft_xml");
+        break;case ft_xml_hl	: strcpy(buf,"ft_xml_hl");
+        break;case ft_string_value	: strcpy(buf,"ft_string_value");
+        break;case ft_delimited_value	: strcpy(buf,"ft_delimited_value");
+		break;case ft_customized_value	:			strcpy(buf,"ft_customized_value");
+		break;default			: strcpy(buf,"unknown");
+	}	
+}
+void get_ftindexes (xptr node,const char* title)
+{
+	addTextValue(node,"$FTINDEXES.XML",14);
+	xptr parent=insert_element(XNULL,XNULL,node,"FTINDEXES",xdt_untyped,NULL,NULL);
+	xptr left=XNULL;
+	index_sem_down();
+	local_lock_mrg->put_lock_on_db();
+	pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* mdc=ft_indexdata->rb_minimum(ft_indexdata->root);
+	char buf[200];
+	while (mdc!=NULL)
+	{
+		if (left==XNULL)
+		{
+			left=insert_element(XNULL,XNULL,parent,"FTINDEX",xdt_untyped,NULL);
+		}
+		else
+			left=insert_element(left,XNULL,XNULL,"FTINDEX",xdt_untyped,NULL);
+		
+		ft_index_cell* ic=mdc->obj;
+		xptr node=insert_attribute(XNULL,XNULL,left,"title",xdt_untypedAtomic,ic->index_title,
+						strlen(ic->index_title),NULL);
+		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xdt_untypedAtomic,(ic->is_doc)?"doc":"col",
+						3,NULL);
+		node=insert_attribute(node,XNULL,XNULL,"object_title",xdt_untypedAtomic,ic->doc_name,
+			strlen(ic->doc_name),NULL);
+		
+		print_ft_type_name(ic->ftype,buf);
+		node=insert_attribute(node,XNULL,XNULL,"ft_type",xdt_untypedAtomic,buf,
+		strlen(buf),NULL);
+		std::ostringstream str1;
+		ic->object->print(str1);
+		node=insert_attribute(node,XNULL,XNULL,"path",xdt_untypedAtomic,str1.str().c_str(),
+		strlen(str1.str().c_str()),NULL);
+		if (ic->ftype==ft_customized_value && ic->custom_tree!=NULL)
+		{
+			CHECKP(left);
+			xptr indir=((n_dsc*)XADDR(left))->indir;
+			pers_sset<ft_custom_cell,unsigned short>::pers_sset_entry* cdc=ic->custom_tree->rb_minimum(ic->custom_tree->root);
+			xptr cleft=XNULL;
+			while (cdc!=NULL)
+			{
+				ft_custom_cell* cc=cdc->obj;
+				if (cleft==XNULL)
+				{
+					cleft=insert_element(XNULL,XNULL,left,"TEMPLATE",xdt_untyped,NULL);
+				}
+				else
+					cleft=insert_element(cleft,XNULL,XNULL,"TEMPLATE",xdt_untyped,NULL);
+				xptr node=insert_attribute(XNULL,XNULL,cleft,"name",xdt_untypedAtomic,cc->local,
+					strlen(cc->local),NULL);
+				if (cc->ns!=NULL)
+				{
+					node=insert_attribute(node,XNULL,XNULL,"ns_prefix",xdt_untypedAtomic,cc->ns->prefix,strlen(cc->ns->prefix),NULL);
+					node=insert_attribute(node,XNULL,XNULL,"ns_uri",xdt_untypedAtomic,cc->ns->uri,strlen(cc->ns->uri),NULL);
+				}
+				print_ft_type_name(cc->cm,buf);
+				insert_attribute(node,XNULL,XNULL,"ft_type",xdt_untypedAtomic,buf,
+		strlen(buf),NULL);
+				cdc=ic->custom_tree->rb_successor(cdc);
+				left=removeIndirection(indir);
+			}
+
+		}
+		mdc=ft_indexdata->rb_successor(mdc);
+	}
+	index_sem_up();
+}
+#endif
 void get_documents (xptr node,const char* title)
 {
 	addTextValue(node,"$DOCUMENTS.XML",12);
@@ -317,6 +398,11 @@ schema_node* get_system_doc(const char* title)
 	else
 	if (!my_strcmp(title,"$indexes.xml"))
 		func=get_indexes;
+#ifdef SE_ENABLE_FTSEARCH
+	else
+	if (!my_strcmp(title,"$ftindexes.xml"))
+		func=get_ftindexes;
+#endif
 	else
 	if (!my_strcmp(title,"$schema.xml"))
 		func=get_schema;
