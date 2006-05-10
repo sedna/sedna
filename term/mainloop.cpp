@@ -483,6 +483,10 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	//test if the read line is a command
 	bool isCommand = false;
     buffer[i] = (char)getc(source); 
+    while((buffer[i] == '\n')||(buffer[i] == ' '))
+    {
+        buffer[i] = (char)getc(source);
+    } 
     if(buffer[i] == '\\') {isCommand = true; i--;}
     else 
     {
