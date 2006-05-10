@@ -29,7 +29,7 @@ int uSocketInit(sys_call_error_fun fun)
     err = WSAStartup(wVersionRequested, &wsaData);
     if (err != 0)
     {
-        sys_call_error("WSAStartup", &err);
+        sys_call_error2("WSAStartup", &err);
         return U_SOCKET_ERROR;
     }
 
