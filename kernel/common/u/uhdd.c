@@ -357,9 +357,9 @@ int uCopyFile(const char *existing_file, const char *new_file, int fail_if_exist
         return 0;
     }
 
-    if (uGetFileSize(src, &src_file_size) == 0)
+    if (uGetFileSize(src, &src_file_size, __sys_call_error) == 0)
         return 0;
-    if (uSetEndOfFile(des, src_file_size, U_FILE_BEGIN) == 0)
+    if (uSetEndOfFile(des, src_file_size, U_FILE_BEGIN, __sys_call_error) == 0)
         return 0;
 
     while ((c = read(src, buf, BUFFLEN)) > 0)
@@ -614,7 +614,7 @@ int uGetUniqueFileName(const char *directoryName, char *file_name, sys_call_erro
 
     strcpy(file_name, tmp_template);
 
-    uCloseFile(f);
+    uCloseFile(f, __sys_call_error);
     return 1;
 #endif
 }

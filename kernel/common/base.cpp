@@ -494,7 +494,7 @@ void set_global_names(const char *db_name, bool must_exist)
         string path2 = string(SEDNA_DATA);
         d_printf2("path1 = %s\n", path1.c_str());
         d_printf2("path2 = %s\n", path2.c_str());
-        if (!(uIsFileExist(path1.c_str()) && uIsFileExist(path2.c_str())))
+        if (!(uIsFileExist(path1.c_str(), __sys_call_error) && uIsFileExist(path2.c_str(), __sys_call_error)))
             throw USER_EXCEPTION2(SE4200, db_name);
         ////////////////////////////////////////////////////////////////////////
     }
@@ -605,7 +605,7 @@ void set_sedna_data()
   if (is_inside_lib)
   {
       USECURITY_ATTRIBUTES sa = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
-      if (uMkDir(SEDNA_DATA, &sa) == 0)
+      if (uMkDir(SEDNA_DATA, &sa, __sys_call_error) == 0)
           throw USER_EXCEPTION2(SE4300, SEDNA_DATA);
   }
 #endif  

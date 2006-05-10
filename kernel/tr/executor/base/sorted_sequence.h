@@ -211,3 +211,4 @@ inline sorted_sequence::iterator operator +(const sorted_sequence::iterator& it,
     return sorted_sequence::iterator(it.pos + i, it.s);
 }
 #endif
+

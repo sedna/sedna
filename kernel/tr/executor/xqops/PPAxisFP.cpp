@@ -349,3 +349,4 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 		cur=merge_tree->getNextNode();
 	}		 
 }
+

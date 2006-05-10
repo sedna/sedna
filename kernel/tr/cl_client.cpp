@@ -115,7 +115,7 @@ void command_line_client::init()
       for (i=0; i<path_to_security_file.size(); i++)
         if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
 #else
-      if(!uIsFileExist(path_to_security_file.c_str()))
+      if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
          path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
 #endif
 

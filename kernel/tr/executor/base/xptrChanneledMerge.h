@@ -51,3 +51,4 @@ public:
     void clear_merge  ();	
 };
 #endif
+
