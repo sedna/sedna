@@ -327,7 +327,7 @@ void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt)
             *(bool*)p_sm_callback_data = true;
         }
 
-    USemaphoreUp(sm_to_vmm_callback_sem2);
+    USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
 }
 #endif
 

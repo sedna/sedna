@@ -43,8 +43,8 @@ void getSednaAuthMetadataPath(char* path)
 		i++;
 	}
 #else
-	string sedna_auth_metadata_file_path = uGetImageProcPath(path_buf) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
-	if(uIsFileExist(sedna_auth_metadata_file_path.c_str()))
+	string sedna_auth_metadata_file_path = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+	if(uIsFileExist(sedna_auth_metadata_file_path.c_str(), __sys_call_error))
 		strcpy(path, sedna_auth_metadata_file_path.c_str());
 	else
 	{

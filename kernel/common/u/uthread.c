@@ -78,7 +78,7 @@ static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt,
 }
 #endif
 
-int uEnableSuspend(, sys_call_error_fun fun)
+int uEnableSuspend(sys_call_error_fun fun)
 {
 #ifdef _WIN32
     return 0;

@@ -400,10 +400,10 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 
     for (;;)
     {
-       status = uIsProcessExist(pid, h);
+       status = uIsProcessExist(pid, h, __sys_call_error);
        if (status == -1) return -1;
 
-       if (status) uSleep(1);
+       if (status) uSleep(1, __sys_call_error);
        else break;
     }
 
