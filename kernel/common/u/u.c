@@ -77,27 +77,55 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 #endif
 }
 
+int uerrno(const char *funcname, const void* arg)
+{
+#ifdef _WIN32
+    if (strcmp(funcname, "WSAStartup") == 0)
+    {
+        return (arg ? *(int*)arg : 0);
+    }
+    else if (   strcmp(funcname, "WSACleanup") == 0
+             || strcmp(funcname, "socket") == 0
+             || strcmp(funcname, "gethostbyname") == 0
+             || strcmp(funcname, "bind") == 0
+             || strcmp(funcname, "connect") == 0
+             || strcmp(funcname, "setsockopt") == 0
+             || strcmp(funcname, "getsockopt") == 0
+             || strcmp(funcname, "listen") == 0
+             || strcmp(funcname, "accept") == 0
+             || strcmp(funcname, "recv") == 0
+             || strcmp(funcname, "send") == 0
+             || strcmp(funcname, "closesocket") == 0
+             || strcmp(funcname, "shutdown") == 0
+             || strcmp(funcname, "select") == 0)
+    {
+        return WSAGetLastError();
+    }
+    else 
+    {
+        return GetLastError();
+    }
+#else
+    return errno;
+#endif
+}
+
 void uperror(const char *s)
 {
 #ifdef _WIN32
     char buf[256];
-    ustrerror_r(GetLastError(), buf, 256);
+    ustrerror_r(uerrno(s, NULL), buf, 256);
     fprintf(stderr, "%s: %s\n", s, buf);
 #else
     perror(s);
 #endif
 }
 
-
 void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
 {
 #if !(defined(SE_NO_EVENT_LOG))
     char buf[256];
-#ifdef _WIN32
-    int code = GetLastError();
-#else
-    int code = errno;
-#endif
+    int code = uerrno(funcname, arg);
 #endif
 
     d_perror(sys_call);
