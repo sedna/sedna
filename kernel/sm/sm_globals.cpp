@@ -33,7 +33,7 @@ int max_trs_num;
 int phys_log_ext_portion;
 int phys_log_size;
 
-char* db_name = NULL;
+char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char *db_files_path;
 
 

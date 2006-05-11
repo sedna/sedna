@@ -8,7 +8,6 @@
 #include "blk_mngmt.h"
 #include "plmgr.h"
 
-#define VMM_SM_BLK_HDR_MAX_SIZE		4096
 
 
 /*******************************************************************************
@@ -247,20 +246,8 @@ void extend_data_file(int extend_portion) throw (SednaException)
     if (uSetFilePointer(data_file_handler, data_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-#ifdef _WIN32
-    void *p = VirtualAlloc(
-                     NULL,
-                     VMM_SM_BLK_HDR_MAX_SIZE,
-                     MEM_COMMIT,
-                     PAGE_READWRITE
-              );
-#else
-    void *p = new char[VMM_SM_BLK_HDR_MAX_SIZE];
-#endif
-    if (p == NULL) throw SYSTEM_ENV_EXCEPTION("Cannot allocate enough memory");
-
 	int i = 0;
-    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)p;
+    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
 	vmm_sm_blk_hdr::init(hdr);
 
     for (i = 0; i < extend_portion; i++)
@@ -282,13 +269,6 @@ void extend_data_file(int extend_portion) throw (SednaException)
         if (uSetFilePointer(data_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
             throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
     }
-
-#ifdef _WIN32
-    if (VirtualFree(p, 0, MEM_RELEASE) == 0) 
-        throw SYSTEM_ENV_EXCEPTION("Cannot free allocated memory");
-#else
-    delete [] (char*)p;
-#endif
 
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
@@ -316,20 +296,8 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
     if (uSetFilePointer(tmp_file_handler, tmp_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
-#ifdef _WIN32
-    void *p = VirtualAlloc(
-                     NULL,
-                     VMM_SM_BLK_HDR_MAX_SIZE,
-                     MEM_COMMIT,
-                     PAGE_READWRITE
-              );
-#else
-    void *p = new char[VMM_SM_BLK_HDR_MAX_SIZE];
-#endif
-    if (p == NULL) throw SYSTEM_ENV_EXCEPTION("Cannot allocate enough memory");
-
 	int i = 0;
-    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)p;
+    vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
 	vmm_sm_blk_hdr::init(hdr);
 
     for (i = 0; i < extend_portion; i++)
@@ -353,13 +321,6 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
         if (uSetFilePointer(tmp_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
             throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
     }
-
-#ifdef _WIN32
-    if (VirtualFree(p, 0, MEM_RELEASE) == 0) 
-        throw SYSTEM_ENV_EXCEPTION("Cannot free allocated memory");
-#else
-    delete [] (char*)p;
-#endif
 
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }

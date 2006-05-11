@@ -37,9 +37,6 @@ void create_db(__int64 data_file_max_size,
                int pers_heap_size					// in bytes
               )
 {
-    // init master block
-    init_master_block();
-
     // create files
     USECURITY_ATTRIBUTES *sa;	
     if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
@@ -181,9 +178,7 @@ void create_db(__int64 data_file_max_size,
     if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4305);
 
-    release_master_block();
     if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
-
 }
 
 // buffer for physical log

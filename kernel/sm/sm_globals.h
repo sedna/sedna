@@ -34,7 +34,7 @@ extern int phys_log_ext_portion;
 extern int phys_log_size;
 
 // database name
-extern char* db_name;
+extern char db_name[];
 
 // path to db files
 extern char *db_files_path;

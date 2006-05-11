@@ -55,7 +55,7 @@ arg_rec cdb_argtable[] =
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
 {"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
 
-{NULL,                     "\ndb_name", arg_str, db_name,               "???", "\t\tthe name of the database to be created"}
+{NULL,                     "\ndb_name", arg_str, &db_name,               "???", "\t\tthe name of the database to be created"}
 };
 
 void print_cdb_usage()

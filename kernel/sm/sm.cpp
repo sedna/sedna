@@ -645,9 +645,6 @@ int main(int argc, char **argv)
         ppc.shutdown();
         is_ppc_closed = true;
 
-
-        delete [] db_name;
-
         return 0;
  
     } catch (SednaUserException &e) {
