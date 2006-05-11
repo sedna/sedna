@@ -24,7 +24,8 @@
 ********************************************************************************
 *******************************************************************************/
 
-#define MASTER_BLOCK_SIZE		4096
+#define MASTER_BLOCK_SIZE		(__uint32)4096
+#define VMM_SM_BLK_HDR_MAX_SIZE	(__uint32)4096
 
 #define ABS_DATA_OFFSET(p)		((__int64)((p).layer) *												\
                                  (__int64)(LAYER_ADDRESS_SPACE_SIZE) +								\
@@ -142,7 +143,14 @@ struct bm_masterblock
 };
 
 // Master block
+extern char bm_master_block_buf[];
 extern bm_masterblock *mb;
+
+#define SYSTEM_DATA_SIZE		(__uint32)(s_max(MASTER_BLOCK_SIZE, VMM_SM_BLK_HDR_MAX_SIZE))
+#define SYSTEM_DATA_BUF_SIZE	(SYSTEM_DATA_SIZE * (__uint32)2)
+
+extern char system_data_buf[];
+extern char *system_data_aligned_ptr;
 
 
 /*******************************************************************************
@@ -155,9 +163,10 @@ extern bm_masterblock *mb;
 ////////////////////////////////////////////////////////////////////////////////
 /// Masterblock functions
 ////////////////////////////////////////////////////////////////////////////////
+/*
 void init_master_block();
 void release_master_block();
-
+*/
 void read_master_block();
 void flush_master_block(bool is_write_plog = true);
 

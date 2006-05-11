@@ -63,43 +63,19 @@ void bm_rcv_decrease(__int64 old_size)
 
 void bm_rcv_master_block(const void* p)
 {
-#ifdef _WIN32
-    void *n_p = VirtualAlloc(
-                       NULL,
-                       MASTER_BLOCK_SIZE,
-                       MEM_COMMIT,
-                       PAGE_READWRITE
-                );
-#else
-    void *n_p = new char[MASTER_BLOCK_SIZE];
-#endif
-
-    if (n_p == NULL) throw USER_ENV_EXCEPTION("Cannot allocate enough memory", false);
-
     //__int64 tmp_file_cur_size = ((bm_masterblock*)p)->tmp_file_cur_size;
     //((bm_masterblock*)p)->tmp_file_cur_size = (__int64)0;
 
-    memset(n_p, '\0', MASTER_BLOCK_SIZE);
-    memcpy(n_p, p, sizeof(bm_masterblock));
+    memset(mb, '\0', MASTER_BLOCK_SIZE);
+    memcpy(mb, p, sizeof(bm_masterblock));
 
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(data_file_handler, n_p, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
+    int res = uWriteFile(data_file_handler, mb, MASTER_BLOCK_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != MASTER_BLOCK_SIZE)
         throw USER_ENV_EXCEPTION("Cannot write master block", false);
-
-#ifdef _WIN32
-    BOOL res_m = VirtualFree(
-                        (void*)n_p,
-                        0,
-                        MEM_RELEASE
-               );
-    if (res_m == 0) throw USER_ENV_EXCEPTION("Cannot free allocated memory", false);
-#else
-    delete [] (char*)n_p;
-#endif
 }
 
 void bm_rcv_tmp_file()

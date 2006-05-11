@@ -80,9 +80,12 @@ UFile data_file_handler;
 UFile tmp_file_handler;
 
 // Master block
-bm_masterblock *mb;
+char bm_master_block_buf[MASTER_BLOCK_SIZE * 2];
+bm_masterblock *mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
 
 
+char system_data_buf[SYSTEM_DATA_BUF_SIZE];
+char *system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + SYSTEM_DATA_BUF_SIZE) / SYSTEM_DATA_BUF_SIZE * SYSTEM_DATA_BUF_SIZE);
 
 
 
@@ -97,42 +100,6 @@ bm_masterblock *mb;
 ////////////////////////////////////////////////////////////////////////////////
 /// Masterblock functions
 ////////////////////////////////////////////////////////////////////////////////
-
-#define MASTER_BLOCK_SIZE		4096
-
-void init_master_block()
-{
-#ifdef _WIN32
-    void *p = VirtualAlloc(
-                     NULL,
-                     MASTER_BLOCK_SIZE,
-                     MEM_COMMIT,
-                     PAGE_READWRITE
-              );
-#else 
-    void *p = new char[MASTER_BLOCK_SIZE];
-#endif
-
-    if (p == NULL) throw USER_ENV_EXCEPTION("Cannot allocate enough memory", false);
-
-    mb = (bm_masterblock*)p;
-}
-
-void release_master_block()
-{
-#ifdef _WIN32
-    BOOL res = VirtualFree(
-                      (void*)mb,
-                      0,
-                      MEM_RELEASE
-               );
-
-    if (res == 0) throw USER_ENV_EXCEPTION("Cannot free allocated memory", false);
-#else 
-    free(mb);
-#endif
-}
-
 void read_master_block()
 {
     if (uSetFilePointer(data_file_handler, (__int64)0, NULL, U_FILE_BEGIN, __sys_call_error) == 0)

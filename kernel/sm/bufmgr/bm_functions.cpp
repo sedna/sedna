@@ -171,7 +171,6 @@ void bm_startup() throw (SednaException)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
 
-    init_master_block();
     read_master_block();
 }
 
@@ -184,8 +183,6 @@ void bm_shutdown() throw (SednaException)
 
     flush_master_block();
     d_printf1("Flush master block: complete\n");
-    release_master_block();
-    d_printf1("Release master block: complete\n");
 
     if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
