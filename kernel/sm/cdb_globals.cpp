@@ -34,7 +34,6 @@ int _phys_log_buf_size_ = 1;
 
 int _bufs_num_ =1600;
 int _max_trs_num_ =10;
-char _db_name_[MAX_ARGS_LENGTH];
 
 
 const size_t cdb_narg = 15;
@@ -56,7 +55,7 @@ arg_rec cdb_argtable[] =
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
 {"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
 
-{NULL,                     "\ndb_name", arg_str, _db_name_,               "???", "\t\tthe name of the database to be created"}
+{NULL,                     "\ndb_name", arg_str, db_name,               "???", "\t\tthe name of the database to be created"}
 };
 
 void print_cdb_usage()
@@ -109,14 +108,11 @@ void setup_cdb_globals(int argc,
    phys_log_ext_portion = _phys_log_ext_portion_ * 0x100000;
 
 
-   db_name = new char[strlen(_db_name_)+1];
-   strcpy (db_name, _db_name_);
-
    if (strcmp(db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
 
    //d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
-   string data_files_path = string(SEDNA_DATA) + "/data/" + _db_name_ + "_files/";
+   string data_files_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/";
    db_files_path  =new char [data_files_path.length()+1];
    strcpy(db_files_path, data_files_path.c_str());
 

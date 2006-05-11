@@ -170,11 +170,9 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION2(SE4045, "data file");
 
     // flush master block to disk
-    indirection_table_free_entry = new xptr;
-    *indirection_table_free_entry = XNULL;
+    xptr tmp_p = XNULL;
+    indirection_table_free_entry = &tmp_p;
     flush_master_block(false);
-    delete indirection_table_free_entry;
-
 
     // close opened files
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
@@ -187,6 +185,9 @@ void create_db(__int64 data_file_max_size,
     if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
 
 }
+
+// buffer for physical log
+char phys_log_buf[0x100000]; //1MB
 
 void create_phys_log(int phys_log_size)
 {
@@ -270,61 +271,22 @@ void create_phys_log(int phys_log_size)
   d_printf2("phys_log_size=%d\n", phys_log_size);
 
   //init remainder of phys log
-/*
-  while ( file_rmndr > 0 )
-  {
-     res = uWriteFile(
-                  phys_log_handle,
-                  &sect_head,
-                  sizeof(sector_head),
-                  &nbytes_written
-                 );
-
-
-     if ( res == 0 || nbytes_written != sizeof(sector_head))
-        throw USER_EXCEPTION2(SE4045, "physical log");
-
-     res = uSetFilePointer(
-                       phys_log_handle,
-                       sector_size - sizeof(sector_head),
-                       NULL, 
-                       U_FILE_CURRENT
-                      );
-
-
-     if ( res == 0 )
-        throw USER_EXCEPTION2(SE4046, "physical log");
-
-     file_rmndr -=sector_size;  
-  }
-*/
-
-  char* buf;
-  buf = new char[0x100000];//1MB
   int offs = 0;
-  //int rmndr = sizeof(buf);
-
-  //d_printf2("rmndr=%d\n", rmndr);
 
   //init buf to write in phys log
-  while( offs < 0x100000)
+  while (offs < 0x100000)
   {
-    //((sector_head*)(buf+offs))->durable_lsn = NULL_LSN;
-    //((sector_head*)(buf+offs))->version = -1;
-    memcpy(((char*)buf)+offs, &sect_head, sizeof(sector_head));
-    
-    
-    //rmndr -= sector_size;
+    memcpy(((char*)phys_log_buf)+offs, &sect_head, sizeof(sector_head));        
     offs += sector_size;
   }
 
 
   //write n times buf to phys log. n is equal to number of Mb of phys log  
-  for(int i=0; i<(phys_log_size/0x100000); i++)
+  for (int i=0; i<(phys_log_size/0x100000); i++)
   {
     res = uWriteFile(
                  phys_log_handle,
-                 buf,
+                 phys_log_buf,
                  0x100000,
                  &nbytes_written,
                  __sys_call_error                 
@@ -334,8 +296,6 @@ void create_phys_log(int phys_log_size)
       throw SYSTEM_EXCEPTION("Can't write to phys log file");
 
   }
-
-  delete [] buf;
 
 
   res = uSetEndOfFile(phys_log_handle, 0, U_FILE_CURRENT, __sys_call_error);
@@ -347,11 +307,8 @@ void create_phys_log(int phys_log_size)
 
   if ( res == 0 )
       throw USER_EXCEPTION2(SE4043, "physical log");
-
 #endif
 }
-
-
 
 
 

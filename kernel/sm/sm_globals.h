@@ -41,7 +41,7 @@ extern char *db_files_path;
 
 void setup_globals();
 
-void setup_sm_globals(char *_db_name_);
+void setup_sm_globals();
 
 void unregister_sm_on_gov();
 
@@ -54,7 +54,6 @@ extern int sm_help;
 extern int sm_version;
 
 extern int background_mode; 
-extern char __db_name__[];
 extern int __bufs_num__;
 extern int __max_trs_num__;
 
