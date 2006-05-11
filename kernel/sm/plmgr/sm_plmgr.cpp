@@ -24,9 +24,9 @@ int bl_num = 0;//for debug
 LONG_LSN sm_plmgr::recoverDataBase()
 {
   int version;
-  LSN _durable_lsn_ = pl_head_for_rcv->prev_lsn;//last durable lsn before checkpoint
+  LSN _durable_lsn_ = pl_head_for_rcv.prev_lsn;//last durable lsn before checkpoint
 
-  version = pl_head_for_rcv->version;
+  version = pl_head_for_rcv.version;
 
   //get file size
   __int64 file_size;
@@ -82,26 +82,26 @@ LONG_LSN sm_plmgr::recoverDataBase()
   bm_rcv_init();
   
   // !!! recover persistent heap;
-  bm_rcv_ph(pl_head_for_rcv->ph_bu_to_ph);
+  bm_rcv_ph(pl_head_for_rcv.ph_bu_to_ph);
 
 
   #endif
 
   d_printf2("recovery durable lsn=%d\n", _durable_lsn_);
 
-  if ( _durable_lsn_ < pl_head_for_rcv->next_lsn )
+  if ( _durable_lsn_ < pl_head_for_rcv.next_lsn )
   {
      #ifndef PHYS_LOG_TEST
      bm_rcv_release();
      bm_rcv_tmp_file();
      #endif
 
-     (pl_head_for_rcv->version)++;
+     (pl_head_for_rcv.version)++;
      //flush phys log head
-     _writeFile(pl_head_for_rcv, sizeof(file_head), 0);
+     _writeFile(&pl_head_for_rcv, sizeof(file_head), 0);
 
 //    std::cout <<"Logical log checkpoint lsn=" << pl_head_for_rcv->last_checkpoint_lsn << endl;
-     return pl_head_for_rcv->last_checkpoint_lsn;
+     return pl_head_for_rcv.last_checkpoint_lsn;
   }    //OK, database is already in consistent state
 
   LSN _prev_durable_lsn_ = _durable_lsn_;
@@ -182,10 +182,10 @@ LONG_LSN sm_plmgr::recoverDataBase()
 
 end:
 
-  (pl_head_for_rcv->version)++;
+  (pl_head_for_rcv.version)++;
 
  // flush phys log head
-  _writeFile(pl_head_for_rcv, sizeof(file_head), 0);
+  _writeFile(&pl_head_for_rcv, sizeof(file_head), 0);
 
   #ifndef PHYS_LOG_TEST           
    //release bm
@@ -195,5 +195,5 @@ end:
   bm_rcv_tmp_file();
 
 //  std::cout <<"Logical log checkpoint lsn=" << pl_head_for_rcv->last_checkpoint_lsn << endl;
-  return pl_head_for_rcv->last_checkpoint_lsn;
+  return pl_head_for_rcv.last_checkpoint_lsn;
 }

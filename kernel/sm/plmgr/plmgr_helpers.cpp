@@ -13,7 +13,7 @@ void plmgr_core::writeSector(void *p, int size, int file_pos, LSN& drbl_lsn)
 {
   //Note: file position is pointed to  the next durable lsn
   int sect_beg = file_pos - (file_pos % sector_size);
-  sector_head* sect_head;
+  sector_head sect_head;
  
   shared_mem_head* mem_head = (shared_mem_head*)share_mem;
 
@@ -21,26 +21,22 @@ void plmgr_core::writeSector(void *p, int size, int file_pos, LSN& drbl_lsn)
   if (sect_beg == file_pos)
   {
 
-     sect_head = (sector_head*)p;
-     sect_head->durable_lsn = drbl_lsn;
-     sect_head->version = mem_head->pl_head.version;
+     ((sector_head*)p)->durable_lsn = drbl_lsn;
+     ((sector_head*)p)->version = mem_head->pl_head.version;
 
      _writeFile(p, size, file_pos);
 
   }
   else
   {
-     sect_head = new sector_head;
-     sect_head->durable_lsn = drbl_lsn;
-     sect_head->version = mem_head->pl_head.version;
+     sect_head.durable_lsn = drbl_lsn;
+     sect_head.version = mem_head->pl_head.version;
 
       //write the header of sector
-     _writeFile(sect_head, sizeof(sector_head), sect_beg);
+     _writeFile(&sect_head, sizeof(sector_head), sect_beg);
 
      //write body of sector
      _writeFile(p, size, file_pos);
-
-     delete sect_head;
   }
 }
 
@@ -103,7 +99,7 @@ void plmgr_core::readLogRecordFromDisk(char* buf, LSN& lsn)
   char tmp_buf[PHYS_LOG_READ_BUF_LENGTH];
 
                                                //header
-  file_pos = (lsn - pl_head_for_rcv->next_lsn) + sector_size;
+  file_pos = (lsn - pl_head_for_rcv.next_lsn) + sector_size;
 
   res = uSetFilePointer(
                     pl_file_handler,

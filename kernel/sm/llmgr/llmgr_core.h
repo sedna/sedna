@@ -158,14 +158,17 @@ private:
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
   void *shared_mem;
-  char small_read_buf[LOGICAL_LOG_UNDO_READ_PORTION];
-  char *large_read_buf;//this var is used when size of small_read_buf is not enough
+  char* read_buf;//
+  int read_buf_size;
+//  char small_read_buf[LOGICAL_LOG_UNDO_READ_PORTION];
+//  char *large_read_buf;//this var is used when size of small_read_buf is not enough
 
   bool rollback_active;//used only from transaction (not used from sm)
   bool recovery_active;//used only from rcv_db process and if recovery_active == true the recovery process must not write to phys log
 
   char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
   int indir_rec_len;
+  int indir_rec_buf_size;
   std::vector<log_file_dsc> ll_open_files;//this structure is ordered in sm and is unordered in transaction (may contain duplicates)
 
   plmgr_core* _phys_log_mgr_; //used to activate checkpoint
@@ -174,6 +177,10 @@ private:
 
   std::string db_files_path;
   std::string db_name;
+
+  //for mm
+  int internal_buf_size;
+  char* internal_buf;
 
 public:
   //create and release functions; called in sm
@@ -249,7 +256,6 @@ private:
   const char* get_record_from_disk(LONG_LSN& lsn);
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
-  void delete_large_read_buf();
   void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
   void redo_commit_trns(trns_analysis_map& lst, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
   trns_analysis_map get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks);//last parameter is out
@@ -293,6 +299,17 @@ private:
     if (x2 <= x1 && x2 <= x3) return x2;
     else return x3;
   };	
+
+  inline char* ll_log_malloc(int size)
+  {
+     if (internal_buf_size < size)
+     {
+        delete [] internal_buf;
+        internal_buf = new char[size];
+     }
+
+     return internal_buf;
+  };
 };
 
 UFile create_logical_log(const char* log_file_name,

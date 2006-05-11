@@ -150,8 +150,8 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
 
   res = uReadFile(
                ll_curr_file_dsc,
-               small_read_buf,
-               sizeof(small_read_buf),
+               read_buf,
+               LOGICAL_LOG_UNDO_READ_PORTION,
                &bytes_read,
                __sys_call_error
              );
@@ -161,20 +161,26 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
 
   logical_log_head* log_head;
 
-  log_head = (logical_log_head*)small_read_buf;
+  log_head = (logical_log_head*)read_buf;
   int rec_len = log_head->body_len + sizeof(logical_log_head);
 
-  if (rec_len > bytes_read && bytes_read < sizeof(small_read_buf))
+  if (rec_len > bytes_read && bytes_read < LOGICAL_LOG_UNDO_READ_PORTION)
      throw USER_EXCEPTION(SE4154);
 
-  if (rec_len > sizeof(small_read_buf))
+  if (rec_len > LOGICAL_LOG_UNDO_READ_PORTION)
   {//not full record in buffer
-     large_read_buf = new char[rec_len];
+     if (read_buf_size < rec_len)
+     {
+       delete [] read_buf;
+       read_buf = new char[rec_len];
+       read_buf_size = rec_len;
+     }
+
      set_file_pointer(lsn);
   
      res = uReadFile(
                  ll_curr_file_dsc,
-                 large_read_buf,
+                 read_buf,
                  rec_len,
                  &bytes_read,
                  __sys_call_error
@@ -183,10 +189,10 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
      if( res == 0 || bytes_read != rec_len)
        throw USER_EXCEPTION2(SE4044, "logical log file");
 
-     return large_read_buf;
+     return read_buf;
   }
   else
-     return small_read_buf;
+     return read_buf;
 }
 
 
@@ -211,31 +217,19 @@ const char* llmgr_core::get_record_from_shared_memory(int end_offs, int len)
     int rec_beg_offs =  mem_head->size - first_portion;
 
 
-    if (len <= sizeof(small_read_buf) ) 
+    if (len > read_buf_size)
     {
-       memcpy(small_read_buf, mem_beg + rec_beg_offs, first_portion);
-       memcpy(small_read_buf + first_portion, mem_beg + sizeof(logical_log_sh_mem_head), second_portion);
-       return small_read_buf;
+       delete [] read_buf;
+       read_buf = new char[len]; 
+       read_buf_size = len;
     }
-    else
-    {
-       large_read_buf = new char[len];
-       memcpy(large_read_buf, mem_beg + rec_beg_offs, first_portion);
-       memcpy(large_read_buf + first_portion, mem_beg + sizeof(logical_log_sh_mem_head), second_portion);
-       return large_read_buf;
-    }
+
+    memcpy(read_buf, mem_beg + rec_beg_offs, first_portion);
+    memcpy(read_buf + first_portion, mem_beg + sizeof(logical_log_sh_mem_head), second_portion);
+    return read_buf;
   }
     
      
-}
-
-void llmgr_core::delete_large_read_buf()
-{
-   if (large_read_buf != NULL)
-   {
-      delete [] large_read_buf;
-      large_read_buf = NULL;
-   }
 }
 
 void llmgr_core::extend_logical_log(bool sync)
