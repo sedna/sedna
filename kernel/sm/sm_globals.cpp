@@ -42,24 +42,24 @@ SSMMsg* gov_server;
 
 
 
-void setup_sm_globals(char *_db_name_)
+void setup_sm_globals()
 {
    
    char buf[1000];
 
-   string data_files_path = string(SEDNA_DATA) + "/data/" + _db_name_ + "_files/";
+   string data_files_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/";
    db_files_path = new char[data_files_path.length() + 1];
    strcpy(db_files_path, data_files_path.c_str());
 
 
-   string cfg_file_name = string(SEDNA_DATA) + "/cfg/" + _db_name_ + "_cfg.xml";
+   string cfg_file_name = string(SEDNA_DATA) + "/cfg/" + db_name + "_cfg.xml";
    string cfg_file_content;
 
 
    FILE *f = fopen(cfg_file_name.c_str(), "r");
 
    if (f == NULL)
-       throw USER_EXCEPTION2(SE4200,  _db_name_);
+       throw USER_EXCEPTION2(SE4200,  db_name);
 
    while( !feof(f) )
    {
@@ -70,10 +70,6 @@ void setup_sm_globals(char *_db_name_)
 
      cfg_file_content.append(buf, len);
   }
-
-  //init data base name
-  db_name = new char[strlen(_db_name_)+1];
-  strcpy(db_name, _db_name_);
 
   //init bufs_num and max_trs_num from config file
 
@@ -163,7 +159,6 @@ int sm_version = 0;
 int background_mode = 0; 
 int __bufs_num__ = 0;
 int __max_trs_num__ = 0;
-char __db_name__[1000];
 int write_phys_log = 1;
 
 
@@ -180,6 +175,6 @@ arg_rec sm_argtable[] =
 /*
 {"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,           "on",  "   write to physical log (default on)"},
 */
-{NULL,               " db-name", arg_str,  __db_name__,             "???",  "\t\t   The name of the database "},
+{NULL,               " db-name", arg_str,  &__db_name__,             "???",  "\t\t   The name of the database "},
 };
 

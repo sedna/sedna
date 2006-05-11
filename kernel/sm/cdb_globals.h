@@ -27,7 +27,6 @@ extern int _persisitent_heap_size_;
 
 extern int _bufs_num_;
 extern int _max_trs_num_;
-extern char _db_name_[];
 
 extern arg_rec cdb_argtable[];
 extern const size_t cdb_narg;

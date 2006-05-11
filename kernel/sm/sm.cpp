@@ -384,13 +384,13 @@ int main(int argc, char **argv)
 
             if (arg_scan_ret_val == 0)
                 throw USER_ENV_EXCEPTION(buf, false);
-            if (string(__db_name__) == "???")
+            if (strcmp(db_name, "???") == 0)
                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
         }
 
 
         set_global_names();
-        set_global_names(__db_name__, true);
+        set_global_names(db_name, true);
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
         try {
             string command_line = argv[0];
             command_line += " -background-mode off ";
-            command_line += __db_name__;
+            command_line += db_name;
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
@@ -437,7 +437,7 @@ int main(int argc, char **argv)
 
 
             USemaphore started_sem;
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), NULL, __sys_call_error))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(db_name, buf, 1024), NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4205);
            
             if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
@@ -471,20 +471,15 @@ int main(int argc, char **argv)
         }
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
-        event_logger_init(EL_SM, __db_name__, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("SM event log is ready"));
 
 
-        setup_sm_globals(__db_name__);//setup default values from config file
-
-//        INIT_DEBUG_LOG(__db_name__); 
-
+        setup_sm_globals();//setup default values from config file
 
 
         if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
-
-        //setup_globals();
 
          
 
@@ -555,7 +550,7 @@ int main(int argc, char **argv)
 
             ssmmsg = new SSMMsg(SSMMsg::Server, 
                                 sizeof (sm_msg_struct), 
-                                CHARISMA_SSMMSG_SM_ID(__db_name__, buf, 1024), 
+                                CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
                                 SM_NUMBER_OF_SERVER_THREADS,
                                 U_INFINITE);
             if (ssmmsg->init() != 0)
@@ -589,7 +584,7 @@ int main(int argc, char **argv)
 
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
             USemaphore started_sem;
-            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY(__db_name__, buf, 1024), __sys_call_error))
+            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY(db_name, buf, 1024), __sys_call_error))
             {
                 USemaphoreUp(started_sem, __sys_call_error);
                 USemaphoreClose(started_sem, __sys_call_error);
