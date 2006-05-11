@@ -106,7 +106,7 @@ class plmgr_core {
 protected:
   UFile pl_file_handler;
 
-  file_head* pl_head_for_rcv; //pointer to the header of physical log file (used only during recovery)
+  file_head pl_head_for_rcv; //pointer to the header of physical log file (used only during recovery)
   int sector_size; //the size of the sector of hard disk
   char* read_buf; //buffer for reading log records during rollback or recovery (more than maximum log record size)
 

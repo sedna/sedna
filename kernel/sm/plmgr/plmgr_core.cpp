@@ -113,18 +113,16 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
   if (sizeof(file_head) > sector_size )
      throw USER_EXCEPTION(SE4101);
   
-  pl_head_for_rcv = new file_head;
+  memcpy(&pl_head_for_rcv, read_buf, sizeof(file_head));
+  bool _is_stopped_correctly_ = pl_head_for_rcv.is_stopped_successfully;
 
-  memcpy(pl_head_for_rcv, read_buf, sizeof(file_head));
-  bool _is_stopped_correctly_ = pl_head_for_rcv->is_stopped_successfully;
-
-  pl_head_for_rcv->is_stopped_successfully = false;
-  _writeFile(pl_head_for_rcv, sizeof(file_head), 0);
+  pl_head_for_rcv.is_stopped_successfully = false;
+  _writeFile(&pl_head_for_rcv, sizeof(file_head), 0);
 
   log_file_size = _phys_log_size_;
 
 
-  d_printf2("pl_head_fro_rcv.version=%d\n", pl_head_for_rcv->version);
+  d_printf2("pl_head_fro_rcv.version=%d\n", pl_head_for_rcv.version);
 
   return _is_stopped_correctly_;  
 }
@@ -172,7 +170,7 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 
 void plmgr_core::init_phys_log_open_state()
 {
-  pl_head_for_rcv = NULL;
+//  pl_head_for_rcv = NULL;
 }
 
 
@@ -218,11 +216,11 @@ void plmgr_core::create_shared_mem(int ext_portion)
   mem_head->keep_bytes = 0;
   mem_head->size = sizeof(shared_mem_head)+sector_size*PHYS_LOG_SHARED_MEM_SECTORS_NUM;
   mem_head->sect_free_bytes = 0;
-  mem_head->next_lsn = pl_head_for_rcv->next_lsn;
+  mem_head->next_lsn = pl_head_for_rcv.next_lsn;
   mem_head->prev_lsn = NULL_LSN;
-  mem_head->durable_lsn = pl_head_for_rcv->prev_lsn;
-  mem_head->next_durable_lsn = pl_head_for_rcv->next_lsn;
-  mem_head->pl_head = *pl_head_for_rcv;
+  mem_head->durable_lsn = pl_head_for_rcv.prev_lsn;
+  mem_head->next_durable_lsn = pl_head_for_rcv.next_lsn;
+  mem_head->pl_head = pl_head_for_rcv;
   mem_head->extend_portion_size = ext_portion;
   mem_head->checkpoint_flag = false;
   mem_head->checkpoint_on = false;
@@ -335,9 +333,6 @@ void plmgr_core::close_phys_log()
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
 
-  if( pl_head_for_rcv != NULL)
-    delete pl_head_for_rcv;
-
   delete [] read_buf;
 
 }
@@ -369,9 +364,6 @@ void plmgr_core::release_phys_log(file_head& head)
 
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
-
-  if( pl_head_for_rcv != NULL)
-    delete pl_head_for_rcv;
 
   delete [] read_buf;
 
@@ -941,7 +933,7 @@ int plmgr_core::get_cp_num()
 
 bool plmgr_core::is_stopped_correctly()
 {
-   return pl_head_for_rcv->is_stopped_successfully;
+   return pl_head_for_rcv.is_stopped_successfully;
 }
 
 void plmgr_core::activate_checkpoint(bool sync)

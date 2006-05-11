@@ -65,16 +65,21 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   for (j=0; j <i; j++)
        ll_open_files.erase(ll_open_files.begin());
   
-  if (sizeof(small_read_buf) < sizeof(logical_log_head))
-     throw USER_EXCEPTION(SE4150);
-
-  large_read_buf = NULL;
+//  if (sizeof(small_read_buf) < sizeof(logical_log_head))
+//     throw USER_EXCEPTION(SE4150);
 
   rollback_active = false;
   recovery_active = false;
 
   indir_rec = NULL;
   indir_rec_len = 0;
+  
+  internal_buf = new char[2*PAGE_SIZE];
+  internal_buf_size = 2*PAGE_SIZE;
+  indir_rec_buf_size = 0;
+
+  read_buf = new char[LOGICAL_LOG_UNDO_READ_PORTION];
+  read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
   this->_phys_log_mgr_ = phys_log_mgr_;
 }
@@ -215,6 +220,7 @@ void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, plmgr_cor
   db_files_path = _db_files_path_;
   db_name = _db_name_;
 
+
   this->_phys_log_mgr_ = phys_log_mgr_;
 /*
   ll_file_curr_dsc = uOpenFile(
@@ -289,12 +295,20 @@ void llmgr_core::ll_log_close()
 
 void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &trid, bool sync)
 {
-  large_read_buf = NULL;
   rollback_active = false;
   recovery_active = rcv_active;
 
   indir_rec = NULL;
   indir_rec_len = 0;
+
+  internal_buf = new char[2*PAGE_SIZE];
+  internal_buf_size = 2*PAGE_SIZE;
+  indir_rec_buf_size = 0;
+
+  read_buf = new char[LOGICAL_LOG_UNDO_READ_PORTION];
+  read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
+
+
 
   ll_log_lock(sync);
    
@@ -330,6 +344,10 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
   mem_head->t_tbl[trid].num_of_log_records = 0;
 
   close_all_log_files();
+
+  if (internal_buf_size > 0) delete [] internal_buf;
+  if (indir_rec_buf_size > 0) delete [] indir_rec;
+  if (read_buf_size > 0) delete [] read_buf; 
 
   ll_log_unlock(sync);
 }
@@ -370,7 +388,7 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
             sizeof(xmlscm_type) +                           
             4*sizeof(xptr); 
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   //char op = (inserted) ? LL_INSERT_ELEM: LL_DELETE_ELEM;
   char op;
@@ -400,10 +418,7 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec; 
 }
 
 /* attribute record body format:
@@ -443,7 +458,7 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
             sizeof(xmlscm_type) +
             4*sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -474,10 +489,7 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec; 
 }
 
 /*
@@ -507,7 +519,7 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
             value_size +
             4*sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -533,10 +545,7 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
   //inert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;
 }
 
 
@@ -561,7 +570,7 @@ void llmgr_core::ll_log_text_edit(transaction_id& trid, const xptr& self,const c
             data_size +
             sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -583,7 +592,6 @@ void llmgr_core::ll_log_text_edit(transaction_id& trid, const xptr& self,const c
   //inert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] tmp_rec;
 }
 
 
@@ -611,7 +619,7 @@ void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  c
             col_len +
             sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -635,10 +643,7 @@ void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  c
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;  
 }
 
 /*
@@ -670,7 +675,7 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
             total_size +
             4*sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
    
@@ -698,10 +703,7 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;  
 }
 
 /*
@@ -730,7 +732,7 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
             value_size +
             4*sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -759,10 +761,7 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;  
 }
 
 /*
@@ -785,7 +784,7 @@ void llmgr_core::ll_log_collection(transaction_id& trid, const  char* name,bool 
             indir_rec_len +
             strlen(name)+1;
   
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -809,10 +808,7 @@ void llmgr_core::ll_log_collection(transaction_id& trid, const  char* name,bool 
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;  
 }
 
 /*
@@ -843,7 +839,7 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
             prefix_len +
             4*sizeof(xptr);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -871,10 +867,7 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 
-  delete [] indir_rec;
-  indir_rec = NULL;
   indir_rec_len = 0;
-  delete [] tmp_rec;  
 }
 
 
@@ -912,7 +905,7 @@ void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, con
             ind_title_len +
             doc_name_len;
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
@@ -940,8 +933,6 @@ void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, con
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
-
-  delete [] tmp_rec;  
 }
 
 /*
@@ -1028,7 +1019,7 @@ LONG_LSN llmgr_core::ll_log_commit(transaction_id trid, bool sync)
 
   rec_len = sizeof(char) + sizeof(transaction_id);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
   char op = LL_COMMIT;
   int offs = 0;
 
@@ -1040,8 +1031,6 @@ LONG_LSN llmgr_core::ll_log_commit(transaction_id trid, bool sync)
   ret_lsn = ll_log_insert_record(tmp_rec, rec_len, trid, false);
 
   mem_head->t_tbl[trid].is_ended = true;  
-
-  delete [] tmp_rec;  
 
   ll_log_unlock(sync);
 
@@ -1064,7 +1053,7 @@ void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 
   rec_len = sizeof(char) + sizeof(transaction_id);
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
   char op = LL_ROLLBACK;
   int offs = 0;
 
@@ -1077,10 +1066,7 @@ void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 
   mem_head->t_tbl[trid].is_ended = true;
 
-  delete [] tmp_rec;  
-
   ll_log_unlock(sync);
-
 }
 
 /*
@@ -1113,7 +1099,7 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
   }
 
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
   ret_lsn = mem_head->next_lsn;
 
   //create record body
@@ -1144,8 +1130,6 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
   writeSharedMemory(tmp_rec, rec_len);
 
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
-
-  delete [] tmp_rec;
 
   ll_log_unlock(sync);
 
@@ -1227,8 +1211,13 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
                    sizeof(int) +
                    blocks_len;
 
-
-  indir_rec = new char[_indir_rec_len];  
+  if (_indir_rec_len > indir_rec_buf_size)
+  {
+    if (indir_rec_buf_size > 0) delete [] indir_rec;
+    indir_rec = new char[_indir_rec_len];
+    indir_rec_buf_size = _indir_rec_len;
+  }
+//  indir_rec = new char[_indir_rec_len];  
   indir_rec_len = _indir_rec_len;
 
   //create record body
@@ -1649,8 +1638,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 		}
 		else//next record is not contiguous
 		{
-           delete_large_read_buf();
-
 		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
 
            offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
@@ -1665,7 +1652,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      {//next record on disk
 
         lsn -= log_head->prev_trn_offs;
-        delete_large_read_buf();
         rec_beg = get_record_from_disk(lsn);
         InShMem = false;
         log_head = (logical_log_head*)rec_beg;
