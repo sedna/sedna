@@ -77,6 +77,8 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPDAFilter$(OBJ_EXT)				\
                        PPUp$(OBJ_EXT)					\
                        PPStringFuncs$(OBJ_EXT)			\
+                       PPCheckpoint$(OBJ_EXT)			\
+                       PPXptr$(OBJ_EXT)					\
                        casting_operations$(OBJ_EXT)		\
                        numeric_operations$(OBJ_EXT)		\
                        boolean_operations$(OBJ_EXT)		\
