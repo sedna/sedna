@@ -152,34 +152,39 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	FTRACE((log,"done\n"));
 
 
-	if (split_query(bl_docs_query,&blq)!=0) 
-		goto imp_error;
-    
-    for (i=0;i<blq.d_size;i++) {
-		char *docname=blq.buf[i];
-		char *colname=blq.buf[i];
-		// blq.buf[i] = "docname['colname]"
-		while (*colname!='\'' && *colname!='\0') colname++;
-		if (*colname=='\'') {
-			*colname='\0';
-			colname++;
-		} else {
-			colname=NULL;
-		}
-		sprintf(strbuf,"%s%d.xml",path,i+1);
-		if (colname==NULL)
-		  FTRACE((log,"Bulkload document '%s'...",docname))
-		else
-		  FTRACE((log,"Bulkload document '%s' into collection '%s'...",docname,colname))
-		if (bulkload_xml(&conn,strbuf,docname,colname,log)!=0)
+	FTRACE((log,"Loading documents..."))
+	if (strlen(bl_docs_query)==0)
+		FTRACE((log,"(no documents in the database)...")) 
+	else {
+		FTRACE((log,"\n"))
+        if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
-		FTRACE((log,"done\n"));
+        for (i=0;i<blq.d_size;i++) {
+			char *docname=blq.buf[i];
+			char *colname=blq.buf[i];
+			// blq.buf[i] = "docname['colname]"
+			while (*colname!='\'' && *colname!='\0') colname++;
+			if (*colname=='\'') {
+				*colname='\0';
+				colname++;
+			} else {
+				colname=NULL;
+			}
+			sprintf(strbuf,"%s%d.xml",path,i+1);
+			if (colname==NULL)
+			FTRACE((log,"Bulkload document '%s'...",docname))
+			else
+			FTRACE((log,"Bulkload document '%s' into collection '%s'...",docname,colname))
+			if (bulkload_xml(&conn,strbuf,docname,colname,log)!=0)
+				goto imp_error;
+			FTRACE((log,"done\n"));
+		}
 	}
-
+	FTRACE((log,"done\n"));
 	
 	FTRACE((log,"Creating indexes..."))
 	if (strlen(cr_indexes_query)==0)
-		FTRACE((log,"(no indexes in the database)")) 
+		FTRACE((log,"(no indexes in the database)...")) 
 	else
 		if (execute_multiquery(&conn,cr_indexes_query,log)!=0) 
 			goto imp_error;
