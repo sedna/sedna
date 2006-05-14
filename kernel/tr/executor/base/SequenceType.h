@@ -13,6 +13,7 @@
 #include "nodes.h"
 #include "tuple.h"
 #include "vmm.h"
+#include <vector>
 
 /// occurence indicator
 enum st_occurence_indicator
@@ -89,6 +90,7 @@ struct sequence_type
     st_item_type type;
 };
 
+typedef std::vector<sequence_type>		arr_of_sequence_type;
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2);
 
@@ -98,6 +100,8 @@ inline bool is_same_or_derived(xmlscm_type t1, xmlscm_type t2)
 }
 
 bool type_matches_single(const tuple_cell& tc, const st_item_type& it);
+
+bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st);
 
 bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st);
 
