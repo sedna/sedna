@@ -1,6 +1,6 @@
 /*
  * File:  PPPred.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include <math.h>
@@ -1010,11 +1010,10 @@ void PPPred2::open ()
     s = new sequence(source_child.ts);
     first_time = true;
     result_ready = false;
-    pos = 0;
     cur_tuple = NULL;
-    first_time = true;
-    eos_reached = true;
+    eos_reached = false;
     need_reopen = false;
+    pos = 0;
 
 
     for (int i = 0; i < var_dscs.size(); i++)
@@ -1081,6 +1080,7 @@ void PPPred2::next(tuple &t)
     
     if(first_time)
 	{
+	    if(s->size() != 0) s->clear();
 	    while (true)
         {
             source_child.op->next(t);
@@ -1099,10 +1099,10 @@ void PPPred2::next(tuple &t)
 	   		  		range.reinit();
        				for(int i = 0; i < conjuncts.size(); i++)
     					range.add_new_constraint(conditions[i], conjuncts[i]);	
-    			    if(range.is_empty()) { t.set_eos(); s->clear(); return; }
+    			    if(range.is_empty()) { t.set_eos(); return; }
    			 	    else if(range.is_any()) result_ready = true; 
 	   		  	}
-   			 	else { t.set_eos(); s->clear(); return; }
+   			 	else { t.set_eos(); return; }
        		}
 			else
 			{
@@ -1112,10 +1112,10 @@ void PPPred2::next(tuple &t)
 				if(is_numeric)
 				{
 				    range.reinit_with_position(value);
-				    if(range.is_empty()) { t.set_eos(); s->clear(); return; }
+				    if(range.is_empty()) { t.set_eos(); return; }
 				}
 				else if( tc.get_xs_boolean() ) result_ready = true;
-				else { t.set_eos(); s->clear(); return; }
+				else { t.set_eos(); return; }
 			}
 			need_reopen = true;
 		}
@@ -1124,7 +1124,7 @@ void PPPred2::next(tuple &t)
    		 	range.reinit();
 	       	for(int i = 0; i < conjuncts.size(); i++)
    	    		range.add_new_constraint(conditions[i], conjuncts[i]);	
-   	    	if(range.is_empty()) { t.set_eos(); s->clear(); return; } 
+   	    	if(range.is_empty()) { t.set_eos(); return; } 
     	}
     	
     	first_time = false;
@@ -1145,7 +1145,6 @@ void PPPred2::next(tuple &t)
 		if(pos < s->size()) 
 		{
 			s->get(t, pos++);
-	        cur_tuple = &t;
 	        return;
 	    }
 	}	
@@ -1181,7 +1180,6 @@ void PPPred2::next(tuple &t)
     result_ready = false;
     first_time = true;
     t.set_eos();
-    s->clear();
     pos = 0;
 }
 

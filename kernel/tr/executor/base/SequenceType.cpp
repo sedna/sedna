@@ -8,6 +8,7 @@
 #include "PPBase.h"
 #include "SequenceType.h"
 #include "casting_operations.h"
+#include "sequence.h"
 
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)
@@ -126,41 +127,71 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 }
 
 
-bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st)
+inline void get_next(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, int &pos)
 {
-    child.op->next(t);
+	if(s == NULL)
+	{
+		child.op->next(t);
+		if(t.is_eos()) eos_reached = true;
+    }
+	else
+	{
+		if(pos == s->size()) //does 'pos' points to the end of the sequence?
+	    {
+	    	if(eos_reached) t.set_eos(); 
+	    	else
+	    	{
+	    		//get next tuple from the 'child' and cache it
+	    		child.op->next(t); 
+    			if(!t.is_eos()) { eos_reached = true; s->add(t); pos++; }
+    		}
+	    }
+	    //else get 'pos'-th tuple from the given sequence
+    	else s->get(t, pos++); 
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//Pointer to sequence is used there to save tuples from PPOpIn.
+//If this pointer is not NULL and sequence is not empty then
+//tuples from it are proceeded before tuples from the PPOpIn!
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st)
+{
+    int pos = 0;
+
+    get_next(child, s, t, eos_reached, pos);
 
     if (t.is_eos())
-    {
-        eos_reached = true;
-
         return (st.oi == st_empty		|| 
                 st.oi == st_optional	|| 
                 st.oi == st_zero_or_more);
-    }
 
     if (st.oi == st_empty) return false;
     if (!type_matches_single(child.get(t), st.type)) return false;
 
-    child.op->next(t);
+    get_next(child, s, t, eos_reached, pos);
 
-    if (t.is_eos())
-    {
-        eos_reached = true;
-        return true;
-    }
+    if (t.is_eos()) return true;
 
     if (st.oi == st_one || st.oi == st_optional) return false;
 
     while (!t.is_eos())
     {
         if (!type_matches_single(child.get(t), st.type)) return false;
-        child.op->next(t);
+	    get_next(child, s, t, eos_reached, pos);
     }
 
-    eos_reached = true;
     return true;
 }
+
+bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st)
+{
+    return type_matches(child, NULL, t, eos_reached, st);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 void type_promotion(tuple_cell /*out*/&tc, xmlscm_type type)
 {

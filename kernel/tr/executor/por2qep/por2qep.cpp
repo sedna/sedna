@@ -1041,6 +1041,56 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnDistinctValues(cxt,
                                       make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPTypeswitch")
+    {
+    	if (   lst->size() != 6
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_LIST
+            || lst->at(4).type != SCM_LIST
+            || lst->at(5).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "48.1");
+
+        int i = 0;
+       
+        arr_of_var_dsc vars;
+        scheme_list *_vars_ = lst->at(1).internal.list;
+        for (i = 0; i != _vars_->size(); i++)
+        {
+            if (_vars_->at(i).type != SCM_NUMBER)
+                throw USER_EXCEPTION2(SE1004, "48.2");
+
+            var_dsc var = atoi(_vars_->at(i).internal.num);
+            vars.push_back(var);
+        }
+
+        arr_of_sequence_type _types_;
+        scheme_list *types_list = lst->at(3).internal.list;
+        for (i = 0; i < types_list->size(); i++)
+        {
+        	if (types_list->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "48.3");
+
+            _types_.push_back(make_sequence_type(types_list->at(i).internal.list));
+        }
+                
+        arr_of_PPOpIn _cases_;
+        scheme_list *cases_list = lst->at(4).internal.list;
+        for (i = 0; i < cases_list->size(); i++)
+        {
+            if (cases_list->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "48.4");
+
+            _cases_.push_back(make_pp_op(cxt, cases_list->at(i).internal.list));
+        }
+
+        opit = new PPTypeswitch(cxt,
+        						vars,
+        						make_pp_op(cxt, cases_list->at(2).internal.list),
+        						_types_,
+        						_cases_,
+								make_pp_op(cxt, cases_list->at(5).internal.list));
+    }
     else if (op == "PPCast")
     {
         if (   lst->size() != 4
@@ -1055,6 +1105,43 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                           make_pp_op(cxt, lst->at(1).internal.list),
                           target_type,
                           lst->at(3).internal.b);
+    }
+    else if (op == "PPCastable")
+    {
+        if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_SYMBOL
+            || lst->at(3).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "50");
+
+        xmlscm_type target_type = lr_atomic_type2xmlscm_type(lst->at(2).internal.symb);
+
+        opit = new PPCastable(cxt,
+                              make_pp_op(cxt, lst->at(1).internal.list),
+                              target_type,
+                              lst->at(3).internal.b);
+    }
+    else if (op == "PPInstanceOf")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "69");
+
+        opit = new PPInstanceOf(cxt,
+                                make_pp_op(cxt, lst->at(1).internal.list),
+                                make_sequence_type(lst->at(2).internal.list));
+    }
+    else if (op == "PPTreat")
+    {
+    	if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "69.1");
+
+        opit = new PPTreat(cxt,
+                           make_pp_op(cxt, lst->at(1).internal.list),
+                           make_sequence_type(lst->at(2).internal.list));
     }
     else if (op == "PPGeneralCompGT")
     {
@@ -1279,17 +1366,6 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = PPNodeComparison::PPGTNodeComparison(cxt,
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
-    }
-    else if (op == "PPInstanceOf")
-    {
-        if (   lst->size() != 3
-            || lst->at(1).type != SCM_LIST
-            || lst->at(2).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "69");
-
-        opit = new PPInstanceOf(cxt,
-                                make_pp_op(cxt, lst->at(1).internal.list),
-                                make_sequence_type(lst->at(2).internal.list));
     }
     else if (op == "PPFunCall")
     {

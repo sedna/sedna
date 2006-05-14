@@ -464,3 +464,16 @@ tuple_cell cast(const tuple_cell &c, xmlscm_type xtype)
         default					: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast");
     }
 }
+
+bool is_castable(const tuple_cell &c, xmlscm_type xtype)
+{
+	try
+	{
+		cast(c, xtype);	
+		return true;
+	}
+	catch(SednaUserException &e)
+	{
+		return false;
+	}
+}

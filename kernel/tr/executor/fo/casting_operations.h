@@ -13,6 +13,8 @@
 
 tuple_cell cast(const tuple_cell &c, xmlscm_type xtype);
 
+bool is_castable(const tuple_cell &c, xmlscm_type xtype);
+
 tuple_cell cast_to_xs_string		(const tuple_cell &c);
 tuple_cell cast_to_xs_QName			(const tuple_cell &c);
 tuple_cell cast_to_xdt_untypedAtomic(const tuple_cell &c);
