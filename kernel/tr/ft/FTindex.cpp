@@ -58,7 +58,7 @@ xptr_sequence *ftlog_file::read_xptr_sequence()
 
 void ftlog_file::close_and_delete_file(const char *index_name)
 {
-	if (uCloseFile(file) == 0)
+	if (uCloseFile(file, __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4043);
 
 	char fn[32];
@@ -67,7 +67,7 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 		+ std::string(db_name) + std::string("_files/dtsearch/");
 	std::string log_path = log_path1 + std::string(fn);
 
-	if (uDeleteFile(log_path.c_str()) == 0)
+	if (uDeleteFile(log_path.c_str(), __sys_call_error) == 0)
 		throw USER_EXCEPTION(SE4041);
 }
 
@@ -76,8 +76,8 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
-	uMkDir(index_path1.c_str(),NULL);
-	uMkDir(index_path.c_str(),NULL);
+	uMkDir(index_path1.c_str(),NULL, __sys_call_error);
+	uMkDir(index_path.c_str(),NULL, __sys_call_error);
 	this->IndexPath.set(index_path.c_str());
 
 	this->SuppressMessagePump();
@@ -108,7 +108,7 @@ void SednaIndexJob::create_index(std::vector<xptr> *first_nodes)
 }
 void SednaIndexJob::OnError(long a, const char * b, const char * c, const char *d)
 {
-	d_printf2("error %s\n", c);
+	//d_printf2("error %s\n", c);
 }
 int SednaIndexJob::clear_index(const char *index_name)
 {
@@ -161,7 +161,7 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 	std::string list_path = list_path1 + std::string(ft_idx->index_title) + 
 		std::string("\\remove_list");
 
-	UFile f = uCreateFile(list_path.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL);
+	UFile f = uCreateFile(list_path.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
 
 	xptr_sequence::iterator it = deleted->begin();
 	char tmp_buf[32];
@@ -169,20 +169,20 @@ void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 	{
 		int wr;
 		SednaDataSource::recordToFilename(tmp_buf, *it);
-		uWriteFile(f, tmp_buf, strlen(tmp_buf), &wr);
+		uWriteFile(f, tmp_buf, strlen(tmp_buf), &wr, __sys_call_error);
 		tmp_buf[0] = '\n';
-		uWriteFile(f, tmp_buf, 1, &wr);
+		uWriteFile(f, tmp_buf, 1, &wr, __sys_call_error);
 
 		it++;
 	}
-	uCloseFile(f);
+	uCloseFile(f, __sys_call_error);
 	this->ToRemoveListName.setU8(list_path.c_str());
 	this->SetActionRemoveListed(true);
 	log_file->start_new_record(FTLOG_DELETE_START);
 	log_file->write_xptr_sequence(deleted);
 	log_file->flush();
 	this->Execute();
-	uDeleteFile(list_path.c_str());
+	uDeleteFile(list_path.c_str(), __sys_call_error);
 	log_file->start_new_record(FTLOG_DELETE_END);
 	log_file->flush();
 }
@@ -196,9 +196,9 @@ UFile SednaIndexJob::create_log(const char *index_name)
 	std::string log_path = log_path1 + std::string(fn);
 
 	USECURITY_ATTRIBUTES *sa;
-	if(uCreateSA(&sa,U_ALL_ACCESS, 0)!=0) throw USER_EXCEPTION(SE3060);
-	UFile log_file = uCreateFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, sa);
-	if(uReleaseSA(sa)!=0) throw USER_EXCEPTION(SE3063);
+	if(uCreateSA(&sa,U_ALL_ACCESS, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
+	UFile log_file = uCreateFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, sa, __sys_call_error);
+	if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
 
 	if (log_file == U_INVALID_FD)
 		throw USER_EXCEPTION2(SE4040, "failed to create log for full-text index operations");
@@ -383,7 +383,7 @@ void SednaIndexJob::recover_db_file(const char *fname, trns_analysis_map& undo_r
 		+ std::string(db_name) + std::string("_files/dtsearch/");
 	std::string log_path = log_path1 + std::string(fname);
 
-	UFile log_ufile = uOpenFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH);
+	UFile log_ufile = uOpenFile(log_path.c_str(), 0, U_READ_WRITE, U_WRITE_THROUGH, __sys_call_error);
 
 	if (log_ufile == U_INVALID_FD)
 		throw SYSTEM_EXCEPTION("failed to open log for full-text index operations");

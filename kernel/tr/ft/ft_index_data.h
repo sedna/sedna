@@ -104,13 +104,13 @@ void ft_index_on_session_end();
 void inline ft_index_sem_down()
 {
 #ifndef NOSEM
-	USemaphoreDown(ft_index_sem);
+	USemaphoreDown(ft_index_sem, __sys_call_error);
 #endif
 }
 void inline ft_index_sem_up()
 {
 #ifndef NOSEM
-	USemaphoreUp(ft_index_sem);
+	USemaphoreUp(ft_index_sem, __sys_call_error);
 #endif
 }
 

@@ -126,16 +126,16 @@ private:
 	static const int min_words_after = 10;
 	static const int max_words_after = 20;
 
-	typename Iterator fragment_start;
-	typename Iterator fragment_end;
+	Iterator fragment_start;
+	Iterator fragment_end;
 	int fragment_start_word_tok_num;
 	int fragment_start_word_num;
 	bool fragment_start_split;
 	bool fragment_end_split;
 	int fragment_pref_ch; //FIXME: stupid workaround
 
-	typename Iterator str_it;
-	typename Iterator str_end;
+	Iterator str_it;
+	Iterator str_end;
 
 	e_str_buf *result;
 public:
@@ -174,7 +174,11 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   void set_index(tuple_cell& name);
 		   void reopen();        
 		   virtual ~SednaSearchJob();
+#ifdef WIN32
 		   static DWORD WINAPI ThreadFunc( void* lpParam );
+#else
+		   static void *ThreadFunc( void* lpParam );
+#endif
 	  private:
 		  PPOpIn* seq;
 		  UTHANDLE dtth;

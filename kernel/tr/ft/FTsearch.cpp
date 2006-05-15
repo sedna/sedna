@@ -6,6 +6,7 @@
 #include "sedna.h"
 
 #include "FTsearch.h"
+#include "PPBase.h"
 #include "tr_globals.h"
 
 using namespace dtSearch;
@@ -375,9 +376,12 @@ void SednaSearchJob::OnFound(long totalFiles,
 	DSearchJob::VetoThisItem();
 	res = SednaDataSource::filenameToRecord(name);
 	if (hilight)
-		hl->convert_node(SednaDataSource::filenameToRecord(name),item.hits,item.hitCount);
-	UUnnamedSemaphoreUp(&sem1);
-	UUnnamedSemaphoreDown(&sem2);
+	{
+		xptr ptr = SednaDataSource::filenameToRecord(name);
+		hl->convert_node(ptr,item.hits,item.hitCount);
+	}
+	UUnnamedSemaphoreUp(&sem1, __sys_call_error);
+	UUnnamedSemaphoreDown(&sem2, __sys_call_error);
 }
 SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_)
 {
@@ -405,17 +409,17 @@ void SednaSearchJob::get_next_result(tuple &t)
 {
 	if (dtth==NULL)
 	{
-		UUnnamedSemaphoreCreate(&sem1, 0, NULL);
-		UUnnamedSemaphoreCreate(&sem2, 0, NULL);
+		UUnnamedSemaphoreCreate(&sem1, 0, NULL, __sys_call_error);
+		UUnnamedSemaphoreCreate(&sem2, 0, NULL, __sys_call_error);
         uCreateThread(
         ThreadFunc,                  // thread function 
         this,						 // argument to thread function 
         &dtth,                       // use default creation flags 
-        0, NULL);
+        0, NULL, __sys_call_error);
 	}
 	else
-		UUnnamedSemaphoreUp(&sem2);    
-	UUnnamedSemaphoreDown(&sem1);
+		UUnnamedSemaphoreUp(&sem2, __sys_call_error);
+	UUnnamedSemaphoreDown(&sem1, __sys_call_error);
     if (res==XNULL)
 	{
 		/*
@@ -426,8 +430,8 @@ void SednaSearchJob::get_next_result(tuple &t)
 		dtssSetOptions(opts, result);*/
 		t.set_eos();
 		dtth = NULL;
-		UUnnamedSemaphoreRelease(&sem1);
-		UUnnamedSemaphoreRelease(&sem2);
+		UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
+		UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
 	}
 	else
 	{
@@ -460,7 +464,11 @@ void SednaSearchJob::reopen()
 SednaSearchJob::~SednaSearchJob()
 {
 }
+#ifdef WIN32
 DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
+#else
+void *SednaSearchJob::ThreadFunc( void* lpParam )
+#endif
 {
 	
 	//if (((SednaSearchJob*)lpParam)->hilight)
@@ -483,7 +491,7 @@ DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
 	}
 
 	((SednaSearchJob*)lpParam)->res = XNULL;
-	UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1));
+	UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
 	return 0;
 }
 void SednaSearchJob::OnSearchingIndex(const char * indexPath)
@@ -491,6 +499,11 @@ void SednaSearchJob::OnSearchingIndex(const char * indexPath)
 	//std::cout<<"Searching: "<<indexPath;
 }
 
+
+static int cmp_long(const void *a, const void *b)
+{
+	return int(*((long*)a) - *((long*)b));
+}
 
 template <class Iterator>
 SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it_, 
@@ -653,6 +666,9 @@ static inline bool is_tag_char(int ch)
 {
 	return ((!iswpunct(ch) && !iswspace(ch) && ch != '<' && ch != SednaStringHighlighter<char*>::EOF_ch) || ch == '-');
 }
+
+
+inline static bool iswordchar(int ch);
 
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_end, bool copy)
@@ -982,11 +998,6 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 	}
 	fragment_end = str_it;
 	fragment_end_split = false;
-}
-
-static int cmp_long(const void *a, const void *b)
-{
-	return int(*((long*)a) - *((long*)b));
 }
 
 void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
