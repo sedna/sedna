@@ -3,6 +3,7 @@
 #include "se_exp_export.h"
 #include "se_exp_cl.h"
 #include "sprompt.h"
+#include "uutils.h"
 
 
 void print_usage() {
@@ -13,7 +14,7 @@ void print_usage() {
 
 
 int main(int argc, char* argv[]) {
-  char parse_errmsg[1000];
+  char parse_errmsg[PARSE_ERR_MSG_SIZE];
   char *input_login=NULL,*input_password=NULL;
   int tmp;
   
@@ -46,21 +47,29 @@ int main(int argc, char* argv[]) {
 		printf("Logging is off.\n"); 
 	}
 	if (strcmp(login,"-") == 0) {           
-       	input_login = simple_prompt("Login: ", 100, 1);
+       	input_login = simple_prompt("Login: ", SPROMT_LOGIN_SIZE, 1);
 		strcpy(login,input_login);
        	if (input_login!=NULL) free(input_login);
     }                                       
 	if (strcmp(password,"-") == 0) {
-       	input_password = simple_prompt("Password: ", 100, 0);
+       	input_password = simple_prompt("Password: ", SPROMT_LOGIN_SIZE, 0);
 		strcpy(password,input_password);
        	if (input_password!=NULL) free(input_password);
     }
+    
 
 	// Add the slash to the specified path 
 	tmp=strlen(path);
 	if (path[tmp-1]!='\\' && path[tmp-1]!='/') {
 		path[tmp]=SE_EXP_PATH_SEP;
 		path[tmp+1]='\0';
+	}
+
+    // Concat the host with socket_port
+	if (socket_port!=5050) {
+		char buf[SOCKET_PORT_DIGITS_NUM + 1];
+		strcat(host,":");
+		strcat(host,u_itoa(socket_port, buf, 10));
 	}
 
 	if (!strcmp(command,"export")) {
