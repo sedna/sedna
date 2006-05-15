@@ -33,7 +33,7 @@ void ft_index_on_session_begin(pers_sset<ft_index_cell,unsigned short> * _indexd
     ft_indexdata = _indexdata_;
     ft_idx_counter = _idx_counter_;
 	//SEMAPHOR INIT SECTION
-	if (USemaphoreOpen(&ft_index_sem, FT_INDEX_SEMAPHORE_STR) != 0)
+	if (USemaphoreOpen(&ft_index_sem, FT_INDEX_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "FT_INDEX_SEMAPHORE_STR");
 
     ft_index_initialized = true;
@@ -43,7 +43,7 @@ void ft_index_on_session_end()
 {
     if (!ft_index_initialized) return;
 	//SEMAPHOR RELEASE SECTION
-    if (USemaphoreClose(ft_index_sem) != 0)
+    if (USemaphoreClose(ft_index_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4013, "FT_INDEX_SEMAPHORE_STR");
     ft_index_initialized = false;
 }

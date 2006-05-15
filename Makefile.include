@@ -247,6 +247,11 @@ CFLAGS  += -fprofile-arcs -ftest-coverage
 CPPFLAGS+= -fprofile-arcs -ftest-coverage
 endif
 
+ifeq ($(ENABLE_DTSEARCH),1)
+CPPFLAGS+= -DSE_ENABLE_FTSEARCH -D__UNIX__ -DUnicodeText
+LFLAGS += -L$(PP)/libs/dtsearch/lib -ldtsearch -lz
+endif
+
 CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer -fno-strict-aliasing -Wall	\
                      -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS 
 LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken
