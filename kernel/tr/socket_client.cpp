@@ -521,3 +521,6 @@ void socket_client::show_time(string qep_time)
    if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
 }
 
+void socket_client::write_user_query_to_log()
+{
+}
