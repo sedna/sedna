@@ -91,7 +91,7 @@ void delete_document(const char *document_name)
 		}
 #ifdef SE_ENABLE_FTSEARCH
 	    schema_ft_ind_cell* ftsci=((doc_schema_node*)snode)->sc_ft_idx;
-		while (sci!=NULL)
+		while (ftsci!=NULL)
 		{
 			ft_index_cell::delete_index(ftsci->index->index_title);
 			ftsci=((doc_schema_node*)snode)->sc_ft_idx;
@@ -201,7 +201,7 @@ void delete_collection(const char *collection_name)
 		}
 #ifdef SE_ENABLE_FTSEARCH
 	    schema_ft_ind_cell* ftsci=coll->sc_ft_idx;
-		while (sci!=NULL)
+		while (ftsci!=NULL)
 		{
 			ft_index_cell::delete_index(ftsci->index->index_title);
 			ftsci=coll->sc_ft_idx;
