@@ -511,9 +511,16 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char 
 		memcpy(custom_tree_buf + custom_tree_size, str, len + 1);\
 		custom_tree_size += len + 1;\
 	}
-
-			PUT_STR(tmp->obj->ns->uri);
-			PUT_STR(tmp->obj->ns->prefix);
+			if (tmp->obj->ns == NULL)
+			{
+				PUT_STR(NULL);
+				PUT_STR(NULL);
+			}
+			else
+			{
+				PUT_STR(tmp->obj->ns->uri);
+				PUT_STR(tmp->obj->ns->prefix);
+			}
 			PUT_STR(tmp->obj->local);
 #undef PUT_STR
 

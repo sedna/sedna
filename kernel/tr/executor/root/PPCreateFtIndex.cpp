@@ -56,12 +56,16 @@ void PPCreateFtIndex::open()
 {
     root = get_schema_node(db_ent, "Unknown entity passed to PPCreateIndex");
     index_name.op->open();
+	if (cust_rules.op)
+		cust_rules.op->open();
 }
 
 void PPCreateFtIndex::close()
 {
     index_name.op->close();
     root = NULL;
+	if (cust_rules.op)
+		cust_rules.op->close();
 }
 
 
