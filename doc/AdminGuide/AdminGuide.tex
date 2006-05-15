@@ -474,6 +474,173 @@ The \verb!-print-intermed! and \verb!-query-type! options are used for debug pur
 The \verb!-name! and \verb!-pswd! options are reserved for further Sedna features.
 
 
+\subsection{Backup and Restore}
+
+As with everything that contains valuable data, Sedna databases should be backed up regularly.
+In this section we present different aproaches to backing up Sedna data and the process of 
+migration between different Sedna releases.
+
+
+\subsubsection{se\_exp utility}
+
+The purpose of \verb!se_exp! utility is to provide functionality of exporting/importing data. The 
+idea behind the \verb!se_exp! method is to generate a set of XML files and XQuery 
+scripts to restore the database in the same state as it was at the time of the exporting. 
+
+Note that \verb!se_exp! is a regular Sedna client application. This means that you can export data from
+any remote host that has access to Sedna. The requirement is that \verb!se_exp! should operate with 
+special permissions. In particular, it must have read access to all documents in the database including 
+system metadata. This means that you should run it as a user which has DBA role.
+
+The usage of \verb!se_exp! utility is:
+
+\begin{verbatim}
+se_exp [options] command dbname path
+options:
+  -help                   display this help and exit
+  --help                  display this help and exit
+  -version                display product version and exit
+  -verbose on/off         verbose output (default off)
+  -host host              hostname of the machine with Sedna running
+                          (default localhost)
+  -port-number port       socket listening port  (default 5050)
+  -name name              user name
+  -pswd password          user password
+   command                export | restore | import
+   db-name                database name
+   path                   path to exported/imported data
+\end{verbatim}
+
+
+There are three commands to manipulate data with \verb!se_exp!. They are \verb!export!,
+\verb!restore! and \verb!import!. Below we describe each of these commands in details.
+
+
+
+
+\subsubsection*{Export}
+The purpose of \verb!export! command is to export data from specified database. The basic usage 
+of this command is:
+
+\begin{verbatim}
+se_exp export dbname path
+\end{verbatim}
+
+The parameter \verb!dbname! specifies the database in Sedna to export data from. The \verb!path!
+parameter specifies the directory to store files with exported data. 
+
+While export process \verb!se_exp! generates a set of XML files and a set of XQuery scripts to 
+recreate the state of database. For each XML document in the database including XML documents in
+collections \verb!se_exp! generates an XML file. Some XML files with system metadata are also
+generated. Note that the security metadata is exported in insecure way (the file contains 
+unencrypted user names and passwords).
+
+Exported data created by \verb!se_exp! is transaction consistent, that is, updates to the database 
+while \verb!se_exp! is running will not be in the exported data. 
+
+To specify which database server \verb!se_exp! should contact, use the command line options 
+\verb!-host host!. The default host is the local host. As Sedna client application, \verb!se_exp! 
+requires user name and password to connect to the database. You can either specify them with 
+\verb!-name! and \verb!-pswd! options or type user name and password in the dialog while 
+running \verb!se_exp!.
+
+
+
+
+\subsubsection*{Restore}
+
+The \verb!restore! command restores data created by the export command into the empty database.
+The restore command is intended for migration between different releases of Sedna and for back
+up of your data in XML format. The basic usage of this command is:
+
+\begin{verbatim}
+se_exp restore dbname path
+\end{verbatim}  
+
+The parameter \verb!dbname! specifies the database in Sedna to restore data into. The \verb!path!
+parameter specifies the directory with data to restore. 
+
+The database \verb!dbname! will not be created by this command. It is required that the target database 
+already exist and run before starting the restore process. You must create it yourself with the help
+of \verb!se_cdb! command and start it with \verb!se_sm! command. It is also required that the target 
+database is empty, i.e. it doesn't contain any data or any users or roles except the default one.
+
+
+
+
+\subsubsection*{Import}
+
+The \verb!import! command imports data created by the export command into an existing database
+which may be not empty. The basic usage of this command is:
+
+\begin{verbatim}
+se_exp import dbname path
+\end{verbatim}  
+
+The parameter \verb!dbname! specifies the database in Sedna to import data to. The \verb!path!
+parameter specifies the directory with data to import. 
+
+The database \verb!dbname! will not be created by this command. It is required that the target database 
+already exist and run before starting the import process. 
+
+You can import data into database which contains some data and has some security politics. The only
+restriction is that there should not be any conflicts in the names of XML documents, collections or
+indices. 
+
+The main difference between \verb!restore! and \verb!import! command is that \verb!import! command 
+doesn't import any security information. All data is imported by the user who run the \verb!se_exp! 
+utility, i.e. by the user with the name and password specified with \verb!se_exp! parameters. Of cause 
+this user should have enough rights to create collections, load documents and create indices.
+
+
+
+
+
+
+\subsubsection{File system level backup}
+
+An alternative strategy to backup a database is to directly copy the directories that Sedna
+uses to store the data of the database. Read Section \ref{sec:dir-structure} to find out where
+Sedna stores databases. You can use whatever method you prefer for doing usual file system backups.
+To restore a database, copy the corresponding backup directory to the location where Sedna stores
+databases.
+
+There is a requirement is that the target database must be shut down in order to get a usable backup.
+Half-way measures such as disallowing all connections will not work.
+
+Note that a file system backup will not necessarily be smaller than an back up via export. On 
+the contrary, it will most likely be larger.
+
+\begin{note}
+The database directory copied to different machine or different version of the same operating system 
+might not work properly. If you want to restore a database on another machine or OS installation use
+\verb!se_exp! utility instead.
+\end{note}
+
+
+\subsubsection{Migration Between Releases}
+
+In this section we discuss how to migrate your data from one release of Sedna to another. 
+As the internal data storage format is subject to change between different releases of Sedna it is a 
+frequently required task to accurately migrate data.  
+
+It is recommended that you use \verb!se_exp! utility to pass through this problem. The process 
+consists of four steps.
+
+\begin{enumerate}
+\item
+Run \verb!se_exp! utility with \verb!export! command to export your data to some 
+directory on the filesystem.
+\item
+Shut down the old version of Sedna database server and remove it from your system. 
+\item
+Install and run a new version of Sedna, create the database with \verb!se_cdb! and start it with 
+\verb!se_sm!. Make sure that no transaction has been run with the new database before restoring 
+the data.
+\item
+Run \verb!se_exp! utility with \verb!restore! command to restore data into the new database
+\end{enumerate}
+
 
 \subsection{The Examples of Using Command Line Utilities}
 
