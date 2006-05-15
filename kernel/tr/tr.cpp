@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
         // sid is known
         event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         event_logger_set_sid(sid);
-
+        client->write_user_query_to_log();
 
 #ifdef _WIN32
         BOOL fSuccess;

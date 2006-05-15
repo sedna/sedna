@@ -434,3 +434,30 @@ void command_line_client::show_time(string qep_time)
 	d_printf2("Execution time of the latest query %s\n",qep_time.c_str());
 }
 
+
+void command_line_client::write_user_query_to_log()
+{
+   char buf[1000000];
+
+   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
+   {
+
+      //read batch text in string
+
+      FILE *f;
+      if ((f = fopen(filename, "r")) == NULL)
+         throw USER_EXCEPTION2(SE4042, filename);
+
+      string plain_batch_text;
+      plain_batch_text.reserve(100000);
+
+      while(!feof(f))
+      {
+         size_t len= fread(buf, sizeof(char), sizeof(buf), f);
+         plain_batch_text.append(buf, len);
+      }
+
+      elog_long(EL_LOG, "User's query:\n", plain_batch_text.c_str());
+   }
+
+}
