@@ -172,7 +172,7 @@ const char* llmgr_core::get_record_from_disk(LONG_LSN& lsn)
      if (read_buf_size < rec_len)
      {
        delete [] read_buf;
-       read_buf = new char[rec_len];
+       read_buf = new(TransactionContext) char[rec_len];
        read_buf_size = rec_len;
      }
 
@@ -220,7 +220,7 @@ const char* llmgr_core::get_record_from_shared_memory(int end_offs, int len)
     if (len > read_buf_size)
     {
        delete [] read_buf;
-       read_buf = new char[len]; 
+       read_buf = new(TransactionContext) char[len]; 
        read_buf_size = len;
     }
 

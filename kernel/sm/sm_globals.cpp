@@ -34,7 +34,7 @@ int phys_log_ext_portion;
 int phys_log_size;
 
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
-char *db_files_path;
+char db_files_path[U_MAX_PATH + 1];
 
 
 //gov_server is used for connecting to the governor for registr/unregister sm
@@ -43,13 +43,16 @@ SSMMsg* gov_server;
 
 
 void setup_sm_globals()
-{
-   
-   char buf[1000];
+{   
+   char buf[1024];
 
-   string data_files_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/";
-   db_files_path = new char[data_files_path.length() + 1];
-   strcpy(db_files_path, data_files_path.c_str());
+   if (strlen(SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
+      throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
+   strcpy(db_files_path, SEDNA_DATA);
+   strcat(db_files_path, "/data/");
+   strcat(db_files_path, db_name);
+   strcat(db_files_path, "_files/");
+
 
 
    string cfg_file_name = string(SEDNA_DATA) + "/cfg/" + db_name + "_cfg.xml";
@@ -63,7 +66,7 @@ void setup_sm_globals()
 
    while( !feof(f) )
    {
-     size_t len = fread (buf, sizeof(char), 1000, f);
+     size_t len = fread (buf, sizeof(char), 1024, f);
 
      if ( ferror(f) )
         throw USER_EXCEPTION2(SE4044,  cfg_file_name.c_str());

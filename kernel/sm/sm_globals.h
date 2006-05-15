@@ -37,7 +37,7 @@ extern int phys_log_size;
 extern char db_name[];
 
 // path to db files
-extern char *db_files_path;
+extern char db_files_path[];
 
 void setup_globals();
 

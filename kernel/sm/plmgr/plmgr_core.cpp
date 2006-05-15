@@ -13,8 +13,7 @@
 #include "usem.h"
 #include "d_printf.h"
 #include "tr_debug.h"
-#include <string>
-#include <stdio.h>
+#include "memutils.h"
 //#include "trmgr.h"
 
 using namespace std;
@@ -75,7 +74,7 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 
 
   //init read_buf
-  read_buf = new char[PHYS_LOG_READ_BUF_LENGTH];
+  read_buf = new(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
 
   //init phys log header (it stored in the first sector of phys log file)
   int res3;
@@ -160,7 +159,7 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 
 
   //init read_buf
-  read_buf = new char[PHYS_LOG_READ_BUF_LENGTH];
+  read_buf = new(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
 
   this->init_phys_log_open_state();
 

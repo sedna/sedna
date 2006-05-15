@@ -12,13 +12,12 @@
 #include <map>
 
 #include "base.h"
-//#include "nodes.h"
 #include "xptr.h"
 #include "uhdd.h"
 #include "usem.h"
 #include "ushm.h"
 #include "plmgr_core.h"
-//#include "plmgr.h"
+#include "memutils.h"
 
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
@@ -305,7 +304,7 @@ private:
      if (internal_buf_size < size)
      {
         delete [] internal_buf;
-        internal_buf = new char[size];
+        internal_buf = new(TransactionContext) char[size];
      }
 
      return internal_buf;
