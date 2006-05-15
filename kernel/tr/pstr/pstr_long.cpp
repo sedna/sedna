@@ -791,8 +791,7 @@ int  pstr_long_cursor::get_blk_rev(char **ptr)
 }
 
 
-//pre:	dst != src
-//		size0 is actual string size, FIXME
+//pre:	size0 is actual string size, FIXME
 void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0)
 {
 	if (size0 < (PAGE_SIZE * 2))
@@ -810,7 +809,6 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 		pstr_long_off_t size = size0;
 		CHECKP(dst_desc);
 		intl_last_blk = ((struct t_dsc *)XADDR(dst_desc))->data;
-		U_ASSERT(intl_last_blk != src);
 
 		char *data_buf = (char *)malloc(PAGE_SIZE);
 		int data_buf_cnt=0, data_buf_ofs=0;
@@ -889,14 +887,23 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 		if (data_buf_cnt > data_buf_ofs)
 			plog = intl_append_str_pc(dst_desc, data_buf + data_buf_ofs, data_buf_cnt - data_buf_ofs, plog);
 		//FIXME slow?
-		while (src_cur.blk != XNULL)
+		while (size > 0)
 		{
+			U_ASSERT(src_cur.blk != XNULL);
 			data_buf_cnt = src_cur.copy_blk(data_buf);
+			if (data_buf_cnt > size)
+			{
+				data_buf_cnt = size;
+				U_ASSERT(((struct t_dsc *)XADDR(dst_desc))->data == src);
+			}
 			data_buf_ofs = 0;
 
 			if (data_buf_cnt > data_buf_ofs)
 				plog = intl_append_str_pc(dst_desc, data_buf + data_buf_ofs, data_buf_cnt - data_buf_ofs, plog);
+
+			size -= data_buf_cnt;
 		}
+		U_ASSERT(size == 0);
 
 		free(data_buf);
 		//intl_append_str_pc will be executed at least once, because size0 >= PAGE_SIZE*2
