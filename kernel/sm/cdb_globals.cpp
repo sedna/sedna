@@ -111,11 +111,12 @@ void setup_cdb_globals(int argc,
    if (strcmp(db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
 
-   //d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
-   string data_files_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/";
-   db_files_path  =new char [data_files_path.length()+1];
-   strcpy(db_files_path, data_files_path.c_str());
-
+   if (strlen(SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
+      throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
+   strcpy(db_files_path, SEDNA_DATA);
+   strcat(db_files_path, "/data/");
+   strcat(db_files_path, db_name);
+   strcat(db_files_path, "_files/");
 }
 
 

@@ -19,29 +19,6 @@ using namespace std;
 // HANDLERS FOR PARSING CONFIG FILES
 /******************************************************************************/
 
-//src is the string from which NewLine character must be removed
-
-void rmNewLine(char* src)
-{
-   char *tmp_buf;
-   tmp_buf = new char[strlen(src)+1];
-   int i=0, j = 0;
-
-   for (i=0; i < (int)strlen(src); i++)
-   {
-     if (src[i] != '\n')
-     {
-        tmp_buf[j] = src[i];
-        j++;
-     }
-   }
-   tmp_buf[j] = '\0';
-
-   strcpy(src, tmp_buf);
-
-   delete [] tmp_buf;
-}
-
 void startElement_sm_cfg(void *cnt, const char *name, const char **atts)
 {
  
@@ -54,13 +31,7 @@ void endElement_sm_cfg(void *cnt, const char *name)
 
   string _tag_name_ = ((CfgParserContext*)cnt)->tag_name;
   string _content_ = ((CfgParserContext*)cnt)->content;
-/*
-  if (_tag_name_ == "name")
-  {
-     db_name = new char[_content_.length()+1];
-     strcpy(db_name, _content_.c_str());
-  }
-*/
+
   if ( _tag_name_ == "bufs_num")
   {  
      bufs_num = atoi(_content_.c_str());

@@ -103,7 +103,7 @@ extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 
 #ifdef __cplusplus
-/*
+
 inline void *operator new(usize_t size)
 {
     return MemoryContextAlloc(CurrentMemoryContext, size);
@@ -133,7 +133,7 @@ inline void operator delete[](void* p)
 {
     se_free(p);
 }
-*/
+
 #endif /* __cplusplus__ */
 
 

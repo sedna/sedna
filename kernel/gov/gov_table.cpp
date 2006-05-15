@@ -407,6 +407,7 @@ void info_table::stop_database(const database_id& db_id)
      throw SYSTEM_EXCEPTION("Failed to shutdown SSMMsg service (message service)");
 
   delete sm_server;
+  sm_server = NULL;
   
 
   res = uWaitForProcess(pid, proc_handle, __sys_call_error);
