@@ -111,9 +111,7 @@ SednaTextInputStream::SednaTextInputStream(dtsFileInfo* info,ft_index_type _cm_,
     idTextInputStream(TextInputStreamID),
 	fileInfo(info),
 	estr_it(NULL)
-	{   
-	 
-    
+{    
 }
 
 SednaTextInputStream::~SednaTextInputStream()
@@ -357,7 +355,7 @@ xptr OperationSednaDataSource::get_next_doc()
    tuple_cell& tc= t.cells[0];
    if (!tc.is_node())
    {
-	   throw USER_EXCEPTION(SE2031);
+	   throw USER_EXCEPTION2(XP0006, "atomic values are not supported in full-text queries");
    }
    return tc.get_node();
 }
@@ -381,9 +379,12 @@ void SednaSearchJob::OnFound(long totalFiles,
 		hl->convert_node(ptr,item.hits,item.hitCount);
 	}
 	UUnnamedSemaphoreUp(&sem1, __sys_call_error);
+	this->thread_up_semaphore_on_exception = false;
 	UUnnamedSemaphoreDown(&sem2, __sys_call_error);
+	this->thread_up_semaphore_on_exception = true;
 }
-SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_)
+SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_, bool _hl_fragment_):seq(_seq_), hilight(_hilight_), hl_fragment(_hl_fragment_),
+																																							thread_exception(NULL), thread_up_semaphore_on_exception(true)
 {
 	AttachDataSource(new OperationSednaDataSource(_cm_,_custom_tree_,_seq_),true);
 	dtth=NULL;
@@ -396,7 +397,9 @@ SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_cus
 			hl=new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
 }
-SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hilight(_hilight_),hl_fragment(_hl_fragment_)
+SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hilight(_hilight_),hl_fragment(_hl_fragment_),
+													thread_exception(NULL), thread_up_semaphore_on_exception(true)
+
 {
 	dtth=NULL;
 	this->SuppressMessagePump();
@@ -405,21 +408,48 @@ void SednaSearchJob::set_request(tuple_cell& request)
 {
 	this->Request.setU8(t_str_buf(request).c_str());
 }
+void SednaSearchJob::stop_thread_on_error()
+{
+	UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
+	UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
+	//TODO: stop thread
+}
 void SednaSearchJob::get_next_result(tuple &t)
 {
 	if (dtth==NULL)
 	{
-		UUnnamedSemaphoreCreate(&sem1, 0, NULL, __sys_call_error);
-		UUnnamedSemaphoreCreate(&sem2, 0, NULL, __sys_call_error);
-        uCreateThread(
-        ThreadFunc,                  // thread function 
-        this,						 // argument to thread function 
-        &dtth,                       // use default creation flags 
-        0, NULL, __sys_call_error);
+		if (UUnnamedSemaphoreCreate(&sem1, 0, NULL, __sys_call_error) != 0)
+			throw USER_EXCEPTION(SE4010);
+		if (UUnnamedSemaphoreCreate(&sem2, 0, NULL, __sys_call_error) != 0)
+		{
+			UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
+			throw USER_EXCEPTION(SE4010);
+		}
+        uResVal rval = uCreateThread(
+			ThreadFunc,                  // thread function 
+			this,						 // argument to thread function 
+			&dtth,                       // use default creation flags 
+			0, NULL, __sys_call_error);
+		if (rval != 0)
+		{
+			UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
+			UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
+			throw USER_EXCEPTION(SE4060);
+		}
 	}
 	else
-		UUnnamedSemaphoreUp(&sem2, __sys_call_error);
-	UUnnamedSemaphoreDown(&sem1, __sys_call_error);
+	{
+		if (UUnnamedSemaphoreUp(&sem2, __sys_call_error) != 0)
+		{
+			this->stop_thread_on_error();
+			throw USER_EXCEPTION(SE4014);
+		}
+	}
+	if (UUnnamedSemaphoreDown(&sem1, __sys_call_error) != 0)
+	{
+		this->stop_thread_on_error();
+		throw USER_EXCEPTION(SE4015);
+	}
     if (res==XNULL)
 	{
 		/*
@@ -429,9 +459,19 @@ void SednaSearchJob::get_next_result(tuple &t)
 		opts.fieldFlags = save_field_flags;
 		dtssSetOptions(opts, result);*/
 		t.set_eos();
+		int res1 = UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
+		int res2 = UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
+
+		if (uThreadJoin(dtth, __sys_call_error) != 0)
+			throw USER_EXCEPTION2(SE4064, "failed to join ftsearch thread"); //FIXME: this error code is (probably) wrong
 		dtth = NULL;
-		UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
-		UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
+
+		if (res1 != 0 || res2 != 0)
+			throw USER_EXCEPTION(SE4013);
+
+
+		if (thread_exception != NULL)
+			throw SednaUserException(*thread_exception);
 	}
 	else
 	{
@@ -470,28 +510,37 @@ DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
 void *SednaSearchJob::ThreadFunc( void* lpParam )
 #endif
 {
-	
-	//if (((SednaSearchJob*)lpParam)->hilight)
+	try
 	{
-		//FIXME
-		dtsOptions opts;
-		short result;
-		dtssGetOptions(opts, result);
-		((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
-		//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
-		opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
-		dtssSetOptions(opts, result);
-	}
-	((SednaSearchJob*)lpParam)->Execute();
-	if (((SednaSearchJob*)lpParam)->GetErrorCount()>0)
-	{
-		const dtsErrorInfo * ptr= ((SednaSearchJob*)lpParam)->GetErrors();
-		/*for (int i=0;i<ptr->getCount();i++)
-			std::cout<<ptr->getMessage(i);*/
-	}
+		//if (((SednaSearchJob*)lpParam)->hilight)
+		{
+			//FIXME
+			dtsOptions opts;
+			short result;
+			dtssGetOptions(opts, result);
+			((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
+			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
+			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+			dtssSetOptions(opts, result);
+		}
+		((SednaSearchJob*)lpParam)->Execute();
+		if (((SednaSearchJob*)lpParam)->GetErrorCount()>0)
+		{
+			const dtsErrorInfo * ptr= ((SednaSearchJob*)lpParam)->GetErrors();
+			/*for (int i=0;i<ptr->getCount();i++)
+				std::cout<<ptr->getMessage(i);*/
+		}
 
-	((SednaSearchJob*)lpParam)->res = XNULL;
-	UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
+		((SednaSearchJob*)lpParam)->res = XNULL;
+		UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
+	}
+	catch (SednaUserException e)
+	{
+		((SednaSearchJob*)lpParam)->res = XNULL;
+		if (((SednaSearchJob*)lpParam)->thread_up_semaphore_on_exception)
+			UUnnamedSemaphoreUp(&(((SednaSearchJob*)lpParam)->sem1), __sys_call_error);
+		((SednaSearchJob*)lpParam)->thread_exception = new SednaUserException(e);
+	}
 	return 0;
 }
 void SednaSearchJob::OnSearchingIndex(const char * indexPath)

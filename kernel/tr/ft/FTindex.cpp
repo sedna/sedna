@@ -353,7 +353,6 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 		}
 		last_lsn = lrec.pred_lsn;
 	}
-	log_file->close_and_delete_file(index_name);
 }
 void SednaIndexJob::rollback()
 {
@@ -364,6 +363,7 @@ void SednaIndexJob::rollback()
 		log_file->flush();
 		log_file->seek_start();
 		rollback_index(log_file, it->first.c_str());
+		log_file->close_and_delete_file(it->first.c_str());
 		delete log_file;
 		it++;
 	//1. read the logindex file and crate the ordered list of index operations
@@ -396,6 +396,7 @@ void SednaIndexJob::recover_db_file(const char *fname, trns_analysis_map& undo_r
 	if (it == undo_redo_trns_map.end() || it->second.type == 0)
 	{
 		rollback_index(&log_file, index_name);
+		log_file.close_and_delete_file(index_name);
 	}
 	else
 		log_file.close_and_delete_file(index_name);
