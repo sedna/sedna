@@ -35,3 +35,26 @@ arithmLogicalTypeExpr![in_context in_c] >[out_context out_c]:
 
 	  <<#arithmLogicalExpr=rpe;>>
 ;
+
+
+typeswitchExpr![in_context in_c] >[out_context out_c]:
+
+	#(AST_TYPESWITCH 
+	  e1:expr[in_c]>[out_c]
+	  cc:caseClauses[in_c]>[out_c]
+	  #(AST_DEFAULT_TS v:vardecl e2:exprSingle[in_c]>[out_c]))
+	<<cc->addChild(#(#["default"], #(#["fun-def"], #(#[], #(#["!xs!anytype"], v)), e2)));
+	  #typeswitchExpr=#(#["ts"], e1, cc);
+	>>
+;
+
+caseClauses![in_context in_c] >[out_context out_c]:
+
+	#(AST_CASES
+	   <<#caseClauses=#(#["cases"]);>>
+	   (#(AST_CASE_TS v:vardecl t:sequenceType e:exprSingle[in_c] >[out_c]
+	    )
+	     <<#caseClauses->addChild(#(#["case"], #(#["type"], t), #(#["fun-def"], #(#[], #(#["!xs!anytype"], v)), e)));>>
+	   )+
+	 )
+;

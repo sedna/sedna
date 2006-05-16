@@ -146,4 +146,30 @@ valueExpr!:
 //	| validateExpr
 ;
 
+typeswitchExpr!:
+	<<ASTBase* var;>>
+	TYPESWITCH LPAR e1:expr RPAR cc:caseClauses DEFAULT {v:varRef AS} RETURN e2:exprSingle
+	<<
+	  if (#v == NULL) var=#(#[AST_VAR], #(#[AST_QNAME], #["%v", AST_LOCAL_NAME], #["", AST_PREFIX]));
+	  else var = #v;
+	  #0=#(#[AST_TYPESWITCH], #e1, #cc, #(#[AST_DEFAULT_TS], var, #e2));
+	>>
+;
+
+caseClauses!:
+	<<ASTBase* var;
+	  bool exist_var=false;
+	  #0=#(#[AST_CASES]);
+	>>
+	(CASE_ {v:varRef AS <<exist_var=true;>>} t:sequenceType RETURN e:exprSingle
+	  <<
+	    if (!exist_var) var=#(#[AST_VAR], #(#[AST_QNAME], #["%v", AST_LOCAL_NAME], #["", AST_PREFIX]));
+	    else var = #v;
+
+	    #0->addChild(#(#[AST_CASE_TS], var, #t, #e));
+	    exist_var = false;
+	  >>
+	)+
+;
+
 }

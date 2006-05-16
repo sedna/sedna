@@ -109,6 +109,9 @@ exprSingle! [in_context in_c] >[out_context out_c]:
 	| quant:quantifierExpr[in_c] >[out_c]
 	  <<#exprSingle=quant;>>
 
+	| ts:typeswitchExpr[in_c] >[out_c]
+	  <<#exprSingle=ts;>>
+
 ;
 
 qname!:
