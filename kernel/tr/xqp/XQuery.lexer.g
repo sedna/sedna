@@ -43,6 +43,8 @@ virtual void errstd(const char *s){
 
 //-------------------------- keywords ------------------
 
+#token CASE_ "case"
+#token TYPESWITCH "typeswitch"
 #token DECLARE "declare"
 #token FUNCTION "function"
 #token EXTERNAL "external"
@@ -110,6 +112,7 @@ virtual void errstd(const char *s){
 #token TO "to"
 #token INSTANCE "instance"
 #token TREAT "treat"
+
 
 /*  This keywords are added for update expressions      */
 #token UPDATE "UPDATE" <<mode(UPDATE_CLASS);>>
