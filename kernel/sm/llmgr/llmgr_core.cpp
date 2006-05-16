@@ -1983,29 +1983,30 @@ void llmgr_core::ll_truncate_log(bool sync)
   __int64 new_base_addr = mem_head->base_addr + num_files_to_truncate*LOG_FILE_PORTION_SIZE;
   int valid_number = mem_head->ll_files_arr[num_files_to_truncate];
   
-  //set file pointer to header (begin of valid number) of last log file
-  LONG_LSN lsn = ((mem_head->next_lsn / LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE) +
-                    2*sizeof(LONG_LSN) + sizeof(int);
+  //set file pointer to header
+  LONG_LSN lsn = ((mem_head->next_lsn / LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE);
 
   set_file_pointer(lsn);
 
+  logical_log_file_head file_head = read_log_file_header(ll_curr_file_dsc);
+  set_file_pointer(lsn);//pos to the begin of file
+  file_head.base_addr = new_base_addr;
+  file_head.valid_number = valid_number;
 
 
   int res;
   int written;
-  char buf[sizeof(__int64) + sizeof(int)];
-  memcpy(buf, &new_base_addr, sizeof(__int64));
-  memcpy(buf+sizeof(__int64), &valid_number, sizeof(int));
 
-  //write base addr and valid number atomically
+  //write file header
   res = uWriteFile(ll_curr_file_dsc,
-                   buf,
-                   sizeof(__int64) + sizeof(int),
+                   &file_head,
+                   sizeof(logical_log_file_head),
                    &written,
                     __sys_call_error
                     );
-  if (res == 0 || written != (sizeof(__int64) + sizeof(int)))
+  if (res == 0 || written != sizeof(logical_log_file_head))
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
+
 
   //!!!Delete unnecceary files
   std::string log_file_name;
