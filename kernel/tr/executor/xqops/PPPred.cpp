@@ -4,6 +4,8 @@
  */
 
 #include <math.h>
+#include <algorithm>
+#include <functional>
 
 #include "sedna.h"
 
@@ -11,8 +13,6 @@
 #include "PPUtils.h"
 #include "PPSLStub.h"
 #include "PPSResLStub.h"
-#include <algorithm>
-#include <functional>
 #include "casting_operations.h"
 
 using namespace std;
