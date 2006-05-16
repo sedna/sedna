@@ -7,6 +7,7 @@
 #include <string>
 #include <list>
 #include <fstream>
+#include <sstream>
 #include <stdio.h>
 
 #include "base.h"
@@ -17,7 +18,6 @@
 #include "tr_functions.h"
 #include "auc.h"
 #include "tr_utils.h"
-#include <sstream>
 
 
 using namespace std;
