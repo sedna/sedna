@@ -35,6 +35,8 @@ USemaphore concurrent_ops_sem;
 int number_of_records = 0;
 int down_nums = 0;
 int up_nums = 0;
+int down_up_counter = 0;
+
 ////////////////////
 
 
@@ -195,6 +197,7 @@ void down_concurrent_micro_ops_number()
   if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 
+  down_up_counter++;
 //  down_nums++;
 
 //  d_printf1("down_concurrent_micro_ops_number() - end\n");
@@ -214,6 +217,7 @@ void up_concurrent_micro_ops_number()
   if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
 
+  down_up_counter--;
 //  up_nums++;
 
 //  d_printf1("up_concurrent_micro_ops_number() - end\n");
