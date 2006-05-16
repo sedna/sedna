@@ -54,175 +54,117 @@ class SednaConnectionImpl implements SednaConnection
   	this.bufInputStream = bufInputStream;
   }
 
-// begins transaction; 1 - success, 0 - error
   public void begin() throws DriverException
   {
+   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
+  	
   	 NetOps.Message msg = new NetOps.Message();
-  	 try
-  	 {
-      NetOps.driverPrintOut("\nBeginning transaction...");
-      
-      msg.instruction = 210;// BeginTransaction
-      msg.length = 0;
-  	  NetOps.writeMsg(msg, outputStream);
+     msg.instruction = NetOps.se_BeginTransaction;
+     msg.length = 0;
+  	 NetOps.writeMsg(msg, outputStream);
   	  
-      NetOps.readMsg(msg, bufInputStream);
+     NetOps.readMsg(msg, bufInputStream);
       
-      if (msg.instruction == 230)
-      {
-          NetOps.driverPrintOut(" OK\n");
-      }
-      else if (msg.instruction == 240)
-      {
-    //    NetOps.driverPrintOut(" Failed\n"+(NetOps.getErrorInfo(msg.body)));
-          throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));      
-      }
-      else if (msg.instruction == 100)
-      {
-    //    NetOps.driverPrintOut(" Failed\n"+(NetOps.getErrorInfo(msg.body)));
-          throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));      
-      }
-      else throw new DriverException("Unknown message from server");      
-     }
-     catch(IOException e)
+     if ((msg.instruction == NetOps.se_BeginTransactionFailed) || (msg.instruction == NetOps.se_ErrorResponse))
      {
-      NetOps.driverErrOut("Error while IO to server: "+e.toString());
-       throw new DriverException("Error while IO to server: "+e.toString());
+          throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));      
      }
+     else if (msg.instruction != NetOps.se_BeginTransactionOk)
+      	  throw new DriverException(DriverException.SE3008);   //Unknown message from server   
   } 
 // closes connection (exits connection process on server)  
   public void close() throws DriverException
   {
-  	 NetOps.Message msg = new NetOps.Message();
+   	if(this.isClose) throw new DriverException(DriverException.SE3028);
+  	
+  	NetOps.Message msg = new NetOps.Message();
  	
-  	try
-  	{
-      NetOps.driverPrintOut("\nClosing session...");
-      msg.instruction = 500; //CloseConnection
-      msg.length = 0;
- 	  NetOps.writeMsg(msg, outputStream);
- 	  
- 	  
-      NetOps.readMsg(msg, bufInputStream);
-      
-      if (msg.instruction == 520) //TransactionRollBack
-      {
-      	throw new DriverException("Transaction rollback. Session is closed.");
-      }
-      else if (msg.instruction == 510) //CloseSessionOk
-      {
-      	NetOps.driverPrintOut( "OK\n");
-      } 
-      else if (msg.instruction == 100) //ErrorResponse
-      {
-        throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
-      }
-      else throw new DriverException("Unknown message from server");      
-    }
-    
-    catch(IOException e)
+    msg.instruction = NetOps.se_CloseConnection;
+    msg.length = 0;
+    NetOps.writeMsg(msg, outputStream);
+    NetOps.readMsg(msg, bufInputStream);
+     
+    if (msg.instruction == NetOps.se_TransactionRollbackBeforeClose)
     {
-      NetOps.driverErrOut("Error while IO to server: "+e.toString());
-      this.isClose = true;
-      throw new DriverException("Error while IO to server: "+e.toString());	
+ 		try{
+ 			this.socket.close();
+ 			this.outputStream.close();
+ 			this.bufInputStream.close();
+	    	this.isClose = true;
+ 		}catch(IOException ioe)
+ 		{
+	   		throw new DriverException("Transaction rollback. Session is closed.");
+ 		}
     }
-   this.isClose = true;
-   
+    else if (msg.instruction == NetOps.se_ErrorResponse) 
+    {
+    	this.isClose = true;
+        throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
+    }
+    else if (msg.instruction != NetOps.se_CloseConnectionOk)
+    {
+    	this.isClose = true;
+    	throw new DriverException(DriverException.SE3008);  //Unknown message from server      
+    }
+    this.isClose = true;
   }
+  
   public SednaStatement createStatement() throws DriverException
   {
-    if (isClose()) throw new DriverException ("Creating a statement on a closed connection");
-    NetOps.driverPrintOut("Creating  statement...");
+    if (isClose()) throw new DriverException (DriverException.SE5500);
   	SednaStatement st = new SednaStatementImpl(this.outputStream, this.bufInputStream, this.currentResult);
-  	NetOps.driverErrOut("OK\n");
   	return st;
   }
   
   public void commit() throws DriverException
   {
-  	 NetOps.Message msg = new NetOps.Message();
+   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
   	
-    
-    NetOps.driverPrintOut("Commiting transaction...");  	
-  	try
-  	{
-  	msg.instruction = 220;
-  	msg.length = 0;	
-    NetOps.writeMsg(msg, outputStream);
+  	 NetOps.Message msg = new NetOps.Message();
 
-    NetOps.readMsg(msg, bufInputStream);
+  	 msg.instruction = NetOps.se_CommitTransaction;
+  	 msg.length = 0;	
+     NetOps.writeMsg(msg, outputStream);
+
+     NetOps.readMsg(msg, bufInputStream);
     
-    if (msg.instruction == 260) // CommitFailed
-    {
-      throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
-    }
-    
-    else if (msg.instruction == 250) //CommitSucceeded
-    {
-      NetOps.driverPrintOut(" OK\n");	
-    }
- 
-    else if (msg.instruction == 100)
-    {
-      NetOps.driverPrintOut(" Error\n");	
-      throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
-    }
-    
-    else throw new DriverException("Unknown instruction from server");
-    
-    }
-    catch(IOException e)
-    {
-     NetOps.driverErrOut(e.toString()); 
-     throw new DriverException(e.toString());
-    }
+     if (msg.instruction == NetOps.se_CommitTransactionFailed) // CommitFailed
+     {
+     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
+     }
+ 	 else if (msg.instruction == NetOps.se_ErrorResponse)
+     {
+     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
+     }
+     else if (msg.instruction != NetOps.se_CommitTransactionOk)
+       	throw new DriverException(DriverException.SE3008);
   }
 
   public void rollback() throws DriverException
   {
+   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
+  	
   	 NetOps.Message msg = new NetOps.Message();
   	
-    
-    NetOps.driverPrintOut("Rollback transaction...");  	
-  	try
-  	{
-  	msg.instruction = 225;
-  	msg.length = 0;	
-    NetOps.writeMsg(msg, outputStream);
+	 msg.instruction = NetOps.se_RollbackTransaction;
+  	 msg.length = 0;	
+     NetOps.writeMsg(msg, outputStream);
 
-    NetOps.readMsg(msg, bufInputStream);
-    
-    if (msg.instruction == 265) // RollbackFailed
-    {
-      throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
-    }
-    
-    else if (msg.instruction == 255) //RollbackSucceeded
-    {
-      NetOps.driverPrintOut(" OK\n");	
-    }
- 
-    else if (msg.instruction == 100)
-    {
-      NetOps.driverPrintOut(" Error\n");	
-      throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
-    }
-    
-    else throw new DriverException("Unknown instruction from server");
-    
-    }
-    catch(IOException e)
-    {
-     NetOps.driverErrOut(e.toString()); 
-     throw new DriverException(e.toString());
-    }
+     NetOps.readMsg(msg, bufInputStream);
+	 if (msg.instruction == NetOps.se_RollbackTransactionFailed) // RollbackFailed
+     {
+     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
+     }
+	 else if (msg.instruction == NetOps.se_ErrorResponse)
+   	 {
+     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
+     }
+     else if (msg.instruction != NetOps.se_RollbackTransactionOk)
+       	throw new DriverException(DriverException.SE3008);
   }
 
-  
   public boolean isClose()
   {
   	return this.isClose;
   }
-  
- 
 }

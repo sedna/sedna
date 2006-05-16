@@ -874,8 +874,6 @@ sedna-err:SE3071
 
 ########### concerning security ####################
 
-
-
 ######################################################################
 ### Static query analysis error
 ######################################################################
@@ -1468,3 +1466,19 @@ sedna-err:SE5059
 sedna-err:SE5100
 
     Error in Scheme part.
+
+######################################################################
+### Java API errors
+######################################################################
+
+sedna-err:SE5500
+
+    An attempt to create a statement on a closed connection.
+sedna-err:SE5501
+
+    Result item cannot be returned as a String because it is too large.
+sedna-err:SE5502
+
+    Unsupported encoding.
+
+########### Java API errors ####################
