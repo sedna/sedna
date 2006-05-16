@@ -170,7 +170,6 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
 		   SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
 		   void set_request(tuple_cell& request);
-		   void stop_thread_on_error();
 		   void get_next_result(tuple &t);
 		   void set_index(tuple_cell& name);
 		   void reopen();        
@@ -183,6 +182,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 	  private:
 		  SednaUserException *thread_exception;
 		  bool thread_up_semaphore_on_exception;
+		  void stop_thread(bool ignore_errors);
 		  
 		  PPOpIn* seq;
 		  UTHANDLE dtth;

@@ -408,11 +408,22 @@ void SednaSearchJob::set_request(tuple_cell& request)
 {
 	this->Request.setU8(t_str_buf(request).c_str());
 }
-void SednaSearchJob::stop_thread_on_error()
+void SednaSearchJob::stop_thread(bool ignore_errors)
 {
-	UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
-	UUnnamedSemaphoreRelease(&sem2, __sys_call_error);
-	//TODO: stop thread
+	if (dtth != NULL)
+	{
+		if (uTerminateThread(dtth, __sys_call_error) != 0 && !ignore_errors)
+			throw USER_EXCEPTION(SE4063); //FIXME: wrong error code
+		if (uCloseThreadHandle(dtth, __sys_call_error) != 0 && !ignore_errors)
+			throw USER_EXCEPTION(SE4063);
+		dtth = NULL;
+	}
+	//FIXME!!!
+	if (UUnnamedSemaphoreRelease(&sem1, __sys_call_error) != 0 && !ignore_errors)
+		throw USER_EXCEPTION(SE4013);
+	if (UUnnamedSemaphoreRelease(&sem2, __sys_call_error) != 0 && !ignore_errors)
+		throw USER_EXCEPTION(SE4013);
+	
 }
 void SednaSearchJob::get_next_result(tuple &t)
 {
@@ -441,13 +452,13 @@ void SednaSearchJob::get_next_result(tuple &t)
 	{
 		if (UUnnamedSemaphoreUp(&sem2, __sys_call_error) != 0)
 		{
-			this->stop_thread_on_error();
+			this->stop_thread(true);
 			throw USER_EXCEPTION(SE4014);
 		}
 	}
 	if (UUnnamedSemaphoreDown(&sem1, __sys_call_error) != 0)
 	{
-		this->stop_thread_on_error();
+		this->stop_thread(true);
 		throw USER_EXCEPTION(SE4015);
 	}
     if (res==XNULL)
@@ -464,6 +475,8 @@ void SednaSearchJob::get_next_result(tuple &t)
 
 		if (uThreadJoin(dtth, __sys_call_error) != 0)
 			throw USER_EXCEPTION2(SE4064, "failed to join ftsearch thread"); //FIXME: this error code is (probably) wrong
+		if (uCloseThreadHandle(dtth, __sys_call_error) != 0)
+			throw USER_EXCEPTION(SE4063);
 		dtth = NULL;
 
 		if (res1 != 0 || res2 != 0)
@@ -503,6 +516,8 @@ void SednaSearchJob::reopen()
 }
 SednaSearchJob::~SednaSearchJob()
 {
+	if (dtth != NULL)
+		this->stop_thread(false);
 }
 #ifdef WIN32
 DWORD WINAPI SednaSearchJob::ThreadFunc( void* lpParam )
