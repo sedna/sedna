@@ -75,3 +75,17 @@
 (sa:analyze-query
    '(retrieve-metadata (prolog) (retrieve-descr-scheme (const (type !xs!string) "auc2")))
 )
+
+(sa:analyze-query
+ '(query
+   (prolog)
+   (query-body
+    (ts
+     (const (type !xs!string) "test.xml")
+     (cases
+         (case (type !xs!string)
+           (fun-def ((xs:anyType (var ("" "x"))))
+                    (var ("" "x"))))
+       (default
+        (fun-def ((xs:anyType (var ("" "x"))))
+                 (var ("" "x")))))))))

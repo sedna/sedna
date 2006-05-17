@@ -528,6 +528,10 @@
              ((eq? op-name 'instance-of)
               `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
                                 ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+             
+             ; *** typeswitch ***
+             ((eq? op-name 'ts)
+              (l2p:ts2por node))
 
              ; *** ddo ***
              ((eq? op-name 'ddo)
@@ -1324,7 +1328,6 @@
     ;(display vars-map)
   `(fun-def ,new-var-decls ,(l2p:rename-vars vars-map (xlr:fun-body fun-def))))
 )
-
   
 (define (l2p:generate-map vars)
   (if (null? vars)
@@ -1587,3 +1590,57 @@
                   (or requires-node? node?)
                   (or requires-pos? pos?)
                   (or requires-last? last?))))))))))
+
+;=========================================================================
+; Typeswitch
+
+(define (l2p:ts2por arg-lst)
+  (let ((source-child (l2p:any-lr-node2por (car arg-lst)))
+        (cases (cdr
+                (cadr arg-lst)  ; addresses '(cases ...)
+                ))
+        (var-num (l2p:gen-var)  ; HAS A SIDE EFFECT!!!!         
+                 ))
+    (let ((case-pairs
+           (map
+            (lambda (case)
+              (cons (let ((type (cadr  ; sequence type
+                                 (cadr case)  ; addresses '(type ...)
+                                 )))
+                      ((if (pair? type)
+                           l2p:lr-sequenceType2por-sequenceType
+                           l2p:lr-atomic-type2por-atomic-type)
+                       type))
+                    (l2p:any-lr-node2por
+                     (l2p:rename-fun-arg-to-given-num
+                      (caddr case)  ; fun-def
+                      var-num))))
+            (reverse (cdr (reverse cases)))  ; this can be done more effectively, of course
+            ))
+          (default-body (l2p:any-lr-node2por
+                         (l2p:rename-fun-arg-to-given-num
+                          (cadr  ; fun-def for default case
+                           (car (reverse cases))  ; default case
+                           )
+                          var-num
+                          ))))
+      `(,(l2p:tuple-size source-child)
+        (PPTypeswitch
+         (,var-num)
+         ,source-child
+         ,(map car case-pairs)  ; listof sequence types
+         ,(map cdr case-pairs)
+         ,default-body)))))
+
+; Renames the fun-def argument with a given number
+; Returns the modified function body
+; The function is a simplified variant of `l2p:rename-vars2unique-numbers'
+(define (l2p:rename-fun-arg-to-given-num fun-def num)
+  (let ((vars-map (list (list
+                         (cadr  ; variable name
+                          (cadr  ; addresses '(var ("url" "name"))
+                           (car  ; the first argument
+                            (cadr fun-def)  ; argument list
+                            )))
+                         num))))
+    (l2p:rename-vars vars-map (xlr:fun-body fun-def))))
