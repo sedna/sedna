@@ -11,6 +11,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
   qbuf_t load_docs = {NULL,0,0};
   qbuf_t create_colls = {NULL,0,0};
   qbuf_t create_indexes = {NULL,0,0};
+  qbuf_t create_ftindexes = {NULL,0,0};
   qbuf_t create_sec = {NULL,0,0};
   int i,res,error_status=1;
   int value;
@@ -64,7 +65,13 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	if (fill_qbuf(&conn,&create_indexes, create_indexes_query, log)!=0) {
 		goto exp_error;
 	}
-	FTRACE((log,"...done (%d statements)\n", create_colls.d_size));
+	FTRACE((log,"...done (%d statements)\n", create_indexes.d_size));
+
+	FTRACE((log,"Constructing create full-text search indexes script"));
+	if (fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log)!=0) {
+		goto exp_error;
+	}
+	FTRACE((log,"...done (%d statements)\n", create_ftindexes.d_size));
 
 	FTRACE((log,"Constructing export security script"));
 	if (fill_qbuf(&conn,&create_sec, create_sec_query, log)!=0) {
@@ -74,11 +81,13 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 
 
 	for (i=0;i<exp_docs.d_size;i++) {
-		/* workaround through sedna API error */
-		char *sedna_bug_nl = exp_docs.buf[i];
-		while (*sedna_bug_nl=='\n') sedna_bug_nl++;
+		/* workaround to display document_name */
+		char *doc_name = exp_docs.buf[i];
+		while (*doc_name!=';' && *doc_name!='\0') doc_name++;
+		if (*doc_name==';') doc_name++;
+		while (*doc_name==' ') doc_name++;
 		/* end */
-		FTRACE((log,"Exporting document %d of %d [%s]...",(i+1),exp_docs.d_size,sedna_bug_nl));
+		FTRACE((log,"Exporting document %d of %d [%s]...",(i+1),exp_docs.d_size,doc_name));
 		sprintf(strbuf,"%s%d.xml",path,(i+1));
 		if ((f=fopen(strbuf,"w"))==NULL) {
 			ETRACE((log,"ERROR: can't write to file %s\n",strbuf))
@@ -111,6 +120,9 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 
 	sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
 	write_xquery_script(&create_indexes,strbuf);
+
+	sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
+	write_xquery_script(&create_ftindexes,strbuf);
 
 	sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
 	write_xquery_script(&create_sec,strbuf);
@@ -153,31 +165,48 @@ exp_error_no_conn:
 const char load_docs_query[] = "declare option output \"indent=no\"; \
                                 let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
 											    where $i/@name != \"db_security_data\" \
-												   return string-value($i/@name), \
+												   return fn:concat(\"\"\"\",$i/@name,\"\"\"\"), \
                                     $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
                                                 for $j in $i/DOCUMENT \
-                                                   return fn:concat($j/@name,\"'\",$i/@name) \
+                                                   return fn:concat(\"\"\"\",$j/@name,\"\"\" \"\"\",$i/@name,\"\"\"\") \
                                 return ($reg-docs,$col-docs)";
+
  
 
-const char exp_docs_query[] = "let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
+const char exp_docs_query[] = "declare option output \"indent=no\"; \
+                               let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
 											   where $i/@name != \"db_security_data\" \
-                                                 return fn:concat(\"document('\",$i/@name,\"')\"), \
+                                                 return fn:concat(\"declare option output \"\"indent=no\"\"; \", \"document(\"\"\",$i/@name,\"\"\")\"), \
                                    $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
                                                for $j in $i/DOCUMENT \
-                                                 return fn:concat(\"document('\",$j/@name,\"','\",$i/@name,\"')\") \
+                                                 return fn:concat(\"declare option output \"\"indent=no\"\"; \", \"document(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
                                return ($reg-docs,$col-docs)";
 
-const char create_colls_query[] = "for $i in document(\"$collections.xml\")/*/COLLECTION \
-								   return fn:concat(\"CREATE COLLECTION '\",$i/@name,\"'\")";
+const char create_colls_query[] = "declare option output \"indent=no\"; \
+                                   for $i in document(\"$collections.xml\")/*/COLLECTION \
+								   return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
 const char create_sec_query[] = "for $i in document(\"$collections.xml\")/NODATA \
-								 return fn:concat(\"CREATE COLLECTION '\",$i/@name,\"'\")";
+								 return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
 const char create_indexes_query[] = "for $i in document(\"$indexes.xml\")/INDEXES/INDEX \
                                      return \
-                                       fn:concat(\"CREATE INDEX '\", $i/@title, \"' ON \", \
-                                       fn:concat($i/@indexed_object,\"('\",$i/@object_title,\"')\", \"/\", $i/@value_path), \
+                                       fn:concat(\"CREATE INDEX \"\"\", $i/@title, \"\"\" ON \", \
+                                       fn:concat($i/@indexed_object,\"(\"\"\",$i/@object_title,\"\"\")\", \"/\", $i/@value_path), \
                                        \" BY \", \
 									   $i/@key_path, \
 									   \" AS \",  $i/@key_type)";
+
+
+const char create_ftindexes_query[] = " for $i in document(\"$ftindexes.xml\")/FTINDEXES/FTINDEX \
+									    let $cust := <dummy>{(for $t in $i/TEMPLATE[position() < last()] \
+															  return fn:concat(\"(\"\"\",$t/@name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\",\",\"), \
+															  for $t in $i/TEMPLATE[position() = last()] \
+															  return fn:concat(\"(\"\"\",$t/@name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\"))}</dummy>/text() \
+										return  \
+										  fn:concat(\"CREATE FULL-TEXT INDEX \"\"\", \
+													$i/@title, \
+													\"\"\" ON \", \
+													$i/@indexed_object, \"(\"\"\", $i/@object_title, \"\"\")\", \"/\", $i/@path, \
+													\" TYPE \"\"\", $i/@ft_type, \"\"\"\", \
+													if (empty($cust)) then \"\" else fn:concat(\" (\",$cust,\")\")) ";

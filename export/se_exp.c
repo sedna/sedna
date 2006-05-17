@@ -18,10 +18,10 @@ int main(int argc, char* argv[]) {
   char *input_login=NULL,*input_password=NULL;
   int tmp;
   
-    if (argc < 4) {
+    /*if (argc < 4) {
 		print_usage();
 		exit(-1);
-	} 
+	} */
 	if (arg_scanargv(argc, argv, exp_argtable, narg, NULL, parse_errmsg, NULL)==0) {
 		printf("ERROR: %s\n\n", parse_errmsg);
 		print_usage();
@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
 		exit(0); 
 	}
 	if (exp_version == 1) { 
-		printf("Sedna Export Version 0.6.0\nCopyright (C) 2004-2006 ISP RAS and others. All rights reserved.\nSee file COPYRIGHT provided with the distribution.\n"); 
+		printf("Sedna Export Version 0.6.5\nCopyright (C) 2004-2006 ISP RAS and others. All rights reserved.\nSee file COPYRIGHT provided with the distribution.\n"); 
 		exit(0); 
 	}
 	if (strcmp(command,"export") && strcmp(command,"import") && strcmp(command,"restore") != 0) {

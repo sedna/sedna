@@ -222,8 +222,31 @@ int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log) {
 
 
 
+int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, FILE* log) {
+  str_buf_t bl_query = {NULL, 0 , 0};
+  int res;
+  
+  if (rp_add_data(&bl_query,"declare boundary-space preserve; LOAD \"") != 0) return -1;
+  if (rp_add_data(&bl_query,filename) != 0) return -1;
+  if (rp_add_data(&bl_query,"\" ") != 0) return -1;
+  if (rp_add_data(&bl_query,docname) != 0) return -1;
+  
+  res = SEexecute(conn,bl_query.buf);
+  if ((res != SEDNA_QUERY_SUCCEEDED) && (res != SEDNA_UPDATE_SUCCEEDED) && (res != SEDNA_BULK_LOAD_SUCCEEDED)) {
+	ETRACE((log, "\nERROR: failed to execute query:\n\n%s\n\nDetails:\n\n%s\n\n",bl_query.buf,SEgetLastErrorMsg(conn)))
+	if (bl_query.buf!=NULL) free(bl_query.buf);
+	return -1;
+  }
+  if (res != SEDNA_BULK_LOAD_SUCCEEDED) {
+	if (bl_query.buf!=NULL) free(bl_query.buf);
+	return -1;
+  }
+  
+  if (bl_query.buf!=NULL) free(bl_query.buf);    
+  return 0;
+}
 
-
+/*
 int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, const char *colname, FILE* log) {
   FILE *f=NULL;
   int real_read;
@@ -250,7 +273,7 @@ int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *d
     fclose(f);	
 	return 0;
 }
-
+*/
 
 
 

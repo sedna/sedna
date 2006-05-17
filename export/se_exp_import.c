@@ -1,7 +1,6 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 
-
 //function checks that the database db_name is empty
 // 1. document("$documents.xml") contains only db_security_data record
 // 2. document("$collections.xml") is empty
@@ -38,7 +37,7 @@ int restore_security(struct SednaConnection *conn, const char *path, FILE* log) 
   char strbuf[PATH_SIZE];
 
    sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,NULL,log) != 0) {
+   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,log) != 0) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"))
 	   return -1;
    } 
@@ -69,6 +68,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   char *cr_col_query = NULL;
   char *bl_docs_query = NULL;
   char *cr_indexes_query = NULL;
+  char *cr_ftindexes_query = NULL;
   char *upd_sec_query = NULL;
   qbuf_t blq = {NULL,0,0};
   FILE *log = NULL;  
@@ -130,6 +130,10 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if ((cr_indexes_query = read_query(strbuf))==NULL) 
 		goto imp_error; 
 
+	sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
+	if ((cr_ftindexes_query = read_query(strbuf))==NULL) 
+		goto imp_error; 
+
 	sprintf(strbuf,"%s%s",path,LOAD_DOCS_QUERY_FILE);
 	if ((bl_docs_query = read_query(strbuf))==NULL)
 		goto imp_error;
@@ -160,22 +164,10 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
         for (i=0;i<blq.d_size;i++) {
-			char *docname=blq.buf[i];
-			char *colname=blq.buf[i];
-			// blq.buf[i] = "docname['colname]"
-			while (*colname!='\'' && *colname!='\0') colname++;
-			if (*colname=='\'') {
-				*colname='\0';
-				colname++;
-			} else {
-				colname=NULL;
-			}
+			// blq.buf[i] = "docname" "colname"
 			sprintf(strbuf,"%s%d.xml",path,i+1);
-			if (colname==NULL)
-			FTRACE((log,"Bulkload document '%s'...",docname))
-			else
-			FTRACE((log,"Bulkload document '%s' into collection '%s'...",docname,colname))
-			if (bulkload_xml(&conn,strbuf,docname,colname,log)!=0)
+			FTRACE((log," Bulkload document %s...",blq.buf[i]))
+			if (bulkload_xml(&conn,strbuf,blq.buf[i],log)!=0)
 				goto imp_error;
 			FTRACE((log,"done\n"));
 		}
@@ -190,6 +182,14 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
+
+	FTRACE((log,"Creating full-text search indexes..."))
+	if (strlen(cr_ftindexes_query)==0)
+		FTRACE((log,"(no full-test search indexes in the database)...")) 
+	else
+		if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
+			goto imp_error;
+	FTRACE((log,"done\n"));
 
 
 	// processing security information
