@@ -26,6 +26,7 @@
 #define LOAD_DOCS_QUERY_FILE     "load_docs.xquery"
 #define CR_SEC_QUERY_FILE        "create_security.xquery"
 #define CR_INDEXES_QUERY_FILE    "create_indexes.xquery"
+#define CR_FTINDEXES_QUERY_FILE    "create_ftindexes.xquery"
 #define DB_SECURITY_DOC          "db_security_data"
 #define DB_SECURITY_DOC_TMP      "db_security_data_exp"
 
@@ -48,7 +49,7 @@ extern int exp_verbose;
 
 
 //function bulkloads XML file with filename to Sedna with docname
-int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, const char *colname, FILE* log);
+int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, FILE* log);
 
 //function executes XQuery expression in query and outputs the result to file f
 int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE* log);
