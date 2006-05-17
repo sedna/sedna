@@ -276,9 +276,9 @@
      ((predicate)
       (sa:analyze-predicate expr vars funcs ns-binding default-ns))
      ;-------------------
-     ; 2.11 Quantifiers
-     ((some every)
-      (sa:some-every expr vars funcs ns-binding default-ns))
+     ; 2.11 Expressions on Sequence Types
+     ((ts)
+      (sa:analyze-typeswitch expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
@@ -289,6 +289,10 @@
       (sa:analyze-congen1 expr vars funcs ns-binding default-ns))
      ((congen2)
       (sa:analyze-congen2 expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 3.6. Quantified expressions
+     ((some every)
+      (sa:some-every expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 3.7 XQuery 1.0 Functions
      ((!fn!document !fn!collection)
@@ -1552,21 +1556,87 @@
              (cdr expr-pair))))))))))
 
 ;-------------------------------------------------
-; 2.11 Quantifiers
+; 2.11 Expressions on Sequence Types
 
-; Some, every
-(define (sa:some-every expr vars funcs ns-binding default-ns)
+; Typeswitch
+(define (sa:analyze-typeswitch expr vars funcs ns-binding default-ns)
   (and
    (sa:assert-num-args expr 2)
-   (let ((seq-res
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
-         (fun-res
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+   (let ((source-expr
+          (sa:analyze-expr (car (sa:op-args expr))
+                           vars funcs ns-binding default-ns)))
      (and
-      seq-res fun-res
-      (cons (list (sa:op-name expr)
-                  (car seq-res) (car fun-res))
-            sa:type-any)))))
+      source-expr
+      (let ((cases (sa:ts-all-cases (cadr (sa:op-args expr))
+                                    vars funcs ns-binding default-ns
+                                    (cdr source-expr)  ; source expression type
+                                    )))
+        (and
+         cases  ; no error detected
+         (cons (list (sa:op-name expr)  ; = 'ts
+                     (car source-expr)
+                     (car cases))
+               (cdr cases)  ; return type
+               )))))))
+
+(define (sa:ts-all-cases expr vars funcs ns-binding default-ns src-type)
+  (cond
+    ((not (and (pair? expr) (eq? (car expr) 'cases)))
+     (cl:signal-input-error SE5056 expr))
+    ((null? (sa:op-args expr))
+     ; At least a default-case is required 
+     (cl:signal-input-error SE5057 expr))
+    (else
+     (let loop ((args (sa:op-args expr))  ; non-null
+                (res '()))
+       (if
+        (null? args)  ; all scanned
+        (cons (cons (sa:op-name expr)  ; = 'cases
+                    (map car (reverse res)))
+              (sa:combine-types (map cdr
+                                     res  ; no need for reverse, the effect is symmetric
+                                     )))
+        (let ((case ((if (null? (cdr args))  ; this is the last case
+                         sa:ts-default sa:ts-case)
+                     (car args)
+                     vars funcs ns-binding default-ns src-type)))
+          (and
+           case
+           (loop (cdr args)
+                 (cons case res)))))))))
+
+(define (sa:ts-case expr vars funcs ns-binding default-ns src-type)
+  (cond
+    ((not (and (pair? expr) (eq? (car expr) 'case)))
+     (cl:signal-input-error SE5058 expr))
+    (else
+     (and
+      (sa:assert-num-args expr 2)
+      (let ((type-pair (sa:analyze-type (car (sa:op-args expr))
+                                        vars funcs ns-binding default-ns))
+            (func-pair (sa:analyze-fun-def (cadr (sa:op-args expr))
+                                           vars funcs ns-binding default-ns)))
+        (and
+         type-pair func-pair
+         (cons (list (sa:op-name expr)  ; = 'case
+                     (car type-pair)
+                     (car func-pair))
+               (cdr func-pair))))))))       
+
+(define (sa:ts-default expr vars funcs ns-binding default-ns src-type)
+  (cond
+    ((not (and (pair? expr) (eq? (car expr) 'default)))
+     (cl:signal-input-error SE5059 expr))
+    (else
+     (and
+      (sa:assert-num-args expr 1)
+      (let ((new-fun (sa:analyze-fun-def (car (sa:op-args expr))
+                                         vars funcs ns-binding default-ns)))
+        (and
+         new-fun
+         (cons (list (sa:op-name expr)  ; = 'default
+                     (car new-fun))
+               (cdr new-fun))))))))
 
 ;-------------------------------------------------
 ; 2.14 Distinct doc order
@@ -1622,6 +1692,23 @@
       (cons (list (sa:op-name expr)
                   (car pair))
             (cdr pair))))))
+
+;-------------------------------------------------
+; 3.6. Quantified expressions
+
+; Some, every
+(define (sa:some-every expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((seq-res
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+         (fun-res
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+     (and
+      seq-res fun-res
+      (cons (list (sa:op-name expr)
+                  (car seq-res) (car fun-res))
+            sa:type-any)))))
 
 ;-------------------------------------------------
 ; 3.7 XQuery 1.0 Functions

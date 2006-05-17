@@ -1453,6 +1453,18 @@ sedna-err:SE5054
 sedna-err:SE5055
 
     Unknown option in XQuery prolog.
+sedna-err:SE5056
+
+    Malformed cases supplied in a typeswitch operation.
+sedna-err:SE5057
+
+    No default case supplied for a typeswitch operation.
+sedna-err:SE5058
+
+    Unexpected case for a typeswitch operation.
+sedna-err:SE5059
+
+    Malformed default case for a typeswitch operation.
 sedna-err:SE5100
 
     Error in Scheme part.

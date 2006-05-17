@@ -121,3 +121,25 @@
             (fun-def
              ((!xs!anyType (var ("" "$%v"))))
              (!fn!min (var ("" "$%v")) (!fn!position))))))))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (return
+      (const (type !xs!string) "test.xml")
+      (fun-def
+       ((!xs!anyType (var ("" "$%v"))))
+       (ts
+        (var ("" "$%v"))
+        (cases
+            (case (type (one !xs!string))
+              (fun-def ((xs:anyType (var ("" "x"))))
+                       (var ("" "x"))))
+          (case (type (one (node-test)))
+            (fun-def ((xs:anyType (var ("" "x"))))
+                     (const (type !xs!string) "tesfdl")))
+          (default
+           (fun-def ((xs:anyType (var ("" "x"))))
+                    (var ("" "$%v"))))))))))))
