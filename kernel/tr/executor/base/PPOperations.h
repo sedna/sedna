@@ -80,6 +80,7 @@
 #include "PPUp.h"
 #include "PPStringFuncs.h"
 #include "PPRange.h"
+#include "PPCheckpoint.h"
 #ifdef SQL_CONNECTION
 #include "PPSQL.h"
 #endif

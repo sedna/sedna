@@ -1925,6 +1925,14 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_pp_op(cxt, lst->at(2).internal.list));
     }
+    else if (op == "PPCheckpoint")
+    {
+        if (   lst->size() != 1
+           ) throw USER_EXCEPTION2(SE1004, "103");
+
+        opit = new PPCheckpoint(cxt);
+    }
+
 
 
 
