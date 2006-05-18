@@ -1086,10 +1086,10 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPTypeswitch(cxt,
         						vars,
-        						make_pp_op(cxt, cases_list->at(2).internal.list),
+        						make_pp_op(cxt, lst->at(2).internal.list),
         						_types_,
         						_cases_,
-								make_pp_op(cxt, cases_list->at(5).internal.list));
+								make_pp_op(cxt, lst->at(5).internal.list));
     }
     else if (op == "PPCast")
     {
