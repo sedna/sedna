@@ -32,6 +32,7 @@ void PPCheckpoint::close ()
 
 void PPCheckpoint::next (tuple &t)
 {
+    t.set_eos();
     // call checkpoint here
 }
 
