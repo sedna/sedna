@@ -9,6 +9,7 @@
 #include "uhdd.h"
 #include "cdb_globals.h"
 #include "db_utils.h"
+#include "d_printf.h"
 #ifdef _WIN32
 #include <io.h>
 #else
@@ -297,12 +298,13 @@ int delete_logical_log(const char* db_name)
   {
      is_llog =  dent->d_name;
 
-     if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
-     {
-       find_log = true;
-       if (uDeleteFile(dent->d_name, __sys_call_error) == 0) 
-          return 2;
-     }
+     if (is_llog.size() >=7)
+        if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
+        {
+          find_log = true;
+          if (uDeleteFile((path_to_db_files + dent->d_name).c_str(), __sys_call_error) == 0) 
+             return 2;
+        }
 
   } while(NULL != (dent=readdir(dir)));
 
