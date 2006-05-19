@@ -679,7 +679,9 @@
              ((eq? op-name '!fn!checkpoint) 
               `(1 (PPFnCheckpoint))
              )
-             
+             ((eq? op-name '!se!checkpoint) 
+              `(1 (PPCheckpoint))
+             )             
              
              ; *** !fn!replace ***
              ((eq? op-name '!fn!replace) 

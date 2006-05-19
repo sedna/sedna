@@ -228,7 +228,18 @@ void up_concurrent_micro_ops_number()
 #endif
 }
 
+void wait_for_checkpoint_finished()
+{
+#ifdef CHECKPOINT_ON
+  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
+     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
 
+  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
+     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
+
+
+#endif
+} 
 
 
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted)

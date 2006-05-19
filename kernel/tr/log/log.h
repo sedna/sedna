@@ -28,7 +28,6 @@ void hl_phys_log_on_transaction_end();
 void hl_phys_log_change(const /*xptr &*/void *p, shft size);
 void hl_phys_log_change_blk(const /*xptr &*/void *p);
 void hl_phys_log_create_node_blk(const void* p);
-void activate_checkpoint();
 int get_phys_record_block_parts(const void * p, int size);
 
 /* Logical journal records */
@@ -40,6 +39,8 @@ void hl_logical_log_on_transaction_end(bool is_commit);
 
 void down_concurrent_micro_ops_number();
 void up_concurrent_micro_ops_number();
+void wait_for_checkpoint_finished();
+void activate_and_wait_for_end_checkpoint();
 
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const  char* value,int data_size,const char* uri,const char* prefix,bool inserted);
