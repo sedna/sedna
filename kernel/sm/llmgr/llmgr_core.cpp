@@ -945,6 +945,73 @@ void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, con
 }
 
 /*
+ Full-text index log record format:
+ op (1 byte)
+ trid (transaction_id)
+ object_path ('\0' terminated string)
+ ft_index_type (int) 
+ index_title ('\0' terminated string)
+ doc_name ('\0' terminated string)
+ is_doc (bool)
+ custom_tree_size (int)
+ custom_tree_buf (custom_tree_size bytes)
+*/
+/*
+void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync)
+{
+  if (rollback_active || recovery_active) return;
+
+  //d_printf2("written in log obj_path=%s\n", object_path);
+  //d_printf2("written in log key_path=%s\n", key_path);
+
+
+  char *tmp_rec;  
+  int rec_len;
+  int obj_path_len = (object_path != NULL) ? (strlen(object_path)+1) : 1;
+  int key_path_len = (key_path != NULL) ? (strlen(key_path)+1) : 1;
+  int ind_title_len = (index_title != NULL) ? (strlen(index_title)+1) : 1;
+  int doc_name_len = (doc_name != NULL) ? (strlen(doc_name)+1) : 1;
+
+ 
+  rec_len = sizeof(char) +
+            sizeof(transaction_id) +
+            obj_path_len +
+            key_path_len +
+            sizeof(xmlscm_type) +
+            ind_title_len +
+            doc_name_len;
+
+  tmp_rec = new char[rec_len];
+
+  char op;
+
+  if (is_doc)
+     op = inserted ? LL_INSERT_DOC_INDEX : LL_DELETE_DOC_INDEX;
+  else
+     op = inserted ? LL_INSERT_COL_INDEX : LL_DELETE_COL_INDEX;
+
+
+  int offs = 0;
+
+  //create record body
+  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+  inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
+
+
+  inc_mem_copy(tmp_rec, offs, (object_path != NULL) ? object_path : "", obj_path_len);
+  inc_mem_copy(tmp_rec, offs, (key_path != NULL) ? key_path : "", key_path_len);
+
+  inc_mem_copy(tmp_rec, offs, &key_type, sizeof(xmlscm_type));
+
+  inc_mem_copy(tmp_rec, offs, (index_title != NULL) ? index_title : "", ind_title_len);
+  inc_mem_copy(tmp_rec, offs, (doc_name != NULL) ? doc_name : "", doc_name_len);
+
+
+  //insert record
+  ll_log_insert_record(tmp_rec, rec_len, trid, sync);
+}
+*/
+/*
  commit log record format:
  op (1 byte)
  trid (transaction_id)
@@ -1563,7 +1630,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   while(true)
   {
 //#ifdef LOGICAL_LOG_TEST
-	  //d_printf2("record number=%d\n",i);
+//	  d_printf2("record number=%d\n",i);
 	  i++;
 //#endif
      exec_micro_op_func(rec_beg + sizeof(logical_log_head),

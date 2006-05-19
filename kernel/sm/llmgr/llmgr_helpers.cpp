@@ -467,7 +467,7 @@ UFile llmgr_core::get_log_file_descriptor(int log_file_number)
      //search is file opened
      int i,j;
      vector<log_file_dsc>::iterator it;
-     for (i = ll_open_files.size() - 2; i>=0; i++)
+     for (i = ll_open_files.size() - 2; i>=0; i--)
      {
        if (ll_open_files[i].name_number == log_file_number)
        {//find case

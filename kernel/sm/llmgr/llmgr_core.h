@@ -205,6 +205,7 @@ public:
   void ll_log_collection(transaction_id& trid, const  char* name,bool inserted, bool sync);
   void ll_log_ns(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted, bool sync);
   void ll_log_index(transaction_id& trid, const char *object_path, const char *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted, bool sync);
+//  void ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync);
 
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
