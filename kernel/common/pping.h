@@ -16,11 +16,13 @@
 
 #define PPING_ON
 
+#define PPING_MAX_HOSTLEN 128
+
 class pping_client
 {
 private:
     int port;
-    char* host;
+    char host[PPING_MAX_HOSTLEN];
     USOCKET sock;
     bool stop_keep_alive;
     bool initialized;

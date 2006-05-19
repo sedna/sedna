@@ -81,6 +81,7 @@ extern MemoryContext XQParserContext;
  * Memory-context-type-independent functions in mcxt.c
  */
 extern void MemoryContextInit(void);
+extern int  SafeMemoryContextInit(void);
 extern void MemoryContextReset(MemoryContext context);
 extern void MemoryContextDelete(MemoryContext context);
 extern void MemoryContextResetChildren(MemoryContext context);

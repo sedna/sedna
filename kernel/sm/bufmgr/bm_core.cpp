@@ -81,11 +81,11 @@ UFile tmp_file_handler;
 
 // Master block
 char bm_master_block_buf[MASTER_BLOCK_SIZE * 2];
-bm_masterblock *mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
+bm_masterblock *mb = NULL;
 
 
-char system_data_buf[SYSTEM_DATA_BUF_SIZE];
-char *system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + SYSTEM_DATA_BUF_SIZE) / SYSTEM_DATA_BUF_SIZE * SYSTEM_DATA_BUF_SIZE);
+char system_data_buf[VMM_SM_BLK_HDR_MAX_SIZE * 2];
+char *system_data_aligned_ptr = NULL;
 
 
 

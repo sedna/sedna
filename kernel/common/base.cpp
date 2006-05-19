@@ -612,4 +612,3 @@ void set_sedna_data()
 
   is_init_sedna_data = true;
 }
-

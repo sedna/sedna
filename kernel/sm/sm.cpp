@@ -20,6 +20,7 @@
 #include "lm_base.h"
 #include "lm_globals.h"
 #include "gmm.h"
+#include "memutils.h"
 
 using namespace std;
 
@@ -369,6 +370,7 @@ int main(int argc, char **argv)
 
     try {
 
+        SafeMemoryContextInit();
 
         if (argc == 1)
         {

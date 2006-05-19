@@ -16,6 +16,35 @@
 #include "sedna.h"
 #include "memutils.h"
 
+int SafeMemoryContextInit(void)
+{
+    static int initialized = 0;
+    if (!initialized)
+    {
+        CurrentMemoryContext = NULL;
+        TopMemoryContext = NULL;
+        ErrorContext = NULL;
+
+        MemoryContextInit();
+
+        initialized = 1;
+        return 1;
+    }
+    return 0;
+}
+/*
+void *operator_new_context(usize_t size, MemoryContext context)
+{
+    if (SafeMemoryContextInit()) context = TopMemoryContext;
+    return MemoryContextAlloc(context, size);
+}
+*/
+void *operator_new_global(usize_t size)
+{
+    SafeMemoryContextInit();
+    return MemoryContextAlloc(TopMemoryContext, size);
+}
+
 
 /*****************************************************************************
  *	  GLOBAL MEMORY															 *
