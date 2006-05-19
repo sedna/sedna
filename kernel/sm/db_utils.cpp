@@ -281,8 +281,9 @@ int delete_logical_log(const char* db_name)
 #else
   DIR *dir;
   struct dirent* dent;
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
 
-  dir = opendir(db_files_path.c_str());
+  dir = opendir(path_to_db_files.c_str());
 
   if (dir == NULL)
      return 2;
