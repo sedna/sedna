@@ -4,7 +4,7 @@
 
 PP = ../../..
 
-VPATH = base fo por2qep root xqops $(PP)/kernel/tr
+VPATH = base fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
 
 
 include $(PP)/Makefile.include

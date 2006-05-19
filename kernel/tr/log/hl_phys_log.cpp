@@ -217,10 +217,12 @@ void hl_phys_log_create_node_blk(const void* p)
 #endif
 }
 
-void activate_checkpoint()
+void activate_and_wait_for_end_checkpoint()
 {
 #ifdef CHECKPOINT_ON
      phys_log_mgr->activate_checkpoint(true);
+     uSleep(1, __sys_call_error);
+     wait_for_checkpoint_finished();
 #endif
 }
 

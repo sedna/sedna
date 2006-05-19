@@ -514,20 +514,25 @@
     (,sa:fn-ns "index-scan-between" 4 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!index-scan-between)
-	;----------------------------------------
-	; Full text search functions
-	(,sa:fn-ns "ftindex-scan" 2 2
+    ;----------------------------------------
+    ; Full text search functions
+    (,sa:fn-ns "ftindex-scan" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftindex-scan)
-	(,sa:fn-ns "ftscan" 3 4
+    (,sa:fn-ns "ftscan" 3 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftscan)
-	(,sa:fn-ns "fthighlight" 2 2
+    (,sa:fn-ns "fthighlight" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight)
-	(,sa:fn-ns "fthighlight-blocks" 2 2
+    (,sa:fn-ns "fthighlight-blocks" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight2)
+    ;----------------------------------------
+    ; Checkpoint
+    (,sa:se-ns "checkpoint" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !se!checkpoint)
     ;----------------------------------------
     ; Legacy
     (,sa:fn-ns "item-at" 2 2

@@ -5,6 +5,7 @@
 
 #include "sedna.h"
 #include "PPCheckpoint.h"
+#include "log.h"
 
 PPCheckpoint::PPCheckpoint(variable_context *_cxt_) : PPIterator(_cxt_)
 {
@@ -33,6 +34,7 @@ void PPCheckpoint::close ()
 void PPCheckpoint::next (tuple &t)
 {
     t.set_eos();
+    activate_and_wait_for_end_checkpoint();
     // call checkpoint here
 }
 
