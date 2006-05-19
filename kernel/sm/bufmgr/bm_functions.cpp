@@ -171,6 +171,7 @@ void bm_startup() throw (SednaException)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
 
+    mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
 }
 

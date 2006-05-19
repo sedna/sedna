@@ -247,6 +247,7 @@ void extend_data_file(int extend_portion) throw (SednaException)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
 	int i = 0;
+    system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + VMM_SM_BLK_HDR_MAX_SIZE) / VMM_SM_BLK_HDR_MAX_SIZE * VMM_SM_BLK_HDR_MAX_SIZE);
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
 	vmm_sm_blk_hdr::init(hdr);
 
@@ -297,6 +298,7 @@ void extend_tmp_file(int extend_portion) throw (SednaException)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
 	int i = 0;
+    system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + VMM_SM_BLK_HDR_MAX_SIZE) / VMM_SM_BLK_HDR_MAX_SIZE * VMM_SM_BLK_HDR_MAX_SIZE);
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
 	vmm_sm_blk_hdr::init(hdr);
 

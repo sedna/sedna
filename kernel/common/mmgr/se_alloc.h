@@ -96,6 +96,7 @@ extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #define se_strdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
 
+void *operator_new_context(usize_t size, MemoryContext context);
 
 #ifdef __cplusplus
 }
@@ -104,24 +105,73 @@ extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
 #ifdef __cplusplus
 
+/*
+ * AF:
+ * We can overload global new and global delete to use our Context
+ * memory allocation routines. But for this moment we prefer not to
+ * do that but rather to define placement new and placement delete
+ * (with parameter MemoryContext). Placement delete is implemented
+ * by the template function se_destroy, which calls destructor 
+ * explicitly.
+ * To conclude, STL routines are using default new and delete operators
+ * (we can count on them that they do not have memory leaks). For
+ * Sedna code we should use se_new and se_new_cxt macroses to allocate
+ * memory and se_delete to deallocate memory. Note that se_new and 
+ * se_new_cxt call constructor and se_delete calls destructor correctly.
+ * Note that we still could call global new and delete operators
+ * that are not overloaded.
+ *
+ * Example:
+ * A *a = NULL;
+ * int *i = NULL;
+ *
+ * // our new operator in CurrentMemoryContext
+ * a = se_new A(some_parameters ...); 
+ * se_delete(a); // destructor will be called
+ *
+ * // our new operator in TopMemoryContext
+ * a = se_new_cxt(TopMemoryContext) A(some_parameters ...);
+ * se_delete(a); // destructor will be called
+ *
+ * // Simple types are also supported correctly
+ * i = se_new int;
+ * se_delete(i);
+ */
+
+/* !!! Uncomment this if you want to replace global new and global
+       delete.
+
 inline void *operator new(usize_t size)
 {
-    return MemoryContextAlloc(CurrentMemoryContext, size);
+    return operator_new_global(size);
 }
+
+inline void operator delete(void* p)
+{
+    if (p) se_free(p);
+}
+
+inline void *operator new[](usize_t size)
+{
+    return operator_new_global(size);
+}
+
+inline void operator delete[](void* p)
+{
+    if (p) se_free(p);
+}
+*/
+
+
 
 inline void *operator new(usize_t size, MemoryContext context)
 {
     return MemoryContextAlloc(context, size);
 }
 
-inline void operator delete(void* p)
+inline void operator delete(void* p, MemoryContext context)
 {
-    se_free(p);
-}
-
-inline void *operator new[](usize_t size)
-{
-    return MemoryContextAlloc(CurrentMemoryContext, size);
+    if (p) se_free(p);
 }
 
 inline void *operator new[](usize_t size, MemoryContext context)
@@ -129,10 +179,24 @@ inline void *operator new[](usize_t size, MemoryContext context)
     return MemoryContextAlloc(context, size);
 }
 
-inline void operator delete[](void* p)
+inline void operator delete[](void* p, MemoryContext context)
 {
-    se_free(p);
+    if (p) se_free(p);
 }
+
+template<class T> void se_delete(T* p, MemoryContext context)
+{
+    if (p) 
+    {
+        p->~T();
+        se_free(p);
+    }
+}
+
+
+#define se_new                  new(CurrentMemoryContext)
+#define se_new_cxt(cxt)         new(cxt)
+#define se_delete(p)            se_destroy(p, NULL)
 
 #endif /* __cplusplus__ */
 

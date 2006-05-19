@@ -132,6 +132,7 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION(SE4306);
 
 
+    mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     // set values for master block
     mb->free_data_blocks = XNULL;
     mb->free_tmp_blocks = XNULL;
@@ -325,6 +326,7 @@ int main(int argc, char **argv)
 
     try {
 
+        SafeMemoryContextInit();
         set_sedna_data();
 
         if (argc == 1)

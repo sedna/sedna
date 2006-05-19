@@ -74,11 +74,11 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   indir_rec = NULL;
   indir_rec_len = 0;
   
-  internal_buf = new(TransactionContext) char[2*PAGE_SIZE];
+  internal_buf = new(TopMemoryContext) char[2*PAGE_SIZE];
   internal_buf_size = 2*PAGE_SIZE;
   indir_rec_buf_size = 0;
 
-  read_buf = new(TransactionContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
+  read_buf = new(TopMemoryContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
   this->_phys_log_mgr_ = phys_log_mgr_;

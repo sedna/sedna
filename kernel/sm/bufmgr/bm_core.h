@@ -146,9 +146,6 @@ struct bm_masterblock
 extern char bm_master_block_buf[];
 extern bm_masterblock *mb;
 
-#define SYSTEM_DATA_SIZE		(__uint32)(s_max(MASTER_BLOCK_SIZE, VMM_SM_BLK_HDR_MAX_SIZE))
-#define SYSTEM_DATA_BUF_SIZE	(SYSTEM_DATA_SIZE * (__uint32)2)
-
 extern char system_data_buf[];
 extern char *system_data_aligned_ptr;
 

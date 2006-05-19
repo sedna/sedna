@@ -109,12 +109,18 @@ int main(int argc, char *argv[])
             OS_exceptions_handler::install_handler();
         }
 
-        MemoryContextInit();
+        SafeMemoryContextInit();
 
-        TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-        KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-        XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+        TransactionContext = TopMemoryContext;
+        UserStatementContext = TopMemoryContext;
+        KernelStatementContext = TopMemoryContext;
+        XQParserContext = TopMemoryContext;
+
+
+//        TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+//        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+//        KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+//        XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
 
 
 
@@ -218,7 +224,7 @@ int main(int argc, char *argv[])
         /////////////////////////////////////////////////////////////////////////////////
         while (expect_another_transaction) //cycle by transactions
         {
-            MemoryContextSwitchTo(TransactionContext);
+            //MemoryContextSwitchTo(TransactionContext);
 
             client->read_msg(&client_msg);
             if (client_msg.instruction == se_BeginTransaction)  //BeginTransaction
@@ -245,11 +251,11 @@ int main(int argc, char *argv[])
                         {
                         case se_Authenticate:  //authentication
                             {
-                                MemoryContextSwitchTo(UserStatementContext);
+                                //MemoryContextSwitchTo(UserStatementContext);
                                 authentication();
-                                MemoryContextResetChildren(UserStatementContext);
-                                MemoryContextReset(UserStatementContext);
-                                MemoryContextSwitchTo(TransactionContext);
+                                //MemoryContextResetChildren(UserStatementContext);
+                                //MemoryContextReset(UserStatementContext);
+                                //MemoryContextSwitchTo(TransactionContext);
 
                                 client->authentication_result(true, "");
                                 break;
@@ -436,8 +442,8 @@ int main(int argc, char *argv[])
                 client->process_unknown_instruction(client_msg.instruction, false);
             }
 
-            MemoryContextResetChildren(TransactionContext);
-            MemoryContextReset(TransactionContext);
+            //MemoryContextResetChildren(TransactionContext);
+            //MemoryContextReset(TransactionContext);
         } // end 'while' by transactions
         /////////////////////////////////////////////////////////////////////////////////
         /// END OF CYCLE BY TRANSACTIONS

@@ -54,12 +54,11 @@ pping_client::pping_client(int _port_, const char* _host_)
 {
 #ifdef PPING_ON
     port = _port_;
-    if (_host_)
-    {
-        host = new char[strlen(_host_) + 1];
+    if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
         strcpy(host, _host_);
-    }
-    else host = NULL;
+    else
+        strcpy(host, "127.0.0.1");
+
     stop_keep_alive = false;
     initialized = false;
 #endif
@@ -68,7 +67,6 @@ pping_client::pping_client(int _port_, const char* _host_)
 pping_client::~pping_client()
 {
 #ifdef PPING_ON
-    if (host) delete [] host;
 #endif
 }
 
@@ -94,19 +92,7 @@ void pping_client::startup(SednaUserException& e, bool is_soft)
     sock = usocket(AF_INET, SOCK_STREAM, 0, __sys_call_error);
 
     if (sock == U_INVALID_SOCKET) throw USER_ENV_EXCEPTION("Failed to create socket", false);
-    if (host)
-    {
-        if (uconnect_tcp(sock, port, host, __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
-            //throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
-    }
-    else
-    {
-//        std::string local_host;
-//        if (ulocalhost(&local_host) == U_SOCKET_ERROR)
-//            throw USER_ENV_EXCEPTION("Failed to obtain local host name", false);
-        if (uconnect_tcp(sock, port, "127.0.0.1", __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
-            //throw USER_ENV_EXCEPTION("Failed to create TCP connection", false);
-    }
+    if (uconnect_tcp(sock, port, host, __sys_call_error) == U_SOCKET_ERROR) throw_exception(e, is_soft);
 
     if (UUnnamedSemaphoreCreate(&sem, 0, NULL, __sys_call_error) != 0)
         throw USER_ENV_EXCEPTION("Failed to create semaphore", false);
