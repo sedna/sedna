@@ -295,7 +295,7 @@ int delete_logical_log(const char* db_name)
   bool find_log = false;  
   do 
   {
-     is_llog =  dent->d_name);
+     is_llog =  dent->d_name;
 
      if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
      {
