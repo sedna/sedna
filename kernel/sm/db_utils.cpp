@@ -8,6 +8,15 @@
 #include "base.h"
 #include "uhdd.h"
 #include "cdb_globals.h"
+#include "db_utils.h"
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <sys/types.h>
+#include <dirent.h>
+#endif
+
+
 
 using namespace std;
 
@@ -50,13 +59,10 @@ int cleanup_db(const char* db_name)
    }
 
    //delete llog file
-   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str(), __sys_call_error))
-   {
-      db_exist = true;
-      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".0llog").c_str(), __sys_call_error);
-      if (res == 0)
-         return 2;
-   }
+   res = delete_logical_log(db_name);
+
+   if (res == 2) return 2;
+   if (res > 0) db_exist = true;
 
 
    //delete plog file
@@ -113,7 +119,7 @@ bool exist_db(const char* db_name)
 
    res3 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".tmp").c_str(), __sys_call_error);
 
-   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".llog").c_str(), __sys_call_error);
+   res4 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".plog").c_str(), __sys_call_error);
 
    res5 = uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph").c_str(), __sys_call_error);
 
@@ -225,4 +231,76 @@ int load_metadata_in_database(const char* db_name)
 #else 
   return 0;
 #endif
+}
+
+//returns 0 if logical log not exist
+//returns 1 was deleted succesfully
+//returns 2 if logical log can't be deleted
+
+int delete_logical_log(const char* db_name)
+{
+#ifdef _WIN32
+
+  char buf[4096];
+  char *cur_dir;
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+
+  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
+     return 2;
+  
+
+  struct _finddata_t log_file;
+  long dsc;
+
+  if ( (dsc = _findfirst("*llog", &log_file)) == -1L)
+  {
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
+
+     return 0;
+  }
+
+  do 
+  {
+     if (uDeleteFile(log_file.name, __sys_call_error) == 0) 
+     {
+        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+        return 2;
+     }
+
+  } while(_findnext(dsc, &log_file) == 0);
+
+    
+  _findclose(dsc);
+
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+     return 2;
+
+  return 1;
+#else
+  DIR *dir;
+  struct dirent* dent;
+
+  dir = opendir(db_files_path.c_str());
+
+  if (dir == NULL)
+     return 2;
+
+  dent = readdir (dir);
+  if (dent == NULL) return 0; 
+  
+  do 
+  {
+     if (uDeleteFile(dent->d_name, __sys_call_error) == 0) 
+        return 2;
+
+  } while(NULL != (dent=readdir(dir)));
+
+  if (0 != closedir(dir))
+     return 2;
+
+  return 1;
+#endif  
+
 }

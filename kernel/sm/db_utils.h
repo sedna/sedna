@@ -13,4 +13,6 @@ int cleanup_db(const char* db_name);
 bool exist_db(const char* db_name);
 
 int load_metadata_in_database(const char* db_name);
+
+int delete_logical_log(const char* db_name);
 #endif
