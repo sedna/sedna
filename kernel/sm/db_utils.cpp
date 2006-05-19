@@ -289,17 +289,27 @@ int delete_logical_log(const char* db_name)
      return 2;
 
   dent = readdir (dir);
-  if (dent == NULL) return 0; 
-  
+  if (dent == NULL) return 2; 
+
+  string is_llog;
+  bool find_log = false;  
   do 
   {
-     if (uDeleteFile(dent->d_name, __sys_call_error) == 0) 
-        return 2;
+     is_llog =  dent->d_name);
+
+     if ( is_llog.substr(is_llog.size()-4, 4) == "llog") 
+     {
+       find_log = true;
+       if (uDeleteFile(dent->d_name, __sys_call_error) == 0) 
+          return 2;
+     }
 
   } while(NULL != (dent=readdir(dir)));
 
   if (0 != closedir(dir))
      return 2;
+
+  if (!find_log) return 0;
 
   return 1;
 #endif  
