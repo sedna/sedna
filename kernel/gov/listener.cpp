@@ -180,7 +180,7 @@ int client_listener(bool background_off_from_background_on)
 
 
 
-   if (uclose_socket(sockfd, __sys_call_error) != 0) throw SYSTEM_EXCEPTION("Can't close listening socket");
+   if (uclose_socket(sockfd, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't close listening socket");
 
    return 0;
 }
