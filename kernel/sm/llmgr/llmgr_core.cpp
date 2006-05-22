@@ -2081,7 +2081,7 @@ void llmgr_core::ll_truncate_log(bool sync)
 
   memcpy((char*)mem_head->ll_files_arr,
          (char*)mem_head->ll_files_arr+num_files_to_truncate*sizeof(int),
-         mem_head->ll_files_num - num_files_to_truncate);
+         (mem_head->ll_files_num - num_files_to_truncate)*sizeof(int));
 
   mem_head->ll_files_num -= num_files_to_truncate;
   mem_head->ll_free_files_num += num_files_to_truncate;
