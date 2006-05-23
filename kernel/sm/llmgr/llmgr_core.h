@@ -303,8 +303,8 @@ private:
   {
      if (internal_buf_size < size)
      {
-        delete [] internal_buf;
-        internal_buf = new(TransactionContext) char[size];
+        se_delete(internal_buf);
+        internal_buf = se_new_cxt(TransactionContext) char[size];
      }
 
      return internal_buf;

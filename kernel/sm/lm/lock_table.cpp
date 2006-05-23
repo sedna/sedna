@@ -541,13 +541,14 @@ lock_reply lock_table::release_tr_locks(transaction_id tr_id, bool sync)
   }
  
 
-  resource_id *r_id;
+  resource_id r_id;
   request = tr_head->tran->locks;
   while(request != NULL)
   {
+	 r_id = resource_id(request->head->r_id);
 	 //obtain the pointer to the next request since after unlock call the request will be deleted
      request = request->tran_next;
-     unlock(tr_id, resource_id(request->head->r_id), false);
+     unlock(tr_id, r_id, false);
   }
 
   up_sem(sync);
