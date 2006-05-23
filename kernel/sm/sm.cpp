@@ -110,8 +110,7 @@ int sm_server_handler(void *arg)
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
                          else kind = LM_DATABASE;
   
-                         resource_id* r_id = new resource_id(string((msg->data.data)+2), kind);
-                         lock_reply r = lm_table.lock(msg->trid, msg->sid, *r_id, mode, LOCK_LONG, 0/*timeout is not important by now*/);
+                         lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
 
                          if (r == LOCK_OK) msg->data.data[0] = '1';
                          else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(true)) msg->data.data[0] = '0';
@@ -170,8 +169,7 @@ int sm_server_handler(void *arg)
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
                          else kind = LM_DATABASE;
   
-                         resource_id* r_id = new resource_id(string((msg->data.data)+2), kind);
-                         lock_reply r = lm_table.unlock(msg->trid, *r_id);
+                         lock_reply r = lm_table.unlock(msg->trid, resource_id(string((msg->data.data)+2), kind));
 
 
 //                         d_printf1("lock table after release locks operation\n");
