@@ -261,13 +261,14 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   char qfile_abspath[U_MAX_PATH];
   char cfile_abspath[U_MAX_PATH];
   char dir[U_MAX_PATH];
+  char *res = NULL;
 
-  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, U_MAX_PATH, __sys_call_error);
-  if (cur_dir_abspath == NULL)
+  res = uGetCurrentWorkingDirectory(cur_dir_abspath, U_MAX_PATH, __sys_call_error);
+  if (res == NULL)
      throw USER_EXCEPTION(SE4602);
 
-  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, U_MAX_PATH, __sys_call_error);
-  if (qfile_abspath == NULL)
+  res = uGetAbsoluteFilePath(filename, qfile_abspath, U_MAX_PATH, __sys_call_error);
+  if (res == NULL)
      throw USER_EXCEPTION2(SE4603, filename);
 
   char* new_dir;
@@ -277,15 +278,19 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
      throw USER_EXCEPTION2(SE4604, new_dir);
 
   
-  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+  res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+  if (res == NULL)
+     throw USER_EXCEPTION2(SE4603, client_filename);
 
   if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
-
   
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {
-     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+     res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+     if (res == NULL)
+        throw USER_EXCEPTION2(SE4603, client_filename);
+
      if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
   }

@@ -184,7 +184,7 @@ inline void operator delete[](void* p, MemoryContext context)
     if (p) se_free(p);
 }
 
-template<class T> void se_delete(T* p, MemoryContext context)
+template<class T> void __se_delete(T* p, MemoryContext context)
 {
     if (p) 
     {
@@ -196,7 +196,7 @@ template<class T> void se_delete(T* p, MemoryContext context)
 
 #define se_new                  new(CurrentMemoryContext)
 #define se_new_cxt(cxt)         new(cxt)
-#define se_delete(p)            se_destroy(p, NULL)
+#define se_delete(p)            __se_delete(p, NULL)
 
 #endif /* __cplusplus__ */
 

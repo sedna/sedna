@@ -74,7 +74,7 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 
 
   //init read_buf
-  read_buf = new(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
+  read_buf = se_new_cxt(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
 
   //init phys log header (it stored in the first sector of phys log file)
   int res3;
@@ -159,7 +159,7 @@ void plmgr_core::open_phys_log(string db_phys_log_path, int _phys_log_size_)
 
 
   //init read_buf
-  read_buf = new(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
+  read_buf = se_new_cxt(TopMemoryContext) char[PHYS_LOG_READ_BUF_LENGTH];
 
   this->init_phys_log_open_state();
 
@@ -332,7 +332,7 @@ void plmgr_core::close_phys_log()
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
 
-  delete [] read_buf;
+  se_delete(read_buf);
 
 }
 
@@ -364,7 +364,7 @@ void plmgr_core::release_phys_log(file_head& head)
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
 
-  delete [] read_buf;
+  delete(read_buf);
 
 }
 

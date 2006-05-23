@@ -74,11 +74,11 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   indir_rec = NULL;
   indir_rec_len = 0;
   
-  internal_buf = new(TopMemoryContext) char[2*PAGE_SIZE];
+  internal_buf = se_new_cxt(TopMemoryContext) char[2*PAGE_SIZE];
   internal_buf_size = 2*PAGE_SIZE;
   indir_rec_buf_size = 0;
 
-  read_buf = new(TopMemoryContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
+  read_buf = se_new_cxt(TopMemoryContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
   this->_phys_log_mgr_ = phys_log_mgr_;
@@ -301,11 +301,11 @@ void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &tr
   indir_rec = NULL;
   indir_rec_len = 0;
 
-  internal_buf = new(TransactionContext) char[2*PAGE_SIZE];
+  internal_buf = se_new_cxt(TransactionContext) char[2*PAGE_SIZE];
   internal_buf_size = 2*PAGE_SIZE;
   indir_rec_buf_size = 0;
 
-  read_buf = new(TransactionContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
+  read_buf = se_new_cxt(TransactionContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
 
@@ -345,9 +345,9 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
 
   close_all_log_files();
 
-  if (internal_buf_size > 0) delete [] internal_buf;
-  if (indir_rec_buf_size > 0) delete [] indir_rec;
-  if (read_buf_size > 0) delete [] read_buf; 
+  if (internal_buf_size > 0) se_delete(internal_buf);
+  if (indir_rec_buf_size > 0) se_delete(indir_rec);
+  if (read_buf_size > 0) se_delete(read_buf);
 
   ll_log_unlock(sync);
 }
@@ -1213,8 +1213,8 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
 
   if (_indir_rec_len > indir_rec_buf_size)
   {
-    if (indir_rec_buf_size > 0) delete [] indir_rec;
-    indir_rec = new(TransactionContext) char[_indir_rec_len];
+    if (indir_rec_buf_size > 0) se_delete(indir_rec);
+    indir_rec = se_new_cxt(TransactionContext) char[_indir_rec_len];
     indir_rec_buf_size = _indir_rec_len;
   }
 //  indir_rec = new char[_indir_rec_len];  
