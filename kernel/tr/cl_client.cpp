@@ -257,27 +257,27 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   }
 
 
-  char *cur_dir_abspath = new char[4096];
-  char *qfile_abspath = new char[4096];
-  char *cfile_abspath = new char[4096];
-  char *dir = new char[4096];
+  char cur_dir_abspath[U_MAX_PATH];
+  char qfile_abspath[U_MAX_PATH];
+  char cfile_abspath[U_MAX_PATH];
+  char dir[U_MAX_PATH];
 
-  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, 4096, __sys_call_error);
+  cur_dir_abspath = uGetCurrentWorkingDirectory(cur_dir_abspath, U_MAX_PATH, __sys_call_error);
   if (cur_dir_abspath == NULL)
      throw USER_EXCEPTION(SE4602);
 
-  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, 4096, __sys_call_error);
+  qfile_abspath = uGetAbsoluteFilePath(filename, qfile_abspath, U_MAX_PATH, __sys_call_error);
   if (qfile_abspath == NULL)
      throw USER_EXCEPTION2(SE4603, filename);
 
   char* new_dir;
-  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, 4096, __sys_call_error);
+  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, U_MAX_PATH, __sys_call_error);
   
   if (uChangeWorkingDirectory(new_dir, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, new_dir);
 
   
-  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096, __sys_call_error);
+  cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
 
   if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
@@ -285,7 +285,7 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {
-     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, 4096, __sys_call_error);
+     cfile_abspath = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
      if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
   }
@@ -300,15 +300,7 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 */
   strcpy(cf.name, client_filename);
 
- 
-  delete [] cur_dir_abspath;
-  delete [] qfile_abspath;
-  delete [] cfile_abspath;
-  delete [] dir;
-
   return cf;
-
-
 }
 
 void command_line_client::close_file_from_client(client_file cf)
