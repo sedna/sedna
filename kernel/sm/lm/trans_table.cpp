@@ -36,7 +36,7 @@ tr_lock_head::tr_lock_head(TransCB *trCB)
 tr_lock_head::~tr_lock_head()
 {
 #ifdef LOCK_MGR_ON
-/ delete tran;
+  delete tran;
 #endif
 }
 
