@@ -149,7 +149,7 @@ public:
                 int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, res_msg.body+1);
                 memcpy(res_msg.body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
 
-         		if(sp_send_msg(out_socket, &res_msg)!=0) throw USER_EXCEPTION(SE3006);
+         		if(sp_send_msg(out_socket, &res_msg) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3006);
         	} //end for
 
          	res_msg.length = ost+5;
@@ -230,7 +230,7 @@ public:
                                                 	  return *this; }
                                     		
     virtual se_ostream& write(char *s, int n)		
-	{ 
+	{
     	res_msg.instruction = se_ItemPart; //ItemPart message
 
 		if((res_msg.length + n) > (SE_SOCKET_MSG_BUF_SIZE-5))
@@ -286,7 +286,7 @@ public:
                                           
                                           res_msg.length = 5;
                                         }
-    virtual void endline()				{ res_msg.body[res_msg.length]='\n'; res_msg.length +=1; }
+    virtual void endline()				{ res_msg.body[res_msg.length]='\n'; res_msg.length +=1;}
     virtual void error(const char* str)	{ flush();
                                           res_msg.instruction = se_ErrorResponse; //ErrorResponse
                                           strcpy(res_msg.body+5, str);

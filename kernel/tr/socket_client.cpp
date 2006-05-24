@@ -22,8 +22,7 @@
 
 using namespace std;
 
-
-void socket_client::init()
+socket_client::socket_client()
 {
      p_ver.major_version = 1;
      p_ver.minor_version = 0;	
@@ -35,16 +34,22 @@ void socket_client::init()
      timeout.tv_sec = 1;
      timeout.tv_usec = 0;
 
+	 Sock = U_INVALID_SOCKET;
+     stream = NULL;
+     long_query_stream = NULL;
+}
+
+void socket_client::init()
+{
  	  //  Takes Socket handle from Environment Variable 
-      char buffer[ENV_BUF_SIZE + 1];
-      memset(buffer, 0, ENV_BUF_SIZE + 1);
-      uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
-      //d_printf2("getenv variable %d \n",GetLastError());
+     char buffer[ENV_BUF_SIZE + 1];
+     memset(buffer, 0, ENV_BUF_SIZE + 1);
+     uGetEnvironmentVariable(CONNECTION_SOCKET_HANDLE, buffer, ENV_BUF_SIZE, __sys_call_error);
+     //d_printf2("getenv variable %d \n",GetLastError());
 
-      Sock = atoi(buffer);   // use Sock
-
-      if (Sock == 0)  //INVALID_SOCKET
-      {
+     Sock = atoi(buffer);   // use Sock
+     if (Sock == U_INVALID_SOCKET)  //INVALID_SOCKET
+     {
 #ifdef _WIN32
         d_printf2("accept failed %d\n",GetLastError());
 #else
@@ -54,13 +59,12 @@ void socket_client::init()
       }
       
       stream = new se_socketostream(Sock);
-      long_query_stream = NULL;
-
 }
 
 void socket_client::release()
 {
-   	 if(ushutdown_close_socket(Sock, __sys_call_error)!=0)  throw USER_EXCEPTION(SE3011); 
+     if(Sock != U_INVALID_SOCKET)
+         if(ushutdown_close_socket(Sock, __sys_call_error)!=0) Sock = U_INVALID_SOCKET;
    	 if(stream != NULL)
    	 {
    	 	 delete stream;
@@ -114,17 +118,17 @@ void socket_client::read_msg(msg_struct *msg)
 			}
                         timeout.tv_sec = 1;
                         timeout.tv_usec = 0;
-			res = uselect_read(Sock, &timeout, __sys_call_error);
+
+           	res = uselect_read(Sock, &timeout, __sys_call_error);
  
 			if(res == 1) //ready to recv data
 			{
 				break;
 			}
-			else if(res == U_SOCKET_ERROR) {d_printf2("select failed: %s\n", usocket_error_translator()); throw USER_EXCEPTION(SE3007);}
+			else if(res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator());}
 		}
 		res = sp_recv_msg(Sock, msg);//d_printf2("msg.instruction %d\n", (*msg).instruction);
-		
-		if(res == U_SOCKET_ERROR) { throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
+		if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
 		if(res == 1) throw USER_EXCEPTION(SE3012);
 	}
 }
@@ -161,7 +165,7 @@ char* socket_client::get_query_string(msg_struct *msg)
 			memcpy(long_query_stream+query_size, (*msg).body+6, query_portion_length);
 			query_size += query_portion_length;
 	   		res = sp_recv_msg(Sock, msg);
-	   		if (res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
+	   		if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
 	   		if (res == 1) throw USER_EXCEPTION(SE3012);
 		}
 		long_query_stream[query_size] = '\0';
@@ -203,7 +207,7 @@ client_file socket_client::get_file_from_client(const char* filename)
   file_struct fs;
   client_file cf;
 
-  int i, got, written = 0, cmd_bl, len_int;
+  int i, got, written = 0, cmd_bl, len_int, res;
   __int64 res_pos;
 
      try
@@ -222,7 +226,7 @@ client_file socket_client::get_file_from_client(const char* filename)
         	{
         		sp_msg.instruction = 431;// BulkLoadFromStream 431 message
         		sp_msg.length = 0;
-        		if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+        		if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
         	}
         	else
         	{
@@ -232,14 +236,17 @@ client_file socket_client::get_file_from_client(const char* filename)
         		int2net_int(strlen(filename), sp_msg.body+1);
         		sp_msg.body[0] = 0;
         		memcpy(sp_msg.body+5, filename, strlen(filename));
-        		if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+        		if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
         	}
 			// create tmpfile for bulkload
 			
 			tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
-		    int res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
+		    res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
 	    	if(res == 0) throw USER_EXCEPTION(SE4052);
-    	    if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION(SE3007);
+
+    	    res = sp_recv_msg(Sock, &sp_msg);
+			if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
+			if(res == 1) throw USER_EXCEPTION(SE3012);
 
         	while(sp_msg.instruction != se_BulkLoadEnd)    // while not BulkLoadEnd message
 	        {
@@ -253,7 +260,9 @@ client_file socket_client::get_file_from_client(const char* filename)
 	        		if ((got == 0)||(written!=sp_msg.length-5)) throw USER_EXCEPTION(SE4045); 
 	        	}
 	        	else throw USER_EXCEPTION(SE3009);
-	        	if(sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
+	        	res = sp_recv_msg(Sock, &sp_msg);
+		   		if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+		   		if (res == 1) throw USER_EXCEPTION(SE3012);
 	        } //end of while
 
          	got = uCloseFile(fs.f, __sys_call_error);
@@ -290,7 +299,7 @@ void socket_client::respond_to_client(int instruction)
         case se_CommitTransactionOk:
             if (read_msg_count == 1) {read_msg_count--; return;}
     }
-	if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+	if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
 void socket_client::begin_item()
@@ -300,7 +309,7 @@ void socket_client::begin_item()
 	sp_msg.instruction = se_QuerySucceeded;
 	sp_msg.length = 0;
 	
-	if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+	if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
 void socket_client::end_of_item(bool res) //res variable is ignored
@@ -312,20 +321,22 @@ void socket_client::get_session_parameters()
 {
   sp_msg.instruction = se_SendSessionParameters;// SendSessionParameters message
   sp_msg.length = 0;
-  if (sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+  if (sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
   
   timeout.tv_sec = 50;
   timeout.tv_usec = 0;
   int select_res = uselect_read(Sock, &timeout, __sys_call_error);
   if (select_res == 0) throw USER_EXCEPTION(SE3047);
-  if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
-  if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
-
+  if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+  int res = sp_recv_msg(Sock, &sp_msg);
+  if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+  if (res == 1) throw USER_EXCEPTION(SE3012);
+  
   if (sp_msg.instruction != se_SessionParameters) //SessionParameters
-   {
+  {
      error(SE3009, string("Unknown Instruction from client. Authentication failed."));
      throw USER_EXCEPTION(SE3009);
-   }
+  }
   int buf_position = 0;
   p_ver.major_version = sp_msg.body[buf_position];
   p_ver.minor_version = sp_msg.body[buf_position+1];
@@ -378,8 +389,10 @@ void socket_client::get_session_parameters()
   timeout.tv_usec = 0;
   select_res = uselect_read(Sock, &timeout, __sys_call_error);
   if (select_res == 0) throw USER_EXCEPTION(SE3047);
-  if (select_res == U_SOCKET_ERROR) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
-  if (sp_recv_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3007,usocket_error_translator());
+  if (select_res == U_SOCKET_ERROR) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+  res = sp_recv_msg(Sock, &sp_msg);
+  if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+  if (res == 1) throw USER_EXCEPTION(SE3012);
 
   if (sp_msg.instruction != se_AuthenticationParameters) //AuthenticationParameters
   {
@@ -413,11 +426,11 @@ void socket_client::authentication_result(bool res, const string& body)
    {
    	   sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message
    	   sp_msg.length = 0; 
-   	   if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+   	   if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
    }
    else
    {
-	   if(sp_error_message_handler(Sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) throw USER_EXCEPTION(SE3006);  //AuthenticationFailed
+	   if(sp_error_message_handler(Sock, se_AuthenticationFailed, SE3006, body.c_str())!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);} 
    }
 }
 
@@ -476,24 +489,22 @@ void socket_client::process_unknown_instruction(int instruction, bool in_transac
 
 void socket_client::error(int code, const string& body)
 {
-	try{
-	if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());  //ErrorResponse
-     } catch (SednaException &e) {
-          fprintf(stderr, "%s\n", e.getMsg().c_str());
-     } catch (...) {
-          sedna_soft_fault();
-     }
+    if(Sock != U_INVALID_SOCKET)
+        if(sp_error_message_handler(Sock, se_ErrorResponse, code, body.c_str())!=0) 
+        {
+            Sock = U_INVALID_SOCKET;
+            throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+        }
 }
 
 void socket_client::error()
 {
-	try{
-	if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) throw USER_EXCEPTION2(SE3006,usocket_error_translator());
-     } catch (SednaException &e) {
-          fprintf(stderr, "%s\n", e.getMsg().c_str());
-     } catch (...) {
-          sedna_soft_fault();
-     }
+    if(Sock != U_INVALID_SOCKET)
+        if(sp_error_message_handler(Sock, se_ErrorResponse, 0, "Unknown error")!=0) 
+        {
+            Sock = U_INVALID_SOCKET;
+            throw USER_EXCEPTION2(SE3006,usocket_error_translator());
+        }
 }
 
 void socket_client::show_time(string qep_time)
@@ -507,6 +518,6 @@ void socket_client::show_time(string qep_time)
    int2net_int(qep_time.length(), sp_msg.body+1);
    strcpy(sp_msg.body+5, qep_time.c_str());
    
-   if(sp_send_msg(Sock, &sp_msg)!=0) throw USER_EXCEPTION(SE3006);
+   if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION(SE3006);}
 }
 

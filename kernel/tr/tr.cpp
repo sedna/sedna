@@ -124,7 +124,6 @@ int main(int argc, char * argv[])
      {
 //        if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0)
 //           throw USER_EXCEPTION(SE4613);
-
         client = new command_line_client(argc, argv); 
      }
 
@@ -450,8 +449,7 @@ int main(int argc, char * argv[])
              if (e.get_code() == SE3053)
                 client->authentication_result(false, e.getMsg());
              else
-          	    if ((e.get_code()!= SE3007) &&(e.get_code()!= SE3006))
-          	      client->error(e.get_code(), e.getMsg());
+        	    client->error(e.get_code(), e.getMsg());
              client->release();
 		     delete client;
              }

@@ -23,6 +23,7 @@ class SednaStatementImpl implements SednaStatement
     this.bufInputStream = bufInputStream;
     this.currentResult = currentResult;
   }
+
   
 // @param - query as a String  
 // returns true if PlaneResult of this Statement is a result of a query
@@ -30,6 +31,16 @@ class SednaStatementImpl implements SednaStatement
 // throws Exception if there were errors
   
   public boolean execute(String queryText) throws DriverException
+  {
+      return execute(queryText, ResultType.XML);
+  }
+  
+// @param - query as a String  
+// returns true if PlaneResult of this Statement is a result of a query
+// false if it was Update
+// throws Exception if there were errors
+  
+  public boolean execute(String queryText, ResultType resultType) throws DriverException
   {
  	NetOps.Message msg = new NetOps.Message();
     try
@@ -47,7 +58,7 @@ class SednaStatementImpl implements SednaStatement
 		  // string length - 4 bytes
 		  // string
 		  // writing queryText	
-		  		msg.body[0] = 0; // result format code
+                setQueryResultType(msg, resultType);
 		  		msg.body[1] = 0; // string format
 		  		NetOps.writeInt(NetOps.SEDNA_SOCKET_MSG_BUF_SIZE-6, msg.body, 2);
 		  		if((query_bytes.length - bytes_sent) > (NetOps.SEDNA_SOCKET_MSG_BUF_SIZE-6))
@@ -75,7 +86,7 @@ class SednaStatementImpl implements SednaStatement
 	  		// string length - 4 bytes
 	  		// string
 	    	// writing queryText	
-	    	msg.body[0] = 0; // result format code
+            setQueryResultType(msg, resultType);
 	  		msg.body[1] = 0; // string format
 	  		NetOps.writeInt(query_bytes.length, msg.body, 2);
  
@@ -141,8 +152,16 @@ class SednaStatementImpl implements SednaStatement
 // returns true if PlaneResult of this Statement is a result of a query
 // false if it was Update
 // throws Exception if there were errors
-
   public boolean execute(InputStream in) throws DriverException, IOException
+  {
+      return execute(in, ResultType.XML);
+  }
+
+// @param - Reader to take the query from  
+// returns true if PlaneResult of this Statement is a result of a query
+// false if it was Update
+// throws Exception if there were errors
+  public boolean execute(InputStream in, ResultType resultType) throws DriverException, IOException
   {
   	// constructs the query string
   	StringBuffer strBuf = new StringBuffer();
@@ -163,9 +182,8 @@ class SednaStatementImpl implements SednaStatement
 			  // string
     
 			  // writing queryText	
-			  msg.body[0] = 0; // result format code
+	          setQueryResultType(msg, resultType);
 			  msg.body[1] = 0; // string format
-
 			  NetOps.writeInt(call_res, msg.body, 2);
 			  NetOps.writeMsg(msg, outputStream);
 		  }
@@ -279,5 +297,18 @@ class SednaStatementImpl implements SednaStatement
   public SednaSerializedResult getSerializedResult()
   {
   	return this.serializedResult;
+  }
+  
+  private void setQueryResultType(NetOps.Message message, ResultType resultType)
+  {
+     if (resultType == ResultType.SXML)
+     {
+	    message.body[0] = 1;
+	    System.out.println("setQueryResultType 1!!");
+     }
+     else
+     {
+        message.body[0] = 0;
+     }
   }
 }

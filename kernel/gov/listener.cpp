@@ -198,7 +198,7 @@ try{
        throw USER_EXCEPTION(SE3046);
 
 #ifdef _WIN32
-    USOCKET DuplicateSock;
+    USOCKET DuplicateSock = U_INVALID_SOCKET;
     //DuplicateHandle is used only for WinSockets 
     //(as create process doesn't inherit socket handles correctly)
     // Duplicate the socket socknew to create an inheritable copy.
