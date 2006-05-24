@@ -446,7 +446,7 @@ negative values:
 
 \verb!SEDNA_OPEN_SESSION_FAILED! - failed to open session.
 
-\verb!SEDNA_ERROR! - some error is occured, session is not open.
+\verb!SEDNA_ERROR! - some error is occurred, session is not open.
 
 
 To access multiple databases at one time or to better process its complex logic an application can have several sessions open at one time.
@@ -469,7 +469,7 @@ negative values:
 
 \verb!SEDNA_CLOSE_SESSION_FAILED! - session was closed with errors.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 An application can set attributes that govern aspects of a session using \verb!SEsetConnectionAttr!:
 
@@ -498,7 +498,7 @@ positive value:
 
 negative value:
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 \begin{figure}
 \begin{center}
@@ -540,7 +540,7 @@ positive value:
 
 negative value:
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 
 
@@ -576,7 +576,7 @@ negative value:
 
 \verb!SEDNA_BEGIN_TRANSACTION_FAILED! - failed to begin a transaction.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 \begin{verbatim}int SEcommit(SednaConnection* conn)\end{verbatim}
 
@@ -594,7 +594,7 @@ negative value:
 
 \verb!SEDNA_COMMIT_TRANSACTION_FAILED! - failed to commit transaction.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 \begin{verbatim}int SErollback(SednaCommection* conn)\end{verbatim}
 
@@ -612,7 +612,7 @@ negative value:
 
 \verb!SEDNA_ROLLBACK_TRANSACTION_FAILED! - failed to rollback transaction.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 
 
@@ -691,7 +691,7 @@ negative values:
 
 \verb!SEDNA_BULK_LOAD_FAILED! - bulk load failed.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 
 
@@ -724,7 +724,7 @@ negative values:
 
 \verb!SEDNA_BULK_LOAD_FAILED! - bulk load failed.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 
 If \verb!SEexecute! function or \verb!SEexecuteLong! function returns \verb!SEDNA_QUERY_SUCCEEDED!, the result data can be retrieved. The result of XQuery query evaluation is a sequence of items, where every item is represented as
@@ -750,7 +750,7 @@ negative values:
 
 \verb!SEDNA_NO_ITEM! - there was no succeeded query that produced the result data, no result data to retrieve.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 \begin{verbatim}int SEgetData(SednaConnection* conn, char* buf, int bytes_to_read)\end{verbatim}
 
@@ -775,7 +775,7 @@ negative values:
 
 \verb!SEDNA_GET_DATA_FAILED! - failed to get data.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 %---------------------------------------------------------------------------
 
@@ -809,7 +809,7 @@ positive values:
 
 negative values:
 
-\verb!SEDNA_ERROR! - some error occured. Data were not loaded.
+\verb!SEDNA_ERROR! - some error occurred. Data were not loaded.
 
 When the whole document is loaded using \verb!SEloadData!, application must use \verb!SEendLoadData! to notify server that  transfer of XML document is finished:
 
@@ -829,7 +829,7 @@ negative values:
 
 \verb!SEDNA_BULK_LOAD_FAILED! - Failed to load XML document into the database.
 
-\verb!SEDNA_ERROR! - some error occured.
+\verb!SEDNA_ERROR! - some error occurred.
 
 
 
@@ -853,7 +853,7 @@ parameters:
 
 \verb!conn! - a pointer to an instance of the SednaConnection type.
 
-The function returns the information about the last error occured in this session.
+The function returns the information about the last error occurred in this session.
 
 To get last error code use:
 
@@ -865,7 +865,7 @@ parameters:
 
 \verb!conn! - a pointer to an instance of the SednaConnection type.
 
-The function returns the code of a last error occured in this session.
+The function returns the code of a last error occurred in this session.
 
 
 
@@ -1158,7 +1158,7 @@ kinds of queries:
 
 If an error occurs at the server side during query execution (e.g.\ the
 requested document not found), the function raises an exception that contains
-the message about the error occured.
+the message about the error occurred.
 
 In the successful case of query execution, \texttt{sedna:execute-query} returns
 \texttt{\#t} for the last 2 kinds of queries, to denote a successful update
@@ -1248,7 +1248,7 @@ This function starts a new transaction on the \texttt{connection} objects and
 executes all the \texttt{queries} given in order.
 If no exception occurs, the function commits the transaction and returns the
 result of the last query.
-If any exception occured during query execution, the function sends rollback
+If any exception occurred during query execution, the function sends rollback
 to the Sedna DBMS and passes along the exception to the application.
 
 
