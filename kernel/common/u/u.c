@@ -53,6 +53,7 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 #ifdef _WIN32
     DWORD res = 0;
    
+    memset(buf, '\0', n);
     res = FormatMessage( 
                 FORMAT_MESSAGE_FROM_SYSTEM | 
                 FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -73,7 +74,11 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 
     return 0;
 #else
-    return strerror_r(errnum, buf, n);
+    char *res = NULL;
+    memset(buf, '\0', n);
+    res = strerror_r(errnum, buf, n);
+    strncpy(buf, res, n - 1); 
+    return 0;
 #endif
 }
 

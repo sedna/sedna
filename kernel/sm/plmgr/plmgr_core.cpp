@@ -345,7 +345,6 @@ void plmgr_core::release_phys_log(file_head& head)
 {
   int res2;
   int res1;
-
   head.is_stopped_successfully = true;
   _writeFile(&head, sizeof(file_head), 0);
 
@@ -360,12 +359,10 @@ void plmgr_core::release_phys_log(file_head& head)
 
 
   res1 = uCloseFile(pl_file_handler, __sys_call_error);
-
   if ( res1 == 0 )
      throw USER_EXCEPTION2(SE4043, "physical log file");
 
-  delete(read_buf);
-
+  se_delete(read_buf);
 }
 
 void plmgr_core::release_shared_mem()

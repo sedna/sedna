@@ -166,22 +166,26 @@ inline void operator delete[](void* p)
 
 inline void *operator new(usize_t size, MemoryContext context)
 {
-    return MemoryContextAlloc(context, size);
+    return malloc(size);
+    //return MemoryContextAlloc(context, size);
 }
 
 inline void operator delete(void* p, MemoryContext context)
 {
-    if (p) se_free(p);
+    if (p) free(p);
+    //if (p) se_free(p);
 }
 
 inline void *operator new[](usize_t size, MemoryContext context)
 {
-    return MemoryContextAlloc(context, size);
+    return malloc(size);
+    //return MemoryContextAlloc(context, size);
 }
 
 inline void operator delete[](void* p, MemoryContext context)
 {
-    if (p) se_free(p);
+    if (p) free(p);
+    //if (p) se_free(p);
 }
 
 template<class T> void __se_delete(T* p, MemoryContext context)
@@ -189,7 +193,8 @@ template<class T> void __se_delete(T* p, MemoryContext context)
     if (p) 
     {
         p->~T();
-        se_free(p);
+        //se_free(p);
+        free(p);
     }
 }
 
