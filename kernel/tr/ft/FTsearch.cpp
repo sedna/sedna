@@ -604,8 +604,13 @@ void SednaStringHighlighter<Iterator>::run()
 		Iterator str_it_save = str_it;
 		Iterator str_end_save = str_end;
 		//first parse_doc pass: compute ht0
-		cur_ch = getch(str_it, str_end);
-		parse_doc();
+		if (ht_cnt == 0)
+			ht0 = 1;
+		else
+		{
+			cur_ch = getch(str_it, str_end);
+			parse_doc();
+		}
 
 		//second pass: get the fragment
 		str_it = str_it_save;
