@@ -12,7 +12,11 @@ public interface SednaStatement
 {
 public boolean execute(String queryText) throws DriverException;
 
+public boolean execute(String queryText, ResultType resultType) throws DriverException;
+
 public boolean execute(InputStream in) throws DriverException, IOException;
+
+public boolean execute(InputStream in, ResultType resultType) throws DriverException, IOException;
 
 public void loadDocument(InputStream in, String doc_name) throws DriverException, IOException;
 

@@ -91,6 +91,33 @@ ust$(OBJ_EXT):$(PP)/kernel/common/u/u.c
 libsedna$(LIB_EXT): libsednast$(OBJ_EXT) usocketst$(OBJ_EXT) uhddst$(OBJ_EXT) spst$(OBJ_EXT) uutilsst$(OBJ_EXT) \
                       usecurityst$(OBJ_EXT) d_printfst$(OBJ_EXT) error_codesst$(OBJ_EXT) ust$(OBJ_EXT)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
+# multithreaded dynamic library - libsednamt.dll
+libsednamtdll$(OBJ_EXT):libsedna.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)libsednamtdll$(OBJ_EXT) $<
+usocketmtdll$(OBJ_EXT):$(PP)/kernel/common/u/usocket.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)usocketmtdll$(OBJ_EXT)  $<
+uhddsmtdll$(OBJ_EXT):$(PP)/kernel/common/u/uhdd.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)uhddsmtdll$(OBJ_EXT)  $<
+spmtdll$(OBJ_EXT):$(PP)/kernel/common/sp.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)spmtdll$(OBJ_EXT)  $<
+uutilsmtdll$(OBJ_EXT):$(PP)/kernel/common/u/uutils.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)uutilsmtdll$(OBJ_EXT)  $<
+usecuritymtdll$(OBJ_EXT):$(PP)/kernel/common/u/usecurity.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)usecuritymtdll$(OBJ_EXT)  $<
+d_printfmtdll$(OBJ_EXT):$(PP)/kernel/common/errdbg/d_printf.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)d_printfmtdll$(OBJ_EXT)  $<
+error_codesmtdll$(OBJ_EXT):$(PP)/kernel/common/error_codes.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)error_codesmtdll$(OBJ_EXT)  $<
+umtdll$(OBJ_EXT):$(PP)/kernel/common/u/u.c
+		$(CC) $(CFLAGS_ST) /MD $(OBJ_NAME)umtdll$(OBJ_EXT)  $<
+
+
+libsednamt$(DLL_EXT): libsednamtdll$(OBJ_EXT) usocketmtdll$(OBJ_EXT) uhddsmtdll$(OBJ_EXT)	\
+                spmtdll$(OBJ_EXT) uutilsmtdll$(OBJ_EXT) \
+                usecuritymtdll$(OBJ_EXT) d_printfmtdll$(OBJ_EXT) error_codesmtdll$(OBJ_EXT) umtdll$(OBJ_EXT)
+	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
 else
 # UNIX 
 

@@ -41,7 +41,7 @@ private:
 	
     struct timeval timeout;
 public:
-    socket_client() {}
+    socket_client();
  //   ~socket_client() {}
     virtual void process_unknown_instruction(int instruction, bool in_transaction);
 	

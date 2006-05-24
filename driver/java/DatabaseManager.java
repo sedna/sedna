@@ -24,23 +24,19 @@ public static SednaConnection getConnection(String url_string, String db_name, S
       String url = "";
       int socket_port;
       
-      try {
-            NetOps.driverPrintOut("Trying to establish connection ...");
-        
-            if(url_string.indexOf(":")!=(-1))
-            { 
-            	url = url_string.substring(0,url_string.indexOf(":"));
-            	socket_port = Integer.parseInt(url_string.substring(url_string.indexOf(":")+1, url_string.length()));
-            }
-            else 
-            {
-            	url = url_string;
-            	socket_port = 5050;
-            } 
-         
-//            if(url.equals("localhost")) url = InetAddress.getLocalHost().getHostName();
-            if(url.equals("localhost")) url = "127.0.0.1"; //local ip address
-            
+      try
+      {
+        if(url_string.indexOf(":")!=(-1))
+        { 
+          	url = url_string.substring(0,url_string.indexOf(":"));
+           	socket_port = Integer.parseInt(url_string.substring(url_string.indexOf(":")+1, url_string.length()));
+        }
+        else 
+        {
+           	url = url_string;
+           	socket_port = 5050;
+        } 
+        if(url.equals("localhost")) url = "127.0.0.1"; //local ip address
         // open a socket connection
         socket = new Socket(url, socket_port);
         con.setSocket(socket);

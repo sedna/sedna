@@ -127,7 +127,7 @@ void on_session_end(SSMMsg* &sm_server)
 
 
    d_printf1("Deleting SSMMsg...");
-   if (is_sm_server_inited)
+   if (is_sm_server_inited && sm_server)
    {
       sm_server->shutdown();
       delete sm_server;

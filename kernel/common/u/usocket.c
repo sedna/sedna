@@ -305,7 +305,7 @@ int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun)
 
     while (1)
     {
-        res_len = send(s, buf, len, 0);
+        res_len = send(s, buf, len, MSG_NOSIGNAL);
         if (res_len == U_SOCKET_ERROR)
             if (errno == EINTR)
                 continue;
