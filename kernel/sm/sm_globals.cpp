@@ -180,6 +180,6 @@ arg_rec sm_argtable[] =
 /*
 {"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,           "on",  "   write to physical log (default on)"},
 */
-{NULL,               " db-name", arg_str,  &__db_name__,             "???",  "\t\t   The name of the database "},
+{NULL,               " db-name", arg_str,  __db_name__,             "???",  "\t\t   The name of the database "},
 };
 
