@@ -28,7 +28,7 @@ arg_rec smsd_argtable[] =
 {"--help",            NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t   display this help and exit"},
 {"-help",             NULL,       arg_lit,   &smsd_help,                 "0",    "\t\t\t   display this help and exit"},
 {"-version",          NULL,       arg_lit,   &smsd_version,              "0",    "\t\t   display product version and exit"},
-{NULL,               " db-name",  arg_str,   &db_name,                "???",  "\t\t   The name of the database "}
+{NULL,               " db-name",  arg_str,   db_name,                    "???",  "\t\t   The name of the database "}
 };
 
 

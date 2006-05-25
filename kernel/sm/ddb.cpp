@@ -35,8 +35,8 @@ arg_rec ddb_argtable[] =
 {
 {"--help",            NULL,       arg_lit,   &ddb_help1,                 "0",    "\t\t   display this help and exit"},
 {"-help",             NULL,       arg_lit,   &ddb_help2,                 "0",    "\t\t\t   display this help and exit"},
-{"-version",          NULL,       arg_lit,   &ddb_version,              "0",    "\t\t   display product version and exit"},
-{NULL,               " db-name",  arg_str,   &db_name,                "???",  "\t\t   The name of the database "}
+{"-version",          NULL,       arg_lit,   &ddb_version,               "0",    "\t\t   display product version and exit"},
+{NULL,               " db-name",  arg_str,   db_name,                    "???",  "\t\t   The name of the database "}
 };
 
 

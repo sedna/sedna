@@ -42,17 +42,17 @@ arg_rec tr_argtable[] =
 {"-help",            NULL,       arg_lit,   &tr_s_help,                 "0",       "\t\t\t  display this help and exit"},
 {"--help",           NULL,       arg_lit,   &tr_l_help,                 "0",       "\t\t  display this help and exit"},
 {"-version",         NULL,       arg_lit,   &tr_version,                "0",       "\t\t  display product version and exit"},
-{"-output",         " file",     arg_str,   &output_file,               "STDOUT",  "\t\t  outputfile (default STDOUT)"},
+{"-output",         " file",     arg_str,   output_file,                "STDOUT",  "\t\t  outputfile (default STDOUT)"},
 {"-show-time",      " on/off",   arg_bool,  &show_time,                 "off",     "\t  show time of query execution (default off)"},
 /* {"-rewriter",       " on/off",   arg_bool,  &run_rewriter,              "on",      "\t  run rewriter (default on)"}, */
 {"-popt",  			" on/off",	 arg_bool,  &run_popt, 					"off",	   "\t\t  run physical optimizer (default off)"},
 {"-print-intermed", " on/off",   arg_bool,  &print_intermed,            "off",     "  print intermediate results for debug purposes\n\t\t\t  (default off)"},
 /* {"-server-mode",    " on/off",   arg_bool,  &server_mode,               "off",     "\t  work in server mode (output result to pipe)\n\t\t\t  (default off)"}, */
-{"-query-type",     " type",     arg_str,   &q_type,                    "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
-{"-name",           " name",     arg_str,   &login,                     "SYSTEM",  "\t\t  user name (default SYSTEM)"},
-{"-pswd",           " password", arg_str,   &password,                  "MANAGER", "\t  user password (default MANAGER)"},
-{NULL,              " db-name",  arg_str,   &db_name,                   "???",     "\t\t  database name"},
-{NULL,              " filename", arg_str,   &filename,                  "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
+{"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
+{"-name",           " name",     arg_str,   login,                      "SYSTEM",  "\t\t  user name (default SYSTEM)"},
+{"-pswd",           " password", arg_str,   password,                   "MANAGER", "\t  user password (default MANAGER)"},
+{NULL,              " db-name",  arg_str,   db_name,                    "???",     "\t\t  database name"},
+{NULL,              " filename", arg_str,   filename,                   "???",     "\t\t  file with an XQuery query\n\t\t\t  "}
 };
 
 client_core* client = NULL;
