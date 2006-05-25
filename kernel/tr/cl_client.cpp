@@ -279,8 +279,9 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 
   
   res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-  if (res == NULL)
+/*if (res == NULL)
      throw USER_EXCEPTION2(SE4603, client_filename);
+*/
 
   if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
@@ -288,8 +289,9 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {
      res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
-     if (res == NULL)
+/*     if (res == NULL)
         throw USER_EXCEPTION2(SE4603, client_filename);
+*/
 
      if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
