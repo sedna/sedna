@@ -136,14 +136,15 @@ inline void get_next(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reach
     }
 	else
 	{
-		if(pos == s->size()) //does 'pos' points to the end of the sequence?
+		if(pos == s->size()) //does 'pos' point to the end of the sequence?
 	    {
 	    	if(eos_reached) t.set_eos(); 
 	    	else
 	    	{
 	    		//get next tuple from the 'child' and cache it
 	    		child.op->next(t); 
-    			if(!t.is_eos()) { eos_reached = true; s->add(t); pos++; }
+    			if(!t.is_eos()) { s->add(t); pos++; }
+				else eos_reached = true;
     		}
 	    }
 	    //else get 'pos'-th tuple from the given sequence
