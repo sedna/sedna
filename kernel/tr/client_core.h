@@ -17,6 +17,7 @@
 struct client_file{
 	FILE* f;
 	char name[1024];
+    __int64 file_size;//size of file in bytes
 };
 
 class client_core

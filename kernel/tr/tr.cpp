@@ -24,7 +24,6 @@
 #include "socket_client.h"
 #include "tr_utils.h"
 #include "auc.h"
-#include "memutils.h"
 
 
 // only for MSDEV 6.0

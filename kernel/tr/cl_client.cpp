@@ -247,11 +247,14 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 {
   client_file cf;
   char buf[1024];
+  
 
   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
   {//load metadata case (client_filename must be absolute path)
      if ((cf.f = fopen (client_filename, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
+     if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
+        throw USER_EXCEPTION2(SE4050, client_filename);
      strcpy(cf.name, client_filename);
      return cf;
   }
@@ -285,6 +288,7 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 
   if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
+
   
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {
@@ -295,6 +299,14 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 
      if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, client_filename);
+
+     if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
+        throw USER_EXCEPTION2(SE4050, client_filename);
+  }
+  else
+  {
+     if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
+        throw USER_EXCEPTION2(SE4050, client_filename);
   }
   
 /*

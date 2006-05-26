@@ -402,6 +402,35 @@ int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun)
 #endif
 }
 
+/* If the function succeeds, the return value is nonzero.*/
+/* If the function fails, the return value is zero.*/
+int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun fun)
+{
+   int res;
+   UFile fd;
+
+   fd = uOpenFile(name,
+                        U_SHARE_READ | U_SHARE_WRITE,
+                        U_READ_WRITE,
+                        U_WRITE_THROUGH,
+                        __sys_call_error);
+
+   if (fd == U_INVALID_FD)  return 0;
+
+   res = uGetFileSize(fd, file_size, __sys_call_error);
+   
+   if (res == 0)
+   {
+     uCloseFile(fd, __sys_call_error);
+     return 0;
+   }
+
+   if (uCloseFile(fd, __sys_call_error) == 0) return 0;
+
+   return 1;
+}
+
+
 int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fun)
 {
 #ifdef _WIN32

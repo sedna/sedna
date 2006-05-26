@@ -20,13 +20,10 @@
 #include "indirection.h"
 #include "tr_globals.h"
 #include "XQuerytoLR.h"
+#include "tr_common_funcs.h"
 
 #define ENV_BUF_SIZE 1000
 
-void on_session_begin(SSMMsg* &sm_server);
-void on_session_end(SSMMsg* &sm_server);
-void on_transaction_begin(SSMMsg* &sm_server);
-void on_transaction_end(SSMMsg* &sm_server, bool is_commit);
 void on_user_statement_begin(QueryType query_type,
                              t_print output_type,
                              se_ostream* s,
@@ -35,13 +32,7 @@ void on_user_statement_begin(QueryType query_type,
                              StmntsArray* &st);
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st);
 
-
-
-bool is_stop_session();
 void set_session_finished();
-
-transaction_id get_transaction_id(SSMMsg* sm_server);
-void release_transaction_id(SSMMsg* sm_server);
 
 void clear_state(StmntsArray* &st, PPQueryEssence* &qep_tree);
 void exec_implicit_stmnt_part(StmntsArray *st);

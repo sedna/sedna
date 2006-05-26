@@ -507,7 +507,8 @@ int main(int argc, char **argv)
         ll_phys_log_set_phys_log_flag(false);
         //recover data base by phisical log
 
-        if (!is_stopped_correctly) ll_phys_log_recover_db();
+        LONG_LSN last_checkpoint_lsn = NULL_LSN;
+        if (!is_stopped_correctly) last_checkpoint_lsn = ll_phys_log_recover_db();
         d_printf1("db recovered by phys log successfully\n");
 
         ll_phys_log_set_phys_log_flag(true);
@@ -574,7 +575,7 @@ int main(int argc, char **argv)
 
 
 //FOR DEBUG I comment this call
-            if (!is_stopped_correctly) execute_recovery_by_logical_log_process();
+//            if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
 
 
 

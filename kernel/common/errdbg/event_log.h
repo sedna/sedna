@@ -41,6 +41,7 @@
 #define EL_SMSD     6
 #define EL_STOP     7
 #define EL_TRN      8
+#define EL_RCV      9
 
 
 typedef struct event_log_msg

@@ -15,7 +15,7 @@
 #include "plmgr_core.h"
 #include "uutils.h"
 #include "d_printf.h"
-//#include "trmgr.h"
+#include "trmgr.h"
 
 using namespace std;
 

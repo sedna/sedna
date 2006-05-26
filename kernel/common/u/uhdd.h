@@ -130,6 +130,10 @@ extern "C"
 /* If the function fails, the return value is zero.*/
     int uGetFileSize(UFile fd, __int64 * file_size, sys_call_error_fun fun);
 
+/* If the function succeeds, the return value is nonzero.*/
+/* If the function fails, the return value is zero.*/
+    int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun fun);
+
 
 /* If the function succeeds, the return value is nonzero.*/
 /* If the function fails, the return value is zero.*/
