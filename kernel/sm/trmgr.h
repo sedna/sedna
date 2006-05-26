@@ -17,17 +17,17 @@
 #define CHECKPOINT_ON
 //#define TEST_CHECKPOINT_ON
 //must be uncommneted
-//#define RECOVERY_ON
+#define RECOVERY_ON
 //must be uncommneted
 //#define TEST_RECOVERY_ON
 //must be uncommneted
-//#define RECOVERY_EXEC_MICRO_OP
+#define RECOVERY_EXEC_MICRO_OP
 
 void start_chekpoint_thread();
 void init_checkpoint_sems();
 void shutdown_chekpoint_thread();
 void release_checkpoint_sems();
-void execute_recovery_by_logical_log_process();
+void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn);
 
 void init_transaction_ids_table();
 void release_transaction_ids_table();
@@ -35,3 +35,4 @@ transaction_id get_transaction_id();
 void give_transaction_id(transaction_id& trid);
 
 extern USemaphore wait_for_checkpoint; 
+extern USemaphore checkpoint_finished;

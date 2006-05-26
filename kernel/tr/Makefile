@@ -17,7 +17,7 @@ VPATH = . structures
 
 include $(PP)/Makefile.include
 
-all: $(PP)/bin/se_trn$(EXE_EXT)
+all: $(PP)/bin/se_rcv$(EXE_EXT) $(PP)/bin/se_trn$(EXE_EXT)
 	@echo ===================================================================
 	@echo TR DONE
 	@echo ===================================================================
@@ -313,9 +313,12 @@ TRN_OBJS = tr$(OBJ_EXT)					\
            socket_client$(OBJ_EXT)      \
            cl_client$(OBJ_EXT)          \
            tr_functions$(OBJ_EXT)       \
+           tr_common_funcs$(OBJ_EXT)    \
            tr_globals$(OBJ_EXT)		
 
-TRN_RCV_OBJS = rcv_db$(OBJ_EXT)
+TRN_RCV_OBJS = rcv_db$(OBJ_EXT)         \
+               tr_globals$(OBJ_EXT)     \
+               tr_common_funcs$(OBJ_EXT)    
 
 #BL_OBJS =  bl$(OBJ_EXT)					\
 #           tr_globals$(OBJ_EXT)         \
@@ -436,8 +439,9 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) libraries
 endif
 
 
+
 ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_rcv_db$(EXE_EXT): $(TRN_RCV_OBJS) libraries
+$(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
 	$(LD) $(LFLAGS) $(LDOUT)$@ $(TRN_RCV_OBJS)				\
                                $(EXECUTOR_S)				\
                                $(LOCKS_S)					\
@@ -460,7 +464,7 @@ $(PP)/bin/se_rcv_db$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(AUTH_S)					\
                                $(RCV_S)	
 else					
-$(PP)/bin/se_rcv_db$(EXE_EXT): $(TRN_RCV_OBJS) libraries
+$(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
 	$(LD) $(LFLAGS) 										\
                                $(EXECUTOR_P)				\
                                $(LOCKS_P)					\

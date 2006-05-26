@@ -24,7 +24,8 @@
 using namespace std;
 
 /* global variables for checkpoint */
-USemaphore wait_for_checkpoint; 
+USemaphore wait_for_checkpoint;
+USemaphore checkpoint_finished;
 USemaphore checkpoint_sem; 
 USemaphore concurrent_ops_sem;
 
@@ -58,13 +59,6 @@ U_THREAD_PROC (checkpoint_thread, arg)
     if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
        throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
 
-    string str;
-    if (shutdown_checkpoint_thread)
-        str = string("checkpoint started (shutdown_flag=true)"); 
-    else
-        str = string("checkpoint started (shutdown_flag=false)"); 
-    
-    WRITE_DEBUG_LOG(str.c_str());
 
     //syn with all micro ops
     if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)
@@ -140,8 +134,10 @@ U_THREAD_PROC (checkpoint_thread, arg)
        throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
 
     ll_phys_log_set_checkpoint_on_flag(false);
-    str = "checkpoint finished\n"; 
-    WRITE_DEBUG_LOG(str.c_str());
+
+//    if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
+//       throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
+    
 
     times++;
 
@@ -182,6 +178,10 @@ void init_checkpoint_sems()
 #ifdef CHECKPOINT_ON
   if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_WAIT_FOR_CHECKPOINT");
+/*
+  if (USemaphoreCreate(&checkpoint_finished, 0, 1, SEDNA_CHECKPOINT_FINISHED_SEM, NULL, __sys_call_error) != 0)
+     throw USER_EXCEPTION2(SE4010, "SEDNA_CHECKPOINT_FINISHED_SEM");
+*/
 
   if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_CHECKPOINT_SEM");
@@ -218,6 +218,10 @@ void release_checkpoint_sems()
   //release semaphores
   if (USemaphoreRelease(wait_for_checkpoint, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHARISMA_WAIT_FOR_CHECKPOINT");
+/*
+  if (USemaphoreRelease(checkpoint_finished, __sys_call_error) != 0)
+     throw USER_EXCEPTION2(SE4011, "SEDNA_CHECKPOINT_FINISHED_SEM");
+*/
 
   if (USemaphoreRelease(checkpoint_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHARISMA_CHECKPOINT_SEM");
@@ -229,19 +233,25 @@ void release_checkpoint_sems()
 #endif
 }
 
-void execute_recovery_by_logical_log_process()
+void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
 {
 #ifdef RECOVERY_ON
   if (USemaphoreCreate(&wait_for_recovery, 0, 1, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
 
   //create recovery process
-  int res;
+  int res, res2;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
+  char buf2[1024];
+  UPID pid;
+  UPHANDLE h;
 
   //string command_line = string(SEDNA_DATA) + string("/bin/rcv_db.exe ") + string(db_name);
 
-  string command_line = uGetImageProcPath(buf) + string("/se_rcv_db.exe ") + string(db_name) ;
+  string command_line = uGetImageProcPath(buf, __sys_call_error) +
+                        string("/se_rcv.exe ") + string(db_name) + string(" ") +
+
+                        _ui64toa(last_checkpoint_lsn, buf2, 10);
   strcpy(buf, command_line.c_str());
 
 #ifndef TEST_RECOVERY_ON
@@ -250,9 +260,9 @@ void execute_recovery_by_logical_log_process()
                   false,
                   NULL,
                   /*U_DETACHED_PROCESS*/0,
+                  &h,
                   NULL,
-                  NULL,
-                  NULL,
+                  &pid,
                   NULL,
                   NULL,
                   __sys_call_error);
@@ -261,12 +271,19 @@ void execute_recovery_by_logical_log_process()
      throw USER_EXCEPTION2(SE4070,"recovery process");
 #endif
 
-  delete [] command_line_str;
-  
+  for (;;)
+  {
+     res =USemaphoreDownTimeout(wait_for_recovery, 15000, __sys_call_error);
+     if (res == 0) break;
+     else if (res == 1)
+        throw USER_EXCEPTION2(SE4015, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
+     else // timeout expired
+     {
+       res2 = uIsProcessExist(pid, h, __sys_call_error);
+       if (res2 != 1) throw USER_EXCEPTION(SE4501);
 
-  if (USemaphoreDown(wait_for_recovery, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4015, "CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG");
-
+     }
+  }
 #endif
 }
 

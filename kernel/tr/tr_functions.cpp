@@ -15,8 +15,6 @@
 #include "rcv_funcs.h"
 
 using namespace std;
-static bool is_sm_server_inited = false;
-static bool is_ph_inited = false;
 
 static bool is_trid_obtained = false;
 static bool is_qep_built = false;
@@ -127,7 +125,7 @@ void on_session_end(SSMMsg* &sm_server)
 
 
    d_printf1("Deleting SSMMsg...");
-   if (is_sm_server_inited && sm_server)
+   if (is_sm_server_inited)
    {
       sm_server->shutdown();
       delete sm_server;
@@ -239,6 +237,7 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
     }
 }
 
+
 void on_user_statement_begin(QueryType query_type,
                              t_print output_type,
                              se_ostream* s,
@@ -287,14 +286,6 @@ void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 
 
 
-bool is_stop_session()
-{
-  if (!is_init_gov_shm) return true;
-
-  if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return true;
-
-  return  (((gov_sess_struct*)((char*)gov_shared_mem + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + sid*sizeof(gov_sess_struct)))->stop == 1) ? true : false;
-}
 
 void set_session_finished()
 {
@@ -311,38 +302,6 @@ void set_session_finished()
 }
 
 
-transaction_id get_transaction_id(SSMMsg* sm_server)
-{
-   sm_msg_struct msg;
-   msg.cmd = 1;
-   if (sm_server->send_msg(&msg) !=0 )
-      throw USER_EXCEPTION(SE3034);
-
-
-   if (msg.trid == -1)
-      throw USER_EXCEPTION(SE4607);
-
-   is_trid_obtained = true;
-   d_printf2("get trid=%d\n", msg.trid);
-   return msg.trid;
-}
-
-void release_transaction_id(SSMMsg* sm_server)
-{
-   if ( is_trid_obtained == true )
-   {
-      if (trid < 0 || trid >= CHARISMA_MAX_TRNS_NUMBER) return;
-
-      d_printf2("return trid=%d\n", trid);
-      sm_msg_struct msg;
-      msg.cmd = 2;
-      msg.trid = trid;
-      if (sm_server->send_msg(&msg) !=0 )
-         throw USER_EXCEPTION(SE3034);
-   }
-   is_trid_obtained = false;
-
-}
 
 void execute(PPQueryEssence* qep_tree)
 {

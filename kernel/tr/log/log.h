@@ -31,10 +31,10 @@ void hl_phys_log_create_node_blk(const void* p);
 int get_phys_record_block_parts(const void * p, int size);
 
 /* Logical journal records */
-void hl_logical_log_on_session_begin(std::string logical_log_path, bool rcv_active = false);
-void hl_logical_log_on_transaction_begin(bool rcv_active = false);
+void hl_logical_log_on_session_begin(std::string logical_log_path, bool rcv_active);
+void hl_logical_log_on_transaction_begin(bool rcv_active);
 void hl_logical_log_on_session_end();
-void hl_logical_log_on_transaction_end(bool is_commit);
+void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active);
 
 
 void down_concurrent_micro_ops_number();

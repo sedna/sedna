@@ -22,11 +22,14 @@
 typedef int ramoffs;
 #define RAMOFFS_OUT_OFF_BOUNDS                          INT_MAX
 
+//typedef __int64 LSN;
 typedef long LSN;
 typedef __int64 LONG_LSN;
 typedef __uint32 CP_counter;
 #define  NULL_LSN (-1)
 #define  NULL_FILE (-1)
+
+#define MAX_FILE_SIZE_WITHOUT_CHECKPOINT 50*(1024*1024)
 
 
 typedef int session_id;
@@ -189,6 +192,7 @@ extern global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME;
 extern global_name CHARISMA_SM_WAIT_FOR_SHUTDOWN;
 
 extern global_name CHARISMA_CHECKPOINT_SEM;
+extern global_name SEDNA_CHECKPOINT_FINISHED_SEM;
 extern global_name CHARISMA_LOGICAL_OPERATION_ATOMICITY;
 extern global_name CHARISMA_WAIT_FOR_CHECKPOINT;
 extern global_name CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG;

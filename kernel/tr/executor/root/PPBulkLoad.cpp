@@ -87,17 +87,32 @@ void PPBulkLoad::execute()
 
     int need_cp;
     xptr doc_root;
-    client_file cf = client->get_file_from_client(tc_filename.get_str_mem()); 
+    client_file cf = client->get_file_from_client(tc_filename.get_str_mem());
+    bool write_to_logical_log;
+
+    if (!is_need_checkpoint_on_transaction_commit)
+    {
+       if (cf.file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
+       {
+          write_to_logical_log = false;
+          is_need_checkpoint_on_transaction_commit = true;
+       }
+       else
+          write_to_logical_log = true;
+    }
+    else
+          write_to_logical_log = false;
+    
     bool boundary_space_strip = (tr_globals::st_ct.boundary_space == xq_boundary_space_strip);
 
     try {
    	    if (collection.op == NULL) 
         { 
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
-            hl_disable_log();
+            if (!write_to_logical_log) hl_disable_log();
             doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
-            hl_enable_log();
-            hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
+            if (!write_to_logical_log) hl_enable_log();
+            if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
         else 
         {
@@ -114,10 +129,10 @@ void PPBulkLoad::execute()
 
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
-            hl_disable_log();
+            if (!write_to_logical_log) hl_disable_log();
             doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
-            hl_enable_log();
-            hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
+            if (!write_to_logical_log) hl_enable_log();
+            if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }
     } catch (...) {
         client->close_file_from_client(cf);

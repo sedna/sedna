@@ -67,6 +67,7 @@ void hl_logical_log_on_transaction_begin(bool rcv_active)
 #ifdef LOGICAL_LOG
   //Here trid is a global variable inited before
   tr_llmgr->ll_log_on_transaction_begin(rcv_active, trid, true);
+  is_need_checkpoint_on_transaction_commit = false;
   is_ll_on_transaction_initialized = true; 
 #endif
 }
@@ -98,28 +99,32 @@ void hl_logical_log_on_session_end()
 #endif 
 }
 
-void hl_logical_log_on_transaction_end(bool is_commit)
+void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
 {
 #ifdef LOGICAL_LOG
   if (is_ll_on_transaction_initialized)
   {
-     if (is_commit)
+
+     if (!rcv_active)
      {
+        if (is_commit)
+        {
 #ifdef SE_ENABLE_FTSEARCH
-		 SednaIndexJob::start_commit();
+   		   SednaIndexJob::start_commit();
 #endif
-		 hl_logical_log_commit(trid);
+	  	   hl_logical_log_commit(trid);
 #ifdef SE_ENABLE_FTSEARCH
-		 SednaIndexJob::fix_commit();
+		   SednaIndexJob::fix_commit();
 #endif
-     }
-     else
-     {
-        rollback_tr_by_logical_log(trid);
+        }
+        else
+        {
+           rollback_tr_by_logical_log(trid);
 #ifdef SE_ENABLE_FTSEARCH
-		SednaIndexJob::rollback();
+	   	   SednaIndexJob::rollback();
 #endif
-        hl_logical_log_rollback(trid); 
+           hl_logical_log_rollback(trid); 
+        }
      }
 
      //Here trid is a global variable inited before
@@ -250,9 +255,6 @@ void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_element(trid, self, left, right, parent, name, uri, prefix, type, inserted, true);
-  string str = string("hl_logical_log_element finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
-
 #endif
 }
 
@@ -262,10 +264,6 @@ void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &righ
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_attribute(trid, self, left, right, parent, name, type, value, data_size, uri, prefix, inserted, true);
-
-  string str = string("hl_logical_log_attribute finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
-
 #endif
 }
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted)
@@ -274,9 +272,6 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_text(trid, self, left, right, parent, (char*)value, data_size, inserted, true);
-  string str = string("hl_logical_log_text finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
-
 #endif
 }
 void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,bool begin,bool inserted)
@@ -375,8 +370,6 @@ void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_comment(trid, self, left, right, parent, value, data_size, inserted, true); 
-  string str = string("hl_logical_log_comment finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 void hl_logical_log_document(const xptr &self,const  char* name,const  char* collection,bool inserted)
@@ -387,8 +380,6 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 //  d_printf2("doc %s\n", name);
 //  self.print();
   tr_llmgr->ll_log_document(trid, self, name, collection, inserted, true); 
-  string str = string("hl_logical_log_document finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 void hl_logical_log_collection(const  char* name,bool inserted)
@@ -397,8 +388,6 @@ void hl_logical_log_collection(const  char* name,bool inserted)
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_collection(trid, name, inserted, true);
-  string str = string("hl_logical_log_collection finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 
@@ -409,8 +398,6 @@ void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &righ
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_ns(trid, self, left, right, parent, uri, prefix, inserted, true);
-  string str = string("hl_logical_log_namespace finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted)
@@ -419,8 +406,6 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_pi(trid, self, left, right, parent, value, total_size, target_size, inserted, true);
-  string str = string("hl_logical_log_pi finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 void hl_logical_log_indirection(int cl_hint, std::vector<xptr>* blocks)
@@ -435,16 +420,9 @@ void hl_logical_log_commit(transaction_id _trid)
 {
 #ifdef LOGICAL_LOG
   number_of_records++;
-//  LONG_LSN commit_lsn;
+  if (is_need_checkpoint_on_transaction_commit)
+     activate_and_wait_for_end_checkpoint();
   tr_llmgr->commit_trn(_trid, true);
-
-//  commit_lsn = tr_llmgr->ll_log_commit(_trid, true);
-//  tr_llmgr->ll_log_flush(_trid, true);
-//  tr_llmgr->flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
-  //d_printf3("num of records written by transaction id=%d, num=%d\n", trid, tr_llmgr->get_num_of_records_written_by_trn(trid)); 
-  string str = string("hl_logical_log_comment finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
-  //d_printf1("Commit record has been added and flushed\n");
 #endif
 }
 
@@ -453,9 +431,6 @@ void hl_logical_log_rollback(transaction_id _trid)
 #ifdef LOGICAL_LOG
   tr_llmgr->ll_log_rollback(_trid, true);
   //d_printf3("num of records written by transaction id=%d, num=%d\n", trid, tr_llmgr->get_num_of_records_written_by_trn(trid)); 
-
-  string str = string("hl_logical_log_rollback finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
 

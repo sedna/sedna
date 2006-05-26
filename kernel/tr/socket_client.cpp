@@ -212,16 +212,6 @@ client_file socket_client::get_file_from_client(const char* filename)
 
      try
      { 
-        // first transaction && security_is_on: load metadata from locally stored file sedna_auth_md.xml
-        if(!auth && AUTH_SWITCH)
-        {
-			char path[1024];
-			getSednaAuthMetadataPath(path);
-        	cf.f = fopen(string(path).c_str(), "r");
-         	strcpy(cf.name, string(path).c_str());
-        }
-        else
-        {
         	if (strcmp(filename, "/STDIN/") == 0)
         	{
         		sp_msg.instruction = 431;// BulkLoadFromStream 431 message
@@ -267,8 +257,11 @@ client_file socket_client::get_file_from_client(const char* filename)
 
          	got = uCloseFile(fs.f, __sys_call_error);
          	cf.f = fopen(string(fs.name).c_str(), "r");
+
+            if (uGetFileSizeByName(fs.name, &(cf.file_size), __sys_call_error) == 0)
+               throw USER_EXCEPTION2(SE4050, fs.name);
+
          	strcpy(cf.name, fs.name);
-        } //end of else
      } catch (...) {
       	  if(uCloseFile(fs.f, __sys_call_error) == 0) d_printf1("tmp file close error %d\n");
           if(uDeleteFile(string(fs.name).c_str(), __sys_call_error) == 0) d_printf1("tmp file delete error");

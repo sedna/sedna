@@ -1202,6 +1202,9 @@ sedna-err:SE4409
 sedna-err:SE4500
 
    bad logical record given from logical log
+sedna-err:SE4501
+
+   Can't recover database by logical log
 
 ############################################################################
 # Transaction general errors 

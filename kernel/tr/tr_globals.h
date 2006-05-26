@@ -52,5 +52,6 @@ extern void* gov_shared_mem;
 extern persistent_db_data* entry_point;
 
 extern msg_struct sp_msg;
+extern bool is_need_checkpoint_on_transaction_commit;
 
 #endif
