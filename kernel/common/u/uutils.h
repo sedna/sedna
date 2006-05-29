@@ -24,6 +24,7 @@ extern "C"
 #ifdef _WIN32
 #define u_itoa _itoa
 #define u_ltoa _ltoa
+#define u_i64toa _i64toa
 #define u_ultoa _ultoa
 #define u_gcvt _gcvt
 #else

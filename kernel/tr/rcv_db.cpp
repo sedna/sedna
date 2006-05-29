@@ -36,7 +36,7 @@ SSMMsg *sm_server = NULL;
 
 int main (int argc, char** argv)
 {
-  getchar();
+//  getchar();
   if (argc != 3)
   {
      d_printf1("bad number of paprameters\n");

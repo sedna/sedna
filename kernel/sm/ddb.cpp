@@ -104,6 +104,9 @@ int main(int argc, char** argv)
         
         set_global_names(db_name);
 
+        if (uSocketInit(__sys_call_error) != 0)
+            throw USER_EXCEPTION(SE3001);
+
 
         sedna_work = start_ppc(ppc, e);
 
@@ -159,9 +162,12 @@ int main(int argc, char** argv)
 
 		if (sedna_work) ppc.shutdown();
 
+        uSocketCleanup(__sys_call_error);
+
   } catch (SednaUserException &e) { 
       fprintf(stderr, "%s\n", e.getMsg().c_str());
       if (sedna_work) ppc.shutdown();
+      uSocketCleanup(__sys_call_error);
       return 1;
   } catch (SednaException &e) {
       sedna_soft_fault(e);
