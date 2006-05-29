@@ -20,6 +20,7 @@
 #include "d_printf.h"
 #include "tr_debug.h"
 #include "plmgr_core.h"
+#include "uutils.h"
 
 using namespace std;
 
@@ -249,9 +250,9 @@ void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
   //string command_line = string(SEDNA_DATA) + string("/bin/rcv_db.exe ") + string(db_name);
 
   string command_line = uGetImageProcPath(buf, __sys_call_error) +
-                        string("/se_rcv.exe ") + string(db_name) + string(" ") +
+                        string("/se_rcv ") + string(db_name) + string(" ") +
 
-                        _ui64toa(last_checkpoint_lsn, buf2, 10);
+                        u_i64toa(last_checkpoint_lsn, buf2, 10);
   strcpy(buf, command_line.c_str());
 
 #ifndef TEST_RECOVERY_ON

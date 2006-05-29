@@ -288,7 +288,6 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 
   if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
-
   
   if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
   {

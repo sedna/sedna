@@ -465,7 +465,7 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(RCV_S)	
 else					
 $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
-	$(LD) $(LFLAGS) 										\
+	$(LD) $(LFLAGS)        					\
                                $(EXECUTOR_P)				\
                                $(LOCKS_P)					\
                                $(COMMON_FILES_P)			\
@@ -486,6 +486,9 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(LOGICAL_LOG_P)				\
                                $(AUTH_P)					\
                                $(RCV_P)						\
+                               $(EXECUTOR_P)					\
+                               $(MO_P)						\
+                               $(CRMUTILS_P)					\
                     $(LDOUT)$@ $(TRN_RCV_OBJS)				\
                 --start-group  $(EXECUTOR_S)				\
                                $(LOCKS_S)					\
@@ -508,6 +511,10 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(AUTH_S)					\
                                $(RCV_S)						\
                                $(EXECUTOR_S)				\
+                               $(CRMUTILS_S)					\
+                               $(STRUCTURES_S)					\
+                               $(MO_S)						\
+                               $(UPDATES_S)					\
                                $(COMMON_FILES_S) --end-group\
                                $(LSLIBS)
 endif
