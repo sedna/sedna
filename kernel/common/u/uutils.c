@@ -68,6 +68,22 @@ char *u_ultoa(unsigned long value, char *str, int radix)
     return str;
 }
 
+char *u_i64toa(__int64 value, char *str, int radix)
+{
+#ifdef _WIN32
+    _i64toa(value, str, radix);
+#else
+    if (radix != 10)
+    {
+        d_printf1("radix in call to _ultoa has unsupported value\n");
+        return NULL;
+    }
+
+    sprintf(str, "%lld", value);
+    return str;
+#endif
+}
+
 char *u_gcvt(double value, int digits, char *buf)
 {
 #ifdef HAVE_GCVT

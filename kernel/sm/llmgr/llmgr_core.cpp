@@ -1677,7 +1677,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      {//next record on disk
 */
      lsn -= log_head->prev_trn_offs;
-     delete_large_read_buf();
      rec_beg = get_record_from_disk(lsn);
 //     InShMem = false;
      log_head = (logical_log_head*)rec_beg;
@@ -1768,8 +1767,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 		}
 		else//next record is not contiguous
 		{
-           delete_large_read_buf();
-
+v v v v v v v
+^ ^ ^ ^ ^ ^ ^
 		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
 
            offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
@@ -1784,7 +1783,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      {//next record on disk
 
         lsn -= log_head->prev_trn_offs;
-        delete_large_read_buf();
+v v v v v v v
+^ ^ ^ ^ ^ ^ ^
         rec_beg = get_record_from_disk(lsn);
         InShMem = false;
         log_head = (logical_log_head*)rec_beg;

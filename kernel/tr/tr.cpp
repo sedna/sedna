@@ -24,7 +24,8 @@
 #include "socket_client.h"
 #include "tr_utils.h"
 #include "auc.h"
-
+#include "memutils.h"
+#include "tr_common_funcs.h"
 
 // only for MSDEV 6.0
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)

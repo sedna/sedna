@@ -14,6 +14,9 @@
 #include "tr_functions.h"
 
 
+#ifndef _WIN32
+#define _atoi64 atoll
+#endif
 using namespace std;
 
 //persistent_db_data* entry_point;
