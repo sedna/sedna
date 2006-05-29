@@ -575,7 +575,7 @@ int main(int argc, char **argv)
 
 
 //FOR DEBUG I comment this call
-//            if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
+            if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
 
 
 

@@ -79,6 +79,8 @@ enum {LL_INSERT_ELEM,
       LL_CHECKPOINT
      };
 
+enum transaction_mode {NORMAL_MODE, ROLLBACK_MODE};
+
 struct logical_log_head
 {
   int prev_trn_offs;
@@ -103,6 +105,10 @@ struct trn_cell
   LONG_LSN last_lsn;
   LONG_LSN first_lsn;//lsn of first transaction's record in log
   int last_rec_mem_offs;//NULL_OFFS -> last record on disk
+  transaction_mode mode;//indicates transaction mode
+  LONG_LSN prev_rollback_lsn;//indicates next record to be rollbacked in ROLLBACK_MODE
+                             //prev_rollback_lsn == NULL_LSN in NORMAL_MODE
+  LONG_LSN hint_lsn;//this lsn must be assigned to prev_rollback_lsn in microop
   bool is_ended; //true if commit or rollback record has been added in the logical log of the transaction
   int num_of_log_records; //used for debug
 };
@@ -217,6 +223,9 @@ public:
   void ll_log_rollback(transaction_id _trid, bool sync);
   LONG_LSN ll_log_checkpoint(bool sync);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
+
+  void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
+  void set_prev_rollback_lsn(transaction_id &trid, bool sync);//this function must be called inside microop
 
 
   void ll_log_flush(bool sync);

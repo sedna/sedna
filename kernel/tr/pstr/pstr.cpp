@@ -349,6 +349,11 @@ void pstr_deallocate(xptr node) {
 #ifndef PSTR_NO_CHECKP
 	CHECKP(node);
 #endif
+	if (IS_DATA_BLOCK(node)) 
+	{
+			hl_phys_log_change(&(((t_dsc*)XADDR(node))->data),sizeof(xptr));
+			hl_phys_log_change(&(((t_dsc*)XADDR(node))->size),sizeof(shft));
+	}
 	((t_dsc*)XADDR(node))->data = XNULL;
 	((t_dsc*)XADDR(node))->size = 0;
 }

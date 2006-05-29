@@ -132,8 +132,11 @@ void hl_phys_log_change(const /*xptr &*/void *p, shft size)
 
 
         int i;
-        char* addr = (char*)ALIGN_ADDR(p); 
-        for (i = first_part_num; i< first_part_num + parts_num; i++)
+        char* addr = (char*)ALIGN_ADDR(p);
+        if ((first_part_num + parts_num) > BLOCK_PARTS)
+            throw SYSTEM_EXCEPTION("Incorrect determining of parts to write in phys log");
+
+        for (i = first_part_num; i< (first_part_num + parts_num); i++)
         {
            if (hdr->cntrs[i] <= phys_log_mgr->get_cp_num())
            {
@@ -235,7 +238,7 @@ int get_phys_record_block_parts(const void * p, int size)
 //	d_printf2("XXX div=%d\n", PAGE_SIZE/BLOCK_PARTS);
 //	d_printf2("XXX p=%d\n", p);
 //	d_printf2("XXX p offs=%d\n", (int)p & PAGE_BIT_MASK);
-    i+=size;
+    i+=(size-1);
     i= i / (PAGE_SIZE/BLOCK_PARTS);
 //    d_printf2("ret value=%d\n", BLOCK_PARTS*(i-part)+part);
     return  BLOCK_PARTS*(i-part)+part;

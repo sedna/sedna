@@ -218,6 +218,7 @@ void up_concurrent_micro_ops_number()
 
 #ifdef CHECKPOINT_ON
 //  d_printf1("up_concurrent_micro_ops_number() - begin\n");
+  tr_llmgr->set_prev_rollback_lsn(trid, true);
 
   if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 

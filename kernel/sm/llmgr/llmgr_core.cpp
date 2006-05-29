@@ -322,6 +322,10 @@ void llmgr_core::ll_log_on_transaction_begin(bool rcv_active, transaction_id &tr
   mem_head->t_tbl[trid].last_rec_mem_offs  = NULL_OFFS;
   mem_head->t_tbl[trid].is_ended = false;
   mem_head->t_tbl[trid].num_of_log_records = 0;
+  mem_head->t_tbl[trid].mode = NORMAL_MODE;
+  mem_head->t_tbl[trid].prev_rollback_lsn = NULL_LSN;
+  mem_head->t_tbl[trid].hint_lsn = NULL_LSN;
+  
 
   ll_log_unlock(sync);
 
@@ -1115,7 +1119,12 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
        inc_mem_copy(tmp_rec, offs, &last_lsn, sizeof(LONG_LSN));
     }
     else
-       inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].last_lsn), sizeof(LONG_LSN));
+    {
+       if (mem_head->t_tbl[i].mode == ROLLBACK_MODE)
+          inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].prev_rollback_lsn), sizeof(LONG_LSN));
+       else
+          inc_mem_copy(tmp_rec, offs, &(mem_head->t_tbl[i].last_lsn), sizeof(LONG_LSN));
+    }
   }
 
   //insert record in shared memory
@@ -1564,6 +1573,127 @@ void llmgr_core::ll_log_flush(bool sync)
                     UNDO, REDO functions
 ******************************************************************************/
 //function is used for onlne rollback
+
+void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
+{//before this call all log records are completed
+  ll_log_lock(sync);
+
+  rollback_active = true;
+
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  char * mem_beg = (char*)shared_mem;
+  const char * rec_beg; 
+  logical_log_head* log_head; 
+
+  mem_head->t_tbl[trid].mode = ROLLBACK_MODE;
+
+  if ( mem_head->t_tbl[trid].last_lsn == NULL_LSN )
+  {//ok such transaction already rolled back
+     rollback_active = false;
+     ll_log_unlock(sync);
+     return;
+  }
+
+  ll_log_flush(trid, false);
+  ll_log_unlock(sync);
+
+  //there is at least one record for tr to be rolled back
+  LONG_LSN lsn;
+//  int offs;
+//  bool InShMem;
+//  int rmndr_mem_len;
+/* 
+  if (mem_head->t_tbl[trid].last_rec_mem_offs != NULL_OFFS)
+  {
+     offs = mem_head->t_tbl[trid].last_rec_mem_offs;
+     rec_beg = mem_beg + offs;
+     InShMem = true;
+     log_head = (logical_log_head*)rec_beg;
+     if(mem_head->begin_not_drbl_offs <= mem_head->t_tbl[trid].last_rec_mem_offs)
+        rmndr_mem_len = mem_head->t_tbl[trid].last_rec_mem_offs - mem_head->begin_not_drbl_offs;
+	 else
+        rmndr_mem_len = mem_head->size - sizeof(logical_log_sh_mem_head) -
+                        (mem_head->begin_not_drbl_offs - mem_head->t_tbl[trid].last_rec_mem_offs);	    
+  }
+  else
+  {
+     rec_beg = get_record_from_disk(lsn);
+     InShMem = false;
+     log_head = (logical_log_head*)rec_beg;
+	 rmndr_mem_len = 0;
+  }
+*/
+
+  lsn = mem_head->t_tbl[trid].last_lsn;
+  rec_beg = get_record_from_disk(lsn);
+  log_head = (logical_log_head*)rec_beg;
+  //cout << "rollback record lsn=" << lsn << endl;
+
+//#ifdef LOGICAL_LOG_TEST
+  int i=1;
+//#endif
+  while(true)
+  {
+//#ifdef LOGICAL_LOG_TEST
+//	  d_printf2("record number=%d\n",i);
+	 i++;
+//#endif
+     if (log_head->prev_trn_offs == NULL_LSN)
+        set_hint_lsn_for_prev_rollback_record(trid, (LONG_LSN)NULL_LSN);
+     else
+        set_hint_lsn_for_prev_rollback_record(trid, (LONG_LSN)(lsn - log_head->prev_trn_offs));
+
+     exec_micro_op_func(rec_beg + sizeof(logical_log_head),
+                        ((logical_log_head*)rec_beg)->body_len,
+
+						true);
+     if (log_head->prev_trn_offs == NULL_OFFS)
+        break;//all operations rolled back
+
+/*
+     if( InShMem && rmndr_mem_len >= log_head->prev_trn_offs)
+     {//next record in shared memory
+        if ( (offs - log_head->prev_trn_offs) >= (int)sizeof(logical_log_sh_mem_head))//next record is contiguous
+		{
+           offs -= log_head->prev_trn_offs;
+           rec_beg = mem_beg + offs;
+		}
+		else//next record is not contiguous
+		{
+           delete_large_read_buf();
+
+		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
+
+           offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
+
+		}			 
+        rmndr_mem_len -= log_head->prev_trn_offs;
+		lsn -= log_head->prev_trn_offs;
+        InShMem = true;
+        log_head = (logical_log_head*)rec_beg;
+	 }
+
+     else
+     {//next record on disk
+*/
+     lsn -= log_head->prev_trn_offs;
+     delete_large_read_buf();
+     rec_beg = get_record_from_disk(lsn);
+//     InShMem = false;
+     log_head = (logical_log_head*)rec_beg;
+//     rmndr_mem_len = 0;
+//     }
+
+//     cout << "rollback record lsn=" << lsn << endl;
+
+  }
+
+  rollback_active = false;
+//  ll_log_unlock(sync);
+}
+
+/*
+//function is used for onlne rollback
 void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
 {//before this call all log records are completed
   ll_log_lock(sync);
@@ -1619,7 +1749,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   while(true)
   {
 //#ifdef LOGICAL_LOG_TEST
-//	  d_printf2("record number=%d\n",i);
+	  //d_printf2("record number=%d\n",i);
 	  i++;
 //#endif
      exec_micro_op_func(rec_beg + sizeof(logical_log_head),
@@ -1638,6 +1768,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 		}
 		else//next record is not contiguous
 		{
+           delete_large_read_buf();
+
 		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
 
            offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
@@ -1652,6 +1784,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      {//next record on disk
 
         lsn -= log_head->prev_trn_offs;
+        delete_large_read_buf();
         rec_beg = get_record_from_disk(lsn);
         InShMem = false;
         log_head = (logical_log_head*)rec_beg;
@@ -1665,7 +1798,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   rollback_active = false;
   ll_log_unlock(sync);
 }
-
+*/
 
 //this function is run from the special recovery process
 #ifdef SE_ENABLE_FTSEARCH
@@ -2098,4 +2231,23 @@ void llmgr_core::activate_checkpoint()
 {
     //here phys_log_mgr is a global variable
     _phys_log_mgr_->activate_checkpoint(true);
+}
+
+void llmgr_core::set_prev_rollback_lsn(transaction_id &trid, bool sync)
+{
+  ll_log_lock(sync);
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  
+  if ( mem_head->t_tbl[trid].mode == ROLLBACK_MODE)
+      mem_head->t_tbl[trid].prev_rollback_lsn = mem_head->t_tbl[trid].hint_lsn;
+
+  ll_log_unlock(sync);
+}
+
+void llmgr_core::set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn)
+{
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  
+  if ( mem_head->t_tbl[trid].mode == ROLLBACK_MODE)
+      mem_head->t_tbl[trid].hint_lsn = lsn;
 }

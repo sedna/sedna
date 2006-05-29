@@ -22,8 +22,8 @@
 typedef int ramoffs;
 #define RAMOFFS_OUT_OFF_BOUNDS                          INT_MAX
 
-//typedef __int64 LSN;
-typedef long LSN;
+typedef __int64 LSN;
+//typedef long LSN;
 typedef __int64 LONG_LSN;
 typedef __uint32 CP_counter;
 #define  NULL_LSN (-1)
