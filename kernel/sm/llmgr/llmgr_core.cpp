@@ -1599,30 +1599,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
   //there is at least one record for tr to be rolled back
   LONG_LSN lsn;
-//  int offs;
-//  bool InShMem;
-//  int rmndr_mem_len;
-/* 
-  if (mem_head->t_tbl[trid].last_rec_mem_offs != NULL_OFFS)
-  {
-     offs = mem_head->t_tbl[trid].last_rec_mem_offs;
-     rec_beg = mem_beg + offs;
-     InShMem = true;
-     log_head = (logical_log_head*)rec_beg;
-     if(mem_head->begin_not_drbl_offs <= mem_head->t_tbl[trid].last_rec_mem_offs)
-        rmndr_mem_len = mem_head->t_tbl[trid].last_rec_mem_offs - mem_head->begin_not_drbl_offs;
-	 else
-        rmndr_mem_len = mem_head->size - sizeof(logical_log_sh_mem_head) -
-                        (mem_head->begin_not_drbl_offs - mem_head->t_tbl[trid].last_rec_mem_offs);	    
-  }
-  else
-  {
-     rec_beg = get_record_from_disk(lsn);
-     InShMem = false;
-     log_head = (logical_log_head*)rec_beg;
-	 rmndr_mem_len = 0;
-  }
-*/
 
   lsn = mem_head->t_tbl[trid].last_lsn;
   rec_beg = get_record_from_disk(lsn);
@@ -1650,40 +1626,11 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      if (log_head->prev_trn_offs == NULL_OFFS)
         break;//all operations rolled back
 
-/*
-     if( InShMem && rmndr_mem_len >= log_head->prev_trn_offs)
-     {//next record in shared memory
-        if ( (offs - log_head->prev_trn_offs) >= (int)sizeof(logical_log_sh_mem_head))//next record is contiguous
-		{
-           offs -= log_head->prev_trn_offs;
-           rec_beg = mem_beg + offs;
-		}
-		else//next record is not contiguous
-		{
-           delete_large_read_buf();
 
-		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
 
-           offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
-
-		}			 
-        rmndr_mem_len -= log_head->prev_trn_offs;
-		lsn -= log_head->prev_trn_offs;
-        InShMem = true;
-        log_head = (logical_log_head*)rec_beg;
-	 }
-
-     else
-     {//next record on disk
-*/
      lsn -= log_head->prev_trn_offs;
      rec_beg = get_record_from_disk(lsn);
-//     InShMem = false;
      log_head = (logical_log_head*)rec_beg;
-//     rmndr_mem_len = 0;
-//     }
-
-//     cout << "rollback record lsn=" << lsn << endl;
 
   }
 
@@ -1767,8 +1714,6 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 		}
 		else//next record is not contiguous
 		{
-v v v v v v v
-^ ^ ^ ^ ^ ^ ^
 		   rec_beg = get_record_from_shared_memory(offs, log_head->prev_trn_offs);
 
            offs = mem_head->size - (log_head->prev_trn_offs -(offs - sizeof(logical_log_sh_mem_head)));
@@ -1783,8 +1728,6 @@ v v v v v v v
      {//next record on disk
 
         lsn -= log_head->prev_trn_offs;
-v v v v v v v
-^ ^ ^ ^ ^ ^ ^
         rec_beg = get_record_from_disk(lsn);
         InShMem = false;
         log_head = (logical_log_head*)rec_beg;
@@ -2235,13 +2178,11 @@ void llmgr_core::activate_checkpoint()
 
 void llmgr_core::set_prev_rollback_lsn(transaction_id &trid, bool sync)
 {
-  ll_log_lock(sync);
+  //!!!The acquire of sem is not needed since I don't read here shared variables!!!
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   
   if ( mem_head->t_tbl[trid].mode == ROLLBACK_MODE)
       mem_head->t_tbl[trid].prev_rollback_lsn = mem_head->t_tbl[trid].hint_lsn;
-
-  ll_log_unlock(sync);
 }
 
 void llmgr_core::set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn)

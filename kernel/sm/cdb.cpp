@@ -487,6 +487,7 @@ int main(int argc, char **argv)
              if (!is_ppc_closed) ppc.shutdown();
              cleanup_db(db_name);
              fprintf(stderr, "%s\n", e.getMsg().c_str());
+             uSocketCleanup(__sys_call_error);  
              return 1;
         } catch (SednaException &e) {
              cleanup_db(db_name);
