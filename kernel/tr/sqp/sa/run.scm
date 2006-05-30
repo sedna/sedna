@@ -89,3 +89,10 @@
        (default
         (fun-def ((xs:anyType (var ("" "x"))))
                  (var ("" "x")))))))))
+
+(sa:analyze-query
+ '(query (prolog)
+         (query-body (castable (const (type !xs!integer) 1) (type (optional !xs!string))))))
+(sa:analyze-query
+ '(query (prolog)
+         (query-body (treat (const (type !xs!integer) 1) (type (one !xs!integer))))))
