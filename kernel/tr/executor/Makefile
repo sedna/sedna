@@ -33,6 +33,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPReturn$(OBJ_EXT)				\
                        PPSelect$(OBJ_EXT)				\
                        PPLet$(OBJ_EXT)					\
+                       PPOrderBy$(OBJ_EXT)				\
                        PPVariable$(OBJ_EXT)				\
                        PPConst$(OBJ_EXT)				\
                        PPNil$(OBJ_EXT)					\

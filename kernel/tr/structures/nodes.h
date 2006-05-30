@@ -123,6 +123,19 @@ int xmlscm_type_size(xmlscm_type t);
 #define xs_NOTATION				41
 #define se_separator		    42
 
+// Types derived from xs:integer
+#define xs_nonPositiveInteger   43
+#define xs_negativeInteger      44
+#define xs_long                 45
+#define xs_int 				    46
+#define xs_short                47
+#define xs_byte                 48
+#define xs_nonNegativeInteger   49
+#define xs_unsignedLong         50
+#define xs_unsignedInt          51
+#define xs_unsignedShort        52
+#define xs_unsignedByte         53
+#define xs_positiveInteger      54
 
 
 /* Descriptor of element node */
