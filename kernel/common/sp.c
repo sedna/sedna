@@ -24,8 +24,8 @@ int sp_recv_msg(USOCKET s, struct msg_struct *msg)
         got += rc;
     }
 
-    msg->instruction = ntohl(*(__int32 *) ptr);
-    msg->length = ntohl(*(__int32 *) (ptr + 4));
+    msg->instruction = ntohl(*(sp_int32 *) ptr);
+    msg->length = ntohl(*(sp_int32 *) (ptr + 4));
     if (msg->length > SE_SOCKET_MSG_BUF_SIZE)
     {
         return 1;               /* Message length exceeds available size */
@@ -50,8 +50,8 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
     char ptr[8];
     int rc = 0, sent = 0;
 
-    *(__int32*)ptr = htonl(msg->instruction);
-    *((__int32*)(ptr + 4)) = htonl(msg->length);
+    *(sp_int32*)ptr = htonl(msg->instruction);
+    *((sp_int32*)(ptr + 4)) = htonl(msg->length);
     
     while (sent < 8)
     {
@@ -83,9 +83,9 @@ int sp_error_message_handler(USOCKET s, int error_ins, int error_code, const cha
 
     server_msg.instruction = error_ins;
     server_msg.length = err_length + 5 + 4;
-    *(__int32*)server_msg.body = htonl(error_code);  /* this is error code */
+    *(sp_int32*)server_msg.body = htonl(error_code);  /* this is error code */
     server_msg.body[4] = 0;
-    *(__int32*)(server_msg.body + 5) = htonl(err_length);  /* this is error_info length */
+    *(sp_int32*)(server_msg.body + 5) = htonl(err_length);  /* this is error_info length */
     memcpy(server_msg.body + 9, error_info, err_length);
 
     return sp_send_msg(s, &server_msg);
