@@ -279,6 +279,10 @@
      ; 2.11 Expressions on Sequence Types
      ((ts)
       (sa:analyze-typeswitch expr vars funcs ns-binding default-ns))
+     ((treat instance-of)
+      (sa:analyze-treat expr vars funcs ns-binding default-ns))
+     ((castable)
+      (sa:analyze-castable expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
@@ -1562,6 +1566,39 @@
 
 ;-------------------------------------------------
 ; 2.11 Expressions on Sequence Types
+
+; Castable
+; Clone of sa:analyze-cast
+; TODO: analyze single type instead of item type
+(define (sa:analyze-castable expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((args (list
+                (sa:analyze-expr
+                 (car (sa:op-args expr)) vars funcs ns-binding default-ns)
+                (sa:analyze-type
+                 (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
+     (if (memv #f args)
+         #f
+         (cons (cons (sa:op-name expr)
+                     (map car args))
+               sa:type-atomic  ; boolean result
+               )))))
+
+; Treat
+(define (sa:analyze-treat expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((args (list
+                (sa:analyze-expr
+                 (car (sa:op-args expr)) vars funcs ns-binding default-ns)
+                (sa:analyze-type
+                 (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
+     (if (memv #f args)
+         #f
+         (cons (cons (sa:op-name expr)
+                     (map car args))
+               (cdadr args))))))
 
 ; Typeswitch
 (define (sa:analyze-typeswitch expr vars funcs ns-binding default-ns)

@@ -143,3 +143,7 @@
           (default
            (fun-def ((xs:anyType (var ("" "x"))))
                     (var ("" "$%v"))))))))))))
+(l2p:lr2por
+ '(query (prolog)
+         (query-body
+          (castable (const (type !xs!integer) 1) (type (optional !xs!string))))))

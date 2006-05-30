@@ -523,11 +523,32 @@
               ) 
              )
              
-             ; *** instance of ***
-             
+             ; *** instance of ***             
              ((eq? op-name 'instance-of)
               `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
                                 ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+             
+             ; *** treat as ***
+             ((eq? op-name 'treat)
+              `(1 (PPTreat ,(l2p:any-lr-node2por (car node))
+                           ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+             
+             ; *** instance of ***
+             ((eq? op-name 'instance-of)
+              `(1 (PPInstanceOf ,(l2p:any-lr-node2por (car node))
+                                ,(l2p:lr-sequenceType2por-sequenceType (cadr (cadr node))))))
+             
+             ; *** castable ***
+             ((eq? op-name 'castable)
+              (let ((single-type (cadr  ; addresses '(one type)
+                                  (cadr node)  ; addresses '(type (one type))
+                                  )))
+              `(1 (PPCastable
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:lr-atomic-type2por-atomic-type (cadr single-type))
+                   ,(and (memq (car single-type) '(optional zero-or-more))
+                         #t  ; boolean value
+                         )))))
              
              ; *** typeswitch ***
              ((eq? op-name 'ts)
