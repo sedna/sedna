@@ -228,7 +228,7 @@ void create_phys_log(int phys_log_size)
   pl_head.last_checkpoint_lsn = NULL_LSN;
   pl_head.cp_num = 0;
   pl_head.is_stopped_successfully = true;
-  //pl_head.sedna_db_version=...
+  pl_head.sedna_db_version=SEDNA_DATA_STRUCTURES_VER;
 
   int nbytes_written;
 
