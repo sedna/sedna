@@ -146,11 +146,11 @@ void ll_phys_log_clear(const LONG_LSN& last_cp_lsn, bool sync)
 }
 
 
-bool ll_phys_log_startup()
+bool ll_phys_log_startup(int& sedna_db_version)
 {
 #ifdef PHYS_LOG
   phys_log_mgr = new sm_plmgr();
-  return phys_log_mgr->create_phys_log(db_files_path, phys_log_size);
+  return phys_log_mgr->create_phys_log(db_files_path, phys_log_size, sedna_db_version);
 #else
   return true;
 #endif

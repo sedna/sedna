@@ -17,7 +17,7 @@ VPATH = . structures
 
 include $(PP)/Makefile.include
 
-all: $(PP)/bin/se_rcv$(EXE_EXT) $(PP)/bin/se_trn$(EXE_EXT)
+all: $(PP)/bin/se_trn$(EXE_EXT) $(PP)/bin/se_rcv$(EXE_EXT)
 	@echo ===================================================================
 	@echo TR DONE
 	@echo ===================================================================

@@ -39,7 +39,7 @@ LONG_LSN ll_phys_log_recover_db();
 // clear physical log
 void ll_phys_log_clear(const LONG_LSN& last_cp_lsn, bool sync = true);
 
-bool ll_phys_log_startup();
+bool ll_phys_log_startup(int& sedna_db_version);
 
 void ll_phys_log_startup_shared_mem();
 

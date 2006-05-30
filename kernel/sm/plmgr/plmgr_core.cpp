@@ -28,7 +28,7 @@ int pure_size = 0; //for DEBUG
 
 ******************************************************************************/
 
-bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
+bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_, int& sedna_db_version)
 {
   int r;
   //init phys log protection semaphore
@@ -122,6 +122,8 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_)
 
 
   d_printf2("pl_head_fro_rcv.version=%d\n", pl_head_for_rcv.version);
+
+  sedna_db_version = pl_head_for_rcv.sedna_db_version;
 
   return _is_stopped_correctly_;  
 }

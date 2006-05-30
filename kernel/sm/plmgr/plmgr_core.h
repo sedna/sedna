@@ -62,6 +62,7 @@ struct file_head
   LONG_LSN last_checkpoint_lsn;//lsn of last stable checkpoint record in logical log
   int cp_num;//indicates number of checkpoints
   bool is_stopped_successfully; //indicates whether database need recovery (used during sm startup)
+  int sedna_db_version;
 
   file_head &operator= (file_head &fh)
   { 
@@ -72,6 +73,7 @@ struct file_head
     last_checkpoint_lsn = fh.last_checkpoint_lsn;
     cp_num = fh.cp_num;
     is_stopped_successfully = fh.is_stopped_successfully;
+    sedna_db_version = fh.sedna_db_version;
     return *this;
   };
 };
@@ -118,7 +120,7 @@ protected:
 
 
 public:
-  bool create_phys_log(std::string db_files_path, int _log_file_size_);
+  bool create_phys_log(std::string db_files_path, int _log_file_size_, int& sedna_db_version);
   void open_phys_log(std::string db_phys_log_path, int _log_file_size_ = 100);
   void init_phys_log_open_state();
   void create_shared_mem(int ext_portion);

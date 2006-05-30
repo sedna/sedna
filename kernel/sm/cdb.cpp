@@ -228,6 +228,7 @@ void create_phys_log(int phys_log_size)
   pl_head.last_checkpoint_lsn = NULL_LSN;
   pl_head.cp_num = 0;
   pl_head.is_stopped_successfully = true;
+  //pl_head.sedna_db_version=...
 
   int nbytes_written;
 
@@ -432,7 +433,7 @@ int main(int argc, char **argv)
              init_checkpoint_sems();
 
 
-             ll_phys_log_startup();
+             ll_phys_log_startup(sedna_db_version);
              d_printf1("phys_log_startup call successful\n");
 
              ll_phys_log_set_phys_log_flag(false);

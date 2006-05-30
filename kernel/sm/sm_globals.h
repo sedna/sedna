@@ -12,8 +12,10 @@
 #include "argtable.h"
 #include "usem.h"
 #include "uthread.h"
+#include "SSMMsg.h"
 
 
+#define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"
 
 /*******************************************************************************
 ********************************************************************************
@@ -21,6 +23,7 @@
 ********************************************************************************
 *******************************************************************************/
 
+extern SSMMsg *ssmmsg;
 // number of memory buffers
 extern int bufs_num;
 
@@ -39,6 +42,8 @@ extern char db_name[];
 // path to db files
 extern char db_files_path[];
 
+extern int sedna_db_version;
+
 void setup_globals();
 
 void setup_sm_globals();
@@ -46,6 +51,8 @@ void setup_sm_globals();
 void unregister_sm_on_gov();
 
 void register_sm_on_gov();
+
+int sm_server_handler(void *arg);
 
 
 
