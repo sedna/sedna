@@ -171,7 +171,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
 			       }
 	        }
 			else
-   				//must be XPTY004!
+   				//FIXME!!! error code must be XPTY0004 there!
    				throw USER_EXCEPTION2(XP0006, "There is a not valid combination of types in value comparison");
             
 			switch(occ)

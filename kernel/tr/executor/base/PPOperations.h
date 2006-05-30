@@ -36,6 +36,7 @@
 #include "PPReturn.h"
 #include "PPSelect.h"
 #include "PPLet.h"
+#include "PPOrderBy.h"
 #include "PPVariable.h"
 #include "PPConst.h"
 #include "PPNil.h"

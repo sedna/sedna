@@ -107,7 +107,10 @@ bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequen
 
 void type_promotion(tuple_cell /*out*/&tc, xmlscm_type type);
 
+bool is_correct_type(xmlscm_type t);
 
+//operations with types used in order by specification
+xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2);
 
 
 
