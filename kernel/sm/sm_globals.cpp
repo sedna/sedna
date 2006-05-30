@@ -35,10 +35,12 @@ int phys_log_size;
 
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char db_files_path[U_MAX_PATH + 1];
+int sedna_db_version = 0;
 
 
 //gov_server is used for connecting to the governor for registr/unregister sm
 SSMMsg* gov_server;
+
 
 
 

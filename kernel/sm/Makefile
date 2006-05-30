@@ -109,6 +109,7 @@ CDB_OBJS = cdb$(OBJ_EXT)			\
            trmgr$(OBJ_EXT)			\
            bm_rcv$(OBJ_EXT)
 
+
 $(PP)/bin/se_cdb$(EXE_EXT): $(CDB_OBJS)			\
                             $(COMMON_FILES_LIB)	\
                             $(PHYS_LOG_MGR_LIB)	\

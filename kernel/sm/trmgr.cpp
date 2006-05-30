@@ -21,6 +21,9 @@
 #include "tr_debug.h"
 #include "plmgr_core.h"
 #include "uutils.h"
+#include "bm_functions.h"
+#include "SSMMsg.h"
+#include "trmgr.h"
 
 using namespace std;
 
@@ -234,6 +237,7 @@ void release_checkpoint_sems()
 #endif
 }
 
+
 void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
 {
 #ifdef RECOVERY_ON
@@ -316,6 +320,8 @@ void release_transaction_ids_table()
 #ifdef TRMGR_ON
   if (0 != USemaphoreRelease(trn_table_ids_sync_sem, __sys_call_error))
      throw USER_EXCEPTION2(SE4011, "CHARISMA_SYNC_TRN_IDS_TABLE");
+
+  _ids_table_.clear();
 #endif
 }
 
