@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
         if ((term_s_help == 1)||(term_l_help == 1)){print_term_usage(); return 0; }
 
-        if (term_version == 1) {print_version_and_copyright("Sedna Terminal"); throw USER_SOFT_EXCEPTION("");}
+        if (term_version == 1) {print_version_and_copyright("Sedna Terminal");  return 0; }
 
         if (socket_port == 0) socket_port = 5050;
         if (strcmp(host, "???") == 0 ) strcpy(host, "localhost"); 
