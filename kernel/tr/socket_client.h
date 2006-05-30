@@ -22,6 +22,10 @@ struct protocol_version{
 	char minor_version;
 };
 enum client_states {NO_TRANSACTION, IN_TRANSACTION};
+enum read_msg_states {se_BeginAuthenticatingTransaction = 3,
+                      se_Authentication = 2,
+                      se_CommitAuthenticatingTransaction = 1,
+                      se_GetNextMessageFromClient = 0 };
 
 EXTERN_DECLARE_TIME_VARS
 class socket_client : public client_core
@@ -31,7 +35,7 @@ private:
      
 	protocol_version p_ver;
 	
-	int read_msg_count;
+	read_msg_states read_msg_count;
 	bool has_next_item;
     bool is_on_stop;
 	char query_string[SE_SOCKET_MSG_BUF_SIZE+1];
