@@ -264,7 +264,7 @@ void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
                   buf,
                   false,
                   NULL,
-                  /*U_DETACHED_PROCESS*/0,
+                  U_DETACHED_PROCESS/*0*/,
                   &h,
                   NULL,
                   &pid,

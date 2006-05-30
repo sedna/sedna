@@ -1131,6 +1131,9 @@ sedna-err:SE4210
 sedna-err:SE4211
 
     Failed to create the database
+sedna-err:SE4212
+
+    Database files format is incompatible with SEDNA binaries
 
 ############################################################################
 # Create and Drop DataBase Utilities errors

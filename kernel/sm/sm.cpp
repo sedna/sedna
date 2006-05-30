@@ -671,12 +671,19 @@ void recover_database_by_physical_and_logical_log()
      //init checkpoint resources
      init_checkpoint_sems();
 
-     //create checkpoint thread
-     start_chekpoint_thread();
-
      //start phys log
      bool is_stopped_correctly = ll_phys_log_startup(sedna_db_version/*out parameter*/);
+     if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
+     {
+        release_checkpoint_sems();
+        release_transaction_ids_table();
+        throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
+     }
+
      d_printf1("phys log startup call finished successfully\n");
+
+     //create checkpoint thread
+     start_chekpoint_thread();
 
      //!!!Insert check of Database version
 
