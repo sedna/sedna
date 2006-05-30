@@ -27,7 +27,7 @@ socket_client::socket_client()
      p_ver.major_version = 1;
      p_ver.minor_version = 0;	
  
-     read_msg_count = 4;
+     read_msg_count = se_BeginAuthenticatingTransaction;
      has_next_item = true;
      is_on_stop = false;
 
@@ -87,25 +87,22 @@ void socket_client::read_msg(msg_struct *msg)
 		(*msg).length = 0;
         is_on_stop = true;
 	}
-	else if(read_msg_count == 4)           // emulate BeginTransaction
+	else if(read_msg_count == se_BeginAuthenticatingTransaction)           // emulate BeginTransaction
 	{
 		(*msg).instruction = se_BeginTransaction; //BeginTransaction
 		(*msg).length = 0;
-		read_msg_count--;		
 	}
-	else if(read_msg_count == 3)      // process authentication
+	else if(read_msg_count == se_Authentication)      // process authentication
 	{
 		(*msg).instruction = se_Authenticate;   // Internal code for authentication
 		(*msg).length = 0; 
-		read_msg_count--;		
 	}
-	else if(read_msg_count == 2)      // emulate CommitTransaction
+	else if(read_msg_count == se_CommitAuthenticatingTransaction)      // emulate CommitTransaction
 	{
 		(*msg).instruction = se_CommitTransaction;  //CommitTransaction
 		(*msg).length = 0;  
-		read_msg_count--;		
 	}
-	else if(read_msg_count == 0)      // read next message from client
+	else if(read_msg_count == se_GetNextMessageFromClient)      // read next message from client
 	{	
      	while(1)
 		{
@@ -288,9 +285,9 @@ void socket_client::respond_to_client(int instruction)
     switch (instruction)
     {
         case se_BeginTransactionOk:
-            if (read_msg_count == 3) return;
+            if (read_msg_count == se_BeginAuthenticatingTransaction) {read_msg_count = se_Authentication; return;}
         case se_CommitTransactionOk:
-            if (read_msg_count == 1) {read_msg_count--; return;}
+            if (read_msg_count == se_CommitAuthenticatingTransaction) {read_msg_count = se_GetNextMessageFromClient; return;}
     }
 	if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
@@ -420,6 +417,7 @@ void socket_client::authentication_result(bool res, const string& body)
    	   sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message
    	   sp_msg.length = 0; 
    	   if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+	   read_msg_count = se_CommitAuthenticatingTransaction;		
    }
    else
    {
