@@ -55,8 +55,6 @@ extern "C"
 #define SEDNA_NO_ITEM                            (-20)
 #define SEDNA_RESULT_END                         (-21)
 
-#define SEDNA_GET_DATA_FAILED                    (-22)
-
 #define SEDNA_DATA_CHUNK_LOADED                    23
 
 #define SEDNA_ERROR                              (-24)

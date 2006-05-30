@@ -75,7 +75,7 @@ int main()
         do
         {
             bytes_read = SEgetData(&conn, buf, 1024 - 1);
-            if((bytes_read == SEDNA_ERROR) || (bytes_read == SEDNA_GET_DATA_FAILED))
+            if(bytes_read == SEDNA_ERROR)
             {
                 printf("Failed to get result from server\n%s\n", SEgetLastErrorMsg(&conn));
                 //closing session
