@@ -442,7 +442,7 @@ endif
 
 ifeq ("$(PLATFORM)", "WIN32")
 $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
-	$(LD) $(LFLAGS) $(LDOUT)$@ $(TRN_RCV_OBJS)				\
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $(TRN_RCV_OBJS)				\
                                $(EXECUTOR_S)				\
                                $(LOCKS_S)					\
                                $(COMMON_FILES_S)			\
