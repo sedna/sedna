@@ -105,8 +105,7 @@ MainLoop(FILE *source)
 #endif
 
 	//open session
-   
-    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(u_itoa(socket_port, buffer, 10)).c_str());
+   // strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
     int res = SEconnect(&conn, host, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN)
     {
