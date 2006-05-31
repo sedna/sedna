@@ -655,114 +655,120 @@ int main(int argc, char **argv)
 
 void recover_database_by_physical_and_logical_log()
 {
-  char buf[1024];
-  if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) != 0)
-  {//I am in running sm process
+  try{
+    char buf[1024];
+    if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) != 0)
+    {//I am in running sm process
 
-     event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
-     elog(EL_LOG, ("SM event log in recovery procedure is ready"));
+       event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+       elog(EL_LOG, ("SM event log in recovery procedure is ready"));
 
-     //init transacion ids table
-     init_transaction_ids_table();
+       //init transacion ids table
+       init_transaction_ids_table();
 
-     //init checkpoint resources
-     init_checkpoint_sems();
+       //init checkpoint resources
+       init_checkpoint_sems();
 
-     //start phys log
-     bool is_stopped_correctly = ll_phys_log_startup(sedna_db_version/*out parameter*/);
-     if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
-     {
-        release_checkpoint_sems();
-        release_transaction_ids_table();
-        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
-           throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
-     }
+       //start phys log
+       bool is_stopped_correctly = ll_phys_log_startup(sedna_db_version/*out parameter*/);
+       if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
+       {
+          release_checkpoint_sems();
+          release_transaction_ids_table();
+          if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
+             throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
+       }
 
-     d_printf1("phys log startup call finished successfully\n");
+       d_printf1("phys log startup call finished successfully\n");
 
-     //create checkpoint thread
-     start_chekpoint_thread();
+       //create checkpoint thread
+       start_chekpoint_thread();
 
-     //!!!Insert check of Database version
+       //disable write to phys log
+       ll_phys_log_set_phys_log_flag(false);
 
-     //disable write to phys log
-     ll_phys_log_set_phys_log_flag(false);
+       //recover data base by phisical log
+       LONG_LSN last_checkpoint_lsn = NULL_LSN;
+       if (!is_stopped_correctly) last_checkpoint_lsn = ll_phys_log_recover_db();
+       d_printf1("db recovered by phys log successfully\n");
 
-     //recover data base by phisical log
-     LONG_LSN last_checkpoint_lsn = NULL_LSN;
-     if (!is_stopped_correctly) last_checkpoint_lsn = ll_phys_log_recover_db();
-     d_printf1("db recovered by phys log successfully\n");
+       ll_phys_log_set_phys_log_flag(true);
 
-     ll_phys_log_set_phys_log_flag(true);
+       //start up shared memory for phys log
+       ll_phys_log_startup_shared_mem();
 
-     //start up shared memory for phys log
-     ll_phys_log_startup_shared_mem();
-
-     //disable checkpoints
-     ll_phys_log_set_checkpoint_flag(false);
+       //disable checkpoints
+       ll_phys_log_set_checkpoint_flag(false);
         
-     //start up logical log
-     ll_logical_log_startup();
+       //start up logical log
+       ll_logical_log_startup();
 
 #ifdef LOCK_MGR_ON
-        lm_table.init_lock_table();
+       lm_table.init_lock_table();
 #endif
 
-     //start buffer manager
-     bm_startup();
+       //start buffer manager
+       bm_startup();
+
+       // Starting SSMMsg server
+       d_printf1("Starting SSMMsg...");
+
+       ssmmsg = new SSMMsg(SSMMsg::Server, 
+                           sizeof (sm_msg_struct), 
+                           CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
+                           SM_NUMBER_OF_SERVER_THREADS,
+                           U_INFINITE);
+       if (ssmmsg->init() != 0)
+          throw USER_EXCEPTION(SE3030);
+
+       if (ssmmsg->serve_clients(sm_server_handler) != 0)
+          throw USER_EXCEPTION(SE3031);
+
+       d_printf1("OK\n");
+
+       //recover database by logical log
+       if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
+
+       //enable checkpoints
+       ll_phys_log_set_checkpoint_flag(true);
 
 
-     // Starting SSMMsg server
-     d_printf1("Starting SSMMsg...");
+       if (ssmmsg->stop_serve_clients() != 0)
+          throw USER_EXCEPTION(SE3032);
 
-     ssmmsg = new SSMMsg(SSMMsg::Server, 
-                         sizeof (sm_msg_struct), 
-                         CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
-                         SM_NUMBER_OF_SERVER_THREADS,
-                         U_INFINITE);
-     if (ssmmsg->init() != 0)
-        throw USER_EXCEPTION(SE3030);
+       if (ssmmsg->shutdown() != 0)
+          throw USER_EXCEPTION(SE3033);
 
-     if (ssmmsg->serve_clients(sm_server_handler) != 0)
-        throw USER_EXCEPTION(SE3031);
+       //shutdown checkpoint thread (it also makes checkpoint)
+       shutdown_chekpoint_thread();
 
-     d_printf1("OK\n");
+       // shutdown bm
+       bm_shutdown();
 
-     //recover database by logical log
-     if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
+       //shutdown phys log
+       ll_phys_log_shutdown();
 
-     //enable checkpoints
-     ll_phys_log_set_checkpoint_flag(true);
+       //shutdown logical log
+       ll_logical_log_shutdown();
 
+       //release checkpoint resources
+       release_checkpoint_sems();
 
-     if (ssmmsg->stop_serve_clients() != 0)
-        throw USER_EXCEPTION(SE3032);
-
-     if (ssmmsg->shutdown() != 0)
-        throw USER_EXCEPTION(SE3033);
-
-     //shutdown checkpoint thread (it also makes checkpoint)
-     shutdown_chekpoint_thread();
-
-     // shutdown bm
-     bm_shutdown();
-
-     //shutdown phys log
-     ll_phys_log_shutdown();
-
-     //shutdown logical log
-     ll_logical_log_shutdown();
-
-     //release checkpoint resources
-     release_checkpoint_sems();
-
-     release_transaction_ids_table();
+       release_transaction_ids_table();
 
 #ifdef LOCK_MGR_ON
-     lm_table.release_lock_table();
+       lm_table.release_lock_table();
 #endif
-
-     elog(EL_LOG, ("SM recovery procedure is finished successfully"));
-     event_logger_release();
+       elog(EL_LOG, ("SM recovery procedure is finished successfully"));
+       event_logger_release();
+    }
+  } catch (SednaUserException &e) {
+       fprintf(stderr, "%s\n", e.getMsg().c_str());
+       throw USER_EXCEPTION(SE4205);       
+  } catch (SednaException &e) {
+        throw;
+  } catch(...) {
+        throw;
   }
+
 }
