@@ -18,6 +18,7 @@
 #include "d_printf.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "FTindex.h"
+#include "ft_index_data.h"
 #endif
 #include "d_printf.h"
 #include "tr_debug.h"
@@ -756,6 +757,76 @@ try{
 //     d_printf1("rollback index operation end\n");
 
   }
+#ifdef SE_ENABLE_FTSEARCH
+  if(op == LL_INSERT_DOC_FTS_INDEX || op == LL_DELETE_DOC_FTS_INDEX || op == LL_INSERT_COL_FTS_INDEX || op == LL_DELETE_COL_FTS_INDEX)
+  {
+     const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
+     int itconst;
+     int custom_tree_size;
+     int offs;
+
+
+     offs = sizeof(char) + sizeof(transaction_id);
+
+     obj_path = rec + offs;
+     offs += strlen(obj_path) + 1;
+     memcpy(&itconst, rec + offs, sizeof(int));
+     offs += sizeof(int);
+     ind_name = rec + offs;
+     offs += strlen(ind_name) + 1;
+     doc_name = rec + offs;
+     offs += strlen(doc_name) + 1;
+     memcpy(&custom_tree_size, rec + offs, sizeof(int));
+     offs += sizeof(int);
+     custom_tree_buf = rec + offs;
+
+     if((isUNDO && (op == LL_DELETE_DOC_FTS_INDEX || op == LL_DELETE_COL_FTS_INDEX) ) || (!isUNDO && (op == LL_INSERT_DOC_FTS_INDEX || op == LL_INSERT_COL_FTS_INDEX)))
+     {//create index
+//        d_printf1("rollback index operation begin\n");
+        if (op == LL_DELETE_DOC_FTS_INDEX || op == LL_INSERT_DOC_FTS_INDEX)
+        {;
+
+           schema_node *doc_node = find_document(doc_name);
+//           d_printf1("doc found\n");
+
+           if (doc_node->type == document || doc_node->type == virtual_root)
+              ft_index_cell::create_index (lr2PathExpr(NULL, obj_path, true),
+                            (ft_index_type)itconst,
+                            (doc_schema_node*)doc_node,
+                            ind_name,
+                            doc_name,
+                            true,
+                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size));
+           else throw SYSTEM_EXCEPTION("Can't create index for document");
+        } 
+        else
+        {;
+
+//           d_printf2("obj_path=%s\n", obj_path);
+//           d_printf2("key_path=%s\n", key_path);
+           schema_node *col_node = find_collection(doc_name);
+           if (col_node->type == document || col_node->type == virtual_root)
+              ft_index_cell::create_index (lr2PathExpr(NULL, obj_path, true),
+                            (ft_index_type)itconst,
+                            (doc_schema_node*)col_node,
+                            ind_name,
+                            doc_name,
+                            false,
+                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size));
+           else throw SYSTEM_EXCEPTION("Can't create index for collection");
+
+        }
+     }
+     else
+     {//delete index
+//          d_printf2("ind_name=%s\n", ind_name);
+         ;
+          ft_index_cell::delete_index (ind_name);
+     }
+//     d_printf1("rollback index operation end\n");
+
+  }
+#endif
   else
     throw SYSTEM_EXCEPTION("bad logical record given from logical log");
 

@@ -51,7 +51,8 @@ void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool ins
 //void hl_logical_log_text_edit(const xptr &self,xptr source,bool begin); 
 //void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,bool inserted); 
 #ifdef SE_ENABLE_FTSEARCH
- void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted); 
+void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted); 
+std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size);
 #endif
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted); 
 void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted); 

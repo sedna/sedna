@@ -519,8 +519,12 @@ void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char 
 		}
 	}
 
-	//TODO: call something
+    tr_llmgr->ll_log_ft_index(trid, obj_str.str().c_str(), itconst, index_title, doc_name, is_doc, custom_tree_buf, custom_tree_size, inserted, true);
 
 	#endif
+}
+std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size)
+{
+    return NULL;
 }
 #endif

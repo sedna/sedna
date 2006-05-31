@@ -169,6 +169,7 @@ void ll_phys_log_shutdown()
   file_head head = phys_log_mgr->get_file_head();
   phys_log_mgr->release_shared_mem();
   phys_log_mgr->release_phys_log(head);
+  delete phys_log_mgr;
   
   d_printf1("Physical log statistics:\n");
   d_printf2("log_change_times=%d\n", log_change_times);

@@ -947,11 +947,10 @@ void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, con
  ft_index_type (int) 
  index_title ('\0' terminated string)
  doc_name ('\0' terminated string)
- is_doc (bool)
  custom_tree_size (int)
  custom_tree_buf (custom_tree_size bytes)
 */
-/*
+
 void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync)
 {
   if (rollback_active || recovery_active) return;
@@ -963,7 +962,6 @@ void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, 
   char *tmp_rec;  
   int rec_len;
   int obj_path_len = (object_path != NULL) ? (strlen(object_path)+1) : 1;
-  int key_path_len = (key_path != NULL) ? (strlen(key_path)+1) : 1;
   int ind_title_len = (index_title != NULL) ? (strlen(index_title)+1) : 1;
   int doc_name_len = (doc_name != NULL) ? (strlen(doc_name)+1) : 1;
 
@@ -971,19 +969,20 @@ void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, 
   rec_len = sizeof(char) +
             sizeof(transaction_id) +
             obj_path_len +
-            key_path_len +
-            sizeof(xmlscm_type) +
+            sizeof(int) +
             ind_title_len +
-            doc_name_len;
+            doc_name_len +
+            sizeof(int) + //is_doc
+            custom_tree_size;
 
-  tmp_rec = new char[rec_len];
+  tmp_rec = ll_log_malloc(rec_len);
 
   char op;
 
   if (is_doc)
-     op = inserted ? LL_INSERT_DOC_INDEX : LL_DELETE_DOC_INDEX;
+     op = inserted ? LL_INSERT_DOC_FTS_INDEX : LL_DELETE_DOC_FTS_INDEX;
   else
-     op = inserted ? LL_INSERT_COL_INDEX : LL_DELETE_COL_INDEX;
+     op = inserted ? LL_INSERT_COL_FTS_INDEX : LL_DELETE_COL_FTS_INDEX;
 
 
   int offs = 0;
@@ -991,21 +990,19 @@ void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
-
-
   inc_mem_copy(tmp_rec, offs, (object_path != NULL) ? object_path : "", obj_path_len);
-  inc_mem_copy(tmp_rec, offs, (key_path != NULL) ? key_path : "", key_path_len);
-
-  inc_mem_copy(tmp_rec, offs, &key_type, sizeof(xmlscm_type));
+  inc_mem_copy(tmp_rec, offs, &itconst, sizeof(int));
 
   inc_mem_copy(tmp_rec, offs, (index_title != NULL) ? index_title : "", ind_title_len);
   inc_mem_copy(tmp_rec, offs, (doc_name != NULL) ? doc_name : "", doc_name_len);
 
+  inc_mem_copy(tmp_rec, offs, &custom_tree_size, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, custom_tree_buf, custom_tree_size);
 
   //insert record
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 }
-*/
+
 /*
  commit log record format:
  op (1 byte)
@@ -2003,7 +2000,10 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
         body_beg[0] == LL_INSERT_NS   || body_beg[0] == LL_DELETE_NS ||
         body_beg[0] == LL_INDIR_INSERT_NS   || body_beg[0] == LL_INDIR_DELETE_NS ||
         body_beg[0] == LL_INSERT_DOC_INDEX  || body_beg[0] == LL_DELETE_DOC_INDEX ||
-        body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX)
+        body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX ||
+        body_beg[0] == LL_INSERT_DOC_FTS_INDEX  || body_beg[0] == LL_DELETE_DOC_FTS_INDEX ||
+        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX)
+
     {
       if(trns_map.find(*trid) == trns_map.end() &&
          trns_map_after_checkpoint.find(*trid) == trns_map_after_checkpoint.end())
