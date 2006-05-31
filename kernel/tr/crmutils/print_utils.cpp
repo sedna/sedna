@@ -774,7 +774,7 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 						}
 					case xs_date:
 						{
-							tup.cells[i].get_xs_date().get_string_value(z);
+							tup.cells[i].get_xs_dateTime().get_string_value(z);
 							if (ptype==xml)
 								crmout<<z;
 							else

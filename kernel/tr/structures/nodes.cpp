@@ -162,12 +162,12 @@ int xmlscm_type_size(xmlscm_type t)
     
     switch (t) 
     {
-		case xs_dateTime			: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_dateTime yet (in xmlscm_type_size).");
-		case xs_date				: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_date yet (in xmlscm_type_size).");
-		case xs_time				: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_time yet (in xmlscm_type_size).");
-		case xs_duration			: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_duration yet (in xmlscm_type_size).");
-		case xdt_yearMonthDuration	: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xdt_yearMonthDuration yet (in xmlscm_type_size).");
-		case xdt_dayTimeDuration	: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xdt_dayTimeDuration yet (in xmlscm_type_size).");
+		case xs_dateTime			: return 0;
+		case xs_date				: return 0;
+		case xs_time				: return 0;
+		case xs_duration			: return 0;
+		case xdt_yearMonthDuration	: return 0;
+		case xdt_dayTimeDuration	: return 0;
 		case xs_float				: return sizeof(float);
 		case xs_double				: return sizeof(double);
 		case xs_string				: return 0;
@@ -182,11 +182,11 @@ int xmlscm_type_size(xmlscm_type t)
 		case xs_ENTITY				: return 0;
 		case xs_decimal				: return sizeof(double);
 		case xs_integer				: return sizeof(int);
-		case xs_gYearMonth			: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_gYearMonth yet (in xmlscm_type_size).");
-		case xs_gYear				: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_gYear yet (in xmlscm_type_size).");
-		case xs_gMonthDay			: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_gMonthDay yet (in xmlscm_type_size).");
-		case xs_gDay				: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_gDay yet (in xmlscm_type_size).");
-		case xs_gMonth				: throw USER_EXCEPTION2(SE1002, "Size is undefined for type xs_gMonth yet (in xmlscm_type_size).");
+		case xs_gYearMonth			: return 0;
+		case xs_gYear				: return 0;
+		case xs_gMonthDay			: return 0;
+		case xs_gDay				: return 0;
+		case xs_gMonth				: return 0;
 		case xs_boolean				: return sizeof(bool);
 		case xs_base64Binary		: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_base64Binary is not implemented yet (in xmlscm_type_size).");
 		case xs_hexBinary			: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_hexBinary is not implemented yet (in xmlscm_type_size).");

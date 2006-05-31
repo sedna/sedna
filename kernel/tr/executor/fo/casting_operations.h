@@ -26,7 +26,7 @@ tuple_cell cast_to_xs_integer		(const tuple_cell &c);
 
 tuple_cell cast_to_xs_boolean		(const tuple_cell &c);
 
-tuple_cell cast_to_xs_date			(const tuple_cell &c);
+tuple_cell cast_to_xs_dateTime			(const tuple_cell &c, xmlscm_type xtype);
 
 
 #endif

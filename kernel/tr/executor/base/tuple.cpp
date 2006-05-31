@@ -37,7 +37,7 @@ void tuple_cell::print(bool b) const
                                   {
                                       case xdt_untypedAtomic	: d_printf2("\"%s\"", get_str_mem()); break;
                                       case xs_dateTime			: d_printf1("[xs_dateTime]"); break;
-                                      case xs_date				: get_xs_date().print(); break;
+                                      case xs_date				: printf("'%s'",get_xs_dateTime()); break;
                                       case xs_time				: d_printf1("[xs_time]"); break;
                                       case xs_duration			: d_printf1("[xs_duration]"); break;
                                       case xdt_yearMonthDuration: d_printf1("[xdt_yearMonthDuration]"); break;
@@ -122,6 +122,7 @@ void tuple_cell::copy_string(char *buf)
     ///!!! check that size <= MAX_MEM_STR_SIZE
     switch (type)
     {
+//DATE: make sure we can copy strings with trailing 0's
         case tc_light_atomic:           strcpy(buf, str_ptr.get()); 
                                         return;
         case tc_heavy_atomic_estr:      e_str_copy_to_buffer(buf, *(xptr*)(&data), size); 

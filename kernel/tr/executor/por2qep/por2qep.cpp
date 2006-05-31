@@ -8,14 +8,69 @@
 #include "por2qep.h"
 #include "ext.h"
 #include "e_string.h"
+#include "op_map.h"
 
 #define SE_NAMESPACE		"http://www.modis.ispras.ru/sedna"
 
 using namespace std;
 
 PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst);
+CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst);
 
-CalcOp *clarify_calc_op(arr_of_PPOpIn *arr, const string &op, scheme_list *lst);
+CalcOp *check_consistence_and_build_unary_calc_op(arr_of_PPOpIn *arr, scheme_list *lst, xq_unary_op_type t)
+{
+    xmlscm_type t1;
+    if (   lst->size() == 2
+        && lst->at(1).type == SCM_LIST)
+    {
+        t1 = xs_anyType;
+    }
+    else if (   lst->size() == 3
+             && lst->at(1).type == SCM_LIST
+             && lst->at(2).type == SCM_LIST)
+    {
+        scheme_list *l = lst->at(2).internal.list;
+        if (   l->size() != 1
+            || l->at(0).type != SCM_SYMBOL)
+        throw USER_EXCEPTION2(SE1004, "105");
+
+        t1 = lr_atomic_type2xmlscm_type(l->at(0).internal.symb);
+    }
+    else throw USER_EXCEPTION2(SE1004, "105");
+
+    return new UnaryOp(make_calc_op(arr, lst->at(1).internal.list),
+                       get_unary_op(t, t1));
+}
+
+CalcOp *check_consistence_and_build_binary_calc_op(arr_of_PPOpIn *arr, scheme_list *lst, xq_binary_op_type t)
+{
+    xmlscm_type t1, t2;
+    if (   lst->size() == 3
+        && lst->at(1).type == SCM_LIST
+        && lst->at(2).type == SCM_LIST)
+    {
+        t1 = t2 = xs_anyType;
+    }
+    else if (   lst->size() == 4
+             && lst->at(1).type == SCM_LIST
+             && lst->at(2).type == SCM_LIST
+             && lst->at(3).type == SCM_LIST)
+    {
+        scheme_list *l = lst->at(3).internal.list;
+        if (   l->size() != 2
+            || l->at(0).type != SCM_SYMBOL
+            || l->at(1).type != SCM_SYMBOL)
+        throw USER_EXCEPTION2(SE1004, "105");
+
+        t1 = lr_atomic_type2xmlscm_type(l->at(0).internal.symb);
+        t2 = lr_atomic_type2xmlscm_type(l->at(1).internal.symb);
+    }
+    else throw USER_EXCEPTION2(SE1004, "105");
+
+    return new BinaryOp(make_calc_op(arr, lst->at(1).internal.list),
+                        make_calc_op(arr, lst->at(2).internal.list),
+                        get_binary_op(t, t1, t2));
+}
 
 CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst)
 {
@@ -49,7 +104,21 @@ CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst)
         else throw USER_EXCEPTION2(SE1004, "104");
     }
 
-    return clarify_calc_op(arr, op, lst);
+    if (op == "BinaryValEQ")                 return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_eq);
+    else if (op == "BinaryValNE")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_ne);
+    else if (op == "BinaryValLT")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_lt);
+    else if (op == "BinaryValLE")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_le);
+    else if (op == "BinaryValGT")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_gt);
+    else if (op == "BinaryValGE")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_ge);
+    else if (op == "BinaryOpAdd")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_add);
+    else if (op == "BinaryOpSubtract")       return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_sub);
+    else if (op == "BinaryOpMultiply")       return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_mul);
+    else if (op == "BinaryOpDivide")         return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_div);
+    else if (op == "BinaryOpIntegerDivide")  return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_idiv);
+    else if (op == "BinaryOpMod")            return check_consistence_and_build_binary_calc_op(arr, lst, xqbop_mod);
+    else if (op == "UnaryOpPlus")            return check_consistence_and_build_unary_calc_op(arr, lst, xquop_plus);
+    else if (op == "UnaryOpMinus")           return check_consistence_and_build_unary_calc_op(arr, lst, xquop_minus);
+    else throw USER_EXCEPTION2(SE1004, "106");
 }
 
 void set_axis_parameters(scheme_list *lst, 
@@ -405,6 +474,8 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else if (strcmp(type, "!xs!time") == 0)			xtype = xs_time;
     else if (strcmp(type, "!xs!date") == 0)			xtype = xs_date;
     else if (strcmp(type, "!xs!duration") == 0)		xtype = xs_duration;
+    else if (strcmp(type, "!xdt!yearMonthDuration") == 0)		xtype = xdt_yearMonthDuration;
+    else if (strcmp(type, "!xdt!dayTimeDuration") == 0)		xtype = xdt_dayTimeDuration;
     else if (strcmp(type, "!xs!boolean") == 0)		xtype = xs_boolean;
     else if (strcmp(type, "!xs!base64Binary") == 0)	xtype = xs_base64Binary;
     else if (strcmp(type, "!xs!hexBinary") == 0)	xtype = xs_hexBinary;
@@ -1932,10 +2003,105 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPCheckpoint(cxt);
     }
+    else if (op == "PPFnYearsFromDuration" ||
+                op == "PPFnMonthsFromDuration" ||
+                op == "PPFnDaysFromDuration" ||
+                op == "PPFnHoursFromDuration" ||
+                op == "PPFnMinutesFromDuration" ||
+                op == "PPFnSecondsFromDuration" ||
+                op == "PPFnYearFromDateTime" ||
+                op == "PPFnMonthFromDateTime" ||
+                op == "PPFnDayFromDateTime" ||
+                op == "PPFnHoursFromDateTime" ||
+                op == "PPFnMinutesFromDateTime" ||
+                op == "PPFnSecondsFromDateTime" ||
+                op == "PPFnTimezoneFromDateTime" ||
+                op == "PPFnYearFromDate" ||
+                op == "PPFnMonthFromDate" ||
+                op == "PPFnDayFromDate" ||
+                op == "PPFnTimezoneFromDate" ||
+                op == "PPFnHoursFromTime" ||
+                op == "PPFnMinutesFromTime" ||
+                op == "PPFnSecondsFromTime" ||
+                op == "PPFnTimezoneFromTime" ||
+                op == "PPFnAdjustDateTimeToTimezone" ||
+                op == "PPFnAdjustDateToTimezone" ||
+                op == "PPFnAdjustTimeToTimezone")
+    {
+        int type;
+        int nFunctionArgs  = 1;
 
+        if (lst->size() == 2 &&
+                lst->at(1).type != SCM_LIST)
+            throw USER_EXCEPTION2(SE1004, "103");
+        if (   (lst->size() == 3 && (
+                lst->at(1).type != SCM_LIST ||
+                lst->at(2).type != SCM_LIST )))
+            throw USER_EXCEPTION2(SE1004, "103");
+        if (lst->size() != 2 && lst->size() != 3)
+            throw USER_EXCEPTION2(SE1004, "103");
 
+        if (op == "PPFnYearsFromDuration") type = PPFnDateTimeFunc::yearsFromDuration;
+        if (op == "PPFnMonthsFromDuration") type = PPFnDateTimeFunc::monthsFromDuration;
+        if (op == "PPFnDaysFromDuration") type = PPFnDateTimeFunc::daysFromDuration;
+        if (op == "PPFnHoursFromDuration") type = PPFnDateTimeFunc::hoursFromDuration;
+        if (op == "PPFnMinutesFromDuration") type = PPFnDateTimeFunc::minutesFromDuration;
+        if (op == "PPFnSecondsFromDuration") type = PPFnDateTimeFunc::secondsFromDuration;
+        if (op == "PPFnYearFromDateTime") type = PPFnDateTimeFunc::yearFromDateTime;
+        if (op == "PPFnMonthFromDateTime") type = PPFnDateTimeFunc::monthFromDateTime;
+        if (op == "PPFnDayFromDateTime") type = PPFnDateTimeFunc::dayFromDateTime;
+        if (op == "PPFnHoursFromDateTime") type = PPFnDateTimeFunc::hoursFromDateTime;
+        if (op == "PPFnMinutesFromDateTime") type = PPFnDateTimeFunc::minutesFromDateTime;
+        if (op == "PPFnSecondsFromDateTime") type = PPFnDateTimeFunc::secondsFromDateTime;
+        if (op == "PPFnTimezoneFromDateTime") type = PPFnDateTimeFunc::timezoneFromDateTime;
+        if (op == "PPFnYearFromDate") type = PPFnDateTimeFunc::yearFromDate;
+        if (op == "PPFnMonthFromDate") type = PPFnDateTimeFunc::monthFromDate;
+        if (op == "PPFnDayFromDate") type = PPFnDateTimeFunc::dayFromDate;
+        if (op == "PPFnTimezoneFromDate") type = PPFnDateTimeFunc::timezoneFromDate;
+        if (op == "PPFnHoursFromTime") type = PPFnDateTimeFunc::hoursFromTime;
+        if (op == "PPFnMinutesFromTime") type = PPFnDateTimeFunc::minutesFromTime;
+        if (op == "PPFnSecondsFromTime") type = PPFnDateTimeFunc::secondsFromTime;
+        if (op == "PPFnTimezoneFromTime") type = PPFnDateTimeFunc::timezoneFromTime;
+        if (op == "PPFnTimezoneFromTime") type = PPFnDateTimeFunc::timezoneFromTime;
+        if (op == "PPFnAdjustDateTimeToTimezone")
+        {
+                if (lst->size() == 3)
+                {
+                        type = PPFnDateTimeFunc2Params::adjustDateTimeToTimezone;
+                        nFunctionArgs = 2;
+                }
+                else
+                        type = PPFnDateTimeFunc::adjustDateTimeToTimezone;
+        }
+        if (op == "PPFnAdjustDateToTimezone")
+        {
+                if (lst->size() == 3)
+                {
+                        type = PPFnDateTimeFunc2Params::adjustDateToTimezone;
+                        nFunctionArgs = 2;
+                }
+                else
+                        type = PPFnDateTimeFunc::adjustDateToTimezone;
+        }
+        if (op == "PPFnAdjustTimeToTimezone")
+        {
+                if (lst->size() == 3)
+                {
+                       type = PPFnDateTimeFunc2Params::adjustTimeToTimezone;
+                        nFunctionArgs = 2;
+                }
+                else
+                        type = PPFnDateTimeFunc::adjustTimeToTimezone;
+        }
 
-
+        if (nFunctionArgs == 1)
+                opit = new PPFnDateTimeFunc(cxt,
+                           make_pp_op(cxt, lst->at(1).internal.list), type);
+        else
+                opit = new PPFnDateTimeFunc2Params(cxt,
+                           make_pp_op(cxt, lst->at(1).internal.list),
+                           make_pp_op(cxt, lst->at(2).internal.list), type);
+    }
 
 #ifdef SQL_CONNECTION
     else if (op == "PPFnSQLConnect")
