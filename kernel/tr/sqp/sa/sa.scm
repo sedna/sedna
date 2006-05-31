@@ -348,13 +348,14 @@
 (define sa:sql-ns "http://modis.ispras.ru/Sedna/SQL")
 (define sa:xs-ns "http://www.w3.org/2001/XMLSchema")
 (define sa:se-ns "http://www.modis.ispras.ru/sedna")
+(define sa:xdt-ns "http://www.w3.org/2004/07/xpath-datatypes")
 
 (define sa:predefined-ns-prefixes
   `(("xml" . "http://www.w3.org/XML/1998/namespace")
     ("xs" . ,sa:xs-ns)
     ("xsi" . "http://www.w3.org/2001/XMLSchema-instance")
     ("fn" . ,sa:fn-ns)
-    ("xdt" . "http://www.w3.org/2004/07/xpath-datatypes")
+    ("xdt" . ,sa:xdt-ns)
     ("local" . "http://www.w3.org/2004/07/xquery-local-functions")
     ("se" . ,sa:se-ns)
     ))
@@ -479,6 +480,88 @@
     (,sa:fn-ns "matches" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!matches)
+    ;----------------------------------------
+    ; XML Date/Time functions
+   (,sa:fn-ns "years-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!years-from-duration)
+   (,sa:fn-ns "months-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!months-from-duration)
+   (,sa:fn-ns "days-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!days-from-duration)
+   (,sa:fn-ns "hours-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!hours-from-duration)
+   (,sa:fn-ns "minutes-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!minutes-from-duration)
+   (,sa:fn-ns "seconds-from-duration" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!seconds-from-duration)
+   (,sa:fn-ns "year-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!year-from-dateTime)
+   (,sa:fn-ns "month-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!month-from-dateTime)
+   (,sa:fn-ns "day-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!day-from-dateTime)
+   (,sa:fn-ns "hours-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!hours-from-dateTime)
+   (,sa:fn-ns "minutes-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!minutes-from-dateTime)
+   (,sa:fn-ns "seconds-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!seconds-from-dateTime)
+   (,sa:fn-ns "timezone-from-dateTime" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!timezone-from-dateTime)
+   (,sa:fn-ns "year-from-date" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!year-from-date)
+   (,sa:fn-ns "month-from-date" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!month-from-date)
+   (,sa:fn-ns "day-from-date" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!day-from-date)
+   (,sa:fn-ns "timezone-from-date" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!timezone-from-date)
+   (,sa:fn-ns "hours-from-time" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!hours-from-time)
+   (,sa:fn-ns "minutes-from-time" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!minutes-from-time)
+   (,sa:fn-ns "seconds-from-time" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!seconds-from-time)
+   (,sa:fn-ns "timezone-from-time" 1 1
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!timezone-from-time)
+   (,sa:fn-ns "adjust-dateTime-to-timezone" 1 2
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!adjust-dateTime-to-timezone)
+   (,sa:fn-ns "adjust-date-to-timezone" 1 2
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!adjust-date-to-timezone)
+   (,sa:fn-ns "adjust-time-to-timezone" 1 2
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!adjust-time-to-timezone)
+   (,sa:xdt-ns "yearMonthDuration" 1 1
+     ,(lambda (num-args) (list sa:type-any))
+     ,sa:type-atomic
+     (cast !xdt!yearMonthDuration))
+   (,sa:xdt-ns "dayTimeDuration" 1 1
+     ,(lambda (num-args) (list sa:type-any))
+     ,sa:type-atomic
+     (cast !xdt!dayTimeDuration))
     ;----------------------------------------
     ; SQL extension by Roman Pastuhov
     (,sa:sql-ns "exec-update" 2 #f

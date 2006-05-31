@@ -10,6 +10,7 @@ VPATH = base fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
 include $(PP)/Makefile.include
 
 EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
+                       XMLDateTime$(OBJ_EXT)			\
                        sequence$(OBJ_EXT)				\
                        xptr_sequence$(OBJ_EXT)			\
                        sorted_sequence$(OBJ_EXT)		\
@@ -74,6 +75,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPUnion$(OBJ_EXT)				\
                        PPIntersect$(OBJ_EXT)			\
                        PPExcept$(OBJ_EXT)				\
+                       PPFnDateTimeFuncs$(OBJ_EXT)			\
                        PPADFilter$(OBJ_EXT)				\
                        PPDAFilter$(OBJ_EXT)				\
                        PPUp$(OBJ_EXT)					\
@@ -85,6 +87,8 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        boolean_operations$(OBJ_EXT)		\
                        comparison_operations$(OBJ_EXT)	\
                        string_operations$(OBJ_EXT)		\
+                       dateTime_operations$(OBJ_EXT)	\
+                       op_map$(OBJ_EXT)                 \
                        PPQueryRoot$(OBJ_EXT)			\
                        PPInsertTo$(OBJ_EXT)				\
                        PPInsertFollowing$(OBJ_EXT)		\
@@ -102,7 +106,6 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPRetrieveMetadata$(OBJ_EXT)		\
                        por2qep$(OBJ_EXT)				\
                        ext$(OBJ_EXT)					\
-                       calc_altern$(OBJ_EXT)			\
                        scheme_tree$(OBJ_EXT)			
 
 ifeq ($(SQL_CONNECTION),1)
@@ -138,134 +141,6 @@ gen_num_ops$(EXE_EXT): gen_num_ops$(OBJ_EXT)
 
 numeric_operations.h numeric_operations.cpp: gen_num_ops$(EXE_EXT)
 	./gen_num_ops$(EXE_EXT)
-
-gen_compar_ops$(OBJ_EXT): gen_compar_ops.c
-	$(CC) $(CFLAGS_CHICKEN_EXE) $<
-
-gen_compar_ops$(EXE_EXT): gen_compar_ops$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
-
-comparison_operations.h comparison_operations.cpp: gen_compar_ops$(EXE_EXT)
-	./gen_compar_ops$(EXE_EXT)
-
-gen_calc_altern$(OBJ_EXT): gen_calc_altern.c
-	$(CC) $(CFLAGS_CHICKEN_EXE) $<
-
-gen_calc_altern$(EXE_EXT): gen_calc_altern$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
-
-calc_altern.cpp: gen_calc_altern$(EXE_EXT)
-	./gen_calc_altern$(EXE_EXT)
-
-
-calc_altern$(OBJ_EXT): calc_altern.cpp \
-  ../../kernel/tr/executor/fo/boolean_operations.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  ../../kernel/tr/executor/base/sequence.h \
-  ../../kernel/tr/executor/base/compare.h \
-  ../../kernel/tr/executor/base/tuple.h ../../kernel/common/counted_ptr.h \
-  ../../kernel/tr/structures/nodes.h ../../kernel/common/base.h \
-  ../../kernel/common/sedna.h ../../kernel/common/u/u.h \
-  ../../driver/c/sp_defs.h \
-  ../../kernel/common/mmgr/se_alloc.h \
-  ../../kernel/common/errdbg/event_log.h ../../kernel/common/sedna.h \
-  ../../kernel/common/utils.h \
-  ../../kernel/common/u/uprocess.h ../../kernel/common/u/u.h \
-  ../../kernel/common/u/uthread.h ../../kernel/common/u/usecurity.h \
-  ../../kernel/common/sm_vmm_data.h \
-  ../../kernel/common/xptr.h ../../kernel/common/base.h \
-  ../../kernel/common/errdbg/exceptions.h ../../kernel/common/utils.h \
-  ../../kernel/common/errdbg/d_printf.h ../../kernel/common/u/u.h \
-  ../../kernel/common/error_codes.h \
-  ../../kernel/common/errdbg/event_log.h \
-  ../../kernel/tr/nid/numb_scheme.h ../../kernel/common/xptr.h \
-  ../../kernel/tr/crmutils/exec_output.h \
-  ../../kernel/common/u/usocket.h ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
-  ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
-  ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/tr/executor/base/decimal.h \
-  ../../kernel/tr/executor/base/date.h \
-  ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
-  ../../kernel/tr/executor/base/SequenceType.h \
-  ../../kernel/tr/executor/base/XPath.h \
-  ../../kernel/tr/executor/por2qep/scheme_tree.h \
-  ../../kernel/tr/vmm/vmm.h ../../kernel/common/xptr.h \
-  ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/tr/vmm/os_exceptions.h ../../kernel/common/u/u.h \
-  ../../kernel/common/SSMMsg.h ../../kernel/common/u/usem.h \
-  ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
-  ../../kernel/common/persistent_db_data.h \
-  ../../kernel/common/u/uthread.h \
-  ../../kernel/tr/executor/base/PPStaticContext.h \
-  ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
-  ../../kernel/tr/structures/pers_map.h \
-  ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \
-  ../../kernel/common/u/usecurity.h numeric_operations.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  comparison_operations.h \
-  ../../kernel/tr/executor/fo/string_operations.h \
-  ../../kernel/tr/executor/xqops/PPCalculate.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  ../../kernel/tr/executor/base/PPUtils.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  ../../kernel/tr/crmutils/node_utils.h ../../kernel/common/xptr.h \
-  ../../kernel/tr/structures/nodes.h ../../kernel/tr/vmm/vmm.h \
-  ../../kernel/tr/structures/schema.h \
-  ../../kernel/tr/executor/base/dm_accessors.h \
-  ../../kernel/tr/executor/fo/boolean_operations.h \
-  ../../kernel/tr/executor/por2qep/scheme_tree.h
-
-comparison_operations$(OBJ_EXT): comparison_operations.cpp \
-  comparison_operations.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  ../../kernel/tr/executor/base/sequence.h \
-  ../../kernel/tr/executor/base/compare.h \
-  ../../kernel/tr/executor/base/tuple.h ../../kernel/common/counted_ptr.h \
-  ../../kernel/tr/structures/nodes.h ../../kernel/common/base.h \
-  ../../kernel/common/sedna.h ../../kernel/common/u/u.h \
-  \
-  ../../driver/c/sp_defs.h \
-  ../../kernel/common/mmgr/se_alloc.h \
-  ../../kernel/common/errdbg/event_log.h ../../kernel/common/sedna.h \
-  ../../kernel/common/utils.h \
-  ../../kernel/common/u/uprocess.h ../../kernel/common/u/u.h \
-  ../../kernel/common/u/uthread.h ../../kernel/common/u/usecurity.h \
-  ../../kernel/common/sm_vmm_data.h \
-  ../../kernel/common/xptr.h ../../kernel/common/base.h \
-  ../../kernel/common/errdbg/exceptions.h ../../kernel/common/utils.h \
-  ../../kernel/common/errdbg/d_printf.h ../../kernel/common/u/u.h \
-  ../../kernel/common/error_codes.h \
-  ../../kernel/common/errdbg/event_log.h \
-  ../../kernel/tr/nid/numb_scheme.h ../../kernel/common/xptr.h \
-  ../../kernel/tr/crmutils/exec_output.h \
-  ../../kernel/common/u/usocket.h ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
-  ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
-  ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/tr/executor/base/decimal.h \
-  ../../kernel/tr/executor/base/date.h \
-  ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
-  ../../kernel/tr/executor/base/SequenceType.h \
-  ../../kernel/tr/executor/base/XPath.h \
-  ../../kernel/tr/executor/por2qep/scheme_tree.h \
-  ../../kernel/tr/vmm/vmm.h ../../kernel/common/xptr.h \
-  ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/tr/vmm/os_exceptions.h ../../kernel/common/u/u.h \
-  ../../kernel/common/SSMMsg.h ../../kernel/common/u/usem.h \
-  ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
-  ../../kernel/common/persistent_db_data.h \
-  ../../kernel/common/u/uthread.h \
-  ../../kernel/tr/executor/base/PPStaticContext.h \
-  ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
-  ../../kernel/tr/structures/pers_map.h \
-  ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \
-  ../../kernel/common/u/usecurity.h numeric_operations.h \
-  ../../kernel/tr/executor/fo/boolean_operations.h \
-  ../../kernel/tr/executor/base/PPBase.h \
-  ../../kernel/tr/executor/fo/string_operations.h \
-  ../../kernel/tr/executor/fo/casting_operations.h \
-  ../../kernel/tr/nid/numb_scheme.h
 
 numeric_operations$(OBJ_EXT): numeric_operations.cpp \
   numeric_operations.h ../../kernel/tr/executor/base/PPBase.h \
@@ -340,17 +215,8 @@ clean: generic_clean
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors
 	-$(REMOVE) gen_num_ops$(EXE_EXT)
-	-$(REMOVE) gen_compar_ops$(EXE_EXT)
-	-$(REMOVE) gen_calc_altern$(EXE_EXT)
 	-$(REMOVE) numeric_operations.h 
 	-$(REMOVE) numeric_operations.cpp
-	-$(REMOVE) comparison_operations.h
-	-$(REMOVE) comparison_operations.cpp
-	-$(REMOVE) calc_altern.cpp
-	-$(REMOVE) gen_calc_altern.c
-	-$(REMOVE) gen_calc_altern.exp
-	-$(REMOVE) gen_compar_ops.c
-	-$(REMOVE) gen_compar_ops.exp
 	-$(REMOVE) gen_num_ops.c
 	-$(REMOVE) gen_num_ops.exp
 

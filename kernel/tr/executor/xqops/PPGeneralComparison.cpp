@@ -208,7 +208,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_date(value);
+			tuple_cell num_val=cast_to_xs_dateTime(value,xs_date);
 			if (min_ut_dat)
 			{
 				if (value_comp_lt(num_val,min_ut_dat_cell).get_xs_boolean()) 
@@ -315,7 +315,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_date(value);
+			tuple_cell num_val=cast_to_xs_dateTime(value,xs_date);
 			if (max_ut_dat)
 			{
 				if (value_comp_gt(num_val,max_ut_dat_cell).get_xs_boolean()) 

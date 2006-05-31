@@ -14,6 +14,7 @@
 #include "decimal.h"
 #include "date.h"
 #include "pstr.h"
+#include "XMLDateTime.h"
 
 /// Array of int pairs
 typedef std::pair<int, int>			int_pair;
@@ -82,7 +83,7 @@ public:
     float      get_xs_float()   const { return *(float*     )(&data); }
     double     get_xs_double()  const { return *(double*    )(&data); }
     bool       get_xs_boolean() const { return *(bool*      )(&data); }
-    date       get_xs_date()    const { return *(date*      )(&data); }
+    XMLDateTime get_xs_dateTime()    const { return XMLDateTime(str_ptr); }
 
 /* !!! DELETE LATER */
     char*   get_xdt_untypedAtomic_mem () const { return get_str_mem(); }
@@ -167,7 +168,9 @@ public:
     {
         *(date*)(&(data)) = _data_;
     }
-
+    // for xs_dateTime and duration, as well as their subsets
+    tuple_cell(xmlscm_type _type_, str_counted_ptr _str_): type(tc_light_atomic), xtype(_type_), str_ptr(_str_)
+    {}
 
     ////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR TUPLE_CELL
@@ -215,6 +218,11 @@ public:
     static tuple_cell atomic(xmlscm_type _xtype_, char *_str_)
     {
         return tuple_cell(tc_light_atomic, (tcdata)0, _xtype_, _str_, 0);
+    }
+
+    static tuple_cell atomic(xmlscm_type _xtype_, str_counted_ptr _str_)
+    {
+        return tuple_cell(_xtype_, _str_);
     }
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_)
@@ -286,6 +294,16 @@ public:
         data = (tcdata)0;
         xtype = _xtype_;
         str_ptr = str_counted_ptr(_str_);
+        size = 0;
+    }
+
+    /// set counted string atomic value w/o deep copy
+    void set_atomic(xmlscm_type _xtype_, str_counted_ptr _str_)
+    {
+        type = tc_light_atomic;
+        data = (tcdata)0;
+        xtype = _xtype_;
+        str_ptr = _str_;
         size = 0;
     }
 

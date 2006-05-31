@@ -755,7 +755,127 @@
              ((eq? op-name '!fn!collection)
               `(1 (PPAbsPath (collection ,(l2p:getDocorCollNamePor (car node))) ()))
              )
-                          
+
+             ; *** !fn!years-from-duration ***
+             ((eq? op-name '!fn!years-from-duration)
+              `(1 (PPFnYearsFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!months-from-duration***
+             ((eq? op-name '!fn!months-from-duration)
+              `(1 (PPFnMonthsFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!days-from-duration ***
+             ((eq? op-name '!fn!days-from-duration)
+              `(1 (PPFnDaysFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!hours-from-duration ***
+             ((eq? op-name '!fn!hours-from-duration)
+              `(1 (PPFnHoursFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!minutes-from-duration ***
+             ((eq? op-name '!fn!minutes-from-duration)
+              `(1 (PPFnMinutesFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!seconds-from-duration ***
+             ((eq? op-name '!fn!seconds-from-duration)
+              `(1 (PPFnSecondsFromDuration ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!year-from-dateTime***
+             ((eq? op-name '!fn!year-from-dateTime)
+              `(1 (PPFnYearFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!month-from-dateTime***
+             ((eq? op-name '!fn!month-from-dateTime)
+              `(1 (PPFnMonthFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!day-from-dateTime***
+             ((eq? op-name '!fn!day-from-dateTime)
+              `(1 (PPFnDayFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!hours-from-dateTime***
+             ((eq? op-name '!fn!hours-from-dateTime)
+              `(1 (PPFnHoursFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!minutes-from-dateTime***
+             ((eq? op-name '!fn!minutes-from-dateTime)
+              `(1 (PPFnMinutesFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!seconds-from-dateTime***
+             ((eq? op-name '!fn!seconds-from-dateTime)
+              `(1 (PPFnSecondsFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!timezone-from-dateTime***
+             ((eq? op-name '!fn!timezone-from-dateTime)
+              `(1 (PPFnTimezoneFromDateTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!year-from-date***
+             ((eq? op-name '!fn!year-from-date)
+              `(1 (PPFnYearFromDate ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!month-from-date***
+             ((eq? op-name '!fn!month-from-date)
+              `(1 (PPFnMonthFromDate ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!day-from-date***
+             ((eq? op-name '!fn!day-from-date)
+              `(1 (PPFnDayFromDate ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!timezone-from-date***
+             ((eq? op-name '!fn!timezone-from-date)
+              `(1 (PPFnTimezoneFromDate ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!hours-from-time***
+             ((eq? op-name '!fn!hours-from-time)
+              `(1 (PPFnHoursFromTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!minutes-from-time***
+             ((eq? op-name '!fn!minutes-from-time)
+              `(1 (PPFnMinutesFromTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!seconds-from-time***
+             ((eq? op-name '!fn!seconds-from-time)
+              `(1 (PPFnSecondsFromTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!timezone-from-time***
+             ((eq? op-name '!fn!timezone-from-time)
+              `(1 (PPFnTimezoneFromTime ,(l2p:any-lr-node2por (car node))))
+             )
+
+             ; *** !fn!adjust-dateTime-to-timezone***
+             ((eq? op-name '!fn!adjust-dateTime-to-timezone)
+              `(1 (PPFnAdjustDateTimeToTimezone ,@(map l2p:any-lr-node2por node)))
+             )
+
+             ; *** !fn!adjust-date-to-timezone***
+             ((eq? op-name '!fn!adjust-date-to-timezone)
+              `(1 (PPFnAdjustDateToTimezone ,@(map l2p:any-lr-node2por node)))
+             )
+
+             ; *** !fn!adjust-time-to-timezone***
+             ((eq? op-name '!fn!adjust-time-to-timezone)
+              `(1 (PPFnAdjustTimeToTimezone ,@(map l2p:any-lr-node2por node)))
+             )
+
              ; *** !fn!sql-connect ***
              ((eq? op-name '!fn!sql-connect)
               `(1 (PPFnSQLConnect ,@(map l2p:any-lr-node2por node)))

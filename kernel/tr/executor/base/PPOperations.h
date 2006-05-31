@@ -77,6 +77,7 @@
 #include "PPIntersect.h"
 #include "PPExcept.h"
 #include "PPADFilter.h"
+#include "PPFnDateTimeFuncs.h"
 #include "PPDAFilter.h"
 #include "PPUp.h"
 #include "PPStringFuncs.h"
