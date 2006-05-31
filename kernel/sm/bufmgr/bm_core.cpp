@@ -22,7 +22,7 @@ using namespace std;
 ********************************************************************************
 *******************************************************************************/
 // Buffer memory starts with this address
-void* buf_mem_addr;
+void* buf_mem_addr = NULL;
 
 // Buffer memory table that translates xptr addresses to buffer offsets
 t_buffer_table buffer_table;
@@ -50,7 +50,7 @@ USemaphore vmm_sm_sem;
 tr_info_map trs;
 
 // Shared memory for SM callback call (used for callbacking VMMs - stores args)
-void * p_sm_callback_data;
+void * p_sm_callback_data = NULL;
 
 #ifdef LRU
 // Shared memory for global LRU stamp
@@ -59,7 +59,7 @@ LRU_stamp *lru_global_stamp_data;
 
 // Identifier of transaction that is in exclusive mode
 // if it is set up in -1 then there is no transaction in exclusive mode
-session_id xmode_sid;
+session_id xmode_sid = -1;
 
 // Synchronization semaphore for intering exclusive mode
 USemaphore xmode;
@@ -73,7 +73,7 @@ USemaphore ft_index_sem;
 #endif
 
 // Pointer to shared memory where xptr to indirection table is stored
-xptr* indirection_table_free_entry;
+xptr* indirection_table_free_entry = NULL;
 
 // File handlers
 UFile data_file_handler;

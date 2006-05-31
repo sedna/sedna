@@ -89,6 +89,8 @@ void _bm_release_buffer_pool()
     if (uUnmapViewOfFile(file_mapping, buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
+    buf_mem_addr = NULL;
+
     if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
@@ -188,6 +190,8 @@ void bm_shutdown() throw (SednaException)
     if (uDettachShMem(p_sm_callback_file_mapping, p_sm_callback_data, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
+    p_sm_callback_data = NULL;
+
     if (uReleaseShMem(p_sm_callback_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 #ifdef LRU
@@ -199,6 +203,8 @@ void bm_shutdown() throw (SednaException)
 #endif
     if (uDettachShMem(itfe_file_mapping, indirection_table_free_entry, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4024, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
+
+    indirection_table_free_entry = NULL;
 
     if (uReleaseShMem(itfe_file_mapping, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4020, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
@@ -238,6 +244,20 @@ void bm_shutdown() throw (SednaException)
     if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4043, ".tmp file");
     d_printf1("Close database files: complete\n");
+
+    tr_info_map::iterator it;
+    for (it = trs.begin(); it != trs.end(); it++)
+    {
+        if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
+            throw SYSTEM_ENV_EXCEPTION("Cannot release SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
+
+        if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem2, __sys_call_error) != 0)
+            throw SYSTEM_ENV_EXCEPTION("Cannot release SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
+
+        tr_info *info = it->second;
+        trs.erase(it);
+        delete (info);
+    }
 }
 
 void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaException)

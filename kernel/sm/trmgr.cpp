@@ -36,7 +36,7 @@ USemaphore concurrent_ops_sem;
 USemaphore wait_for_recovery;
 
 UTHANDLE  checkpoint_thread_dsc;
-bool shutdown_checkpoint_thread;
+bool shutdown_checkpoint_thread = false;
 
 /* global variables for transaction ids table */
 USemaphore trn_table_ids_sync_sem;
@@ -171,8 +171,7 @@ void start_chekpoint_thread()
   if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE, NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4060, "checkpoint thread");
 
-  string str = string("start_checkpoint_thread finished\n");
-  WRITE_DEBUG_LOG(str.c_str());
+  shutdown_checkpoint_thread = false;
 
 #endif
 }
@@ -209,10 +208,6 @@ void shutdown_chekpoint_thread()
      
   if (uCloseThreadHandle(checkpoint_thread_dsc, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4063, "checkpoint thread");
-
-  //string str = string("shutdown_checkpoint_thread finished\n");
-  //WRITE_DEBUG_LOG(str.c_str());
-
 #endif
 }
 

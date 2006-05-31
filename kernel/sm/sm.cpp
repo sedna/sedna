@@ -420,6 +420,14 @@ int main(int argc, char **argv)
 #endif
         }
 
+        setup_sm_globals();//setup default values from config file
+        if ( __bufs_num__ > 0 )
+           bufs_num = __bufs_num__;
+
+        if ( __max_trs_num__ > 0)
+           max_trs_num = __max_trs_num__;
+
+
         recover_database_by_physical_and_logical_log();
 
 
@@ -476,20 +484,17 @@ int main(int argc, char **argv)
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("SM event log is ready"));
 
-
-        setup_sm_globals();//setup default values from config file
-
+//        setup_sm_globals();//setup default values from config file
 
         if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
-
-         
-
+/*
         if ( __bufs_num__ > 0 )
            bufs_num = __bufs_num__;
 
         if ( __max_trs_num__ > 0)
            max_trs_num = __max_trs_num__;
+*/         
 
         //init transacion ids table
         init_transaction_ids_table();
@@ -657,14 +662,6 @@ void recover_database_by_physical_and_logical_log()
      event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
      elog(EL_LOG, ("SM event log in recovery procedure is ready"));
 
-     setup_sm_globals();//setup default values from config file
-
-     if ( __bufs_num__ > 0 )
-        bufs_num = __bufs_num__;
-
-     if ( __max_trs_num__ > 0)
-        max_trs_num = __max_trs_num__;
-
      //init transacion ids table
      init_transaction_ids_table();
 
@@ -677,7 +674,8 @@ void recover_database_by_physical_and_logical_log()
      {
         release_checkpoint_sems();
         release_transaction_ids_table();
-        throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
+        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
+           throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
      }
 
      d_printf1("phys log startup call finished successfully\n");

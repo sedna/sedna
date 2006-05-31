@@ -30,8 +30,8 @@
 #define COMMIT_LOG_RECORD_LEN (sizeof(logical_log_head) + sizeof(char) + sizeof(transaction_id))
 
 //this parameter must be more than CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
-#define LOG_FILE_PORTION_SIZE (100 * (1024*1024)) //was 2
-#define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 5 //was 3
+#define LOG_FILE_PORTION_SIZE (2 * (1024*1024)) //was 2
+#define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 3 //was 3
 //#define MAX_ALL_LOG_FILE_SIZE 10*LOG_FILE_PORTION_SIZE
 
 enum {LL_INSERT_ELEM,
@@ -76,7 +76,11 @@ enum {LL_INSERT_ELEM,
       LL_DELETE_COL_INDEX,
       LL_COMMIT,
       LL_ROLLBACK,
-      LL_CHECKPOINT
+      LL_CHECKPOINT,
+      LL_INSERT_DOC_FTS_INDEX,
+      LL_DELETE_DOC_FTS_INDEX,
+      LL_INSERT_COL_FTS_INDEX,
+      LL_DELETE_COL_FTS_INDEX
      };
 
 enum transaction_mode {NORMAL_MODE, ROLLBACK_MODE};
@@ -217,7 +221,7 @@ public:
   void ll_log_collection(transaction_id& trid, const  char* name,bool inserted, bool sync);
   void ll_log_ns(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted, bool sync);
   void ll_log_index(transaction_id& trid, const char *object_path, const char *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted, bool sync);
-//  void ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync);
+  void ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync);
 
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
