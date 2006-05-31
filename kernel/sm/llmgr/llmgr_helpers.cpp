@@ -68,7 +68,7 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
 
   int res;
   int written;
-  int next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
+  LONG_LSN next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
 
   char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
   memcpy(buf, &commit_lsn, sizeof(LONG_LSN));

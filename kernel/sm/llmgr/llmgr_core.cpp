@@ -2108,6 +2108,13 @@ void llmgr_core::ll_truncate_log(bool sync)
   else
     num_files_to_truncate = (minLSN - mem_head->base_addr)/LOG_FILE_PORTION_SIZE;
 
+  if (num_files_to_truncate  == 0)
+  {
+	  ll_log_unlock(sync);
+	  return;
+  }
+
+  if (num_files_to_truncate < 0) throw SYSTEM_EXCEPTION("Incorrect number of files to truncate");
   //!!!!rewrite base_addr and valid_number atomically
   __int64 new_base_addr = mem_head->base_addr + num_files_to_truncate*LOG_FILE_PORTION_SIZE;
   int valid_number = mem_head->ll_files_arr[num_files_to_truncate];
@@ -2138,6 +2145,7 @@ void llmgr_core::ll_truncate_log(bool sync)
 
 
   //!!!Delete unnecceary files
+  close_all_log_files();
   std::string log_file_name;
   char buf2[20];
   for (i=0; i< num_files_to_truncate; i++)
