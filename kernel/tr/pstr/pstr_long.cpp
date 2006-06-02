@@ -777,7 +777,11 @@ int  pstr_long_cursor::get_blk_rev(char **ptr)
 		blk = ((struct pstr_long_blk_hdr *)XADDR(blk))->prev_blk;
 		U_ASSERT(blk != XNULL);
 		ofs = PAGE_SIZE;
-		return data_buf_cnt;
+
+		if (data_buf_cnt == 0)
+			return this->get_blk_rev(ptr); // (+ operator may move to next block)
+		else
+			return data_buf_cnt;
 	}
 	else
 	{
