@@ -38,7 +38,7 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
     if (res != 0) 
-        throw USER_EXCEPTION(SE1015);
+        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
 
     res = uSetCurProcessWorkingSetSize(
                         working_set_size,			// minimum working set size
@@ -47,38 +47,20 @@ void _bm_set_working_set_size()
           );
     if (res != 0) 
         throw USER_EXCEPTION(SE1015);
-}
-
-void _bm_restore_working_set_size()
-{
-    int res = 0;
-    res = uSetCurProcessWorkingSetSize(
-                        MinimumWorkingSetSize_orig,// minimum working set size
-                        MaximumWorkingSetSize_orig,// maximum working set size
-                        __sys_call_error
-          );
-    if (res != 0)
-        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
-}
-
-void _bm_init_buffer_pool()
-{
-#ifndef REQUIRE_ROOT
-    int is_root = uIsAdmin(__sys_call_error);
-    if (is_root && lock_memory)
 #endif
         _bm_set_working_set_size();
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
-        throw USER_EXCEPTION(SE1015);
+        throw USER_EXCEPTION(SE1015, "See file FAQ shipped with the distribution");
 
     buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
-        throw USER_EXCEPTION(SE1015);
+        throw USER_EXCEPTION(SE1015, "See file FAQ shipped with the distribution");
 
-#ifndef REQUIRE_ROOT
-    if (is_root && lock_memory)
+#ifdef REQUIRE_ROOT
+    if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+        throw USER_EXCEPTION(SE1016);
 #endif
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
             throw USER_EXCEPTION(SE1016);
