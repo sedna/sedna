@@ -1366,6 +1366,25 @@ Gambit), uncomment the corresponding line at the beginning of the example code
 in \texttt{"client.scm"} and follow the instructions of the chosen Scheme
 implementation in running the program.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 %==========================================================================
 %
 %                                  Database Language
@@ -1373,25 +1392,24 @@ implementation in running the program.
 %===========================================================================
 \section{Database Language}
 \label{sec:DBLang}
-\subsection{Data Manipulation Language} 
+%\subsection{Data Manipulation Language} 
 
-\subsubsection{XQuery Support}
+\subsection{XQuery Support}
 \label{sec:xquery-support}
 The Sedna query language is XQuery \cite{paper:query-language} developed by W3C. 
 Below is the list of the XQuery features, supported in the current release of Sedna.
 \begin{itemize}
-\item	Data model \cite{paper:data-model} 
+\item Data model \cite{paper:data-model} 
 \begin{itemize}
-\item Nodes: Element, Document, Text, Namespace and Attribute Nodes.
-\item Accesors: dm:node-kind, dm:node-name, dm:string-value, dm:typed-value
-\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xdt:untypedAtomic and xdt:anyAtomicType .
+\item Nodes kind: Element, Document, Text, Namespace and Attribute Nodes.
+\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xs:dateTime, xs:date, xs:time, xs:gYearMonth, xs:gYear, xs:gMonthDay, xs:gMonth, xs:gDay, xs:duration, xdt:yearMonthDuration, xdt:dayTimeDuration, xdt:untypedAtomic and xdt:anyAtomicType.
 \end{itemize}
 \item	Language features \cite{paper:query-language} 
 \begin{itemize}
 \item Primary Expressions: literals, variable references, parenthesized expressions, context item expression, XQuery comments
 \item Path Expressions
 \begin{itemize}
-\item Axes: child, descendant, attribute, self, descendant-or-self, parent.
+\item All axes
 \item Node Tests: NameTest, Wildcard , TextTest, AnyKindTest.
 \item Other Features: predicates, abbriviated syntax.
 \end{itemize}
@@ -1400,175 +1418,14 @@ Below is the list of the XQuery features, supported in the current release of Se
 \item Comparisons: value comparison, general comparison, node comparison.
 \item Logical Expressions
 \item Constructors: direct element constructor, computed element and attribute constructors.
-\item FLWOR: for and let clause, where clause, return clause.
+\item FLWOR: for and let clause, where clause, order by (there is a restriction that Let clause is prohibited in FLWOR-expressions which contain Order By clause), return clause.
+\item Conditional Expression
+\item Quantified Expression (without type declaration).
+\item Expressions on SequenceTypes: Instance Of, Typeswitch, Cast, Castable, Treat
 \item Function declaration (locally defined user functions are supported).
-\item Other Expressions: conditional expression, quantified expression (without type declaration), cast expression.
 \end{itemize}
 \item Functions and operators \cite{paper:query-fo}: see \ref{xquery-functions}
 \end{itemize}
-
-
-\subsubsection{Update Language}
-The update language is based on the XQuery update proposal by Patrick Lehti \cite{paper:query-update} with the number of improvements.
-
-\begin{note}The result of each update statement, shouldn't break the well-formedness and validness of XML entitites, stored in the database.
-Otherwise, an error is raised.
-\end{note}
-
-\emph{INSERT}
-
-The insert statement inserts content at positions identified by the \verb!into!, \verb!preceding! and \verb!following! clauses. 
-
-\begin{verbatim}
-UPDATE
-insert Expr1 (into|preceding|following) Expr2
-\end{verbatim}
-
-\verb!Expr1! identifies the ordered sequence of the nodes to be inserted. The \verb!into!, \verb!preceding! or \verb!following! clause identifies the position. For each node in the result sequence of \verb!Expr2!, the result sequence of \verb!Expr1! is inserted to the position identified by the \verb!into!, \verb!preceding! or \verb!following! clauses. 
-If the \verb!into! clause is specified, the sequence is appended to the random position of the child sequence for each node in the result of \verb!Expr2!. If the \verb!preceding! clause is specified, the sequence is appended before each node in the result of \verb!Expr2!. If the \verb!following! clause is specified, the sequence is appended after each node in the result of \verb!Expr2!.
-
-If one of the following conditions is met an error occurs:
-\begin{itemize}
-\item There are non-element nodes in the result of \verb!Expr2! in case of the \verb!into! clause
-\item There are temporary nodes in  \verb!Expr2! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
-\end{itemize}
-
-\begin{verbatim}
-UPDATE
-insert <warning>High Blood Pressure!</warning>
-preceeding doc("hospital")//blood_pressure[systolic>180]
-\end{verbatim}
-
-\emph{DELETE}
-
-The \verb!DELETE! statement serves to remove persistent nodes from the database. It contains a subexpression, that returns the nodes to be deleted. 
-
-\begin{verbatim}
-UPDATE
-delete Expr 
-\end{verbatim}
-\verb!Expr! identifies the  nodes to be removed from the datatbase. Note, that nodes are removed from the database with all their descandants. 
-
-If one of the following conditions is met an error occurs:
-\begin{itemize}
-\item There are nodes in the result sequence of \verb!Expr! that are not stored in external memory
-\end{itemize}
-
-\begin{verbatim}
-UPDATE
-delete doc("hospital")//blood_pressure[systolic>180]
-\end{verbatim}
-
-\emph{DELETE\_UNDEEP}
-\begin{verbatim}
-UPDATE
-delete_undeep Expr 
-\end{verbatim}
-
-The \verb!DELETE_undeep! statement removes nodes identified by \verb!Expr!, but in contrast to the \verb!DELETE! statement it leaves the descendants of the nodes in the database.
-
-Consider the following example:
-\begin{verbatim}
-A document named "a.xml" before update:
-<A>
-<B>
-<C/>
-<D/>
-</B>
-</A>
-
-UPDATE
-delete_undeep doc("a.xml")//B
-
-The document after update:
-<A>
-<C/>
-<D/>
-</A>
-\end{verbatim}
-
-\emph{REPLACE}
-
-The \verb!REPLACE! statement is used to replace nodes in an XML document in the following manner. Each node returned by \verb!Expr1! is replaced with the sequence of the nodes returned by \verb!Expr2! where \verb!$var! is bound to the node. Note that \verb!Expr2! is executed over the original document without taking into account intermediate updates performed during execution of this statement. 
-
-If one of the following conditions is met, an error occurs:
-\begin{itemize}
-\item There are atomic values in the result of \verb!Expr1!
-\item There are temporary nodes in  \verb!Expr1! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
-\end{itemize}
-
-The \verb!$var! variable bound in \verb!replace! clause may have an optional type declaration. If the type of a value bound to the variable does not match the declared type, an error is raised.
-
-\begin{verbatim}
-UPDATE
-replace $var [as type] in Expr1
-with Expr2($var)
-\end{verbatim}
-
-In the following example the salary of persons named "John" is doubled.
-
-\begin{verbatim}
-UPDATE
-replace $p in doc("foo.xml")/db/person[name="John"]
-with 
-<person>
-{($p/@*, 
-  $p/node()[not(self::salary)],
-  for $s in $p/salary
-  return <salary>{$s*2}</salary>)}
-</person>
-\end{verbatim}
-
-
-
-\emph{RENAME}
-
-The \verb!RENAME! statement is used to change the qualified name of an element or attribute.
-
-\begin{verbatim}
-UPDATE
-rename Expr on QName
-\end{verbatim}
-
-The following expression changes the name of \verb!<job/>! elements without changing their contents:
-\begin{verbatim}
-UPDATE
-rename //job[.="bit banger"] on profession
-\end{verbatim}
-
-\subsubsection{Bulk load}
-\label{bulk-load}
-To do bulk load use the following statements:
-\begin{verbatim}
-LOAD "file_name" "document_name" 
-\end{verbatim}
-
-The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database.
-
-\begin{verbatim}
-LOAD "file_name" "document_name" "collection_name"
-\end{verbatim}
-
-The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database. The third parameter is the collection name to load the document into.
-
-For performing bulk load not from the source file but from an input stream,
-use the following statements:
-\begin{verbatim}LOAD STDIN "document_name"\end{verbatim}
-
-\begin{verbatim}LOAD STDIN "document_name" "collection_name"\end{verbatim}
-
-Compared to the above bulk load statements, here the
-\verb!"file_name"! is replaced by the keyword \verb!STDIN! to denote that
-the file to be loaded is taken from the input stream. Characters in the input stream must form a well-formed XML document, which is loaded into the database and named as specified by
-\verb!"document_name"!. If \verb!collection_name! is set, the document is loaded into the specified collection of the database.
-
-By default, the standard input stream is used. You can redirect a different input stream to be used as an input for bulk load. For example, an XML document produced by some program as its output can be loaded to a Sedna database in a stream-wise fashion. To redirect the input when working from a command line, you can use the functionality provided by your operation system.
-Java and Scheme APIs provide additional wrappers for bulk load from stream, such that the input stream can be specified by an additional argument of a function call.
-
-By default, Sedna removes boundary whitespaces according to the boundary-space policy defined in \cite{paper:query-language}. To control boundary whitespaces processing, use \emph{boundary-space declaration} \cite{paper:query-language} in the prolog of the \verb!LOAD! statement.  The following example illustrates a boundary-space declaration that instructs Sedna to preserve whitespaces:
-\begin{verbatim}
-declare boundary-space preserve;
-\end{verbatim}
 
 
 \subsubsection{Controlling Serialization}
@@ -1597,24 +1454,23 @@ As mentioned above, you may omit the Sedna namespace declaration:
 declare option output "indent=yes";
 \end{verbatim}
 
-
-
-\subsection{XQuery Functions}
+\subsection{Standard XQuery Functions and Extensions}
 \label{functions}
 \subsubsection{Standard XQuery Functions}
 \label{xquery-functions}
 The following standard XQuery functions specified in \cite{paper:query-fo} are supported:
 \begin{itemize}
-\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, true, false, not, empty, exists, string, string-length, translate
-\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib}; 
+\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, node-kind, node-name, true, false, not, empty, exists, string, string-value, string-length, translate, typed-value
+\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib};
+\item functions on durations, dates and times 
 see \cite{paper:query-fo}  for function signatures and \cite{lib:pcre-lib} for regular expression syntax) 
 \end{itemize}
 
 %==========================================================================
-%                                                Index-scan functions
+%                                      Value Index-scan functions
 %==========================================================================
-\subsubsection{Index-scan Functions}
-\label{sec:index-scan-fun}
+\subsubsection{Value Index-scan Functions}
+\label{sec:value-index-scan-fun}
 In the current version of Sedna, query executor does not use indecies automatically. Use the following functions
 to enforce executor to employ indices. 
 
@@ -1633,9 +1489,44 @@ index-scan-between ($title as xs:string, $value1 as xdt:anyAtomicType,
 
 The \verb!index-scan-between! scans the index with the \verb!$title! name and returns the sequence of nodes which keys belong to the interval (segment, left half-interval, right half-interval) between the first \verb!$value1! and second \verb!$value2! search values. An Sedna error is raised if the search values can not be cast to the atomic type of the index. This function provides the \verb!$range! parameter of the \verb!xs:string! type to set the type of the scan. If the string is not equal to one of the following then the Sedna error SE2035 is raised: “INT” (interval), ”HINTR” (segment), “SEG” (left half-interval), ”HINTL” (right half-interval).
 
-For example, to select the names of people who live in the London city employing the "people" index defined in Section \ref{sec:managing-indices}, use the following expression:
+For example, to select the names of people who live in the London city employing the "people" index defined in Section \ref{sec:managing-value-indices}, use the following expression:
 \begin{verbatim}
 index-scan("people", "London", "EQ")/name
+\end{verbatim}
+
+
+
+%==========================================================================
+%                                      Full-text Search Functions
+%==========================================================================
+
+\subsubsection{Full-text Search Functions}
+\label{sec:ft-fun}
+In the current version of Sedna, query executor does not use full-text indecies automatically. Use the following functions
+to enforce executor to employ indices. 
+
+\begin{verbatim}
+ftindex-scan($title as xs:string, $query as xs:string) as node()*
+\end{verbatim}
+
+The \verb!ftindex-scan! function scans the full-text index with the \verb!$title! name and returns the sequence of items which satisfy the \verb!$query!. As full-text index is based on dtSearch \cite{link:dtsearch-engine}, use the dtSearch request language \cite{doc:dtsearch} to specify the query. 
+
+For example, you can employ the "articles" index defined in Section \ref{sec:managing-ft-indices} to select the titles of articles that contain word "apple" but not "pear":
+\begin{verbatim}
+ftindex-scan("articles", "apple and not pear")/title
+\end{verbatim}
+
+\begin{verbatim}
+ftscan($seq as node()*, $query as xs:string, $type as xs:string, 
+$customization_rules as xs:string) as node()*
+\end{verbatim}
+
+The \verb!ftscan! function returns those items of the input sequence \verb!$seq! which satisfy the query \verb!$query!. The function does not use indices and can be applied to any sequence of nodes, even those that are not indexed. The query \verb!$query! is evaluated over the text representation constructed according to the \verb!$type! and \verb!$customization_rules! paramters. The values of the parameters are the same as those used when a full-text index is created (see Section \ref{sec:managing-ft-indices} for details).
+
+For example, you can select the titles of articles that contain word "apple" but not "pear" \emph{without} using indices and using special customization rules as follows:
+\begin{verbatim}
+ftscan(doc("foo")/library//article, "apple and not pear", 
+"customized-value", (("b","string-value"),("a","delimited-value")))/title
 \end{verbatim}
 
 
@@ -2139,6 +2030,170 @@ There is a sample external function code available in the folder:
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
 
+\subsection{Update Language}
+The update language is based on the XQuery update proposal by Patrick Lehti \cite{paper:query-update} with the number of improvements.
+
+\begin{note}The result of each update statement, shouldn't break the well-formedness and validness of XML entitites, stored in the database.
+Otherwise, an error is raised.
+\end{note}
+
+\emph{INSERT}
+
+The insert statement inserts content at positions identified by the \verb!into!, \verb!preceding! and \verb!following! clauses. 
+
+\begin{verbatim}
+UPDATE
+insert Expr1 (into|preceding|following) Expr2
+\end{verbatim}
+
+\verb!Expr1! identifies the ordered sequence of the nodes to be inserted. The \verb!into!, \verb!preceding! or \verb!following! clause identifies the position. For each node in the result sequence of \verb!Expr2!, the result sequence of \verb!Expr1! is inserted to the position identified by the \verb!into!, \verb!preceding! or \verb!following! clauses. 
+If the \verb!into! clause is specified, the sequence is appended to the random position of the child sequence for each node in the result of \verb!Expr2!. If the \verb!preceding! clause is specified, the sequence is appended before each node in the result of \verb!Expr2!. If the \verb!following! clause is specified, the sequence is appended after each node in the result of \verb!Expr2!.
+
+If one of the following conditions is met an error occurs:
+\begin{itemize}
+\item There are non-element nodes in the result of \verb!Expr2! in case of the \verb!into! clause
+\item There are temporary nodes in  \verb!Expr2! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
+\end{itemize}
+
+\begin{verbatim}
+UPDATE
+insert <warning>High Blood Pressure!</warning>
+preceeding doc("hospital")//blood_pressure[systolic>180]
+\end{verbatim}
+
+\emph{DELETE}
+
+The \verb!DELETE! statement serves to remove persistent nodes from the database. It contains a subexpression, that returns the nodes to be deleted. 
+
+\begin{verbatim}
+UPDATE
+delete Expr 
+\end{verbatim}
+\verb!Expr! identifies the  nodes to be removed from the datatbase. Note, that nodes are removed from the database with all their descandants. 
+
+If one of the following conditions is met an error occurs:
+\begin{itemize}
+\item There are nodes in the result sequence of \verb!Expr! that are not stored in external memory
+\end{itemize}
+
+\begin{verbatim}
+UPDATE
+delete doc("hospital")//blood_pressure[systolic>180]
+\end{verbatim}
+
+\emph{DELETE\_UNDEEP}
+\begin{verbatim}
+UPDATE
+delete_undeep Expr 
+\end{verbatim}
+
+The \verb!DELETE_undeep! statement removes nodes identified by \verb!Expr!, but in contrast to the \verb!DELETE! statement it leaves the descendants of the nodes in the database.
+
+Consider the following example:
+\begin{verbatim}
+A document named "a.xml" before update:
+<A>
+<B>
+<C/>
+<D/>
+</B>
+</A>
+
+UPDATE
+delete_undeep doc("a.xml")//B
+
+The document after update:
+<A>
+<C/>
+<D/>
+</A>
+\end{verbatim}
+
+\emph{REPLACE}
+
+The \verb!REPLACE! statement is used to replace nodes in an XML document in the following manner. Each node returned by \verb!Expr1! is replaced with the sequence of the nodes returned by \verb!Expr2! where \verb!$var! is bound to the node. Note that \verb!Expr2! is executed over the original document without taking into account intermediate updates performed during execution of this statement. 
+
+If one of the following conditions is met, an error occurs:
+\begin{itemize}
+\item There are atomic values in the result of \verb!Expr1!
+\item There are temporary nodes in  \verb!Expr1! (a node is considered \emph{temporary}, if it is created as the result of the XQuery constructor evaluation.)
+\end{itemize}
+
+The \verb!$var! variable bound in \verb!replace! clause may have an optional type declaration. If the type of a value bound to the variable does not match the declared type, an error is raised.
+
+\begin{verbatim}
+UPDATE
+replace $var [as type] in Expr1
+with Expr2($var)
+\end{verbatim}
+
+In the following example the salary of persons named "John" is doubled.
+
+\begin{verbatim}
+UPDATE
+replace $p in doc("foo.xml")/db/person[name="John"]
+with 
+<person>
+{($p/@*, 
+  $p/node()[not(self::salary)],
+  for $s in $p/salary
+  return <salary>{$s*2}</salary>)}
+</person>
+\end{verbatim}
+
+
+
+\emph{RENAME}
+
+The \verb!RENAME! statement is used to change the qualified name of an element or attribute.
+
+\begin{verbatim}
+UPDATE
+rename Expr on QName
+\end{verbatim}
+
+The following expression changes the name of \verb!<job/>! elements without changing their contents:
+\begin{verbatim}
+UPDATE
+rename //job[.="bit banger"] on profession
+\end{verbatim}
+
+\subsection{Bulk Load}
+\label{bulk-load}
+To do bulk load use the following statements:
+\begin{verbatim}
+LOAD "file_name" "document_name" 
+\end{verbatim}
+
+The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database.
+
+\begin{verbatim}
+LOAD "file_name" "document_name" "collection_name"
+\end{verbatim}
+
+The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database. The third parameter is the collection name to load the document into.
+
+For performing bulk load not from the source file but from an input stream,
+use the following statements:
+\begin{verbatim}LOAD STDIN "document_name"\end{verbatim}
+
+\begin{verbatim}LOAD STDIN "document_name" "collection_name"\end{verbatim}
+
+Compared to the above bulk load statements, here the
+\verb!"file_name"! is replaced by the keyword \verb!STDIN! to denote that
+the file to be loaded is taken from the input stream. Characters in the input stream must form a well-formed XML document, which is loaded into the database and named as specified by
+\verb!"document_name"!. If \verb!collection_name! is set, the document is loaded into the specified collection of the database.
+
+By default, the standard input stream is used. You can redirect a different input stream to be used as an input for bulk load. For example, an XML document produced by some program as its output can be loaded to a Sedna database in a stream-wise fashion. To redirect the input when working from a command line, you can use the functionality provided by your operation system.
+Java and Scheme APIs provide additional wrappers for bulk load from stream, such that the input stream can be specified by an additional argument of a function call.
+
+By default, Sedna removes boundary whitespaces according to the boundary-space policy defined in \cite{paper:query-language}. To control boundary whitespaces processing, use \emph{boundary-space declaration} \cite{paper:query-language} in the prolog of the \verb!LOAD! statement.  The following example illustrates a boundary-space declaration that instructs Sedna to preserve whitespaces:
+\begin{verbatim}
+declare boundary-space preserve;
+\end{verbatim}
+
+
+
 \subsection{Data Definition Language}
 
 This section describes Sedna Data Definition Language (DDL) that is used to create the database structures that will hold one’s data.
@@ -2147,7 +2202,7 @@ Most of parameters of Sedna DDL are computable and specified as XQuery expressio
 The expected type of all the parameters is \verb!xs:string!. All parameters are evaluated and atomized.
 If the atomized value is not of \verb!xs:string!, a dynamic error is raised.
 
-\subsubsection{Managing Documents}
+\subsubsection{Managing Standalone Documents}
 \begin{verbatim}
 CREATE DOCUMENT doc-name-expr
 \end{verbatim}
@@ -2191,6 +2246,7 @@ name that is the result of \verb!coll-name-expr!.
 
 XML documents can be loaded into the collection, as previously described in
 Sect.\ref{bulk-load}.
+
 To access a single document from collection in an XQuery or XML update query,
 the \verb!document! function accepts a collection name as its second optional
 argument:
@@ -2213,6 +2269,12 @@ Conventional XQuery predicates can be used for filtering the sequence returned
 by the \verb!collection! function call, for selecting certain documents that
 satisfy the desired condition.
 
+\begin{verbatim}
+CREATE DOCUMENT doc-name-expr IN COLLECTION coll-name-expr
+\end{verbatim}
+
+This statement creates a new document named \verb!doc-name-expr! in a collection named \verb!coll-name-expr!. 
+
 %To drop a document located in collection, the following statement is provided:
 \begin{verbatim}DROP DOCUMENT doc-name-expr IN COLLECTION coll-name-expr\end{verbatim}
 
@@ -2225,8 +2287,8 @@ The \verb!DROP COLLECTION! statement drops the collection with the
 \verb!coll-name-expr! name from the database.
 If the collection contains any documents, these documents are dropped as well.
 
-\subsubsection{Managing Indices}
-\label{sec:managing-indices}
+\subsubsection{Managing Value Indices}
+\label{sec:managing-value-indices}
 Sedna supports value indices based on B-tree to index XML element content and attribute values. Below is the description of statements to manage indices.
 
 \begin{verbatim}
@@ -2260,7 +2322,60 @@ DROP INDEX title-expr
 The DROP INDEX statement removes the index named \verb!title-expr! from the database.
 
 \begin{note}In the current version of Sedna, query executor does not use indices automatically. You can enforce the executor to employ indices by
-using the XQuery index-scan functions specified in Section \ref{sec:index-scan-fun}.
+using the XQuery index-scan functions specified in Section \ref{sec:value-index-scan-fun}.
+\end{note}
+
+
+
+
+\subsubsection{Managing Full-Text Indices}
+\label{sec:managing-ft-indices}
+Sedna is integrated with dtSearch Engine \cite{link:dtsearch-engine}, a third party commercial product, to support full-text indices. As dtSearch works on Windows and Linux platforms, Sedna supports full-text indices only on these platforms. Below is the description of statements to manage full-text indices.
+
+\begin{verbatim}
+CREATE FULL-TEXT INDEX title-expr
+ON path
+TYPE type
+\end{verbatim}
+
+The \verb!CREATE INDEX! indexes nodes (specified by \verb!path!) by a text representation of the nodes. The text representations of the nodes are constructed according to \verb!type!. 
+
+\verb!title-expr! is the title of the index created. It should be unique for each index in the database.
+
+\verb!path! is an XPath expression without any filter expressions that identifies the nodes of a document or a collection that are to be indexed. An example of the \verb!path! expression is as follows \verb!doc("foo")/library//article!.
+
+\verb!type! specifies how the text representations of nodes are constructed when the nodes are indexed. \verb!type! can have one of the following values: 
+\begin{itemize}
+\item \verb!"xml"! - The XML representations of the nodes are used. 
+\item \verb!"string-value"! - The string-values of the nodes are used as obtained using standard XQuery \verb!fn:string! function. The string-value of a node is the concatenated contents of all its descendant text nodes, in document order.
+\item \verb!"delimited-value"! - The same as \verb!"string-value"! but blank characters are inserted between  text nodes.
+\item \verb!"customized-value"! \verb!((element-qname, type), ... (element-qname, type))! - This option allows specifying  types for particular element nodes. Here \verb!element-qname! is a QName of an element, \verb!type! can have one of the values listed above (i.e. \verb!"xml"!, \verb!"string-value"!, \verb!"delimited-value"!). For those elements that are not specified in the list, the \verb!"xml"! type is used by default.
+\end{itemize}
+
+In the following example, articles are indexed by their contents represented as XML.
+
+\begin{verbatim}
+CREATE FULL-TEXT INDEX "articles"
+ON doc("foo")/library//article 
+TYPE "xml"
+\end{verbatim}
+
+The example below illustrates the use of \verb!"customized-value"! type.
+\begin{verbatim}
+CREATE FULL-TEXT INDEX "messages"
+ON document("foo")//message
+TYPE "customized-value" (("b", "string-value"), ("a", "delimited-value"))
+\end{verbatim}
+
+To remove an full-text index, use the following statement:
+\begin{verbatim}
+DROP FULL-TEXT INDEX title-expr
+\end{verbatim}
+
+The DROP INDEX statement removes the index named \verb!title-expr! from the database.
+
+\begin{note}In the current version of Sedna, query executor does not use full-text indices automatically. You can enforce the executor to employ indices by
+using the XQuery full-text search functions specified in Section \ref{sec:ft-fun}.
 \end{note}
 
 \subsubsection{Retrieving Metadata}
@@ -2330,10 +2445,10 @@ The root of the XML document is the \verb!TREE_DESCRIPTIVE_SCHEMA! element, whic
 
 \begin{thebibliography}{9}
 \bibitem{doc:admin} ``Sedna Administration Guide''
-\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Working Draft, 4 April 2005
-\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Working Draft, 4 April 2005
-\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Working Draft, 4 April 2005
-\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Working Draft, 15 September 2005
+\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Candidate Recommendation, 3 November 2005
+\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Candidate Recommendation, 3 November 2005
+\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Candidate Recommendation, 3 November 2005
+\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Candidate Recommendation, 3 November 2005
 \bibitem{paper:query-update} Patrick Lehti. ``Design and Implementation of a Data Manipulation Processor for a XML Query Language'', http://www.ipsi.fraunhofer.de/~lehti/
 \bibitem{lib:pcre-lib} http://www.pcre.org/
 \bibitem{paper:sedna-overview}  
@@ -2367,6 +2482,15 @@ Kirill Lisovsky, Dmitry Lizorkin.
 ``XML Path Language (XPath) and its functional implementation SXPath'',
 Russian Digital Libraries Journal , 2003, Volume 6, Issue 4,
 http://www.elbib.ru/index.phtml?page=elbib/eng/journal/2003/part4/LL
+
+\bibitem{link:dtsearch-engine}
+dtSearch Engine home page, 
+http://www.dtsearch.com/PLF\_engine\_2.html
+
+\bibitem{doc:dtsearch}
+dtSearch Web Help
+http://support.dtsearch.com/webhelp/dtsearch
+
 
 \end{thebibliography}
 

@@ -366,10 +366,7 @@ The third option allows to get the version of the \verb!se_smsd!.
 Note that \verb!se_smsd! command causes a roll back of all active transactions executed over \verb!db_name! database.
 
 
-\subsection{Running Queries}
-Sedna provides two utilities to run queries: the Sedna Terminal \verb!se_term! and \verb!se_trn!. Below the description of the two is provided.
-
-\subsubsection{Sedna Terminal}
+\subsection{Sedna Terminal}
 \verb!se_term! is an interactive terminal to Sedna. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
 
 The usage of the \verb!se_term! is as follows:
@@ -440,38 +437,6 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 \verb!AUTOCOMMIT! - when set, autocommit mode is on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
 
 \verb!ON_ERROR_STOP! - when set, \verb!se_term! returns with the code 3 when statement or meta-command fails. When unset \verb!se_term! processing continues, unless it is the connection failure.
-
-\subsubsection{se\_trn utility}
-There are several ways to execute query over Sedna, but in this section we present the simplest way to do it. To execute the query over Sedna, the \verb!se_trn! command should be used. This command requries two input parameters. The first one is the name of the database, to which the query is addressed and the second one is the file with .xquery extension, which contains the user query. Besides, there are several options, which semantics will be explained below. About supported QUERY/UPDATE language see in the Sedna Programmer's Guide. The result of the query is directed to standard output stream (stdout). 
-
-The usage of the \verb!se_trn! is as follows:
-
-\begin{verbatim}
-Usage: se_trn [options] dbname filename
-options:
-  -help                   display this help and exit
-  --help                  display this help and exit
-  -version                display product version and exit
-  -show-time on/off       show time of query execution (default off)
-  -print-intermed on/off  print intermediate results for debug purposes
-                          (default off)
-  -query-type type        type of the query to execute (XQuery, POR),
-                          (default XQuery)
-  -name name              user name (default SYSTEM)
-  -pswd password          user password (default MANAGER)
-   db-name                database name
-   filename               file with an XQuery query
-\end{verbatim}
-
-The first and second options are straightforward, typing this option Administrator can get the exhaustive information about the \verb!se_trn! command.
-
-The third option allows to get the version of the \verb!se_trn! command.
-
-The \verb!-show-time! option allows to know how much time it took for the server to execute client's query.
-
-The \verb!-print-intermed! and \verb!-query-type! options are used for debug purposes and we don't recommend to use them.
-
-The \verb!-name! and \verb!-pswd! options are reserved for further Sedna features.
 
 
 \subsection{Backup and Restore}
@@ -641,6 +606,8 @@ the data.
 Run \verb!se_exp! utility with \verb!restore! command to restore data into the new database
 \end{enumerate}
 
+\subsection{Event Log}
+Sedna keeps track of all important events that happen during its functioning. You can find the log file named \verb!event.log! in the \verb!data! directory where Sedna stores databases. The location of the \verb!data! directory depends on the Sedna package you have used to install Sedna (see Section \ref{sec:dir-structure} for details).
 
 \subsection{The Examples of Using Command Line Utilities}
 
@@ -680,7 +647,7 @@ The \verb!<path>! is the path to the XML document to be loaded to the xmark data
 \item Run the command: 
 
 \begin{verbatim}
-se_trn xmark load.xquery
+se_term -file load.xquery xmark
 \end{verbatim}
 
 \item Create the following file with name \verb!query1.xquery!:
@@ -693,7 +660,7 @@ Where \verb!<name>! is the name of the loaded document in the xmark database.
 
 \item Type the command and enter it:
 \begin{verbatim}
-se_trn xmark query1.xquery
+se_term -file query1.xquery xmark
 \end{verbatim}
 \end{enumerate}
 
@@ -703,6 +670,15 @@ To stop Sedna and all its components and databases, type and enter the following
 se_stop
 \end{verbatim}
 
+
+
+%========================================================================================
+%
+%
+%                              Sedna users and privileges
+%
+%
+%========================================================================================
 \section{Sedna Database Users and Privileges}
 
 Every Sedna database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object. 
