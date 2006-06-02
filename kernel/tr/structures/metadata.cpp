@@ -74,15 +74,6 @@ void delete_document(const char *document_name)
 		metadata_sem_up();
 		//0. turn on delete mode for indirection
 		start_delete_mode((doc_schema_node*)snode);
-		xptr blk=snode->bblk;
-		if (blk!=XNULL)
-		{
-			CHECKP(blk);
-			xptr ind=((n_dsc*)((char*)XADDR(blk)+((node_blk_hdr*)XADDR(blk))->desc_first))->indir;
-			delete_doc_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk)));
-			hl_logical_log_document(ind,document_name,NULL,false);
-		}
-		
 		schema_ind_cell* sci=((doc_schema_node*)snode)->sc_idx;
 		while (sci!=NULL)
 		{
@@ -97,6 +88,16 @@ void delete_document(const char *document_name)
 			ftsci=((doc_schema_node*)snode)->sc_ft_idx;
 		}
 #endif
+		xptr blk=snode->bblk;
+		if (blk!=XNULL)
+		{
+			CHECKP(blk);
+			xptr ind=((n_dsc*)((char*)XADDR(blk)+((node_blk_hdr*)XADDR(blk))->desc_first))->indir;
+			delete_doc_node(GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk)));
+			hl_logical_log_document(ind,document_name,NULL,false);
+		}
+		
+		
 		snode->delete_scheme_node();
 		up_concurrent_micro_ops_number();
 		
@@ -168,6 +169,20 @@ void delete_collection(const char *collection_name)
 	metadata_sem_up();
 	//0. turn on delete mode for indirection
 	start_delete_mode(coll);
+	schema_ind_cell* sci=coll->sc_idx;
+		while (sci!=NULL)
+		{
+			delete_index(sci->index->index_title);
+			sci=coll->sc_idx;
+		}
+#ifdef SE_ENABLE_FTSEARCH
+	    schema_ft_ind_cell* ftsci=coll->sc_ft_idx;
+		while (ftsci!=NULL)
+		{
+			ft_index_cell::delete_index(ftsci->index->index_title);
+			ftsci=coll->sc_ft_idx;
+		}
+#endif
 	//1. deleting documents from collection
 	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* tmp=coll->metadata->rb_minimum(coll->metadata->root);
 	while (tmp!=NULL)
@@ -193,20 +208,7 @@ void delete_collection(const char *collection_name)
 	}
 	coll->free_map();
 	down_concurrent_micro_ops_number();
-	schema_ind_cell* sci=coll->sc_idx;
-		while (sci!=NULL)
-		{
-			delete_index(sci->index->index_title);
-			sci=coll->sc_idx;
-		}
-#ifdef SE_ENABLE_FTSEARCH
-	    schema_ft_ind_cell* ftsci=coll->sc_ft_idx;
-		while (ftsci!=NULL)
-		{
-			ft_index_cell::delete_index(ftsci->index->index_title);
-			ftsci=coll->sc_ft_idx;
-		}
-#endif
+	
 	((schema_node*)coll)->delete_scheme_node();
 	hl_logical_log_collection(collection_name,false);
 	//free_metadata_cell(cdc);
