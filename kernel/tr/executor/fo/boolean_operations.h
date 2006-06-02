@@ -40,13 +40,6 @@ tuple_cell op_boolean_not_equal(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_boolean_less_equal(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_boolean_greater_equal(const tuple_cell &a1, const tuple_cell &a2);
 
-tuple_cell op_boolean_equal_e(const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_boolean_less_than_e(const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_boolean_greater_than_e(const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_boolean_not_equal_e(const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_boolean_less_equal_e(const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_boolean_greater_equal_e(const tuple_cell &a1, const tuple_cell &a2);
-
 /*******************************************************************************
  * OPERATORS ON BOOLEAN VALUES: END
  ******************************************************************************/
