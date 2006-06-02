@@ -4,7 +4,7 @@ The Institute for System Programming (ISP)
 of the Russian Academy of Sciences (RAS) 
 (http://www.ispras.ru).
 
-Copyright (C) 2004 ISP RAS. All rights reserved.
+Copyright (C) 2004-2006 ISP RAS. All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this product except in compliance with the License.
@@ -91,4 +91,30 @@ This product also includes software developed by other legal entities:
    (See accompanying file kernel/common/ph/COPYING (source code distribution) or
    copy at http://www.gnu.org/copyleft/library.txt).
 
+7. PostgreSQL Database Management System
+   (formerly known as Postgres, then as Postgres95)
+
+   Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+   Portions Copyright (c) 1994, The Regents of the University of California
+
+   Permission to use, copy, modify, and distribute this software and its
+   documentation for any purpose, without fee, and without a written agreement
+   is hereby granted, provided that the above copyright notice and this
+   paragraph and the following two paragraphs appear in all copies.
+
+8. Xerces C++
+   Copyright 2005-2006 ISP RAS
+   Copyright 2001-2004 The Apache Software Foundation
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+  
+        http://www.apache.org/licenses/LICENSE-2.0
+   
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 

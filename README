@@ -1,7 +1,7 @@
 
-                          Readme for Sedna 0.5
+                          Readme for Sedna 1.0
 
-        Copyright (C) 2005 ISP RAS and others. All rights reserved.
+      Copyright (C) 2004-2006 ISP RAS and others. All rights reserved.
 
 
    _______________________________________________________________________
@@ -33,10 +33,6 @@
    - Windows 2000/XP
    - Linux x86 kernel version 2.4 or higher
 
-   Additional requirements:
-   - Java API driver requires Java Run-time Environment (JRE) version 1.4.
-   - Scheme API driver requires PLT version 200 or higher, or Chicken.
-
 
    _______________________________________________________________________
 
@@ -58,12 +54,17 @@ Windows platform:
    1) Unzip archive to any directory (for example "c:\sedna").
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH.
+      Note: we recommend you to use an absolute path (in the previous 
+      example add "c:\sedna\bin" to the PATH variable).
 
 Linux platform:
 
    Sedna is distributed as a single self-extracting script.
    The installation process consists of running self-extracting script
    and following its instruction.
+   Note: To avoid incompatibility problems with different glibc versions
+   we _strongly_ recommend you building Sedna from source code or using
+   Sedna package (RPM or DEB) if it is provided by your Linux vendor.
 
 
    _______________________________________________________________________
