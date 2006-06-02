@@ -58,8 +58,6 @@ Windows platform:
    1) Unzip archive to any directory (for example "c:\sedna").
    2) Add the bin subdirectory of sedna installation to the environment 
       variable PATH.
-      Note: we recommend you to use an absolute path (in the previous 
-      example add "c:\sedna\bin" to the PATH variable).
 
 Linux platform:
 

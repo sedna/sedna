@@ -3,9 +3,72 @@
 
      _________________________________________________________________
 
+                             Release 1.0
+
+     Release date: 2006-??-??, as current date of 2006-05-31
+     _________________________________________________________________
+
+New:
+- XQuery extended with support for: date, time, duration functions; all XPath axes; 
+expressions on SequenceTypes (Instance Of, Typeswitch, Castable, Treat), Order By.
+- The XQuery functions position(), last() are optimized
+- Event Log
+- Support for Full-text Search (Sedna is integrated with dtSearch)
+- Recovery
+
+
+     _________________________________________________________________
+
+                             OmniMark API 
+
+     Release date: 2006-01-12
+     _________________________________________________________________
+
+we are pleased to announce that new version of OmniMark 8 now supports Sedna.
+
+Please find release notes here:
+http://www.stilo.com/products/platformv8.html
+
+Documentation can be found here:
+http://ftp.omnimark.com/documentation/library/63.htm
+
+     _________________________________________________________________
+
+                             Release 0.5 
+
+     Release date: 2005-09-27
+     _________________________________________________________________
+
+New:
+- Support for transactions (rollback and concurrency control)
+- Support for database security (users and privileges)
+- Support for Unicode (utf8)
+- Support for XQuery external functions implemented in C 
+  (limited to deal with sequences of atomic values only)
+- Directory structure and file names changed according to "Filesystem 
+Hierarchy Standard" (http://www.pathname.com/fhs/pub/fhs-2.3.html).
+- Support for the following standard XQuery functions is added: 
+fn:string, fn:string-length, fn:concat, fn:data
+- Update language is extended with the replace statement
+- Parameters of DDL statements are now computable
+- No limitation on the size of an XQuery query
+- Sedna API driver for the Gambit-C implementation of Scheme
+- Sedna package for Alt Linux is now availible at 
+http://altlinux.org/index.php?module=sisyphus&package=sedna
+(the package includes the previous version 0.4) 
+- Bug fixes
+
+New contributions:
+- Sedna API driver for .Net (Thanks to John Wood)
+- Sedna API driver for Python (Thanks to Anton Akkuzin)
+- Sedna API driver for Chicken Scheme is packaged as an egg (Thanks to Felix
+Winkelmann)
+
+     _________________________________________________________________
+
              Stable shapshot of version 0.5 being developed
 
-     Release date: 2005-??-??, current as of 2005-05-16
+     Release date: 2005-05-31
 
      _________________________________________________________________
 

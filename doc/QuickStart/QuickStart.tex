@@ -67,17 +67,17 @@ se_sm auction
 If the database is started successfully it prints "\verb!SM has been! \verb!started in! \verb!the background mode!".
 \item Load the sample XML document into the \verb!auction! database by typing the command:
 \begin{verbatim}
-se_trn auction load_data.xquery 
+se_term -file load_data.xquery auction
 \end{verbatim}
 If the document is loaded successfully it prints "\verb!UPDATE! \verb!is executed! \verb!successfully!".
 \item Now you can execute the sample queries by typing the command:
 \begin{verbatim}
-se_trn auction <query_name>.xquery 
+se_term -file <query_name>.xquery auction
 \end{verbatim}
 where \verb!<query_name>.xquery! is the name of a file with the sample query.
 For instance, to execute \verb!sample01.xquery! you should type 
 \begin{verbatim}
-se_trn auction sample01.xquery
+se_term -file sample01.xquery auction
 \end{verbatim}
 It prints the query result.
 \item Stop Sedna by running the following command:
@@ -111,7 +111,7 @@ We also provide ten sample XQuery queries to the document, that give a good illu
 \end{enumerate}
 
 \begin{thebibliography}{9}
-\bibitem{xmark} The XML benchmark project - XMark, www.xml-benchmark.org
+\bibitem{xmark} The XML benchmark project (XMark), www.xml-benchmark.org
 \end{thebibliography}
 
 \end{document}
