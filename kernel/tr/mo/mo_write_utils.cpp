@@ -2007,6 +2007,7 @@ void insertTextValue(xptr node,const void* text, int size,text_type ttype)
 /*removes the head of currently existing text value. */
 void delete_text_head(xptr node, int size)
 {
+	CHECKP(node);
     t_dsc* test_desc= (t_dsc*)XADDR(node);
 	int cur_size=test_desc->size;
 	if (cur_size<=size)
@@ -2051,7 +2052,8 @@ void delete_text_head(xptr node, int size)
 /*removes the tail of currently existing text value. */
 void delete_text_tail(xptr node, int size)
 {
-    t_dsc* test_desc= (t_dsc*)XADDR(node);
+    CHECKP(node);
+	t_dsc* test_desc= (t_dsc*)XADDR(node);
 	int cur_size=test_desc->size;
 	if (cur_size<=size)
 		throw SYSTEM_EXCEPTION("wrong recovery of text node");

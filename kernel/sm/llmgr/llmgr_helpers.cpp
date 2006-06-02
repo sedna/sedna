@@ -266,7 +266,9 @@ void llmgr_core::extend_logical_log(bool sync)
   mem_head->ll_files_arr[mem_head->ll_files_num] = new_file_number;
   mem_head->ll_files_num++;
 
-  mem_head->next_lsn = (mem_head->next_lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + 
+//This is not correct  mem_head->next_lsn = (mem_head->next_lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + 
+//                       sizeof(logical_log_file_head); 
+  mem_head->next_lsn = mem_head->base_addr + (mem_head->ll_files_num - 1)*LOG_FILE_PORTION_SIZE +
                        sizeof(logical_log_file_head); 
 
   mem_head->next_durable_lsn = mem_head->next_lsn;

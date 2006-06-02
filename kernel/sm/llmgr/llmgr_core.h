@@ -94,7 +94,7 @@ struct logical_log_head
 struct logical_log_file_head
 {
   LONG_LSN last_commit_lsn;//last record of the last committed trn
-  LONG_LSN next_lsn; //lsn of the next record after last_commit (or just next lsn of recrd if there is no any commit)
+  LONG_LSN next_lsn; //lsn of next record to be recorded
 //  LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
   int prev_file_number;//-1 indicates NULL
   __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
