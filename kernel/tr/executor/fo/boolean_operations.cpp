@@ -15,67 +15,6 @@
  * OPERATORS ON BOOLEAN VALUES: BEGIN
  ******************************************************************************/
 
-tuple_cell op_boolean_equal_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_equal(a1, a2);
-/*
-    return op_boolean_equal(a1.is_eos() ? fn_false() : a1, 
-                            a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-tuple_cell op_boolean_less_than_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_less_than(a1, a2);
-/*
-    return op_boolean_less_than(a1.is_eos() ? fn_false() : a1, 
-                                a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-tuple_cell op_boolean_greater_than_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_greater_than(a1, a2);
-/*
-    return op_boolean_greater_than(a1.is_eos() ? fn_false() : a1, 
-                                   a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-tuple_cell op_boolean_not_equal_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_not_equal(a1, a2);
-/*
-    return op_boolean_not_equal(a1.is_eos() ? fn_false() : a1, 
-                                a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-tuple_cell op_boolean_less_equal_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_less_equal(a1, a2);
-/*
-    return op_boolean_less_equal(a1.is_eos() ? fn_false() : a1, 
-                                 a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-tuple_cell op_boolean_greater_equal_e(const tuple_cell &a1, const tuple_cell &a2)
-{
-    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
-    return op_boolean_greater_equal(a1, a2);
-/*
-    return op_boolean_greater_equal(a1.is_eos() ? fn_false() : a1, 
-                                    a2.is_eos() ? fn_false() : a2);
-*/
-}
-
-
 tuple_cell op_boolean_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || a1.get_atomic_type() != xs_boolean ||
@@ -129,7 +68,6 @@ tuple_cell op_boolean_greater_equal(const tuple_cell &a1, const tuple_cell &a2)
 
     return tuple_cell::atomic(a1.get_xs_boolean() > a2.get_xs_boolean());
 }
-
 
 /*******************************************************************************
  * OPERATORS ON BOOLEAN VALUES: END

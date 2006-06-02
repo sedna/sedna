@@ -11,39 +11,8 @@
 #include "PPBase.h"
 
 
-tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2);
-
-
-
-inline tuple_cell fn_compare_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() == 0);
-}
-
-inline tuple_cell fn_compare_not_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() != 0);
-}
-
-inline tuple_cell fn_compare_less_than(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() < 0);
-}
-
-inline tuple_cell fn_compare_less_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() <= 0);
-}
-
-inline tuple_cell fn_compare_greater_than(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() > 0);
-}
-
-inline tuple_cell fn_compare_greater_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() >= 0);
-}
+// treat_xdt_untypedAtomic_as_xs_string should be set to true only for XQuery B.2 Operator Mapping implementation
+tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool treat_xdt_untypedAtomic_as_xs_string = false);
 
 
 #endif
