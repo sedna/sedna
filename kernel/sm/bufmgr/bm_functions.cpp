@@ -52,11 +52,11 @@ void _bm_set_working_set_size()
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
-        throw USER_EXCEPTION(SE1015, "See file FAQ shipped with the distribution");
+        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
 
     buf_mem_addr = uMapViewOfFile(file_mapping, NULL, bufs_num * PAGE_SIZE, 0, __sys_call_error);
     if (buf_mem_addr == NULL)
-        throw USER_EXCEPTION(SE1015, "See file FAQ shipped with the distribution");
+        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
 
 #ifdef REQUIRE_ROOT
     if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
