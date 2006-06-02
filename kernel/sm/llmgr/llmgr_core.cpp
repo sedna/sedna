@@ -1093,7 +1093,9 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
 
   rec_len = sizeof(char) + sizeof(int) + CHARISMA_MAX_TRNS_NUMBER*(sizeof(LONG_LSN) + sizeof(transaction_id));
   //check that log file will not be overflowed
-  if ((LOG_FILE_PORTION_SIZE - (mem_head->next_lsn % LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + rec_len))
+
+  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
+	  (sizeof(logical_log_head) + rec_len))
   {//current log must be flushed and new file created
      ll_log_flush(false);
      extend_logical_log(false);
@@ -1253,7 +1255,10 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   logical_log_head log_head;
 
   //check that log file will not be overflowed
-  if ((LOG_FILE_PORTION_SIZE - (mem_head->next_lsn % LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + len))
+  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
+	  (sizeof(logical_log_head) + len))
+
+//  if ((mem_head->next_lsn - (mem_head->next_lsn/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + len)
   {//current log must be flushed and new file created
      ll_log_flush(false);
      extend_logical_log(false);
@@ -1608,7 +1613,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   while(true)
   {
 //#ifdef LOGICAL_LOG_TEST
-//	  d_printf2("record number=%d\n",i);
+	//  d_printf3("record number=%d\n",i);
+//	 cout << "rollback lsn=" << lsn << endl;
 	 i++;
 //#endif
      if (log_head->prev_trn_offs == NULL_LSN)
@@ -1880,9 +1886,17 @@ void llmgr_core::redo_commit_trns(trns_analysis_map& trns_map, LONG_LSN &start_l
   trns_analysis_map::iterator it; 
  
   int i=1;
+  __int64 file_size;
 
   do
   {
+    set_file_pointer(lsn);
+    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       throw SYSTEM_EXCEPTION("Can't get file size");
+
+	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+
     rec = get_record_from_disk(lsn);
     body_len = ((logical_log_head*)rec)->body_len;
 
@@ -1954,9 +1968,19 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
   //pass the log
   trns_analysis_map trns_map_after_checkpoint;//map of transactions began after checkpoint
   trns_analysis_map::iterator it;
+  __int64 file_size;
 
   while (lsn <= end_lsn)
   {
+    //obtain lsn of next record (it must be not contiguous if next record is located in next log file)
+    set_file_pointer(lsn);
+    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       throw SYSTEM_EXCEPTION("Can't get file size");
+
+	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+
+ 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
 
@@ -2128,6 +2152,7 @@ void llmgr_core::ll_truncate_log(bool sync)
   set_file_pointer(lsn);//pos to the begin of file
   file_head.base_addr = new_base_addr;
   file_head.valid_number = valid_number;
+  file_head.next_lsn = mem_head->next_lsn;
 
 
   int res;
