@@ -120,6 +120,14 @@ protected:
 
 
 public:
+  plmgr_core()
+  {
+      sector_size = 0;
+      read_buf = NULL;
+      share_mem = NULL;
+      log_file_size = 0;
+  }
+
   bool create_phys_log(std::string db_files_path, int _log_file_size_, int& sedna_db_version);
   void open_phys_log(std::string db_phys_log_path, int _log_file_size_ = 100);
   void init_phys_log_open_state();
