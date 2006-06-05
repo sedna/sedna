@@ -80,7 +80,7 @@ export DISTR_EXT=tar.gz
 export SRC_EXT=tar.gz
 fi
 
-EXCLUDE_FROM_SOURCE_DISTR="--exclude exclude_files --exclude copyright.sh --exclude linecount.sh --exclude release.sh"
+EXCLUDE_FROM_SOURCE_DISTR="--exclude exclude_files --exclude copyright.sh --exclude linecount.sh --exclude release.sh --exclude _darcs"
 for exclude_file in libs/AntlrMSVC60.mak libs/Makefile.antlr libs/Makefile.dlg libs/Makefile.sor libs/Makefile.sor-lib libs/chicken.mak libs/expat_static.mak; do 
 	EXCLUDE_FROM_SOURCE_DISTR="$EXCLUDE_FROM_SOURCE_DISTR --exclude $exclude_file"
 done
