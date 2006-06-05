@@ -1127,7 +1127,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 				intl_ftr.cursor = -intl_ftr.cursor;
 				U_ASSERT(intl_ftr.cursor == cursor - size);
-				U_ASSERT(map_start >= cursor);
+				U_ASSERT(map_start >= cursor - size);
 
 				intl_last_blk = pred_blk;
 
