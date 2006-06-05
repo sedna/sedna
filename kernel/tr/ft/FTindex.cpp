@@ -73,8 +73,8 @@ void ftlog_file::close_and_delete_file(const char *index_name)
 
 SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 {
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	uMkDir(index_path1.c_str(),NULL, __sys_call_error);
 	uMkDir(index_path.c_str(),NULL, __sys_call_error);
@@ -112,8 +112,8 @@ void SednaIndexJob::OnError(long a, const char * b, const char * c, const char *
 }
 int SednaIndexJob::clear_index(const char *index_name)
 {
-	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
 	std::string index_path = index_path1 + std::string(index_name);
 
 	short result;
@@ -156,10 +156,10 @@ void SednaIndexJob::insert_into_index(xptr_sequence* upserted)
 }
 void SednaIndexJob::delete_from_index(xptr_sequence* deleted)
 {
-	std::string list_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
-		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+	std::string list_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
 	std::string list_path = list_path1 + std::string(ft_idx->index_title) + 
-		std::string("\\remove_list");
+		std::string("/remove_list");
 
 	UFile f = uCreateFile(list_path.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
 

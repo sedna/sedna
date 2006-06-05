@@ -15,4 +15,9 @@ bool exist_db(const char* db_name);
 int load_metadata_in_database(const char* db_name);
 
 int delete_logical_log(const char* db_name);
+
+#ifdef SE_ENABLE_FTSEARCH
+int delete_dtsearch_files(const char* db_name);
+#endif
+
 #endif

@@ -59,6 +59,15 @@ int cleanup_db(const char* db_name)
          return 2;
    }
 
+#ifdef SE_ENABLE_FTSEARCH
+   //delete dtsearch files
+   res = delete_dtsearch_files(db_name);
+
+   if (res == 2) return 2;
+   if (res > 0) db_exist = true;
+#endif
+
+
    //delete llog file
    res = delete_logical_log(db_name);
 
@@ -317,3 +326,162 @@ int delete_logical_log(const char* db_name)
 #endif  
 
 }
+
+//returns 0 if dtsearch files do not exist
+//returns 1 if dtsearch files were deleted succesfully
+//returns 2 if dtsearch files can't be deleted
+#ifdef SE_ENABLE_FTSEARCH
+int delete_dtsearch_files(const char* db_name)
+{
+#ifdef _WIN32
+
+  char buf[4096];
+  char *cur_dir;
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+
+  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
+     return 2;
+  
+  if (uChangeWorkingDirectory("dtsearch", __sys_call_error) != 0 )
+  {
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
+
+     return 0;
+  }
+
+  struct _finddata_t dts_file;
+  long dsc;
+
+  if ( (dsc = _findfirst("*", &dts_file)) == -1L)
+  {
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
+
+     return 0;
+  }
+
+  do 
+  {
+	 if (!strcmp(dts_file.name, ".") || !strcmp(dts_file.name, ".."))
+		 continue;
+  	 if (dts_file.attrib & _A_SUBDIR)
+  	 {
+  	 	 if (uChangeWorkingDirectory(dts_file.name, __sys_call_error) != 0 )
+  	 	 {
+	        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+	        return 2;
+  	 	 }
+         struct _finddata_t dts_dir_file;
+         long dsc1;
+         if ( (dsc1 = _findfirst("*", &dts_dir_file)) != -1L)
+         {
+         	 do
+         	 {
+				 if (!strcmp(dts_dir_file.name, ".") || !strcmp(dts_dir_file.name, ".."))
+					 continue;
+			     if (uDeleteFile(dts_dir_file.name, __sys_call_error) == 0) 
+			     {
+			        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+			        return 2;
+			     }
+         	 } while (_findnext(dsc1, &dts_dir_file) == 0);
+         }
+         _findclose(dsc1);
+		if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
+		{
+	        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+	        return 2;
+		}
+
+		if (uDelDir(dts_file.name, __sys_call_error) == 0) 
+		{
+			uChangeWorkingDirectory(cur_dir, __sys_call_error);
+			return 2;
+		}
+  	 }
+	 else
+	 {
+		 if (uDeleteFile(dts_file.name, __sys_call_error) == 0) 
+		 {
+			uChangeWorkingDirectory(cur_dir, __sys_call_error);
+			return 2;
+		 }
+	 }
+  } while(_findnext(dsc, &dts_file) == 0);
+
+  _findclose(dsc);
+
+  if (uChangeWorkingDirectory("..", __sys_call_error) != 0)
+  {
+	  uChangeWorkingDirectory(cur_dir, __sys_call_error);
+	  return 2;
+  }
+
+  if (uDelDir("dtsearch", __sys_call_error) == 0) 
+  {
+	  uChangeWorkingDirectory(cur_dir, __sys_call_error);
+	  return 2;
+  }
+
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+     return 2;
+
+  return 1;
+#else
+  DIR *dir;
+  struct dirent* dent;
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/dtsearch/";
+
+  dir = opendir(path_to_db_files.c_str());
+
+  if (dir == NULL)
+     return 0;
+
+  dent = readdir (dir);
+  if (dent == NULL) return 2;
+
+  do 
+  {
+     if (!strcmp(dent->d_name, ".") || !strcmp(dent->d_name, ".."))
+		 continue;
+
+     string file_path = path_to_db_files + string(dent->d_name);
+     struct stat f;
+     if (lstat(file_path.c_str(), &f) == -1)
+         return 2;
+	 if (S_ISDIR(f.st_mode))
+	 {
+	 	 string subdir_path = file_path + string("/");
+	 	 DIR *sub_dir = opendir(subdir_path.c_str());
+	 	 struct dirent *sdent;
+	 	 if (sub_dir == NULL)
+	 	 	 return 2;
+	 	 while(NULL != (sdent=readdir(sub_dir)))
+	 	 {
+	 	 	 if (!strcmp(sdent->d_name, ".") || !strcmp(sdent->d_name, ".."))
+                 continue;
+			 if (uDeleteFile((subdir_path + sdent->d_name).c_str(), __sys_call_error) == 0) 
+				 return 2;
+	 	 }
+		 if (uDelDir(file_path.c_str(), __sys_call_error) == 0) 
+			 return 2;
+	 }
+	 else
+	 {
+		 if (uDeleteFile(file_path.c_str(), __sys_call_error) == 0) 
+			 return 2;
+	 }
+  } while(NULL != (dent=readdir(dir)));
+
+  if (0 != closedir(dir))
+     return 2;
+  if (uDelDir(path_to_db_files.c_str(), __sys_call_error) == 0)
+     return 2;
+  
+  return 1;
+#endif  
+
+}
+#endif
