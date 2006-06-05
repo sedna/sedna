@@ -14,7 +14,7 @@
 
 #include "u.h"
 
-#define REQUIRE_ROOT
+//#define REQUIRE_ROOT
 
 #ifdef _WIN32
 #define U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK             GENERIC_ALL

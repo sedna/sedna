@@ -4,14 +4,6 @@
  */
 
 
-/******************************************************************************
-The following is left to implement:
-1. I do not _reserve_ address space for data. It can bring us to unpredictable
-   errors.
-
-*******************************************************************************/
-
-
 #include "sedna.h"
 #include <string>
 #include "sm_vmm_data.h"
@@ -30,33 +22,52 @@ using namespace std;
 ********************************************************************************
 *******************************************************************************/
 
-#if (defined(_WIN32) && defined(REQUIRE_ROOT))
 #define EBS_WORKING_SET_SIZE	(20 * 1024 * 1024)
-SIZE_T MinimumWorkingSetSize_orig = 0, MaximumWorkingSetSize_orig = 0;
-#endif
+size_t MinimumWorkingSetSize_orig = 0, MaximumWorkingSetSize_orig = 0;
+int lock_memory = 1;
+
+
+void _bm_set_working_set_size()
+{
+    int working_set_size = bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
+    int res = 0;
+
+    res = uGetCurProcessWorkingSetSize(
+                        &MinimumWorkingSetSize_orig,// minimum working set size
+                        &MaximumWorkingSetSize_orig,// maximum working set size
+                        __sys_call_error
+          );
+    if (res != 0) 
+        throw USER_EXCEPTION(SE1015);
+
+    res = uSetCurProcessWorkingSetSize(
+                        working_set_size,			// minimum working set size
+                        working_set_size,			// maximum working set size
+                        __sys_call_error
+          );
+    if (res != 0) 
+        throw USER_EXCEPTION(SE1015);
+}
+
+void _bm_restore_working_set_size()
+{
+    int res = 0;
+    res = uSetCurProcessWorkingSetSize(
+                        MinimumWorkingSetSize_orig,// minimum working set size
+                        MaximumWorkingSetSize_orig,// maximum working set size
+                        __sys_call_error
+          );
+    if (res != 0)
+        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+}
 
 void _bm_init_buffer_pool()
 {
-#if (defined(_WIN32) && defined(REQUIRE_ROOT))
-    int working_set_size = bufs_num * PAGE_SIZE + EBS_WORKING_SET_SIZE;
-    BOOL res = 0;
-
-    res = GetProcessWorkingSetSize(
-                    GetCurrentProcess(),        // handle to the process
-                    &MinimumWorkingSetSize_orig,// minimum working set size
-                    &MaximumWorkingSetSize_orig // maximum working set size
-          );
-    if (res == 0) 
-        throw USER_EXCEPTION(SE1015);
-
-    res = SetProcessWorkingSetSize(
-                    GetCurrentProcess(),		// handle to process
-                    working_set_size,			// minimum working set size
-                    working_set_size			// maximum working set size
-          );
-    if (res == 0) 
-        throw USER_EXCEPTION(SE1015);
+#ifndef REQUIRE_ROOT
+    int is_root = uIsAdmin(__sys_call_error);
+    if (is_root && lock_memory)
 #endif
+        _bm_set_working_set_size();
 
     file_mapping = uCreateFileMapping(U_INVALID_FD, bufs_num * PAGE_SIZE, CHARISMA_BUFFER_SHARED_MEMORY_NAME, NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(file_mapping))
@@ -66,10 +77,11 @@ void _bm_init_buffer_pool()
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION(SE1015);
 
-#ifdef REQUIRE_ROOT
-    if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
-        throw USER_EXCEPTION(SE1016);
+#ifndef REQUIRE_ROOT
+    if (is_root && lock_memory)
 #endif
+        if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+            throw USER_EXCEPTION(SE1016);
 
     for (int i = 0; i < bufs_num; i++) free_mem.push(i * PAGE_SIZE);
 }
@@ -81,10 +93,12 @@ void _bm_release_buffer_pool()
     used_mem.clear();
     blocked_mem.clear();
 
-#ifdef REQUIRE_ROOT
-    if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
-        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+#ifndef REQUIRE_ROOT
+    int is_root = uIsAdmin(__sys_call_error);
+    if (is_root && lock_memory)
 #endif
+        if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
+            throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
     if (uUnmapViewOfFile(file_mapping, buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
@@ -94,17 +108,10 @@ void _bm_release_buffer_pool()
     if (uReleaseFileMapping(file_mapping, CHARISMA_BUFFER_SHARED_MEMORY_NAME, __sys_call_error) == -1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
-#if (defined(_WIN32) && defined(REQUIRE_ROOT))
-    BOOL res = 0;
-
-    res = SetProcessWorkingSetSize(
-                    GetCurrentProcess(),       // handle to the process
-                    MinimumWorkingSetSize_orig,// minimum working set size
-                    MaximumWorkingSetSize_orig // maximum working set size
-          );
-    if (res == 0)
-        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+#ifndef REQUIRE_ROOT
+    if (is_root && lock_memory)
 #endif
+        _bm_restore_working_set_size();
 }
 
 void bm_startup() throw (SednaException)
