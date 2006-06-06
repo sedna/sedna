@@ -185,11 +185,7 @@ void PPCastable::next  (tuple &t)
 
         if (t.is_eos()) 
         {
-            if (can_be_empty_seq)
-            {
-                first_time = true;
-                res = true;
-            }
+            if (can_be_empty_seq) res = true;
             else res = false; //cast expression ('?' is not specified in target type but empty sequence is given)
         }
         else
