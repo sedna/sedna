@@ -11,6 +11,11 @@
 #include "uhdd.h"
 //using namespace dtSearch;
 
+#ifndef _WIN32
+#include <sys/types.h>
+#include <dirent.h>
+#endif
+
 void ftlog_file::write_xptr_sequence(xptr_sequence* seq)
 {
 	int count = seq->size();
@@ -425,10 +430,24 @@ void SednaIndexJob::recover_db(trns_analysis_map& undo_redo_trns_map)
             found = FindNextFile(fhanldle, &find_data);
         }
         if (FindClose(fhanldle) == 0)
-			throw USER_EXCEPTION(SE4043);
+			throw USER_EXCEPTION(SE4043); //FIXME: exception code
     }
 #else
-	//TODO: linux
+	DIR *dir;
+	struct dirent *dent;
+	std::string log_path = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
+	dir = opendir(log_path.c_str());
+	if (dir != NULL)
+		while (NULL != (dent = readdir(dir)))
+		{
+			int l = strlen(dent->d_name);
+			if (l > 4 && !strcmp((char*)dent->d_name + l - 4, ".log"))
+					recover_db_file(dent->d_name, undo_redo_trns_map);
+		}
+	if (0 != closedir(dir))
+			throw USER_EXCEPTION(SE4043); //FIXME: exception code
+	
 #endif
 	//1. create list of all files to process
 	// 2. cycle on file list
