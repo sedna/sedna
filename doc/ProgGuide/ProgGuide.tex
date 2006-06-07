@@ -484,7 +484,7 @@ parameters:
 
 \verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
 
-\verb!attr! - an attribute to set (one the predifined Sedna connection attributes lited below).
+\verb!attr! - an attribute to set (one of the predifined Sedna connection attributes listed below).
 
 \verb!attrValue! - a pointer to the value to be associated with the attribute.
 
@@ -509,9 +509,13 @@ $Attribute$&$Attribute Value$&$Attribute Value Length$\\
 \verb!SEDNA_ATTR_AUTOCOMMIT! & \verb!SEDNA_AUTOCOMMIT_ON!,	 & sizeof(int)\\
 							 & \verb!SEDNA_AUTOCOMMIT_OFF! 	 & \\
 \hline
+\verb!SEDNA_ATTR_SESSION_DIRECTORY! & \emph{path to directory}	 & \emph{length of path}\\
+\hline
 \end{tabular}}
 \end{center}
 \end{figure}
+
+The \verb!SEDNA_ATTR_SESSION_DIRECTORY! connection attribute defines the \verb!session directory!. If this attribute is set, paths in the \verb!LOAD! statement \ref{bulk-load} are evaluated relative to the session directory.
 
 An application can get connection attributes using \verb!SEgetConnectionAttr!:
 
