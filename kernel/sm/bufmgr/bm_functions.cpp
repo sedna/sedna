@@ -46,7 +46,26 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
     if (res != 0) 
-        throw USER_EXCEPTION(SE1015);
+        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
+}
+
+void _bm_restore_working_set_size()
+{
+    int res = 0;
+    res = uSetCurProcessWorkingSetSize(
+                        MinimumWorkingSetSize_orig,// minimum working set size
+                        MaximumWorkingSetSize_orig,// maximum working set size
+                        __sys_call_error
+          );
+    if (res != 0)
+        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+}
+
+void _bm_init_buffer_pool()
+{
+#ifndef REQUIRE_ROOT
+    int is_root = uIsAdmin(__sys_call_error);
+    if (is_root && lock_memory)
 #endif
         _bm_set_working_set_size();
 
@@ -58,12 +77,11 @@ void _bm_set_working_set_size()
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
 
-#ifdef REQUIRE_ROOT
-    if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
-        throw USER_EXCEPTION(SE1016);
+#ifndef REQUIRE_ROOT
+    if (is_root && lock_memory)
 #endif
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
-            throw USER_EXCEPTION(SE1016);
+            throw USER_EXCEPTION2(SE1016, "See file FAQ shipped with the distribution");
 
     for (int i = 0; i < bufs_num; i++) free_mem.push(i * PAGE_SIZE);
 }
@@ -513,5 +531,3 @@ void bm_block_statistics(sm_blk_stat *stat) throw (SednaException)
     stat->used_data_blocks_num = (int)((mb->data_file_cur_size - (__int64)PAGE_SIZE) / (__int64)PAGE_SIZE) - stat->free_data_blocks_num;
     stat->used_tmp_blocks_num = (int)(mb->tmp_file_cur_size / (__int64)PAGE_SIZE) - stat->free_tmp_blocks_num;
 }
-
-
