@@ -36,6 +36,7 @@ extern const size_t narg;
 extern arg_rec term_argtable[];
 
 extern bool on_error_stop;
+extern char session_dir[];
 extern SednaConnection conn;
 
 #define EXIT_SUCCESS                       0

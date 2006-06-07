@@ -104,13 +104,36 @@ MainLoop(FILE *source)
 #endif
 
 	//open session
-   // strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
+   
+    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
     int res = SEconnect(&conn, host, db_name, login, password);
-	
     if(res != SEDNA_SESSION_OPEN)
     {
 	   fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
 	   return 1;
+    }
+
+    if (strcmp(filename,"???") != 0)
+    {
+        char file_abs_path[U_MAX_PATH+1];
+        if (uGetAbsoluteFilePath(filename, file_abs_path, U_MAX_PATH, __sys_call_error) == NULL)
+        {
+	        fprintf(stderr, "failed to get an absolute path of the script file \n%s\n", SEgetLastErrorMsg(&conn));
+			quit_term();
+	        return 1;
+        }
+        if (uGetDirectoryFromFilePath(file_abs_path, session_dir, U_MAX_DIR, __sys_call_error) == NULL)
+        {
+	        fprintf(stderr, "failed to get a directory from the file path \n%s\n", SEgetLastErrorMsg(&conn));
+			quit_term();
+	        return 1;
+        }
+	    if (SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY, session_dir, strlen(session_dir)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+        {
+	        fprintf(stderr, "failed to set the Sedna session directory attribute \n%s\n", SEgetLastErrorMsg(&conn));
+			quit_term();
+	        return 1;
+        }
     }
 
 	set_sedna_data();
