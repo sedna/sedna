@@ -8,6 +8,7 @@
 #include "base.h"
 #include "d_printf.h"
 #include "uhdd.h"
+#include "uutils.h"
 
 #include "mainloop.h"
 #include "term_globals.h"
@@ -105,7 +106,7 @@ MainLoop(FILE *source)
 
 	//open session
    
-    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
+    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(u_itoa(socket_port, buffer, 10)).c_str());
     int res = SEconnect(&conn, host, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN)
     {
