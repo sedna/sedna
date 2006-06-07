@@ -375,28 +375,57 @@ static int execute(struct SednaConnection *conn)
         /* open file. Read from file and send 410 - BulkLoadPortion. 420 - BulkLoadEnd.*/
         /*     cout << "bulk load from file " << string(msg.body+5).c_str() << " ...";*/
         UFile file_handle;
+        char cur_dir_abspath[SE_MAX_DIR_LENGTH+1];
+        char cfile_abspath[SE_MAX_DIR_LENGTH+1];
         int already_read = 1, res = 1;
         char *filename = conn->msg.body + 5;
         filename[s_min(conn->msg.length - 5, SE_SOCKET_MSG_BUF_SIZE - 6)] = '\0';
-        file_handle = uOpenFile(filename, 0, U_READ, 0, NULL);
+
+        if (uGetCurrentWorkingDirectory(cur_dir_abspath, SE_MAX_DIR_LENGTH, NULL) == NULL)
+        {
+            setDriverErrorMsg(conn, SE4602, NULL);
+            return SEDNA_ERROR;
+        }
+        if (uChangeWorkingDirectory(conn->session_directory, NULL) != 0)
+        {
+            setDriverErrorMsg(conn, SE4604, NULL);
+            return SEDNA_ERROR;
+        }
+        if (uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error) == NULL)
+        {
+            setDriverErrorMsg(conn, SE4603, NULL);
+            return SEDNA_ERROR;
+        }
+        if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
+        {
+            setDriverErrorMsg(conn, SE4604, NULL);
+            return SEDNA_ERROR;
+        }
+
+        file_handle = uOpenFile(cfile_abspath, 0, U_READ, 0, NULL);
         if (file_handle == U_INVALID_FD)
         {
-            /* send 400 - BulkLoadError*/
-            conn->msg.instruction = se_BulkLoadError;
-            conn->msg.length = 0;
-            if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+            uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error);
+            file_handle = uOpenFile(cfile_abspath, 0, U_READ, 0, NULL);
+            if(file_handle == U_INVALID_FD)
             {
-                connectionFailure(conn, SE3006, NULL, NULL);
-                return SEDNA_ERROR;
+                /* send 400 - BulkLoadError*/
+                conn->msg.instruction = se_BulkLoadError;
+                conn->msg.length = 0;
+                if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+                {
+                    connectionFailure(conn, SE3006, NULL, NULL);
+                    return SEDNA_ERROR;
+                }
+                setDriverErrorMsg(conn, SE3017, filename);
+                if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+                {
+                    connectionFailure(conn, SE3007, NULL, NULL);
+                    return SEDNA_ERROR;
+                }
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_BULK_LOAD_FAILED;
             }
-            setDriverErrorMsg(conn, SE3017, filename);
-            if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-            {
-                connectionFailure(conn, SE3007, NULL, NULL);
-                return SEDNA_ERROR;
-            }
-            conn->isInTransaction = SEDNA_NO_TRANSACTION;
-            return SEDNA_BULK_LOAD_FAILED;
         }
 
         while ((res > 0) && (already_read != 0))
@@ -712,7 +741,15 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         conn->local_data_length = 0;
         conn->local_data_offset = 0;
         conn->cbl.bulk_load_started = 0;
-
+        if(strcmp(conn->session_directory, "") == 0) /* Session directory has not been set yet */
+        {
+        	if (uGetCurrentWorkingDirectory(conn->session_directory, SE_MAX_DIR_LENGTH, NULL) == NULL)
+        	{
+            	connectionFailure(conn, SE4602, NULL, NULL);
+            	release(conn);
+            	return SEDNA_OPEN_SESSION_FAILED;
+        	}
+        }
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_OK;
 
@@ -1494,6 +1531,15 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                     return SEDNA_ERROR;
             }
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+        case SEDNA_ATTR_SESSION_DIRECTORY:
+            if (attrValueLength > SE_MAX_DIR_LENGTH)
+            {
+                setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
+                return SEDNA_ERROR;
+            }
+            strncpy(conn->session_directory, attrValue, attrValueLength);
+            conn->session_directory[attrValueLength] = '\0';
+            return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
@@ -1513,6 +1559,10 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             value = (conn->autocommit) ? SEDNA_AUTOCOMMIT_ON: SEDNA_AUTOCOMMIT_OFF;
             memcpy(attrValue, &value, 4);
             *attrValueLength = 4;
+            return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
+        case SEDNA_ATTR_SESSION_DIRECTORY:
+            memcpy(attrValue, conn->session_directory, strlen(conn->session_directory));
+            *attrValueLength = strlen(conn->session_directory);
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/

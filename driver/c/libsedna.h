@@ -73,7 +73,7 @@ extern "C"
 #define SEDNA_SET_ATTRIBUTE_SUCCEEDED              32
 #define SEDNA_GET_ATTRIBUTE_SUCCEEDED              33
     
-    enum SEattr {SEDNA_ATTR_AUTOCOMMIT};
+    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY};
     
     struct conn_bulk_load
     {
@@ -88,6 +88,7 @@ extern "C"
         char db_name[SE_MAX_DB_NAME_LENGTH + 1];
         char login[SE_MAX_LOGIN_LENGTH + 1];
         char password[SE_MAX_PASSWORD_LENGTH + 1];
+        char session_directory[SE_MAX_DIR_LENGTH+1];
 #ifdef _WIN32
         SOCKET socket;
 #else
@@ -115,7 +116,7 @@ extern "C"
         struct msg_struct msg;
     };
 
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}}
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
 

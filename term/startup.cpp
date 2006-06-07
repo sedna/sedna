@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
         if ((term_s_help == 1)||(term_l_help == 1)){print_term_usage(); return 0; }
 
-        if (term_version == 1) {print_version_and_copyright("Sedna Terminal");  return 0; }
+        if (term_version == 1) {print_version_and_copyright("Sedna Terminal"); throw USER_SOFT_EXCEPTION("");}
 
         if (socket_port == 0) socket_port = 5050;
         if (strcmp(host, "???") == 0 ) strcpy(host, "localhost"); 
@@ -143,10 +143,9 @@ int main(int argc, char *argv[])
     	fprintf(stderr, "%s\n", e.getMsg().c_str());
     } catch (SednaException &e) {
     	fprintf(stderr, "System error\n");
-        sedna_soft_fault(e);
+    	fprintf(stderr, e.getMsg().c_str());
     } catch (...) {
        	fprintf(stderr, "System error\n");
-       	sedna_soft_fault();
     }
     
     return 1;

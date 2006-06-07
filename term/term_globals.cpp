@@ -46,4 +46,7 @@ arg_rec term_argtable[] =
 };
 
 bool on_error_stop = false;
+
+char session_dir[U_MAX_DIR+1];
+
 SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;
