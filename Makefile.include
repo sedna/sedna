@@ -130,7 +130,7 @@ ifeq ("$(OS)", "CYGWIN_NT")
 CC = cl /c
 CCX = cl /c
 LD = link
-LB = lib
+LB = link /LIB
 LIBFLAGS = /NOLOGO
 LDOUT = /out:
 LIBOUT = /OUT:
