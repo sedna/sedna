@@ -52,7 +52,7 @@ typedef pthread_spinlock_t     uspinlock;
 #ifdef _WIN32
 #define uSpinInit(sl)		((*(sl) = FALSE), 0)
 #define uSpinDestroy(sl)	0
-#define uSpinLock(sl)		while (InterlockedExchange(sl, TRUE) == TRUE) Sleep(0)
+#define uSpinLock(sl)		while (InterlockedExchange(sl, TRUE) == TRUE) { Sleep(0); }
 #define uSpinUnlock(sl)		InterlockedExchange(sl, FALSE)
 #else
 #define uSpinInit(sl)		pthread_spin_init(sl, 0)
