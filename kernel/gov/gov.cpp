@@ -158,6 +158,7 @@ int main(int argc, char** argv)
         /////////////// BACKGROUND MODE ////////////////////////////////////////
         char *command_line_str = NULL;
         if (background_mode == 1)
+        {
         try {
             string command_line = argv[0];
             command_line += " -background-mode off";
@@ -200,6 +201,7 @@ int main(int argc, char** argv)
             sedna_soft_fault(e);
         } catch (...) {
             sedna_soft_fault();
+        }
         }
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 

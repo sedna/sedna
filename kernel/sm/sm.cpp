@@ -434,6 +434,7 @@ int main(int argc, char **argv)
         /////////////// BACKGROUND MODE ////////////////////////////////////////
         char *command_line_str = NULL;
         if (background_mode == 1)
+        {
         try {
             string command_line = argv[0];
             command_line += " -background-mode off ";
@@ -479,6 +480,7 @@ int main(int argc, char **argv)
         } catch (...) {
             sedna_soft_fault();
         }
+    	}
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
