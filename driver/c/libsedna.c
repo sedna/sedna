@@ -384,22 +384,22 @@ static int execute(struct SednaConnection *conn)
         if (uGetCurrentWorkingDirectory(cur_dir_abspath, SE_MAX_DIR_LENGTH, NULL) == NULL)
         {
             setDriverErrorMsg(conn, SE4602, NULL);
-            return SEDNA_ERROR;
+            goto BulkLoadErr;
         }
         if (uChangeWorkingDirectory(conn->session_directory, NULL) != 0)
         {
             setDriverErrorMsg(conn, SE4604, NULL);
-            return SEDNA_ERROR;
+            goto BulkLoadErr;
         }
         if (uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error) == NULL)
         {
             setDriverErrorMsg(conn, SE4603, NULL);
-            return SEDNA_ERROR;
+            goto BulkLoadErr;
         }
         if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
         {
             setDriverErrorMsg(conn, SE4604, NULL);
-            return SEDNA_ERROR;
+            goto BulkLoadErr;
         }
 
         file_handle = uOpenFile(cfile_abspath, 0, U_READ, 0, NULL);
@@ -410,7 +410,7 @@ static int execute(struct SednaConnection *conn)
             if(file_handle == U_INVALID_FD)
             {
                 /* send 400 - BulkLoadError*/
-                conn->msg.instruction = se_BulkLoadError;
+  BulkLoadErr:  conn->msg.instruction = se_BulkLoadError;
                 conn->msg.length = 0;
                 if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
                 {
