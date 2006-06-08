@@ -840,7 +840,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
         fprintf(stderr, "Cannot write to soft fault log file");
         return;
     }
-#ifndef _WIN32
+#ifdef _WIN32
     strcpy(log_buf, "\n");
     strcat(log_buf, str);
     strcat(log_buf, " command line arguments: ");
