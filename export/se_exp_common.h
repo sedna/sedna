@@ -44,8 +44,8 @@ typedef struct qbuf_t {
 } qbuf_t;
 
 extern int exp_verbose;
-#define FTRACE(x) {fprintf x; if (exp_verbose==1) {FILE *log=stdout; fprintf x;} } 
-#define ETRACE(x) {fprintf x; {FILE *log=stdout; fprintf x;} } 
+#define FTRACE(x) do {fprintf x; if (exp_verbose==1) {FILE *log=stdout; fprintf x;} } while (0)
+#define ETRACE(x) do {fprintf x; {FILE *log=stdout; fprintf x;} } while (0)
 
 
 //function bulkloads XML file with filename to Sedna with docname
