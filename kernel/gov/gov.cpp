@@ -94,7 +94,7 @@ void GOVCtrlHandler(int signo)
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
-    pping_server pps(5151);
+    pping_server pps(5151, EL_GOV);
 
     bool is_pps_close = true;
 
@@ -198,9 +198,9 @@ int main(int argc, char** argv)
             fprintf(stderr, "%s\n", e.getMsg().c_str());
             return 1;            
         } catch (SednaException &e) {
-            sedna_soft_fault(e);
+            sedna_soft_fault(e, EL_GOV);
         } catch (...) {
-            sedna_soft_fault();
+            sedna_soft_fault(EL_GOV);
         }
         }
         /////////////// BACKGROUND MODE ////////////////////////////////////////
@@ -209,6 +209,7 @@ int main(int argc, char** argv)
         if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
+        elog(EL_LOG, ("=============================================="));
         elog(EL_LOG, ("SEDNA event log is ready"));
 
 
@@ -267,9 +268,9 @@ int main(int argc, char** argv)
         if (!is_pps_close) { pps.shutdown();}
         return 1;
     } catch (SednaException &e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_GOV);
     } catch (...) {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_GOV);
     }
     
     return 0;

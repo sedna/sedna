@@ -23,6 +23,7 @@ class pping_client
 private:
     int port;
     char host[PPING_MAX_HOSTLEN];
+    int component;
     USOCKET sock;
     bool stop_keep_alive;
     bool initialized;
@@ -33,7 +34,7 @@ private:
     void startup(SednaUserException& e, bool is_soft);
 
 public:
-    pping_client(int _port_, const char* _host_ = NULL);
+    pping_client(int _port_, int _component_, const char* _host_ = NULL);
     ~pping_client();
 
     void startup(SednaUserException& e);
@@ -59,13 +60,14 @@ public:
 private:
     int port;
     USOCKET sock;
+    int component;
     bool initialized;
     UTHANDLE server_lstn_thread_handle;
     bool close_lstn_thread;
     thread_table_t thread_table[PPING_SERVER_THREAD_TABLE_SIZE];
 
 public:
-    pping_server(int _port_);
+    pping_server(int _port_, int _component_);
     ~pping_server();
 
     void startup();

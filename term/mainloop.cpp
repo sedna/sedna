@@ -105,14 +105,14 @@ MainLoop(FILE *source)
 #endif
 
 	//open session
-   // strcat(strcat(host,":"),std::string(itoa(socket_port, buffer, 10)).c_str());
+   
+    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(u_itoa(socket_port, buffer, 10)).c_str());
     int res = SEconnect(&conn, host, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN)
     {
 	   fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
 	   return 1;
     }
-
     if (strcmp(filename,"???") != 0)
     {
         char file_abs_path[U_MAX_PATH+1];

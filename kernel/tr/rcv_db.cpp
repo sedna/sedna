@@ -44,7 +44,7 @@ int main (int argc, char** argv)
   }
 
 
-  pping_client ppc(5151);
+  pping_client ppc(5151, EL_RCV);
 
   try{
       vmm_preliminary_call();

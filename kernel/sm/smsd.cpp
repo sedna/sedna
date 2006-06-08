@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     int command = STOP;
 
 
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_SMSD);
 
  
     try {
@@ -141,9 +141,9 @@ end:
         ppc.shutdown();
         return 1;
     } catch (SednaException &e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_SMSD);
     } catch (...){
-        sedna_soft_fault();
+        sedna_soft_fault(EL_SMSD);
     }
 
     return 0;

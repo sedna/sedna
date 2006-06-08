@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 {
   program_name_argv_0 = argv[0];
             
-  pping_client ppc(5151);
+  pping_client ppc(5151, EL_DDB);
 
   bool sedna_work = false;
             
@@ -170,9 +170,9 @@ int main(int argc, char** argv)
       uSocketCleanup(__sys_call_error);
       return 1;
   } catch (SednaException &e) {
-      sedna_soft_fault(e);
+      sedna_soft_fault(e, EL_DDB);
   } catch (...){
-      sedna_soft_fault();
+      sedna_soft_fault(EL_DDB);
   }
 
 

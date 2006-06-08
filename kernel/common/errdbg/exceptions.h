@@ -361,11 +361,11 @@ public:
 
 
 
-
-void sedna_soft_fault(const SednaException &e);
-void sedna_soft_fault(const char* s);
-void sedna_soft_fault();
-
+/* Sedna soft fault fuctions.
+ * !! sedna_soft_fault fuction with no message parameter is defined in event_loc.h
+ */
+void sedna_soft_fault(const SednaException &e, int component);
+void sedna_soft_fault(const char* s, int  component);
 
 
 

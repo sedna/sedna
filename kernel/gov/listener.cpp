@@ -278,10 +278,10 @@ try{
        sp_error_message_handler(socknew, 100, e.get_code(), e.getMsg().c_str());
    } catch (SednaException &e) {
        sp_error_message_handler(socknew, 100, 0, "System error");
-       sedna_soft_fault(e);
+       sedna_soft_fault(e, EL_GOV);
    } catch (...) {
        sp_error_message_handler(socknew, 100, 0, "System error");
-       sedna_soft_fault();
+       sedna_soft_fault(EL_GOV);
    }
 
 

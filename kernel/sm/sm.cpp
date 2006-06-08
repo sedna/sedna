@@ -340,12 +340,12 @@ int sm_server_handler(void *arg)
             case SE1021:  // Cannot lock block in memory because it is not in memory.
                           msg->cmd = 28;
                           break;
-            default    :  sedna_soft_fault(e);
+            default    :  sedna_soft_fault(e, EL_SM);
         }
     } catch (SednaException &e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_SM);
     } catch (...) {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_SM);
     }
 
     return 0;
@@ -362,7 +362,7 @@ void print_sm_usage()
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_SM);
     bool is_ppc_closed = true;
     char buf[1024];
 
@@ -476,9 +476,9 @@ int main(int argc, char **argv)
             ppc.shutdown();
             return 1;
         } catch (SednaException &e) {
-            sedna_soft_fault(e);
+            sedna_soft_fault(e, EL_SM);
         } catch (...) {
-            sedna_soft_fault();
+            sedna_soft_fault(EL_SM);
         }
     	}
         /////////////// BACKGROUND MODE ////////////////////////////////////////
@@ -646,9 +646,9 @@ int main(int argc, char **argv)
         if (!is_ppc_closed) ppc.shutdown();
         return 1;
     } catch (SednaException &e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_SM);
     } catch(...) {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_SM);
     }
 
     return 0;
