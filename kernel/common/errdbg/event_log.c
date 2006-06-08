@@ -8,6 +8,7 @@
 #include "uthread.h"
 #include "ushm.h"
 #include "usem.h"
+#include "uhdd.h"
 
 
 
@@ -241,7 +242,7 @@ static int __event_log_write_hdr(int elevel,
         {
             char buf[U_MAX_PATH];
 
-            uGetFileNameFromFilePath(filename, buf, U_MAX_PATH);
+            uGetFileNameFromFilePath(filename, buf, U_MAX_PATH, __sys_call_error);
             res = fprintf(el_ostr, " [%s:%s:%d]", buf, funcname, lineno);
 
             if (res == -1) return res;
@@ -735,4 +736,135 @@ int event_logger_set_trid(int trid)
 {
     el_trid = trid;
     return 0;
+}
+
+void sedna_soft_fault_log(const char* log_message, int  component)
+{
+    char buf_pid[20];
+	char buf[SEDNA_DATA_VAR_SIZE + 128];
+    char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
+    char dt_buf[32];
+    struct tm *newtime;
+    time_t aclock;
+    const char* str = NULL;
+    const char* sf_msg = "SEDNA soft fault message:\n";
+	UFile soft_fault_file_handle;    
+    int res, bytes_written = 0;
+
+	if(log_message == NULL) return;
+
+    strcpy(buf, SEDNA_DATA);
+#ifdef _WIN32
+    strcat(buf, "\\data\\");
+#else
+    strcat(buf, "/data/");
+#endif
+    strcat(buf, SE_SOFT_FAULT_LOG_DIR);
+    time(&aclock);                   /* Get time in seconds */
+    newtime = localtime(&aclock);    /* Convert time to struct tm form */
+
+    sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d",
+            newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
+            newtime->tm_hour, newtime->tm_min);
+    strcat(buf, dt_buf);
+
+//    if (!uIsFileExist(buf, __sys_call_error))
+//    {
+        if (uMkDir(buf, NULL, __sys_call_error) == 0)
+            perror("Cannot create directory for soft fault logs");
+//    }
+
+#ifdef _WIN32
+    strcat(buf, "\\");
+#else
+    strcat(buf, "/");
+#endif
+
+    switch (component)
+    {
+        case EL_CDB:
+            str = "CDB";
+            break;
+        case EL_DDB:
+            str = "DDB";
+            break;
+        case EL_GOV:
+            str = "GOV";
+            break;
+        case EL_RC:
+            str = "RC";
+            break;
+        case EL_SM:
+            str = "SM";
+            break;
+        case EL_SMSD:
+            str = "SMSD";
+            break;
+        case EL_STOP:
+            str = "STOP";
+            break;
+        case EL_TRN:
+            str = "TRN";
+            break;
+        default:
+            str = "UNK";
+    }
+    
+    strcat(buf, str);
+#ifdef _WIN32
+    strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
+#else
+    strcat(buf, u_gcvt(uGetCurrentProcessId(__sys_call_error), 10, buf_pid));
+#endif
+    strcat(buf, ".log");
+    if (uIsFileExist(buf, __sys_call_error))
+    {
+        res = uDeleteFile(buf, __sys_call_error);
+        if(res == 0)
+        {
+            fprintf(stderr, "Cannot create soft fault log file");
+            return;
+        }
+    }
+    soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
+    if(soft_fault_file_handle == U_INVALID_FD)
+    {
+        fprintf(stderr, "Cannot create soft fault log file");
+        return;
+    }
+    strcpy(log_buf, "SEDNA soft fault message:\n");
+    strcat(log_buf, log_message);
+    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, __sys_call_error);
+    if (res == 0 || bytes_written != strlen(log_buf)) 
+    {
+        fprintf(stderr, "Cannot write to soft fault log file");
+        return;
+    }
+    strcpy(log_buf, "\n");
+    strcat(log_buf, str);
+    strcat(log_buf, " command line arguments: ");
+    strcat(log_buf, GetCommandLine());
+    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, __sys_call_error);
+    if (res == 0 || bytes_written != strlen(log_buf)) 
+    {
+        fprintf(stderr, "Cannot write to soft fault log file");
+        return;
+    }
+	res = uCloseFile(soft_fault_file_handle, __sys_call_error);
+    if(res == 0)
+    {
+        fprintf(stderr, "Cannot close soft fault log file");
+        return;
+    }
+    
+    return;
+}
+
+void sedna_soft_fault(int  component)
+{
+    SEDNA_SOFT_FAULT_BASE_MSG;
+
+	sedna_soft_fault_log("Sedna soft fault without details", component);
+
+    SEDNA_SOFT_FAULT_FINALIZER;
 }

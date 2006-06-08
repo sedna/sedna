@@ -42,7 +42,7 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
         {
             if (!ppc->stop_keep_alive)
             {
-                sedna_soft_fault("SEDNA GOVERNOR is down");
+                sedna_soft_fault("SEDNA GOVERNOR is down", ppc->component);
             }
         }
         UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000, NULL);
@@ -50,7 +50,7 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
     return 0;
 }
 
-pping_client::pping_client(int _port_, const char* _host_)
+pping_client::pping_client(int _port_, int _component_, const char* _host_)
 {
 #ifdef PPING_ON
     port = _port_;
@@ -58,7 +58,8 @@ pping_client::pping_client(int _port_, const char* _host_)
         strcpy(host, _host_);
     else
         strcpy(host, "127.0.0.1");
-
+	component = _component_;
+	
     stop_keep_alive = false;
     initialized = false;
 #endif
@@ -154,6 +155,7 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     pping_server *pps = ((pping_serv_arg*)arg)->pps;
     USOCKET sock = ((pping_serv_arg*)arg)->sock;
     int id = ((pping_serv_arg*)arg)->id;
+    int component = ((pping_serv_arg*)arg)->pps->component;
     delete ((pping_serv_arg*)arg);
 
     char c = PPING_DISCONNECT_MSG;
@@ -171,7 +173,7 @@ U_THREAD_PROC(pping_server_cli_thread_proc, arg)
     return 0;
 
 sys_failure:
-    sedna_soft_fault("One of SEDNA processes is down");
+    sedna_soft_fault("One of SEDNA processes is down", component);
 
     return 0;
 }
@@ -249,15 +251,16 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
     return 0;
 
 sys_failure:
-    sedna_soft_fault("Malfunction in SEDNA GOVERNOR");
+    sedna_soft_fault("Malfunction in SEDNA GOVERNOR", pps->component);
 
     return 0;
 }
 
-pping_server::pping_server(int _port_)
+pping_server::pping_server(int _port_, int _component_)
 {
 #ifdef PPING_ON
     port = _port_;
+    component = _component_;
     close_lstn_thread = false;
     initialized = false;
 

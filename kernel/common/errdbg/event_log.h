@@ -31,6 +31,9 @@
 #define SE_EVENT_LOG_FUNCNAME_LEN      128
 #define SE_EVENT_LOG_CONTENT_LEN       1024
 
+#define SE_SOFT_FAULT_LOG_DIR          "fault-"
+#define SE_SOFT_FAULT_LOG_CONTENT_LEN  1024
+
 /* Component codes */
 #define EL_UNK      0
 #define EL_CDB      1
@@ -188,6 +191,17 @@ int event_logger_set_sid(int sid);
  */
 int event_logger_set_trid(int trid);
 
+/*
+ * Creates a separate file with soft fault log (log_message) for the component (component).
+ */
+void sedna_soft_fault_log(const char* log_message, int  component);
+
+/*
+ *  Sedna soft fault function. 
+ *  !! two sedna_soft_fault functions are defined in exceptions.h 
+ */
+
+void sedna_soft_fault(int component);
 
 #ifdef __cplusplus
 }

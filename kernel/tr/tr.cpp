@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 {
     int ret_code = 0;
     program_name_argv_0 = argv[0];
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_TRN);
     char buf[1024];
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
@@ -255,7 +255,6 @@ int main(int argc, char *argv[])
                                 //MemoryContextResetChildren(UserStatementContext);
                                 //MemoryContextReset(UserStatementContext);
                                 //MemoryContextSwitchTo(TransactionContext);
-
                                 client->authentication_result(true, "");
                                 break;
                             }
@@ -417,11 +416,11 @@ int main(int argc, char *argv[])
                 }
                 catch(SednaException & e)
                 {
-                    sedna_soft_fault(e);
+                    sedna_soft_fault(e, EL_TRN);
                 }
                 catch(...)
                 {
-                    sedna_soft_fault();
+                    sedna_soft_fault(EL_TRN);
                 }
 
             }
@@ -523,11 +522,11 @@ int main(int argc, char *argv[])
     }
     catch(SednaException & e)
     {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_TRN);
     }
     catch(...)
     {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_TRN);
     }
 
     return ret_code;

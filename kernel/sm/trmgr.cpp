@@ -155,9 +155,9 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
   }//end while
  } catch(SednaException &e) {
-   sedna_soft_fault(e);
+   sedna_soft_fault(e, EL_SM);
  } catch (...) {
-   sedna_soft_fault();
+   sedna_soft_fault(EL_SM);
  }
 #endif
 

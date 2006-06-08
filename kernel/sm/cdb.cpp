@@ -321,7 +321,7 @@ int main(int argc, char **argv)
     int persistent_heap_size = 0xA00000;		// = 10Mb
 //    int phys_log_size = 0xA00000;                       // = 10Mb
 //    int phys_log_ext_portion = 0xA00000;                // = 10Mb
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_SM);
     bool is_ppc_closed = true;
 
 
@@ -492,10 +492,10 @@ int main(int argc, char **argv)
              return 1;
         } catch (SednaException &e) {
              cleanup_db(db_name);
-             sedna_soft_fault(e);
+             sedna_soft_fault(e, EL_CDB);
         } catch (...) {
              cleanup_db(db_name);
-             sedna_soft_fault();
+             sedna_soft_fault(EL_CDB);
         }
 
 
@@ -503,9 +503,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         return 1;
     } catch (SednaException &e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_CDB);
     } catch (...) {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_CDB);
     }
 
 

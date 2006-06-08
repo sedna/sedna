@@ -8,13 +8,14 @@
 
 
 #include "sedna.h"
+#include "event_log.h"
 
 
 /*
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()
  */
 int se_ExceptionalCondition(char *conditionName, char *errorType,
-                            char *fileName, int lineNumber)
+                            char *fileName, int lineNumber, int component)
 {
 	if (!PointerIsValid(conditionName)
 		|| !PointerIsValid(fileName)
@@ -34,8 +35,7 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 	uSleep(8640 * 10, __sys_call_error); 
 #endif
 
-    SEDNA_SOFT_FAULT_BASE_MSG;
-    SEDNA_SOFT_FAULT_FINALIZER;
+    sedna_soft_fault(EL_UNK);
 
 	return 0;
 }

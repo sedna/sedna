@@ -121,7 +121,7 @@ bool is_first_start_of_gov()
 {
   try
   {
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_GOV);
 
     SednaUserException e = USER_EXCEPTION(SE4400);
     ppc.startup(e);

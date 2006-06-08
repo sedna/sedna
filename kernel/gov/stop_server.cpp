@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     program_name_argv_0 = argv[0];
 
 
-    pping_client ppc(5151);
+    pping_client ppc(5151, EL_STOP);
 
 
     try {
@@ -106,9 +106,9 @@ end:
           fprintf(stderr, "%s\n", e.getMsg().c_str());
           return -1;
       } catch(SednaException &e) {
-          sedna_soft_fault(e);
+          sedna_soft_fault(e, EL_STOP);
       } catch (...) {
-          sedna_soft_fault();
+          sedna_soft_fault(EL_STOP);
       }
 }
 
