@@ -15,7 +15,7 @@
  * se_ExceptionalCondition - Handles the failure of an SE_ASSERT()
  */
 int se_ExceptionalCondition(char *conditionName, char *errorType,
-                            char *fileName, int lineNumber, int component)
+                            char *fileName, int lineNumber)
 {
 	if (!PointerIsValid(conditionName)
 		|| !PointerIsValid(fileName)
