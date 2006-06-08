@@ -13,7 +13,7 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
   int res;
 	
 	if ((str_res = execute_query_str(conn, check_db_empty_query,log))==NULL) {
-		ETRACE((log,"\nERROR: Can't check emptyness of the database\n"))
+		ETRACE((log,"\nERROR: Can't check emptyness of the database\n"));
 		return -1;
 	}
     if (!strcmp(str_res,"0")) 
@@ -22,7 +22,7 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 	if (!strcmp(str_res,"1"))
 		res=1;
 	else {
-		ETRACE((log,"\nUnexpected result while checking the database\n"))
+		ETRACE((log,"\nUnexpected result while checking the database\n"));
 		res=-1;
 	}
     
@@ -38,19 +38,19 @@ int restore_security(struct SednaConnection *conn, const char *path, FILE* log) 
 
    sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
    if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,log) != 0) {
-	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"))
+	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"));
 	   return -1;
    } 
   
    sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc('%s')/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
-	   ETRACE((log,"\nERROR: failed to update document with initial security data\n"))
+	   ETRACE((log,"\nERROR: failed to update document with initial security data\n"));
 	   return -1;
    }
 
    sprintf(strbuf,"DROP DOCUMENT '%s'",DB_SECURITY_DOC_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
-	   ETRACE((log,"\nERROR: failed to drop temporary document with security data\n"))
+	   ETRACE((log,"\nERROR: failed to drop temporary document with security data\n"));
 	   return -1;
    } 
    return 0;
@@ -86,13 +86,13 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	sprintf(strbuf,"%s%s",path,IMP_LOG_FILE_NAME);
 	if ((log=fopen(strbuf,"w"))==NULL) {
-		ETRACE((log,"ERROR: the specified path \"%s\" is not accesible for writing\n",path))
+		ETRACE((log,"ERROR: the specified path \"%s\" is not accesible for writing\n",path));
 		goto imp_error_no_conn;
 	}
 	
 	FTRACE((log,"Connecting to Sedna..."));
     if(SEconnect(&conn, url, db_name, login, password)!= SEDNA_SESSION_OPEN) {
-		ETRACE((log,"ERROR: can't connect to Sedna XML DB\n%s\n", SEgetLastErrorMsg(&conn)))
+		ETRACE((log,"ERROR: can't connect to Sedna XML DB\n%s\n", SEgetLastErrorMsg(&conn)));
 		goto imp_error_no_conn;
 	}
 	FTRACE((log,"done\n"));
@@ -104,7 +104,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
     FTRACE((log,"Starting transaction..."));
 	if (SEbegin(&conn)!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
-		ETRACE((log,"ERROR: failed to begin transaction\n"))
+		ETRACE((log,"ERROR: failed to begin transaction\n"));
 	    goto imp_error;
 	}
 	FTRACE((log,"done\n"));
@@ -116,7 +116,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			goto imp_error;
 		else
 			if (db_empty==0) {
-				ETRACE((log,"ERROR: database '%s' is not empty\n",db_name))
+				ETRACE((log,"ERROR: database '%s' is not empty\n",db_name));
 				goto imp_error;
 			}
 	}
@@ -147,26 +147,26 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	
 
-	FTRACE((log,"Creating collections..."))
+	FTRACE((log,"Creating collections..."));
 	if (strlen(cr_col_query)==0)
-		FTRACE((log,"(no collections in the database)...")) 
+		FTRACE((log,"(no collections in the database)..."));
 	else
         if (execute_multiquery(&conn,cr_col_query, log)!=0) 
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
 
-	FTRACE((log,"Loading documents..."))
+	FTRACE((log,"Loading documents..."));
 	if (strlen(bl_docs_query)==0)
-		FTRACE((log,"(no documents in the database)...")) 
+		FTRACE((log,"(no documents in the database)..."));
 	else {
-		FTRACE((log,"\n"))
+		FTRACE((log,"\n"));
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
         for (i=0;i<blq.d_size;i++) {
 			// blq.buf[i] = "docname" "colname"
 			sprintf(strbuf,"%s%d.xml",path,i+1);
-			FTRACE((log," Bulkload document %s...",blq.buf[i]))
+			FTRACE((log," Bulkload document %s...",blq.buf[i]));
 			if (bulkload_xml(&conn,strbuf,blq.buf[i],log)!=0)
 				goto imp_error;
 			FTRACE((log,"done\n"));
@@ -174,18 +174,18 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	}
 	FTRACE((log,"done\n"));
 	
-	FTRACE((log,"Creating indexes..."))
+	FTRACE((log,"Creating indexes..."));
 	if (strlen(cr_indexes_query)==0)
-		FTRACE((log,"(no indexes in the database)...")) 
+		FTRACE((log,"(no indexes in the database)..."));
 	else
 		if (execute_multiquery(&conn,cr_indexes_query,log)!=0) 
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
 
-	FTRACE((log,"Creating full-text search indexes..."))
+	FTRACE((log,"Creating full-text search indexes..."));
 	if (strlen(cr_ftindexes_query)==0)
-		FTRACE((log,"(no full-test search indexes in the database)...")) 
+		FTRACE((log,"(no full-test search indexes in the database)...")); 
 	else
 		if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
 			goto imp_error;
@@ -195,7 +195,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	// processing security information
 	if (sec_import==1) {
 		// restoring security
-		FTRACE((log,"Restoring security information..."))
+		FTRACE((log,"Restoring security information..."));
 		if (restore_security(&conn,path,log)!=0) 
 			goto imp_error;
 		FTRACE((log,"done\n"));
@@ -203,7 +203,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		// importing data
 		// security information is not imported
         // may be some merge will be required in the future
-		//   FTRACE((log,"Updating security information..."))
+		//   FTRACE((log,"Updating security information..."));
 	    //   if (strlen(upd_sec_query)==0 || 1)
 		//      FTRACE((log,"(no additional security information available)")) 
 	    //   else
@@ -212,7 +212,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	    //  FTRACE((log,"done\n"));
 	}
 
-	FTRACE((log,"Commiting the transaction..."))
+	FTRACE((log,"Commiting the transaction..."));
 	SEcommit(&conn);
 	FTRACE((log,"done\n"));
 
@@ -220,9 +220,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 imp_error:
 
-	FTRACE((log,"Closing connection..."))
+	FTRACE((log,"Closing connection..."));
 	SEclose(&conn);
-	FTRACE((log,"done\n"))
+	FTRACE((log,"done\n"));
 	
 //disposing dynamic memory
 imp_error_no_conn:

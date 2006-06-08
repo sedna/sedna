@@ -28,7 +28,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	
 	FTRACE((log,"Connecting to Sedna..."));
 	if(SEconnect(&conn, url, db_name, login, password)!= SEDNA_SESSION_OPEN) {
-		ETRACE((log,"ERROR: can't connect to Sedna XML DB\n%s\n", SEgetLastErrorMsg(&conn)))
+		ETRACE((log,"ERROR: can't connect to Sedna XML DB\n%s\n", SEgetLastErrorMsg(&conn)));
 		goto exp_error_no_conn;
 	}
 	FTRACE((log,"done\n"));
@@ -38,7 +38,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	
     FTRACE((log,"Starting transaction..."));
 	if ((res = SEbegin(&conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
-		ETRACE((log,"ERROR: failed to begin transaction\n"))
+		ETRACE((log,"ERROR: failed to begin transaction\n"));
 		goto exp_error;
 	}
 	FTRACE((log,"done\n"));
@@ -90,7 +90,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		FTRACE((log,"Exporting document %d of %d [%s]...",(i+1),exp_docs.d_size,doc_name));
 		sprintf(strbuf,"%s%d.xml",path,(i+1));
 		if ((f=fopen(strbuf,"w"))==NULL) {
-			ETRACE((log,"ERROR: can't write to file %s\n",strbuf))
+			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
 			goto exp_error;
 		}
 		if (execute_query(&conn,exp_docs.buf[i],f,log)!=0) 
@@ -102,7 +102,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	FTRACE((log,"Exporting security data..."));
 	sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
 	if ((f=fopen(strbuf,"w"))==NULL) {
-		ETRACE((log,"ERROR: can't write to file %s\n",strbuf))
+		ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
 		goto exp_error;
 	}
 	sprintf(strbuf,"doc('%s')",DB_SECURITY_DOC);
@@ -111,7 +111,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	fclose(f);
 	FTRACE((log,"done\n"));
 
-	FTRACE((log,"Writing XQuery scripts..."))
+	FTRACE((log,"Writing XQuery scripts..."));
 	sprintf(strbuf,"%s%s",path,CR_COL_QUERY_FILE);
 	write_xquery_script(&create_colls,strbuf);
 
@@ -128,7 +128,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	write_xquery_script(&create_sec,strbuf);
 	FTRACE((log,"done\n"));
 
-	FTRACE((log,"Commiting the transaction..."))
+	FTRACE((log,"Commiting the transaction..."));
 	SEcommit(&conn);
 	FTRACE((log,"done\n"));
 
@@ -136,9 +136,9 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 
 exp_error:
 
-	FTRACE((log,"Closing connection..."))
+	FTRACE((log,"Closing connection..."));
 	SEclose(&conn);
-	FTRACE((log,"done\n"))
+	FTRACE((log,"done\n"));
 	
 
 //disposing dynamic memory
