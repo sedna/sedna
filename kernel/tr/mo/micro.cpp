@@ -1243,6 +1243,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 	xptr result=XNULL;
 	if (size<1)
 		throw USER_EXCEPTION(SE2009);
+	if ((unsigned int)size>STRMAXSIZE)
+		throw USER_EXCEPTION(SE2037);
 	if ((right_sib==XNULL)&&(left_sib==XNULL)&&(parent==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 	if (left_sib!=XNULL) 
 	{
@@ -1468,6 +1470,8 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 								update_idx_delete_text(left_sib);
 								down_concurrent_micro_ops_number();
 							}
+							if (((__int64)(unsigned int)size+(__int64)(unsigned int)l_size)>STRMAXSIZE)
+								throw USER_EXCEPTION(SE2037);
 							pstr_long_append_tail(left_sib, right_sib);
 							CHECKP(left_sib);
 							hl_logical_log_text_edit(text_node->indir,size,false,true); 

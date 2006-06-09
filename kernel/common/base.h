@@ -225,7 +225,7 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* 
 #define CHARISMA_MAX_TRNS_NUMBER                        10
 #define MAX_SESSIONS_NUMBER								10
 #define MAX_DBS_NUMBER									10
-
+#define STRMAXSIZE   4000000000lu
 
 
 void set_sedna_data();

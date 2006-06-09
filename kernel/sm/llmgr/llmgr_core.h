@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <list>
 
 #include "base.h"
 #include "xptr.h"
@@ -121,18 +122,42 @@ struct trn_cell
 typedef trn_cell trn_tbl[CHARISMA_MAX_TRNS_NUMBER];
 
 
-struct trn_cell_analysis
+enum trn_analysis_enum {TRN_NOT_FINISHED, TRN_ROLLBACK_FINISHED, TRN_COMMIT_FINISHED};
+
+struct trn_cell_analysis_redo
 {
-  char type;//0 -> undo, 1 -> redo
-  LONG_LSN lsn;//record from which undo (type==0) or redo (type == 1)
-  xptr node;
-  trn_cell_analysis(char _type_, LONG_LSN _lsn_): type(_type_), lsn(_lsn_) {}; 
+  transaction_id trid;
+  LONG_LSN trn_start_rcv_lsn;//first lsn of transaction or lsn of next record after recovery checkpoint 
+  LONG_LSN trn_end_lsn;
+  trn_analysis_enum finish_status;//used only during analysis phase;//0->not finished, 1->rollback record find, 2 ->commit record find
+//  char type;//0 -> undo, 1 -> redo
+//  LONG_LSN lsn;//record from which undo (type==0) or redo (type == 1)
+  xptr node;//!!!what is it ?
+//  trn_cell_analysis(char _type_, LONG_LSN _lsn_): type(_type_), lsn(_lsn_) {}; 
+  trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(TRN_NOT_FINISHED) {};
+  trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_, trn_analysis_enum _finish_status_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(_finish_status_) {};
 };
 
-typedef std::map<transaction_id, trn_cell_analysis> trns_analysis_map;
+struct trn_cell_analysis_undo
+{
+  transaction_id trid;
+  LONG_LSN trn_undo_rcv_lsn;//lsn from which to execute undo during recovery
+  LONG_LSN first_lsn_after_cp;//is needed if we find that transaction will be committed and we need to do redo for it from this lsn
+  trn_analysis_enum finish_status;//used only during analysis phase;//0->not finished, 1->rollback record find, 2 ->commit record find
+  xptr node;//!!!what is it ?
+  trn_cell_analysis_undo(transaction_id _trid_, LONG_LSN _lsn_): trid(_trid_), trn_undo_rcv_lsn(_lsn_), first_lsn_after_cp(NULL_LSN),  finish_status(TRN_NOT_FINISHED) {};
+};
 
-typedef std::pair <transaction_id, trn_cell_analysis> trn_pair;
+//typedef std::map<transaction_id, trn_cell_analysis> trns_analysis_map;
 
+//typedef std::pair <transaction_id, trn_cell_analysis> trn_pair;
+
+typedef std::list<trn_cell_analysis_redo> trns_redo_analysis_list;
+typedef std::list<trn_cell_analysis_redo>::iterator trns_redo_analysis_list_iterator;
+typedef std::list<trn_cell_analysis_redo>::reverse_iterator trns_redo_analysis_list_reverse_iterator;
+
+typedef std::list<trn_cell_analysis_undo> trns_undo_analysis_list;
+typedef std::list<trn_cell_analysis_undo>::iterator trns_undo_analysis_list_iterator;
 
 
 
@@ -243,6 +268,7 @@ public:
   void recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 #else
 void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+
 #endif
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
@@ -269,8 +295,19 @@ private:
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
   void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
-  void redo_commit_trns(trns_analysis_map& lst, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
-  trns_analysis_map get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks);//last parameter is out
+  void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
+  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks, /*out*/ trns_undo_analysis_list& undo_list, /*out*/trns_redo_analysis_list& redo_list /*out*/);
+
+  bool find_redo_trn_cell(transaction_id trid,
+                          trns_redo_analysis_list& redo_list,
+                          LONG_LSN lsn,
+                          trn_cell_analysis_redo& redo_trn_cell/*out*/);
+
+  bool find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/);
+  void set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/);
+
+  bool find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/);
+  void set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/);
 
   void activate_checkpoint();
 

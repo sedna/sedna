@@ -1552,6 +1552,32 @@ void llmgr_core::ll_log_flush_last_record(bool sync)
   mem_head->keep_bytes -= bytes_to_flush;
   mem_head->next_durable_lsn += bytes_to_flush;
 
+
+  ///!!! Here flush next lsn field in header 
+  UFile fd = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
+
+  res = uSetFilePointer(
+                   fd,
+                   sizeof(LONG_LSN),
+                   NULL,
+                   U_FILE_BEGIN,
+                   __sys_call_error
+                 );
+
+  if (res == 0)
+     throw USER_EXCEPTION2(SE4046, "logical log file");
+
+  res = uWriteFile(fd,
+                   &(mem_head->next_durable_lsn),
+                   sizeof(LONG_LSN),
+                   &written,
+                   __sys_call_error
+                    );
+  if (res == 0 || written != sizeof(LONG_LSN))
+     throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
+
+  
+
   ll_log_unlock(sync);
 }
 
@@ -1793,16 +1819,39 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
      return;//all already recovered
   }
 
-  trns_analysis_map undo_redo_trns_map;
+//  trns_analysis_map undo_redo_trns_map;
 
 
   std::vector<xptr> indir_blocks;
+  trns_undo_analysis_list undo_list;
+  trns_redo_analysis_list redo_list;
  
-  d_printf1("get_undo_redo_trns_map\n");
-  undo_redo_trns_map =
-         get_undo_redo_trns_map(last_checkpoint_lsn,
-                                last_commit_lsn,
-                                indir_blocks);
+  
+  cout << "last_cp_lsn=" << last_checkpoint_lsn << "last_commit_lsn=" << last_commit_lsn << endl;
+
+//  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
+  get_undo_redo_trns_list(last_checkpoint_lsn,
+                          last_commit_lsn,
+                          indir_blocks, /*out*/
+                          undo_list, /*out*/
+                          redo_list /*out*/
+                         );
+
+
+  trns_undo_analysis_list_iterator it;
+  for (it = undo_list.begin(); it != undo_list.end(); it++)
+  {
+//       std::cout << "trid=" << it->trid << " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn;     
+     std::cout << "trid=" << it->trid <<  " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn << "first_lsn_after_cp=" << it->first_lsn_after_cp << " finish_status=" << it->finish_status << endl;
+  }
+
+
+  trns_redo_analysis_list_iterator it2;
+  for (it2 = redo_list.begin(); it2 != redo_list.end(); it2++)
+  {
+     std::cout << "trid=" << it2->trid << ", " << " trn_start_rcv_lsn=" << it2->trn_start_rcv_lsn << "trn_end_lsn=" << it2->trn_end_lsn <<  " finish_status=" << it2->finish_status << endl;
+  }
+
 
   d_printf2("rcv_allocate_blocks num=%d\n", indir_blocks.size());
   for (int i=0; i< indir_blocks.size(); i++)
@@ -1812,12 +1861,11 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 
   switch_indirection(undo_indir_mode);
 
-  d_printf1("undo loseres\n");
+  d_printf2("undo loseres num=%d\n", undo_list.size());
   //undo losers
-  trns_analysis_map::iterator it;
-  for(it=undo_redo_trns_map.begin(); it != undo_redo_trns_map.end(); it++)
-     if ((it->second).type == 0)//undo case
-        undo_trn((it->second).lsn, exec_micro_op);
+  trns_undo_analysis_list_iterator it1;
+  for(it1=undo_list.begin(); it1 != undo_list.end(); it1++)
+     undo_trn(it1->trn_undo_rcv_lsn, exec_micro_op);
 
 
   //redo committed transactions
@@ -1831,20 +1879,14 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 
   switch_indirection(redo_indir_mode);
 
-  //check that there is at least one redo transaction
-  bool exist_redo = false;
-  for(it=undo_redo_trns_map.begin(); it != undo_redo_trns_map.end(); it++)
-     if ((it->second).type == 1)//redo case
-         exist_redo = true;        
- 
-  if (exist_redo)
-  {
-      d_printf1("redo commited transactions\n");
-      redo_commit_trns(undo_redo_trns_map, 
-                       start_redo_lsn,
-                       last_commit_lsn,
-                       exec_micro_op);
-  }
+  d_printf2("redo list size=%d\n", redo_list.size());
+
+  redo_commit_trns(redo_list, 
+                   start_redo_lsn,
+                   last_commit_lsn,
+                   exec_micro_op);
+  
+  
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_redo_trns_map);
 #endif
@@ -1875,18 +1917,23 @@ void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (con
 
 }
 
-void llmgr_core::redo_commit_trns(trns_analysis_map& trns_map, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool))
+void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool))
 {
+  if (redo_list.empty()) return;
+
+
   if (start_lsn > end_lsn )
      throw USER_EXCEPTION(SE4152);
 
   LONG_LSN lsn = start_lsn;
   const char *rec;
   int body_len;
-  trns_analysis_map::iterator it; 
+//  trns_analysis_map::iterator it; 
  
   int i=1;
   __int64 file_size;
+  trn_cell_analysis_redo redo_trn_cell(-1, NULL_LSN, NULL_LSN);
+  bool res;
 
   do
   {
@@ -1904,23 +1951,32 @@ void llmgr_core::redo_commit_trns(trns_analysis_map& trns_map, LONG_LSN &start_l
         (rec + sizeof(logical_log_head))[0] != LL_ROLLBACK &&
         (rec + sizeof(logical_log_head))[0] != LL_CHECKPOINT)
     {
-      it = trns_map.find(*((transaction_id*)((rec + sizeof(logical_log_head))+sizeof(char))));
+
+      //this function tries to find transaction which start_lsn <=lsn <=end_lsn
+      res = find_redo_trn_cell(*((transaction_id*)((rec + sizeof(logical_log_head))+sizeof(char))),
+                               redo_list,
+                               lsn,
+                               redo_trn_cell/*out*/);
+
+      if (res)
+      {
+
+         if (redo_trn_cell.finish_status != TRN_COMMIT_FINISHED ||
+             redo_trn_cell.trn_end_lsn == NULL_LSN || redo_trn_cell.trn_start_rcv_lsn== NULL_LSN ||
+             redo_trn_cell.trn_start_rcv_lsn > redo_trn_cell.trn_end_lsn) 
+            throw SYSTEM_EXCEPTION("Incorrect status|end_lsn|start_lsn of transaction to be redone");
 
 
-      if (it != trns_map.end() && (it->second).type == 1)//redo record
+
 #ifdef RECOVERY_EXEC_MICRO_OP
          _exec_micro_op_(rec + sizeof(logical_log_head), body_len, false);
-#else
-          ;
+#else 
+        ;
 #endif
+      }
 	  // FOR DEBUG
       //d_printf4("exec log record num=%d len=%d, trid=%d\n", i, body_len, *((transaction_id*)((rec + sizeof(logical_log_head))+sizeof(char))));
-/////////////////////////////
     }
-	else//branch for debug
-	{
-		d_printf4("commit or rollback or cp num=%d, len=%d, trid=%d\n", i, body_len, *((transaction_id*)((rec + sizeof(logical_log_head))+sizeof(char))));
-	}
         
     lsn += sizeof(logical_log_head) + body_len;
 	i++;
@@ -1928,12 +1984,19 @@ void llmgr_core::redo_commit_trns(trns_analysis_map& trns_map, LONG_LSN &start_l
   } while(lsn <= end_lsn);
 }
 
-trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_LSN &end_lsn, vector<xptr>& indir_blocks)
+void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
+                                        LONG_LSN &end_lsn,
+                                        vector<xptr>& indir_blocks, /*out*/
+                                        trns_undo_analysis_list& undo_list, /*out*/
+                                        trns_redo_analysis_list& redo_list /*out*/
+                                       )
 {
   LONG_LSN lsn;
   const char *rec;
   const char *body_beg;
-  trns_analysis_map trns_map;
+  trns_undo_analysis_list _undo_list_;
+  trns_redo_analysis_list _redo_list_;
+  LONG_LSN next_lsn_after_cp;
 
 
   //init trns_map from checkpoint record
@@ -1958,16 +2021,19 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
 
        trid = (transaction_id*)(body_beg + sizeof(char) + sizeof(int) + i*(sizeof(transaction_id) + sizeof(LONG_LSN)));
        last_lsn = (LONG_LSN*)(body_beg + sizeof(char) + sizeof(int) + i*(sizeof(transaction_id) + sizeof(LONG_LSN)) + sizeof(transaction_id));
+       if (*last_lsn != NULL_LSN)_undo_list_.push_back(trn_cell_analysis_undo(*trid, *last_lsn));
 
-       trns_map.insert(trn_pair(*trid, trn_cell_analysis(0, *last_lsn)));
+//       trns_map.insert(trn_pair(*trid, trn_cell_analysis(0, *last_lsn)));
     }
 
     lsn = start_lsn + get_record_length(rec);    
   }
 
+  next_lsn_after_cp = lsn;
+
   //pass the log
-  trns_analysis_map trns_map_after_checkpoint;//map of transactions began after checkpoint
-  trns_analysis_map::iterator it;
+//  trns_analysis_map trns_map_after_checkpoint;//map of transactions began after checkpoint
+//  trns_analysis_map::iterator it;
   __int64 file_size;
 
   while (lsn <= end_lsn)
@@ -1989,22 +2055,11 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
 
     transaction_id *trid;
     trid = (transaction_id*)(body_beg + sizeof(char));
+    trn_cell_analysis_undo undo_trn_cell(-1, NULL_LSN);
+    trn_cell_analysis_redo redo_trn_cell(-1, NULL_LSN, NULL_LSN);
+    bool res1, res2;
 
-    if (body_beg[0] == LL_COMMIT)
-    {
-       if ((it = trns_map.find(*trid)) != trns_map.end())
-          it->second.type = 1;//change status to redo
-       else
-       {
-          if ((it = trns_map_after_checkpoint.find(*trid)) != trns_map_after_checkpoint.end())
-             it->second.type = 1;
-          else
-			  if (((logical_log_head*)rec)->prev_trn_offs != NULL_LSN)//it means that commit record is not the only record of transaction
-                 throw USER_EXCEPTION(SE4154);
-       }
-          
-    }
-    else
+
     if (body_beg[0] == LL_INSERT_ELEM || body_beg[0] == LL_DELETE_ELEM ||
         body_beg[0] == LL_INDIR_INSERT_ELEM || body_beg[0] == LL_INDIR_DELETE_ELEM ||
         body_beg[0] == LL_INSERT_ATTR || body_beg[0] == LL_DELETE_ATTR ||
@@ -2029,14 +2084,28 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
         body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX)
 
     {
-      if(trns_map.find(*trid) == trns_map.end() &&
-         trns_map_after_checkpoint.find(*trid) == trns_map_after_checkpoint.end())
+      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
       {
-         //first record of new transaction
-         trns_map_after_checkpoint.insert(trn_pair(*trid, trn_cell_analysis(0, lsn)));
+         if (undo_trn_cell.first_lsn_after_cp == NULL_LSN)
+         {
+            undo_trn_cell.first_lsn_after_cp = lsn;
+            set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell);
+         }
+      }
+      else
+      {//need to check in redo list 
+         
+         res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
+         if (!res2 || redo_trn_cell.finish_status != TRN_NOT_FINISHED)
+         {//first record of transaction
+            _redo_list_.push_back(trn_cell_analysis_redo(*trid, lsn, NULL_LSN));
+         
+         }
+         
       }
 
-      
+     
       if (
           body_beg[0] == LL_INDIR_INSERT_ELEM || body_beg[0] == LL_INDIR_DELETE_ELEM ||
           body_beg[0] == LL_INDIR_INSERT_ATTR || body_beg[0] == LL_INDIR_DELETE_ATTR ||
@@ -2066,21 +2135,75 @@ trns_analysis_map llmgr_core::get_undo_redo_trns_map(LONG_LSN &start_lsn, LONG_L
 
     }
     else
-    if (body_beg[0] != LL_ROLLBACK)
+    if (body_beg[0] == LL_COMMIT)//may be transaction with only one commit record in te log
+    {
+      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+      
+      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
+      {
+
+         undo_trn_cell.finish_status = TRN_COMMIT_FINISHED;
+         set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell); 
+
+         if (undo_trn_cell.first_lsn_after_cp != NULL_LSN)//we need to redo at least one record for this transaction after checkpoint
+            _redo_list_.push_front(trn_cell_analysis_redo(*trid, next_lsn_after_cp, lsn, TRN_COMMIT_FINISHED));
+
+      }
+      else
+      {
+         res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
+         if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
+         {
+             redo_trn_cell.finish_status =  TRN_COMMIT_FINISHED;
+             redo_trn_cell.trn_end_lsn = lsn;
+             set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
+         }
+      }
+    }
+    else 
+    if (body_beg[0] == LL_ROLLBACK)
+    {
+      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+      
+      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
+      {
+         undo_trn_cell.finish_status = TRN_ROLLBACK_FINISHED;
+         set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell); 
+      }
+      else
+      {
+         res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
+         if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
+         {
+             redo_trn_cell.finish_status = TRN_ROLLBACK_FINISHED;
+             redo_trn_cell.trn_end_lsn = lsn;
+             set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
+         }
+      }
+
+    }
+    else
       throw USER_EXCEPTION(SE4154);
 
     lsn += get_record_length(rec);
   }
 
 
-  //add commit transaction which where bagan after checkpoint to the result map  
-  for (it = trns_map_after_checkpoint.begin(); it != trns_map_after_checkpoint.end(); it++)
+  //init undo list (out paprameter)
+  trns_undo_analysis_list_iterator it1;
+  for (it1 = _undo_list_.begin(); it1 != _undo_list_.end(); it1++)
   {
-    if (it->second.type == 1)//redo case
-       trns_map.insert(trn_pair(it->first, trn_cell_analysis(1, it->second.lsn)));
+    if (it1->finish_status != TRN_COMMIT_FINISHED) undo_list.push_back(*it1);
   }
 
-  return trns_map;
+  //init redo list (out paprameter)
+  trns_redo_analysis_list_iterator it2;
+  for (it2 = _redo_list_.begin(); it2 != _redo_list_.end(); it2++)
+  {
+    if (it2->finish_status == TRN_NOT_FINISHED || it2->finish_status == TRN_ROLLBACK_FINISHED) continue;
+    else if (it2->finish_status == TRN_COMMIT_FINISHED)  redo_list.push_back(*it2);
+    else throw SYSTEM_EXCEPTION("Unpredictable finish status of transaction");
+  }
 }
 
 
