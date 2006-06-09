@@ -223,7 +223,7 @@ xptr add_record_to_data_indirection_table(xptr p)
         *(xptr*)(XADDR(rollback_record)) = p;
 
         VMM_SIGNAL_MODIFICATION(rollback_record);
-		redo_hint=-1;
+		//redo_hint=-1;
 
         return rollback_record;
     }
@@ -241,6 +241,7 @@ xptr add_record_to_data_indirection_table(xptr p)
 		int cl_size=(rollback_mode==MODE_REDO)?redo_hint:(sch->cl_hint==0)?MIN_CLUSTER_SIZE:sch->cl_hint;
 		//2.2 creating new cluster
 		res=create_new_cluster(cl_size,sch->root,sch,(rollback_mode==MODE_REDO)?redo_blocks:NULL);
+		redo_hint=(rollback_mode==MODE_REDO)?-2:-1;
 	}
 	//3. filling indirection record|updateing schema node
 	CHECKP(res);
@@ -249,7 +250,7 @@ xptr add_record_to_data_indirection_table(xptr p)
 	*(xptr*)(XADDR(res)) = p;
 	VMM_SIGNAL_MODIFICATION(res);
     //USemaphoreUp(indirection_table_sem);
-	redo_hint=-1;
+	
     return res;
 }
 
