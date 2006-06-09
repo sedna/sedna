@@ -11,6 +11,7 @@
 #include "pstr_long.h"
 #include "nodes.h"
 #include "pstr.h"
+#include "d_printf.h"
 
 
 #if 1
@@ -798,6 +799,7 @@ int  pstr_long_cursor::get_blk_rev(char **ptr)
 //pre:	size0 is actual string size, FIXME
 void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0)
 {
+	U_TRACE(("dst_desc.addr=%p, src.addr=%p, size0=%ld\n", dst_desc.addr, src.addr, size0));
 	if (size0 < (PAGE_SIZE * 2))
 	{//FIXME?
 		char *tmp_buf = (char*)malloc(size0); //FIXME: use static buf?
@@ -1073,6 +1075,7 @@ static inline void intl_remove_last_ble()
 //truncate size bytes from string end
 void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 {
+	U_TRACE(("dest.addr=%p, size=%ld\n", desc.addr, size));
 	U_ASSERT(size >= 0);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
@@ -1340,6 +1343,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 
 static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t size0)
 {
+	U_TRACE(("desc.addr=%p,data=%p,size0=%ld\n", desc.addr, data, size0));
 	U_ASSERT(size0 >= 0);
 	if (size0 == 0)
 		return;
@@ -1674,6 +1678,7 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size)
 {	
+	U_TRACE(("desc.addr=%p, size=%ld\n", desc.addr, size));
 	U_ASSERT(size >= 0);
 	CHECKP(desc);
 	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;

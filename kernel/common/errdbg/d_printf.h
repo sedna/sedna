@@ -45,6 +45,11 @@
 #  define ASSERT(x)
 #endif
 
+#ifdef DEBUG_TRACE
+#  define U_TRACE(P) do { el_debug_printf("[%s:%s:%d]", __FILE__, __FUNCTION__, __LINE__); el_debug_printf P;} while (0)
+#else
+#  define U_TRACE(P)
+#endif
 
 #ifdef __cplusplus
 extern "C"
