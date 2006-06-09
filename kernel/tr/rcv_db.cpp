@@ -174,9 +174,9 @@ int main (int argc, char** argv)
       uSocketCleanup(__sys_call_error);
       fprintf(stderr, "%s\n", e.getMsg());
   } catch(SednaException & e) {
-        sedna_soft_fault(e);
+        sedna_soft_fault(e, EL_RCV);
   } catch(...) {
-        sedna_soft_fault();
+        sedna_soft_fault(EL_RCV);
   }
 
   return 0;

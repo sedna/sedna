@@ -817,15 +817,6 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     strcat(buf, u_gcvt(uGetCurrentProcessId(__sys_call_error), 10, buf_pid));
 #endif
     strcat(buf, ".log");
-    if (uIsFileExist(buf, __sys_call_error))
-    {
-        res = uDeleteFile(buf, __sys_call_error);
-        if(res == 0)
-        {
-            fprintf(stderr, "Cannot create soft fault log file");
-            return;
-        }
-    }
     soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
     if(soft_fault_file_handle == U_INVALID_FD)
     {
