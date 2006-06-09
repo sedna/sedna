@@ -233,6 +233,7 @@ public:
   //on transaction functions
   void ll_log_on_transaction_begin(bool rcv_active, transaction_id &trid, bool sync);
   void ll_log_on_transaction_end(transaction_id &trid, bool sync);
+  LONG_LSN ll_get_lsn_of_first_record_in_logical_log(transaction_id &trid, bool sync);
 
 
   //these functions are called during transaction execution
