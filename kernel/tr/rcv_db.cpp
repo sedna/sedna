@@ -173,8 +173,10 @@ int main (int argc, char** argv)
 	  ppc.shutdown();
       uSocketCleanup(__sys_call_error);
       fprintf(stderr, "%s\n", e.getMsg());
+  } catch(SednaException & e) {
+        sedna_soft_fault(e);
   } catch(...) {
-      fprintf(stderr, "unknown error");
+        sedna_soft_fault();
   }
 
   return 0;

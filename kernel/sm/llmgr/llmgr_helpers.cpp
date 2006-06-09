@@ -85,6 +85,7 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
 }
 
+
 /*
 void llmgr_core::flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn)
 {
@@ -572,4 +573,92 @@ UFile create_logical_log(const char* log_file_name,
 
   return logical_log_dsc;
 #endif
+}
+
+bool llmgr_core::find_redo_trn_cell(transaction_id trid,
+                                    trns_redo_analysis_list& redo_list,
+                                    LONG_LSN lsn,
+                                    trn_cell_analysis_redo& redo_trn_cell/*out*/)
+{
+   trns_redo_analysis_list_iterator it;
+
+   for (it = redo_list.begin(); it != redo_list.end(); it++)
+   {
+      if (it->trid == trid && it->trn_start_rcv_lsn <= lsn && it->trn_end_lsn >= lsn)
+      {
+         redo_trn_cell = *it;
+         return true;
+      }
+
+      if (it->trn_start_rcv_lsn > lsn) return false;
+        
+   }
+   return false;
+}
+
+
+bool llmgr_core::find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/)
+{
+  trns_undo_analysis_list_iterator it;
+  for (it = undo_list.begin(); it != undo_list.end(); it++)
+  {
+    if (it->trid == trid)
+    {
+       undo_trn_cell = *it;
+       return true;
+    }
+  }
+
+  return false;
+}
+
+
+void llmgr_core::set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/)
+{
+  trns_undo_analysis_list_iterator it;
+  for (it = undo_list.begin(); it != undo_list.end(); it++)
+  {
+    if (it->trid == trid)
+    {
+       *it = undo_trn_cell;
+       return;
+    }
+  }
+
+  d_printf1("!!!TRID NOT FOUND\n");
+  return;
+
+}
+
+
+bool llmgr_core::find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/)
+{
+  trns_redo_analysis_list_reverse_iterator it;
+  for (it = redo_list.rbegin(); it != redo_list.rend(); it++)
+  {
+     if (it->trid == trid)
+     {
+       redo_trn_cell=*it;
+       return true;
+     }
+  }
+
+  return false;
+
+}
+
+void llmgr_core::set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/)
+{
+  trns_redo_analysis_list_reverse_iterator it;
+  for (it = redo_list.rbegin(); it != redo_list.rend(); it++)
+  {
+     if (it->trid == trid)
+     {
+        *it =  redo_trn_cell;
+        return;
+     }
+  }
+
+  d_printf1("!!!TRID NOT FOUND\n");
+  return;
 }

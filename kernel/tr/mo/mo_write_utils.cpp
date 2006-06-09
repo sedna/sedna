@@ -1915,14 +1915,16 @@ void appendTextValue(xptr node,const void* text, int size,text_type ttype)
 	   
 	t_dsc* test_desc= (t_dsc*)XADDR(node);
 	int cur_size=test_desc->size;
+	if (((__int64)(unsigned int)size+(__int64)(unsigned int)cur_size)>STRMAXSIZE)
+		throw USER_EXCEPTION(SE2037);
 	//test_desc->size+=size;
 	if (IS_DATA_BLOCK(node))
 	{
 		update_idx_delete_text(node);
 	}
-	if (cur_size>(int)PSTRMAXSIZE)
+	if ((unsigned int)cur_size>(unsigned int)PSTRMAXSIZE)
 	{
-		pstr_long_append_tail(node, text,size,ttype);
+		pstr_long_append_tail(node, text,(unsigned int)size,ttype);
 	}
 	else
 	{
@@ -1930,14 +1932,14 @@ void appendTextValue(xptr node,const void* text, int size,text_type ttype)
 		CHECKP(ind_ptr);
 		shft shift= *((shft*)XADDR(ind_ptr));
 		char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-		if ((int)(cur_size+size)>PSTRMAXSIZE)
+		if ((unsigned int)(cur_size+size)>(unsigned int)PSTRMAXSIZE)
 		{
 			char* z=new char[cur_size];
 			memcpy(z,data,cur_size);
             pstr_deallocate(node);
-			pstr_long_create_str(node, z,  cur_size,text_mem);
+			pstr_long_create_str(node, z,  (unsigned int)cur_size,text_mem);
 			delete []z;
-			pstr_long_append_tail(node, text, size,ttype);
+			pstr_long_append_tail(node, text, (unsigned int)size,ttype);
 		}
 		else
 		{
@@ -1963,14 +1965,16 @@ void insertTextValue(xptr node,const void* text, int size,text_type ttype)
 {
    t_dsc* test_desc= (t_dsc*)XADDR(node);
 	int cur_size=test_desc->size;
+	if (((__int64)(unsigned int)size+(__int64)(unsigned int)cur_size)>STRMAXSIZE)
+		throw USER_EXCEPTION(SE2037);
 	//test_desc->size+=size;
 	if (IS_DATA_BLOCK(node))
 	{
 		update_idx_delete_text(node);
 	}
-	if (cur_size>(int)PSTRMAXSIZE)
+	if ((unsigned int)cur_size>(unsigned int)PSTRMAXSIZE)
 	{
-		pstr_long_append_head(node, text,size,ttype);
+		pstr_long_append_head(node, text,(unsigned int) size,ttype);
 	}
 	else
 	{
@@ -1978,14 +1982,14 @@ void insertTextValue(xptr node,const void* text, int size,text_type ttype)
 		CHECKP(ind_ptr);
 		shft shift= *((shft*)XADDR(ind_ptr));
 		char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-		if ((int)(cur_size+size)>PSTRMAXSIZE)
+		if ((unsigned int)(cur_size+size)>(unsigned int)PSTRMAXSIZE)
 		{
 			
 			char* z=new char[cur_size];
 			memcpy(z,data,cur_size);
             pstr_deallocate(node);
-			pstr_long_create_str(node, text,  size,ttype);
-			pstr_long_append_tail(node, z, cur_size,text_mem);
+			pstr_long_create_str(node, text,  (unsigned int)size,ttype);
+			pstr_long_append_tail(node, z, (unsigned int)cur_size,text_mem);
 			delete []z;
 		}
 		else

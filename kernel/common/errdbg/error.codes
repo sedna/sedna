@@ -661,7 +661,9 @@ sedna-err:SE2035
 sedna-err:SE2036
 
     Document node deletion is prohibited by this function use DROP DOCUMENT in metadata API
+sedna-err:SE2037
 
+The size of string is limited by 4 GB
 ########### sql ####################
 sedna-err:SE2100
 
