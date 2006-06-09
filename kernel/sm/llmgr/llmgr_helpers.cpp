@@ -575,6 +575,16 @@ UFile create_logical_log(const char* log_file_name,
 #endif
 }
 
+LONG_LSN llmgr_core::ll_get_lsn_of_first_record_in_logical_log(transaction_id &trid, bool sync)
+{
+  ll_log_lock(sync);
+   
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  LONG_LSN lsn = mem_head->t_tbl[trid].first_lsn;
+  ll_log_unlock(sync);
+  return lsn;	  
+}
+
 bool llmgr_core::find_redo_trn_cell(transaction_id trid,
                                     trns_redo_analysis_list& redo_list,
                                     LONG_LSN lsn,

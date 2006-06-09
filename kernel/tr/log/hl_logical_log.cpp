@@ -247,7 +247,14 @@ void wait_for_checkpoint_finished()
 #endif
 } 
 
-
+LONG_LSN get_lsn_of_first_record_in_logical_log()
+{
+#ifdef LOGICAL_LOG
+    return tr_llmgr->ll_get_lsn_of_first_record_in_logical_log(trid, true);
+#else
+	return NULL_LSN;
+#endif
+}
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted)
 {
 #ifdef LOGICAL_LOG

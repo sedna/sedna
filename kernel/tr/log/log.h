@@ -42,6 +42,8 @@ void up_concurrent_micro_ops_number();
 void wait_for_checkpoint_finished();
 void activate_and_wait_for_end_checkpoint();
 
+LONG_LSN get_lsn_of_first_record_in_logical_log();
+
 void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const  char* value,int data_size,const char* uri,const char* prefix,bool inserted);
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted); 
