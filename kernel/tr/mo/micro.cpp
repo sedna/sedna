@@ -1231,7 +1231,7 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns)
 	}
 	return result;
 }
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,int size,text_type ttype)
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,unsigned int size,text_type ttype)
 {
     //d_printf1("bit");fflush(stdout);
     #ifdef _MYDEBUG

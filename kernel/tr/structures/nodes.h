@@ -148,7 +148,7 @@ struct e_dsc : public n_dsc {
 
 /* Descriptor of text-enabled node */
 struct t_dsc : public n_dsc {
-	int				size;		/* size of the text node */
+	unsigned int				size;		/* size of the text node */
 	xptr			data;		/* pointer to the content of that item */
 
 	static void init(void *p);

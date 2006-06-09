@@ -59,7 +59,7 @@ inline xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const ch
 	return insert_attribute(left_sib, right_sib, parent,name, type,value, data_size,NULL);
 }
 
-xptr insert_text(xptr left_sib, xptr right_sib, xptr parent,const void* value, int size,text_type ttype=text_mem);
+xptr insert_text(xptr left_sib, xptr right_sib, xptr parent,const void* value, unsigned int size,text_type ttype=text_mem);
 xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent,const char* value, int size);
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent,const char* value, int size);
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, int tsize,const char* data, int dsize);
@@ -189,14 +189,14 @@ void inline clear_references(node_blk_hdr* block,n_dsc* node)
 void deleteTextValue(xptr node);
 
 /*inserts text value into the database*/
-void addTextValue(xptr node,const void* text, int size,text_type ttype=text_mem);
+void addTextValue(xptr node,const void* text, unsigned int size,text_type ttype=text_mem);
 
 
 /*appends currently existing text value */
-void appendTextValue(xptr node,const void* text, int size,text_type ttype);
+void appendTextValue(xptr node,const void* text, unsigned int size,text_type ttype);
 
 /*appends currently existing text value. New  text is inserted from the first position */
-void insertTextValue(xptr node,const void* text, int size,text_type ttype);
+void insertTextValue(xptr node,const void* text, unsigned int size,text_type ttype);
 void delete_text_head(xptr node, int size);
 void delete_text_tail(xptr node, int size);
 
