@@ -141,7 +141,7 @@ public:
     // for int atomics
     tuple_cell(int _data_) : type(tc_light_atomic), xtype(xs_integer), size(0)
     {
-        *(int*)(&(data)) = _data_;
+		*(int*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
     tuple_cell(decimal _data_) : type(tc_light_atomic), xtype(xs_decimal), size(0)
@@ -286,6 +286,7 @@ public:
     void set_node(const xptr &_p_) { type = tc_node; data = *((tcdata*)&_p_); }
     void set_xptr(const xptr &_p_) { data = *((tcdata*)&_p_); }
     void set_size(int _size_) { size = _size_; }
+    void set_type(tuple_cell_type _type_) { type = _type_; }
 
     /// set string atomic value w/o deep copy
     void set_atomic(xmlscm_type _xtype_, char *_str_)
@@ -326,6 +327,14 @@ public:
 		memset(&str_ptr, 0, sizeof(str_ptr));
 	}
 
+    /// for consistency size (set_size) and type (set_type) must be set appropriately 
+    /// after using these functions!
+    void     set_xs_integer(int _data_) 	{ xtype = xs_integer; *(int*)(&(data)) = _data_; } 
+    void	 set_xs_decimal(decimal _data_) { xtype = xs_decimal; *(decimal*)(&(data)) = _data_; }
+    void     set_xs_float(float _data_) 	{ xtype = xs_float;   *(float*)(&(data)) = _data_; }
+    void     set_xs_double(double _data_)	{ xtype = xs_double;  *(double*)(&(data)) = _data_;}
+    void     set_xs_boolean(bool _data_) 	{ xtype = xs_boolean; *(bool*)(&(data)) = _data_; }
+        
     ////////////////////////////////////////////////////////////////////////////
     /// ADDITIONAL FUNCTIONS
     ////////////////////////////////////////////////////////////////////////////
