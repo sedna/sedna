@@ -22,11 +22,14 @@ enum se_output_indent {se_output_indent_yes, se_output_indent_no};
 
 enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
 
+enum xq_empty_order {xq_empty_order_greatest, xq_empty_order_least};
+
 struct static_context
 {
     se_output_method output_method;
     se_output_indent output_indent;
     xq_boundary_space boundary_space;
+    xq_empty_order empty_order;
 
 	std::vector<xml_ns*> def_ns;
 	inscmap insc_ns;

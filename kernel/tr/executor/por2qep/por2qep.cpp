@@ -460,7 +460,6 @@ tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value)
     return tc;
 }
 
-
 xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 {
     xmlscm_type xtype;
@@ -493,6 +492,32 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     // !xs!anySimpleType --> xs_anySimpleType
 
     return xtype;
+}
+
+orb_modifier make_order_by_modifier(scheme_list *lst)
+{
+	if (   lst->size() != 2
+        || lst->at(0).type != SCM_SYMBOL
+        || lst->at(1).type != SCM_SYMBOL)
+        throw USER_EXCEPTION2(SE1004, "156");
+
+	orb_modifier m;    
+
+	string status = string(lst->at(0).internal.symb);
+
+	if(status == "greatest") m.status = ORB_EMPTY_GREATEST;
+	else if(status == "least") m.status = ORB_EMPTY_LEAST;
+	else if(status == "default")
+		m.status = tr_globals::st_ct.empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;	
+	else throw USER_EXCEPTION2(SE1004, "157");
+
+	string order = string(lst->at(1).internal.symb);
+	
+	if(order == "ascending" || order == "default") m.order = ORB_ASCENDING;
+	else if(order == "descending") m.order = ORB_DESCENDING;
+	else throw USER_EXCEPTION2(SE1004, "158");
+
+	return m;
 }
 
 
@@ -1613,94 +1638,6 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPTuple(cxt, arr);
     }
-    /*else if (op == "PPPred1")
-    {
-        if (   lst->size() < 6
-            || lst->size() > 7
-            || lst->at(1).type != SCM_LIST
-            || lst->at(2).type != SCM_LIST
-            || lst->at(3).type != SCM_LIST
-            || lst->at(4).type != SCM_LIST
-            || lst->at(5).type != SCM_NUMBER
-           ) throw USER_EXCEPTION2(SE1004, "84");
-
-        int i = 0;
-           
-        arr_of_var_dsc vars;
-        scheme_list *_vars_ = lst->at(1).internal.list;
-        for (i = 0; i != _vars_->size(); i++)
-        {
-            if (_vars_->at(i).type != SCM_NUMBER)
-                throw USER_EXCEPTION2(SE1004, "85");
-
-            var_dsc var = atoi(_vars_->at(i).internal.num);
-            vars.push_back(var);
-        }
-
-        arr_of_comp_cond _conditions_;
-        arr_of_PPOpIn _conjuncts_;
-        scheme_list *conjuncts_list = lst->at(3).internal.list;
-        for (i = 0; i < conjuncts_list->size(); i++)
-        {
-            if (conjuncts_list->at(i).type != SCM_LIST)
-                throw USER_EXCEPTION2(SE1004, "85.1");
-            scheme_list *conjunct = conjuncts_list->at(i).internal.list;
-            
-            if (   conjunct->size() != 2 
-                || conjunct->at(0).type != SCM_SYMBOL 
-                || conjunct->at(1).type != SCM_LIST
-               )
-                throw USER_EXCEPTION2(SE1004, "85.2");
-
-            string occ_string = string(conjunct->at(0).internal.symb);
-        	operation_compare_condition occ;
-	        if (occ_string == "eqv")            occ = OCC_VALUE_EQUAL;
-    	    else if (occ_string == "nev")	    occ = OCC_VALUE_NOT_EQUAL;
-	        else if (occ_string == "lev")	    occ = OCC_VALUE_LESS_EQUAL;
-    	    else if (occ_string == "gtv")	    occ = OCC_VALUE_GREATER;
-	        else if (occ_string == "gev")	    occ = OCC_VALUE_GREATER_EQUAL;
-    	    else if (occ_string == "ltv")	    occ = OCC_VALUE_LESS;
-      	    else if (occ_string == "eqg")       occ = OCC_GENERAL_EQUAL;
-    	    else if (occ_string == "neg")	    occ = OCC_GENERAL_NOT_EQUAL;
-	        else if (occ_string == "leg")	    occ = OCC_GENERAL_LESS_EQUAL;
-    	    else if (occ_string == "gtg")	    occ = OCC_GENERAL_GREATER;
-	        else if (occ_string == "geg")	    occ = OCC_GENERAL_GREATER_EQUAL;
-    	    else if (occ_string == "ltg")	    occ = OCC_GENERAL_LESS;
-	        else throw USER_EXCEPTION2(SE1004, "85.3");
-    
-            _conditions_.push_back(occ);
-            _conjuncts_.push_back(make_pp_op(cxt, conjunct->at(1).internal.list));
-        }
-
-
-        bool _once_ = (atoi(lst->at(5).internal.num) == 1);
-
-
-        if (lst->size() == 7)
-        {
-            if (lst->at(6).type != SCM_NUMBER)
-                throw USER_EXCEPTION2(SE1004, "86");
-            var_dsc pos = atoi(lst->at(6).internal.num);
-
-            opit = new PPPred1(cxt,
-                               vars,
-                               make_pp_op(cxt, lst->at(2).internal.list),
-                               _conjuncts_,
-                               _conditions_,
-                               make_pp_op(cxt, lst->at(4).internal.list),
-                               _once_,
-                               pos);
-        }
-        else
-            opit = new PPPred1(cxt,
-                               vars,
-                               make_pp_op(cxt, lst->at(2).internal.list),
-                               _conjuncts_,
-                               _conditions_,
-                               make_pp_op(cxt, lst->at(4).internal.list),
-                               _once_);
-    }*/
-    
     else if (op == "PPPred1" || op == "PPPred2")	//PPPred1 and PPPred2 have much in common; hence, they are joined in one "if"
     {
         if(op == "PPPred1")
@@ -2101,6 +2038,32 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                 opit = new PPFnDateTimeFunc2Params(cxt,
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_pp_op(cxt, lst->at(2).internal.list), type);
+    }
+    else if (op == "PPOrderBy")
+    {
+    	if (   lst->size() != 4
+            || lst->at(1).type != SCM_BOOL
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_LIST 
+           ) throw USER_EXCEPTION2(SE1004, "104");
+        
+		scheme_list *modifiers_list = lst->at(3).internal.list;
+		arr_of_orb_modifier _modifiers_;
+
+		for (int i = 0; i < modifiers_list->size(); i++)
+        {
+            if (modifiers_list->at(i).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "105");
+            scheme_list *modifier = modifiers_list->at(i).internal.list;
+            orb_modifier om = make_order_by_modifier(modifier);
+            _modifiers_.push_back(om);
+		}	        
+
+		opit = new PPOrderBy(cxt,							
+							 lst->at(1).internal.b,    	
+							 make_pp_op(cxt, lst->at(2).internal.list), 
+		                     _modifiers_,
+							 ts);
     }
 
 #ifdef SQL_CONNECTION
@@ -3074,6 +3037,22 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
             else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "preserve") == 0)
             {
                 tr_globals::st_ct.boundary_space = xq_boundary_space_preserve;
+            }
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        else if (prolog_decl == "PPEmptyOrderDecl")  
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "greatest") == 0)
+            {
+                tr_globals::st_ct.empty_order = xq_empty_order_greatest;
+            }
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "least") == 0)
+            {
+                tr_globals::st_ct.empty_order = xq_empty_order_least;
             }
             else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
         }

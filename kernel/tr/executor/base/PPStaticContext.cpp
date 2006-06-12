@@ -11,6 +11,7 @@ static_context::static_context()
         output_method = se_output_method_xml;
         output_indent = se_output_indent_yes;
         boundary_space = xq_boundary_space_strip;
+        empty_order = xq_empty_order_least;
 
 		def_ns.push_back(NULL);
 		xml_ns* tmp=xml_ns::init(NULL,"xml",false);

@@ -9,8 +9,10 @@
 #include "sedna.h"
 #include "PPBase.h"
 #include "PPUtils.h"
+#include "bit_set.h"
 #include "sorted_sequence.h"
 #include "numb_scheme.h"
+#include "op_map.h"
 #include "casting_operations.h"
 
 
@@ -21,50 +23,84 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #define ORB_SERIALIZED_STRING_SIZE 8			    //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
-                                                    //bytes after serialization, whic can store string itself or
+                                                    //bytes after serialization, which can store string itself or
                                                     //fixed size prefix + xptr.
+
+#define ORB_SERIALIZED_SIZE(t)	xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t);
+                                                                                                                
+///////////////////////////////////////////////////////////////////////////////
+/// NOTE!
+/// This buffer is internal class to use only within OrderBy operation!
+/// It hasn't many important security checks for memory borders and so on.
+///////////////////////////////////////////////////////////////////////////////
+class temp_buffer
+{
+private:
+	int size;
+	char* buffer;
+	int pos;
+	
+public:
+	temp_buffer (int _size_);
+	~temp_buffer ();
+
+	void clear ();
+	void serialize_to_buffer (tuple_cell tc);
+	void copy_to_buffer      (xptr addr, int size);
+	void copy_to_buffer      (const void* addr, int size);
+	void copy_from_buffer    (int start, int size, xptr addr);
+	void copy_from_buffer    (xptr addr);
+	void copy_from_buffer    (int start, xptr addr);
+	void copy_from_buffer	 (int start, int size, void* addr);
+	void copy_from_buffer	 (void* addr);
+	void copy_from_buffer	 (int start, void* addr);
+	void create_empty_block  (int size);
+	void create_empty_block  (int start, int size);
+};
+///////////////////////////////////////////////////////////////////////////////
+
 enum orb_empty_status {
 	ORB_EMPTY_GREATEST,
 	ORB_EMPTY_LEAST,
-	ORB_ES_DEFAULT
 };
 
 enum orb_sort_order {
 	ORB_ASCENDING,
 	ORB_DESCENDING,
-	ORB_SO_DEFAULT
 };
 
 struct orb_modifier {
-	orb_sort_order order;
+	orb_sort_order order;							
 	orb_empty_status status;
-
-	orb_modifier(orb_sort_order _order_,
-	             orb_empty_status _status_): order(_order_),
-	                                         status(_status_) 
-	{
-	}
 };
 
 struct common_type
 {
-	int size;										//Size of type in bytes. 0 for string based types.
+	int size;										//Size of type in bytes.
 	xmlscm_type xtype;                              //One of the atomic built-in types.
-	int (* gt)(const void* arg1, const void* arg2); //Pointer to in-memory comparison function for given type.
+	//bin_op_tuple_cell_tuple_cell gt;				//Pointer to comparison function for given type.
+	bool initialized;								//'true' if xtype is defined, else must be 'false'
 };
 
 typedef std::vector<orb_modifier>		arr_of_orb_modifier;
 typedef std::vector<common_type>        arr_of_common_type; 
 
-//Udata* used in serialization/deserialization in sorted sequence
+//Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
 {
 	sequence *sort;									
-	int pos;                                        
-	int size; 										//Serialized size in bytes. 
-	arr_of_common_type* header;	
-	arr_of_orb_modifier* modifiers;
+	int pos;                                        //Initial sequence which must be sorted.
+	int size; 										//Serialized size of in bytes (fixed for each tuple): 
+													//[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
+	int bit_set_offset;								//Offset to bit_set (i.e. size of position + size of tuple cells in serialized presentation).
+	arr_of_common_type* header;						//Array of common types structures.
+	arr_of_orb_modifier* modifiers;					//Array of standart order by modifiers - [empty (greatest | least)] and [ascending | descending].
+	temp_buffer* buffer;							//Buffer for memory copy operations (when ALIGNMENT_REQUIRED or two blocks are used).
 };
+
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -89,36 +125,20 @@ private:
     sequence *sort_cells;             				//Accumulates other 'sort_size' tuple cells. 
     
     bool first_time;
+    bool need_reinit;
     sorted_sequence *ss;
     int pos;
     
     arr_of_common_type types;
     orb_user_data udata;
     
-    static int compare_less (xptr v1,xptr v2, const void * Udata);
-	static int get_size (tuple& t, const void * Udata);
-	static void serialize (tuple& t,xptr v1, const void * Udata);
-	static void serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-	static void deserialize (tuple &t, xptr& v1, const void * Udata);
-	static void deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-	static int get_size_ser(xptr& v1);
-	static xptr get_ptr_ser(xptr& v1,int sz);
-	static void copy_data_ser_to_buffer(xptr v1,int sz);
-	static void copy_data_ser_to_buffer(xptr v1,shft shift,int sz);
-
-	inline static void copy_to_buffer(xptr addr, shft size)
-	{
-		CHECKP(addr);
-		copy_to_buffer(XADDR(addr),size);
-	}
-	static void copy_to_buffer(xptr addr, shft shift,shft size)
-	{
-		CHECKP(addr);
-		copy_to_buffer(XADDR(addr),shift,size);
-	}
-	static void copy_to_buffer(const void* addr, shft size);
-	static void copy_to_buffer(const void* addr, shft shift,shft size);
-	static void copy_from_buffer(xptr addr, shft shift,shft size);
+    static int  compare_less 		(xptr v1,xptr v2, const void * Udata);
+	static int  get_size 			(tuple& t, const void * Udata);
+	static void serialize 			(tuple& t,xptr v1, const void * Udata);
+	static void serialize_2_blks 	(tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+	static void deserialize 		(tuple &t, xptr& v1, const void * Udata);
+	static void deserialize_2_blks 	(tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
+    	
 	void children(PPOpIn& _child_) { _child_ = child; }
 
 public:

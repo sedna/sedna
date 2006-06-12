@@ -18,6 +18,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        e_string$(OBJ_EXT)				\
                        ext_sort$(OBJ_EXT)				\
                        compare$(OBJ_EXT)				\
+                       bit_set$(OBJ_EXT)				\
                        merge$(OBJ_EXT)					\
                        xptrChanneledMerge$(OBJ_EXT)		\
                        PPStaticContext$(OBJ_EXT)		\
