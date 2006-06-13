@@ -1098,14 +1098,14 @@ int SEnext(struct SednaConnection *conn)
     if (!conn->in_query)
         return SEDNA_NO_ITEM;
 
+    if (conn->result_end)
+        return SEDNA_RESULT_END;
+
     if (conn->first_next)
     {
         conn->first_next = 0;
         return SEDNA_NEXT_ITEM_SUCCEEDED;
     }
-
-    if (conn->result_end)
-        return SEDNA_RESULT_END;
 
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)

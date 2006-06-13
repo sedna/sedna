@@ -39,7 +39,7 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
 		return 1;
 	}
 
-    USECURITY_ATTRIBUTES shm_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
+    USECURITY_ATTRIBUTES shm_access_mode = U_SEDNA_SHMEM_ACCESS_PERMISSIONS_MASK;
     if (sa) shm_access_mode = *sa;
 	*id = shmget(name, size, IPC_CREAT | IPC_EXCL | shm_access_mode);
 
