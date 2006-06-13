@@ -67,7 +67,9 @@
 #if (defined(FreeBSD) || defined(SunOS)) /*??? for SunOS*/
 #define PREDEFINED_DISK_SECTOR_SIZE 512
 #else
-/* disk sector size should be obtained programmatically */
+/* disk sector size should be obtained programmatically but if it could not
+   then predefined size (of 512 byts) will be used */
+#define PREDEFINED_DISK_SECTOR_SIZE 512
 #endif
 #endif
 

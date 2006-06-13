@@ -456,6 +456,12 @@ int uGetDiskSectorSize(int *sector_size, const char *path, sys_call_error_fun fu
     int n = 0, i = 0;
     char buf[DSS_BUF_SIZE];
 
+    if (geteuid() != 0)
+    {
+        *sector_size = PREDEFINED_DISK_SECTOR_SIZE;
+        return 1;
+    }
+
     if (lstat(path, &path_buf) == -1)
     {
         sys_call_error("lstat");
