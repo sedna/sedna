@@ -410,7 +410,7 @@ Before working with Sedna an application has to declare variable of the \verb!Se
 \begin{verbatim}struct SednaConnection conn = SEDNA_CONNECTION_INITIALIZER;\end{verbatim}
 
 \begin{note}
-The initialization with \verb!SEDNA_CONNECTION_INITIALIZER! is not mandatory if you are using Sedna version 0.5 or earlier. 
+The initialization with \verb!SEDNA_CONNECTION_INITIALIZER! is mandatory for Sedna version 0.5 and earlier. 
 \end{note}
 To start working with Sedna an application has to open a session via establishing an authenticated connection with the server using \verb!SEconnect!:
 \begin{verbatim}
