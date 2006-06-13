@@ -1156,7 +1156,7 @@ sedna-err:SE4204
    Can't register SM on Governor
 sedna-err:SE4205
 
-   Failed to run SM in the background mode
+   Failed to run SM in the background mode (use '-background-mode off' for detailed diagnostics)
 sedna-err:SE4206
 
    Failed to initialize system parameters    
@@ -1220,7 +1220,7 @@ sedna-err:SE4400
     SEDNA server is not running  
 sedna-err:SE4401
 
-    Failed to run GOVERNOR in the background mode
+    Failed to run GOVERNOR in the background mode (use '-background-mode off' for detailed diagnostics)
 sedna-err:SE4402
   
     Failed to run GOVERNOR
