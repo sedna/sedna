@@ -1,4 +1,3 @@
-
 #
 # Makefile for bin (GNU make)
 #
@@ -24,7 +23,5 @@ clean: generic_clean
 	-$(REMOVE) se_stop$(EXE_EXT)
 	-$(REMOVE) se_trn$(EXE_EXT)
 	-$(REMOVE) se_term$(EXE_EXT)
-	-$(REMOVE) se_rcv_db$(EXE_EXT)
+	-$(REMOVE) se_rcv$(EXE_EXT)
 	-$(REMOVE) se_exp$(EXE_EXT)
-	-$(REMOVE) intermed*.*
-
