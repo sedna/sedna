@@ -1,170 +1,185 @@
+
 /*
  * File:  SednaConnectionImpl.java
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
+
 package ru.ispras.sedna.driver;
 
-import java.net.Socket;
+//~--- JDK imports ------------------------------------------------------------
+
 import java.io.*;
+
+import java.net.Socket;
+
 import java.util.*;
 
-class SednaConnectionImpl implements SednaConnection
-{
-  private Integer id;
-  private Socket socket;
-  OutputStream outputStream;
-  BufferedInputStream bufInputStream;
-   
-  private boolean isClose = false; 
- 
-  SednaSerializedResult currentResult = null; // all statements that were created in this connection
+//~--- classes ----------------------------------------------------------------
 
-//sets session id (for driver-internal use)  
-  void setId(Integer id)
-  {
-  	this.id = id;
-  }
-//gets session id (for driver-internal use)  
-  Integer getId()
-  {
-  	return this.id;
-  }
-//sets socket (for driver-internal use)  
-  void setSocket(Socket s)
-  {
-  	this.socket = s;
-  }
-//gets socket (for driver-internal use)  
-  Socket getSocket()
-  {
-  	return this.socket;
-  }
-  
-//sets OutputStream of the connections socket (for driver-internal use)  
-  void setOS(OutputStream outputStream)
-  {
-  	this.outputStream = outputStream;
-  }
-  
-//sets DataInputStream of the connections socket (for driver-internal use)  
-  void setBIS(BufferedInputStream bufInputStream)
-  {
-  	this.bufInputStream = bufInputStream;
-  }
+class SednaConnectionImpl implements SednaConnection {
+    private boolean       isClose       = false;
+    SednaSerializedResult currentResult = null;    // all statements that were created in this connection
+    BufferedInputStream bufInputStream;
+    private Integer     id;
+    OutputStream        outputStream;
+    private Socket      socket;
 
-  public void begin() throws DriverException
-  {
-   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
-  	
-  	 NetOps.Message msg = new NetOps.Message();
-     msg.instruction = NetOps.se_BeginTransaction;
-     msg.length = 0;
-  	 NetOps.writeMsg(msg, outputStream);
-  	  
-     NetOps.readMsg(msg, bufInputStream);
-      
-     if ((msg.instruction == NetOps.se_BeginTransactionFailed) || (msg.instruction == NetOps.se_ErrorResponse))
-     {
-          throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));      
-     }
-     else if (msg.instruction != NetOps.se_BeginTransactionOk)
-      	  throw new DriverException(DriverException.SE3008);   //Unknown message from server   
-  } 
-// closes connection (exits connection process on server)  
-  public void close() throws DriverException
-  {
-   	if(this.isClose) throw new DriverException(DriverException.SE3028);
-  	
-  	NetOps.Message msg = new NetOps.Message();
- 	
-    msg.instruction = NetOps.se_CloseConnection;
-    msg.length = 0;
-    NetOps.writeMsg(msg, outputStream);
-    NetOps.readMsg(msg, bufInputStream);
-     
-    if (msg.instruction == NetOps.se_TransactionRollbackBeforeClose)
-    {
- 		try{
- 			this.socket.close();
- 			this.outputStream.close();
- 			this.bufInputStream.close();
-	    	this.isClose = true;
- 		}catch(IOException ioe)
- 		{
-	   		throw new DriverException("Transaction rollback. Session is closed.");
- 		}
+    //~--- methods ------------------------------------------------------------
+
+    public void begin() throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(DriverException.SE3028);
+        }
+
+        NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_BeginTransaction;
+        msg.length      = 0;
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+        if ((msg.instruction == NetOps.se_BeginTransactionFailed)
+                || (msg.instruction == NetOps.se_ErrorResponse)) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction != NetOps.se_BeginTransactionOk) {
+            throw new DriverException(DriverException.SE3008);    // Unknown message from server
+        }
     }
-    else if (msg.instruction == NetOps.se_ErrorResponse) 
-    {
-    	this.isClose = true;
-        throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
+
+    // closes connection (exits connection process on server)  
+    public void close() throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(DriverException.SE3028);
+        }
+
+        NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_CloseConnection;
+        msg.length      = 0;
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+        if (msg.instruction == NetOps.se_TransactionRollbackBeforeClose) {
+            try {
+                this.socket.close();
+                this.outputStream.close();
+                this.bufInputStream.close();
+                this.isClose = true;
+            } catch (IOException ioe) {
+                throw new DriverException(
+                    "Transaction rollback. Session is closed.");
+            }
+        } else if (msg.instruction == NetOps.se_ErrorResponse) {
+            this.isClose = true;
+
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction != NetOps.se_CloseConnectionOk) {
+            this.isClose = true;
+
+            throw new DriverException(DriverException.SE3008);    // Unknown message from server
+        }
+
+        this.isClose = true;
     }
-    else if (msg.instruction != NetOps.se_CloseConnectionOk)
-    {
-    	this.isClose = true;
-    	throw new DriverException(DriverException.SE3008);  //Unknown message from server      
+
+    public void commit() throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(DriverException.SE3028);
+        }
+
+        NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_CommitTransaction;
+        msg.length      = 0;
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+        if (msg.instruction == NetOps.se_CommitTransactionFailed)    // CommitFailed
+        {
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction == NetOps.se_ErrorResponse) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction != NetOps.se_CommitTransactionOk) {
+            throw new DriverException(DriverException.SE3008);
+        }
     }
-    this.isClose = true;
-  }
-  
-  public SednaStatement createStatement() throws DriverException
-  {
-    if (isClose()) throw new DriverException (DriverException.SE5500);
-  	SednaStatement st = new SednaStatementImpl(this.outputStream, this.bufInputStream, this.currentResult);
-  	return st;
-  }
-  
-  public void commit() throws DriverException
-  {
-   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
-  	
-  	 NetOps.Message msg = new NetOps.Message();
 
-  	 msg.instruction = NetOps.se_CommitTransaction;
-  	 msg.length = 0;	
-     NetOps.writeMsg(msg, outputStream);
+    public SednaStatement createStatement() throws DriverException {
+        if (isClose()) {
+            throw new DriverException(DriverException.SE5500);
+        }
 
-     NetOps.readMsg(msg, bufInputStream);
-    
-     if (msg.instruction == NetOps.se_CommitTransactionFailed) // CommitFailed
-     {
-     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
-     }
- 	 else if (msg.instruction == NetOps.se_ErrorResponse)
-     {
-     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
-     }
-     else if (msg.instruction != NetOps.se_CommitTransactionOk)
-       	throw new DriverException(DriverException.SE3008);
-  }
+        SednaStatement st = new SednaStatementImpl(this.outputStream,
+                                this.bufInputStream, this.currentResult);
 
-  public void rollback() throws DriverException
-  {
-   	 if(this.isClose) throw new DriverException(DriverException.SE3028);
-  	
-  	 NetOps.Message msg = new NetOps.Message();
-  	
-	 msg.instruction = NetOps.se_RollbackTransaction;
-  	 msg.length = 0;	
-     NetOps.writeMsg(msg, outputStream);
+        return st;
+    }
 
-     NetOps.readMsg(msg, bufInputStream);
-	 if (msg.instruction == NetOps.se_RollbackTransactionFailed) // RollbackFailed
-     {
-     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	
-     }
-	 else if (msg.instruction == NetOps.se_ErrorResponse)
-   	 {
-     	throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length));	    
-     }
-     else if (msg.instruction != NetOps.se_RollbackTransactionOk)
-       	throw new DriverException(DriverException.SE3008);
-  }
+    public void rollback() throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(DriverException.SE3028);
+        }
 
-  public boolean isClose()
-  {
-  	return this.isClose;
-  }
+        NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_RollbackTransaction;
+        msg.length      = 0;
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+        if (msg.instruction == NetOps.se_RollbackTransactionFailed)    // RollbackFailed
+        {
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction == NetOps.se_ErrorResponse) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body,
+                    msg.length));
+        } else if (msg.instruction != NetOps.se_RollbackTransactionOk) {
+            throw new DriverException(DriverException.SE3008);
+        }
+    }
+
+    //~--- get methods --------------------------------------------------------
+
+    // gets session id (for driver-internal use)  
+    Integer getId() {
+        return this.id;
+    }
+
+    // gets socket (for driver-internal use)  
+    Socket getSocket() {
+        return this.socket;
+    }
+
+    public boolean isClose() {
+        return this.isClose;
+    }
+
+    //~--- set methods --------------------------------------------------------
+
+    // sets DataInputStream of the connections socket (for driver-internal use)  
+    void setBIS(BufferedInputStream bufInputStream) {
+        this.bufInputStream = bufInputStream;
+    }
+
+    // sets session id (for driver-internal use)  
+    void setId(Integer id) {
+        this.id = id;
+    }
+
+    // sets OutputStream of the connections socket (for driver-internal use)  
+    void setOS(OutputStream outputStream) {
+        this.outputStream = outputStream;
+    }
+
+    // sets socket (for driver-internal use)  
+    void setSocket(Socket s) {
+        this.socket = s;
+    }
 }
