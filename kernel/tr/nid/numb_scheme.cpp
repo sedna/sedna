@@ -29,7 +29,7 @@ static fnumber	PROPORTION(0,1);		/* proportion used to divide alphabet sequence 
 int nid_block_count=0;
 char   DC = ALPHABET_SIZE-1;
 doc_schema_node* nid_holder=NULL ;			/* current persistent block holder*/
-xptr			TMPNIDBLK = XNULL;		/* current temporary block for nid prefixes */
+xptr			TMPNIDBLK;		/* current temporary block for nid prefixes */
 t_nid			NIDNULL;
 std::pair<int /*size*/,int /*increment*/>* sizehnt=NULL;
 void	nid_set_proportion(fnumber p) {

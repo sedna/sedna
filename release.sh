@@ -139,7 +139,7 @@ prepare_source() {
 
 #script for downloading build-number-file
 get_build_file() {
-    echo "open adxmlserv.ispras.ru" > ftpscript.txt &&
+    echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
@@ -162,7 +162,7 @@ get_build_file() {
 #script for upload build-number-file
 put_build_file() {
     echo $BUILD > $BUILD_FILE &&
-    echo "open adxmlserv.ispras.ru" > ftpscript.txt &&
+    echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
@@ -180,13 +180,14 @@ put_build_file() {
     rm $BUILD_FILE || failwith "Cannot remove build_file"
 }
 
-#script for uploading results of build to adxmlserv
+#script for uploading results of build to seine
 #parameters: binary_file_name source_file_name
 #requirements: current directory must be $SEDNA_INSTALL
-put_results_to_adxmlserv() {
-	echo "open adxmlserv.ispras.ru" > ftpscript.txt &&
+put_results_to_seine() {
+	echo "open seine.ispras.ru" > ftpscript.txt &&
 	echo "anonymous" >> ftpscript.txt &&
 	echo "password" >> ftpscript.txt &&
+	echo "binary" >> ftpscript.txt &&
 	echo "cd build" >> ftpscript.txt &&
 	echo "put $1" >> ftpscript.txt &&
 	echo "put $2" >> ftpscript.txt &&
@@ -197,14 +198,14 @@ put_results_to_adxmlserv() {
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build results to adxmlserv"
+    fi || failwith "Cannot upload build results to seine"
 
     rm ftpscript.txt || failwith "Cannot remove build_file"
 }
 
 #script for downloading user name to modis.ispras.ru
 get_modis_ftp_uname() {
-    echo "open adxmlserv.ispras.ru" > ftpscript.txt &&
+    echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
@@ -226,7 +227,7 @@ get_modis_ftp_uname() {
 
 #script for downloading password to modis.ispras.ru
 get_modis_ftp_passw() {
-    echo "open adxmlserv.ispras.ru" > ftpscript.txt &&
+    echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
@@ -257,6 +258,7 @@ put_results_to_modis() {
         echo "$FTP_UNAME" >> ftpscript.txt && 
         echo "$FTP_PASSW" >> ftpscript.txt;
     fi &&
+    echo "binary" >> ftpscript.txt &&
     echo "put $1" >> ftpscript.txt &&
     echo "put $2" >> ftpscript.txt &&
     echo "close" >> ftpscript.txt &&
@@ -345,7 +347,7 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      chmod a+x $BIN_FILE_NAME.sh &&
      rm linux-install.sh);
  fi || failwith "Cannot create selfextracted binary package"
- put_results_to_adxmlserv $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
+ put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
 ##### RELEASE #################################################################
 
 
