@@ -480,7 +480,8 @@ static void sc_start(void *data, const char *el, const char **attr)
 	}*/
 	child->cl_hint++;
 	curr_fo.back()++;
-    curr_fo.push_back(0);
+	clear_text();
+	curr_fo.push_back(0);
 	sc_parent=child;
 	if (is_ns)
 	{
@@ -523,16 +524,21 @@ static void sc_end(void *data, const char *el)
 		if (it->second.first<curr_fo.back()) it->second.first=curr_fo.back();
 	curr_fo.pop_back();
 	sc_parent=sc_parent->parent;
+	clear_text();
 }
 
 void sc_data(void *userData, const char *s, int len)
 {
-	if (cdata_mode||(wpstrip && isWP(s,len))) return;
-	schema_node* xsn=sc_parent->get_child(NULL,NULL,text);
-	if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,text);
-	//statistics
-	xsn->cl_hint++;
-	curr_fo.back()++;
+	if (!text_inserted)
+	{
+		if (cdata_mode||(wpstrip && isWP(s,len))) return;
+		schema_node* xsn=sc_parent->get_child(NULL,NULL,text);
+		if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,text);
+		//statistics
+       		xsn->cl_hint++;
+		curr_fo.back()++;
+		text_inserted=true;
+	}
 }
 
 void el_ns (void *userData, const char *prefix, const char *uri)
@@ -582,6 +588,7 @@ void sc_comment (void *userData, const char *data)
 	//statistics
 	xsn->cl_hint++;
 	curr_fo.back()++;
+	clear_text();
 }
 void dt_comment (void *userData, const char *data)
 {
@@ -644,6 +651,7 @@ void sc_pi (void *userData, const char *target, const char *data)
 {
 	schema_node* xsn=sc_parent->get_child(NULL,NULL,pr_ins);
 	if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,pr_ins);
+	clear_text();
 	//statistics
 	xsn->cl_hint++;
 	curr_fo.back()++;
