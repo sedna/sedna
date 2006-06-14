@@ -90,7 +90,10 @@ prepare_windows_source() {
     rm -rf $FILE_BASE/libs/pcre/*.a &&
     make -C $FILE_BASE/libs &&
     rm -rf $FILE_BASE/libs/bin &&
-    rm -rf $FILE_BASE/libs/src
+    rm -rf $FILE_BASE/libs/src &&
+    mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
+    sed -e 's/\(build_\w\+\)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
+    rm -f $FILE_BASE/libs/Makefile.orig
 }
 
 prepare_linux_source() {
