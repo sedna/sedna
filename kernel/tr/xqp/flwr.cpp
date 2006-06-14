@@ -19,7 +19,7 @@ make_nested_flwr(PCCTS_AST* flcs, PCCTS_AST* r_cl, PCCTS_AST* w_cl, PCCTS_AST* v
    {
       if (order_by)
          return ASTBase::tmake(new AST(AST_UNIO), var_decls); 
-      else r_cl;
+      else return r_cl;
    }
    else
    {

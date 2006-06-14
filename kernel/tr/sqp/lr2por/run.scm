@@ -147,3 +147,103 @@
  '(query (prolog)
          (query-body
           (castable (const (type !xs!integer) 1) (type (optional !xs!string))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog (declare-default-order (const (type !xs!string) "empty-least")))
+    (query-body
+     (return
+      (order-by
+       (return
+        (const (type !xs!integer) 13)
+        (fun-def
+         ((xs:anyType (var ("" "$x1"))))
+         (return
+          (var ("" "$x1"))
+          (fun-def
+           ((xs:anyType (var ("" "$x2"))))
+           (let@
+               (+@ (var ("" "$x1")) (var ("" "$x2")))
+             (fun-def
+              ((xs:anyType (var ("" "$x3"))))
+              (let@
+                  (sequence (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")))
+                (fun-def
+                 ((xs:anyType (var ("" "$x4"))))
+                 (if@
+                  (and@
+                   (<@ (var ("" "$x1")) (var ("" "$x2")))
+                   (=@ (var ("" "$x3")) (var ("" "$x4"))))
+                  (unio
+                   (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")) (var ("" "$x4")))
+                  (sequence))))))))))
+       (fun-def
+        ((xs:anyType (var ("" "$x1")))
+         (!xs!anyType (var ("" "$x2")))
+         (xs:anyType (var ("" "$x3")))
+         (xs:anyType (var ("" "$x4"))))
+        (orderspecs
+         (const (type !xs!string) "non-stable")
+         (orderspec
+          (ordermodifier (const (type !xs!string) "asc") (const (type !xs!string) "empty-greatest"))
+          (sequence (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")) (var ("" "$x4"))))
+         (orderspec
+          (ordermodifier (const (type !xs!string) "desc"))
+          (sequence (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")) (var ("" "$x4")))))))
+      (fun-def
+       ((xs:anyType (var ("" "$x1")))
+        (!xs!anyType (var ("" "$x2")))
+        (xs:anyType (var ("" "$x3")))
+        (xs:anyType (var ("" "$x4"))))
+       (sequence (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")) (var ("" "$x4")))))))))
+
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (return
+      (order-by
+       (return
+        (ddo
+         (child
+          (ddo (descendant-or-self (!fn!document (const (type !xs!string) "a")) (type (node-test))))
+          (type (elem-test (ename (const (type !xs!QName) ("" "book")) (type *) (const (type !xs!string) "non-nil"))))))
+        (fun-def
+         ((xs:anyType (var ("" "b"))))
+         (return
+          (ddo
+           (child
+            (ddo (descendant-or-self (!fn!document (const (type !xs!string) "a")) (type (node-test))))
+            (type
+             (elem-test (ename (const (type !xs!QName) ("" "author")) (type *) (const (type !xs!string) "non-nil"))))))
+          (fun-def ((xs:anyType (var ("" "a")))) (unio (var ("" "b")) (var ("" "a")))))))
+       (fun-def
+        ((xs:anyType (var ("" "b"))) (xs:anyType (var ("" "a"))))
+        (orderspecs
+         (const (type !xs!string) "non-stable")
+         (orderspec
+          (ordermodifier)
+          (ddo
+           (child
+            (var ("" "b"))
+            (type
+             (elem-test (ename (const (type !xs!QName) ("" "title")) (type *) (const (type !xs!string) "non-nil")))))))
+         (orderspec
+          (ordermodifier (const (type !xs!string) "desc") (const (type !xs!string) "empty-least"))
+          (ddo
+           (child
+            (var ("" "a"))
+            (type
+             (elem-test (ename (const (type !xs!QName) ("" "price")) (type *) (const (type !xs!string) "non-nil")))))))
+         (orderspec
+          (ordermodifier (const (type !xs!string) "desc"))
+          (ddo
+           (child
+            (var ("" "b"))
+            (type
+             (elem-test
+              (ename (const (type !xs!QName) ("" "salary")) (type *) (const (type !xs!string) "non-nil"))))))))))
+      (fun-def ((xs:anyType (var ("" "b"))) (xs:anyType (var ("" "a")))) (var ("" "b"))))))))
