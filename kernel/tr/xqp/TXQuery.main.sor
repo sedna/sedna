@@ -103,7 +103,7 @@ exprSingle! [in_context in_c] >[out_context out_c]:
 	| alte:arithmLogicalTypeExpr[in_c] >[out_c]
 	  <<#exprSingle=alte;>>
 
-	| flwr:flwrExpr[in_c] >[out_c]
+	| flwr:flwrorExpr[in_c] >[out_c]
 	  <<#exprSingle=flwr;>>
 
 	| quant:quantifierExpr[in_c] >[out_c]
@@ -111,6 +111,8 @@ exprSingle! [in_context in_c] >[out_context out_c]:
 
 	| ts:typeswitchExpr[in_c] >[out_c]
 	  <<#exprSingle=ts;>>
+	| ue:unioExpr[in_c] > [out_c]
+	  <<#exprSingle=ue;>>
 
 ;
 
@@ -139,6 +141,7 @@ vardecl!:
 	  #vardecl = #(#["var"], qn);
 	>>
 ;
+
 
 stringLiteral!:
 	s:AST_STRING_CONST
