@@ -77,6 +77,11 @@
      (l2p:decl-def-func-ns2por prolog-decl))
     ((eq? (car prolog-decl) 'boundary-space-decl)
      `(PPBoundarySpaceDecl ,(caddr (cadr prolog-decl))))
+    ((eq? (car prolog-decl) 'declare-default-order)
+     `(PPEmptyOrderDecl
+       ,(cdr (assoc (caddr (cadr prolog-decl))
+                    '(("empty-greatest" . greatest)
+                      ("empty-least" . least))))))
     ((eq? (car prolog-decl) 'declare-option)
      `(PPOptionDecl
        (,(caddr (cadr prolog-decl))  ; option QName
@@ -233,6 +238,14 @@
              ; *** predicate ***
              ((eq? op-name 'predicate)
               (l2p:predicate2por node))
+             
+             ; *** order-by ***
+             ((eq? op-name 'order-by)
+              (l2p:order-by2por node))
+             
+             ((eq? op-name 'tmp-tuple)
+              `(,(length node)
+                (PPTuple ,@(map l2p:any-lr-node2por node))))
              
              ; *** lreturn ***
              ((eq? op-name 'lreturn)
@@ -438,14 +451,18 @@
                      (ts-else (l2p:tuple-size else-expr))
                     )
 
-                (if (eq? ts-then ts-else)
-                    `(,ts-then (PPIf
-                               ,(l2p:any-lr-node2por (car node))
-                               ,then-expr
-                               ,else-expr
-                              )
-                     )
-                    (cl:signal-input-error SE4008 "bad input logical plan: tuple-size of then expr not equal to tuple-size of else expr")
+                (if
+                 (or (eq? ts-then ts-else)
+                     (equal? else-expr '(1 (PPNil))))
+                 `(,ts-then (PPIf
+                             ,(l2p:any-lr-node2por (car node))
+                             ,then-expr
+                             ,else-expr
+                             )
+                   )
+                 (cl:signal-input-error
+                  SE4008
+                  "bad input logical plan: tuple-size of then expr not equal to tuple-size of else expr")
                 )
               )
              )
@@ -1509,7 +1526,6 @@
 
 ;(define (l2p:new-var-name))
 
-
 ;=========================================================================
 ; Predicate
 
@@ -1733,6 +1749,59 @@
                   (or requires-node? node?)
                   (or requires-pos? pos?)
                   (or requires-last? last?))))))))))
+
+;=========================================================================
+; Order-by
+
+; Replaces each 'unio with 'tmp-tuple and extends its arguments with ExprSingle-list
+; from OrderSpecList
+(define (l2p:replace-unio2tmp-tuple expr expr-single-lst)
+  (cond
+    ((not (pair? expr))  ; leaf node
+     expr)
+    ((eq? (car expr) 'unio)
+     ;(write expr)
+     ;(newline)
+     (cons 'tmp-tuple
+           (append (cdr expr) expr-single-lst)))    
+    (else
+     (map
+      (lambda (kid) (l2p:replace-unio2tmp-tuple kid expr-single-lst))
+      expr))))
+
+(define (l2p:order-by2por arg-lst)
+  (let* ((subexpr (car arg-lst))
+         (fun-def (cadr arg-lst))
+         (orderspecs (caddr fun-def))
+         (stable-const (cadr orderspecs))
+         (spec-lst (cddr orderspecs)))
+    `(,(length (cadr fun-def))  ; Tuple size
+      (PPOrderBy
+       ,(if (string=? (caddr stable-const)  ; constant value
+                      "stable")
+            #t #f)
+       ,(l2p:any-lr-node2por
+         (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
+       ,@(map
+          (lambda (modif)
+            (if
+             (null? (cdr modif))  ; no arguments at all
+             '(default default)
+             (list
+              (cond
+                ((null? (cddr modif))  ; no empty status
+                 'default)
+                ((assoc (caddr (caddr modif))  ; value of the 1st const
+                        '(("empty-greatest" . greatest)
+                          ("empty-least" . least)))
+                 => cdr)
+                (else
+                 'default))
+              (cdr (assoc (caddr (cadr modif))  ; value of the 1st const
+                          '(("asc" . ascending)
+                            ("desc" . descending)))))))
+          (map cadr spec-lst)  ; list of ordermodifier
+          )))))
 
 ;=========================================================================
 ; Typeswitch

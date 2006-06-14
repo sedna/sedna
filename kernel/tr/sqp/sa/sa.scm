@@ -235,7 +235,7 @@
       (sa:analyze-axis expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.4 Sequence
-     ((sequence)
+     ((sequence unio)
       (sa:analyze-sequence expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.5 Arithmetic operations
@@ -275,6 +275,10 @@
       (sa:analyze-return expr vars funcs ns-binding default-ns))
      ((predicate)
       (sa:analyze-predicate expr vars funcs ns-binding default-ns))
+     ((order-by)
+      (sa:analyze-order-by expr vars funcs ns-binding default-ns))
+     ((orderspecs)
+      (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.11 Expressions on Sequence Types
      ((ts)
@@ -788,6 +792,20 @@
                   ns-binding default-elem-ns default-func-ns
                   (cdr prolog))
             (cl:signal-user-error SE5054 (cadr expr)))))
+         ((declare-default-order)  ; Default order for empty sequences
+          ; Clone of boundary-space-decl
+          (and
+           (sa:assert-num-args expr 1)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (if
+            (member (cadr expr)  ; predefined values
+                    '((const (type !xs!string) "empty-greatest")
+                      (const (type !xs!string) "empty-least")))
+            (loop (cons expr new-prlg)
+                  funcs triples
+                  ns-binding default-elem-ns default-func-ns
+                  (cdr prolog))
+            (cl:signal-user-error SE5054 (cadr expr)))))         
          ((declare-option)
           (and
            (sa:assert-num-args expr 2)
@@ -1620,11 +1638,11 @@
     (sa:assert-num-args expr 2)
     (let ((formal-args
            (sa:analyze-formal-args
-            (car (sa:op-args expr)) ns-binding (car default-ns))))
+            (car (sa:op-args expr)) ns-binding (car default-ns))))     
       (cond
         ((not formal-args) #f)
-        ((> (length formal-args) 3)
-         (cl:signal-input-error SE5033 expr))
+        ;((> (length formal-args) 3)
+        ; (cl:signal-input-error SE5033 expr))
         (else
          (let ((expr-pair
                 (sa:analyze-expr (cadr (sa:op-args expr))
@@ -2378,3 +2396,111 @@
                         'sa:atomic  ; dummy
                         )))
       (and new (car new)))))
+
+
+;==========================================================================
+; Order by
+
+;(ordermodifier 
+; (const (type !xs!string) "asc")
+; (const (type !xs!string) "empty-greatest"))
+(define (sa:analyze-ordermodifier expr vars funcs ns-binding default-ns)
+  (cond
+    ((not (and (pair? expr) (eq? (sa:op-name expr) 'ordermodifier)))
+     (cl:signal-user-error SE5064 expr))
+    ((null? (sa:op-args expr))  ; everything by default
+     (cons expr sa:type-any))
+    (else
+     (and
+      (or (= (length (sa:op-args expr)) 1)
+          (sa:assert-num-args expr 2))
+      (let ((c1 (car (sa:op-args expr)))  ; first constant
+            (c2 (if (null? (cdr (sa:op-args expr)))  ; a single argument
+                    '(const (type !xs!string) "default")
+                    (cadr (sa:op-args expr)))))
+        (and
+         (sa:analyze-string-const c1 '() '() '() sa:default-ns)
+         (sa:analyze-string-const c2 '() '() '() sa:default-ns)
+         (let ((v1 (caddr c1))  ; value of the first constant
+               (v2 (caddr c2)))
+           (cond
+             ((not (member v1 '("asc" "desc")))
+              (cl:signal-user-error SE5061 v1))
+             ((not (member v2 '("empty-greatest" "empty-least" "default")))
+              (cl:signal-user-error SE5062 v1))
+             (else
+              (cons expr sa:type-any))))))))))
+
+;(orderspec
+; (ordermodifier 
+;  (const (type !xs!string) "asc")
+;  (const (type !xs!string) "empty-greatest"))
+; (*@ (var $x1) (var $x2) (var $x3) (var $x4)))
+(define (sa:analyze-orderspec expr vars funcs ns-binding default-ns)
+  (if
+   (not (and (pair? expr) (eq? (sa:op-name expr) 'orderspec)))
+   (cl:signal-user-error SE5065 expr)
+   (and
+    (sa:assert-num-args expr 2)
+    (let ((new-modifier
+           (sa:analyze-ordermodifier
+            (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (new-subexpr
+           (sa:analyze-expr
+            (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+      (and
+       new-modifier new-subexpr
+       (cons (list (sa:op-name expr)  ; ='orderspec
+                   (car new-modifier)
+                   (car new-subexpr))
+             (cdr new-subexpr)))))))
+
+;(orderspecs
+; (const (type !xs!string) "non-stable")
+; (orderspec ...)
+; (orderspec ...))
+(define (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns)
+  (cond
+    ((not (and (pair? expr) (eq? (sa:op-name expr) 'orderspecs)))
+     (cl:signal-user-error SE5066 expr))
+    ((null? (sa:op-args expr))  ; no stable/non-stable declaration
+     (cl:signal-user-error SE5063 expr))
+    ((not (and (sa:analyze-string-const
+                (car (sa:op-args expr)) '() '() '() sa:default-ns)
+               (member
+                (caddr (car (sa:op-args expr)))  ; value of the constant
+                '("stable" "non-stable"))))
+     (cl:signal-user-error SE5063 (car (sa:op-args expr))))
+    (else
+     (let ((new-orderspec-lst
+            (map
+             (lambda (sub)
+               (sa:analyze-orderspec sub vars funcs ns-binding default-ns))
+             (cdr (sa:op-args expr)))))
+       (and
+        (not (memv #f new-orderspec-lst))
+        (cons
+         (cons (sa:op-name expr)  ; ='orderspecs
+               (cons (car (sa:op-args expr))  ; stable / non-stable
+                     (map car new-orderspec-lst)))
+         sa:type-any  ; we don't care about the type
+         ))))))
+
+(define (sa:analyze-order-by expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((new-value
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+         (new-fun
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+     (and
+      new-value new-fun
+      (let ((fun-body (caddr (car new-fun))))
+        (if
+         (not (and (pair? fun-body) (eq? (sa:op-name fun-body) 'orderspecs)))
+         (cl:signal-user-error SE5066 fun-body)
+         #t))
+      (cons (list (sa:op-name expr)  ; ='order-by
+                  (car new-value)
+                  (car new-fun))
+            (cdr new-fun))))))
