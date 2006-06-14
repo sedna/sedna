@@ -1499,7 +1499,7 @@ const char *SEshowTime(struct SednaConnection *conn)
 
     if (conn->msg.instruction == se_LastQueryTime)      /*LastQueryTime*/
     {
-        strcpy(conn->query_time, conn->msg.body + 5);
+        strncpy(conn->query_time, conn->msg.body + 5, conn->msg.length - 5);
         return conn->query_time;
     }
     else
