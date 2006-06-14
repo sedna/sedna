@@ -1,9 +1,36 @@
 /* */
 
 flwrorExpr! [in_context in_c] >[out_context out_c]:
-	  #(AST_ORDER_BY orderByClause[in_c] >[out_c] flwrExprOrderBy)
-	| flwrExpr[in_c] >[out_c]
+	  #(AST_FLWR_ORDER_BY flwr1:flwrExpr[in_c] >[out_c] vdl:varDeclList[in_c] >[out_c] obc:orderByClause[in_c] >[out_c] re:exprSingle[in_c] >[out_c])
+	  <<#flwrorExpr=#(#["return"], #(#["order-by"], flwr1, 
+	                                 #(#["fun-def"], vdl, obc)),
+	                    #(#["fun-def"], vdl->dup(), re));
+	  >>
+
+	| flwr:flwrExpr[in_c] >[out_c]
+	  <<#flwrorExpr = flwr;>>
 ;
+
+varDeclList! [in_context in_c] >[out_context out_c]:
+    <<PCCTS_AST* res = NULL; bool type = false;>>
+	(#(AST_VAR_DECL v1:vardecl ev1:expr[in_c] >[out_c] {st1:sequenceType <<type = true;>>})
+	<<if (res == NULL)
+      {
+        if (type) res = #(#[], st1, v1);
+        else res = #(#[], #["xs:anyType"], v1);
+      }
+      else
+      {
+        if (type) res->append(#(#[], st1, v1));
+        else res->append(#(#[], #["xs:anyType"], v1));
+      }
+	  type = false;
+	>>
+	)+
+
+	<<#varDeclList=#(#[], res);>>
+;
+
 
 flwrExpr! [in_context in_c] >[out_context out_c]:
 	<<bool isFor=false;
@@ -69,18 +96,17 @@ flwrExpr! [in_context in_c] >[out_context out_c]:
 ;
 
 
-flwrExprOrderBy!:
-	AST_FUNC
-;
-
 orderByClause! [in_context in_c] >[out_context out_c]:
-	  #(AST_ORDER_BY (orderSpec[in_c] >[out_c])*)
-	| #(AST_STABLE_ORDER_BY (orderSpec[in_c] >[out_c])*)
+	  #(AST_ORDER_BY <<#orderByClause=#(#["orderspecs"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"non-stable\""])); >>
+         (os1:orderSpec[in_c] >[out_c] <<#orderByClause->addChild(os1);>>)*)
+	| #(AST_STABLE_ORDER_BY <<#orderByClause=#(#["orderspecs"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"stable\""])); >>
+         (os2:orderSpec[in_c] >[out_c]<<#orderByClause->addChild(os2);>>)*)
 ;
 
 orderSpec! [in_context in_c] >[out_context out_c]:
 	<<out_context out_c;>>
-	#(AST_ORDER_SPEC exprSingle[in_c] >[out_c] orderModifier)
+	#(AST_ORDER_SPEC e:exprSingle[in_c] >[out_c] om:orderModifier)
+	<<#orderSpec=#(#["orderspec"], om, e );>>
 ;
 
 orderModifier!:
@@ -89,7 +115,7 @@ orderModifier!:
 	  #(AST_EMPT_GR_LST {p2:AST_ORDER_PROPERTY})
 	  #(AST_COLLATION {p3:AST_ORDER_PROPERTY})
 	)
-	<<#orderModifier=#["ordermodifier"];
+	<<#orderModifier=#(#[], #["ordermodifier"]);
 
 	  if(p1!=NULL) 
 	    #orderModifier->addChild(#(#["const"], 
@@ -113,3 +139,16 @@ orderModifier!:
 	  
 	>>
 ;
+
+unioExpr! [in_context in_c] > [out_context out_c]:
+    #(AST_UNIO vdl:varDeclList[in_c] >[out_c])
+    <<PCCTS_AST* res, *it;
+      res = #(#["unio"]);
+      for (it = vdl->down(); it != NULL; it= it->right())
+      {
+         res->addChild(it->down()->right());
+      }
+
+      #unioExpr= res;
+	>>
+;     

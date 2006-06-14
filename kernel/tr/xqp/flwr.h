@@ -6,4 +6,4 @@
 #include "sedna.h"
 #include "AST.h"
 
-PCCTS_AST* make_nested_flwr(PCCTS_AST*, PCCTS_AST*, PCCTS_AST*, PCCTS_AST*);
+PCCTS_AST* make_nested_flwr(PCCTS_AST*, PCCTS_AST*, PCCTS_AST*, PCCTS_AST*, bool);

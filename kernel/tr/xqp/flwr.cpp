@@ -11,30 +11,33 @@
 
 
 PCCTS_AST*
-make_nested_flwr(PCCTS_AST* flcs, PCCTS_AST* r_cl, PCCTS_AST* w_cl, PCCTS_AST* o_cl){
+make_nested_flwr(PCCTS_AST* flcs, PCCTS_AST* r_cl, PCCTS_AST* w_cl, PCCTS_AST* var_decls, bool order_by){
 
  if(flcs==NULL)
  {
    if(w_cl==NULL)
-      return r_cl;  
+   {
+      if (order_by)
+         return ASTBase::tmake(new AST(AST_UNIO), var_decls); 
+      else r_cl;
+   }
    else
-      return ASTBase::tmake(new AST(AST_IF), w_cl, r_cl, ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL), NULL); 
+   {
+      if (order_by)
+         return ASTBase::tmake(new AST(AST_IF), w_cl, ASTBase::tmake(new AST(AST_UNIO), var_decls), ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL));
+      else
+         return ASTBase::tmake(new AST(AST_IF), w_cl, r_cl, ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL), NULL); 
+   }
  } //exit from recursion
 
  else{
-   if(o_cl==NULL){
      PCCTS_AST *r=flcs->right(), *tmp;
      flcs->setRight(NULL);
     
      tmp = ASTBase::tmake(new AST(AST_BOUND), flcs,
-                           make_nested_flwr(r, r_cl, w_cl, NULL), NULL);
+                           make_nested_flwr(r, r_cl, w_cl, var_decls, order_by), NULL);
 
      return tmp;
-   }
-   else
-     return ASTBase::tmake(new AST(AST_ORDER_BY), o_cl,
-                           make_nested_flwr(flcs, r_cl, w_cl, NULL), NULL);  
-    
  }
 
 }
