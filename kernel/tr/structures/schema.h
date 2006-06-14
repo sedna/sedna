@@ -125,10 +125,10 @@ struct schema_node
     sc_ref*				first_child;/* refernce to the first child */
 	sc_ref*				last_child;	/* refernce to the last child  */
 	/*statistics*/
-	int nodecnt;
-	int blockcnt;
-	int extnids;
-	int indir_blk_cnt;
+	unsigned int nodecnt;
+	unsigned int blockcnt;
+	unsigned int extnids;
+	unsigned int indir_blk_cnt;
 	__int64 textcnt;
 	/*stat end*/
 	struct doc_schema_node* root;
