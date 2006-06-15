@@ -37,7 +37,7 @@ arg_rec term_argtable[] =
 {"-output",         " filename", arg_str,   output_file,                  "STDOUT",  "\t  output file (default stdout)"},
 {"-query",          " \"query\"",arg_str,   query,                        "???",     "\t  XQuery query to execute\t\t"},
 {"-echo",           " on/off",   arg_str,   echo_str,                     "???",      "\t\t  display se_term output  (default: on for interactive mode, off for batch mode)"},
-{"-showtime",       " on/off",   arg_bool,  &show_time,                   "off",     "\t  show time of the latest query execution (default off)"},
+{"-show-time",       " on/off",   arg_bool,  &show_time,                   "off",     "\t  show time of the latest query execution (default off)"},
 {"-host",           " host",     arg_str,   host,                         "???",     "\t\t  hostname of the machine with Sedna running (default localhost)\n\t\t"},
 {"-port-number",    " port",     arg_int,   &socket_port,                 "5050",    "\t  socket listening port  (default 5050)"},
 {"-name",           " name",     arg_str,   login,                        "???",  "\t\t  user name "},
