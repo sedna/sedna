@@ -14,22 +14,24 @@ flworExpr!:
 	RETURN e:exprSingle
 	<<ASTBase* it;
       ASTBase* copy_var_decls1 = NULL, *copy_var_decls2 = NULL;
+
       for(it = flcs; it != NULL; it =(ASTBase*)(it->right()))
       {
+
         if (copy_var_decls1 == NULL)
         {
-           copy_var_decls1=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup());
-           copy_var_decls2=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup());
+
+           copy_var_decls1=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL);
+           copy_var_decls2=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL);
         }
         else
         {
-           copy_var_decls1->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup()));
-           copy_var_decls2->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup()));
+           copy_var_decls1->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL));
+           copy_var_decls2->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL));
         }
-    
       }
       if (#obc != NULL)
-	    #0=ASTBase::tmake(new AST(AST_FLWR_ORDER_BY), (ASTBase*)make_nested_flwr(flcs, #e, #wc, copy_var_decls1, true), copy_var_decls2, #obc, #e);
+	    #0=ASTBase::tmake(new AST(AST_FLWR_ORDER_BY), (ASTBase*)make_nested_flwr(flcs, #e, #wc, copy_var_decls1, true), copy_var_decls2, #obc, #e, NULL);
 	  else
 	    #0=(ASTBase*)make_nested_flwr(flcs, #e, #wc, copy_var_decls1, false);
 	>>

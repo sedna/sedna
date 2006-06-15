@@ -18,13 +18,13 @@ make_nested_flwr(PCCTS_AST* flcs, PCCTS_AST* r_cl, PCCTS_AST* w_cl, PCCTS_AST* v
    if(w_cl==NULL)
    {
       if (order_by)
-         return ASTBase::tmake(new AST(AST_UNIO), var_decls); 
+         return ASTBase::tmake(new AST(AST_UNIO), var_decls, NULL); 
       else return r_cl;
    }
    else
    {
       if (order_by)
-         return ASTBase::tmake(new AST(AST_IF), w_cl, ASTBase::tmake(new AST(AST_UNIO), var_decls), ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL));
+         return ASTBase::tmake(new AST(AST_IF), w_cl, ASTBase::tmake(new AST(AST_UNIO), var_decls, NULL), ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL), NULL);
       else
          return ASTBase::tmake(new AST(AST_IF), w_cl, r_cl, ASTBase::tmake(new AST(AST_RELATIVE_PATH), ASTBase::tmake(new AST(AST_FILTER_PATH_STEP),  ASTBase::tmake(new AST(AST_SEQUENCE), NULL), ASTBase::tmake(new AST(AST_PREDICATES), NULL), NULL), NULL), NULL); 
    }
