@@ -290,11 +290,6 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 
 	switch (t1)
     {
-        case xdt_untypedAtomic		: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_dateTime			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_date				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_time				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_duration			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
         case xdt_yearMonthDuration	: 
         	switch(t2)
         	{
@@ -437,15 +432,6 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type");
 		   	}
         
-        case xs_gYearMonth			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_gYear				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_gMonthDay			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_gDay				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_gMonth				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_boolean				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_base64Binary		: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        case xs_hexBinary			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
-        
         case xs_anyURI				: 
         	switch(t2)
         	{
@@ -552,6 +538,20 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
          		case xs_double				: return xs_double;
 				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type");
         	}
+
+        case xdt_untypedAtomic		: 
+        case xs_dateTime			: 
+        case xs_date				: 
+        case xs_time				: 
+        case xs_duration			: 
+        case xs_gYearMonth			: 
+        case xs_gYear				: 
+        case xs_gMonthDay			: 
+        case xs_gDay				: 
+        case xs_gMonth				: 
+        case xs_boolean				: 
+        case xs_base64Binary		: 
+        case xs_hexBinary			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type");
         default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to evaluate_common_type");
     }
 }

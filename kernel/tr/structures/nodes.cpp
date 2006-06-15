@@ -156,43 +156,46 @@ void d_dsc::init(void *p)
 
 int xmlscm_type_size(xmlscm_type t)
 {
-    /////////////////////////////////////////////////////////////////////////////////////
-    // FIXME!!! Size for some types can be defined now!
-    /////////////////////////////////////////////////////////////////////////////////////
-    
     switch (t) 
     {
-		case xs_dateTime			: return 0;
-		case xs_date				: return 0;
-		case xs_time				: return 0;
-		case xs_duration			: return 0;
-		case xdt_yearMonthDuration	: return 0;
-		case xdt_dayTimeDuration	: return 0;
+   		/// Basic types. Size is fixed. ///
+   		case xs_decimal				: return sizeof(double);
+		case xs_integer				: return sizeof(int);
+		case xs_boolean				: return sizeof(bool);
 		case xs_float				: return sizeof(float);
 		case xs_double				: return sizeof(double);
-		case xs_string				: return 0;
-		case xs_normalizedString	: return 0;
-		case xs_token				: return 0;
-		case xs_language			: return 0;
-		case xs_NMTOKEN				: return 0;
-		case xs_Name				: return 0;
-		case xs_NCName				: return 0;
-		case xs_ID					: return 0;
-		case xs_IDREF				: return 0;
-		case xs_ENTITY				: return 0;
-		case xs_decimal				: return sizeof(double);
-		case xs_integer				: return sizeof(int);
-		case xs_gYearMonth			: return 0;
-		case xs_gYear				: return 0;
-		case xs_gMonthDay			: return 0;
-		case xs_gDay				: return 0;
-		case xs_gMonth				: return 0;
-		case xs_boolean				: return sizeof(bool);
+
+   		/// String based types. 0 means that size is not fixed for these types. ///
+		case xs_string				: 
+		case xs_normalizedString	: 
+		case xs_token				: 
+		case xs_language			: 
+		case xs_NMTOKEN				: 
+		case xs_Name				: 
+		case xs_NCName				: 
+		case xs_ID					: 
+		case xs_IDREF				: 
+		case xs_ENTITY				: 
+		case xs_anyURI				: 
+		case xs_QName				: 
+		case xs_NOTATION			: return 0;								
+		
+		/// XMLDateTime based types. Size is fixed. ///
+		case xs_dateTime			: 
+		case xs_date				: 
+		case xs_time				: 
+		case xs_duration			: 
+		case xdt_yearMonthDuration	: 
+		case xdt_dayTimeDuration	: 
+		case xs_gYearMonth			: 
+		case xs_gYear				: 
+		case xs_gMonthDay			: 
+		case xs_gDay				: 
+		case xs_gMonth				: return sizeof(int)*(XMLDateTime::TOTAL_FIELDS);
+
+		/// Not supported or not implemented for now types. ///
 		case xs_base64Binary		: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_base64Binary is not implemented yet (in xmlscm_type_size).");
 		case xs_hexBinary			: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_hexBinary is not implemented yet (in xmlscm_type_size).");
-		case xs_anyURI				: return 0;									//If it is implemented as string!
-		case xs_QName				: return 0;									//If it is implemented as string!
-		case xs_NOTATION			: return 0;									//If it is implemented as string!
 		case xs_nonPositiveInteger  : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_nonPositiveInteger is not implemented yet (in xmlscm_type_size).");
 		case xs_negativeInteger     : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_negativeInteger is not implemented yet (in xmlscm_type_size).");
 		case xs_long                : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_long is not implemented yet (in xmlscm_type_size).");
@@ -205,6 +208,7 @@ int xmlscm_type_size(xmlscm_type t)
 		case xs_unsignedShort       : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedShort is not implemented yet (in xmlscm_type_size).");
 		case xs_unsignedByte        : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedByte is not implemented yet (in xmlscm_type_size).");
 		case xs_positiveInteger     : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_positiveInteger is not implemented yet (in xmlscm_type_size).");
-        default						: throw USER_EXCEPTION2(SE1003, "Unexpected case in xmlscm_type_size.");
+
+        default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type in xmlscm_type_size.");
     }
 }
