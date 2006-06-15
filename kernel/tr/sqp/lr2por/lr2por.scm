@@ -1782,7 +1782,7 @@
             #t #f)
        ,(l2p:any-lr-node2por
          (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
-       ,@(map
+       ,(map
           (lambda (modif)
             (if
              (null? (cdr modif))  ; no arguments at all
