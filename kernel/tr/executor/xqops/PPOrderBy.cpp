@@ -12,6 +12,73 @@ using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+/// Special functions to check if we can perform ordering using gt operator.
+/// The ordering is performed in the least common type that has a gt operator. 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+/// Simply throws SE1002 for some types.
+
+void assert_type_is_supported(xmlscm_type t)
+{
+	if( t == xs_nonPositiveInteger  ||
+		t == xs_negativeInteger     || 
+		t == xs_long                || 
+		t == xs_int 				|| 
+		t == xs_short               || 
+		t == xs_byte                || 
+		t == xs_nonNegativeInteger  || 
+		t == xs_unsignedLong        || 
+		t == xs_unsignedInt         ||
+		t == xs_unsignedShort       || 
+		t == xs_unsignedByte        || 
+		t == xs_positiveInteger) 
+	     throw USER_EXCEPTION2(SE1002, "Ordering for XML simple type is not supported (PPOrderBy).");
+}
+
+/// Returns the least common that has a gt operator.
+/// Throws SE1002 if types can be compared by are not supported.
+/// Throws XP0006 if least common type has not gt operator.
+
+xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
+{
+	assert_type_is_supported(t1);
+	assert_type_is_supported(t2);
+	
+	xmlscm_type t = evaluate_common_type(t1, t2);	
+	
+	switch(t)	
+	{
+        case xs_string				: 
+        case xs_normalizedString	: 
+        case xs_token				: 
+        case xs_language			: 
+        case xs_NMTOKEN				: 
+        case xs_Name				: 
+        case xs_NCName				: 
+        case xs_ID					: 
+        case xs_IDREF				: 
+        case xs_ENTITY				: 
+        case xs_anyURI				: return xs_string;
+        
+        case xdt_yearMonthDuration	: 
+        case xdt_dayTimeDuration	: 
+        case xs_float				: 
+        case xs_double				: 
+        case xs_decimal				: 
+        case xs_integer				: 
+        case xs_boolean				: return t;
+
+		default						: throw USER_EXCEPTION2(XP0006, "Less common type has not gt operator (PPOrderBy).");
+	}	
+}
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /// PPOrderBy
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,7 +94,7 @@ PPOrderBy::PPOrderBy(variable_context *_cxt_,
                                         data_size(_data_size_)
 {
 	if(modifiers.size() != child.ts - data_size) 
-		throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number in PPOrderBy.");
+		throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number (PPOrderBy).");
 	
 	sort_size = child.ts - data_size;
     types.resize(sort_size);
@@ -56,7 +123,7 @@ void PPOrderBy::open  ()
     udata.size      = sizeof(int);			
     udata.buffer    = NULL;
 
-    ss = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
+    ss = new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
 
 void PPOrderBy::reopen()
@@ -101,26 +168,25 @@ void PPOrderBy::next  (tuple &t)
 	   	int i;
 	   	tuple data_tuple(data_size);
         tuple sort_tuple(sort_size);
+        tuple source(child.ts);
 
         for(i = 0; i < sort_size; i++) types.at(i).initialized = false;
 
     	while (true)
         {
-            child.op -> next(t);
-            if (t.is_eos()) break;
-            if (child.ts != t.cells_number) 
-            	throw USER_EXCEPTION2(SE1003, "Incorrect size of the arrived tuple in PPOrderBy.");
-            
-            for(i = 0; i < t.cells_number; i++)
+            child.op -> next(source);
+            if (source.is_eos()) break;
+
+            for(i = 0; i < source.cells_number; i++)
             {	
-            	if(i < data_size)	data_tuple.cells[i] = t.cells[i];
+            	if(i < data_size)	data_tuple.cells[i] = source.cells[i];
             	else                
             	{
-            		if(t.cells[i].is_eos()) 
+            		if(source.cells[i].is_eos()) 
             			sort_tuple.cells[i - data_size].set_eos();
             		else
             		{
-            			tuple_cell tc = atomize(t.cells[i]);
+            			tuple_cell tc = atomize(source.cells[i]);
             			sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xdt_untypedAtomic ? 
 	            	 									  cast_to_xs_string(tc) : tc ;
         	    		
@@ -128,7 +194,7 @@ void PPOrderBy::next  (tuple &t)
 	            		xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
             			
             			if(ct->initialized)
-	            			ct->xtype = evaluate_common_type(ct->xtype, t);
+	            			ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
             			else
             			{
                    			ct->xtype = t;
@@ -155,7 +221,7 @@ void PPOrderBy::next  (tuple &t)
         if(sort_size % 8 != 0) udata.size++;
 
         if(udata.size > DATA_BLK_SIZE) 
-	        throw USER_EXCEPTION2(SE1003, "Too long order by specification.");
+	        throw USER_EXCEPTION2(SE1003, "Too long order by specification (PPOrderBy).");
 
       	if(udata.buffer != NULL) delete udata.buffer;
 	    udata.buffer = new temp_buffer(udata.size);
@@ -166,7 +232,8 @@ void PPOrderBy::next  (tuple &t)
         	ss -> add(sort_tuple);
         	udata.pos ++;
         }
-        
+
+        ss -> sort();
         first_time = false;
     }
     
@@ -174,7 +241,7 @@ void PPOrderBy::next  (tuple &t)
     {
     	ss->get(t,pos++);
     	if(t.cells[0].get_atomic_type() != xs_integer) 
-    		throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization in PPOrderBy.");
+    		throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization (PPOrderBy).");
     	data_cells -> get(t, t.cells[0].get_xs_integer());
     }
     else 
@@ -241,12 +308,17 @@ void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
    	    	case xs_decimal				: *((double*)value) = *((double*)addr); break;
 		    case xs_integer				: *((int*)value) = *((int*)addr); break;
 		    case xs_boolean				: *((bool*)value) = *((bool*)addr); break;
-			default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented in order by.");
+           	default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented (PPOrderBy).");
 		}	
 	#endif
 }
 
-int PPOrderBy::compare_less (xptr v1, xptr v2, const void * Udata)
+//////////////////////////////////////////////////////////////
+/// v2 points to (j-1)-th element
+/// v1 points to (j)-th element
+/// if compare(j-1, j) < 0 then they are swapped
+//////////////////////////////////////////////////////////////
+int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 {
 	orb_user_data* ud = (orb_user_data*)Udata;
 	int length = (ud->header)->size();
@@ -274,18 +346,18 @@ int PPOrderBy::compare_less (xptr v1, xptr v2, const void * Udata)
 		xmlscm_type type = ct.xtype;
 		int type_size = ct.size;		
 
-		int order = m.order == ORB_ASCENDING ? 1 : -1;
+		int order = m.order == ORB_ASCENDING ? -1 : 1;
 		if(temp1 == NULL) CHECKP(v1);
 		bool is_eos1 = bs1.testAt(i);
 		if(temp2 == NULL) CHECKP(v2);
 		bool is_eos2 = bs2.testAt(i);
 
-		if(is_eos1 && !is_eos2)
+		if(is_eos1 && !is_eos2) 		/// there we have (j)-th is eos and (j-1)-th is not eos
 		{
 			if(m.status == ORB_EMPTY_GREATEST) result = -1 * order;
 			else result = 1 * order;
 		}
-		else if(is_eos2 && !is_eos1)		
+		else if(is_eos2 && !is_eos1)	/// there we have (j-1)-th is eos and (j)-th is not eos	
 		{
 		    if(m.status == ORB_EMPTY_GREATEST) result = 1 * order;
 			else result = -1 * order;
@@ -336,7 +408,23 @@ int PPOrderBy::compare_less (xptr v1, xptr v2, const void * Udata)
 		        	if(value1 && !value2) result = -1*order;
 		        	break;
 		        }
-				default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented in order by.");
+		        case xdt_yearMonthDuration	: 
+		        case xdt_dayTimeDuration	: 
+		        {
+		        	char* buffer1 = new char[type_size];
+		        	char* buffer2 = new char[type_size]; 
+		        	if(temp1 == NULL) CHECKP(v1);
+		        	memcpy(buffer1, (char*)addr1+offset, type_size);
+			        str_counted_ptr ptr1(buffer1);
+			        XMLDateTime value1(ptr1);
+	        		if(temp2 == NULL) CHECKP(v2);
+		        	memcpy(buffer2, (char*)addr2+offset, type_size);
+			        str_counted_ptr ptr2(buffer2);
+			        XMLDateTime value2(ptr2);
+		        	result = XMLDateTime::compare(value2, value1)*order;
+		        	break;
+		        }
+				default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 			}
 		}
 		if(result != 0) break;
@@ -396,7 +484,6 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			xmlscm_type type = ct.xtype;
 			int type_size = ct.size;
 
-
 			if(t.cells[i].is_eos()) 
 			{
 				bs.setAt(i);
@@ -408,13 +495,17 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 				
 				switch (type)
 	    		{
-    	    		
 			        case xs_float				: *((float*)((char*)p+offset)) = t.cells[i].get_xs_float(); break;
 		    	    case xs_double				: *((double*)((char*)p+offset)) = t.cells[i].get_xs_double(); break;
 			        case xs_decimal				: *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().to_double(); break;
 			        case xs_integer				: *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
 			        case xs_boolean				: *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
-					default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented in order by.");
+			        case xdt_yearMonthDuration	: 
+			        case xdt_dayTimeDuration	: 
+			        	//t.cells[i].get_xs_dateTime().normalize(); 
+			        	memcpy((char*)p+offset, t.cells[i].get_xs_dateTime().getRawData().get(), type_size);
+			        	break;
+					default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 				}
 			}
 			offset += type_size;
@@ -467,7 +558,7 @@ void PPOrderBy::deserialize (tuple& t, xptr& v1, const void * Udata)
 		pos = *((int*)p);
 	#endif
 
-	t.copy(tuple_cell::atomic(pos));
+	t.cells[0] = tuple_cell::atomic(pos);
 }
 
 void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
@@ -500,7 +591,7 @@ temp_buffer::temp_buffer (int _size_): size(_size_),
 									   pos(0)
 {
 	if(size <= 0) 
-		throw USER_EXCEPTION2(SE1003, "Buffer size must be positive in temp_buffer in PPOrderBy.");			
+		throw USER_EXCEPTION2(SE1003, "Buffer size must be positive (PPOrderBy::temp_buffer).");			
 	buffer = new char[size]; 
 }
 	
@@ -521,17 +612,22 @@ void temp_buffer::serialize_to_buffer (tuple_cell tc)
     U_ASSERT(tc.is_atomic());
     xmlscm_type type = tc.get_atomic_type();
 
+    int type_size = ORB_SERIALIZED_SIZE(type);
+
     switch (type)
     {
-        case xs_float				: {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, sizeof(float)); break;}
-        case xs_double				: {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, sizeof(double));  break;}
-        case xs_decimal				: {double value = tc.get_xs_decimal().to_double(); memcpy(buffer + pos, &value, sizeof(double)); break;}
-        case xs_integer				: {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, sizeof(int)); break;}
-        case xs_boolean				: {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, sizeof(bool)); break;}
-		default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented in order by.");
+        case xs_float				: {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_double				: {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, type_size);  break;}
+        case xs_decimal				: {double value = tc.get_xs_decimal().to_double(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_integer				: {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_boolean				: {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
+        case xdt_yearMonthDuration	: 
+        case xdt_dayTimeDuration	: 
+        	//tc.get_xs_dateTime().normalize(); 
+        	memcpy(buffer + pos, tc.get_xs_dateTime().getRawData().get(), type_size);
+        	break;
+		default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 	}
-
-	pos += ORB_SERIALIZED_SIZE(type);
 }
 
 

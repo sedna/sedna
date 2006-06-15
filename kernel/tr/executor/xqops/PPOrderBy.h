@@ -36,9 +36,9 @@
 class temp_buffer
 {
 private:
-	int size;
-	char* buffer;
-	int pos;
+	int   size;              //Size in bytes is fixed.
+	char* buffer;            //Pointer to actual data.
+	int   pos;               //Points to the data end in the buffer.
 	
 public:
 	temp_buffer (int _size_);
@@ -70,7 +70,7 @@ enum orb_sort_order {
 };
 
 struct orb_modifier {
-	orb_sort_order order;							
+	orb_sort_order   order;							
 	orb_empty_status status;
 };
 
@@ -121,8 +121,8 @@ private:
     int sort_size; 					  				//Number of these tuple cells. This value is automaticaly
     								  				//evaluated form the 'data_size' and 'child.ts' values
 
-    sequence *data_cells;			  				//Accumulates the first 'data_size' tuple cells.
-    sequence *sort_cells;             				//Accumulates other 'sort_size' tuple cells. 
+    sequence *data_cells;			  				//Accumulates the first 'data_size' tuple cells. 
+    sequence *sort_cells;             				//Accumulates other 'sort_size' tuple cells.  
     
     bool first_time;
     bool need_reinit;
@@ -132,7 +132,7 @@ private:
     arr_of_common_type types;
     orb_user_data udata;
     
-    static int  compare_less 		(xptr v1,xptr v2, const void * Udata);
+    static int  compare		 		(xptr v1,xptr v2, const void * Udata);
 	static int  get_size 			(tuple& t, const void * Udata);
 	static void serialize 			(tuple& t,xptr v1, const void * Udata);
 	static void serialize_2_blks 	(tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
