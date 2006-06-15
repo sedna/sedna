@@ -216,13 +216,13 @@ CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
 LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
 else
-CFLAGS   = -DC_NO_PIC_NO_DLL -O3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
+CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
            -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized	\
            -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
-CPPFLAGS = -O3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
+CPPFLAGS = -O0 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
            -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH)						\
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
-LFLAGS   = -O3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = -O0 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
 endif
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl
 
