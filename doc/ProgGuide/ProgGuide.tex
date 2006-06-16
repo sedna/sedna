@@ -1506,6 +1506,8 @@ index-scan("people", "London", "EQ")/name
 
 \subsubsection{Full-text Search Functions}
 \label{sec:ft-fun}
+Please read Section \ref{sec:managing-ft-indices} before reading this section. 
+
 In the current version of Sedna, query executor does not use full-text indecies automatically. Use the following functions
 to enforce executor to employ indices. 
 
@@ -2334,7 +2336,9 @@ using the XQuery index-scan functions specified in Section \ref{sec:value-index-
 
 \subsubsection{Managing Full-Text Indices}
 \label{sec:managing-ft-indices}
-Sedna is integrated with dtSearch Engine \cite{link:dtsearch-engine}, a third party commercial product, to support full-text indices. As dtSearch works on Windows and Linux platforms, Sedna supports full-text indices only on these platforms. Below is the description of statements to manage full-text indices.
+Sedna is integrated with dtSearch \cite{link:dtsearch-engine}, a commercial text retrieval engine, which provides full-text indices. The integration allows combining XQuery with full-text search facilities. As dtSearch is a third party commercial product, Sedna does not include dtSearch. If you are interested in using Sedna with dtSearch, please contact us. 
+
+Below is the description of statements to manage dtSearch full-text indices in Sedna.
 
 \begin{verbatim}
 CREATE FULL-TEXT INDEX title-expr
@@ -2383,69 +2387,48 @@ using the XQuery full-text search functions specified in Section \ref{sec:ft-fun
 \end{note}
 
 \subsubsection{Retrieving Metadata}
-\begin{verbatim}
-RETRIEVE METADATA FOR DOCUMENTS [WITH STATISTICS]
-RETRIEVE METADATA FOR COLLECTIONS [WITH STATISTICS]
-\end{verbatim}
-
-The \verb!RETRIEVE! \verb!METADATA! statement retrieves the metadata information about all XML documents or collections stored in database. The output of this statement is an XML document, which complies with the following DTD:
-
-\begin{verbatim}
-<!ELEMENT XML_DOCUMENTS (Document)*|(Collection)*>
-<!ELEMENT Document (#TEXT)?>
-<!ATTLIST Document name CDATA #REQUIRED>
-<!ELEMENT Collection (#TEXT)?>
-<!ATTLIST Collection name CDATA #REQUIRED >                   
-\end{verbatim}
-
-The value of the \verb!name! attribute is the name of the document or collection. If the \verb!WITH! \verb!STATISTICS! command is stated, the following statistical information is retrieved as the content of the \verb!Document! or \verb!Collection! elements:
-
+You can retrieve various metadata about database objects (such as documents, collections, indices, etc.) as XML data by querying the following predefined documents:
 \begin{itemize}
-\item \verb!TOTAL NODES IN SCHEMA!. The number of the nodes of the descriptive schema.
-\item \verb!TOTAL TEXT NODES IN SCHEMA!. The number of the text attribute and document nodes of the descriptive schema.
-\item \verb!TOTAL NODES!. The number of the nodes of the document (or collection).
-\item \verb!DEPTH!. The maximal depth of the document (or collection).
-\item \verb!TOTAL BLOCKS EXCEPT NID! and \verb!INDIR!. The number of the blocks occupied by document (or collection) except blocks with numberig schema and indirection.
-\item \verb!TOTAL DESCRIPTOR BLOCKS!. The number of  the descriptor blocks occupied by document (or collection) .
-\item \verb!TOTAL STRING BLOCKS!. The number of  the text blocks occupied by document (or collection) .
-\item \verb!FILL PERCENTAGE!. Fill factor of the blocks (in percents).
-\item \verb!TOTAL INNER BLOCKS!. The number of  the descriptor blocks occupied by document (or collection) except first and last blocks in each chain of blocks.
-\item \verb!TOTAL INNER NODES SIZE!. The size of the inner blocks.
-\item \verb!INNER FILL PERCENTAGE!. Fill factor of the inner blocks (in percents).
-\item \verb!STRINGS!. The share of  the string blocks (in percents).
-\item \verb!DESCRIPTORS!. The share of  the descriptor blocks (in percents).
-\item \verb!NIDS percentage!. The share of  the long labeling numbers' (>11) total size (in percents).
-\item \verb!INDIRECTION percentage!. The share of  the indirection records' total size (in percents).
-\item \verb!TOTAL SIZE!. The total size of the document (or collection), in MGBs.
-\item \verb!STRINGS size!. The total size of the string blocks , in MGBs.
-\item \verb!DESCRIPTORS size!. The total size of the descriptor blocks , in MGBs.
-\item \verb!NIDS size!. The total size of the long labeling numbers , in MGBs.
-\item \verb!FREE SPACE IN STRING BLOCKS size!. The total size of the free space in the string blocks.
-\item \verb!INDIRECTION size!. The total size of the indirection records , in MGBs.
-\item \verb!NIDS size!. The share of  the indirection records' total size (in percents).
-\item \verb!Data size variation!. The histogram of the xml data by it's size.
-\item \verb!NID size variation!. The histogram of the labeling numbers it's length.
+\item \verb!$catalog.xml! - list of all stand-alone documents and collections
+\item \verb!$documents.xml! - list of all stand-alone documents and in-collection documents
+\item \verb!$indexes.xml! - list of indecies with information about them 
+\item \verb!$ftindexes.xml! - list of full-text indecies with information about them (if compiled with \verb!SE_ENABLE_FTSEARCH!)
+\item \verb!$schema.xml! - descriptive schema of all documents and collections with some schema-related  information 
+\item \verb!$collections.xml! - list of all collections
+\item \verb!$errors.xml! - list of all user errors
+\item \verb!$version.xml! - version and build numbers
+\item \verb!$document_<name>! - statistical information about the document named <name>
+\item \verb!$schema_<name>! - the descriptive schema of the document named <name>
 \end{itemize}
 
-\begin{verbatim}
-RETRIEVE DESCRIPTIVE SCHEMA FOR DOCUMENT doc-name-expr
-RETRIEVE DESCRIPTIVE SCHEMA FOR COLLECTION coll-name-expr
-\end{verbatim}
 
-The \verb!RETRIEVE! \verb!DESCRIPTIVE! \verb!SCHEMA! statement retrieves the descriptive schema of the XML document or collection with the \verb!doc-name-expr! or \verb!coll-name-expr! name respectively. 
+The statistical information in the document \verb!$document_<name>! contains the following elements:
 
-%The output format of the descriptive schema is specified after the \verb!AS! clause. In the current version of Sedna there is only the TREE format. In future versions more formats will be added. 
-
-The output of a descriptive schema is an XML document, which complies with the following DTD:
-
-\begin{verbatim}
-<!ELEMENT TREE_DESCRIPTIVE_SCHEMA NODE>
-<!ELEMENT NODE (NODE)*>
-<!ATTLIST NODE name CDATA #IMPLIED
-               type (document|element|text|attribute)>
-\end{verbatim}
-
-The root of the XML document is the \verb!TREE_DESCRIPTIVE_SCHEMA! element, which contains the tree representation of a descriptive schema. The \verb!NODE! element describes a node of descriptive schema. It has two attributes: \verb!name! and \verb!type!, which define the name and the type of the node correspondingly. There are four types of nodes in descriptive schema: document, element, attribute and text. More on descriptive schema see in \cite{paper:sedna-overview}.
+\begin{itemize}
+\item \verb!total_schema_nodes! - the number of the nodes of the descriptive schema
+\item \verb!total_schema_text_nodes! - the number of the attribute and text nodes of the descriptive schema
+\item \verb!total_nodes! - the number of the nodes of the document (or collection)
+\item \verb!schema_depth! - the maximal depth of the document (or collection)
+\item \verb!total_desc_blk! - the number of  the descriptor blocks occupied by document (or collection)
+\item \verb!total_str_blk! - the number of  the text blocks occupied by document (or collection)
+\item \verb!saturation! - fill factor of the blocks (in percents)
+\item \verb!total_innr_blk! - the number of  the descriptor blocks occupied by document (or collection) except first and last blocks in each chain of blocks
+\item \verb!total_innr_size! - the size of the inner blocks
+\item \verb!innr_blk_saturation! - fill factor of the inner blocks (in percents)
+\item \verb!strings! - the share of  the string blocks (in percents)
+\item \verb!descriptors! - the share of  the descriptor blocks (in percents)
+\item \verb!nid! - the share of  the long labeling numbers' (>11) total size (in percents)
+\item \verb!indirection! - the share of  the indirection records' total size (in percents)
+\item \verb!total_size! - the total size of the document (or collection), in MGBs
+\item \verb!string_size! - the total size of the string blocks , in MGBs
+\item \verb!descriptor_size! - the total size of the descriptor blocks , in MGBs
+\item \verb!nids_size! - the total size of the long labeling numbers , in MGBs
+\item \verb!free_space_in_str_blocks! - the total size of the free space in the string blocks
+\item \verb!indirection_size! - the total size of the indirection records , in MGBs
+\item \verb!nids_size! - the share of  the indirection records' total size (in percents)
+\item \verb!STRINGS! - the histogram of the xml data by its size
+\item \verb!NID! - the histogram of the labeling numbers its length
+\end{itemize}
 
 \begin{thebibliography}{9}
 \bibitem{doc:admin} ``Sedna Administration Guide''
