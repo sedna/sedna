@@ -8,6 +8,10 @@ prolog!:
 	   <<if (prolog_ == NULL) prolog_ =nd; else prolog_->append(nd);>>
 	 | dnd:defaultNamaspaceDecl
 	   <<if (prolog_ == NULL) prolog_ =dnd; else prolog_->append(dnd);>>
+
+	 | eod:emptyOrderDecl
+	   <<if (prolog_ == NULL) prolog_ =eod; else prolog_->append(eod);>>
+
 	 | bsd:boundarySpaceDecl
 	   <<if (prolog_ == NULL) prolog_ =bsd; else prolog_->append(bsd);>>
 	 | dopt:declareOption
@@ -108,3 +112,10 @@ declareOption!:
 	>>
 ;
 
+emptyOrderDecl!:
+	(   AST_DEF_ORDER_EG
+	    <<#emptyOrderDecl= #(#["declare-default-order"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"empty-greatest\""]));>>
+	  |  AST_DEF_ORDER_EL
+	    <<#emptyOrderDecl= #(#["declare-default-order"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"empty-least\""]));>>
+	)
+;

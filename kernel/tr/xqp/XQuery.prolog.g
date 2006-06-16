@@ -12,10 +12,13 @@ queryProlog!:
 	   | nd:namespaceDecl
 	     <<if(prolog == NULL) prolog=#nd; else prolog->append(#nd);>>
 
-	   | dnd:defaultNamaspaceDecl
-	     <<if(prolog == NULL) prolog=#dnd; else prolog->append(#dnd);>>
+	   | dds:defaultDecls
+	     <<if(prolog == NULL) prolog=#dds; else prolog->append(#dds);>>
+
 	   | bsd:boundarySpaceDecl
 	     <<if(prolog == NULL) prolog=#bsd; else prolog->append(#bsd);>>
+
+
 
 	   | dopt:declareOption
 	     <<if(prolog == NULL) prolog=#dopt; else prolog->append(#dopt);>>
@@ -78,7 +81,7 @@ namespaceDecl!:
 ;
 
 
-defaultNamaspaceDecl!:
+defaultDecls!:
 	DECLARE DEFAULT 
 	 (ELEMENT NAMESPACE s:STRINGLITERAL
 	  <<#0=#(#[AST_DECL_DEF_ELEM_NSP], 
@@ -89,6 +92,12 @@ defaultNamaspaceDecl!:
 	  <<#0=#(#[AST_DECL_DEF_FUNC_NSP], 
 	         #[$s2->getText(), AST_STRING_CONST]);
 	  >>
+	 | ORDER EMPTY 
+	     (   GREATEST  <<#0=#[AST_DEF_ORDER_EG];>>
+
+	      | LEAST <<#0=#[AST_DEF_ORDER_EL];>>
+	     )
+
 
 	 )
 
