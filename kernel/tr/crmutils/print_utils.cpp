@@ -697,7 +697,9 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 		{
 			if (xq_type!=text && xq_type!=attribute)
 				crmout.write(data,size);
-			else 
+			else if (xq_type == attribute)
+				crmout.writeattribute(data, size);
+			else
 				crmout.writextext(data,size);
 		}
 		else
