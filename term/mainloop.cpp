@@ -538,6 +538,13 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 			fflush(stdin);
 			successResult = EXIT_GOT_QUERY; 
 		}
+		if((!isCommand)&&(buffer[i-2] == (char)'&')&&(buffer[i-1] == (char)'\r')&&((buffer[i] == (char)'\n')||(buffer[i] == EOF)))
+		{
+			*item_len = i-2;
+			buffer[*item_len] = '\0';
+			fflush(stdin);
+			successResult = EXIT_GOT_QUERY; 
+		}
 		else if((isCommand)&&(buffer[i] == (char)'\n'))
 		{
 			*item_len = i;
@@ -569,7 +576,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 			buffer[*item_len] = '\0'; 
 			successResult = EXIT_GOT_QUERY;
 		}
-		else if(buffer[i] != '\r')
+		else
 		{
 			i++;
 		}
