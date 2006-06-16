@@ -9,6 +9,7 @@
 #include "tr_globals.h"
 #include "dtsearch.h"
 #include "uhdd.h"
+#include "log.h"
 //using namespace dtSearch;
 
 #ifndef _WIN32
@@ -221,6 +222,10 @@ ftlog_file *SednaIndexJob::get_log_file(const char *index_name)
 		lf->file = create_log(index_name);
 		lf->last_lsn = 0;
 		log_files_map[index_name_str] = lf;
+		lf->start_new_record(FTLOG_HEADER);
+		LONG_LSN tran_first_lsn = get_lsn_of_first_record_in_logical_log();
+		U_ASSERT(tran_first_lsn != NULL_LSN);
+		lf->write_data(&tran_first_lsn, sizeof(tran_first_lsn));
 		return lf;
 	}
 	else
@@ -268,6 +273,7 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	sij.create_index(&start_nodes);
 }
 
+//pre: log_file must be positioned right after FTLOG_HEADER record
 void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 {
 	ftlog_record lrec;
@@ -367,7 +373,9 @@ void SednaIndexJob::rollback()
 		ftlog_file *log_file = it->second;
 		log_file->flush();
 		log_file->seek_start();
-		rollback_index(log_file, it->first.c_str());
+		LONG_LSN tran_first_lsn;
+		if (log_file->read_header(&tran_first_lsn))
+			rollback_index(log_file, it->first.c_str());
 		log_file->close_and_delete_file(it->first.c_str());
 		delete log_file;
 		it++;
@@ -377,12 +385,16 @@ void SednaIndexJob::rollback()
 	}
 	log_files_map.clear();
 }
-void SednaIndexJob::recover_db_file(const char *fname, trns_analysis_map& undo_redo_trns_map)
+void SednaIndexJob::recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn)
 {
 	char *index_name = new char[strlen(fname)];
 	transaction_id trid;
-	if (sscanf(fname, "trn%d_%s.log", &trid, index_name) != 2)
+	if (sscanf(fname, "trn%d_%s", &trid, index_name) != 2)
 		throw SYSTEM_EXCEPTION("strange file in data/dtsearch folder");
+	int l = strlen(index_name);
+	if (l <= 4 || strcmp(index_name + l - 4, ".log"))
+		throw SYSTEM_EXCEPTION("strange file in data/dtsearch folder");
+	index_name[l-4] = 0;
 
 	std::string log_path1 = std::string(SEDNA_DATA) + std::string("/data/")
 		+ std::string(db_name) + std::string("_files/dtsearch/");
@@ -395,10 +407,50 @@ void SednaIndexJob::recover_db_file(const char *fname, trns_analysis_map& undo_r
 	
 	ftlog_file log_file;
 	log_file.file = log_ufile;
-	log_file.last_lsn = 0;
+	LONG_LSN trans_first_lsn;
+	int res = log_file.read_header(&trans_first_lsn);
+	bool rollback;
+	if (trans_first_lsn > checkpoint_lsn)
+	{
+		bool f = false;
+		trns_redo_analysis_list::const_iterator redo_it = redo_list.begin();
+		while (redo_it != redo_list.end())
+		{
+			if (redo_it->trid == trid && redo_it->trn_end_lsn > trans_first_lsn)
+			{
+				rollback = false;
+				f = true;
+				break;
+			}
 
-	trns_analysis_map::const_iterator it = undo_redo_trns_map.find(trid);
-	if (it == undo_redo_trns_map.end() || it->second.type == 0)
+			redo_it++;
+		}
+		if (!f)
+		{
+			rollback = true; //it's either nowhere or in undo_list
+		}
+	}
+	else
+	{
+		bool f = false;
+		trns_undo_analysis_list::const_iterator undo_it = undo_list.begin();
+		while (undo_it != undo_list.end())
+		{
+			if (undo_it->trid == trid)
+			{
+				rollback = true;
+				f = true;
+				break;
+			}
+			undo_it++;
+		}
+		if (!f)
+		{
+			rollback = false;
+		}
+	}
+
+	if (rollback)
 	{
 		rollback_index(&log_file, index_name);
 		log_file.close_and_delete_file(index_name);
@@ -408,7 +460,7 @@ void SednaIndexJob::recover_db_file(const char *fname, trns_analysis_map& undo_r
 
 	delete[] index_name;
 }
-void SednaIndexJob::recover_db(trns_analysis_map& undo_redo_trns_map)
+void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn)
 {
 #ifdef _WIN32
 
@@ -426,7 +478,7 @@ void SednaIndexJob::recover_db(trns_analysis_map& undo_redo_trns_map)
         int found = 1;
         while (found)
         {
-			recover_db_file(find_data.cFileName, undo_redo_trns_map);
+			recover_db_file(find_data.cFileName, undo_list, redo_list, checkpoint_lsn);
             found = FindNextFile(fhanldle, &find_data);
         }
         if (FindClose(fhanldle) == 0)

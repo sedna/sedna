@@ -1774,7 +1774,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
 //this function is run from the special recovery process
 #ifdef SE_ENABLE_FTSEARCH
-void llmgr_core::recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),
+void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
 										   void (*exec_micro_op) (const char*, int, bool),
                                            void(*switch_indirection)(int),
                                            void (*_rcv_allocate_blocks)(const std::vector<xptr>&),
@@ -1888,7 +1888,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   
   
 #ifdef SE_ENABLE_FTSEARCH
-  index_op(undo_redo_trns_map);
+  index_op(undo_list, redo_list, last_checkpoint_lsn);
 #endif
 
   //close all open log files

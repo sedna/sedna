@@ -12,6 +12,7 @@
 #include "xptr_sequence.h"
 #include "llmgr_core.h"
 
+#define FTLOG_HEADER		0x010
 #define FTLOG_CREATE_BEGIN	0x0001
 #define FTLOG_CREATE_END	0x0002
 #define FTLOG_CLEAR_BEGIN	0x0003
@@ -108,7 +109,7 @@ struct ftlog_file
 		if (seek(0) == 0)
 			   throw SYSTEM_EXCEPTION("SE4046");
 	}
-	//returns 0 if failed, 1 if opeation is successful
+	//returns 0 if failed, 1 if operation is successful
 	int read_data(void *data, int size)
 	{
 		int res, nread = 0;
@@ -118,6 +119,27 @@ struct ftlog_file
 			return 0;
 		else
 			return 1;
+	}
+
+	//returns 0 if failed, 1 if operation is successful
+	int read_header(LSN *_trans_first_lsn_)
+	{
+		ftlog_record lrec;
+		LONG_LSN trans_first_lsn;
+
+		int res = this->read_data(&lrec, sizeof(ftlog_record));
+		if (res == 0)
+			return 0;
+
+		if (lrec.rec_type != FTLOG_HEADER)
+			return 0;
+
+		res = this->read_data(&trans_first_lsn, sizeof(trans_first_lsn));
+		if (res == 0)
+			return 0;
+
+		*_trans_first_lsn_ = trans_first_lsn;
+		return 1;
 	}
 private:
 	inline void write_to_file(void *buf, int size)
@@ -150,13 +172,13 @@ class SednaIndexJob : public dtSearch::DIndexJob {
 		   static void start_commit();
 		   static void fix_commit();
 		   static void rollback();
-		   static void recover_db(trns_analysis_map& undo_redo_trns_map);
+		   static void recover_db(const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn);
 
 	  private:
 		  PPOpIn* seq;
 		  const ft_index_cell *ft_idx;
 		  static void rollback_index(ftlog_file *log_file, const char *index_name);
-		  static void recover_db_file(const char *fname, trns_analysis_map& undo_redo_trns_map);
+		  static void recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn);
 		  static void rebuild_index(const char *index_name);
 		  
      };

@@ -758,7 +758,7 @@ try{
 
   }
 #ifdef SE_ENABLE_FTSEARCH
-  if(op == LL_INSERT_DOC_FTS_INDEX || op == LL_DELETE_DOC_FTS_INDEX || op == LL_INSERT_COL_FTS_INDEX || op == LL_DELETE_COL_FTS_INDEX)
+  else if(op == LL_INSERT_DOC_FTS_INDEX || op == LL_DELETE_DOC_FTS_INDEX || op == LL_INSERT_COL_FTS_INDEX || op == LL_DELETE_COL_FTS_INDEX)
   {
      const char *obj_path, *ind_name, *doc_name, *custom_tree_buf;
      int itconst;
