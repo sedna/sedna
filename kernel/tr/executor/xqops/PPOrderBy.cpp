@@ -5,6 +5,8 @@
 
 #include <iostream>
 #include "sedna.h"
+#include "string_operations.h"
+#include "e_string.h"
 #include "PPOrderBy.h"
 
 using namespace std;
@@ -327,13 +329,17 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 	char* temp2 = NULL; 
 	void* addr1;
 	void* addr2;
+	int position1;
+	int position2;
 	
 	addr1 = get_ptr_to_complete_serialized_data(v1, &temp1, Udata);
 	addr2 = get_ptr_to_complete_serialized_data(v2, &temp2, Udata);
     
     if(temp1 == NULL) CHECKP(v1);
+    get_deserialized_value(&position1, addr1, xs_integer);
     bit_set bs1((char *)addr1+ud->bit_set_offset, length);
     if(temp2 == NULL) CHECKP(v2);
+    get_deserialized_value(&position2, addr2, xs_integer);
     bit_set bs2((char *)addr2+ud->bit_set_offset, length);
 
 	int offset = sizeof(int);
@@ -407,6 +413,38 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 		        	if(value2 && !value1) result = 1*order;
 		        	if(value1 && !value2) result = -1*order;
 		        	break;
+		        }
+		        case xs_string				:
+		        {
+		         	bool flag1, flag2;
+	    	    	if(temp1 != NULL || temp2 !=NULL)
+	    	    	{
+		    	    	if(temp1 != NULL) CHECKP(v1);
+		    	    	if(temp2 != NULL) CHECKP(v2);
+		    	    	get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
+		    	    	get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
+		    	    	result = strcmp((char*)addr2+offset+sizeof(bool), (char*)addr1+offset+sizeof(bool))*order;
+	    	    	}
+	    	    	else 
+	    	    	{
+	    	    		char* prefix = new char[ORB_STRING_PREFIX_SIZE+1]; 
+						CHECKP(v1);
+						get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
+						strcpy(prefix, (char*)addr1+offset+sizeof(bool));
+						CHECKP(v2);
+						get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
+						result = strcmp((char*)addr2+offset+sizeof(bool), prefix)*order;
+	    	    		delete prefix;
+	    	    	}
+	    	    	if (result == 0 && (!flag1 || !flag2))
+	    	    	{
+	    	    		tuple t1(length);
+	    	    		tuple t2(length);
+	    	    		ud->sort->get(t1, position1);
+	    	    		ud->sort->get(t2, position2);
+	    	    		result = (fn_compare(t2.cells[i], t1.cells[i], false).get_xs_integer())*order;
+	    	    	}
+	    	    	break;
 		        }
 		        case xdt_yearMonthDuration	: 
 		        case xdt_dayTimeDuration	: 
@@ -500,7 +538,18 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			        case xs_decimal				: *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().to_double(); break;
 			        case xs_integer				: *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
 			        case xs_boolean				: *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
-			        case xdt_yearMonthDuration	: 
+	                case xs_string				:
+			        {
+        				int length_all = t.cells[i].get_strlen();
+			        	int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
+			        	bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
+			        	memcpy((char*)p+offset, &flag, sizeof(bool));                       
+			        	if(t.cells[i].get_type() == tc_light_atomic) memcpy((char*)p+offset + sizeof(bool), t.cells[i].get_str_mem(), length_ser);
+			        	else copy_text((char*)p+offset + sizeof(bool), t.cells[i].get_str_vmm(), length_ser);
+			        	*((char*)p+offset + sizeof(bool) + length_ser) = '\0';
+			        	break;		
+			        }
+                    case xdt_yearMonthDuration	: 
 			        case xdt_dayTimeDuration	: 
 			        	//t.cells[i].get_xs_dateTime().normalize(); 
 			        	memcpy((char*)p+offset, t.cells[i].get_xs_dateTime().getRawData().get(), type_size);
@@ -621,6 +670,17 @@ void temp_buffer::serialize_to_buffer (tuple_cell tc)
         case xs_decimal				: {double value = tc.get_xs_decimal().to_double(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_integer				: {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean				: {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_string				:
+        {
+        	int length_all = tc.get_strlen();
+        	int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
+        	bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
+        	memcpy(buffer+pos, &flag, sizeof(bool));                       
+        	if(tc.get_type() == tc_light_atomic) memcpy(buffer+pos + sizeof(bool), tc.get_str_mem(), length_ser);
+        	else copy_text(buffer+pos + sizeof(bool), tc.get_str_vmm(), length_ser);
+        	buffer[pos + sizeof(bool) + length_ser] = '\0';
+        	break;		
+        }
         case xdt_yearMonthDuration	: 
         case xdt_dayTimeDuration	: 
         	//tc.get_xs_dateTime().normalize(); 
@@ -628,6 +688,8 @@ void temp_buffer::serialize_to_buffer (tuple_cell tc)
         	break;
 		default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 	}
+
+	pos += type_size;
 }
 
 

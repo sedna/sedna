@@ -22,9 +22,19 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-#define ORB_SERIALIZED_STRING_SIZE 8			    //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
-                                                    //bytes after serialization, which can store string itself or
-                                                    //fixed size prefix + xptr.
+#define ORB_STRING_PREFIX_SIZE	8					
+
+
+#define ORB_SERIALIZED_STRING_SIZE sizeof(bool) + ORB_STRING_PREFIX_SIZE + sizeof(char)		 
+																	    //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
+                                                    					//bytes after serialization:
+                                               					        //sizeof(bool) + prefix size + sizeof(char) 
+                                                    					//[true ] + [prefix] + ['\0] or
+                                                    					//[false] + [prefix] + ['\0] 
+                                                    					//'true' means that the whole string was serialized (size <= prefix size).
+                                                    					//'false' means we are able to get the whole string using not 
+                                                    					//serialize tuple cell with this string.
+
 
 #define ORB_SERIALIZED_SIZE(t)	xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t);
                                                                                                                 
