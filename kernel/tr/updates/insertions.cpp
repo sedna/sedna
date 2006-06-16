@@ -21,6 +21,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 	tuple t2(arg2.ts);
 	xptr_sequence arg2seq;
 	arg1.op->next(t);
+	descript_sequence arg3seq(2);
 	while (!t.is_eos())
 	{
 		if (t.cells[0].is_node())
@@ -30,7 +31,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			if (is_node_persistent(node) )
 			{
 				xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(indir);	
+				arg1seq.add(node);	
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -63,16 +64,15 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 			if (!(is_node_document(node) || (is_node_attribute(node) && (prev_item!=attribute && prev_item!=xml_namespace))))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
-				if (is_node_persistent(node))
+				xptr indir=((n_dsc*)XADDR(node))->indir;
+                if (is_node_persistent(node))
 				{
-					xptr indir=((n_dsc*)XADDR(node))->indir;
-					arg2seq.add(indir);	
+					tuple tup(2);
+					tup.copy(tuple_cell::node(node),tuple_cell(arg2seq.size()));
+					arg3seq.add(tup);
 				}
-				else
-				{
-					//deep constructing of node
-					arg2seq.add(node);
-				}
+				arg2seq.add(indir);	
+				
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -91,8 +91,69 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 	}
 
 	if (arg2seq.size()<=0) return;
-	// outer cycle on first sequence
+
+// copying the nodes of the inserting sequence tha are the parents
+	// of the nodes from the first sequence
+	arg1seq.sort();
+	arg3seq.sort();
+	descript_sequence::iterator it3=arg3seq.begin();
 	xptr_sequence::iterator it1=arg1seq.begin();
+	while(it3!=arg3seq.end()&& it1!=arg1seq.end())
+	{
+		switch(nid_cmp_effective((*it3).cells[0].get_node(), *it1))
+		{
+		case 0:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				++it3;
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+
+				++it1;
+			}
+			break;
+		case 1:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}	
+			break;
+			
+		case 2:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}
+			break;
+		case -1:
+			++it3;
+			break;
+		case -2:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				++it3;
+			}
+			break;
+		}
+	}
+// changing the rest nodes in first sequence to indir
+	while(it1!=arg1seq.end())
+	{
+		xptr nd=*it1;
+		CHECKP(nd);
+		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		++it1;
+	}
+
+	// outer cycle on first sequence
+	it1=arg1seq.begin();
 	upd_ns_map* ins_swiz=NULL;
 	xptr_sequence::iterator it2;
 	xptr node_child=XNULL;
@@ -150,19 +211,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		do
 		{
 			node_child=*it2;
-			mark= is_node_persistent(node_child); 
-			if (mark) 
-			{
-				node_child=removeIndirection(node_child);
-				// checking that item from the second sequence is not a parent of the item from the first sequence
-				if (nid_ancestor(node_child,removeIndirection(node_par)))
-				{
-#ifndef IGNORE_UPDATE_ERRORS
-					throw USER_EXCEPTION(SE2017);
-#endif				
-					goto cycle2;
-				}
-			}
+			node_child=removeIndirection(node_child);
+			mark= is_node_persistent(node_child); 			
 			CHECKP(node_child);
 			if (child==XNULL)
 			{
@@ -209,6 +259,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	xptr_sequence arg1seq;
 	tuple t2(arg2.ts);
 	xptr_sequence arg2seq;
+	descript_sequence arg3seq(2);
 	arg1.op->next(t);
 	while (!t.is_eos())
 	{
@@ -218,8 +269,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			CHECKP(node);
 			if (is_node_persistent(node) )
 			{
-				xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(indir);	
+				//xptr indir=((n_dsc*)XADDR(node))->indir;
+				arg1seq.add(node);	
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -239,7 +290,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	if (arg1seq.size()<=0) return;
 	// Checking authorization
 	if (is_auth_check_needed(INSERT_STATEMENT)) 
-		auth_for_update(&arg1seq, INSERT_STATEMENT, false);
+		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
 	
 	// Creating the second sequence (different validity tests+ indirection deref)
 	t_item prev_item=attribute;
@@ -253,16 +304,14 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 			if (!(is_node_document(node)|| (is_node_attribute(node) && prev_item!=attribute)))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
+				xptr indir=((n_dsc*)XADDR(node))->indir;
 				if (is_node_persistent(node))
 				{
-					xptr indir=((n_dsc*)XADDR(node))->indir;
-					arg2seq.add(indir);	
+					tuple tup(2);
+					tup.copy(tuple_cell::node(node),tuple_cell(arg2seq.size()));
+					arg3seq.add(tup);
 				}
-				else
-				{
-					//deep constructing of node
-					arg2seq.add(node);
-				}
+				arg2seq.add(indir);					
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -281,8 +330,69 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	}
 
 	if (arg2seq.size()<=0) return;
-	// outer cycle on first sequence
+
+// copying the nodes of the inserting sequence tha are the parents
+	// of the nodes from the first sequence
+	arg1seq.sort();
+	arg3seq.sort();
+	descript_sequence::iterator it3=arg3seq.begin();
 	xptr_sequence::iterator it1=arg1seq.begin();
+	while(it3!=arg3seq.end()&& it1!=arg1seq.end())
+	{
+		switch(nid_cmp_effective((*it3).cells[0].get_node(), *it1))
+		{
+		case 0:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				++it3;
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+
+				++it1;
+			}
+			break;
+		case 1:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}	
+			break;
+			
+		case 2:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}
+			break;
+		case -1:
+			++it3;
+			break;
+		case -2:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				++it3;
+			}
+			break;
+		}
+	}
+// changing the rest nodes in first sequence to indir
+	while(it1!=arg1seq.end())
+	{
+		xptr nd=*it1;
+		CHECKP(nd);
+		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		++it1;
+	}
+
+	// outer cycle on first sequence
+	it1=arg1seq.begin();
 	xptr_sequence::iterator it2;
 	upd_ns_map* ins_swiz=NULL;
 	xptr node_child=XNULL;
@@ -334,19 +444,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		do
 		{
 			node_child=*it2;
-			mark= is_node_persistent(node_child); 
-			if (mark) 
-			{
-				node_child=removeIndirection(node_child);
-				// checking that item from the second sequence is not a parent of the item from the first sequence
-				if (nid_ancestor(node_child,removeIndirection(node_par)))
-				{
-#ifndef IGNORE_UPDATE_ERRORS
-					throw USER_EXCEPTION(SE2017);
-#endif				
-					goto cycle2;
-				}
-			}
+			node_child=removeIndirection(node_child);
+			mark= is_node_persistent(node_child); 			
 			CHECKP(node_child);
 			if (mark) 
 				node_child=deep_pers_copy(child, XNULL, XNULL, node_child,true);
@@ -381,6 +480,8 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	// Creating the first sequence (different validity tests+ indirection deref)
 	tuple t(arg1.ts);
 	xptr_sequence arg1seq;
+	//xptr_sequence arg1seq_tmp;
+	descript_sequence arg3seq(2);
 	tuple t2(arg2.ts);
 	xptr_sequence arg2seq;
 	//bool ch_auth=is_auth_check_needed(INSERT_STATEMENT);
@@ -395,8 +496,9 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 			{
 				/*if (ch_auth)
 					auth_for_update( node, INSERT_STATEMENT);*/
-				xptr indir=((n_dsc*)XADDR(node))->indir;
-				arg1seq.add(indir);	
+				//xptr indir=((n_dsc*)XADDR(node))->indir;
+				arg1seq.add(node);	
+				
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -417,7 +519,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	
 	// Checking authorization
 	if (is_auth_check_needed(INSERT_STATEMENT)) 
-		auth_for_update(&arg1seq, INSERT_STATEMENT, false);
+		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
 	
 	// Creating the second sequence (different validity tests+ indirection deref)
 	t_item prev_item=attribute;
@@ -431,16 +533,19 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 			if (!(is_node_document(node)||( is_node_attribute(node) && prev_item!=attribute)))
 			{
 				prev_item=GETTYPE(GETSCHEMENODEX(node));
+				xptr indir=((n_dsc*)XADDR(node))->indir;
 				if (is_node_persistent(node))
 				{
-					xptr indir=((n_dsc*)XADDR(node))->indir;
-					arg2seq.add(indir);	
+					tuple tup(2);
+					tup.copy(tuple_cell::node(node),tuple_cell(arg2seq.size()));
+					arg3seq.add(tup);
 				}
-				else
-				{
+				arg2seq.add(indir);	
+				//else
+				//{
 					//deep constructing of node
-					arg2seq.add(node);
-				}
+				//	arg2seq.add(node);
+				//}
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
@@ -460,7 +565,69 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	
 	// outer cycle on first sequence
 	if (arg2seq.size()<=0 ) return;
+
+	// copying the nodes of the inserting sequence tha are the parents
+	// of the nodes from the first sequence
+	arg1seq.sort();
+	arg3seq.sort();
+	descript_sequence::iterator it3=arg3seq.begin();
 	xptr_sequence::iterator it1=arg1seq.begin();
+	while(it3!=arg3seq.end()&& it1!=arg1seq.end())
+	{
+		switch(nid_cmp_effective((*it3).cells[0].get_node(), *it1))
+		{
+		case 0:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				++it3;
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+
+				++it1;
+			}
+			break;
+		case 1:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}	
+			break;
+			
+		case 2:
+			{
+				xptr nd=*it1;
+				CHECKP(nd);
+				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				++it1;
+			}
+			break;
+		case -1:
+			++it3;
+			break;
+		case -2:
+			{
+				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				++it3;
+			}
+			break;
+		}
+	}
+// changing the rest nodes in first sequence to indir
+	while(it1!=arg1seq.end())
+	{
+		xptr nd=*it1;
+		CHECKP(nd);
+		arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+		++it1;
+	}
+
+	// UPDATE
+	it1=arg1seq.begin();
 	xptr_sequence::iterator it2;
 	upd_ns_map* ins_swiz=NULL;
 	xptr node_child=XNULL;
@@ -478,18 +645,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		{
 			node_child=*it2;
 			mark= is_node_persistent(node_child); 
-			if (mark) 
-			{
-				node_child=removeIndirection(node_child);
-				// checking that item from the second sequence is not a parent of the item from the first sequence
-				if (nid_ancestor(node_child,removeIndirection(node_par)))
-				{
-#ifndef IGNORE_UPDATE_ERRORS
-					throw USER_EXCEPTION(SE2017);
-#endif
-					goto cycle2;
-				}
-			}
+			node_child=removeIndirection(node_child);			
 			CHECKP(node_child);
 			if (prev_item==xml_namespace && ! is_node_xml_namespace(node_child)) 
 			{
