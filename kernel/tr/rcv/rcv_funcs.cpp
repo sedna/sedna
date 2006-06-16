@@ -853,6 +853,7 @@ void print_value(const char* value, int value_size)
 
 void rcv_allocate_blocks(const vector<xptr> &arr)
 {
+/*
     set<xptr> s;
     set<xptr>::iterator s_it;
     vector<xptr> d;
@@ -879,4 +880,5 @@ void rcv_allocate_blocks(const vector<xptr> &arr)
 
     for (i = 0; i < d.size(); i++)
         vmm_pseudo_delete_block(d[i]);
+*/
 }

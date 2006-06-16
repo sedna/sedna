@@ -108,20 +108,25 @@ void vmm_on_session_end() throw (SednaException);
 void vmm_on_transaction_begin() throw (SednaException);
 void vmm_on_transaction_end() throw (SednaException);
 
+// VMM alloc/delete functions
 void vmm_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
 void vmm_alloc_tmp_block(xptr /*out*/ *p) throw (SednaException);
 void vmm_delete_block(xptr p) throw (SednaException);
 void vmm_delete_tmp_blocks() throw (SednaException);
 
+// VMM exclusive mode functions
 void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw (SednaException);
 void vmm_memlock_block(xptr p) throw (SednaException);
 void vmm_memunlock_block(xptr p) throw (SednaException);
 void vmm_exit_exclusive_mode() throw (SednaException);
 
-void vmm_pseudo_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
-void vmm_pseudo_delete_block(xptr p) throw (SednaException);
-
 void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException);
+
+// VMM recovery functions
+void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
+void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException);
+void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException);
+void vmm_rcv_clear_indir_block_set(xptr p) throw (SednaException);
 
 
 // Internal VMM functions
