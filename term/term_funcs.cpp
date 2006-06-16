@@ -63,28 +63,28 @@ int process_commandline_query()
     res = SEexecute(&conn, query); 
     if(res == SEDNA_QUERY_FAILED) 
     {
-    	fprintf(stderr, "Query failed \n%s\n%s", SEgetLastErrorMsg(&conn), query);
+    	fprintf(stderr, "\n%s\n%s", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_UPDATE_FAILED) 
     {
-    	fprintf(stderr, "Update failed \n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_BULK_LOAD_FAILED) 
     {
-    	fprintf(stderr, "Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
     if(res == SEDNA_ERROR) 
     {
-    	fprintf(stderr, "Error \n%s\n%s", SEgetLastErrorMsg(&conn),query);
+    	fprintf(stderr, "\n%s\n%s", SEgetLastErrorMsg(&conn),query);
     	//closing session
     	SEclose(&conn);
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
@@ -122,11 +122,11 @@ int process_commandline_query()
     }
     if(res == SEDNA_UPDATE_SUCCEEDED) 
     {
-    	term_output1("Update succeeded\n");
+    	fprintf(res_os, "UPDATE is executed successfully\n");
     }
 	if(res == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
-    	term_output1("Bulkload succeeded\n");
+    	fprintf(res_os, "Bulk load succeeded\n");
     }
     
     if(show_time != 0)

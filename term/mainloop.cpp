@@ -446,11 +446,11 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else if(result == SEDNA_QUERY_SUCCEEDED) 
     {
     	//iterate over the result sequece and retrieve the result data
-    	int bytes_read;
-    	result = SEnext(&conn);
+    	int bytes_read, res_next;
+    	res_next = SEnext(&conn);
     	term_output1("result:\n");
     	
-    	while((result != SEDNA_RESULT_END)&&(result != SEDNA_ERROR))
+    	while((res_next != SEDNA_RESULT_END)&&(res_next != SEDNA_ERROR))
     	{
     		bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
             if (bytes_read == SEDNA_ERROR)
@@ -469,7 +469,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
                 if (bytes_read == SEDNA_ERROR)
                 {
-       	            fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
+       	            fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
                 	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
@@ -477,17 +477,22 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                     else return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
-    		result = SEnext(&conn);
+    		res_next = SEnext(&conn);
+            if(res_next == SEDNA_NEXT_ITEM_FAILED)
+            {
+                fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+                break;
+            }
     	}
-		fprintf(res_os, "\n");
+		term_output1("\n");
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
-    	term_output1("Update succeeded\n");
+    	fprintf(res_os, "UPDATE is executed successfully\n");
     }
     else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
-    	term_output1("Bulk load succeeded\n");
+    	fprintf(res_os, "Bulk load succeeded\n");
     }
     else 
     {
@@ -526,7 +531,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	{
 		buffer[i] = (char)getc(source);
 
-		if((!isCommand)&&((buffer[i-1] == (char)';')||(buffer[i-1] == (char)'&'))&&((buffer[i] == (char)'\n')||(buffer[i] == EOF)))
+		if((!isCommand)&&(buffer[i-1] == (char)'&')&&((buffer[i] == (char)'\n')||(buffer[i] == EOF)))
 		{
 			*item_len = i-1;
 			buffer[*item_len] = '\0';
