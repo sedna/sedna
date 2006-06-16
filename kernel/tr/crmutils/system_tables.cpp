@@ -136,7 +136,7 @@ void get_document_full (xptr node,const char* title)
 	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENT",xdt_untyped,NULL,NULL);
 	insert_attribute(XNULL,XNULL,parent,"name",xdt_untypedAtomic,title,strlen(title),NULL);
 	schema_node* scn=find_document(title);	
-	getDebugInfo(scn, parent);
+	if (scn!=NULL) getDebugInfo(scn, parent);
 
 }
 bool is_document_system(const char* title)
