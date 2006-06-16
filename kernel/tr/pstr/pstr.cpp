@@ -62,7 +62,7 @@ void pstr_blk_markup(xptr blk) {
 	*(shft*)SITB_ADDR(blk) = PAGE_SIZE-sizeof(shft);
 	*(shft*)SITH_ADDR(blk) = PSTR_EMPTY_SLOT;				/* no free slots - the SIT is empty */
 	*(shft*)SSB_ADDR(blk) = SS_ADDR(blk)-(char*)XADDR(blk);
-	*(shft*)BFS_ADDR(blk) = PSTRMAXSIZE;					/* one slot is registered in SIT */
+	*(shft*)BFS_ADDR(blk) = PSTRMAXSIZE+sizeof(shft);					/* one slot is registered in SIT */
 	*(shft*)HHSIZE_ADDR(blk) = 0;
 }
 
@@ -165,7 +165,7 @@ CHECKP(blk);
 	if (s_size > PSTRMAXSIZE)
 		throw USER_EXCEPTION(2024);
 	/* Check if the string fits into block at all */
-	if (!pstr_fit_into_blk(blk, s_size)) {
+ 	if (!pstr_fit_into_blk(blk, s_size)) {
 			return result;
 	}
 	shft s1 = BFS(blk);
