@@ -16,6 +16,11 @@
 
 int quit_term()
 {
+	if(show_time != 0)
+	{
+		fprintf(stderr, "total time: %s\n",SEshowTime(&conn));
+	}
+	
 	term_output1("Closing session...");
 	
     //closing session
@@ -192,10 +197,6 @@ MainLoop(FILE *source)
             break;
             
 		case EXIT_EOF:
-			if(show_time != 0)
-			{
-				term_output2("Time: %s\n",SEshowTime(&conn));
-			}
 			if(source != stdin)
 			{
 				if((SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE) && (!conn.autocommit))
