@@ -5,16 +5,19 @@
 
                              Release 1.0
 
-     Release date: 2006-??-??, as current date of 2006-05-31
+     Release date: 2006-06-16
      _________________________________________________________________
 
 New:
+- Bug fixes 
 - XQuery extended with support for: date, time, duration functions; all XPath axes; 
-expressions on SequenceTypes (Instance Of, Typeswitch, Castable, Treat), Order By.
+expressions on SequenceTypes (Instance Of, Typeswitch, Castable, Treat), Order By
 - The XQuery functions position(), last() are optimized
-- Event Log
-- Support for Full-text Search (Sedna is integrated with dtSearch)
 - Recovery
+- Event Log
+- Backup and Restore Utilities
+- Integration with dtSearch (http://www.dtsearch.com), a commercial text retrieval engine
+(not included in the distributive, please contact us to get information on how to use Sedna with dtSearch)
 
 
      _________________________________________________________________
