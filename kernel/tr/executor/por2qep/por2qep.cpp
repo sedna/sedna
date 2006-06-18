@@ -3043,14 +3043,15 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
         else if (prolog_decl == "PPEmptyOrderDecl")  
         {
             if (   qp->at(i).internal.list->size() != 2
-                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                || qp->at(i).internal.list->at(1).type != SCM_SYMBOL)
                 throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
-            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "greatest") == 0)
+            string s = string(qp->at(i).internal.list->at(1).internal.symb);
+            if (s == "greatest")
             {
                 tr_globals::st_ct.empty_order = xq_empty_order_greatest;
             }
-            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "least") == 0)
+            else if (s == "least")
             {
                 tr_globals::st_ct.empty_order = xq_empty_order_least;
             }

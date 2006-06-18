@@ -5,8 +5,6 @@
 
 #include <iostream>
 #include "sedna.h"
-#include "string_operations.h"
-#include "e_string.h"
 #include "PPOrderBy.h"
 
 using namespace std;
@@ -71,7 +69,7 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
         case xs_integer				: 
         case xs_boolean				: return t;
 
-		default						: throw USER_EXCEPTION2(XP0006, "Less common type has not gt operator (PPOrderBy).");
+		default						: throw USER_EXCEPTION2(XP0006, "Least common type has not gt operator (PPOrderBy).");
 	}	
 }
 
@@ -113,6 +111,7 @@ void PPOrderBy::open  ()
     child.op->open();
     first_time  = true;
     need_reinit = false;
+    need_to_sort= false;
     pos = 0;
     
     data_cells  = new sequence(data_size);
@@ -162,9 +161,10 @@ void PPOrderBy::next  (tuple &t)
 	    	sort_cells -> clear();
     		ss         -> clear();
    		    pos = 0;
-   		    udata.pos = 0;
-		    udata.size = sizeof(int);
+   		    udata.pos   = 0;
+		    udata.size  = sizeof(int);
 		    need_reinit = false;
+		    need_to_sort= false;
     	}
 
 	   	int i;
@@ -209,42 +209,48 @@ void PPOrderBy::next  (tuple &t)
             data_cells -> add(data_tuple);
             sort_cells -> add(sort_tuple);
         }
-
+        
         for(i = 0; i < sort_size; i++)
         {
         	common_type* ct = &types.at(i);
-        	ct->size = ORB_SERIALIZED_SIZE(ct->xtype);
-        	udata.size += ct->size;
-        	//ct->gt = get_binary_op(xqbop_gt, ct->xtype, ct->xtype);
+        	if(!ct->initialized) continue;
+       		ct->size = ORB_SERIALIZED_SIZE(ct->xtype);
+       		udata.size += ct->size;
+       		need_to_sort = true;
         }
 
-        udata.bit_set_offset = udata.size;		   // offset to the begin of the eos map in each serialized tuple
-        udata.size += sort_size / 8;               // additional bytes for serialized bit_set which contains eos bitmap
-        if(sort_size % 8 != 0) udata.size++;
-
-        if(udata.size > DATA_BLK_SIZE) 
-	        throw USER_EXCEPTION2(SE1003, "Too long order by specification (PPOrderBy).");
-
-      	if(udata.buffer != NULL) delete udata.buffer;
-	    udata.buffer = new temp_buffer(udata.size);
-
-        for(i = 0; i < sort_cells->size(); i++)
+        if(need_to_sort)
         {
-        	sort_cells -> get(sort_tuple, i);
-        	ss -> add(sort_tuple);
-        	udata.pos ++;
-        }
+	        udata.bit_set_offset = udata.size;		   // offset to the begin of the eos map in each serialized tuple
+	        udata.size += sort_size / 8;               // additional bytes for serialized bit_set which contains eos bitmap
+	        if(sort_size % 8 != 0) udata.size++;
 
-        ss -> sort();
+    	    if(udata.size > DATA_BLK_SIZE) 
+		        throw USER_EXCEPTION2(SE1003, "Too long order by specification (PPOrderBy).");
+
+    	  	if(udata.buffer != NULL) delete udata.buffer;
+		    udata.buffer = new temp_buffer(udata.size);
+
+    	    for(i = 0; i < sort_cells->size(); i++)
+	        {
+	        	sort_cells -> get(sort_tuple, i);
+	        	ss -> add(sort_tuple);
+	        	udata.pos ++;
+    	    }
+
+	        ss -> sort();
+	    }
         first_time = false;
     }
     
-    if (pos < ss->size()) 
+    if (pos < (need_to_sort ? ss->size() : data_cells->size())) 
     {
-    	ss->get(t,pos++);
-    	if(t.cells[0].get_atomic_type() != xs_integer) 
-    		throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization (PPOrderBy).");
-    	data_cells -> get(t, t.cells[0].get_xs_integer());
+    	if(need_to_sort) {
+	    	ss->get(t,pos++);
+    		if(t.cells[0].get_atomic_type() != xs_integer) 
+    			throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization (PPOrderBy).");
+    	}
+    	data_cells -> get(t, need_to_sort ? t.cells[0].get_xs_integer() : pos++);
     }
     else 
     {
@@ -280,6 +286,17 @@ bool PPOrderBy::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPOrderBy static methods needed by sorted sequence
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+void serialize_string(const tuple_cell& tc, void* dest)
+{
+   	int length_all = tc.get_strlen();
+   	int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
+   	bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
+   	memcpy(dest, &flag, sizeof(bool));                       
+   	if(tc.get_type() == tc_light_atomic) memcpy((char*)dest + sizeof(bool), tc.get_str_mem(), length_ser);
+   	else copy_text((char*)dest + sizeof(bool), tc.get_str_vmm(), length_ser);
+  	*((char*)dest+sizeof(bool)+length_ser) = '\0';
+}
 
 void* get_ptr_to_complete_serialized_data(xptr v, char** temp,  const void * Udata)
 {
@@ -329,25 +346,22 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 	char* temp2 = NULL; 
 	void* addr1;
 	void* addr2;
-	int position1;
-	int position2;
 	
 	addr1 = get_ptr_to_complete_serialized_data(v1, &temp1, Udata);
 	addr2 = get_ptr_to_complete_serialized_data(v2, &temp2, Udata);
     
     if(temp1 == NULL) CHECKP(v1);
-    get_deserialized_value(&position1, addr1, xs_integer);
     bit_set bs1((char *)addr1+ud->bit_set_offset, length);
     if(temp2 == NULL) CHECKP(v2);
-    get_deserialized_value(&position2, addr2, xs_integer);
     bit_set bs2((char *)addr2+ud->bit_set_offset, length);
 
 	int offset = sizeof(int);
 	int result = 0;
 
-	for(int i=0; i< length; i++)
+	for(int i=0; i < length; i++)
 	{
 		common_type  &ct = (ud -> header) -> at(i);
+		if (!ct.initialized) continue;
 		orb_modifier &m  = (ud -> modifiers) -> at(i);
 		xmlscm_type type = ct.xtype;
 		int type_size = ct.size;		
@@ -438,6 +452,12 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 	    	    	}
 	    	    	if (result == 0 && (!flag1 || !flag2))
 	    	    	{
+	    	    		int position1;
+						int position2;
+		    	    	if(temp1 != NULL) CHECKP(v1);
+	    	    	    get_deserialized_value(&position1, addr1, xs_integer);
+		    	    	if(temp2 != NULL) CHECKP(v2);
+	    	    	    get_deserialized_value(&position2, addr2, xs_integer);
 	    	    		tuple t1(length);
 	    	    		tuple t2(length);
 	    	    		ud->sort->get(t1, position1);
@@ -449,17 +469,31 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
 		        case xdt_yearMonthDuration	: 
 		        case xdt_dayTimeDuration	: 
 		        {
-		        	char* buffer1 = new char[type_size];
-		        	char* buffer2 = new char[type_size]; 
-		        	if(temp1 == NULL) CHECKP(v1);
-		        	memcpy(buffer1, (char*)addr1+offset, type_size);
-			        str_counted_ptr ptr1(buffer1);
-			        XMLDateTime value1(ptr1);
-	        		if(temp2 == NULL) CHECKP(v2);
-		        	memcpy(buffer2, (char*)addr2+offset, type_size);
-			        str_counted_ptr ptr2(buffer2);
-			        XMLDateTime value2(ptr2);
-		        	result = XMLDateTime::compare(value2, value1)*order;
+		        	if(temp1 != NULL || temp2 != NULL)
+		        	{
+		        		if(temp1 != NULL) CHECKP(v1);
+		        		if(temp2 != NULL) CHECKP(v2);
+		        		str_counted_ptr ptr1((char*)addr1+offset);
+				        str_counted_ptr ptr2((char*)addr2+offset);
+				        XMLDateTime value1(ptr1);
+				        XMLDateTime value2(ptr2);
+				        result = XMLDateTime::compare(value2, value1)*order;
+				        ptr1.detach();
+				        ptr2.detach();
+		        	}
+		        	else
+		        	{
+		        		char* buffer = new char[type_size];	
+						CHECKP(v1);
+						memcpy(buffer, (char*)addr1+offset, type_size);
+				        str_counted_ptr ptr1(buffer);
+				        XMLDateTime value1(ptr1);
+				        CHECKP(v2);
+				        str_counted_ptr ptr2((char*)addr2+offset);
+				        XMLDateTime value2(ptr2);
+				        result = XMLDateTime::compare(value2, value1)*order;
+				        ptr2.detach();
+		        	}
 		        	break;
 		        }
 				default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
@@ -492,7 +526,8 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 		for(int i = 0; i < t.cells_number; i++)
 		{
 			common_type &ct = (ud -> header) -> at(i);
-			xmlscm_type type = ct.xtype;
+			if (!ct.initialized) continue; 				//if t.initialized == false we have a column of eos values
+			xmlscm_type type = ct.xtype;                //thus we don't need to serialize this column and sort by it
 			int type_size = ct.size;
 
 			if(t.cells[i].is_eos()) 
@@ -519,6 +554,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 		for(int i = 0; i < t.cells_number; i++)
 		{
 			common_type &ct = (ud -> header) -> at(i);
+			if (!ct.initialized) continue;
 			xmlscm_type type = ct.xtype;
 			int type_size = ct.size;
 
@@ -538,22 +574,9 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			        case xs_decimal				: *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().to_double(); break;
 			        case xs_integer				: *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
 			        case xs_boolean				: *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
-	                case xs_string				:
-			        {
-        				int length_all = t.cells[i].get_strlen();
-			        	int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
-			        	bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
-			        	memcpy((char*)p+offset, &flag, sizeof(bool));                       
-			        	if(t.cells[i].get_type() == tc_light_atomic) memcpy((char*)p+offset + sizeof(bool), t.cells[i].get_str_mem(), length_ser);
-			        	else copy_text((char*)p+offset + sizeof(bool), t.cells[i].get_str_vmm(), length_ser);
-			        	*((char*)p+offset + sizeof(bool) + length_ser) = '\0';
-			        	break;		
-			        }
+	                case xs_string				: serialize_string(t.cells[i], (char*)p+offset); break;
                     case xdt_yearMonthDuration	: 
-			        case xdt_dayTimeDuration	: 
-			        	//t.cells[i].get_xs_dateTime().normalize(); 
-			        	memcpy((char*)p+offset, t.cells[i].get_xs_dateTime().getRawData().get(), type_size);
-			        	break;
+			        case xdt_dayTimeDuration	: memcpy((char*)p+offset, t.cells[i].get_xs_dateTime().getRawData().get(), type_size); break;
 					default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 				}
 			}
@@ -576,6 +599,7 @@ void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
 	for(int i = 0; i < t.cells_number; i++)
 	{
 		common_type &ct = (ud -> header) -> at(i);
+		if (!ct.initialized) continue;
 		xmlscm_type type = ct.xtype;
 		int type_size = ct.size;
 
@@ -655,7 +679,7 @@ void temp_buffer::clear ()
 	pos = 0;	
 }
 
-void temp_buffer::serialize_to_buffer (tuple_cell tc)
+void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
 {
     if(tc.is_eos()) return;
     U_ASSERT(tc.is_atomic());
@@ -670,22 +694,9 @@ void temp_buffer::serialize_to_buffer (tuple_cell tc)
         case xs_decimal				: {double value = tc.get_xs_decimal().to_double(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_integer				: {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean				: {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
-        case xs_string				:
-        {
-        	int length_all = tc.get_strlen();
-        	int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
-        	bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
-        	memcpy(buffer+pos, &flag, sizeof(bool));                       
-        	if(tc.get_type() == tc_light_atomic) memcpy(buffer+pos + sizeof(bool), tc.get_str_mem(), length_ser);
-        	else copy_text(buffer+pos + sizeof(bool), tc.get_str_vmm(), length_ser);
-        	buffer[pos + sizeof(bool) + length_ser] = '\0';
-        	break;		
-        }
+        case xs_string				: {serialize_string(tc, buffer+pos); break; }		
         case xdt_yearMonthDuration	: 
-        case xdt_dayTimeDuration	: 
-        	//tc.get_xs_dateTime().normalize(); 
-        	memcpy(buffer + pos, tc.get_xs_dateTime().getRawData().get(), type_size);
-        	break;
+        case xdt_dayTimeDuration	: {memcpy(buffer + pos, tc.get_xs_dateTime().getRawData().get(), type_size); break;}
 		default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
 	}
 
