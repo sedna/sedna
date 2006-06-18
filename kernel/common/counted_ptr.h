@@ -40,6 +40,19 @@ public:
         return *this;
     }
 
+    X* detach()
+    {
+        if (unique() && itsCounter) 
+        {
+            X* ptr = itsCounter->ptr;
+            delete itsCounter;
+            itsCounter = 0;
+            return ptr;
+        }
+        else return NULL;
+    }
+
+
 /*
 #ifndef NO_MEMBER_TEMPLATES
     template <class Y> friend class counted_ptr<Y>;

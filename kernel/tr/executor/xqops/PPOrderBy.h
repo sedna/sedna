@@ -11,8 +11,9 @@
 #include "PPUtils.h"
 #include "bit_set.h"
 #include "sorted_sequence.h"
-#include "numb_scheme.h"
+#include "e_string.h"
 #include "op_map.h"
+#include "string_operations.h"
 #include "casting_operations.h"
 
 
@@ -55,7 +56,7 @@ public:
 	~temp_buffer ();
 
 	void clear ();
-	void serialize_to_buffer (tuple_cell tc);
+	void serialize_to_buffer (const tuple_cell& tc);
 	void copy_to_buffer      (xptr addr, int size);
 	void copy_to_buffer      (const void* addr, int size);
 	void copy_from_buffer    (int start, int size, xptr addr);
@@ -88,7 +89,6 @@ struct common_type
 {
 	int size;										//Size of type in bytes.
 	xmlscm_type xtype;                              //One of the atomic built-in types.
-	//bin_op_tuple_cell_tuple_cell gt;				//Pointer to comparison function for given type.
 	bool initialized;								//'true' if xtype is defined, else must be 'false'
 };
 
@@ -136,6 +136,7 @@ private:
     
     bool first_time;
     bool need_reinit;
+    bool need_to_sort;								//If we have of eos values then we don't need to sort by them
     sorted_sequence *ss;
     int pos;
     
