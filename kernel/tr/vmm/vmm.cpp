@@ -86,6 +86,7 @@ static bool vmm_transaction_initialized = false;
 
 static sm_msg_struct msg;
 
+static bool vmm_is_recovery_mode = false;
 // indirection block set (used for recovery)
 static std::set<xptr> indir_block_set;
 
@@ -645,7 +646,7 @@ void vmm_determine_region(bool log) throw (SednaException)
 ********************************************************************************
 *******************************************************************************/
 
-persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException)
+persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException)
 {
     vmm_cur_ptr = NULL;
 
@@ -673,6 +674,8 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
 //    uSpinInit(vmm_spin_lock);
 //#endif
 
+    vmm_is_recovery_mode = is_rcv_mode;
+
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -683,6 +686,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException
         msg.cmd = 21; // bm_register_session
         msg.trid = 0; // trid is not defined in this point
         msg.sid = sid;
+        msg.data.num = vmm_is_recovery_mode ? 1 : 0;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
@@ -893,7 +897,7 @@ void vmm_on_transaction_end() throw (SednaException)
 ********************************************************************************
 *******************************************************************************/
 
-void vmm_alloc_data_block(xptr *p) throw (SednaException)
+void _vmm_alloc_data_block(xptr *p) throw (SednaException)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -906,8 +910,35 @@ void vmm_alloc_data_block(xptr *p) throw (SednaException)
 
     CHECKP(*p);
 
-    VMM_INC_DATA_BLOCK_COUNT
-    VMM_TRACE_ALLOC_DATA_BLOCK
+}
+
+void vmm_alloc_data_block(xptr *p) throw (SednaException)
+{
+    if (vmm_is_recovery_mode)
+    {
+        vector<xptr> d;
+        int i = 0;
+
+        while (true)
+        {
+            _vmm_alloc_data_block(p);
+            if (indir_block_set.find(*p) == indir_block_set.end())
+                break;
+            else
+                d.push_back(*p);
+        }
+
+        for (i = 0; i < d.size(); i++)
+            vmm_delete_block(d[i]);
+    }
+    else
+    {
+        _vmm_alloc_data_block(p);
+
+        VMM_INC_DATA_BLOCK_COUNT
+        VMM_TRACE_ALLOC_DATA_BLOCK
+        //printf("vmm_alloc_data_block (%d, 0x%x)\n", p->layer, p->addr);
+    }
 }
 
 void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
@@ -961,6 +992,7 @@ void vmm_delete_block(xptr p) throw (SednaException)
         throw;
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
+    printf("vmm_alloc_data_block (%d, 0x%x)\n", p.layer,p.addr);
 }
 
 void vmm_delete_tmp_blocks() throw (SednaException)
@@ -1141,7 +1173,8 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaExcepti
   RECOVERY FUNCTIONS
 ********************************************************************************
 *******************************************************************************/
-void _vmm_pseudo_alloc_data_block(xptr /*out*/ *p) throw (SednaException)
+/*
+void _vmm_pseudo_alloc_data_block(xptr *p) throw (SednaException)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
 
@@ -1188,14 +1221,14 @@ void _vmm_pseudo_delete_block(xptr p) throw (SednaException)
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
-void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException)
+void vmm_rcv_alloc_data_block(xptr *p) throw (SednaException)
 {
     vector<xptr> d;
     int i = 0;
 
     while (true)
     {
-        _vmm_pseudo_alloc_data_block(p);
+        __vmm_alloc_data_block(p);
         if (indir_block_set.find(*p) == indir_block_set.end())
             break;
         else
@@ -1203,9 +1236,9 @@ void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException)
     }
 
     for (i = 0; i < d.size(); i++)
-        _vmm_pseudo_delete_block(d[i]);
+        vmm_delete_block(d[i]);
 }
-
+*/
 void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException)
 {
     vector<xptr> d;
@@ -1214,7 +1247,7 @@ void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException)
 
     while (true)
     {
-        _vmm_pseudo_alloc_data_block(&cur);
+        _vmm_alloc_data_block(&cur);
         if (cur == p)
             break;
         else
@@ -1222,7 +1255,7 @@ void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException)
     }
 
     for (i = 0; i < d.size(); i++)
-        _vmm_pseudo_delete_block(d[i]);
+        vmm_delete_block(d[i]);
 }
 
 void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException)
@@ -1230,7 +1263,7 @@ void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException)
     indir_block_set.insert(p);
 }
 
-void vmm_rcv_clear_indir_block_set(xptr p) throw (SednaException)
+void vmm_rcv_clear_indir_block_set() throw (SednaException)
 {
     indir_block_set.clear();
 }

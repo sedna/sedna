@@ -16,7 +16,7 @@ void bm_startup() throw (SednaException);
 
 void bm_shutdown() throw (SednaException);
 
-void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaException);
+void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mode) throw (SednaException);
 
 void bm_unregister_session(session_id sid) throw (SednaException);
 
@@ -53,11 +53,11 @@ void bm_memlock_block(session_id sid, xptr p) throw (SednaException);
 
 void bm_memunlock_block(session_id sid, xptr p) throw (SednaException);
 
-void bm_pseudo_allocate_data_block(session_id sid,
-                                   xptr /*out*/ *p) throw (SednaException);
+//void bm_pseudo_allocate_data_block(session_id sid,
+//                                   xptr /*out*/ *p) throw (SednaException);
 
-void bm_pseudo_delete_data_block(session_id sid,
-                                 xptr p) throw (SednaException);
+//void bm_pseudo_delete_data_block(session_id sid,
+//                                 xptr p) throw (SednaException);
 
 /// Debug functions
 void bm_block_statistics(sm_blk_stat *stat) throw (SednaException);

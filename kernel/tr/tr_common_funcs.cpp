@@ -48,7 +48,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("OK\n");
 
    d_printf1("Initializing VMM...");
-   entry_point = vmm_on_session_begin(sm_server);
+   entry_point = vmm_on_session_begin(sm_server, rcv_active);
    d_printf1("OK\n");
 
    d_printf1("Initializing indirection table...");
@@ -195,6 +195,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 
 void on_kernel_recovery_statement_begin()
 {
+    sid = 0;
     indirection_table_on_statement_begin();  
 }
 

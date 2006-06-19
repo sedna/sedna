@@ -23,8 +23,10 @@ using namespace std;
 *******************************************************************************/
 
 #define EBS_WORKING_SET_SIZE	(20 * 1024 * 1024)
-size_t MinimumWorkingSetSize_orig = 0, MaximumWorkingSetSize_orig = 0;
-int lock_memory = 1;
+static size_t MinimumWorkingSetSize_orig = 0, MaximumWorkingSetSize_orig = 0;
+static int lock_memory = 1;
+
+static bool is_recovery_mode = false;
 
 
 void _bm_set_working_set_size()
@@ -267,7 +269,7 @@ void bm_shutdown() throw (SednaException)
     }
 }
 
-void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaException)
+void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mode) throw (SednaException)
 {
     tr_info_map::iterator it = trs.find(sid);
     if (it != trs.end()) throw USER_EXCEPTION(SE1018);
@@ -293,6 +295,8 @@ void bm_register_session(session_id sid, persistent_db_data** pdb) throw (SednaE
     trs.insert(tr_info_map::value_type(sid, ti));
 
     *pdb = mb->pdb;
+
+    if (is_rcv_mode) is_recovery_mode = true;
 }
 
 void bm_unregister_session(session_id sid) throw (SednaException)
@@ -310,6 +314,8 @@ void bm_unregister_session(session_id sid) throw (SednaException)
 	tr_info *info = it->second;
 	trs.erase(it);
     delete (info);
+
+    is_recovery_mode = false;
 }
 
 void bm_register_transaction(session_id sid, transaction_id trid) throw (SednaException)
@@ -420,7 +426,14 @@ void bm_delete_block(session_id sid,
 
     if (IS_DATA_BLOCK(p))
     {
-        push_to_persistent_free_blocks_stack(&(it->second->freed_data_blocks), p);
+        if (is_recovery_mode)
+        {
+            push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), p);
+        }
+        else
+        {
+            push_to_persistent_free_blocks_stack(&(it->second->freed_data_blocks), p);
+        }
     }
     else 
     {
@@ -505,9 +518,9 @@ void bm_memunlock_block(session_id sid, xptr p) throw (SednaException)
     else
         throw SYSTEM_EXCEPTION("Transaction is trying to unlock block that has not been locked");
 }
-
+/*
 void bm_pseudo_allocate_data_block(session_id sid,
-                                   xptr /*out*/ *p) throw (SednaException)
+                                   xptr *p) throw (SednaException)
 {
     new_data_block(p);
 }
@@ -522,7 +535,7 @@ void bm_pseudo_delete_data_block(session_id sid,
 
     // !!! MASTER BLOCK HAS BEEN CHANGED
 }
-
+*/
 void bm_block_statistics(sm_blk_stat *stat) throw (SednaException)
 {
     stat->free_data_blocks_num = count_elems_of_persistent_free_blocks_stack(mb->free_data_blocks);

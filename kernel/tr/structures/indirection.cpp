@@ -142,6 +142,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	else
 	{
 		tmp=blks->back();
+        vmm_rcv_alloc_indir_block(tmp);
 		blks->pop_back();
 	}
     tmp=fill_empty_block(tmp);
@@ -182,6 +183,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 		else
 		{
 			tmp=blks->back();
+            vmm_rcv_alloc_indir_block(tmp); 
 			blks->pop_back();
 		}
 		tmp=fill_empty_block(tmp);
@@ -214,11 +216,25 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 }
 xptr add_record_to_data_indirection_table(xptr p)
 {
-    if (rollback_mode==MODE_UNDO||redo_hint==-2)
+    
+	if (rollback_mode!=MODE_NORMAL)
     {
         // This fragment of code can be thrown out because rollback_record
         // was not changed
+		if (redo_hint>0)
+		{
+			CHECKP(p);
+			schema_node* sch=(GETBLOCKBYNODE(p))->snode;
+			create_new_cluster(redo_hint,sch->root,sch,redo_blocks);
+			redo_hint=-1;
+		}
         CHECKP(rollback_record);
+		if (rollback_mode==MODE_REDO)
+		{
+			CHECKP(p);
+			schema_node* sch=(GETBLOCKBYNODE(p))->snode;
+			sch->ind_entry = *(xptr*)(XADDR(rollback_record));
+		}
 
         *(xptr*)(XADDR(rollback_record)) = p;
 
@@ -227,7 +243,7 @@ xptr add_record_to_data_indirection_table(xptr p)
 
         return rollback_record;
     }
-
+	
     // it means delete from list
     //USemaphoreDown(indirection_table_sem);
 	indir_node_count++;
@@ -238,10 +254,9 @@ xptr add_record_to_data_indirection_table(xptr p)
 	if (res==XNULL)
 	{
 		//2.1 calculating cluster size
-		int cl_size=(rollback_mode==MODE_REDO)?redo_hint:(sch->cl_hint==0)?MIN_CLUSTER_SIZE:sch->cl_hint;
+		int cl_size=(sch->cl_hint==0)?MIN_CLUSTER_SIZE:sch->cl_hint;
 		//2.2 creating new cluster
-		res=create_new_cluster(cl_size,sch->root,sch,(rollback_mode==MODE_REDO)?redo_blocks:NULL);
-		redo_hint=(rollback_mode==MODE_REDO)?-2:-1;
+		res=create_new_cluster(cl_size,sch->root,sch,NULL);		
 	}
 	//3. filling indirection record|updateing schema node
 	CHECKP(res);

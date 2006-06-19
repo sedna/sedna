@@ -266,9 +266,9 @@ public:
   void commit_trn(transaction_id& trid, bool sync);
   void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
  #ifdef SE_ENABLE_FTSEARCH
-  void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+  void recover_db_by_logical_log(void (*index_op) (trns_analysis_map&),void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 #else
-void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_rcv_allocate_blocks)(const std::vector<xptr>&), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
+void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_vmm_rcv_add_to_indir_block_set_)(xptr p), void (*_vmm_rcv_clear_indir_block_set_)(),void (*_sync_indirection_table_)(), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 
 #endif
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
@@ -297,7 +297,7 @@ private:
   const char* get_record_from_shared_memory(int end_offs, int len);
   void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
   void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
-  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, std::vector<xptr>& indir_blocks, /*out*/ trns_undo_analysis_list& undo_list, /*out*/trns_redo_analysis_list& redo_list /*out*/);
+  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, trns_undo_analysis_list& undo_list, /*out*/trns_redo_analysis_list& redo_list /*out*/, void (*_vmm_rcv_add_to_indir_block_set_)(xptr p));
 
   bool find_redo_trn_cell(transaction_id trid,
                           trns_redo_analysis_list& redo_list,

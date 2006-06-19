@@ -201,7 +201,7 @@ int sm_server_handler(void *arg)
             case 21: {
                          //d_printf1("query 21: bm_register_session\n");
                          persistent_db_data* pdb;
-                         bm_register_session(msg->sid, &pdb);
+                         bm_register_session(msg->sid, &pdb, msg->data.num);
                          msg->data.num = bufs_num;
                          msg->data.mptr = pdb;
                          msg->cmd = 0;
@@ -278,13 +278,13 @@ int sm_server_handler(void *arg)
                      }
             case 32: {
                          //d_printf1("query 32: bm_pseudo_allocate_data_block\n");
-                         bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
+                         //bm_pseudo_allocate_data_block(msg->sid, (xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 33: {
                          //d_printf1("query 33: bm_pseudo_delete_data_block\n");
-                         bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         //bm_pseudo_delete_data_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
