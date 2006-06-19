@@ -109,6 +109,7 @@ int main (int argc, char** argv)
       hl_logical_log_init(logical_log_file_path, true);
       d_printf1("OK\n");
 */
+	  sid=0;
       on_session_begin(sm_server, true);
       on_transaction_begin(sm_server, true);//true means recovery active
       on_kernel_recovery_statement_begin();

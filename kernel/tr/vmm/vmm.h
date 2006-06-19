@@ -103,7 +103,7 @@
 void vmm_preliminary_call() throw (SednaException);
 void vmm_determine_region(bool log = false) throw (SednaException);
 
-persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_) throw (SednaException);
+persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException);
 void vmm_on_session_end() throw (SednaException);
 void vmm_on_transaction_begin() throw (SednaException);
 void vmm_on_transaction_end() throw (SednaException);
@@ -123,10 +123,10 @@ void vmm_exit_exclusive_mode() throw (SednaException);
 void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaException);
 
 // VMM recovery functions
-void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
+//void vmm_rcv_alloc_data_block(xptr /*out*/ *p) throw (SednaException);
 void vmm_rcv_alloc_indir_block(xptr p) throw (SednaException);
 void vmm_rcv_add_to_indir_block_set(xptr p) throw (SednaException);
-void vmm_rcv_clear_indir_block_set(xptr p) throw (SednaException);
+void vmm_rcv_clear_indir_block_set() throw (SednaException);
 
 
 // Internal VMM functions

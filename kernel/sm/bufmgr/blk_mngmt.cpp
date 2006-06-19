@@ -133,7 +133,6 @@ int count_elems_of_persistent_free_blocks_stack(xptr hd)
     return num;
 }
 
-
 int push_to_persistent_used_blocks_stack(xptr *hd, xptr p)
 {
     ramoffs offs = 0;

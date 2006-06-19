@@ -16,6 +16,8 @@
 #include "uutils.h"
 #include "d_printf.h"
 #include "trmgr.h"
+#include "vmm.h"
+#include "indirection.h"
 
 using namespace std;
 
@@ -1777,7 +1779,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
 										   void (*exec_micro_op) (const char*, int, bool),
                                            void(*switch_indirection)(int),
-                                           void (*_rcv_allocate_blocks)(const std::vector<xptr>&),
+                                           void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
+                                           void (*_vmm_rcv_clear_indir_block_set_)(),
                                            const LONG_LSN& last_cp_lsn,
                                            int undo_indir_mode,
                                            int redo_indir_mode,
@@ -1785,7 +1788,9 @@ void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_ana
 #else
 void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),
                                            void(*switch_indirection)(int),
-                                           void (*_rcv_allocate_blocks)(const std::vector<xptr>&),
+                                           void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
+                                           void (*_vmm_rcv_clear_indir_block_set_)(),
+                                           void (*_sync_indirection_table_)(),
                                            const LONG_LSN& last_cp_lsn,
                                            int undo_indir_mode,
                                            int redo_indir_mode,
@@ -1822,42 +1827,48 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 //  trns_analysis_map undo_redo_trns_map;
 
 
-  std::vector<xptr> indir_blocks;
   trns_undo_analysis_list undo_list;
   trns_redo_analysis_list redo_list;
  
-  
+#ifdef EL_DEBUG
+#if (EL_DEBUG == 1)
   cout << "last_cp_lsn=" << last_checkpoint_lsn << "last_commit_lsn=" << last_commit_lsn << endl;
+#endif
+#endif
 
 //  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
   get_undo_redo_trns_list(last_checkpoint_lsn,
                           last_commit_lsn,
-                          indir_blocks, /*out*/
                           undo_list, /*out*/
-                          redo_list /*out*/
+                          redo_list, /*out*/
+                          _vmm_rcv_add_to_indir_block_set_
                          );
 
 
   trns_undo_analysis_list_iterator it;
+
+#ifdef EL_DEBUG
+#if (EL_DEBUG == 1)
   for (it = undo_list.begin(); it != undo_list.end(); it++)
   {
 //       std::cout << "trid=" << it->trid << " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn;     
      std::cout << "trid=" << it->trid <<  " trn_undo_rcv_lsn=" << it->trn_undo_rcv_lsn << "first_lsn_after_cp=" << it->first_lsn_after_cp << " finish_status=" << it->finish_status << endl;
   }
+#endif
+#endif
 
 
   trns_redo_analysis_list_iterator it2;
+
+#ifdef EL_DEBUG
+#if (EL_DEBUG == 1)
   for (it2 = redo_list.begin(); it2 != redo_list.end(); it2++)
   {
      std::cout << "trid=" << it2->trid << ", " << " trn_start_rcv_lsn=" << it2->trn_start_rcv_lsn << "trn_end_lsn=" << it2->trn_end_lsn <<  " finish_status=" << it2->finish_status << endl;
   }
+#endif
+#endif
 
-
-  d_printf2("rcv_allocate_blocks num=%d\n", indir_blocks.size());
-  for (int i=0; i< indir_blocks.size(); i++)
-      indir_blocks[i].print();
-
-  _rcv_allocate_blocks(indir_blocks);
 
   switch_indirection(undo_indir_mode);
 
@@ -1867,6 +1878,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   for(it1=undo_list.begin(); it1 != undo_list.end(); it1++)
      undo_trn(it1->trn_undo_rcv_lsn, exec_micro_op);
 
+  _sync_indirection_table_();
 
   //redo committed transactions
   LONG_LSN start_redo_lsn;
@@ -1890,6 +1902,8 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_list, redo_list, last_checkpoint_lsn);
 #endif
+
+  _vmm_rcv_clear_indir_block_set_();
 
   //close all open log files
   close_all_log_files();
@@ -1986,9 +2000,9 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
 void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
                                         LONG_LSN &end_lsn,
-                                        vector<xptr>& indir_blocks, /*out*/
                                         trns_undo_analysis_list& undo_list, /*out*/
-                                        trns_redo_analysis_list& redo_list /*out*/
+                                        trns_redo_analysis_list& redo_list, /*out*/
+                                        void (*_vmm_rcv_add_to_indir_block_set_)(xptr p)
                                        )
 {
   LONG_LSN lsn;
@@ -2128,7 +2142,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 
           for (int i = 0; i< *blocks_num; i++)
           {
-              indir_blocks.push_back(*((xptr*)(body_beg + offs)));
+              _vmm_rcv_add_to_indir_block_set_(*((xptr*)(body_beg + offs)));
               offs += sizeof(xptr);
           }
       }

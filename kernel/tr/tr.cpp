@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
     char buf[1024];
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
-
+    bool sedna_server_is_running = false;
+//getchar();
     try
     {
 
@@ -105,7 +106,12 @@ int main(int argc, char *argv[])
         }
         else
         {
-            vmm_preliminary_call();
+            try {
+                vmm_preliminary_call();
+                sedna_server_is_running = true;
+            } catch (SednaUserException &e) {
+                if (e.get_code() != SE4400) throw;
+            }
             OS_exceptions_handler::install_handler();
         }
 
@@ -144,6 +150,7 @@ int main(int argc, char *argv[])
 //           throw USER_EXCEPTION(SE4613);
 
             client = new command_line_client(argc, argv);
+            if (!sedna_server_is_running) throw USER_EXCEPTION(SE4400);
         }
 
         if (uSocketInit(__sys_call_error) != 0)
