@@ -438,6 +438,8 @@ int main(int argc, char **argv)
         try {
             string command_line = argv[0];
             command_line += " -background-mode off ";
+            command_line += " -bufs-num " + int2string(__bufs_num__);
+            command_line += " -max-trs-num " + int2string(__max_trs_num__);
             command_line += db_name;
 
             command_line_str = new char[command_line.length() + 1];

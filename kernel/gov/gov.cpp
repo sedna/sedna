@@ -162,6 +162,7 @@ int main(int argc, char** argv)
         try {
             string command_line = argv[0];
             command_line += " -background-mode off";
+            command_line += " -port-number " + int2string(socket_port);
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
