@@ -1465,11 +1465,13 @@ const char *SEshowTime(struct SednaConnection *conn)
     {
         setDriverErrorMsg(conn, SE3028, NULL);        /* "Connection with server is closed or have not been established yet." */
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
     if (conn->isConnectionOk != SEDNA_CONNECTION_OK)
     {
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
@@ -1481,12 +1483,14 @@ const char *SEshowTime(struct SednaConnection *conn)
     if (conn->in_query)
     {
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
         connectionFailure(conn, SE3006, NULL, NULL);
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
@@ -1494,17 +1498,20 @@ const char *SEshowTime(struct SednaConnection *conn)
     {
         connectionFailure(conn, SE3006, NULL, NULL);
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 
     if (conn->msg.instruction == se_LastQueryTime)      /*LastQueryTime*/
     {
         strncpy(conn->query_time, conn->msg.body + 5, conn->msg.length - 5);
+        conn->query_time[conn->msg.length - 5] = '\0';
         return conn->query_time;
     }
     else
     {
         strcpy(conn->query_time, "not available");
+        conn->query_time[13] = '\0';
         return conn->query_time;
     }
 }

@@ -131,7 +131,7 @@ int process_commandline_query()
     
     if(show_time != 0)
     {
-    	term_output2("Time: %s\n",SEshowTime(&conn));
+    	fprintf("total time: %s\n",SEshowTime(&conn));
     }
 	
 
