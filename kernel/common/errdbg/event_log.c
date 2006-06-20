@@ -763,16 +763,13 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     time(&aclock);                   /* Get time in seconds */
     newtime = localtime(&aclock);    /* Convert time to struct tm form */
 
-    sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d",
+    sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-02%d",
             newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
-            newtime->tm_hour, newtime->tm_min);
+            newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
     strcat(buf, dt_buf);
 
-//    if (!uIsFileExist(buf, __sys_call_error))
-//    {
-        if (uMkDir(buf, NULL, __sys_call_error) == 0)
-            perror("Cannot create directory for soft fault logs");
-//    }
+    if (uMkDir(buf, NULL, NULL) == 0)
+         perror("Cannot create directory for soft fault logs");
 
 #ifdef _WIN32
     strcat(buf, "\\");
@@ -817,7 +814,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     strcat(buf, u_gcvt(uGetCurrentProcessId(__sys_call_error), 10, buf_pid));
 #endif
     strcat(buf, ".log");
-    soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, __sys_call_error);
+    soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
     if(soft_fault_file_handle == U_INVALID_FD)
     {
         fprintf(stderr, "Cannot create soft fault log file");
@@ -825,7 +822,7 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     }
     strcpy(log_buf, "SEDNA soft fault message:\n");
     strcat(log_buf, log_message);
-    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, __sys_call_error);
+    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf)) 
     {
         fprintf(stderr, "Cannot write to soft fault log file");
@@ -836,14 +833,14 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     strcat(log_buf, str);
     strcat(log_buf, " command line arguments: ");
     strcat(log_buf, GetCommandLine());
-    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, __sys_call_error);
+    res = uWriteFile(soft_fault_file_handle, log_buf, strlen(log_buf), &bytes_written, NULL);
     if (res == 0 || bytes_written != strlen(log_buf)) 
     {
         fprintf(stderr, "Cannot write to soft fault log file");
         return;
     }
 #endif
-	res = uCloseFile(soft_fault_file_handle, __sys_call_error);
+	res = uCloseFile(soft_fault_file_handle, NULL);
     if(res == 0)
     {
         fprintf(stderr, "Cannot close soft fault log file");
