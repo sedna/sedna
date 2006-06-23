@@ -596,8 +596,17 @@ int XMLDateTime::compare(const XMLDateTime& lValue
     // If any of the them is not normalized() yet,
     // we need to do something here.
     //
-    XMLDateTime lTemp = lValue;
-    XMLDateTime rTemp = rValue;
+
+    //FIXME: hack a copy operator that works with indexes
+    char* lstrvalue = new char[ TOTAL_FIELDS * sizeof(int)];
+    char* rstrvalue = new char[ TOTAL_FIELDS * sizeof(int)];
+    memcpy(lstrvalue, lValue.string_value, TOTAL_FIELDS * sizeof(int));
+    memcpy(rstrvalue, rValue.string_value, TOTAL_FIELDS * sizeof(int));
+    str_counted_ptr lptr = str_counted_ptr(lstrvalue);
+    str_counted_ptr rptr = str_counted_ptr(rstrvalue);
+
+    XMLDateTime lTemp(lptr);
+    XMLDateTime rTemp(rptr);
 
     lTemp.normalize();
     rTemp.normalize();
@@ -620,7 +629,9 @@ int XMLDateTime::compare(const XMLDateTime& lValue
 		 	lTemp.getValue(MiliSecond)/pow(10.0, (double)lTemp.getValue(MiliSecondLen));
 
 	if (! rTemp.getValue(MiliSecondLen))
+	{
 		return GREATER_THAN;
+	}
 
 	double rMilis = rTemp.getValue(MiliSecond) == 0 ? 0.0 :
 		 	rTemp.getValue(MiliSecond)/pow(10.0, (double)rTemp.getValue(MiliSecondLen));
