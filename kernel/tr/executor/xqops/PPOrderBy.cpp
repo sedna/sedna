@@ -530,11 +530,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			xmlscm_type type = ct.xtype;                //thus we don't need to serialize this column and sort by it
 			int type_size = ct.size;
 
-			if(t.cells[i].is_eos()) 
-			{
-				bs.setAt(i);
-				buffer->create_empty_block(type_size);
-			}
+			if(t.cells[i].is_eos()) bs.setAt(i);
 			else 
 			{
 				if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
@@ -558,11 +554,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			xmlscm_type type = ct.xtype;
 			int type_size = ct.size;
 
-			if(t.cells[i].is_eos()) 
-			{
-				bs.setAt(i);
-				memset((char*)p+offset, '0', type_size);
-			}
+			if(t.cells[i].is_eos()) bs.setAt(i);
 			else 
 			{
 				if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
@@ -574,7 +566,16 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 			        case xs_decimal				: *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().to_double(); break;
 			        case xs_integer				: *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
 			        case xs_boolean				: *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
-	                case xs_string				: serialize_string(t.cells[i], (char*)p+offset); break;
+	                case xs_string				: 
+	                {
+	                	serialize_string(t.cells[i], (char*)p+offset); 
+	                	if(t.cells[i].get_type() != tc_light_atomic)
+	                	{
+	                		CHECKP(v1);
+		                	VMM_SIGNAL_MODIFICATION(v1);
+		                }
+	                	break;
+	                }
                     case xdt_yearMonthDuration	: 
 			        case xdt_dayTimeDuration	: memcpy((char*)p+offset, t.cells[i].get_xs_dateTime().getRawData().get(), type_size); break;
 					default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
@@ -603,11 +604,7 @@ void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
 		xmlscm_type type = ct.xtype;
 		int type_size = ct.size;
 
-		if(t.cells[i].is_eos()) 
-		{
-			bs.setAt(i);
-			buffer->create_empty_block(type_size);
-		}
+		if(t.cells[i].is_eos()) bs.setAt(i);
 		else 
 		{
 			if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
