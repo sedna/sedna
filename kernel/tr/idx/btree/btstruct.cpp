@@ -26,6 +26,15 @@ void bt_key::init(const bt_key& k)
         case xs_double	: v.d_v = k.v.d_v; break;
         case xs_string	: v.s_v = new char[strlen(k.v.s_v) + 1];
                           strcpy(v.s_v, k.v.s_v);
+			  break;
+	case xs_date:
+	case xs_time:
+	case xs_dateTime:
+	case xs_duration:
+	case xdt_yearMonthDuration:
+	case xdt_dayTimeDuration:
+			  v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
+			  memcpy(v.s_v, k.v.s_v, XMLDateTime::TOTAL_FIELDS * sizeof(int));
                           break;
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
@@ -47,7 +56,19 @@ void bt_key::init(char* pg, shft key_idx)
                               v.s_v[size] = '\0';
                               memcpy(v.s_v, pg + *key_tab_slot, size);
                               break;
-                          }
+			}
+	case xs_date:
+	case xs_time:
+	case xs_dateTime:
+	case xdt_yearMonthDuration:
+	case xdt_dayTimeDuration:
+			  {
+				shft size = *(key_tab_slot + 1);
+				v.s_v = new char[size + 1];
+				v.s_v[size] = '\0';
+				memcpy(v.s_v, pg + *key_tab_slot, size);
+				break;
+			  }
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
 }
@@ -60,7 +81,13 @@ int bt_key::get_size() const
         case xs_float	: return sizeof(float);
         case xs_double	: return sizeof(double);
         case xs_string	: return strlen(v.s_v);
-        default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
+	case xs_date:
+	case xs_time:
+	case xs_dateTime:
+	case xdt_yearMonthDuration:
+	case xdt_dayTimeDuration:
+			return XMLDateTime::TOTAL_FIELDS * sizeof(int);
+	default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
 }
 
@@ -91,6 +118,14 @@ void bt_key::setnew(const char* nv)
     type = xs_string;
     v.s_v = new char[strlen(nv) + 1];
     strcpy(v.s_v, nv);
+}
+
+void bt_key::setnew_dateTimeDuration(const char* nv, xmlscm_type t)
+{
+    free();
+    type = t;
+    v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
+    memcpy(v.s_v, nv, XMLDateTime::TOTAL_FIELDS * sizeof(int));
 }
 
 

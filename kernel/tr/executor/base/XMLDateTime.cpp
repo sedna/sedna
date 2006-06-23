@@ -213,28 +213,56 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 // Component extraction functions
 //---------------------------------------------------------------------------------------
 int XMLDateTime::getYears() const
-{ return getValue(CentYear); }
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	return dt.getValue(CentYear);
+}
 
 int XMLDateTime::getMonths() const
-{ return getValue(Month); }
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	return dt.getValue(Month);
+}
 
 int XMLDateTime::getDays() const
-{ return getValue(Day); }
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	return dt.getValue(Day);
+}
 
 int XMLDateTime::getHours() const
-{ return getValue(Hour); }
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	return dt.getValue(Hour);
+}
 
 int XMLDateTime::getMinutes() const
-{ return getValue(Minute); }
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	return dt.getValue(Minute);
+}
 
 double XMLDateTime::getSeconds() const
-{
-	double milis = getValue(MiliSecond)/pow((double)getValue(MiliSecondLen),10);
-	return getValue(Second) + milis;
+{ 
+	XMLDateTime dt = *this;
+	if (dt.isDuration())
+		dt.normalize();
+	double milis = ( dt.getValue(MiliSecondLen) == 0 ) ? 0.0 : dt.getValue(MiliSecond)/pow(10.0,(double)dt.getValue(MiliSecondLen));
+	return (double)dt.getValue(Second) + milis;
 } 
 
 XMLDateTime XMLDateTime::getTimezone() const
-{
+{ 
 	XMLDateTime tz;
 	tz.setValue(Type, xdt_dayTimeDuration);
 	int neg = (getValue(utc) == UTC_NEG )? -1: 1;
@@ -252,18 +280,23 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
     XMLDateTime newDuration;
     newDuration.setValue(XMLDateTime::Type, d1.getValue(XMLDateTime::Type));
 
+
    if (d1.getValue(XMLDateTime::Type) == xdt_yearMonthDuration)
    {
 	newDuration.setValue(XMLDateTime::Month, d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month) + 
 			d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month));
+	newDuration.normalize();
 	return newDuration;
    }
    else //must be xdt_dayTimeDuration
    {
 	//add miliseconds
 	int carry = 0;
-	double milis = d1.getValue(XMLDateTime::MiliSecond)/pow((double)d1.getValue(XMLDateTime::MiliSecondLen),10) +
-			d2.getValue(XMLDateTime::MiliSecond)/pow((double)d2.getValue(XMLDateTime::MiliSecondLen),10);
+	double milis1 = d1.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
+		 d1.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d1.getValue(XMLDateTime::MiliSecondLen));
+	double milis2 = d2.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
+		 d2.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d2.getValue(XMLDateTime::MiliSecondLen));
+	double milis = milis1 + milis2;
 	if (milis>=1.0 || milis <=0.0)
 	{
 		if (milis>=1.0)
@@ -277,15 +310,32 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 			carry = -1;
 		}
 		char tmpBuf[MAX_MEM_STR_SIZE];
-		sprintf(tmpBuf, "%g.50", milis);
+		if (milis != 0.0)
+			sprintf(tmpBuf, "%g", milis);
+		else
+			sprintf(tmpBuf, "0.0");
 		newDuration.setValue(XMLDateTime::MiliSecond, atoi(&tmpBuf[2]));
 		newDuration.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
 	}
 
+/*
 	newDuration.setValue(XMLDateTime::Second, d1.getValue(XMLDateTime::Second) + d2.getValue(XMLDateTime::Second) + carry);
 	newDuration.setValue(XMLDateTime::Minute, d1.getValue(XMLDateTime::Minute) + d2.getValue(XMLDateTime::Minute));
 	newDuration.setValue(XMLDateTime::Hour, d1.getValue(XMLDateTime::Hour) + d2.getValue(XMLDateTime::Hour));
 	newDuration.setValue(XMLDateTime::Day, d1.getValue(XMLDateTime::Day) + d2.getValue(XMLDateTime::Day));
+*/
+/*
+	char sbuf[1000];
+	sprintf(sbuf, "d2.s = %d", d2.getValue(XMLDateTime::Second));
+	throw USER_EXCEPTION2(FODT017, sbuf );
+*/
+ 
+ 	newDuration.setValue(XMLDateTime::Second,
+			d1.getValue(XMLDateTime::Second) + d2.getValue(XMLDateTime::Second) + carry +
+			d1.getValue(XMLDateTime::Minute)*60 + d2.getValue(XMLDateTime::Minute)*60 +
+			d1.getValue(XMLDateTime::Hour)*60*60 + d2.getValue(XMLDateTime::Hour)*60*60 +
+			d1.getValue(XMLDateTime::Day)*60*60*24 + d2.getValue(XMLDateTime::Day)*60*60*24 );
+	newDuration.normalize();
 	return newDuration;
     }
 }
@@ -303,21 +353,44 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 	if (d.getValue(XMLDateTime::Type) == xdt_yearMonthDuration)
 	{
 		int months = d.getValue(XMLDateTime::CentYear)*12 + d.getValue(XMLDateTime::Month);
-		newDuration.setValue(XMLDateTime::Month, (int)floor(months * v + 0.5 ));
+		double multMonths = months * v;
+		int neg = multMonths > 0 ? 1 : -1;
+		months = neg * (int)floor( neg * multMonths + 0.5);
+		newDuration.setValue(XMLDateTime::Month, months);
+		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG);
+		newDuration.normalize();
 		return newDuration;
 	}
 	else // must be xdt_dayTimeDuration
 	{
-		double milis = d.getValue(XMLDateTime::MiliSecond)/pow((double)d.getValue(XMLDateTime::MiliSecondLen),10);
+		int miliSecond = d.getValue(XMLDateTime::MiliSecond);
+		int miliSecondLen = d.getValue(XMLDateTime::MiliSecondLen);
+		double milis = (miliSecond == 0)?0.0:miliSecond/pow(10.0, (double)miliSecondLen);
 		long seconds = d.getValue(XMLDateTime::Second) + d.getValue(XMLDateTime::Minute)*60 
 			+ d.getValue(XMLDateTime::Hour)*60*60 + d.getValue(XMLDateTime::Day)*60*60*24;
-		milis = seconds + milis * v;
-		newDuration.setValue(XMLDateTime::Second, (int)milis);
+		double seconds_milis = (seconds + milis) * v;
+		int neg = seconds_milis > 0 ? 1 : -1;
+		newDuration.setValue(XMLDateTime::Second, (int)seconds_milis);
 		char tmpBuf[MAX_MEM_STR_SIZE];
-		sprintf(tmpBuf, "%g.50", milis - (int)milis);
-		newDuration.setValue(XMLDateTime::MiliSecond, atoi(&tmpBuf[2]));
+		if (seconds_milis - (int)seconds_milis != 0.0)
+			sprintf(tmpBuf, "%g", neg * (seconds_milis - (int)seconds_milis));
+		else
+			sprintf(tmpBuf, "0.0");
+		newDuration.setValue(XMLDateTime::MiliSecond, neg * atoi(&tmpBuf[2]));
 		newDuration.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
-		return newDuration;
+
+/*
+
+		char sbuf[1000];
+		sprintf(sbuf, "MS=%d, DIV=%g, seconds = %d, milis = %.50f, seconds_milis = %.50f, norm milis = %.50f, printed_milis = %d, mili len = %d", 
+			d.getValue(XMLDateTime::MiliSecond), 
+			pow((double)d.getValue(XMLDateTime::MiliSecondLen),10),
+			seconds, milis, seconds_milis, seconds_milis -(int)milis, atoi(&tmpBuf[2]), strlen(&tmpBuf[2]) );
+		throw USER_EXCEPTION2(FODT017, sbuf );
+*/
+
+		//newDuration.normalize();
+	 	return newDuration;
 	}
  }
 
@@ -331,10 +404,12 @@ double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
 	}
 	else // must be xdt_dayTimeDuration
 	{
-		double milis1 = d1.getValue(XMLDateTime::MiliSecond)/pow((double)d1.getValue(XMLDateTime::MiliSecondLen),10);
+		double milis1 = d1.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
+		 	d1.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d1.getValue(XMLDateTime::MiliSecondLen));
 		long seconds1 = d1.getValue(XMLDateTime::Second) + d1.getValue(XMLDateTime::Minute)*60 + d1.getValue(XMLDateTime::Hour)*60*60 +
 			d1.getValue(XMLDateTime::Day)*60*60*24;
-		double milis2 = d2.getValue(XMLDateTime::MiliSecond)/pow((double)d2.getValue(XMLDateTime::MiliSecondLen),10);
+		double milis2 = d2.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
+		 	d2.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d2.getValue(XMLDateTime::MiliSecondLen));
 		long seconds2 = d2.getValue(XMLDateTime::Second) + d2.getValue(XMLDateTime::Minute)*60 + d2.getValue(XMLDateTime::Hour)*60*60 +
 			d2.getValue(XMLDateTime::Day)*60*60*24;
 		return ( (seconds1 + milis1) / (seconds2 + milis2));
@@ -350,6 +425,8 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 {
     XMLDateTime fNewDate = dt;
     int carry;
+
+    fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
 
     if (fDuration.getValue(XMLDateTime::Type) == xdt_yearMonthDuration )
     {
@@ -369,8 +446,8 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
     {
 	//add miliseconds
 	carry = 0;
-	double milis = dt.getValue(XMLDateTime::MiliSecond)/pow((double)dt.getValue(XMLDateTime::MiliSecondLen),10) +
-			fDuration.getValue(XMLDateTime::MiliSecond)/pow((double)fDuration.getValue(XMLDateTime::MiliSecondLen),10);
+	double milis = dt.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)dt.getValue(XMLDateTime::MiliSecondLen)) +
+			fDuration.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)fDuration.getValue(XMLDateTime::MiliSecondLen));
 	if (milis>=1.0 || milis <=0.0)
 	{
 		if (milis>=1.0)
@@ -384,7 +461,10 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 			carry = -1;
 		}
 		char tmpBuf[MAX_MEM_STR_SIZE];
-		sprintf(tmpBuf, "%g.50", milis);
+		if (milis != 0.0)
+			sprintf(tmpBuf, "%g", milis);
+		else
+			sprintf(tmpBuf,"0.0");
 		fNewDate.setValue(XMLDateTime::MiliSecond, atoi(&tmpBuf[2]));
 		fNewDate.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
 	}
@@ -478,7 +558,7 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 
 	// compute the difference between the two timezones
 	XMLDateTime dtTz = dt.getTimezone();
-	XMLDateTime diff = subtractDurations(tz, dtTz);
+	XMLDateTime diff = subtractDurations(dtTz, tz);
 
 	int utc_type = ( tz.getValue(XMLDateTime::Hour) < 0 )?XMLDateTime::UTC_NEG:XMLDateTime::UTC_POS;
 	fNewDate.setValue(XMLDateTime::utc, utc_type);
@@ -516,12 +596,14 @@ int XMLDateTime::compare(const XMLDateTime& lValue
 
     if ( lTemp.getValue(MiliSecondLen))
     {
-	double lMilis = lTemp.getValue(MiliSecond)/pow((double)lTemp.getValue(MiliSecondLen),10);
+	double lMilis = lTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	lTemp.getValue(MiliSecond)/pow(10.0, (double)lTemp.getValue(MiliSecondLen));
 
 	if (! rTemp.getValue(MiliSecondLen))
 		return GREATER_THAN;
 
-	double rMilis = rTemp.getValue(MiliSecond)/pow((double)rTemp.getValue(MiliSecondLen),10);
+	double rMilis = rTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	rTemp.getValue(MiliSecond)/pow(10.0, (double)rTemp.getValue(MiliSecondLen));
 
         if ( lMilis < rMilis )
         {
@@ -532,6 +614,27 @@ int XMLDateTime::compare(const XMLDateTime& lValue
             return GREATER_THAN;
         }
     }
+
+   /* This is for xs:date datatype, where the normalized value still contains a timezone!
+      Doesn't happen in any other date/time types
+   */
+   if ( lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD)
+   {
+	int lNeg = lTemp.getValue(utc) == UTC_POS ? -1 : 1;
+	int rNeg = rTemp.getValue(utc) == UTC_POS ? -1 : 1;
+
+	if (lTemp.getValue(tz_hh) * lNeg < rTemp.getValue(tz_hh) * rNeg)
+		return LESS_THAN;
+
+	else if (lTemp.getValue(tz_hh) * lNeg > rTemp.getValue(tz_hh) * rNeg)
+		return GREATER_THAN;
+
+	if (lTemp.getValue(tz_mm) * lNeg < rTemp.getValue(tz_mm) * rNeg)
+		return LESS_THAN;
+
+	else if (lTemp.getValue(tz_mm) * lNeg > rTemp.getValue(tz_mm) * rNeg)
+		return GREATER_THAN;
+   }
 
     return EQUAL;
 }
@@ -623,7 +726,7 @@ void XMLDateTime::parseDay(const char* buf)
 	    throw USER_EXCEPTION2(FODT004, "invalid gDay value");
         else
         {
-            setValue(utc, pos+1);
+    	    setValue(utc, pos+1);
             getTimeZone(buf, DAY_SIZE, end);
         }
     }
@@ -640,12 +743,14 @@ void XMLDateTime::parseMonth(const char* fBuffer)
     setValue(Type, xs_gMonth);
     int fStart=0, fEnd=strlen(fBuffer);
 
-    if (fBuffer[0] != DATE_SEPARATOR || fBuffer[1] != DATE_SEPARATOR  )
+    if (fBuffer[0] != DATE_SEPARATOR || fBuffer[1] != DATE_SEPARATOR  || fEnd < 4 )
 	throw USER_EXCEPTION2(FODT005, "invalid gMonth value");
 
     // REVISIT: allow both --MM and --MM-- now. 
     // need to remove the following lines to disallow --MM-- 
     // when the errata is officially in the rec. 
+    setValue(Month, parseInt(fBuffer, 2, 4));
+ 
     fStart = 4;
     if ( fEnd >= fStart+2 && fBuffer[fStart] == DATE_SEPARATOR && fBuffer[fStart+1] == DATE_SEPARATOR ) 
     { 
@@ -662,7 +767,7 @@ void XMLDateTime::parseMonth(const char* fBuffer)
 		throw USER_EXCEPTION2(FODT005, "invalid gMonth value");
         else
         {
-            setValue(utc,  pos+1);
+    	    setValue(utc, pos+1);
             getTimeZone(fBuffer, fStart, fEnd);
         }
     }
@@ -689,7 +794,7 @@ void XMLDateTime::parseYear(const char* fBuffer)
     }
     else
     {
-        setValue(CentYear, parseIntYear(fBuffer, sign, fEnd));
+        setValue(CentYear, parseIntYear(fBuffer, fStart, sign));
         getTimeZone(fBuffer, sign, fEnd);
     }
 
@@ -725,7 +830,7 @@ void XMLDateTime::parseMonthDay(const char* fBuffer)
 		throw USER_EXCEPTION2(FODT006, "invalid gMonthDay value");
         else
         {
-            setValue(utc, pos+1);
+    	    setValue(utc, pos+1);
             getTimeZone(fBuffer,MONTHDAY_SIZE,fEnd);
         }
     }
@@ -892,6 +997,8 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     if ( !designator )
     throw USER_EXCEPTION2(FODT007, "invalid duration");
 
+    normalize();
+
 }
 
 //
@@ -956,6 +1063,8 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
 
     if ( !designator )
     throw USER_EXCEPTION2(FODT007, "invalid xdt_yearMonthDuration");
+
+    normalize();
 }
 
 // xdt_dayTimeDuration
@@ -1085,6 +1194,8 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 
     if ( !designator )
     throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration");
+
+    normalize();
 }
 
 
@@ -1239,7 +1350,7 @@ void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd)
     	if (pos == NOT_FOUND) 
 	   throw USER_EXCEPTION2(FODT003, "no UTC sign in the timezone");
    		else { 
-            setValue(utc, pos+1);
+    	    	setValue(utc, pos+1);
   	        getTimeZone(fBuffer,fStart,fEnd);   		
    		}
     }
@@ -1287,13 +1398,23 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
 //  Validator and normalizer
 // ---------------------------------------------------------------------------
 
+void XMLDateTime::normalize()
+{
+    if (getValue(Type) == xs_duration || getValue(Type) == xdt_yearMonthDuration ||
+	getValue(Type) == xdt_dayTimeDuration)
+	normalizeDuration();
+
+    else
+	normalizeDateTime();
+}
+
 /**
  * If timezone present - normalize dateTime  [E Adding durations to dateTimes]
  *
  * @param date   CCYY-MM-DDThh:mm:ss+03
  * @return CCYY-MM-DDThh:mm:ssZ
  */
-void XMLDateTime::normalize()
+void XMLDateTime::normalizeDateTime()
 {
 
     int negate = (getValue(utc) == UTC_POS)? -1: 1;
@@ -1332,6 +1453,16 @@ void XMLDateTime::normalize()
         carry--;
     }
 
+    // Special case for xs:date
+    if (getValue(Type) == xs_date && (getValue(Hour) != 0 || getValue(Minute) != 0 ))
+    {
+	setValue(utc, UTC_NEG);
+	setValue(tz_hh, getValue(Hour));
+	setValue(tz_mm, getValue(Minute));
+	setValue(Hour, 0);
+	setValue(Minute, 0);
+    }
+
     if (getValue(Type) != xs_time)
     	setValue(Day, getValue(Day) + carry);   
 
@@ -1363,7 +1494,92 @@ void XMLDateTime::normalize()
         setValue(CentYear, getValue(CentYear) + fQuotient(temp, 1, 13));
     }
 
-    setValue(utc, UTC_STD);
+    if (getValue(Type) != xs_date)
+    {
+    	setValue(utc, UTC_STD);
+    	setValue(tz_hh, 0);
+    	setValue(tz_mm, 0);
+    }
+
+    return;
+}
+
+/**
+ * If timezone present - normalize dateTime  [E Adding durations to dateTimes]
+ *
+ * @param date   CCYY-MM-DDThh:mm:ss+03
+ * @return CCYY-MM-DDThh:mm:ssZ
+ */
+void XMLDateTime::normalizeDuration()
+{
+
+    int negate = (getValue(utc) == UTC_NEG)? -1: 1;
+    int temp;
+    int carry;
+    
+    // add seconds
+    temp = negate * getValue(Second);
+    carry = fQuotient(temp, 60);
+    setValue(Second, negate * mod(temp, 60, carry));
+    if (negate * getValue(Second) < 0) {
+        setValue(Second, getValue(Second)+ 60*negate);
+        carry--;
+    }
+
+    // add mins
+    temp = negate * getValue(Minute);
+    carry = fQuotient(temp, 60);
+    setValue(Minute, negate * mod(temp, 60, carry));
+    if (negate * getValue(Minute) < 0) {
+        setValue(Minute, getValue(Minute)+ 60*negate);
+        carry--;
+    }
+   
+    //add hours
+    temp = negate * getValue(Hour) + carry;
+    carry = fQuotient(temp, 24);
+    setValue(Hour, negate * mod(temp, 24, carry));
+    if (negate * getValue(Hour) < 0) {
+        setValue(Hour, getValue(Hour) + 24*negate);
+        carry--;
+    }
+
+    // if this is a dayTimeDuration, then we leave the rest of duration
+    // in days, otherwise we carry to months and years
+    if (getValue(Type) == xdt_dayTimeDuration)
+	setValue(Day, getValue(Day) + carry*negate);
+ 
+    else
+    {
+    	//add days
+    	temp = negate * getValue(Day) + carry;
+    	carry = fQuotient(temp, 31);
+    	setValue(Day, negate * mod(temp, 31, carry));
+    	if (negate * getValue(Day) < 0) {
+        	setValue(Day, getValue(Day) + 31*negate);
+        	carry--;
+      	}
+
+    	//add months
+    	temp = negate * getValue(Month) + carry;
+    	carry = fQuotient(temp, 12);
+	setValue(Month, negate * mod(temp, 12, carry));
+
+	if (negate * getValue(Month)< 0){
+		setValue(Month, getValue(Month) + 12*negate);
+		carry--;
+	}
+	
+/*
+	char buf[1000];
+	sprintf(buf, "temp=%d, orig_carry=%d, value=%d, finalValue=%d, carry=%d, year = %d",
+		temp, orig_carry, value, finalValue, carry, getValue(CentYear) + carry*negate);
+	throw USER_EXCEPTION2(FODT011, buf);
+*/
+
+    	//add years
+    	setValue(CentYear, getValue(CentYear) + carry*negate);
+    }
 
     return;
 }
@@ -1452,7 +1668,7 @@ int XMLDateTime::findUTCSign (const char* fBuffer, const int start, const int fE
         pos = indexOf(UTC_SET, fBuffer[index]);
         if ( pos != NOT_FOUND)
         {
-            setValue(utc, pos+1);   // refer to utcType, there is 1 diff
+    	    setValue(utc, pos+1);
             return index;
         }
     }
@@ -1543,11 +1759,6 @@ void XMLDateTime::printDateTime(char* buf) const
     *retPtr++ = DATETIME_SEPARATOR;
 
     fillString(retPtr, getValue(Hour), 2);
-    if (getValue(Hour) == 24)
-    {
-        *(retPtr - 2) = '0';
-        *(retPtr - 1) = '0';
-    }
     *retPtr++ = TIME_SEPARATOR;
     fillString(retPtr, getValue(Minute), 2);
     *retPtr++ = TIME_SEPARATOR;
@@ -1556,14 +1767,30 @@ void XMLDateTime::printDateTime(char* buf) const
     if (miliSecondsLen)
     {
         *retPtr++ = '.';
-	if (retPtr-buf+miliSecondsLen > MAX_MEM_STR_SIZE)
-		throw USER_EXCEPTION2(FODT016, "string representation of dateTime value is too long");
+	//if (retPtr-buf+miliSecondsLen > MAX_MEM_STR_SIZE)
+		//throw USER_EXCEPTION2(FODT016, "string representation of dateTime value is too long");
 
- 	fillString(retPtr, getValue(MiliSecond), miliSecondsLen);
+	if (retPtr-buf+miliSecondsLen > MAX_MEM_STR_SIZE)
+	{
+	}
+
+ 	else fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
+
+ 	//fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
     }
 
-    if (utcSize)
-        *retPtr++ = UTC_STD_CHAR;
+    if (utcSize) {
+        if (getValue(utc) != UTC_STD)
+	{
+		*retPtr++ = UTC_SET[getValue(utc)-1];
+                fillString(retPtr, getValue(tz_hh), 2);
+                *retPtr++ = TIME_SEPARATOR;
+                fillString(retPtr, getValue(tz_mm), 2);
+        }
+        else {
+                *retPtr++ = UTC_STD_CHAR;
+        }
+    }
     *retPtr = 0;
 }
 
@@ -1655,11 +1882,9 @@ void XMLDateTime::printDate(char* buf) const
 	}
 
         if (utcSize) {
-            if (getValue(tz_hh) != 0 || getValue(tz_mm) != 0) {
-		if (getValue(tz_hh) < 0 || getValue(tz_mm) < 0 )
-                	*retPtr++ = UTC_NEG_CHAR;               
-		else
-                	*retPtr++ = UTC_POS_CHAR;               
+            if (getValue(utc) != UTC_STD)
+	    {
+		*retPtr++ = UTC_SET[getValue(utc)-1];
                 fillString(retPtr, getValue(tz_hh), 2);
                 *retPtr++ = TIME_SEPARATOR;
                 fillString(retPtr, getValue(tz_mm), 2);
@@ -1767,15 +1992,13 @@ void XMLDateTime::printTime(char* buf) const
     if (miliSecondsLen)
     {
         *retPtr++ = '.';
-	fillString(retPtr, getValue(MiliSecond), miliSecondsLen);
+	fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
     }
 
     if (utcSize) {
-        if (getValue(tz_hh) != 0 || getValue(tz_mm) != 0) {
-		if (getValue(tz_hh) < 0 || getValue(tz_mm) < 0 )
-                	*retPtr++ = UTC_NEG_CHAR;               
-		else
-                	*retPtr++ = UTC_POS_CHAR;               
+        if (getValue(utc) != UTC_STD)
+	{
+		*retPtr++ = UTC_SET[getValue(utc)-1];
                 fillString(retPtr, getValue(tz_hh), 2);
                 *retPtr++ = TIME_SEPARATOR;
                 fillString(retPtr, getValue(tz_mm), 2);
@@ -1792,9 +2015,7 @@ void XMLDateTime::printDuration(char* buf ) const
 	char* bufPtr = buf;
 	int nonZeroDate, nonZeroTime;
 
-	int neg = ( getValue(CentYear) < 0  || getValue(Month) < 0 || getValue(Day) < 0 ||
-			getValue(Hour) < 0 || getValue(Minute) < 0 || getValue(Second) < 0 ||
-			getValue(MiliSecond) < 0 )?-1:1;
+	int neg = getValue(utc) == UTC_POS ? 1 : -1;
 
 	if (neg == -1)
 		*bufPtr++ = '-';
@@ -1854,7 +2075,7 @@ void XMLDateTime::printDuration(char* buf ) const
 			if (getValue(MiliSecond) != 0)
 			{
 				*bufPtr++ = '.';
-				fillString(bufPtr, getValue(MiliSecond), getValue(MiliSecondLen));
+				fillMilisString(bufPtr, neg*getValue(MiliSecond), getValue(MiliSecondLen));
 			}
 			*bufPtr++ = DURATION_S;
 			nonZeroTime= 1;
@@ -1883,6 +2104,25 @@ void XMLDateTime::fillString(char*& ptr, int value, int expLen) const
     }
 
     for (i = 0; i < actualLen; i++)
+    {
+        *ptr++ = strBuffer[i];
+    }
+    delete strBuffer;
+}
+
+void XMLDateTime::fillMilisString(char*& ptr, int value, int expLen) const
+{
+    char *strBuffer = new char[expLen+1];
+    sprintf(strBuffer, "%d", value);
+    int   actualLen = strlen(strBuffer);
+    int   i;
+    //append leading zeros
+    for (i = 0; i < expLen - actualLen; i++)
+    {
+        *ptr++ = '0';
+    }
+
+    for (i = 0; i < actualLen && i < expLen; i++)
     {
         *ptr++ = strBuffer[i];
     }
