@@ -53,7 +53,7 @@ tuple_cell op_add_dayTimeDuration_to_time(const tuple_cell &a1, const tuple_cell
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:add-dayTimeDuration-to-time on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_time, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_add_time_to_dayTimeDuration(const tuple_cell &a1, const tuple_cell &a2)
@@ -67,7 +67,7 @@ tuple_cell op_add_yearMonthDuration_to_dateTime(const tuple_cell &a1, const tupl
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_yearMonthDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:add-yearMonthDuration-to-dateTime on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_dateTime, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_add_dateTime_to_yearMonthDuration(const tuple_cell &a1, const tuple_cell &a2)
@@ -81,7 +81,7 @@ tuple_cell op_add_dayTimeDuration_to_dateTime(const tuple_cell &a1, const tuple_
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:add-dayTimeDuration-to-time on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_dateTime, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_add_dateTime_to_dayTimeDuration(const tuple_cell &a1, const tuple_cell &a2)
@@ -95,7 +95,7 @@ tuple_cell op_add_yearMonthDurations(const tuple_cell &a1, const tuple_cell &a2)
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_yearMonthDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:add-yearMonthDurations on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_yearMonthDuration, addDurations(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_add_dayTimeDurations(const tuple_cell &a1, const tuple_cell &a2)
@@ -104,7 +104,7 @@ tuple_cell op_add_dayTimeDurations(const tuple_cell &a1, const tuple_cell &a2)
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:add-dayTimeDurations on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, addDurationToDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, addDurations(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dates(const tuple_cell &a1, const tuple_cell &a2)
@@ -113,7 +113,7 @@ tuple_cell op_subtract_dates(const tuple_cell &a1, const tuple_cell &a2)
 	!a2.is_atomic() || a2.get_atomic_type() != xs_date )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dates on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_yearMonthDuration_from_date(const tuple_cell &a1, const tuple_cell &a2)
@@ -122,7 +122,7 @@ tuple_cell op_subtract_yearMonthDuration_from_date(const tuple_cell &a1, const t
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_yearMonthDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-yearMonthDuration-from-date on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_date, subtractDurationFromDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dayTimeDuration_from_date(const tuple_cell &a1, const tuple_cell &a2)
@@ -131,7 +131,7 @@ tuple_cell op_subtract_dayTimeDuration_from_date(const tuple_cell &a1, const tup
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dayTimeDuration-from-date on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_date, subtractDurationFromDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_times(const tuple_cell &a1, const tuple_cell &a2)
@@ -140,7 +140,7 @@ tuple_cell op_subtract_times(const tuple_cell &a1, const tuple_cell &a2)
 	!a2.is_atomic() || a2.get_atomic_type() != xs_time )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-times on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dayTimeDuration_from_time(const tuple_cell &a1, const tuple_cell &a2)
@@ -149,7 +149,7 @@ tuple_cell op_subtract_dayTimeDuration_from_time(const tuple_cell &a1, const tup
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration)
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dayTimeDuration-from-time on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_time, subtractDurationFromDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dateTimes(const tuple_cell &a1, const tuple_cell &a2)
@@ -158,7 +158,7 @@ tuple_cell op_subtract_dateTimes(const tuple_cell &a1, const tuple_cell &a2)
 	!a2.is_atomic() || a2.get_atomic_type() != xs_dateTime )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dateTimes on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_yearMonthDuration_from_dateTime(const tuple_cell &a1, const tuple_cell &a2)
@@ -167,7 +167,7 @@ tuple_cell op_subtract_yearMonthDuration_from_dateTime(const tuple_cell &a1, con
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_yearMonthDuration )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-yearMonthDuration-from-dateTime on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_dateTime, subtractDurationFromDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dayTimeDuration_from_dateTime(const tuple_cell &a1, const tuple_cell &a2)
@@ -176,7 +176,7 @@ tuple_cell op_subtract_dayTimeDuration_from_dateTime(const tuple_cell &a1, const
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dayTimeDuration-from-dateTime on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xs_dateTime, subtractDurationFromDateTime(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_yearMonthDurations(const tuple_cell &a1, const tuple_cell &a2)
@@ -185,7 +185,7 @@ tuple_cell op_subtract_yearMonthDurations(const tuple_cell &a1, const tuple_cell
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_yearMonthDuration )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-yearMonthDurations on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_yearMonthDuration, subtractDurations(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 
 tuple_cell op_subtract_dayTimeDurations(const tuple_cell &a1, const tuple_cell &a2)
@@ -194,7 +194,7 @@ tuple_cell op_subtract_dayTimeDurations(const tuple_cell &a1, const tuple_cell &
 	!a2.is_atomic() || a2.get_atomic_type() != xdt_dayTimeDuration )
 	throw USER_EXCEPTION2(SE1003, "Calling op:subtract-dayTimeDurations on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, subtractDateTimes(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, subtractDurations(a1.get_xs_dateTime(), a2.get_xs_dateTime()).getRawData());
 }
 tuple_cell op_multiply_yearMonthDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
@@ -202,7 +202,7 @@ tuple_cell op_multiply_yearMonthDuration_by_numeric(const tuple_cell &a1, const 
 	!a2.is_atomic() || !a2.is_numeric_type())
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-yearMonthDuration-by-numeric on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, multiplyDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
+    return tuple_cell::atomic(xdt_yearMonthDuration, multiplyDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
 }
 
 tuple_cell op_multiply_numeric_by_yearMonthDuration(const tuple_cell &a1, const tuple_cell &a2)
@@ -216,7 +216,7 @@ tuple_cell op_multiply_dayTimeDuration_by_numeric(const tuple_cell &a1, const tu
 	!a2.is_atomic() || !a2.is_numeric_type())
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-dayTimeDuration-by-numeric on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, multiplyDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
+    return tuple_cell::atomic(xdt_dayTimeDuration, multiplyDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
 }
 
 tuple_cell op_multiply_numeric_by_dayTimeDuration(const tuple_cell &a1, const tuple_cell &a2)
@@ -230,12 +230,16 @@ tuple_cell op_divide_yearMonthDuration_by_numeric(const tuple_cell &a1, const tu
 	!a2.is_atomic() || !a2.is_numeric_type())
 	throw USER_EXCEPTION2(SE1003, "Calling op:divide-yearMonthDuration-by-numeric on invalid arguments");
 
-    return tuple_cell::atomic(xs_date, divideDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
+    return tuple_cell::atomic(xdt_yearMonthDuration, divideDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
 }
 
 tuple_cell op_divide_dayTimeDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
-	return op_divide_yearMonthDuration_by_numeric(a2,a1);
+    if (!a1.is_atomic() || a1.get_atomic_type() != xdt_dayTimeDuration ||
+	!a2.is_atomic() || !a2.is_numeric_type())
+	throw USER_EXCEPTION2(SE1003, "Calling op:divide-dayTimeDuration-by-numeric on invalid arguments");
+
+    return tuple_cell::atomic(xdt_dayTimeDuration, divideDuration(a1.get_xs_dateTime(), get_double_from_tuple_cell(a2)).getRawData());
 }
 
 tuple_cell op_divide_yearMonthDuration_by_yearMonthDuration(const tuple_cell &a1, const tuple_cell &a2)

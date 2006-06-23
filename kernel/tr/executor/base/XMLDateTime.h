@@ -138,6 +138,11 @@ public:
     double getSeconds() const;
     XMLDateTime getTimezone() const;
 
+    void normalize();
+    void normalizeDateTime();
+    void normalizeDuration();
+
+    bool isDuration(){ return (getValue(Type) == xs_duration || getValue(Type) == xdt_dayTimeDuration || getValue(Type) == xdt_yearMonthDuration); }
     static int compare(const XMLDateTime& d1, const XMLDateTime& d2);
    //------------------------------------------------------------------------
     // Gets a string representation of a dateTime or duration
@@ -238,10 +243,9 @@ private:
 
     void                  validateDateTime()          const;
 
-    void                  normalize();
 
     void                  fillString(char*& ptr, int value, int expLen) const;
-
+    void                  fillMilisString(char*& ptr, int value, int expLen) const;
     int                   fillYearString(char*& ptr, int value) const;
 };
 

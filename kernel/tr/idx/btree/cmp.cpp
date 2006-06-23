@@ -5,6 +5,8 @@
 
 #include "sedna.h"
 #include "btstruct.h"
+#include "counted_ptr.h"
+#include "XMLDateTime.h"
 
 
 /* returns 1 if k1>k2; -1 if k1<k2; 0 if k1=k2 */
@@ -27,6 +29,17 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
                           else if (x < 0.0) return -1;
                           else return 0;
         case xs_string	: return strcmp(k1.v.s_v, k2.v.s_v);
+	case xs_date:
+	case xs_dateTime:
+	case xs_time:
+	case xdt_yearMonthDuration:
+	case xdt_dayTimeDuration:
+	{
+		str_counted_ptr str1 = str_counted_ptr(k1.v.s_v);
+		str_counted_ptr str2 = str_counted_ptr(k2.v.s_v);
+		return XMLDateTime::compare( XMLDateTime(str1), XMLDateTime(str2) );
+	}
+
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
 }
@@ -77,6 +90,18 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
                               if (res != 0) return res;
                               else return size1 - size2;
                           }
+	
+	case xs_date:
+	case xs_dateTime:
+	case xs_time:
+	case xdt_yearMonthDuration:
+	case xdt_dayTimeDuration:
+			{
+			    char *head = pg + *(shft*)tab_el;
+			    str_counted_ptr str1 = str_counted_ptr(head);
+			    str_counted_ptr str2 = str_counted_ptr(k2.v.s_v);
+			    return XMLDateTime::compare( XMLDateTime(str1), XMLDateTime(str2) );
+			}
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
 }

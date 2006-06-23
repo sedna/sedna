@@ -36,8 +36,8 @@ extern bin_op_tuple_cell_tuple_cell op_mul_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_div_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_idiv_tbl[1][1];
 extern bin_op_tuple_cell_tuple_cell op_mod_tbl[1][1];
-extern bin_op_tuple_cell_tuple_cell op_eq_tbl[12][12];
-extern bin_op_tuple_cell_tuple_cell op_ne_tbl[12][12];
+extern bin_op_tuple_cell_tuple_cell op_eq_tbl[13][13];
+extern bin_op_tuple_cell_tuple_cell op_ne_tbl[13][13];
 extern bin_op_tuple_cell_tuple_cell op_gt_tbl[7][7];
 extern bin_op_tuple_cell_tuple_cell op_lt_tbl[7][7];
 extern bin_op_tuple_cell_tuple_cell op_ge_tbl[7][7];
@@ -312,13 +312,13 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_sub_tbl[6][6] =
 {
-                           /*numeric*/           /*xs:date*/                               /*xs:time*/                               /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/          /*xs:dateTime*/
-/*numeric*/                {op_numeric_subtract, op_subtract_dates,                        NULL,                                     NULL,                               NULL,                              NULL},
-/*xs:date*/                {NULL,                NULL,                                     op_subtract_times,                        NULL,                               NULL,                              NULL},
-/*xs:time*/                {NULL,                NULL,                                     NULL,                                     NULL,                               NULL,                              NULL},
-/*xdt:dayTimeDuration*/    {NULL,                op_subtract_dayTimeDuration_from_date,    op_subtract_dayTimeDuration_from_time,    op_subtract_dayTimeDurations,       NULL,                              op_subtract_dayTimeDuration_from_dateTime},
-/*xdt:yearMonthDuration*/  {NULL,                op_subtract_yearMonthDuration_from_date,  NULL,                                     NULL,                               op_subtract_yearMonthDurations,    op_subtract_yearMonthDuration_from_dateTime},
-/*xs:dateTime*/            {NULL,                NULL,                                     NULL,                                     NULL,                               NULL,                              op_subtract_dateTimes}
+                           /*numeric*/           /*xs:date*/          /*xs:time*/           /*xdt:dayTimeDuration*/                     /*xdt:yearMonthDuration*/                      /*xs:dateTime*/
+/*numeric*/                {op_numeric_subtract, NULL,                NULL,                 NULL,                                       NULL,                                          NULL},
+/*xs:date*/                {NULL,                op_subtract_dates,   NULL,                 op_subtract_dayTimeDuration_from_date,      op_subtract_yearMonthDuration_from_date,       NULL},
+/*xs:time*/                {NULL,                NULL,                op_subtract_times,    op_subtract_dayTimeDuration_from_time,      NULL,                                          NULL},
+/*xdt:dayTimeDuration*/    {NULL,                NULL,                NULL,                 op_subtract_dayTimeDurations,               NULL,                                          NULL},
+/*xdt:yearMonthDuration*/  {NULL,                NULL,                NULL,                 NULL,                                       op_subtract_yearMonthDurations,                NULL},
+/*xs:dateTime*/            {NULL,                NULL,                NULL,                 op_subtract_dayTimeDuration_from_dateTime,  op_subtract_yearMonthDuration_from_dateTime,   op_subtract_dateTimes}
 };
 
 int simple_type2bin_op_mul_index(xmlscm_type xtype)
@@ -343,7 +343,7 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
 bin_op_tuple_cell_tuple_cell op_mul_tbl[3][3] = 
 {
                            /*numeric*/                              /*xdt:dayTimeDuration*/                 /*xdt:yearMonthDuration*/
-/*numeric*/                {op_numeric_multiply,                      op_multiply_dayTimeDuration_by_numeric, op_multiply_numeric_by_yearMonthDuration},
+/*numeric*/                {op_numeric_multiply,                      op_multiply_numeric_by_dayTimeDuration, op_multiply_numeric_by_yearMonthDuration},
 /*xdt:dayTimeDuration*/    {op_multiply_dayTimeDuration_by_numeric,   NULL,                                   NULL},
 /*xdt:yearMonthDuration*/  {op_multiply_yearMonthDuration_by_numeric, NULL,                                   NULL}
 };
@@ -370,10 +370,10 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_div_tbl[3][3] = 
 {
-                           /*numeric*/                              /*xdt:dayTimeDuration*/                 /*xdt:yearMonthDuration*/
-/*numeric*/                {op_numeric_divide,                      op_divide_dayTimeDuration_by_numeric,   op_divide_yearMonthDuration_by_numeric},
-/*xdt:dayTimeDuration*/    {NULL,                                   NULL,                                   NULL},
-/*xdt:yearMonthDuration*/  {NULL,                                   NULL,                                   NULL}
+                           /*numeric*/                                /*xdt:dayTimeDuration*/                        /*xdt:yearMonthDuration*/
+/*numeric*/                {op_numeric_divide,                        NULL,                                          NULL},
+/*xdt:dayTimeDuration*/    {op_divide_dayTimeDuration_by_numeric,     op_divide_dayTimeDuration_by_dayTimeDuration,  NULL},
+/*xdt:yearMonthDuration*/  {op_divide_yearMonthDuration_by_numeric,   NULL,                                          op_divide_yearMonthDuration_by_yearMonthDuration}
 };
 
 int simple_type2bin_op_idiv_index(xmlscm_type xtype)
@@ -423,45 +423,48 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
+    case xs_duration:
+	return 3;
     case xdt_dayTimeDuration:
-        return 3;
-    case xdt_yearMonthDuration:
         return 4;
+    case xdt_yearMonthDuration:
+        return 5;
     case xs_dateTime:
-       return 5;
+       return 6;
     case xs_gYear:
-        return 6;
-    case xs_gYearMonth:
         return 7;
-    case xs_gMonth:
+    case xs_gYearMonth:
         return 8;
-    case xs_gMonthDay:
+    case xs_gMonth:
         return 9;
-    case xs_gDay:
+    case xs_gMonthDay:
         return 10;
+    case xs_gDay:
+        return 11;
     case xdt_untypedAtomic:
     case xs_string:
-        return 11;
+        return 12;
     default:
         return -1;
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_eq_tbl[12][12] = 
+bin_op_tuple_cell_tuple_cell op_eq_tbl[13][13] = 
 {
-                           /*numeric*/        /*xs:date*/         /*xs:time*/         /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/
-/*numeric*/                {op_numeric_equal, NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:date*/                {NULL,             op_date_equal,      NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:time*/                {NULL,             NULL,               op_time_equal,      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xdt:dayTimeDuration*/    {NULL,             NULL,               NULL,               op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xdt:yearMonthDuration*/  {NULL,             NULL,               NULL,               NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:dateTime*/            {NULL,             NULL,               NULL,               NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:gYear*/               {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:gYearMonth*/          {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL},
-/*xs:gMonth*/              {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL},
-/*xs:gMonthDay*/           {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL},
-/*xs:gDay*/                {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL},
-/*xs:string*/              {NULL,             NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal}
+                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	
+/*numeric*/                {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:date*/                {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:time*/                {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:duration*/            {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xdt:dayTimeDuration*/    {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xdt:yearMonthDuration*/  {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:dateTime*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:gYear*/               {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:gYearMonth*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL},
+/*xs:gMonth*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL},
+/*xs:gMonthDay*/           {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL},
+/*xs:gDay*/                {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL},
+/*xs:string*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal}
 };
 
 
@@ -478,45 +481,48 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
+    case xs_duration:
+	return 3;
     case xdt_dayTimeDuration:
-        return 3;
-    case xdt_yearMonthDuration:
         return 4;
-    case xs_dateTime:
+    case xdt_yearMonthDuration:
         return 5;
-    case xs_gYear:
+    case xs_dateTime:
         return 6;
-    case xs_gYearMonth:
+    case xs_gYear:
         return 7;
-    case xs_gMonth:
+    case xs_gYearMonth:
         return 8;
-    case xs_gMonthDay:
+    case xs_gMonth:
         return 9;
-    case xs_gDay:
+    case xs_gMonthDay:
         return 10;
+    case xs_gDay:
+        return 11;
     case xdt_untypedAtomic:
     case xs_string:
-        return 11;
+        return 12;
     default:
         return -1;
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_ne_tbl[12][12] = 
+bin_op_tuple_cell_tuple_cell op_ne_tbl[13][13] = 
 {
-                           /*numeric*/            /*xs:date*/         /*xs:time*/         /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/
-/*numeric*/                {op_numeric_not_equal, NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:date*/                {NULL,                 op_date_not_equal,  NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:time*/                {NULL,                 NULL,               op_time_not_equal,  NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xdt:dayTimeDuration*/    {NULL,                 NULL,               NULL,               op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xdt:yearMonthDuration*/  {NULL,                 NULL,               NULL,               NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:dateTime*/            {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:gYear*/               {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:gYearMonth*/          {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL},
-/*xs:gMonth*/              {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL},
-/*xs:gMonthDay*/           {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL},
-/*xs:gDay*/                {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL},
-/*xs:string*/              {NULL,                 NULL,               NULL,               NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal}
+                           /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/
+/*numeric*/                {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:date*/                {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:time*/                {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:duration*/            {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xdt:dayTimeDuration*/    {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xdt:yearMonthDuration*/  {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:dateTime*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:gYear*/               {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:gYearMonth*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL},
+/*xs:gMonth*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL},
+/*xs:gMonthDay*/           {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL},
+/*xs:gDay*/                {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL},
+/*xs:string*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal}
 };
 
 
@@ -687,8 +693,8 @@ xq_binary_op_info_type xq_binary_op_info[] =
 /*xqbop_div*/  {op_div,  op_numeric_div_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_div_tbl,  3,  simple_type2bin_op_div_index},
 /*xqbop_idiv*/ {op_idiv, op_numeric_idiv_tbl, simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_idiv_tbl, 1,  simple_type2bin_op_idiv_index},
 /*xqbop_mod*/  {op_mod,  op_numeric_mod_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mod_tbl,  1,  simple_type2bin_op_mod_index},
-/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   12, simple_type2bin_op_eq_index},
-/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   12, simple_type2bin_op_ne_index},
+/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   13, simple_type2bin_op_eq_index},
+/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   13, simple_type2bin_op_ne_index},
 /*xqbop_gt*/   {op_gt,   op_numeric_gt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_gt_tbl,   7,  simple_type2bin_op_gt_index},
 /*xqbop_lt*/   {op_lt,   op_numeric_lt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_lt_tbl,   7, simple_type2bin_op_lt_index},
 /*xqbop_ge*/   {op_ge,   op_numeric_ge_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ge_tbl,   7, simple_type2bin_op_ge_index},
@@ -792,7 +798,8 @@ tuple_cell _op_generic(xq_binary_op_type t, const tuple_cell &a1, const tuple_ce
     bin_op_tuple_cell_tuple_cell op = (info.map_table)[info.map_table_side_size * i1 + i2];
 
     if ((i1 == -1) || (i2 == -1) || (op == NULL))
-        throw USER_EXCEPTION2(XP0006, _op_binary_generic_err_c_str(t));
+	throw USER_EXCEPTION2(XP0006, _op_binary_generic_err_c_str(t));
+
     else
         return op(a1, a2);
 }

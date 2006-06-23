@@ -33,6 +33,12 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
         case xs_float			: key.setnew(ltc.get_xs_float());	break;
         case xs_double			: key.setnew(ltc.get_xs_double());	break;
         case xs_string			: key.setnew(ltc.get_str_mem());	break;
+	case xs_date                    :
+	case xs_dateTime                :
+	case xs_time                    :
+	case xdt_yearMonthDuration      :
+	case xdt_dayTimeDuration        : key.setnew_dateTimeDuration(ltc.get_str_mem(), ltc.get_atomic_type()); break;
+
         default					: throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
     }
 }
