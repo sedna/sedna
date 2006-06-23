@@ -63,10 +63,8 @@ void bt_key::init(char* pg, shft key_idx)
 	case xdt_yearMonthDuration:
 	case xdt_dayTimeDuration:
 			  {
-				shft size = *(key_tab_slot + 1);
-				v.s_v = new char[size + 1];
-				v.s_v[size] = '\0';
-				memcpy(v.s_v, pg + *key_tab_slot, size);
+				v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
+				memcpy(v.s_v, (void*)key_tab_slot, XMLDateTime::TOTAL_FIELDS * sizeof(int));
 				break;
 			  }
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");

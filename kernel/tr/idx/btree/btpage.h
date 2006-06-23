@@ -146,14 +146,14 @@ inline	bool	BT_VARIABLE_KEY_TYPE(xmlscm_type t)
 											{
 											switch (t) {
 												case xs_string:
+													return true;
+													break;     
 												case xs_date:
 												case xs_time:
 												case xs_dateTime:
 												case xs_duration:
 												case xdt_yearMonthDuration:
 												case xdt_dayTimeDuration:
-													return true;
-													break;
 												case xs_integer:
 												case xs_float:
 												case xs_double:

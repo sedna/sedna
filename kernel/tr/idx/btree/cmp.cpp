@@ -95,8 +95,7 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
 	case xdt_yearMonthDuration:
 	case xdt_dayTimeDuration:
 			{
-			    char *head = pg + *(shft*)tab_el;
-			    return XMLDateTime::compare( XMLDateTime(head), XMLDateTime(k2.v.s_v) );
+			    return XMLDateTime::compare( XMLDateTime((char*)tab_el), XMLDateTime(k2.v.s_v) );
 			}
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
