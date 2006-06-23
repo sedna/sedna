@@ -69,9 +69,9 @@ public:
     // ctors and dtor
     // -----------------------------------------------------------------------
 
-    XMLDateTime(){ counted_ptr_value = str_counted_ptr(new char[sizeof(int) * TOTAL_FIELDS]); reset(); }
-    XMLDateTime(str_counted_ptr buf){ counted_ptr_value = buf; string_value = buf.get(); }
-    XMLDateTime(char* buf){ string_value = buf; }
+    XMLDateTime();
+    XMLDateTime(str_counted_ptr buf);
+    XMLDateTime(char* buf);
     // -----------------------------------------------------------------------
     // Copy ctor and Assignment operators
     // -----------------------------------------------------------------------
