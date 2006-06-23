@@ -69,8 +69,9 @@ public:
     // ctors and dtor
     // -----------------------------------------------------------------------
 
-    XMLDateTime(){ value = str_counted_ptr(new char[sizeof(int) * TOTAL_FIELDS]); reset(); }
-    XMLDateTime(str_counted_ptr buf){ value = buf; }
+    XMLDateTime(){ counted_ptr_value = str_counted_ptr(new char[sizeof(int) * TOTAL_FIELDS]); reset(); }
+    XMLDateTime(str_counted_ptr buf){ counted_ptr_value = buf; string_value = buf.get(); }
+    XMLDateTime(char* buf){ string_value = buf; }
     // -----------------------------------------------------------------------
     // Copy ctor and Assignment operators
     // -----------------------------------------------------------------------
@@ -152,7 +153,7 @@ public:
     //------------------------------------------------------------------------
     // Gets a raw representation of the character array where the data is stored
     //------------------------------------------------------------------------
-    str_counted_ptr getRawData(){ return value;}
+    str_counted_ptr getRawData(){ return counted_ptr_value;}
 
     //-----------------------------------------------------------------------
     // Getter and setter functions
@@ -160,12 +161,12 @@ public:
 
 	int getValue(int valueIndex) const
 	{
-		return ((int*)value.get())[ valueIndex ];
+		return ((int*)string_value)[ valueIndex ];
 	}
 
 	void setValue(int valueIndex, int newValue )
 	{
-		((int*)value.get())[ valueIndex ] = newValue;
+		((int*)string_value)[ valueIndex ] = newValue;
 	}
 
 private:
@@ -173,7 +174,8 @@ private:
     //-----------------------------------------------------------------------
     // The values of dateTime are stored in a string
     //-----------------------------------------------------------------------
-	str_counted_ptr		value;
+	str_counted_ptr		counted_ptr_value;
+	char*			string_value;
 
 
     // -----------------------------------------------------------------------

@@ -656,7 +656,8 @@ XMLDateTime& XMLDateTime::operator=(const XMLDateTime& rhs)
 
 void XMLDateTime::copy(const XMLDateTime &toCopy)
 {
-	value = toCopy.value;
+	counted_ptr_value = toCopy.counted_ptr_value;
+	string_value = toCopy.string_value;
 }
 
 //
