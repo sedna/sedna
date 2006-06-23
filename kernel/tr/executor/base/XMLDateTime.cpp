@@ -142,6 +142,26 @@ static int maxDayInMonthFor(int year, int month)
 }
 
 //---------------------------------------------------------------------------------------
+// Constructors
+//---------------------------------------------------------------------------------------
+XMLDateTime::XMLDateTime()
+{
+	counted_ptr_value = str_counted_ptr(new char[sizeof(int) * TOTAL_FIELDS]);
+	string_value = counted_ptr_value.get();
+	reset();
+}
+
+XMLDateTime::XMLDateTime(str_counted_ptr buf)
+{
+	counted_ptr_value = buf;
+	string_value = buf.get();
+}
+
+XMLDateTime::XMLDateTime(char* buf)
+{ string_value = buf; }
+
+
+//---------------------------------------------------------------------------------------
 // Conversion function
 //---------------------------------------------------------------------------------------
 XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
