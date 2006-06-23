@@ -30,8 +30,8 @@
 																	    //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
                                                     					//bytes after serialization:
                                                					        //sizeof(bool) + prefix size + sizeof(char) 
-                                                    					//[true ] + [prefix] + ['\0] or
-                                                    					//[false] + [prefix] + ['\0] 
+                                                    					//[true ] + [prefix] + ['\0'] or
+                                                    					//[false] + [prefix] + ['\0'] 
                                                     					//'true' means that the whole string was serialized (size <= prefix size).
                                                     					//'false' means we are able to get the whole string using not 
                                                     					//serialize tuple cell with this string.
@@ -42,7 +42,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// NOTE!
 /// This buffer is internal class to use only within OrderBy operation!
-/// It hasn't many important security checks for memory borders and so on.
+/// It doesn't have many important security checks for memory borders and others!
 ///////////////////////////////////////////////////////////////////////////////
 class temp_buffer
 {
