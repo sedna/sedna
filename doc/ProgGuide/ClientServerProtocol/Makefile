@@ -3,10 +3,14 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-all: ClientServerProtocol.pdf
+all: clean_dvi ClientServerProtocol.pdf
 	@echo ===================================================================
 	@echo ClientServerProtocol has been done
 	@echo ===================================================================
+
+#clean_dvi is required to make pdf and html publishing working correct together
+clean_dvi: 
+	-$(REMOVE) *.dvi
 
 
 clean:

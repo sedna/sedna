@@ -3,11 +3,15 @@ PP = ../..
 
 include $(PP)/Makefile.include
 
-all: AdminGuide.pdf
+
+all: clean_dvi AdminGuide.pdf
 	@echo ===================================================================
 	@echo AdminGuide has been done
 	@echo ===================================================================
 
+#clean_dvi is required to make pdf and html publishing working correct together
+clean_dvi: 
+	-$(REMOVE) *.dvi
 
 clean:
 	-$(REMOVE) *.aux
