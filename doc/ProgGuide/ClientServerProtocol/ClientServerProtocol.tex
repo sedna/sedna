@@ -15,6 +15,12 @@
 \newtheorem{theo}{Theorem}
 \newtheorem{note}{Note}
 
+%\usepackage{tex4ht}
+
+%to avoid processing \TocAt by latex
+\newcommand{\TocAt}[6]{}
+
+
 \usepackage[dvips]{epsfig}
 
 \usepackage{multirow}
@@ -25,6 +31,13 @@
 
 \begin{document}
 \maketitle
+
+\TocAt*{section,subsection,subsubsection}
+\TocAt*{subsection,subsubsection}
+
+\tableofcontents
+
+
 Sedna uses a message-based protocol for communication between clients and the Sedna server through the TCP/IP sockets. Higher level application programming interfaces are built over this protocol (see for example the Java API and Scheme API in the Sedna programmer's guide).
 
 This document describes version 1.0 of the protocol. 

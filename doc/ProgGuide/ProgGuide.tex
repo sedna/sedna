@@ -8,6 +8,7 @@
 \def\verbatim@font{\mmmm}
 \makeatother
 %\usepackage[russian]{babel}
+  
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{theorem}
@@ -16,7 +17,11 @@
 \newtheorem{theo}{Theorem}
 \newtheorem{note}{Note}
 
+
 %\usepackage{tex4ht}
+
+%to avoid processing \TocAt by latex
+\newcommand{\TocAt}[6]{}
 
 % Позволяет вставлять картинки в формате eps.
 \usepackage[dvips]{epsfig}
@@ -31,6 +36,8 @@
 \title{Sedna Programmer's Guide}
 \date{}
 
+
+
 \begin{document}
 % Это однострочный комментарий. Многострочных комментариев, к сожаление, в латехе нет.
 
@@ -42,8 +49,9 @@
 %\author{}, \date{}, которые вставляются до \begin{document}
 \maketitle
 
+\TocAt*{section,subsection,subsubsection}
+\TocAt*{subsection,subsubsection}
 
-% Вставка оглавления
 \tableofcontents
 
 %\part{(Пример части) Название первой части}
@@ -1441,7 +1449,7 @@ Serialization is the process of converting XML nodes evaluated by XQuery into a 
 Parameter name & Values & Description \\
 \hline
 \hline
-indent & "yes" or "no" (default no) & Output indented \\
+indent & "yes" or "no" (default yes) & Output indented \\
 \hline
 \end{tabular}
 

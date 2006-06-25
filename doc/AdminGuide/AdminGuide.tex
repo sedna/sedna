@@ -19,7 +19,11 @@
 \newtheorem{theo}{Theorem}
 \newtheorem{note}{Note}
 
-%\usepackage{tex4ht}
+%\usepackage[html,4,section+]{tex4ht}
+
+%to avoid processing \TocAt by latex
+\newcommand{\TocAt}[6]{}
+
 
 \usepackage[dvips]{epsfig}
 
@@ -32,6 +36,8 @@
 \begin{document}
 \sloppy
 \maketitle
+\TocAt*{section,subsection,subsubsection}
+\TocAt*{subsection,subsubsection}
 \tableofcontents
 
 \section{Introduction}
