@@ -172,7 +172,7 @@ int main (int argc, char** argv)
       event_logger_release();
       event_logger_set_sid(-1);
 	  ppc.shutdown();
-      uSocketCleanup(__sys_call_error);
+      uSocketCleanup(NULL);
       fprintf(stderr, "%s\n", e.getMsg());
   } catch(SednaException & e) {
         sedna_soft_fault(e, EL_RCV);
