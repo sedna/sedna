@@ -443,7 +443,7 @@ XMLDateTime divideDuration(const XMLDateTime& d, double v)
 
 XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDuration)
 {
-    XMLDateTime fNewDate = dt;
+    XMLDateTime fNewDate;
     int carry;
 
     fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
@@ -597,16 +597,8 @@ int XMLDateTime::compare(const XMLDateTime& lValue
     // we need to do something here.
     //
 
-    //FIXME: hack a copy operator that works with indexes
-    char* lstrvalue = new char[ TOTAL_FIELDS * sizeof(int)];
-    char* rstrvalue = new char[ TOTAL_FIELDS * sizeof(int)];
-    memcpy(lstrvalue, lValue.string_value, TOTAL_FIELDS * sizeof(int));
-    memcpy(rstrvalue, rValue.string_value, TOTAL_FIELDS * sizeof(int));
-    str_counted_ptr lptr = str_counted_ptr(lstrvalue);
-    str_counted_ptr rptr = str_counted_ptr(rstrvalue);
-
-    XMLDateTime lTemp(lptr);
-    XMLDateTime rTemp(rptr);
+    XMLDateTime lTemp = lValue;
+    XMLDateTime rTemp = rValue;
 
     lTemp.normalize();
     rTemp.normalize();
@@ -651,8 +643,8 @@ int XMLDateTime::compare(const XMLDateTime& lValue
    */
    if ( lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD)
    {
-	int lNeg = lTemp.getValue(utc) == UTC_POS ? -1 : 1;
-	int rNeg = rTemp.getValue(utc) == UTC_POS ? -1 : 1;
+	int lNeg = lTemp.getValue(utc) == UTC_POS ? 1 : -1;
+	int rNeg = rTemp.getValue(utc) == UTC_POS ? 1 : -1;
 
 	if (lTemp.getValue(tz_hh) * lNeg < rTemp.getValue(tz_hh) * rNeg)
 		return LESS_THAN;
@@ -687,8 +679,10 @@ XMLDateTime& XMLDateTime::operator=(const XMLDateTime& rhs)
 
 void XMLDateTime::copy(const XMLDateTime &toCopy)
 {
-	counted_ptr_value = toCopy.counted_ptr_value;
-	string_value = toCopy.string_value;
+    char* new_string_value = new char[ TOTAL_FIELDS * sizeof(int)];
+    memcpy(new_string_value, toCopy.string_value, TOTAL_FIELDS * sizeof(int));
+    counted_ptr_value = str_counted_ptr(new_string_value);
+    string_value = counted_ptr_value.get();
 }
 
 //
@@ -1123,10 +1117,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
          (fBuffer[fStart++]!= DURATION_STARTER ))
 	throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration");
 
-    // java code
-    //date[utc]=(c=='-')?'-':0;
-    //fValue[utc] = UTC_STD;
-    setValue(utc, (fBuffer[0] == '-'? UTC_NEG : UTC_STD));
+    setValue(utc, (fBuffer[0] == '-'? UTC_NEG : UTC_POS));
 
     int negate = ( fBuffer[0] == '-'? -1 : 1);
 
@@ -1449,7 +1440,7 @@ void XMLDateTime::normalize()
 void XMLDateTime::normalizeDateTime()
 {
 
-    int negate = (getValue(utc) == UTC_POS)? -1: 1;
+    int negate = (getValue(utc) == UTC_POS)? 1: -1;
     int temp;
     int carry;
     
