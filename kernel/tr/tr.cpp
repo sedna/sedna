@@ -146,7 +146,8 @@ int main(int argc, char *argv[])
             client = new socket_client();
         else                    //server mode  = 0 (run from command line)
         {
-        if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0)
+        if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0 &&
+		    uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
            throw USER_EXCEPTION(SE4613);
 
             client = new command_line_client(argc, argv);
