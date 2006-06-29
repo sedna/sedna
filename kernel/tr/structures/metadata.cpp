@@ -294,17 +294,14 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 	}
 	metadata_sem_down();
 	sn_metadata_cell* coll=NULL;
-	try
-	{
-		coll=search_metadata_cell(collection_name,NULL)->obj;
-		
-	}	
-	catch (...)	
+	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* ptr = search_metadata_cell(collection_name,NULL);
+    if (ptr == NULL)
 	{
 		metadata_sem_up();
 		throw USER_EXCEPTION(SE2003);
 	}	
-	down_concurrent_micro_ops_number();
+    coll=ptr->obj;
+    down_concurrent_micro_ops_number();
 	dn_metadata_cell* mdc=(dn_metadata_cell*)scm_malloc(sizeof(dn_metadata_cell),true);
 	mdc->document_name=(char*)scm_malloc(name.size()+1,true);
 	strcpy(mdc->document_name,name.c_str());
