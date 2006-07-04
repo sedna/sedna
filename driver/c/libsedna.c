@@ -121,6 +121,12 @@ static int cleanSocket(struct SednaConnection *conn)
             return SEDNA_ERROR;
         }
     }
+    if (conn->autocommit)
+    {
+        int comm_res = commit_handler(conn);
+        if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+        return SEDNA_ERROR;
+    }
 
     conn->socket_keeps_data = 0;
     if (conn->msg.instruction == se_ResultEnd)
@@ -173,7 +179,12 @@ static int resultQueryHandler(struct SednaConnection *conn)
         conn->socket_keeps_data = 0;    /* set the flag - Socket does not keep item data */
         conn->result_end = 1;           /* set the flag - there are no items             */
         conn->in_query = 1;
-
+        if (conn->autocommit)
+        {
+             int comm_res = commit_handler(conn);
+             if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                  return SEDNA_ERROR;
+        }
         return SEDNA_QUERY_SUCCEEDED;
     }
     else
@@ -264,7 +275,6 @@ static int commit_handler(struct SednaConnection *conn)
     }
     else if (conn->msg.instruction == se_CommitTransactionOk)   /* CommitTransactionOk */
     {
-        conn->in_query = 0;
         return SEDNA_COMMIT_TRANSACTION_SUCCEEDED;
     }
     else
@@ -910,6 +920,7 @@ int SEcommit(struct SednaConnection *conn)
     /* clean socket*/
     if (cleanSocket(conn) == SEDNA_ERROR)
         return SEDNA_ERROR;
+    conn->in_query = 0;
 
     return commit_handler(conn);
 }
@@ -1218,6 +1229,13 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
             {
                 conn->result_end = 1;   /* tell result is finished*/
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
+                if (conn->autocommit)
+                {
+                    int comm_res = commit_handler(conn);
+                    if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                        return SEDNA_ERROR;
+                }
+                    
                 return buf_position;
             }
             else
