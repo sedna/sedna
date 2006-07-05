@@ -168,6 +168,16 @@
                                     (cond
                                       ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
                                        `(wildcard_star ()))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (car (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
                                       (else 
                                        `(qname 
                                          (,(xlr:namespace-name (cadr (cadr what)))
@@ -188,6 +198,16 @@
                                     (cond
                                       ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
                                        `(wildcard_star ()))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (car (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
                                       (else 
                                        `(qname 
                                          (,(xlr:namespace-name (cadr (cadr what)))
@@ -199,6 +219,16 @@
                                     (cond
                                       ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
                                        `(wildcard_star ()))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (car (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
+                                      ((and (eq? (car (cadr (cadr what))) 'const)
+                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
+                                            (pair? (caddr (cadr (cadr what))))
+                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
                                       (else 
                                        `(qname 
                                          (,(xlr:namespace-name (cadr (cadr what)))
