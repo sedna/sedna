@@ -992,7 +992,6 @@ void vmm_delete_block(xptr p) throw (SednaException)
         throw;
     }
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
-    printf("vmm_alloc_data_block (%d, 0x%x)\n", p.layer,p.addr);
 }
 
 void vmm_delete_tmp_blocks() throw (SednaException)
