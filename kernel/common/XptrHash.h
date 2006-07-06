@@ -40,6 +40,7 @@ private:
     typedef cell t_tbl[1 << middle_significan_bits];
 
     t_tbl tbl;
+    int num;
 
 
 
@@ -132,25 +133,15 @@ XptrHash<T, middle_significan_bits, right_zero_bits>::XptrHash()
         tbl[i].key.clear();
         tbl[i].is_present = false;
     }
+
+    num = 0;
 }
 
 
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 XptrHash<T, middle_significan_bits, right_zero_bits>::~XptrHash() 
 {
-    for (__uint32 i = 0; i < ((__uint32)1 << middle_significan_bits); i++)
-    {
-        add_cell * p = tbl[i].next;
-
-        for (; p != NULL; )
-        {
-            add_cell * tmp = p;
-            p = p->next;
-            delete tmp;
-        }
-
-        tbl[i].next = NULL;
-    }
+    clear();
 }
 
 
@@ -175,6 +166,8 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val
         start.next = NULL;
         start.is_present = true;
     }
+   
+    num++;
 
     return 0;
 }
@@ -213,6 +206,7 @@ template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 {
     cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+
     if (start.is_present)
     {
         if (start.key == key)
@@ -231,6 +225,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
                 delete p;
                 start.is_present = true;
             }
+            --num;
             return 0;
         }
         else
@@ -242,6 +237,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
                 add_cell * p = start.next;
                 start.next = start.next->next;
                 delete p;
+                --num;
                 return 0;
             }
 
@@ -254,6 +250,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
                 {
                     pred->next = cur->next;
                     delete cur;
+                    --num;
                     return 0;
                 }
             }
@@ -263,6 +260,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
     }
     else return 1;
 
+    --num;
     return 0;
 }
 
@@ -271,6 +269,7 @@ template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, T &val)
 {
     cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
+
     if (start.is_present)
     {
         if (start.key == key)
@@ -291,6 +290,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
                 delete p;
                 start.is_present = true;
             }
+            --num;
             return 0;
         }
         else
@@ -303,6 +303,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
                 add_cell * p = start.next;
                 start.next = start.next->next;
                 delete p;
+                --num;
                 return 0;
             }
 
@@ -316,6 +317,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
                     val = cur->val;
                     pred->next = cur->next;
                     delete cur;
+                    --num;
                     return 0;
                 }
             }
@@ -324,6 +326,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find_remove(xptr key, 
     }
     else return 1;
 
+    --num;
     return 0;
 }
 
@@ -361,23 +364,27 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::replace(xptr key, cons
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 void XptrHash<T, middle_significan_bits, right_zero_bits>::clear()
 {
-    int i = 0;
-    add_cell *p = NULL, *tmp = NULL;
-    for (i = 0; i < (1 << middle_significan_bits); i++)
+    if (num != 0)
     {
-        p = tbl[i].next;
-        while (p)
+        add_cell *p = NULL, *tmp = NULL;
+    
+        for (__uint32 i = 0; i < ((__uint32)1 << middle_significan_bits); i++)
         {
-            tmp = p;
-            p = tmp->next;
-            delete tmp;
+            p = tbl[i].next;
+            while (p)
+            {
+                tmp = p;
+                p = tmp->next;
+                delete tmp;
+            }
+            tbl[i].key = XNULL;
+            tbl[i].next = NULL;
+            tbl[i].is_present = false;
         }
-        tbl[i].key = XNULL;
-        tbl[i].next = NULL;
-        tbl[i].is_present = false;
+    
+        num = 0;
     }
 }
-
 
 #endif
 
