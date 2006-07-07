@@ -1110,7 +1110,10 @@ int SEnext(struct SednaConnection *conn)
         return SEDNA_NO_ITEM;
 
     if (conn->result_end)
+    {
+        conn->in_query = 0;
         return SEDNA_RESULT_END;
+    }
 
     if (conn->first_next)
     {
