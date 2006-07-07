@@ -620,6 +620,14 @@
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight2)
     ;----------------------------------------
+    ; Encyclopedia-specific ordering functions
+    (,sa:fn-ns "is_ancestor" 2 2
+     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
+     ,sa:type-atomic !fn!is_ancestor)
+    (,sa:fn-ns "filter_entry_level" 1 1
+     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
+     ,sa:type-nodes !fn!filter_entry_level)
+    ;----------------------------------------
     ; Checkpoint
     (,sa:se-ns "checkpoint" 0 0
      ,(lambda (num-args) '())
