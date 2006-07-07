@@ -41,6 +41,8 @@ public:
 		PPOpIn _seq1_, PPOpIn _seq2_); 
 	static PPNodeComparison* PPGTNodeComparison(variable_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
+	static PPNodeComparison* PPANNodeComparison(variable_context *_cxt_, 
+		PPOpIn _seq1_, PPOpIn _seq2_); 
 	
 };
 #endif

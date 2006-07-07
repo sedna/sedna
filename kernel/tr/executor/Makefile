@@ -41,6 +41,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPNil$(OBJ_EXT)					\
                        PPSequenceTypes$(OBJ_EXT)		\
                        PPDDO$(OBJ_EXT)					\
+                       PPFilterEL$(OBJ_EXT)					\
                        PPSequence$(OBJ_EXT)				\
                        PPRange$(OBJ_EXT)				\
                        PPSequenceOps$(OBJ_EXT)			\
