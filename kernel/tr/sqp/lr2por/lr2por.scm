@@ -967,7 +967,17 @@
 			; *** !fn!fthighlight2 ***
              ((eq? op-name '!fn!fthighlight2)
               `(1 (PPFtHighlight2 ,@(map l2p:any-lr-node2por node)))
-             )                 
+             )
+             
+             ; *** !fn!is_ancestor ***
+             ((eq? op-name '!fn!is_ancestor)
+              `(1 (PPANNodeComparison ,@(map l2p:any-lr-node2por node)))
+             )
+             
+             ; *** !fn!filter_entry_level ***
+             ((eq? op-name '!fn!filter_entry_level)
+              `(1 (PPFEL ,(l2p:any-lr-node2por (car node))))
+             )
 			 
              ; *** scan ***
              ((eq? op-name 'scan)
