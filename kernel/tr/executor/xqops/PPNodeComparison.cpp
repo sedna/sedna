@@ -21,6 +21,11 @@ PPNodeComparison* PPNodeComparison::PPEQNodeComparison(variable_context *_cxt_,
 { 
 	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,0);
 }
+PPNodeComparison* PPNodeComparison::PPANNodeComparison(variable_context *_cxt_, 
+																PPOpIn _seq1_, PPOpIn _seq2_)
+{ 
+	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,2);
+}
 PPNodeComparison::PPNodeComparison(variable_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_,int _type_): PPIterator(_cxt_),
                                     seq1(_seq1_),seq2(_seq2_),type(_type_)
 {
@@ -103,6 +108,12 @@ void PPNodeComparison::next  (tuple &t)
 				break;
 			case 1:
 				if (nid_cmp(node1,node2)>0)
+					t.copy(tuple_cell::atomic(true));
+				else
+					t.copy(tuple_cell::atomic(false));
+				break;
+			case 2:
+				if (nid_cmp_effective(node1,node2)==-2)
 					t.copy(tuple_cell::atomic(true));
 				else
 					t.copy(tuple_cell::atomic(false));

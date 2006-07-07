@@ -12,8 +12,8 @@
 
 using namespace std;
 
-static char* temp_buffer=NULL;//new char[MAXINTERNALPREFIX];
-static int buf_lgth=0;//MAXINTERNALPREFIX;
+char* PPDDO::temp_buffer=NULL;//new char[MAXINTERNALPREFIX];
+int PPDDO::buf_lgth=0;//MAXINTERNALPREFIX;
 
 
 PPDDO::PPDDO(variable_context *_cxt_,
@@ -85,12 +85,12 @@ void PPDDO::next  (tuple &t)
         }
 
         u_timeb t_sort1, t_sort2;
-        d_printf1("Before sorting: \n");
-        u_ftime(&t_sort1);
+   /*     d_printf1("Before sorting: \n");
+        u_ftime(&t_sort1);*/
         //s->sort();
         s->sort();
-        u_ftime(&t_sort2);
-        d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());
+        /*u_ftime(&t_sort2);
+        d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
     }
 
     if (pos < s->size()) s->get(t,pos++);

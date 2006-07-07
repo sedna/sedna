@@ -1314,7 +1314,16 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPDDO(cxt,
                          make_pp_op(cxt, lst->at(1).internal.list));
     }
-    else if (op == "PPConGen1")
+	else if (op == "PPFEL")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "157");
+
+        opit = new PPFilterEL(cxt,
+                         make_pp_op(cxt, lst->at(1).internal.list));
+    }
+	else if (op == "PPConGen1")
     {
         if (   lst->size() != 3
             || lst->at(1).type != SCM_NUMBER
@@ -1449,6 +1458,17 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
            ) throw USER_EXCEPTION2(SE1004, "67");
 
         opit = PPNodeComparison::PPLTNodeComparison(cxt,
+                                                    make_pp_op(cxt, lst->at(1).internal.list),
+                                                    make_pp_op(cxt, lst->at(2).internal.list));
+    }
+	else if (op == "PPANNodeComparison")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "158");
+
+        opit = PPNodeComparison::PPANNodeComparison(cxt,
                                                     make_pp_op(cxt, lst->at(1).internal.list),
                                                     make_pp_op(cxt, lst->at(2).internal.list));
     }
