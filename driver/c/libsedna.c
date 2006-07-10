@@ -135,73 +135,6 @@ static int cleanSocket(struct SednaConnection *conn)
     return 1;
 }
 
-/* takes the data from server when execute a query and decide if the query failed or succeeded*/
-static int resultQueryHandler(struct SednaConnection *conn)
-{
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, NULL, NULL);
-        return SEDNA_ERROR;
-    }
-    if (conn->msg.instruction == se_ErrorResponse)
-    {
-        setServerErrorMsg(conn, conn->msg);
-        conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
-        conn->result_end = 1;   /*set the flag - there are items*/
-        conn->in_query = 0;
-        conn->isInTransaction = SEDNA_NO_TRANSACTION;
-        return SEDNA_QUERY_FAILED;
-    }
-    else if (conn->msg.instruction == se_ItemPart)      /* ItemPart */
-    {
-        memcpy(conn->local_data_buf, conn->msg.body + 5, conn->msg.length - 5);
-        conn->local_data_length = conn->msg.length - 5;
-        conn->local_data_offset = 0;
-        conn->socket_keeps_data = 1;    /* set the flag - Socket keeps item data */
-        conn->result_end = 0;           /* set the flag - there no items */
-        conn->in_query = 1;
-
-        return SEDNA_QUERY_SUCCEEDED;
-    }
-    else if (conn->msg.instruction == se_ItemEnd)       /* ItemEnd */
-    {
-        conn->local_data_length = 0;
-        conn->local_data_offset = 0;
-        conn->socket_keeps_data = 0;    /* set the flag - Socket does not keep item data */
-        conn->result_end = 0;           /* set the flag - there are items */
-        conn->in_query = 1;
-        return SEDNA_QUERY_SUCCEEDED;
-    }
-    else if (conn->msg.instruction == se_ResultEnd)     /* ResultEnd */
-    {
-        conn->local_data_length = 0;
-        conn->local_data_offset = 0;
-        conn->socket_keeps_data = 0;    /* set the flag - Socket does not keep item data */
-        conn->result_end = 1;           /* set the flag - there are no items             */
-        conn->in_query = 1;
-        if (conn->autocommit)
-        {
-             int comm_res = commit_handler(conn);
-             if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
-                  return SEDNA_ERROR;
-        }
-        return SEDNA_QUERY_SUCCEEDED;
-    }
-    else
-    {
-        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
-        conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
-        conn->local_data_offset = 0;
-        conn->local_data_length = 0;
-        conn->result_end = 1;   /*set the flag - there are no items*/
-        conn->in_query = 0;
-        conn->isInTransaction = SEDNA_NO_TRANSACTION;
-
-        return SEDNA_QUERY_FAILED;
-    }
-
-}
-
 static int begin_handler(struct SednaConnection *conn)
 {
     /* send 210 - BeginTransaction*/
@@ -324,6 +257,73 @@ static int rollback_handler(struct SednaConnection *conn)
         connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_ROLLBACK_TRANSACTION_FAILED;
     }
+}
+
+/* takes the data from server when execute a query and decide if the query failed or succeeded*/
+static int resultQueryHandler(struct SednaConnection *conn)
+{
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL, NULL);
+        return SEDNA_ERROR;
+    }
+    if (conn->msg.instruction == se_ErrorResponse)
+    {
+        setServerErrorMsg(conn, conn->msg);
+        conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
+        conn->result_end = 1;   /*set the flag - there are items*/
+        conn->in_query = 0;
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
+        return SEDNA_QUERY_FAILED;
+    }
+    else if (conn->msg.instruction == se_ItemPart)      /* ItemPart */
+    {
+        memcpy(conn->local_data_buf, conn->msg.body + 5, conn->msg.length - 5);
+        conn->local_data_length = conn->msg.length - 5;
+        conn->local_data_offset = 0;
+        conn->socket_keeps_data = 1;    /* set the flag - Socket keeps item data */
+        conn->result_end = 0;           /* set the flag - there no items */
+        conn->in_query = 1;
+
+        return SEDNA_QUERY_SUCCEEDED;
+    }
+    else if (conn->msg.instruction == se_ItemEnd)       /* ItemEnd */
+    {
+        conn->local_data_length = 0;
+        conn->local_data_offset = 0;
+        conn->socket_keeps_data = 0;    /* set the flag - Socket does not keep item data */
+        conn->result_end = 0;           /* set the flag - there are items */
+        conn->in_query = 1;
+        return SEDNA_QUERY_SUCCEEDED;
+    }
+    else if (conn->msg.instruction == se_ResultEnd)     /* ResultEnd */
+    {
+        conn->local_data_length = 0;
+        conn->local_data_offset = 0;
+        conn->socket_keeps_data = 0;    /* set the flag - Socket does not keep item data */
+        conn->result_end = 1;           /* set the flag - there are no items             */
+        conn->in_query = 1;
+        if (conn->autocommit)
+        {
+             int comm_res = commit_handler(conn);
+             if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+                  return SEDNA_ERROR;
+        }
+        return SEDNA_QUERY_SUCCEEDED;
+    }
+    else
+    {
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
+        conn->local_data_offset = 0;
+        conn->local_data_length = 0;
+        conn->result_end = 1;   /*set the flag - there are no items*/
+        conn->in_query = 0;
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
+
+        return SEDNA_QUERY_FAILED;
+    }
+
 }
 
 static void release(struct SednaConnection *conn)
@@ -1111,7 +1111,6 @@ int SEnext(struct SednaConnection *conn)
 
     if (conn->result_end)
     {
-        conn->in_query = 0;
         return SEDNA_RESULT_END;
     }
 
@@ -1501,12 +1500,6 @@ const char *SEshowTime(struct SednaConnection *conn)
 
     clearLastError(conn);
 
-    if (conn->in_query)
-    {
-        strcpy(conn->query_time, "not available");
-        conn->query_time[13] = '\0';
-        return conn->query_time;
-    }
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
         connectionFailure(conn, SE3006, NULL, NULL);
