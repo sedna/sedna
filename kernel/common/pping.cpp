@@ -219,6 +219,8 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
             else goto sys_failure;
         }
 
+        if (uNotInheritDescriptor(UHANDLE(pps_arg->sock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
+
         for (i = 0; i < PPING_SERVER_THREAD_TABLE_SIZE; ++i)
         {
             if (!(pps->thread_table[i].is_empty) &&
