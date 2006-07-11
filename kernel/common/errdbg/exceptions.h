@@ -129,7 +129,8 @@ Errors could be outputted to the user in the format of <sedna-message>:
 
 
 #define SYSTEM_EXCEPTION(msg) \
-    (elog(EL_FATAL, (msg)), \
+    ((U_ASSERT_MACRO(false)), \
+     elog(EL_FATAL, (msg)), \
      SednaSystemException(__FILE__, __SE_FUNCTION__, __LINE__, msg))
 
 #define SYSTEM_ENV_EXCEPTION(msg) \

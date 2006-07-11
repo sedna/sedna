@@ -1255,6 +1255,8 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   logical_log_head log_head;
+  U_ASSERT(mem_head->keep_bytes >= 0);
+  U_ASSERT(mem_head->keep_bytes <= mem_head->size);
 
   //check that log file will not be overflowed
   if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
@@ -1293,7 +1295,11 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   
   ret_lsn = mem_head->t_tbl[trid].last_lsn;
 
+  U_ASSERT(mem_head->keep_bytes >= 0);
+  U_ASSERT(mem_head->keep_bytes <= mem_head->size);
+
   ll_log_unlock(sync);
+
 
 //  d_printf4("log record inserted, trid=%d, num=%d\n len=%d\n", trid, mem_head->t_tbl[trid].num_of_log_records, len);
 
@@ -1411,7 +1417,7 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
   int to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
                       rmndr_len,
                       mem_head->size - offs);
-  int written;
+  int written, i;
 
   //set file pointer to the end  
   set_file_pointer(mem_head->next_durable_lsn);
@@ -1427,6 +1433,8 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
                       &written,
                       __sys_call_error
                     );
+
+     U_ASSERT(res != 0 && to_write == written);
      if (res == 0 || to_write != written)
        throw SYSTEM_EXCEPTION("Can't write to logical log");
 
@@ -1453,10 +1461,17 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
     mem_head->begin_not_drbl_offs = sizeof(logical_log_sh_mem_head) +
                                     bytes_to_flush - 
                                     (mem_head->size - mem_head->begin_not_drbl_offs);
-                   
+
   mem_head->free_bytes += bytes_to_flush;
   mem_head->keep_bytes -= bytes_to_flush;
   mem_head->t_tbl[trid].last_rec_mem_offs = NULL_OFFS;
+
+  for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+  {
+     if (i != trid && mem_head->t_tbl[i].last_lsn <= mem_head->t_tbl[trid].last_lsn)
+        mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
+        
+  }
   mem_head->next_durable_lsn += bytes_to_flush;
 
   ll_log_unlock(sync);
@@ -1592,7 +1607,10 @@ void llmgr_core::ll_log_flush(bool sync)
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;  
 
   for (int i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+  {
       ll_log_flush(i, false);
+      mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
+  }
 
   ll_log_unlock(sync);
 }

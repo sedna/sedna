@@ -139,6 +139,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     ll_phys_log_set_checkpoint_on_flag(false);
 
+    elog(EL_LOG, ("Checkpoint procedure is finished"));
+
 //    if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
 //       throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
     

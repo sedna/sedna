@@ -103,6 +103,7 @@ session_id info_table::get_id()
   }
 
   d_printf2("returned id=%d\n", id);
+  if (id >= MAX_SESSIONS_NUMBER) throw SYSTEM_EXCEPTION("Got incorrect session id");
   return id;
 }
 

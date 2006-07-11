@@ -14,7 +14,7 @@
 #include "d_printf.h"
 #include "tr_debug.h"
 #include "memutils.h"
-//#include "trmgr.h"
+#include "trmgr.h"
 
 using namespace std;
 
@@ -780,6 +780,10 @@ void plmgr_core::logClear(const LONG_LSN& last_cp_lsn, bool sync)
   d_printf2("mem_head->next_durable_lsn=%d\n", mem_head->next_durable_lsn);
 
   mem_head->num_of_records_after_cp = 0;  
+  
+  //for debug
+  pure_size = 0;
+  size_of_bytes_written_to_phys_log = 0;
   UpSemaphore(sync);
 }
 
