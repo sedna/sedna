@@ -248,6 +248,8 @@ void register_session_on_gov()
 	 	memmove(ptr, sp_msg.body, 4);
 	 	sid = (*(__int32*)ptr);                            //sid (session identificator) is a global parameter
         d_printf2("session sid=%d\n", sid);
+        if (sid >= MAX_SESSIONS_NUMBER) throw SYSTEM_EXCEPTION("Got incorrect session id from GOV");
+
 	 	if (sid == -1)
         {
             ushutdown_close_socket(s, __sys_call_error);
