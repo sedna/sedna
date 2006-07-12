@@ -15,21 +15,21 @@
 
 enum operation_compare_condition
 {
-	OCC_VALUE_EQUAL,
-	OCC_VALUE_NOT_EQUAL,
-	OCC_VALUE_LESS,
-	OCC_VALUE_GREATER,
-	OCC_VALUE_LESS_EQUAL,
-	OCC_VALUE_GREATER_EQUAL,
-	OCC_GENERAL_EQUAL,
-	OCC_GENERAL_NOT_EQUAL,
-	OCC_GENERAL_LESS,
-	OCC_GENERAL_GREATER,
-	OCC_GENERAL_LESS_EQUAL,
-	OCC_GENERAL_GREATER_EQUAL
+    OCC_VALUE_EQUAL,
+    OCC_VALUE_NOT_EQUAL,
+    OCC_VALUE_LESS,
+    OCC_VALUE_GREATER,
+    OCC_VALUE_LESS_EQUAL,
+    OCC_VALUE_GREATER_EQUAL,
+    OCC_GENERAL_EQUAL,
+    OCC_GENERAL_NOT_EQUAL,
+    OCC_GENERAL_LESS,
+    OCC_GENERAL_GREATER,
+    OCC_GENERAL_LESS_EQUAL,
+    OCC_GENERAL_GREATER_EQUAL
 };                          
 
-typedef std::vector<operation_compare_condition>	arr_of_comp_cond;
+typedef std::vector<operation_compare_condition>    arr_of_comp_cond;
 
 
 
@@ -44,52 +44,52 @@ struct PPPredRange
 
 enum range_state
 {
-	RS_INITIAL,
-	RS_EMPTY,
-	RS_RANGE,
-	RS_POINTS
+    RS_INITIAL,
+    RS_EMPTY,
+    RS_RANGE,
+    RS_POINTS
 };
 
 private:
 
-	int upper_bound;
-	int lower_bound;		
-	range_state state;
-	std::list<int> except_points;
-	std::list<int> points;
+    int upper_bound;
+    int lower_bound;        
+    range_state state;
+    std::list<int> except_points;
+    std::list<int> points;
 
-	inline bool is_occ_value(operation_compare_condition occ){
-		return occ == OCC_VALUE_EQUAL || occ == OCC_VALUE_NOT_EQUAL || occ == OCC_VALUE_LESS || 
-		       occ == OCC_VALUE_GREATER || occ == OCC_VALUE_LESS_EQUAL || occ == OCC_VALUE_GREATER_EQUAL;
+    inline bool is_occ_value(operation_compare_condition occ){
+        return occ == OCC_VALUE_EQUAL || occ == OCC_VALUE_NOT_EQUAL || occ == OCC_VALUE_LESS || 
+               occ == OCC_VALUE_GREATER || occ == OCC_VALUE_LESS_EQUAL || occ == OCC_VALUE_GREATER_EQUAL;
 
-	}
-	inline bool is_occ_general(operation_compare_condition occ)
-	{
-		return occ == OCC_GENERAL_EQUAL || occ == OCC_GENERAL_NOT_EQUAL || occ == OCC_GENERAL_LESS || 
-		       occ == OCC_GENERAL_GREATER || occ == OCC_GENERAL_LESS_EQUAL || occ == OCC_GENERAL_GREATER_EQUAL;
-	}
-	
-	void PPPredRange::position_less_than(double double_value);
-	void PPPredRange::position_greater_than(double double_value);
-	void PPPredRange::position_less_equal_than(double double_value);
-	void PPPredRange::position_greater_equal_than(double double_value);
-	
-	void PPPredRange::print_state();
+    }
+    inline bool is_occ_general(operation_compare_condition occ)
+    {
+        return occ == OCC_GENERAL_EQUAL || occ == OCC_GENERAL_NOT_EQUAL || occ == OCC_GENERAL_LESS || 
+               occ == OCC_GENERAL_GREATER || occ == OCC_GENERAL_LESS_EQUAL || occ == OCC_GENERAL_GREATER_EQUAL;
+    }
+    
+    void PPPredRange::position_less_than(double double_value);
+    void PPPredRange::position_greater_than(double double_value);
+    void PPPredRange::position_less_equal_than(double double_value);
+    void PPPredRange::position_greater_equal_than(double double_value);
+    
+    void PPPredRange::print_state();
 
 public:
-	
-	int add_new_constraint(operation_compare_condition occ, const PPOpIn &conjunct);
-	bool is_position_in_range(int pos);
-	int get_max_posible_position();
-	int get_min_posible_position();
+    
+    int add_new_constraint(operation_compare_condition occ, const PPOpIn &conjunct);
+    bool is_position_in_range(int pos);
+    int get_max_posible_position();
+    int get_min_posible_position();
 
-	bool is_empty();
-	bool is_any();
-	
-	PPPredRange();
-	
-	int reinit_with_position(double position);
-	void reinit();
+    bool is_empty();
+    bool is_any();
+    
+    PPPredRange();
+    
+    int reinit_with_position(double position);
+    void reinit();
 };
 
 
@@ -148,13 +148,13 @@ public:
 
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
 
-	PPPred1(variable_context *_cxt_,
+    PPPred1(variable_context *_cxt_,
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
-	        arr_of_comp_cond _conditions_,
+            arr_of_comp_cond _conditions_,
             PPOpIn _data_child_,
-	        bool _once_,
+            bool _once_,
             var_dsc _pos_dsc_ = -1);
     
     virtual ~PPPred1();
@@ -234,9 +234,9 @@ public:
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
-	        arr_of_comp_cond _conditions_,
+            arr_of_comp_cond _conditions_,
             PPOpIn _data_child_,
-   	        bool _once_,
+            bool _once_,
             var_dsc _lst_dsc_,
             var_dsc _pos_dsc_ = -1);
 

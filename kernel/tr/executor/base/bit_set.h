@@ -21,7 +21,7 @@ private:
 
 public:
 
-    bit_set (int _size_);	//_size_ is needded size in bits
+    bit_set (int _size_);	//_size_ is needed size in bits
 	
 	~bit_set();
     

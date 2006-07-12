@@ -59,7 +59,7 @@ void sequence::init_blks()
 
     eblk = bblk;
     blks_num = 1;
-	blk_arr.push_back(eblk);
+    blk_arr.push_back(eblk);
 }
 
 void sequence::init_txt_blks()
@@ -140,14 +140,14 @@ int sequence::add(const tuple &t)
             xptr txt_ptr = t.cells[i].is_light_atomic() ? copy_text(t.cells[i].get_str_mem(), &txt_eblk, &new_blks_num) :
                                                           copy_text(t.cells[i].get_str_vmm(), t.cells[i].get_strlen_vmm(), &txt_eblk, &new_blks_num);
             (dest_addr + i)->set_xptr(txt_ptr);
-			if (t.cells[i].is_light_atomic())
-				(dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
-			(dest_addr + i)->_reset_str_ptr();
+            if (t.cells[i].is_light_atomic())
+                (dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
+            (dest_addr + i)->_reset_str_ptr();
             txt_blks_num += new_blks_num;
             CHECKP(eblk);
         }
-		else
-			(dest_addr + i)->_reset_str_ptr();
+        else
+            (dest_addr + i)->_reset_str_ptr();
     }
 
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
@@ -234,11 +234,11 @@ void sequence::clear()
     mem_tuples.clear();
     blk_arr.clear();
 
-    seq_size = 0;		// size of the sequence in tuples
+    seq_size = 0;       // size of the sequence in tuples
 
-    bblk = XNULL;		// pointer to the first block of the block chain
-    eblk = XNULL;		// pointer to the last block of the block chain
-    blks_num = 0;		// number of blocks bound to this node (in chain)
+    bblk = XNULL;       // pointer to the first block of the block chain
+    eblk = XNULL;       // pointer to the last block of the block chain
+    blks_num = 0;       // number of blocks bound to this node (in chain)
 
     txt_bblk = XNULL;
     txt_eblk = XNULL;
@@ -277,7 +277,7 @@ void sequence::qsort(const order_spec_list& osl)
     if (tuples_in_memory != 0)
         throw USER_EXCEPTION2(SE1003, "sequence::qsort works on vmm sequences only");
 
-	qsort(osl, 0, seq_size);
+    qsort(osl, 0, seq_size);
 } 
 
 void sequence::qsort(const order_spec_list& osl, int off, int len)
@@ -288,8 +288,8 @@ void sequence::qsort(const order_spec_list& osl, int off, int len)
         for (int i = off; i < len + off; i++)
             for (int j = i; j > off && compare(osl, j, j - 1) < 0; j--)
                 swap(j, j - 1);
-	    return;
-	}
+        return;
+    }
 
     // Choose a partition element, v
     int m = off + (len >> 1); // Small arrays, middle element
@@ -303,7 +303,7 @@ void sequence::qsort(const order_spec_list& osl, int off, int len)
             l = med3(osl, l, l + s, l + 2 * s);
             m = med3(osl, m - s, m, m + s);
             n = med3(osl, n - 2 * s, n - s, n);
-	    }
+        }
         m = med3(osl, l, m, n); // Mid-size, med of 3
     }
 
@@ -315,28 +315,28 @@ void sequence::qsort(const order_spec_list& osl, int off, int len)
         {
             if (compare(osl, b, m) == 0)
                 swap(a++, b);
-			b++;
+            b++;
         }
         while (c >= b && compare(osl, m, c) <= 0) 
-		{
+        {
             if (compare(osl, c, m) == 0)
                 swap(c, d--);
             c--;
-	    }
+        }
         if (b > c) break;
         swap(b++, c--);
     }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = s_min(a - off, b - a  );  vecswap(off, b - s, s);
-	s = s_min(d - c, n - d - 1);  vecswap(b,   n - s, s);
+    // Swap partition elements back to middle
+    int s, n = off + len;
+    s = s_min(a - off, b - a  );  vecswap(off, b - s, s);
+    s = s_min(d - c, n - d - 1);  vecswap(b,   n - s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b - a) > 1)
-	    qsort(osl, off, s);
-	if ((s = d - c) > 1)
-	    qsort(osl, n - s, s);
+    // Recursively sort non-partition-elements
+    if ((s = b - a) > 1)
+        qsort(osl, off, s);
+    if ((s = d - c) > 1)
+        qsort(osl, n - s, s);
 }
 
 void sequence::swap(int a, int b)
@@ -357,7 +357,7 @@ void sequence::swap(int a, int b)
     CHECKP(p_a);
     memcpy(p_a_mem, XADDR(p_a), tuple_sizeof);
     CHECKP(p_b);
-	memcpy(p_b_mem, XADDR(p_b), tuple_sizeof);
+    memcpy(p_b_mem, XADDR(p_b), tuple_sizeof);
     memcpy(XADDR(p_b), p_a_mem, tuple_sizeof);
     CHECKP(p_a);
     memcpy(XADDR(p_a), p_b_mem, tuple_sizeof);
@@ -372,7 +372,7 @@ int sequence::med3(const order_spec_list& osl, int a, int b, int c)
 
 void sequence::vecswap(int a, int b, int n) 
 {
-	for (int i = 0; i < n; i++, a++, b++) swap(a, b);
+    for (int i = 0; i < n; i++, a++, b++) swap(a, b);
 }
 
 int sequence::compare(const order_spec_list& osl, int a, int b)
@@ -393,7 +393,7 @@ int sequence::compare(const order_spec_list& osl, int a, int b)
     CHECKP(p_a);
     memcpy(p_a_mem, XADDR(p_a), tuple_sizeof);
     CHECKP(p_b);
-	memcpy(p_b_mem, XADDR(p_b), tuple_sizeof);
+    memcpy(p_b_mem, XADDR(p_b), tuple_sizeof);
 
     return tuple_compare(osl, tuple_size, (tuple_cell*)p_a_mem, (tuple_cell*)p_b_mem);
 }
@@ -487,156 +487,156 @@ tuple_cell sequence_tmp::get_00() const
 //////////////////////////////////////////////////////////////////////////////
 xptr descript_sequence::get_xptr(int a)
 {
-	if (a < tuples_in_memory)
-	{
-		return mem_tuples[a][0].get_node();
-	}
-	else
-	{
-		int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
-		int b_ind = (a - tuples_in_memory) / tuples_in_block;
-		int o_ind = (a - tuples_in_memory) % tuples_in_block;
-		xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
-		CHECKP(p);
-		return ((tuple_cell*)XADDR(p))->get_node();
-	}
+    if (a < tuples_in_memory)
+    {
+        return mem_tuples[a][0].get_node();
+    }
+    else
+    {
+        int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
+        int b_ind = (a - tuples_in_memory) / tuples_in_block;
+        int o_ind = (a - tuples_in_memory) % tuples_in_block;
+        xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
+        CHECKP(p);
+        return ((tuple_cell*)XADDR(p))->get_node();
+    }
 }
 void descript_sequence::sort() 
 { 
-	sort1(0,seq_size);
-	//    std::sort(begin(), end(), nodes_document_order_less());
+    sort1(0,seq_size);
+    //    std::sort(begin(), end(), nodes_document_order_less());
 } 
 void descript_sequence::sort1(int off, int len)
 {
-	// Insertion sort on smallest arrays
-	if (len < 7) {
-	    for (int i=off; i<len+off; i++)
-		for (int j=i; j>off && on_less(j,j-1)<0; j--)
-		    swap( j, j-1);
-	    return;
-	}
+    // Insertion sort on smallest arrays
+    if (len < 7) {
+        for (int i=off; i<len+off; i++)
+        for (int j=i; j>off && on_less(j,j-1)<0; j--)
+            swap( j, j-1);
+        return;
+    }
 
-	// Choose a partition element, v
-	int m = off + (len >> 1);       // Small arrays, middle element
-	if (len > 7) {
-	    int l = off;
-	    int n = off + len - 1;
-	    if (len > 40) {        // Big arrays, pseudomedian of 9
-		int s = len/8;
-		l = med3(l,     l+s, l+2*s);
-		m = med3( m-s,   m,   m+s);
-		n = med3( n-2*s, n-s, n);
-	    }
-	    m = med3( l, m, n); // Mid-size, med of 3
-	}
-	xptr v = get_xptr(m);
+    // Choose a partition element, v
+    int m = off + (len >> 1);       // Small arrays, middle element
+    if (len > 7) {
+        int l = off;
+        int n = off + len - 1;
+        if (len > 40) {        // Big arrays, pseudomedian of 9
+        int s = len/8;
+        l = med3(l,     l+s, l+2*s);
+        m = med3( m-s,   m,   m+s);
+        n = med3( n-2*s, n-s, n);
+        }
+        m = med3( l, m, n); // Mid-size, med of 3
+    }
+    xptr v = get_xptr(m);
 
-	// Establish Invariant: v* (<v)* (>v)* v*
-	int a = off, b = a, c = off + len - 1, d = c;
-	while(true) {
-	    while (b <= c && on_less_lt( b, v)<=0) 
-		{
-			if (get_xptr(b) == v)
-				swap(a++, b);
-			b++;
-	    }
-	    while (c >= b && on_less_rt(v,c)<=0) 
-		{
-			if (get_xptr(c) == v)
-				swap(c, d--);
-			c--;
-	    }
-	    if (b > c)
-		break;
-	    swap(b++, c--);
-	}
+    // Establish Invariant: v* (<v)* (>v)* v*
+    int a = off, b = a, c = off + len - 1, d = c;
+    while(true) {
+        while (b <= c && on_less_lt( b, v)<=0) 
+        {
+            if (get_xptr(b) == v)
+                swap(a++, b);
+            b++;
+        }
+        while (c >= b && on_less_rt(v,c)<=0) 
+        {
+            if (get_xptr(c) == v)
+                swap(c, d--);
+            c--;
+        }
+        if (b > c)
+        break;
+        swap(b++, c--);
+    }
 
-	// Swap partition elements back to middle
-	int s, n = off + len;
-	s = s_min(a-off, b-a  );  vecswap( off, b-s, s);
-	s = s_min(d-c,   n-d-1);  vecswap( b,   n-s, s);
+    // Swap partition elements back to middle
+    int s, n = off + len;
+    s = s_min(a-off, b-a  );  vecswap( off, b-s, s);
+    s = s_min(d-c,   n-d-1);  vecswap( b,   n-s, s);
 
-	// Recursively sort non-partition-elements
-	if ((s = b-a) > 1)
-	    sort1( off, s);
-	if ((s = d-c) > 1)
-	    sort1(n-s, s);
+    // Recursively sort non-partition-elements
+    if ((s = b-a) > 1)
+        sort1( off, s);
+    if ((s = d-c) > 1)
+        sort1(n-s, s);
 }
 
 void descript_sequence::swap(int a, int b)
 {
-	char* p1= new char[tuple_sizeof];
-	//char p2[tuple_sizeof];
-	//1. get pointer to tuple a
-	//2. copy content to temp memory
-	//3. get pointer to tuple b
-	//4. copy content to temp2 memory
-	//5. copy temp2 to a
-	//6. copy temp1 to b
-	if (a < tuples_in_memory)
-	{
-		memcpy(p1,&mem_tuples[a][0],tuple_sizeof);
-		if (b < tuples_in_memory)
-		{
-			memcpy(&mem_tuples[a][0],&mem_tuples[b][0] ,tuple_sizeof);
+    char* p1= new char[tuple_sizeof];
+    //char p2[tuple_sizeof];
+    //1. get pointer to tuple a
+    //2. copy content to temp memory
+    //3. get pointer to tuple b
+    //4. copy content to temp2 memory
+    //5. copy temp2 to a
+    //6. copy temp1 to b
+    if (a < tuples_in_memory)
+    {
+        memcpy(p1,&mem_tuples[a][0],tuple_sizeof);
+        if (b < tuples_in_memory)
+        {
+            memcpy(&mem_tuples[a][0],&mem_tuples[b][0] ,tuple_sizeof);
             memcpy(&mem_tuples[b][0],p1 ,tuple_sizeof);
-		}
-		else
-		{
-			int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
-			int b_ind = (b - tuples_in_memory) / tuples_in_block;
-			int o_ind = (b - tuples_in_memory) % tuples_in_block;
-			xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
-			CHECKP(p);
-			memcpy(&mem_tuples[a][0],XADDR(p), tuple_sizeof);
-			memcpy(XADDR(p),p1 ,tuple_sizeof);
+        }
+        else
+        {
+            int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
+            int b_ind = (b - tuples_in_memory) / tuples_in_block;
+            int o_ind = (b - tuples_in_memory) % tuples_in_block;
+            xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
+            CHECKP(p);
+            memcpy(&mem_tuples[a][0],XADDR(p), tuple_sizeof);
+            memcpy(XADDR(p),p1 ,tuple_sizeof);
 
-		}
-	}
-	else
-	{
-		if (b < tuples_in_memory)
-		{
-			memcpy(p1,&mem_tuples[b][0],tuple_sizeof);
-			int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
-			int b_ind = (a - tuples_in_memory) / tuples_in_block;
-			int o_ind = (a - tuples_in_memory) % tuples_in_block;
-			xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
-			CHECKP(p);
-			memcpy(&mem_tuples[b][0],XADDR(p), tuple_sizeof);
-			memcpy(XADDR(p),p1 ,tuple_sizeof);
-		}
-		else
-		{
-			int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
-			int b_ind = (a - tuples_in_memory) / tuples_in_block;
-			int o_ind = (a - tuples_in_memory) % tuples_in_block;
-			xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
-			CHECKP(p);
-			memcpy(p1,XADDR(p),tuple_sizeof);
-			char* p2= new char[tuple_sizeof];
-			b_ind = (b - tuples_in_memory) / tuples_in_block;
-			o_ind = (b - tuples_in_memory) % tuples_in_block;
-			xptr p_b = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
-			CHECKP(p_b);
-			memcpy(p2,XADDR(p_b),tuple_sizeof);
-			memcpy(XADDR(p_b),p1,tuple_sizeof);
-			CHECKP(p);
-			memcpy(XADDR(p),p2,tuple_sizeof);
-			delete[]p2;
+        }
+    }
+    else
+    {
+        if (b < tuples_in_memory)
+        {
+            memcpy(p1,&mem_tuples[b][0],tuple_sizeof);
+            int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
+            int b_ind = (a - tuples_in_memory) / tuples_in_block;
+            int o_ind = (a - tuples_in_memory) % tuples_in_block;
+            xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
+            CHECKP(p);
+            memcpy(&mem_tuples[b][0],XADDR(p), tuple_sizeof);
+            memcpy(XADDR(p),p1 ,tuple_sizeof);
+        }
+        else
+        {
+            int tuples_in_block = (PAGE_SIZE - sizeof(seq_blk_hdr)) / tuple_sizeof;
+            int b_ind = (a - tuples_in_memory) / tuples_in_block;
+            int o_ind = (a - tuples_in_memory) % tuples_in_block;
+            xptr p = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
+            CHECKP(p);
+            memcpy(p1,XADDR(p),tuple_sizeof);
+            char* p2= new char[tuple_sizeof];
+            b_ind = (b - tuples_in_memory) / tuples_in_block;
+            o_ind = (b - tuples_in_memory) % tuples_in_block;
+            xptr p_b = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * tuple_sizeof;
+            CHECKP(p_b);
+            memcpy(p2,XADDR(p_b),tuple_sizeof);
+            memcpy(XADDR(p_b),p1,tuple_sizeof);
+            CHECKP(p);
+            memcpy(XADDR(p),p2,tuple_sizeof);
+            delete[]p2;
 
-		}
-	
-	}
-	delete[]p1;
+        }
+    
+    }
+    delete[]p1;
 }
 int descript_sequence::med3( int a, int b, int c) 
 {
-	return (on_less(a,b)<0 ?
-		(on_less(b,c)<0 ? b : on_less(a,c)<0 ? c : a) :
-		(on_less(c,b)<0 ? b : on_less(c,a)<0 ? c : a));
+    return (on_less(a,b)<0 ?
+        (on_less(b,c)<0 ? b : on_less(a,c)<0 ? c : a) :
+        (on_less(c,b)<0 ? b : on_less(c,a)<0 ? c : a));
 }
 void descript_sequence::vecswap(int a, int b, int n) 
 {
-	for (int i=0; i<n; i++, a++, b++) swap(a, b);
+    for (int i=0; i<n; i++, a++, b++) swap(a, b);
 }

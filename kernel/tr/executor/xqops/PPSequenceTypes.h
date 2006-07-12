@@ -208,10 +208,10 @@ public:
 
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
     
- 	PPTypeswitch(variable_context *_cxt_,
+    PPTypeswitch(variable_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
-				 const arr_of_sequence_type& _types_,
+                 const arr_of_sequence_type& _types_,
                  arr_of_PPOpIn _cases_,
                  PPOpIn _default_child_);
     
