@@ -52,7 +52,7 @@ void PPCast::next  (tuple &t)
 {
     if (first_time)
     {
-		first_time = false;
+        first_time = false;
         child.op->next(t);
 
         if (t.is_eos()) 
@@ -180,7 +180,7 @@ void PPCastable::next  (tuple &t)
     bool res;
     if (first_time)
     {
-		first_time = false;
+        first_time = false;
         child.op->next(t);
 
         if (t.is_eos()) 
@@ -190,11 +190,11 @@ void PPCastable::next  (tuple &t)
         }
         else
         {
-        	tuple_cell tc = atomize(child.get(t));
-        	child.op->next(t);
-	        if (!t.is_eos())  res = false; //cast expression (the result of atomization is a sequence of more than one atomic value)
-	        else res = is_castable(tc, target_type);
-	    }
+            tuple_cell tc = atomize(child.get(t));
+            child.op->next(t);
+            if (!t.is_eos())  res = false; //cast expression (the result of atomization is a sequence of more than one atomic value)
+            else res = is_castable(tc, target_type);
+        }
         
         t.copy(tuple_cell::atomic(res));
     }
@@ -215,7 +215,7 @@ PPIterator* PPCastable::copy(variable_context *_cxt_)
 
 bool PPCastable::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
-	throw USER_EXCEPTION2(SE1002, "PPCastable::result");
+    throw USER_EXCEPTION2(SE1002, "PPCastable::result");
 }
 
 
@@ -272,7 +272,7 @@ void PPInstanceOf::next  (tuple &t)
 {
     if (first_time)
     {
-		first_time = false;
+        first_time = false;
 
         if (!eos_reached) child.op->reopen();
 
@@ -357,7 +357,7 @@ void PPTreat::next(tuple &t)
 {
     if (first_time)
     {
-		first_time = false;
+        first_time = false;
         if (!eos_reached) child.op->reopen();
         bool res = type_matches(child, s, t, eos_reached, st);
         //!!! FIXME: error code must be XPDY0050 there
@@ -366,14 +366,14 @@ void PPTreat::next(tuple &t)
    
     if(pos < s->size())
     {
-       	s->get(t, pos++);
-       	return;
+        s->get(t, pos++);
+        return;
     }
     else if(!eos_reached)
     {
-    	child.op->next(t);
-    	if(t.is_eos()) eos_reached = true;
-    	else return;
+        child.op->next(t);
+        if(t.is_eos()) eos_reached = true;
+        else return;
     }
 
     t.set_eos();
@@ -411,19 +411,19 @@ bool PPTreat::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 PPTypeswitch::PPTypeswitch(variable_context *_cxt_,
-                 		   arr_of_var_dsc _var_dscs_, 
-                 		   PPOpIn _source_child_, 
-				 		   const arr_of_sequence_type& _types_,
- 		                   arr_of_PPOpIn _cases_,
-            		       PPOpIn _default_child_): PPVarIterator(_cxt_),
-				                                    var_dscs(_var_dscs_),
+                           arr_of_var_dsc _var_dscs_, 
+                           PPOpIn _source_child_, 
+                           const arr_of_sequence_type& _types_,
+                           arr_of_PPOpIn _cases_,
+                           PPOpIn _default_child_): PPVarIterator(_cxt_),
+                                                    var_dscs(_var_dscs_),
                                                     source_child(_source_child_),
                                                     types(_types_),
                                                     cases(_cases_),
                                                     default_child(_default_child_)
 {
-	if(cases.size() != types.size()) 
-		throw USER_EXCEPTION2(SE1003, "PPTypeswitch: number of cases must be equal to number of types");
+    if(cases.size() != types.size()) 
+        throw USER_EXCEPTION2(SE1003, "PPTypeswitch: number of cases must be equal to number of types");
 }
 
 
@@ -434,8 +434,8 @@ PPTypeswitch::~PPTypeswitch()
     
     for( int i = 0; i < cases.size(); i++)
     {
-    	delete (cases[i].op);
-    	cases[i].op = NULL;
+        delete (cases[i].op);
+        cases[i].op = NULL;
     }
     
     delete default_child.op;            
@@ -463,7 +463,7 @@ void PPTypeswitch::open ()
     }
     
     for(int i = 0; i < cases.size(); i++)
-		(cases[i].op) -> open();
+        (cases[i].op) -> open();
     
     default_child.op->open();
 }
@@ -473,23 +473,23 @@ void PPTypeswitch::reopen()
     if(!eos_reached) source_child.op->reopen();
     if(effective_case != NULL) 
     {
-    	(effective_case->op) -> reopen();
-	    effective_case = NULL;
-	}
+        (effective_case->op) -> reopen();
+        effective_case = NULL;
+    }
     
     eos_reached = false;
     first_time = true;
     need_reopen = false;
 
     s->clear();
-	reinit_consumer_table();
+    reinit_consumer_table();
 }
 
 void PPTypeswitch::close ()
 {
-	source_child.op->close();	
+    source_child.op->close();   
 
-	for( int i = 0; i < cases.size(); i++)
+    for( int i = 0; i < cases.size(); i++)
         (cases[i].op) -> close();
      
     default_child.op->close();
@@ -501,34 +501,34 @@ void PPTypeswitch::next(tuple &t)
     if (first_time)
     {
         if(need_reopen)
-	    {
-	        if(!eos_reached) source_child.op->reopen();
-    	    s->clear();
-    	    reinit_consumer_table();
-    	    need_reopen = false;
-    	}
+        {
+            if(!eos_reached) source_child.op->reopen();
+            s->clear();
+            reinit_consumer_table();
+            need_reopen = false;
+        }
 
-		first_time = false;
+        first_time = false;
         eos_reached = false;
 
         effective_case = &default_child;
         for(int i = 0; i < cases.size(); i++)
         {
-        	if(type_matches(source_child, s, t, eos_reached, types[i]))
-        	{
-        		effective_case = &cases[i]; 
-        		break;
-        	}
+            if(type_matches(source_child, s, t, eos_reached, types[i]))
+            {
+                effective_case = &cases[i]; 
+                break;
+            }
         }
     }
    
     (effective_case->op) -> next(t);
     
-	if(t.is_eos()) 
-	{
-		first_time = true;
-		need_reopen = true;
-	}
+    if(t.is_eos()) 
+    {
+        first_time = true;
+        need_reopen = true;
+    }
 }
 
 PPIterator* PPTypeswitch::copy(variable_context *_cxt_)
@@ -551,12 +551,12 @@ PPIterator* PPTypeswitch::copy(variable_context *_cxt_)
 
 var_c_id PPTypeswitch::register_consumer(var_dsc dsc)
 {
-	complex_var_consumption &cvc = *(cxt->producers[dsc].cvc);
+    complex_var_consumption &cvc = *(cxt->producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
-void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)           	       
+void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
     producer &p = cxt->producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
@@ -600,7 +600,7 @@ void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)
 
 inline void PPTypeswitch::reinit_consumer_table()
 {
-	for (int i = 0; i < var_dscs.size(); i++)
+    for (int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->producers[var_dscs[i]];
         for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
