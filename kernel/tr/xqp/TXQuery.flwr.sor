@@ -77,7 +77,8 @@ flwrExpr! [in_context in_c] >[out_context out_c]:
 
 	    if(st2!=NULL){
 	      var_decl=st2;
-	      var_decl->append(v1);
+	      var_decl->append(v3);
+	      var_decl=#(#[], var_decl);
 	    }
 	    else{
 	      var_decl=#(#["xs:anyType"], v3);
