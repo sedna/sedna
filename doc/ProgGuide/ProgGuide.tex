@@ -189,11 +189,20 @@ public boolean execute(java.io.InputSteram in) throws DriverException
 
 The \verb!in! parameter is some input stream to read an XQuery statement from.
 
-
 Some statements (such as XQuery statements or the retrieve metadata command) produce the result. In case of such statements, the \verb!execute! methods return true and the result can be obtained as described in Section \ref{sec:results}. In case of statements that do not produce the result (such as updates or bulk load), the \verb!execute! methods return false. 
 
-%The methods return true if the query was not an update, and returns false if that was an update. The methods throw \verb!DriverException! if the execution fails.
+The results of XQuery queries to the Sedna DBMS can be represented either in XML or SXML~\cite{paper:sxml}. To specify the type of the result use:
 
+\begin{verbatim}
+public boolean execute(InputStream in, ResultType resultType)
+                                        throws DriverException, IOException;
+\end{verbatim}
+\begin{verbatim}
+public boolean execute(String queryText, ResultType resultType)
+                                        throws DriverException, IOException;
+\end{verbatim}
+
+The \verb!resultType! parameter is either \verb!ResultType.XML! or \verb!ResultType.SXML!.
 
 
 \subsubsection{Results}
