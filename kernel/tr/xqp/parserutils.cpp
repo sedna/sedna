@@ -26,6 +26,31 @@ void erase_doublequot(char* lex_text)
       text = text.replace(pos, 2, repl_text);
     }
 
+    //replase " with \" for Scheme part
+    find_text = "\"";
+    repl_text = "\\\"";
+
+    pos = 0;
+
+    for(;;)
+    {
+      pos = text.find(find_text, pos);
+      if (pos == string::npos) break;
+
+      if (pos == 0)
+         text = text.replace(pos, 1, repl_text);
+      else
+      {
+         if (text[pos-1] != '\\')
+             text = text.replace(pos, 1, repl_text);
+      }
+
+    
+
+      pos +=find_text.size() + 1;
+    }
+
+
     lex = string("\"") + text + "\"";
   }
   else
