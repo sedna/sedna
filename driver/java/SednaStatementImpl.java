@@ -314,7 +314,6 @@ class SednaStatementImpl implements SednaStatement {
                                     ResultType resultType) {
         if (resultType == ResultType.SXML) {
             message.body[0] = 1;
-            System.out.println("setQueryResultType 1!!");
         } else {
             message.body[0] = 0;
         }
