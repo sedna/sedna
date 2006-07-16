@@ -81,17 +81,26 @@ void PPFilterEL::next  (tuple &t)
         /*u_ftime(&t_sort2);
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
     }
-    while (true)
+	if (pos < s->size())
 	{
-		if (pos < s->size())
+		s->get(t,pos);
+		if (pos+1==s->size()) 
 		{
-			s->get(t,pos);
-			if (pos+1==s->size()) return;
-			else
+			pos++;
+			return;
+		}
+		else
+		{
+			while(true)
 			{
 				xptr p=(t.cells[0]).get_node();
+				if (pos+1==s->size())
+				{
+					pos++;
+					return;
+				}
 				s->get(t,pos+1);
-				if (p==(t.cells[0]).get_node()||nid_cmp_effective(p,(t.cells[0]).get_node())==-2)
+				if ((p==(t.cells[0]).get_node()||nid_cmp_effective(p,(t.cells[0]).get_node())==-2))
 					pos++;
 				else
 				{
@@ -101,14 +110,16 @@ void PPFilterEL::next  (tuple &t)
 				}
 			}
 		}
-		else 
-		{
-			t.set_eos();
-			pos = 0;
-			s->clear();
-			return;
-		}
+		
 	}
+	else 
+	{
+		t.set_eos();
+		pos = 0;
+		s->clear();
+		return;
+	}
+	
 }
 
 PPIterator* PPFilterEL::copy(variable_context *_cxt_)

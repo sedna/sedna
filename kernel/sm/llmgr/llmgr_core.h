@@ -271,6 +271,7 @@ void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_ana
                                            void(*switch_indirection)(int),
                                            void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
                                            void (*_vmm_rcv_clear_indir_block_set_)(),
+                                           void (*_sync_indirection_table_)(),
                                            const LONG_LSN& last_cp_lsn,
                                            int undo_indir_mode,
                                            int redo_indir_mode,
