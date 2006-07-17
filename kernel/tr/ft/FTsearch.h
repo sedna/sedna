@@ -147,12 +147,12 @@ public:
 class SednaConvertJob
 {
 public:
-	static e_str_buf result;
+	e_str_buf result;
 	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_);
 	void convert_node(xptr& node,long* ht,long ht_cnt);
 	virtual void OnOutput(const char * txt, int length);
 private:
-	static t_str_buf in_buf;
+	t_str_buf in_buf;
 	SednaTextInputStream *tis;
 	dtsFileInfo fileInfo;
 
@@ -172,7 +172,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   void set_request(tuple_cell& request);
 		   void get_next_result(tuple &t);
 		   void set_index(tuple_cell& name);
-		   void reopen();        
+		   void reopen();
 		   virtual ~SednaSearchJob();
 #ifdef WIN32
 		   static DWORD WINAPI ThreadFunc( void* lpParam );
