@@ -491,7 +491,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 		if (!hilight)
 			t.copy(tuple_cell::node(res));
 		else
-			t.copy(SednaConvertJob::result.content());
+			t.copy(hl->result.content());
 		
 	}
 }
@@ -1095,5 +1095,3 @@ void SednaConvertJob::OnOutput(const char * txt, int length)
 	result.append_mstr(txt,length);
 }
 
-e_str_buf SednaConvertJob::result;
-t_str_buf SednaConvertJob::in_buf;
