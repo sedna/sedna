@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * $Id: XMLDateTime.cpp 225847 2005-07-28 18:54:29Z cargilld $
- */
 
 // ---------------------------------------------------------------------------
 //  Includes
@@ -2196,6 +2193,6 @@ void XMLDateTime::get_string_value(char* buf)
 		case xs_duration:		printDuration(buf); break;
 		case xdt_dayTimeDuration:	printDuration(buf); break;
 		case xdt_yearMonthDuration:	printDuration(buf); break;
-		default:			throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to XMLDateTime::get_string_value");			
+		default:			throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to XMLDateTime::get_string_value");
 	}
 }

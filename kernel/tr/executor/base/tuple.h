@@ -107,10 +107,21 @@ public:
 
     bool is_string_type() const
     { // !!! Other string types are possible in the future
-        return (xtype == xdt_untypedAtomic	||
-                xtype == xs_anyURI			||
-                xtype == xs_QName			||
-                xtype == xs_string);
+        return (xtype == xdt_untypedAtomic		||
+                xtype == xs_anyURI				||
+                xtype == xs_QName				||
+                xtype == xs_string				||
+                xtype ==  xs_dateTime			||
+                xtype ==  xs_date				||
+                xtype ==  xs_time				||
+                xtype ==  xs_duration			||
+                xtype ==  xdt_yearMonthDuration	||
+                xtype ==  xdt_dayTimeDuration	||
+                xtype ==  xs_gYearMonth			||
+                xtype ==  xs_gYear				||
+                xtype ==  xs_gMonthDay			||
+                xtype ==  xs_gDay				||
+                xtype ==  xs_gMonth);
     }
     bool is_numeric_type() const
     {

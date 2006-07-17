@@ -737,7 +737,8 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 			{
 				if (tup.cells[i].is_string_type())
 				{
-					crmout<<tup.cells[i].get_str_mem();
+					//crmout<<tup.cells[i].get_str_mem();
+					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());
 				}
 				else
 				{
