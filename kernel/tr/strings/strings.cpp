@@ -222,7 +222,7 @@ t_str_buf::~t_str_buf()
 	if (m_buf_size > 0)
 		free(m_buf);
 }
-static void print_estr(se_ostream& crmout, xptr src, int count) // or pstr,  FIXME: int count
+static void estr_writextext(se_ostream& crmout, xptr src, int count) // or pstr,  FIXME: int count
 { //FIXME - use e_str_cursor
 	while (count > 0)
 	{
@@ -231,7 +231,7 @@ static void print_estr(se_ostream& crmout, xptr src, int count) // or pstr,  FIX
 		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (int)(XADDR(src));
 		int real_count = s_min(src_spc_blk, count);
 
-		crmout.write((char*)XADDR(src), real_count);
+		crmout.writextext((char*)XADDR(src), real_count);
 
 		if (real_count == count) return;
 
@@ -246,14 +246,15 @@ void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 	switch (tc.get_type())
 	{
 	case tc_light_atomic:
-		crmout.write(tc.get_str_mem(), tc.get_strlen_mem());
+		//crmout.write(tc.get_str_mem(), tc.get_strlen_mem());
+		crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
 		return;
 	case tc_heavy_atomic_estr:
 	case tc_heavy_atomic_pstr_short:
-		print_estr(crmout, tc.get_str_vmm(), tc.get_strlen_vmm());
+		estr_writextext(crmout, tc.get_str_vmm(), tc.get_strlen_vmm());
 		return;
 	case tc_heavy_atomic_pstr_long:
-		pstr_long_write(tc.get_str_vmm(), crmout);
+		pstr_long_writextext(tc.get_str_vmm(), crmout);
 		return;
 	}
 }
