@@ -94,47 +94,6 @@ static void setBulkLoadFinished(struct SednaConnection *conn)
     strcpy(conn->cbl.col_name, "");
 }
 
-/*return 1 - clean ok*/
-/*error - SEDNA_ERROR*/
-static int cleanSocket(struct SednaConnection *conn)
-{
-    conn->local_data_length = 0;
-    conn->local_data_offset = 0;
-    if (!conn->socket_keeps_data)
-        return 0;
-    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-    {
-        connectionFailure(conn, SE3007, NULL, NULL);
-        return SEDNA_ERROR;
-    }
-
-    while ((conn->msg.instruction != se_ItemEnd) && (conn->msg.instruction != se_ResultEnd))
-    {
-        if (conn->msg.instruction == se_ErrorResponse)
-        {
-            connectionFailure(conn, 0, NULL, &(conn->msg));
-            return SEDNA_ERROR;
-        }
-        if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
-        {
-            connectionFailure(conn, SE3007, NULL, NULL);
-            return SEDNA_ERROR;
-        }
-    }
-    if (conn->autocommit)
-    {
-        int comm_res = commit_handler(conn);
-        if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
-        return SEDNA_ERROR;
-    }
-
-    conn->socket_keeps_data = 0;
-    if (conn->msg.instruction == se_ResultEnd)
-        conn->result_end = 1;
-
-    return 1;
-}
-
 static int begin_handler(struct SednaConnection *conn)
 {
     /* send 210 - BeginTransaction*/
@@ -257,6 +216,47 @@ static int rollback_handler(struct SednaConnection *conn)
         connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
         return SEDNA_ROLLBACK_TRANSACTION_FAILED;
     }
+}
+
+/*return 1 - clean ok*/
+/*error - SEDNA_ERROR*/
+static int cleanSocket(struct SednaConnection *conn)
+{
+    conn->local_data_length = 0;
+    conn->local_data_offset = 0;
+    if (!conn->socket_keeps_data)
+        return 0;
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL, NULL);
+        return SEDNA_ERROR;
+    }
+
+    while ((conn->msg.instruction != se_ItemEnd) && (conn->msg.instruction != se_ResultEnd))
+    {
+        if (conn->msg.instruction == se_ErrorResponse)
+        {
+            connectionFailure(conn, 0, NULL, &(conn->msg));
+            return SEDNA_ERROR;
+        }
+        if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+        {
+            connectionFailure(conn, SE3007, NULL, NULL);
+            return SEDNA_ERROR;
+        }
+    }
+    if (conn->autocommit)
+    {
+        int comm_res = commit_handler(conn);
+        if(comm_res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED)
+        return SEDNA_ERROR;
+    }
+
+    conn->socket_keeps_data = 0;
+    if (conn->msg.instruction == se_ResultEnd)
+        conn->result_end = 1;
+
+    return 1;
 }
 
 /* takes the data from server when execute a query and decide if the query failed or succeeded*/
