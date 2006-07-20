@@ -233,7 +233,7 @@ endif
 	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/Makefile $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/external-functions/c/Makefile
 	$(INSTALL) -Dp $(PERM3) include/sedna_ef.h $(INCLUDE_PREFIX)/sedna_ef.h
 ifeq ($(AUTH_SWITCH), 1)
-	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
+	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/sedna_auth_md.xml
 endif
 	$(INSTALL) -Dp $(PERM3) AUTHORS   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/AUTHORS
 	$(INSTALL) -Dp $(PERM3) COPYRIGHT $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/COPYRIGHT
