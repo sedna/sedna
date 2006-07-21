@@ -179,12 +179,13 @@ CHECKP(blk);
 	/* Check if to insert into maxhole or into SS tail */
 	if (hole_size < s_size) {
 		/* Check if its possible to insert into SS tail without defragmentation */
-		if (  SITB(blk) - SSB(blk) < (s_size+ (SITH(blk)?0:sizeof(shft)) ) ) {
+		int lp=(int)SITB(blk) - (int)SSB(blk);
+		if (  lp < (int)(s_size) ) {
 			pstr_defragment(blk);
 		}
 		result = pstr_insert_into_tail(blk,s,s_size);
 	} else {
-		if ( (!SITH(blk))&&(SITB(blk) - SSB(blk) < sizeof(shft))) 
+		if ( (!SITH(blk))&&((int)SITB(blk) - (int)SSB(blk) < (int)sizeof(shft))) 
 		{
 			pstr_defragment(blk);
 			result = pstr_insert_into_tail(blk,s,s_size);
@@ -193,6 +194,9 @@ CHECKP(blk);
 			result = pstr_insert_into_maxhole(blk,s,s_size);
 	}
 	//check_blk_consistency(result);
+/*	CHECKP(blk);
+	if (  SITB(blk) < SSB(blk)) {
+		throw SYSTEM_EXCEPTION("pstr internal error");}*/
 	return result;
 }
 
@@ -209,7 +213,7 @@ CHECKP(blk);
 	shft s1 = SITB(blk);
 	shft s2 = SSB(blk);
 	shft s3 = BFS(blk);
-	if (SITB(blk) - SSB(blk) < s_size) {
+	if ((int)SITB(blk) - (int)SSB(blk) < s_size) {
 		//pstr_print_blk(blk);
 		throw SYSTEM_EXCEPTION("[pstr_insert_into_tail()] free space in SS tail is smaller then the size of string to insert");
 	}
