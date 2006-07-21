@@ -49,17 +49,17 @@ bool is_rolled_back()
 	return rollback_mode != MODE_NORMAL;
 }
 xptr indir_blk_hdr::init(xptr p)
-{
-	
-    xptr pred = p + sizeof(indir_blk_hdr);
-    xptr cur = pred + sizeof(xptr);
-    while ((unsigned int)(XADDR(cur)) + sizeof(xptr) <= (unsigned int)(XADDR(p)) + PAGE_SIZE)
+{    
+	char* pred = ((char *)XADDR(p)) + sizeof(indir_blk_hdr);
+    char* cur = pred + sizeof(xptr);
+	unsigned int bl_end=(unsigned int)(XADDR(p)) + PAGE_SIZE;
+    while ((unsigned int)(cur + sizeof(xptr)) <= bl_end)
     {
-        *(xptr*)(XADDR(pred)) = cur;
+        *((xptr*)pred) = ADDR2XPTR(cur);
         pred = cur;
-        cur += sizeof(xptr);
+        cur += sizeof(xptr);		
     }
-	*(xptr*)(XADDR(pred)) = XNULL;
+	*((xptr*)pred) = XNULL;
     VMM_SIGNAL_MODIFICATION(p);
     return p + sizeof(indir_blk_hdr);
 
@@ -68,15 +68,16 @@ xptr fill_empty_block(xptr p)
 {
     CHECKP(p);
 	((indir_blk_hdr*)XADDR(p))->nblk=XNULL;
-    xptr pred = p + sizeof(indir_blk_hdr);
-    xptr cur = pred + sizeof(xptr);
-    while ((unsigned int)(XADDR(cur)) + sizeof(xptr) <= (unsigned int)(XADDR(p)) + PAGE_SIZE)
+    char* pred = ((char *)XADDR(p)) + sizeof(indir_blk_hdr);
+    char* cur = pred + sizeof(xptr);
+	unsigned int bl_end=(unsigned int)(XADDR(p)) + PAGE_SIZE;
+    while ((unsigned int)(cur + sizeof(xptr)) <= bl_end)
     {
-        *(xptr*)(XADDR(pred)) = cur;
+        *((xptr*)pred) = ADDR2XPTR(cur);
         pred = cur;
-        cur += sizeof(xptr);
+        cur += sizeof(xptr);		
     }
-	*(xptr*)(XADDR(pred)) = XNULL;
+	*((xptr*)pred) = XNULL;
     VMM_SIGNAL_MODIFICATION(p);
     return p + sizeof(indir_blk_hdr);
 }
@@ -91,7 +92,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	{
 		//1. case when some place in block is left
 		//1.1 counting this place
-		int holes=(int)((BLOCKXPTR((first))+PAGE_SIZE)-first)/sizeof(xptr)-1;
+		int holes=(int)(((unsigned int)XADDR(BLOCKXPTR(first))+PAGE_SIZE)-(unsigned int)XADDR(first))/sizeof(xptr)-1;
 		//1.2 checking whether the whole cluster fits into block
 		if (cnt<=holes)
 		{
