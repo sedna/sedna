@@ -97,6 +97,10 @@ extern "C"
 /* If the function fails, the return value is zero.*/
     int uDelDir(const char *dir, sys_call_error_fun fun);
 
+/* If the function succeeds, the return value is nonzero.*/
+/* If the function fails, the return value is zero.*/
+    int uMoveFile(const char* old_name, const char* new_name, sys_call_error_fun fun);
+
 /* If the function succeeds, the return value is nonzero. If the return value */
 /* is nonzero and the number of bytes read is zero, the file pointer was beyond */
 /* the current end of the file at the time of the read operation.*/

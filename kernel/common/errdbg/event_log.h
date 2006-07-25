@@ -32,6 +32,8 @@
 #define SE_EVENT_LOG_CONTENT_LEN       1024
 
 #define SE_SOFT_FAULT_LOG_DIR          "fault-"
+#define SE_LAST_SOFT_FAULT_DIR         "fault-last"
+#define SE_ASSERT_FAILED_FILE_NAME     "assert_failed"
 #define SE_SOFT_FAULT_LOG_CONTENT_LEN  1024
 
 /* Component codes */

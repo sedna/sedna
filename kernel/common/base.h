@@ -228,7 +228,6 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* 
 #define STRMAXSIZE   4000000000lu
 
 
-void set_sedna_data();
 void set_global_names();
 void set_global_names(const char *db_name, bool must_exist = false);
 extern FILE* res_os;

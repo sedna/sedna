@@ -141,7 +141,7 @@ MainLoop(FILE *source)
         }
     }
 
-	set_sedna_data();
+	set_sedna_data(NULL);
 	
 	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n\n");
 	term_output1("Type:\n");

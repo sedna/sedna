@@ -328,7 +328,8 @@ int main(int argc, char **argv)
     try {
 
         SafeMemoryContextInit();
-        set_sedna_data();
+        if (! set_sedna_data(NULL))
+            throw USER_EXCEPTION(SE4411);
 
         if (argc == 1)
            print_cdb_usage();

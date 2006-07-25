@@ -212,22 +212,5 @@ string trim(string str)
 }
 
 
-std::string get_sedna_data_path(string cfg_text)
-{
-   string path;
-   int beg, fin;
-
-   beg = cfg_text.find("<sedna_data>");
-   fin = cfg_text.find("</sedna_data>");
-
-   d_printf2("cfg_text=%s\n", cfg_text.c_str());
-   if (beg == -1 || fin == -1)
-	   throw USER_ENV_EXCEPTION("Bad Sedna Config File", true);
-
-   path = cfg_text.substr(beg+ 12, fin-(beg + 12 -1)-1 );   
-   d_printf2("path=%s\n", path.c_str());
-
-   return path;   
-}
 
 
