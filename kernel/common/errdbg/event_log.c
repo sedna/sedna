@@ -753,23 +753,33 @@ void sedna_soft_fault_log(const char* log_message, int  component)
 
 	if(log_message == NULL) return;
 
+    //
+    if (! set_sedna_data(NULL)) 
+    {
+      fprintf(stderr, "Can't set sedna data");
+      return;
+    }
     strcpy(buf, SEDNA_DATA);
 #ifdef _WIN32
     strcat(buf, "\\data\\");
 #else
     strcat(buf, "/data/");
 #endif
-    strcat(buf, SE_SOFT_FAULT_LOG_DIR);
-    time(&aclock);                   /* Get time in seconds */
-    newtime = localtime(&aclock);    /* Convert time to struct tm form */
-
-    sprintf(dt_buf,"%04d-%02d-%02d-%02d-%02d-02%d",
-            newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
-            newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
-    strcat(buf, dt_buf);
 
     if (uMkDir(buf, NULL, NULL) == 0)
-         perror("Cannot create directory for soft fault logs");
+    {
+       fprintf(stderr, "Cannot create data directory for soft fault logs\n");
+       return;  
+    }
+
+
+    strcat(buf, SE_LAST_SOFT_FAULT_DIR);
+
+    if (uMkDir(buf, NULL, NULL) == 0)
+    {
+       fprintf(stderr, "Cannot create directory for soft fault logs\n");
+       return;  
+    }
 
 #ifdef _WIN32
     strcat(buf, "\\");

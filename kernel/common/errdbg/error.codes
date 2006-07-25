@@ -1102,6 +1102,9 @@ sedna-err:SE4079
 sedna-err:SE4080
 
     Can't set handles property
+sedna-err:SE4081
+
+    Can't get process' image path
 
 
 ###########################################################################
@@ -1242,6 +1245,14 @@ sedna-err:SE4408
 sedna-err:SE4409
 
     Failed to open session: database is not started
+sedna-err:SE4410
+ 
+    Can't rename last soft fault directory
+
+sedna-err:SE4411
+
+    Can't set sedna data variable
+
 
 ############################################################################
 # Recovery Utility errors

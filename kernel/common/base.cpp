@@ -242,7 +242,6 @@ global_name SE_EVENT_LOG_SEMAPHORES_NAME;
 
 
 char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
-bool is_init_sedna_data = false;
 FILE* res_os = stdout; //otput stream of transaction results (result of the user's query)
 
 
@@ -401,7 +400,10 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name, char* b
 
 void set_global_names()
 {
-    set_sedna_data();
+    int res;
+    res = set_sedna_data(__sys_call_error);
+    if (!res) throw USER_EXCEPTION(SE4411);
+    
 
     //s_printf2("SEDNA_DATA = %s\n", SEDNA_DATA);
 
@@ -540,80 +542,4 @@ void set_global_names(const char *db_name, bool must_exist)
 
     UNIX_GN_INIT1(SEDNA_LOCK_MANAGER_SEM);
 #endif
-}
-
-void set_sedna_data()
-{
-  if (is_init_sedna_data)
-     return;
-
-
-  char proc_buf[U_MAX_PATH + 1];
-  std::string proc_path = uGetImageProcPath(proc_buf, __sys_call_error);
-  std::string sedna_cfg_file;
-  bool is_inside_lib = true;
-
-  //copy default values
-#ifdef _WIN32
-  strcpy(SEDNA_DATA, (proc_path + "\\..").c_str());
-#else
-  strcpy(SEDNA_DATA, "/var/lib/sedna");
-#endif
-
-#ifdef _WIN32
-  sedna_cfg_file = proc_path + "\\.." + "\\etc\\sednaconf.xml";
-#else
-  sedna_cfg_file = proc_path + "/.." + "/etc/sednaconf.xml";
-#endif
-  d_printf2("sedna_cfg_file=%s\n", sedna_cfg_file.c_str());
-  std::fstream fs(sedna_cfg_file.c_str());
-  std::string cfg_text;
-  if (fs.is_open())  
-  {//exist sednaconf.xml in etc directory
-     d_printf1("exist sednaconf.xml in local etc\n");
-     char buf;
-     while (!fs.eof())
-     {
-        fs.get(buf);
-        if (!fs.eof()) cfg_text += buf;
-     }
-     fs.close();
-
-     strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text).c_str());
-     is_inside_lib = true;
-  }
-  else
-  {
-#ifndef _WIN32 //UNIX
-     sedna_cfg_file = "/etc/sednaconf.xml";
-     fstream fs_(sedna_cfg_file.c_str());
-     if (fs_.is_open())  
-     {//exist sednaconf.xml in etc directory
-
-        char buf;
-        while (!fs_.eof())
-        {
-           fs_.get(buf);
-           if (!fs_.eof()) cfg_text += buf;
-        }
-        fs_.close();
-
-        strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text).c_str());
-        is_inside_lib = true;
-     }
-#endif       
-  }
-
-  d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
-
-#ifndef _WIN32
-  if (is_inside_lib)
-  {
-      USECURITY_ATTRIBUTES sa = U_SEDNA_DIRECTORY_ACCESS_PERMISSIONS_MASK;
-      if (uMkDir(SEDNA_DATA, &sa, __sys_call_error) == 0)
-          throw USER_EXCEPTION2(SE4300, SEDNA_DATA);
-  }
-#endif  
-
-  is_init_sedna_data = true;
 }

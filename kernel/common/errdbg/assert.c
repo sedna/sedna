@@ -9,6 +9,7 @@
 
 #include "sedna.h"
 #include "event_log.h"
+#include "uhdd.h"
 
 
 /*
@@ -17,6 +18,9 @@
 int se_ExceptionalCondition(char *conditionName, char *errorType,
                             char *fileName, int lineNumber)
 {
+	char buf[SEDNA_DATA_VAR_SIZE + 128];
+    UFile a_fh;
+
 	if (!PointerIsValid(conditionName)
 		|| !PointerIsValid(fileName)
 		|| !PointerIsValid(errorType))
@@ -27,6 +31,38 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
                          errorType, conditionName,
                          fileName, lineNumber);
 	}
+
+
+
+    strcpy(buf, SEDNA_DATA);
+#ifdef _WIN32
+    strcat(buf, "\\data\\");
+#else
+    strcat(buf, "/data/");
+#endif
+    if (uMkDir(buf, NULL, NULL) == 0)
+       fprintf(stderr, "Cannot create data directory for soft fault logs\n");   
+
+    strcat(buf, SE_LAST_SOFT_FAULT_DIR);
+
+    if (uMkDir(buf, NULL, NULL) == 0)
+       fprintf(stderr, "Cannot create directory for soft fault logs\n");
+
+
+#ifdef _WIN32
+    strcat(buf, "\\");
+#else
+    strcat(buf, "/");
+#endif
+    strcat(buf, SE_ASSERT_FAILED_FILE_NAME);
+
+
+    a_fh = uCreateFile(buf, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, NULL, NULL);
+    if (a_fh == U_INVALID_FD)
+        fprintf(stderr, "Can't create assert_failed file\n");
+
+    uCloseFile(a_fh, NULL);
+
 
 #ifdef SE_SLEEP_ON_ASSERT
 	/*

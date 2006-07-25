@@ -132,6 +132,28 @@ int uDeleteFile(const char *name, sys_call_error_fun fun)
 #endif
 }
 
+int uMoveFile(const char* old_name, const char* new_name, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+   BOOL res = MoveFile(old_name, new_name);
+
+   if (res == 0)
+      sys_call_error("MoveFile");
+
+   return res;
+#else
+  int res;
+  res = rename(old_name, new_name);
+  if (res != 0)
+  {
+      sys_call_error("rename");
+      return 0;
+  }
+  
+  return 1;
+#endif 
+}
+
 int uDelDir(const char *dir, sys_call_error_fun fun)
 {
 #ifdef _WIN32

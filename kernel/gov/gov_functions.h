@@ -9,7 +9,7 @@
 
 void clean_resources(bool background_off_from_background_on);
 bool is_first_start_of_gov();
-
+void RenameLastSoftFaultDir();
 
 #endif
 

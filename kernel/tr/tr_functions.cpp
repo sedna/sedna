@@ -282,7 +282,8 @@ bool check_database_existence(const char* db_name)
 {
    bool res1 = false, res2 = false, res3 = false, res4 = false, res5 = false, res6 = false;
 
-   set_sedna_data();
+   if (!set_sedna_data(NULL))
+      throw USER_EXCEPTION(SE4411);
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 
