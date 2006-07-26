@@ -21,8 +21,8 @@ char* get_sedna_data_path(char* cfg_text, char* buf)
    if (beg == NULL || fin == NULL)
       return NULL;
 
-   memcpy(buf, beg + sizeof("<sedna_data>"), (int)fin-((int)beg + sizeof("<sedna_data>")));
-   buf[(int)fin-((int)beg + sizeof("<sedna_data>"))] = '\0';
+   memcpy(buf, beg + 12, (int)fin-((int)beg + 12));
+   buf[(int)fin-((int)beg + 12)] = '\0';
 
    return buf;   
 }
