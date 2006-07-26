@@ -20,6 +20,7 @@
 #include "gov_table.h"
 #include "d_printf.h"
 #include "uhdd.h"
+#include "uutils.h"
 #include "ugc.h"
 #include "pping.h"
 
@@ -152,7 +153,7 @@ void RenameLastSoftFaultDir()
   buf += "\\data";
   last_sf_dir = buf + std::string("\\") + SE_LAST_SOFT_FAULT_DIR;
 #else
-  buf += "/data"
+  buf += "/data";
   last_sf_dir = buf + std::string("/") + SE_LAST_SOFT_FAULT_DIR;
 #endif
 
@@ -207,9 +208,10 @@ void RenameLastSoftFaultDir()
     tm = localtime(&statbuf.st_mtime);
 
     /* Get localized date string. */
-    strftime(datestring, sizeof(datestring), nl_langinfo(D_T_FMT), tm);
+    //strftime(datestring, sizeof(datestring), nl_langinfo(D_T_FMT), tm);
+    strftime(datestring, sizeof(datestring), "%02d-%02m-%Y-%02H-%02M", tm);
 
-    sprintf(buf2, "%s", datastring);
+    sprintf(buf2, "%s", datestring);
 
    //get time of creation for this directory under Linux
 #endif
@@ -227,12 +229,12 @@ void RenameLastSoftFaultDir()
        char val[128];
        for (;;)
        {
-         if (!uIsFileExist((new_name + string(".")  + _itoa(i, val, 10)).c_str(), NULL)) break;
+         if (!uIsFileExist((new_name + string(".")  + u_itoa(i, val, 10)).c_str(), NULL)) break;
         
          i++;
        }
 
-       new_name += string(".")  + _itoa(i, val, 10);
+       new_name += string(".")  + u_itoa(i, val, 10);
     }
 
 

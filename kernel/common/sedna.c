@@ -5,6 +5,8 @@
 
 #include "sedna.h"
 #include "d_printf.h"
+#include "usecurity.h"
+#include "uhdd.h"
 
 char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
 
@@ -36,10 +38,13 @@ int set_sedna_data(sys_call_error_fun fun)
   FILE* fs;
   char* cfg_text;
   int cfg_text_free_size;
+  size_t size;
+  char buf[1024];
+  int ind;
   
 
   if (is_init_sedna_data)
-     return;
+     return 1;
 
 
   uGetImageProcPath(proc_buf, fun);
@@ -73,9 +78,6 @@ int set_sedna_data(sys_call_error_fun fun)
   cfg_text_free_size = 1023;
   if (fs != NULL)  
   {//exist sednaconf.xml in etc directory
-     char buf[1024];
-     size_t size;
-     int ind;
      d_printf1("exist sednaconf.xml in local etc\n");
 
      while (true)
@@ -106,23 +108,25 @@ int set_sedna_data(sys_call_error_fun fun)
 
      if (fs != NULL)  
      {//exist sednaconf.xml in etc directory
-        size = fread(buf, sizeof(char), 1024, fs);
+        while(true)
+        {
+           size = fread(buf, sizeof(char), 1024, fs);
 
-        if (ferror(fs)) return 0;
+           if (ferror(fs)) return 0;
 
-        if (cfg_text_free_size < size)
-           cfg_text = realloc(cfg_text, 2*1024 + strlen(cfg_text));
+           if (cfg_text_free_size < size)
+              cfg_text = realloc(cfg_text, 2*1024 + strlen(cfg_text));
 
-        ind = strlen(cfg_text) + size;
-        memcpy(cfg_text + sizeof(char)*strlen(cfg_text), buf, size);
-        cfg_text[ind] = '\0';
+           ind = strlen(cfg_text) + size;
+           memcpy(cfg_text + sizeof(char)*strlen(cfg_text), buf, size);
+           cfg_text[ind] = '\0';
 
-        if (feof(fs)) break; 
+           if (feof(fs)) break;
+        }
+
+        fclose(fs);
+        strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
      }
-
-     fclose(fs);
-
-     strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
 #endif       
   }
 
