@@ -114,8 +114,8 @@ void PPOrderBy::open  ()
     need_to_sort= false;
     pos = 0;
     
-    data_cells  = new sequence(data_size);
-    sort_cells  = new sequence(sort_size); 
+    data_cells  = new sequence_tmp(data_size);
+    sort_cells  = new sequence_tmp(sort_size); 
 
     udata.sort      = sort_cells;
     udata.pos       = 0;
