@@ -335,7 +335,7 @@ void PPTreat::open  ()
     first_time = true;
     eos_reached = true;
     
-    s = new sequence(child.ts);
+    s = new sequence_tmp(child.ts);
     pos = 0;
 }                                     
 

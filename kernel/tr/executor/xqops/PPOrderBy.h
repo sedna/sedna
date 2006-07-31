@@ -98,7 +98,7 @@ typedef std::vector<common_type>        arr_of_common_type;
 //Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
 {
-    sequence *sort;                                 
+    sequence_tmp *sort;                                 
     int pos;                                        //Initial sequence which must be sorted.
     int size;                                       //Serialized size of in bytes (fixed for each tuple): 
                                                     //[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
@@ -131,8 +131,8 @@ private:
     int sort_size;                                  //Number of these tuple cells. This value is automaticaly
                                                     //evaluated form the 'data_size' and 'child.ts' values
 
-    sequence *data_cells;                           //Accumulates the first 'data_size' tuple cells. 
-    sequence *sort_cells;                           //Accumulates other 'sort_size' tuple cells.  
+    sequence_tmp *data_cells;                           //Accumulates the first 'data_size' tuple cells. 
+    sequence_tmp *sort_cells;                           //Accumulates other 'sort_size' tuple cells.  
     
     bool first_time;
     bool need_reinit;

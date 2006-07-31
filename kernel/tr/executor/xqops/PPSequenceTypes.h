@@ -140,7 +140,7 @@ protected:
     PPOpIn child;
     sequence_type st;
 
-    sequence *s;
+    sequence_tmp *s;
     int pos;
 
     bool first_time;
