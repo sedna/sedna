@@ -117,7 +117,7 @@ void PPAxisDescendant::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-		if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+		if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)
@@ -194,7 +194,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
         xptr tmp=child.get(t).get_node();
 		if (tmp!=XNULL)
 		{
@@ -274,7 +274,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)
@@ -340,7 +340,7 @@ void PPAxisDescendantAttr::next_text(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 	next_wildcard_star(t);
 }
@@ -350,7 +350,7 @@ void PPAxisDescendantAttr::next_node(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }*/
 	next_wildcard_star(t);
 }
@@ -377,7 +377,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)

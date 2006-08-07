@@ -51,13 +51,13 @@ void PPDmNodeKind::next  (tuple &t)
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-kind is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-kind is not a node");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-kind is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-kind is not a node");
 
         dm_node_kind_type res = dm_node_kind(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-kind is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-kind is not a node");
 
         switch (res)
         {
@@ -117,9 +117,9 @@ bool PPDmNodeKind::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence *d_seq = (sequence*)nk_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-kind is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-kind is not a node");
     const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-kind is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-kind is not a node");
 
     dm_node_kind_type res = dm_node_kind(tc.get_node());
 
@@ -194,13 +194,13 @@ void PPDmNodeName::next  (tuple &t)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
 
         tuple_cell tc = dm_node_name(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -240,9 +240,9 @@ bool PPDmNodeName::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence *d_seq = (sequence*)nn_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
     const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
 
     r = new sequence(dm_node_name(tc.get_node()));
     return true;
@@ -292,13 +292,13 @@ void PPDmStringValue::next  (tuple &t)
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Argument of dm:string-value is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:string-value is not a node");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
         tuple_cell tc = dm_string_value(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of dm:string-value is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
         t.copy(tc);
     }
@@ -333,9 +333,9 @@ bool PPDmStringValue::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence *d_seq = (sequence*)sv_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of dm:string-value is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
     const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:string-value is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
     r = new sequence(dm_string_value(tc.get_node()));
     return true;
@@ -385,13 +385,13 @@ void PPDmTypedValue::next  (tuple &t)
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Argument of dm:typed-value is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:typed-value is not a node");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
         tuple_cell tc = dm_typed_value(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of dm:typed-value is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
         t.copy(tc);
     }
@@ -426,9 +426,9 @@ bool PPDmTypedValue::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence *d_seq = (sequence*)tv_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of dm:typed-value is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
     const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:typed-value is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
     r = new sequence(dm_typed_value(tc.get_node()));
     return true;
@@ -475,13 +475,13 @@ void PPDmDocumentURI::next  (tuple &t)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Argument of dm:document-uri is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:document-uri is not a node");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
 
         tuple_cell tc = dm_document_uri(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of dm:document-uri is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -521,9 +521,9 @@ bool PPDmDocumentURI::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence *d_seq = (sequence*)nn_r;
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
     const tuple_cell &tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of dm:node-name is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
 
     r = new sequence(dm_node_name(tc.get_node()));
     return true;

@@ -1368,7 +1368,7 @@ void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd)
   	if ( fStart < fEnd ) {
         int pos = indexOf(UTC_SET, fBuffer[fStart]);
     	if (pos == NOT_FOUND) 
-	   throw USER_EXCEPTION2(FODT003, "no UTC sign in the timezone");
+	   throw USER_EXCEPTION2(FODT0003, "no UTC sign in the timezone");
    		else { 
     	    	setValue(utc, pos+1);
   	        getTimeZone(fBuffer,fStart,fEnd);   		
@@ -1391,7 +1391,7 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
     if ( fBuffer[sign] == UTC_STD_CHAR )
     {
         if ((sign + 1) != fEnd )
-	throw USER_EXCEPTION2(FODT003, "extra characters after Z in timezone");
+	throw USER_EXCEPTION2(FODT0003, "extra characters after Z in timezone");
             //"Error in parsing time zone");
 
         return;	
@@ -1405,7 +1405,7 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
     //
     if ( ( ( sign + TIMEZONE_SIZE + 1) != fEnd )      ||
          ( fBuffer[sign + 3] != TIMEZONE_SEPARATOR ) )
-	throw USER_EXCEPTION2(FODT003, "error parsing time zone");
+	throw USER_EXCEPTION2(FODT0003, "error parsing time zone");
         //("Error in parsing time zone");
 
     setValue(tz_hh, parseInt(fBuffer,sign+1, sign+3));
@@ -1649,12 +1649,12 @@ void XMLDateTime::validateDateTime() const
     //validate time-zone hours
     if ( (abs(getValue(tz_hh)) > 14) ||
          ((abs(getValue(tz_hh)) == 14) && (getValue(tz_mm)!= 0)) )
-	throw USER_EXCEPTION2(FODT003, "invalid timezone hours, values must be between -14 and 14");
+	throw USER_EXCEPTION2(FODT0003, "invalid timezone hours, values must be between -14 and 14");
         //"Time zone should have range -14..+14");
 
     //validate time-zone minutes
     if ( abs(getValue(tz_mm)) > 59 )
-	throw USER_EXCEPTION2(FODT003, "invalid timezone minutes, values must be between 0 and 59");
+	throw USER_EXCEPTION2(FODT0003, "invalid timezone minutes, values must be between 0 and 59");
         //("Minute must have values 0-59");
 	
     return;

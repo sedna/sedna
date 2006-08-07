@@ -72,7 +72,7 @@ void PPAxisAttribute::next_processing_instruction(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -82,7 +82,7 @@ void PPAxisAttribute::next_comment(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -92,7 +92,7 @@ void PPAxisAttribute::next_text(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -103,7 +103,7 @@ void PPAxisAttribute::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderAttributeChild(child.get(t).get_node());
     }
@@ -124,7 +124,7 @@ void PPAxisAttribute::next_qname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, attribute),
@@ -144,7 +144,7 @@ void PPAxisAttribute::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderAttributeChild(child.get(t).get_node());
     }
@@ -160,7 +160,7 @@ void PPAxisAttribute::next_wildcard_ncname_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname, attribute),
@@ -180,7 +180,7 @@ void PPAxisAttribute::next_wildcard_star_ncname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          NULL,
@@ -242,7 +242,7 @@ sequence *PPAxisAttribute::next_qname_s(sequence *data_seq, PPAxisAttribute* cur
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getChildPointerXptr(tc.get_node(), 
                                   cur_op->nt_data.qname.LocalPart.c_str(), 
@@ -269,7 +269,7 @@ sequence *PPAxisAttribute::next_wildcard_star_s(sequence *data_seq, PPAxisAttrib
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderAttributeChild(tc.get_node());
 

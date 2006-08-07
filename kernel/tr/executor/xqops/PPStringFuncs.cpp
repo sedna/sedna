@@ -91,7 +91,7 @@ void PPFnConcat::next(tuple &t)
         res_str_len += tcv[i].get_strlen();
 
         ch_arr[i].op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:concat is more than 1");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:concat is more than 1");
     }
 
     tuple_cell res;
@@ -189,7 +189,7 @@ void PPFnStringLength::next  (tuple &t)
 			len = charset_handler->length(&tc);
 
             child.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:string-length is more than 1");
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
         }
 
         t.copy(tuple_cell::atomic(len));
@@ -268,33 +268,33 @@ void PPFnTranslate::next  (tuple &t)
 
 		map_str.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION2(XP0006, "2nd argument of fn:translate is empty sequence");
+			throw USER_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is empty sequence");
 		tuple_cell map_tc = map_str.get(t);
 		map_tc = atomize(map_tc);
 		if (map_tc.get_atomic_type()==xdt_untypedAtomic)
 			map_tc.set_xtype(xs_string);
 		else
 			if (!map_tc.is_string_type())
-				throw USER_EXCEPTION2(XP0006, "2nd argument of fn:translate is not a string");
+				throw USER_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not a string");
 		map_tc = tuple_cell::make_sure_light_atomic(map_tc);
 		map_str.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION2(XP0006, "2nd argument of fn:translate is not atomic value");
+			throw USER_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not atomic value");
 
 		trans_str.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION2(XP0006, "3rd argument of fn:translate is empty sequence");
+			throw USER_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is empty sequence");
 		tuple_cell trans_tc = trans_str.get(t);
 		trans_tc = atomize(trans_tc);
 		if (trans_tc.get_atomic_type()==xdt_untypedAtomic)
 			trans_tc.set_xtype(xs_string);
 		else
 			if (!trans_tc.is_string_type())
-				throw USER_EXCEPTION2(XP0006, "3rd argument of fn:translate is not a string");
+				throw USER_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not a string");
 		trans_tc = tuple_cell::make_sure_light_atomic(trans_tc);
 		trans_str.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION2(XP0006, "3rd argument of fn:translate is not atomic value");
+			throw USER_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not atomic value");
 
 		str.op->next(t);
 		if (!t.is_eos())
@@ -302,7 +302,7 @@ void PPFnTranslate::next  (tuple &t)
 			tuple_cell tc = str.get(t);
 			tc = cast_to_xs_string(atomize(tc));
 			str.op->next(t);
-			if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:translate as 1st argument is more than 1");
+			if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:translate as 1st argument is more than 1");
 
 			charset_handler->transtale(t, &tc, &map_tc, &trans_tc);
 		}

@@ -49,7 +49,7 @@ void PPUp::next  (tuple &t)
             previous = XNULL;
             return;
         }
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of PPUp is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of PPUp is not a node");
 
         xptr p = child.get(t).get_node();
                                    

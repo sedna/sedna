@@ -38,7 +38,7 @@ void assert_type_is_supported(xmlscm_type t)
 
 /// Returns the least common type that has a gt operator.
 /// Throws SE1002 if types can be compared by one of or both are not supported.
-/// Throws XP0006 if least common type doesn't have a gt operator.
+/// Throws XPTY0004 if least common type doesn't have a gt operator.
 
 xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
@@ -69,7 +69,7 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
         case xs_integer               : 
         case xs_boolean               : return t;
 
-        default                       : throw USER_EXCEPTION2(XP0006, "Least common type doesn't have a gt operator (PPOrderBy).");
+        default                       : throw USER_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator (PPOrderBy).");
     }    
 }
 

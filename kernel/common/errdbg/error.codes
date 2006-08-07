@@ -11,7 +11,7 @@
 ##    consists of three lines. The first line is the error code (for instance,
 ##    "sedna-err:SE1000"). The second line consists of command that specify
 ##    what to do in case of this error (format is under development and now 
-##    this string is simply ignored). The third line consistd of the textual
+##    this string is simply ignored). The third line consists of the textual
 ##    description of the error
 ###############################################################################
 
@@ -33,227 +33,281 @@ sedna-err:SE1000
 ## These are errors from XQuery specification (do not edit them until the 
 ## specification changes)
 ###############################################################################
-err:XP0001
-    
-    It is a static error if analysis of an expression relies on some component of the static context that has not been assigned a value.
-err:XP0002
-    
-    It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that has not been assigned a value.
-err:XP0003
-    
-    It is a static error if an expression is not a valid instance of the grammar defined in A.1 EBNF.
-err:XP0004
-    
-    During the analysis phase, it is a type error if the static typing feature is in effect and an expression is found to have a static type that is not appropriate for the context in which the expression occurs.
-err:XP0005
 
-    During the analysis phase, it is a static error if the static typing feature is in effect and the static type assigned to an expression other than the expression () or data(()) is the empty type.
-err:XP0006
+err:XPST0001
 
-    During the evaluation phase, it is a type error if a value does not match a required type as specified by the matching rules in 2.5.4 SequenceType Matching.
-err:XP0007
+	It is a static error if analysis of an expression relies on some component of the static context that has not been assigned a value.
+err:XPDY0002
 
-    It is a type error if the fn:data function is applied to a node whose type annotation denotes a complex type with non-mixed complex content.
-err:XP0008
+	It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that has not been assigned a value.
+err:XPST0003
 
-    It is a static error if an expression refers to an element name, attribute name, type name, function name, namespace prefix, or variable name that is not defined in the static context, except within an ElementTest or an AttributeTest.
-err:XQ0009
+	It is a static error if an expression is not a valid instance of the grammar defined in A.1 EBNF.
+err:XPTY0004
+	
+	It is a type error if, during the static analysis phase, an expression is found to have a static type that is not appropriate for the context in which the expression occurs, or during the dynamic evaluation phase, the dynamic type of a value does not match a required type as specified by the matching rules in 2.5.4 SequenceType Matching.
+err:XPST0005
 
-    An implementation that does not support the Schema Import Feature may raise a static error if a Prolog contains a schema import.
-err:XQ0010
+	During the analysis phase, it is a static error if the static type assigned to an expression other than the expression () or data(()) is empty-sequence().
+err:XPTY0006
 
-    An implementation that does not support the Full Axis Feature must raise a static error if it encounters a reference to an optional axis that it does not support.
-err:XQ0012
+	(Not currently used.)
+err:XPTY0007
 
-    If the Schema Import Feature is in effect, it is a static error if the set of definitions contained in all imported schemas do not satisfy the conditions for schema validity specified in Sections 3 and 5 of [XML Schema] Part 1. In particular, the definitions must be valid, they must be complete, and they must be unique -- that is, the pool of definitions must not contain two or more schema components with the same name and target namespace.
-err:XQ0013
+	(Not currently used.)
+err:XPST0008
 
-    It is a static error if an implementation supports a pragma but determines that its content is invalid.
-err:XQ0014
+	It is a static error if an expression refers to an element name, attribute name, schema type name, namespace prefix, or variable name that is not defined in the static context, except within an ElementTest or an AttributeTest.
+err:XQST0009
 
-    It is a static error if an implementation does not support a must-understand extension or an implementation does support a must-understand extension and the implementation determines that the character content is invalid.
-err:XQ0015
+	An implementation that does not support the Schema Import Feature must raise a static error if a Prolog contains a schema import.
+err:XPST0010
 
-    It is a static error if the XQuery Flagger is enabled and the query contains a must-understand extension.
-err:XQ0016
+	An implementation must raise a static error if it encounters a reference to an axis that it does not support.
+err:XQST0012
 
-    An implementation that does not support the Module Feature raises a static error if it encounters a module declaration or a module import.
-err:XP0017
+	It is a static error if the set of definitions contained in all schemas imported by a Prolog do not satisfy the conditions for schema validity specified in Sections 3 and 5 of [XML Schema] Part 1--i.e., each definition must be valid, complete, and unique.
+err:XQST0013
 
-    It is a static error if the expanded QName and number of arguments in a function call do not match the name and arity of a function signature in the static context.
-err:XP0018
+	It is a static error if an implementation recognizes a pragma but determines that its content is invalid.
+err:XQST0014
 
-    It is a type error if the result of the last step in a path expression contains both nodes and atomic values.
-err:XP0019
+	(Not currently used.)
+err:XQST0015
 
-    It is a type error if the result of an step (other than the last step) in a path expression contains an atomic value.
-err:XP0020
+	(Not currently used.)
+err:XQST0016
 
-    It is a type error if in an axis expression, the context item is not a node.
-err:XP0021
+	An implementation that does not support the Module Feature raises a static error if it encounters a module declaration or a module import.
+err:XPST0017
 
-    It is a dynamic error if the argument of a cast expression or constructor function cannot be cast to the required type.
-err:XQ0022
+	It is a static error if the expanded QName and number of arguments in a function call do not match the name and arity of a function signature in the static context.
+err:XPTY0018
 
-    It is a static error if the value of a namespace declaration attribute is not a literal string.
+	It is a type error if the result of the last step in a path expression contains both nodes and atomic values.
+err:XPTY0019
+
+	It is a type error if the result of a step (other than the last step) in a path expression contains an atomic value.
+err:XPTY0020
+
+	It is a type error if, in an axis step, the context item is not a node.
+err:XPDY0021
+
+	(Not currently used.)
+err:XQST0022
+
+	It is a static error if the value of a namespace declaration attribute is not a URILiteral.
+err:XQTY0023
+
+	(Not currently used.)
+err:XQTY0024
+
+	It is a type error if the content sequence in an element constructor contains an attribute node following a node that is not an attribute node.
+err:XQDY0025
+
+	It is a dynamic error if any attribute of a constructed element does not have a name that is distinct from the names of all other attributes of the constructed element.
+err:XQDY0026
+
+	It is a dynamic error if the result of the content expression of a computed processing instruction constructor contains the string "?>".
+err:XQDY0027
+
+	In a validate expression, it is a dynamic error if the root element information item in the PSVI resulting from validation does not have the expected validity property: valid if validation mode is strict, or either valid or notKnown if validation mode is lax.
+err:XQTY0028
+
+	(Not currently used.)
+err:XQDY0029
+
+	(Not currently used.)
+err:XQTY0030
+
+	It is a type error if the argument of a validate expression does not evaluate to exactly one document or element node.
+err:XQST0031
+
+	It is a static error if the version number specified in a version declaration is not supported by the implementation.
+err:XQST0032
+
+	A static error is raised if a Prolog contains more than one base URI declaration.
+err:XQST0033
+
+	It is a static error if a Prolog contains multiple declarations for the same namespace prefix.
+err:XQST0034
+
+	It is a static error if multiple functions declared or imported by a module have the number of arguments and their expanded QNames are equal (as defined by the eq operator).
+err:XQST0035
+
+	It is a static error to import two schema components that both define the same name in the same symbol space and in the same scope.
+err:XQST0036
+
+	It is a static error to import a module if the importing module's in-scope schema types do not include definitions for the schema type names that appear in the declarations of variables and functions (whether in an argument type or return type) that are present in the imported module and are referenced in the importing module.
+err:XQST0037
+
+	(Not currently used.)
+err:XQST0038
+
+	It is a static error if a Prolog contains more than one default collation declaration, or the value specified by a default collation declaration is not present in statically known collations.
+err:XQST0039
+
+	It is a static error for a function declaration to have more than one parameter with the same name.
+err:XQST0040
+
+	It is a static error if the attributes specified by a direct element constructor do not have distinct expanded QNames.
+err:XQDY0041
+
+	It is a dynamic error if the value of the name expression in a computed processing instruction constructor cannot be cast to the type xs:NCName.
+err:XQST0042
+
+	(Not currently used.)
+err:XQST0043
+
+	(Not currently used.)
+err:XQDY0044
+
+	It is a dynamic error if the node-name property of the node constructed by a computed attribute constructor is in the namespace http://www.w3.org/2000/xmlns/ (corresponding to namespace prefix xmlns), or is in no namespace and has local name xmlns.
+err:XQST0045
+
+	It is a static error if the function name in a function declaration is in one of the following namespaces: http://www.w3.org/XML/1998/namespace, http://www.w3.org/2001/XMLSchema, http://www.w3.org/2001/XMLSchema-instance, http://www.w3.org/2005/xpath-functions, http://www.w3.org/2005/xpath-datatypes.
+err:XQST0046
+
+	An implementation MAY raise a static error if the value of a URILiteral is of nonzero length and is not in the lexical space of xs:anyURI, or if it is a string that represents a "relative reference" as defined in [RFC3986].
+err:XQST0047
+
+	It is a static error if multiple module imports in the same Prolog specify the same target namespace.
+err:XQST0048
+
+	It is a static error if a function or variable declared in a library module is not in the target namespace of the library module.
+err:XQST0049
+
+	It is a static error if two or more variables declared or imported by a module have equal expanded QNames (as defined by the eq operator.)
+err:XPDY0050
+
+	It is a dynamic error if the dynamic type of the operand of a treat expression does not match the sequence type specified by the treat expression. This error might also be raised by a path expression beginning with "/" or "//" if the context node is not in a tree that is rooted at a document node. This is because a leading "/" or "//" in a path expression is an abbreviation for an initial step that includes the clause treat as document-node().
+err:XPST0051
+
+	It is a static error if a QName that is used as an AtomicType in a SequenceType is not defined in the in-scope schema types as an atomic type.
+err:XQDY0052
+
+	(Not currently used.)
+err:XQST0053
+
+	(Not currently used.)
+err:XQST0054
+
+	It is a static error if the initializing expression in a variable declaration cannot be executed because of a circularity (for example, the expression depends on a function that in turn depends on the value of the initialized variable).
+err:XQST0055
+
+	It is a static error if a Prolog contains more than one copy-namespaces declaration.
+err:XQST0056
+
+	(Not currently used.)
+err:XQST0057
+
+	It is a static error if a schema import binds a namespace prefix but does not specify a target namespace other than a zero-length string.
+err:XQST0058
+
+	It is a static error if multiple schema imports specify the same target namespace.
+err:XQST0059
+
+	It is a static error if an implementation is unable to process a schema or module import by finding a schema or module with the specified target namespace.
+err:XQST0060
+
+	It is a static error if the name of a function in a function declaration is not in a namespace (expanded QName has a null namespace URI).
+err:XQDY0061
+
+	It is a dynamic error if the operand of a validate expression is a document node whose children do not consist of exactly one element node and zero or more comment and processing instruction nodes, in any order.
+err:XQDY0062
+
+	(Not currently used.)
+err:XQST0063
+
+	(Not currently used.)
+err:XQDY0064
+
+	It is a dynamic error if the value of the name expression in a computed processing instruction constructor is equal to "XML" (in any combination of upper and lower case).
+err:XQST0065
+
+	A static error is raised if a Prolog contains more than one ordering mode declaration.
+err:XQST0066
+
+	A static error is raised if a Prolog contains more than one default element/type namespace declaration, or more than one default function namespace declaration.
+err:XQST0067
+
+	A static error is raised if a Prolog contains more than one construction declaration.
+err:XQST0068
+	
+	A static error is raised if a Prolog contains more than one boundary-space declaration.
+err:XQST0069
+
+	A static error is raised if a Prolog contains more than one empty order declaration.
+err:XQST0070
+
+	A static error is raised if the predefined namespace prefix xml or xmlns is redeclared or if another namespace prefix is bound to the namespace URI associated with the prefix xml.
+err:XQST0071
+
+	A static error is raised if the namespace declaration attributes of a direct element constructor do not have distinct names.
+err:XQDY0072
+
+	It is a dynamic error if the result of the content expression of a computed comment constructor contains two adjacent hyphens or ends with a hyphen.
+err:XQST0073
+
+	It is a static error if the graph of module imports contains a cycle (that is, if there exists a sequence of modules M1 ... Mn such that each Mi imports Mi+1 and Mn imports M1), unless all the modules in the cycle share a common namespace.
+err:XQDY0074
+
+	It is a dynamic error if the value of the name expression in a computed element or attribute constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found in statically known namespaces.)
+err:XQST0075
+
+	An implementation that does not support the Validation Feature must raise a static error if it encounters a validate expression.
+err:XQST0076
+
+	It is a static error if a collation subclause in an order by clause of a FLWOR expression does not identify a collation that is present in statically known collations.
+err:XQST0077
+
+	(Not currently used.)
+err:XQST0078
+
+	(Not currently used.)
+err:XQST0079
+
+	It is a static error if an extension expression contains neither a pragma that is recognized by the implementation nor an expression enclosed in curly braces.
+err:XPST0080
+
+	The target type of a cast or castable expression must be an atomic type that is in the in-scope schema types and is not xs:NOTATION or xs:anyAtomicType, optionally followed by the occurrence indicator "?"; otherwise a static error is raised.
+err:XPST0081
+
+	It is a static error if a QName used in a query contains a namespace prefix that cannot be expanded into a namespace URI by using the statically known namespaces.
+err:XQST0082
+
+	(Not currently used.)
+err:XPST0083
+
+	(Not currently used.)
+err:XQDY0084
+
+	It is a dynamic error if the element validated by a validate statement does not have a top-level element declaration in the in-scope element declarations, if validation mode is strict.
+err:XQST0085
+
+	It is a static error if the namespace URI in a namespace declaration attribute is a zero-length string, and the implementation does not support [XML Names 1.1].
+err:XQTY0086
+
+	It is a type error if the typed value of a copied element or attribute node is namespace-sensitive when construction mode is preserve and copy-namespaces mode is no-preserve.
+err:XQST0087
+
+	It is a static error if the encoding specified in a Version Declaration does not conform to the definition of EncName specified in [XML 1.0].
+err:XQST0088
+
+	It is a static error if the literal that specifies the target namespace in a module import or a module declaration is of zero length.
+err:XQST0089
+
+	It is a static error if a variable bound in a for clause of a FLWOR expression, and its associated positional variable, do not have distinct names (expanded QNames).
+err:XQST0090
+
+	It is a static error if a character reference does not identify a valid character in the version of XML that is in use.
+
+
+# Next error codes must be destroyed!
+
 err:XQ0023
 
     (Not currently used.)
-err:XQ0024
-
-    It is a type error if the content sequence in an element constructor contains an attribute node following a node that is not an attribute node.
-err:XQ0025
-
-    It is a dynamic error if any attribute of a constructed element does not have a name that is distinct from the names of all other attributes of the constructed element.
-err:XQ0026
-
-    It is a dynamic error if the result of the content expression of a computed processing instruction constructor contains the string "?>".
-err:XQ0027
-
-    In a validate expression, it is a dynamic error if validation fails.
-err:XQ0028
-
-    (Not currently used.)
-err:XP0029
-
-    It is a dynamic error in a cast expression if the input value does not satisfy the facets of the target type.
-err:XQ0030
-
-    It is a type error if the argument of a validate expression does not evaluate to exactly one document or element node.
-err:XQ0031
-
-    It is a static error if the version number specified in a version declaration is not supported by the implementation.
-err:XQ0032
-
-    A static error is raised if a Prolog contains more than one base URI declaration.
-err:XQ0033
-
-    It is a static error if a Prolog contains multiple declarations for the same namespace prefix.
-err:XQ0034
-
-    It is a static error if multiple functions declared or imported by a module have the same expanded QName and the same number of arguments.
-err:XQ0035
-
-    It is a static error to import two schema components that both define the same name in the same symbol space and in the same scope.
-err:XQ0036
-
-    It is a type error to import a module if the importing module's in-scope type definitions do not include definitions for the type names that appear in variable declarations, function parameters, or function returns found in the imported module.
-err:XQ0037
-
-    (Not currently used.)
-err:XQ0038
-
-    It is a static error if a Prolog contains more than one default collation declaration, or the value specified by a default collation declaration does not identify a collation known to the implementation.
-err:XQ0039
-
-    It is a static error for a function declaration to have more than one parameter with the same name.
-err:XQ0040
-
-    It is a static error if the attributes specified by a direct element constructor do not have distinct names.
-err:XQ0041
-
-    It is a dynamic error if the value of the name expression in a computed processing instruction constructor cannot be cast to the type xs:NCName.
-err:XQ0042
-
-    (Not currently used.)
-err:XQ0043
-
-    (Not currently used.)
-err:XQ0044
-
-    It is a dynamic error if the name expression of a computed attribute constructor returns a QName that is in the namespace http://www.w3.org/TR/REC-xml-names (corresponding to namespace prefix xmlns), or returns a QName that is in no namespace and has local name xmlns.
-err:XQ0045
-
-    It is a static error if the function name in a function declaration is in one of the following namespaces: http://www.w3.org/XML/1998/namespace, http://www.w3.org/2001/XMLSchema, http://www.w3.org/2001/XMLSchema-instance, http://www.w3.org/2004/10/xpath-functions, http://www.w3.org/2004/10/xpath-datatypes.
-err:XQ0046
-
-    It is a static error if a string that is required to contain a valid URI does not contain a valid lexical form according to the definition of xs:anyURI in [XML Schema].
-err:XQ0047
-
-    It is a static error if multiple module imports in the same Prolog specify the same target namespace.
-err:XQ0048
-
-    It is a static error if a function or variable declared in a library module is not in the target namespace of the library module.
-err:XQ0049
-
-    It is a static error if more than one variable declared or imported by a module has the same expanded QName.
-err:XP0050
-
-    It is a dynamic error if the dynamic type of the operand of a treat expression does not match the type specified by the treat expression.
-err:XP0051
-
-    It is a static error if a QName that is used as an AtomicType in a SequenceType is not defined in the in-scope type definitions as an atomic type.
-err:XQ0052
-
-    (Not currently used.)
-err:XQ0053
-
-    (Not currently used.)
-err:XQ0054
-
-    It is a static error if the initializing expression in a variable declaration cannot be executed because of a circularity (for example, the expression depends on a function that in turn depends on the value of the initialized variable).
-err:XQ0055
-
-    It is a static error if a Prolog contains more than one inherit-namespaces declaration.
-err:XQ0056
-
-    It is a static error if the target namespace specified in a module import is the same as the target namespace of the importing module.
-err:XQ0057
-
-    It is a static error if a schema import binds a namespace prefix but does not specify a target namespace other than a zero-length string.
-err:XQ0058
-
-    It is a static error if multiple schema imports specify the same target namespace.
-err:XQ0059
-
-    It is a static error if an implementation is unable to process a schema or module import by finding a schema or module with the specified target namespace.
-err:XQ0060
-
-    It is a static error if the name of a function in a function declaration is not in a namespace (expanded QName has an empty URI).
-err:XQ0061
-
-    It is a dynamic error if validity assessment is performed on a document node unless the children of the document node comprise exactly one element node, no text nodes, and zero or more comment and processing instruction nodes, in any order.
-err:XQ0062
-
-    It is a dynamic error if a document-level constraint is not satisfied when validity assessment is performed on a document node. Document-level constraints include identity constraints (xs:unique, xs:key, and xs:keyref) and ID/IDREF constraints.
-err:XQ0063
-
-    It is a static error if the URI specified by a default function namespace declaration is a zero-length string.
-err:XQ0064
-
-    It is a dynamic error if the value of the name expression in a computed processing instruction constructor is equal to "XML" (in any combination of upper and lower case).
-err:XQ0065
-
-    A static error is raised if a Prolog contains more than one ordering mode declaration.
-err:XQ0066
-
-    A static error is raised if a Prolog contains more than one default element/type namespace declaration, or more than one default function namespace declaration.
-err:XQ0067
-
-    A static error is raised if a Prolog contains more than one construction declaration.
-err:XQ0068
-
-    A static error is raised if a Prolog contains more than one Xmlspace declaration.
-err:XQ0069
-
-    A static error is raised if a Prolog contains more than one empty ordering declaration.
-err:XQ0070
-
-    A static error is raised if the predefined namespace prefix xml or xmlns is redeclared by a namespace declaration or namespace declaration attribute.
-err:XQ0071
-
-    A static error is raised if the namespace declaration attributes of a direct element constructor do not have distinct names.
-err:XQ0072
-
-    It is a dynamic error if the result of the content expression of a computed comment constructor contains two adjacent hyphens or ends with a hyphen.
-err:XQ0073
-
-    It is a static error if the graph of module imports contains a cycle (that is, if there exists a sequence of modules M1 ... Mn such that each Mi imports Mi+1 and Mn imports M1.)
-err:XQ0074
-
-    It is a dynamic error if the value of the name expression in a computed element constructor cannot be converted to an expanded QName (for example, because it contains a namespace prefix not found in statically known namespaces.
-
-
 
 
 ###############################################################################
@@ -261,61 +315,67 @@ err:XQ0074
 ###############################################################################
 err:FOER0000
 
-    Unidentified error.
+	Unidentified error.
 err:FOAR0001
+	
+	Division by zero. This error is raised whenever an attempt is made to divide by zero.
 
-    This error is raised whenever an attempt is made to divide by zero.
-err:FOAR0002
+err:FOAR0002 
 
-    This error is raised whenever numeric operations result in an overflow or underflow.
-err:FOCA0001
+	Numeric operation overflow/underflow. This error is raised whenever numeric operations result in an overflow or underflow.
+err:FOCA0001 
 
-    Input value too large for decimal
+	Input value too large for decimal. 
+	
 err:FOCA0002
 
-    Invalid lexical value
+	Invalid lexical value. 
 err:FOCA0003
 
-    Input value too large for integer
-err:FOCA0004
-
-    Error in casting to integer
+	Input value too large for integer. 
 err:FOCA0005
 
-    NaN supplied as float/double value
-err:FOCH0001
+	NaN supplied as float/double value. 
+err:FOCA0006
 
-    Codepoint not valid
+	String to be cast to decimal has too many digits of precision. 
+err:FOCH0001
+	
+	Code point not valid. 
 err:FOCH0002
 
-    Unsupported collation
+	Unsupported collation. 
 err:FOCH0003
 
-    Unsupported normalization form
+	Unsupported normalization form. 
 err:FOCH0004
 
-    Collation does not support collation units
+	Collation does not support collation units. 
 err:FODC0001
 
-    No context document
+	No context document. 
 err:FODC0002
 
-    Error retrieving resource
+	Error retrieving resource. 
+err:FODC0003
+
+	Function stability not defined. 
 err:FODC0004
 
-    Invalid argument to fn:collection()
+	Invalid argument to fn:collection. 
 err:FODC0005
 
-    Invalid argument to fn:doc
+	Invalid argument to fn:doc. 
 err:FODT0001
 
-    Overflow in date/time arithmetic
+	Overflow/underflow in date/time operation. 
 err:FODT0002
 
-    Overflow in duration arithmetic
-err:FODT003
+	Overflow/underflow in duration operation. 
+err:FODT0003
 
-    Invalid timezone value
+	Invalid timezone value. 
+
 err:FODT004
 
     Invalid gDay value
@@ -358,63 +418,52 @@ err:FODT016
 err:FODT017
 
     Invalid dateTime value, missing a separator
-err:FONC0001
-
-    Undefined context item
-err:FONS0003
-
-    No prefix defined for namespace
 err:FONS0004
 
-    No namespace found for prefix
+	No namespace found for prefix. 
 err:FONS0005
 
-    Base uri not defined in the static context
+	Base-uri not defined in the static context. 
 err:FORG0001
 
-    Invalid value for cast/constructor
+	Invalid value for cast/constructor. 
 err:FORG0002
 
-    Invalid argument to fn:resolve-uri()
+	Invalid argument to fn:resolve-uri(). 
 err:FORG0003
 
-    fn:zero-or-one called with a sequence containing more than one item
+	fn:zero-or-one called with a sequence containing more than one item. 
 err:FORG0004
 
-    fn:one-or-more called with a sequence containing no items
+	fn:one-or-more called with a sequence containing no items. 
 err:FORG0005
 
-    fn:exactly-one called with a sequence containing zero or more than one item
+	fn:exactly-one called with a sequence containing zero or more than one item. 
 err:FORG0006
 
-    Invalid argument type
-err:FORG0007
-
-    Invalid argument to aggregate function
+	Invalid argument type. 
 err:FORG0008
 
-    Both arguments to fn:dateTime have a speciified timezone.
+	Both arguments to fn:dateTime have a specified timezone. 
 err:FORG0009
 
-    Base uri argument to fn:resolve-uri is not an absolute uri
+	Error in resolving a relative URI against a base URI in fn:resolve-uri. 
 err:FORX0001
 
-    Invalid regular expression flags
+	Invalid regular expression. flags 
 err:FORX0002
 
-    Invalid regular expression
+	Invalid regular expression. 
 err:FORX0003
 
-    Regular expression matches zero-length string
+	Regular expression matches zero-length string. 
 err:FORX0004
 
-    Invalid replacement string
-err:FOTY0011
-
-    Context item is not a node
+	Invalid replacement string. 
 err:FOTY0012
 
-    Items not comparable
+	Argument node does not have a typed value. 
+
 
 
 ###############################################################################

@@ -83,7 +83,7 @@ void PPAxisSelf::next   (tuple &t)
 			{
 				child.op->next(t);
 				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{
@@ -118,7 +118,7 @@ void PPAxisSelf::next   (tuple &t)
 			{
 				child.op->next(t);
 				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{
@@ -153,7 +153,7 @@ void PPAxisSelf::next   (tuple &t)
 			{
 				child.op->next(t);
 				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{

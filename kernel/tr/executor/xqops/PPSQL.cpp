@@ -461,13 +461,13 @@ void PPFnSQLExecute::next(tuple &t)
 		arr[0].op->next(tmp);
 
 		if (tmp.is_eos())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		arr[0].op->next(tmp);
 		if (!tmp.is_eos())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 
 		if (handle == NULL)
 			throw USER_EXCEPTION(SE2101);
@@ -606,13 +606,13 @@ void PPFnSQLPrepare::next(tuple &t)
 		connection.op->next(tmp);
 
 		if (tmp.is_eos())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		connection.op->next(tmp);
 		if (!tmp.is_eos())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 
 		if (handle == NULL)
 			throw USER_EXCEPTION(SE2101);
@@ -694,14 +694,14 @@ void PPFnSQLClose::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	handle_id = tmp.cells[0].get_xs_integer();
 	handle = sql_handle_manager->get_handle(handle_id);
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
 		throw USER_EXCEPTION(SE2101);
@@ -763,13 +763,13 @@ void PPFnSQLCommit::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
 		throw USER_EXCEPTION(SE2101);
@@ -829,13 +829,13 @@ void PPFnSQLRollback::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
 		throw USER_EXCEPTION(SE2101);

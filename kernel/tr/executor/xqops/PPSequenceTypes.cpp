@@ -62,12 +62,12 @@ void PPCast::next  (tuple &t)
                 t.set_eos();
                 return;
             }
-            else throw USER_EXCEPTION2(XP0006, "cast expression ('?' is not specified in target type but empty sequence is given)");
+            else throw USER_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
 
         tuple_cell tc = atomize(child.get(t));
 
         child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XP0006, "cast expression (the result of atomization is a sequence of more than one atomic value)");
+        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
 
         t.copy(cast(tc, target_type));
     }
@@ -112,9 +112,9 @@ bool PPCast::result(PPIterator* cur, variable_context *cxt, void*& r)
             r = child_seq;
             return true;
         }
-        else throw USER_EXCEPTION2(XP0006, "cast expression ('?' is not specified in target type but empty sequence is given)");
+        else throw USER_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
 
-    if (child_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "cast expression (the result of atomization is a sequence of more than one atomic value)");
+    if (child_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
 
     tuple t(1);
     child_seq->get(t, child_seq->begin());
@@ -360,8 +360,7 @@ void PPTreat::next(tuple &t)
         first_time = false;
         if (!eos_reached) child.op->reopen();
         bool res = type_matches(child, s, t, eos_reached, st);
-        //!!! FIXME: error code must be XPDY0050 there
-        if(res == false) throw USER_EXCEPTION(XP0050);
+        if(res == false) throw USER_EXCEPTION(XPDY0050);
     }
    
     if(pos < s->size())

@@ -355,7 +355,7 @@ xptr OperationSednaDataSource::get_next_doc()
    tuple_cell& tc= t.cells[0];
    if (!tc.is_node())
    {
-	   throw USER_EXCEPTION2(XP0006, "atomic values are not supported in full-text queries");
+	   throw USER_EXCEPTION2(XPTY0004, "atomic values are not supported in full-text queries");
    }
    return tc.get_node();
 }

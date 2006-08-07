@@ -97,7 +97,7 @@ char * static_context::get_uri_by_prefix(const NCName& _prefix,t_item type) cons
 		if (it!=insc_ns.end()&& it->second.size()>0)
 			uri=it->second.back()->uri;
 		else
-			throw USER_EXCEPTION(XP0008);
+			throw USER_EXCEPTION(XPST0008);
 	}
 	return uri;
 }
@@ -114,7 +114,7 @@ xml_ns* static_context::get_xmlns_by_prefix(const NCName& _prefix)
 		if (it!=insc_ns.end()&& it->second.size()>0)
 			return it->second.back();
 		else
-			throw USER_EXCEPTION(XP0008);
+			throw USER_EXCEPTION(XPST0008);
 	}
 }
 void static_context::clear_context()

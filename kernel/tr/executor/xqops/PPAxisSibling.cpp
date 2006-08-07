@@ -119,7 +119,7 @@ void PPAxisSibling::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		xptr tmp=child.get(t).get_node();
 		CHECKP(tmp);
 		if (is_node_attribute(tmp)||GETSCHEMENODEX(tmp)->parent->type==virtual_root)continue;
@@ -168,7 +168,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         xptr tmp=child.get(t).get_node();
 		CHECKP(tmp);
@@ -287,7 +287,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		CHECKP(cur);

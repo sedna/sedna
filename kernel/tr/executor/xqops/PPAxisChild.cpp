@@ -72,7 +72,7 @@ void PPAxisChild::next_processing_instruction(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -82,7 +82,7 @@ void PPAxisChild::next_comment(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -93,7 +93,7 @@ void PPAxisChild::next_text(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getChildPointerXptr(child.get(t).get_node(), NULL, text, NULL);
     }
@@ -109,7 +109,7 @@ void PPAxisChild::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderNoneAttributeChild(child.get(t).get_node());
     }
@@ -130,7 +130,7 @@ void PPAxisChild::next_qname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
@@ -150,7 +150,7 @@ void PPAxisChild::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderElementChild(child.get(t).get_node());
     }
@@ -166,7 +166,7 @@ void PPAxisChild::next_wildcard_ncname_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname, element),
@@ -186,7 +186,7 @@ void PPAxisChild::next_wildcard_star_ncname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          NULL,
@@ -231,7 +231,7 @@ sequence *PPAxisChild::next_text_s(sequence *data_seq, PPAxisChild* cur_op)
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getChildPointerXptr(tc.get_node(), NULL, text,NULL);
 
@@ -257,7 +257,7 @@ sequence *PPAxisChild::next_node_s(sequence *data_seq, PPAxisChild* cur_op)
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderNoneAttributeChild(tc.get_node());
 
@@ -288,7 +288,7 @@ sequence *PPAxisChild::next_qname_s(sequence *data_seq, PPAxisChild* cur_op)
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getChildPointerXptr(tc.get_node(), 
                                   cur_op->nt_data.qname.LocalPart.c_str(), 
@@ -316,7 +316,7 @@ sequence *PPAxisChild::next_wildcard_star_s(sequence *data_seq, PPAxisChild* cur
     {
         data_seq->get(t, i);
         tuple_cell tc = t.cells[0];
-        if (!(tc.is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(tc.is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderElementChild(tc.get_node());
 

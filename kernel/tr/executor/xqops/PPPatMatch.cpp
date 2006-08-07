@@ -151,7 +151,7 @@ void PPPatMatch::next  (tuple &t)
 				t1c.set_xtype(xs_string);
 			else
 				if (!t1c.is_string_type())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 		}
 		seq2.op->next(t);
 		tuple_cell t2c= t.cells[0];
@@ -163,7 +163,7 @@ void PPPatMatch::next  (tuple &t)
 				t2c.set_xtype(xs_string);
 			else		
 				if (!t2c.is_string_type())
-					throw USER_EXCEPTION(XP0006);
+					throw USER_EXCEPTION(XPTY0004);
 		}
 		tuple_cell t3c;
 		tuple_cell t4c;
@@ -179,7 +179,7 @@ void PPPatMatch::next  (tuple &t)
 				t3c.set_xtype(xs_string);
 				else		
 				if (!t3c.is_string_type())
-					throw USER_EXCEPTION(XP0006);
+					throw USER_EXCEPTION(XPTY0004);
 			}
 			if (ch_cnt>3)
 			{
@@ -193,7 +193,7 @@ void PPPatMatch::next  (tuple &t)
 						t4c.set_xtype(xs_string);
 					else		
 						if (!t4c.is_string_type())
-							throw USER_EXCEPTION(XP0006);
+							throw USER_EXCEPTION(XPTY0004);
 				}
 			}
 		}
@@ -205,25 +205,25 @@ void PPPatMatch::next  (tuple &t)
 		{
 			seq1.op->next(t);
 			if (!t.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		if (!t2c.is_eos())
 		{
 			seq2.op->next(t);
 			if (!t.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		if (!t3c.is_eos())
 		{
 			seq3.op->next(t);
 			if (!t.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		if (!t4c.is_eos())
 		{
 			seq4.op->next(t);
 			if (!t.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		//apply function
 		(this->*comp_fun)(t,&t1c,&t2c,&t3c,&t4c);
@@ -246,7 +246,7 @@ void PPPatMatch::matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,
 	}
 	//2. light atomization of second parameter
 	if (t2->is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
 	tuple_cell tflags = tuple_cell::eos();
@@ -267,7 +267,7 @@ void PPPatMatch::replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,
 	}
 	//2. light atomization of second parameter
 	if (t2->is_eos())
-		throw USER_EXCEPTION(XP0006);
+		throw USER_EXCEPTION(XPTY0004);
 
 	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
 	tuple_cell tf=tuple_cell::make_sure_light_atomic(*t3);
