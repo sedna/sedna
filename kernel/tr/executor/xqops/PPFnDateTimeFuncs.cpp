@@ -56,7 +56,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
  	    xmlscm_type tc_type = tc.get_atomic_type();
 
             child.op->next(t);
-              if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:dateTime function is more than 1");
+              if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
 
 	    switch (dateTimeFunc)
 	    {
@@ -67,7 +67,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_yearMonthDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_date )
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 						
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getYears()));
 					break;
@@ -78,7 +78,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_yearMonthDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_date )
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getMonths()));
 					break;
@@ -89,7 +89,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_dayTimeDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_date )
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getDays()));
 					break;
@@ -100,7 +100,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_dayTimeDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getHours()));
 					break;
@@ -111,7 +111,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_dayTimeDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getMinutes()));
 					break;
@@ -122,7 +122,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xdt_dayTimeDuration &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getSeconds()));
 					break;
@@ -132,7 +132,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 					if (tc_type != xs_date &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic(xdt_dayTimeDuration,
 							tc.get_xs_dateTime().getTimezone().getRawData()));
@@ -143,12 +143,12 @@ void PPFnDateTimeFunc::next  (tuple &t)
 					if (tc_type != xs_date &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic(tc.get_atomic_type(), 
 							adjustToTimezone(tc.get_xs_dateTime()).getRawData()));
 					break;
-		default:		throw USER_EXCEPTION2(XP0006, "Invalid date/time function");
+		default:		throw USER_EXCEPTION2(XPTY0004, "Invalid date/time function");
 		}
          }		
     }
@@ -231,7 +231,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 		xmlscm_type secondArgType = secondArg.get_atomic_type();
 
                 child2.op->next(t);
-            	  if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:dateTime function is more than 1");
+            	  if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
 
 	    	switch (dateTimeFunc)
 	    	{
@@ -241,10 +241,10 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 					if (firstArgType != xs_date &&
 						firstArgType != xs_dateTime &&
 						firstArgType != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed as first argument to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed as first argument to fn:dateTime function");
 
 					if (secondArgType != xdt_dayTimeDuration)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed as second argument to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed as second argument to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic(firstArgType,
 							adjustToTimezone(firstArg.get_xs_dateTime(), 
@@ -255,7 +255,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 	    else
 	    {	
             	child1.op->next(t);
-            	  if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:dateTime function is more than 1");
+            	  if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
 
 	    	switch (dateTimeFunc)
 	    	{
@@ -265,7 +265,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 					if (firstArgType != xs_date &&
 						firstArgType != xs_dateTime &&
 						firstArgType != xs_time)
-					throw USER_EXCEPTION2(XP0006, "Invalid type passed to fn:dateTime function");
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 
 					t.copy(tuple_cell::atomic(firstArgType,
 							adjustToTimezone(firstArg.get_xs_dateTime()).getRawData()));

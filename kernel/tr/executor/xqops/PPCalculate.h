@@ -201,13 +201,13 @@ public:
 
         children->at(i).op->next(t);
         if (t.is_eos()) return atomize(tc);
-        else throw USER_EXCEPTION(XP0006);
+        else throw USER_EXCEPTION(XPTY0004);
     }
     tuple_cell result(/**/std::vector<void*>& v/**/)
     {
         sequence *s = (sequence*)(v[i]);
         if (s->size() == 0) return tuple_cell::eos();
-        if (s->size() != 1) throw USER_EXCEPTION(XP0006);
+        if (s->size() != 1) throw USER_EXCEPTION(XPTY0004);
         s->get(t, 0);
         return atomize(t.cells[0]);
     }

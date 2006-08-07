@@ -103,7 +103,7 @@ void PPAxisAncestor::next_processing_instruction(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -113,7 +113,7 @@ void PPAxisAncestor::next_comment(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -123,7 +123,7 @@ void PPAxisAncestor::next_text(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
     }
 }
 
@@ -134,7 +134,7 @@ void PPAxisAncestor::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);
@@ -160,7 +160,7 @@ void PPAxisAncestor::next_qname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);		
@@ -197,7 +197,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);		
@@ -234,7 +234,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
@@ -274,7 +274,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);        

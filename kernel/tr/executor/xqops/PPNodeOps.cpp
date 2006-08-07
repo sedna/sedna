@@ -58,12 +58,12 @@ void PPFnName::next  (tuple &t)
             return;
         }
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of fn:name is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
 
         tuple_cell tc = dm_node_name(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of fn:name is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
 
         if (tc.is_eos())
         {
@@ -112,9 +112,9 @@ bool PPFnName::result(PPIterator* cur, variable_context *cxt, void*& r)
         return true;
     }
 
-    if (d_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Argument of fn:name is not a node");
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
     tuple_cell tc = d_seq->get_00();
-    if (!(tc.is_node())) throw USER_EXCEPTION2(XP0006, "Argument of fn:name is not a node");
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
 
     tc.set_xtype(xs_string); // !!! dangerous
     r = new sequence(dm_node_name(tc.get_node()));

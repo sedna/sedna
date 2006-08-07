@@ -11,7 +11,7 @@
 
 inline tuple_cell getAtomizedCell(tuple& tup)
 {
-	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XP0006, "Name argument of Constructor is not a single atomic value");
+	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
 }
 int PPRange::getIntFromOp(PPOpIn & op)
@@ -25,7 +25,7 @@ int PPRange::getIntFromOp(PPOpIn & op)
 	}
 	tuple_cell res=getAtomizedCell(t);
 	op.op->next(t);
-	if (!(t.is_eos())) throw USER_EXCEPTION(XP0006);
+	if (!(t.is_eos())) throw USER_EXCEPTION(XPTY0004);
 	return cast_to_xs_integer(res).get_xs_integer();
 }
 

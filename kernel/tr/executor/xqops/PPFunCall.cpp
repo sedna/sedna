@@ -23,14 +23,14 @@ void fun_conv_rules::next(tuple &t)
 
     switch (st->oi)
     {
-        case st_empty			: if (num != 0) throw USER_EXCEPTION2(XP0006, "Value does not match the required type in function call");
+        case st_empty			: if (num != 0) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
-        case st_one				: if (num != 1) throw USER_EXCEPTION2(XP0006, "Value does not match the required type in function call");
+        case st_one				: if (num != 1) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
-        case st_optional		: if (!(num == 0 || num == 1)) throw USER_EXCEPTION2(XP0006, "Value does not match the required type in function call");
+        case st_optional		: if (!(num == 0 || num == 1)) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
         case st_zero_or_more	: break;
-        case st_one_or_more		: if (!(num >= 1)) throw USER_EXCEPTION2(XP0006, "Value does not match the required type in function call");
+        case st_one_or_more		: if (!(num >= 1)) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
         default					: throw USER_EXCEPTION2(SE1003, "Unexpected case in fcr::next");
     }
@@ -55,7 +55,7 @@ void fun_conv_rules::next(tuple &t)
     }
 
     if (!type_matches_single(tc, st->type))
-        throw USER_EXCEPTION2(XP0006, "Value does not match the required type in function call");
+        throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
 }
 
 #ifdef STRICT_FUNS

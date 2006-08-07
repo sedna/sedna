@@ -80,7 +80,7 @@ void PPNodeComparison::next  (tuple &t)
 		
 		//1. operands verify
 		if (!( (t1.cells[0].is_node()||t1.is_eos())&&((t2.cells[0].is_node()||t2.is_eos()))))
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 		//2. emty sequence check
 		if (t1.is_eos()||t2.is_eos())
 		{
@@ -127,13 +127,13 @@ void PPNodeComparison::next  (tuple &t)
 		{
 			seq1.op->next(t1);
 			if (!t1.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		if (!t2.is_eos())
 		{
 			seq2.op->next(t2);
 			if (!t2.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
     }
     else 

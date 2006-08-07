@@ -63,7 +63,7 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XP0006, "Argument of except is not a node");
+                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of except is not a node");
                 xptr1 = child1.get(t).get_node();
             }
             tug_first = false;
@@ -78,7 +78,7 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XP0006, "Argument of except is not a node");
+                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of except is not a node");
                 xptr2 = child2.get(t).get_node();
             }
             tug_second = false;

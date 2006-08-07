@@ -44,12 +44,12 @@ tuple_cell getQnameParameter(PPOpIn qname)
 	tuple name(qname.ts);
 	qname.op->next(name);
 	if (name.is_eos()) throw USER_EXCEPTION2(SE1003, " name argument of Constructor is wrong");
-	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XP0006);
+	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XPTY0004);
 	tuple_cell res=atomize(name.cells[0]);
 	res=cast_to_xs_QName(res);
 	res=tuple_cell::make_sure_light_atomic(res);
 	qname.op->next(name);
-	if (!(name.is_eos())) throw USER_EXCEPTION(XP0006);
+	if (!(name.is_eos())) throw USER_EXCEPTION(XPTY0004);
 	return res;
 }
 /*tuple_cell getStringParameter(PPOpIn content)
@@ -391,7 +391,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 				case attribute:
 					{
-						if (!mark_attr) throw USER_EXCEPTION(XQ0024);
+						if (!mark_attr) throw USER_EXCEPTION(XQTY0024);
 					}
 				}
 				if (conscnt>cnt)
@@ -1013,7 +1013,7 @@ void PPPIConstructor::next  (tuple &t)
         {
             delete prefix->n;
             delete prefix;
-			throw USER_EXCEPTION(XQ0041);
+			throw USER_EXCEPTION(XQDY0041);
         }
 		const char* value=at_value;
 		tuple_cell res;

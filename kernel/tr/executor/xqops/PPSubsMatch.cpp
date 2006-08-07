@@ -204,7 +204,7 @@ void PPSubsMatch::next  (tuple &t)
 				t1c.set_xtype(xs_string);
 			else
 				if (!t1c.is_string_type())
-			throw USER_EXCEPTION(XP0006);
+			throw USER_EXCEPTION(XPTY0004);
 		}
 		tuple_cell t2c= t2.cells[0];
 		if (t2.is_eos())t2c.set_eos();
@@ -215,7 +215,7 @@ void PPSubsMatch::next  (tuple &t)
 				t2c.set_xtype(xs_string);
 			else		
 				if (!t2c.is_string_type())
-					throw USER_EXCEPTION(XP0006);
+					throw USER_EXCEPTION(XPTY0004);
 		}
 		bool mark=false;
 		// memory mapping
@@ -293,13 +293,13 @@ void PPSubsMatch::next  (tuple &t)
 		{
 			seq1.op->next(t1);
 			if (!t1.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 		if (!t2c.is_eos())
 		{
 			seq2.op->next(t2);
 			if (!t2.is_eos())
-				throw USER_EXCEPTION(XP0006);
+				throw USER_EXCEPTION(XPTY0004);
 		}
 	}
     else 

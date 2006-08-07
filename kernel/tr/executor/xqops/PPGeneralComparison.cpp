@@ -203,7 +203,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		catch(...)
 		{
 		 if (max_num)
-			 throw USER_EXCEPTION(XP0021);
+			 throw USER_EXCEPTION(FORG0001);
 			min_num_cast=true;
 		}
 		try
@@ -227,7 +227,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		catch(...)
 		{
 			if (max_dat)
-			 throw USER_EXCEPTION(XP0021);
+			 throw USER_EXCEPTION(FORG0001);
 			min_dat_cast=true;
 		}
 		return ret_type;
@@ -310,7 +310,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		catch(...)
 		{
 			if (min_num)
-			 throw USER_EXCEPTION(XP0021);
+			 throw USER_EXCEPTION(FORG0001);
 			max_num_cast=true;
 		}
 		try
@@ -334,7 +334,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		catch(...)
 		{
 			if (min_dat)
-			 throw USER_EXCEPTION(XP0021);
+			 throw USER_EXCEPTION(FORG0001);
 			max_dat_cast=true;
 		}
 		return ret_type;

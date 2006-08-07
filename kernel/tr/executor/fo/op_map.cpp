@@ -779,7 +779,7 @@ tuple_cell _op_numeric_generic(xq_binary_op_type t, const tuple_cell &a1, const 
     int i1 = (info.numeric_index)(a1.get_atomic_type());
     int i2 = (info.numeric_index)(a2.get_atomic_type());
     if ((i1 == -1) || (i2 == -1))
-        throw USER_EXCEPTION2(XP0006, _op_numeric_binary_generic_err_c_str(t));
+        throw USER_EXCEPTION2(XPTY0004, _op_numeric_binary_generic_err_c_str(t));
     else
         return ((info.numeric_table)[i1][i2])(a1, a2);
 }
@@ -798,7 +798,7 @@ tuple_cell _op_generic(xq_binary_op_type t, const tuple_cell &a1, const tuple_ce
     bin_op_tuple_cell_tuple_cell op = (info.map_table)[info.map_table_side_size * i1 + i2];
 
     if ((i1 == -1) || (i2 == -1) || (op == NULL))
-	throw USER_EXCEPTION2(XP0006, _op_binary_generic_err_c_str(t));
+	throw USER_EXCEPTION2(XPTY0004, _op_binary_generic_err_c_str(t));
 
     else
         return op(a1, a2);
@@ -908,7 +908,7 @@ tuple_cell _op_generic(xq_unary_op_type t, const tuple_cell &a1, const char* (*e
 
     int i1 = simple_type2un_op_numeric_index(a1.get_atomic_type());
     if (i1 == -1)
-        throw USER_EXCEPTION2(XP0006, err_msg_fun(t));
+        throw USER_EXCEPTION2(XPTY0004, err_msg_fun(t));
     else
         return (xq_unary_op_info[(int)t].numeric_table[i1])(a1);
 }

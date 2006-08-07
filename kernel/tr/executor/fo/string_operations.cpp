@@ -266,7 +266,7 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool treat_xdt
         && a2.is_atomic() && (a2.get_atomic_type() == xs_string || (treat_xdt_untypedAtomic_as_xs_string && a2.get_atomic_type() == xdt_untypedAtomic)))
         ;
     else
-        throw USER_EXCEPTION2(XP0006, "Calling fn:compare on non-string values");
+        throw USER_EXCEPTION2(XPTY0004, "Calling fn:compare on non-string values");
 
 /*
     ASSERT(a1.get_type() == tc_light_atomic || 

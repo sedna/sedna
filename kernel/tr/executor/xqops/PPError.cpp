@@ -38,14 +38,14 @@ void PPFnError::next  (tuple &t)
 {
     child.op->next(t);
 
-    if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Wrong arguments in function fn:error");
+    if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
     tuple_cell tc = child.get(t);
     if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION2(XP0006, "Wrong arguments in function fn:error");
+        throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
     child.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION2(XP0006, "Wrong arguments in function fn:error");
+    if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
         
     tc = tuple_cell::make_sure_light_atomic(tc);
 

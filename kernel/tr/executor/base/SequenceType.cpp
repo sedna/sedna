@@ -284,23 +284,19 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 	if(is_derived(t1, t2)) return t2;
 	if(is_derived(t2, t1)) return t1;
 	
-	/////////////////////////////////////////////////////////////////////
-	//FIXME!!! XP0006 is not correct code - XPTY0004 must be there
-	/////////////////////////////////////////////////////////////////////
-
 	switch (t1)
     {
         case xdt_yearMonthDuration	: 
         	switch(t2)
         	{
         		case xdt_dayTimeDuration    : return xs_duration;
-        		default                     : throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+        		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type.");
+        case xdt_dayTimeDuration	: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
             switch(t2)
         	{
         		case xdt_yearMonthDuration  : return xs_duration;
-        		default                     : throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+        		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_float				: 
         	switch(t2)
@@ -320,7 +316,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_unsignedByte        : 
 				case xs_positiveInteger     : return xs_float;
 				case xs_double				: return xs_double;
-		        default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+		        default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
 		   	}
         case xs_double				:
         	switch(t2)
@@ -340,18 +336,18 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_unsignedShort       : 
 				case xs_unsignedByte        : 
 				case xs_positiveInteger     : return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         
         case xs_string				: 
    	        if(t2 == xs_anyURI) return xs_string;
-   	        else throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+   	        else throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         case xs_normalizedString	: 
    	        if(t2 == xs_anyURI) return xs_string;
- 	        else throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+ 	        else throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         case xs_token				: 
  	        if(t2 == xs_anyURI) return xs_string;
-   	        else throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+   	        else throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         case xs_language			: 
             switch(t2)
 	       	{
@@ -362,7 +358,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_ID					: return xs_token;
 		        case xs_IDREF				: return xs_token;
 		        case xs_ENTITY				: return xs_token;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_NMTOKEN				: 
             switch(t2)
@@ -374,7 +370,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_ID					: return xs_token;
 		        case xs_IDREF				: return xs_token;
 		        case xs_ENTITY				: return xs_token;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_Name				: 
             switch(t2)
@@ -382,7 +378,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
         		case xs_anyURI              : return xs_string;
 		        case xs_language			: return xs_token;
         		case xs_NMTOKEN				: return xs_token;
-		        default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+		        default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_NCName				: 
             switch(t2)
@@ -390,7 +386,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
         		case xs_anyURI              : return xs_string;
         		case xs_language			: return xs_token;
 		        case xs_NMTOKEN				: return xs_token;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_ID					: 
         	switch(t2)
@@ -400,7 +396,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_NMTOKEN				: return xs_token;
 				case xs_IDREF 			    : return xs_NCName;
 				case xs_ENTITY				: return xs_NCName;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_IDREF				: 
            	switch(t2)
@@ -410,7 +406,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_NMTOKEN				: return xs_token;
 				case xs_ID	 			    : return xs_NCName;
 				case xs_ENTITY				: return xs_NCName;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_ENTITY				: 
            	switch(t2)
@@ -420,7 +416,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_NMTOKEN				: return xs_token;
 				case xs_ID 				    : return xs_NCName;
 				case xs_IDREF				: return xs_NCName;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         
         case xs_decimal				: 
@@ -429,7 +425,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 	       	{
 		        case xs_float				: return xs_float;
 				case xs_double				: return xs_double;
-		        default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+		        default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
 		   	}
         
         case xs_anyURI				: 
@@ -445,11 +441,11 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 		        case xs_ID					: 
 		        case xs_IDREF				: 
 		        case xs_ENTITY				: return xs_string;
-		        default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+		        default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         
-        case xs_QName				: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type.");
-        case xs_NOTATION			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type.");
+        case xs_QName				: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
+        case xs_NOTATION			: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
 
         case xs_nonPositiveInteger  : 
 		case xs_negativeInteger     :
@@ -467,7 +463,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_positiveInteger     : return xs_integer;
         		case xs_float				: return xs_float;
          		case xs_double				: return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 		
 		case xs_long                : 
@@ -486,7 +482,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_positiveInteger     : return xs_integer;
         		case xs_float				: return xs_float;
          		case xs_double				: return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 		
 		case xs_nonNegativeInteger  :
@@ -500,7 +496,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_byte                : return xs_integer;
         		case xs_float				: return xs_float;
          		case xs_double				: return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 
 		case xs_unsignedLong        : 
@@ -518,7 +514,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_positiveInteger     : return xs_nonNegativeInteger;
         		case xs_float				: return xs_float;
          		case xs_double				: return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 		
 		case xs_positiveInteger     : 
@@ -536,7 +532,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				case xs_unsignedByte        : return xs_nonNegativeInteger;
         		case xs_float				: return xs_float;
          		case xs_double				: return xs_double;
-				default						: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
+				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 
         case xdt_untypedAtomic		: 
@@ -551,7 +547,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
         case xs_gMonth				: 
         case xs_boolean				: 
         case xs_base64Binary		: 
-        case xs_hexBinary			: throw USER_EXCEPTION2(XP0006, "Types could not be converted to a common type in evaluate_common_type.");
+        case xs_hexBinary			: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
         default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to evaluate_common_type.");
     }
 }

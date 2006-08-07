@@ -66,7 +66,7 @@ void PPFnString::next  (tuple &t)
             tc = cast_to_xs_string(child.get(t));
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Length of sequence passed to fn:string is more than 1");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string is more than 1");
 
         t.copy(tc);
     }
@@ -197,12 +197,12 @@ void PPFnDocumentURI::next  (tuple &t)
             return;
         }
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XP0006, "Argument of fn:document-uri is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
 
         tuple_cell tc = dm_document_uri(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Argument of fn:document-uri is not a node");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
 
         if (tc.is_eos())
         {

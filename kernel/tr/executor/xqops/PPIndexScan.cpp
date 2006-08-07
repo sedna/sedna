@@ -147,13 +147,13 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
     {
         tuple t(1);
         child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Value argument of index-scan is not a single sequence");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
 
         tc = child.get(t);
         tc = atomize(tc);
 
         child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XP0006, "Value argument of index-scan is not a single sequence");
+        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
     }
 
 

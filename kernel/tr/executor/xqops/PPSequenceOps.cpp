@@ -239,12 +239,12 @@ void PPFnItemAt::next(tuple &t)
         first_time = false;
 
         pos_child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XP0006, "Invalid argument to fn:item-at");
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
 
         int pos = cast_to_xs_integer(pos_child.get(t)).get_xs_integer();
 
         pos_child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XP0006, "Invalid argument to fn:item-at");
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
         if (pos < 1) throw USER_EXCEPTION(SE1007);
 
         for (int i = 1; i <= pos; i++)
@@ -308,7 +308,7 @@ bool PPFnItemAt::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     sequence* pos_seq = (sequence*)pos_r;
-    if (pos_seq->size() != 1) throw USER_EXCEPTION2(XP0006, "Invalid argument to fn:item-at");
+    if (pos_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
 
     int pos = cast_to_xs_integer(pos_seq->get_00()).get_xs_integer();
 

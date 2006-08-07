@@ -13,7 +13,7 @@
 
 inline tuple_cell getAtomizedCell(tuple& tup)
 {
-	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XP0006, "Name argument of Constructor is not a single atomic value");
+	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
 }
 ///////////////////////////////////////////////////////////////////////////////

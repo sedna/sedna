@@ -88,7 +88,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
     (cond ((string=? word "integer_divide")
            (if
             (or (not (eq? type1 'xs_integer)) (not (eq? type2 'xs_integer)))
-            (out "    throw USER_EXCEPTION2(XP0006, \"Can not perform idiv operation on types other than xs:integer\");")
+            (out "    throw USER_EXCEPTION2(XPTY0004, \"Can not perform idiv operation on types other than xs:integer\");")
             (begin
               (out "    ")
               (out-XMLSchema-type-as-C-type gct)
@@ -202,12 +202,12 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
                   (out "(a1, a2);")
                   (nl)
                   (loop2 (cdr inner)))))
-          (out "            default: throw USER_EXCEPTION2(XP0006, \"Invalid arguments of a numeric operation\");")
+          (out "            default: throw USER_EXCEPTION2(XPTY0004, \"Invalid arguments of a numeric operation\");")
           (nl)
           (out "            }")
           (nl)
           (loop1 (cdr outer)))))
-  (out "    default: throw USER_EXCEPTION2(XP0006, \"Invalid arguments of a numeric operation\");")
+  (out "    default: throw USER_EXCEPTION2(XPTY0004, \"Invalid arguments of a numeric operation\");")
   (nl)
   (out "    }")
   (nl)

@@ -122,7 +122,7 @@ void PPAxisFP::next_node(tuple &t)
         child.op->next(t);
         if (t.is_eos()) 		
 			return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		if (following)
 			cur = getNextNDNode(child.get(t).get_node());
 		else
@@ -173,7 +173,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         base = child.get(t).get_node();
 		if (following)
@@ -266,7 +266,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
         child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XP0020);
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 		
         base = child.get(t).get_node();
 		is_col=is_node_in_collection(base);

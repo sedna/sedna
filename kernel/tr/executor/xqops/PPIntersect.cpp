@@ -62,7 +62,7 @@ void PPIntersect::next  (tuple &t)
             }
             else
             {
-                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XP0006, "Argument of intersect is not a node");
+                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
                 xptr1 = child1.get(t).get_node();
             }
 
@@ -78,7 +78,7 @@ void PPIntersect::next  (tuple &t)
             }
             else
             {
-                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XP0006, "Argument of intersect is not a node");
+                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
                 xptr2 = child2.get(t).get_node();
             }
 
