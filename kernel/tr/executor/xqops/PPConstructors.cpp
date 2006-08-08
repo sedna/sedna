@@ -383,7 +383,7 @@ void PPElementConstructor::next  (tuple &t)
 				switch (typ)
 				{
 				case xml_namespace:ns_list.push_back(((ns_dsc*)XADDR(node))->ns);break;
-				case document:throw USER_EXCEPTION(XQ0023);
+				case document:throw USER_EXCEPTION(FORG0001);
 				case element: case text: 
 					{
 						mark_attr=false;
