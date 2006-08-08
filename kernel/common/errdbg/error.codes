@@ -303,13 +303,6 @@ err:XQST0090
 	It is a static error if a character reference does not identify a valid character in the version of XML that is in use.
 
 
-# Next error codes must be destroyed!
-
-err:XQ0023
-
-    (Not currently used.)
-
-
 ###############################################################################
 ## XQuery/XPath Functions and Operators errors
 ###############################################################################
@@ -450,7 +443,7 @@ err:FORG0009
 	Error in resolving a relative URI against a base URI in fn:resolve-uri. 
 err:FORX0001
 
-	Invalid regular expression. flags 
+	Invalid regular expression flags. 
 err:FORX0002
 
 	Invalid regular expression. 
