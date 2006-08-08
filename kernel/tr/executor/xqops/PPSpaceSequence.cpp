@@ -41,8 +41,9 @@ void PPSpaceSequence::next(tuple &t)
 	if (!int_tup.is_eos())
 	{
 		t.copy(int_tup);
+		space=int_tup.cells[0].is_atomic();
 		int_tup.set_eos();
-		space=true;
+		
 		return;
 	}
 	while (it < ch_arr.size())
@@ -52,7 +53,7 @@ void PPSpaceSequence::next(tuple &t)
         if (int_tup.is_eos()) it++;
         else 
 		{
-			if (space)
+			if (space && int_tup.cells[0].is_atomic())
 			{
 				t.copy(space_tup);
 				space=false;
@@ -60,8 +61,9 @@ void PPSpaceSequence::next(tuple &t)
 			else
 			{
 				t.copy(int_tup);
+				space=int_tup.cells[0].is_atomic();
 				int_tup.set_eos();
-				space=true;
+				
 			}
 			return;
 		}
