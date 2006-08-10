@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 
                     d_printf1("\nTr is rolled back successfully\n");
 
-                    if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009)   //session must be closed
+                    if (e.get_code() == SE3053 || e.get_code() == SE3006 || e.get_code() == SE3007 || e.get_code() == SE3009 || e.get_code() == SE3012)   //session must be closed
                     {
                         ret_code = 1;
                         throw;
