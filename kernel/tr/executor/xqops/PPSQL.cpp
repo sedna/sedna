@@ -841,7 +841,7 @@ void PPFnSQLRollback::next(tuple &t)
 		throw USER_EXCEPTION(SE2101);
 
 	if (handle->type != SQLH_CONNECTION)
-		throw USER_EXCEPTION(XP0004);
+		throw USER_EXCEPTION(XPTY0004);
 
 	handle->rollback();
 
