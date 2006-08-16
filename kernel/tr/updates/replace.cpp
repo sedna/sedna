@@ -113,13 +113,50 @@ void replace(PPOpIn arg)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
-	// inserting new nodes
-	xptr_sequence::iterator sit=arg2seq.begin();
+	//sorting arg1seq
+	arg3seq.clear();
 	xptr_sequence::iterator it=arg1seq.begin();
+	xptr_sequence::iterator sit=arg2seq.begin();
+	int ctr=0;
 	do
 	{
-		xptr node=removeIndirection(*it);
+		tuple tup(2);
+		tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell(ctr));
+		arg3seq.add(tup);
+		while(*sit!=XNULL)
+		{
+			sit++;
+			ctr++;			
+		}
+		sit++;
+		ctr++;
+		it++;
+	}
+	while (it!=arg1seq.end());
+	arg3seq.sort();
+	it3=arg3seq.begin();
+	descript_sequence arg4seq(2);
+	do
+	{
+		xptr node=(*it3).cells[0].get_node();
+		CHECKP(node);
+		tuple t=(*it3);
+		t.cells[0].set_node(((n_dsc*)XADDR(node))->indir);
+		++it3;
+		arg4seq.add(t);
+		
+	}
+	while (it3!=arg3seq.end());
+	// inserting new nodes
+	it3=arg4seq.end();
+	do
+	{
+		--it3;
+		xptr node=removeIndirection((*it3).cells[0].get_node());
+		
 		//1.insert
+		int pos=(*it3).cells[1].get_xs_integer();
+		sit=arg2seq.begin()+pos;
 		while(*sit!=XNULL)
 		{
 			xptr node_child=*sit;
@@ -130,12 +167,12 @@ void replace(PPOpIn arg)
 			
 			sit++;
 		}
-		sit++;
-		++it;
+		//delete node
+		delete_node(removeIndirection((*it3).cells[0].get_node()));
 	}
-	while (it!=arg1seq.end());
+	while (it3!=arg4seq.begin());
 	//3.delete
-	arg2seq.clear();
+/*	arg2seq.clear();
 	it=arg1seq.begin();
 	while (it!=arg1seq.end())
 	{
@@ -151,6 +188,7 @@ void replace(PPOpIn arg)
 		if (it==arg2seq.begin()) break;
 	}
 	while (true);
+*/
 	if (ins_swiz!=NULL) 
 	{
 //		checkSwiizleTab(ins_swiz);
