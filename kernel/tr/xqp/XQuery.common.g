@@ -447,8 +447,8 @@ varRef!:
 enclosedExpr!:
 	LBRACE e:expr RBRACE
 	<<
-//	  #0=#e;
-	  #0=#(#[AST_SPACE_SEQUENCE], #e);
+	  #0=#e;
+//	  #0=#(#[AST_SPACE_SEQUENCE], #e);
 	>>
 ;
 

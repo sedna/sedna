@@ -93,7 +93,7 @@ elementContent!:
 	<<
 	  if (val.empty())
 	  {
-	     if (cnt == NULL) cnt = #ee; else cnt->append(#ee);
+	     if (cnt == NULL) cnt = #(#[AST_SPACE_SEQUENCE], #ee); else cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	  }
 	  else
 	  {
@@ -107,20 +107,20 @@ elementContent!:
 	     }
 
 	     if (cnt == NULL && isBoundWhiteSpace) 
-	        cnt = #ee;
+	        cnt = #(#[AST_SPACE_SEQUENCE], #ee);
 	     else
 	     if (cnt == NULL && !isBoundWhiteSpace)
 	     {
 	        cnt = #[val, AST_CHAR_SEQ];
-	        cnt->append(#ee);
+	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	     } 
 	     else
 	     if ( cnt!= NULL && isBoundWhiteSpace)
-	        cnt->append(#ee);
+	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	     else
 	     {
 	        cnt->append(#[val, AST_CHAR_SEQ]);
-	        cnt->append(#ee);
+	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	     }
 	  }
 
