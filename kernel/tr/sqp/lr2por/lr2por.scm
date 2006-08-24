@@ -584,11 +584,12 @@
                   `(,(l2p:tuple-size (car seq-operands)) (PPSequence ,@seq-operands)))))
              
              ; *** spaceseq ***
-             ((eq? op-name 'spaceseq)
-              (if (null? node) 
+             ((or (eq? op-name 'space-sequence) (eq? op-name 'spaceseq))
+              (if (null? node)
                   '(1 (PPNil))
                   (let ((seq-operands (map l2p:any-lr-node2por node)))
-                  `(,(l2p:tuple-size (car seq-operands)) (PPSpaceSequence ,@seq-operands)))))
+                  `(,(l2p:tuple-size (car seq-operands))
+                    (PPSpaceSequence ,@seq-operands)))))
              
              ; *** union ***
              ((eq? op-name 'union@)
