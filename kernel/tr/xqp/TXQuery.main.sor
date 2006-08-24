@@ -77,7 +77,8 @@ query!:
 
 
 expr! [in_context in_c] >[out_context out_c]: 
-	(  #(AST_SEQUENCE (e1:exprSingle[in_c] >[out_c]
+/*
+	( ( #(AST_SEQUENCE (e1:exprSingle[in_c] >[out_c]
 	                   <<if(#expr == NULL)
 	                     {
 	                       #expr=e1;
@@ -89,9 +90,10 @@ expr! [in_context in_c] >[out_context out_c]:
 	                   >>
 	                  )*)
 	   <<#expr=#(#[], #["sequence"], #expr);>>
+	  )
 
-	 | es:exprSingle[in_c] >[out_c] <<#expr=es;>>
-	)
+	 |*/ (es:exprSingle[in_c] >[out_c] <<#expr=es;>>)
+
 ;
 
 exprSingle! [in_context in_c] >[out_context out_c]:
@@ -113,6 +115,33 @@ exprSingle! [in_context in_c] >[out_context out_c]:
 	  <<#exprSingle=ts;>>
 	| ue:unioExpr[in_c] > [out_c]
 	  <<#exprSingle=ue;>>
+	| ( #(AST_SPACE_SEQUENCE (e2:exprSingle[in_c] >[out_c]
+	                   <<if(#expr == NULL)
+	                     {
+	                       #exprSingle=e2;
+	                     }
+	                     else
+	                     {
+	                      #exprSingle->append(e2);
+	                     }    
+	                   >>
+	                  )*)
+	   <<#exprSingle=#(#[], #["space-sequence"], #exprSingle);>>
+      )
+	| ( #(AST_SEQUENCE (e1:exprSingle[in_c] >[out_c]
+	                   <<if(#expr == NULL)
+	                     {
+	                       #exprSingle=e1;
+	                     }
+	                     else
+	                     {
+	                      #exprSingle->append(e1);
+	                     }    
+	                   >>
+	                  )*)
+	   <<#exprSingle=#(#[], #["sequence"], #exprSingle);>>
+	  )
+
 
 ;
 
