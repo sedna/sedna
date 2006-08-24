@@ -235,7 +235,7 @@
       (sa:analyze-axis expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.4 Sequence
-     ((sequence unio)
+     ((sequence space-sequence unio)
       (sa:analyze-sequence expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.5 Arithmetic operations
@@ -1376,6 +1376,7 @@
    ; type-lst now contains only all nodes or all atomic
    (car type-lst)))
 
+; Processing sequences, space-sequences and unios
 ; Important note: the sequence may contain namespace declarations that
 ; affect the following parsing
 (define (sa:analyze-sequence expr vars funcs ns-binding default-ns)
@@ -1387,7 +1388,7 @@
     (if
      (memv #f args-res)  ; error detected    
      #f
-     (cons (cons (sa:op-name expr)  ; ='sequence
+     (cons (cons (sa:op-name expr)  ; ='sequence or 'unio or 'space-sequence
                  (map car args-res))
            (sa:combine-types (map cdr args-res))))))
 
