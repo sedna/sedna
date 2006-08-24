@@ -177,7 +177,8 @@ enum ASTNodeType { 	 AST_QUERY=1,
 			 AST_TYPESWITCH,
 			 AST_DEFAULT_TS,
 			 AST_CASES,
-			 AST_CASE_TS
+			 AST_CASE_TS,
+			 AST_SPACE_SEQUENCE
  };
 
 #endif
