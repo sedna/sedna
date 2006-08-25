@@ -34,6 +34,16 @@ int main(int argc, char *argv[])
 {
 	int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
 	char errmsg[1000];
+
+    for(int i=0; i<argc; i++)
+    {
+        if(strlen(argv[i])>TERM_ARGSTRLEN)
+        {
+            fprintf(stderr, "One of the command line argumets is too long\n");
+            return EXIT_TERM_FAILED;
+        }
+    }
+    
 	arg_scan_ret_val = arg_scanargv(argc, argv, term_argtable, narg, NULL, errmsg, NULL);
 	
 	int			ret_code;
