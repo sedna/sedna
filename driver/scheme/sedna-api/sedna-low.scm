@@ -65,3 +65,41 @@
   #f)
  
 )
+
+; Procedure sedna:apply-string-append borrowed from SXML Serializer
+; ("serializer.ss" in ssax.sf.net)
+;
+; procedure srl:apply-string-append :: STR-LST -> STRING
+; str-lst ::= (listof string)
+; Concatenates `str-lst' members into a single string
+; (sedna:apply-string-append str-lst) = (apply string-append str-lst)
+(cond-expand
+ (chicken
+  ; In Chicken, procedures are generally limited to 126 arguments
+  ; http://www.call-with-current-continuation.org/
+  ; Due to this Chicken limitation, we cannot apply `string-append' directly
+  ; for a potentially long `str-lst'
+  
+  ; Similar to R5RS 'list-tail' but returns the new list consisting of the
+  ; first 'k' members of 'lst'
+  (define (sedna:list-head lst k)
+    (if (or (null? lst) (zero? k))
+        '()
+        (cons (car lst) (sedna:list-head (cdr lst) (- k 1)))))
+
+  ; Because of Chicken 126-argument limitation, I do not care of intermediate
+  ; garbage produced in the following solution:
+  (define (sedna:apply-string-append str-lst)
+    (cond
+      ((null? str-lst) "")
+      ((null? (cdr str-lst)) (car str-lst))
+      (else  ; at least two members
+       (let ((middle (inexact->exact (round (/ (length str-lst) 2)))))
+         (string-append
+          (sedna:apply-string-append (sedna:list-head str-lst middle))
+          (sedna:apply-string-append (list-tail str-lst middle)))))))
+  )
+ (else
+  (define (sedna:apply-string-append str-lst)
+    (apply string-append str-lst))
+  ))
