@@ -16,7 +16,8 @@
 ; Raises an exception
 (define (sedna:raise-exn . msg)
   (exc:signal
-   (make-property-condition 'exn 'message (apply string-append msg))))
+   (make-property-condition 'exn
+                            'message (sedna:apply-string-append msg))))
 
 ;-------------------------------------------------
 ; Basic read and write operations on port
@@ -467,6 +468,54 @@
 ;==========================================================================
 ; Query execution
 
+; Several constants for query parts representation
+(define sedna:Execute 300)
+(define sedna:ExecuteLong 301)
+(define sedna:LongQueryEnd 302)
+
+; Writes a query to the output port
+; query - a string that represents a query
+; result-type-sxml? - whether the query result is to be output in SXML format
+; out - output port
+; If a query length exceeds 10Kbytes, the query is transmitted in several
+; packets, otherwise, it is transmitted as a single packet
+; The function always returns #t
+(define sedna:write-query-out
+  (let ((max-query-length 10000))
+    (lambda (query result-type-sxml? out)
+      (if
+       (< (string-length query) max-query-length)  ; a relatively short query
+       (sedna:write-package-as-bytes
+        sedna:Execute
+        (cons
+         (if result-type-sxml? sedna:char001 sedna:char000)
+         (sedna:string->network query))
+        out)
+       (let ((res-type-char
+              (if result-type-sxml? sedna:char001 sedna:char000))
+             (lng (string-length query)))
+         (let loop ((i 0))
+           (if
+            ; remainder of a query contains less than 5K bytes
+            (< (- lng i) max-query-length)
+            (begin
+              (sedna:write-package-as-bytes
+               sedna:ExecuteLong
+               (cons res-type-char
+                     (sedna:string->network (substring query i lng)))
+               out)
+              (sedna:write-package-as-bytes
+               sedna:LongQueryEnd '() out)
+              #t)
+            (begin
+              (sedna:write-package-as-bytes
+               sedna:ExecuteLong
+               (cons res-type-char
+                     (sedna:string->network
+                      (substring query i (+ i max-query-length))))
+               out)
+              (loop (+ i max-query-length))))))))))       
+
 ;-------------------------------------------------
 ; Representation for a result
 ;  result ::= (cons item promise)
@@ -525,7 +574,7 @@
               '()
               (let ((curr-position (sedna:port-position in)))
                 (cons
-                 (apply string-append res)
+                 (sedna:apply-string-append res)
                  (delay
                    (cond
                      ((not (= (sedna:port-position in) curr-position))
@@ -539,7 +588,7 @@
          ((= code sedna:ResultEnd)
           (if frst  ; nothing yet in the res
               '()
-              (list (apply string-append res))))
+              (list (sedna:apply-string-append res))))
          ((= code sedna:ErrorResponse)
           (sedna:raise-server-error body-chars))
          (else
@@ -573,7 +622,7 @@
                 (cons
                  ; DL: Uncomment this to get the result in SXML
                  (call-with-input-string
-                  (apply string-append res)
+                  (sedna:apply-string-append res)
                   read)
                  (delay
                    (cond
@@ -589,7 +638,7 @@
           (if frst  ; nothing yet in the res
               '()
               (list (call-with-input-string
-                     (apply string-append res)
+                     (sedna:apply-string-append res)
                      read))))
          ((= code sedna:ErrorResponse)
           (sedna:raise-server-error body-chars))
@@ -670,7 +719,6 @@
 ; High-level API functions
 
 ; Several constants for package header codes
-(define sedna:ExecuteLite 300)
 (define sedna:QuerySucceeded 320)
 (define sedna:QueryFailed 330)
 (define sedna:UpdateSucceeded 340)
@@ -680,10 +728,7 @@
 (define (sedna:execute-query-xml connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
-    (sedna:write-package-as-bytes     
-     sedna:ExecuteLite
-     (cons sedna:char000 (sedna:string->network query))
-     out)
+    (sedna:write-query-out query #f out)
     (let-values*
      (((code body-chars)
        (sedna:read-package-as-chars in)))
@@ -719,14 +764,7 @@
 (define (sedna:execute-query connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
-    (sedna:write-package-as-bytes     
-     sedna:ExecuteLite
-     (cons 
-      ;sedna:char000
-      ; DL: change to
-      sedna:char001
-           (sedna:string->network query))
-     out)
+    (sedna:write-query-out query #t out)
     (let-values*
      (((code body-chars)
        (sedna:read-package-as-chars in)))
@@ -771,16 +809,13 @@
          connection port document-name . collection-name)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
-    (sedna:write-package-as-bytes     
-     sedna:ExecuteLite
-     (cons
-      sedna:char001
-      (sedna:string->network
-       (if
-        (null? collection-name)  ; it is a standalone document
-        (string-append "LOAD STDIN \"" document-name "\"")
-        (string-append
-         "LOAD STDIN \"" document-name "\" \"" collection-name "\""))))
+    (sedna:write-query-out
+     (if
+      (null? collection-name)  ; it is a standalone document
+      (string-append "LOAD STDIN \"" document-name "\"")
+      (string-append
+       "LOAD STDIN \"" document-name "\" \"" collection-name "\""))
+     #t  ; result in the form of SXML
      out)
     (let-values*
      (((code body-chars)
