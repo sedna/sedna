@@ -24,7 +24,7 @@ sort_item* utl_sort_sit(xptr blk) {
 		/* SIT contains empty slots, which are value-linked by the shft value of next empty slot in the block.
 		   Here we use the fact that for empty slots the shift value stored in that slot points inside SIT,
 		   to filter out empty slots of the SIT */
-		if (slot_value == PSTR_EMPTY_SLOT || slot_value >= SITB(blk))
+		if (slot_value == PSTR_EMPTY_SLOT || slot_value >= (SITB(blk)+ sizeof(shft)))
 			continue;
 		it = sit_array+sit_size;
 		it->item_type=ITEM_PSTR;

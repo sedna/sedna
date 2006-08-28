@@ -15,6 +15,8 @@ void replace(PPOpIn arg)
 	//1.seq-replaced nodes
 	//2.replacements
 	//3. persistent replacements+their position in 2 seq
+//	xptr addr(0,(void*)0x4acc0000);
+//	check_blk_consistency(addr);
 	tuple t(arg.ts);
 	descript_sequence arg3seq(2);
 	xptr_sequence arg1seq;
