@@ -707,7 +707,7 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 			crmout<<"\"";
 			if (xq_type!=text && xq_type!=attribute)
 				crmout.write(data,size);
-			else crmout.writextext(data,size);
+			else crmout.writextext(data,size,true);
 			crmout<<"\"";
 		}
 	}
@@ -715,7 +715,7 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 	{
 		if (ptype!=xml)
 		 crmout<<"\"";
-		pstr_long_writextext(txt,crmout);
+		pstr_long_writextext(txt,crmout,ptype!=xml);
 		if (ptype!=xml)
 		 crmout<<"\"";
 		//crmout.writextext(data,size);
@@ -738,7 +738,7 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 				if (tup.cells[i].is_string_type())
 				{
 					//crmout<<tup.cells[i].get_str_mem();
-					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());
+					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem(),ptype!=xml);
 				}
 				else
 				{

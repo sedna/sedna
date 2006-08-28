@@ -24,7 +24,7 @@ se_ostream& se_ostream::operator<<(__int64 n)
 	return *this;
 }
 
-se_ostream& se_ostream::writextext(char *s, int n)
+se_ostream& se_ostream::writextext(char *s, int n, bool sxmlescape)
 { 
     int j = 0, i = 0;
     for (i = 0; i < n; i++)
@@ -52,6 +52,16 @@ se_ostream& se_ostream::writextext(char *s, int n)
                 j = i + 1;
                 break;
     	    }
+			case '"':
+			{
+				if (sxmlescape)
+				{
+					this->write(s+j,i-j);
+					this->write("\\\"",2);
+					j = i + 1;
+                break;
+				}
+			}
         }
     }
     this->write(s+j, n-j); 

@@ -43,7 +43,7 @@ public:
     virtual se_ostream& operator<<(void * n)                       = 0;
     virtual se_ostream& put(char c)                                = 0;
     virtual se_ostream& write(char *s, int n)                      = 0;
-    virtual se_ostream& writextext(char *s, int n);
+    virtual se_ostream& writextext(char *s, int n, bool sxmlescape=false);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
     virtual void end_of_data(bool res)                             = 0;
