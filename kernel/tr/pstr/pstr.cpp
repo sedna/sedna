@@ -381,7 +381,7 @@ bool pstr_do_deallocate(xptr blk, xptr ps, int s_size, bool drop_empty_block)
 	shft	ps_shft = *(shft*)XADDR(ps);
 
 	/* Check if ps_shft slot contains non-empty shft */
-	if (ps_shft == PSTR_EMPTY_SLOT) 
+	if (ps_shft == PSTR_EMPTY_SLOT||(ps_shft+s_size > SSB(blk))) 
 		throw SYSTEM_EXCEPTION("[pstr_deallocate()] string to be deallocated occupies PSTR_EMPTY_SLOT");
 	
 	/* Check if the string is in SS tail (last) */
@@ -493,7 +493,8 @@ post_operations:
 				throw SYSTEM_EXCEPTION("[pstr_deallocate()] string can not be adjacent with with SS tail and with some hole on the right simultaneously");
 			}
 		}*/
-//		check_blk_consistency(blk);
+	//	if ((int)blk.addr==0x4acc0000)
+	//	check_blk_consistency(blk);
 	}
 	return false;
 }
@@ -786,7 +787,21 @@ void check_blk_consistency(xptr addr)
 	xptr blk=BLOCKXPTR(addr);
 	CHECKP(blk);
 	shft hh_size=HHSIZE(blk);
-	for (int i=0; i<hh_size; i++) 
+	sort_item* sorted_sit = utl_sort_sit(blk);
+//	utl_print(sorted_sit);
+	sort_item* sorted_hh	= utl_sort_hh(blk);
+//	utl_print(sorted_hh);
+	sort_item* sorted_hh_sit = utl_merge(sorted_sit, sorted_hh);
+	if (sorted_hh_sit==NULL) return;
+	while (((char*)sorted_hh_sit->next_item)!=NULL)
+	{
+		sorted_hh_sit=sorted_hh_sit->next_item;	
+	}
+	if (sorted_hh_sit->item_type == ITEM_HOLE)
+		throw SYSTEM_EXCEPTION("wrong place for hole in block");
+	if (sorted_hh_sit->sort_value>=SSB(blk))
+		throw SYSTEM_EXCEPTION("wrong position of data in block");
+/*	for (int i=0; i<hh_size; i++) 
 	{
 		hh_slot* tmp = (hh_slot*)HH_ADDR(blk, i);
 		if (tmp->hole_shft+ tmp->hole_size==SSB(blk) ) 
@@ -794,5 +809,5 @@ void check_blk_consistency(xptr addr)
 			throw SYSTEM_EXCEPTION("[pstr_deallocate()] string can not be adjacent with with SS tail and with some hole on the right simultaneously");
 		}
 	}
-
+*/
 }
