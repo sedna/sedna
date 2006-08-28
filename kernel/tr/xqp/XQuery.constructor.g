@@ -30,7 +30,7 @@ dirElemConstructor!:
 	   ENDTAGOPEN qn2:qname {WS|NL} ENDTAGCLOSE
 
 	   <<if (strcmp(((AST*)(#qn1->down()))->getText(), ((AST*)(#qn2->down()))->getText()) != 0)
-	        throw USER_EXCEPTION2(SE4001, ("start tag " + std::string("\'<") + ((AST*)(#qn1->down()))->getText() + ">\'" +
+	        throw USER_EXCEPTION2(XPST0003, ("start tag " + std::string("\'<") + ((AST*)(#qn1->down()))->getText() + ">\'" +
 	                                       " does not match close tag " + "\'</" + ((AST*)(#qn2->down()))->getText()  + ">\'" +
 	                                       ", line: " + int2string(LT(1)->getLine())).c_str());
 	    #0=#(#[AST_ELEMENT],

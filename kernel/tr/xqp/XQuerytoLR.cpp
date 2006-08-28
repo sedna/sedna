@@ -85,7 +85,10 @@ StringVector parse_batch(QueryType type, const char* batch)
         t = XQuerytoIR(batch);
 
         for (it = (SORAST*)(t->down()); it != NULL; it = (SORAST*)(it->right()))
+        {
            array.push_back(string(it->getText()));  
+//           printf("query: %s\n", it->getText());
+        }
 
 
      }

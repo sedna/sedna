@@ -56,10 +56,19 @@ void erase_doublequot(char* lex_text)
   else
   {
     lex[0] = '\"';
-    lex[lex.size()-1] = '\"';
+    if (lex[1] == '\"') 
+    {
+       lex[1] = '\\';
+       lex[2] = '\"';
+       lex[3] = '\"';
+    }
+    else
+       lex[lex.size()-1] = '\"';
   }
 
   strcpy(lex_text, lex.c_str());
+
+//  printf("lext_text=%s\n", lex_text);
 
 }
 

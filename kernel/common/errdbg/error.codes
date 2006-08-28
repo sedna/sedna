@@ -963,9 +963,6 @@ sedna-err:SE3071
 ######################################################################
 ### Static query analysis error
 ######################################################################
-sedna-err:SE4000
-
-    XQuery parser lexical error.
 sedna-err:SE4001
 
     XQuery parser syntax error.
