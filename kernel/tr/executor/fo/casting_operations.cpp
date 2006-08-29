@@ -59,7 +59,22 @@ tuple_cell cast_string_type_to_xs_double(const tuple_cell &c)
 
 tuple_cell cast_string_type_to_xs_decimal(const tuple_cell &c)
 {
-    throw USER_EXCEPTION2(SE1002, "cast_string_type_to_xs_decimal");
+    char *t = NULL;
+
+    if (c.is_heavy_atomic())
+    { // VMM is used for storing
+        int size = c.get_strlen_vmm();
+        if (size > MAX_MEM_STR_SIZE) throw USER_EXCEPTION2(SE1003, "Buffer overflow");
+        t = tr_globals::mem_str_buf;
+        e_str_copy_to_buffer(t, c.get_str_vmm(), size);
+        t[size] = '\0';
+    }
+    else 
+    { // On-line memory is used
+        t = c.get_str_mem();
+    }
+
+    return tuple_cell::atomic(decimal(t));
 }
 
 tuple_cell cast_string_type_to_xs_integer(const tuple_cell &c)
@@ -340,7 +355,7 @@ tuple_cell cast_to_xs_decimal(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_double(c);
+        case xdt_untypedAtomic	: return cast_string_type_to_xs_decimal(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -361,7 +376,7 @@ tuple_cell cast_to_xs_decimal(const tuple_cell &c)
         case xs_anyURI			: throw USER_EXCEPTION(FORG0001);
         case xs_QName			: throw USER_EXCEPTION(FORG0001);
         case xs_NOTATION		: throw USER_EXCEPTION(FORG0001);
-        case xs_string			: return cast_string_type_to_xs_double(c);
+        case xs_string			: return cast_string_type_to_xs_decimal(c);
         case xs_decimal			: return c;
         case xs_integer 		: return tuple_cell::atomic(decimal(c.get_xs_integer()));
         default					: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_to_xs_decimal");
