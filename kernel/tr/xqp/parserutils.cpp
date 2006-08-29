@@ -12,7 +12,7 @@ using namespace std;
 void erase_doublequot(char* lex_text)
 {
   string lex = lex_text;
-  if (lex.size() > 3)
+  if (lex.size() >= 3)
   {
     string find_text = string(1, lex[0]) + string(1, lex[0]);
     string repl_text = string("\\") + string(1, lex[0]);
@@ -56,14 +56,7 @@ void erase_doublequot(char* lex_text)
   else
   {
     lex[0] = '\"';
-    if (lex[1] == '\"') 
-    {
-       lex[1] = '\\';
-       lex[2] = '\"';
-       lex[3] = '\"';
-    }
-    else
-       lex[lex.size()-1] = '\"';
+    lex[lex.size()-1] = '\"';
   }
 
   strcpy(lex_text, lex.c_str());
