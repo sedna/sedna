@@ -21,6 +21,12 @@ public:
     decimal(const decimal& d) { v = d.v; }
     decimal(decimal *p) { v = p->v; }
     decimal(double d) { v = d; }
+    decimal(const char* s) 
+    {
+        char* stop;
+        v = strtod(s, &stop);
+        if (*stop != '\0') throw USER_EXCEPTION2(FOCA0002, "Cannot convert to xs:double type"); // !!! this error code is not correct...
+    }
     ~decimal() {}
 
     // return value is the same as for sprintf
