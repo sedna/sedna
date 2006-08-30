@@ -35,13 +35,13 @@ void tuple_cell::print(bool b) const
                                   }
                                   switch (xtype)
                                   {
-                                      case xdt_untypedAtomic	: d_printf2("\"%s\"", get_str_mem()); break;
+                                      case xs_untypedAtomic	: d_printf2("\"%s\"", get_str_mem()); break;
                                       case xs_dateTime			: d_printf1("[xs_dateTime]"); break;
                                       case xs_date				: printf("'%s'",get_xs_dateTime()); break;
                                       case xs_time				: d_printf1("[xs_time]"); break;
                                       case xs_duration			: d_printf1("[xs_duration]"); break;
-                                      case xdt_yearMonthDuration: d_printf1("[xdt_yearMonthDuration]"); break;
-                                      case xdt_dayTimeDuration	: d_printf1("[xdt_dayTimeDuration]"); break;
+                                      case xs_yearMonthDuration: d_printf1("[xs_yearMonthDuration]"); break;
+                                      case xs_dayTimeDuration	: d_printf1("[xs_dayTimeDuration]"); break;
                                       case xs_float				: d_printf2("%g", get_xs_float()); break;
                                       case xs_double			: d_printf2("%g", get_xs_double()); break;
                                       case xs_string			: d_printf2("\"%s\"", get_str_mem()); break;

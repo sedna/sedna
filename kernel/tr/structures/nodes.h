@@ -86,16 +86,16 @@ int xmlscm_type_size(xmlscm_type t);
 #define xs_ENTITIES				5
 
 // Built-in complex types
-#define xdt_untyped				6
+#define xs_untyped				6
 
 // Built-in atomic types
-#define xdt_untypedAtomic		10
+#define xs_untypedAtomic		10
 #define xs_dateTime				11
 #define xs_date					12
 #define xs_time					13
 #define xs_duration				14
-#define xdt_yearMonthDuration	15
-#define xdt_dayTimeDuration		16
+#define xs_yearMonthDuration	15
+#define xs_dayTimeDuration		16
 #define xs_float				17
 #define xs_double				18
 #define xs_string				19

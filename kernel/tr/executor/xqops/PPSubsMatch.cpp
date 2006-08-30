@@ -200,7 +200,7 @@ void PPSubsMatch::next  (tuple &t)
 		if (!t1c.is_eos())
 		{
 			t1c= atomize(t1c);
-			if (t1c.get_atomic_type()==xdt_untypedAtomic)
+			if (t1c.get_atomic_type()==xs_untypedAtomic)
 				t1c.set_xtype(xs_string);
 			else
 				if (!t1c.is_string_type())
@@ -211,7 +211,7 @@ void PPSubsMatch::next  (tuple &t)
 		if (!t2c.is_eos())
 		{
 			t2c= atomize(t2c);          
-			if (t2c.get_atomic_type()==xdt_untypedAtomic)
+			if (t2c.get_atomic_type()==xs_untypedAtomic)
 				t2c.set_xtype(xs_string);
 			else		
 				if (!t2c.is_string_type())

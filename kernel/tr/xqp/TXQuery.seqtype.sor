@@ -27,7 +27,7 @@ singleType!:
 	              std::string(((SORAST *)(qn->down()))->getText())=="\"integer\"" 
 	             )
                    || //xdt prefix
-             std::string(((SORAST *)qn)->getText())=="\"xdt\"" &&
+             std::string(((SORAST *)qn)->getText())=="\"xs\"" &&
 	              std::string(((SORAST *)(qn->down()))->getText())=="\"untypedAtomic\"")
 
 
@@ -100,7 +100,7 @@ sequenceType!:
 	                          std::string(((SORAST *)(qn->down()))->getText())=="\"integer\"" 
 	                         )
                                || //xdt prefix
-	                    std::string(((SORAST *)qn)->getText())=="\"xdt\"" &&
+	                    std::string(((SORAST *)qn)->getText())=="\"xs\"" &&
 	                          std::string(((SORAST *)(qn->down()))->getText())=="\"untypedAtomic\"")
 	                  {
 	                   std::string type=std::string(((SORAST *)(qn->down()))->getText());

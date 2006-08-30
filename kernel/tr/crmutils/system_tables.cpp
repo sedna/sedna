@@ -29,18 +29,18 @@ void print_type_name(xmlscm_type keytype, char* buf)
 		break;case xs_string	: strcpy(buf,"xs:string");
 		break;case xs_anyType	:			strcpy(buf,"xs:anyType");
 		break;case xs_anySimpleType	:	strcpy(buf,"xs:anySimpleType");
-		break;case xs_anyAtomicType:		strcpy(buf,"xdt:anyAtomicType");
+		break;case xs_anyAtomicType:		strcpy(buf,"xs:anyAtomicType");
 		break;case xs_IDREFS	:			strcpy(buf,"xs:IDREFS");
 		break;case xs_NMTOKENS:				strcpy(buf,"xs:NMTOKENS");
 		break;case xs_ENTITIES:				strcpy(buf,"xs:ENTITIES");
-		break;case xdt_untyped:				strcpy(buf,"xdt:untyped");
-		break;case xdt_untypedAtomic:		strcpy(buf,"xdt:untypedAtomic");
+		break;case xs_untyped:				strcpy(buf,"xs:untyped");
+		break;case xs_untypedAtomic:		strcpy(buf,"xs:untypedAtomic");
 		break;case xs_dateTime	:			strcpy(buf,"xs:dateTime");
 		break;case xs_date		:			strcpy(buf,"xs:date");
 		break;case xs_time		:			strcpy(buf,"xs:time");
 		break;case xs_duration	:			strcpy(buf,"xs:duration");
-		break;case xdt_yearMonthDuration:	strcpy(buf,"xdt:yearMonthDuration");
-		break;case xdt_dayTimeDuration:		strcpy(buf,"xdt:dayTimeDuration");
+		break;case xs_yearMonthDuration:	strcpy(buf,"xs:yearMonthDuration");
+		break;case xs_dayTimeDuration:		strcpy(buf,"xs:dayTimeDuration");
 		break;case xs_normalizedString:		strcpy(buf,"xs:normalizedString");
 		break;case xs_token	:			strcpy(buf,"xs:token");
 		break;case xs_language:				strcpy(buf,"xs:language");
@@ -68,29 +68,29 @@ void print_type_name(xmlscm_type keytype, char* buf)
 }
 xptr fill_schema(schema_node* scm, xptr& node,xptr& neighb)
 {
-	xptr parent=insert_element(neighb,XNULL,node,convert_type(scm->type),xdt_untyped,NULL);
+	xptr parent=insert_element(neighb,XNULL,node,convert_type(scm->type),xs_untyped,NULL);
 	xptr indir=((n_dsc*)XADDR(parent))->indir;
-	xptr left =insert_attribute(XNULL,XNULL,parent,"name",xdt_untypedAtomic,scm->name,(scm->name==NULL)?0:strlen(scm->name),NULL);
+	xptr left =insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,scm->name,(scm->name==NULL)?0:strlen(scm->name),NULL);
 	if (scm->xmlns!=NULL)
 	{
-		left=insert_attribute(left,XNULL,XNULL,"prefix",xdt_untypedAtomic,scm->xmlns->prefix,(scm->xmlns->prefix==NULL)?0:strlen(scm->xmlns->prefix),NULL);
-		left=insert_attribute(left,XNULL,XNULL,"uri",xdt_untypedAtomic,scm->xmlns->uri,(scm->xmlns->uri==NULL)?0:strlen(scm->xmlns->uri),NULL);
+		left=insert_attribute(left,XNULL,XNULL,"prefix",xs_untypedAtomic,scm->xmlns->prefix,(scm->xmlns->prefix==NULL)?0:strlen(scm->xmlns->prefix),NULL);
+		left=insert_attribute(left,XNULL,XNULL,"uri",xs_untypedAtomic,scm->xmlns->uri,(scm->xmlns->uri==NULL)?0:strlen(scm->xmlns->uri),NULL);
 	}
 	char buf[20];
 	u_itoa(scm->nodecnt,buf,10);
-	left=insert_attribute(left,XNULL,XNULL,"total_nodes",xdt_untypedAtomic,buf,strlen(buf),NULL);
+	left=insert_attribute(left,XNULL,XNULL,"total_nodes",xs_untypedAtomic,buf,strlen(buf),NULL);
 	u_itoa(scm->blockcnt,buf,10);
-	left=insert_attribute(left,XNULL,XNULL,"total_blocks",xdt_untypedAtomic,buf,strlen(buf),NULL);
+	left=insert_attribute(left,XNULL,XNULL,"total_blocks",xs_untypedAtomic,buf,strlen(buf),NULL);
 	u_itoa(scm->extnids,buf,10);
-	left=insert_attribute(left,XNULL,XNULL,"total_ext_nids",xdt_untypedAtomic,buf,strlen(buf),NULL);
+	left=insert_attribute(left,XNULL,XNULL,"total_ext_nids",xs_untypedAtomic,buf,strlen(buf),NULL);
 	u_itoa(scm->indir_blk_cnt,buf,10);
-	left=insert_attribute(left,XNULL,XNULL,"total_indir_blocks",xdt_untypedAtomic,buf,strlen(buf),NULL);
+	left=insert_attribute(left,XNULL,XNULL,"total_indir_blocks",xs_untypedAtomic,buf,strlen(buf),NULL);
 	#ifdef WIN32
 	_i64toa(scm->textcnt,buf,10);
 	#else
 	sprintf(buf,"%lld",scm->textcnt);
 	#endif
-	left=insert_attribute(left,XNULL,XNULL,"total_text",xdt_untypedAtomic,buf,strlen(buf),NULL);
+	left=insert_attribute(left,XNULL,XNULL,"total_text",xs_untypedAtomic,buf,strlen(buf),NULL);
 	sc_ref *sc= scm->first_child;
 	while (sc!=NULL)
 	{
@@ -102,7 +102,7 @@ xptr fill_schema(schema_node* scm, xptr& node,xptr& neighb)
 void get_schema(xptr node,const char* title)
 {
 	addTextValue(node,"$SCHEMA.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"SCHEMA",xdt_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"SCHEMA",xs_untyped,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -112,11 +112,11 @@ void get_schema(xptr node,const char* title)
 		{
 			if (left==XNULL)
 			{
-				left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xdt_untyped,NULL);
+				left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
 			}
 			else
-				left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xdt_untyped,NULL);
-			xptr cd=insert_attribute(XNULL,XNULL,left,"name",xdt_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
+				left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
+			xptr cd=insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 				strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 			fill_schema(mdc->obj->snode,left,cd);
 		}
@@ -133,8 +133,8 @@ void get_document_full (xptr node,const char* title)
 	strcat(docn,title);
 	addTextValue(node,docn,strlen(docn));
 	delete [] docn;
-	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENT",xdt_untyped,NULL,NULL);
-	insert_attribute(XNULL,XNULL,parent,"name",xdt_untypedAtomic,title,strlen(title),NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENT",xs_untyped,NULL,NULL);
+	insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL);
 	schema_node* scn=find_document(title);	
 	if (scn!=NULL) getDebugInfo(scn, parent);
 
@@ -146,10 +146,10 @@ bool is_document_system(const char* title)
 void get_version(xptr node,const char* title)
 {
 	addTextValue(node,"$VERSION.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"SEDNA",xdt_untyped,NULL);
-    insert_attribute(XNULL,XNULL,parent,"VERSION",xdt_untypedAtomic,SEDNA_VERSION,
+	xptr parent=insert_element(XNULL,XNULL,node,"SEDNA",xs_untyped,NULL);
+    insert_attribute(XNULL,XNULL,parent,"VERSION",xs_untypedAtomic,SEDNA_VERSION,
 						strlen(SEDNA_VERSION),NULL);
-	insert_attribute(XNULL,XNULL,parent,"BUILD",xdt_untypedAtomic,SEDNA_BUILD,
+	insert_attribute(XNULL,XNULL,parent,"BUILD",xs_untypedAtomic,SEDNA_BUILD,
 						strlen(SEDNA_BUILD),NULL);
 	
 	
@@ -157,20 +157,20 @@ void get_version(xptr node,const char* title)
 void get_errors(xptr node,const char* title)
 {
 	addTextValue(node,"$ERRORS.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"ERRORS",xdt_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"ERRORS",xs_untyped,NULL);
 	xptr left=XNULL;
 	for (int i=0;i<=SE5100;i++)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,"ERROR",xdt_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,"ERROR",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,"ERROR",xdt_untyped,NULL,NULL);
+			left=insert_element(left,XNULL,XNULL,"ERROR",xs_untyped,NULL,NULL);
 		
-		insert_attribute(XNULL,XNULL,left,"code",xdt_untypedAtomic,user_error_code_entries[i].code,
+		insert_attribute(XNULL,XNULL,left,"code",xs_untypedAtomic,user_error_code_entries[i].code,
 						strlen(user_error_code_entries[i].code),NULL);
-		insert_attribute(XNULL,XNULL,left,"roll_back",xdt_untypedAtomic,(user_error_code_entries[i].act==ueca_ROLLBACK_TRN)?"Y":"N",
+		insert_attribute(XNULL,XNULL,left,"roll_back",xs_untypedAtomic,(user_error_code_entries[i].act==ueca_ROLLBACK_TRN)?"Y":"N",
 						1,NULL);
 		insert_text(XNULL,XNULL,left,user_error_code_entries[i].descr,
 						strlen(user_error_code_entries[i].descr));
@@ -180,7 +180,7 @@ void get_errors(xptr node,const char* title)
 void get_indexes (xptr node,const char* title)
 {
 	addTextValue(node,"$INDEXES.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"INDEXES",xdt_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"INDEXES",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	index_sem_down();
 	local_lock_mrg->put_lock_on_db();
@@ -190,27 +190,27 @@ void get_indexes (xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,"INDEX",xdt_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,"INDEX",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,"INDEX",xdt_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,"INDEX",xs_untyped,NULL);
 		
 		index_cell* ic=mdc->obj;
-		xptr node=insert_attribute(XNULL,XNULL,left,"title",xdt_untypedAtomic,ic->index_title,
+		xptr node=insert_attribute(XNULL,XNULL,left,"title",xs_untypedAtomic,ic->index_title,
 						strlen(ic->index_title),NULL);
-		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xdt_untypedAtomic,(ic->is_doc)?"doc":"collection", 
+		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xs_untypedAtomic,(ic->is_doc)?"doc":"collection", 
 						(ic->is_doc)?3:10,NULL);
-		node=insert_attribute(node,XNULL,XNULL,"object_title",xdt_untypedAtomic,ic->doc_name,
+		node=insert_attribute(node,XNULL,XNULL,"object_title",xs_untypedAtomic,ic->doc_name,
 			strlen(ic->doc_name),NULL);
 		print_type_name(ic->keytype,buf);
-		node=insert_attribute(node,XNULL,XNULL,"key_type",xdt_untypedAtomic,buf,
+		node=insert_attribute(node,XNULL,XNULL,"key_type",xs_untypedAtomic,buf,
 		strlen(buf),NULL);
 		std::ostringstream str1, str2;
 		ic->object->print(str1);
-		node=insert_attribute(node,XNULL,XNULL,"value_path",xdt_untypedAtomic,str1.str().c_str(),
+		node=insert_attribute(node,XNULL,XNULL,"value_path",xs_untypedAtomic,str1.str().c_str(),
 		strlen(str1.str().c_str()),NULL);
 		ic->key->print(str2);
-		node=insert_attribute(node,XNULL,XNULL,"key_path",xdt_untypedAtomic,str2.str().c_str(),
+		node=insert_attribute(node,XNULL,XNULL,"key_path",xs_untypedAtomic,str2.str().c_str(),
 		strlen(str2.str().c_str()),NULL);
 
 
@@ -235,7 +235,7 @@ void print_ft_type_name(ft_index_type ftype, char* buf)
 void get_ftindexes (xptr node,const char* title)
 {
 	addTextValue(node,"$FTINDEXES.XML",14);
-	xptr parent=insert_element(XNULL,XNULL,node,"FTINDEXES",xdt_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"FTINDEXES",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	index_sem_down();
 	local_lock_mrg->put_lock_on_db();
@@ -245,25 +245,25 @@ void get_ftindexes (xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,"FTINDEX",xdt_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,"FTINDEX",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,"FTINDEX",xdt_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,"FTINDEX",xs_untyped,NULL);
 		
 		ft_index_cell* ic=mdc->obj;
-		xptr node=insert_attribute(XNULL,XNULL,left,"title",xdt_untypedAtomic,ic->index_title,
+		xptr node=insert_attribute(XNULL,XNULL,left,"title",xs_untypedAtomic,ic->index_title,
 						strlen(ic->index_title),NULL);
-		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xdt_untypedAtomic,(ic->is_doc)?"doc":"collection",
+		node=insert_attribute(node,XNULL,XNULL,"indexed_object",xs_untypedAtomic,(ic->is_doc)?"doc":"collection",
 						(ic->is_doc)?3:10,NULL);
-		node=insert_attribute(node,XNULL,XNULL,"object_title",xdt_untypedAtomic,ic->doc_name,
+		node=insert_attribute(node,XNULL,XNULL,"object_title",xs_untypedAtomic,ic->doc_name,
 			strlen(ic->doc_name),NULL);
 		
 		print_ft_type_name(ic->ftype,buf);
-		node=insert_attribute(node,XNULL,XNULL,"ft_type",xdt_untypedAtomic,buf,
+		node=insert_attribute(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf,
 		strlen(buf),NULL);
 		std::ostringstream str1;
 		ic->object->print(str1);
-		node=insert_attribute(node,XNULL,XNULL,"path",xdt_untypedAtomic,str1.str().c_str(),
+		node=insert_attribute(node,XNULL,XNULL,"path",xs_untypedAtomic,str1.str().c_str(),
 		strlen(str1.str().c_str()),NULL);
 		if (ic->ftype==ft_customized_value && ic->custom_tree!=NULL)
 		{
@@ -276,19 +276,19 @@ void get_ftindexes (xptr node,const char* title)
 				ft_custom_cell* cc=cdc->obj;
 				if (cleft==XNULL)
 				{
-					cleft=insert_element(XNULL,XNULL,left,"TEMPLATE",xdt_untyped,NULL);
+					cleft=insert_element(XNULL,XNULL,left,"TEMPLATE",xs_untyped,NULL);
 				}
 				else
-					cleft=insert_element(cleft,XNULL,XNULL,"TEMPLATE",xdt_untyped,NULL);
-				xptr node=insert_attribute(XNULL,XNULL,cleft,"name",xdt_untypedAtomic,cc->local,
+					cleft=insert_element(cleft,XNULL,XNULL,"TEMPLATE",xs_untyped,NULL);
+				xptr node=insert_attribute(XNULL,XNULL,cleft,"name",xs_untypedAtomic,cc->local,
 					strlen(cc->local),NULL);
 				if (cc->ns!=NULL)
 				{
-					node=insert_attribute(node,XNULL,XNULL,"ns_prefix",xdt_untypedAtomic,cc->ns->prefix,strlen(cc->ns->prefix),NULL);
-					node=insert_attribute(node,XNULL,XNULL,"ns_uri",xdt_untypedAtomic,cc->ns->uri,strlen(cc->ns->uri),NULL);
+					node=insert_attribute(node,XNULL,XNULL,"ns_prefix",xs_untypedAtomic,cc->ns->prefix,strlen(cc->ns->prefix),NULL);
+					node=insert_attribute(node,XNULL,XNULL,"ns_uri",xs_untypedAtomic,cc->ns->uri,strlen(cc->ns->uri),NULL);
 				}
 				print_ft_type_name(cc->cm,buf);
-				insert_attribute(node,XNULL,XNULL,"ft_type",xdt_untypedAtomic,buf,
+				insert_attribute(node,XNULL,XNULL,"ft_type",xs_untypedAtomic,buf,
 		strlen(buf),NULL);
 				cdc=ic->custom_tree->rb_successor(cdc);
 				left=removeIndirection(indir);
@@ -303,7 +303,7 @@ void get_ftindexes (xptr node,const char* title)
 void get_documents (xptr node,const char* title)
 {
 	addTextValue(node,"$DOCUMENTS.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENTS",xdt_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENTS",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	local_lock_mrg->put_lock_on_db();
@@ -312,10 +312,10 @@ void get_documents (xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xdt_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xdt_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
 		if (mdc->obj->document_name==NULL)
 		{
 			col_schema_node* coll=(col_schema_node*)mdc->obj->snode;
@@ -323,13 +323,13 @@ void get_documents (xptr node,const char* title)
 			xptr d_left=XNULL;
 			while (dc!=NULL)
 			{
-				d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xdt_untyped,NULL,NULL);
-				insert_attribute(XNULL,XNULL,d_left,"name",xdt_untypedAtomic,dc->obj->document_name,
+				d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
+				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,dc->obj->document_name,
 						strlen(dc->obj->document_name),NULL);
 				dc=coll->metadata->rb_successor(dc); 
 			}
 		}
-		insert_attribute(XNULL,XNULL,left,"name",xdt_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
+		insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		
 		mdc=metadata->rb_successor(mdc);
@@ -339,7 +339,7 @@ void get_documents (xptr node,const char* title)
 void get_catalog(xptr node,const char* title)
 {
 	addTextValue(node,"$CATALOG.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"CATALOG",xdt_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"CATALOG",xs_untyped,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -347,12 +347,12 @@ void get_catalog(xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xdt_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xdt_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
 
-		insert_attribute(XNULL,XNULL,left,"name",xdt_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
+		insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		
 		mdc=metadata->rb_successor(mdc);
@@ -363,7 +363,7 @@ void get_catalog(xptr node,const char* title)
 void get_collections(xptr node,const char* title)
 {
 	addTextValue(node,"$COLLECTIONS.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"COLLECTION",xdt_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"COLLECTION",xs_untyped,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -373,11 +373,11 @@ void get_collections(xptr node,const char* title)
 		{
 			if (left==XNULL)
 			{
-				left=insert_element(XNULL,XNULL,parent,"COLLECTION",xdt_untyped,NULL);
+				left=insert_element(XNULL,XNULL,parent,"COLLECTION",xs_untyped,NULL);
 			}
 			else
-				left=insert_element(left,XNULL,XNULL,"COLLECTION",xdt_untyped,NULL);
-			insert_attribute(XNULL,XNULL,left,"name",xdt_untypedAtomic,mdc->obj->collection_name,
+				left=insert_element(left,XNULL,XNULL,"COLLECTION",xs_untyped,NULL);
+			insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->obj->collection_name,
 						strlen(mdc->obj->collection_name),NULL);
 		}
 		

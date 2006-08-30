@@ -22,7 +22,7 @@ tuple_cell string2tuple_cell(std::string value, xmlscm_type xtype)
 {
 	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
 
-    tuple_cell c = tuple_cell::atomic_deep(xdt_untypedAtomic, value.c_str());
+    tuple_cell c = tuple_cell::atomic_deep(xs_untypedAtomic, value.c_str());
     return cast(c, xtype);
 }
 
@@ -63,7 +63,7 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
             break;
         }
     case xs_string			: 
-    case xdt_untypedAtomic	: 
+    case xs_untypedAtomic	: 
         {
             if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
                 return tuple_cell::atomic(false);
@@ -86,7 +86,7 @@ tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
     case xs_decimal			: 
     case xs_integer 		: return value_comp_eq(tuple_cell::atomic(pos), t);
     case xs_string			: 
-    case xdt_untypedAtomic	: 
+    case xs_untypedAtomic	: 
         {
             if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
                 return tuple_cell::atomic(false);

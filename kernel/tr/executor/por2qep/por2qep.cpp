@@ -463,7 +463,7 @@ tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value)
 xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 {
     xmlscm_type xtype;
-    if (strcmp(type, "!xdt!untypedAtomic") == 0) 	xtype = xdt_untypedAtomic;
+    if (strcmp(type, "!xs!untypedAtomic") == 0) 	xtype = xs_untypedAtomic;
     else if (strcmp(type, "!xs!gYearMonth") == 0)	xtype = xs_gYearMonth;
     else if (strcmp(type, "!xs!gYear") == 0)		xtype = xs_gYear;
     else if (strcmp(type, "!xs!gMonthDay") == 0)	xtype = xs_gMonthDay;
@@ -473,8 +473,8 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else if (strcmp(type, "!xs!time") == 0)			xtype = xs_time;
     else if (strcmp(type, "!xs!date") == 0)			xtype = xs_date;
     else if (strcmp(type, "!xs!duration") == 0)		xtype = xs_duration;
-    else if (strcmp(type, "!xdt!yearMonthDuration") == 0)		xtype = xdt_yearMonthDuration;
-    else if (strcmp(type, "!xdt!dayTimeDuration") == 0)		xtype = xdt_dayTimeDuration;
+    else if (strcmp(type, "!xs!yearMonthDuration") == 0)		xtype = xs_yearMonthDuration;
+    else if (strcmp(type, "!xs!dayTimeDuration") == 0)		xtype = xs_dayTimeDuration;
     else if (strcmp(type, "!xs!boolean") == 0)		xtype = xs_boolean;
     else if (strcmp(type, "!xs!base64Binary") == 0)	xtype = xs_base64Binary;
     else if (strcmp(type, "!xs!hexBinary") == 0)	xtype = xs_hexBinary;

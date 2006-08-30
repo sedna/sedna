@@ -55,7 +55,7 @@ void e_dsc::init(void *p)
     d->rdsc= XNULL;
 	d->desc_next=0;
 	d->desc_prev=0;
-    d->type	= xdt_untyped;
+    d->type	= xs_untyped;
 	d->indir=XNULL;
 }
 
@@ -123,7 +123,7 @@ void a_dsc::init(void *p)
 	d->desc_prev=0;
     d->size = 0;
     d->data= XNULL;
-	d->type	= xdt_untyped;
+	d->type	= xs_untyped;
 	d->indir=XNULL;
 }
 void a_dsc::init(void *p, xmlscm_type t)
@@ -185,8 +185,8 @@ int xmlscm_type_size(xmlscm_type t)
 		case xs_date				: 
 		case xs_time				: 
 		case xs_duration			: 
-		case xdt_yearMonthDuration	: 
-		case xdt_dayTimeDuration	: 
+		case xs_yearMonthDuration	: 
+		case xs_dayTimeDuration	: 
 		case xs_gYearMonth			: 
 		case xs_gYear				: 
 		case xs_gMonthDay			: 

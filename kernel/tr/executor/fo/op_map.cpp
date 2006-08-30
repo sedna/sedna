@@ -104,7 +104,7 @@ int simple_type2bin_op_numeric_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 0;
     case xs_integer:
         return 1;
@@ -121,122 +121,122 @@ int simple_type2bin_op_numeric_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_numeric_add_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                               /*xs_integer*/                               /*xs_decimal*/                               /*xs_float*/                               /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_add_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_add_xdt_untypedAtomic_xs_integer, op_numeric_add_xdt_untypedAtomic_xs_decimal, op_numeric_add_xdt_untypedAtomic_xs_float, op_numeric_add_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_add_xs_integer_xdt_untypedAtomic,        op_numeric_add_xs_integer_xs_integer,        op_numeric_add_xs_integer_xs_decimal,        op_numeric_add_xs_integer_xs_float,        op_numeric_add_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_add_xs_decimal_xdt_untypedAtomic,        op_numeric_add_xs_decimal_xs_integer,        op_numeric_add_xs_decimal_xs_decimal,        op_numeric_add_xs_decimal_xs_float,        op_numeric_add_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_add_xs_float_xdt_untypedAtomic,          op_numeric_add_xs_float_xs_integer,          op_numeric_add_xs_float_xs_decimal,          op_numeric_add_xs_float_xs_float,          op_numeric_add_xs_float_xs_double},
-/*xs_double*/         {op_numeric_add_xs_double_xdt_untypedAtomic,         op_numeric_add_xs_double_xs_integer,         op_numeric_add_xs_double_xs_decimal,         op_numeric_add_xs_double_xs_float,         op_numeric_add_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                               /*xs_integer*/                               /*xs_decimal*/                               /*xs_float*/                               /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_add_xs_untypedAtomic_xs_untypedAtomic, op_numeric_add_xs_untypedAtomic_xs_integer, op_numeric_add_xs_untypedAtomic_xs_decimal, op_numeric_add_xs_untypedAtomic_xs_float, op_numeric_add_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_add_xs_integer_xs_untypedAtomic,        op_numeric_add_xs_integer_xs_integer,        op_numeric_add_xs_integer_xs_decimal,        op_numeric_add_xs_integer_xs_float,        op_numeric_add_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_add_xs_decimal_xs_untypedAtomic,        op_numeric_add_xs_decimal_xs_integer,        op_numeric_add_xs_decimal_xs_decimal,        op_numeric_add_xs_decimal_xs_float,        op_numeric_add_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_add_xs_float_xs_untypedAtomic,          op_numeric_add_xs_float_xs_integer,          op_numeric_add_xs_float_xs_decimal,          op_numeric_add_xs_float_xs_float,          op_numeric_add_xs_float_xs_double},
+/*xs_double*/         {op_numeric_add_xs_double_xs_untypedAtomic,         op_numeric_add_xs_double_xs_integer,         op_numeric_add_xs_double_xs_decimal,         op_numeric_add_xs_double_xs_float,         op_numeric_add_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_sub_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_subtract_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_subtract_xdt_untypedAtomic_xs_integer, op_numeric_subtract_xdt_untypedAtomic_xs_decimal, op_numeric_subtract_xdt_untypedAtomic_xs_float, op_numeric_subtract_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_subtract_xs_integer_xdt_untypedAtomic,        op_numeric_subtract_xs_integer_xs_integer,        op_numeric_subtract_xs_integer_xs_decimal,        op_numeric_subtract_xs_integer_xs_float,        op_numeric_subtract_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_subtract_xs_decimal_xdt_untypedAtomic,        op_numeric_subtract_xs_decimal_xs_integer,        op_numeric_subtract_xs_decimal_xs_decimal,        op_numeric_subtract_xs_decimal_xs_float,        op_numeric_subtract_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_subtract_xs_float_xdt_untypedAtomic,          op_numeric_subtract_xs_float_xs_integer,          op_numeric_subtract_xs_float_xs_decimal,          op_numeric_subtract_xs_float_xs_float,          op_numeric_subtract_xs_float_xs_double},
-/*xs_double*/         {op_numeric_subtract_xs_double_xdt_untypedAtomic,         op_numeric_subtract_xs_double_xs_integer,         op_numeric_subtract_xs_double_xs_decimal,         op_numeric_subtract_xs_double_xs_float,         op_numeric_subtract_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_subtract_xs_untypedAtomic_xs_untypedAtomic, op_numeric_subtract_xs_untypedAtomic_xs_integer, op_numeric_subtract_xs_untypedAtomic_xs_decimal, op_numeric_subtract_xs_untypedAtomic_xs_float, op_numeric_subtract_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_subtract_xs_integer_xs_untypedAtomic,        op_numeric_subtract_xs_integer_xs_integer,        op_numeric_subtract_xs_integer_xs_decimal,        op_numeric_subtract_xs_integer_xs_float,        op_numeric_subtract_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_subtract_xs_decimal_xs_untypedAtomic,        op_numeric_subtract_xs_decimal_xs_integer,        op_numeric_subtract_xs_decimal_xs_decimal,        op_numeric_subtract_xs_decimal_xs_float,        op_numeric_subtract_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_subtract_xs_float_xs_untypedAtomic,          op_numeric_subtract_xs_float_xs_integer,          op_numeric_subtract_xs_float_xs_decimal,          op_numeric_subtract_xs_float_xs_float,          op_numeric_subtract_xs_float_xs_double},
+/*xs_double*/         {op_numeric_subtract_xs_double_xs_untypedAtomic,         op_numeric_subtract_xs_double_xs_integer,         op_numeric_subtract_xs_double_xs_decimal,         op_numeric_subtract_xs_double_xs_float,         op_numeric_subtract_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_mul_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_multiply_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_multiply_xdt_untypedAtomic_xs_integer, op_numeric_multiply_xdt_untypedAtomic_xs_decimal, op_numeric_multiply_xdt_untypedAtomic_xs_float, op_numeric_multiply_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_multiply_xs_integer_xdt_untypedAtomic,        op_numeric_multiply_xs_integer_xs_integer,        op_numeric_multiply_xs_integer_xs_decimal,        op_numeric_multiply_xs_integer_xs_float,        op_numeric_multiply_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_multiply_xs_decimal_xdt_untypedAtomic,        op_numeric_multiply_xs_decimal_xs_integer,        op_numeric_multiply_xs_decimal_xs_decimal,        op_numeric_multiply_xs_decimal_xs_float,        op_numeric_multiply_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_multiply_xs_float_xdt_untypedAtomic,          op_numeric_multiply_xs_float_xs_integer,          op_numeric_multiply_xs_float_xs_decimal,          op_numeric_multiply_xs_float_xs_float,          op_numeric_multiply_xs_float_xs_double},
-/*xs_double*/         {op_numeric_multiply_xs_double_xdt_untypedAtomic,         op_numeric_multiply_xs_double_xs_integer,         op_numeric_multiply_xs_double_xs_decimal,         op_numeric_multiply_xs_double_xs_float,         op_numeric_multiply_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_multiply_xs_untypedAtomic_xs_untypedAtomic, op_numeric_multiply_xs_untypedAtomic_xs_integer, op_numeric_multiply_xs_untypedAtomic_xs_decimal, op_numeric_multiply_xs_untypedAtomic_xs_float, op_numeric_multiply_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_multiply_xs_integer_xs_untypedAtomic,        op_numeric_multiply_xs_integer_xs_integer,        op_numeric_multiply_xs_integer_xs_decimal,        op_numeric_multiply_xs_integer_xs_float,        op_numeric_multiply_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_multiply_xs_decimal_xs_untypedAtomic,        op_numeric_multiply_xs_decimal_xs_integer,        op_numeric_multiply_xs_decimal_xs_decimal,        op_numeric_multiply_xs_decimal_xs_float,        op_numeric_multiply_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_multiply_xs_float_xs_untypedAtomic,          op_numeric_multiply_xs_float_xs_integer,          op_numeric_multiply_xs_float_xs_decimal,          op_numeric_multiply_xs_float_xs_float,          op_numeric_multiply_xs_float_xs_double},
+/*xs_double*/         {op_numeric_multiply_xs_double_xs_untypedAtomic,         op_numeric_multiply_xs_double_xs_integer,         op_numeric_multiply_xs_double_xs_decimal,         op_numeric_multiply_xs_double_xs_float,         op_numeric_multiply_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_div_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                  /*xs_integer*/                                  /*xs_decimal*/                                  /*xs_float*/                                  /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_divide_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_divide_xdt_untypedAtomic_xs_integer, op_numeric_divide_xdt_untypedAtomic_xs_decimal, op_numeric_divide_xdt_untypedAtomic_xs_float, op_numeric_divide_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_divide_xs_integer_xdt_untypedAtomic,        op_numeric_divide_xs_integer_xs_integer,        op_numeric_divide_xs_integer_xs_decimal,        op_numeric_divide_xs_integer_xs_float,        op_numeric_divide_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_divide_xs_decimal_xdt_untypedAtomic,        op_numeric_divide_xs_decimal_xs_integer,        op_numeric_divide_xs_decimal_xs_decimal,        op_numeric_divide_xs_decimal_xs_float,        op_numeric_divide_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_divide_xs_float_xdt_untypedAtomic,          op_numeric_divide_xs_float_xs_integer,          op_numeric_divide_xs_float_xs_decimal,          op_numeric_divide_xs_float_xs_float,          op_numeric_divide_xs_float_xs_double},
-/*xs_double*/         {op_numeric_divide_xs_double_xdt_untypedAtomic,         op_numeric_divide_xs_double_xs_integer,         op_numeric_divide_xs_double_xs_decimal,         op_numeric_divide_xs_double_xs_float,         op_numeric_divide_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                  /*xs_integer*/                                  /*xs_decimal*/                                  /*xs_float*/                                  /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_divide_xs_untypedAtomic_xs_untypedAtomic, op_numeric_divide_xs_untypedAtomic_xs_integer, op_numeric_divide_xs_untypedAtomic_xs_decimal, op_numeric_divide_xs_untypedAtomic_xs_float, op_numeric_divide_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_divide_xs_integer_xs_untypedAtomic,        op_numeric_divide_xs_integer_xs_integer,        op_numeric_divide_xs_integer_xs_decimal,        op_numeric_divide_xs_integer_xs_float,        op_numeric_divide_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_divide_xs_decimal_xs_untypedAtomic,        op_numeric_divide_xs_decimal_xs_integer,        op_numeric_divide_xs_decimal_xs_decimal,        op_numeric_divide_xs_decimal_xs_float,        op_numeric_divide_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_divide_xs_float_xs_untypedAtomic,          op_numeric_divide_xs_float_xs_integer,          op_numeric_divide_xs_float_xs_decimal,          op_numeric_divide_xs_float_xs_float,          op_numeric_divide_xs_float_xs_double},
+/*xs_double*/         {op_numeric_divide_xs_double_xs_untypedAtomic,         op_numeric_divide_xs_double_xs_integer,         op_numeric_divide_xs_double_xs_decimal,         op_numeric_divide_xs_double_xs_float,         op_numeric_divide_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_idiv_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                          /*xs_integer*/                                          /*xs_decimal*/                                          /*xs_float*/                                          /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_integer_divide_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_integer_divide_xdt_untypedAtomic_xs_integer, op_numeric_integer_divide_xdt_untypedAtomic_xs_decimal, op_numeric_integer_divide_xdt_untypedAtomic_xs_float, op_numeric_integer_divide_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_integer_divide_xs_integer_xdt_untypedAtomic,        op_numeric_integer_divide_xs_integer_xs_integer,        op_numeric_integer_divide_xs_integer_xs_decimal,        op_numeric_integer_divide_xs_integer_xs_float,        op_numeric_integer_divide_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_integer_divide_xs_decimal_xdt_untypedAtomic,        op_numeric_integer_divide_xs_decimal_xs_integer,        op_numeric_integer_divide_xs_decimal_xs_decimal,        op_numeric_integer_divide_xs_decimal_xs_float,        op_numeric_integer_divide_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_integer_divide_xs_float_xdt_untypedAtomic,          op_numeric_integer_divide_xs_float_xs_integer,          op_numeric_integer_divide_xs_float_xs_decimal,          op_numeric_integer_divide_xs_float_xs_float,          op_numeric_integer_divide_xs_float_xs_double},
-/*xs_double*/         {op_numeric_integer_divide_xs_double_xdt_untypedAtomic,         op_numeric_integer_divide_xs_double_xs_integer,         op_numeric_integer_divide_xs_double_xs_decimal,         op_numeric_integer_divide_xs_double_xs_float,         op_numeric_integer_divide_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                          /*xs_integer*/                                          /*xs_decimal*/                                          /*xs_float*/                                          /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_integer_divide_xs_untypedAtomic_xs_untypedAtomic, op_numeric_integer_divide_xs_untypedAtomic_xs_integer, op_numeric_integer_divide_xs_untypedAtomic_xs_decimal, op_numeric_integer_divide_xs_untypedAtomic_xs_float, op_numeric_integer_divide_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_integer_divide_xs_integer_xs_untypedAtomic,        op_numeric_integer_divide_xs_integer_xs_integer,        op_numeric_integer_divide_xs_integer_xs_decimal,        op_numeric_integer_divide_xs_integer_xs_float,        op_numeric_integer_divide_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_integer_divide_xs_decimal_xs_untypedAtomic,        op_numeric_integer_divide_xs_decimal_xs_integer,        op_numeric_integer_divide_xs_decimal_xs_decimal,        op_numeric_integer_divide_xs_decimal_xs_float,        op_numeric_integer_divide_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_integer_divide_xs_float_xs_untypedAtomic,          op_numeric_integer_divide_xs_float_xs_integer,          op_numeric_integer_divide_xs_float_xs_decimal,          op_numeric_integer_divide_xs_float_xs_float,          op_numeric_integer_divide_xs_float_xs_double},
+/*xs_double*/         {op_numeric_integer_divide_xs_double_xs_untypedAtomic,         op_numeric_integer_divide_xs_double_xs_integer,         op_numeric_integer_divide_xs_double_xs_decimal,         op_numeric_integer_divide_xs_double_xs_float,         op_numeric_integer_divide_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_mod_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                               /*xs_integer*/                               /*xs_decimal*/                               /*xs_float*/                               /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_mod_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_mod_xdt_untypedAtomic_xs_integer, op_numeric_mod_xdt_untypedAtomic_xs_decimal, op_numeric_mod_xdt_untypedAtomic_xs_float, op_numeric_mod_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_mod_xs_integer_xdt_untypedAtomic,        op_numeric_mod_xs_integer_xs_integer,        op_numeric_mod_xs_integer_xs_decimal,        op_numeric_mod_xs_integer_xs_float,        op_numeric_mod_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_mod_xs_decimal_xdt_untypedAtomic,        op_numeric_mod_xs_decimal_xs_integer,        op_numeric_mod_xs_decimal_xs_decimal,        op_numeric_mod_xs_decimal_xs_float,        op_numeric_mod_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_mod_xs_float_xdt_untypedAtomic,          op_numeric_mod_xs_float_xs_integer,          op_numeric_mod_xs_float_xs_decimal,          op_numeric_mod_xs_float_xs_float,          op_numeric_mod_xs_float_xs_double},
-/*xs_double*/         {op_numeric_mod_xs_double_xdt_untypedAtomic,         op_numeric_mod_xs_double_xs_integer,         op_numeric_mod_xs_double_xs_decimal,         op_numeric_mod_xs_double_xs_float,         op_numeric_mod_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                               /*xs_integer*/                               /*xs_decimal*/                               /*xs_float*/                               /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_mod_xs_untypedAtomic_xs_untypedAtomic, op_numeric_mod_xs_untypedAtomic_xs_integer, op_numeric_mod_xs_untypedAtomic_xs_decimal, op_numeric_mod_xs_untypedAtomic_xs_float, op_numeric_mod_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_mod_xs_integer_xs_untypedAtomic,        op_numeric_mod_xs_integer_xs_integer,        op_numeric_mod_xs_integer_xs_decimal,        op_numeric_mod_xs_integer_xs_float,        op_numeric_mod_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_mod_xs_decimal_xs_untypedAtomic,        op_numeric_mod_xs_decimal_xs_integer,        op_numeric_mod_xs_decimal_xs_decimal,        op_numeric_mod_xs_decimal_xs_float,        op_numeric_mod_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_mod_xs_float_xs_untypedAtomic,          op_numeric_mod_xs_float_xs_integer,          op_numeric_mod_xs_float_xs_decimal,          op_numeric_mod_xs_float_xs_float,          op_numeric_mod_xs_float_xs_double},
+/*xs_double*/         {op_numeric_mod_xs_double_xs_untypedAtomic,         op_numeric_mod_xs_double_xs_integer,         op_numeric_mod_xs_double_xs_decimal,         op_numeric_mod_xs_double_xs_float,         op_numeric_mod_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_eq_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                 /*xs_integer*/                                 /*xs_decimal*/                                 /*xs_float*/                                 /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_equal_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_equal_xdt_untypedAtomic_xs_integer, op_numeric_equal_xdt_untypedAtomic_xs_decimal, op_numeric_equal_xdt_untypedAtomic_xs_float, op_numeric_equal_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_equal_xs_integer_xdt_untypedAtomic,        op_numeric_equal_xs_integer_xs_integer,        op_numeric_equal_xs_integer_xs_decimal,        op_numeric_equal_xs_integer_xs_float,        op_numeric_equal_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_equal_xs_decimal_xdt_untypedAtomic,        op_numeric_equal_xs_decimal_xs_integer,        op_numeric_equal_xs_decimal_xs_decimal,        op_numeric_equal_xs_decimal_xs_float,        op_numeric_equal_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_equal_xs_float_xdt_untypedAtomic,          op_numeric_equal_xs_float_xs_integer,          op_numeric_equal_xs_float_xs_decimal,          op_numeric_equal_xs_float_xs_float,          op_numeric_equal_xs_float_xs_double},
-/*xs_double*/         {op_numeric_equal_xs_double_xdt_untypedAtomic,         op_numeric_equal_xs_double_xs_integer,         op_numeric_equal_xs_double_xs_decimal,         op_numeric_equal_xs_double_xs_float,         op_numeric_equal_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                 /*xs_integer*/                                 /*xs_decimal*/                                 /*xs_float*/                                 /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_equal_xs_untypedAtomic_xs_untypedAtomic, op_numeric_equal_xs_untypedAtomic_xs_integer, op_numeric_equal_xs_untypedAtomic_xs_decimal, op_numeric_equal_xs_untypedAtomic_xs_float, op_numeric_equal_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_equal_xs_integer_xs_untypedAtomic,        op_numeric_equal_xs_integer_xs_integer,        op_numeric_equal_xs_integer_xs_decimal,        op_numeric_equal_xs_integer_xs_float,        op_numeric_equal_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_equal_xs_decimal_xs_untypedAtomic,        op_numeric_equal_xs_decimal_xs_integer,        op_numeric_equal_xs_decimal_xs_decimal,        op_numeric_equal_xs_decimal_xs_float,        op_numeric_equal_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_equal_xs_float_xs_untypedAtomic,          op_numeric_equal_xs_float_xs_integer,          op_numeric_equal_xs_float_xs_decimal,          op_numeric_equal_xs_float_xs_float,          op_numeric_equal_xs_float_xs_double},
+/*xs_double*/         {op_numeric_equal_xs_double_xs_untypedAtomic,         op_numeric_equal_xs_double_xs_integer,         op_numeric_equal_xs_double_xs_decimal,         op_numeric_equal_xs_double_xs_float,         op_numeric_equal_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_lt_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                     /*xs_integer*/                                     /*xs_decimal*/                                     /*xs_float*/                                     /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_less_than_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_less_than_xdt_untypedAtomic_xs_integer, op_numeric_less_than_xdt_untypedAtomic_xs_decimal, op_numeric_less_than_xdt_untypedAtomic_xs_float, op_numeric_less_than_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_less_than_xs_integer_xdt_untypedAtomic,        op_numeric_less_than_xs_integer_xs_integer,        op_numeric_less_than_xs_integer_xs_decimal,        op_numeric_less_than_xs_integer_xs_float,        op_numeric_less_than_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_less_than_xs_decimal_xdt_untypedAtomic,        op_numeric_less_than_xs_decimal_xs_integer,        op_numeric_less_than_xs_decimal_xs_decimal,        op_numeric_less_than_xs_decimal_xs_float,        op_numeric_less_than_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_less_than_xs_float_xdt_untypedAtomic,          op_numeric_less_than_xs_float_xs_integer,          op_numeric_less_than_xs_float_xs_decimal,          op_numeric_less_than_xs_float_xs_float,          op_numeric_less_than_xs_float_xs_double},
-/*xs_double*/         {op_numeric_less_than_xs_double_xdt_untypedAtomic,         op_numeric_less_than_xs_double_xs_integer,         op_numeric_less_than_xs_double_xs_decimal,         op_numeric_less_than_xs_double_xs_float,         op_numeric_less_than_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                     /*xs_integer*/                                     /*xs_decimal*/                                     /*xs_float*/                                     /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_less_than_xs_untypedAtomic_xs_untypedAtomic, op_numeric_less_than_xs_untypedAtomic_xs_integer, op_numeric_less_than_xs_untypedAtomic_xs_decimal, op_numeric_less_than_xs_untypedAtomic_xs_float, op_numeric_less_than_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_less_than_xs_integer_xs_untypedAtomic,        op_numeric_less_than_xs_integer_xs_integer,        op_numeric_less_than_xs_integer_xs_decimal,        op_numeric_less_than_xs_integer_xs_float,        op_numeric_less_than_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_less_than_xs_decimal_xs_untypedAtomic,        op_numeric_less_than_xs_decimal_xs_integer,        op_numeric_less_than_xs_decimal_xs_decimal,        op_numeric_less_than_xs_decimal_xs_float,        op_numeric_less_than_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_less_than_xs_float_xs_untypedAtomic,          op_numeric_less_than_xs_float_xs_integer,          op_numeric_less_than_xs_float_xs_decimal,          op_numeric_less_than_xs_float_xs_float,          op_numeric_less_than_xs_float_xs_double},
+/*xs_double*/         {op_numeric_less_than_xs_double_xs_untypedAtomic,         op_numeric_less_than_xs_double_xs_integer,         op_numeric_less_than_xs_double_xs_decimal,         op_numeric_less_than_xs_double_xs_float,         op_numeric_less_than_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_gt_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                        /*xs_integer*/                                        /*xs_decimal*/                                        /*xs_float*/                                        /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_greater_than_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_greater_than_xdt_untypedAtomic_xs_integer, op_numeric_greater_than_xdt_untypedAtomic_xs_decimal, op_numeric_greater_than_xdt_untypedAtomic_xs_float, op_numeric_greater_than_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_greater_than_xs_integer_xdt_untypedAtomic,        op_numeric_greater_than_xs_integer_xs_integer,        op_numeric_greater_than_xs_integer_xs_decimal,        op_numeric_greater_than_xs_integer_xs_float,        op_numeric_greater_than_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_greater_than_xs_decimal_xdt_untypedAtomic,        op_numeric_greater_than_xs_decimal_xs_integer,        op_numeric_greater_than_xs_decimal_xs_decimal,        op_numeric_greater_than_xs_decimal_xs_float,        op_numeric_greater_than_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_greater_than_xs_float_xdt_untypedAtomic,          op_numeric_greater_than_xs_float_xs_integer,          op_numeric_greater_than_xs_float_xs_decimal,          op_numeric_greater_than_xs_float_xs_float,          op_numeric_greater_than_xs_float_xs_double},
-/*xs_double*/         {op_numeric_greater_than_xs_double_xdt_untypedAtomic,         op_numeric_greater_than_xs_double_xs_integer,         op_numeric_greater_than_xs_double_xs_decimal,         op_numeric_greater_than_xs_double_xs_float,         op_numeric_greater_than_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                        /*xs_integer*/                                        /*xs_decimal*/                                        /*xs_float*/                                        /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_greater_than_xs_untypedAtomic_xs_untypedAtomic, op_numeric_greater_than_xs_untypedAtomic_xs_integer, op_numeric_greater_than_xs_untypedAtomic_xs_decimal, op_numeric_greater_than_xs_untypedAtomic_xs_float, op_numeric_greater_than_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_greater_than_xs_integer_xs_untypedAtomic,        op_numeric_greater_than_xs_integer_xs_integer,        op_numeric_greater_than_xs_integer_xs_decimal,        op_numeric_greater_than_xs_integer_xs_float,        op_numeric_greater_than_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_greater_than_xs_decimal_xs_untypedAtomic,        op_numeric_greater_than_xs_decimal_xs_integer,        op_numeric_greater_than_xs_decimal_xs_decimal,        op_numeric_greater_than_xs_decimal_xs_float,        op_numeric_greater_than_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_greater_than_xs_float_xs_untypedAtomic,          op_numeric_greater_than_xs_float_xs_integer,          op_numeric_greater_than_xs_float_xs_decimal,          op_numeric_greater_than_xs_float_xs_float,          op_numeric_greater_than_xs_float_xs_double},
+/*xs_double*/         {op_numeric_greater_than_xs_double_xs_untypedAtomic,         op_numeric_greater_than_xs_double_xs_integer,         op_numeric_greater_than_xs_double_xs_decimal,         op_numeric_greater_than_xs_double_xs_float,         op_numeric_greater_than_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_ne_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                     /*xs_integer*/                                     /*xs_decimal*/                                     /*xs_float*/                                     /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_not_equal_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_not_equal_xdt_untypedAtomic_xs_integer, op_numeric_not_equal_xdt_untypedAtomic_xs_decimal, op_numeric_not_equal_xdt_untypedAtomic_xs_float, op_numeric_not_equal_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_not_equal_xs_integer_xdt_untypedAtomic,        op_numeric_not_equal_xs_integer_xs_integer,        op_numeric_not_equal_xs_integer_xs_decimal,        op_numeric_not_equal_xs_integer_xs_float,        op_numeric_not_equal_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_not_equal_xs_decimal_xdt_untypedAtomic,        op_numeric_not_equal_xs_decimal_xs_integer,        op_numeric_not_equal_xs_decimal_xs_decimal,        op_numeric_not_equal_xs_decimal_xs_float,        op_numeric_not_equal_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_not_equal_xs_float_xdt_untypedAtomic,          op_numeric_not_equal_xs_float_xs_integer,          op_numeric_not_equal_xs_float_xs_decimal,          op_numeric_not_equal_xs_float_xs_float,          op_numeric_not_equal_xs_float_xs_double},
-/*xs_double*/         {op_numeric_not_equal_xs_double_xdt_untypedAtomic,         op_numeric_not_equal_xs_double_xs_integer,         op_numeric_not_equal_xs_double_xs_decimal,         op_numeric_not_equal_xs_double_xs_float,         op_numeric_not_equal_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                     /*xs_integer*/                                     /*xs_decimal*/                                     /*xs_float*/                                     /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_not_equal_xs_untypedAtomic_xs_untypedAtomic, op_numeric_not_equal_xs_untypedAtomic_xs_integer, op_numeric_not_equal_xs_untypedAtomic_xs_decimal, op_numeric_not_equal_xs_untypedAtomic_xs_float, op_numeric_not_equal_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_not_equal_xs_integer_xs_untypedAtomic,        op_numeric_not_equal_xs_integer_xs_integer,        op_numeric_not_equal_xs_integer_xs_decimal,        op_numeric_not_equal_xs_integer_xs_float,        op_numeric_not_equal_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_not_equal_xs_decimal_xs_untypedAtomic,        op_numeric_not_equal_xs_decimal_xs_integer,        op_numeric_not_equal_xs_decimal_xs_decimal,        op_numeric_not_equal_xs_decimal_xs_float,        op_numeric_not_equal_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_not_equal_xs_float_xs_untypedAtomic,          op_numeric_not_equal_xs_float_xs_integer,          op_numeric_not_equal_xs_float_xs_decimal,          op_numeric_not_equal_xs_float_xs_float,          op_numeric_not_equal_xs_float_xs_double},
+/*xs_double*/         {op_numeric_not_equal_xs_double_xs_untypedAtomic,         op_numeric_not_equal_xs_double_xs_integer,         op_numeric_not_equal_xs_double_xs_decimal,         op_numeric_not_equal_xs_double_xs_float,         op_numeric_not_equal_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_le_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                      /*xs_integer*/                                      /*xs_decimal*/                                      /*xs_float*/                                      /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_less_equal_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_less_equal_xdt_untypedAtomic_xs_integer, op_numeric_less_equal_xdt_untypedAtomic_xs_decimal, op_numeric_less_equal_xdt_untypedAtomic_xs_float, op_numeric_less_equal_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_less_equal_xs_integer_xdt_untypedAtomic,        op_numeric_less_equal_xs_integer_xs_integer,        op_numeric_less_equal_xs_integer_xs_decimal,        op_numeric_less_equal_xs_integer_xs_float,        op_numeric_less_equal_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_less_equal_xs_decimal_xdt_untypedAtomic,        op_numeric_less_equal_xs_decimal_xs_integer,        op_numeric_less_equal_xs_decimal_xs_decimal,        op_numeric_less_equal_xs_decimal_xs_float,        op_numeric_less_equal_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_less_equal_xs_float_xdt_untypedAtomic,          op_numeric_less_equal_xs_float_xs_integer,          op_numeric_less_equal_xs_float_xs_decimal,          op_numeric_less_equal_xs_float_xs_float,          op_numeric_less_equal_xs_float_xs_double},
-/*xs_double*/         {op_numeric_less_equal_xs_double_xdt_untypedAtomic,         op_numeric_less_equal_xs_double_xs_integer,         op_numeric_less_equal_xs_double_xs_decimal,         op_numeric_less_equal_xs_double_xs_float,         op_numeric_less_equal_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                      /*xs_integer*/                                      /*xs_decimal*/                                      /*xs_float*/                                      /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_less_equal_xs_untypedAtomic_xs_untypedAtomic, op_numeric_less_equal_xs_untypedAtomic_xs_integer, op_numeric_less_equal_xs_untypedAtomic_xs_decimal, op_numeric_less_equal_xs_untypedAtomic_xs_float, op_numeric_less_equal_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_less_equal_xs_integer_xs_untypedAtomic,        op_numeric_less_equal_xs_integer_xs_integer,        op_numeric_less_equal_xs_integer_xs_decimal,        op_numeric_less_equal_xs_integer_xs_float,        op_numeric_less_equal_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_less_equal_xs_decimal_xs_untypedAtomic,        op_numeric_less_equal_xs_decimal_xs_integer,        op_numeric_less_equal_xs_decimal_xs_decimal,        op_numeric_less_equal_xs_decimal_xs_float,        op_numeric_less_equal_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_less_equal_xs_float_xs_untypedAtomic,          op_numeric_less_equal_xs_float_xs_integer,          op_numeric_less_equal_xs_float_xs_decimal,          op_numeric_less_equal_xs_float_xs_float,          op_numeric_less_equal_xs_float_xs_double},
+/*xs_double*/         {op_numeric_less_equal_xs_double_xs_untypedAtomic,         op_numeric_less_equal_xs_double_xs_integer,         op_numeric_less_equal_xs_double_xs_decimal,         op_numeric_less_equal_xs_double_xs_float,         op_numeric_less_equal_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_ge_tbl[5][5] = 
 {
-                       /*xdt_untypedAtomic*/                                         /*xs_integer*/                                         /*xs_decimal*/                                         /*xs_float*/                                         /*xs_double*/
-/*xdt_untypedAtomic*/ {op_numeric_greater_equal_xdt_untypedAtomic_xdt_untypedAtomic, op_numeric_greater_equal_xdt_untypedAtomic_xs_integer, op_numeric_greater_equal_xdt_untypedAtomic_xs_decimal, op_numeric_greater_equal_xdt_untypedAtomic_xs_float, op_numeric_greater_equal_xdt_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_greater_equal_xs_integer_xdt_untypedAtomic,        op_numeric_greater_equal_xs_integer_xs_integer,        op_numeric_greater_equal_xs_integer_xs_decimal,        op_numeric_greater_equal_xs_integer_xs_float,        op_numeric_greater_equal_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_greater_equal_xs_decimal_xdt_untypedAtomic,        op_numeric_greater_equal_xs_decimal_xs_integer,        op_numeric_greater_equal_xs_decimal_xs_decimal,        op_numeric_greater_equal_xs_decimal_xs_float,        op_numeric_greater_equal_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_greater_equal_xs_float_xdt_untypedAtomic,          op_numeric_greater_equal_xs_float_xs_integer,          op_numeric_greater_equal_xs_float_xs_decimal,          op_numeric_greater_equal_xs_float_xs_float,          op_numeric_greater_equal_xs_float_xs_double},
-/*xs_double*/         {op_numeric_greater_equal_xs_double_xdt_untypedAtomic,         op_numeric_greater_equal_xs_double_xs_integer,         op_numeric_greater_equal_xs_double_xs_decimal,         op_numeric_greater_equal_xs_double_xs_float,         op_numeric_greater_equal_xs_double_xs_double}
+                       /*xs_untypedAtomic*/                                         /*xs_integer*/                                         /*xs_decimal*/                                         /*xs_float*/                                         /*xs_double*/
+/*xs_untypedAtomic*/ {op_numeric_greater_equal_xs_untypedAtomic_xs_untypedAtomic, op_numeric_greater_equal_xs_untypedAtomic_xs_integer, op_numeric_greater_equal_xs_untypedAtomic_xs_decimal, op_numeric_greater_equal_xs_untypedAtomic_xs_float, op_numeric_greater_equal_xs_untypedAtomic_xs_double},
+/*xs_integer*/        {op_numeric_greater_equal_xs_integer_xs_untypedAtomic,        op_numeric_greater_equal_xs_integer_xs_integer,        op_numeric_greater_equal_xs_integer_xs_decimal,        op_numeric_greater_equal_xs_integer_xs_float,        op_numeric_greater_equal_xs_integer_xs_double},
+/*xs_decimal*/        {op_numeric_greater_equal_xs_decimal_xs_untypedAtomic,        op_numeric_greater_equal_xs_decimal_xs_integer,        op_numeric_greater_equal_xs_decimal_xs_decimal,        op_numeric_greater_equal_xs_decimal_xs_float,        op_numeric_greater_equal_xs_decimal_xs_double},
+/*xs_float*/          {op_numeric_greater_equal_xs_float_xs_untypedAtomic,          op_numeric_greater_equal_xs_float_xs_integer,          op_numeric_greater_equal_xs_float_xs_decimal,          op_numeric_greater_equal_xs_float_xs_float,          op_numeric_greater_equal_xs_float_xs_double},
+/*xs_double*/         {op_numeric_greater_equal_xs_double_xs_untypedAtomic,         op_numeric_greater_equal_xs_double_xs_integer,         op_numeric_greater_equal_xs_double_xs_decimal,         op_numeric_greater_equal_xs_double_xs_float,         op_numeric_greater_equal_xs_double_xs_double}
 };
 
 
@@ -253,7 +253,7 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
@@ -263,9 +263,9 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
@@ -276,12 +276,12 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_add_tbl[6][6]=
 {
-                           /*numeric*/      /*xs:date*/                       /*xs:time*/                     /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/
+                           /*numeric*/      /*xs:date*/                       /*xs:time*/                     /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/
 /*numeric*/                {op_numeric_add, NULL,                             NULL,                           NULL,                               NULL,                                 NULL},
 /*xs:date*/                {NULL,           NULL,                             NULL,                           op_add_dayTimeDuration_to_date,     op_add_yearMonthDuration_to_date,     NULL},
 /*xs:time*/                {NULL,           NULL,                             NULL,                           op_add_dayTimeDuration_to_time,     NULL,                                 NULL},
-/*xdt:dayTimeDuration*/    {NULL,           op_add_date_to_dayTimeDuration,   op_add_time_to_dayTimeDuration, op_add_dayTimeDurations,            NULL,                                 op_add_dateTime_to_dayTimeDuration},
-/*xdt:yearMonthDuration*/  {NULL,           op_add_date_to_yearMonthDuration, NULL,                           NULL,                               op_add_yearMonthDurations,            op_add_dateTime_to_yearMonthDuration},
+/*xs:dayTimeDuration*/    {NULL,           op_add_date_to_dayTimeDuration,   op_add_time_to_dayTimeDuration, op_add_dayTimeDurations,            NULL,                                 op_add_dateTime_to_dayTimeDuration},
+/*xs:yearMonthDuration*/  {NULL,           op_add_date_to_yearMonthDuration, NULL,                           NULL,                               op_add_yearMonthDurations,            op_add_dateTime_to_yearMonthDuration},
 /*xs:dateTime*/            {NULL,           NULL,                             NULL,                           op_add_dayTimeDuration_to_dateTime, op_add_yearMonthDuration_to_dateTime, NULL}
 };
 
@@ -289,7 +289,7 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
@@ -299,9 +299,9 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
@@ -312,12 +312,12 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_sub_tbl[6][6] =
 {
-                           /*numeric*/           /*xs:date*/          /*xs:time*/           /*xdt:dayTimeDuration*/                     /*xdt:yearMonthDuration*/                      /*xs:dateTime*/
+                           /*numeric*/           /*xs:date*/          /*xs:time*/           /*xs:dayTimeDuration*/                     /*xs:yearMonthDuration*/                      /*xs:dateTime*/
 /*numeric*/                {op_numeric_subtract, NULL,                NULL,                 NULL,                                       NULL,                                          NULL},
 /*xs:date*/                {NULL,                op_subtract_dates,   NULL,                 op_subtract_dayTimeDuration_from_date,      op_subtract_yearMonthDuration_from_date,       NULL},
 /*xs:time*/                {NULL,                NULL,                op_subtract_times,    op_subtract_dayTimeDuration_from_time,      NULL,                                          NULL},
-/*xdt:dayTimeDuration*/    {NULL,                NULL,                NULL,                 op_subtract_dayTimeDurations,               NULL,                                          NULL},
-/*xdt:yearMonthDuration*/  {NULL,                NULL,                NULL,                 NULL,                                       op_subtract_yearMonthDurations,                NULL},
+/*xs:dayTimeDuration*/    {NULL,                NULL,                NULL,                 op_subtract_dayTimeDurations,               NULL,                                          NULL},
+/*xs:yearMonthDuration*/  {NULL,                NULL,                NULL,                 NULL,                                       op_subtract_yearMonthDurations,                NULL},
 /*xs:dateTime*/            {NULL,                NULL,                NULL,                 op_subtract_dayTimeDuration_from_dateTime,  op_subtract_yearMonthDuration_from_dateTime,   op_subtract_dateTimes}
 };
 
@@ -325,15 +325,15 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
         return 0;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 1;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 2;
     default:
         return -1;
@@ -342,10 +342,10 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_mul_tbl[3][3] = 
 {
-                           /*numeric*/                              /*xdt:dayTimeDuration*/                 /*xdt:yearMonthDuration*/
+                           /*numeric*/                              /*xs:dayTimeDuration*/                 /*xs:yearMonthDuration*/
 /*numeric*/                {op_numeric_multiply,                      op_multiply_numeric_by_dayTimeDuration, op_multiply_numeric_by_yearMonthDuration},
-/*xdt:dayTimeDuration*/    {op_multiply_dayTimeDuration_by_numeric,   NULL,                                   NULL},
-/*xdt:yearMonthDuration*/  {op_multiply_yearMonthDuration_by_numeric, NULL,                                   NULL}
+/*xs:dayTimeDuration*/    {op_multiply_dayTimeDuration_by_numeric,   NULL,                                   NULL},
+/*xs:yearMonthDuration*/  {op_multiply_yearMonthDuration_by_numeric, NULL,                                   NULL}
 };
 
 
@@ -353,15 +353,15 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
         return 0;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 1;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 2;
     default:
         return -1;
@@ -370,17 +370,17 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_div_tbl[3][3] = 
 {
-                           /*numeric*/                                /*xdt:dayTimeDuration*/                        /*xdt:yearMonthDuration*/
+                           /*numeric*/                                /*xs:dayTimeDuration*/                        /*xs:yearMonthDuration*/
 /*numeric*/                {op_numeric_divide,                        NULL,                                          NULL},
-/*xdt:dayTimeDuration*/    {op_divide_dayTimeDuration_by_numeric,     op_divide_dayTimeDuration_by_dayTimeDuration,  NULL},
-/*xdt:yearMonthDuration*/  {op_divide_yearMonthDuration_by_numeric,   NULL,                                          op_divide_yearMonthDuration_by_yearMonthDuration}
+/*xs:dayTimeDuration*/    {op_divide_dayTimeDuration_by_numeric,     op_divide_dayTimeDuration_by_dayTimeDuration,  NULL},
+/*xs:yearMonthDuration*/  {op_divide_yearMonthDuration_by_numeric,   NULL,                                          op_divide_yearMonthDuration_by_yearMonthDuration}
 };
 
 int simple_type2bin_op_idiv_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
@@ -397,7 +397,7 @@ int simple_type2bin_op_mod_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
     case xs_integer:
     case xs_decimal: 
     case xs_float: 
@@ -425,9 +425,9 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
         return 2;
     case xs_duration:
 	return 3;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 4;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 5;
     case xs_dateTime:
        return 6;
@@ -441,7 +441,7 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
         return 10;
     case xs_gDay:
         return 11;
-    case xdt_untypedAtomic:
+    case xs_untypedAtomic:
     case xs_string:
         return 12;
     default:
@@ -451,13 +451,13 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_eq_tbl[13][13] = 
 {
-                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	
+                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	
 /*numeric*/                {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:date*/                {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:time*/                {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:duration*/            {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xdt:dayTimeDuration*/    {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xdt:yearMonthDuration*/  {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:dayTimeDuration*/    {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
+/*xs:yearMonthDuration*/  {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:dateTime*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:gYear*/               {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL},
 /*xs:gYearMonth*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL},
@@ -483,9 +483,9 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
         return 2;
     case xs_duration:
 	return 3;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 4;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 5;
     case xs_dateTime:
         return 6;
@@ -499,7 +499,7 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
         return 10;
     case xs_gDay:
         return 11;
-    case xdt_untypedAtomic:
+    case xs_untypedAtomic:
     case xs_string:
         return 12;
     default:
@@ -509,13 +509,13 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_ne_tbl[13][13] = 
 {
-                           /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/
+                           /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/
 /*numeric*/                {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:date*/                {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:time*/                {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:duration*/            {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xdt:dayTimeDuration*/    {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xdt:yearMonthDuration*/  {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:dayTimeDuration*/    {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
+/*xs:yearMonthDuration*/  {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:dateTime*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:gYear*/               {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL},
 /*xs:gYearMonth*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL},
@@ -539,14 +539,14 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
     case xs_string:
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 6;
     default:
         return -1;
@@ -555,12 +555,12 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_gt_tbl[7][7] = 
 {
-                           /*numeric*/               /*xs:date*/            /*xs:time*/            /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
+                           /*numeric*/               /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
 /*numeric*/                {op_numeric_greater_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:date*/                {NULL,                    op_date_greater_than,  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:time*/                {NULL,                    NULL,                  op_time_greater_than,  NULL,                               NULL,                                 NULL,                          NULL},
-/*xdt:dayTimeDuration*/    {NULL,                    NULL,                  NULL,                  op_dayTimeDuration_greater_than,    NULL,                                 NULL,                          NULL},
-/*xdt:yearMonthDuration*/  {NULL,                    NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_than,    NULL,                          NULL},
+/*xs:dayTimeDuration*/    {NULL,                    NULL,                  NULL,                  op_dayTimeDuration_greater_than,    NULL,                                 NULL,                          NULL},
+/*xs:yearMonthDuration*/  {NULL,                    NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_than,    NULL,                          NULL},
 /*xs:dateTime*/            {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_than,      NULL},
 /*xs:string*/              {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_than}
 };
@@ -578,14 +578,14 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
     case xs_string:
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 6;
     default:
         return -1;
@@ -594,12 +594,12 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_lt_tbl[7][7] = 
 {
-                           /*numeric*/            /*xs:date*/            /*xs:time*/            /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
+                           /*numeric*/            /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
 /*numeric*/                {op_numeric_less_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:date*/                {NULL,                 op_date_less_than,     NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:time*/                {NULL,                 NULL,                  op_time_less_than,     NULL,                               NULL,                                 NULL,                          NULL},
-/*xdt:dayTimeDuration*/    {NULL,                 NULL,                  NULL,                  op_dayTimeDuration_less_than,       NULL,                                 NULL,                          NULL},
-/*xdt:yearMonthDuration*/  {NULL,                 NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_than,       NULL,                          NULL},
+/*xs:dayTimeDuration*/    {NULL,                 NULL,                  NULL,                  op_dayTimeDuration_less_than,       NULL,                                 NULL,                          NULL},
+/*xs:yearMonthDuration*/  {NULL,                 NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_than,       NULL,                          NULL},
 /*xs:dateTime*/            {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_than,         NULL},
 /*xs:string*/              {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_than}
 };
@@ -617,14 +617,14 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
     case xs_string:
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 6;
     default:
         return -1;
@@ -634,12 +634,12 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_ge_tbl[7][7] =
 {
-                           /*numeric*/                /*xs:date*/            /*xs:time*/            /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
+                           /*numeric*/                /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
 /*numeric*/                {op_numeric_greater_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:date*/                {NULL,                     op_date_greater_equal, NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:time*/                {NULL,                     NULL,                  op_time_greater_equal, NULL,                               NULL,                                 NULL,                          NULL},
-/*xdt:dayTimeDuration*/    {NULL,                     NULL,                  NULL,                  op_dayTimeDuration_greater_equal,   NULL,                                 NULL,                          NULL},
-/*xdt:yearMonthDuration*/  {NULL,                     NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_equal,   NULL,                          NULL},
+/*xs:dayTimeDuration*/    {NULL,                     NULL,                  NULL,                  op_dayTimeDuration_greater_equal,   NULL,                                 NULL,                          NULL},
+/*xs:yearMonthDuration*/  {NULL,                     NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_equal,   NULL,                          NULL},
 /*xs:dateTime*/            {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_equal,     NULL},
 /*xs:string*/              {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_equal}
 };
@@ -657,14 +657,14 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
         return 1;
     case xs_time:
         return 2;
-    case xdt_dayTimeDuration:
+    case xs_dayTimeDuration:
         return 3;
-    case xdt_yearMonthDuration:
+    case xs_yearMonthDuration:
         return 4;
     case xs_dateTime:
         return 5;
     case xs_string:
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 6;
     default:
         return -1;
@@ -673,12 +673,12 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
 
 bin_op_tuple_cell_tuple_cell op_le_tbl[7][7] = 
 {
-                           /*numeric*/             /*xs:date*/            /*xs:time*/            /*xdt:dayTimeDuration*/             /*xdt:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
+                           /*numeric*/             /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
 /*numeric*/                {op_numeric_less_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:date*/                {NULL,                  op_date_less_equal,    NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
 /*xs:time*/                {NULL,                  NULL,                  op_time_less_equal,    NULL,                               NULL,                                 NULL,                          NULL},
-/*xdt:dayTimeDuration*/    {NULL,                  NULL,                  NULL,                  op_dayTimeDuration_less_equal,      NULL,                                 NULL,                          NULL},
-/*xdt:yearMonthDuration*/  {NULL,                  NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_equal,      NULL,                          NULL},
+/*xs:dayTimeDuration*/    {NULL,                  NULL,                  NULL,                  op_dayTimeDuration_less_equal,      NULL,                                 NULL,                          NULL},
+/*xs:yearMonthDuration*/  {NULL,                  NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_equal,      NULL,                          NULL},
 /*xs:dateTime*/            {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_equal,        NULL},
 /*xs:string*/              {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_equal}
 };
@@ -839,14 +839,14 @@ bin_op_tuple_cell_tuple_cell get_binary_op(xq_binary_op_type t, xmlscm_type t1, 
 
 un_op_tuple_cell op_numeric_plus_tbl[5] = 
 {
-/*xdt_untypedAtomic*/                    /*xs_integer*/                    /*xs_decimal*/                    /*xs_float*/                    /*xs_double*/
-op_numeric_unary_plus_xdt_untypedAtomic, op_numeric_unary_plus_xs_integer, op_numeric_unary_plus_xs_decimal, op_numeric_unary_plus_xs_float, op_numeric_unary_plus_xs_double
+/*xs_untypedAtomic*/                    /*xs_integer*/                    /*xs_decimal*/                    /*xs_float*/                    /*xs_double*/
+op_numeric_unary_plus_xs_untypedAtomic, op_numeric_unary_plus_xs_integer, op_numeric_unary_plus_xs_decimal, op_numeric_unary_plus_xs_float, op_numeric_unary_plus_xs_double
 };
 
 un_op_tuple_cell op_numeric_minus_tbl[5] = 
 {
-/*xdt_untypedAtomic*/                    /*xs_integer*/                    /*xs_decimal*/                    /*xs_float*/                    /*xs_double*/
-op_numeric_unary_minus_xdt_untypedAtomic, op_numeric_unary_minus_xs_integer, op_numeric_unary_minus_xs_decimal, op_numeric_unary_minus_xs_float, op_numeric_unary_minus_xs_double
+/*xs_untypedAtomic*/                    /*xs_integer*/                    /*xs_decimal*/                    /*xs_float*/                    /*xs_double*/
+op_numeric_unary_minus_xs_untypedAtomic, op_numeric_unary_minus_xs_integer, op_numeric_unary_minus_xs_decimal, op_numeric_unary_minus_xs_float, op_numeric_unary_minus_xs_double
 };
 
 xq_unary_op_info_type xq_unary_op_info[] =
@@ -859,7 +859,7 @@ int simple_type2un_op_numeric_index(xmlscm_type xtype)
 {
     switch(xtype)
     {
-    case xdt_untypedAtomic: 
+    case xs_untypedAtomic: 
         return 0;
     case xs_integer:
         return 1;

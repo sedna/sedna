@@ -271,7 +271,7 @@ void PPFnTranslate::next  (tuple &t)
 			throw USER_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is empty sequence");
 		tuple_cell map_tc = map_str.get(t);
 		map_tc = atomize(map_tc);
-		if (map_tc.get_atomic_type()==xdt_untypedAtomic)
+		if (map_tc.get_atomic_type()==xs_untypedAtomic)
 			map_tc.set_xtype(xs_string);
 		else
 			if (!map_tc.is_string_type())
@@ -286,7 +286,7 @@ void PPFnTranslate::next  (tuple &t)
 			throw USER_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is empty sequence");
 		tuple_cell trans_tc = trans_str.get(t);
 		trans_tc = atomize(trans_tc);
-		if (trans_tc.get_atomic_type()==xdt_untypedAtomic)
+		if (trans_tc.get_atomic_type()==xs_untypedAtomic)
 			trans_tc.set_xtype(xs_string);
 		else
 			if (!trans_tc.is_string_type())

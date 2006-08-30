@@ -152,8 +152,8 @@ inline	bool	BT_VARIABLE_KEY_TYPE(xmlscm_type t)
 												case xs_time:
 												case xs_dateTime:
 												case xs_duration:
-												case xdt_yearMonthDuration:
-												case xdt_dayTimeDuration:
+												case xs_yearMonthDuration:
+												case xs_dayTimeDuration:
 												case xs_integer:
 												case xs_float:
 												case xs_double:

@@ -558,14 +558,14 @@
    (,sa:fn-ns "adjust-time-to-timezone" 1 2
     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
     ,sa:type-atomic !fn!adjust-time-to-timezone)
-   (,sa:xdt-ns "yearMonthDuration" 1 1
+   (,sa:xs-ns "yearMonthDuration" 1 1
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
-     (cast !xdt!yearMonthDuration))
-   (,sa:xdt-ns "dayTimeDuration" 1 1
+     (cast !xs!yearMonthDuration))
+   (,sa:xs-ns "dayTimeDuration" 1 1
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
-     (cast !xdt!dayTimeDuration))
+     (cast !xs!dayTimeDuration))
     ;----------------------------------------
     ; SQL extension by Roman Pastuhov
     (,sa:sql-ns "exec-update" 2 #f
@@ -704,6 +704,7 @@
      "unsignedInt"
      "unsignedShort"
      "unsignedByte"
+     "untypedAtomic"
      "positiveInteger"))    
   ))
 

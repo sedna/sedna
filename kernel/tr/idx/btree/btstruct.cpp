@@ -31,8 +31,8 @@ void bt_key::init(const bt_key& k)
 	case xs_time:
 	case xs_dateTime:
 	case xs_duration:
-	case xdt_yearMonthDuration:
-	case xdt_dayTimeDuration:
+	case xs_yearMonthDuration:
+	case xs_dayTimeDuration:
 			  v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
 			  memcpy(v.s_v, k.v.s_v, XMLDateTime::TOTAL_FIELDS * sizeof(int));
                           break;
@@ -60,8 +60,8 @@ void bt_key::init(char* pg, shft key_idx)
 	case xs_date:
 	case xs_time:
 	case xs_dateTime:
-	case xdt_yearMonthDuration:
-	case xdt_dayTimeDuration:
+	case xs_yearMonthDuration:
+	case xs_dayTimeDuration:
 			  {
 				v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
 				memcpy(v.s_v, (void*)key_tab_slot, XMLDateTime::TOTAL_FIELDS * sizeof(int));
@@ -82,8 +82,8 @@ int bt_key::get_size() const
 	case xs_date:
 	case xs_time:
 	case xs_dateTime:
-	case xdt_yearMonthDuration:
-	case xdt_dayTimeDuration:
+	case xs_yearMonthDuration:
+	case xs_dayTimeDuration:
 			return XMLDateTime::TOTAL_FIELDS * sizeof(int);
 	default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }

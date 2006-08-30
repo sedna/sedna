@@ -143,7 +143,7 @@ public:
     void normalizeDateTime();
     void normalizeDuration();
 
-    bool isDuration(){ return (getValue(Type) == xs_duration || getValue(Type) == xdt_dayTimeDuration || getValue(Type) == xdt_yearMonthDuration); }
+    bool isDuration(){ return (getValue(Type) == xs_duration || getValue(Type) == xs_dayTimeDuration || getValue(Type) == xs_yearMonthDuration); }
     static int compare(const XMLDateTime& d1, const XMLDateTime& d2);
    //------------------------------------------------------------------------
     // Gets a string representation of a dateTime or duration

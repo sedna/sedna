@@ -74,13 +74,13 @@ void serialize2lr_tuple_cell(std::ostream &s, const tuple_cell &tc)
         //(const (type !xs!integer) 153)
         switch (tc.get_atomic_type())
         {
-            case xdt_untypedAtomic		: s << "!xdt!untypedAtomic) \"" << tc.get_str_mem() << "\""; break;
+            case xs_untypedAtomic		: s << "!xs!untypedAtomic) \"" << tc.get_str_mem() << "\""; break;
             case xs_dateTime			: s << "!xs!dateTime) ()"; break;
             case xs_date				: s << "!xs!date) ()"; break;
             case xs_time				: s << "!xs!time) ()"; break;
             case xs_duration			: s << "!xs!duration) ()"; break;
-            case xdt_yearMonthDuration	: s << "!xdt!yearMonthDuration) ()"; break;
-            case xdt_dayTimeDuration	: s << "!xdt!dayTimeDuration) ()"; break;
+            case xs_yearMonthDuration	: s << "!xs!yearMonthDuration) ()"; break;
+            case xs_dayTimeDuration		: s << "!xs!dayTimeDuration) ()"; break;
             case xs_float				: s << "!xs!float) " << tc.get_xs_float(); break;
             case xs_double				: s << "!xs!double) " << tc.get_xs_double(); break;
             case xs_string				: s << "!xs!string) \"" << tc.get_str_mem() << "\""; break;

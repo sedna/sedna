@@ -306,15 +306,15 @@ void PPElementConstructor::next  (tuple &t)
 		xptr new_element;
 		if (parind==XNULL || deep_copy)
 		{
-			new_element= insert_element(removeIndirection(last_elem),XNULL,virt_root,name,xdt_untyped,ns);
+			new_element= insert_element(removeIndirection(last_elem),XNULL,virt_root,name,xs_untyped,ns);
 			last_elem=((n_dsc*)XADDR(new_element))->indir;
 		}
 		else
 		{
 			if (leftind!=XNULL)
-				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,xdt_untyped,ns);
+				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,xs_untyped,ns);
 			else
-				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,xdt_untyped,ns);
+				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,xs_untyped,ns);
 			conscnt++;
 		}
 		int cnt=conscnt;
@@ -619,13 +619,13 @@ void PPAttributeConstructor::next  (tuple &t)
 		//Attribute insertion
 		xptr new_attribute;
 		if (cont_parind==XNULL || deep_copy)
-			new_attribute= insert_attribute(XNULL,XNULL,virt_root,name,xdt_untypedAtomic,value,size,ns);
+			new_attribute= insert_attribute(XNULL,XNULL,virt_root,name,xs_untypedAtomic,value,size,ns);
 		else
 		{
 			if (cont_leftind!=XNULL)
-				new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xdt_untypedAtomic,value,size,ns);
+				new_attribute= insert_attribute(removeIndirection(cont_leftind),XNULL,XNULL,name,xs_untypedAtomic,value,size,ns);
 			else
-				new_attribute= insert_attribute(XNULL,XNULL,removeIndirection(cont_parind),name,xdt_untypedAtomic,value,size,ns);
+				new_attribute= insert_attribute(XNULL,XNULL,removeIndirection(cont_parind),name,xs_untypedAtomic,value,size,ns);
 			conscnt++;
 			cont_leftind=((n_dsc*)XADDR(new_attribute))->indir;			
 		}

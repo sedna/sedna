@@ -260,7 +260,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
                         throw USER_EXCEPTION2(SE1003, "Invalid numeric type in PPPRedRange");
                    }
             }
-            else if(tc.get_atomic_type() == xdt_untypedAtomic)
+            else if(tc.get_atomic_type() == xs_untypedAtomic)
             {
                 tc = cast_to_xs_double(tc);
                 double_values.push_back(tc.get_xs_double());

@@ -147,7 +147,7 @@ void PPPatMatch::next  (tuple &t)
 		if (!t1c.is_eos())
 		{
 			t1c= atomize(t1c);
-			if (t1c.get_atomic_type()==xdt_untypedAtomic)
+			if (t1c.get_atomic_type()==xs_untypedAtomic)
 				t1c.set_xtype(xs_string);
 			else
 				if (!t1c.is_string_type())
@@ -159,7 +159,7 @@ void PPPatMatch::next  (tuple &t)
 		if (!t2c.is_eos())
 		{
 			t2c= atomize(t2c);          
-			if (t2c.get_atomic_type()==xdt_untypedAtomic)
+			if (t2c.get_atomic_type()==xs_untypedAtomic)
 				t2c.set_xtype(xs_string);
 			else		
 				if (!t2c.is_string_type())
@@ -175,7 +175,7 @@ void PPPatMatch::next  (tuple &t)
 			if (!t3c.is_eos())
 			{
 				t3c= atomize(t3c);          
-				if (t3c.get_atomic_type()==xdt_untypedAtomic)
+				if (t3c.get_atomic_type()==xs_untypedAtomic)
 				t3c.set_xtype(xs_string);
 				else		
 				if (!t3c.is_string_type())
@@ -189,7 +189,7 @@ void PPPatMatch::next  (tuple &t)
 				if (!t4c.is_eos())
 				{
 					t4c= atomize(t4c);          
-					if (t4c.get_atomic_type()==xdt_untypedAtomic)
+					if (t4c.get_atomic_type()==xs_untypedAtomic)
 						t4c.set_xtype(xs_string);
 					else		
 						if (!t4c.is_string_type())

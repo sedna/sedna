@@ -182,7 +182,7 @@ tuple_cell dm_string_value(xptr node)
                                   return dm_string_value_call_traverse(node);
                               }
         case element		: {
-                                  if (E_DSC(node)->type == xdt_untyped)
+                                  if (E_DSC(node)->type == xs_untyped)
                                   {
                                       return dm_string_value_call_traverse(node);
                                   }
@@ -256,13 +256,13 @@ tuple_cell dm_typed_value(xptr node)
 
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
-        case document		: return cast(dm_string_value(node), xdt_untypedAtomic);
+        case document		: return cast(dm_string_value(node), xs_untypedAtomic);
         case element		: {
                                   xmlscm_type type = E_DSC(node)->type;
-                                  if (type == xdt_untyped)
+                                  if (type == xs_untyped)
                                   {
                                       tuple_cell res = dm_string_value(node);
-                                      res.set_xtype(xdt_untypedAtomic);
+                                      res.set_xtype(xs_untypedAtomic);
                                       return res;
                                   }
                                   else 
@@ -279,7 +279,7 @@ tuple_cell dm_typed_value(xptr node)
                                   int size = T_DSC(node)->size;
                                   xptr data = T_DSC(node)->data;
                                   CHECKP(data);
-                                  return tuple_cell::atomic_pstr(xdt_untypedAtomic, 
+                                  return tuple_cell::atomic_pstr(xs_untypedAtomic, 
                                                                  size, 
                                                                  PSTRDEREF(data));
                               }
@@ -291,8 +291,8 @@ char* type2string(xmlscm_type type)
 {
     switch (type)
     {
-        case xdt_untyped		: return "xdt:untyped";
-        case xdt_untypedAtomic	: return "xdt:untypedAtomic";
+        case xs_untyped			: return "xs:untyped";
+        case xs_untypedAtomic	: return "xs:untypedAtomic";
         case xs_gYearMonth		: return "xs:gYearMonth";
         case xs_gYear			: return "xs:gYear";
         case xs_gMonthDay		: return "xs:gMonthDay";
@@ -330,7 +330,7 @@ tuple_cell dm_type_name(xptr node)
         case xml_namespace	: return tuple_cell::eos();
         case pr_ins			: return tuple_cell::eos();
         case comment		: return tuple_cell::eos();
-        case text			: return tuple_cell::atomic_xs_QName_deep("xdt", "untypedAtomic");
+        case text			: return tuple_cell::atomic_xs_QName_deep("xs", "untypedAtomic");
         default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:type-name");
     }
 }

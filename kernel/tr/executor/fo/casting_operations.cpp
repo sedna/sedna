@@ -156,18 +156,18 @@ tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtyp
         case xs_time			: res.parseTime(t); break;
 	case xs_date			: res.parseDate(t); break;
         case xs_duration		: res.parseDuration(t); break;
-        case xdt_yearMonthDuration	: res.parseYearMonthDuration(t); break;
-        case xdt_dayTimeDuration	: res.parseDayTimeDuration(t); break;
+        case xs_yearMonthDuration	: res.parseYearMonthDuration(t); break;
+        case xs_dayTimeDuration	: res.parseDayTimeDuration(t); break;
         default				: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_to_xs_dateTime");
     }
 		
     return tuple_cell::atomic(xtype, res.getRawData());
 }
 
-tuple_cell cast_to_xdt_untypedAtomic(const tuple_cell &c)
+tuple_cell cast_to_xs_untypedAtomic(const tuple_cell &c)
 {
     tuple_cell tc(cast_to_xs_string(c));
-    tc.set_xtype(xdt_untypedAtomic);
+    tc.set_xtype(xs_untypedAtomic);
     return tc;
 }
 
@@ -177,7 +177,7 @@ tuple_cell cast_to_xs_QName(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: {
+        case xs_untypedAtomic	: {
                                       // !!! FIXME: check lexical representation
                                       tuple_cell res(c);
                                       res.set_xtype(xs_QName);
@@ -192,8 +192,8 @@ tuple_cell cast_to_xs_QName(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: throw USER_EXCEPTION(FORG0001);
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
         case xs_hexBinary		: throw USER_EXCEPTION(FORG0001);
@@ -220,7 +220,7 @@ tuple_cell cast_to_xs_string(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: {
+        case xs_untypedAtomic	: {
                                       tuple_cell res(c);
                                       res.set_xtype(xs_string);
                                       return res;
@@ -234,8 +234,8 @@ tuple_cell cast_to_xs_string(const tuple_cell &c)
         case xs_time			:
         case xs_date			:
         case xs_duration		:
-        case xdt_yearMonthDuration	:
-        case xdt_dayTimeDuration	: {
+        case xs_yearMonthDuration	:
+        case xs_dayTimeDuration	: {
                                       char tmp[MAX_MEM_STR_SIZE + 1];
                                       c.get_xs_dateTime().get_string_value(tmp);
                                       return tuple_cell::atomic_deep(xs_string, tmp);
@@ -287,7 +287,7 @@ tuple_cell cast_to_xs_float(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_float(c);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_float(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -297,8 +297,8 @@ tuple_cell cast_to_xs_float(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: if (c.get_xs_boolean()) return tuple_cell::atomic((float)1);
                                   else return tuple_cell::atomic((float)0);
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
@@ -321,7 +321,7 @@ tuple_cell cast_to_xs_double(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_double(c);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_double(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -331,8 +331,8 @@ tuple_cell cast_to_xs_double(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration		: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration		: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: if (c.get_xs_boolean()) return tuple_cell::atomic((double)1);
                                   else return tuple_cell::atomic((double)0);
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
@@ -355,7 +355,7 @@ tuple_cell cast_to_xs_decimal(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_decimal(c);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_decimal(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -365,8 +365,8 @@ tuple_cell cast_to_xs_decimal(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: if (c.get_xs_boolean()) return tuple_cell::atomic(decimal(1.0));
                                   else return tuple_cell::atomic(decimal(0.0));
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
@@ -389,7 +389,7 @@ tuple_cell cast_to_xs_integer(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_integer(c);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_integer(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -399,8 +399,8 @@ tuple_cell cast_to_xs_integer(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: if (c.get_xs_boolean()) return tuple_cell::atomic(1);
                                   else return tuple_cell::atomic(0);
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
@@ -423,7 +423,7 @@ tuple_cell cast_to_xs_boolean(const tuple_cell &c)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_boolean(c);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_boolean(c);
         case xs_gYearMonth		: throw USER_EXCEPTION(FORG0001);
         case xs_gYear			: throw USER_EXCEPTION(FORG0001);
         case xs_gMonthDay		: throw USER_EXCEPTION(FORG0001);
@@ -433,8 +433,8 @@ tuple_cell cast_to_xs_boolean(const tuple_cell &c)
         case xs_time			: throw USER_EXCEPTION(FORG0001);
         case xs_date			: throw USER_EXCEPTION(FORG0001);
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
-        case xdt_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
+        case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_boolean			: return c;
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
         case xs_hexBinary		: throw USER_EXCEPTION(FORG0001);
@@ -456,7 +456,7 @@ tuple_cell cast_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
 
     switch (c.get_atomic_type())
     {
-        case xdt_untypedAtomic	: return cast_string_type_to_xs_dateTime(c,type);
+        case xs_untypedAtomic	: return cast_string_type_to_xs_dateTime(c,type);
         case xs_gYearMonth		: {
 					if(type != xs_gYearMonth) throw USER_EXCEPTION(FORG0001);
 					else return c;
@@ -510,26 +510,26 @@ tuple_cell cast_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
 					switch (type)
 					  {
 						case xs_duration: return c; 
-						case xdt_yearMonthDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
-						case xdt_dayTimeDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+						case xs_yearMonthDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+						case xs_dayTimeDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
 						default: throw USER_EXCEPTION(FORG0001);
 					  }
 					}
-	case xdt_yearMonthDuration	: {
+	case xs_yearMonthDuration	: {
 					switch (type)
 					  {
 						case xs_duration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
-						case xdt_yearMonthDuration: return c;
-						case xdt_dayTimeDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+						case xs_yearMonthDuration: return c;
+						case xs_dayTimeDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
 						default: throw USER_EXCEPTION(FORG0001);
 					  }
 					}
-	case xdt_dayTimeDuration	: {
+	case xs_dayTimeDuration	: {
 					switch (type)
 					  {
 						case xs_duration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
-						case xdt_yearMonthDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData()); 
-						case xdt_dayTimeDuration: return c;
+						case xs_yearMonthDuration: return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData()); 
+						case xs_dayTimeDuration: return c;
 						default: throw USER_EXCEPTION(FORG0001);
 					  }
 					}
@@ -552,7 +552,7 @@ tuple_cell cast(const tuple_cell &c, xmlscm_type xtype)
 {
     switch (xtype)
     {
-        case xdt_untypedAtomic	: return cast_to_xdt_untypedAtomic(c);
+        case xs_untypedAtomic	: return cast_to_xs_untypedAtomic(c);
         case xs_gYearMonth		: return cast_to_xs_dateTime(c,xtype);
         case xs_gYear			: return cast_to_xs_dateTime(c,xtype);
         case xs_gMonthDay		: return cast_to_xs_dateTime(c,xtype);
@@ -562,8 +562,8 @@ tuple_cell cast(const tuple_cell &c, xmlscm_type xtype)
         case xs_time			: return cast_to_xs_dateTime(c,xtype);
         case xs_date			: return cast_to_xs_dateTime(c,xtype);
         case xs_duration		: return cast_to_xs_dateTime(c,xtype);
-        case xdt_yearMonthDuration	: return cast_to_xs_dateTime(c,xtype);
-        case xdt_dayTimeDuration	: return cast_to_xs_dateTime(c,xtype);
+        case xs_yearMonthDuration	: return cast_to_xs_dateTime(c,xtype);
+        case xs_dayTimeDuration	: return cast_to_xs_dateTime(c,xtype);
         case xs_boolean			: return cast_to_xs_boolean(c);
         case xs_base64Binary	: throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented");
         case xs_hexBinary		: throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented");

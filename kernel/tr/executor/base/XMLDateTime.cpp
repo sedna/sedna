@@ -208,10 +208,10 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 					newValue.setValue(MiliSecond, getValue(MiliSecond));
 					newValue.setValue(MiliSecondLen, getValue(MiliSecondLen));
 					break;
-		case xdt_yearMonthDuration: 	newValue.setValue(CentYear, getValue(CentYear));
+		case xs_yearMonthDuration: 	newValue.setValue(CentYear, getValue(CentYear));
 						newValue.setValue(Month, getValue(Month));
 						break;
-		case xdt_dayTimeDuration:	newValue.setValue(Day, getValue(Day));
+		case xs_dayTimeDuration:	newValue.setValue(Day, getValue(Day));
 						newValue.setValue(Hour, getValue(Hour));
 						newValue.setValue(Minute, getValue(Minute));
 						newValue.setValue(Second, getValue(Second));
@@ -281,7 +281,7 @@ double XMLDateTime::getSeconds() const
 XMLDateTime XMLDateTime::getTimezone() const
 { 
 	XMLDateTime tz;
-	tz.setValue(Type, xdt_dayTimeDuration);
+	tz.setValue(Type, xs_dayTimeDuration);
 	int neg = (getValue(utc) == UTC_NEG )? -1: 1;
 	tz.setValue(Hour, neg * getValue(tz_hh));
 	tz.setValue(Minute, neg * getValue(tz_mm));
@@ -298,14 +298,14 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
     newDuration.setValue(XMLDateTime::Type, d1.getValue(XMLDateTime::Type));
 
 
-   if (d1.getValue(XMLDateTime::Type) == xdt_yearMonthDuration)
+   if (d1.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
    {
 	newDuration.setValue(XMLDateTime::Month, d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month) + 
 			d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month));
 	newDuration.normalize();
 	return newDuration;
    }
-   else //must be xdt_dayTimeDuration
+   else //must be xs_dayTimeDuration
    {
 	//add miliseconds
 	int carry = 0;
@@ -367,7 +367,7 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 	XMLDateTime newDuration;
 	newDuration.setValue(XMLDateTime::Type, d.getValue(XMLDateTime::Type));
 
-	if (d.getValue(XMLDateTime::Type) == xdt_yearMonthDuration)
+	if (d.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
 	{
 		int months = d.getValue(XMLDateTime::CentYear)*12 + d.getValue(XMLDateTime::Month);
 		double multMonths = months * v;
@@ -378,7 +378,7 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		newDuration.normalize();
 		return newDuration;
 	}
-	else // must be xdt_dayTimeDuration
+	else // must be xs_dayTimeDuration
 	{
 		int miliSecond = d.getValue(XMLDateTime::MiliSecond);
 		int miliSecondLen = d.getValue(XMLDateTime::MiliSecondLen);
@@ -413,13 +413,13 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 
 double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
 {
-	if (d1.getValue(XMLDateTime::Type) == xdt_yearMonthDuration)
+	if (d1.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
 	{
 		int m1 = d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month);
 		int m2 = d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month);
 		return ((double)m1/ (double)m2);
 	}
-	else // must be xdt_dayTimeDuration
+	else // must be xs_dayTimeDuration
 	{
 		double milis1 = d1.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
 		 	d1.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d1.getValue(XMLDateTime::MiliSecondLen));
@@ -445,7 +445,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 
     fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
 
-    if (fDuration.getValue(XMLDateTime::Type) == xdt_yearMonthDuration )
+    if (fDuration.getValue(XMLDateTime::Type) == xs_yearMonthDuration )
     {
 	//add months
 	fNewDate.setValue(XMLDateTime::Month, modulo(dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month), 1, 13));
@@ -459,7 +459,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
     	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
     }
 
-    if (fDuration.getValue(XMLDateTime::Type) == xdt_dayTimeDuration )
+    if (fDuration.getValue(XMLDateTime::Type) == xs_dayTimeDuration )
     {
 	//add miliseconds
 	carry = 0;
@@ -1025,7 +1025,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 }
 
 //
-// Parse xdt_yearMonth duration
+// Parse xs_yearMonth duration
 // PnYnM: -P1Y2M
 //
 // [-]{'P'{[n'Y'][n'M']}}
@@ -1033,19 +1033,19 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 //
 void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
 {
-    setValue(Type, xdt_yearMonthDuration);
+    setValue(Type, xs_yearMonthDuration);
     int fStart=0, fEnd = strlen(fBuffer);
     // must start with '-' or 'P'
     //
     char c = fBuffer[fStart++];
     if ( (c != DURATION_STARTER) &&
          (c != '-')            )
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_yearMonthDuration start");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration start");
 
     // 'P' must ALWAYS be present in either case
     if ( (c == '-') &&
          (fBuffer[fStart++]!= DURATION_STARTER ))
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_yearMonthDuration");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
 
     // java code
     //date[utc]=(c=='-')?'-':0;
@@ -1060,7 +1060,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     // eg P-1234, invalid
     //
     if (indexOf(fBuffer, fStart, fEnd, '-') != NOT_FOUND)
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_yearMonthDuration");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
 
     //at least one number and designator must be seen after P
     bool designator = false;
@@ -1085,12 +1085,12 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     }
 
     if ( !designator )
-    throw USER_EXCEPTION2(FODT007, "invalid xdt_yearMonthDuration");
+    throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
 
     normalize();
 }
 
-// xdt_dayTimeDuration
+// xs_dayTimeDuration
 // PnDTnHnMnS: -P3DT10H30M
 //
 // [-]{'P'{[n'D']['T'][n'H'][n'M'][n'S']}}
@@ -1100,19 +1100,19 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
 //
 void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 {
-    setValue(Type, xdt_dayTimeDuration);
+    setValue(Type, xs_dayTimeDuration);
     int fStart=0, fEnd = strlen(fBuffer);
     // must start with '-' or 'P'
     //
     char c = fBuffer[fStart++];
     if ( (c != DURATION_STARTER) &&
          (c != '-')            )
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration start");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration start");
 
     // 'P' must ALWAYS be present in either case
     if ( (c == '-') &&
          (fBuffer[fStart++]!= DURATION_STARTER ))
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
 
     setValue(utc, (fBuffer[0] == '-'? UTC_NEG : UTC_POS));
 
@@ -1146,7 +1146,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 
     if ( (fEnd == endDate) &&   // 'T' absent
          (fStart != fEnd)   )   // something after Day
-	throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration");
+	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
 
     if ( fEnd != endDate ) // 'T' present
     {
@@ -1190,7 +1190,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
                  * make usure there is something after the '.' and before the end.
                  */
                 if ( mlsec+1 == end )
-		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in xdt_dayTimeDuration");
+		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in xs_dayTimeDuration");
 
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 setValue(MiliSecond,negate * parseInt(fBuffer, mlsec+1, end));
@@ -1209,11 +1209,11 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
         // P1Y1M1DT is illigal value as well
         if ( (fStart != fEnd) ||
               fBuffer[--fStart] == DATETIME_SEPARATOR )
-	throw USER_EXCEPTION2(FODT007, "no time after time separator in xdt_dayTimeDuration");
+	throw USER_EXCEPTION2(FODT007, "no time after time separator in xs_dayTimeDuration");
     }
 
     if ( !designator )
-    throw USER_EXCEPTION2(FODT007, "invalid xdt_dayTimeDuration");
+    throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
 
     normalize();
 }
@@ -1420,8 +1420,8 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
 
 void XMLDateTime::normalize()
 {
-    if (getValue(Type) == xs_duration || getValue(Type) == xdt_yearMonthDuration ||
-	getValue(Type) == xdt_dayTimeDuration)
+    if (getValue(Type) == xs_duration || getValue(Type) == xs_yearMonthDuration ||
+	getValue(Type) == xs_dayTimeDuration)
 	normalizeDuration();
 
     else
@@ -1566,7 +1566,7 @@ void XMLDateTime::normalizeDuration()
 
     // if this is a dayTimeDuration, then we leave the rest of duration
     // in days, otherwise we carry to months and years
-    if (getValue(Type) == xdt_dayTimeDuration)
+    if (getValue(Type) == xs_dayTimeDuration)
 	setValue(Day, getValue(Day) + carry*negate);
  
     else
@@ -2056,13 +2056,13 @@ void XMLDateTime::printDuration(char* buf ) const
 		*bufPtr++ = DURATION_M;
 		nonZeroDate = 1;
 	}
-	if (getValue(Type) == xdt_yearMonthDuration && !nonZeroDate)
+	if (getValue(Type) == xs_yearMonthDuration && !nonZeroDate)
 	{
 		*bufPtr++ = '0';
 		*bufPtr++ = DURATION_M;
 	}
 
-	if (getValue(Type) == xs_duration || getValue(Type) == xdt_dayTimeDuration)
+	if (getValue(Type) == xs_duration || getValue(Type) == xs_dayTimeDuration)
 	{
 		if (getValue(Day) != 0)
 		{
@@ -2191,8 +2191,8 @@ void XMLDateTime::get_string_value(char* buf)
 		case xs_date:			printDate(buf); break;
 		case xs_time:			printTime(buf); break;
 		case xs_duration:		printDuration(buf); break;
-		case xdt_dayTimeDuration:	printDuration(buf); break;
-		case xdt_yearMonthDuration:	printDuration(buf); break;
+		case xs_dayTimeDuration:	printDuration(buf); break;
+		case xs_yearMonthDuration:	printDuration(buf); break;
 		default:			throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to XMLDateTime::get_string_value");
 	}
 }

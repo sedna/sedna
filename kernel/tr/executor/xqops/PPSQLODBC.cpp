@@ -660,7 +660,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 		return;
 	}
 
-	xptr elem = insert_element(removeIndirection(last_elem), XNULL, virt_root, "tuple", xdt_untyped, NULL);
+	xptr elem = insert_element(removeIndirection(last_elem), XNULL, virt_root, "tuple", xs_untyped, NULL);
 	xptr indir=((n_dsc*)XADDR(elem))->indir;
 	xptr left = XNULL;
 	last_elem = indir;
@@ -710,7 +710,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 			res_buf[res_len] = 0;
 		
 			//old SQLODBCResult::get -
-			//elem = insert_element(left, XNULL, parent, (char *)col_name, xdt_untyped, NULL);
+			//elem = insert_element(left, XNULL, parent, (char *)col_name, xs_untyped, NULL);
 			//insert_text(XNULL, XNULL, elem, (char *)res_buf, res_len);
 			//return elem;
 
