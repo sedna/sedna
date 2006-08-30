@@ -157,7 +157,7 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
     }
 
 
-    if (tc.get_atomic_type() == xdt_untypedAtomic)
+    if (tc.get_atomic_type() == xs_untypedAtomic)
         tc = cast(tc, idx_type);
     else
         type_promotion(tc, idx_type);

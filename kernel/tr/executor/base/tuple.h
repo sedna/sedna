@@ -86,8 +86,8 @@ public:
     XMLDateTime get_xs_dateTime()    const { return XMLDateTime(str_ptr); }
 
 /* !!! DELETE LATER */
-    char*   get_xdt_untypedAtomic_mem () const { return get_str_mem(); }
-    xptr    get_xdt_untypedAtomic_vmm () const { return get_str_vmm(); }
+    char*   get_xs_untypedAtomic_mem () const { return get_str_mem(); }
+    xptr    get_xs_untypedAtomic_vmm () const { return get_str_vmm(); }
     char*   get_xs_anyURI_mem         () const { return get_str_mem(); }
     xptr    get_xs_anyURI_vmm         () const { return get_str_vmm(); }
     char*   get_xs_QName_mem          () const { return get_str_mem(); }
@@ -107,7 +107,7 @@ public:
 
     bool is_string_type() const
     { // !!! Other string types are possible in the future
-        return (xtype == xdt_untypedAtomic		||
+        return (xtype == xs_untypedAtomic		||
                 xtype == xs_anyURI				||
                 xtype == xs_QName				||
                 xtype == xs_string
@@ -116,8 +116,8 @@ public:
                 xtype == xs_date				||
                 xtype == xs_time				||
                 xtype == xs_duration			||
-                xtype == xdt_yearMonthDuration	||
-                xtype == xdt_dayTimeDuration	||
+                xtype == xs_yearMonthDuration	||
+                xtype == xs_dayTimeDuration	||
                 xtype == xs_gYearMonth			||
                 xtype == xs_gYear				||
                 xtype == xs_gMonthDay			||

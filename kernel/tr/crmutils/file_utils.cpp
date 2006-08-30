@@ -301,10 +301,10 @@ static void start(void *s, const char *el, const char **attr)
 	}*/
     //d_printf1("be"); fflush(stdout);
 	if (mark)
-		new_node=insert_element(XNULL,XNULL,parent,local,xdt_untyped,ns);
+		new_node=insert_element(XNULL,XNULL,parent,local,xs_untyped,ns);
 	else
 	{
-		new_node=insert_element(left,XNULL,XNULL,local,xdt_untyped,ns);
+		new_node=insert_element(left,XNULL,XNULL,local,xs_untyped,ns);
 		mark=1;
 	}
 #ifdef SE_ENABLE_FTSEARCH
@@ -344,7 +344,7 @@ if (is_coll)
 			ns=xm_nsp.find(str_pair(prefix,uri))->second;
 		}
 		else ns=NULL;
-		att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xdt_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
+		att=insert_attribute(att,XNULL,(att==XNULL)?new_node:XNULL,local,xs_untypedAtomic,attr[i + 1],strlen(attr[i + 1]),ns);
 #ifdef SE_ENABLE_FTSEARCH
 		if (is_coll)
 			update_insert_sequence(att,(GETBLOCKBYNODE(att))->snode->ft_index_object); 

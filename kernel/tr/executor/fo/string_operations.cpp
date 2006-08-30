@@ -260,10 +260,10 @@ inline int fn_compare_mstr_vs_mstr(const char* str1, const char* str2)
     return strcmp(str1, str2);
 }
 
-tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool treat_xdt_untypedAtomic_as_xs_string)
+tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool treat_xs_untypedAtomic_as_xs_string)
 {
-    if (   a1.is_atomic() && (a1.get_atomic_type() == xs_string || (treat_xdt_untypedAtomic_as_xs_string && a1.get_atomic_type() == xdt_untypedAtomic))
-        && a2.is_atomic() && (a2.get_atomic_type() == xs_string || (treat_xdt_untypedAtomic_as_xs_string && a2.get_atomic_type() == xdt_untypedAtomic)))
+    if (   a1.is_atomic() && (a1.get_atomic_type() == xs_string || (treat_xs_untypedAtomic_as_xs_string && a1.get_atomic_type() == xs_untypedAtomic))
+        && a2.is_atomic() && (a2.get_atomic_type() == xs_string || (treat_xs_untypedAtomic_as_xs_string && a2.get_atomic_type() == xs_untypedAtomic)))
         ;
     else
         throw USER_EXCEPTION2(XPTY0004, "Calling fn:compare on non-string values");

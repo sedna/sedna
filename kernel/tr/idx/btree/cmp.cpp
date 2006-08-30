@@ -32,8 +32,8 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
 	case xs_date:
 	case xs_dateTime:
 	case xs_time:
-	case xdt_yearMonthDuration:
-	case xdt_dayTimeDuration:
+	case xs_yearMonthDuration:
+	case xs_dayTimeDuration:
 	{
 		return XMLDateTime::compare( XMLDateTime(k1.v.s_v), XMLDateTime(k2.v.s_v) );
 	}
@@ -92,8 +92,8 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
 	case xs_date:
 	case xs_dateTime:
 	case xs_time:
-	case xdt_yearMonthDuration:
-	case xdt_dayTimeDuration:
+	case xs_yearMonthDuration:
+	case xs_dayTimeDuration:
 			{
 			    return XMLDateTime::compare( XMLDateTime((char*)tab_el), XMLDateTime(k2.v.s_v) );
 			}

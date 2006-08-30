@@ -192,7 +192,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 	case element:
 		{
 			xptr node_indir=((n_dsc*)XADDR(node))->indir;
-			res =insert_element(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((e_dsc*)XADDR(node))->type:xdt_untyped,(GETSCHEMENODEX(node))->xmlns);
+			res =insert_element(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((e_dsc*)XADDR(node))->type:xs_untyped,(GETSCHEMENODEX(node))->xmlns);
 			xptr indir= ((n_dsc*)XADDR(res))->indir;
 			node=removeIndirection(node_indir);
 			CHECKP(node);
@@ -302,11 +302,11 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 			shft shift= *((shft*)XADDR(ind_ptr));
 			char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 			memcpy(z,data,size);
-			res =insert_attribute(left, right, parent,nam, (save_types)?typ:xdt_untypedAtomic,z,size,(GETSCHEMENODEX(node))->xmlns);
+			res =insert_attribute(left, right, parent,nam, (save_types)?typ:xs_untypedAtomic,z,size,(GETSCHEMENODEX(node))->xmlns);
 			delete [] z;
 		}
 		else
-			res =insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((a_dsc*)XADDR(node))->type:xdt_untypedAtomic,NULL,0,(GETSCHEMENODEX(node))->xmlns);
+			res =insert_attribute(left, right, parent,GETNAME(GETSCHEMENODEX(node)), (save_types)?((a_dsc*)XADDR(node))->type:xs_untypedAtomic,NULL,0,(GETSCHEMENODEX(node))->xmlns);
 
 	 }
 	 break;

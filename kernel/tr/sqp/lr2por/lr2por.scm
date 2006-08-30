@@ -1289,7 +1289,7 @@
 (define (l2p:lr-sequenceType2por-sequenceType SeqType)
   (let ((lr-occ-ind (car SeqType)))
         (cond 
-          ((eq? lr-occ-ind 'empty-test) `(empty xdt_untypedAtomic))
+          ((eq? lr-occ-ind 'empty-test) `(empty xs_untypedAtomic))
 
              
           ((or (eq? lr-occ-ind 'one)
@@ -1336,7 +1336,7 @@
   atomic-type)
 
 ;(define (l2p:lr-atomic-type2por-atomic-type atomic-type)
-;  (cond ((eq? atomic-type '!xdt!untypedAtomic) 'xdt_untypedAtomic)
+;  (cond ((eq? atomic-type '!xs!untypedAtomic) 'xs_untypedAtomic)
 ;        ((eq? atomic-type '!xs!anySimpleType) 'xs_anySimpleType)
 ;        ((eq? atomic-type '!xs!gYearMonth) 'xs_gYearMonth)
 ;        ((eq? atomic-type '!xs!gYear) 'xs_gYear)

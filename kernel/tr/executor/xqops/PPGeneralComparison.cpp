@@ -66,30 +66,30 @@ PPEQLGeneralComparison::PPEQLGeneralComparison(variable_context *_cxt_,
 }
 void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2)
 {
-	if (cell1.get_atomic_type()==xdt_untypedAtomic && cell2.get_atomic_type()==xdt_untypedAtomic)
+	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()==xs_untypedAtomic)
 	{
 		cell1=cast_to_xs_string(cell1);
 		cell2=cast_to_xs_string(cell2);
 		return; 
 	}
-	if (cell1.get_atomic_type()==xdt_untypedAtomic && cell2.is_numeric_type())
+	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.is_numeric_type())
 	{
 		cell1=cast_to_xs_double(cell1);
 		return; 
 	}
-	if (cell2.get_atomic_type()==xdt_untypedAtomic && cell1.is_numeric_type())
+	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.is_numeric_type())
 	{
 		cell2=cast_to_xs_double(cell2);
 		return; 
 	}
 	
-	if (cell1.get_atomic_type()==xdt_untypedAtomic && cell2.get_atomic_type()!=xdt_untypedAtomic)
+	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()!=xs_untypedAtomic)
 	{
 		cell1=cast(cell1,cell2.get_atomic_type());
 		return;
 	}
 
-	if (cell2.get_atomic_type()==xdt_untypedAtomic && cell1.get_atomic_type()!=xdt_untypedAtomic)
+	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.get_atomic_type()!=xs_untypedAtomic)
 	{
 		cell2=cast(cell2,cell1.get_atomic_type());
 		return;
@@ -165,7 +165,7 @@ bool PPGeneralComparison::result(PPIterator* cur, variable_context *cxt, void*& 
 ///////////////////////////////////////////////////////////////////////////////
 xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 {
-	xmlscm_type ret_type=xdt_untyped;
+	xmlscm_type ret_type=xs_untyped;
 	if (value.is_string_type())
 	{
 		if (min_str)
@@ -272,7 +272,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 }
 xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 {
-	xmlscm_type ret_type=xdt_untyped;
+	xmlscm_type ret_type=xs_untyped;
 	if (value.is_string_type())
 	{
 		if (max_str)
@@ -379,7 +379,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 }
 bool PPLMGeneralComparison::compare_minmax(xmlscm_type type_info, bool min_changed)
 {
-	if (type_info==xdt_untyped) return false;
+	if (type_info==xs_untyped) return false;
 	if (min_changed)
 	{
 		switch (type_info)
@@ -422,7 +422,7 @@ bool PPLMGeneralComparison::compare_minmax(xmlscm_type type_info, bool min_chang
 }
 bool PPLMGeneralComparison::compare_minmax_le(xmlscm_type type_info, bool min_changed)
 {
-	if (type_info==xdt_untyped) return false;
+	if (type_info==xs_untyped) return false;
 	if (min_changed)
 	{
 		switch (type_info)
@@ -630,13 +630,13 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		}
 		tuple_cell res[2];
 		res[0]=getAtomizedCell(*cont[0]);
-		if (res[0].get_atomic_type()==xdt_untypedAtomic) 
+		if (res[0].get_atomic_type()==xs_untypedAtomic) 
 		{
 			seq_str_val[0]=res[0];
 			uv_exist[0]=true;
 		}
 		res[1]=getAtomizedCell(*cont[1]);
-		if (res[1].get_atomic_type()==xdt_untypedAtomic) 
+		if (res[1].get_atomic_type()==xs_untypedAtomic) 
 		{
 			seq_str_val[1]=res[1];
 			uv_exist[1]=true;
@@ -668,7 +668,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 				else
 				{
 					res[pr]=getAtomizedCell(*cont[pr]);
-					if (res[pr].get_atomic_type()==xdt_untypedAtomic) 
+					if (res[pr].get_atomic_type()==xs_untypedAtomic) 
 					{
 						if (!uv_exist[pr])
 						{

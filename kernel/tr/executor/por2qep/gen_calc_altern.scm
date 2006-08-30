@@ -24,7 +24,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
                                (string->symbol "xs_decimal")
                                (string->symbol "xs_float")
                                (string->symbol "xs_double")
-                               (string->symbol "xdt_untypedAtomic")))
+                               (string->symbol "xs_untypedAtomic")))
 
 (define (make-pair lst1 lst2 word)
   (append (map (lambda (x) (list word x (car lst2))) lst1)
@@ -158,12 +158,12 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
                     (UnaryOpMinus_xs_decimal op_numeric_unary_plus_xs_decimal)
                     (UnaryOpMinus_xs_float op_numeric_unary_plus_xs_float)
                     (UnaryOpMinus_xs_double op_numeric_unary_plus_xs_double)
-                    (UnaryOpMinus_xdt_untypedAtomic op_numeric_unary_plus_xdt_untypedAtomic)
+                    (UnaryOpMinus_xs_untypedAtomic op_numeric_unary_plus_xs_untypedAtomic)
                     (UnaryOpMinus_xs_integer op_numeric_unary_minus_xs_integer)
                     (UnaryOpMinus_xs_decimal op_numeric_unary_minus_xs_decimal)
                     (UnaryOpMinus_xs_float op_numeric_unary_minus_xs_float)
                     (UnaryOpMinus_xs_double op_numeric_unary_minus_xs_double)
-                    (UnaryOpMinus_xdt_untypedAtomic op_numeric_unary_minus_xdt_untypedAtomic)))
+                    (UnaryOpMinus_xs_untypedAtomic op_numeric_unary_minus_xs_untypedAtomic)))
 
 (define (generate-unary-ops unary-ops)
   (let loop ((ops unary-ops))

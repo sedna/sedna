@@ -66,7 +66,7 @@ public:
     void setnew(const char* nv);
     void setnew_dateTimeDuration(const char* nv, xmlscm_type t);
 
-    void * data () const { return ((type == xs_string || type == xs_date || type == xs_dateTime || type == xs_time || type == xdt_yearMonthDuration || type == xdt_dayTimeDuration )? (void*)(v.s_v) : (void*)&v); }
+    void * data () const { return ((type == xs_string || type == xs_date || type == xs_dateTime || type == xs_time || type == xs_yearMonthDuration || type == xs_dayTimeDuration )? (void*)(v.s_v) : (void*)&v); }
 
 
     xmlscm_type get_type() const { return type; }

@@ -15,13 +15,13 @@ bool is_derived(xmlscm_type t1, xmlscm_type t2)
 {
     switch (t1)
     {
-        case xdt_untypedAtomic		: return false;
+        case xs_untypedAtomic		: return false;
         case xs_dateTime			: return false;
         case xs_date				: return false;
         case xs_time				: return false;
         case xs_duration			: return false;
-        case xdt_yearMonthDuration	: return (t2 == xs_duration);
-        case xdt_dayTimeDuration	: return (t2 == xs_duration);
+        case xs_yearMonthDuration	: return (t2 == xs_duration);
+        case xs_dayTimeDuration	: return (t2 == xs_duration);
         case xs_float				: return false;
         case xs_double				: return false;
         case xs_string				: return false;
@@ -223,13 +223,13 @@ void type_promotion(tuple_cell &tc, xmlscm_type type) //tc contains result tuple
 
 bool is_correct_type(xmlscm_type t)
 {
-	return ( 	   t == xdt_untypedAtomic
+	return ( 	   t == xs_untypedAtomic
         		|| t == xs_dateTime	
         		|| t == xs_date		
         		|| t == xs_time		
      		    || t == xs_duration	
-		        || t == xdt_yearMonthDuration
-		        || t == xdt_dayTimeDuration
+		        || t == xs_yearMonthDuration
+		        || t == xs_dayTimeDuration
 		        || t == xs_float			
 		        || t == xs_double			
 		        || t == xs_string			
@@ -286,16 +286,16 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 	
 	switch (t1)
     {
-        case xdt_yearMonthDuration	: 
+        case xs_yearMonthDuration	: 
         	switch(t2)
         	{
-        		case xdt_dayTimeDuration    : return xs_duration;
+        		case xs_dayTimeDuration    : return xs_duration;
         		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
-        case xdt_dayTimeDuration	: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
+        case xs_dayTimeDuration	: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
             switch(t2)
         	{
-        		case xdt_yearMonthDuration  : return xs_duration;
+        		case xs_yearMonthDuration  : return xs_duration;
         		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_float				: 
@@ -535,7 +535,7 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 				default						: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
 
-        case xdt_untypedAtomic		: 
+        case xs_untypedAtomic		: 
         case xs_dateTime			: 
         case xs_date				: 
         case xs_time				: 
