@@ -558,14 +558,14 @@
    (,sa:fn-ns "adjust-time-to-timezone" 1 2
     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
     ,sa:type-atomic !fn!adjust-time-to-timezone)
-   (,sa:xs-ns "yearMonthDuration" 1 1
+   (,sa:xdt-ns "yearMonthDuration" 1 1
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
-     (cast !xs!yearMonthDuration))
-   (,sa:xs-ns "dayTimeDuration" 1 1
+     (cast !xdt!yearMonthDuration))
+   (,sa:xdt-ns "dayTimeDuration" 1 1
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
-     (cast !xs!dayTimeDuration))
+     (cast !xdt!dayTimeDuration))
     ;----------------------------------------
     ; SQL extension by Roman Pastuhov
     (,sa:sql-ns "exec-update" 2 #f
@@ -1282,7 +1282,7 @@
       (cl:signal-input-error SE5026 expr)
       (case (cadr type)  ; type value
         ((!xs!integer !xs!decimal !xs!double)
-         (if (number? value)
+         (if (or (string? value) (number? value))
              (cons expr sa:type-atomic)
              (cl:signal-input-error SE5027 expr)))
         ((!xs!string)
