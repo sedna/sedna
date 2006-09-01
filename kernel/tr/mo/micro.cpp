@@ -689,8 +689,8 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 		par_indir=((n_dsc*)XADDR(parent))->indir;
 	}
 	n_dsc* par_desc=(n_dsc*)XADDR(parent);
-	if (getChildPointer(par_desc,name,attribute,ns)!=XNULL && (GETBLOCKBYNODE_ADDR(par_desc))->snode->type!=virtual_root) 
-		throw USER_EXCEPTION(SE2008);
+	if ((GETBLOCKBYNODE_ADDR(par_desc))->snode->type!=virtual_root && isAttributePointerSet(par_desc,name,(ns==NULL)?NULL:ns->uri)  ) 
+		throw USER_EXCEPTION(XQDY0025);
 	int size=COUNTREFERENCES((GETBLOCKBYNODE(parent)),size_of_node((GETBLOCKBYNODE(parent))));
 	if (((left_sib==XNULL)&&(right_sib==XNULL))&&giveAnyChild(par_desc,size)!=XNULL)
 	{

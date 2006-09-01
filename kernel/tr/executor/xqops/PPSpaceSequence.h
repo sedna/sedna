@@ -15,12 +15,13 @@ private:
 	static tuple_cell space_tup;
 	tuple int_tup;
 	bool space;
+	bool isAtomized;
 
 public:
 	virtual PPIterator* copy(variable_context *_cxt_);
 	virtual void next   (tuple &t);
     PPSpaceSequence(variable_context *_cxt_,
-               const arr_of_PPOpIn &_children_);
+               const arr_of_PPOpIn &_children_, bool _IsAtomized_);
     virtual ~PPSpaceSequence();
 };
 
