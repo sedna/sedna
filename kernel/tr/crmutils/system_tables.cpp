@@ -316,6 +316,8 @@ void get_documents (xptr node,const char* title)
 		}
 		else
 			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
+        insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
+						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		if (mdc->obj->document_name==NULL)
 		{
 			col_schema_node* coll=(col_schema_node*)mdc->obj->snode;
@@ -329,9 +331,6 @@ void get_documents (xptr node,const char* title)
 				dc=coll->metadata->rb_successor(dc); 
 			}
 		}
-		insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
-						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
-		
 		mdc=metadata->rb_successor(mdc);
 	}
 	metadata_sem_up();
