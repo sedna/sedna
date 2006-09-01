@@ -326,7 +326,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
  CHECKP(res);
  return res;
 }
-void copy_content(xptr newnode,xptr node,xptr left)
+xptr copy_content(xptr newnode,xptr node,xptr left,bool save_types)
 {
 	CHECKP(node);
 	xptr left_ngh=XNULL;
@@ -335,7 +335,7 @@ void copy_content(xptr newnode,xptr node,xptr left)
 	{
 		CHECKP(child);
 		xptr node_indir=((n_dsc*)XADDR(child))->indir;
-		left_ngh=deep_pers_copy(left, XNULL, newnode,child,true);
+		left_ngh=deep_pers_copy(left, XNULL, newnode,child,save_types);
 		child=removeIndirection(node_indir);
 		CHECKP(child);
 		child=GETRIGHTPOINTER(child);
@@ -343,12 +343,13 @@ void copy_content(xptr newnode,xptr node,xptr left)
 		{
 			CHECKP(child);
 			node_indir=((n_dsc*)XADDR(child))->indir;
-			left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,true);
+			left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,save_types);
 			child=removeIndirection(node_indir);
 			CHECKP(child);
 			child=GETRIGHTPOINTER(child);
 		}
 	}
+	return left_ngh;
 }
 void swizzleNamespace (xml_ns*& ns,upd_ns_map*& updmap)
 {

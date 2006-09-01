@@ -41,7 +41,7 @@ xptr deep_node_copy(xptr left_ind, xptr right_ind, xptr parent_ind, xptr node);
 xptr copy_to_temp(xptr node);
 void clear_temp();
 xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_types, unsigned short depth=0);
-void copy_content(xptr newnode,xptr node,xptr left);
+xptr copy_content(xptr newnode,xptr node,xptr left, bool save_types=true);
 xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& updmap, unsigned short depth=0);
 //node tests
 

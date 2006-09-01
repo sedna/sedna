@@ -401,7 +401,25 @@ xptr getChildPointer(n_dsc* node,const char* name,t_item type,xml_ns* ns)
 	else
 		return XNULL;
 }
-
+bool isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
+{
+	node_blk_hdr* block=GETBLOCKBYNODE_ADDR(node);
+	schema_node* scm_node=block->snode;
+	sc_ref* sc=scm_node->first_child;
+	int cnt=-1;
+	while (sc!=NULL)
+	{
+		++cnt;
+		if (sc->type==attribute && my_strcmp(name,sc->name)==0 &&  (((char*)sc->xmlns)==uri ||
+			my_strcmp(uri,sc->xmlns->uri)==0)) 
+		{
+			if (block->dsc_size>=((shft)size_of_node(block)+((shft)cnt+1)*((shft)sizeof(xptr))) && 
+		((*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))))!=XNULL)) return true;
+		}
+		sc=sc->next;
+	}
+	return false;
+}
 /* returns the xptr to the nearest left neighboring descriptor of the attribute*/
 xptr findAttributeWithSameNameToInsertAfter_CP(xptr parent,const char* name,xml_ns* ns)
 { 

@@ -1562,8 +1562,8 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         {
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
-
-        opit = new PPSpaceSequence(cxt, arr);
+		bool tmp=false;
+        opit = new PPSpaceSequence(cxt, arr,tmp);
     }
     else if (op == "PPFnError")
     {

@@ -124,6 +124,7 @@ void getStringWSParameter(PPOpIn content)
 		at_vals.add(value);
 		content.op->next(value);
 	}
+	str_val.clear();
 	sequence::iterator it=at_vals.begin();
 	do
 	{
@@ -374,6 +375,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 					while (it!=at_vals.end());
 					at_vals.clear();
+					if(str_val.get_size()>0)
 					left=insert_text(left,XNULL,removeIndirection(indir),str_val.get_ptr_to_text(),str_val.get_size(),str_val.get_type());
 					mark_attr=false;
 				}
@@ -383,7 +385,7 @@ void PPElementConstructor::next  (tuple &t)
 				switch (typ)
 				{
 				case xml_namespace:ns_list.push_back(((ns_dsc*)XADDR(node))->ns);break;
-				case document:throw USER_EXCEPTION(FORG0001);
+				case document:
 				case element: case text: 
 					{
 						mark_attr=false;
@@ -402,8 +404,17 @@ void PPElementConstructor::next  (tuple &t)
 				}
 				else
 				{
-					
-					left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+					if (typ==document)
+					{
+						xptr res = copy_content(removeIndirection(indir),node,left,false);
+						if (res!=XNULL)					
+							left=res;
+						else continue;	
+						
+					}
+					else
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+						
 				}
 				cont_leftind=((n_dsc*)XADDR(left))->indir;
 			}
@@ -445,6 +456,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 					while (it!=at_vals.end());
 					at_vals.clear();
+					if(str_val.get_size()>0)
 					left=insert_text(left,XNULL,removeIndirection(indir),str_val.get_ptr_to_text(),str_val.get_size(),str_val.get_type());
 		}
 		//Result
