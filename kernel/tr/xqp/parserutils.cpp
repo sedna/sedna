@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void erase_doublequot(char* lex_text)
+string erase_doublequot(char* lex_text)
 {
   string lex = lex_text;
   if (lex.size() >= 3)
@@ -59,7 +59,7 @@ void erase_doublequot(char* lex_text)
     lex[lex.size()-1] = '\"';
   }
 
-  strcpy(lex_text, lex.c_str());
+  return  lex;
 
 //  printf("lext_text=%s\n", lex_text);
 
