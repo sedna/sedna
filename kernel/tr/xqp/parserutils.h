@@ -6,7 +6,7 @@
 #include "sedna.h"
 #include <string>
 
-void erase_doublequot(char* lex_text);
+std::string erase_doublequot(char* lex_text);
 void replace_entity(char* lex_text, std::string find_ent, std::string replc_ent);
 
 

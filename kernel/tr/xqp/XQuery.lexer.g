@@ -252,12 +252,14 @@ virtual void errstd(const char *s){
 
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*"
 #token NCNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" //it is the subset of specification
-#token INTEGERLITERAL  "[0-9]+"
-#token DOUBLELITERAL   "((\.[0-9]+) | ([0-9]+{\.[0-9]*})) (e | E) {\+| \-} [0-9]+"
-#token DECIMALLITERAL  "(\.[0-9]+) |  ([0-9]+\.[0-9]*)"
+#token INTEGERLITERAL  "[0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
+#token DOUBLELITERAL   "((\.[0-9]+) | ([0-9]+{\.[0-9]*})) (e | E) {\+| \-} [0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
+#token DECIMALLITERAL  "(\.[0-9]+) |  ([0-9]+\.[0-9]*)" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"|~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'|~[\'&])*\')"
 <<
-  erase_doublequot(lextext());
+  std::string res = erase_doublequot(lextext());
+  replstr(res.c_str());
+//  replstr((std::string("\"") + res + std::string("\"")).c_str());
   replace_entity(lextext(), "&lt;", "<");
   replace_entity(lextext(), "&gt;", ">");
   replace_entity(lextext(), "&amp;", "&");
