@@ -550,6 +550,19 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 	} while (0)
 
 
+/*
+ * NaN, INF and -INF check functions
+ */
+#ifdef _WIN32
+#define u_is_nan(d)         (_isnan(d))
+#define u_is_neg_inf(d)     (_fpclass(d) == _FPCLASS_NINF)
+#define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
+#else
+#define u_is_nan(d)         (isnan(d))
+#define u_is_neg_inf(d)     (isinf(d) == -1)
+#define u_is_pos_inf(d)     (isinf(d) == 1)
+#endif
+
 
 /*=============================================================================
  *                           Functions
