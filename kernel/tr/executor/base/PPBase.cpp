@@ -36,6 +36,7 @@ query_prolog qp;
 static_context st_ct;
 
 char mem_str_buf[MAX_MEM_STR_SIZE + 1];
+char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
 
 char e_string_buf[PAGE_SIZE];
 }

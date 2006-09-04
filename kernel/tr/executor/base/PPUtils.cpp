@@ -18,7 +18,7 @@
 #include "auc.h"
 
 
-tuple_cell string2tuple_cell(std::string value, xmlscm_type xtype)
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
 {
 	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
 

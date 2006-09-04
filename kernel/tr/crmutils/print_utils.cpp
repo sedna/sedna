@@ -743,7 +743,7 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 				else
 				{
 					xmlscm_type typ=tup.cells[i].get_atomic_type();
-					char*z=new char[50];
+					char*z=tr_globals::mem_str_buf2;
 					switch (typ)
 					{
 					case xs_integer:
@@ -785,7 +785,6 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 							break;
 						}
 					}
-					delete[]z;
 				}
 			}
 			else

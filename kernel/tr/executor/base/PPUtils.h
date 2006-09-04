@@ -22,7 +22,7 @@ inline xptr first_child(xptr node)
 }
 
 
-tuple_cell string2tuple_cell(std::string value, xmlscm_type xtype);
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
 
 
 
