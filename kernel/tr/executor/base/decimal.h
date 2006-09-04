@@ -55,7 +55,8 @@ public:
 
 inline int decimal::get_string_value(char * buf)
 {
-    return sprintf(buf, "%f", v);
+    if (v > 1.0e20) throw USER_EXCEPTION(FOCA0001);
+    return sprintf(buf, "%.20f", v);
 }
 
 inline decimal operator - (const decimal & d)

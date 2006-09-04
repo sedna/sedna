@@ -448,11 +448,11 @@ tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value)
 
     switch (const_value.type)
     {
-        case SCM_SYMBOL: tc = string2tuple_cell(string(const_value.internal.symb), xtype);
+        case SCM_SYMBOL: tc = string2tuple_cell(std::string(const_value.internal.symb), xtype);
                          break;
-        case SCM_NUMBER: tc = string2tuple_cell(string(const_value.internal.num), xtype);
+        case SCM_NUMBER: tc = string2tuple_cell(std::string(const_value.internal.num), xtype);
                          break;
-        case SCM_STRING: tc = string2tuple_cell(string(const_value.internal.str), xtype);
+        case SCM_STRING: tc = string2tuple_cell(std::string(const_value.internal.str), xtype);
                          break;
         default        : throw USER_EXCEPTION2(SE1004, "154");
     }        
