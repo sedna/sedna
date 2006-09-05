@@ -86,4 +86,32 @@ public:
     virtual ~PPFnNot();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnBoolean
+///////////////////////////////////////////////////////////////////////////////
+class PPFnBoolean : public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    bool first_time;
+    bool eos_reached;
+
+    PPOpIn child;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnBoolean(variable_context *_cxt_,
+				PPOpIn _child_);
+    virtual ~PPFnBoolean();
+};
+
+
 #endif

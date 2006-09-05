@@ -679,7 +679,7 @@ void PPPred1::next(tuple &t)
         {
             if(conjuncts.size() != 0) 
             {
-                tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, 0);
+                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
@@ -762,7 +762,7 @@ void PPPred1::next(tuple &t)
                 }
                 
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
-                                                          predicate_boolean_value(data_child, data, eos_reached, 0);
+                                                          effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
                 if(tc.get_xs_boolean()) return;
             }
@@ -1092,7 +1092,7 @@ void PPPred2::next(tuple &t)
         {
             if(conjuncts.size() != 0) 
             {
-                tuple_cell tc = predicate_boolean_value(data_child, data, eos_reached, 0);
+                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
@@ -1168,7 +1168,7 @@ void PPPred2::next(tuple &t)
                     reinit_consumer_table();
                 }
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
-                                                          predicate_boolean_value(data_child, data, eos_reached, 0);
+                                                          effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
                 if(tc.get_xs_boolean()) return;
             }
