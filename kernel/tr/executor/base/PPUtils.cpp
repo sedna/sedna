@@ -27,9 +27,10 @@ tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
 }
 
 
-//******************************************************************************
-//* TYPE CONVERSION: BEGIN
-//******************************************************************************
+/*******************************************************************************
+ * Effective Boolean Value Evaluation: BEGIN
+ ******************************************************************************/
+
 
 tuple_cell effective_boolean_value(const tuple_cell &t)
 {
@@ -76,6 +77,21 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
     return tuple_cell::atomic(true);
 }
 
+tuple_cell effective_boolean_value(const sequence *s)
+{
+    if (s->size() == 0) return tuple_cell::atomic(false);      //1. If its operand is an empty sequence, fn:boolean returns false.
+   
+    const tuple_cell &tc = s->get_00();
+    if (tc.is_node()) return tuple_cell::atomic(true);         //2. If its operand is a sequence whose first item is a node, fn:boolean returns true.
+    
+    if (s->size() > 1) throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
+    
+    if (tc.is_atomic()) return effective_boolean_value(tc);    //3. If its operand is a SINGLETON value of type ... get effective boolean of this value
+															   //4. In all other cases, fn:boolean raises a type error [err:FORG0006].
+    throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
+}
+
+
 tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
 {
     switch (t.get_atomic_type())
@@ -97,44 +113,6 @@ tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
     }
 
     return tuple_cell::atomic(true);
-}
-
-tuple_cell _pred_and_effect_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
-{
-    child.op->next(t);
-
-    if (t.is_eos())
-    {
-        eos_reached = true;
-        return tuple_cell::atomic(false);
-    }
-
-    if (child.get(t).is_node())
-    {
-        eos_reached = false;
-        return tuple_cell::atomic(true);
-    }
-
-    if (child.get(t).is_atomic())
-    {
-        tuple_cell tc = child.get(t);
-
-        child.op->next(t);
-
-        if (t.is_eos())
-        {
-            eos_reached = true;
-            return pos ? predicate_boolean_value(tc, pos)
-                       : effective_boolean_value(tc);
-        }
-        else
-        {
-            eos_reached = false;
-            return tuple_cell::atomic(true);
-        }
-    }
-
-    throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
 }
 
 
@@ -184,33 +162,53 @@ tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bo
 	        }
 	        return effective_boolean_value(tc);
         }
-        else
-        {
-            eos_reached = false;
-            return tuple_cell::atomic(true);
-        }
+        else										//4. In all other cases, fn:boolean raises a type error [err:FORG0006].
+	        throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
     }
 
     throw USER_EXCEPTION2(SE1003, "Impossible case in predicate_numeric_or_boolean_value");
 }
 
-tuple_cell effective_boolean_value(const sequence *s)
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
 {
-    if (s->size() == 0) return tuple_cell::atomic(false);
-    if (s->size() > 1) return tuple_cell::atomic(true);
+    child.op->next(t);
 
-    const tuple_cell &tc = s->get_00();
+    if (t.is_eos())   										//1. If its operand is an empty sequence, fn:boolean returns false.
+    {
+        eos_reached = true;
+        return tuple_cell::atomic(false);
+    }
 
-    if (tc.is_node()) return tuple_cell::atomic(true);
-    if (tc.is_atomic()) return effective_boolean_value(tc);
+    if (child.get(t).is_node())								//2. If its operand is a sequence whose first item is a node, fn:boolean returns true.
+    {
+        eos_reached = false;
+        return tuple_cell::atomic(true);
+    }
+
+    if (child.get(t).is_atomic())
+    {                                                       //3. If its operand is a SINGLETON value of type ... get effective boolean of this value
+        tuple_cell tc = child.get(t);
+
+        child.op->next(t);
+
+        if (t.is_eos())
+        {
+            eos_reached = true;
+            return pos ? predicate_boolean_value(tc, pos)
+                       : effective_boolean_value(tc);
+        }
+        else										       //4. In all other cases, fn:boolean raises a type error [err:FORG0006].
+	        throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
+
+    }
 
     throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
 }
 
 
-//******************************************************************************
-//* TYPE CONVERSION: END
-//******************************************************************************
+/*******************************************************************************
+ * Effective Boolean Value Evaluation: END
+ ******************************************************************************/
 
 
 

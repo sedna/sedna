@@ -200,3 +200,73 @@ bool PPFnNot::result(PPIterator* cur, variable_context *cxt, void*& r)
     delete ((sequence*)not_r);
     return true;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnBoolean
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+
+PPFnBoolean::PPFnBoolean(variable_context *_cxt_,
+                         PPOpIn _child_) : PPIterator(_cxt_),
+                                           child(_child_)
+{
+}
+
+PPFnBoolean::~PPFnBoolean()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnBoolean::open  ()
+{
+    child.op->open();
+
+    first_time = true;
+    eos_reached = true;
+}
+
+void PPFnBoolean::reopen()
+{
+    child.op->reopen();
+
+    first_time = true;
+    eos_reached = true;
+}
+
+void PPFnBoolean::close ()
+{
+    child.op->close();
+}
+
+void PPFnBoolean::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+        if (!eos_reached) child.op->reopen();
+        t.copy(effective_boolean_value(child, t, eos_reached));
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnBoolean::copy(variable_context *_cxt_)
+{
+    PPFnBoolean *res = new PPFnBoolean(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnBoolean::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnBoolean::result");
+}

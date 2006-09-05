@@ -41,35 +41,37 @@ inline bool is_zero(float x) { return (x >= 0 ? x : -x) < DOUBLE_ZERO; }
 
 
 /*******************************************************************************
- * TYPE CONVERSION: BEGIN
+ * Effective Boolean Value Evaluation: BEGIN
  ******************************************************************************/
-
-tuple_cell _pred_and_effect_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);
-
-tuple_cell effective_boolean_value(const tuple_cell &t);
 
 inline tuple_cell atomize(const tuple_cell& t)
 {
     return t.get_type() == tc_node ? dm_typed_value(t.get_node()) : t;
 }
 
-inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached)
-{
-    return _pred_and_effect_boolean_value(child, t, eos_reached, 0);
-}
-
+tuple_cell effective_boolean_value(const tuple_cell &t);
 tuple_cell effective_boolean_value(const sequence *s);
+
+
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);
+
 
 inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
 {
-    return _pred_and_effect_boolean_value(child, t, eos_reached, pos);
+	U_ASSERT(pos > 0);
+	return predicate_and_effective_boolean_value(child, t, eos_reached, pos);		
 }
 
-tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
+
+inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached)
+{
+	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);		
+}
 
 
 /*******************************************************************************
- * TYPE CONVERSION: END
+ * Effective Boolean Value Evaluation: END
  ******************************************************************************/
 
 
