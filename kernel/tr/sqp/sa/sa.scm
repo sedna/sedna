@@ -478,6 +478,9 @@
     (,sa:fn-ns "translate" 3 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!translate)
+    (,sa:fn-ns "deep-equal" 2 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-atomic !fn!deep-equal)
     (,sa:fn-ns "replace" 3 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!replace)
