@@ -84,6 +84,7 @@ public:
 	void clear();
 	void append(const tuple_cell &tc);
 	void append(const char *str);//always copy to inner buffer
+	void append(const char *str, int add_len);//always copy to inner buffer
 	void set(const tuple_cell &tc) { clear(); append(tc); }
 	void set(const char *str) { clear(); append(str); }
 	
@@ -93,7 +94,7 @@ public:
     t_str_buf& operator=(const t_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for t_str_buf is not implemented"); }
 	virtual t_str_buf& operator<<(const char *s)	{ this->append(s); 
                                                           return *this; }
-    virtual t_str_buf& operator<<(char c)		{ this->append(c); return *this; }
+    virtual t_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
 };
 
 class CharCounter

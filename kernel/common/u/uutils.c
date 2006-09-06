@@ -131,3 +131,22 @@ char *int2c_str(int value, char *buf)
     u_itoa(value, buf, 10);
     return buf;
 }
+
+__int64  strto__int64(const char *nptr, char **endptr, int base)
+{
+#ifdef _WIN32
+    return _strtoi64(nptr, endptr,base);
+#else
+    return strtoll(nptr, endptr,base);
+#endif
+}
+
+__uint64 strto__uint64(const char *nptr, char **endptr, int base)
+{
+#ifdef _WIN32
+    return _strtoui64(nptr, endptr,base);
+#else
+    return strtoull(nptr, endptr,base);
+#endif
+}
+

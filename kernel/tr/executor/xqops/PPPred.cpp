@@ -161,7 +161,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
                     case xs_integer: 
                         double_value = tc.get_xs_integer(); break;
                     case xs_decimal:
-                        double_value = tc.get_xs_decimal().to_double(); break;
+                        double_value = tc.get_xs_decimal().get_double(); break;
                     case xs_double:
                         double_value = tc.get_xs_double(); break;
                     case xs_float:
@@ -251,7 +251,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
                     case xs_integer: 
                         double_values.push_back(tc.get_xs_integer()); break;
                     case xs_decimal:
-                        double_values.push_back(tc.get_xs_decimal().to_double()); break;
+                        double_values.push_back(tc.get_xs_decimal().get_double()); break;
                     case xs_double:
                         double_values.push_back(tc.get_xs_double()); break;
                     case xs_float:
@@ -810,7 +810,7 @@ void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        t.copy(dsc == pos_dsc ? tuple_cell::atomic(pos)
+        t.copy(dsc == pos_dsc ? tuple_cell::atomic((__int64)pos)
                               : cur_tuple->cells[p.tuple_pos]);
     }
     else 
@@ -1215,8 +1215,8 @@ void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        if (dsc == pos_dsc)         t.copy(tuple_cell::atomic(pos));
-        else if (dsc == lst_dsc)    t.copy(tuple_cell::atomic(s->size()));
+        if (dsc == pos_dsc)         t.copy(tuple_cell::atomic((__int64)pos));
+        else if (dsc == lst_dsc)    t.copy(tuple_cell::atomic((__int64)(s->size())));
         else                        t.copy(cur_tuple->cells[p.tuple_pos]);
     }
     else 

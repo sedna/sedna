@@ -46,7 +46,7 @@ void replace(PPOpIn arg)
 					if (is_node_persistent(node))
 					{
 						tuple tup(2);
-						tup.copy(tuple_cell::node(node),tuple_cell(arg2seq.size()));
+						tup.copy(tuple_cell::node(node),tuple_cell((__int64)(arg2seq.size())));
 						arg3seq.add(tup);
 					}
 					arg2seq.add(indir);
@@ -123,7 +123,7 @@ void replace(PPOpIn arg)
 	do
 	{
 		tuple tup(2);
-		tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell(ctr));
+		tup.copy(tuple_cell::node(removeIndirection(*it)),tuple_cell((__int64)ctr));
 		arg3seq.add(tup);
 		while(*sit!=XNULL)
 		{

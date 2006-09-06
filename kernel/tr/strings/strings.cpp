@@ -183,9 +183,8 @@ void t_str_buf::append(const tuple_cell &tc)
 	}
 }
 
-void t_str_buf::append(const char *str)
+void t_str_buf::append(const char *str, int add_len)
 {
-	const int add_len = strlen(str);
 	const int new_len = m_len + add_len;
 	if (new_len < T_STR_MEMBUF_SIZE)
 	{
@@ -203,18 +202,25 @@ void t_str_buf::append(const char *str)
 		}
 		m_flags = f_text_in_buf; //clear f_text_in_estr_buf
 		m_ttype = text_mem;
-		strcpy(m_buf + m_len, str);
+		strncpy(m_buf + m_len, str, add_len);
 		m_len = new_len;
+		m_buf[m_len] = 0;
 	}
 	else
 	{
 		if (!(m_flags & f_text_in_estr_buf))
 			move_to_estr();
-		m_estr.append_mstr(str);
+		m_estr.append_mstr(str, add_len);
 		m_len = new_len;
 		m_ttype = text_estr;
 		m_flags = f_text_in_estr_buf; //clear f_text_in_buf
 	}
+}
+	
+void t_str_buf::append(const char *str)
+{
+	const int add_len = strlen(str);
+	this->append(str, add_len);
 }
 	
 t_str_buf::~t_str_buf()

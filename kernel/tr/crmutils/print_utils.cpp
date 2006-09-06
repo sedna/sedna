@@ -753,7 +753,7 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 						}
 					case xs_decimal:
 						{
-							tup.cells[i].get_xs_decimal().get_string_value(z);
+							tup.cells[i].get_xs_decimal().get_c_str(z);
 							crmout<<z;
 							break;
 						}

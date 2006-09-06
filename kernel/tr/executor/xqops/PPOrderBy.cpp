@@ -557,7 +557,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                 {
                     case xs_float                : *((float*)((char*)p+offset)) = t.cells[i].get_xs_float(); break;
                     case xs_double               : *((double*)((char*)p+offset)) = t.cells[i].get_xs_double(); break;
-                    case xs_decimal              : *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().to_double(); break;
+                    case xs_decimal              : *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().get_double(); break;
                     case xs_integer              : *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
                     case xs_boolean              : *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
                     case xs_string               : 
@@ -622,7 +622,7 @@ void PPOrderBy::deserialize (tuple& t, xptr& v1, const void * Udata)
         pos = *((int*)p);
     #endif
 
-    t.cells[0] = tuple_cell::atomic(pos);
+    t.cells[0] = tuple_cell::atomic((__int64)pos);
 }
 
 void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
@@ -682,7 +682,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
     {
         case xs_float                : {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, type_size);  break;}
-        case xs_decimal              : {double value = tc.get_xs_decimal().to_double(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_decimal              : {double value = tc.get_xs_decimal().get_double(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_integer              : {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        

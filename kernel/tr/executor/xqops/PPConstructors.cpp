@@ -56,7 +56,7 @@ tuple_cell getQnameParameter(PPOpIn qname)
 {
 	return tuple_cell::atomic_deep(xs_string,"");	
 }*/
-tuple_cell getStringParameter(PPOpIn content)
+void getStringParameter(PPOpIn content)
 {
 	str_val.clear();
 	tuple value(content.ts);
@@ -65,7 +65,7 @@ tuple_cell getStringParameter(PPOpIn content)
 	if (value.is_eos()) 
 	{
 	 	str_val.append(EMPTY_STRING_TC);
-		return NULL;
+		return;
 	}
 	else
 	{
@@ -101,7 +101,6 @@ tuple_cell getStringParameter(PPOpIn content)
 	}
 	while (it!=at_vals.end());
 	//str_val.push_to_memory();
-	return NULL;//result;
 }
 void getStringWSParameter(PPOpIn content)
 {

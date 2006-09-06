@@ -148,7 +148,7 @@ public:
    //------------------------------------------------------------------------
     // Gets a string representation of a dateTime or duration
     //------------------------------------------------------------------------
-    void get_string_value(char* outputBuffer);
+    void get_string_value(char* outputBuffer) const;
 
     //------------------------------------------------------------------------
     // Gets a raw representation of the character array where the data is stored

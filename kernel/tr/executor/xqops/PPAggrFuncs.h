@@ -37,9 +37,9 @@ public:
     PPFnCountEssence() : n(0) {}
     ~PPFnCountEssence() {}
     void add_item(const tuple_cell &tc) { n++; }
-    tuple_cell get_result() { return tuple_cell::atomic(n); }
+    tuple_cell get_result() { return tuple_cell::atomic((__int64)n); }
     void reopen() { n = 0; }
-    static tuple_cell result(sequence *s) { return tuple_cell::atomic(s->size()); }
+    static tuple_cell result(sequence *s) { return tuple_cell::atomic((__int64)(s->size())); }
 };
 
 ////////////////////////////// PPFnSumEssence //////////////////////////////////
@@ -87,7 +87,7 @@ public:
         else sum = op_numeric_add(sum, atomize(tc)); 
         n++;
     }
-    tuple_cell get_result() { return n == 0 ? tuple_cell::eos() : op_numeric_divide(sum, n); }
+    tuple_cell get_result() { return n == 0 ? tuple_cell::eos() : op_numeric_divide(sum, (__int64)n); }
     void reopen() { n = 0; }
     static tuple_cell result(sequence *s)
     {
@@ -99,7 +99,7 @@ public:
             s->get(t, i);
             sum = op_numeric_add(sum, atomize(t.cells[0])); 
         }
-        return op_numeric_divide(sum, s->size());
+        return op_numeric_divide(sum, (__int64)(s->size()));
     }
 };
 

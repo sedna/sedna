@@ -11,7 +11,7 @@
 
 #include "counted_ptr.h"
 #include "nodes.h"
-#include "decimal.h"
+#include "xs_decimal_t.h"
 #include "date.h"
 #include "pstr.h"
 #include "XMLDateTime.h"
@@ -78,12 +78,12 @@ public:
 
     xptr get_node() const { return *(xptr*)(&data); }
 
-    int        get_xs_integer() const { return *(int*       )(&data); } 
-    decimal    get_xs_decimal() const { return *(decimal*   )(&data); }
-    float      get_xs_float()   const { return *(float*     )(&data); }
-    double     get_xs_double()  const { return *(double*    )(&data); }
-    bool       get_xs_boolean() const { return *(bool*      )(&data); }
-    XMLDateTime get_xs_dateTime()    const { return XMLDateTime(str_ptr); }
+    __int64      get_xs_integer() const { return *(__int64*     )(&data); } 
+    xs_decimal_t get_xs_decimal() const { return *(xs_decimal_t*)(&data); }
+    float        get_xs_float()   const { return *(float*       )(&data); }
+    double       get_xs_double()  const { return *(double*      )(&data); }
+    bool         get_xs_boolean() const { return *(bool*        )(&data); }
+    XMLDateTime  get_xs_dateTime()const { return XMLDateTime(str_ptr);  }
 
 /* !!! DELETE LATER */
     char*   get_xs_untypedAtomic_mem () const { return get_str_mem(); }
@@ -151,14 +151,14 @@ public:
                              size(_size_) {}
 
     // for int atomics
-    tuple_cell(int _data_) : type(tc_light_atomic), xtype(xs_integer), size(0)
+    tuple_cell(__int64 _data_) : type(tc_light_atomic), xtype(xs_integer), size(0)
     {
-		*(int*)(&(data)) = _data_;
+		*(__int64*)(&(data)) = _data_;
     }
     // for xs_decimal atomics
-    tuple_cell(decimal _data_) : type(tc_light_atomic), xtype(xs_decimal), size(0)
+    tuple_cell(xs_decimal_t _data_) : type(tc_light_atomic), xtype(xs_decimal), size(0)
     {
-        *(decimal*)(&(data)) = _data_;
+        *(xs_decimal_t*)(&(data)) = _data_;
     }
     // for xs_float atomics
     tuple_cell(float _data_) : type(tc_light_atomic), xtype(xs_float), size(0)
@@ -197,12 +197,12 @@ public:
         return tuple_cell();
     }
 
-    static tuple_cell atomic(int _data_)
+    static tuple_cell atomic(__int64 _data_)
     {
         return tuple_cell(_data_);
     }
 
-    static tuple_cell atomic(decimal _data_)
+    static tuple_cell atomic(xs_decimal_t _data_)
     {
         return tuple_cell(_data_);
     }

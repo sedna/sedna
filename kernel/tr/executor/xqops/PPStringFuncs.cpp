@@ -192,7 +192,7 @@ void PPFnStringLength::next  (tuple &t)
             if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
         }
 
-        t.copy(tuple_cell::atomic(len));
+        t.copy(tuple_cell::atomic((__int64)len));
     }
     else 
     {

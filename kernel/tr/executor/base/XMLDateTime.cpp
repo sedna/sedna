@@ -2178,7 +2178,7 @@ int XMLDateTime::fillYearString(char*& ptr, int value) const
     return 0;
 }
 
-void XMLDateTime::get_string_value(char* buf)
+void XMLDateTime::get_string_value(char* buf) const
 {
 	switch( getValue(Type))
 	{	
