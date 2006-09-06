@@ -66,7 +66,7 @@ void PPConGen1::next  (tuple &t)
     else
     {
         // put data and congen1_var into t
-        t.copy(data, tuple_cell::atomic(p.counter));
+        t.copy(data, tuple_cell::atomic((__int64)p.counter));
         p.counter++;
     }
 }
@@ -194,7 +194,7 @@ void PPConGen2::next  (tuple &t)
     else
     {
         s->get(data, counter - 1);
-        t.copy(data, tuple_cell::atomic(counter), tuple_cell::atomic(s->size()));
+        t.copy(data, tuple_cell::atomic((__int64)counter), tuple_cell::atomic((__int64)(s->size())));
         counter++;
     }
 }

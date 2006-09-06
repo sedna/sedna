@@ -45,6 +45,9 @@ extern "C"
     /* buf length must not be less than 20 */
     char *int2c_str(int value, char *buf);
 
+    __int64  strto__int64(const char *nptr, char **endptr, int base);
+    __uint64 strto__uint64(const char *nptr, char **endptr, int base);
+
 
 #ifdef __cplusplus
 }

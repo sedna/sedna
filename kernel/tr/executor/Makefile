@@ -4,7 +4,7 @@
 
 PP = ../../..
 
-VPATH = base fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
+VPATH = base base/decNumber fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
 
 
 include $(PP)/Makefile.include
@@ -20,6 +20,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        compare$(OBJ_EXT)				\
                        bit_set$(OBJ_EXT)				\
                        merge$(OBJ_EXT)					\
+                       xs_helper$(OBJ_EXT)				\
                        xptrChanneledMerge$(OBJ_EXT)		\
                        PPStaticContext$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
@@ -27,6 +28,11 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        XPath$(OBJ_EXT)					\
                        XPathOnSchema$(OBJ_EXT)			\
                        SequenceType$(OBJ_EXT)			\
+                       xs_helper$(OBJ_EXT)				\
+                       xs_decimal_t$(OBJ_EXT)			\
+                       decContext$(OBJ_EXT)				\
+                       decimal64$(OBJ_EXT)				\
+                       decNumber$(OBJ_EXT)				\
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\
                        PPIf$(OBJ_EXT)					\
@@ -41,7 +47,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPNil$(OBJ_EXT)					\
                        PPSequenceTypes$(OBJ_EXT)		\
                        PPDDO$(OBJ_EXT)					\
-                       PPFilterEL$(OBJ_EXT)					\
+                       PPFilterEL$(OBJ_EXT)				\
                        PPSequence$(OBJ_EXT)				\
                        PPRange$(OBJ_EXT)				\
                        PPSequenceOps$(OBJ_EXT)			\
@@ -171,7 +177,7 @@ numeric_operations$(OBJ_EXT): numeric_operations.cpp \
   ../../kernel/common/sp.h ../../kernel/common/u/usocket.h \
   ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
   ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
-  ../../kernel/tr/executor/base/decimal.h \
+  ../../kernel/tr/executor/base/xs_decimal_t.h \
   ../../kernel/tr/executor/base/date.h \
   ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
   ../../kernel/tr/executor/base/SequenceType.h \

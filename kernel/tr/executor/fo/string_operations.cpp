@@ -28,11 +28,11 @@
  * EQUALITY AND COMPARISON OF STRINGS: BEGIN
  ******************************************************************************/
 
-int sign(int i)
+static __int64 sign(int i)
 {
-    if (i > 0) return 1;
-    if (i < 0) return -1;
-    return i;
+    if (i > 0) return (__int64)1;
+    if (i < 0) return (__int64)-1;
+    return (__int64)i;
 }
 
 int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, int str2len)

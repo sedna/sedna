@@ -5,6 +5,7 @@
 
 #include "sedna.h"
 
+#include <math.h>
 #include "crmutils.h"
 #include "metadata.h"
 #include "expat.h"

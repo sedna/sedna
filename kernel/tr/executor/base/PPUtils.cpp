@@ -100,7 +100,7 @@ tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
     case xs_float			: 
     case xs_double			: 
     case xs_decimal			: 
-    case xs_integer 		: return value_comp_eq(tuple_cell::atomic(pos), t);
+    case xs_integer 		: return value_comp_eq(tuple_cell::atomic((__int64)pos), t);
     case xs_string			: 
     case xs_untypedAtomic	: 
         {
@@ -151,7 +151,7 @@ tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bo
     				case xs_integer: 
     				    value = tc.get_xs_integer(); break;
     				case xs_decimal:
-			            value = tc.get_xs_decimal().to_double(); break;
+			            value = tc.get_xs_decimal().get_double(); break;
 			        case xs_double:
 			           	value = tc.get_xs_double(); break;
     				case xs_float:

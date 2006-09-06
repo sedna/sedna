@@ -22,6 +22,7 @@ PPQueryEssence* on_kernel_statement_begin(scheme_list *por,
 {
     // !!! Additional code review is needed
     indirection_table_on_statement_begin();
+    xs_decimal_t::init();
     PPQueryEssence* qep_tree = build_qep(por, *s, output_type);
     is_qep_built = true;
     qep_tree->open();

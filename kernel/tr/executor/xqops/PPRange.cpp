@@ -87,7 +87,7 @@ void PPRange::next(tuple &t)
 		cur=start;
 		return;
 	}
-	t.copy(tuple_cell::atomic(cur));
+	t.copy(tuple_cell::atomic((__int64)cur));
     cur++;
 }
 

@@ -18,6 +18,7 @@
 #include "sedna.h"
 #include <strstream>
 #include <list>
+#include <math.h>
 #include "att_xpath.h"
 #include "XPathOnSchema.h"
 #include "PPUtils.h"
