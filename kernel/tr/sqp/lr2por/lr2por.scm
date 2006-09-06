@@ -672,6 +672,12 @@
 								 ,(l2p:any-lr-node2por (caddr node))))
              )
              
+             ; *** deep-equal ***
+             ((eq? op-name '!fn!deep-equal)
+              `(1 (PPFnDeepEqual
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node)))))
+             
              ; *** string-length ***
              ((eq? op-name '!fn!string-length)
               `(1 (PPFnStringLength ,(l2p:any-lr-node2por (car node))))
