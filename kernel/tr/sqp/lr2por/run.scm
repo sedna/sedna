@@ -259,3 +259,18 @@
       (fun-def
        ((xs:anyType (var ("" "x"))) (!se!positional-var (var ("" "n"))))
        (+@ (var ("" "x")) (const (type !xs!integer) 4))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (return
+      (sequence (const (type !xs!string) "Ford") (const (type !xs!string) "Chevy"))
+      (fun-def
+       ((xs:anyType (var ("" "car"))) (se:positional-var (var ("" "i"))))
+       (return
+        (sequence (const (type !xs!string) "Cat") (const (type !xs!string) "Dog"))
+        (fun-def
+         ((xs:anyType (var ("" "pet"))) (se:positional-var (var ("" "j"))))
+         (sequence (var ("" "car")) (var ("" "pet")) (var ("" "i")) (var ("" "j")))))))))))

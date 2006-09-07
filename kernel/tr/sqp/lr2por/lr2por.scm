@@ -231,20 +231,23 @@
                                (map
                                 (lambda (arg)
                                   (l2p:lr-sequenceType2por-sequenceType
-                                   `(one  ; occurrence indicator
-                                     ,(car arg))))
+                                   (if (symbol? (car arg))
+                                       `(one  ; occurrence indicator
+                                         ,(car arg))
+                                       (car arg))))
                                 arg-lst)))
                           (if
                            (null?  ; unknown types only
                             (filter
                              (lambda (arg)
-                               (memv arg '(xs:anyType !xs!anyType)))
+                               (not (memq (cadr arg)
+                                          '(xs:anyType !xs!anyType))))
                              por-arg-types))
                            '()
                            por-arg-types))))
                     )
                 ;(pp new-fun-def)
-                (cons
+                (list
                  (l2p:tuple-size right-PhysOp)
                  (if
                   (or  ; no positional var
@@ -286,17 +289,50 @@
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
                      (tsr (l2p:tuple-size right-PhysOp))
                      (tsl (l2p:tuple-size left-PhysOp))
+                     (reverse-new-arg-lst (reverse (cadr new-fun-def)))
+                     (make-por-arg-types
+                      (lambda (arg-lst)
+                        (let ((por-arg-types
+                               (map
+                                (lambda (arg)
+                                  (l2p:lr-sequenceType2por-sequenceType
+                                   (if (symbol? (car arg))
+                                       `(one  ; occurrence indicator
+                                         ,(car arg))
+                                       (car arg))))
+                                arg-lst)))
+                          (if
+                           (null?  ; unknown types only
+                            (filter
+                             (lambda (arg)
+                               (not (memq (cadr arg)
+                                          '(xs:anyType !xs!anyType))))
+                             por-arg-types))
+                           '()
+                           por-arg-types))))
                     )
                 ;(pp new-fun-def)
-                `(,tsr
-                   (PPReturn 
-                    ,(map  cadr (cadr new-fun-def))
+                (list
+                 tsr
+                 (if
+                  (or  ; no positional var
+                   (null? (cdr reverse-new-arg-lst))  ; only a single argument
+                   (not (memq
+                         (caar reverse-new-arg-lst)  ; type of last argument
+                         '(se:positional-var !se!positional-var))))
+                  `(PPReturn
+                    ,(map cadr (cadr new-fun-def))
                     (,tsl (PPStore ,left-PhysOp))
                     ,right-PhysOp
-                   )
-                 )
-              )
-             )
+                    -1
+                    ,@(make-por-arg-types (cadr new-fun-def)))
+                  `(PPReturn
+                    ,(map cadr (reverse (cdr reverse-new-arg-lst)))
+                    (,tsl (PPStore ,left-PhysOp))
+                    ,right-PhysOp
+                    ,(cadar reverse-new-arg-lst)
+                    ,@(make-por-arg-types
+                       (reverse (cdr reverse-new-arg-lst))))))))
              
              ((eq? op-name 'let@)
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
@@ -312,12 +348,14 @@
                            ))))
                        (por-arg-type-list  ; argument type enclosed in list
                         (if
-                         (memv lr-fun-arg-type '(xs:anyType !xs!anyType))
+                         (memq lr-fun-arg-type '(xs:anyType !xs!anyType))
                          '()
                          (list
                           (l2p:lr-sequenceType2por-sequenceType
-                           `(one  ; occurrence indicator
-                             ,lr-fun-arg-type))))))
+                           (if (symbol? lr-fun-arg-type)
+                               `(one  ; occurrence indicator
+                                 ,lr-fun-arg-type)
+                               lr-fun-arg-type))))))
                        
                   ;(pp new-fun-def)
                   `(,(l2p:tuple-size right-PhysOp)
