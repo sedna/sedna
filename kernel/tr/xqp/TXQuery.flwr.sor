@@ -48,13 +48,15 @@ flwrExpr! [in_context in_c] >[out_context out_c]:
 	    SORASTBase *iter_seq=NULL, *var_decl=NULL, *pos_decl=NULL;
 
 	    if(v2!=NULL){
-	      pos_decl=#(#["xs:integer"], v2);
-	      iter_seq=#(#["con-gen1"], ev1, #["m"]); //last param must be a number, but it's value is not defined in Logical Reperesentation yet
+	      pos_decl=#(#["se:positional-var"], v2);
+//	      iter_seq=#(#["con-gen1"], ev1, #["m"]); //last param must be a number, but it's value is not defined in Logical Reperesentation yet
 	    }
 	    else{
 	      pos_decl=NULL;
-	      iter_seq=ev1;
+//	      iter_seq=ev1;
 	    }
+
+            iter_seq=ev1;
 
 	    if(st1!=NULL){
 	      var_decl=st1;
