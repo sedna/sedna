@@ -10,7 +10,7 @@
 #include "PPSResLStub.h"
 
 
-PPReturn::PPReturn(variable_context *_cxt_,
+/*PPReturn::PPReturn(variable_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_) : PPVarIterator(_cxt_),
@@ -19,9 +19,39 @@ PPReturn::PPReturn(variable_context *_cxt_,
                                           data_child(_data_child_),
                                           source(_source_child_.ts)
 {
+}*/
+
+PPReturn::PPReturn(variable_context *_cxt_,
+                   arr_of_var_dsc _var_dscs_, 
+                   PPOpIn _source_child_, 
+                   PPOpIn _data_child_,
+                   var_dsc _pos_dsc_,
+                   const sequence_type& _st_) : PPVarIterator(_cxt_),
+                                                var_dscs(_var_dscs_),
+                                                source_child(_source_child_),
+                                                data_child(_data_child_),
+                                                source(_source_child_.ts),
+                                                pos_dsc(_pos_dsc_),
+                                                st(_st_),
+                                                need_to_check_type(true)
+{
 }
 
 PPReturn::PPReturn(variable_context *_cxt_,
+                   arr_of_var_dsc _var_dscs_, 
+                   PPOpIn _source_child_, 
+                   PPOpIn _data_child_,
+                   var_dsc _pos_dsc_) : PPVarIterator(_cxt_),
+                                        var_dscs(_var_dscs_),
+                                        source_child(_source_child_),
+                                        data_child(_data_child_),
+                                        source(_source_child_.ts),
+                                        pos_dsc(_pos_dsc_),
+                                        need_to_check_type(false)
+{
+}
+
+/*PPReturn::PPReturn(variable_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -30,9 +60,11 @@ PPReturn::PPReturn(variable_context *_cxt_,
                                      source_child(_source_child_),
                                      data_child(_data_child_),
                                      source(_source_),
-                                     first_time(false)
+                                     first_time(false),
+                                     need_to_check_type(false),
+                                     pos_dsc(-1)
 {
-}
+}*/
 
 PPReturn::~PPReturn()
 {
@@ -45,6 +77,7 @@ PPReturn::~PPReturn()
 
 void PPReturn::open ()
 {
+    pos = 0;
     source_child.op->open();
     first_time = true;
 
@@ -57,11 +90,21 @@ void PPReturn::open ()
         p.tuple_pos = i;
     }
 
+    if (pos_dsc >= 0)
+    {
+        producer &p = cxt->producers[pos_dsc];
+        p.type = pt_lazy_simple;
+        p.op = this;
+        p.svc = new simple_var_consumption;
+        p.tuple_pos = 0;
+    }
+
 	data_child.op->open();
 }
 
 void PPReturn::reopen ()
 {
+    pos = 0;
     source_child.op->reopen();
     data_child.op->reopen();
 
@@ -87,13 +130,22 @@ void PPReturn::next(tuple &t)
     while (t.is_eos())
     {
         source_child.op->next(source);
-
+        
+        pos++;
+        
         if (source.is_eos())
         {
             t.set_eos();
             first_time = true;			// reopens automatically
+            pos = 0;                    // reopens automatically
             reinit_consumer_table();	// reopens automatically
             return;
+        }
+
+        if (need_to_check_type)
+        {
+        	if (st.oi == st_empty || !type_matches_single(source.cells[0], st.type)) 
+        		throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
         }
 
         reinit_consumer_table();
@@ -105,9 +157,12 @@ void PPReturn::next(tuple &t)
 
 PPIterator* PPReturn::copy(variable_context *_cxt_)
 {
-    PPReturn *res = new PPReturn(_cxt_, var_dscs, source_child, data_child);
+    PPReturn *res = need_to_check_type ? new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc, st) 
+                                       : new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc); 
+    
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
+    
     return res;
 }
 
@@ -125,7 +180,8 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        t.copy(source.cells[p.tuple_pos]);
+        t.copy(dsc == pos_dsc ? tuple_cell::atomic(pos)
+                              : source.cells[p.tuple_pos]);
     }
 	else
     {
@@ -146,11 +202,19 @@ inline void PPReturn::reinit_consumer_table()
         producer &p = cxt->producers[var_dscs[i]];
         for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
+
+    if (pos_dsc >= 0)
+    {
+        producer &p = cxt->producers[pos_dsc];
+        for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
+    }
 }
 
 bool PPReturn::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
-    PPOpIn data_child, source_child;
+	throw USER_EXCEPTION2(SE1002, "PPReturn::result");
+
+/*    PPOpIn data_child, source_child;
     ((PPReturn*)cur)->children(source_child, data_child);
 
     void *source_r;
@@ -236,5 +300,5 @@ bool PPReturn::result(PPIterator* cur, variable_context *cxt, void*& r)
        delete data_seq;
     }
 
-    return strict_op_result(cur, res_seq, cxt, r);
+    return strict_op_result(cur, res_seq, cxt, r);*/
 }

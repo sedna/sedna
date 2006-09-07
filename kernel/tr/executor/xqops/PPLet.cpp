@@ -17,9 +17,25 @@ PPLet::PPLet(variable_context *_cxt_,
                                     var_dscs(_var_dscs_),
                                     source_child(_source_child_),
                                     data_child(_data_child_),
-                                    source(_source_child_.ts)
+                                    source(_source_child_.ts),
+                                    need_to_check_type(false)
 {
 }
+
+PPLet::PPLet(variable_context *_cxt_,
+             arr_of_var_dsc _var_dscs_, 
+             PPOpIn _source_child_, 
+             PPOpIn _data_child_,
+             const sequence_type& _st_) : PPVarIterator(_cxt_),
+                                          var_dscs(_var_dscs_),
+                                          source_child(_source_child_),
+                                          data_child(_data_child_),
+                                          source(_source_child_.ts),
+                                          st(_st_),
+                                          need_to_check_type(true)
+{
+}
+
 
 //PPLet::PPLet(variable_context *_cxt_,
 //             arr_of_var_dsc _var_dscs_, 
@@ -89,6 +105,13 @@ void PPLet::next(tuple &t)
         if (!seq_filled) source_child.op->reopen();
         seq_filled = false;
         s->clear();
+
+        if(need_to_check_type)
+        {
+            if(!type_matches(source_child, s, t, seq_filled, st))
+                throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
+        }
+        
         need_reopen = false;
         reinit_consumer_table();
     }
@@ -100,7 +123,8 @@ void PPLet::next(tuple &t)
 
 PPIterator* PPLet::copy(variable_context *_cxt_)
 {
-    PPLet *res = new PPLet(_cxt_, var_dscs, source_child, data_child);
+    PPLet *res = need_to_check_type ? new PPLet(_cxt_, var_dscs, source_child, data_child, st)
+                                    : new PPLet(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;

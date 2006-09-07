@@ -21,6 +21,9 @@ private:
 
     PPOpIn data_child;
 
+    bool need_to_check_type;
+    sequence_type st;
+
     bool seq_filled;
     bool need_reopen;
     sequence_tmp *s;
@@ -50,6 +53,13 @@ public:
     virtual PPIterator* copy(variable_context *_cxt_);
 
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    
+    PPLet(variable_context *_cxt_,
+          arr_of_var_dsc _var_dscs_, 
+          PPOpIn _source_child_, 
+          PPOpIn _data_child_,
+          const sequence_type& _st_);
 
     PPLet(variable_context *_cxt_,
           arr_of_var_dsc _var_dscs_, 
