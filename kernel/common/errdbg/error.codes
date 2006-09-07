@@ -1404,27 +1404,12 @@ sedna-err:SE5005
 sedna-err:SE5006
 
     Operation not yet supported.
-sedna-err:SE5007
-   
-    Result of function body cannot be cast to function return type declared.
 sedna-err:SE5008
 
     Unexpected namespace prefix.
-sedna-err:SE5009
-
-    Duplicate prefix declaration.
-sedna-err:SE5010
-
-    Duplicate default element prefix declaration.
-sedna-err:SE5011
-
-    Duplicate default function prefix declaration in XQuery prolog.
 sedna-err:SE5012
 
     Declaration not supported.
-sedna-err:SE5013
-
-    Undeclared namespace prefix in QName.
 sedna-err:SE5014
 
     Not a constant.
@@ -1455,12 +1440,6 @@ sedna-err:SE5022
 sedna-err:SE5023
 
     Malformed variable name.
-sedna-err:SE5024
-
-    Undeclared namespace prefix in variable.
-sedna-err:SE5025
-
-    Variable undeclared.
 sedna-err:SE5026
 
     Type definition for constant not found.
@@ -1470,15 +1449,9 @@ sedna-err:SE5027
 sedna-err:SE5028
 
     Constant is not a proper QName.
-sedna-err:SE5029
-
-    Axis cannot be applied to atomic type.
 sedna-err:SE5030
 
     Not a type specifier.
-sedna-err:SE5031
-
-    Argument of node comparison is not a node().
 sedna-err:SE5032
 
     Not an anonimous function definition.
@@ -1494,15 +1467,6 @@ sedna-err:SE5035
 sedna-err:SE5036
 
     No function name provided in the function call.
-sedna-err:SE5037
-
-    Undeclared XQuery function.
-sedna-err:SE5038
-
-    Number of arguments in the prototype and in the function call don't match.
-sedna-err:SE5039
-
-    Atomic argument cannot be converted to node-type formal parameter.
 sedna-err:SE5040
 
     Empty or unexpected update operation.
@@ -1539,12 +1503,6 @@ sedna-err:SE5050
 sedna-err:SE5051
 
     Unknown range specified for index-scan-between function call.
-sedna-err:SE5052
-
-    Union, intersect or except expressions cannot be applied to non-node data types.
-sedna-err:SE5053
-
-    Context is not defined.
 sedna-err:SE5054
 
     Unexpected value of the boundary-space declaration.
