@@ -423,6 +423,9 @@
     (,sa:fn-ns "namespace-uri" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!namespace-uri)
+    (,sa:fn-ns "boolean" 1 1
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-atomic !fn!boolean)
     (,sa:fn-ns "not" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!not)
@@ -1617,7 +1620,8 @@
    (let ((new-value
           (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
          (new-fun
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-fun-def (cadr (sa:op-args expr))
+                              vars funcs ns-binding default-ns)))
      (and
       new-value new-fun
       (cons (list (sa:op-name expr)  ; ='return

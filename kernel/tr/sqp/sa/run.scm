@@ -203,3 +203,15 @@
             (elem-test
              (ename (const (type !xs!QName) ("" "salary")) (type *) (const (type !xs!string) "non-nil"))))))))))
      (fun-def ((xs:anyType (var ("" "b"))) (xs:anyType (var ("" "a")))) (var ("" "b")))))))
+
+(sa:analyze-query
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (sequence (const (type !xs!integer) 1) (const (type !xs!integer) 2))
+     (fun-def
+      ((xs:anyType (var ("" "x")))
+       (!se!positional-var (var ("" "n"))))
+      (+@ (var ("" "x")) (const (type !xs!integer) 4)))))))
+
