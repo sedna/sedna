@@ -791,7 +791,8 @@
                            (car res))))
                        prolog-res)))
                 (else
-                 (cl:signal-user-error SE5007 body))))))))
+                 (cl:signal-user-error XPTY0004  ; was: SE5007
+                                       body))))))))
      (let ((expr (car prolog)))
        (case (sa:op-name expr)
          ((boundary-space-decl)  ; Boundary space
@@ -864,7 +865,7 @@
            (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
            (if
             (not (symbol? (cadr expr)))  ; prefix
-            (cl:signal-user-error SE5008 (cadr expr))
+            (cl:signal-input-error SE5008 (cadr expr))
             (let ((prefix (symbol->string (car (sa:op-args expr))))
                   (ns-uri (cadr (sa:op-args
                                  (cadr (sa:op-args expr))))))
@@ -878,14 +879,15 @@
                      (cons (cons prefix ns-uri) ns-binding)
                      default-elem-ns default-func-ns
                      (cdr prolog))
-               (cl:signal-user-error SE5009 prefix))))))
+               (cl:signal-user-error XQST0033 prefix)  ; was: SE5009
+               )))))
          ((declare-default-element-namespace)
           (and
            (sa:assert-num-args expr 1)
            (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
            (if
             default-elem-ns  ; default prefix already declared
-            (cl:signal-user-error SE5010)
+            (cl:signal-user-error XQST0066)  ; was: SE5010
             (loop (cons expr new-prlg)
                   funcs triples
                   ns-binding
@@ -898,7 +900,7 @@
            (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
            (if
             default-func-ns  ; default prefix already declared
-            (cl:signal-user-error SE5011)
+            (cl:signal-user-error XQST0066)  ; was: SE5011
             (loop (cons expr new-prlg)
                   funcs triples
                   ns-binding
@@ -1018,7 +1020,8 @@
                  => cdr)
                 (else
                  (cl:signal-user-error
-                  SE5013 prefix ":" (cadr name-parts))))))
+                  XPST0081  ; was: SE5013
+                  prefix ":" (cadr name-parts))))))
         (and
          ns-uri   ; namespace URI found successfully
          (list (sa:op-name qname-const)  ; ='const
@@ -1245,7 +1248,8 @@
       => (lambda (pair)
            (list (cdr pair) (cadr var-name))))
      (else
-      (cl:signal-user-error SE5024 (car var-name))))))
+      (cl:signal-user-error XPST0081 (car var-name))  ; was: SE5024
+      ))))
 
 (define (sa:variable-wrapped expr vars funcs ns-binding default-ns)
   (and
@@ -1262,10 +1266,11 @@
                           var-name)
                     (cdr pair))))
         ((equal? var-name '("" "$%v"))
-         (cl:signal-user-error SE5053))
+         (cl:signal-user-error XPDY0002  ; was: SE5053
+                               ))
         (else
          (cl:signal-user-error
-          SE5025
+          XPST0008  ; was: SE5025
           (if
            (and (pair? var-name) (= (length var-name) 2))
            (if
@@ -1347,7 +1352,7 @@
       a new-type
       (if
        (eq? (cdr a) sa:type-atomic)        
-       (cl:signal-user-error SE5029 expr)
+       (cl:signal-user-error XPTY0020 expr)  ; was: SE5029
        (cons (list (sa:op-name expr)
                    (car a)
                    (car new-type))
@@ -1425,7 +1430,8 @@
        ((memv #f args-res)  ; error detected for args-res
         #f)
        ((memq sa:type-atomic (map cdr args-res))  ; atomic argument
-        (cl:signal-user-error SE5052 expr))
+        (cl:signal-user-error XPTY0004  ; was: SE5052
+                              expr))
        (else  ; form new expr            
         (cons (cons (sa:op-name expr) (map car args-res))
               sa:type-nodes))))))
@@ -1447,13 +1453,15 @@
    #f
    (let ((args-res
           (map
-           (lambda (subexpr) (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+           (lambda (subexpr)
+             (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
            (sa:op-args expr))))
      (cond
        ((member #f args-res)  ; error detected
         #f)
        ((memq sa:type-atomic args-res)  ; at least one argument is atomic
-        (cl:signal-user-error SE5031 expr))
+        (cl:signal-user-error XPTY0004 expr)  ; was: SE5031
+        )
        (else
         (cons (cons (sa:op-name expr)
                     (map car args-res))
@@ -1949,7 +1957,7 @@
           (let loop ((fs funcs))
             (cond
               ((null? fs)  ; all functions scanned
-               (cl:signal-user-error SE5037
+               (cl:signal-user-error XPST0017  ; was: SE5037
                                      (cadr (caddr  ; extract function name
                                             (car (sa:op-args expr))))
                                      ; expr
@@ -1962,7 +1970,7 @@
                   (or (< num-actual (list-ref fun-declaration 2))
                       (and (list-ref fun-declaration 3)  ; max-args
                            (> num-actual (list-ref fun-declaration 3))))
-                  (cl:signal-user-error SE5038
+                  (cl:signal-user-error XPST0017  ; was: SE5038
                                         (car name-parts) ":" (cadr name-parts))
                   (let ((formal-args
                          ((list-ref fun-declaration 4) num-actual)))
@@ -1995,7 +2003,8 @@
                            (list-ref fun-declaration 5))))
                         ((and (eq? (car form) sa:type-nodes)
                               (eq? (cdar act) sa:type-atomic))
-                         (cl:signal-user-error SE5039 expr))
+                         (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
+                         )
                         (else
                          (rpt (cdr form) (cdr act)))))))))
               (else
@@ -2424,7 +2433,7 @@
 (define (sa:analyze-ordermodifier expr vars funcs ns-binding default-ns)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'ordermodifier)))
-     (cl:signal-user-error SE5064 expr))
+     (cl:signal-input-error SE5064 expr))
     ((null? (sa:op-args expr))  ; everything by default
      (cons expr sa:type-any))
     (else
@@ -2442,9 +2451,9 @@
                (v2 (caddr c2)))
            (cond
              ((not (member v1 '("asc" "desc")))
-              (cl:signal-user-error SE5061 v1))
+              (cl:signal-input-error SE5061 v1))
              ((not (member v2 '("empty-greatest" "empty-least" "default")))
-              (cl:signal-user-error SE5062 v1))
+              (cl:signal-input-error SE5062 v1))
              (else
               (cons expr sa:type-any))))))))))
 
@@ -2456,7 +2465,7 @@
 (define (sa:analyze-orderspec expr vars funcs ns-binding default-ns)
   (if
    (not (and (pair? expr) (eq? (sa:op-name expr) 'orderspec)))
-   (cl:signal-user-error SE5065 expr)
+   (cl:signal-input-error SE5065 expr)
    (and
     (sa:assert-num-args expr 2)
     (let ((new-modifier
@@ -2479,15 +2488,15 @@
 (define (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'orderspecs)))
-     (cl:signal-user-error SE5066 expr))
+     (cl:signal-input-error SE5066 expr))
     ((null? (sa:op-args expr))  ; no stable/non-stable declaration
-     (cl:signal-user-error SE5063 expr))
+     (cl:signal-input-error SE5063 expr))
     ((not (and (sa:analyze-string-const
                 (car (sa:op-args expr)) '() '() '() sa:default-ns)
                (member
                 (caddr (car (sa:op-args expr)))  ; value of the constant
                 '("stable" "non-stable"))))
-     (cl:signal-user-error SE5063 (car (sa:op-args expr))))
+     (cl:signal-input-error SE5063 (car (sa:op-args expr))))
     (else
      (let ((new-orderspec-lst
             (map
@@ -2515,7 +2524,7 @@
       (let ((fun-body (caddr (car new-fun))))
         (if
          (not (and (pair? fun-body) (eq? (sa:op-name fun-body) 'orderspecs)))
-         (cl:signal-user-error SE5066 fun-body)
+         (cl:signal-input-error SE5066 fun-body)
          #t))
       (cons (list (sa:op-name expr)  ; ='order-by
                   (car new-value)
