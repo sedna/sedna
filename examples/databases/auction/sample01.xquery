@@ -3,5 +3,4 @@
    registered in North America.
 :)
 
-for    $b in document("auction")/site/people/person[@id="person0"]
-return $b/name/text()
+fn:doc("auction")

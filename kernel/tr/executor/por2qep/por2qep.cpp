@@ -538,10 +538,12 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
     if (op == "PPReturn")
     {
-        if (   lst->size() != 4
+        if (   lst->size() < 5
+            || lst->size() > 6
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
             || lst->at(3).type != SCM_LIST
+            || lst->at(4).type != SCM_NUMBER
            ) throw USER_EXCEPTION2(SE1004, "02");
 
         arr_of_var_dsc vars;
@@ -555,11 +557,29 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             vars.push_back(var);
         }
 
-        opit = new PPReturn(cxt,
-                            vars, 
-                            make_pp_op(cxt, lst->at(2).internal.list),
-                            make_pp_op(cxt, lst->at(3).internal.list));
+        var_dsc pos = atoi(lst->at(4).internal.num);
 
+        if(lst->size() == 6)
+        {
+            if(lst->at(5).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "02.1");
+   
+            opit = new PPReturn(cxt,
+                                vars, 
+                                make_pp_op(cxt, lst->at(2).internal.list),
+                                make_pp_op(cxt, lst->at(3).internal.list),
+                                pos,
+                                make_sequence_type(lst->at(5).internal.list));
+ 
+        }
+        else
+        {
+            opit = new PPReturn(cxt,
+                                vars, 
+                                make_pp_op(cxt, lst->at(2).internal.list),
+                                make_pp_op(cxt, lst->at(3).internal.list),
+                                pos);
+        }
     }
     else if (op == "PPSelect")
     {
@@ -587,7 +607,8 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     }
     else if (op == "PPLet")
     {
-        if (   lst->size() != 4
+        if (   lst->size() < 4
+            || lst->size() > 5 
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
             || lst->at(3).type != SCM_LIST
@@ -603,11 +624,26 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             int var = atoi(_vars_->at(i).internal.num);
             vars.push_back(var);
         }
+        
+        if(lst->size() == 5)
+        {
+            if(lst->at(4).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "06.1");
 
-        opit = new PPLet(cxt,
-                         vars,
-                         make_pp_op(cxt, lst->at(2).internal.list),
-                         make_pp_op(cxt, lst->at(3).internal.list));
+            opit = new PPLet(cxt,
+                             vars,
+                             make_pp_op(cxt, lst->at(2).internal.list),
+                             make_pp_op(cxt, lst->at(3).internal.list),
+                             make_sequence_type(lst->at(5).internal.list));
+ 
+        }
+        else
+        {
+            opit = new PPLet(cxt,
+                             vars,
+                             make_pp_op(cxt, lst->at(2).internal.list),
+                             make_pp_op(cxt, lst->at(3).internal.list));
+        }
     }
     else if (op == "PPConst")
     {

@@ -8,6 +8,7 @@
 
 #include "sedna.h"
 #include "PPBase.h"
+#include "SequenceType.h"
 
 
 class PPReturn : public PPVarIterator
@@ -21,7 +22,11 @@ private:
     PPOpIn data_child;
 
     bool first_time;
-
+    
+    int pos;				  //stores current position;
+    bool need_to_check_type;  //if 'st' is absent this flag must be false;
+    var_dsc pos_dsc;          //-1 if counter is not used;
+    sequence_type st;         //
 
     inline void reinit_consumer_table();
 
@@ -32,11 +37,11 @@ private:
         _data_child_ = data_child;
     }
 
-    PPReturn(variable_context *_cxt_,
+    /*PPReturn(variable_context *_cxt_,
              arr_of_var_dsc _var_dscs_, 
              PPOpIn _source_child_, 
              PPOpIn _data_child_,
-             tuple _source_);
+             tuple _source_);*/
 
 public:
     virtual void open   ();
@@ -49,10 +54,24 @@ public:
 
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
 
+    /*PPReturn(variable_context *_cxt_,
+             arr_of_var_dsc _var_dscs_, 
+             PPOpIn _source_child_, 
+             PPOpIn _data_child_);*/
+
     PPReturn(variable_context *_cxt_,
              arr_of_var_dsc _var_dscs_, 
              PPOpIn _source_child_, 
-             PPOpIn _data_child_);
+             PPOpIn _data_child_,
+             var_dsc _pos_dsc_,
+             const sequence_type& _st_);
+
+    
+    PPReturn(variable_context *_cxt_,
+             arr_of_var_dsc _var_dscs_, 
+             PPOpIn _source_child_, 
+             PPOpIn _data_child_,
+             var_dsc _pos_dsc_);
 
     virtual ~PPReturn();
 
