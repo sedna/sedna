@@ -66,6 +66,7 @@ void PPLet::open ()
     source_child.op->open();
     seq_filled = false;
     need_reopen = false;
+    first_time = true;
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
@@ -85,6 +86,7 @@ void PPLet::reopen ()
     data_child.op->reopen();
 
     seq_filled = false;
+    first_time = true;
     s->clear();
     need_reopen = false;
     reinit_consumer_table();
@@ -105,15 +107,16 @@ void PPLet::next(tuple &t)
         if (!seq_filled) source_child.op->reopen();
         seq_filled = false;
         s->clear();
-
-        if(need_to_check_type)
-        {
-            if(!type_matches(source_child, s, t, seq_filled, st))
-                throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
-        }
-        
+        first_time = true;
         need_reopen = false;
         reinit_consumer_table();
+    }
+
+    if(first_time && need_to_check_type)
+    {
+       if(!type_matches(source_child, s, t, seq_filled, st))
+          throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
+       first_time = false;	
     }
 
     data_child.op->next(t);
