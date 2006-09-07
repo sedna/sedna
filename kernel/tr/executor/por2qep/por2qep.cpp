@@ -634,7 +634,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                              vars,
                              make_pp_op(cxt, lst->at(2).internal.list),
                              make_pp_op(cxt, lst->at(3).internal.list),
-                             make_sequence_type(lst->at(5).internal.list));
+                             make_sequence_type(lst->at(4).internal.list));
  
         }
         else
@@ -1073,8 +1073,8 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "33.1");
 
-        opit = new PPFnNot(cxt, 
-                           make_pp_op(cxt, lst->at(1).internal.list));
+        opit = new PPFnBoolean(cxt, 
+                               make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnTrue")
     {
