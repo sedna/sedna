@@ -220,21 +220,52 @@
              ; *** return ***
              ((eq? op-name 'return)
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
-                     ;(right-operand (substitute-var-value-in-fun-body context var-name value expr))
+                     ;(right-operand
+                     ; (substitute-var-value-in-fun-body context var-name value expr))
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
+                     (reverse-new-arg-lst (reverse (cadr new-fun-def)))
+                     (make-por-arg-types
+                      (lambda (arg-lst)
+                        (let ((por-arg-types
+                               (map
+                                (lambda (arg)
+                                  (l2p:lr-sequenceType2por-sequenceType
+                                   `(one  ; occurrence indicator
+                                     ,(car arg))))
+                                arg-lst)))
+                          (if
+                           (null?  ; unknown types only
+                            (filter
+                             (lambda (arg)
+                               (memv arg '(xs:anyType !xs!anyType)))
+                             por-arg-types))
+                           '()
+                           por-arg-types))))
                     )
                 ;(pp new-fun-def)
-                `(,(l2p:tuple-size right-PhysOp)
-                   (PPReturn 
-                    ,(map  cadr (cadr new-fun-def))
+                (cons
+                 (l2p:tuple-size right-PhysOp)
+                 (if
+                  (or  ; no positional var
+                   (null? (cdr reverse-new-arg-lst))  ; only a single argument
+                   (not (memq
+                         (caar reverse-new-arg-lst)  ; type of last argument
+                         '(se:positional-var !se!positional-var))))
+                  `(PPReturn
+                    ,(map cadr (cadr new-fun-def))
                     ,left-PhysOp
                     ,right-PhysOp
-                   )
-                 )
-              )
-             )
-             
+                    -1
+                    ,@(make-por-arg-types (cadr new-fun-def)))
+                  `(PPReturn
+                    ,(map cadr (reverse (cdr reverse-new-arg-lst)))
+                    ,left-PhysOp
+                    ,right-PhysOp
+                    ,(cadar reverse-new-arg-lst)  ; var-dsc for positional var argument
+                    ,@(make-por-arg-types (reverse (cdr reverse-new-arg-lst))))))
+                ))
+                                                  
              ; *** predicate ***
              ((eq? op-name 'predicate)
               (l2p:predicate2por node))
@@ -273,16 +304,32 @@
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
                     )
-                ;(pp new-fun-def)
-                `(,(l2p:tuple-size right-PhysOp)
-                   (PPLet 
-                    ,(map  cadr (cadr new-fun-def))
-                    ,left-PhysOp
-                    ,right-PhysOp
-                   )
-                 )
+                (let* ((lr-fun-arg-type
+                        (car  ; argument type
+                         (car  ; first argument
+                          (cadr  ; argument list
+                           (cadr node)  ; fun-def
+                           ))))
+                       (por-arg-type-list  ; argument type enclosed in list
+                        (if
+                         (memv lr-fun-arg-type '(xs:anyType !xs!anyType))
+                         '()
+                         (list
+                          (l2p:lr-sequenceType2por-sequenceType
+                           `(one  ; occurrence indicator
+                             ,lr-fun-arg-type))))))
+                       
+                  ;(pp new-fun-def)
+                  `(,(l2p:tuple-size right-PhysOp)
+                    (PPLet 
+                     ,(map  cadr (cadr new-fun-def))
+                     ,left-PhysOp
+                     ,right-PhysOp
+                     ,@por-arg-type-list
+                     )
+                    )
               )
-             )
+             ))
 
              ; *** axis ***
              ((or (eq? op-name 'child)
@@ -605,7 +652,11 @@
              ((eq? op-name 'intersect@)
               `(1 (PPIntersect ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )             
-                                       
+             
+             ; *** boolean ***
+             ((eq? op-name '!fn!boolean)
+              `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))
+             )
              
              ; *** not ***
              ((eq? op-name '!fn!not)
