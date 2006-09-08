@@ -73,13 +73,13 @@
       (if
        (and (pair? curr-decl) (not (null? curr-decl))
             (eq? (car curr-decl) 'PPFunDecl)  ; function declaration
-            (= (length curr-decl) 5))      
+            (= (length curr-decl) 5))
        (list (car curr-decl)  ; = 'PPFunDecl
              (cadr curr-decl)  ; int
              (caddr curr-decl)  ; args types
              (cadddr curr-decl)  ; result type
              (car
-              (porc:process-phys-op (list-ref curr-decl 4) #t #f)))
+              (porc:process-phys-op (list-ref curr-decl 4) #t #f #f)))
        curr-decl)
       (porc:process-prolog (cdr prolog-decl-lst))))))
 
@@ -96,7 +96,8 @@
      ; These operations don't contain constructors
      query-essense)
     (else
-     (car (porc:propagate porc:process-phys-op query-essense #t #f)))))
+     (car (porc:propagate
+           porc:process-phys-op query-essense #t #f #f)))))
 
 
 ;==========================================================================
@@ -107,60 +108,66 @@
 ; prefix-redeclared?
 
 ; Iterates a list of operations in the map style
-(define (porc:map func op-lst copy? ns-prefix)
+(define (porc:map func op-lst copy? ns-prefix in-attr?)
   (let ((alist
          (map
-          (lambda (op) (func op copy? ns-prefix))
+          (lambda (op) (func op copy? ns-prefix in-attr?))
           op-lst)))
     (list (map car alist)
           (porc:map-append cadr alist)
           (porc:lst-or (map caddr alist)))))
 
 ; Propagates the operation
-(define (porc:propagate func op copy? ns-prefix)
-  (let ((new (porc:map func (cdr op) copy? ns-prefix)))
+(define (porc:propagate func op copy? ns-prefix in-attr?)
+  (let ((new (porc:map func (cdr op) copy? ns-prefix in-attr?)))
     (cons
      (cons (car op) (car new))
      (cdr new))))
 
 ;-------------------------------------------------
-; The following functions accept 3 arguments
+; The following functions accept 4 arguments
 ;  expr to be processed
 ;  copy? - whether the constructor is to be copied
-;  ns-prefix - namespace prefix for a containing element. ns-prefix is either
-; a string or
+;  ns-prefix - namespace prefix for a containing element.
+; ns-prefix is either a string or #f(?)
+;  in-attr? - whether the current expression is inside an
+; attribute constructor
 
 ; PhysOp
-(define (porc:process-phys-op expr copy? ns-prefix)
+(define (porc:process-phys-op expr copy? ns-prefix in-attr?)
   (cond
     ((or (not (pair? expr)) (null? expr))  ; atomic
      (list expr '() #f))
     ((and (number? (car expr))
           (= (length expr) 2))
-     (let ((new (porc:process-op (cadr expr) copy? ns-prefix)))
+     (let ((new
+            (porc:process-op (cadr expr) copy? ns-prefix in-attr?)))
       (cons
        (list (car expr)  ; number - tuple size
              (car new))
        (cdr new))))
     ((pair? (car expr))  ; a-la SXPath nodeset
-     (porc:map porc:process-phys-op expr copy? ns-prefix))
+     (porc:map
+      porc:process-phys-op expr copy? ns-prefix in-attr?))
     (else  ; propagate
-     (porc:propagate porc:process-phys-op expr copy? ns-prefix))))
+     (porc:propagate
+      porc:process-phys-op expr copy? ns-prefix in-attr?))))
      
 ; Op
-(define (porc:process-op op copy? ns-prefix)
+(define (porc:process-op op copy? ns-prefix in-attr?)
   (cond
     ((or (not (pair? op)) (null? op))
      (list op '() #f))
     ((eq? (car op) 'PPSequence)
      ; Sequence preserves the value of copy? and ns-prefix
-     (porc:propagate porc:process-phys-op op copy? ns-prefix))
+     (porc:propagate
+      porc:process-phys-op op copy? ns-prefix in-attr?))
     ((eq? (car op) 'PPIf)
      (let ((cnd  ; condition
-            (porc:process-phys-op (cadr op) #t ns-prefix))
+            (porc:process-phys-op (cadr op) #t ns-prefix in-attr?))
            (altern
             (porc:map porc:process-phys-op
-                      (cddr op) copy? ns-prefix)))
+                      (cddr op) copy? ns-prefix in-attr?)))
        (list (cons (car op)  ;='PPIf
                    (cons (car cnd)
                          (car altern)))
@@ -180,9 +187,10 @@
                  #f  ; will match nothing
                  ))
             (name
-             (porc:process-phys-op (cadr op) #t #f))
+             (porc:process-phys-op (cadr op) #t #f in-attr?))
             (value
-             (porc:process-phys-op (caddr op) #f this-ns-prefix)))       
+             (porc:process-phys-op
+              (caddr op) #f this-ns-prefix in-attr?)))
       (list
        (list (car op)  ; = 'PPElement or 'PPAttribute
              (car name)
@@ -196,9 +204,9 @@
     ((and (eq? (car op) 'PPAttribute)
           (= (length op) 3))
      (let ((name
-            (porc:process-phys-op (cadr op) #t #f))
+            (porc:process-phys-op (cadr op) #t #f #t))
            (value
-            (porc:process-phys-op (caddr op) #f #f)))
+            (porc:process-phys-op (caddr op) #f #f #t)))
       (list
        (list (car op)  ; = 'PPElement or 'PPAttribute
              (car name)
@@ -225,7 +233,7 @@
            (var-value (caddr op))
            (expr (cadddr op)))
        (let* ((new-expr
-               (porc:process-phys-op expr copy? #f))
+               (porc:process-phys-op expr copy? #f in-attr?))
               (new-value
                (porc:process-phys-op
                 var-value
@@ -233,7 +241,8 @@
                   ((assoc var-num (cadr new-expr))
                    => cdr)
                   (else #t))
-                #f)))
+                #f
+                in-attr?)))
          (list
           (list (car op)  ; = 'PPLet
                 (cadr op)  ; var num
@@ -245,5 +254,13 @@
                      (not (eq? (car pair) var-num)))
                    (cadr new-expr)))
           #f))))
+    ((eq? (car op) 'PPSpaceSequence)
+     ; The analogue of porc:propagate body
+     (let ((new (porc:map porc:process-phys-op
+                          (cdr op) copy? ns-prefix in-attr?)))
+       (cons
+        (cons (car op) ; == PPSpaceSequence
+              (append (car new) (list in-attr?)))
+        (cdr new))))
     (else  ; any other operation
-     (porc:propagate porc:process-phys-op op #t #f))))
+     (porc:propagate porc:process-phys-op op #t #f in-attr?))))
