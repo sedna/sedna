@@ -274,3 +274,23 @@
         (fun-def
          ((xs:anyType (var ("" "pet"))) (se:positional-var (var ("" "j"))))
          (sequence (var ("" "car")) (var ("" "pet")) (var ("" "i")) (var ("" "j")))))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (element
+      (const (type !xs!QName) ("" "tag"))
+      (space-sequence
+       (sequence
+         (attribute
+          (const (type !xs!string) "attr")
+          (spaceseq
+           (sequence
+             (const (type !xs!integer) "4")
+             (const (type !xs!integer) "5")
+             (const (type !xs!integer) "6"))))
+         (const (type !xs!integer) "7")
+         (const (type !xs!integer) "8")
+         (const (type !xs!integer) "9"))))))))
