@@ -1232,4 +1232,3 @@ xptr getPreviousSiblingNode(xptr node,schema_node* scn)
 	}
 	return XNULL;
 }
-
