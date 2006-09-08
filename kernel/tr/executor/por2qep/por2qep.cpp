@@ -1596,19 +1596,20 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         int i = 0;
 
-        for (i = 1; i < lst->size(); i++)
+        for (i = 1; i < lst->size()-1; i++)
         {
             if (lst->at(i).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "75");
         }
-
+		if (lst->at(lst->size()-1).type != SCM_BOOL)
+			throw USER_EXCEPTION2(SE1004, "751");
         arr_of_PPOpIn arr;
-        for (i = 1; i < lst->size(); i++)
+        for (i = 1; i < lst->size()-1; i++)
         {
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
-		bool tmp=false;
-        opit = new PPSpaceSequence(cxt, arr,tmp);
+		//bool tmp=false;
+        opit = new PPSpaceSequence(cxt, arr,lst->at(lst->size()-1).internal.b);
     }
     else if (op == "PPFnError")
     {
