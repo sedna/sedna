@@ -77,6 +77,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPUnion$(OBJ_EXT)				\
                        PPIntersect$(OBJ_EXT)			\
                        PPExcept$(OBJ_EXT)				\
+                       PPFnDeepEqual$(OBJ_EXT)				\
                        PPFnDateTimeFuncs$(OBJ_EXT)			\
                        PPADFilter$(OBJ_EXT)				\
                        PPDAFilter$(OBJ_EXT)				\

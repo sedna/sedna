@@ -2130,7 +2130,17 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 		                     _modifiers_,
 							 ts);
     }
+	else if (op == "PPFnDeepEqual")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "107");
 
+		opit = new PPFnDeepEqual(cxt,
+                            make_pp_op(cxt, lst->at(1).internal.list),
+                            make_pp_op(cxt, lst->at(2).internal.list));
+    }
 #ifdef SQL_CONNECTION
     else if (op == "PPFnSQLConnect")
     {

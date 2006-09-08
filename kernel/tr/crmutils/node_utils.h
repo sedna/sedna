@@ -243,5 +243,6 @@ bool inline is_next_node_attribute (xptr node)
 	}
 	return false;
 }
+
 #endif
 
