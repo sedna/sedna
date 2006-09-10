@@ -9,6 +9,7 @@
 
 #include "sedna.h"
 #include "PPBase.h"
+#include "crmutils.h"
 
 char *_get_pointer_to_c_str(const tuple_cell &c);
 
@@ -48,6 +49,8 @@ char *get_xs_integer_lexical_representation(char *s, __int64 v);
 char *get_xs_boolean_lexical_representation(char *s, bool b);
 char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d, xmlscm_type xtype);
 
+
+char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell &c, t_print ptype);
 
 
 

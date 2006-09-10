@@ -42,7 +42,7 @@ public:
     void set(float a);
     void set(double a);
     void set(bool a);
-    void set(const char *a);
+    void set(const char *a, bool xs_compliant = true);
 
     __int64 get_int   () const;
     float   get_float () const;
