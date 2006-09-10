@@ -191,8 +191,7 @@ tuple_cell cast_to_xs_decimal(const tuple_cell &c)
         case xs_duration		: throw USER_EXCEPTION(FORG0001);
         case xs_yearMonthDuration	: throw USER_EXCEPTION(FORG0001);
         case xs_dayTimeDuration	: throw USER_EXCEPTION(FORG0001);
-        case xs_boolean			: if (c.get_xs_boolean()) return tuple_cell::atomic(xs_decimal_t(1.0));
-                                  else return tuple_cell::atomic(xs_decimal_t(0.0));
+        case xs_boolean			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_boolean()));
         case xs_base64Binary	: throw USER_EXCEPTION(FORG0001);
         case xs_hexBinary		: throw USER_EXCEPTION(FORG0001);
         case xs_float			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_float()));

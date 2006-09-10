@@ -17,6 +17,7 @@
 #include "pstr_long.h"
 #include "e_string.h"
 #include "casting_operations.h"
+#include "xs_helper.h"
 
 se_stdlib_ostream crm_out(std::cerr);
 typedef  std::map<  std::string,int> nspt_map;
@@ -742,49 +743,8 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 				}
 				else
 				{
-					xmlscm_type typ=tup.cells[i].get_atomic_type();
-					char*z=tr_globals::mem_str_buf2;
-					switch (typ)
-					{
-					case xs_integer:
-						{
-							crmout<<tup.cells[i].get_xs_integer();
-							break;
-						}
-					case xs_decimal:
-						{
-							tup.cells[i].get_xs_decimal().get_c_str(z);
-							crmout<<z;
-							break;
-						}
-					case xs_float:
-						{
-							crmout<<tup.cells[i].get_xs_float();
-							break;
-						}
-					case xs_double:
-						{
-							crmout<<(cast_to_xs_string(tup.cells[i])).get_str_mem();
-							break;
-						}
-					case xs_boolean:
-						{
-							if (ptype==xml)
-								crmout<<((tup.cells[i].get_xs_boolean())? "true":"false");
-							else
-								crmout<<((tup.cells[i].get_xs_boolean())? "#t":"#f");
-							break;
-						}
-					case xs_date:
-						{
-							tup.cells[i].get_xs_dateTime().get_string_value(z);
-							if (ptype==xml)
-								crmout<<z;
-							else
-								crmout<<"\""<<z<<"\"";
-							break;
-						}
-					}
+                    get_lexical_representation_for_fixed_size_atomic(tr_globals::mem_str_buf2, tup.cells[i], ptype);
+                    crmout << tr_globals::mem_str_buf2;
 				}
 			}
 			else

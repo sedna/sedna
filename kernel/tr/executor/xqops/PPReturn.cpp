@@ -180,7 +180,7 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
     if (p.svc->at(id))
     {
         p.svc->at(id) = false;
-        t.copy(dsc == pos_dsc ? tuple_cell::atomic(pos)
+        t.copy(dsc == pos_dsc ? tuple_cell::atomic((__int64)pos)
                               : source.cells[p.tuple_pos]);
     }
 	else
