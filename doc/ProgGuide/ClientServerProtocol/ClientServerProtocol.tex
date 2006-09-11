@@ -126,7 +126,7 @@ The server analyzes the query text to identify the type of the query and runs th
 
 \subsubsection{Querying Data }
 
-The client sends a query in the Execute message, or in the ExecuteLong messages plus the LongQueryEnd message.
+The client sends a query in the Execute message, or in the ExecuteLong messages plus the LongQueryEnd message. The first byte of the query text is a format of the result to obtain - SXML \cite{paper:sxml} or XML. Use \verb!0! if you want to get the result of the query in XML, \verb!1! - to get the result in SXML.
 
 The server processes the query. If the query succeeds the server sends the QuerySucceeded message to the client and then sends a number of messages that contain the first item of the result sequence to the client in the way described below.
 
@@ -399,7 +399,7 @@ Execute (C).
    300 (int)
    body length (int)
   body:
-   query text (string)
+   result format (byte) + query text (string)
 \end{verbatim}
 
 \begin{verbatim}
@@ -408,7 +408,7 @@ ExecuteLong (C).
    301 (int)
    body length (int)
   body:
-   query text (string)
+   result format (byte) + query text (string)
 \end{verbatim}
 
 \begin{verbatim}
@@ -604,4 +604,13 @@ TransactionRollbackBeforeClose (S).
    empty
 \end{verbatim}
 
+\begin{thebibliography}{1}
+
+\bibitem{paper:sxml}
+Oleg Kiselyov.
+``SXML Specification, Revision 3.0'',
+http://www.okmij.org/ftp/Scheme/SXML.html
+\end{thebibliography}
+
 \end{document}
+
