@@ -206,7 +206,11 @@
      (let ((name
             (porc:process-phys-op (cadr op) #t #f #t))
            (value
-            (porc:process-phys-op (caddr op) #f #f #t)))
+            ; Constructors inside attribute values have to be copied
+            ; due to fn:string-value implicitly invoked
+            (porc:process-phys-op (caddr op)
+                                  #t  ; was: #f
+                                  #f #t)))
       (list
        (list (car op)  ; = 'PPElement or 'PPAttribute
              (car name)
