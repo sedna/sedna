@@ -68,18 +68,18 @@ void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell
 {
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()==xs_untypedAtomic)
 	{
-		cell1=cast_to_xs_string(cell1);
-		cell2=cast_to_xs_string(cell2);
+		cell1=cast_primitive_to_xs_string(cell1);
+		cell2=cast_primitive_to_xs_string(cell2);
 		return; 
 	}
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.is_numeric_type())
 	{
-		cell1=cast_to_xs_double(cell1);
+		cell1=cast(cell1, xs_double);
 		return; 
 	}
 	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.is_numeric_type())
 	{
-		cell2=cast_to_xs_double(cell2);
+		cell2=cast(cell2, xs_double);
 		return; 
 	}
 	
@@ -184,7 +184,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_double(value);
+			tuple_cell num_val=cast(value, xs_double);
 			if (min_ut_num)
 			{
 				if (value_comp_lt(num_val,min_ut_num_cell).get_xs_boolean()) 
@@ -208,7 +208,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_dateTime(value,xs_date);
+			tuple_cell num_val=cast(value,xs_date);
 			if (min_ut_dat)
 			{
 				if (value_comp_lt(num_val,min_ut_dat_cell).get_xs_boolean()) 
@@ -291,7 +291,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_double(value);
+			tuple_cell num_val=cast(value, xs_double);
 			if (max_ut_num)
 			{
 				if (value_comp_gt(num_val,max_ut_num_cell).get_xs_boolean()) 
@@ -315,7 +315,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast_to_xs_dateTime(value,xs_date);
+			tuple_cell num_val=cast(value,xs_date);
 			if (max_ut_dat)
 			{
 				if (value_comp_gt(num_val,max_ut_dat_cell).get_xs_boolean()) 
@@ -677,7 +677,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						else
 						{
-							if (value_comp_ne(cast_to_xs_string(seq_str_val[pr]),cast_to_xs_string(res[pr])).get_xs_boolean())
+							if (value_comp_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string)).get_xs_boolean())
 								two_diffs_exist[pr]=true;
 						}
 						if (
@@ -690,7 +690,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						if (uv_exist[1-pr])
 						{
-							if (value_comp_ne(cast_to_xs_string(seq_str_val[pr]),cast_to_xs_string(seq_str_val[1-pr])).get_xs_boolean())
+							if (value_comp_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string)).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
 								return;

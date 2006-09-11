@@ -10,6 +10,33 @@
 #include "casting_operations.h"
 #include "sequence.h"
 
+bool is_primitive(xmlscm_type t)
+{
+	return ( 	   t == xs_untypedAtomic
+		        || t == xs_string			
+		        || t == xs_float			
+		        || t == xs_double			
+		        || t == xs_decimal			
+		        || t == xs_integer			
+     		    || t == xs_duration	
+		        || t == xs_yearMonthDuration
+		        || t == xs_dayTimeDuration
+        		|| t == xs_dateTime	
+        		|| t == xs_time		
+        		|| t == xs_date		
+		        || t == xs_gYearMonth		
+		        || t == xs_gYear			
+		        || t == xs_gMonthDay		
+		        || t == xs_gDay			
+		        || t == xs_gMonth			
+		        || t == xs_boolean			
+		        || t == xs_base64Binary	
+		        || t == xs_hexBinary		
+		        || t == xs_anyURI			
+		        || t == xs_QName			
+		        || t == xs_NOTATION		
+		);
+}
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)
 {
@@ -21,7 +48,7 @@ bool is_derived(xmlscm_type t1, xmlscm_type t2)
         case xs_time				: return false;
         case xs_duration			: return false;
         case xs_yearMonthDuration	: return (t2 == xs_duration);
-        case xs_dayTimeDuration	: return (t2 == xs_duration);
+        case xs_dayTimeDuration		: return (t2 == xs_duration);
         case xs_float				: return false;
         case xs_double				: return false;
         case xs_string				: return false;
@@ -63,6 +90,34 @@ bool is_derived(xmlscm_type t1, xmlscm_type t2)
     }
 }
 
+xmlscm_type primitive_base_type(xmlscm_type t)
+{
+    switch (t)
+    {
+        case xs_normalizedString	: 
+        case xs_token				: 
+        case xs_language			: 
+        case xs_NMTOKEN				: 
+        case xs_Name				: 
+        case xs_NCName				: 
+        case xs_ID					: 
+        case xs_IDREF				: 
+        case xs_ENTITY				: return xs_string;
+        case xs_nonPositiveInteger  : 
+		case xs_negativeInteger     : 
+		case xs_long                : 
+		case xs_int 				: 
+		case xs_short               : 
+		case xs_byte                : 
+		case xs_nonNegativeInteger  : 
+		case xs_unsignedLong        : 
+		case xs_unsignedInt         : 
+		case xs_unsignedShort       : 
+		case xs_unsignedByte        : 
+		case xs_positiveInteger     : return xs_integer;
+        default						: return t;
+    }
+}
 
 bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 {
@@ -209,7 +264,7 @@ void type_promotion(tuple_cell &tc, xmlscm_type type) //tc contains result tuple
 
     if (stype == xs_float && type == xs_double)
     {
-        tc = cast_to_xs_double(tc);
+        tc = cast_primitive_to_xs_double(tc);
         return;
     }
 

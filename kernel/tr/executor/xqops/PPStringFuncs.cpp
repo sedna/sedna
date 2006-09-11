@@ -87,7 +87,7 @@ void PPFnConcat::next(tuple &t)
         }
 
         tuple_cell tc = ch_arr[i].get(t);
-        tcv[i] = cast_to_xs_string(atomize(tc));
+        tcv[i] = cast(atomize(tc), xs_string);
         res_str_len += tcv[i].get_strlen();
 
         ch_arr[i].op->next(t);
@@ -185,7 +185,7 @@ void PPFnStringLength::next  (tuple &t)
         if (!t.is_eos())
         {
             tuple_cell tc = child.get(t);
-            tc = cast_to_xs_string(atomize(tc));
+            tc = cast(atomize(tc), xs_string);
 			len = charset_handler->length(&tc);
 
             child.op->next(t);
@@ -300,7 +300,7 @@ void PPFnTranslate::next  (tuple &t)
 		if (!t.is_eos())
 		{
 			tuple_cell tc = str.get(t);
-			tc = cast_to_xs_string(atomize(tc));
+			tc = cast(atomize(tc), xs_string);
 			str.op->next(t);
 			if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:translate as 1st argument is more than 1");
 

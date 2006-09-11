@@ -190,7 +190,7 @@ void PPOrderBy::next  (tuple &t)
                     {
                         tuple_cell tc = atomize(source.cells[i]);
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
-                                                          cast_to_xs_string(tc) : tc ;
+                                                          cast_primitive_to_xs_string(tc) : tc ;
                         
                         common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();

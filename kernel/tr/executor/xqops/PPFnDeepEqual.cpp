@@ -89,8 +89,8 @@ bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node* sc
 
 bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
-	tuple_cell n1=cast_to_xs_string(dm_typed_value(node1));
-	tuple_cell n2=cast_to_xs_string(dm_typed_value(node2));
+	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
+	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
 	if (value_comp_eq(n1,n2).get_xs_boolean())	
 		return true;
 	else

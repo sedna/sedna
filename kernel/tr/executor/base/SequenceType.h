@@ -92,7 +92,9 @@ struct sequence_type
 
 typedef std::vector<sequence_type>		arr_of_sequence_type;
 
+bool is_primitive(xmlscm_type t);
 bool is_derived(xmlscm_type t1, xmlscm_type t2);
+xmlscm_type primitive_base_type(xmlscm_type t);
 
 inline bool is_same_or_derived(xmlscm_type t1, xmlscm_type t2)
 {

@@ -63,7 +63,7 @@ void PPFnString::next  (tuple &t)
         if ((child.get(t).is_node())) 
             tc = dm_string_value(child.get(t).get_node());
         else
-            tc = cast_to_xs_string(child.get(t));
+            tc = cast(child.get(t), xs_string);
 
         child.op->next(t);
         if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string is more than 1");
