@@ -107,6 +107,18 @@ int simple_type2bin_op_numeric_index(xmlscm_type xtype)
     case xs_untypedAtomic: 
         return 0;
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
         return 1;
     case xs_decimal: 
         return 2;
@@ -255,6 +267,18 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -291,6 +315,18 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -327,6 +363,18 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -355,6 +403,18 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -382,6 +442,18 @@ int simple_type2bin_op_idiv_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -399,6 +471,18 @@ int simple_type2bin_op_mod_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -415,6 +499,18 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -473,6 +569,18 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -531,6 +639,18 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -570,6 +690,18 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -609,6 +741,18 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -649,6 +793,18 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -862,6 +1018,18 @@ int simple_type2un_op_numeric_index(xmlscm_type xtype)
     case xs_untypedAtomic: 
         return 0;
     case xs_integer:
+    case xs_nonPositiveInteger:
+    case xs_negativeInteger:
+    case xs_long:
+    case xs_int:
+    case xs_short:
+    case xs_byte:
+    case xs_nonNegativeInteger:
+    case xs_unsignedLong:
+    case xs_unsignedInt:
+    case xs_unsignedShort:
+    case xs_unsignedByte:
+    case xs_positiveInteger:
         return 1;
     case xs_decimal: 
         return 2;

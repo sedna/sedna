@@ -247,7 +247,7 @@ static void estr_writextext(se_ostream& crmout, xptr src, int count) // or pstr,
 }
 void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 {
-	tuple_cell cell = cast_to_xs_string(tc);
+	tuple_cell cell = cast(tc, xs_string);
 
 	switch (tc.get_type())
 	{

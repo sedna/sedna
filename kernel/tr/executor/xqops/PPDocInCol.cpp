@@ -57,7 +57,7 @@ void PPDocInCol::next(tuple &t)
         col_name_op.op->next(t);
         if (t.is_eos()) return;
 
-        tuple_cell tc_col = cast_to_xs_string(col_name_op.get(t));
+        tuple_cell tc_col = cast(col_name_op.get(t), xs_string);
         tc_col = tuple_cell::make_sure_light_atomic(tc_col);
 
         col_name_op.op->next(t);
@@ -66,7 +66,7 @@ void PPDocInCol::next(tuple &t)
         doc_name_op.op->next(t);
         if (t.is_eos()) return;
 
-        tuple_cell tc_doc = cast_to_xs_string(doc_name_op.get(t));
+        tuple_cell tc_doc = cast(doc_name_op.get(t), xs_string);
         tc_doc = tuple_cell::make_sure_light_atomic(tc_doc);
 
         doc_name_op.op->next(t);

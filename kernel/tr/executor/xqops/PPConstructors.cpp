@@ -46,7 +46,7 @@ tuple_cell getQnameParameter(PPOpIn qname)
 	if (name.is_eos()) throw USER_EXCEPTION2(SE1003, " name argument of Constructor is wrong");
 	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XPTY0004);
 	tuple_cell res=atomize(name.cells[0]);
-	res=cast_to_xs_QName(res);
+	res=cast(res, xs_QName);
 	res=tuple_cell::make_sure_light_atomic(res);
 	qname.op->next(name);
 	if (!(name.is_eos())) throw USER_EXCEPTION(XPTY0004);
@@ -88,7 +88,7 @@ void getStringParameter(PPOpIn content)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast_to_xs_string(res);
+		res=cast(res, xs_string);
 		res=tuple_cell::make_sure_light_atomic(res);
 	/*	if (it!=at_vals.begin())
 		{
@@ -128,7 +128,7 @@ void getStringWSParameter(PPOpIn content)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast_to_xs_string(res);
+		res=cast(res, xs_string);
 		res=tuple_cell::make_sure_light_atomic(res);
 		str_val.append(res);
 		it++;
@@ -367,7 +367,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast_to_xs_string(tcc);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 
@@ -448,7 +448,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast_to_xs_string(tcc);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 

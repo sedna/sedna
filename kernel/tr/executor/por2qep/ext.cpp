@@ -135,7 +135,7 @@ SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
 		node->data.val_double = res.get_xs_double();
 		break;
 	default:
-		res = cast_to_xs_string(res);
+		res = cast(res, xs_string);
 		node->data.type = SEDNATYPE_string;
 		int len;
 		if (res.is_light_atomic())
