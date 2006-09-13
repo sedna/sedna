@@ -75,46 +75,46 @@ inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 
 /******************************************************************************/
 
-inline tuple_cell cast_xs_float_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_float_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     get_xs_double_lexical_representation(tr_globals::mem_str_buf, (double)c.get_xs_float());
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_double_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_double_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     get_xs_double_lexical_representation(tr_globals::mem_str_buf, c.get_xs_double());
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_decimal_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_decimal_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     c.get_xs_decimal().get_c_str(tr_globals::mem_str_buf);
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     get_xs_integer_lexical_representation(tr_globals::mem_str_buf, c.get_xs_integer());
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype)
+inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype, xmlscm_type res_type)
 {
     get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, c.get_xs_dateTime(), xtype);
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_boolean_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_boolean_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     get_xs_boolean_lexical_representation(tr_globals::mem_str_buf, c.get_xs_boolean());
-    return tuple_cell::atomic_deep(xs_string, tr_globals::mem_str_buf);
+    return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
-inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 { // !!! FIX ME: some conversion needed
     tuple_cell res(c);
-    res.set_xtype(xs_string);
+    res.set_xtype(res_type);
     return res;
 }
 
@@ -161,29 +161,29 @@ tuple_cell cast_primitive_to_xs_untypedAtomic(const tuple_cell &c)
                                       res.set_xtype(xs_untypedAtomic);
                                       return res;
                                   }
-        case xs_float			: return cast_xs_float_to_string_type(c);
-        case xs_double			: return cast_xs_double_to_string_type(c);
-        case xs_decimal			: return cast_xs_decimal_to_string_type(c);
-        case xs_integer 		: return cast_xs_integer_to_string_type(c);
-        case xs_duration		: return cast_xs_dateTime_to_string_type(c, xs_duration);
-        case xs_yearMonthDuration:return cast_xs_dateTime_to_string_type(c, xs_yearMonthDuration);
-        case xs_dayTimeDuration	: return cast_xs_dateTime_to_string_type(c, xs_dayTimeDuration);
-        case xs_dateTime		: return cast_xs_dateTime_to_string_type(c, xs_dateTime);
-        case xs_time			: return cast_xs_dateTime_to_string_type(c, xs_time);
-        case xs_date			: return cast_xs_dateTime_to_string_type(c, xs_date);
-        case xs_gYearMonth		: return cast_xs_dateTime_to_string_type(c, xs_gYearMonth);
-        case xs_gYear			: return cast_xs_dateTime_to_string_type(c, xs_gYear);
-        case xs_gMonthDay		: return cast_xs_dateTime_to_string_type(c, xs_gMonthDay);
-        case xs_gDay			: return cast_xs_dateTime_to_string_type(c, xs_gDay);
-        case xs_gMonth			: return cast_xs_dateTime_to_string_type(c, xs_gMonth);
-        case xs_boolean			: return cast_xs_boolean_to_string_type(c);
+        case xs_float			: return cast_xs_float_to_string_type(c, xs_untypedAtomic);
+        case xs_double			: return cast_xs_double_to_string_type(c, xs_untypedAtomic);
+        case xs_decimal			: return cast_xs_decimal_to_string_type(c, xs_untypedAtomic);
+        case xs_integer 		: return cast_xs_integer_to_string_type(c, xs_untypedAtomic);
+        case xs_duration		: return cast_xs_dateTime_to_string_type(c, xs_duration, xs_untypedAtomic);
+        case xs_yearMonthDuration:return cast_xs_dateTime_to_string_type(c, xs_yearMonthDuration, xs_untypedAtomic);
+        case xs_dayTimeDuration	: return cast_xs_dateTime_to_string_type(c, xs_dayTimeDuration, xs_untypedAtomic);
+        case xs_dateTime		: return cast_xs_dateTime_to_string_type(c, xs_dateTime, xs_untypedAtomic);
+        case xs_time			: return cast_xs_dateTime_to_string_type(c, xs_time, xs_untypedAtomic);
+        case xs_date			: return cast_xs_dateTime_to_string_type(c, xs_date, xs_untypedAtomic);
+        case xs_gYearMonth		: return cast_xs_dateTime_to_string_type(c, xs_gYearMonth, xs_untypedAtomic);
+        case xs_gYear			: return cast_xs_dateTime_to_string_type(c, xs_gYear, xs_untypedAtomic);
+        case xs_gMonthDay		: return cast_xs_dateTime_to_string_type(c, xs_gMonthDay, xs_untypedAtomic);
+        case xs_gDay			: return cast_xs_dateTime_to_string_type(c, xs_gDay, xs_untypedAtomic);
+        case xs_gMonth			: return cast_xs_dateTime_to_string_type(c, xs_gMonth, xs_untypedAtomic);
+        case xs_boolean			: return cast_xs_boolean_to_string_type(c, xs_untypedAtomic);
         case xs_base64Binary	: 
         case xs_hexBinary		: {
                                       tuple_cell res(c);
                                       res.set_xtype(xs_untypedAtomic);
                                       return res;
                                   }
-        case xs_anyURI			: return cast_xs_anyURI_to_string_type(c);
+        case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_untypedAtomic);
         default                 : return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic);
     }
 }
@@ -200,29 +200,29 @@ tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
                                       return res;
                                   }
         case xs_string			: return c;
-        case xs_float			: return cast_xs_float_to_string_type(c);
-        case xs_double			: return cast_xs_double_to_string_type(c);
-        case xs_decimal			: return cast_xs_decimal_to_string_type(c);
-        case xs_integer 		: return cast_xs_integer_to_string_type(c);
-        case xs_duration		: return cast_xs_dateTime_to_string_type(c, xs_duration);
-        case xs_yearMonthDuration:return cast_xs_dateTime_to_string_type(c, xs_yearMonthDuration);
-        case xs_dayTimeDuration	: return cast_xs_dateTime_to_string_type(c, xs_dayTimeDuration);
-        case xs_dateTime		: return cast_xs_dateTime_to_string_type(c, xs_dateTime);
-        case xs_time			: return cast_xs_dateTime_to_string_type(c, xs_time);
-        case xs_date			: return cast_xs_dateTime_to_string_type(c, xs_date);
-        case xs_gYearMonth		: return cast_xs_dateTime_to_string_type(c, xs_gYearMonth);
-        case xs_gYear			: return cast_xs_dateTime_to_string_type(c, xs_gYear);
-        case xs_gMonthDay		: return cast_xs_dateTime_to_string_type(c, xs_gMonthDay);
-        case xs_gDay			: return cast_xs_dateTime_to_string_type(c, xs_gDay);
-        case xs_gMonth			: return cast_xs_dateTime_to_string_type(c, xs_gMonth);
-        case xs_boolean			: return cast_xs_boolean_to_string_type(c);
+        case xs_float			: return cast_xs_float_to_string_type(c, xs_string);
+        case xs_double			: return cast_xs_double_to_string_type(c, xs_string);
+        case xs_decimal			: return cast_xs_decimal_to_string_type(c, xs_string);
+        case xs_integer 		: return cast_xs_integer_to_string_type(c, xs_string);
+        case xs_duration		: return cast_xs_dateTime_to_string_type(c, xs_duration, xs_string);
+        case xs_yearMonthDuration:return cast_xs_dateTime_to_string_type(c, xs_yearMonthDuration, xs_string);
+        case xs_dayTimeDuration	: return cast_xs_dateTime_to_string_type(c, xs_dayTimeDuration, xs_string);
+        case xs_dateTime		: return cast_xs_dateTime_to_string_type(c, xs_dateTime, xs_string);
+        case xs_time			: return cast_xs_dateTime_to_string_type(c, xs_time, xs_string);
+        case xs_date			: return cast_xs_dateTime_to_string_type(c, xs_date, xs_string);
+        case xs_gYearMonth		: return cast_xs_dateTime_to_string_type(c, xs_gYearMonth, xs_string);
+        case xs_gYear			: return cast_xs_dateTime_to_string_type(c, xs_gYear, xs_string);
+        case xs_gMonthDay		: return cast_xs_dateTime_to_string_type(c, xs_gMonthDay, xs_string);
+        case xs_gDay			: return cast_xs_dateTime_to_string_type(c, xs_gDay, xs_string);
+        case xs_gMonth			: return cast_xs_dateTime_to_string_type(c, xs_gMonth, xs_string);
+        case xs_boolean			: return cast_xs_boolean_to_string_type(c, xs_string);
         case xs_base64Binary	: 
         case xs_hexBinary		: {
                                       tuple_cell res(c);
                                       res.set_xtype(xs_string);
                                       return res;
                                   }
-        case xs_anyURI			: return cast_xs_anyURI_to_string_type(c);
+        case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_string);
         case xs_QName			: { // !!! FIX ME: don't know what to do
                                       tuple_cell res(c);
                                       res.set_xtype(xs_string);
@@ -578,6 +578,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     else if (base_type == xs_string)
     {
         // !!! Fix me: check constraints
+        sat = true;
     }
 
     if (!sat) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
