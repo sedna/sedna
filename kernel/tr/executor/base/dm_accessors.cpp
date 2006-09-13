@@ -287,34 +287,77 @@ tuple_cell dm_typed_value(xptr node)
     }
 }
 
-char* type2string(xmlscm_type type)
+const char* xmlscm_type2c_str(xmlscm_type type)
 {
     switch (type)
     {
-        case xs_untyped			: return "xs:untyped";
-        case xs_untypedAtomic	: return "xs:untypedAtomic";
-        case xs_gYearMonth		: return "xs:gYearMonth";
-        case xs_gYear			: return "xs:gYear";
-        case xs_gMonthDay		: return "xs:gMonthDay";
-        case xs_gDay			: return "xs:gDay";
-        case xs_gMonth			: return "xs:gMonth";
-        case xs_dateTime		: return "xs:dateTime";
-        case xs_time			: return "xs:time";
-        case xs_date			: return "xs:date";
-        case xs_duration		: return "xs:duration";
-        case xs_boolean			: return "xs:boolean";
-        case xs_base64Binary	: return "xs:base64Binary";
-        case xs_hexBinary		: return "xs:hexBinary";
-        case xs_float			: return "xs:float";
-        case xs_double			: return "xs:double";
-        case xs_anyURI			: return "xs:anyURI";
-        case xs_QName			: return "xs:QName";
-        case xs_NOTATION		: return "xs:NOTATION";
-        case xs_string			: return "xs:string";
-        case xs_decimal			: return "xs:decimal";
-        case xs_integer			: return "xs:integer";
-        case xs_anyType			: return "xs:anyType";
-        default					: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
+        // Abstract base types
+        case xs_anyType				: return "xs:anyType";
+        case xs_anySimpleType		: return "xs:anySimpleType";
+        case xs_anyAtomicType		: return "xs:anyAtomicType";
+
+        // Built-in simple, non-atomic types
+        case xs_IDREFS				: return "xs:IDREFS";
+        case xs_NMTOKENS			: return "xs:NMTOKENS";
+        case xs_ENTITIES			: return "xs:ENTITIES";
+
+        // Built-in complex types
+        case xs_untyped				: return "xs:untyped";
+
+        // Built-in atomic types (Primitive types)
+        case xs_untypedAtomic		: return "xs:untypedAtomic";
+        case xs_dateTime			: return "xs:dateTime";
+        case xs_date				: return "xs:date";
+        case xs_time				: return "xs:time";
+        case xs_duration			: return "xs:duration";
+        case xs_yearMonthDuration	: return "xs:yearMonthDuration";
+        case xs_dayTimeDuration		: return "xs:dayTimeDuration";
+        case xs_float				: return "xs:float";
+        case xs_double				: return "xs:double";
+        case xs_string				: return "xs:string";
+        case xs_decimal				: return "xs:decimal";
+        case xs_integer				: return "xs:integer";
+        case xs_gYearMonth			: return "xs:gYearMonth";
+        case xs_gYear				: return "xs:gYear";
+        case xs_gMonthDay			: return "xs:gMonthDay";
+        case xs_gDay				: return "xs:gDay";
+        case xs_gMonth				: return "xs:gMonth";
+        case xs_boolean				: return "xs:boolean";
+        case xs_base64Binary		: return "xs:base64Binary";
+        case xs_hexBinary			: return "xs:hexBinary";
+        case xs_anyURI				: return "xs:anyURI";
+        case xs_QName				: return "xs:QName";
+        case xs_NOTATION			: return "xs:NOTATION";
+
+        // Special Sedna type
+        case se_separator		    : return "se:separator";
+
+        // Types derived from xs:string
+        case xs_normalizedString	: return "xs:normalizedString";
+        case xs_token				: return "xs:token";
+        case xs_language			: return "xs:language";
+        case xs_NMTOKEN				: return "xs:NMTOKEN";
+        case xs_Name				: return "xs:Name";
+        case xs_NCName				: return "xs:NCName";
+        case xs_ID					: return "xs:ID";
+        case xs_IDREF				: return "xs:IDREF";
+        case xs_ENTITY				: return "xs:ENTITY";
+
+        // Types derived from xs:integer
+        case xs_nonPositiveInteger  : return "xs:nonPositiveInteger";
+        case xs_negativeInteger     : return "xs:negativeInteger";
+        case xs_long                : return "xs:long";
+        case xs_int 				: return "xs:int";
+        case xs_short               : return "xs:short";
+        case xs_byte                : return "xs:byte";
+        case xs_nonNegativeInteger  : return "xs:nonNegativeInteger";
+        case xs_unsignedLong        : return "xs:unsignedLong";
+        case xs_unsignedInt         : return "xs:unsignedInt";
+        case xs_unsignedShort       : return "xs:unsignedShort";
+        case xs_unsignedByte        : return "xs:unsignedByte";
+        case xs_positiveInteger     : return "xs:positiveInteger";
+
+        default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
     }
 }
 
@@ -325,8 +368,8 @@ tuple_cell dm_type_name(xptr node)
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
         case document		: return tuple_cell::eos();
-        case element		: return tuple_cell::atomic_deep(xs_QName, type2string(E_DSC(node)->type));
-        case attribute		: return tuple_cell::atomic_deep(xs_QName, type2string(A_DSC(node)->type));
+        case element		: return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(E_DSC(node)->type));
+        case attribute		: return tuple_cell::atomic_deep(xs_QName, xmlscm_type2c_str(A_DSC(node)->type));
         case xml_namespace	: return tuple_cell::eos();
         case pr_ins			: return tuple_cell::eos();
         case comment		: return tuple_cell::eos();

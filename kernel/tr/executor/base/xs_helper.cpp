@@ -113,29 +113,6 @@ bool c_str2xs_boolean(const char *t)
 }
 
 
-tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtype)
-{
-    char *t = _get_pointer_to_c_str(c);
-    XMLDateTime res;
-
-    switch(xtype)
-    {
-        case xs_gYearMonth        : res.parseYearMonth(t); break;
-        case xs_gYear             : res.parseYear(t); break;
-        case xs_gMonthDay         : res.parseMonthDay(t); break;
-        case xs_gDay              : res.parseDay(t); break;
-        case xs_gMonth            : res.parseMonth(t); break;
-        case xs_dateTime          : res.parseDateTime(t); break;
-        case xs_time              : res.parseTime(t); break;
-        case xs_date              : res.parseDate(t); break;
-        case xs_duration          : res.parseDuration(t); break;
-        case xs_yearMonthDuration : res.parseYearMonthDuration(t); break;
-        case xs_dayTimeDuration   : res.parseDayTimeDuration(t); break;
-        default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_to_xs_dateTime");
-    }
-		
-    return tuple_cell::atomic(xtype, res.getRawData());
-}
 
 
 

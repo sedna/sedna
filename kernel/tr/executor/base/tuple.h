@@ -105,36 +105,9 @@ public:
 
     str_counted_ptr get_str_ptr   () const { return str_ptr; }
 
-    bool is_string_type() const
-    { // !!! Other string types are possible in the future
-        return (xtype == xs_untypedAtomic		||
-                xtype == xs_anyURI				||
-                xtype == xs_QName				||
-                xtype == xs_string
-/*
-                xtype == xs_dateTime			||
-                xtype == xs_date				||
-                xtype == xs_time				||
-                xtype == xs_duration			||
-                xtype == xs_yearMonthDuration	||
-                xtype == xs_dayTimeDuration	||
-                xtype == xs_gYearMonth			||
-                xtype == xs_gYear				||
-                xtype == xs_gMonthDay			||
-                xtype == xs_gDay				||
-                xtype == xs_gMonth*/);
-    }
-    bool is_numeric_type() const
-    {
-        return (xtype == xs_integer			||
-                xtype == xs_decimal			||
-                xtype == xs_float			||
-                xtype == xs_double);
-    }
-    bool is_tuple_cell_of_none_const_size() const
-    {  
-        return (type == tc_light_atomic && is_string_type());
-    }
+    bool is_string_type           () const { return ::is_string_type(xtype); }
+    bool is_numeric_type          () const { return ::is_numeric_type(xtype); }
+    bool is_fixed_size_type       () const { return ::is_fixed_size_type(xtype); }
 
     ////////////////////////////////////////////////////////////////////////////
     /// CONSTRUCTORS FOR TUPLE_CELL

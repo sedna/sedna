@@ -11,8 +11,10 @@
 #include "PPBase.h"
 
 
-// treat_xs_untypedAtomic_as_xs_string should be set to true only for XQuery B.2 Operator Mapping implementation
-tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool treat_xs_untypedAtomic_as_xs_string = false);
+// do_not_check_type should be set to true only for XQuery B.2 Operator Mapping implementation
+tuple_cell fn_compare(const tuple_cell &a1, 
+                      const tuple_cell &a2, 
+                      bool do_not_check_type = false);
 
 
 #endif
