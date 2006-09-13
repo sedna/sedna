@@ -154,61 +154,24 @@ void d_dsc::init(void *p)
 	d->indir=XNULL;
 }
 
-int xmlscm_type_size(xmlscm_type t)
+
+int xmlscm_type_size(xmlscm_type xtype)
 {
-    switch (t) 
+    switch(xtype)
     {
-   		/// Basic types. Size is fixed. ///
-   		case xs_decimal				: return sizeof(double);
-		case xs_integer				: return sizeof(int);
-		case xs_boolean				: return sizeof(bool);
-		case xs_float				: return sizeof(float);
-		case xs_double				: return sizeof(double);
-
-   		/// String based types. 0 means that size is not fixed for these types. ///
-		case xs_string				: 
-		case xs_normalizedString	: 
-		case xs_token				: 
-		case xs_language			: 
-		case xs_NMTOKEN				: 
-		case xs_Name				: 
-		case xs_NCName				: 
-		case xs_ID					: 
-		case xs_IDREF				: 
-		case xs_ENTITY				: 
-		case xs_anyURI				: 
-		case xs_QName				: 
-		case xs_NOTATION			: return 0;								
-		
-		/// XMLDateTime based types. Size is fixed. ///
-		case xs_dateTime			: 
-		case xs_date				: 
-		case xs_time				: 
-		case xs_duration			: 
-		case xs_yearMonthDuration	: 
-		case xs_dayTimeDuration	: 
-		case xs_gYearMonth			: 
-		case xs_gYear				: 
-		case xs_gMonthDay			: 
-		case xs_gDay				: 
-		case xs_gMonth				: return sizeof(int)*(XMLDateTime::TOTAL_FIELDS);
-
-		/// Not supported or not implemented for now types. ///
-		case xs_base64Binary		: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_base64Binary is not implemented yet (in xmlscm_type_size).");
-		case xs_hexBinary			: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_hexBinary is not implemented yet (in xmlscm_type_size).");
-		case xs_nonPositiveInteger  : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_nonPositiveInteger is not implemented yet (in xmlscm_type_size).");
-		case xs_negativeInteger     : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_negativeInteger is not implemented yet (in xmlscm_type_size).");
-		case xs_long                : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_long is not implemented yet (in xmlscm_type_size).");
-		case xs_int 				: throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_int is not implemented yet (in xmlscm_type_size).");
-		case xs_short               : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_short is not implemented yet (in xmlscm_type_size).");
-		case xs_byte                : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_byte is not implemented yet (in xmlscm_type_size).");
-		case xs_nonNegativeInteger  : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_nonNegativeInteger is not implemented yet (in xmlscm_type_size).");
-		case xs_unsignedLong        : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedLong is not implemented yet (in xmlscm_type_size).");
-		case xs_unsignedInt         : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedInt is not implemented yet (in xmlscm_type_size).");
-		case xs_unsignedShort       : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedShort is not implemented yet (in xmlscm_type_size).");
-		case xs_unsignedByte        : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_unsignedByte is not implemented yet (in xmlscm_type_size).");
-		case xs_positiveInteger     : throw USER_EXCEPTION2(SE1002, "Size is undefined. Type xs_positiveInteger is not implemented yet (in xmlscm_type_size).");
-
-        default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type in xmlscm_type_size.");
+        case xs_float  : return sizeof(float);
+        case xs_double : return sizeof(double);
+        case xs_decimal: return sizeof(xs_decimal_t);
+        case xs_integer: return sizeof(__int64);
+        case xs_boolean: return sizeof(bool);
+        default        :
+            if (!is_fixed_size_type(xtype)) 
+                return 0;
+            else if (is_temporal_type(xtype)) 
+                return sizeof(int)*(XMLDateTime::TOTAL_FIELDS); // FIX ME: change this value after dateTime type will be rewritten
+            else if (is_derived_from_xs_integer(xtype)) 
+                return sizeof(__int64);
+            else 
+                throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type in xmlscm_type_size.");
     }
 }

@@ -83,8 +83,8 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPUnion$(OBJ_EXT)				\
                        PPIntersect$(OBJ_EXT)			\
                        PPExcept$(OBJ_EXT)				\
-                       PPFnDeepEqual$(OBJ_EXT)				\
-                       PPFnDateTimeFuncs$(OBJ_EXT)			\
+                       PPFnDeepEqual$(OBJ_EXT)			\
+                       PPFnDateTimeFuncs$(OBJ_EXT)		\
                        PPADFilter$(OBJ_EXT)				\
                        PPDAFilter$(OBJ_EXT)				\
                        PPUp$(OBJ_EXT)					\
@@ -97,6 +97,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        comparison_operations$(OBJ_EXT)	\
                        string_operations$(OBJ_EXT)		\
                        dateTime_operations$(OBJ_EXT)	\
+                       other_fo$(OBJ_EXT)				\
                        op_map$(OBJ_EXT)                 \
                        PPQueryRoot$(OBJ_EXT)			\
                        PPInsertTo$(OBJ_EXT)				\

@@ -190,7 +190,7 @@ void sequence::get(tuple &t, int pos)
 
     for (int i = 0; i < tuple_size; i++) 
     {
-        if (t.cells[i].is_tuple_cell_of_none_const_size())
+        if (t.cells[i].is_light_atomic() && !(t.cells[i].is_fixed_size_type()))
         {
             tuple_cell &c = t.cells[i];
             int strlen = c.get_strlen_vmm();

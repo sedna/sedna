@@ -15,57 +15,17 @@
 #include "vmm.h"
 #include "index_data.h"
 #include "indirection.h"
+#include "dm_accessors.h"
 
 
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node*>* sys_schema=NULL;
-void print_type_name(xmlscm_type keytype, char* buf)
+
+inline void print_type_name(xmlscm_type keytype, char* buf)
 {
-	switch(keytype)
-	{
-		case xs_integer	: strcpy(buf,"xs:integer");
-		break;case xs_float	: strcpy(buf,"xs:float");
-		break;case xs_double	: strcpy(buf,"xs:double");
-		break;case xs_string	: strcpy(buf,"xs:string");
-		break;case xs_anyType	:			strcpy(buf,"xs:anyType");
-		break;case xs_anySimpleType	:	strcpy(buf,"xs:anySimpleType");
-		break;case xs_anyAtomicType:		strcpy(buf,"xs:anyAtomicType");
-		break;case xs_IDREFS	:			strcpy(buf,"xs:IDREFS");
-		break;case xs_NMTOKENS:				strcpy(buf,"xs:NMTOKENS");
-		break;case xs_ENTITIES:				strcpy(buf,"xs:ENTITIES");
-		break;case xs_untyped:				strcpy(buf,"xs:untyped");
-		break;case xs_untypedAtomic:		strcpy(buf,"xs:untypedAtomic");
-		break;case xs_dateTime	:			strcpy(buf,"xs:dateTime");
-		break;case xs_date		:			strcpy(buf,"xs:date");
-		break;case xs_time		:			strcpy(buf,"xs:time");
-		break;case xs_duration	:			strcpy(buf,"xs:duration");
-		break;case xs_yearMonthDuration:	strcpy(buf,"xs:yearMonthDuration");
-		break;case xs_dayTimeDuration:		strcpy(buf,"xs:dayTimeDuration");
-		break;case xs_normalizedString:		strcpy(buf,"xs:normalizedString");
-		break;case xs_token	:			strcpy(buf,"xs:token");
-		break;case xs_language:				strcpy(buf,"xs:language");
-		break;case xs_NMTOKEN	:			strcpy(buf,"xs:NMTOKEN");
-		break;case xs_Name	:				strcpy(buf,"xs:Name");
-		break;case xs_NCName	:			strcpy(buf,"xs:NCName");
-		break;case xs_ID		:			strcpy(buf,"xs:ID");
-		break;case xs_IDREF	:			strcpy(buf,"xs:IDREF");
-		break;case xs_ENTITY	:			strcpy(buf,"xs:ENTITY");
-		break;case xs_decimal	:			strcpy(buf,"xs:decimal");
-		break;case xs_gYearMonth	:		strcpy(buf,"xs:gYearMonth");
-		break;case xs_gYear	:			strcpy(buf,"xs:gYear");
-		break;case xs_gMonthDay:			strcpy(buf,"xs:gMonthDay");
-		break;case xs_gDay:					strcpy(buf,"xs:gDay");
-		break;case xs_gMonth:				strcpy(buf,"xs:gMonth");
-		break;case xs_boolean	:			strcpy(buf,"xs:boolean");
-		break;case xs_base64Binary:			strcpy(buf,"xs:base64Binary");
-		break;case xs_hexBinary:			strcpy(buf,"xs:hexBinary");
-		break;case xs_anyURI	:			strcpy(buf,"xs:anyURI");
-		break;case xs_QName	:			strcpy(buf,"xs:QName");
-		break;case xs_NOTATION:				strcpy(buf,"xs:NOTATION");
-		break;case se_separator:		    strcpy(buf,"se:separator");
-        break;default			: strcpy(buf,"unknown");
-	}	
+    strcpy(buf, xmlscm_type2c_str(keytype));
 }
+
 xptr fill_schema(schema_node* scm, xptr& node,xptr& neighb)
 {
 	xptr parent=insert_element(neighb,XNULL,node,convert_type(scm->type),xs_untyped,NULL);

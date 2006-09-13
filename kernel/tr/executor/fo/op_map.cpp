@@ -10,6 +10,7 @@
 #include "dateTime_operations.h"
 #include "numeric_operations.h"
 #include "string_operations.h"
+#include "other_fo.h"
 
 
 
@@ -36,12 +37,12 @@ extern bin_op_tuple_cell_tuple_cell op_mul_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_div_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_idiv_tbl[1][1];
 extern bin_op_tuple_cell_tuple_cell op_mod_tbl[1][1];
-extern bin_op_tuple_cell_tuple_cell op_eq_tbl[13][13];
-extern bin_op_tuple_cell_tuple_cell op_ne_tbl[13][13];
-extern bin_op_tuple_cell_tuple_cell op_gt_tbl[7][7];
-extern bin_op_tuple_cell_tuple_cell op_lt_tbl[7][7];
-extern bin_op_tuple_cell_tuple_cell op_ge_tbl[7][7];
-extern bin_op_tuple_cell_tuple_cell op_le_tbl[7][7];
+extern bin_op_tuple_cell_tuple_cell op_eq_tbl[16][16];
+extern bin_op_tuple_cell_tuple_cell op_ne_tbl[16][16];
+extern bin_op_tuple_cell_tuple_cell op_gt_tbl[8][8];
+extern bin_op_tuple_cell_tuple_cell op_lt_tbl[8][8];
+extern bin_op_tuple_cell_tuple_cell op_ge_tbl[8][8];
+extern bin_op_tuple_cell_tuple_cell op_le_tbl[8][8];
 
 struct xq_binary_op_info_type
 {
@@ -107,18 +108,6 @@ int simple_type2bin_op_numeric_index(xmlscm_type xtype)
     case xs_untypedAtomic: 
         return 0;
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
         return 1;
     case xs_decimal: 
         return 2;
@@ -127,7 +116,7 @@ int simple_type2bin_op_numeric_index(xmlscm_type xtype)
     case xs_double: 
         return 4;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 1 : -1;
     }
 }
 
@@ -135,40 +124,40 @@ bin_op_tuple_cell_tuple_cell op_numeric_add_tbl[5][5] =
 {
                        /*xs_untypedAtomic*/                               /*xs_integer*/                               /*xs_decimal*/                               /*xs_float*/                               /*xs_double*/
 /*xs_untypedAtomic*/ {op_numeric_add_xs_untypedAtomic_xs_untypedAtomic, op_numeric_add_xs_untypedAtomic_xs_integer, op_numeric_add_xs_untypedAtomic_xs_decimal, op_numeric_add_xs_untypedAtomic_xs_float, op_numeric_add_xs_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_add_xs_integer_xs_untypedAtomic,        op_numeric_add_xs_integer_xs_integer,        op_numeric_add_xs_integer_xs_decimal,        op_numeric_add_xs_integer_xs_float,        op_numeric_add_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_add_xs_decimal_xs_untypedAtomic,        op_numeric_add_xs_decimal_xs_integer,        op_numeric_add_xs_decimal_xs_decimal,        op_numeric_add_xs_decimal_xs_float,        op_numeric_add_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_add_xs_float_xs_untypedAtomic,          op_numeric_add_xs_float_xs_integer,          op_numeric_add_xs_float_xs_decimal,          op_numeric_add_xs_float_xs_float,          op_numeric_add_xs_float_xs_double},
-/*xs_double*/         {op_numeric_add_xs_double_xs_untypedAtomic,         op_numeric_add_xs_double_xs_integer,         op_numeric_add_xs_double_xs_decimal,         op_numeric_add_xs_double_xs_float,         op_numeric_add_xs_double_xs_double}
+/*xs_integer*/       {op_numeric_add_xs_integer_xs_untypedAtomic,        op_numeric_add_xs_integer_xs_integer,        op_numeric_add_xs_integer_xs_decimal,        op_numeric_add_xs_integer_xs_float,        op_numeric_add_xs_integer_xs_double},
+/*xs_decimal*/       {op_numeric_add_xs_decimal_xs_untypedAtomic,        op_numeric_add_xs_decimal_xs_integer,        op_numeric_add_xs_decimal_xs_decimal,        op_numeric_add_xs_decimal_xs_float,        op_numeric_add_xs_decimal_xs_double},
+/*xs_float*/         {op_numeric_add_xs_float_xs_untypedAtomic,          op_numeric_add_xs_float_xs_integer,          op_numeric_add_xs_float_xs_decimal,          op_numeric_add_xs_float_xs_float,          op_numeric_add_xs_float_xs_double},
+/*xs_double*/        {op_numeric_add_xs_double_xs_untypedAtomic,         op_numeric_add_xs_double_xs_integer,         op_numeric_add_xs_double_xs_decimal,         op_numeric_add_xs_double_xs_float,         op_numeric_add_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_sub_tbl[5][5] = 
 {
                        /*xs_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
 /*xs_untypedAtomic*/ {op_numeric_subtract_xs_untypedAtomic_xs_untypedAtomic, op_numeric_subtract_xs_untypedAtomic_xs_integer, op_numeric_subtract_xs_untypedAtomic_xs_decimal, op_numeric_subtract_xs_untypedAtomic_xs_float, op_numeric_subtract_xs_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_subtract_xs_integer_xs_untypedAtomic,        op_numeric_subtract_xs_integer_xs_integer,        op_numeric_subtract_xs_integer_xs_decimal,        op_numeric_subtract_xs_integer_xs_float,        op_numeric_subtract_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_subtract_xs_decimal_xs_untypedAtomic,        op_numeric_subtract_xs_decimal_xs_integer,        op_numeric_subtract_xs_decimal_xs_decimal,        op_numeric_subtract_xs_decimal_xs_float,        op_numeric_subtract_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_subtract_xs_float_xs_untypedAtomic,          op_numeric_subtract_xs_float_xs_integer,          op_numeric_subtract_xs_float_xs_decimal,          op_numeric_subtract_xs_float_xs_float,          op_numeric_subtract_xs_float_xs_double},
-/*xs_double*/         {op_numeric_subtract_xs_double_xs_untypedAtomic,         op_numeric_subtract_xs_double_xs_integer,         op_numeric_subtract_xs_double_xs_decimal,         op_numeric_subtract_xs_double_xs_float,         op_numeric_subtract_xs_double_xs_double}
+/*xs_integer*/       {op_numeric_subtract_xs_integer_xs_untypedAtomic,        op_numeric_subtract_xs_integer_xs_integer,        op_numeric_subtract_xs_integer_xs_decimal,        op_numeric_subtract_xs_integer_xs_float,        op_numeric_subtract_xs_integer_xs_double},
+/*xs_decimal*/       {op_numeric_subtract_xs_decimal_xs_untypedAtomic,        op_numeric_subtract_xs_decimal_xs_integer,        op_numeric_subtract_xs_decimal_xs_decimal,        op_numeric_subtract_xs_decimal_xs_float,        op_numeric_subtract_xs_decimal_xs_double},
+/*xs_float*/         {op_numeric_subtract_xs_float_xs_untypedAtomic,          op_numeric_subtract_xs_float_xs_integer,          op_numeric_subtract_xs_float_xs_decimal,          op_numeric_subtract_xs_float_xs_float,          op_numeric_subtract_xs_float_xs_double},
+/*xs_double*/        {op_numeric_subtract_xs_double_xs_untypedAtomic,         op_numeric_subtract_xs_double_xs_integer,         op_numeric_subtract_xs_double_xs_decimal,         op_numeric_subtract_xs_double_xs_float,         op_numeric_subtract_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_mul_tbl[5][5] = 
 {
                        /*xs_untypedAtomic*/                                    /*xs_integer*/                                    /*xs_decimal*/                                    /*xs_float*/                                    /*xs_double*/
 /*xs_untypedAtomic*/ {op_numeric_multiply_xs_untypedAtomic_xs_untypedAtomic, op_numeric_multiply_xs_untypedAtomic_xs_integer, op_numeric_multiply_xs_untypedAtomic_xs_decimal, op_numeric_multiply_xs_untypedAtomic_xs_float, op_numeric_multiply_xs_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_multiply_xs_integer_xs_untypedAtomic,        op_numeric_multiply_xs_integer_xs_integer,        op_numeric_multiply_xs_integer_xs_decimal,        op_numeric_multiply_xs_integer_xs_float,        op_numeric_multiply_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_multiply_xs_decimal_xs_untypedAtomic,        op_numeric_multiply_xs_decimal_xs_integer,        op_numeric_multiply_xs_decimal_xs_decimal,        op_numeric_multiply_xs_decimal_xs_float,        op_numeric_multiply_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_multiply_xs_float_xs_untypedAtomic,          op_numeric_multiply_xs_float_xs_integer,          op_numeric_multiply_xs_float_xs_decimal,          op_numeric_multiply_xs_float_xs_float,          op_numeric_multiply_xs_float_xs_double},
-/*xs_double*/         {op_numeric_multiply_xs_double_xs_untypedAtomic,         op_numeric_multiply_xs_double_xs_integer,         op_numeric_multiply_xs_double_xs_decimal,         op_numeric_multiply_xs_double_xs_float,         op_numeric_multiply_xs_double_xs_double}
+/*xs_integer*/       {op_numeric_multiply_xs_integer_xs_untypedAtomic,        op_numeric_multiply_xs_integer_xs_integer,        op_numeric_multiply_xs_integer_xs_decimal,        op_numeric_multiply_xs_integer_xs_float,        op_numeric_multiply_xs_integer_xs_double},
+/*xs_decimal*/       {op_numeric_multiply_xs_decimal_xs_untypedAtomic,        op_numeric_multiply_xs_decimal_xs_integer,        op_numeric_multiply_xs_decimal_xs_decimal,        op_numeric_multiply_xs_decimal_xs_float,        op_numeric_multiply_xs_decimal_xs_double},
+/*xs_float*/         {op_numeric_multiply_xs_float_xs_untypedAtomic,          op_numeric_multiply_xs_float_xs_integer,          op_numeric_multiply_xs_float_xs_decimal,          op_numeric_multiply_xs_float_xs_float,          op_numeric_multiply_xs_float_xs_double},
+/*xs_double*/        {op_numeric_multiply_xs_double_xs_untypedAtomic,         op_numeric_multiply_xs_double_xs_integer,         op_numeric_multiply_xs_double_xs_decimal,         op_numeric_multiply_xs_double_xs_float,         op_numeric_multiply_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_div_tbl[5][5] = 
 {
                        /*xs_untypedAtomic*/                                  /*xs_integer*/                                  /*xs_decimal*/                                  /*xs_float*/                                  /*xs_double*/
 /*xs_untypedAtomic*/ {op_numeric_divide_xs_untypedAtomic_xs_untypedAtomic, op_numeric_divide_xs_untypedAtomic_xs_integer, op_numeric_divide_xs_untypedAtomic_xs_decimal, op_numeric_divide_xs_untypedAtomic_xs_float, op_numeric_divide_xs_untypedAtomic_xs_double},
-/*xs_integer*/        {op_numeric_divide_xs_integer_xs_untypedAtomic,        op_numeric_divide_xs_integer_xs_integer,        op_numeric_divide_xs_integer_xs_decimal,        op_numeric_divide_xs_integer_xs_float,        op_numeric_divide_xs_integer_xs_double},
-/*xs_decimal*/        {op_numeric_divide_xs_decimal_xs_untypedAtomic,        op_numeric_divide_xs_decimal_xs_integer,        op_numeric_divide_xs_decimal_xs_decimal,        op_numeric_divide_xs_decimal_xs_float,        op_numeric_divide_xs_decimal_xs_double},
-/*xs_float*/          {op_numeric_divide_xs_float_xs_untypedAtomic,          op_numeric_divide_xs_float_xs_integer,          op_numeric_divide_xs_float_xs_decimal,          op_numeric_divide_xs_float_xs_float,          op_numeric_divide_xs_float_xs_double},
-/*xs_double*/         {op_numeric_divide_xs_double_xs_untypedAtomic,         op_numeric_divide_xs_double_xs_integer,         op_numeric_divide_xs_double_xs_decimal,         op_numeric_divide_xs_double_xs_float,         op_numeric_divide_xs_double_xs_double}
+/*xs_integer*/       {op_numeric_divide_xs_integer_xs_untypedAtomic,        op_numeric_divide_xs_integer_xs_integer,        op_numeric_divide_xs_integer_xs_decimal,        op_numeric_divide_xs_integer_xs_float,        op_numeric_divide_xs_integer_xs_double},
+/*xs_decimal*/       {op_numeric_divide_xs_decimal_xs_untypedAtomic,        op_numeric_divide_xs_decimal_xs_integer,        op_numeric_divide_xs_decimal_xs_decimal,        op_numeric_divide_xs_decimal_xs_float,        op_numeric_divide_xs_decimal_xs_double},
+/*xs_float*/         {op_numeric_divide_xs_float_xs_untypedAtomic,          op_numeric_divide_xs_float_xs_integer,          op_numeric_divide_xs_float_xs_decimal,          op_numeric_divide_xs_float_xs_float,          op_numeric_divide_xs_float_xs_double},
+/*xs_double*/        {op_numeric_divide_xs_double_xs_untypedAtomic,         op_numeric_divide_xs_double_xs_integer,         op_numeric_divide_xs_double_xs_decimal,         op_numeric_divide_xs_double_xs_float,         op_numeric_divide_xs_double_xs_double}
 };
 
 bin_op_tuple_cell_tuple_cell op_numeric_idiv_tbl[5][5] = 
@@ -267,18 +256,6 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -294,7 +271,7 @@ int simple_type2bin_op_add_index(xmlscm_type xtype)
     case xs_dateTime:
         return 5;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -315,18 +292,6 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -342,7 +307,7 @@ int simple_type2bin_op_sub_index(xmlscm_type xtype)
     case xs_dateTime:
         return 5;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -363,18 +328,6 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -384,7 +337,7 @@ int simple_type2bin_op_mul_index(xmlscm_type xtype)
     case xs_yearMonthDuration:
         return 2;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -403,18 +356,6 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -424,7 +365,7 @@ int simple_type2bin_op_div_index(xmlscm_type xtype)
     case xs_yearMonthDuration:
         return 2;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -442,24 +383,12 @@ int simple_type2bin_op_idiv_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
         return 0;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -471,24 +400,12 @@ int simple_type2bin_op_mod_index(xmlscm_type xtype)
     {
     case xs_untypedAtomic: 
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
         return 0;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : -1;
     }
 }
 
@@ -499,18 +416,6 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -539,28 +444,40 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
         return 11;
     case xs_untypedAtomic:
     case xs_string:
+    case xs_hexBinary:
+    case xs_base64Binary:
+    case xs_anyURI:
         return 12;
+    case xs_QName:
+        return 13;
+    case xs_NOTATION:
+        return 14;
+    case xs_boolean:
+        return 15;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 12 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_eq_tbl[13][13] = 
+bin_op_tuple_cell_tuple_cell op_eq_tbl[16][16] = 
 {
-                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	
-/*numeric*/                {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:date*/                {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:time*/                {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:duration*/            {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:dayTimeDuration*/    {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:yearMonthDuration*/  {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:dateTime*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:gYear*/               {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL},
-/*xs:gYearMonth*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL},
-/*xs:gMonth*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL},
-/*xs:gMonthDay*/           {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL},
-/*xs:gDay*/                {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL},
-/*xs:string*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal}
+                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	           /*xs:QName*/       /*xs:NOTATION*/       /*xs:bolean*/
+/*numeric*/              {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:date*/              {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:time*/              {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:duration*/          {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:dayTimeDuration*/   {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:yearMonthDuration*/ {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:dateTime*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gYear*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gYearMonth*/        {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gMonth*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gMonthDay*/         {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gDay*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL,                     NULL,              NULL,                 NULL},
+/*xs:string*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal,  NULL,              NULL,                 NULL},
+/*xs:QName*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     op_equal_xs_QName, NULL,                 NULL},
+/*xs:NOTATION*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              op_equal_xs_NOTATION, NULL},
+/*xs:boolean*/           {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 op_boolean_equal}
 };
 
 
@@ -569,18 +486,6 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -609,28 +514,40 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
         return 11;
     case xs_untypedAtomic:
     case xs_string:
+    case xs_hexBinary:
+    case xs_base64Binary:
+    case xs_anyURI:
         return 12;
+    case xs_QName:
+        return 13;
+    case xs_NOTATION:
+        return 14;
+    case xs_boolean:
+        return 15;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 12 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_ne_tbl[13][13] = 
+bin_op_tuple_cell_tuple_cell op_ne_tbl[16][16] = 
 {
-                           /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/
-/*numeric*/                {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:date*/                {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:time*/                {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:duration*/            {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:dayTimeDuration*/    {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:yearMonthDuration*/  {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:dateTime*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:gYear*/               {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL},
-/*xs:gYearMonth*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL},
-/*xs:gMonth*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL},
-/*xs:gMonthDay*/           {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL},
-/*xs:gDay*/                {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL},
-/*xs:string*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal}
+                         /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/                   /*xs:QName*/           /*xs:NOTATION*/           /*xs:boolean*/
+/*numeric*/              {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:date*/              {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:time*/              {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:duration*/          {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:dayTimeDuration*/   {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:yearMonthDuration*/ {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:dateTime*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gYear*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gYearMonth*/        {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gMonth*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gMonthDay*/         {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gDay*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL,                         NULL,                  NULL,                     NULL},
+/*xs:string*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal,  NULL,                  NULL,                     NULL},
+/*xs:QName*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         op_not_equal_xs_QName, NULL,                     NULL},
+/*xs:NOTATION*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  op_not_equal_xs_NOTATION, NULL},
+/*xs:boolean*/           {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     op_boolean_not_equal}
 };
 
 
@@ -639,18 +556,6 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -668,21 +573,24 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
     case xs_string:
     case xs_untypedAtomic: 
         return 6;
+    case xs_boolean:
+        return 7;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_gt_tbl[7][7] = 
+bin_op_tuple_cell_tuple_cell op_gt_tbl[8][8] = 
 {
-                           /*numeric*/               /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
-/*numeric*/                {op_numeric_greater_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:date*/                {NULL,                    op_date_greater_than,  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:time*/                {NULL,                    NULL,                  op_time_greater_than,  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:dayTimeDuration*/    {NULL,                    NULL,                  NULL,                  op_dayTimeDuration_greater_than,    NULL,                                 NULL,                          NULL},
-/*xs:yearMonthDuration*/  {NULL,                    NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_than,    NULL,                          NULL},
-/*xs:dateTime*/            {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_than,      NULL},
-/*xs:string*/              {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_than}
+                         /*numeric*/               /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/                   /*xs_boolean*/
+/*numeric*/              {op_numeric_greater_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                           NULL},
+/*xs:date*/              {NULL,                    op_date_greater_than,  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                           NULL},
+/*xs:time*/              {NULL,                    NULL,                  op_time_greater_than,  NULL,                               NULL,                                 NULL,                          NULL,                           NULL},
+/*xs:dayTimeDuration*/   {NULL,                    NULL,                  NULL,                  op_dayTimeDuration_greater_than,    NULL,                                 NULL,                          NULL,                           NULL},
+/*xs:yearMonthDuration*/ {NULL,                    NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_than,    NULL,                          NULL,                           NULL},
+/*xs:dateTime*/          {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_than,      NULL,                           NULL},
+/*xs:string*/            {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_than, NULL},
+/*xs:boolean*/           {NULL,                    NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                           op_boolean_greater_than}
 };
 
 int simple_type2bin_op_lt_index(xmlscm_type xtype)
@@ -690,18 +598,6 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -719,21 +615,24 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
     case xs_string:
     case xs_untypedAtomic: 
         return 6;
+    case xs_boolean:
+        return 7;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_lt_tbl[7][7] = 
+bin_op_tuple_cell_tuple_cell op_lt_tbl[8][8] = 
 {
-                           /*numeric*/            /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
-/*numeric*/                {op_numeric_less_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:date*/                {NULL,                 op_date_less_than,     NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:time*/                {NULL,                 NULL,                  op_time_less_than,     NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:dayTimeDuration*/    {NULL,                 NULL,                  NULL,                  op_dayTimeDuration_less_than,       NULL,                                 NULL,                          NULL},
-/*xs:yearMonthDuration*/  {NULL,                 NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_than,       NULL,                          NULL},
-/*xs:dateTime*/            {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_than,         NULL},
-/*xs:string*/              {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_than}
+                         /*numeric*/            /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/               /*xs:dateTime*/                /*xs_string*/                /*xs_boolean*/
+/*numeric*/              {op_numeric_less_than, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                        NULL},
+/*xs:date*/              {NULL,                 op_date_less_than,     NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                        NULL},
+/*xs:time*/              {NULL,                 NULL,                  op_time_less_than,     NULL,                               NULL,                                 NULL,                          NULL,                        NULL},
+/*xs:dayTimeDuration*/   {NULL,                 NULL,                  NULL,                  op_dayTimeDuration_less_than,       NULL,                                 NULL,                          NULL,                        NULL},
+/*xs:yearMonthDuration*/ {NULL,                 NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_than,       NULL,                          NULL,                        NULL},
+/*xs:dateTime*/          {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_than,         NULL,                        NULL},
+/*xs:string*/            {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_than, NULL},
+/*xs:boolean*/           {NULL,                 NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                        op_boolean_less_than}
 };
 
 int simple_type2bin_op_ge_index(xmlscm_type xtype)
@@ -741,18 +640,6 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -770,22 +657,25 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
     case xs_string:
     case xs_untypedAtomic: 
         return 6;
+    case xs_boolean:
+        return 7;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
     }
 }
 
 
-bin_op_tuple_cell_tuple_cell op_ge_tbl[7][7] =
+bin_op_tuple_cell_tuple_cell op_ge_tbl[8][8] =
 {
-                           /*numeric*/                /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
-/*numeric*/                {op_numeric_greater_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:date*/                {NULL,                     op_date_greater_equal, NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:time*/                {NULL,                     NULL,                  op_time_greater_equal, NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:dayTimeDuration*/    {NULL,                     NULL,                  NULL,                  op_dayTimeDuration_greater_equal,   NULL,                                 NULL,                          NULL},
-/*xs:yearMonthDuration*/  {NULL,                     NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_equal,   NULL,                          NULL},
-/*xs:dateTime*/            {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_equal,     NULL},
-/*xs:string*/              {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_equal}
+                         /*numeric*/                /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/              /*xs:yearMonthDuration*/              /*xs:dateTime*/                /*xs_string*/                    /*xs_boolean*/
+/*numeric*/              {op_numeric_greater_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                            NULL},
+/*xs:date*/              {NULL,                     op_date_greater_equal, NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                            NULL},
+/*xs:time*/              {NULL,                     NULL,                  op_time_greater_equal, NULL,                               NULL,                                 NULL,                          NULL,                            NULL},
+/*xs:dayTimeDuration*/   {NULL,                     NULL,                  NULL,                  op_dayTimeDuration_greater_equal,   NULL,                                 NULL,                          NULL,                            NULL},
+/*xs:yearMonthDuration*/ {NULL,                     NULL,                  NULL,                  NULL,                               op_yearMonthDuration_greater_equal,   NULL,                          NULL,                            NULL},
+/*xs:dateTime*/          {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_greater_equal,     NULL,                            NULL},
+/*xs:string*/            {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_greater_equal, NULL},
+/*xs:boolean*/           {NULL,                     NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                            op_boolean_greater_equal}
 };
 
 int simple_type2bin_op_le_index(xmlscm_type xtype)
@@ -793,18 +683,6 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
     switch(xtype)
     {
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
     case xs_decimal: 
     case xs_float: 
     case xs_double: 
@@ -822,21 +700,24 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
     case xs_string:
     case xs_untypedAtomic: 
         return 6;
+    case xs_boolean:
+        return 7;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_le_tbl[7][7] = 
+bin_op_tuple_cell_tuple_cell op_le_tbl[8][8] = 
 {
-                           /*numeric*/             /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_string*/
-/*numeric*/                {op_numeric_less_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:date*/                {NULL,                  op_date_less_equal,    NULL,                  NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:time*/                {NULL,                  NULL,                  op_time_less_equal,    NULL,                               NULL,                                 NULL,                          NULL},
-/*xs:dayTimeDuration*/    {NULL,                  NULL,                  NULL,                  op_dayTimeDuration_less_equal,      NULL,                                 NULL,                          NULL},
-/*xs:yearMonthDuration*/  {NULL,                  NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_equal,      NULL,                          NULL},
-/*xs:dateTime*/            {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_equal,        NULL},
-/*xs:string*/              {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_equal}
+                         /*numeric*/             /*xs:date*/            /*xs:time*/            /*xs:dayTimeDuration*/              /*xs:yearMonthDuration*/             /*xs:dateTime*/                 /*xs_string*/                 /*xs_boolean*/
+/*numeric*/              {op_numeric_less_equal, NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                         NULL},
+/*xs:date*/              {NULL,                  op_date_less_equal,    NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                         NULL},
+/*xs:time*/              {NULL,                  NULL,                  op_time_less_equal,    NULL,                               NULL,                                 NULL,                          NULL,                         NULL},
+/*xs:dayTimeDuration*/   {NULL,                  NULL,                  NULL,                  op_dayTimeDuration_less_equal,      NULL,                                 NULL,                          NULL,                         NULL},
+/*xs:yearMonthDuration*/ {NULL,                  NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_equal,      NULL,                          NULL,                         NULL},
+/*xs:dateTime*/          {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_equal,        NULL,                         NULL},
+/*xs:string*/            {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_equal, NULL},
+/*xs:boolean*/           {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                         op_boolean_greater_equal}
 };
 
 
@@ -849,12 +730,12 @@ xq_binary_op_info_type xq_binary_op_info[] =
 /*xqbop_div*/  {op_div,  op_numeric_div_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_div_tbl,  3,  simple_type2bin_op_div_index},
 /*xqbop_idiv*/ {op_idiv, op_numeric_idiv_tbl, simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_idiv_tbl, 1,  simple_type2bin_op_idiv_index},
 /*xqbop_mod*/  {op_mod,  op_numeric_mod_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mod_tbl,  1,  simple_type2bin_op_mod_index},
-/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   13, simple_type2bin_op_eq_index},
-/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   13, simple_type2bin_op_ne_index},
-/*xqbop_gt*/   {op_gt,   op_numeric_gt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_gt_tbl,   7,  simple_type2bin_op_gt_index},
-/*xqbop_lt*/   {op_lt,   op_numeric_lt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_lt_tbl,   7, simple_type2bin_op_lt_index},
-/*xqbop_ge*/   {op_ge,   op_numeric_ge_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ge_tbl,   7, simple_type2bin_op_ge_index},
-/*xqbop_le*/   {op_le,   op_numeric_le_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_le_tbl,   7, simple_type2bin_op_le_index}
+/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   16, simple_type2bin_op_eq_index},
+/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   16, simple_type2bin_op_ne_index},
+/*xqbop_gt*/   {op_gt,   op_numeric_gt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_gt_tbl,   8,  simple_type2bin_op_gt_index},
+/*xqbop_lt*/   {op_lt,   op_numeric_lt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_lt_tbl,   8, simple_type2bin_op_lt_index},
+/*xqbop_ge*/   {op_ge,   op_numeric_ge_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ge_tbl,   8, simple_type2bin_op_ge_index},
+/*xqbop_le*/   {op_le,   op_numeric_le_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_le_tbl,   8, simple_type2bin_op_le_index}
 };
 
 
@@ -1018,18 +899,6 @@ int simple_type2un_op_numeric_index(xmlscm_type xtype)
     case xs_untypedAtomic: 
         return 0;
     case xs_integer:
-    case xs_nonPositiveInteger:
-    case xs_negativeInteger:
-    case xs_long:
-    case xs_int:
-    case xs_short:
-    case xs_byte:
-    case xs_nonNegativeInteger:
-    case xs_unsignedLong:
-    case xs_unsignedInt:
-    case xs_unsignedShort:
-    case xs_unsignedByte:
-    case xs_positiveInteger:
         return 1;
     case xs_decimal: 
         return 2;
@@ -1038,7 +907,7 @@ int simple_type2un_op_numeric_index(xmlscm_type xtype)
     case xs_double: 
         return 4;
     default:
-        return -1;
+        return is_derived_from_xs_integer(xtype) ? 1 : -1;
     }
 }
 

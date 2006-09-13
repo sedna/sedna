@@ -62,18 +62,22 @@ enum t_item {
 /* node descriptor (abstract structure) */
 struct n_dsc {
     
-    t_nid	    nid;		/* ordering scheme number */
-    xptr			pdsc;		/* pointer to the record in the table of indirect addresses */
-    xptr			ldsc;		/* pointer to the descriptor of left sibling item */
-    xptr			rdsc;		/* pointer to the descriptor of right sibling item */
-	xptr	        indir;      /* record in indirection table*/
-    shft		desc_next;		/* shift to the next descriptor in block */
-    shft		desc_prev;		/* shift to the previous descriptor in block */
+    t_nid   nid;        /* ordering scheme number */
+    xptr    pdsc;       /* pointer to the record in the table of indirect addresses */
+    xptr    ldsc;       /* pointer to the descriptor of left sibling item */
+    xptr    rdsc;       /* pointer to the descriptor of right sibling item */
+	xptr    indir;      /* record in indirection table*/
+    shft    desc_next;  /* shift to the next descriptor in block */
+    shft    desc_prev;  /* shift to the previous descriptor in block */
 
 };
 
 
-int xmlscm_type_size(xmlscm_type t);
+/*
+ * XML Schema Part 2 Datatypes are enumerated below
+ * !!! Note: the order of types is significant, because some functions depend on
+ * this order. If you are going to change something below, think twice! (AF)
+ */
 
 // Abstract base types
 #define xs_anyType				0
@@ -88,55 +92,93 @@ int xmlscm_type_size(xmlscm_type t);
 // Built-in complex types
 #define xs_untyped				6
 
-// Built-in atomic types
-#define xs_untypedAtomic		10
-#define xs_dateTime				11
-#define xs_date					12
-#define xs_time					13
-#define xs_duration				14
-#define xs_yearMonthDuration	15
-#define xs_dayTimeDuration		16
-#define xs_float				17
-#define xs_double				18
-#define xs_string				19
-#define xs_normalizedString		20
-#define xs_token				21
-#define xs_language				22
-#define xs_NMTOKEN				23
-#define xs_Name					24
-#define xs_NCName				25
-#define xs_ID					26
-#define xs_IDREF				27
-#define xs_ENTITY				28
-#define xs_decimal				29
-#define xs_integer				30
-#define xs_gYearMonth			31
-#define xs_gYear				32
-#define xs_gMonthDay			33
-#define xs_gDay					34
-#define xs_gMonth				35
-#define xs_boolean				36
-#define xs_base64Binary			37
-#define xs_hexBinary			38
-#define xs_anyURI				39
-#define xs_QName				40
-#define xs_NOTATION				41
-#define se_separator		    42
+// Built-in atomic types (Primitive types)
+#define xs_dateTime				10
+#define xs_date					11
+#define xs_time					12
+#define xs_duration				13
+#define xs_yearMonthDuration	14
+#define xs_dayTimeDuration		15
+#define xs_gYearMonth			16
+#define xs_gYear				17
+#define xs_gMonthDay			18
+#define xs_gDay					19
+#define xs_gMonth				20
+#define xs_float				21
+#define xs_double				22
+#define xs_decimal				23
+#define xs_integer				24
+#define xs_boolean				25
+#define xs_untypedAtomic		26
+#define xs_string				27
+#define xs_base64Binary			28
+#define xs_hexBinary			29
+#define xs_anyURI				30
+#define xs_QName				31
+#define xs_NOTATION				32
+
+// Special Sedna type
+#define se_separator		    33
+
+// Types derived from xs:string
+#define xs_normalizedString		41
+#define xs_token				42
+#define xs_language				43
+#define xs_NMTOKEN				44
+#define xs_Name					45
+#define xs_NCName				46
+#define xs_ID					47
+#define xs_IDREF				48
+#define xs_ENTITY				49
 
 // Types derived from xs:integer
-#define xs_nonPositiveInteger   43
-#define xs_negativeInteger      44
-#define xs_long                 45
-#define xs_int 				    46
-#define xs_short                47
-#define xs_byte                 48
-#define xs_nonNegativeInteger   49
-#define xs_unsignedLong         50
-#define xs_unsignedInt          51
-#define xs_unsignedShort        52
-#define xs_unsignedByte         53
-#define xs_positiveInteger      54
+#define xs_nonPositiveInteger   50
+#define xs_negativeInteger      51
+#define xs_long                 52
+#define xs_int 				    53
+#define xs_short                54
+#define xs_byte                 55
+#define xs_nonNegativeInteger   56
+#define xs_unsignedLong         57
+#define xs_unsignedInt          58
+#define xs_unsignedShort        59
+#define xs_unsignedByte         60
+#define xs_positiveInteger      61
 
+/* returns size of xtype in bytes (0 if size of datatype can vary) */
+int xmlscm_type_size(xmlscm_type xtype);
+
+inline bool is_string_type(xmlscm_type xtype)
+{
+    return (xs_untypedAtomic <= xtype && xtype <= xs_NOTATION) ||
+           (xs_normalizedString <= xtype && xtype <= xs_ENTITY);
+}
+inline bool is_numeric_type(xmlscm_type xtype)
+{
+    return (xs_float <= xtype && xtype <= xs_integer) || 
+           (xs_nonPositiveInteger <= xtype && xtype <= xs_positiveInteger);
+}
+inline bool is_temporal_type(xmlscm_type xtype)
+{
+    return (xs_dateTime <= xtype && xtype <= xs_gMonth);
+}
+inline bool is_derived_from_xs_string(xmlscm_type xtype)
+{
+    return (xs_normalizedString <= xtype && xtype <= xs_ENTITY);
+}
+inline bool is_derived_from_xs_integer(xmlscm_type xtype)
+{
+    return (xs_nonPositiveInteger <= xtype && xtype <= xs_positiveInteger);
+}
+inline bool is_fixed_size_type(xmlscm_type xtype)
+{
+    return (xs_dateTime <= xtype && xtype <= xs_boolean) ||
+           (xs_nonPositiveInteger <= xtype && xtype <= xs_positiveInteger);
+}
+inline bool is_primitive(xmlscm_type xtype)
+{
+    return (xs_dateTime <= xtype && xtype <= xs_NOTATION);
+}
 
 /* Descriptor of element node */
 struct e_dsc : public n_dsc {

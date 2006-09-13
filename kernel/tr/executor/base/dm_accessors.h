@@ -14,10 +14,12 @@
 /// internal function for getting parent of a node
 xptr get_parent_node(xptr node);
 
+/// internal function for converting xmlscm_type to C string
+const char* xmlscm_type2c_str(xmlscm_type type);
+
 /**
  * Data Model Accessors according to XQuery Data Model
  */
-
 tuple_cell dm_base_uri		(xptr node);
 tuple_cell dm_node_name		(xptr node);
 tuple_cell dm_parent		(xptr node);
