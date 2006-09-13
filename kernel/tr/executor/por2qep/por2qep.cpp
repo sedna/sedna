@@ -498,6 +498,15 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else if (strcmp(type, "!xs!unsignedShort") == 0)      xtype = xs_unsignedShort;
     else if (strcmp(type, "!xs!unsignedByte") == 0)       xtype = xs_unsignedByte;
     else if (strcmp(type, "!xs!positiveInteger") == 0)    xtype = xs_positiveInteger;
+    else if (strcmp(type, "!xs!normalizedString") == 0)   xtype = xs_normalizedString;
+    else if (strcmp(type, "!xs!token") == 0)              xtype = xs_token;
+    else if (strcmp(type, "!xs!language") == 0)           xtype = xs_language;
+    else if (strcmp(type, "!xs!NMTOKEN") == 0)            xtype = xs_NMTOKEN;
+    else if (strcmp(type, "!xs!Name") == 0)               xtype = xs_Name;
+    else if (strcmp(type, "!xs!NCName") == 0)             xtype = xs_NCName;
+    else if (strcmp(type, "!xs!ID") == 0)                 xtype = xs_ID;
+    else if (strcmp(type, "!xs!IDREF") == 0)              xtype = xs_IDREF;
+    else if (strcmp(type, "!xs!ENTITY") == 0)             xtype = xs_ENTITY;
     else if (strcmp(type, "!se!separator") == 0)          xtype = se_separator;
     else throw USER_EXCEPTION2(SE1004, "155");
 
