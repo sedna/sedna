@@ -57,10 +57,18 @@
     typedef int int32_t;
   #endif
   #if !defined(uint64_t)
+    #ifdef _WIN32
+    typedef unsigned __int64 uint64_t;
+    #else
     typedef unsigned long long uint64_t;
+    #endif
   #endif
   #if !defined(int64_t)
+    #ifdef _WIN32
+    typedef __int64 int64_t;
+    #else
     typedef long long int64_t;
+    #endif
   #endif
   #include <signal.h>              // for traps
 
