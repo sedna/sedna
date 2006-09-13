@@ -455,7 +455,7 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
     case xs_boolean:
         return 15;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 12 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 12 : -1);
     }
 }
 
@@ -525,7 +525,7 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
     case xs_boolean:
         return 15;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 12 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 12 : -1);
     }
 }
 
@@ -576,7 +576,7 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
     case xs_boolean:
         return 7;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 6 : -1);
     }
 }
 
@@ -618,7 +618,7 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
     case xs_boolean:
         return 7;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 6 : -1);
     }
 }
 
@@ -660,7 +660,7 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
     case xs_boolean:
         return 7;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 6 : -1);
     }
 }
 
@@ -703,7 +703,7 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
     case xs_boolean:
         return 7;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_string(xtype) ? 6 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 6 : -1);
     }
 }
 
