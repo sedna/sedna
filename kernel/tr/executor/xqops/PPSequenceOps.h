@@ -125,4 +125,33 @@ public:
     virtual ~PPFnDistinctValues();
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnReverse
+///////////////////////////////////////////////////////////////////////////////
+class PPFnReverse : public PPIterator
+{
+private:
+    PPOpIn child;
+
+    sequence_tmp *s;
+    int pos;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnReverse(variable_context *_cxt_,
+                PPOpIn _child_);
+    virtual ~PPFnReverse();
+};
+
+
 #endif

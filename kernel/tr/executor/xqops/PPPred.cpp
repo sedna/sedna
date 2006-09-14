@@ -1041,7 +1041,9 @@ void PPPred2::close ()
         (conjuncts[i].op) -> close();
 
     data_child.op->close();
+
     delete s;
+    s = NULL;
 }
 
 void PPPred2::next(tuple &t)
