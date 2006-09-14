@@ -98,6 +98,7 @@ void PPLet::close ()
     data_child.op->close();
 
     delete s;
+    s = NULL;
 }
 
 void PPLet::next(tuple &t)

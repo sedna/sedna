@@ -61,8 +61,8 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
         case xs_ENTITY                : 
         case xs_anyURI                : return xs_string;
         
-        case xs_yearMonthDuration    : 
-        case xs_dayTimeDuration      : 
+        case xs_yearMonthDuration     : 
+        case xs_dayTimeDuration       : 
         case xs_float                 : 
         case xs_double                : 
         case xs_decimal               : 

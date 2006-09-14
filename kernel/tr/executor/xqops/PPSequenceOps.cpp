@@ -457,3 +457,80 @@ bool PPFnDistinctValues::result(PPIterator* cur, variable_context *cxt, void*& r
     return true;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnReverse
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnReverse::PPFnReverse(variable_context *_cxt_,
+                         PPOpIn _child_) : PPIterator(_cxt_),
+                                           child(_child_),
+								           s(NULL)
+{
+}
+
+PPFnReverse::~PPFnReverse()
+{
+    delete (child.op);
+    child.op = NULL;
+}
+
+void PPFnReverse::open ()
+{
+    child.op->open();
+    s = new sequence_tmp(child.ts);
+    first_time = true;
+}
+
+void PPFnReverse::reopen ()
+{
+    first_time = true;
+    s->clear();
+}
+
+void PPFnReverse::close ()
+{
+    child.op->close();
+
+    delete s;
+    s = NULL;
+}
+
+void PPFnReverse::next (tuple &t)
+{
+    if(first_time)
+    {
+    	pos = -1;
+    	while(true)
+    	{
+    		child.op->next(t);
+    		if(t.is_eos()) break; 
+    		s->add(t);
+    		pos++;
+    	}
+    }
+    
+    if (pos >= 0) s->get(t, pos--);
+    else
+    {
+     	t.set_eos();
+     	s->clear();
+     	first_time = true;
+    }
+}
+
+PPIterator* PPFnReverse::copy(variable_context *_cxt_)
+{
+    PPFnReverse *res = new PPFnReverse(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnReverse::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnReverse::result");
+}
+
+
