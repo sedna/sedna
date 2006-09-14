@@ -24,7 +24,7 @@ inline xptr first_child(xptr node)
 
 tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
 
-
+double get_numeric_value(const tuple_cell &tc);
 
 /*******************************************************************************
  * IS ZERO ROUTINES: BEGIN

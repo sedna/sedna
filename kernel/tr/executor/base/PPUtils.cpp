@@ -26,6 +26,31 @@ tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
     return cast(c, xtype);
 }
 
+double get_numeric_value(const tuple_cell &tc)
+{
+	xmlscm_type xtype = tc.get_atomic_type();
+	
+	U_ASSERT(is_numeric_type(xtype));
+
+	if(xtype == xs_integer || is_derived_from_xs_integer(xtype)) 
+        return tc.get_xs_integer();
+    else
+    {
+        switch(tc.get_atomic_type())
+        {
+    	    case xs_decimal:
+			    return tc.get_xs_decimal().get_double(); break;
+			case xs_double:
+			    return tc.get_xs_double(); break;
+    		case xs_float:
+    	        return tc.get_xs_float(); break;
+			default: 
+			    throw USER_EXCEPTION2(SE1003, "Invalid numeric type in get_numeric_type");
+	    }
+    }
+}
+
+
 
 /*******************************************************************************
  * Effective Boolean Value Evaluation: BEGIN
@@ -34,47 +59,64 @@ tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
 
 tuple_cell effective_boolean_value(const tuple_cell &t)
 {
-    switch (t.get_atomic_type())
+	xmlscm_type xtype = t.get_atomic_type();    
+
+    // 3. If its operand is a sequence whose first item is a node, fn:boolean returns true
+    if(xtype == xs_boolean) return t;                       
+
+	
+    // 4. If its operand is a singleton value of type xs:string, xs:anyURI, xs:untypedAtomic, 
+    //    or a type derived from one of these, fn:boolean returns false if the operand value 
+    //    has zero length; otherwise it returns true.
+    else if(is_derived_from_xs_string(xtype) || 
+            xtype == xs_string || 
+            xtype == xs_anyURI || 
+            xtype == xs_untypedAtomic)
     {
-    case xs_boolean			: return t;
-    case xs_float			: 
-        {
-            double v = (double)(t.get_xs_float());
-            if (_isnan(v)) return tuple_cell::atomic(false);
-                                      
-            if (is_zero(v)) return tuple_cell::atomic(false);
-            break;
-        }
-    case xs_double			: 
-        {
-            double v = t.get_xs_double();
-            if (_isnan(v)) return tuple_cell::atomic(false);
-                                      
-            if (is_zero(v)) return tuple_cell::atomic(false);
-            break;
-        }
-    case xs_decimal			: 
-        {
-            if (t.get_xs_decimal().is_zero())return tuple_cell::atomic(false);
-            break;
-        }
-    case xs_integer 		: 
-        {
-            if (t.get_xs_integer() == 0) return tuple_cell::atomic(false);
-            break;
-        }
-    case xs_string			: 
-    case xs_untypedAtomic	: 
-        {
-            if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
-                return tuple_cell::atomic(false);
-            if (t.is_light_atomic() && t.get_strlen_mem() == 0)
-                return tuple_cell::atomic(false);
-            break;
-        }
+        if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
+            return tuple_cell::atomic(false);
+        if (t.is_light_atomic() && t.get_strlen_mem() == 0)
+            return tuple_cell::atomic(false);
+        return tuple_cell::atomic(true);
     }
 
-    return tuple_cell::atomic(true);
+    // 5. If its operand is a singleton value of any numeric type or derived from a numeric 
+	//    type, fn:boolean returns false if the operand value is NaN or is numerically equal 
+	//    to zero; otherwise it returns true.
+	else if(is_numeric_type(xtype))
+	{
+		switch(xtype)
+		{
+		    case xs_float			: 
+		    {
+                double v = (double)(t.get_xs_float());
+                if (_isnan(v) || is_zero(v)) 
+                    return tuple_cell::atomic(false);
+                break;
+            }
+            case xs_double			: 
+            {
+                double v = t.get_xs_double();
+                if (_isnan(v) || is_zero(v)) 
+                   return tuple_cell::atomic(false);
+                break;
+            }
+            case xs_decimal			: 
+            {
+                if (t.get_xs_decimal().is_zero()) return tuple_cell::atomic(false);
+                break;
+            }
+        }
+
+        if(xtype == xs_integer || is_derived_from_xs_integer(xtype)) 
+            if (t.get_xs_integer() == 0) return tuple_cell::atomic(false);
+
+        return tuple_cell::atomic(true);
+    }
+
+    
+    // 6. In all other cases, fn:boolean raises a type error [err:FORG0006].
+    else throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over given simple type.");
 }
 
 tuple_cell effective_boolean_value(const sequence *s)
@@ -94,27 +136,13 @@ tuple_cell effective_boolean_value(const sequence *s)
 
 tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
 {
-    switch (t.get_atomic_type())
-    {
-    case xs_boolean			: return t;
-    case xs_float			: 
-    case xs_double			: 
-    case xs_decimal			: 
-    case xs_integer 		: return value_comp_eq(tuple_cell::atomic((__int64)pos), t);
-    case xs_string			: 
-    case xs_untypedAtomic	: 
-        {
-            if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
-                return tuple_cell::atomic(false);
-            if (t.is_light_atomic() && t.get_strlen_mem() == 0)
-                return tuple_cell::atomic(false);
-            break;
-        }
-    }
+    xmlscm_type xtype = t.get_atomic_type();
 
-    return tuple_cell::atomic(true);
+    if(is_numeric_type(xtype)) 
+	    return value_comp_eq(tuple_cell::atomic((__int64)pos), t);
+    else
+	    return effective_boolean_value(t);
 }
-
 
 tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value)
 {
@@ -143,23 +171,13 @@ tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bo
         if (t.is_eos())
         {
             eos_reached = true;
-         	if(tc.is_numeric_type())
+
+         	if(is_numeric_type(tc.get_atomic_type()))
     		{
     			is_numeric = true;
-    			switch(tc.get_atomic_type())
-    			{
-    				case xs_integer: 
-    				    value = tc.get_xs_integer(); break;
-    				case xs_decimal:
-			            value = tc.get_xs_decimal().get_double(); break;
-			        case xs_double:
-			           	value = tc.get_xs_double(); break;
-    				case xs_float:
-    			    	value = tc.get_xs_float(); break;
-			        default: 
-			            throw USER_EXCEPTION2(SE1003, "Invalid numeric type in predicate_numeric_or_boolean_value");
-			    }
+    			value = get_numeric_value(tc);
 	        }
+
 	        return effective_boolean_value(tc);
         }
         else										//4. In all other cases, fn:boolean raises a type error [err:FORG0006].

@@ -154,22 +154,9 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
 
             tuple_cell tc = t.cells[0];
             tc = atomize(tc);
-            if(tc.is_numeric_type())
-            {
-                switch(tc.get_atomic_type())
-                {
-                    case xs_integer: 
-                        double_value = tc.get_xs_integer(); break;
-                    case xs_decimal:
-                        double_value = tc.get_xs_decimal().get_double(); break;
-                    case xs_double:
-                        double_value = tc.get_xs_double(); break;
-                    case xs_float:
-                        double_value = tc.get_xs_float(); break;
-                    default: 
-                        throw USER_EXCEPTION2(SE1003, "Invalid numeric type in PPPRed");
-                   }
-            }
+            
+            if(is_numeric_type(tc.get_atomic_type()))
+                double_value = get_numeric_value(tc);
             else
                 throw USER_EXCEPTION2(XPTY0004, "There is a not valid combination of types in value comparison");
             
@@ -244,21 +231,10 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
             if(t.is_eos()) break;
             tuple_cell tc = t.cells[0];
             tc = atomize(tc);
+            
             if(tc.is_numeric_type())
             {
-                switch(tc.get_atomic_type())
-                {
-                    case xs_integer: 
-                        double_values.push_back(tc.get_xs_integer()); break;
-                    case xs_decimal:
-                        double_values.push_back(tc.get_xs_decimal().get_double()); break;
-                    case xs_double:
-                        double_values.push_back(tc.get_xs_double()); break;
-                    case xs_float:
-                        double_values.push_back(tc.get_xs_float()); break;
-                    default: 
-                        throw USER_EXCEPTION2(SE1003, "Invalid numeric type in PPPRedRange");
-                   }
+                double_values.push_back(get_numeric_value(tc));
             }
             else if(tc.get_atomic_type() == xs_untypedAtomic)
             {
