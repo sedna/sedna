@@ -154,4 +154,45 @@ public:
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubsequence
+///////////////////////////////////////////////////////////////////////////////
+class PPFnSubsequence : public PPIterator
+{
+protected:
+    PPOpIn seq_child;
+    PPOpIn start_child;
+    PPOpIn length_child;
+    
+    bool is_length; 		//equal to length_child.op != NULL;
+    bool first_time;
+
+    __int64 current_pos;
+    double start_pos;
+    double length;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnSubsequence(variable_context *_cxt_, 
+                    PPOpIn _seq_child_,
+                    PPOpIn _start_child_);
+
+    PPFnSubsequence(variable_context *_cxt_, 
+                    PPOpIn _seq_child_,
+                    PPOpIn _start_child_,
+                    PPOpIn _length_child_);
+
+    virtual ~PPFnSubsequence();
+};
+
+
+
 #endif
