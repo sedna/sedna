@@ -411,13 +411,13 @@
     (,sa:fn-ns "name" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!name)
-    (,sa:fn-ns "document-uri" 0 1
+    (,sa:fn-ns "document-uri" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!document-uri)
-    (,sa:fn-ns "node-name" 0 1
+    (,sa:fn-ns "node-name" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!node-name)
-    (,sa:fn-ns "node-kind" 0 1
+    (,sa:fn-ns "node-kind" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!node-kind)
     (,sa:fn-ns "namespace-uri" 0 1
@@ -432,6 +432,9 @@
     (,sa:fn-ns "empty" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!empty)
+    (,sa:fn-ns "exists" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))     
+     ,sa:type-atomic !fn!exists)
     (,sa:fn-ns "data" 1 1
      ,(lambda (num-args) `(,sa:type-any))
      ,sa:type-atomic !fn!data)
@@ -441,6 +444,9 @@
     (,sa:fn-ns "error" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!error)
+    (,sa:fn-ns "reverse" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!reverse)
     ;----------------------------------------
     ; Multiarg atomic functions
     (,sa:fn-ns "sum" 0 #f
@@ -472,8 +478,8 @@
     (,sa:fn-ns "typed-value" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!typed-value)
-    (,sa:fn-ns "string" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
+    (,sa:fn-ns "string" 0 1
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!string)
     (,sa:fn-ns "contains" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
@@ -490,6 +496,9 @@
     (,sa:fn-ns "matches" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!matches)
+    (,sa:fn-ns "subsequence" 2 3
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-atomic !fn!subsequence)
     ;----------------------------------------
     ; XML Date/Time functions
    (,sa:fn-ns "years-from-duration" 1 1
@@ -646,12 +655,9 @@
     (,sa:fn-ns "test" 0 #f
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-any !fn!test)
-    (,sa:fn-ns "exists" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))     
-     ,sa:type-atomic)    
     (,sa:fn-ns "local-name" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic)
+     ,sa:type-atomic !fn!local-name)
     (,sa:fn-ns "ends-with" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic)        
@@ -2393,6 +2399,16 @@
                        (const (type !xs!string) "HINTR")))
              pair   ; everything is ok
              (cl:signal-user-error SE5051 fourth))))
+      ((!fn!name !fn!namespace-uri !fn!string-length !fn!string
+                 !fn!local-name)
+       (if
+        (null? (cdr expr))  ; no argument
+        (cons (list (sa:op-name expr)  ; function name
+                    '(var ("" "$%v"))  ; adding context item as argument
+                    )
+              (cdr pair)  ; return type
+              )
+        pair))
       (else  ; any other function call
        pair))))
 
