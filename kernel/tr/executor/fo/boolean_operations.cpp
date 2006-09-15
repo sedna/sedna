@@ -66,7 +66,7 @@ tuple_cell op_boolean_greater_equal(const tuple_cell &a1, const tuple_cell &a2)
         !a2.is_atomic() || a2.get_atomic_type() != xs_boolean)
         throw USER_EXCEPTION2(SE1003, "Calling op:boolean_greater_equal on non-boolean values");
 
-    return tuple_cell::atomic(a1.get_xs_boolean() > a2.get_xs_boolean());
+    return tuple_cell::atomic(a1.get_xs_boolean() >= a2.get_xs_boolean());
 }
 
 /*******************************************************************************
