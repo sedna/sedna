@@ -1198,7 +1198,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "48");
+           ) throw USER_EXCEPTION2(SE1004, "48.-3");
 
         opit = new PPFnDistinctValues(cxt,
                                       make_pp_op(cxt, lst->at(1).internal.list));
@@ -1207,12 +1207,32 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "48.0");
+           ) throw USER_EXCEPTION2(SE1004, "48.-2");
 
         opit = new PPFnReverse(cxt,
                                make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnSubsequence")
+    {
+        if (   lst->size() < 3
+            || lst->size() > 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "48.-1");
 
+        if(lst->size() == 4)
+        {
+        	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "48.0");
+            opit = new PPFnSubsequence(cxt,
+                                       make_pp_op(cxt, lst->at(1).internal.list),
+                                       make_pp_op(cxt, lst->at(2).internal.list),
+                                       make_pp_op(cxt, lst->at(3).internal.list));
+        }
+        else
+            opit = new PPFnSubsequence(cxt,
+                                       make_pp_op(cxt, lst->at(1).internal.list),
+                                       make_pp_op(cxt, lst->at(2).internal.list));
+    }
     else if (op == "PPTypeswitch")
     {
     	if (   lst->size() != 6

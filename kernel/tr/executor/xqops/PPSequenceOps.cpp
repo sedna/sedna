@@ -11,6 +11,7 @@
 #include "PPSLStub.h"
 #include "comparison_operations.h"
 #include "PPUtils.h"
+#include <math.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -533,4 +534,137 @@ bool PPFnReverse::result(PPIterator* cur, variable_context *cxt, void*& r)
 	throw USER_EXCEPTION2(SE1002, "PPFnReverse::result");
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubsequence
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnSubsequence::PPFnSubsequence(variable_context *_cxt_,
+                                 PPOpIn _seq_child_,
+                                 PPOpIn _start_child_) : PPIterator(_cxt_),
+                                                         seq_child(_seq_child_),
+                                                         start_child(_start_child_),
+                                                         is_length(false)
+{
+}
+
+PPFnSubsequence::PPFnSubsequence(variable_context *_cxt_,
+                                 PPOpIn _seq_child_,
+                                 PPOpIn _start_child_,
+                                 PPOpIn _length_child_) : PPIterator(_cxt_),
+                                                          seq_child(_seq_child_),
+                                                          start_child(_start_child_),
+                                                          length_child(_length_child_),
+                                                          is_length(true)
+{
+}
+
+
+PPFnSubsequence::~PPFnSubsequence()
+{
+    delete seq_child.op;
+    seq_child.op = NULL;
+    delete start_child.op;
+    start_child.op = NULL;
+
+    if(is_length)
+    {
+    	delete length_child.op;
+    	length_child.op = NULL;
+    }
+}
+
+void PPFnSubsequence::open  ()
+{
+    seq_child.op->open();
+    start_child.op->open();
+    if(is_length) length_child.op->open();
+    first_time = true;
+}
+
+void PPFnSubsequence::reopen()
+{
+    seq_child.op->reopen();
+    start_child.op->reopen();
+    if(is_length) length_child.op->reopen();
+    first_time = true;
+}
+
+void PPFnSubsequence::close ()
+{
+    seq_child.op->close();
+    start_child.op->close();
+    if(is_length) length_child.op->close();
+
+}
+
+void PPFnSubsequence::next(tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        tuple st(start_child.ts);
+        tuple_cell tc;
+
+        start_child.op->next(st);
+        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument to fn:subsequence.");
+        
+        tc = start_child.get(st);
+        if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the second argument to fn:subsequence.");
+        double start_pos = floor(get_numeric_value(tc) + 0.5);  //floor(x+0.5) is equal there to fn:round
+        
+        start_child.op->next(st);
+        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument to fn:subsequence.");
+
+        if(is_length)
+        {
+            tuple lt(length_child.ts);
+        
+            length_child.op->next(lt);
+            if (lt.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument to fn:subsequence.");
+            
+            tc = start_child.get(lt);
+            if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the third argument to fn:subsequence.");
+            double length = floor(get_numeric_value(tc) + 0.5); //floor(x+0.5) is equal there to fn:round
+        
+            length_child.op->next(lt);
+            if (!(lt.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument to fn:subsequence.");
+        }
+        
+        current_pos = 1;              //position is indexed from 1 in specificaion
+    }
+
+    if( !is_length || length >= 1 )   //if length is given it should be greater or equal than 1 to have non-empty sequence as result
+    {
+        seq_child.op->next(t);
+        current_pos ++;
+
+        if( !t.is_eos() && start_pos <= current_pos)             //[$startingLoc le position()]
+            if( !is_length || current_pos < start_pos + length ) //if length is given [position() lt $startingLoc + $length]
+                return;
+    }
+    
+    t.set_eos();
+    first_time = true; 
+}
+
+PPIterator* PPFnSubsequence::copy(variable_context *_cxt_)
+{
+    PPFnSubsequence *res = is_length ? new PPFnSubsequence(_cxt_, seq_child, start_child, length_child) :
+                                       new PPFnSubsequence(_cxt_, seq_child, start_child);
+                                
+    res->seq_child.op = seq_child.op->copy(_cxt_);
+    res->start_child.op = start_child.op->copy(_cxt_);
+    if(is_length) res->length_child.op = length_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnSubsequence::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnSubsequence::result");
+}
 
