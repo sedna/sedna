@@ -150,6 +150,7 @@ kindTest!:
 
 	| et:elementTest      <<#kindTest=et;>>	
 	| at:attributeTest    <<#kindTest=at;>>
+	| pi:piTest           <<#kindTest=pi;>>
 	)
 ;
 
@@ -227,6 +228,16 @@ attributeTest!:
 	                     )
 	)
 	<<#attributeTest=#(#["attr-test"], #attributeTest);>>
+;
+
+piTest!:
+	<<bool exist_arg=false;>>
+	#(AST_PI {
+	           (  n:AST_LOCAL_NAME  <<#piTest=#(#["pi-test"], #(#["const"], #(#["type"], #["!xs!NCName"]), #[n->getText()])); exist_arg=true;>>
+	            | s:AST_STRING_CONST  <<#piTest=#(#["pi-test"], #(#["const"], #(#["type"], #["!xs!string"]), #[s->getText()])); exist_arg=true;>>
+	           )
+	        })
+	<<if(!exist_arg) #piTest=#(#[], #["pi-test"]);>>
 ;
 
 schemaContextPath!:
