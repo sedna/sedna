@@ -29,7 +29,7 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 
     switch (ltc.get_atomic_type())
     {
-        case xs_integer 		: key.setnew((int)(ltc.get_xs_integer()));	break; //!!! FIX THIS
+        case xs_integer 		: key.setnew((__int64)(ltc.get_xs_integer()));	break; //!!! FIX THIS
         case xs_float			: key.setnew(ltc.get_xs_float());	break;
         case xs_double			: key.setnew(ltc.get_xs_double());	break;
         case xs_string			: key.setnew(ltc.get_str_mem());	break;

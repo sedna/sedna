@@ -46,7 +46,16 @@ tuple_cell getQnameParameter(PPOpIn qname)
 	if (name.is_eos()) throw USER_EXCEPTION2(SE1003, " name argument of Constructor is wrong");
 	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XPTY0004);
 	tuple_cell res=atomize(name.cells[0]);
-	res=cast(res, xs_QName);
+	xmlscm_type xtype=res.get_atomic_type();
+	if (xtype==xs_untypedAtomic)
+	{
+		res=cast(res, xs_string);
+		//res=cast(res, xs_QName);
+	}
+	else
+		if	(is_derived_from_xs_string(xtype)||xtype==xs_string);
+		else if(xtype!=xs_QName)
+			throw USER_EXCEPTION(XPTY0004);
 	res=tuple_cell::make_sure_light_atomic(res);
 	qname.op->next(name);
 	if (!(name.is_eos())) throw USER_EXCEPTION(XPTY0004);
