@@ -2,10 +2,10 @@
 ; File:  sedna-low.scm
 ; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
-;; Low-level Scheme-specific functions for working with a TCP connection
-; This part of code is much borrowed from Oleg Kiselyov's "http.scm"
+;; Low-level Scheme-specific functions
 
-; Low-level functions are:
+; Working with a TCP connection
+; This part of code is much borrowed from Oleg Kiselyov's "http.scm"
 ;
 ;  1. (sedna:open-tcp-connection host port-number)
 ; establishes the TCP connection and creates a pipe for communication with
@@ -62,8 +62,7 @@
   )
  
  (else
-  #f)
- 
+  #f) 
 )
 
 ; Procedure sedna:apply-string-append borrowed from SXML Serializer
@@ -102,4 +101,33 @@
  (else
   (define (sedna:apply-string-append str-lst)
     (apply string-append str-lst))
+  ))
+
+; Pipes
+; 
+;  1. (sedna:make-pipe)
+; Creates a pipe. Returns: (cons input-port output-port)
+;
+;  2. (sedna:close-output-pipe port)
+; Closes an output pipe. The result returned is unspecified
+(cond-expand
+ (plt
+  (define (sedna:make-pipe)
+    (call-with-values make-pipe cons))
+  (define sedna:close-output-pipe close-output-port)
+  
+  )
+ (chicken
+  (define (sedna:make-pipe)
+    (call-with-values create-pipe cons))
+  (define sedna:close-output-pipe close-output-port)
+  ;(define sedna:close-output-pipe close-output-pipe)
+  
+  )
+ (else
+  
+  ; A temporary stub
+  (define (sedna:make-pipe)
+    (cons #f #f))
+  (define (sedna:close-output-pipe port) #f)
   ))

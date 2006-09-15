@@ -798,6 +798,215 @@
 
 
 ;==========================================================================
+; Obtaining query result items as XML stream
+; Sedna input stream for an XML item is represented in SXML as follows:
+;  `(sedna:input-stream
+;    (stream-input-port ,input-port)
+;    (item-part-getter  ,lambda-with-no-arguments))
+; When a character is not ready in the `input-port', calling
+; `lambda-with-no-arguments' provides additional characters to the `input-port'
+; as a side effect, until the whole current XML item is written.
+; `lambda-with-no-arguments' returns #t iff anything was consumed from 
+; tcp-connection-input.
+
+; Predicate
+(define (sedna:input-stream? obj)
+  (and (pair? obj) (not (null? obj))
+       (eq? (car obj) 'sedna:input-stream)
+       (assq 'stream-input-port (cdr obj))
+       (assq 'item-part-getter (cdr obj))))
+
+; Constructor
+(define (sedna:construct-input-stream input-port lambda-with-no-arguments)
+  `(sedna:input-stream
+    (stream-input-port ,input-port)
+    (item-part-getter  ,lambda-with-no-arguments)))
+         
+; Accessors
+; In case of an error, #f is returned
+(define sedna:input-stream-port
+  (sedna:parameterized-connection-accessor 'stream-input-port))
+(define sedna:input-stream-item-part-getter
+  (sedna:parameterized-connection-accessor 'item-part-getter))
+
+;-------------------------------------------------
+; Common functions for reading from sedna:input-stream
+
+(define (sedna:char-reader-helper port-reader)
+  (lambda (input-stream)
+    (let ((port (sedna:input-stream-port input-stream)))
+      (begin
+        (if
+         (char-ready? port)
+         #t
+         ; Otherwise: character not ready, need to supply more characters
+         ((sedna:input-stream-item-part-getter input-stream)))
+        (port-reader port)))))
+
+; Analogue of R5RS `read-char'
+(define sedna:read-char (sedna:char-reader-helper read-char))
+
+; Analogue of R5RS `peek-char'
+(define sedna:peek-char (sedna:char-reader-helper peek-char))
+  
+; Reads the string from Sedna input stream until the newline symbol
+; Consumes the newline symbol from stream, returns the string without
+; the ending newline
+(define (sedna:read-line input-stream)
+  (let ((port (sedna:input-stream-port input-stream)))
+    (let loop ((char-lst '()))
+      (let ((ch (begin
+                  (if
+                   (char-ready? port)
+                   #t
+                   ((sedna:input-stream-item-part-getter input-stream)))
+                  (read-char port))))
+        (cond
+          ((eof-object? ch)  ; the file is over
+           (if (null? char-lst)  ; nothing was read
+               ch
+               (list->string (reverse char-lst))))
+          ((memv ch '(#\return #\newline))
+           (begin             
+             (if  ; followed by newline
+              (and
+               (not (and (char-ready? port)
+                         (eof-object? (peek-char port))))
+               (begin
+                 (if
+                   (char-ready? port)
+                   #t
+                   ((sedna:input-stream-item-part-getter input-stream)))
+                 (char=? (peek-char port) #\newline)))
+              (read-char port)  ; consume this newline as well
+              #t  ; otherwise, do nothing
+              )
+             (list->string (reverse char-lst))))
+          (else
+           (loop (cons ch char-lst))))))))
+
+;-------------------------------------------------
+; Constructing XML stream object for the next item query result
+
+; Reads the next item from the connection.
+; Returns either (cons input-stream promise) or '()
+(define (sedna:get-next-xml-stream-item connection)
+  (let ((in (sedna:connection-input connection))
+        (out (sedna:connection-output connection)))
+    (call-with-values
+     (lambda () (sedna:read-package-as-chars in))
+     (lambda (code body-chars)
+       (cond
+         ((= code sedna:ItemPart)
+          (let* ((ports-pair (sedna:make-pipe))
+                 (pipe-from (car ports-pair))
+                 (pipe-to (cdr ports-pair))
+                 (curr-position (sedna:port-position out))
+                 (item-part-getter
+                  (lambda ()
+                    (cond  ; stream is over?
+                      ((and (char-ready? pipe-from)
+                            (eof-object? (peek-char pipe-from)))
+                       #f  ; nothing was read from in
+                       )
+                      ((not (= (sedna:port-position out) curr-position))
+                       (sedna:raise-exn
+                        "Sedna item-part-getter: "
+                        "Result invalid since the next query was executed")
+                       #f)
+                      (else
+                       (call-with-values
+                        (lambda () (sedna:read-package-as-chars in))
+                        (lambda (code body-chars)
+                          (cond
+                            ((= code sedna:ItemPart)
+                             (call-with-values
+                              (lambda () (sedna:extract-string body-chars))
+                              (lambda (part dummy)
+                                (display part pipe-to)))
+                             #t)
+                            ((= code sedna:ItemEnd)
+                             (sedna:close-output-pipe pipe-to)
+                             #f)
+                            (else
+                             (sedna:raise-exn
+                              "Sedna item-part-getter: "
+                              "Unexpected header code from server: "
+                              (number->string code)))))))))))
+            (call-with-values
+             (lambda () (sedna:extract-string body-chars))
+             (lambda (part dummy)
+               (display part pipe-to)
+               (cons
+                (sedna:construct-input-stream pipe-from item-part-getter)
+                (delay
+                  (if
+                   (not (= (sedna:port-position out) curr-position))
+                   (sedna:raise-exn
+                    "sedna:get-next-xml-stream-item: "
+                    "Result invalid since the next query was executed")
+                   (let loop ((consumed? item-part-getter))
+                     ; Accomplish writing current item part to sedna stream
+                     (if
+                      consumed?
+                      (loop (item-part-getter))
+                      (begin
+                        (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+                        (sedna:get-next-xml-stream-item connection)))))))))))
+         ((= code sedna:ItemEnd)
+          ; This item is empty (why?), request for the next item
+          (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+          (sedna:get-next-xml-stream-item connection))
+         ((= code sedna:ResultEnd)
+          '())
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))
+         (else
+          (sedna:raise-exn
+           "sedna:get-next-xml-stream-item: Unexpected header code from server: "
+           (number->string code))))))))
+
+;-------------------------------------------------
+; Higher-level API
+
+; Execute a query and represent the result in the form of XML stream
+(define (sedna:execute-query-xml-stream connection query)
+  (let ((in (sedna:connection-input connection))
+        (out (sedna:connection-output connection)))
+    (sedna:write-query-out query #f out)
+    (let-values*
+     (((code body-chars)
+       (sedna:read-package-as-chars in)))
+     (cond
+       ((= code sedna:QuerySucceeded)
+        (sedna:get-next-xml-stream-item connection))
+       ((= code sedna:QueryFailed)        
+        (sedna:raise-exn
+         "sedna:execute-query-xml: " (sedna:error-code+info body-chars))
+        #f)
+       ((= code sedna:UpdateSucceeded)
+        #t)
+       ((= code sedna:UpdateFailed)
+        (sedna:raise-exn
+         "sedna:execute-query: Update failed"
+         (sedna:error-code+info body-chars))
+        #f)
+       ((= code sedna:BulkLoadFileName)
+        (let-values*
+         (((filename dummy)
+           (sedna:extract-string body-chars)))
+         (sedna:bulk-load-file filename connection)))
+       ((= code sedna:BulkLoadFromStream)
+        (sedna:bulk-load-port (current-input-port) connection))      
+       ((= code sedna:ErrorResponse)
+        (sedna:raise-server-error body-chars))       
+       (else
+        (sedna:raise-exn
+         "sedna:execute-query-xml: Unexpected header code from server: "
+         (number->string code)))))))
+
+
+;==========================================================================
 ; Wrapper for bulk load from stream
 
 ; Is to be executed withing a transaction
