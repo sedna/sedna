@@ -717,7 +717,7 @@ bin_op_tuple_cell_tuple_cell op_le_tbl[8][8] =
 /*xs:yearMonthDuration*/ {NULL,                  NULL,                  NULL,                  NULL,                               op_yearMonthDuration_less_equal,      NULL,                          NULL,                         NULL},
 /*xs:dateTime*/          {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 op_dateTime_less_equal,        NULL,                         NULL},
 /*xs:string*/            {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          op_map_fn_compare_less_equal, NULL},
-/*xs:boolean*/           {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                         op_boolean_greater_equal}
+/*xs:boolean*/           {NULL,                  NULL,                  NULL,                  NULL,                               NULL,                                 NULL,                          NULL,                         op_boolean_less_equal}
 };
 
 
