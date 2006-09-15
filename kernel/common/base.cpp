@@ -55,6 +55,9 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #ifdef SE_ENABLE_FTSEARCH
 #define _FT_INDEX_SEMAPHORE_STR					    "CharismaFTIndexSemaphore"
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+#define _TRIGGER_SEMAPHORE_STR					    "CharismaTriggerSemaphore"
+#endif
 #define _CHARISMA_SSMMSG_SM_ID						"CHARISMASSMMsgSMId"
 
 #define _CHARISMA_SM_SMSD_ID						"CHARISMASMSMSDID"
@@ -171,7 +174,9 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #ifdef SE_ENABLE_FTSEARCH
 #define _FT_INDEX_SEMAPHORE_STR					    'V'
 #endif
-
+#ifdef SE_ENABLE_TRIGGERS
+#define _TRIGGER_SEMAPHORE_STR					    'W'
+#endif
 #define _SE_EVENT_LOG_SHARED_MEMORY_NAME			'X'
 #define _SE_EVENT_LOG_SEMAPHORES_NAME				'Y'
 #define _SEDNA_CHECKPOINT_FINISHED_SEM				'Z'
@@ -195,6 +200,9 @@ global_name METADATA_SEMAPHORE_STR;
 global_name INDEX_SEMAPHORE_STR;
 #ifdef SE_ENABLE_FTSEARCH
 global_name FT_INDEX_SEMAPHORE_STR;
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+global_name TRIGGER_SEMAPHORE_STR;
 #endif
 
 
@@ -471,6 +479,9 @@ void set_global_names(const char *db_name, bool must_exist)
 #ifdef SE_ENABLE_FTSEARCH
     WIN_GN_INIT1(FT_INDEX_SEMAPHORE_STR);
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+    WIN_GN_INIT1(TRIGGER_SEMAPHORE_STR);
+#endif
 
     WIN_GN_INIT1(PHYS_LOG_SHARED_MEM_NAME);
     WIN_GN_INIT1(PHYS_LOG_PROTECTION_SEMAPHORE_NAME);
@@ -519,6 +530,9 @@ void set_global_names(const char *db_name, bool must_exist)
     UNIX_GN_INIT1(INDEX_SEMAPHORE_STR);
 #ifdef SE_ENABLE_FTSEARCH
     UNIX_GN_INIT1(FT_INDEX_SEMAPHORE_STR);
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    UNIX_GN_INIT1(TRIGGER_SEMAPHORE_STR);
 #endif
 
 

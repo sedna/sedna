@@ -20,6 +20,9 @@
 #ifdef _MYDEBUG
 #include "crmutils.h"
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 
 /*void fillLogOfTextNodeChanged(xptr node, const bool inserted=false)
 {
@@ -1431,7 +1434,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     //d_printf1("ait\n");fflush(stdout);
 	return result;
 }
-void delete_node_inner_2 (xptr nodex, t_item type)
+void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 {
 	//d_printf2("EL Node name=%s \n",name);
 //	d_printf1("\nEL Node DELETE xptr=");
@@ -1449,7 +1452,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		{
 			CHECKP(child);
 			tmp=((n_dsc*)XADDR(child))->ldsc;
-			delete_node_inner_2(child,(GETBLOCKBYNODE(child))->snode->type);
+			delete_node_inner_2(child,(GETBLOCKBYNODE(child))->snode->type, XNULL);
 			child=tmp;
 		}
 		CHECKP(nodex);
@@ -1491,7 +1494,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 						up_concurrent_micro_ops_number();
 					delete []z;
 					CHECKP(right_sib);
-					delete_node_inner_2 (right_sib, text);
+					delete_node_inner_2 (right_sib, text, XNULL);
 				}
 				else
 				{
@@ -1517,7 +1520,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 								update_idx_add_txt(left_sib);
 							}
 							CHECKP(right_sib);
-							delete_node_inner_2 (right_sib, text);
+							delete_node_inner_2 (right_sib, text, XNULL);
 							
 
 						}
@@ -1541,7 +1544,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 								up_concurrent_micro_ops_number();
 							delete []z;
 							CHECKP(left_sib);
-							delete_node_inner_2 (left_sib, text);
+							delete_node_inner_2 (left_sib, text, XNULL);
 						}
 				}				
 			}
@@ -1679,9 +1682,9 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		
 	}
 	//update of parent  pointer to first child by sort 
+	xptr par_indir=node->pdsc;
 	if (type!=document)
 	{	
-		xptr par_indir=node->pdsc;
 		n_dsc* prev=getPreviousDescriptorOfSameSort(node);
 		if (prev==NULL || prev->pdsc!=par_indir)
 		{
@@ -1716,6 +1719,12 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 			hl_phys_log_change(&((n_dsc*)XADDR(right_sib))->ldsc,sizeof(xptr));
 		((n_dsc*)XADDR(right_sib))->ldsc=left_sib;
 	}
+	
+#ifdef SE_ENABLE_TRIGGERS
+    apply_after_delete_triggers(nodex, removeIndirection(par_indir));
+    if (inserted_nodex != XNULL)
+        apply_after_replace_triggers(nodex, inserted_nodex);
+#endif
 	
 	//text value deleting
 	CHECKP(nodex);
@@ -1928,7 +1937,24 @@ init_ft_sequences (node,XNULL,XNULL);
 #ifdef FASTDELETE
 	delete_node_inner (node,block,type);
 #else 
-	delete_node_inner_2 (node,type);
+	delete_node_inner_2 (node, type, XNULL);
+#endif
+}
+
+void delete_replaced_node (xptr deleted_node, xptr inserted_node)
+{
+	node_blk_hdr* block=GETBLOCKBYNODE(deleted_node);
+	CHECKP(deleted_node);
+	t_item type=GETTYPE(block->snode);
+	if (type==document)
+		throw USER_EXCEPTION(SE2036);
+#ifdef SE_ENABLE_FTSEARCH
+init_ft_sequences (node,XNULL,XNULL);
+#endif
+#ifdef FASTDELETE
+	delete_node_inner (deleted_node,block,type);
+#else 
+	delete_node_inner_2 (deleted_node, type, inserted_node);
 #endif
 }
 
@@ -1945,7 +1971,7 @@ void delete_doc_node (xptr node)
 #ifdef FASTDELETE
 	delete_node_inner (node,block,type);
 #else 
-	delete_node_inner_2 (node,type);
+	delete_node_inner_2 (node, type, XNULL);
 #endif
 
 }

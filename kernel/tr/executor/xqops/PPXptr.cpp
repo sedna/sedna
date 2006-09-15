@@ -6,7 +6,13 @@
 #include "sedna.h"
 #include "PPXptr.h"
 
-PPXptr::PPXptr(variable_context *_cxt_, const xptr &_p_) : PPIterator(_cxt_), p(_p_)
+PPXptr::PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_) : PPIterator(_cxt_), var_type(_var_type_)
+{
+}
+
+PPXptr::PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_) : PPIterator(_cxt_), 
+                                                                                      var_type(_var_type_),
+                                                                                      p(_p_)
 {
 }
 
@@ -45,7 +51,7 @@ void PPXptr::next (tuple &t)
 
 PPIterator* PPXptr::copy(variable_context *_cxt_)
 {
-    PPXptr *res = new PPXptr(_cxt_, p);
+    PPXptr *res = new PPXptr(_cxt_, var_type, p);
     return res;
 }
 

@@ -82,6 +82,17 @@ struct schema_ft_ind_cell
 		
 };
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+struct trigger_cell;
+struct schema_trigger_cell
+/* trigger reference object*/
+{
+	trigger_cell* trigger;
+	schema_trigger_cell* next;
+	schema_trigger_cell* previous;
+		
+};
+#endif
 struct schema_ind_cell
 /* index reference object*/
 {
@@ -154,6 +165,16 @@ struct schema_node
 	void remove_ft_index(ft_index_cell* index);
 	void delete_ft_index(schema_ft_ind_cell* index);
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	//TRIGGER SUPPORT
+		
+	schema_trigger_cell* trigger_object;
+	schema_trigger_cell* add_trigger(trigger_cell* trigger);
+		
+	//INNER FUNCTIONS
+	void remove_trigger(trigger_cell* trigger);
+	void delete_trigger(schema_trigger_cell* trigger);
+#endif
 	
 	
 	static void init(void* p);
@@ -215,6 +236,9 @@ struct doc_schema_node: public schema_node
 #ifdef SE_ENABLE_FTSEARCH
 	schema_ft_ind_cell* sc_ft_idx;
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	schema_trigger_cell* sc_triggers;
+#endif
 	/*initialisation of schema node*/
 	static void init(void* p);
 	static doc_schema_node* init( bool persistent);
@@ -223,6 +247,10 @@ struct doc_schema_node: public schema_node
 	#ifdef SE_ENABLE_FTSEARCH
 		void create_ft_index(ft_index_cell* idx);
 		void delete_ft_index(ft_index_cell* idx);
+	#endif
+	#ifdef SE_ENABLE_TRIGGERS
+		void create_trigger(trigger_cell* trc);
+		void delete_trigger(trigger_cell* trc);
 	#endif
 	
 };

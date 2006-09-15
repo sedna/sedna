@@ -961,6 +961,28 @@ sedna-err:SE3071
 ########### concerning security ####################
 
 ######################################################################
+### Triggers
+######################################################################
+sedna-err:SE3200
+
+    Trigger with this name already exists.
+sedna-err:SE3201
+
+    Failed to execute trigger action.
+sedna-err:SE3202
+
+    Wrong trigger action parameter type.
+sedna-err:SE3203
+
+    Trigger action results in an item that is not a node.
+sedna-err:SE3204
+
+    Trigger action must always return a result.
+sedna-err:SE3205
+
+    Trigger action attempts to update a document/collection that is currently updating by some outer update statement.
+
+######################################################################
 ### Static query analysis error
 ######################################################################
 sedna-err:SE4001

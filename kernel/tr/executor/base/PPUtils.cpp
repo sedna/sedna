@@ -16,6 +16,9 @@
 #include "locks.h"
 #include "metadata.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers_utils.h"
+#endif
 
 
 tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
@@ -248,6 +251,9 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
         else 
             throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
+#ifdef SE_ENABLE_TRIGGERS
+	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), db_ent);
+#endif
 
 
     switch (db_ent->type)

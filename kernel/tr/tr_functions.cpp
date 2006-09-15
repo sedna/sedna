@@ -6,6 +6,9 @@
 #include "sedna.h"
 #include "locks.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers_utils.h"
+#endif
 #include "base.h"
 #include "tr_functions.h"
 #include "pq.h"
@@ -91,6 +94,9 @@ void on_user_statement_begin(QueryType query_type,
 
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 {
+#ifdef SE_ENABLE_TRIGGERS
+    clear_built_trigger_actions_map();
+#endif
     on_kernel_statement_end(qep_tree);
 
     if (is_stmt_built)

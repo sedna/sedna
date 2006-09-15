@@ -71,6 +71,9 @@ USemaphore index_sem;
 #ifdef SE_ENABLE_FTSEARCH
 USemaphore ft_index_sem;
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+USemaphore trigger_sem;
+#endif
 
 // Pointer to shared memory where xptr to indirection table is stored
 xptr* indirection_table_free_entry = NULL;

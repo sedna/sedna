@@ -13,6 +13,7 @@ struct sn_metadata_cell;
 struct xml_ns;
 struct index_cell;
 struct ft_index_cell;
+struct trigger_cell;
 struct persistent_db_data
 {
 	pers_sset<sn_metadata_cell, unsigned short> * metadata;
@@ -22,6 +23,11 @@ struct persistent_db_data
 	pers_sset<ft_index_cell, unsigned short> * ft_index;
 	index_id		ft_idx_counter;
 	#endif
+        
+	#ifdef SE_ENABLE_TRIGGERS
+	pers_sset<trigger_cell, unsigned short> * trigger;
+	#endif
+        
 	unsigned char * last_nid;
 	int	last_nid_size;
 
@@ -40,9 +46,14 @@ struct persistent_db_data
 		metadata = NULL;
         is_first_trn = true;
          #ifdef SE_ENABLE_FTSEARCH
-	 ft_index = NULL;
+    	 ft_index = NULL;
          ft_idx_counter = 1;
          #endif
+
+         #ifdef SE_ENABLE_TRIGGERS
+    	 trigger = NULL;
+         #endif
+             
 	}
     bool is_first_transaction() const { return is_first_trn; }
     void clear_first_transaction_flag() { is_first_trn = false; }

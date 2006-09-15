@@ -153,6 +153,9 @@ extern global_name INDEX_SEMAPHORE_STR;
 #ifdef SE_ENABLE_FTSEARCH
 extern global_name FT_INDEX_SEMAPHORE_STR;
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+extern global_name TRIGGER_SEMAPHORE_STR;
+#endif
 
 //sm's SSMMsg shared memory name
 global_name CHARISMA_SSMMSG_SM_ID(const char* db_name, char* buf, int size);

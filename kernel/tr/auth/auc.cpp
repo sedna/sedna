@@ -82,7 +82,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 			//in_auth_query_execution = true;
             tr_globals::st_ct.add_to_context(NULL, "http://www.w3.org/XML/1998/namespace");
 			auth = BLOCK_AUTH_CHECK;			
-			auth_qep_tree *aqtree = build_qep(authorization_query_in_por.c_str(), 19); //previous 17
+			qep_subtree *aqtree = build_qep(authorization_query_in_por.c_str(), 19); //previous 17
 			aqtree->tree.op->open();
 			tuple t = tuple(1);
 			aqtree->tree.op->next(t);

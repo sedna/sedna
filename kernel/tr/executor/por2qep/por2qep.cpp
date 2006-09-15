@@ -10,6 +10,10 @@
 #include "e_string.h"
 #include "op_map.h"
 
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers_data.h"
+#endif
+
 #define SE_NAMESPACE		"http://www.modis.ispras.ru/sedna"
 
 using namespace std;
@@ -3144,6 +3148,85 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
 		     || op == "PPDropFtIndex")
 		throw USER_EXCEPTION2(SE1002, "full-text search support disabled");
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+    else if (op == "PPCreateTrigger")
+    {
+/*d_printf2("\n%d",qe->at(0).type);
+
+d_printf2("\n%d",qe->at(3).type);
+d_printf2("\n%d",qe->at(4).type);
+d_printf2("\n%d",qe->at(5).type);
+d_printf2("\n%d",qe->at(6).type);
+d_printf2("\n%d",qe->at(7).type);
+d_printf2("\n%d",qe->at(8).type);
+d_printf2("\n%d",qe->size());
+*/
+        if (  !(( qe->size() == 9 )||( qe->size() == 12 ))
+            || qe->at(1).type != SCM_NUMBER    
+            || qe->at(2).type != SCM_SYMBOL    // time
+            || qe->at(3).type != SCM_SYMBOL    // event
+			|| qe->at(4).type != SCM_LIST      // on (db_entity)
+			|| qe->at(5).type != SCM_LIST      // on
+            || qe->at(6).type != SCM_SYMBOL    // granularity
+			|| qe->at(7).type != SCM_LIST      // action
+            || qe->at(8).type != SCM_LIST)     // name
+            throw USER_EXCEPTION2(SE1004, "327");
+
+		scheme_list *lst = qe;
+		db_entity *db_ent = make_db_entity(lst->at(4).internal.list);
+		PathExpr *trigger_path = lr2PathExpr(NULL, lst->at(5).internal.list, true);
+
+		int cxt_size = atoi(qe->at(1).internal.num);
+        variable_context *cxt = new variable_context(cxt_size);
+
+//		trigger_action *tr_action = lr2TriggerAction(lst->at(7).internal.list);
+		PathExpr *path_to_parent = NULL;
+
+        // trigger on insert
+        if( qe->size() == 12 )
+        {
+            if (   qe->at(9).type != SCM_STRING    // name of the inserting node
+                || qe->at(10).type != SCM_NUMBER   // type of the inserting node (element/attr)
+                || qe->at(11).type != SCM_LIST)    // rewritten path to the target node
+                throw USER_EXCEPTION2(SE1004, "328");
+   			path_to_parent = lr2PathExpr(NULL, lst->at(11).internal.list, true);
+            return new PPCreateTrigger(qe->at(2).internal.symb, 			// time 
+					               qe->at(3).internal.symb,			// event
+                                   counted_ptr<db_entity>(db_ent),	// on (db_entity)
+                                   trigger_path,					// on            
+					               qe->at(6).internal.symb,			// granularity 
+                                   lst->at(7).internal.list,		// action
+            					   qe->at(9).internal.str,			// inserting name
+            					   atoi(qe->at(1).internal.num),	// inserting type
+            					   path_to_parent,					// path to parent of the inserted node
+								   make_pp_op(cxt, qe->at(8).internal.list)); // trigger name
+        }
+        else
+            return new PPCreateTrigger(qe->at(2).internal.str, 			// time 
+					               qe->at(3).internal.str,			// event
+                                   counted_ptr<db_entity>(db_ent),	// on (db_entity)
+                                   trigger_path,					// on            
+					               qe->at(6).internal.str,			// granularity 
+                                   lst->at(7).internal.list,		// action
+								   make_pp_op(cxt, qe->at(8).internal.list)); // trigger name
+    }
+    else if (op == "PPDropTrigger")
+    {
+        if (   qe->size() != 3
+            || qe->at(1).type != SCM_NUMBER
+            || qe->at(2).type != SCM_LIST)
+            throw USER_EXCEPTION2(SE1004, "329");
+
+		int cxt_size = atoi(qe->at(1).internal.num);
+        variable_context *cxt = new variable_context(cxt_size);
+
+		return new PPDropTrigger(make_pp_op(cxt, qe->at(2).internal.list));
+    }
+#else
+	else if (   op == "PPCreateTrigger"
+		     || op == "PPDropTrigger")
+		throw USER_EXCEPTION2(SE1002, "triggers support disabled");
+#endif
     else throw USER_EXCEPTION2(SE1004, "399");
 
     return NULL;
@@ -3342,12 +3425,12 @@ PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode)
     return qep;
 }
 
-auth_qep_tree *build_qep(const char* por, int cxt_size)
+qep_subtree *build_qep(const char* por, int cxt_size)
 {
     scheme_list *pp_op_in_scheme_lst = NULL;
     pp_op_in_scheme_lst = make_tree_from_scheme_list(por);
 
-    auth_qep_tree *res = new auth_qep_tree();
+    qep_subtree *res = new qep_subtree();
 
     res->cxt = new variable_context(cxt_size);
     res->tree = make_pp_op(res->cxt, pp_op_in_scheme_lst);
@@ -3367,7 +3450,7 @@ void delete_qep(PPQueryEssence *qep)
     tr_globals::qp.size = 0;
 }
 
-void delete_qep(auth_qep_tree *qep)
+void delete_qep(qep_subtree *qep)
 {
     delete (qep->cxt);
     qep->cxt = NULL;

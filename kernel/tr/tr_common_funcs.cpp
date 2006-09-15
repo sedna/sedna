@@ -66,6 +66,12 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    #endif
    d_printf1("OK\n");
 
+   #ifdef SE_ENABLE_TRIGGERS
+   d_printf1("Initializing triggers...");
+   triggers_on_session_begin(entry_point->trigger);
+   d_printf1("OK\n");
+   #endif
+
    d_printf1("Initializing local lock manager...");
    init_local_lock_mgr(sm_server);
    d_printf1("OK\n");
@@ -93,6 +99,13 @@ void on_session_end(SSMMsg* &sm_server)
    release_local_lock_mgr();
    d_printf1("OK\n");
  
+   d_printf1("Releasing triggers...");
+   index_on_session_end();
+   #ifdef SE_ENABLE_TRIGGERS
+   triggers_on_session_end();
+   #endif
+   d_printf1("OK\n");
+
    d_printf1("Releasing indexes...");
    index_on_session_end();
    #ifdef SE_ENABLE_FTSEARCH

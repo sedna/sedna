@@ -1232,3 +1232,12 @@ xptr getPreviousSiblingNode(xptr node,schema_node* scn)
 	}
 	return XNULL;
 }
+bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_node*>* scm_nodes_set )
+{
+    while((scm_node->type != document)&&(scm_node != NULL))
+    {
+        if(scm_nodes_set->find(scm_node) != scm_nodes_set->end()) return true;
+        scm_node = scm_node->parent;
+    }
+    return false;
+}

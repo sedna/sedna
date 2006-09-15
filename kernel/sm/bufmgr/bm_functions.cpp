@@ -152,6 +152,10 @@ void bm_startup() throw (SednaException)
     if (USemaphoreCreate(&ft_index_sem, 1, 1, FT_INDEX_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4010, "FT_INDEX_SEMAPHORE_STR");
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+    if (USemaphoreCreate(&trigger_sem, 1, 1, TRIGGER_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4010, "TRIGGER_SEMAPHORE_STR");
+#endif
 
     // Create shared memory
     if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), NULL, __sys_call_error) != 0)
@@ -239,6 +243,10 @@ void bm_shutdown() throw (SednaException)
 #ifdef SE_ENABLE_FTSEARCH
     if (USemaphoreRelease(ft_index_sem, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4011, "FT_INDEX_SEMAPHORE_STR");
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    if (USemaphoreRelease(trigger_sem, __sys_call_error) != 0)
+        throw USER_EXCEPTION2(SE4011, "TRIGGER_SEMAPHORE_STR");
 #endif
     d_printf1("Release semaphores: complete\n");
 

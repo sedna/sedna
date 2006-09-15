@@ -80,6 +80,21 @@ IDX_S = -lidx
 IDX_P = -Lidx
 endif
 
+ifeq ($(SE_ENABLE_TRIGGERS), 1)
+TRIGGERS_LIB = triggers/libtriggers$(LIB_EXT)
+ifeq ($(PLATFORM), WIN32)
+TRIGGERS_S = $(TRIGGERS_LIB)
+else
+#TRIGGERS_S = -Lidx -lidx
+TRIGGERS_S = -lidx
+TRIGGERS_P = -Lidx
+endif
+else
+TRIGGERS_LIB =
+TRIGGERS_S =
+TRIGGERS_P =
+endif
+
 ifeq ($(ENABLE_DTSEARCH), 1)
 
 FT_LIB = dten600.lib Nafxcw.lib LIBCMT.LIB ft/libft$(LIB_EXT)
@@ -305,6 +320,9 @@ $(AUTH_LIB): libraries
 
 $(RCV_LIB): libraries
 
+ifeq ($(SE_ENABLE_TRIGGERS), 1)
+$(TRIGGERS_LIB): libraries
+endif
 
 ################################################################################
 # tr (Transaction)                                                             #
@@ -365,6 +383,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) libraries
                                $(CRMUTILS_S)				\
                                $(IDX_S)						\
                                $(FT_S)						\
+                               $(TRIGGERS_S)						\
                                $(BTREE_S)					\
                                $(LOCKS_S)					\
                                $(HL_PHYS_LOG_S)				\
@@ -391,6 +410,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) libraries
                                $(CRMUTILS_P)				\
                                $(IDX_P)						\
                                $(FT_P)						\
+                               $(TRIGGERS_P)						\
                                $(BTREE_P)					\
                                $(LOCKS_P)					\
                                $(HL_PHYS_LOG_P)				\
@@ -415,6 +435,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) libraries
                                $(CRMUTILS_S)				\
                                $(IDX_S)						\
                                $(FT_S)						\
+                               $(TRIGGERS_S)						\
                                $(BTREE_S)					\
                                $(LOCKS_S)					\
                                $(HL_PHYS_LOG_S)				\
@@ -449,6 +470,7 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(CRMUTILS_S)				\
                                $(IDX_S)						\
                                $(FT_S)						\
+                               $(TRIGGERS_S)						\
                                $(BTREE_S)					\
                                $(HL_PHYS_LOG_S)				\
                                $(HL_LOGICAL_LOG_S)			\
@@ -472,6 +494,7 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(CRMUTILS_P)				\
                                $(IDX_P)						\
                                $(FT_P)						\
+                               $(TRIGGERS_P)						\
                                $(BTREE_P)					\
                                $(HL_PHYS_LOG_P)				\
                                $(HL_LOGICAL_LOG_P)			\
@@ -496,6 +519,7 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(CRMUTILS_S)				\
                                $(IDX_S)						\
                                $(FT_S)						\
+                               $(TRIGGERS_S)						\
                                $(BTREE_S)					\
                                $(HL_PHYS_LOG_S)				\
                                $(HL_LOGICAL_LOG_S)			\
@@ -546,6 +570,9 @@ endif
 	$(MAKE) -C vmm
 	$(MAKE) -C auth
 	$(MAKE) -C rcv
+ifeq ($(SE_ENABLE_TRIGGERS), 1)
+	$(MAKE) -C triggers
+endif
 
 ################################################################################
 # Clean                                                                        #
@@ -556,6 +583,9 @@ clean: generic_clean
 	$(MAKE) -C idx clean
 ifeq ($(ENABLE_DTSEARCH), 1)
 	$(MAKE) -C ft clean
+endif
+ifeq ($(SE_ENABLE_TRIGGERS), 1)
+	$(MAKE) -C triggers clean
 endif
 	$(MAKE) -C locks clean
 	$(MAKE) -C log clean
