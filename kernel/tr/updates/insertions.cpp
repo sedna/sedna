@@ -9,6 +9,9 @@
 #include "xptr_sequence.h"
 #include "micro.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 /* third insert procedure: insert before
 * arg1- is operation that returns a sequence of the updated nodes
 * arg2- is operation that returns a sequence of the inserted nodes
@@ -633,6 +636,9 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	xptr node_child=XNULL;
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_before_insert_for_each_statement_triggers(arg1seq, arg2seq);
 #endif
 	do
 	{

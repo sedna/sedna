@@ -13,6 +13,9 @@
 #include "numb_scheme.h"
 #include "indirection.h"
 #include "PPConstructors.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 #define IGNORE_UPDATE_ERRORS
 #ifdef SE_ENABLE_FTSEARCH
 std::map<ft_index_cell*,xptr_sequence*> updated_nodes;
@@ -187,6 +190,9 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 #endif
 	CHECKP(node);
 	xptr res;
+#ifdef SE_ENABLE_TRIGGERS
+    if (apply_before_insert_triggers(left, right, parent, node) == XNULL) return left;
+#endif
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
 	case element:
@@ -323,6 +329,9 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
  #ifdef SE_ENABLE_FTSEARCH
  update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+ apply_after_insert_triggers(left, right, parent, res);
+#endif
  CHECKP(res);
  return res;
 }
@@ -387,6 +396,10 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 #endif
 	CHECKP(node);
 	xptr res;
+#ifdef SE_ENABLE_TRIGGERS
+    node = apply_before_insert_triggers(left, right, parent, node);
+    if(node == XNULL) return left;
+#endif
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
 	case element:
@@ -520,6 +533,9 @@ case xml_namespace:
 	CHECKP(res);
 #ifdef SE_ENABLE_FTSEARCH
  update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_after_insert_triggers(left, right, parent, res);
 #endif
  CHECKP(res);
 	return res;

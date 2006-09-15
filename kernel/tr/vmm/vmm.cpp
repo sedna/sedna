@@ -705,6 +705,9 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
 			db_data_ptr->ft_index = pers_sset<ft_index_cell, unsigned short>::init();
             db_data_ptr->ft_idx_counter = 1;
          #endif
+   			#ifdef SE_ENABLE_TRIGGERS
+			db_data_ptr->trigger = pers_sset<trigger_cell, unsigned short>::init();
+         #endif
 		    db_data_ptr->last_nid = NULL;
 		    db_data_ptr->last_nid_size = 0;
 		    //support namespaces list

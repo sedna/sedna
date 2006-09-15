@@ -33,6 +33,10 @@
 #include "PPCreateFtIndex.h"
 #include "PPDropFtIndex.h"
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+#include "PPCreateTrigger.h"
+#include "PPDropTrigger.h"
+#endif
 #include "PPReturn.h"
 #include "PPSelect.h"
 #include "PPLet.h"

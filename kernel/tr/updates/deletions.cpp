@@ -9,6 +9,9 @@
 #include "xptr_sequence.h"
 #include "micro.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 
 void delete_undeep(PPOpIn arg)
 {
@@ -174,7 +177,10 @@ void delete_deep(PPOpIn arg)
 			++it;
 		}
 		while (nid_ancestor(node,*it));
-		delete_node(node);
+#ifdef SE_ENABLE_TRIGGERS
+        if (apply_before_delete_triggers(node) != XNULL)
+#endif
+    		delete_node(node);
 		if (mark) break;
 	}
 	while (true);

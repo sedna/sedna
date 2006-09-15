@@ -12,7 +12,7 @@
 #include "scheme_tree.h"
 #include "exec_output.h"
 
-struct auth_qep_tree
+struct qep_subtree
 {
     variable_context *cxt;
     PPOpIn tree;
@@ -21,10 +21,10 @@ struct auth_qep_tree
 
 PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode = xml);
 PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode = xml);
-auth_qep_tree  *build_qep(const char* por, int cxt_size);
+qep_subtree  *build_qep(const char* por, int cxt_size);
 
 void delete_qep(PPQueryEssence *qep);
-void delete_qep(auth_qep_tree *qep);
+void delete_qep(qep_subtree *qep);
 
 db_entity *make_db_entity(scheme_list *ent_lst, bool explicit_name = true);
 tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value);

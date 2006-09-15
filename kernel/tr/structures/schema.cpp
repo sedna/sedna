@@ -12,7 +12,9 @@
 #ifdef SE_ENABLE_FTSEARCH
 #include "ft_index_data.h"
 #endif
-
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers_data.h"
+#endif
 
 
 void sc_ref::init(void* p)
@@ -43,6 +45,9 @@ void schema_node::init(void* p)
 	scr->index_object=NULL;
 	#ifdef SE_ENABLE_FTSEARCH
 	scr->ft_index_object=NULL;	
+	#endif
+	#ifdef SE_ENABLE_TRIGGERS
+	scr->trigger_object=NULL;	
 	#endif
 	scr->xmlns=NULL;
 	scr->nodecnt=0;
@@ -126,6 +131,35 @@ void doc_schema_node::create_ft_index(ft_index_cell* idx)
 	this->sc_ft_idx=sc;
 }
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+void doc_schema_node::delete_trigger(trigger_cell* trc)
+{
+	
+	schema_trigger_cell* tcell=this->sc_triggers;
+	while (tcell!=NULL)
+	{
+		if (tcell->trigger==trc) break;
+		tcell=tcell->next;
+	}
+	if (tcell->next!=NULL) tcell->next->previous=tcell->previous;
+	if (tcell->previous!=NULL) 
+		tcell->previous->next=tcell->next;
+	else
+		this->sc_triggers=tcell->next;
+	scm_free(tcell,this->persistent);	
+	this->remove_trigger(trc);	
+}
+void doc_schema_node::create_trigger(trigger_cell* trc)
+{
+	schema_trigger_cell* sc=(schema_trigger_cell*)scm_malloc(sizeof(schema_trigger_cell),this->persistent);
+	sc->trigger=trc;
+	sc->previous=NULL;
+	sc->next=this->sc_triggers;
+	if (this->sc_triggers!=NULL)
+		this->sc_triggers->previous=sc;
+	this->sc_triggers=sc;
+}
+#endif
 void doc_schema_node::init(void* p)
 {
 	schema_node::init(p);
@@ -138,6 +172,9 @@ void doc_schema_node::init(void* p)
 	scr->sc_idx=NULL;
 	#ifdef SE_ENABLE_FTSEARCH
 	scr->sc_ft_idx=NULL;    
+	#endif
+	#ifdef SE_ENABLE_TRIGGERS
+	scr->sc_triggers=NULL;    
 	#endif
 }
 void col_schema_node::init(void* p)
@@ -255,6 +292,17 @@ void schema_node::add_child(schema_node* node)
 				node->add_ft_index(ft_ind->index);
 			}
 			ft_ind=ft_ind->next;
+		}
+		#endif
+		#ifdef SE_ENABLE_TRIGGERS
+		schema_trigger_cell* sc_trigger=node->root->sc_triggers;
+		while (sc_trigger!=NULL)
+		{
+			if (sc_trigger->trigger->fits_to_trigger(node))
+			{
+				node->add_trigger(sc_trigger->trigger);
+			}
+			sc_trigger=sc_trigger->next;
 		}
 		#endif
 
@@ -570,6 +618,50 @@ void schema_node::remove_ft_index(ft_index_cell* index)
 	while (sc!=NULL)
 	{
 		sc->snode->remove_ft_index(index);
+		sc=sc->next;
+	}
+}
+
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+schema_trigger_cell* schema_node::add_trigger(trigger_cell* trigger)
+{
+	
+	schema_trigger_cell* sct=(schema_trigger_cell*)scm_malloc(sizeof(schema_trigger_cell),this->persistent);
+	sct->trigger=trigger;
+	sct->previous =NULL;
+	sct->next=this->trigger_object;
+	if (this->trigger_object != NULL)
+		this->trigger_object->previous=sct;
+	this->trigger_object=sct;  
+	return sct;
+}
+
+void schema_node::delete_trigger(schema_trigger_cell* trigger)
+{
+	if (trigger->previous!=NULL) 
+		trigger->previous->next=trigger->next;
+	else
+		this->trigger_object=trigger->next;
+	if (trigger->next!=NULL)
+		trigger->next->previous=trigger->previous;
+	scm_free(trigger,this->persistent);
+}
+void schema_node::remove_trigger(trigger_cell* trigger)
+{
+	schema_trigger_cell* sct=this->trigger_object;
+	while (sct!=NULL)
+	{		
+		if (sct->trigger==trigger) 
+		{
+			this->delete_trigger(sct);
+			break;
+		}		
+	}	
+	sc_ref* sc=this->first_child;
+	while (sc!=NULL)
+	{
+		sc->snode->remove_trigger(trigger);
 		sc=sc->next;
 	}
 }

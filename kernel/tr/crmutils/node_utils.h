@@ -8,6 +8,7 @@
 /*Search utils*/
 
 #include <vector>
+#include <set>
 
 #include "sedna.h"
 
@@ -244,5 +245,7 @@ bool inline is_next_node_attribute (xptr node)
 	return false;
 }
 
+//checks if the node is the descendant of one of the nodes in the vector
+bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_node*>* scm_nodes_set );
 #endif
 

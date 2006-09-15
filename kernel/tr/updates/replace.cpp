@@ -9,6 +9,9 @@
 #include "xptr_sequence.h"
 #include "micro.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 
 void replace(PPOpIn arg)
 {
@@ -162,6 +165,9 @@ void replace(PPOpIn arg)
 		while(*sit!=XNULL)
 		{
 			xptr node_child=*sit;
+#ifdef SE_ENABLE_TRIGGERS
+            if(apply_before_replace_triggers(node, removeIndirection(node_child)) != XNULL)
+#endif
 			if (is_node_persistent(node_child)) 
 				node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
 			else
@@ -170,7 +176,12 @@ void replace(PPOpIn arg)
 			sit++;
 		}
 		//delete node
-		delete_node(removeIndirection((*it3).cells[0].get_node()));
+#ifdef SE_ENABLE_TRIGGERS
+        bool is_replaced = true;
+#else  
+        bool is_replaced = false;
+#endif
+		delete_replaced_node(removeIndirection((*it3).cells[0].get_node()), node);
 	}
 	while (it3!=arg4seq.begin());
 	//3.delete

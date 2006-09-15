@@ -112,6 +112,9 @@ extern USemaphore index_sem;
 #ifdef SE_ENABLE_FTSEARCH
 extern USemaphore ft_index_sem;
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+extern USemaphore trigger_sem;
+#endif
 
 // Pointer to shared memory where xptr to indirection table is stored
 extern xptr* indirection_table_free_entry;

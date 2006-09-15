@@ -75,6 +75,7 @@ inline xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,const ch
 	return insert_namespace(left_sib,right_sib,parent,ns);
 }
 void delete_node(xptr node);
+void delete_replaced_node(xptr delete_node, xptr insert_node);
 void delete_doc_node(xptr node);
 
 
