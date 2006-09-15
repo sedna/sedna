@@ -26,7 +26,13 @@ int PPRange::getIntFromOp(PPOpIn & op)
 	tuple_cell res=getAtomizedCell(t);
 	op.op->next(t);
 	if (!(t.is_eos())) throw USER_EXCEPTION(XPTY0004);
-	return cast(res, xs_integer).get_xs_integer();
+	if (res.get_atomic_type()==xs_untypedAtomic)
+	{
+		res=cast(res,xs_integer);
+	}
+	if (res.get_atomic_type()!=xs_integer&&!is_derived_from_xs_integer(res.get_atomic_type()))
+		throw USER_EXCEPTION(XPTY0004);
+	return res.get_xs_integer();
 }
 
 PPRange::PPRange(variable_context *_cxt_,

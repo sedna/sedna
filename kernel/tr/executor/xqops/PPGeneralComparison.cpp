@@ -787,7 +787,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 }
 void PPLMGeneralComparison::next   (tuple &t)
 {
-	if (first_time)
+ 	if (first_time)
     {
 		first_time = false;
 		tuple_cell (*comp_op) (const tuple_cell&,const tuple_cell&);
