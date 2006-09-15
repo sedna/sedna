@@ -47,7 +47,7 @@ void bt_key::init(char* pg, shft key_idx)
 
     switch (type)
     {
-        case xs_integer	: v.i_v = *(int*)   key_tab_slot; break;
+        case xs_integer	: v.i_v = *(__int64*)   key_tab_slot; break;
         case xs_float	: v.f_v = *(float*) key_tab_slot; break;
         case xs_double	: v.d_v = *(double*)key_tab_slot; break;
         case xs_string	: {
@@ -75,7 +75,7 @@ int bt_key::get_size() const
 {
     switch (type)
     {
-        case xs_integer	: return sizeof(int);
+        case xs_integer	: return sizeof(__int64);
         case xs_float	: return sizeof(float);
         case xs_double	: return sizeof(double);
         case xs_string	: return strlen(v.s_v);
@@ -89,7 +89,7 @@ int bt_key::get_size() const
     }
 }
 
-void bt_key::setnew(int nv)
+void bt_key::setnew(__int64 nv)
 {
     free();
     type = xs_integer;

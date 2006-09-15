@@ -401,7 +401,7 @@ xptr getChildPointer(n_dsc* node,const char* name,t_item type,xml_ns* ns)
 	else
 		return XNULL;
 }
-bool isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
+xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
 {
 	node_blk_hdr* block=GETBLOCKBYNODE_ADDR(node);
 	schema_node* scm_node=block->snode;
@@ -414,11 +414,11 @@ bool isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
 			my_strcmp(uri,sc->xmlns->uri)==0)) 
 		{
 			if (block->dsc_size>=((shft)size_of_node(block)+((shft)cnt+1)*((shft)sizeof(xptr))) && 
-		((*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))))!=XNULL)) return true;
+		((*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))))!=XNULL)) return (*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))));
 		}
 		sc=sc->next;
 	}
-	return false;
+	return XNULL;
 }
 /* returns the xptr to the nearest left neighboring descriptor of the attribute*/
 xptr findAttributeWithSameNameToInsertAfter_CP(xptr parent,const char* name,xml_ns* ns)

@@ -21,7 +21,7 @@ typedef xptr object;
 class bt_key {
 private:
     union {
-        int    i_v;
+        __int64    i_v;
         float  f_v;
         double d_v;
         char*  s_v;
@@ -60,7 +60,7 @@ public:
         free();
         init(pg, key_idx);
     }
-    void setnew(int nv);
+    void setnew(__int64 nv);
     void setnew(float nv);
     void setnew(double nv);
     void setnew(const char* nv);

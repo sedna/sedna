@@ -46,7 +46,10 @@ bool PPFnDeepEqual::are_elements_deep_equal(xptr& node1,xptr& node2)
 	{
 		schema_node * ats=GETSCHEMENODEX(at1);
 		CHECKP(node2);
-		if (!isAttributePointerSet((n_dsc*)XADDR(node2),ats->name,(ats->xmlns==NULL)?NULL:ats->xmlns->uri))return false;
+		xptr nd=isAttributePointerSet((n_dsc*)XADDR(node2),ats->name,(ats->xmlns==NULL)?NULL:ats->xmlns->uri);
+		if (nd==XNULL)return false;
+		CHECKP(nd);
+		if (!are_attributes_equal(at1,nd,ats,GETSCHEMENODEX(nd))) return false;
 		at_cnt++;
 		at1=getNextByOrderAttribute(at1);
 	}

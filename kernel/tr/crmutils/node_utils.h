@@ -124,7 +124,7 @@ inline xptr getChildPointerXptr(xptr node,const char* name,t_item type,xml_ns* n
  return getChildPointer((n_dsc*)XADDR(node),name,type,ns);
 }
 /*returns true iff there is already attribute set with the same local name and uri*/
-bool isAttributePointerSet(n_dsc* node,const char* name,const char* uri);
+xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri);
 void getChildPointerList(xptr node,const char* name,t_item type,char* uri,std::vector<xptr> &childs);
 
 /* utils for persistent string library */
