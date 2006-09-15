@@ -15,17 +15,25 @@ varDeclList! [in_context in_c] >[out_context out_c]:
     <<PCCTS_AST* res = NULL; bool type = false;>>
 	(#(AST_VAR_DECL v1:vardecl ev1:expr[in_c] >[out_c] {st1:sequenceType <<type = true;>>})
 	<<if (res == NULL)
-      {
-        if (type) res = #(#[], st1, v1);
-        else res = #(#[], #["xs:anyType"], v1);
-      }
-      else
-      {
-        if (type) res->append(#(#[], st1, v1));
-        else res->append(#(#[], #["xs:anyType"], v1));
-      }
-	  type = false;
+          {
+            if (type) res = #(#[], st1, v1);
+            else res = #(#[], #["xs:anyType"], v1);
+          }
+          else
+          {
+            if (type) res->append(#(#[], st1, v1));
+            else res->append(#(#[], #["xs:anyType"], v1));
+          }
+   	    type = false;
 	>>
+
+	| #(AST_POS_VAR_DECL v2:vardecl)
+	  <<if (res == NULL)
+	        res = #(#[], #["se:positional-var"], v2);
+	    else
+	        res->append(#(#[], #["se:positional-var"], v2));
+	  >>
+	 
 	)+
 
 	<<#varDeclList=#(#[], res);>>

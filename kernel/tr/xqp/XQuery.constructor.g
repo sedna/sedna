@@ -412,9 +412,13 @@ compElemConstructor!:
  
                 LBRACE {e:expr} RBRACE
 
-	        <<#0=#(#[AST_ELEMENT], #0,
+	        <<
+                  ASTBase* _e_ = NULL;
+                  if (#e != NULL)
+                     _e_ = #(#[AST_SPACE_SEQUENCE], #e);
+	          #0=#(#[AST_ELEMENT], #0,
 	               #[AST_ELEMENT_ATTRIBUTES], 
-	               #(#[AST_CONTENT], #e));
+	               #(#[AST_CONTENT], _e_));
 	        >>
 ;
 
@@ -428,7 +432,12 @@ compAttrConstructor!:
  
                 LBRACE {e:expr} RBRACE
 
-	        <<#0=#(#[AST_ATTRIBUTE], #0, #(#[AST_CONTENT], #e));
+	        <<
+                  ASTBase* _e_ = NULL;
+                  if (#e != NULL)
+                     _e_ = #(#[AST_SPACE_SEQUENCE], #e);
+
+	          #0=#(#[AST_ATTRIBUTE], #0, #(#[AST_CONTENT], _e_));
 	        >>
 
 ;

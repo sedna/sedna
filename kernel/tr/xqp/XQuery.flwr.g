@@ -7,7 +7,8 @@ class XQueryParser{
 flworExpr!:
 	<<AST *flcs=NULL;>>
 
-	( fc:forClause <<if(flcs==NULL) flcs=#fc; else flcs->append(#fc);>>
+	( fc:forClause 
+          <<if(flcs==NULL) flcs=#fc; else flcs->append(#fc);>>
 	| lc:letClause <<if(flcs==NULL) flcs=#lc; else flcs->append(#lc);>>)+
 	{wc:whereClause}
 	{obc:orderByClause}
@@ -20,14 +21,25 @@ flworExpr!:
 
         if (copy_var_decls1 == NULL)
         {
-
            copy_var_decls1=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL);
            copy_var_decls2=ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL);
+
+	   if (it->down()->right() != NULL)
+	   {
+              copy_var_decls1->append(ASTBase::tmake(new AST(AST_POS_VAR_DECL), ((ASTBase*)(it->down()->right()))->dup(), NULL));
+              copy_var_decls2->append(ASTBase::tmake(new AST(AST_POS_VAR_DECL), ((ASTBase*)(it->down()->right()))->dup(), NULL));
+	   }
         }
         else
         {
            copy_var_decls1->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL));
            copy_var_decls2->append(ASTBase::tmake(new AST(AST_VAR_DECL), ((ASTBase*)(it->down()->down()))->dup(), NULL));
+	   if (it->down()->right() != NULL)
+	   {
+              copy_var_decls1->append(ASTBase::tmake(new AST(AST_POS_VAR_DECL), ((ASTBase*)(it->down()->right()))->dup(), NULL));
+              copy_var_decls2->append(ASTBase::tmake(new AST(AST_POS_VAR_DECL), ((ASTBase*)(it->down()->right()))->dup(), NULL));
+	   }
+
         }
       }
       if (#obc != NULL)

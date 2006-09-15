@@ -40,18 +40,26 @@ kindTest!:
 	  dt:documentTest   <<#0=#dt;>>
 	| et:elementTest    <<#0=#et;>>
 	| at:attributeTest  <<#0=#at;>>
-//	| pit:piTest        <<#0=#pit;>>
+	| pit:piTest        <<#0=#pit;>>
 	| ct:commnetTest    <<#0=#ct;>>
 	| tt:textTest       <<#0=#tt;>>
 	| akt:anyKindTest   <<#0=#akt;>>
 ;
 
-/*
+
 piTest!:
-	PROCESSING_INSTRUCTION LPAR {NCNAME| STRINGLITERAL} RPAR
-	<<#0= >>
+	<<bool exist_arg=false;>>
+	PROCESSING_INSTRUCTION LPAR
+	{  
+	   (  n:NCNAME <<#0=#(#[AST_PI], #[$n->getText(), AST_LOCAL_NAME]); exist_arg=true;>>
+	    | s:STRINGLITERAL <<#0=#(#[AST_PI], #[$s->getText(), AST_STRING_CONST]); exist_arg=true;>>
+	   )
+	} RPAR
+	<<if (!exist_arg)
+	     #0=#[AST_PI];
+	>>
 ;
-*/
+
 
 commnetTest!:
 	COMMENT_ LPAR RPAR

@@ -97,7 +97,7 @@ attrContent! [in_context in_c] >[out_context out_c]:
 	  >>
 
 	| e:expr[in_c] >[out_c]
-	  << att_cont=#(#["spaceseq"], e); >>
+	  << att_cont=e; >>
 
 	)
 	<<#attrContent=att_cont;>>
