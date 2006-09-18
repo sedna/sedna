@@ -294,3 +294,38 @@
          (const (type !xs!integer) "7")
          (const (type !xs!integer) "8")
          (const (type !xs!integer) "9"))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (return
+      (order-by
+       (lreturn
+        (sequence
+          (const (type !xs!integer) "1")
+          (const (type !xs!integer) "2")
+          (const (type !xs!integer) "3"))
+        (fun-def
+         (((one !xs!integer) (var ("" "i"))) (se:positional-var (var ("" "j"))))
+         (lreturn
+          (sequence (const (type !xs!integer) "8") (const (type !xs!integer) "10"))
+          (fun-def
+           ((xs:anyType (var ("" "u"))) (se:positional-var (var ("" "v"))))
+           (unio (var ("" "i")) (var ("" "j")) (var ("" "u")) (var ("" "v")))))))
+       (fun-def
+        (((one !xs!integer) (var ("" "i")))
+         (se:positional-var (var ("" "j")))
+         (xs:anyType (var ("" "u")))
+         (se:positional-var (var ("" "v"))))
+        (orderspecs
+         (const (type !xs!string) "non-stable")
+         (orderspec (ordermodifier) (var ("" "j")))
+         (orderspec (ordermodifier) (unary-@ (var ("" "v")))))))
+      (fun-def
+       (((one !xs!integer) (var ("" "i")))
+        (se:positional-var (var ("" "j")))
+        (xs:anyType (var ("" "u")))
+        (se:positional-var (var ("" "v"))))
+       (sequence (var ("" "i")) (var ("" "j")) (var ("" "u")) (var ("" "v")))))))))

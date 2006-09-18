@@ -254,7 +254,12 @@
                    (null? (cdr reverse-new-arg-lst))  ; only a single argument
                    (not (memq
                          (caar reverse-new-arg-lst)  ; type of last argument
-                         '(se:positional-var !se!positional-var))))
+                         '(se:positional-var !se!positional-var)))
+                   ; If first argument is an order-by, than the last variable
+                   ; is not a positional-var, although it may have an
+                   ; xs:positional-var type: when positional var of the for-clause
+                   ; participates in the return-clause
+                   (eq? (caar node) 'order-by))
                   `(PPReturn
                     ,(map cadr (cadr new-fun-def))
                     ,left-PhysOp
@@ -1439,7 +1444,9 @@
 
 
 (define (l2p:lr-atomic-type2por-atomic-type atomic-type)
-  atomic-type)
+  (if (eq? atomic-type 'se:positional-var)
+      'xs:anyType
+      atomic-type))
 
 ;(define (l2p:lr-atomic-type2por-atomic-type atomic-type)
 ;  (cond ((eq? atomic-type '!xdt!untypedAtomic) 'xdt_untypedAtomic)
