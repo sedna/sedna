@@ -128,8 +128,9 @@
 ;   output-port)
 ;  (display body output-port))
 
-; The same for the previous function, but the body is represented as the
-; list of bytes here
+; Writes the package to the output-port
+;  header-code - the number that represents the code of the message
+;  body - the list of bytes that represent the message body
 (define (sedna:write-package-as-bytes header-code body output-port)
   (display
    (list->string (sedna:integer->chars header-code))
@@ -145,6 +146,10 @@
 ;-------------------------------------------------
 ; Reading a package
 
+; Special package headers
+(define sedna:ItemPart 360)
+(define sedna:ItemEnd 370)
+
 ;; Reads the package from input port
 ;; Returns: (values header-code body-string)
 ;(define (sedna:read-package input-port)
@@ -158,8 +163,9 @@
 ;    (values header-code
 ;            (list->string (sedna:read-n-chars body-size input-port)))))
 
-; The same function as the previous one, but returns the list the message body
-; as the list of chars
+; Reads the package from input port
+; Returns: (values header-code body-char-list)
+; Returns the list the message body as the list of chars
 (define (sedna:read-package-as-chars input-port)
   (let*  ; the order of evaluation is significant
       ((header-code
@@ -170,6 +176,18 @@
          (sedna:read-n-chars 4 input-port))))
     (values header-code
             (sedna:read-n-chars body-size input-port))))
+
+; Reads the first package after packages with sedna:ItemPart and sedna:ItemEnd
+; header codes.
+; Returns: (values header-code body-char-list)
+(define (sedna:read-package-after-item-parts input-port)
+  (call-with-values
+   (lambda () (sedna:read-package-as-chars input-port))
+   (lambda (header-code body-char-list)
+     (if
+      (or (= header-code sedna:ItemPart) (= header-code sedna:ItemEnd))
+      (sedna:read-package-after-item-parts input-port)
+      (values header-code body-char-list)))))
 
 
 ;==========================================================================
@@ -363,20 +381,20 @@
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
     (sedna:write-package-as-bytes sedna:CloseConnection '() out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (sedna:close-tcp-connection out)  ; Close the connection
-     (cond
-       ((or (= code sedna:CloseConnectionOk)
-            (= code sedna:TransactionRollbackBeforeClose))        
-        #t)
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))
-       (else
-        (sedna:raise-exn
-         "sedna:disconnect-from-database: Unexpected header code from server: "
-         (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (sedna:close-tcp-connection out)  ; Close the connection
+       (cond
+         ((or (= code sedna:CloseConnectionOk)
+              (= code sedna:TransactionRollbackBeforeClose))        
+          #t)
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))
+         (else
+          (sedna:raise-exn
+           "sedna:disconnect-from-database: Unexpected header code from server: "
+           (number->string code))))))))
 
 
 ;==========================================================================
@@ -402,22 +420,22 @@
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
     (sedna:write-package-as-bytes sedna:BeginTransaction '() out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (cond
-       ((= code sedna:BeginTransactionOk)
-        #t)
-       ((= code sedna:BeginTransactionFailed)
-        (sedna:raise-exn
-         "sedna:begin-transaction: Begin transaction failed")
-        #f)        
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))       
-       (else
-        (sedna:raise-exn
-         "sedna:begin-transaction: Unexpected header code from server: "
-         (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (cond
+         ((= code sedna:BeginTransactionOk)
+          #t)
+         ((= code sedna:BeginTransactionFailed)
+          (sedna:raise-exn
+           "sedna:begin-transaction: Begin transaction failed")
+          #f)        
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))       
+         (else
+          (sedna:raise-exn
+           "sedna:begin-transaction: Unexpected header code from server: "
+           (number->string code))))))))
     
 ; End transaction
 ;  action ::= 'COMMIT | 'ROLLBACK
@@ -428,38 +446,38 @@
      (let ((in (sedna:connection-input connection))
            (out (sedna:connection-output connection)))
        (sedna:write-package-as-bytes sedna:CommitTransaction '() out)
-       (let-values*
-        (((code body-chars)
-          (sedna:read-package-as-chars in)))
-        (cond
-          ((= code sedna:CommitTransactionOk)
-           #t)
-          ((= code sedna:CommitTransactionFailed)
-           (sedna:raise-with-info "Transaction commit failed" body-chars))
-          ((= code sedna:ErrorResponse)
-           (sedna:raise-server-error body-chars))       
-          (else
-           (sedna:raise-exn
-            "sedna:end-transaction: Unexpected header code from server: "
-            (number->string code)))))))
+       (call-with-values
+        (lambda () (sedna:read-package-after-item-parts in))
+        (lambda (code body-chars)
+          (cond
+            ((= code sedna:CommitTransactionOk)
+             #t)
+            ((= code sedna:CommitTransactionFailed)
+             (sedna:raise-with-info "Transaction commit failed" body-chars))
+            ((= code sedna:ErrorResponse)
+             (sedna:raise-server-error body-chars))       
+            (else
+             (sedna:raise-exn
+              "sedna:end-transaction: Unexpected header code from server: "
+              (number->string code))))))))
     ((eq? action 'ROLLBACK)
      (let ((in (sedna:connection-input connection))
            (out (sedna:connection-output connection)))
        (sedna:write-package-as-bytes sedna:RollbackTransaction '() out)
-       (let-values*
-        (((code body-chars)
-          (sedna:read-package-as-chars in)))
-        (cond
-          ((= code sedna:RollbackTransactionOk)
-           #t)
-          ((= code sedna:RollbackTransactionFailed)
-           (sedna:raise-with-info "Transaction rollback failed" body-chars))
-          ((= code sedna:ErrorResponse)
-           (sedna:raise-server-error body-chars))
-          (else
-           (sedna:raise-exn
-            "sedna:end-transaction: Unexpected header code from server: "
-            (number->string code)))))))
+       (call-with-values
+        (lambda () (sedna:read-package-after-item-parts in))
+        (lambda (code body-chars)
+          (cond
+            ((= code sedna:RollbackTransactionOk)
+             #t)
+            ((= code sedna:RollbackTransactionFailed)
+             (sedna:raise-with-info "Transaction rollback failed" body-chars))
+            ((= code sedna:ErrorResponse)
+             (sedna:raise-server-error body-chars))
+            (else
+             (sedna:raise-exn
+              "sedna:end-transaction: Unexpected header code from server: "
+              (number->string code))))))))
     (else
      (sedna:raise-exn "sedna:end-transaction: unknown action specified")
      #f)))
@@ -546,8 +564,6 @@
 
 ; Several constants for package header codes
 (define sedna:GetNextItem 310)
-(define sedna:ItemPart 360)
-(define sedna:ItemEnd 370)
 (define sedna:ResultEnd 375)
 
 ; Reads the next item from the connection.
@@ -729,72 +745,72 @@
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
     (sedna:write-query-out query #f out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (cond
-       ((= code sedna:QuerySucceeded)
-        (sedna:get-next-xml-item connection))
-       ((= code sedna:QueryFailed)        
-        (sedna:raise-exn
-         "sedna:execute-query-xml: " (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:UpdateSucceeded)
-        #t)
-       ((= code sedna:UpdateFailed)
-        (sedna:raise-exn
-         "sedna:execute-query: Update failed"
-         (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:BulkLoadFileName)
-        (let-values*
-         (((filename dummy)
-           (sedna:extract-string body-chars)))
-         (sedna:bulk-load-file filename connection)))
-       ((= code sedna:BulkLoadFromStream)
-        (sedna:bulk-load-port (current-input-port) connection))      
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))       
-       (else
-        (sedna:raise-exn
-         "sedna:execute-query-xml: Unexpected header code from server: "
-         (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (cond
+         ((= code sedna:QuerySucceeded)
+          (sedna:get-next-xml-item connection))
+         ((= code sedna:QueryFailed)        
+          (sedna:raise-exn
+           "sedna:execute-query-xml: " (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:UpdateSucceeded)
+          #t)
+         ((= code sedna:UpdateFailed)
+          (sedna:raise-exn
+           "sedna:execute-query: Update failed"
+           (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:BulkLoadFileName)
+          (let-values*
+           (((filename dummy)
+             (sedna:extract-string body-chars)))
+           (sedna:bulk-load-file filename connection)))
+         ((= code sedna:BulkLoadFromStream)
+          (sedna:bulk-load-port (current-input-port) connection))      
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))       
+         (else
+          (sedna:raise-exn
+           "sedna:execute-query-xml: Unexpected header code from server: "
+           (number->string code))))))))
 
 ; Execute a query
 (define (sedna:execute-query connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
     (sedna:write-query-out query #t out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (cond
-       ((= code sedna:QuerySucceeded)
-        (sedna:get-next-item connection))
-       ((= code sedna:QueryFailed)
-        (sedna:raise-exn
-         "sedna:execute-query: " (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:UpdateSucceeded)
-        #t)
-       ((= code sedna:UpdateFailed)
-        (sedna:raise-exn
-         "sedna:execute-query: Update failed"
-         (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:BulkLoadFileName)
-        (let-values*
-         (((filename dummy)
-           (sedna:extract-string body-chars)))         
-         (sedna:bulk-load-file filename connection)))
-       ((= code sedna:BulkLoadFromStream)
-        (sedna:bulk-load-port (current-input-port) connection))       
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))       
-       (else
-        (sedna:raise-exn
-         "sedna:execute-query: Unexpected header code from server: "
-         (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (cond
+         ((= code sedna:QuerySucceeded)
+          (sedna:get-next-item connection))
+         ((= code sedna:QueryFailed)
+          (sedna:raise-exn
+           "sedna:execute-query: " (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:UpdateSucceeded)
+          #t)
+         ((= code sedna:UpdateFailed)
+          (sedna:raise-exn
+           "sedna:execute-query: Update failed"
+           (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:BulkLoadFileName)
+          (let-values*
+           (((filename dummy)
+             (sedna:extract-string body-chars)))         
+           (sedna:bulk-load-file filename connection)))
+         ((= code sedna:BulkLoadFromStream)
+          (sedna:bulk-load-port (current-input-port) connection))       
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))       
+         (else
+          (sedna:raise-exn
+           "sedna:execute-query: Unexpected header code from server: "
+           (number->string code))))))))
 
 
 ;==========================================================================
@@ -974,36 +990,36 @@
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
     (sedna:write-query-out query #f out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (cond
-       ((= code sedna:QuerySucceeded)
-        (sedna:get-next-xml-stream-item connection))
-       ((= code sedna:QueryFailed)        
-        (sedna:raise-exn
-         "sedna:execute-query-xml: " (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:UpdateSucceeded)
-        #t)
-       ((= code sedna:UpdateFailed)
-        (sedna:raise-exn
-         "sedna:execute-query: Update failed"
-         (sedna:error-code+info body-chars))
-        #f)
-       ((= code sedna:BulkLoadFileName)
-        (let-values*
-         (((filename dummy)
-           (sedna:extract-string body-chars)))
-         (sedna:bulk-load-file filename connection)))
-       ((= code sedna:BulkLoadFromStream)
-        (sedna:bulk-load-port (current-input-port) connection))      
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))       
-       (else
-        (sedna:raise-exn
-         "sedna:execute-query-xml: Unexpected header code from server: "
-         (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (cond
+         ((= code sedna:QuerySucceeded)
+          (sedna:get-next-xml-stream-item connection))
+         ((= code sedna:QueryFailed)        
+          (sedna:raise-exn
+           "sedna:execute-query-xml: " (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:UpdateSucceeded)
+          #t)
+         ((= code sedna:UpdateFailed)
+          (sedna:raise-exn
+           "sedna:execute-query: Update failed"
+           (sedna:error-code+info body-chars))
+          #f)
+         ((= code sedna:BulkLoadFileName)
+          (let-values*
+           (((filename dummy)
+             (sedna:extract-string body-chars)))
+           (sedna:bulk-load-file filename connection)))
+         ((= code sedna:BulkLoadFromStream)
+          (sedna:bulk-load-port (current-input-port) connection))      
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))       
+         (else
+          (sedna:raise-exn
+           "sedna:execute-query-xml: Unexpected header code from server: "
+           (number->string code))))))))
 
 
 ;==========================================================================
@@ -1026,18 +1042,18 @@
        "LOAD STDIN \"" document-name "\" \"" collection-name "\""))
      #t  ; result in the form of SXML
      out)
-    (let-values*
-     (((code body-chars)
-       (sedna:read-package-as-chars in)))
-     (cond       
-       ((= code sedna:BulkLoadFromStream)
-        (sedna:bulk-load-port port connection))
-       ((= code sedna:ErrorResponse)
-        (sedna:raise-server-error body-chars))      
-       (else
-        (sedna:raise-exn
-         "sedna:bulk-load-from-xml-stream: "
-         "Unexpected header code from server: " (number->string code)))))))
+    (call-with-values
+     (lambda () (sedna:read-package-after-item-parts in))
+     (lambda (code body-chars)
+       (cond       
+         ((= code sedna:BulkLoadFromStream)
+          (sedna:bulk-load-port port connection))
+         ((= code sedna:ErrorResponse)
+          (sedna:raise-server-error body-chars))      
+         (else
+          (sedna:raise-exn
+           "sedna:bulk-load-from-xml-stream: "
+           "Unexpected header code from server: " (number->string code))))))))
 
 
 ;==========================================================================
