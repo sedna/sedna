@@ -511,6 +511,7 @@ void PPFnReverse::next (tuple &t)
     		s->add(t);
     		pos++;
     	}
+    	first_time = false;
     }
     
     if (pos >= 0) s->get(t, pos--);
