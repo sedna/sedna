@@ -154,16 +154,12 @@ class NetOps {
             throws IOException, DriverException {
         int call_res;
 
-        for (int i = 0; i < 4; i++) {
-            if ((int_array[i] = (byte) bufInputStream.read()) == -1) {
-                throw new DriverException(DriverException.SE3007);
-            }
-        }
-
+        call_res = bufInputStream.read(int_array, 0, 4);
+        if (call_res != 4) throw new DriverException(DriverException.SE3007);
+        
         int integer = (((int_array[0] & 0xff) << 24)
                        | ((int_array[1] & 0xff) << 16)
                        | ((int_array[2] & 0xff) << 8) | (int_array[3] & 0xff));
-
         return integer;
     }
 
@@ -174,7 +170,6 @@ class NetOps {
         try {
             msg.instruction = NetOps.readInt(bufInputStream);
             msg.length      = NetOps.readInt(bufInputStream);
-
             if (msg.length > SEDNA_SOCKET_MSG_BUF_SIZE) {
                 throw new DriverException(DriverException.SE3012);
             }
