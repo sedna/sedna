@@ -384,34 +384,33 @@ schema_node* get_system_doc(const char* title)
 		func=get_schema;
 		param=title+8;
 	}
+
+    if (func == NULL)
+        throw USER_EXCEPTION2(SE2006, (std::string("Document '") + title + "'").c_str());
+
 	
-	if (func!=NULL)	
-	{
-		local_lock_mrg->lock(lm_s);
-		doc_schema_node* scm=	doc_schema_node::init(false);
-		xptr blk=createNewBlock(scm,false);
-		node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
-		n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
-		block_hdr->free_first=*((shft*)node);
-		block_hdr->desc_first=CALCSHIFT(node,block_hdr);
-		block_hdr->desc_last=block_hdr->desc_first;
-		block_hdr->count=1;
-		block_hdr->snode->nodecnt++;
-		d_dsc::init(node);
-		xptr nodex=ADDR2XPTR(node);
-		xptr tmp=add_record_to_indirection_table(nodex);
-		CHECKP(nodex);
-		VMM_SIGNAL_MODIFICATION(nodex);
-		node->indir=tmp;
-		nid_create_root(nodex,false);
-		CHECKP(nodex);
-		(*func)(nodex,param);
-		if (sys_schema==NULL) sys_schema=new std::vector<schema_node*>;
-		sys_schema->push_back(scm);
-		return scm;
-	}
-	else
-	return NULL;
+	local_lock_mrg->lock(lm_s);
+	doc_schema_node* scm=	doc_schema_node::init(false);
+	xptr blk=createNewBlock(scm,false);
+	node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
+	n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
+	block_hdr->free_first=*((shft*)node);
+	block_hdr->desc_first=CALCSHIFT(node,block_hdr);
+	block_hdr->desc_last=block_hdr->desc_first;
+	block_hdr->count=1;
+	block_hdr->snode->nodecnt++;
+	d_dsc::init(node);
+	xptr nodex=ADDR2XPTR(node);
+	xptr tmp=add_record_to_indirection_table(nodex);
+	CHECKP(nodex);
+	VMM_SIGNAL_MODIFICATION(nodex);
+	node->indir=tmp;
+	nid_create_root(nodex,false);
+	CHECKP(nodex);
+	(*func)(nodex,param);
+	if (sys_schema==NULL) sys_schema=new std::vector<schema_node*>;
+	sys_schema->push_back(scm);
+	return scm;
 }
 void clear_temporary(void)
 {
