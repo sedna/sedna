@@ -541,21 +541,21 @@
                      (ts-else (l2p:tuple-size else-expr))
                     )
 
-                (if
-                 (or (eq? ts-then ts-else)
-                     (equal? else-expr '(1 (PPNil))))
-                 `(,ts-then (PPIf
-                             ,(l2p:any-lr-node2por (car node))
-                             ,then-expr
-                             ,else-expr
-                             )
-                   )
-                 (cl:signal-input-error
-                  SE4008
-                  "bad input logical plan: tuple-size of then expr not equal to tuple-size of else expr")
-                )
-              )
-             )
+                (cond
+                  ((equal? else-expr '(1 (PPNil)))
+                   `(,ts-then (PPIf
+                               ,(l2p:any-lr-node2por (car node))
+                               ,then-expr
+                               (,ts-then (PPNil)))))                   
+                  ((= ts-then ts-else)
+                   `(,ts-then (PPIf
+                               ,(l2p:any-lr-node2por (car node))
+                               ,then-expr
+                               ,else-expr)))
+                  (else
+                   (cl:signal-input-error
+                    SE4008
+                    "bad input logical plan: tuple-size of then expr not equal to tuple-size of else expr")))))
              
              ; *** General Comp ***
              ((eq? op-name '=@)
