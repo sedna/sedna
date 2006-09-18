@@ -710,6 +710,16 @@
               `(1 (PPDmTypedValue ,(l2p:any-lr-node2por (car node))))
              )
              
+             ((eq? op-name '!fn!reverse)
+              `(1 (PPFnReverse ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!subsequence)
+              `(1 (PPFnSubsequence ,@(map l2p:any-lr-node2por node)))
+             )
+             ((eq? op-name '!fn!exists)
+              `(1 (PPFnExists ,(l2p:any-lr-node2por (car node))))
+             )
+             
              ; *** sum ***
              ((eq? op-name '!fn!sum)
               `(1 (PPFnSum ,(l2p:any-lr-node2por (car node))))
