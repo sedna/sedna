@@ -615,7 +615,7 @@ void PPFnSubsequence::next(tuple &t)
         
         tc = start_child.get(st);
         if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the second argument to fn:subsequence.");
-        double start_pos = floor(get_numeric_value(tc) + 0.5);  //floor(x+0.5) is equal there to fn:round
+        start_pos = floor(get_numeric_value(tc) + 0.5);  //floor(x+0.5) is equal there to fn:round
         
         start_child.op->next(st);
         if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument to fn:subsequence.");
@@ -629,23 +629,26 @@ void PPFnSubsequence::next(tuple &t)
             
             tc = start_child.get(lt);
             if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the third argument to fn:subsequence.");
-            double length = floor(get_numeric_value(tc) + 0.5); //floor(x+0.5) is equal there to fn:round
+            length = floor(get_numeric_value(tc) + 0.5); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(lt);
             if (!(lt.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument to fn:subsequence.");
         }
         
-        current_pos = 1;              //position is indexed from 1 in specificaion
+        current_pos = 0;           
     }
-
-    if( !is_length || length >= 1 )   //if length is given it should be greater or equal than 1 to have non-empty sequence as result
+    
+    if(!is_length || length >= 1)  //if length is given it should be greater or equal than 1 to have non-empty sequence as result
     {
-        seq_child.op->next(t);
-        current_pos ++;
+       bool length_check = true;   //allows to break evaluation before all input is passed 
 
-        if( !t.is_eos() && start_pos <= current_pos)             //[$startingLoc le position()]
-            if( !is_length || current_pos < start_pos + length ) //if length is given [position() lt $startingLoc + $length]
-                return;
+       while( (!t.is_eos()) && length_check )
+       {
+           seq_child.op->next(t);
+           current_pos++;
+           bool length_check = is_length ? (current_pos < start_pos + length) : true;
+           if((!t.is_eos()) && start_pos <= current_pos && length_check) return;
+       }
     }
     
     t.set_eos();
