@@ -1161,32 +1161,56 @@
 ;  var-name ::= Scheme symbol
 ;  var-type ::= 'sa:atomic | 'sa:nodes
 (define (sa:analyze-formal-args arg-lst ns-binding default-ns)
-  (if
-   (or (not (list? arg-lst))
-       (memv #f (map pair? arg-lst)))  ; not a proper arg-lst
-   (cl:signal-input-error SE5019 arg-lst)
-   (let ((vars
-          (map
-           (lambda (pair)
-             (let ((type (sa:analyze-seq-type
-                          (car pair) ns-binding default-ns)))
-               (cond
-                 ((not type)  ; error discovered
-                  #f)
-                 ;((sa:var? (cadr pair))
-                 ; (cons (cadr pair) (cdr type)))
-                 ((eq? (sa:op-name (cadr pair)) 'var)
-                  (let ((var-name
-                         (sa:expand-var-name 
-                          (car (sa:op-args (cadr pair)))
-                          ns-binding default-ns)))
-                    (and
-                     var-name                    
-                     (cons var-name (cdr type)))))
-                 (else
-                  (cl:signal-input-error SE5020 (cadr pair))))))
-           arg-lst)))
-     (if (memv #f vars) #f vars))))
+  (letrec ((list-contains-equal-members
+            ; If the list contains `equal?' members, returns a member that
+            ; has a multiple occurrence in the list.
+            ; Otherwise, returns #f
+            (lambda (lst)
+              (cond
+                ((null? lst) #f)
+                ((member (car lst) (cdr lst))
+                 (car lst))
+                (else
+                 (list-contains-equal-members (cdr lst)))))))
+    (if
+     (or (not (list? arg-lst))
+         ; not a proper arg-lst
+         (memv #f (map pair? arg-lst)))
+     (cl:signal-input-error SE5019 arg-lst)
+     (let ((vars
+            (map
+             (lambda (pair)
+               (let ((type (sa:analyze-seq-type
+                            (car pair) ns-binding default-ns)))
+                 (cond
+                   ((not type)  ; error discovered
+                    #f)
+                   ;((sa:var? (cadr pair))
+                   ; (cons (cadr pair) (cdr type)))
+                   ((eq? (sa:op-name (cadr pair)) 'var)
+                    (let ((var-name
+                           (sa:expand-var-name 
+                            (car (sa:op-args (cadr pair)))
+                            ns-binding default-ns)))
+                      (and
+                       var-name
+                       (cons var-name (cdr type)))))
+                   (else
+                    (cl:signal-input-error SE5020 (cadr pair))))))
+             arg-lst)))
+       (and
+        (not (memv #f vars))
+        (cond  ; equal expanded variable names?
+          ((list-contains-equal-members (map car vars))
+           => (lambda (name-pair)
+                (cl:signal-user-error
+                 XQST0089
+                 (if  ; no namespace in variable name
+                  (string=? (car name-pair) "")
+                  (cadr name-pair)
+                  (string-append (car name-pair) ":" (cadr name-pair))))))
+          (else
+           vars)))))))
 
 ; Function return type
 ; Returns that type or #f
