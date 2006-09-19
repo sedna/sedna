@@ -215,3 +215,15 @@
        (!se!positional-var (var ("" "n"))))
       (+@ (var ("" "x")) (const (type !xs!integer) 4)))))))
 
+(sa:analyze-query
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (sequence (const (type !xs!integer) "6") (const (type !xs!integer) "7"))
+     (fun-def
+      ((xs:anyType (var ("" "i"))) (se:positional-var (var ("" "i"))))
+      (if@
+       (>@ (var ("" "i")) (const (type !xs!decimal) "6.5"))
+       (var ("" "i"))
+       (sequence)))))))
