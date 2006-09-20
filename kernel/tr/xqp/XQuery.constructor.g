@@ -7,6 +7,8 @@ class XQueryParser{
 constructor!:
 	  dec:dirElemConstructor <<#0=#dec;>>
 	| cc:computedConstructor <<#0=#cc;>>
+//	| dpic:dirPIConstructor	 <<#0=#dpic;>>
+//	| dcc:dirCommentConstructor  <<#0=#dcc;>>
 //	| xc:xmlComment          <<#0=#xc;>>
 //	| xpi:xmlPI              <<#0=#xpi;>>
 //	| cdc:cdataSection       <<#0=#cdc;>>
@@ -167,7 +169,13 @@ elementContent!:
 	>>
 ;
 
+/*
+dirPIConstructor!:
+;
 
+dirCommentConstructor!:
+;
+*/
 //enclosedExpr rule is in the XQuery.common.g file
 
 /*
@@ -392,7 +400,7 @@ computedConstructor!:
 	  cec:compElemConstructor  <<#0=#cec;>>
 	| cac:compAttrConstructor  <<#0=#cac;>>
 //	| cnsc:compNSConstructor   <<#0=#cnsc;>>
-	| cdc:compDocConstructor   <<#0=#cdc;>>
+//	| cdc:compDocConstructor   <<#0=#cdc;>>
 	| ctc:compTextConstructor  <<#0=#ctc;>>
 	| cxpi:compXmlPI           <<#0=#cxpi;>>
 	| cxc:compXmlComment       <<#0=#cxc;>>
