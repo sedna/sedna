@@ -392,10 +392,10 @@ computedConstructor!:
 	  cec:compElemConstructor  <<#0=#cec;>>
 	| cac:compAttrConstructor  <<#0=#cac;>>
 //	| cnsc:compNSConstructor   <<#0=#cnsc;>>
-//	| compDocConstructor
-//	| ctc:compTextConstructor  <<#0=#ctc;>>
-//	| compXmlPI
-//	| compXmlComment
+	| cdc:compDocConstructor   <<#0=#cdc;>>
+	| ctc:compTextConstructor  <<#0=#ctc;>>
+	| cxpi:compXmlPI           <<#0=#cxpi;>>
+	| cxc:compXmlComment       <<#0=#cxc;>>
 
 ;
 
@@ -443,7 +443,6 @@ compAttrConstructor!:
 ;
 
 /*
-Not presented in current specification
 compNSConstructor!:
 	NAMESPACE n:NCNAME LBRACE e:expr RBRACE
 	<<#0=#(#[AST_NAMESPACE],
@@ -452,11 +451,42 @@ compNSConstructor!:
 	>>
 ;
 */
-/*
+
+compDocConstructor!:
+	LDOCUMENT LBRACE e:expr RBRACE
+
+	<<#0=#(#[AST_DOCUMENT_CONSTR], #e);>>
+	
+;
+
 compTextConstructor!:
 	TEXT LBRACE e:expr RBRACE
 
-	<<#0=#(#[AST_TEXT], #e);>>
+	<<#0=#(#[AST_TEXT_CONSTR], #e);>>
 ;
-*/
+
+compXmlPI!:
+	PROCESSING_INSTRUCTION 
+	(  n:NCNAME 
+	 | (LBRACE e1:expr RBRACE)
+	)
+	LBRACE { e2:expr } RBRACE
+	<<
+	  if (#e1 == NULL)
+	  {
+	     #0=#(#[AST_PI_CONSTR], #[$n->getText(), AST_LOCAL_NAME], #e2);
+	  }
+	  else
+	  {
+	     #0=#(#[AST_PI_CONSTR], #e1, #e2);
+	  }
+	>>
+;
+
+compXmlComment!:
+	COMMENT_ LBRACE e:expr RBRACE
+
+	<<#0=#(#[AST_COMMENT_CONSTR], #e);>>
+;
+
 }
