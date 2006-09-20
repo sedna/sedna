@@ -544,7 +544,22 @@ static bool check_constraints_for_xs_positiveInteger(const __int64& value)
 {
     return value > 0;
 }
-            
+/*
+template <class Iterator>
+static inline void have_spaces(const Iterator &start, const Iterator &end, bool *res)
+{
+	(*res) = false;
+	while (start < end)
+	{
+		if (*start == ' ')
+        {
+			(*res) = true;
+            break;
+        }
+		start++;
+	}
+}
+*/            
 static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type)
 {
     if (TT == base_type) return SV;
@@ -579,6 +594,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     {
         // !!! Fix me: check constraints
         sat = true;
+        //STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(count_spaces, SV, &sat);
     }
 
     if (!sat) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
