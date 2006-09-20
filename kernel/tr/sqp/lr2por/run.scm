@@ -329,3 +329,16 @@
         (xs:anyType (var ("" "u")))
         (se:positional-var (var ("" "v"))))
        (sequence (var ("" "i")) (var ("" "j")) (var ("" "u")) (var ("" "v")))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (element
+      (const (type !xs!string) "non-stable")
+      (comment
+       (sequence
+         (const (type !xs!integer) "4")
+         (const (type !xs!integer) "5")
+         (const (type !xs!integer) "6"))))))))

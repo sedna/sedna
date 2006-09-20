@@ -448,11 +448,28 @@
               )
              )
              
+             ; *** Processing-instruction (PI) constructor ***
+             ; Analogue of attribute constructor
+             ((eq? op-name 'pi)
+              (if
+               (and (eq? (caar node) `const)
+                    (eq? (cadr (cadr (car node))) '!xs!QName))
+               `(1 (PPPI
+                    ,(caddr (car node)) ,(l2p:any-lr-node2por (cadr node))))
+               `(1 (PPPI
+                    ,(l2p:any-lr-node2por (car node))
+                    ,(l2p:any-lr-node2por (cadr node))))))
+             
              ; *** namespace ***
              ((eq? op-name 'namespace)
-              `(1 (PPNamespace ,(caddr (car node)) ,(l2p:any-lr-node2por (cadr node)))))
-                           
-
+              `(1 (PPNamespace
+                   ,(caddr (car node))
+                   ,(l2p:any-lr-node2por (cadr node)))))
+             
+             ; *** comment constructor ***
+             ((eq? op-name 'comment)
+              `(1 (PPComment
+                   ,(l2p:any-lr-node2por (car node)))))
 
              ; *** some ***
              ((eq? op-name 'some)
