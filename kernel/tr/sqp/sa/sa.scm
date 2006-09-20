@@ -265,7 +265,9 @@
       (sa:analyze-element-constructor expr vars funcs ns-binding default-ns))
      ((attribute pi namespace)
       (sa:attribute-pi-namespace expr vars funcs ns-binding default-ns))
-     ((document text comment)
+     ((; document
+       ; text ; computed text node constructors not supported yet
+       comment)
       (sa:document-text-comment expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.10 FLWOR Operations

@@ -1079,6 +1079,47 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                               make_pp_op(cxt, lst->at(2).internal.list),lst->at(3).internal.b);
         }
     }
+    else if (op == "PPPI")
+    {
+        if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+			|| lst->at(3).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "32.1");
+
+        scheme_list *pi_target_lst = lst->at(1).internal.list;
+
+        if (   pi_target_lst->size() == 2
+            && pi_target_lst->at(0).type == SCM_STRING
+            && pi_target_lst->at(1).type == SCM_STRING)
+        {
+            string target = string(pi_target_lst->at(0).internal.str) + ":"
+                            + string(pi_target_lst->at(1).internal.str);
+
+            opit = new PPPIConstructor( cxt,
+                                        target.c_str(),
+                                        make_pp_op(cxt, lst->at(2).internal.list),
+                                        lst->at(3).internal.b);
+        }
+        else
+        {
+            opit = new PPPIConstructor( cxt,
+                                        make_pp_op(cxt, lst->at(1).internal.list),
+                                        make_pp_op(cxt, lst->at(2).internal.list),
+                                        lst->at(3).internal.b);
+        }
+    }
+	else if (op == "PPComment")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "32.2");
+
+        opit = new PPCommentConstructor(cxt,
+                                        make_pp_op(cxt, lst->at(1).internal.list),
+                                        lst->at(2).internal.b);
+    }
     else if (op == "PPFnNot")
     {
         if (   lst->size() != 2
