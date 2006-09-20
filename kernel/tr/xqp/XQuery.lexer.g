@@ -94,7 +94,7 @@ virtual void errstd(const char *s){
 #token COMMENT_ "comment"
 #token NODE "node"
 #token DOCUMENT "document\-node"
-#token LDOCUMENT "document"
+//#token LDOCUMENT "document"
 #token CHILD "child"
 #token DESCENDANT "descendant"
 #token SELF "self"
