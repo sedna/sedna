@@ -150,4 +150,35 @@ namespaceConstructor! [in_context in_c] >[out_context out_c]:
 	    #attrs=#(#["namespace"], nc_name, #(#[], #["sequence"]));
 	>>
 ;
+
+docConstructor! [in_context in_c] >[out_context out_c]:
+
+	#(AST_DOCUMENT_CONSTR e:expr[in_c] >[out_c])
+
+	<<#docConstructor=#(#["document"], e);>>
+;
+
+commentConstructor! [in_context in_c] >[out_context out_c]:
+
+	#(AST_COMMENT_CONSTR e:expr[in_c] >[out_c])
+
+	<<#commentConstructor=#(#["comment"], e);>>
+;
+
+textConstructor! [in_context in_c] >[out_context out_c]:
+
+	#(AST_TEXT_CONSTR e:expr[in_c] >[out_c])
+
+	<<#textConstructor=#(#["text"], e);>>
+;
+
+piConstructor! [in_context in_c] >[out_context out_c]:
+	#(AST_PI_CONSTR (n:AST_LOCAL_NAME | e1:expr[in_c] >[out_c]) {e2:expr[in_c] >[out_c]})
+	<<if (e1 == NULL)
+	     #piConstructor=#(#["pi"], #(#["const"], #(#["type"], #["!xs!NCName"]), #[n->getText()]), e2); 
+	  else
+	     #piConstructor=#(#["pi"], e1, e2); 
+	>>
+;
+
 	
