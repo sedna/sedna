@@ -191,7 +191,9 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 	CHECKP(node);
 	xptr res;
 #ifdef SE_ENABLE_TRIGGERS
-    if (apply_before_insert_triggers(left, right, parent, node) == XNULL) return left;
+    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+    node = apply_per_node_triggers(node, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    if (node == XNULL) return left;
 #endif
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
@@ -330,7 +332,8 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
  update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
 #ifdef SE_ENABLE_TRIGGERS
- apply_after_insert_triggers(left, right, parent, res);
+ if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+ apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
  CHECKP(res);
  return res;
@@ -397,8 +400,9 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 	CHECKP(node);
 	xptr res;
 #ifdef SE_ENABLE_TRIGGERS
-    node = apply_before_insert_triggers(left, right, parent, node);
-    if(node == XNULL) return left;
+    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+    node = apply_per_node_triggers(node, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    if (node == XNULL) return left;
 #endif
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
@@ -535,7 +539,8 @@ case xml_namespace:
  update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_after_insert_triggers(left, right, parent, res);
+    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+    apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
  CHECKP(res);
 	return res;

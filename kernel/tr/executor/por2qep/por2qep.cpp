@@ -2169,6 +2169,24 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                            make_pp_op(cxt, lst->at(1).internal.list),
                            make_pp_op(cxt, lst->at(2).internal.list));
     }
+    else if (op == "PPXptr")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_SYMBOL
+           ) throw USER_EXCEPTION2(SE1004, "103");
+
+        trigger_parameter_type var_type;
+        if (strcmp(lst->at(1).internal.symb, "NEW") == 0) var_type = TRIGGER_PARAMETER_NEW;
+        else if (strcmp(lst->at(1).internal.symb, "OLD") == 0) var_type = TRIGGER_PARAMETER_OLD;
+        else if (strcmp(lst->at(1).internal.symb, "WHERE") == 0) var_type = TRIGGER_PARAMETER_WHERE;
+        else throw USER_EXCEPTION2(SE1004, "104");
+
+        PPXptr *pp_xptr = new PPXptr(cxt, 
+                                     var_type);
+
+        if (qep_parameters) qep_parameters->push_back(pp_xptr);
+        opit = pp_xptr;
+    }
     else if (op == "PPCheckpoint")
     {
         if (   lst->size() != 1

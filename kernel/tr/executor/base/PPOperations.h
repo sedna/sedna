@@ -86,6 +86,7 @@
 #include "PPUp.h"
 #include "PPStringFuncs.h"
 #include "PPRange.h"
+#include "PPXptr.h"
 #include "PPCheckpoint.h"
 #include "PPFilterEL.h"
 #include "PPFnDeepEqual.h"

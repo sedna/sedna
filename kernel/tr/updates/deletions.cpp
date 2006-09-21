@@ -178,7 +178,7 @@ void delete_deep(PPOpIn arg)
 		}
 		while (nid_ancestor(node,*it));
 #ifdef SE_ENABLE_TRIGGERS
-        if (apply_before_delete_triggers(node) != XNULL)
+        if (apply_per_node_triggers(XNULL, node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
 #endif
     		delete_node(node);
 		if (mark) break;

@@ -1721,9 +1721,9 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 	}
 	
 #ifdef SE_ENABLE_TRIGGERS
-    apply_after_delete_triggers(nodex, removeIndirection(par_indir));
+    apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
     if (inserted_nodex != XNULL)
-        apply_after_replace_triggers(nodex, inserted_nodex);
+        apply_per_node_triggers(nodex, inserted_nodex, XNULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
 	
 	//text value deleting
