@@ -239,7 +239,7 @@ char *get_xs_boolean_lexical_representation(char *s, bool b)
     return b ? strcpy(s, "true") : strcpy(s, "false");
 }
 
-char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d, xmlscm_type xtype)
+char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d)
 {
     d.get_string_value(s);
     return s;
@@ -258,15 +258,25 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
         case xs_gMonth            : 
         case xs_dateTime          : 
         case xs_time              : 
-        case xs_date              : 
-        case xs_duration          : 
-        case xs_yearMonthDuration :
-        case xs_dayTimeDuration   : if (ptype == xml)
-                                        return get_xs_dateTime_lexical_representation(s, c.get_xs_dateTime(), c.get_atomic_type());
+        case xs_date              : if (ptype == xml)
+                                        return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
                                     else
                                     {
                                         s[0] = '\"';
-                                        get_xs_dateTime_lexical_representation(s + 1, c.get_xs_dateTime(), c.get_atomic_type());
+                                        get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_dateTime(), c.get_atomic_type()));
+                                        int len = strlen(s);
+                                        s[len] = '\"';
+                                        s[len + 1] = '\0';
+                                    }
+
+        case xs_duration          : 
+        case xs_yearMonthDuration :
+        case xs_dayTimeDuration   : if (ptype == xml)
+                                        return get_xs_dateTime_lexical_representation(s, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
+                                    else
+                                    {
+                                        s[0] = '\"';
+                                        get_xs_dateTime_lexical_representation(s + 1, XMLDateTime(c.get_xs_duration(), c.get_atomic_type()));
                                         int len = strlen(s);
                                         s[len] = '\"';
                                         s[len + 1] = '\0';

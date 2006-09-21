@@ -45,8 +45,14 @@ tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtyp
         case xs_dayTimeDuration   : res.parseDayTimeDuration(t); break;
         default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_to_xs_dateTime");
     }
-		
-    return tuple_cell::atomic(xtype, res.getRawData());
+
+    if (xtype == xs_duration || xtype == xs_yearMonthDuration || xtype == xs_dayTimeDuration)
+    	return tuple_cell::atomic(res.getPackedDuration(), xtype);
+    else
+   {
+	res = XMLDateTime( res.getPackedDateTime(), xtype );
+    	return tuple_cell::atomic(res.getPackedDateTime(), xtype);
+   }
 }
 
 inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
@@ -101,7 +107,7 @@ inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c, xmlscm_typ
 
 inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype, xmlscm_type res_type)
 {
-    get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, c.get_xs_dateTime(), xtype);
+    get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
     return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
@@ -308,6 +314,18 @@ tuple_cell cast_primitive_to_xs_integer(const tuple_cell &c)
     }
 }
 
+tuple_cell cast_xs_dateTime_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
+{
+	XMLDateTime dt1(c.get_xs_dateTime(), c.get_atomic_type());
+	return tuple_cell::atomic(dt1.convertTo(type).getPackedDateTime(), type); 
+}
+
+tuple_cell cast_xs_duration_to_xs_duration(const tuple_cell &c, xmlscm_type type)
+{
+	XMLDateTime dt1(c.get_xs_duration(), c.get_atomic_type());
+	return tuple_cell::atomic(dt1.convertTo(type).getPackedDuration(), type); 
+}
+
 tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
 {
     U_ASSERT(c.is_atomic());
@@ -325,7 +343,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_yearMonthDuration: 
                 case xs_dayTimeDuration  : return (c.get_atomic_type() == type) ? 
                                                    c : 
-                                                   tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+						   cast_xs_duration_to_xs_duration(c, type);
                 default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
             }
         case xs_dateTime         :
@@ -338,7 +356,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_gYear            : 
                 case xs_gMonthDay        : 
                 case xs_gDay             : 
-                case xs_gMonth           : return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+                case xs_gMonth           : return cast_xs_dateTime_to_xs_dateTime(c, type);
                 default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
             }
 
@@ -354,7 +372,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_gYear            : 
                 case xs_gMonthDay        : 
                 case xs_gDay             : 
-                case xs_gMonth           : return tuple_cell::atomic(type, c.get_xs_dateTime().convertTo(type).getRawData());
+                case xs_gMonth           : return  cast_xs_dateTime_to_xs_dateTime(c, type);
                 default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
             }
 

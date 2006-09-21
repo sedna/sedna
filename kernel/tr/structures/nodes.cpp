@@ -168,7 +168,12 @@ int xmlscm_type_size(xmlscm_type xtype)
             if (!is_fixed_size_type(xtype)) 
                 return 0;
             else if (is_temporal_type(xtype)) 
-                return sizeof(int)*(XMLDateTime::TOTAL_FIELDS); // FIX ME: change this value after dateTime type will be rewritten
+	    {
+		if (xtype == xs_duration || xtype == xs_dayTimeDuration || xtype == xs_yearMonthDuration)
+		  return sizeof(xs_packed_duration);
+		else
+		  return sizeof(xs_packed_datetime);
+	    }	
             else if (is_derived_from_xs_integer(xtype)) 
                 return sizeof(__int64);
             else 

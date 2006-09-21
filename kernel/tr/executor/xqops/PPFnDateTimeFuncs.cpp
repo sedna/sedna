@@ -61,70 +61,94 @@ void PPFnDateTimeFunc::next  (tuple &t)
 	    switch (dateTimeFunc)
 	    {
 		case yearsFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_yearMonthDuration )
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+						
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getYears())));
+					break;
 		case yearFromDateTime:
 		case yearFromDate:
-					if (tc_type != xs_duration &&
-						tc_type != xs_yearMonthDuration &&
-						tc_type != xs_dateTime &&
+					if (tc_type != xs_dateTime &&
 						tc_type != xs_date )
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 						
-					t.copy(tuple_cell::atomic((__int64)(tc.get_xs_dateTime().getYears())));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getYears())));
 					break;
 		case monthsFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_yearMonthDuration )
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+					
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getMonths())));
+					break;
 		case monthFromDateTime:
 		case monthFromDate:
-					if (tc_type != xs_duration &&
-						tc_type != xs_yearMonthDuration &&
-						tc_type != xs_dateTime &&
+					if (tc_type != xs_dateTime &&
 						tc_type != xs_date )
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic((__int64)(tc.get_xs_dateTime().getMonths())));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMonths())));
 					break;
 		case daysFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_dayTimeDuration)
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+					
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getDays())));
+					break;
 		case dayFromDateTime:
 		case dayFromDate:
-					if (tc_type != xs_duration &&
-						tc_type != xs_dayTimeDuration &&
-						tc_type != xs_dateTime &&
-						tc_type != xs_date )
+					if (tc_type != xs_dateTime &&
+						tc_type != xs_date)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic((__int64)(tc.get_xs_dateTime().getDays())));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getDays())));
 					break;
 		case hoursFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_dayTimeDuration)
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+					
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getHours())));
+					break;
 		case hoursFromDateTime:
 		case hoursFromTime:
-					if (tc_type != xs_duration &&
-						tc_type != xs_dayTimeDuration &&
-						tc_type != xs_dateTime &&
+					if (tc_type != xs_dateTime &&
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic((__int64)(tc.get_xs_dateTime().getHours())));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getHours())));
 					break;
 		case minutesFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_dayTimeDuration)
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+					
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getMinutes())));
+					break;
 		case minutesFromDateTime:
 		case minutesFromTime:
-					if (tc_type != xs_duration &&
-						tc_type != xs_dayTimeDuration &&
-						tc_type != xs_dateTime &&
+					if (tc_type != xs_dateTime &&
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic((__int64)(tc.get_xs_dateTime().getMinutes())));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getMinutes())));
 					break;
 		case secondsFromDuration:
+					if (tc_type != xs_duration &&
+						tc_type != xs_dayTimeDuration)
+					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
+					
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_duration(), tc_type).getSeconds())));
+					break;
 		case secondsFromDateTime:
 		case secondsFromTime:
-					if (tc_type != xs_duration &&
-						tc_type != xs_dayTimeDuration &&
-						tc_type != xs_dateTime &&
+					if (tc_type != xs_dateTime &&
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic( tc.get_xs_dateTime().getSeconds()));
+					t.copy(tuple_cell::atomic((__int64)(XMLDateTime(tc.get_xs_dateTime(), tc_type).getSeconds())));
 					break;
 		case timezoneFromDateTime:
 		case timezoneFromDate:
@@ -134,8 +158,9 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic(xs_dayTimeDuration,
-							tc.get_xs_dateTime().getTimezone().getRawData()));
+					t.copy(tuple_cell::atomic(
+						XMLDateTime(tc.get_xs_dateTime(), tc_type).getTimezone().getPackedDateTime(),
+						xs_dayTimeDuration));
 					break;
 		case adjustDateTimeToTimezone:
 		case adjustDateToTimezone:
@@ -145,8 +170,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic(tc.get_atomic_type(), 
-							adjustToTimezone(tc.get_xs_dateTime()).getRawData()));
+					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(tc.get_xs_dateTime(), tc_type)).getPackedDateTime(), tc_type));
 					break;
 		default:		throw USER_EXCEPTION2(XPTY0004, "Invalid date/time function");
 		}
@@ -246,9 +270,9 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 					if (secondArgType != xs_dayTimeDuration)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed as second argument to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic(firstArgType,
-							adjustToTimezone(firstArg.get_xs_dateTime(), 
-								secondArg.get_xs_dateTime()).getRawData()));
+					t.copy(tuple_cell::atomic(
+						adjustToTimezone( XMLDateTime(firstArg.get_xs_dateTime(), firstArgType), 
+								  XMLDateTime(secondArg.get_xs_dateTime(), xs_dayTimeDuration)).getPackedDuration(), firstArgType));
 					break;
 		}
 	    }
@@ -267,8 +291,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 						firstArgType != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 
-					t.copy(tuple_cell::atomic(firstArgType,
-							adjustToTimezone(firstArg.get_xs_dateTime()).getRawData()));
+					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(firstArg.get_xs_dateTime(), firstArgType)).getPackedDateTime(), firstArgType));
 					break;
 		}
 	    }

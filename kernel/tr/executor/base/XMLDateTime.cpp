@@ -74,6 +74,11 @@ static const int YEAR_DEFAULT  = 2000;
 static const int MONTH_DEFAULT = 01;
 static const int DAY_DEFAULT   = 15;
 
+static const int DUR_MILISECOND_DIGITS = 4;
+static const int DT_MILISECOND_DIGITS = 6;
+static const int DUR_MILISECOND_MAX_VALUE = (int)pow(10, DUR_MILISECOND_DIGITS);
+static const int DT_MILISECOND_MAX_VALUE = (int)pow(10, DT_MILISECOND_DIGITS);
+
 // order-relation on duration is a partial order. The dates below are used to
 // for comparison of 2 durations, based on the fact that
 // duration x and y is x<=y iff s+x<=s+y
@@ -138,25 +143,89 @@ static int maxDayInMonthFor(int year, int month)
 
 }
 
+static int adjustMiliseconds(int value, int actualLen, int maxLen)
+{
+	for (int i=actualLen; i<maxLen; i++)
+		value = value * 10;
+	for (int i=maxLen; i<actualLen; i++)
+		value = value / 10;
+
+	return value;
+}
+
 //---------------------------------------------------------------------------------------
 // Constructors
 //---------------------------------------------------------------------------------------
 XMLDateTime::XMLDateTime()
 {
-	counted_ptr_value = str_counted_ptr(new char[sizeof(int) * TOTAL_FIELDS]);
-	string_value = counted_ptr_value.get();
 	reset();
 }
 
-XMLDateTime::XMLDateTime(str_counted_ptr buf)
+XMLDateTime::XMLDateTime(xs_packed_datetime dt, xmlscm_type type)
 {
-	counted_ptr_value = buf;
-	string_value = buf.get();
+	setValue(Type, type);
+
+	setValue(CentYear, dt.year);
+	setValue(Month, dt.month);
+	setValue(Day, dt.day);
+	setValue(Hour, dt.hour);
+	setValue(Minute, dt.minute);
+	setValue(Second, dt.second);
+	setValue(MiliSecond, dt.mili);
+	setValue(utc, dt.utc);
+	setValue(tz_hh, dt.tz_hh);
+	setValue(tz_mm, dt.tz_mm);
 }
 
-XMLDateTime::XMLDateTime(char* buf)
-{ string_value = buf; }
+XMLDateTime::XMLDateTime(xs_packed_duration dur, xmlscm_type type)
+{
+	setValue(Type, type);
 
+	int neg = dur.neg == 0 ? 1 : -1;
+	setValue(CentYear, neg * dur.years);
+	setValue(Month, neg * dur.months );
+	setValue(Day, neg * dur.days );
+	setValue(Hour, neg * dur.hours );
+	setValue(Minute, neg * dur.minutes );
+	setValue(Second, neg * dur.seconds );
+	setValue(MiliSecond, neg * dur.milis );
+	setValue(utc, dur.neg == 0 ? UTC_POS : UTC_NEG );
+}
+
+xs_packed_datetime XMLDateTime::getPackedDateTime()
+{
+	xs_packed_datetime retval;
+
+	retval.year = getValue(CentYear);
+	retval.month = getValue(Month);
+	retval.day = getValue(Day);
+	retval.hour = getValue(Hour);
+	retval.minute = getValue(Minute);
+	retval.second = getValue(Second);
+	retval.mili = getValue(MiliSecond);
+	retval.utc = getValue(utc);
+	retval.tz_hh = getValue(tz_hh);
+	retval.tz_mm = getValue(tz_mm);
+
+	return retval;
+}
+
+xs_packed_duration XMLDateTime::getPackedDuration()
+{
+	xs_packed_duration retval;
+	int neg = getValue(utc) == UTC_POS ? 1 : -1;
+
+	retval.neg = neg < 0 ;
+	retval.years = neg * getValue(CentYear);
+	retval.months = neg * getValue(Month);
+	retval.days = neg * getValue(Day);
+	retval.hours = neg * getValue(Hour);
+	retval.minutes = neg * getValue(Minute);
+	retval.seconds = neg * getValue(Second);
+	retval.milis = neg * getValue(MiliSecond);
+
+	return retval;
+}
 
 //---------------------------------------------------------------------------------------
 // Conversion function
@@ -188,7 +257,6 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 					newValue.setValue(Minute, getValue(Minute));
 					newValue.setValue(Second, getValue(Second));
 					newValue.setValue(MiliSecond, getValue(MiliSecond));
-					newValue.setValue(MiliSecondLen, getValue(MiliSecondLen));
 					break;
 		case xs_dateTime:	newValue.setValue(CentYear, getValue(CentYear));
 					newValue.setValue(Month, getValue(Month));
@@ -197,7 +265,6 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 					newValue.setValue(Minute, getValue(Minute));
 					newValue.setValue(Second, getValue(Second));
 					newValue.setValue(MiliSecond, getValue(MiliSecond));
-					newValue.setValue(MiliSecondLen, getValue(MiliSecondLen));
 					break;
 		case xs_duration:	newValue.setValue(CentYear, getValue(CentYear));
 					newValue.setValue(Month, getValue(Month));
@@ -206,7 +273,6 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 					newValue.setValue(Minute, getValue(Minute));
 					newValue.setValue(Second, getValue(Second));
 					newValue.setValue(MiliSecond, getValue(MiliSecond));
-					newValue.setValue(MiliSecondLen, getValue(MiliSecondLen));
 					break;
 		case xs_yearMonthDuration: 	newValue.setValue(CentYear, getValue(CentYear));
 						newValue.setValue(Month, getValue(Month));
@@ -216,7 +282,6 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 						newValue.setValue(Minute, getValue(Minute));
 						newValue.setValue(Second, getValue(Second));
 						newValue.setValue(MiliSecond, getValue(MiliSecond));
-						newValue.setValue(MiliSecondLen, getValue(MiliSecondLen));
 						break;
 	}
 
@@ -272,9 +337,15 @@ int XMLDateTime::getMinutes() const
 double XMLDateTime::getSeconds() const
 { 
 	XMLDateTime dt = *this;
+	double milis;
 	if (dt.isDuration())
+	{
 		dt.normalize();
-	double milis = ( dt.getValue(MiliSecondLen) == 0 ) ? 0.0 : dt.getValue(MiliSecond)/pow(10.0,(double)dt.getValue(MiliSecondLen));
+		milis = ( dt.getValue(MiliSecond) == 0 ) ? 0.0 : dt.getValue(MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
+	}
+	else
+		milis = ( dt.getValue(MiliSecond) == 0 ) ? 0.0 : dt.getValue(MiliSecond)/(double)DT_MILISECOND_MAX_VALUE;
+
 	return (double)dt.getValue(Second) + milis;
 } 
 
@@ -310,9 +381,9 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 	//add miliseconds
 	int carry = 0;
 	double milis1 = d1.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
-		 d1.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d1.getValue(XMLDateTime::MiliSecondLen));
+		 d1.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 	double milis2 = d2.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
-		 d2.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d2.getValue(XMLDateTime::MiliSecondLen));
+		 d2.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 	double milis = milis1 + milis2;
 	if (milis>=1.0 || milis <=0.0)
 	{
@@ -326,13 +397,8 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 			milis += 1.0;
 			carry = -1;
 		}
-		char tmpBuf[MAX_MEM_STR_SIZE];
-		if (milis != 0.0)
-			sprintf(tmpBuf, "%g", milis);
-		else
-			sprintf(tmpBuf, "0.0");
-		newDuration.setValue(XMLDateTime::MiliSecond, atoi(&tmpBuf[2]));
-		newDuration.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
+
+		newDuration.setValue(XMLDateTime::MiliSecond, (int)(milis * DUR_MILISECOND_MAX_VALUE));
 	}
 
 /*
@@ -381,32 +447,15 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 	else // must be xs_dayTimeDuration
 	{
 		int miliSecond = d.getValue(XMLDateTime::MiliSecond);
-		int miliSecondLen = d.getValue(XMLDateTime::MiliSecondLen);
-		double milis = (miliSecond == 0)?0.0:miliSecond/pow(10.0, (double)miliSecondLen);
+		double milis = (miliSecond == 0)?0.0:miliSecond/(double)DUR_MILISECOND_MAX_VALUE;
 		long seconds = d.getValue(XMLDateTime::Second) + d.getValue(XMLDateTime::Minute)*60 
 			+ d.getValue(XMLDateTime::Hour)*60*60 + d.getValue(XMLDateTime::Day)*60*60*24;
 		double seconds_milis = (seconds + milis) * v;
 		int neg = seconds_milis > 0 ? 1 : -1;
 		newDuration.setValue(XMLDateTime::Second, (int)seconds_milis);
-		char tmpBuf[MAX_MEM_STR_SIZE];
 		if (seconds_milis - (int)seconds_milis != 0.0)
-			sprintf(tmpBuf, "%g", neg * (seconds_milis - (int)seconds_milis));
-		else
-			sprintf(tmpBuf, "0.0");
-		newDuration.setValue(XMLDateTime::MiliSecond, neg * atoi(&tmpBuf[2]));
-		newDuration.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
+			newDuration.setValue(XMLDateTime::MiliSecond, (int)((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE));
 
-/*
-
-		char sbuf[1000];
-		sprintf(sbuf, "MS=%d, DIV=%g, seconds = %d, milis = %.50f, seconds_milis = %.50f, norm milis = %.50f, printed_milis = %d, mili len = %d", 
-			d.getValue(XMLDateTime::MiliSecond), 
-			pow((double)d.getValue(XMLDateTime::MiliSecondLen),10),
-			seconds, milis, seconds_milis, seconds_milis -(int)milis, atoi(&tmpBuf[2]), strlen(&tmpBuf[2]) );
-		throw USER_EXCEPTION2(FODT017, sbuf );
-*/
-
-		//newDuration.normalize();
 	 	return newDuration;
 	}
  }
@@ -422,11 +471,11 @@ double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
 	else // must be xs_dayTimeDuration
 	{
 		double milis1 = d1.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
-		 	d1.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d1.getValue(XMLDateTime::MiliSecondLen));
+		 	d1.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 		long seconds1 = d1.getValue(XMLDateTime::Second) + d1.getValue(XMLDateTime::Minute)*60 + d1.getValue(XMLDateTime::Hour)*60*60 +
 			d1.getValue(XMLDateTime::Day)*60*60*24;
 		double milis2 = d2.getValue(XMLDateTime::MiliSecond) == 0 ? 0.0 :
-		 	d2.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)d2.getValue(XMLDateTime::MiliSecondLen));
+		 	d2.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 		long seconds2 = d2.getValue(XMLDateTime::Second) + d2.getValue(XMLDateTime::Minute)*60 + d2.getValue(XMLDateTime::Hour)*60*60 +
 			d2.getValue(XMLDateTime::Day)*60*60*24;
 		return ( (seconds1 + milis1) / (seconds2 + milis2));
@@ -463,8 +512,8 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
     {
 	//add miliseconds
 	carry = 0;
-	double milis = dt.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)dt.getValue(XMLDateTime::MiliSecondLen)) +
-			fDuration.getValue(XMLDateTime::MiliSecond)/pow(10.0, (double)fDuration.getValue(XMLDateTime::MiliSecondLen));
+	double milis = dt.getValue(XMLDateTime::MiliSecond)/(double)DT_MILISECOND_MAX_VALUE;
+			fDuration.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 	if (milis>=1.0 || milis <=0.0)
 	{
 		if (milis>=1.0)
@@ -477,13 +526,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 			milis += 1.0;
 			carry = -1;
 		}
-		char tmpBuf[MAX_MEM_STR_SIZE];
-		if (milis != 0.0)
-			sprintf(tmpBuf, "%g", milis);
-		else
-			sprintf(tmpBuf,"0.0");
-		fNewDate.setValue(XMLDateTime::MiliSecond, atoi(&tmpBuf[2]));
-		fNewDate.setValue(XMLDateTime::MiliSecondLen, strlen(&tmpBuf[2]));
+		fNewDate.setValue(XMLDateTime::MiliSecond, (int)(milis * DT_MILISECOND_MAX_VALUE));
 	}
 
 	//add seconds
@@ -612,18 +655,25 @@ int XMLDateTime::compare(const XMLDateTime& lValue
         }
     }
 
-    if ( lTemp.getValue(MiliSecondLen))
+    if ( lTemp.getValue(MiliSecond))
     {
-	double lMilis = lTemp.getValue(MiliSecond) == 0 ? 0.0 :
-		 	lTemp.getValue(MiliSecond)/pow(10.0, (double)lTemp.getValue(MiliSecondLen));
-
-	if (! rTemp.getValue(MiliSecondLen))
+	double lMilis, rMilis;
+	if (lTemp.isDuration())
 	{
-		return GREATER_THAN;
-	}
+		lMilis = lTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	lTemp.getValue(MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 
-	double rMilis = rTemp.getValue(MiliSecond) == 0 ? 0.0 :
-		 	rTemp.getValue(MiliSecond)/pow(10.0, (double)rTemp.getValue(MiliSecondLen));
+		rMilis = rTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	rTemp.getValue(MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
+	}	
+	else
+	{
+		lMilis = lTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	lTemp.getValue(MiliSecond)/(double)DT_MILISECOND_MAX_VALUE;
+
+		rMilis = rTemp.getValue(MiliSecond) == 0 ? 0.0 :
+		 	rTemp.getValue(MiliSecond)/(double)DT_MILISECOND_MAX_VALUE;
+	}	
 
         if ( lMilis < rMilis )
         {
@@ -676,10 +726,8 @@ XMLDateTime& XMLDateTime::operator=(const XMLDateTime& rhs)
 
 void XMLDateTime::copy(const XMLDateTime &toCopy)
 {
-    char* new_string_value = new char[ TOTAL_FIELDS * sizeof(int)];
-    memcpy(new_string_value, toCopy.string_value, TOTAL_FIELDS * sizeof(int));
-    counted_ptr_value = str_counted_ptr(new_string_value);
-    string_value = counted_ptr_value.get();
+    for (int i=0; i<TOTAL_FIELDS; i++)
+	fields[i] = toCopy.fields[i];
 }
 
 //
@@ -704,7 +752,6 @@ void XMLDateTime::parseTime(const char* buf)
     getTime(buf, start, end);
 
     validateDateTime();
-    setValue(hasTime, true);
 }
 
 // 
@@ -722,7 +769,6 @@ void XMLDateTime::parseDateTime(const char* buf)
 
     getTime(buf, fStart, fEnd);
     validateDateTime();
-    setValue(hasTime, true);
 }
 
 //
@@ -998,9 +1044,10 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in duration");
 
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
-                setValue(MiliSecond,negate * parseInt(fBuffer, mlsec+1, end));
-		setValue(MiliSecondLen, end-mlsec-1);
-            }
+                int rawMilis = parseInt(fBuffer, mlsec+1, end);
+		int miliSecondLen = end-mlsec-1;
+		setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
+	    }
             else
             {
                 setValue(Second, negate * parseInt(fBuffer, fStart,end));
@@ -1193,8 +1240,9 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in xs_dayTimeDuration");
 
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
-                setValue(MiliSecond,negate * parseInt(fBuffer, mlsec+1, end));
-		setValue(MiliSecondLen, end-mlsec-1);
+                int rawMilis = parseInt(fBuffer, mlsec+1, end);
+		int miliSecondLen = end-mlsec-1;
+		setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
             }
             else
             {
@@ -1298,17 +1346,25 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
 	throw USER_EXCEPTION2(FODT009, "invalid time: no digits after the '.'");
             //("ms shall be present once '.' is present" );
 
-        if ( sign == NOT_FOUND )
+	int rawMilis;
+	int miliSecondLen;
+
+	if ( sign == NOT_FOUND )
         {
-            setValue(MiliSecond, parseInt(fBuffer, fStart, fEnd));  //get ms between '.' and fEnd
-	    setValue(MiliSecondLen, fEnd-fStart);
+            rawMilis = parseInt(fBuffer, fStart, fEnd);  //get ms between '.' and fEnd
+	    miliSecondLen = fEnd-fStart;
             fStart = fEnd;
         }
         else
         {
-            setValue(MiliSecond, parseInt(fBuffer, fStart, sign));  //get ms between UTC sign and fEnd
-	    setValue(MiliSecondLen, fEnd-fStart);
+            rawMilis = parseInt(fBuffer, fStart, sign);  //get ms between UTC sign and fEnd
+	    miliSecondLen = fEnd-fStart;
         }
+
+	rawMilis = adjustMiliseconds(rawMilis, miliSecondLen, DT_MILISECOND_DIGITS);
+
+	setValue(MiliSecond, rawMilis);
+
 	}
     else if(sign == 0 || sign != fStart)
 	throw USER_EXCEPTION2(FODT010, "seconds have more than 2 digits");
@@ -1569,6 +1625,7 @@ void XMLDateTime::normalizeDuration()
     if (getValue(Type) == xs_dayTimeDuration)
 	setValue(Day, getValue(Day) + carry*negate);
  
+   //FIXME: duration needs to be normalized according to xquery spec
     else
     {
     	//add days
@@ -1763,7 +1820,6 @@ int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int e
  ***/
 void XMLDateTime::printDateTime(char* buf) const
 {
-    int miliSecondsLen = getValue(MiliSecondLen);
     int utcSize = (getValue(utc) == UTC_UNKNOWN) ? 0 : 1;
 
     char* retPtr = buf;
@@ -1784,19 +1840,10 @@ void XMLDateTime::printDateTime(char* buf) const
     *retPtr++ = TIME_SEPARATOR;
     fillString(retPtr, getValue(Second), 2);
 
-    if (miliSecondsLen)
+    if (getValue(MiliSecond) != 0)
     {
         *retPtr++ = '.';
-	//if (retPtr-buf+miliSecondsLen > MAX_MEM_STR_SIZE)
-		//throw USER_EXCEPTION2(FODT016, "string representation of dateTime value is too long");
-
-	if (retPtr-buf+miliSecondsLen > MAX_MEM_STR_SIZE)
-	{
-	}
-
- 	else fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
-
- 	//fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
+ 	fillMilisString(retPtr, getValue(MiliSecond), DT_MILISECOND_DIGITS);
     }
 
     if (utcSize) {
@@ -1988,10 +2035,9 @@ void XMLDateTime::printDate(char* buf) const
 ***/
 void XMLDateTime::printTime(char* buf) const
 {
-    int miliSecondsLen = getValue(MiliSecondLen);
-    int utcSize = (getValue(utc) == UTC_UNKNOWN) ? 0 : 1;
+
+   int utcSize = (getValue(utc) == UTC_UNKNOWN) ? 0 : 1;
     
-    //char* retBuf = new char[(10 + miliSecondsLen + utcSize + 1) * sizeof(char)];
     char* retPtr = buf;
 
     // 'hh:mm:ss'Z'    ('.'s+)?
@@ -2009,10 +2055,10 @@ void XMLDateTime::printTime(char* buf) const
     *retPtr++ = TIME_SEPARATOR;
     fillString(retPtr, getValue(Second), 2);
 
-    if (miliSecondsLen)
+    if (getValue(MiliSecond) != 0)    
     {
         *retPtr++ = '.';
-	fillMilisString(retPtr, getValue(MiliSecond), miliSecondsLen);
+	fillMilisString(retPtr, getValue(MiliSecond), DT_MILISECOND_DIGITS);
     }
 
     if (utcSize) {
@@ -2095,7 +2141,7 @@ void XMLDateTime::printDuration(char* buf ) const
 			if (getValue(MiliSecond) != 0)
 			{
 				*bufPtr++ = '.';
-				fillMilisString(bufPtr, neg*getValue(MiliSecond), getValue(MiliSecondLen));
+				fillMilisString(bufPtr, neg*getValue(MiliSecond), DUR_MILISECOND_DIGITS);
 			}
 			*bufPtr++ = DURATION_S;
 			nonZeroTime= 1;
@@ -2130,21 +2176,19 @@ void XMLDateTime::fillString(char*& ptr, int value, int expLen) const
     delete strBuffer;
 }
 
-void XMLDateTime::fillMilisString(char*& ptr, int value, int expLen) const
-{
-    char *strBuffer = new char[expLen+1];
-    sprintf(strBuffer, "%d", value);
-    int   actualLen = strlen(strBuffer);
-    int   i;
-    //append leading zeros
-    for (i = 0; i < expLen - actualLen; i++)
-    {
-        *ptr++ = '0';
-    }
 
-    for (i = 0; i < actualLen && i < expLen; i++)
+void XMLDateTime::fillMilisString(char*& ptr, int value, int maxLen) const
+{
+    char* strBuffer = new char[maxLen+1];
+    char* formatString = new char[10];
+    sprintf(formatString, "\%0%dd", maxLen);
+    sprintf(strBuffer, formatString, value);
+	 
+    for (int i = 0; i < maxLen; i++)
     {
-        *ptr++ = strBuffer[i];
+	if (atoi(&strBuffer[i]) ==0)
+		break;
+	*ptr++ = strBuffer[i];
     }
     delete strBuffer;
 }

@@ -37,7 +37,7 @@ void tuple_cell::print(bool b) const
                                   {
                                       case xs_untypedAtomic	: d_printf2("\"%s\"", get_str_mem()); break;
                                       case xs_dateTime			: d_printf1("[xs_dateTime]"); break;
-                                      case xs_date				: printf("'%s'",get_xs_dateTime()); break;
+                                      case xs_date				: printf("'%s'","[xs_date]"); break;
                                       case xs_time				: d_printf1("[xs_time]"); break;
                                       case xs_duration			: d_printf1("[xs_duration]"); break;
                                       case xs_yearMonthDuration: d_printf1("[xs_yearMonthDuration]"); break;
