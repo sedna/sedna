@@ -3,6 +3,7 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <math.h>
 #include "sedna.h"
 
 #include "xs_helper.h"
