@@ -194,5 +194,37 @@ public:
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnRemove
+///////////////////////////////////////////////////////////////////////////////
+class PPFnRemove : public PPIterator
+{
+protected:
+    PPOpIn seq_child;
+    PPOpIn pos_child;
+    
+    bool first_time;
+
+    __int64 current_pos;
+    __int64 remove_pos;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnRemove(variable_context *_cxt_, 
+               PPOpIn _seq_child_,
+               PPOpIn _pos_child_);
+
+    virtual ~PPFnRemove();
+};
+
+
 
 #endif

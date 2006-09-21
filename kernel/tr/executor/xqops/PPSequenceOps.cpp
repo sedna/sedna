@@ -611,28 +611,36 @@ void PPFnSubsequence::next(tuple &t)
         tuple_cell tc;
 
         start_child.op->next(st);
-        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument to fn:subsequence.");
+        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
         
         tc = start_child.get(st);
-        if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the second argument to fn:subsequence.");
+        xmlscm_type xtype = tc.get_atomic_type();
+        
+        if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
+            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:subsequence (xs:double or promotable expected).");
+        
         start_pos = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         
         start_child.op->next(st);
-        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument to fn:subsequence.");
+        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
 
         if(is_length)
         {
             tuple lt(length_child.ts);
         
             length_child.op->next(lt);
-            if (lt.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument to fn:subsequence.");
+            if (lt.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
             
             tc = start_child.get(lt);
-            if(!is_numeric_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Not a numeric type of the third argument to fn:subsequence.");
+            xtype = tc.get_atomic_type();
+
+            if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
+                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:subsequence (xs:double or promotable expected).");
+
             length = floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(lt);
-            if (!(lt.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument to fn:subsequence.");
+            if (!(lt.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
         }
         
         current_pos = 0;           
@@ -670,5 +678,104 @@ PPIterator* PPFnSubsequence::copy(variable_context *_cxt_)
 bool PPFnSubsequence::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnSubsequence::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnRemove
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnRemove::PPFnRemove(variable_context *_cxt_,
+                       PPOpIn _seq_child_,
+                       PPOpIn _pos_child_) : PPIterator(_cxt_),
+                                             seq_child(_seq_child_),
+                                             pos_child(_pos_child_)
+{
+}
+
+
+
+PPFnRemove::~PPFnRemove()
+{
+    delete seq_child.op;
+    seq_child.op = NULL;
+    delete pos_child.op;
+    pos_child.op = NULL;
+}
+
+void PPFnRemove::open  ()
+{
+    seq_child.op->open();
+    pos_child.op->open();
+    first_time = true;
+}
+
+void PPFnRemove::reopen()
+{
+    seq_child.op->reopen();
+    pos_child.op->reopen();
+    first_time = true;
+}
+
+void PPFnRemove::close ()
+{
+    seq_child.op->close();
+    pos_child.op->close();
+}
+
+void PPFnRemove::next(tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        tuple st(pos_child.ts);
+        
+        pos_child.op->next(st);
+        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
+        
+        tuple_cell tc = pos_child.get(st);
+        xmlscm_type xtype = tc.get_atomic_type();
+
+        if(!(xtype == xs_untypedAtomic ||
+             xtype == xs_integer ||
+             is_derived_from_xs_integer(xtype)))  
+            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
+
+        remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
+        
+        pos_child.op->next(st);
+        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
+
+        current_pos = 0;
+    }
+    
+    seq_child.op->next(t);
+    current_pos++;
+
+    if(!t.is_eos() && current_pos == remove_pos) 
+    {
+    	seq_child.op->next(t);
+    	current_pos++;
+    }
+    
+    if(t.is_eos()) first_time = true; 
+}
+
+PPIterator* PPFnRemove::copy(variable_context *_cxt_)
+{
+    PPFnRemove *res =  new PPFnRemove(_cxt_, seq_child, pos_child);
+                                
+    res->seq_child.op = seq_child.op->copy(_cxt_);
+    res->pos_child.op = pos_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnRemove::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnRemove::result");
 }
 
