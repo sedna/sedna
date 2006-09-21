@@ -48,8 +48,12 @@ xptr RelChildAxisMerge::next(const xptr &p)
 {
     if (merged_seq_arr)
     {
+		xptr p;
         elim_disturb(merged_seq_arr, size, sizeof(xptr), doc_order_merge_cmp);
-        return merged_seq_arr[0];
+		p = merged_seq_arr[0];
+		if (p != NULL)
+			merged_seq_arr[0] = getNextSiblingOfSameSortXptr(p);
+        return p;
     }
     else return getNextSiblingOfSameSortXptr(p);
 }
