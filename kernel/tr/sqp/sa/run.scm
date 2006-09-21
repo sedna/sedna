@@ -10,7 +10,9 @@
 (define-macro (cl:signal-user-error code . msg)
   `(begin
      (display "User error ")
-     (display ,(symbol->string code))
+     (display (if (symbol? (quote ,code))
+                  (symbol->string (quote ,code))
+                  (quote ,code)))
      (display ": ")
      (for-each write (list ,@msg))     
      #f))
