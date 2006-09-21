@@ -27,7 +27,44 @@
 #include "nodes.h"
 
 typedef __int64 bigint;
-typedef counted_ptr<char> str_counted_ptr;
+
+typedef struct 
+{
+  unsigned int year;
+  unsigned int day:9;
+  unsigned int month:4;
+  unsigned int hour:5;
+  unsigned int minute:6;
+  unsigned int second:6;
+  unsigned int mili:18;
+  unsigned int utc:4;
+  unsigned int tz_hh:4;
+  unsigned int tz_mm:6;
+} xs_packed_datetime;
+
+/*
+#if (sizeof(xs_packed_datetime)!=12)
+#error "Packed datetime structure is not 12 bytes long"
+#endif
+*/
+
+typedef struct 
+{
+  unsigned int years;
+  unsigned int days;
+  unsigned int neg:1;
+  unsigned int months:4;
+  unsigned int hours:5;
+  unsigned int minutes:6;
+  unsigned int seconds:6;
+  unsigned int milis:10;
+} xs_packed_duration;
+
+/*
+#if (sizeof(packed_duration)!=12)
+#error "Packed datetime structure is not 12 bytes long"
+#endif
+*/
 
 class XMLDateTime
 {
@@ -42,20 +79,19 @@ public:
         Hour       ,
         Minute     ,
         Second     ,
-	hasTime	   ,
-	MiliSecond ,  //not to be used directly
-	MiliSecondLen,
+	MiliSecond ,
         utc        ,
 	tz_hh	   ,
 	tz_mm	   ,
 	TOTAL_FIELDS
     };
 
+
+    int fields[TOTAL_FIELDS];
+
     static const int EQUAL = 0;
-    static const int INDETERMINATE = 100;
     static const int LESS_THAN = -1;    
     static const int GREATER_THAN = 1;
-
 
     enum utcType
     {
@@ -70,14 +106,14 @@ public:
     // -----------------------------------------------------------------------
 
     XMLDateTime();
-    XMLDateTime(str_counted_ptr buf);
-    XMLDateTime(char* buf);
+    XMLDateTime(xs_packed_datetime storage, xmlscm_type type);
+    XMLDateTime(xs_packed_duration storage, xmlscm_type type);
+
     // -----------------------------------------------------------------------
     // Copy ctor and Assignment operators
     // -----------------------------------------------------------------------
 
     XMLDateTime(const XMLDateTime&);
-
     XMLDateTime& operator=(const XMLDateTime&);
 
     // -----------------------------------------------------------------------
@@ -153,7 +189,8 @@ public:
     //------------------------------------------------------------------------
     // Gets a raw representation of the character array where the data is stored
     //------------------------------------------------------------------------
-    str_counted_ptr getRawData(){ return counted_ptr_value;}
+    xs_packed_datetime getPackedDateTime();
+    xs_packed_duration getPackedDuration();
 
     //-----------------------------------------------------------------------
     // Getter and setter functions
@@ -161,22 +198,15 @@ public:
 
 	int getValue(int valueIndex) const
 	{
-		return ((int*)string_value)[ valueIndex ];
+		return fields[ valueIndex ];
 	}
 
 	void setValue(int valueIndex, int newValue )
 	{
-		((int*)string_value)[ valueIndex ] = newValue;
+		fields[valueIndex] = newValue;
 	}
 
 private:
-
-    //-----------------------------------------------------------------------
-    // The values of dateTime are stored in a string
-    //-----------------------------------------------------------------------
-	str_counted_ptr		counted_ptr_value;
-	char*			string_value;
-
 
     // -----------------------------------------------------------------------
     // Comparison

@@ -35,7 +35,16 @@ enum tuple_cell_type {
      tc_heavy_atomic_pstr_long  // cell stores heavy atomic value in long pstrings (that is stored in VMM memory)
                      };
 
-typedef __int64 tcdata;
+struct tcdata
+{
+private:
+    __uint32 a, b, c;
+public:
+  tcdata(): a(0), b(0), c(0)
+  {}
+  tcdata(int value): a(value), b(0), c(0)
+  {}
+};
 
 //#define GET_INTEGER(t)		(*(int*)(&((t).data)))
 
@@ -78,12 +87,13 @@ public:
 
     xptr get_node() const { return *(xptr*)(&data); }
 
-    __int64      get_xs_integer() const { return *(__int64*     )(&data); } 
-    xs_decimal_t get_xs_decimal() const { return *(xs_decimal_t*)(&data); }
-    float        get_xs_float()   const { return *(float*       )(&data); }
-    double       get_xs_double()  const { return *(double*      )(&data); }
-    bool         get_xs_boolean() const { return *(bool*        )(&data); }
-    XMLDateTime  get_xs_dateTime()const { return XMLDateTime(str_ptr);  }
+    __int64         get_xs_integer() const { return *(__int64*     )(&data); } 
+    xs_decimal_t    get_xs_decimal() const { return *(xs_decimal_t*)(&data); }
+    float           get_xs_float()   const { return *(float*       )(&data); }
+    double          get_xs_double()  const { return *(double*      )(&data); }
+    bool            get_xs_boolean() const { return *(bool*        )(&data); }
+    xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data);  }
+    xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data);  }
 
 /* !!! DELETE LATER */
     char*   get_xs_untypedAtomic_mem () const { return get_str_mem(); }
@@ -148,14 +158,22 @@ public:
     {
         *(bool*)(&(data)) = _data_;
     }
+    // FIXME : old code, should be removed
     // for xs_date atomics
     tuple_cell(date _data_) : type(tc_light_atomic), xtype(xs_date), size(0)
     {
         *(date*)(&(data)) = _data_;
     }
-    // for xs_dateTime and duration, as well as their subsets
-    tuple_cell(xmlscm_type _type_, str_counted_ptr _str_): type(tc_light_atomic), xtype(_type_), str_ptr(_str_)
-    {}
+    // for xs_date atomics
+    tuple_cell(xs_packed_datetime _data_, xmlscm_type _type_) : type(tc_light_atomic), xtype(_type_), size(0)
+    {
+        *(xs_packed_datetime*)(&(data)) = _data_;
+    }
+    // for xs_duration atomics
+    tuple_cell(xs_packed_duration _data_, xmlscm_type _type_) : type(tc_light_atomic), xtype(_type_), size(0)
+    {
+        *(xs_packed_duration*)(&(data)) = _data_;
+    }
 
     ////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR TUPLE_CELL
@@ -200,14 +218,19 @@ public:
         return tuple_cell(_data_);
     }
 
+    static tuple_cell atomic(xs_packed_datetime _data_, xmlscm_type _type_)
+    {
+        return tuple_cell(_data_,_type_);
+    }
+
+    static tuple_cell atomic(xs_packed_duration _data_, xmlscm_type _type_)
+    {
+        return tuple_cell(_data_,_type_);
+    }
+
     static tuple_cell atomic(xmlscm_type _xtype_, char *_str_)
     {
         return tuple_cell(tc_light_atomic, (tcdata)0, _xtype_, _str_, 0);
-    }
-
-    static tuple_cell atomic(xmlscm_type _xtype_, str_counted_ptr _str_)
-    {
-        return tuple_cell(_xtype_, _str_);
     }
 
     static tuple_cell atomic_deep(xmlscm_type _xtype_, const char *_str_)
