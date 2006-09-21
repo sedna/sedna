@@ -362,3 +362,31 @@ void CollationHandler_utf8::matches (tuple &t, tuple_cell *t1, tuple_cell *t2, t
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
 }
+
+template<class Iterator>
+static inline void utf8_matches_bool (const Iterator &start, const Iterator &end, const PcrePattern &re, bool *res)
+{
+	int match_flags = PCRE_NO_UTF8_CHECK;
+	PcreMatcher<Iterator> matcher(re);
+
+	*res = matcher.matches(start, end, start, match_flags);
+}
+
+bool CollationHandler_utf8::matches (tuple_cell *tc, const char *regex)
+{
+	try
+	{
+		PcrePattern re(regex, PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
+		bool res;
+		STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(utf8_matches_bool, tc, re, &res);
+		return res;
+	}
+	catch (const PcreCompileException &e)
+	{
+		throw USER_EXCEPTION2(FORX0002, e.what());
+	}
+	catch (const std::exception &e)
+	{
+		throw USER_EXCEPTION2(FORX0002, e.what());
+	}
+}
