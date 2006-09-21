@@ -21,7 +21,7 @@
 #define REPLACE_STATEMENT                     8
 
 
-#define BLOCK_AUTH_CHECK -1
+#define BLOCK_AUTH_CHECK                     -1
 struct dbe_properties { int update_privileges;     // this user's update privileges on this db_entity
 					    bool current_statement;     // is db_entity refered in curent statement
 					    bool was_updated;

@@ -166,7 +166,7 @@ void replace(PPOpIn arg)
 		{
 			xptr node_child=*sit;
 #ifdef SE_ENABLE_TRIGGERS
-            if(apply_before_replace_triggers(node, removeIndirection(node_child)) != XNULL)
+            if(apply_per_node_triggers(node, removeIndirection(node_child), XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
 #endif
 			if (is_node_persistent(node_child)) 
 				node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
@@ -176,11 +176,11 @@ void replace(PPOpIn arg)
 			sit++;
 		}
 		//delete node
-#ifdef SE_ENABLE_TRIGGERS
+/*#ifdef SE_ENABLE_TRIGGERS
         bool is_replaced = true;
 #else  
         bool is_replaced = false;
-#endif
+#endif*/
 		delete_replaced_node(removeIndirection((*it3).cells[0].get_node()), node);
 	}
 	while (it3!=arg4seq.begin());
