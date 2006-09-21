@@ -20,6 +20,9 @@
 ;-------------------------------------------------
 ; Query logical representation
 
+; Identifier for representing a context item
+(define sa:context-item '(var ("" "$%v")))
+
 ; Whether a variable
 (define sa:var? symbol?)
 
@@ -1309,7 +1312,7 @@
               (cons (list (sa:op-name expr)  ; = 'var
                           var-name)
                     (cdr pair))))
-        ((equal? var-name '("" "$%v"))
+        ((equal? var-name (cadr sa:context-item))
          (cl:signal-user-error XPDY0002  ; was: SE5053
                                ))
         (else
@@ -1395,8 +1398,11 @@
      (and
       a new-type
       (if
-       (eq? (cdr a) sa:type-atomic)        
-       (cl:signal-user-error XPTY0020 expr)  ; was: SE5029
+       (eq? (cdr a) sa:type-atomic)
+       (if (equal? (car (sa:op-args expr)) sa:context-item)
+           (cl:signal-user-error  ; was: SE5029
+            XPTY0020 expr)
+           (cl:signal-user-error XPTY0019 expr))
        (cons (list (sa:op-name expr)
                    (car a)
                    (car new-type))
@@ -2394,7 +2400,8 @@
                                 vars funcs ns-binding default-ns))
          (arg3 (sa:analyze-expr (caddr (sa:op-args expr))
                                 (cons
-                                 `(("" "$%v") . ,sa:type-nodes)
+                                 (cons (cadr sa:context-item)
+                                       sa:type-nodes)
                                  vars)
                                 funcs ns-binding default-ns))
          (arg4 (sa:analyze-seq-type (cadddr (sa:op-args expr))
@@ -2447,7 +2454,7 @@
        (if
         (null? (cdr expr))  ; no argument
         (cons (list (sa:op-name expr)  ; function name
-                    '(var ("" "$%v"))  ; adding context item as argument
+                    sa:context-item  ; adding context item as argument
                     )
               (cdr pair)  ; return type
               )
