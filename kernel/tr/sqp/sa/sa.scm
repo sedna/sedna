@@ -446,6 +446,12 @@
     (,sa:fn-ns "error" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!error)
+    (,sa:fn-ns "insert-before" 3 3
+     ,(lambda (num-args) (list sa:type-any sa:type-atomic sa:type-any))
+     ,sa:type-any !fn!insert-before)
+    (,sa:fn-ns "remove" 2 2
+     ,(lambda (num-args) (list sa:type-any sa:type-atomic))
+     ,sa:type-any !fn!remove)
     (,sa:fn-ns "reverse" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!reverse)
@@ -946,7 +952,7 @@
                    (car qname-parts) (cadr qname-parts)  ; name
                    (length formal-args)
                    (length formal-args)  ; min and max args
-                   (let ((arg-types (map cdr formal-args)))
+                   (let ((arg-types (map cadr formal-args)))
                      (lambda (num-args) arg-types))
                    return-type
                    #f  ; to denote that it is an external function
@@ -982,7 +988,7 @@
                   (list                   
                    (car qname-parts) (cadr qname-parts)  ; name
                    (length formal-args) (length formal-args) ; min and max args
-                   (let ((arg-types (map cdr formal-args)))
+                   (let ((arg-types (map cadr formal-args)))
                      (lambda (num-args) arg-types))
                    return-type)
                   funcs))
@@ -1094,7 +1100,11 @@
     ((and (pair? type-spec) (= (length type-spec) 2)
           (string? (car type-spec)) (string? (cadr type-spec)))
      ; external atomic type
-     (cons type-spec sa:type-atomic))
+     (cons 
+      (if (equal? type-spec '("xs" "int"))
+          '!xs!int
+          type-spec)
+      sa:type-atomic))
     ((eq? (car type-spec) 'doc-test)
      (or
       (and (null? (cdr type-spec))  ; no more arguments
@@ -1159,9 +1169,10 @@
 
 ; Is given (listof (list sequence-type var-name))
 ; Returns:  vars or #f
-;  vars ::= (listof (cons var-name var-type))
+;  vars ::= (listof (list var-name var-type type-specifier))
 ;  var-name ::= Scheme symbol
 ;  var-type ::= 'sa:atomic | 'sa:nodes
+;  type-specifier ::= !xs!int or stuff
 (define (sa:analyze-formal-args arg-lst ns-binding default-ns)
   (letrec ((list-contains-equal-members
             ; If the list contains `equal?' members, returns a member that
@@ -1184,6 +1195,7 @@
              (lambda (pair)
                (let ((type (sa:analyze-seq-type
                             (car pair) ns-binding default-ns)))
+                 ;(display (list (car pair) type))
                  (cond
                    ((not type)  ; error discovered
                     #f)
@@ -1196,7 +1208,7 @@
                             ns-binding default-ns)))
                       (and
                        var-name
-                       (cons var-name (cdr type)))))
+                       (list var-name (cdr type) (car type)))))
                    (else
                     (cl:signal-input-error SE5020 (cadr pair))))))
              arg-lst)))
@@ -1695,7 +1707,7 @@
     (sa:assert-num-args expr 2)
     (let ((formal-args
            (sa:analyze-formal-args
-            (car (sa:op-args expr)) ns-binding (car default-ns))))     
+            (car (sa:op-args expr)) ns-binding (car default-ns))))
       (cond
         ((not formal-args) #f)
         ;((> (length formal-args) 3)
@@ -1710,15 +1722,20 @@
             (cons
              (list (sa:op-name expr)  ; = 'fun-def
                    (map  ; args
-                    (lambda (pair)
+                    (lambda (argument-pair analyzed-triple)
                       (list
-                       (car pair)  ; argument type
-                       (list
-                        (caadr pair)   ; = 'var
-                        (sa:expand-var-name
-                         (cadadr pair)  ; var-name
-                         ns-binding (car default-ns)))))
-                    (car (sa:op-args expr)))
+                       (caddr analyzed-triple)  ; argument type
+                       
+                       (list  ; variable name
+                        (caadr argument-pair)   ; = 'var
+                        (car analyzed-triple)  ; expanded variable name
+                        ; Was:
+                        ;(sa:expand-var-name
+                        ; (cadadr pair)  ; var-name
+                        ; ns-binding (car default-ns))
+                        )))
+                    (car (sa:op-args expr))
+                    formal-args)
                    (car expr-pair))
              (cdr expr-pair))))))))))
 

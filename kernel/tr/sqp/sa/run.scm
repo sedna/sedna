@@ -227,3 +227,11 @@
        (>@ (var ("" "i")) (const (type !xs!decimal) "6.5"))
        (var ("" "i"))
        (sequence)))))))
+
+(sa:analyze-query
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (sequence (const (type !xs!integer) "1") (const (type !xs!integer) "2"))
+     (fun-def (((one ("xs" "int")) (var ("" "x")))) (var ("" "x")))))))
