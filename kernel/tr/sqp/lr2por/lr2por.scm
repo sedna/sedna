@@ -489,19 +489,9 @@
              )
    
              ; *** lsome ***
-;             ((eq? op-name 'lsome)
-;              (let* ((select-left-PhysOp (l2p:any-lr-node2por (cadr node)))
-;                     (tsls (l2p:tuple-size select-left-PhysOp))
-;                    )
-;              `(1 (PPFnExists (,tsls (PPSelect ,(map  cadr (cadr (caddr node)))
-;                                               (,tsls (PPStore ,select-left-PhysOp))
-;                                               ,(l2p:any-lr-node2por (caddr (caddr node)))
-;                                     )
-;                              )
-;                  )
-;               )
-;              )
-;             )
+             ((eq? op-name 'lsome)
+              (l2p:lsome->por node))
+             
               ;*** every ***
               ((eq? op-name 'every)
                    (let* ((select-left-PhysOp (l2p:any-lr-node2por (car node)))
@@ -521,20 +511,9 @@
              
 
             
-             ; *** levery ***
-;             ((eq? op-name 'levery)
-;              (let* ((select-left-PhysOp (l2p:any-lr-node2por (cadr node)))
-;                     (tsls (l2p:tuple-size select-left-PhysOp))
-;                    )              
-;              `(1 (PPFnEmpty  (,tsls (PPSelect ,(map  cadr (cadr (caddr node)))
-;                                               (,tsls (PPStore ,select-left-PhysOp))
-;                                               (1 (PPFnNot,(l2p:any-lr-node2por (caddr (caddr node)))))
-;                                     )
-;                              )
-;                  )
-;               )
-;              )
-;             )
+              ; *** levery ***
+              ((eq? op-name 'levery)
+               (l2p:levery->por node))
 
              ; *** exists ***
              ((eq? op-name 'exists)
@@ -2010,3 +1989,50 @@
                             )))
                          num))))
     (l2p:rename-vars vars-map (xlr:fun-body fun-def))))
+
+
+;=========================================================================
+; Lsome, Levery
+
+(define (l2p:lsome->por content)
+  (let* ((select-left-PhysOp (l2p:any-lr-node2por
+                              (car content)  ; was: (cadr content)
+                              ))
+         (tsls (l2p:tuple-size select-left-PhysOp))
+         (new-fun-def (l2p:rename-vars2unique-numbers (cadr content)))
+         (select-right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def))))
+    `(1 (PPFnExists
+         (,tsls
+          (PPSelect
+           ,(map cadr  ; argument names
+                 (cadr new-fun-def))
+           (,tsls (PPStore ,select-left-PhysOp))
+           ,select-right-PhysOp
+               ; Was:
+               ;,(l2p:any-lr-node2por
+               ;  (caddr  ; function body
+               ;   (cadr content)  ; yields: (fun-def ...) ; was: (caddr content)
+               ;   ))
+           ))))))
+
+(define (l2p:levery->por content)
+  (let* ((select-left-PhysOp (l2p:any-lr-node2por
+                              (car content)  ; was: (cadr content)
+                              ))
+         (tsls (l2p:tuple-size select-left-PhysOp))
+         (new-fun-def (l2p:rename-vars2unique-numbers (cadr content)))
+         (select-right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def))))
+    `(1 (PPFnEmpty
+         (,tsls 
+          (PPSelect
+           ,(map cadr  ; argument names
+                 (cadr new-fun-def))
+           (,tsls (PPStore ,select-left-PhysOp))
+           (1 (PPFnNot
+               ,select-right-PhysOp
+               ; Was:
+               ;,(l2p:any-lr-node2por
+               ;  (caddr  ; function body
+               ;   (cadr content)  ; yields: (fun-def ...) ; was: (caddr content)
+               ;   ))
+               ))))))))
