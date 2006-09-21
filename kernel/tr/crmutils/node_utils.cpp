@@ -767,7 +767,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
 					res=new xptr[chcnt];
 					res[0]=first;
 				}
-				res[ctr]=*ptr;
+				res[ctr++]=*ptr;
 			}
 			else
 			{
