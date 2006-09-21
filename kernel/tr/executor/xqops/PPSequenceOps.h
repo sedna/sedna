@@ -227,4 +227,41 @@ public:
 
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnInsertBefore
+///////////////////////////////////////////////////////////////////////////////
+class PPFnInsertBefore : public PPIterator
+{
+protected:
+    PPOpIn seq_child;
+    PPOpIn pos_child;
+    PPOpIn ins_child;
+    
+    bool first_time;
+    bool inserted;       //'eos' reached on the inserted sequence child
+    bool eos_reached;    //'eos' reached on the seq_child
+
+    __int64 current_pos;
+    __int64 insert_pos;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnInsertBefore(variable_context *_cxt_, 
+                     PPOpIn _seq_child_,
+                     PPOpIn _pos_child_,
+                     PPOpIn _ins_child_);
+
+    virtual ~PPFnInsertBefore();
+};
+
+
+
 #endif

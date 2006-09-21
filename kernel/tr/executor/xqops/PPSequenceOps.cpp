@@ -742,7 +742,7 @@ void PPFnRemove::next(tuple &t)
         if(!(xtype == xs_untypedAtomic ||
              xtype == xs_integer ||
              is_derived_from_xs_integer(xtype)))  
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
+            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
 
         remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
         
@@ -777,5 +777,127 @@ PPIterator* PPFnRemove::copy(variable_context *_cxt_)
 bool PPFnRemove::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnRemove::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnInsertBefore
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnInsertBefore::PPFnInsertBefore(variable_context *_cxt_,
+                                   PPOpIn _seq_child_,
+                                   PPOpIn _pos_child_,
+                                   PPOpIn _ins_child_) : PPIterator(_cxt_),
+                                                         seq_child(_seq_child_),
+                                                         pos_child(_pos_child_),
+                                                         ins_child(_ins_child_)
+{
+}
+
+
+
+PPFnInsertBefore::~PPFnInsertBefore()
+{
+    delete seq_child.op;
+    seq_child.op = NULL;
+    delete pos_child.op;
+    pos_child.op = NULL;
+    delete ins_child.op;
+    ins_child.op = NULL;
+
+}
+
+void PPFnInsertBefore::open  ()
+{
+    seq_child.op->open();
+    pos_child.op->open();
+    ins_child.op->open();
+    first_time = true;
+}
+
+void PPFnInsertBefore::reopen()
+{
+    seq_child.op->reopen();
+    pos_child.op->reopen();
+    ins_child.op->reopen();
+    first_time = true;
+}
+
+void PPFnInsertBefore::close ()
+{
+    seq_child.op->close();
+    pos_child.op->close();
+    ins_child.op->close();
+}
+
+void PPFnInsertBefore::next(tuple &t)
+{
+    if (first_time)
+    {
+        first_time  = false;
+        inserted    = false;
+        eos_reached = false;
+
+        tuple st(pos_child.ts);
+        
+        pos_child.op->next(st);
+        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
+        
+        tuple_cell tc = pos_child.get(st);
+        xmlscm_type xtype = tc.get_atomic_type();
+
+        if(!(xtype == xs_untypedAtomic ||
+             xtype == xs_integer ||
+             is_derived_from_xs_integer(xtype)))  
+            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:insert-before (xs:untypedAtomic, xs:integer or derived expected).");
+
+        insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
+        
+        pos_child.op->next(st);
+        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
+
+        current_pos = 1;
+    }
+    
+    if(!inserted && (current_pos == insert_pos || insert_pos < 1))
+    {
+    	ins_child.op->next(t);
+    	if(t.is_eos()) inserted = true;
+    	else return;
+    }
+        
+    if(!eos_reached)
+    {
+        seq_child.op->next(t);
+        current_pos++;
+        if(t.is_eos()) eos_reached = true;
+    }
+
+    if(!inserted && eos_reached)
+    {
+    	ins_child.op->next(t);
+    	if(t.is_eos()) inserted = true;
+    	else return;
+    }
+
+    if(inserted && eos_reached) first_time = true;
+}
+
+PPIterator* PPFnInsertBefore::copy(variable_context *_cxt_)
+{
+    PPFnInsertBefore *res =  new PPFnInsertBefore(_cxt_, seq_child, pos_child, ins_child);
+                                
+    res->seq_child.op = seq_child.op->copy(_cxt_);
+    res->pos_child.op = pos_child.op->copy(_cxt_);
+    res->ins_child.op = ins_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnInsertBefore::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnInsertBefore::result");
 }
 
