@@ -732,6 +732,19 @@
               `(1 (PPDmTypedValue ,(l2p:any-lr-node2por (car node))))
              )
              
+             ((eq? op-name '!fn!insert-before)
+              ; 3 arguments
+              `(1 (PPFnInsertBefore
+                   ;,(l2p:any-lr-node2por (car node))
+                   ;,(l2p:any-lr-node2por (cadr node))
+                   ;,(l2p:any-lr-node2por (caddr node))
+                   ,@(map l2p:any-lr-node2por node)
+                   )))
+             ((eq? op-name '!fn!remove)
+              `(1 (PPFnRemove
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node)))))
+             
              ((eq? op-name '!fn!reverse)
               `(1 (PPFnReverse ,(l2p:any-lr-node2por (car node))))
              )
