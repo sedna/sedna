@@ -268,8 +268,8 @@
       (sa:analyze-element-constructor expr vars funcs ns-binding default-ns))
      ((attribute pi namespace)
       (sa:attribute-pi-namespace expr vars funcs ns-binding default-ns))
-     ((; document
-       ; text ; computed text node constructors not supported yet
+     ((document
+       text
        comment)
       (sa:document-text-comment expr vars funcs ns-binding default-ns))
      ;-------------------

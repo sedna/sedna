@@ -470,6 +470,16 @@
              ((eq? op-name 'comment)
               `(1 (PPComment
                    ,(l2p:any-lr-node2por (car node)))))
+             
+             ; *** document node constructor ***
+             ((eq? op-name 'document)
+              `(1 (PPDocument
+                   ,(l2p:any-lr-node2por (car node)))))
+             
+             ; *** text node constructor ***
+             ((eq? op-name 'text)
+              `(1 (PPText
+                   ,(l2p:any-lr-node2por (car node)))))
 
              ; *** some ***
              ((eq? op-name 'some)

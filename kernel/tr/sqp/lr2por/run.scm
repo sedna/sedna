@@ -342,3 +342,14 @@
          (const (type !xs!integer) "4")
          (const (type !xs!integer) "5")
          (const (type !xs!integer) "6"))))))))
+
+(porc:process-query
+ (l2p:lr2por
+  '(query
+    (prolog)
+    (query-body
+     (document
+      (text
+       (space-sequence
+        (const (type !xs!string) "non-stable")
+        (const (type !xs!integer) "4"))))))))
