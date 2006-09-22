@@ -1120,6 +1120,26 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                         make_pp_op(cxt, lst->at(1).internal.list),
                                         lst->at(2).internal.b);
     }
+	else if (op == "PPText")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_BOOL
+           ) throw USER_EXCEPTION2(SE1004, "32.7");
+
+        opit = new PPTextConstructor(cxt,
+                                        make_pp_op(cxt, lst->at(1).internal.list),
+                                        lst->at(2).internal.b);
+    }
+	else if (op == "PPDocument")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST            
+           ) throw USER_EXCEPTION2(SE1004, "32.7");
+
+        opit = new PPDocumentConstructor(cxt,
+                                        make_pp_op(cxt, lst->at(1).internal.list) );
+    }
     else if (op == "PPFnNot")
     {
         if (   lst->size() != 2

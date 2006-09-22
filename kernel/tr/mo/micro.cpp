@@ -301,7 +301,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
 	case (xml_namespace):
 		ns_dsc::init(new_node);
 		break;
-	case (comment):
+	case (comment):case (text):
 		t_dsc::init(new_node);
 		break;
 	case (cdata):
@@ -428,7 +428,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 	case (xml_namespace):
 		ns_dsc::init(new_node);
 		break;
-	case (comment):
+	case (comment):case (text):
 		t_dsc::init(new_node);
 		break;
 	case (cdata):
@@ -1281,6 +1281,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 	else if (parent!=truep && truep!=XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
 	if (IS_DATA_BLOCK(parent))
 		down_concurrent_micro_ops_number();
+	CHECKP(parent);
+	schema_node * pscm= GETSCHEMENODEX(parent);
     //d_printf1("0");fflush(stdout);
 	int ins_type=0;
 	if (left_sib!=XNULL)
@@ -1294,11 +1296,17 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
             //d_printf1("1");fflush(stdout);
 			//fillLogOfTextNodeChanged(left_sib);
             //d_printf1("!");fflush(stdout);
-			appendTextValue(left_sib,value,size,ttype);
-            //d_printf1("@");fflush(stdout);
-			result=left_sib; 
-            //d_printf1("#");fflush(stdout);
-			ins_type=1;
+			if ( pscm->type==virtual_root) 
+			{
+				result = firstNodeInsertProcedure( left_sib,  parent,text,0); 
+				addTextValue(result,value, size,ttype);
+			}
+			else
+			{
+				appendTextValue(left_sib,value,size,ttype);
+				result=left_sib; 
+				ins_type=1;
+			}
 		}
 	}
     if (right_sib!=XNULL && result==XNULL) 
@@ -1314,9 +1322,17 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 			#endif
             //d_printf1("2");fflush(stdout);
 			//fillLogOfTextNodeChanged(right_sib);
-			insertTextValue(right_sib,value, size,ttype);
-			result=right_sib;
-			ins_type=2;
+			if ( pscm->type==virtual_root) 
+			{
+				result = secondElementInsertProcedure( left_sib,  parent,text,0); 
+				addTextValue(result,value, size,ttype);
+			}
+			else
+			{
+				insertTextValue(right_sib,value, size,ttype);
+				result=right_sib;
+				ins_type=2;
+			}
 		}
 	}
     if ((left!=NULL || right!=NULL)&& result==XNULL)

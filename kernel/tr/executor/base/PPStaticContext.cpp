@@ -4,6 +4,7 @@
  */
 
 #include "sedna.h"
+#include "vmm.h"
 #include "PPStaticContext.h"
 
 static_context::static_context()
@@ -119,7 +120,17 @@ xml_ns* static_context::get_xmlns_by_prefix(const NCName& _prefix)
 }
 void static_context::clear_context()
 {
-	    output_method = se_output_method_xml;
+	std::vector<xptr>::iterator cit=temp_docs.begin();
+	while (cit!=temp_docs.end())
+	{
+		xptr nd=*cit;
+		CHECKP(nd);
+		GETSCHEMENODEX(nd)->delete_scheme_node();
+	//	nid_delete(nd);		
+		++cit;
+	}
+	temp_docs.clear();
+		output_method = se_output_method_xml;
         output_indent = se_output_indent_yes;
         boundary_space = xq_boundary_space_strip;
 		ns_map ::iterator it=ns_lib.begin();
