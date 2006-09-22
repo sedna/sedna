@@ -107,7 +107,10 @@ inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c, xmlscm_typ
 
 inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype, xmlscm_type res_type)
 {
-    get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
+    if (xtype == xs_duration || xtype == xs_yearMonthDuration || xtype == xs_dayTimeDuration )
+    	get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_duration(), xtype));
+    else
+	get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
     return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
