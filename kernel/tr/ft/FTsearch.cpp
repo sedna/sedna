@@ -11,6 +11,9 @@
 
 using namespace dtSearch;
 
+
+#define DTSEARCH_THREAD_STACK_SIZE (1000*1024)
+
 /////////////////////////////////////////////////////////////
 //
 //  DSearchJob
@@ -440,7 +443,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 			ThreadFunc,                  // thread function 
 			this,						 // argument to thread function 
 			&dtth,                       // use default creation flags 
-			0, NULL, __sys_call_error);
+			DTSEARCH_THREAD_STACK_SIZE, NULL, __sys_call_error);
 		if (rval != 0)
 		{
 			UUnnamedSemaphoreRelease(&sem1, __sys_call_error);
@@ -500,8 +503,13 @@ void SednaSearchJob::set_index(tuple_cell& name)
 	ft_index_cell* ft_idx=ft_index_cell::find_index(t_str_buf(name).c_str());
 	if (ft_idx==NULL)
 		throw USER_EXCEPTION(SE1061);
+#ifdef _WIN32
 	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
 		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+#else
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
+#endif
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
 	if (hilight)
