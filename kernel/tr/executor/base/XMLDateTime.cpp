@@ -161,11 +161,10 @@ XMLDateTime::XMLDateTime()
 	reset();
 }
 
-XMLDateTime::XMLDateTime(xs_packed_datetime dt, xmlscm_type type)
+XMLDateTime::XMLDateTime(const xs_packed_datetime& dt, xmlscm_type type)
 {
+	reset();
 	setValue(Type, type);
-
-	printf("Processing packed datetime\n");
 
 	setValue(CentYear, dt.year);
 	setValue(Month, dt.month);
@@ -179,13 +178,12 @@ XMLDateTime::XMLDateTime(xs_packed_datetime dt, xmlscm_type type)
 	setValue(tz_mm, dt.tz_mm);
 }
 
-XMLDateTime::XMLDateTime(xs_packed_duration dur, xmlscm_type type)
+XMLDateTime::XMLDateTime(const xs_packed_duration& dur, xmlscm_type type)
 {
+	reset();
 	setValue(Type, type);
 
 	int neg = dur.neg == 0 ? 1 : -1;
-
-	printf("Processing packed duration, neg=%d\n", neg );
 
 	setValue(CentYear, neg * dur.years);
 	setValue(Month, neg * dur.months );
@@ -228,8 +226,6 @@ xs_packed_duration XMLDateTime::getPackedDuration()
 	retval.minutes = neg * getValue(Minute);
 	retval.seconds = neg * getValue(Second);
 	retval.milis = neg * getValue(MiliSecond);
-
-	printf("Returning packed duration, neg=%d\n", neg );
 
 	return retval;
 }
@@ -396,7 +392,6 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 		 d2.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 	double milis = milis1 + milis2;
 
-	printf("adding durations, milis = %g\n", milis);
  	if (milis>=1.0 || milis <0.0)
 	{
 		if (milis>=1.0)
@@ -418,7 +413,6 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 			d1.getValue(XMLDateTime::Minute)*60 + d2.getValue(XMLDateTime::Minute)*60 +
 			d1.getValue(XMLDateTime::Hour)*60*60 + d2.getValue(XMLDateTime::Hour)*60*60 +
 			d1.getValue(XMLDateTime::Day)*60*60*24 + d2.getValue(XMLDateTime::Day)*60*60*24;
-	printf("Seconds = %d\n", seconds);
  	newDuration.setValue(XMLDateTime::Second, seconds);
 	newDuration.normalize();
 	return newDuration;
@@ -437,16 +431,12 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 
 	if (d.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
 	{
-		printf("Multiplying duration\n");
 		int months = d.getValue(XMLDateTime::CentYear)*12 + d.getValue(XMLDateTime::Month);
-		printf("months = %d\n", months);
 		double multMonths = months * v;
-		printf("multMonths = %d\n", multMonths);
 		int neg = multMonths > 0 ? 1 : -1;
 		months = neg * (int)floor( neg * multMonths + 0.5);
 		newDuration.setValue(XMLDateTime::Month, months);
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG);
-		printf("finalMonths = %d, neg = %d\n", months, neg);
 
 		newDuration.normalize();
 		return newDuration;
@@ -519,7 +509,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
     {
 	//add miliseconds
 	carry = 0;
-	double milis = dt.getValue(XMLDateTime::MiliSecond)/(double)DT_MILISECOND_MAX_VALUE;
+	double milis = dt.getValue(XMLDateTime::MiliSecond)/(double)DT_MILISECOND_MAX_VALUE + 
 			fDuration.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 	if (milis>=1.0 || milis <=0.0)
 	{
@@ -695,7 +685,7 @@ int XMLDateTime::compare(const XMLDateTime& lValue
    /* This is for xs:date datatype, where the normalized value still contains a timezone!
       Doesn't happen in any other date/time types
    */
-   if ( lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD)
+   if (lTemp.getValue(Type) ==xs_date && rTemp.getValue(Type) == xs_date && (   lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD))
    {
 	int lNeg = lTemp.getValue(utc) == UTC_POS ? 1 : -1;
 	int rNeg = rTemp.getValue(utc) == UTC_POS ? 1 : -1;
@@ -1141,7 +1131,6 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     if ( !designator )
     throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
 
-    printf("Parsed yearMonth, year = %d, month  = %d\n", getValue(CentYear), getValue(Month));
     normalize();
 }
 
@@ -1664,7 +1653,6 @@ void XMLDateTime::normalizeDuration()
 
     	//add years
     	setValue(CentYear, getValue(CentYear) + carry*negate);
-	printf("Normalized, year=%d, month=%d\n", getValue(CentYear), getValue(Month));
     }
 
     return;
@@ -2092,7 +2080,6 @@ void XMLDateTime::printDuration(char* buf ) const
 
 	int neg = getValue(utc) == UTC_POS ? 1 : -1;
 
-	printf("Printing duration, neg=%d\n", neg);
  	if (neg == -1)
 		*bufPtr++ = '-';
 
@@ -2169,7 +2156,7 @@ void XMLDateTime::printDuration(char* buf ) const
 
 void XMLDateTime::fillString(char*& ptr, int value, int expLen) const
 {
-    char *strBuffer = new char[expLen+1];
+    char strBuffer[128];
     sprintf(strBuffer, "%d", value);
     int   actualLen = strlen(strBuffer);
     int   i;
@@ -2183,15 +2170,14 @@ void XMLDateTime::fillString(char*& ptr, int value, int expLen) const
     {
         *ptr++ = strBuffer[i];
     }
-    delete strBuffer;
 }
 
 
 void XMLDateTime::fillMilisString(char*& ptr, int value, int maxLen) const
 {
-    char* strBuffer = new char[maxLen+1];
-    char* formatString = new char[10];
-    sprintf(formatString, "\%0%dd", maxLen);
+    char strBuffer[128];
+    char formatString[12];
+    sprintf(formatString, "%%0%dd", maxLen);
     sprintf(strBuffer, formatString, value);
 	 
     for (int i = 0; i < maxLen; i++)
@@ -2200,7 +2186,6 @@ void XMLDateTime::fillMilisString(char*& ptr, int value, int maxLen) const
 		break;
 	*ptr++ = strBuffer[i];
     }
-    delete strBuffer;
 }
 
 int XMLDateTime::fillYearString(char*& ptr, int value) const
