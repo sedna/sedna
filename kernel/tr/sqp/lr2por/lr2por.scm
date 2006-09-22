@@ -832,6 +832,12 @@
              ((eq? op-name '!fn!error) 
               `(1 (PPFnError ,(l2p:any-lr-node2por (car node))))
              )
+ 
+             ; *** trace ***
+		     ((eq? op-name '!fn!trace)
+              `(1 (PPFnTrace
+			       ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node)))))
              
              ; *** checkpoint ***
              ((eq? op-name '!fn!checkpoint) 
