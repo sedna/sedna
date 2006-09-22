@@ -62,7 +62,7 @@ void metadata_on_session_end();
 void delete_document( const char *document_name);
 void delete_document(const char *collection_name,const char *document_name);
 void delete_collection(const char *collection_name);
-xptr insert_document(const char *uri);
+xptr insert_document(const char *uri,bool persistent=true);
 schema_node *insert_collection(const char *collection_name);
 xptr insert_document_in_collection(const char *collection_name, const char *uri);
 

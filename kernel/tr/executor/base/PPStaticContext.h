@@ -32,6 +32,7 @@ struct static_context
     xq_empty_order empty_order;
 
 	std::vector<xml_ns*> def_ns;
+	std::vector<xptr> temp_docs;
 	inscmap insc_ns;
 	ns_map ns_lib;
     static_context();

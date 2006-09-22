@@ -12,6 +12,7 @@
 #include "casting_operations.h"
 #include "updates.h"
 #include "crmutils.h"
+#include "metadata.h"
 #include "e_string.h"
 
 using namespace std;
@@ -43,7 +44,7 @@ tuple_cell getQnameParameter(PPOpIn qname)
 {
 	tuple name(qname.ts);
 	qname.op->next(name);
-	if (name.is_eos()) throw USER_EXCEPTION2(SE1003, " name argument of Constructor is wrong");
+	if (name.is_eos()) throw USER_EXCEPTION(XPTY0004);
 	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XPTY0004);
 	tuple_cell res=atomize(name.cells[0]);
 	xmlscm_type xtype=res.get_atomic_type();
@@ -618,6 +619,9 @@ void PPAttributeConstructor::next  (tuple &t)
 		NCName* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);
 		xml_ns* ns=NULL;
+		if (((prefix==NULL||my_strcmp(prefix->n,"")==0) && my_strcmp(name,"xmlns")==0)
+			||(prefix!=NULL && my_strcmp(prefix->n,"http://www.w3.org/2000/xmlns/")==0 ))
+			throw USER_EXCEPTION(XQDY0044);
 		if (prefix!=NULL)
 		{
 			ns=st_ct.get_xmlns_by_prefix(*prefix);
@@ -1089,6 +1093,302 @@ PPIterator* PPPIConstructor::copy(variable_context *_cxt_)
 }
 
 bool PPPIConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    /*INSERT OPERATION HERE*/
+    return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPTextConstructor
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+PPTextConstructor::PPTextConstructor(variable_context *_cxt_, 
+					 PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
+                                    content(_content_)
+{
+	at_value=NULL;
+	
+}
+
+PPTextConstructor::PPTextConstructor(variable_context *_cxt_, 
+					 const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
+{
+	at_value=new char[strlen(value)+1];
+	strcpy(at_value,value);
+}
+PPTextConstructor::~PPTextConstructor()
+{
+	
+	if (at_value!=NULL) 
+		delete [] at_value;
+	else
+	{
+		delete content.op;
+		content.op = NULL;
+		
+	}
+	if (schema_carrier)
+	{
+		nid_delete(virt_root);
+		root_schema->delete_scheme_node();
+		firstCons=true; // !!! false !!! There was false before... (Andrey)
+	}
+}
+
+void PPTextConstructor::open  ()
+{
+    schema_carrier=checkInitial();
+	if (at_value==NULL) content.op->open();
+    first_time = true;
+    eos_reached = true;
+}
+
+void PPTextConstructor::reopen()
+{
+    if (at_value==NULL) content.op->reopen();
+	first_time = true;
+    eos_reached = true;
+}
+
+void PPTextConstructor::close ()
+{
+    if (at_value==NULL) content.op->close();
+}
+
+void PPTextConstructor::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+		const char* value=at_value;
+		int size=0;
+		tuple_cell res;
+		if (value==NULL)
+		{
+			getStringParameter(content);
+			value=(char*)str_val.c_str();
+			size=str_val.get_size();
+		}
+		else
+			size=strlen(value);
+		xptr newcomm;
+		if (cont_parind==XNULL || deep_copy )
+			newcomm= insert_text(XNULL,XNULL,virt_root,value,size);
+		else
+		{
+			if (cont_leftind!=XNULL)
+				newcomm= insert_text(removeIndirection(cont_leftind),XNULL,XNULL,value,size);
+			else
+				newcomm= insert_text(XNULL,XNULL,removeIndirection(cont_parind),value,size);
+			conscnt++;
+			cont_leftind=((n_dsc*)XADDR(newcomm))->indir;			
+		}
+		//Result
+		t.copy(tuple_cell::node(newcomm));
+	
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPTextConstructor::copy(variable_context *_cxt_)
+{
+	PPTextConstructor *res ;
+	if (at_value!=NULL)	res = new PPTextConstructor(_cxt_, at_value, deep_copy);
+	else 
+	{
+		res = new PPTextConstructor(_cxt_, content, deep_copy);
+		res->content.op = content.op->copy(_cxt_);
+	}
+    return res;
+}
+
+bool PPTextConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    /*INSERT OPERATION HERE*/
+    return true;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPDocumentConstructor
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+PPDocumentConstructor::PPDocumentConstructor(variable_context *_cxt_, 
+					 PPOpIn _content_): PPConstructor(_cxt_,false),
+                                    content(_content_)
+{
+	
+	
+}
+
+PPDocumentConstructor::~PPDocumentConstructor()
+{
+	
+	delete content.op;
+	content.op = NULL;
+}
+
+void PPDocumentConstructor::open  ()
+{
+	content.op->open();
+    first_time = true;
+    eos_reached = true;
+}
+
+void PPDocumentConstructor::reopen()
+{
+    content.op->reopen();
+	first_time = true;
+    eos_reached = true;
+}
+
+void PPDocumentConstructor::close ()
+{
+    content.op->close();
+}
+
+void PPDocumentConstructor::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+		
+		//Name parameter
+		bool need_deall=false;
+		tuple_cell res;
+		//document insertion insertion
+		//context save
+		xptr parind=cont_parind;
+		xptr leftind=cont_leftind;		
+		int cnt=conscnt;
+		int oldcnt=conscnt;
+		xptr new_doc=insert_document("tmp",false);
+		st_ct.temp_docs.push_back(new_doc);
+		xptr indir=((n_dsc*)XADDR(new_doc))->indir;
+		cont_parind=indir;
+		cont_leftind=XNULL;
+		sequence at_vals(1);
+		xptr left=XNULL;
+		content.op->next(t);
+		while (!t.is_eos())
+		{
+			//print_tuple(cont,crm_out);
+			tuple_cell tc=t.cells[0];
+			if (tc.is_atomic())
+			{
+				at_vals.add(t);
+				//if (val->get_size()>0) val->append(" ");
+				//val->append(cont_ptr);
+			}
+			else
+			{
+				if (at_vals.size()>0)
+				{
+					tuple_cell tcc;
+					str_val.clear();
+					sequence::iterator it=at_vals.begin();
+					do
+					{
+						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
+						tcc=cast(tcc, xs_string);
+						str_val.append(tcc);
+						it++;
+					}
+					while (it!=at_vals.end());
+					at_vals.clear();
+					if(str_val.get_size()>0)
+					left=insert_text(left,XNULL,removeIndirection(indir),str_val.get_ptr_to_text(),str_val.get_size(),str_val.get_type());
+				}
+				xptr node=tc.get_node();
+				CHECKP(node);
+				t_item typ=GETTYPE(GETSCHEMENODE(XADDR(node)));
+				switch (typ)
+				{
+				case document:
+				case element: case text: 
+					{
+						break;
+					}
+				case attribute:
+					{
+						throw USER_EXCEPTION(XPTY0004);
+					}
+				}
+				if (conscnt>cnt)
+				{
+					left=node;
+					cnt=conscnt;
+					CHECKP(left);
+				}
+				else
+				{
+					if (typ==document)
+					{
+						xptr res = copy_content(removeIndirection(indir),node,left,false);
+						if (res!=XNULL)					
+							left=res;
+						else continue;	
+						
+					}
+					else
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+						
+				}
+				cont_leftind=((n_dsc*)XADDR(left))->indir;
+			}
+			
+			content.op->next(t);
+		}
+		if (at_vals.size()>0)
+		{
+					str_val.clear();
+					tuple_cell tcc;
+					sequence::iterator it=at_vals.begin();
+					do
+					{
+						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
+						tcc=cast(tcc, xs_string);
+						str_val.append(tcc);
+						it++;
+					}
+					while (it!=at_vals.end());
+					at_vals.clear();
+					if(str_val.get_size()>0)
+					left=insert_text(left,XNULL,removeIndirection(indir),str_val.get_ptr_to_text(),str_val.get_size(),str_val.get_type());
+		}
+		t.copy(tuple_cell::node(removeIndirection(indir)));
+		cont_parind=parind;
+		cont_leftind=XNULL;
+		conscnt=oldcnt;
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPDocumentConstructor::copy(variable_context *_cxt_)
+{
+	PPDocumentConstructor *res ;
+	res = new PPDocumentConstructor(_cxt_, content);
+	res->content.op = content.op->copy(_cxt_);
+    return res;
+}
+
+bool PPDocumentConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;

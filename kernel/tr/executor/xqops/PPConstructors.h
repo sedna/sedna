@@ -176,6 +176,63 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPTextConstructor
+///////////////////////////////////////////////////////////////////////////////
+class PPTextConstructor : public PPConstructor
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn content;
+	char* at_value;
+	
+    
+
+    void children(PPOpIn &_content_) {if (at_value==NULL)_content_=content ;}
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPTextConstructor(variable_context *_cxt_, 
+            PPOpIn _content_,bool _deep_copy);
+	PPTextConstructor(variable_context *_cxt_, 
+            const char* value,bool _deep_copy);
+    virtual ~PPTextConstructor();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPDocumentConstructor
+///////////////////////////////////////////////////////////////////////////////
+class PPDocumentConstructor : public PPConstructor
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn content;
+	void children(PPOpIn &_content_) {_content_=content ;}
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPDocumentConstructor(variable_context *_cxt_, 
+            PPOpIn _content_);
+    virtual ~PPDocumentConstructor();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPPIConstructor
 ///////////////////////////////////////////////////////////////////////////////
 class PPPIConstructor : public PPConstructor

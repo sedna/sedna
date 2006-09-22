@@ -218,9 +218,13 @@ void delete_collection(const char *collection_name)
 	//metadata_sem_up();
 }
 
-xptr insert_document(const char *uri)
+xptr insert_document(const char *uri,bool persistent)
 {
+	doc_schema_node* scm=NULL;
 	string name=get_name_from_uri(uri);
+	char* name_ptr=NULL;
+if (persistent)
+	{	
     metadata_sem_down();
 	
 	if (search_metadata_cell(NULL,name.c_str())!=NULL)
@@ -233,12 +237,16 @@ xptr insert_document(const char *uri)
 	sn_metadata_cell* mdc=(sn_metadata_cell*)scm_malloc(sizeof(sn_metadata_cell),true);
 	mdc->collection_name=NULL;
 	mdc->document_name=(char*)scm_malloc(name.size()+1,true);
+	name_ptr=mdc->document_name;
 	strcpy(mdc->document_name,name.c_str());
-	doc_schema_node* scm=	doc_schema_node::init(true);
+	scm=	doc_schema_node::init(true);
 	mdc->snode=scm;
 	metadata->put(mdc);
 	metadata_sem_up();
-	xptr blk=createNewBlock(scm,true);
+}
+else
+	scm=doc_schema_node::init(false);
+	xptr blk=createNewBlock(scm,persistent);
 	node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(blk);
 	n_dsc* node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
 	block_hdr->free_first=*((shft*)node);
@@ -248,17 +256,20 @@ xptr insert_document(const char *uri)
 	xptr nodex=ADDR2XPTR(node);
 	xptr tmp=add_record_to_indirection_table(nodex);
 	CHECKP(nodex);
-	VMM_SIGNAL_MODIFICATION(nodex);
 	node->indir=tmp;
-	nid_create_root(nodex,true);
-	CHECKP(nodex);
-	addTextValue(nodex,mdc->document_name,name.length());
-	VMM_SIGNAL_MODIFICATION(nodex);
 	block_hdr->count=1;
 	//NODE STATISTICS
 	block_hdr->snode->nodecnt++;
-	hl_logical_log_document(node->indir,uri,NULL,true);
-	up_concurrent_micro_ops_number();
+	VMM_SIGNAL_MODIFICATION(nodex);
+	nid_create_root(nodex,persistent);
+	if (persistent)
+	{
+	
+		CHECKP(nodex);
+		addTextValue(nodex,name_ptr,name.length());
+		VMM_SIGNAL_MODIFICATION(nodex);
+		hl_logical_log_document(node->indir,uri,NULL,true);							up_concurrent_micro_ops_number();
+	}	
 	return nodex;
 }
 
