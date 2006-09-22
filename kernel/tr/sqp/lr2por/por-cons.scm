@@ -177,8 +177,6 @@
     ; IS ADDED TO ATTRIBUTE AS WELL
     ((and (eq? (car op) 'PPElement)
           (= (length op) 3))
-     ;(display op)
-     ;(newline)
      (let* ((this-ns-prefix
              (if (and (list? (cadr op))  ; not a null
                       (= (length (cadr op)) 2)
@@ -223,11 +221,11 @@
     ((and (eq? (car op) 'PPPI)
           (= (length op) 3))
      (let ((name
-            (porc:process-phys-op (cadr op) #t #f #t))
+            (porc:process-phys-op (cadr op) #t #f #f))
            (value
             ; Constructors inside PIs have to be copied
             ; due to fn:string-value implicitly invoked
-            (porc:process-phys-op (caddr op) #t #f #t)))
+            (porc:process-phys-op (caddr op) #t #f #f)))
       (list
        (list (car op)  ; = 'PPPI
              (car name)
@@ -244,9 +242,31 @@
      )
     ((eq? (car op) 'PPComment)
      (let ((content
-            (porc:process-phys-op (cadr op) #t #f #t)))
+            (porc:process-phys-op (cadr op) #t #f #f)))
       (list
        (list (car op)  ; = 'PPComment
+             (car content)
+             copy?   ; should copy or not
+             )
+       (cadr content)
+       #f  ; we don't care
+       )))
+    ((eq? (car op) 'PPDocument)
+     (let ((content
+            (porc:process-phys-op (cadr op)
+                                  #f  ; don't copy inside document node
+                                  #f #f)))
+      (list
+       (list (car op)  ; = 'PPDocument
+             (car content))
+       (cadr content)
+       #f  ; we don't care
+       )))
+    ((eq? (car op) 'PPText)
+     (let ((content
+            (porc:process-phys-op (cadr op) #t #f #f)))
+      (list
+       (list (car op)  ; = 'PPText
              (car content)
              copy?   ; should copy or not
              )
