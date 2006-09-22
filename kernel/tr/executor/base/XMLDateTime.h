@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * $Id: XMLDateTime.hpp 225121 2005-07-25 13:41:47Z cargilld $
- */
-
 #ifndef XML_DATETIME_H
 #define XML_DATETIME_H
 
@@ -106,8 +102,8 @@ public:
     // -----------------------------------------------------------------------
 
     XMLDateTime();
-    XMLDateTime(xs_packed_datetime storage, xmlscm_type type);
-    XMLDateTime(xs_packed_duration storage, xmlscm_type type);
+    XMLDateTime(const xs_packed_datetime& storage, xmlscm_type type);
+    XMLDateTime(const xs_packed_duration& storage, xmlscm_type type);
 
     // -----------------------------------------------------------------------
     // Copy ctor and Assignment operators
