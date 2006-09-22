@@ -495,7 +495,7 @@ void SednaIndexJob::recover_db(const trns_undo_analysis_list& undo_list, const t
 		{
 			int l = strlen(dent->d_name);
 			if (l > 4 && !strcmp((char*)dent->d_name + l - 4, ".log"))
-					recover_db_file(dent->d_name, undo_redo_trns_map);
+					recover_db_file(dent->d_name, undo_list, redo_list, checkpoint_lsn);
 		}
 	if (0 != closedir(dir))
 			throw USER_EXCEPTION(SE4043); //FIXME: exception code

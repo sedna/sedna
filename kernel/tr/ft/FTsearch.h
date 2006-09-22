@@ -21,6 +21,16 @@
 #include "crmutils.h" 
 
 
+//TODO: remove this and do not include dtsearch files here 
+// (dstring.h defines true/false then boolean_operations do not compile)
+#ifdef false
+#undef false
+#endif
+#ifdef true
+#undef true
+#endif
+
+
 class SednaTextInputStream {
     public:
         SednaTextInputStream(dtsFileInfo* _info_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_);
