@@ -201,6 +201,8 @@
        )))
     ((and (eq? (car op) 'PPAttribute)
           (= (length op) 3))
+     ; Attribute, pi, comment and computed text node constructors must
+     ; have in-attr? == #t for their content
      (let ((name
             (porc:process-phys-op (cadr op) #t #f #t))
            (value
@@ -221,11 +223,11 @@
     ((and (eq? (car op) 'PPPI)
           (= (length op) 3))
      (let ((name
-            (porc:process-phys-op (cadr op) #t #f #f))
+            (porc:process-phys-op (cadr op) #t #f #t))
            (value
             ; Constructors inside PIs have to be copied
             ; due to fn:string-value implicitly invoked
-            (porc:process-phys-op (caddr op) #t #f #f)))
+            (porc:process-phys-op (caddr op) #t #f #t)))
       (list
        (list (car op)  ; = 'PPPI
              (car name)
@@ -242,7 +244,7 @@
      )
     ((eq? (car op) 'PPComment)
      (let ((content
-            (porc:process-phys-op (cadr op) #t #f #f)))
+            (porc:process-phys-op (cadr op) #t #f #t)))
       (list
        (list (car op)  ; = 'PPComment
              (car content)
@@ -264,7 +266,7 @@
        )))
     ((eq? (car op) 'PPText)
      (let ((content
-            (porc:process-phys-op (cadr op) #t #f #f)))
+            (porc:process-phys-op (cadr op) #t #f #t)))
       (list
        (list (car op)  ; = 'PPText
              (car content)
