@@ -99,6 +99,7 @@ class SednaStatementImpl implements SednaStatement {
 
                 this.serializedResult =
                     new SednaSerializedResultImpl(sitem.item,
+                                                  sitem.hasNextItem,
                                                   this.bufInputStream,
                                                   this.outputStream);
 
@@ -214,6 +215,7 @@ class SednaStatementImpl implements SednaStatement {
 
                 this.serializedResult =
                     new SednaSerializedResultImpl(sitem.item,
+                                                  sitem.hasNextItem,
                                                   this.bufInputStream,
                                                   this.outputStream);
 

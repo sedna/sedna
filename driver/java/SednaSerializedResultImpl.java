@@ -22,12 +22,12 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
 
     //~--- constructors -------------------------------------------------------
 
-    SednaSerializedResultImpl(StringBuffer stringItem, BufferedInputStream is,
+    SednaSerializedResultImpl(StringBuffer stringItem, boolean hasNextItem, BufferedInputStream is,
                               OutputStream os) {
         this.bufInputStream = is;
         this.outputStream   = os;
         this.stringItem     = stringItem;
-        this.hasNextItem    = true;
+        this.hasNextItem    = hasNextItem;
     }
 
     //~--- methods ------------------------------------------------------------
