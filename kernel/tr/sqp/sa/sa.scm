@@ -449,6 +449,9 @@
     (,sa:fn-ns "error" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!error)
+    (,sa:fn-ns "trace" 2 2
+     ,(lambda (num-args) (list sa:type-any sa:type-atomic))
+     ,sa:type-any !fn!trace)
     (,sa:fn-ns "insert-before" 3 3
      ,(lambda (num-args) (list sa:type-any sa:type-atomic sa:type-any))
      ,sa:type-any !fn!insert-before)
