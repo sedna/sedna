@@ -1255,6 +1255,36 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
+    /*else if (op == "PPFnOneOrMore")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "48.-8");
+
+        opit = new PPFnOneOrMore(cxt,
+                                 make_pp_op(cxt, lst->at(1).internal.list));
+                                 
+    }
+    else if (op == "PPFnExactlyOne")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "48.-7");
+
+        opit = new PPFnExactlyOne(cxt,
+                                  make_pp_op(cxt, lst->at(1).internal.list));
+                                 
+    }
+    else if (op == "PPFnZeroOrOne")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "48.-6");
+
+        opit = new PPFnZeroOrOne(cxt,
+                                 make_pp_op(cxt, lst->at(1).internal.list));
+                                 
+    }*/
     else if (op == "PPFnInsertBefore")
     {
         if (   lst->size() != 4

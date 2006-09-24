@@ -10,70 +10,28 @@
 using namespace std;
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// Special functions to check if we can perform ordering using a gt operator.
-/// The ordering is performed in the least common type that has a gt operator. 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-/// Simply throws SE1002 for some XML simple types.
-
-void assert_type_is_supported(xmlscm_type t)
-{
-    if( t == xs_nonPositiveInteger  ||
-        t == xs_negativeInteger     || 
-        t == xs_long                || 
-        t == xs_int                 || 
-        t == xs_short               || 
-        t == xs_byte                || 
-        t == xs_nonNegativeInteger  || 
-        t == xs_unsignedLong        || 
-        t == xs_unsignedInt         ||
-        t == xs_unsignedShort       || 
-        t == xs_unsignedByte        || 
-        t == xs_positiveInteger) 
-         throw USER_EXCEPTION2(SE1002, "Ordering for XML simple type is not supported (PPOrderBy).");
-}
-
 /// Returns the least common type that has a gt operator.
-/// Throws SE1002 if types can be compared by one of or both are not supported.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
 xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
-    assert_type_is_supported(t1);
-    assert_type_is_supported(t2);
-    
     xmlscm_type t = evaluate_common_type(t1, t2);    
     
+    if(t == xs_string  || is_derived_from_xs_string(t))  return xs_string;
+    if(t == xs_integer || is_derived_from_xs_integer(t)) return xs_integer; 
+    
+    ///FIXME!!! Some other 'date types' have a gt operator.
     switch(t)    
-    {
-        case xs_string                : 
-        case xs_normalizedString      : 
-        case xs_token                 : 
-        case xs_language              : 
-        case xs_NMTOKEN               : 
-        case xs_Name                  : 
-        case xs_NCName                : 
-        case xs_ID                    : 
-        case xs_IDREF                 : 
-        case xs_ENTITY                : 
-        case xs_anyURI                : return xs_string;
-        
+    {   
         case xs_yearMonthDuration     : 
         case xs_dayTimeDuration       : 
         case xs_float                 : 
         case xs_double                : 
         case xs_decimal               : 
-        case xs_integer               : 
         case xs_boolean               : return t;
-
         default                       : throw USER_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator (PPOrderBy).");
     }    
 }
-
-
 
 
 
@@ -121,7 +79,7 @@ void PPOrderBy::open  ()
     udata.pos       = 0;
     udata.header    = &types;
     udata.modifiers = &modifiers;
-    udata.size      = sizeof(int);            
+    udata.size      = sizeof(__int64);            
     udata.buffer    = NULL;
 
     ss = new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
@@ -162,7 +120,7 @@ void PPOrderBy::next  (tuple &t)
             ss         -> clear();
             pos = 0;
             udata.pos   = 0;
-            udata.size  = sizeof(int);
+            udata.size  = sizeof(__int64);
             need_reinit = false;
             need_to_sort= false;
         }
@@ -289,7 +247,7 @@ bool PPOrderBy::result(PPIterator* cur, variable_context *cxt, void*& r)
 
 void serialize_string(const tuple_cell& tc, void* dest)
 {
-    int length_all = tc.get_strlen();
+    __int64 length_all = tc.get_strlen();
     int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
     memcpy(dest, &flag, sizeof(bool));                       
@@ -325,7 +283,7 @@ void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
             case xs_float                  : *((float*)value) = *((float*)addr); break;
             case xs_double                 : 
             case xs_decimal                : *((double*)value) = *((double*)addr); break;
-            case xs_integer                : *((int*)value) = *((int*)addr); break;
+            case xs_integer                : *((__int64*)value) = *((__int64*)addr); break;
             case xs_boolean                : *((bool*)value) = *((bool*)addr); break;
             default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented (PPOrderBy).");
         }    
@@ -355,7 +313,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     if(temp2 == NULL) CHECKP(v2);
     bit_set bs2((char *)addr2+ud->bit_set_offset, length);
 
-    int offset = sizeof(int);
+    int offset = sizeof(__int64);
     int result = 0;
 
     for(int i=0; i < length; i++)
@@ -393,7 +351,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_float);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_float);
-                    result = (value2-value1)*order;
+                    if (value2 == value1) result = 0;
+                    else result = (value2 > value1 ? 1 : -1)*order;
                     break;
                 }
                 case xs_double                 : 
@@ -404,17 +363,19 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_double);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_double);
-                    result = (value2-value1)*order;
+                    if (value2 == value1) result = 0;
+                    else result = (value2 > value1 ? 1 : -1)*order;
                     break;
                 }
                 case xs_integer                : 
                 {
-                    int value1, value2;
+                    __int64 value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_integer);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_integer);
-                    result = (value2-value1)*order;
+                    if (value2 == value1) result = 0;
+                    else result = (value2 > value1 ? 1 : -1)*order;
                     break;
                 }
                 case xs_boolean                : 
@@ -452,8 +413,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     if (result == 0 && (!flag1 || !flag2))
                     {
-                        int position1;
-                        int position2;
+                        __int64 position1;
+                        __int64 position2;
                         if(temp1 != NULL) CHECKP(v1);
                         get_deserialized_value(&position1, addr1, xs_integer);
                         if(temp2 != NULL) CHECKP(v2);
@@ -466,6 +427,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     break;
                 }
+                ///FIXME!!! Some other 'date types' have a gt operator.
                 case xs_yearMonthDuration    : 
                 case xs_dayTimeDuration      : 
                 {
@@ -498,7 +460,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     }
     if(temp1 != NULL) {    delete temp1; temp1 = NULL;    }
     if(temp2 != NULL) {    delete temp2; temp2 = NULL;    }
-    return result;
+	
+	return result;
 }
 
 int PPOrderBy::get_size (tuple& t, const void * Udata)
@@ -509,14 +472,14 @@ int PPOrderBy::get_size (tuple& t, const void * Udata)
 void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 {
     orb_user_data* ud = (orb_user_data*)Udata;
-    int pos = ud  -> pos;
+    __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
         
     #ifdef ALIGNMENT_REQUIRED
 
         temp_buffer* buffer = ud -> buffer;
         buffer->clear();
-        buffer->copy_to_buffer(&pos, sizeof(int));
+        buffer->copy_to_buffer(&pos, sizeof(__int64));
         for(int i = 0; i < t.cells_number; i++)
         {
             common_type &ct = (ud -> header) -> at(i);
@@ -539,8 +502,8 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
         CHECKP(v1);
         VMM_SIGNAL_MODIFICATION(v1);
         void* p = XADDR(v1);
-        *((int *)p) = pos;
-        int offset = sizeof(int);
+        *((__int64 *)p) = pos;
+        int offset = sizeof(__int64);
         for(int i = 0; i < t.cells_number; i++)
         {
             common_type &ct = (ud -> header) -> at(i);
@@ -558,7 +521,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_float                : *((float*)((char*)p+offset)) = t.cells[i].get_xs_float(); break;
                     case xs_double               : *((double*)((char*)p+offset)) = t.cells[i].get_xs_double(); break;
                     case xs_decimal              : *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().get_double(); break;
-                    case xs_integer              : *((int*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
+                    case xs_integer              : *((__int64*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
                     case xs_boolean              : *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
                     case xs_string               : 
                     {
@@ -570,6 +533,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                         }
                         break;
                     }
+                    ///FIXME!!! Some other 'date types' have a gt operator.
                     case xs_yearMonthDuration    : 
                     case xs_dayTimeDuration      : memcpy((char*)p+offset, t.cells[i].get_str_ptr().get(), type_size); break;
                     default                       : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
@@ -585,12 +549,12 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
     orb_user_data* ud = (orb_user_data*)Udata;
-    int pos = ud  -> pos;
+    __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
     
     temp_buffer* buffer = ud -> buffer;
     buffer->clear();
-    buffer->copy_to_buffer(&pos, sizeof(int));
+    buffer->copy_to_buffer(&pos, sizeof(__int64));
     for(int i = 0; i < t.cells_number; i++)
     {
         common_type &ct = (ud -> header) -> at(i);
@@ -614,12 +578,12 @@ void PPOrderBy::deserialize (tuple& t, xptr& v1, const void * Udata)
 {
     CHECKP(v1);
     void* p = XADDR(v1);
-    int pos;
+    __int64 pos;
 
     #ifdef ALIGNMENT_REQUIRED
-        memcpy(&pos, p, sizeof(int));
+        memcpy(&pos, p, sizeof(__int64));
     #else
-        pos = *((int*)p);
+        pos = *((__int64*)p);
     #endif
 
     t.cells[0] = tuple_cell::atomic((__int64)pos);
@@ -627,13 +591,13 @@ void PPOrderBy::deserialize (tuple& t, xptr& v1, const void * Udata)
 
 void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
-    if(size1 < sizeof(int))
+    if(size1 < sizeof(__int64))
     {
         int pos;
         temp_buffer* buffer = ((orb_user_data*)Udata) -> buffer;
         buffer->clear();
         buffer->copy_to_buffer(v1, size1);
-        buffer->copy_to_buffer(v2, sizeof(int)-size1);
+        buffer->copy_to_buffer(v2, sizeof(__int64)-size1);
         buffer->copy_from_buffer(&pos);
     }
     else
@@ -683,11 +647,12 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_float                : {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, type_size);  break;}
         case xs_decimal              : {double value = tc.get_xs_decimal().get_double(); memcpy(buffer + pos, &value, type_size); break;}
-        case xs_integer              : {int value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        
-        case xs_yearMonthDuration   : 
-        case xs_dayTimeDuration     : {memcpy(buffer + pos, tc.get_str_ptr().get(), type_size); break;}
+        ///FIXME!!! Some other 'date types' have a gt operator.
+        case xs_yearMonthDuration    : 
+        case xs_dayTimeDuration      : {memcpy(buffer + pos, tc.get_str_ptr().get(), type_size); break;}
         default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
     }
 

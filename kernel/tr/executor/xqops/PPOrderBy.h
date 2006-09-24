@@ -98,8 +98,8 @@ typedef std::vector<common_type>        arr_of_common_type;
 //Udata* is used in serialization/deserialization in sorted sequence
 struct orb_user_data
 {
-    sequence_tmp *sort;                                 
-    int pos;                                        //Initial sequence which must be sorted.
+    sequence_tmp *sort;                             //Initial sequence which must be sorted.    
+    __int64 pos;                                    
     int size;                                       //Serialized size of in bytes (fixed for each tuple): 
                                                     //[position] + [tuple_cell(1) | tuple_cell(2) | .... tuple_cell(N)] + [bit_set - eos map].
     int bit_set_offset;                             //Offset to bit_set (i.e. size of position + size of tuple cells in serialized presentation).
@@ -138,7 +138,7 @@ private:
     bool need_reinit;
     bool need_to_sort;                              //If we have of eos values then we don't need to sort by them
     sorted_sequence *ss;
-    int pos;
+    __int64 pos;
     
     arr_of_common_type types;
     orb_user_data udata;

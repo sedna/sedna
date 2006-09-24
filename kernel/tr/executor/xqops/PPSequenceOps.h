@@ -39,7 +39,7 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// PPFnEmpty
+/// PPFnExists
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnExists : public PPIterator
 {
@@ -260,6 +260,79 @@ public:
                      PPOpIn _ins_child_);
 
     virtual ~PPFnInsertBefore();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnZeroOrOne
+///////////////////////////////////////////////////////////////////////////////
+class PPFnZeroOrOne : public PPIterator
+{
+protected:
+    PPOpIn child;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnZeroOrOne(variable_context *_cxt_,
+                  PPOpIn _child_);
+    virtual ~PPFnZeroOrOne();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnOneOrMore
+///////////////////////////////////////////////////////////////////////////////
+class PPFnOneOrMore : public PPIterator
+{
+protected:
+    PPOpIn child;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnOneOrMore(variable_context *_cxt_,
+                  PPOpIn _child_);
+    virtual ~PPFnOneOrMore();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnExactlyOne
+///////////////////////////////////////////////////////////////////////////////
+class PPFnExactlyOne : public PPIterator
+{
+protected:
+    PPOpIn child;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnExactlyOne(variable_context *_cxt_,
+                  PPOpIn _child_);
+    virtual ~PPFnExactlyOne();
 };
 
 
