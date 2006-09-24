@@ -901,3 +901,179 @@ bool PPFnInsertBefore::result(PPIterator* cur, variable_context *cxt, void*& r)
 	throw USER_EXCEPTION2(SE1002, "PPFnInsertBefore::result");
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnZeroOrOne
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnZeroOrOne::PPFnZeroOrOne(variable_context *_cxt_,
+                             PPOpIn _child_) : PPIterator(_cxt_),
+                                               child(_child_)
+{
+}
+
+PPFnZeroOrOne::~PPFnZeroOrOne()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnZeroOrOne::open  ()
+{
+    child.op->open();
+}
+
+void PPFnZeroOrOne::reopen()
+{
+    child.op->reopen();
+}
+
+void PPFnZeroOrOne::close ()
+{
+    child.op->close();
+}
+
+void PPFnZeroOrOne::next  (tuple &t)
+{
+    child.op->next(t);
+
+    if (!t.is_eos())
+    {
+        tuple temp(child.ts);
+        child.op->next(temp);
+        if(!temp.is_eos()) throw USER_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
+    }
+}
+
+PPIterator* PPFnZeroOrOne::copy(variable_context *_cxt_)
+{
+    PPFnZeroOrOne *res = new PPFnZeroOrOne(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnZeroOrOne::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnZeroOrOne::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnOneOrMore
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnOneOrMore::PPFnOneOrMore(variable_context *_cxt_,
+                             PPOpIn _child_) : PPIterator(_cxt_),
+                                               child(_child_)
+{
+}
+
+PPFnOneOrMore::~PPFnOneOrMore()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnOneOrMore::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnOneOrMore::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnOneOrMore::close ()
+{
+    child.op->close();
+}
+
+void PPFnOneOrMore::next  (tuple &t)
+{
+    child.op->next(t);
+    if (t.is_eos()) 
+    {
+        if(first_time) throw USER_EXCEPTION(FORG0004); //error code description: fn:one-or-more called with a sequence containing no items.
+        first_time = true;
+    }
+    else first_time = false;
+}
+
+PPIterator* PPFnOneOrMore::copy(variable_context *_cxt_)
+{
+    PPFnOneOrMore *res = new PPFnOneOrMore(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnOneOrMore::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnOneOrMore::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnExactlyOne
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnExactlyOne::PPFnExactlyOne(variable_context *_cxt_,
+                               PPOpIn _child_) : PPIterator(_cxt_),
+                                                 child(_child_)
+{
+}
+
+PPFnExactlyOne::~PPFnExactlyOne()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnExactlyOne::open  ()
+{
+    child.op->open();
+}
+
+void PPFnExactlyOne::reopen()
+{
+    child.op->reopen();
+}
+
+void PPFnExactlyOne::close ()
+{
+    child.op->close();
+}
+
+void PPFnExactlyOne::next  (tuple &t)
+{
+    child.op->next(t);
+    if(t.is_eos()) throw USER_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
+
+    tuple temp(child.ts);
+    child.op->next(temp);
+    if(!temp.is_eos()) throw USER_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
+}
+
+PPIterator* PPFnExactlyOne::copy(variable_context *_cxt_)
+{
+    PPFnExactlyOne *res = new PPFnExactlyOne(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnExactlyOne::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnExactlyOne::result");
+}
+

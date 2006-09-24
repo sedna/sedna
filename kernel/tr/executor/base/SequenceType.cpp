@@ -249,13 +249,13 @@ xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
         case xs_yearMonthDuration	: 
         	switch(t2)
         	{
-        		case xs_dayTimeDuration    : return xs_duration;
+        		case xs_dayTimeDuration     : return xs_duration;
         		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_dayTimeDuration	: throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type in evaluate_common_type.");
             switch(t2)
         	{
-        		case xs_yearMonthDuration  : return xs_duration;
+        		case xs_yearMonthDuration   : return xs_duration;
         		default                     : throw USER_EXCEPTION2(XPTY0004, "Types could not be converted to a common type or unexpected XML Schema simple type in evaluate_common_type.");
         	}
         case xs_float				: 

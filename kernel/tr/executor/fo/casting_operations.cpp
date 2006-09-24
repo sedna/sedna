@@ -544,22 +544,43 @@ static bool check_constraints_for_xs_positiveInteger(const __int64& value)
 {
     return value > 0;
 }
-/*
+
+
 template <class Iterator>
-static inline void have_spaces(const Iterator &start, const Iterator &end, bool *res)
+static inline void check_constraints_for_xs_normalizedString(Iterator &start, const Iterator &end, bool *res)
 {
 	(*res) = false;
+
 	while (start < end)
 	{
-		if (*start == ' ')
-        {
-			(*res) = true;
-            break;
-        }
+		if (*start == '\n' || *start == '\r' || *start == '\t') return;
 		start++;
 	}
+
+	(*res) = true;
 }
-*/            
+
+template <class Iterator>
+static inline void check_constraints_for_xs_token(Iterator &start, const Iterator &end, bool *res)
+{
+	(*res) = false;
+	
+	unsigned char previous = *start;
+
+	while (start < end)
+	{
+		if (*start == '\n' || *start == '\r' || *start == '\t' || (*start == ' ' && previous == ' ')) return;
+        previous = *start;
+		start++;
+	}
+
+	if(previous == ' ') return;
+
+	(*res) = true;
+}
+
+
+
 static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type)
 {
     if (TT == base_type) return SV;
@@ -592,9 +613,20 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     }
     else if (base_type == xs_string)
     {
-        // !!! Fix me: check constraints
-        sat = true;
-        //STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(count_spaces, SV, &sat);
+        switch (TT)
+        {
+            case xs_string            : sat = true; break
+            case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
+       	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
+            case xs_language          : 
+       	    case xs_NMTOKEN           : 
+       	    case xs_Name              : 
+       	    case xs_NCName            : 
+       	    case xs_ID                : 
+       	    case xs_IDREF             :
+       	    case xs_ENTITY            : sat = true; break;
+            default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_within_a_branch");
+	    }
     }
 
     if (!sat) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
