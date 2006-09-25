@@ -449,6 +449,7 @@
     (,sa:fn-ns "error" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!error)
+    ;----------------------------------------
     (,sa:fn-ns "trace" 2 2
      ,(lambda (num-args) (list sa:type-any sa:type-atomic))
      ,sa:type-any !fn!trace)
@@ -459,8 +460,17 @@
      ,(lambda (num-args) (list sa:type-any sa:type-atomic))
      ,sa:type-any !fn!remove)
     (,sa:fn-ns "reverse" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!reverse)
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-any !fn!reverse)
+    (,sa:fn-ns "zero-or-one" 1 1
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-any !fn!zero-or-one)
+    (,sa:fn-ns "one-or-more" 1 1
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-any !fn!one-or-more)
+    (,sa:fn-ns "exactly-one" 1 1
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-any !fn!exactly-one)
     ;----------------------------------------
     ; Multiarg atomic functions
     (,sa:fn-ns "sum" 0 #f
@@ -595,45 +605,45 @@
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
      (cast !xs!dayTimeDuration))
-    ;----------------------------------------
-    ; SQL extension by Roman Pastuhov
-    (,sa:sql-ns "exec-update" 2 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!sql-exec-update)
-    (,sa:sql-ns "connect" 1 4
-     ,(lambda (num-args)
-        (if (= num-args 4)
-            (append (sa:make-list sa:type-atomic (- num-args 1))
-                    (list sa:type-nodes))
-            (sa:make-list sa:type-atomic num-args)))
-     ,sa:type-atomic !fn!sql-connect)
-    (,sa:sql-ns "prepare" 2 3
-     ,(lambda (num-args)
-        (if (= num-args 3)
-            (append (sa:make-list sa:type-atomic (- num-args 1))
-                    (list sa:type-nodes))
-            (sa:make-list sa:type-atomic num-args)))
-     ,sa:type-atomic !fn!sql-prepare)
-    (,sa:sql-ns "execute" 2 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!sql-execute)
-    (,sa:sql-ns "close" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-nodes !fn!sql-close)
-    (,sa:sql-ns "commit" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-nodes !fn!sql-commit)
-    (,sa:sql-ns "rollback" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-nodes !fn!sql-rollback)
-    ;----------------------------------------
-    ; Index functions
-    (,sa:fn-ns "index-scan" 3 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!index-scan)
-    (,sa:fn-ns "index-scan-between" 4 4
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!index-scan-between)
+   ;----------------------------------------
+   ; SQL extension by Roman Pastuhov
+   (,sa:sql-ns "exec-update" 2 #f
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-nodes !fn!sql-exec-update)
+   (,sa:sql-ns "connect" 1 4
+    ,(lambda (num-args)
+       (if (= num-args 4)
+           (append (sa:make-list sa:type-atomic (- num-args 1))
+                   (list sa:type-nodes))
+           (sa:make-list sa:type-atomic num-args)))
+    ,sa:type-atomic !fn!sql-connect)
+   (,sa:sql-ns "prepare" 2 3
+    ,(lambda (num-args)
+       (if (= num-args 3)
+           (append (sa:make-list sa:type-atomic (- num-args 1))
+                   (list sa:type-nodes))
+           (sa:make-list sa:type-atomic num-args)))
+    ,sa:type-atomic !fn!sql-prepare)
+   (,sa:sql-ns "execute" 2 #f
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-nodes !fn!sql-execute)
+   (,sa:sql-ns "close" 1 1
+    ,(lambda (num-args) `(,sa:type-atomic))
+    ,sa:type-nodes !fn!sql-close)
+   (,sa:sql-ns "commit" 1 1
+    ,(lambda (num-args) `(,sa:type-atomic))
+    ,sa:type-nodes !fn!sql-commit)
+   (,sa:sql-ns "rollback" 1 1
+    ,(lambda (num-args) `(,sa:type-atomic))
+    ,sa:type-nodes !fn!sql-rollback)
+   ;----------------------------------------
+   ; Index functions
+   (,sa:fn-ns "index-scan" 3 3
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-nodes !fn!index-scan)
+   (,sa:fn-ns "index-scan-between" 4 4
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-nodes !fn!index-scan-between)
     ;----------------------------------------
     ; Full text search functions
     (,sa:fn-ns "ftindex-scan" 2 2
