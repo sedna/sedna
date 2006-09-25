@@ -650,8 +650,9 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        
+        ///FIXME!!! Some other 'date types' have a gt operator.
         case xs_yearMonthDuration   : 
-        case xs_dayTimeDuration     : {memcpy(buffer + pos, tc.get_str_ptr().get(), type_size); break;}
+        case xs_dayTimeDuration     : {memcpy(buffer + pos, &(tc.get_xs_duration()), type_size); break;}
         default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
     }
 
