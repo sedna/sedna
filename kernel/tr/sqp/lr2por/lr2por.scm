@@ -744,6 +744,17 @@
               `(1 (PPFnExists ,(l2p:any-lr-node2por (car node))))
              )
              
+             ; *** Functions That Test the Cardinality of Sequences ***
+             ((eq? op-name '!fn!zero-or-one)
+              `(1 (PPFnZeroOrOne ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!one-or-more)
+              `(1 (PPFnOneOrMore ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!exactly-one)
+              `(1 (PPFnExactlyOne ,(l2p:any-lr-node2por (car node))))
+             )
+             
              ; *** sum ***
              ((eq? op-name '!fn!sum)
               `(1 (PPFnSum ,(l2p:any-lr-node2por (car node))))
