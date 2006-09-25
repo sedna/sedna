@@ -615,7 +615,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     {
         switch (TT)
         {
-            case xs_string            : sat = true; break
+            case xs_string            : sat = true; break;
             case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
        	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
             case xs_language          : 
