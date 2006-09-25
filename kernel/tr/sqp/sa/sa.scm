@@ -1116,10 +1116,38 @@
     ((and (pair? type-spec) (= (length type-spec) 2)
           (string? (car type-spec)) (string? (cadr type-spec)))
      ; external atomic type
-     (cons 
-      (if (equal? type-spec '("xs" "int"))
-          '!xs!int
-          type-spec)
+     (cons
+      (cond
+        ; TODO: construct alist at program initialization
+        ((assoc type-spec
+                '((("xs" "int") . !xs!int)
+                  (("xs" "long") . !xs!long)
+                  (("xs" "short") . !xs!short)
+                  (("xs" "byte") . !xs!byte)
+                  (("xs" "nonPositiveInteger") . !xs!nonPositiveInteger)
+                  (("xs" "negativeInteger") . !xs!negativeInteger)
+                  (("xs" "nonNegativeInteger") . !xs!nonNegativeInteger)
+                  (("xs" "positiveInteger") . !xs!positiveInteger)
+                  (("xs" "unsignedLong") . !xs!unsignedLong)
+                  (("xs" "unsignedInt") . !xs!unsignedInt)
+                  (("xs" "unsignedShort") . !xs!unsignedShort)
+                  (("xs" "unsignedByte") . !xs!unsignedByte)
+                  (("xs" "normalizedString") . !xs!normalizedString)
+                  (("xs" "token") . !xs!token)
+                  (("xs" "language") . !xs!language)
+                  (("xs" "Name") . !xs!Name)
+                  (("xs" "NCName") . !xs!NCName)
+                  (("xs" "NMTOKEN") . !xs!NMTOKEN)
+                  ;(("xs" "NMTOKENS") . !xs!NMTOKENS)
+                  (("xs" "ID") . !xs!ID)
+                  (("xs" "IDREF") . !xs!IDREF)
+                  ;(("xs" "IDREFS") . !xs!IDREFS)
+                  (("xs" "ENTITY") . !xs!ENTITY)
+                  ;(("xs" "ENTITIES") . !xs!ENTITIES)
+                  ))
+         => cdr)
+        (else
+         type-spec))
       sa:type-atomic))
     ((eq? (car type-spec) 'doc-test)
      (or
