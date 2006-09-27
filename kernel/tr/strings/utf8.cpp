@@ -372,7 +372,7 @@ static inline void utf8_matches_bool (const Iterator &start, const Iterator &end
 	*res = matcher.matches(start, end, start, match_flags);
 }
 
-bool CollationHandler_utf8::matches (tuple_cell *tc, const char *regex)
+bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 {
 	try
 	{
