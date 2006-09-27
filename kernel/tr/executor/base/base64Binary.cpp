@@ -107,7 +107,7 @@ tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
     
     if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
     int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
-    return tuple_cell::atomic_estr(xs_hexBinary, reslen, start_pos);
+    return tuple_cell::atomic_estr(xs_base64Binary, reslen, start_pos);
 }
 
 
