@@ -33,6 +33,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        decContext$(OBJ_EXT)				\
                        decimal64$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
+                       base64Binary$(OBJ_EXT)           \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\
                        PPIf$(OBJ_EXT)					\

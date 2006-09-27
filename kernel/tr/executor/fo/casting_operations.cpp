@@ -9,6 +9,7 @@
 #include "casting_operations.h"
 #include "xs_helper.h"
 #include "dm_accessors.h"
+#include "base64Binary.h"
 
 
 /******************************************************************************/
@@ -58,13 +59,54 @@ tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtyp
 inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
     { return tuple_cell::atomic(c_str2xs_boolean(_get_pointer_to_c_str(c))); }
 
-inline tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
-    // !!! FIX ME
-    { throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented"); }
+
+
+//this function checks constraints on xs:hexBinary lexical representation
+//if given value doesn't conform to constraints valid will be 'false'
+//else valid will be true and res_it will contain canonical representation of the 
+//given value.
+template <class Iterator>
+static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it, bool *valid)
+{
+    *valid = false;
+    unsigned char value;
+    unsigned char delta = 'A'-'a';
+    while (start < end)
+    {
+        value = *start;
+        if( !(('0' <= value && value <= '9') || 
+              ('a' <= value && value <= 'f') || 
+              ('A' <= value && value <= 'F')) ) return;
+        if('a' <= value && value <= 'f') value += delta;
+        *res_it = value;
+        ++res_it;
+        ++start;
+    }
+    *valid = true;
+}
 
 inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
-    // !!! FIX ME
-    { throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented"); }
+{ 
+    if (e_string_last_blk==XNULL) 
+    {
+        vmm_alloc_tmp_block(&e_string_last_blk);
+        e_str_blk_hdr::init(XADDR(e_string_last_blk));
+        e_string_first_blk = e_string_last_blk;
+    }
+    
+    e_string_o_iterator<unsigned char> res_it;
+    xptr start_pos = res_it.pos;
+    bool valid;
+
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_hexBinary, &c, res_it, &valid);
+    
+    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:hexBinary type.");
+    int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
+    return tuple_cell::atomic_estr(xs_hexBinary, reslen, start_pos);
+}
+
+
+
 
 inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
     // !!! FIX ME
@@ -584,7 +626,9 @@ static inline void check_constraints_for_xs_normalizedString(Iterator &start, co
 template <class Iterator>
 static inline void check_constraints_for_xs_token(Iterator &start, const Iterator &end, bool *res)
 {
-	(*res) = false;
+	(*res) = start == end;
+	
+	if(*res) return;
 	
 	unsigned char previous = *start;
 
@@ -599,6 +643,13 @@ static inline void check_constraints_for_xs_token(Iterator &start, const Iterato
 
 	(*res) = true;
 }
+
+static inline bool check_constraints_for_xs_language(tuple_cell *value)
+{
+	char const* regex = "^([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*)$";
+	return collation_handler->matches(value, regex);
+}
+
 
 
 
@@ -639,7 +690,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
             case xs_string            : sat = true; break;
             case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
        	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
-            case xs_language          : 
+            case xs_language          : sat = check_constraints_for_xs_language((tuple_cell *)&SV); break;
        	    case xs_NMTOKEN           : 
        	    case xs_Name              : 
        	    case xs_NCName            : 
