@@ -1255,7 +1255,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
-    /*else if (op == "PPFnOneOrMore")
+    else if (op == "PPFnOneOrMore")
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
@@ -1284,7 +1284,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnZeroOrOne(cxt,
                                  make_pp_op(cxt, lst->at(1).internal.list));
                                  
-    }*/
+    }
     else if (op == "PPFnInsertBefore")
     {
         if (   lst->size() != 4

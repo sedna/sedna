@@ -270,6 +270,7 @@ class PPFnZeroOrOne : public PPIterator
 {
 protected:
     PPOpIn child;
+    bool first_time;
 
 public:
     virtual void open   ();
@@ -319,6 +320,7 @@ class PPFnExactlyOne : public PPIterator
 {
 protected:
     PPOpIn child;
+    bool first_time;
 
 public:
     virtual void open   ();

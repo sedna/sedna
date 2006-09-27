@@ -923,11 +923,13 @@ PPFnZeroOrOne::~PPFnZeroOrOne()
 void PPFnZeroOrOne::open  ()
 {
     child.op->open();
+    first_time = true;
 }
 
 void PPFnZeroOrOne::reopen()
 {
     child.op->reopen();
+    first_time = true;
 }
 
 void PPFnZeroOrOne::close ()
@@ -937,13 +939,22 @@ void PPFnZeroOrOne::close ()
 
 void PPFnZeroOrOne::next  (tuple &t)
 {
-    child.op->next(t);
-
-    if (!t.is_eos())
+    if(first_time)
     {
-        tuple temp(child.ts);
-        child.op->next(temp);
-        if(!temp.is_eos()) throw USER_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
+        child.op->next(t);
+        first_time = false;
+
+        if (!t.is_eos())
+        {
+            tuple temp(child.ts);
+            child.op->next(temp);
+            if(!temp.is_eos()) throw USER_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
+        }
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
     }
 }
 
@@ -1042,11 +1053,13 @@ PPFnExactlyOne::~PPFnExactlyOne()
 void PPFnExactlyOne::open  ()
 {
     child.op->open();
+    first_time = true;
 }
 
 void PPFnExactlyOne::reopen()
 {
     child.op->reopen();
+    first_time = true;
 }
 
 void PPFnExactlyOne::close ()
@@ -1056,12 +1069,21 @@ void PPFnExactlyOne::close ()
 
 void PPFnExactlyOne::next  (tuple &t)
 {
-    child.op->next(t);
-    if(t.is_eos()) throw USER_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
+    if(first_time)
+    {
+        first_time = false;
+        child.op->next(t);
+        if(t.is_eos()) throw USER_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
 
-    tuple temp(child.ts);
-    child.op->next(temp);
-    if(!temp.is_eos()) throw USER_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
+        tuple temp(child.ts);
+        child.op->next(temp);
+        if(!temp.is_eos()) throw USER_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
+    }
 }
 
 PPIterator* PPFnExactlyOne::copy(variable_context *_cxt_)

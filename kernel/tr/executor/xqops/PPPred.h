@@ -69,12 +69,12 @@ private:
                occ == OCC_GENERAL_GREATER || occ == OCC_GENERAL_LESS_EQUAL || occ == OCC_GENERAL_GREATER_EQUAL;
     }
     
-    void position_less_than(double double_value);
-    void position_greater_than(double double_value);
-    void position_less_equal_than(double double_value);
-    void position_greater_equal_than(double double_value);
+    void PPPredRange::position_less_than(double double_value);
+    void PPPredRange::position_greater_than(double double_value);
+    void PPPredRange::position_less_equal_than(double double_value);
+    void PPPredRange::position_greater_equal_than(double double_value);
     
-    void print_state();
+    void PPPredRange::print_state();
 
 public:
     
