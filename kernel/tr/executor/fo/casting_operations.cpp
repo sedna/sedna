@@ -69,8 +69,9 @@ template <class Iterator>
 static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it, bool *valid)
 {
     *valid = false;
-    unsigned char value;
-    unsigned char delta = 'A'-'a';
+    unsigned char value;             
+    unsigned char delta = 'A'-'a';   //used to create canonical representation with upper case symbols;
+    int counter = 0;                 //number of symbols in hexBinary must be even;
     while (start < end)
     {
         value = *start;
@@ -79,10 +80,11 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
               ('A' <= value && value <= 'F')) ) return;
         if('a' <= value && value <= 'f') value += delta;
         *res_it = value;
+        ++counter;
         ++res_it;
         ++start;
     }
-    *valid = true;
+    if(!(counter & 1)) *valid = true;   //chech evenness at last;
 }
 
 inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
@@ -690,7 +692,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
             case xs_string            : sat = true; break;
             case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
        	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
-            case xs_language          : sat = check_constraints_for_xs_language((tuple_cell *)&SV); break;
+            case xs_language          : sat = check_constraints_for_xs_language(&SV); break;
        	    case xs_NMTOKEN           : 
        	    case xs_Name              : 
        	    case xs_NCName            : 
