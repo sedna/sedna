@@ -46,11 +46,7 @@ void delete_undeep(PPOpIn arg)
 		arg.op->next(t);
 	}
 	
-/*	// Checking authorization
-	if (is_auth_check_needed(DELETE_STATEMENT)) 
-		auth_for_update(argseq, DELETE_STATEMENT, true);
-*/	
-		//Sort in document order
+	//Sort in document order
 	if (argseq.size()<=0) return;
 	argseq.sort();
 	// INDIR
@@ -77,22 +73,27 @@ void delete_undeep(PPOpIn arg)
 		--it;
 		xptr node=removeIndirection(*it);
 		CHECKP(node);
-		t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
-		switch(type)
+#ifdef SE_ENABLE_TRIGGERS
+        if (apply_per_node_triggers(XNULL, node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
+#endif
 		{
-		case attribute: text:
+			t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
+			switch(type)
 			{
-			 delete_node(node);
-			}
-		case element:
-			{
-				xptr indir=*it;
-				//1.INSERT
-				xptr parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
-				copy_content(parent,node,node);
-				//2.DELETE
-				CHECKP(indir);
-				delete_node(*((xptr*)XADDR(indir)));				
+			case attribute: text:
+				{
+				 delete_node(node);
+				}
+			case element:
+				{
+					xptr indir=*it;
+					//1.INSERT
+					xptr parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
+					copy_content(parent,node,node);
+					//2.DELETE
+					CHECKP(indir);
+					delete_node(*((xptr*)XADDR(indir)));				
+				}
 			}
 		}
 
@@ -101,6 +102,9 @@ void delete_undeep(PPOpIn arg)
 	while (true);
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
 #endif
 }
 void delete_deep(PPOpIn arg)
@@ -186,5 +190,8 @@ void delete_deep(PPOpIn arg)
 	while (true);
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
 #endif
 }

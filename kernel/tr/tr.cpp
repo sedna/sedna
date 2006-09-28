@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
     bool sedna_server_is_running = false;
+//Sleep(10000);    
 //getchar();
     try
     {

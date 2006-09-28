@@ -981,6 +981,9 @@ sedna-err:SE3204
 sedna-err:SE3205
 
     Trigger action attempts to update a document/collection that is currently updating by some outer update statement.
+sedna-err:SE3206
+
+    Cannot execute trigger action, since current cascade level exceeds permissible threshold.
 
 ######################################################################
 ### Static query analysis error

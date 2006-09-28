@@ -125,7 +125,7 @@ struct sc_ref
 };
 
 /* Scheme node */
-struct doc_scheme_node;
+struct doc_schema_node;
 struct schema_node
 {
 	t_item				type;		/* type of node: element/text/attribute/simple */

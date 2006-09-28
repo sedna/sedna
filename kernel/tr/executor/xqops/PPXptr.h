@@ -8,9 +8,7 @@
 
 #include "sedna.h"
 #include "PPBase.h"
-#ifdef SE_ENABLE_TRIGGERS
 #include "triggers_data.h"
-#endif
 
 class PPXptr : public PPIterator
 {

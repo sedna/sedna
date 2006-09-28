@@ -236,6 +236,7 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {
     schema_node *root = NULL;
+//    doc_schema_node *root = NULL;
 
     switch (db_ent->type)
     {
@@ -252,7 +253,7 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
             throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
 #ifdef SE_ENABLE_TRIGGERS
-	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), db_ent);
+	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root);
 #endif
 
 

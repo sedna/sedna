@@ -502,7 +502,9 @@ t_scmnodes_const descendant_or_self_nodes(const schema_node *node, node_type_res
     if (extended_nodes && extender_nodes)
         if (extended_nodes->find((schema_node*)node) != extended_nodes->end())
            for (t_scmnodes_set::iterator i=extender_nodes->begin(); i!=extender_nodes->end(); i++)
-                res = vector_concat(res, descendant_or_self_nodes((const schema_node*)(*i), restriction, extended_nodes, extender_nodes, true));
+		   {
+			   res = vector_concat(res, descendant_or_self_nodes((schema_node*)*i, restriction, extended_nodes, extender_nodes, true));
+		   }
         
     return res;
 }
@@ -518,7 +520,7 @@ t_scmnodes_const descendant_nodes(const schema_node *node, node_type_restriction
     if (extended_nodes && extender_nodes)
         if (extended_nodes->find((schema_node*)node) != extended_nodes->end())
             for (t_scmnodes_set::iterator i=extender_nodes->begin(); i!=extender_nodes->end(); i++)
-                 res = vector_concat(res, descendant_or_self_nodes((const schema_node*)(*i), restriction, extended_nodes, extender_nodes, true));
+                 res = vector_concat(res, descendant_or_self_nodes((schema_node*)(*i), restriction, extended_nodes, extender_nodes, true));
 
     return res;
 }
@@ -921,10 +923,10 @@ t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const 
             for (j = 0; j != nto.s; j++)
             {
                 t_scmnodes_const tmp;
-                if (extended_nodes->find((schema_node*)n1.at(i)) != extended_nodes->end())
-                    tmp = execute_node_test(n1.at(i), nto.nt[j], extended_nodes, extender_nodes);
-                else
-                    tmp = execute_node_test(n1.at(i), nto.nt[j], NULL, NULL);
+//                if (extended_nodes->find((schema_node*)n1.at(i)) != extended_nodes->end())
+                tmp = execute_node_test(n1.at(i), nto.nt[j], extended_nodes, extender_nodes);
+//                else
+//                    tmp = execute_node_test(n1.at(i), nto.nt[j], NULL, NULL);
 
                 n2 = vector_concat(n2, tmp);
             }
@@ -942,7 +944,7 @@ t_scmnodes_const execute_abs_path_expr(const schema_node *root, const PathExpr *
     t_scmnodes_const scmnodes;
 
     scmnodes.push_back(root);
-    scmnodes = execute_abs_path_expr_rec(scmnodes, *path_expr, extended_nodes, extender_nodes);
+	scmnodes = execute_abs_path_expr_rec(scmnodes, *path_expr, extended_nodes, extender_nodes);
 
     //d_printf2("PPAbsPath::execute_abs_path_expr: size of scmnodes %d\n", scmnodes.size());
 
