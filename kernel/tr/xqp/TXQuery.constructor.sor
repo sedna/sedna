@@ -160,9 +160,13 @@ docConstructor! [in_context in_c] >[out_context out_c]:
 
 commentConstructor! [in_context in_c] >[out_context out_c]:
 
-	#(AST_COMMENT_CONSTR e:expr[in_c] >[out_c])
+	#(AST_COMMENT_CONSTR 
+	    (  e:expr[in_c] >[out_c] <<#commentConstructor=#(#["comment"], e);>>
+	     | s:AST_STRING_CONST <<#commentConstructor=#(#["comment"], #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"") + std::string(s->getText()) + std::string("\"")]));>>
+	    )
+	 )
 
-	<<#commentConstructor=#(#["comment"], e);>>
+	
 ;
 
 textConstructor! [in_context in_c] >[out_context out_c]:
@@ -173,11 +177,15 @@ textConstructor! [in_context in_c] >[out_context out_c]:
 ;
 
 piConstructor! [in_context in_c] >[out_context out_c]:
-	#(AST_PI_CONSTR (n:AST_LOCAL_NAME | e1:expr[in_c] >[out_c]) {e2:expr[in_c] >[out_c]})
-	<<if (e1 == NULL)
-	     #piConstructor=#(#["pi"], #(#["const"], #(#["type"], #["!xs!NCName"]), #[n->getText()]), e2); 
-	  else
-	     #piConstructor=#(#["pi"], e1, e2); 
+	#(AST_PI_CONSTR (n:AST_LOCAL_NAME  | e1:expr[in_c] >[out_c]) {(e2:expr[in_c] >[out_c] | s:AST_STRING_CONST)})
+	<<
+	  SORASTBase* instr = NULL;
+	  if (e2 != NULL) instr= e2; else if (s != NULL) instr= #(#["const"], #(#["type"], #["!xs!string"]), s);
+
+	  if (e1 != NULL)
+	     #piConstructor=#(#["pi"], e1, instr); 
+	  else if (n != NULL)
+	        #piConstructor=#(#["pi"], #(#["const"], #(#["type"], #["!xs!NCName"]), #[n->getText()]), instr); 
 	>>
 ;
 

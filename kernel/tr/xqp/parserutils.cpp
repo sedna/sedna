@@ -65,7 +65,37 @@ string erase_doublequot(char* lex_text)
 
 }
 
-void replace_entity(char* lex_text, string find_ent, string replc_ent)
+string escape_quot(string text)
+{
+    //replase " with \" for Scheme part
+    int pos;
+    string find_text = "\"";
+    string repl_text = "\\\"";
+
+    pos = 0;
+
+    for(;;)
+    {
+      pos = text.find(find_text, pos);
+      if (pos == string::npos) break;
+
+      if (pos == 0)
+         text = text.replace(pos, 1, repl_text);
+      else
+      {
+         if (text[pos-1] != '\\')
+             text = text.replace(pos, 1, repl_text);
+      }
+
+    
+
+      pos +=find_text.size() + 1;
+    }
+
+    return text;
+}
+
+string replace_entity(char* lex_text, string find_ent, string replc_ent)
 {
   string lex = lex_text;
   string::size_type pos;
@@ -79,6 +109,8 @@ void replace_entity(char* lex_text, string find_ent, string replc_ent)
   }
 
   strcpy(lex_text, lex.c_str());
+
+  return lex;
 }
 
 
