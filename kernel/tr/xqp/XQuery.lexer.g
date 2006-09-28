@@ -14,6 +14,8 @@
 using namespace std;
 
 STACK_INT Lexical_Analizer_State;
+
+bool s_after_pi_target = false;
  
 >>
 
@@ -94,7 +96,7 @@ virtual void errstd(const char *s){
 #token COMMENT_ "comment"
 #token NODE "node"
 #token DOCUMENT "document\-node"
-//#token LDOCUMENT "document"
+#token LDOCUMENT "document"
 #token CHILD "child"
 #token DESCENDANT "descendant"
 #token SELF "self"
@@ -209,6 +211,7 @@ virtual void errstd(const char *s){
 //#token DOUBLELBRACE "\{\{"
 //#token DOUBLERBRACE "\}\}"
 
+
 //--------------------------- delimeters -------------------
 #token DOLLAR "$"
 #token AT "\@"
@@ -273,11 +276,27 @@ virtual void errstd(const char *s){
          newline();
 >>
 
+// tokens for processing instruction constructor
+
+#token LPI "\<\?" 
+<<
+  s_after_pi_target = false; mode(PITARGET);
+  Lexical_Analizer_State.push(START);
+>>
+#token RPI "\?\>"
 
 //----------------- tokens in element constructor -----------
 #token STARTTAGOPEN "\<"   
 <<
   mode (XML_OPEN_TAG);
+  Lexical_Analizer_State.push(START);
+>>
+
+//----------------- tokens for comment constructor ----------
+
+#token XMLCOMMENTOPEN  "\<!\-\-"
+<<
+  mode(XML_COMMENT);
   Lexical_Analizer_State.push(START);
 >>
 
@@ -370,8 +389,12 @@ virtual void errstd(const char *s){
   Lexical_Analizer_State.push(XML_CDATA_SECTION);
 >>
 
-//#token XMLCOMMENTOPEN  "\<\-\-"
-//#token XMLCOMMNETCLOSE "\-\-\>"
+#token XMLCOMMENTOPEN  "\<\-\-" 
+<<
+  mode(XML_COMMENT);
+  Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
+>>
+
 
 #token CHAR_ELEM "~[\{\}\<\&]"  
 <<
@@ -619,6 +642,61 @@ virtual void errstd(const char *s){
 >>
 */
 
+#lexclass PITARGET
+
+#token WS "[\ \t\r]*" <<if (s_after_pi_target) mode(PIINSTRUCTION);>>
+#token NL "([\n])*"
+<<
+  int num = strlen(lextext());
+  for (int i=0; i<num; i++ )
+      if ((lextext())[i] == '\n')
+         newline();
+
+  if (s_after_pi_target) mode(PIINSTRUCTION);
+>>
+
+#token NAME "[_a-zA-Z]([a-zA-Z0-9_\-\.])*" <<s_after_pi_target = true;>>
+
+#token RPI "\?\>" 
+<<
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
+
+#lexclass  PIINSTRUCTION
+
+
+#token INSTRUCTION "~[\?\>]+" 
+<<
+  string res;
+  res = escape_quot(std::string(lextext()));
+
+  res = std::string("\"") + res + std::string("\"");
+  replstr(res.c_str());
+
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
+
+#token RPI "\?\>"
+<<
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
+
+#lexclass XML_COMMENT
+
+//#token XMLCOMMENTCONTENT "(~[\-] | ([\-](~[\-])))*" <<printf("XML COMMENT!!!!\n\n");>>
+
+#token XMLCOMMENTCLOSE    "\-\-\>"
+<<
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
+
+#token XMLCOMMENTCONTENT "(~[\-])*"
+
+
 
 #lexclass UPDATE_CLASS
 
@@ -638,3 +716,4 @@ virtual void errstd(const char *s){
   Lexical_Analizer_State.push(UPDATE_CLASS);
   skip (); 
 >>
+

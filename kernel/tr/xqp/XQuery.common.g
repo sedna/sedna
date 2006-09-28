@@ -179,6 +179,7 @@ localPart2!:
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_LOCAL_NAME];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_LOCAL_NAME];>>
 	| CASE <<#0=#["case", AST_LOCAL_NAME];>>
+	| LDOCUMENT <<#0=#["document", AST_LOCAL_NAME];>>
 ;
 
 prefixPart1!:
@@ -304,7 +305,7 @@ prefixPart2!:
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_PREFIX];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_PREFIX];>>
 	| CASE <<#0=#["case", AST_PREFIX];>>
-
+	| LDOCUMENT <<#0=#["document", AST_PREFIX];>>
 ;
 
 ncname!: 

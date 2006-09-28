@@ -6,9 +6,9 @@ class XQueryParser{
 
 constructor!:
 	  dec:dirElemConstructor <<#0=#dec;>>
+	| dpic:dirPIConstructor	 <<#0=#dpic;>>
 	| cc:computedConstructor <<#0=#cc;>>
-//	| dpic:dirPIConstructor	 <<#0=#dpic;>>
-//	| dcc:dirCommentConstructor  <<#0=#dcc;>>
+	| dcc:dirCommentConstructor  <<#0=#dcc;>>
 //	| xc:xmlComment          <<#0=#xc;>>
 //	| xpi:xmlPI              <<#0=#xpi;>>
 //	| cdc:cdataSection       <<#0=#cdc;>>
@@ -169,13 +169,36 @@ elementContent!:
 	>>
 ;
 
-/*
+
 dirPIConstructor!:
+	LPI {(WS|NL)} p:piTarget
+	<<#0=#(#[AST_PI_CONSTR], #p);>>
+
+	 (WS|NL) { i:INSTRUCTION <<#0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
 ;
 
-dirCommentConstructor!:
+piTarget!:
+	n:NAME
+	<<
+	  if (strlen($n->getText()) == 3)
+	  {
+	     if (($n->getText()[0] == 'x' || $n->getText()[0] == 'X') &&
+	         ($n->getText()[0] == 'm' || $n->getText()[0] == 'M') &&
+	         ($n->getText()[0] == 'l' || $n->getText()[0] == 'L'))
+	             throw USER_EXCEPTION2(XPST0003, (std::string("unexpected token: ")+ "\'" + $n->getText() + "\'" + ", line: " + int2string(LT(1)->getLine())).c_str());
+	  }
+
+	  #0=#[$n->getText(), AST_LOCAL_NAME]; 
+	>>
 ;
-*/
+
+
+dirCommentConstructor!:
+	XMLCOMMENTOPEN c:XMLCOMMENTCONTENT XMLCOMMENTCLOSE
+	<<#0=#(#[AST_COMMENT_CONSTR], #[$c->getText(), AST_STRING_CONST]);>>
+;
+
+
 //enclosedExpr rule is in the XQuery.common.g file
 
 /*
@@ -400,7 +423,7 @@ computedConstructor!:
 	  cec:compElemConstructor  <<#0=#cec;>>
 	| cac:compAttrConstructor  <<#0=#cac;>>
 //	| cnsc:compNSConstructor   <<#0=#cnsc;>>
-//	| cdc:compDocConstructor   <<#0=#cdc;>>
+	| cdc:compDocConstructor   <<#0=#cdc;>>
 	| ctc:compTextConstructor  <<#0=#ctc;>>
 	| cxpi:compXmlPI           <<#0=#cxpi;>>
 	| cxc:compXmlComment       <<#0=#cxc;>>
