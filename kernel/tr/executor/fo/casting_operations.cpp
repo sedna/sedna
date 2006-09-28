@@ -646,7 +646,7 @@ static inline void check_constraints_for_xs_token(Iterator &start, const Iterato
 	(*res) = true;
 }
 
-static inline bool check_constraints_for_xs_language(tuple_cell *value)
+static inline bool check_constraints_for_xs_language(const tuple_cell *value)
 {
 	char const* regex = "^([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*)$";
 	return collation_handler->matches(value, regex);
