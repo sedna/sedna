@@ -181,3 +181,42 @@
         ,(mlr:lreturn+xpath (xlr:get-query-body query) #t))))
     (else  ; update or smth
      (mlr:lreturn+xpath query #t))))
+
+
+;=========================================================================
+; In this section, the new API for keeping only required 'ddo operations
+; is constructed
+; In:
+;  expr - expression to process
+;  called-once? - inherited from lreturn
+;  order-required? - whether order required for the result of this expr
+;  var-types - alist for each variable type in scope
+;  prolog - query prolog, for user-declared function calls
+;  processed-funcs - alist of user-declared functions with rewritten bodies
+;
+;  var-types ::= (listof (cons var-name var-type))
+;  var-name ::= (list namespace-uri local-part)
+;  namespace-uri, local-part ::= strings
+;  var-type - logical representation for XQuery sequence type
+; Example: ((("" "e") . (one (node-test)))
+;           (("" "s") . (zero-or-more (node-test)) ))
+;
+; processed-funcs ::= (listof (list  func-name
+;                                    ddo-required-for-result?
+;                                    (listof  order-required-for-argument?)
+;                                    rewritten-declare-function-clause
+;                             ))
+; ddo-required-for-result? - may be #f for one function call and may become
+;  #t for another function call. In such a case, the alist entry for the
+;  given function is replaced
+;
+; Out - in the form of values:
+;  expr - the rewritten expression
+;  ddo-auto? - whether DDO is supported automatically by expression
+;  zero-or-one? - whether zero-or-one node is returned by the expr
+;  single-level? - whether all nodes on a single level
+;  processed-funcs - as in In-part
+;  order-for-variables - whether order required for variables encountered inside
+;
+;  order-for-variables ::= (listof (cons var-name order-required?))
+;  var-name - the same as in In-part
