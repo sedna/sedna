@@ -16,7 +16,6 @@
 using namespace std;
 
 static auth_map amap;
-static bool in_auth_query_execution;
 static bool security_metadata_updating ;
 
 
@@ -62,7 +61,6 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 	typedef pair <counted_ptr<db_entity>, struct dbe_properties> authPair;
 	auth_map::iterator mapIter;
 	
-	//if ( in_auth_query_execution ) return; //auth_for_query is called with in the auth query - do not check authorization
 	if ( auth == BLOCK_AUTH_CHECK ) return;
 	
 	mapIter = amap.find(dbe);
@@ -112,7 +110,6 @@ void auth_for_query(counted_ptr<db_entity> dbe)
     	    pr = amap.insert( authPair( dbe, dbe_p ) );
 		}
 		catch(SednaUserException &e){
-			in_auth_query_execution = false;
 			throw;
 		}	
     }

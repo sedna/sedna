@@ -7,7 +7,7 @@
 #include "locks.h"
 #include "auc.h"
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers_utils.h"
+#include "triggers_data.h"
 #endif
 #include "base.h"
 #include "tr_functions.h"
@@ -57,7 +57,7 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
 
        vmm_delete_tmp_blocks();
        indirection_table_on_statement_end();
-
+       
        is_qep_built = false;
     }
 }
@@ -89,14 +89,19 @@ void on_user_statement_begin(QueryType query_type,
     if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
     if (AUTH_SWITCH) auth = 1;                   // turn on security checkings
 
+#ifdef SE_ENABLE_TRIGGERS
+    triggers_on_statement_begin();
+#endif
+
     qep_tree = on_kernel_statement_begin(st->stmnts.back().stmnt, s, output_type);
 }
 
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
 {
 #ifdef SE_ENABLE_TRIGGERS
-    clear_built_trigger_actions_map();
+    triggers_on_statement_end();
 #endif
+    
     on_kernel_statement_end(qep_tree);
 
     if (is_stmt_built)

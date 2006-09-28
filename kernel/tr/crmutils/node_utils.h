@@ -16,6 +16,7 @@
 #include "nodes.h"
 #include "vmm.h"
 #include "schema.h"
+#include "xptr_sequence.h"
 
 typedef bool (*comp_schema)(const schema_node* scm,const char* uri,const char* name, t_item type);
 
@@ -151,6 +152,9 @@ inline void getSchemeChildsOrSelf(schema_node* scm,const char* uri,const char* n
 xptr getFirstAttributeDescendantAndFillPath(std::vector<xptr> &descstack);
 /* returns the first descandant or self of the current node that corresponds to the stated schema_node*/
 xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm);
+xptr getFirstDescandantByScheme(xptr_sequence* ancestors,schema_node* scm);
+
+
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node);
 /*comparison function for schema nodes*/
  bool comp_type(const schema_node* scm,const char* uri,const char* name, t_item type);

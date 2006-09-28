@@ -163,6 +163,10 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(&arg1seq, &arg2seq, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+#endif
+    
 	do
 	{
 		bool mark;
@@ -249,6 +253,9 @@ cycle1:
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 }
 /* second insert procedure: insert following
@@ -402,6 +409,10 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(&arg1seq, &arg2seq, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+#endif
+
 	do
 	{
 		bool mark;
@@ -472,6 +483,9 @@ cycle1:
 	}
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 }
 /* first insert procedure: insert to
@@ -646,16 +660,6 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		xptr node_par=*it1;	
 		xptr prev_child=XNULL;
 		t_item prev_item=xml_namespace;
-		if(arg2seq.size()>100) {
-			node_child= arg2seq[95];
-			node_child= arg2seq[96];
-			node_child= arg2seq[98];
-			node_child= arg2seq[99];
-			node_child= arg2seq[100];
-			node_child= arg2seq[101];
-			node_child= arg2seq[102];
-		}
-
 		it2=arg2seq.begin();
 
 		do
