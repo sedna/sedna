@@ -77,7 +77,7 @@ class NetOps {
     final static int se_BulkLoadError                  = 400;
     final static int se_BulkLoadEnd                    = 420;
     final static int se_Authenticate                   = 90;
-    static byte      int_array[]                       = new byte[4];
+//    static byte      int_array[]                       = new byte[4];
 
     //~--- methods ------------------------------------------------------------
 
@@ -153,6 +153,7 @@ class NetOps {
     static int readInt(BufferedInputStream bufInputStream)
             throws IOException, DriverException {
         int call_res;
+        byte int_array[] = new byte[4];
 
         call_res = bufInputStream.read(int_array, 0, 4);
         if (call_res != 4) throw new DriverException(DriverException.SE3007);
