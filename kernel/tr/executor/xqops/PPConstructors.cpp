@@ -66,16 +66,17 @@ tuple_cell getQnameParameter(PPOpIn qname)
 {
 	return tuple_cell::atomic_deep(xs_string,"");	
 }*/
-void getStringParameter(PPOpIn content)
+bool getStringParameter(PPOpIn content)
 {
-	str_val.clear();
+	
 	tuple value(content.ts);
 	content.op->next(value);
 	sequence at_vals(1);
 	if (value.is_eos()) 
 	{
+		str_val.clear();
 	 	str_val.append(EMPTY_STRING_TC);
-		return;
+		return true;
 	}
 	else
 	{
@@ -94,6 +95,7 @@ void getStringParameter(PPOpIn content)
 		at_vals.add(value);
 		content.op->next(value);
 	}
+	str_val.clear();
 	sequence::iterator it=at_vals.begin();
 	do
 	{
@@ -110,6 +112,7 @@ void getStringParameter(PPOpIn content)
         
 	}
 	while (it!=at_vals.end());
+	return false;
 	//str_val.push_to_memory();
 }
 void getStringWSParameter(PPOpIn content)
@@ -395,8 +398,30 @@ void PPElementConstructor::next  (tuple &t)
 				{
 				case xml_namespace:ns_list.push_back(((ns_dsc*)XADDR(node))->ns);break;
 				case document:
-				case element: case text: 
+				case element: 
 					{
+						mark_attr=false;
+						break;
+					}
+				case text:
+					{
+						if (((t_dsc*)XADDR(node))->size==0) 
+						{
+							if (it_st!=start_seq.end())
+			{
+				it_st++;
+				if (it_st==start_seq.end())	
+				{
+					content.op->next(cont);
+					cont_ptr=&cont;
+				}
+				else cont_ptr=&(*it_st);
+
+			}
+							else
+								content.op->next(cont);
+							continue;
+						}
 						mark_attr=false;
 						break;
 					}
@@ -410,6 +435,7 @@ void PPElementConstructor::next  (tuple &t)
 					left=node;
 					cnt=conscnt;
 					CHECKP(left);
+					cont_leftind=((n_dsc*)XADDR(left))->indir;
 				}
 				else
 				{
@@ -417,15 +443,19 @@ void PPElementConstructor::next  (tuple &t)
 					{
 						xptr res = copy_content(removeIndirection(indir),node,left,false);
 						if (res!=XNULL)					
+						{
 							left=res;
-						else continue;	
-						
+							cont_leftind=((n_dsc*)XADDR(left))->indir;
+						}						
 					}
 					else
+					{
 						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+						cont_leftind=((n_dsc*)XADDR(left))->indir;
+					}
 						
 				}
-				cont_leftind=((n_dsc*)XADDR(left))->indir;
+				
 			}
 			/*if (last_elem==local_last)
 			{
@@ -1169,14 +1199,19 @@ void PPTextConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (value==NULL)
 		{
-			getStringParameter(content);
+			if (getStringParameter(content))
+			{
+				t.set_eos();
+				return;
+			}
 			value=(char*)str_val.c_str();
+			
 			size=str_val.get_size();
 		}
 		else
 			size=strlen(value);
 		xptr newcomm;
-		if (cont_parind==XNULL || deep_copy )
+		if (cont_parind==XNULL || deep_copy || size==0)
 			newcomm= insert_text(XNULL,XNULL,virt_root,value,size);
 		else
 		{
@@ -1317,8 +1352,17 @@ void PPDocumentConstructor::next  (tuple &t)
 				switch (typ)
 				{
 				case document:
-				case element: case text: 
+				case element: 
 					{
+						break;
+					}
+				case text: 
+					{
+						if (((t_dsc*)XADDR(node))->size==0) 
+						{
+							content.op->next(t);
+							continue;
+						}
 						break;
 					}
 				case attribute:
@@ -1339,7 +1383,11 @@ void PPDocumentConstructor::next  (tuple &t)
 						xptr res = copy_content(removeIndirection(indir),node,left,false);
 						if (res!=XNULL)					
 							left=res;
-						else continue;	
+						else 
+						{
+							content.op->next(t);
+							continue;	
+						}
 						
 					}
 					else

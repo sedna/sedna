@@ -350,11 +350,12 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 	{
 	case document: case virtual_root:
 		{
+			if (IS_DATA_BLOCK(node))
 			crmout <<((ptype==xml)? "<?xml version=\"1.0\" standalone=\"yes\"":"(*TOP*");
 			xptr child=giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),sizeof(d_dsc)));
 			if(child==XNULL)
 			{
-				crmout << ((ptype==xml)? "?>": ")");
+				if (IS_DATA_BLOCK(node)) crmout << ((ptype==xml)? "?>": ")");
 				return;			
 			}
 			else CHECKP(child);
@@ -367,7 +368,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				if (child==XNULL) break;
 				CHECKP(child);
 			}
-			crmout << ((ptype==xml )? "?>": ")");
+			if (IS_DATA_BLOCK(node)) crmout << ((ptype==xml )? "?>": ")");
 			while (child!=XNULL)
 			{
 				CHECKP(child);
