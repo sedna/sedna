@@ -148,3 +148,7 @@ public:
 	  }
 	  inline char_iterator_utf8  operator --(int) { int old_shift = shift; --(*this); return char_iterator_utf8((char*)begin,size,old_shift); }
 };
+
+
+const char *utf8_encode_char(int c);
+

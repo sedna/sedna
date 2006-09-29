@@ -390,3 +390,29 @@ bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
 }
+
+const char *utf8_encode_char(int c)
+{
+	static char rbuf[5];
+	if (c < (1 << 7)) {
+		rbuf[0] = c;
+		rbuf[1] = 0;
+	} else if (c < (1 << 11)) {
+		rbuf[0] = ((c >> 6) | 0xc0);
+		rbuf[1] = ((c & 0x3f) | 0x80);
+		rbuf[2] = 0;
+	} else if (c < (1 << 16)) {
+		rbuf[0] = ((c >> 12) | 0xe0);
+		rbuf[1] = (((c >> 6) & 0x3f) | 0x80);
+		rbuf[2] = ((c & 0x3f) | 0x80);
+		rbuf[3] = 0;
+	} else if (c < (1 << 21)) {
+		rbuf[0] = ((c >> 18) | 0xf0);
+		rbuf[1] = (((c >> 12) & 0x3f) | 0x80);
+		rbuf[2] = (((c >> 6) & 0x3f) | 0x80);
+		rbuf[3] = ((c & 0x3f) | 0x80);
+		rbuf[4] = 0;
+	}
+	return rbuf;
+}
+
