@@ -211,13 +211,14 @@ tuple_cell dm_string_value(xptr node)
         case pr_ins			: {
                                   int size = PI_DSC(node)->size;
                                   xptr data = PI_DSC(node)->data;
-
+								  int targ=PI_DSC(node)->target;
+									
                                   if (size == 0) return EMPTY_STRING_TC;
 
 							      CHECKP(data);
                                   return tuple_cell::atomic_pstr(xs_string, 
-                                                                 size, 
-                                                                 PSTRDEREF(data));
+                                                                 size-targ-1, 
+                                                                 PSTRDEREF(data)+targ+1);
                               }
         case comment		: {
                                   int size = T_DSC(node)->size;

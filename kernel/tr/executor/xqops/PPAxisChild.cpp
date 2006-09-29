@@ -78,12 +78,18 @@ void PPAxisChild::next_processing_instruction(tuple &t)
 
 void PPAxisChild::next_comment(tuple &t)
 {
-    while (true)
+    while (cur == NULL)
     {
         child.op->next(t);
         if (t.is_eos()) return;
+
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+
+        cur = getChildPointerXptr(child.get(t).get_node(), NULL, comment, NULL);
     }
+
+    t.copy(tuple_cell::node(cur));
+    cur = getNextSiblingOfSameSortXptr(cur);
 }
 
 void PPAxisChild::next_text(tuple &t)

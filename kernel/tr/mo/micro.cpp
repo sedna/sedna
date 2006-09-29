@@ -49,148 +49,7 @@
 		hl_logical_log_indirection( -2, NULL);
 	}
 }*/
-xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,text_type ttype)
-{
-	#ifdef _MYDEBUG
-		crm_out<<" textInsertProcedure";
-	#endif
-	xptr tmp ;
-	CHECKP(parent);
-	node_blk_hdr* block=GETBLOCKBYNODE(parent);
-	int chcnt=COUNTREFERENCES(block,size_of_node(block));
-	xptr right_sib=giveAnyDmChildrenChild((n_dsc*)XADDR(parent),chcnt);
-	xptr par_indir=XNULL;
-	xptr left_sib=XNULL;
-	if (right_sib==XNULL)
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->1";
-		#endif
-		left_sib=getLastNonDmChildrenChild((n_dsc*)XADDR(parent),chcnt);
-		if (left_sib!=XNULL)
-		{
-			CHECKP(left_sib);
-			par_indir=GETPARENTPOINTER(left_sib);
-		}	  
-	}
-	else
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->3";
-		#endif	
-		CHECKP(right_sib);
-		left_sib=GETLEFTPOINTER(right_sib);
-		par_indir=GETPARENTPOINTER(right_sib);
-	}
-	CHECKP(parent);
-	if (par_indir==XNULL)
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->4";
-		#endif
-		par_indir=((n_dsc*)XADDR(parent))->indir;
-	}
 
-	if (left_sib!=XNULL) 
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->5";
-		#endif
-		CHECKP(left_sib);
-		if (GETTYPE(GETSCHEMENODEX(left_sib))==text)
-		{
-			#ifdef _MYDEBUG
-				crm_out<<" textInsertProcedure->6";
-			#endif
-			//fillLogOfTextNodeChanged(left_sib);
-			appendTextValue(left_sib,value, size,ttype);
-			ins_type=1;
-
-			return left_sib; 
-		}
-	}
-    if (right_sib!=XNULL) 
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->7";
-		#endif
-		CHECKP(right_sib);
-		if (GETTYPE(GETSCHEMENODEX(right_sib))==text)
-		{
-			#ifdef _MYDEBUG
-				crm_out<<" textInsertProcedure->8";
-			#endif
-			//fillLogOfTextNodeChanged(right_sib);
-			insertTextValue(right_sib,value,size,ttype);
-			ins_type=2;
-			return right_sib;
-		}
-	}
-	if (block->snode->is_node_in_scheme_and_in_data(NULL,NULL,text) )
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->9";
-		#endif
-		xptr namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,NULL,text,NULL);
-		if (namesake!=XNULL)
-			tmp = addNewNodeOfSameSortAfter(namesake,left_sib, right_sib, parent,   par_indir, 0,text);
-		else 
-		{
-			#ifdef _MYDEBUG
-				crm_out<<" textInsertProcedure->10";
-			#endif
-			namesake= findNodeWithSameNameToInsertBefore(right_sib, parent,parent,NULL,text,NULL);
-			if (namesake!=XNULL)  tmp=addNewNodeOfSameSortBefore(namesake,left_sib,right_sib, parent,   par_indir, 0,text);
-		}
-	}
-	else 
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->11";
-		#endif
-		schema_node* scm;
-		CHECKP(parent);
-		if (block->snode->has_child_by_schema(NULL,NULL,text)<0)  
-			scm=   block->snode->add_child(NULL,NULL,text);
-		else
-			scm= block->snode->get_child(NULL,NULL,text);
-		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
-		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir , NULL,text);
-	} 
-    par_indir=GETPARENTPOINTER(tmp);
-	CHECKP(parent);
-	xptr* pos;
-    if ((pos=elementContainsChild(((n_dsc*)XADDR(parent)),NULL,text,NULL))!=NULL)
-	{
-		#ifdef _MYDEBUG
-			crm_out<<" textInsertProcedure->12";
-		#endif
-		CHECKP(tmp);
-		n_dsc* node_d=getPreviousDescriptorOfSameSort (((n_dsc*)XADDR(tmp)));
-	    if (node_d==NULL || node_d->pdsc!=par_indir)
-		{
-			#ifdef _MYDEBUG
-				crm_out<<" textInsertProcedure->13";
-			#endif
-			CHECKP(parent);
-			VMM_SIGNAL_MODIFICATION(parent);
-			//PHYS LOG
-			if (IS_DATA_BLOCK(parent)) 
-				hl_phys_log_change(pos,sizeof(xptr));
-			*pos=tmp;
-		}
-	}
-    else
-		addChildsBySchemeSplittingBlock(parent, NULL,text, tmp,NULL);
-	CHECKP(tmp);
-	//NODE STATISTICS
-	(GETBLOCKBYNODE(tmp))->snode->nodecnt++;
-	addTextValue(tmp,value, size,ttype);
-	#ifdef _MYDEBUG
-		crm_out<<" end of textInsertProcedure";
-	#endif
-	return tmp;
-}
 xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr parent,const char* name, xmlscm_type type,t_item node_type,xml_ns* ns)
 {
 	#ifdef _MYDEBUG
@@ -509,6 +368,167 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 	#endif
 	CHECKP(n_blk);
 	return insertBetween ( l_sib, right_sib, new_node);
+}
+xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,text_type ttype)
+{
+	#ifdef _MYDEBUG
+		crm_out<<" textInsertProcedure";
+	#endif
+	xptr tmp ;
+	CHECKP(parent);
+	node_blk_hdr* block=GETBLOCKBYNODE(parent);
+	int chcnt=COUNTREFERENCES(block,size_of_node(block));
+	xptr right_sib=giveAnyDmChildrenChild((n_dsc*)XADDR(parent),chcnt);
+	xptr par_indir=XNULL;
+	xptr left_sib=XNULL;
+	if (right_sib==XNULL)
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->1";
+		#endif
+		left_sib=getLastNonDmChildrenChild((n_dsc*)XADDR(parent),chcnt);
+		if (left_sib!=XNULL)
+		{
+			CHECKP(left_sib);
+			par_indir=GETPARENTPOINTER(left_sib);
+		}	  
+	}
+	else
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->3";
+		#endif	
+		CHECKP(right_sib);
+		left_sib=GETLEFTPOINTER(right_sib);
+		par_indir=GETPARENTPOINTER(right_sib);
+	}
+	CHECKP(parent);
+	schema_node * pscm= GETSCHEMENODEX(parent);
+	if (par_indir==XNULL)
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->4";
+		#endif
+		par_indir=((n_dsc*)XADDR(parent))->indir;
+	}
+
+	if (left_sib!=XNULL) 
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->5";
+		#endif
+		CHECKP(left_sib);
+		if (GETTYPE(GETSCHEMENODEX(left_sib))==text)
+		{
+			#ifdef _MYDEBUG
+				crm_out<<" textInsertProcedure->6";
+			#endif
+			//fillLogOfTextNodeChanged(left_sib);
+			if ( pscm->type==virtual_root) 
+			{
+				xptr result = firstNodeInsertProcedure( left_sib,  parent,text,0); 
+				if (size>0)addTextValue(result,value, size,ttype);
+				return result;
+			}
+			else
+			{
+				if (size>0) appendTextValue(left_sib,value,size,ttype);		
+				ins_type=1;
+				return left_sib;
+			}			 
+		}
+	}
+    if (right_sib!=XNULL) 
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->7";
+		#endif
+		CHECKP(right_sib);
+		if (GETTYPE(GETSCHEMENODEX(right_sib))==text)
+		{
+			#ifdef _MYDEBUG
+				crm_out<<" textInsertProcedure->8";
+			#endif
+			//fillLogOfTextNodeChanged(right_sib);
+			if ( pscm->type==virtual_root) 
+			{
+				xptr result = secondElementInsertProcedure( right_sib,  parent,text,0); 
+				if (size>0) addTextValue(result,value, size,ttype);
+				return result;
+			}
+			else
+			{
+				if (size>0) insertTextValue(right_sib,value, size,ttype);	
+				ins_type=2;
+				return right_sib;
+			}			
+			
+		}
+	}
+	if (block->snode->is_node_in_scheme_and_in_data(NULL,NULL,text) )
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->9";
+		#endif
+		xptr namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,NULL,text,NULL);
+		if (namesake!=XNULL)
+			tmp = addNewNodeOfSameSortAfter(namesake,left_sib, right_sib, parent,   par_indir, 0,text);
+		else 
+		{
+			#ifdef _MYDEBUG
+				crm_out<<" textInsertProcedure->10";
+			#endif
+			namesake= findNodeWithSameNameToInsertBefore(right_sib, parent,parent,NULL,text,NULL);
+			if (namesake!=XNULL)  tmp=addNewNodeOfSameSortBefore(namesake,left_sib,right_sib, parent,   par_indir, 0,text);
+		}
+	}
+	else 
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->11";
+		#endif
+		schema_node* scm;
+		CHECKP(parent);
+		if (block->snode->has_child_by_schema(NULL,NULL,text)<0)  
+			scm=   block->snode->add_child(NULL,NULL,text);
+		else
+			scm= block->snode->get_child(NULL,NULL,text);
+		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
+		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir , NULL,text);
+	} 
+    par_indir=GETPARENTPOINTER(tmp);
+	CHECKP(parent);
+	xptr* pos;
+    if ((pos=elementContainsChild(((n_dsc*)XADDR(parent)),NULL,text,NULL))!=NULL)
+	{
+		#ifdef _MYDEBUG
+			crm_out<<" textInsertProcedure->12";
+		#endif
+		CHECKP(tmp);
+		n_dsc* node_d=getPreviousDescriptorOfSameSort (((n_dsc*)XADDR(tmp)));
+	    if (node_d==NULL || node_d->pdsc!=par_indir)
+		{
+			#ifdef _MYDEBUG
+				crm_out<<" textInsertProcedure->13";
+			#endif
+			CHECKP(parent);
+			VMM_SIGNAL_MODIFICATION(parent);
+			//PHYS LOG
+			if (IS_DATA_BLOCK(parent)) 
+				hl_phys_log_change(pos,sizeof(xptr));
+			*pos=tmp;
+		}
+	}
+    else
+		addChildsBySchemeSplittingBlock(parent, NULL,text, tmp,NULL);
+	CHECKP(tmp);
+	//NODE STATISTICS
+	(GETBLOCKBYNODE(tmp))->snode->nodecnt++;
+	if (size>0) addTextValue(tmp,value, size,ttype);
+	#ifdef _MYDEBUG
+		crm_out<<" end of textInsertProcedure";
+	#endif
+	return tmp;
 }
 xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name, xmlscm_type type,xml_ns* ns)
 {
@@ -1241,7 +1261,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 	node_blk_hdr *right=NULL;
 	xptr truep=XNULL;
 	xptr result=XNULL;
-	if (size<1)
+	if (size<1 && IS_DATA_BLOCK(parent))
 		throw USER_EXCEPTION(SE2009);
 	if ((unsigned int)size>STRMAXSIZE)
 		throw USER_EXCEPTION(SE2037);
@@ -1299,11 +1319,11 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 			if ( pscm->type==virtual_root) 
 			{
 				result = firstNodeInsertProcedure( left_sib,  parent,text,0); 
-				addTextValue(result,value, size,ttype);
+				if (size>0)addTextValue(result,value, size,ttype);
 			}
 			else
 			{
-				appendTextValue(left_sib,value,size,ttype);
+				if (size>0) appendTextValue(left_sib,value,size,ttype);
 				result=left_sib; 
 				ins_type=1;
 			}
@@ -1324,12 +1344,12 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 			//fillLogOfTextNodeChanged(right_sib);
 			if ( pscm->type==virtual_root) 
 			{
-				result = secondElementInsertProcedure( left_sib,  parent,text,0); 
-				addTextValue(result,value, size,ttype);
+				result = secondElementInsertProcedure( right_sib,  parent,text,0); 
+				if (size>0) addTextValue(result,value, size,ttype);
 			}
 			else
 			{
-				insertTextValue(right_sib,value, size,ttype);
+				if (size>0) insertTextValue(right_sib,value, size,ttype);
 				result=right_sib;
 				ins_type=2;
 			}
@@ -1345,7 +1365,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 		//NODE STATISTICS
 		if (IS_DATA_BLOCK(parent))
 			(GETBLOCKBYNODE(tmp))->snode->nodecnt++;
-		addTextValue(tmp,value, size,ttype);
+		if (size>0) addTextValue(tmp,value, size,ttype);
 		result=tmp;
 	}
 	#ifdef _MYDEBUG

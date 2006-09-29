@@ -115,7 +115,7 @@ xml_ns* static_context::get_xmlns_by_prefix(const NCName& _prefix)
 		if (it!=insc_ns.end()&& it->second.size()>0)
 			return it->second.back();
 		else
-			throw USER_EXCEPTION(XPST0008);
+			throw USER_EXCEPTION(XQDY0074);
 	}
 }
 void static_context::clear_context()
