@@ -186,6 +186,8 @@
 ;=========================================================================
 ; In this section, the new API for keeping only required 'ddo operations
 ; is constructed
+; Prefix for this part of the module is `lropt:'
+;
 ; In:
 ;  expr - expression to process
 ;  called-once? - inherited from lreturn
@@ -202,11 +204,11 @@
 ;           (("" "s") . (zero-or-more (node-test)) ))
 ;
 ; processed-funcs ::= (listof (list  func-name
-;                                    ddo-required-for-result?
+;                                    order-required-for-result?
 ;                                    (listof  order-required-for-argument?)
 ;                                    rewritten-declare-function-clause
 ;                             ))
-; ddo-required-for-result? - may be #f for one function call and may become
+; order-required-for-result? - may be #f for one function call and may become
 ;  #t for another function call. In such a case, the alist entry for the
 ;  given function is replaced
 ;
@@ -220,3 +222,371 @@
 ;
 ;  order-for-variables ::= (listof (cons var-name order-required?))
 ;  var-name - the same as in In-part
+
+; Accessors to a member of `processed-funcs'
+;  processed-func ::= (list  func-name
+;                            order-required-for-result?
+;                            (listof  order-required-for-argument?)
+;                            rewritten-declare-function-clause)
+(define procced-func-name        car)
+(define procced-func-for-result  cadr)
+(define procced-func-for-args    caddr)
+(define procced-func-declaration cadddr)                  
+
+; Default result to recover from unexpected input error
+(define (lropt:input-error expr processed-funcs)
+  ; Can add some message diagnostics here
+  (values expr #f #f #f processed-funcs '()))
+                        
+; General Expr
+; Prototype borrowed from `sa:analyze-expr' and `xquery-functions'
+; Out - in the form of values:
+;  expr - the rewritten expression
+;  ddo-auto? - whether DDO is supported automatically by expression
+;  zero-or-one? - whether zero-or-one node is returned by the expr
+;  single-level? - whether all nodes on a single level
+;  processed-funcs - as in In-part
+;  order-for-variables - whether order required for variables encountered inside
+(define (lropt:expr expr called-once? order-required?
+                    var-types prolog processed-funcs)
+  (if
+   (not (pair? expr))
+   (lropt:input-error expr processed-funcs)
+   (case (xlr:op-name expr)  ; operation name
+     ((var)
+      (sa:variable-wrapped expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 2.2 Constants
+     ((const)
+      ; The same result for functions with no arguments
+      (values expr #t #t #t processed-funcs '()))
+     ;-------------------
+     ; Axes
+     ((ancestor ancestor-or-self attr-axis child descendant descendant-or-self
+                following following-sibling parent preceding
+                preceding-sibling self)
+      ; ATTENTION: namespace axis
+      (sa:analyze-axis expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 2.4 Sequence
+     ((sequence space-sequence spaceseq)
+      (lropt:propagate expr called-once? order-required?
+                       var-types prolog processed-funcs
+                       #f  ; no automatical DDO
+                       #f  ; not zero-or-one
+                       #f  ; not single-level
+                       ))
+     ((unio)
+      #f)
+     ;-------------------
+     ; 2.5, 2.6 Arithmetic and comparison operations
+     ((+@ -@ *@ div@ idiv@ mod@ /@ unary+@ unary-@
+        eq@ ne@ lt@ le@ gt@ ge@ is@ <<@ >>@)
+      ; ATTENTION [*]: In general, ordering is required for arguments,
+      ; since an argument may consist of several duplicate values
+      (lropt:propagate expr called-once?
+                       #f  ; see attention comment [*] above
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ((to@)
+      (lropt:propagate expr called-once?
+                       #f  ; [*]
+                       var-types prolog processed-funcs
+                       #t  ; values can be considered ordered
+                       #f  ; in general, contains more than one value
+                       #t))
+     ((=@ !=@ <@ <=@ >@ >=@)
+      (lropt:propagate expr called-once?
+                       #f  ; the order of arguments is not important
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ;-------------------
+     ; 2.7 Conditional operation
+     ((if if@)
+      (sa:analyze-if expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 2.8 Logical operations
+     ((and@ or@)
+      ; The same as for general comparison operators
+      ; TODO: think of introducing a function for this
+      (lropt:propagate expr called-once?
+                       #f  ; EBW is taken => order not important
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ;-------------------
+     ; 2.9 Constructors
+     ((element attribute pi namespace)
+      (lropt:propagate expr called-once?
+                       ; Only a single item in name => order not important,
+                       ; minus duplicates [*]
+                       (list #f #t)
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ((document text comment)
+      (lropt:propagate expr called-once?
+                       #t  ; spaceseq implicitly taken => order is important
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ;-------------------
+     ; 2.10 FLWOR Operations
+     ((let@)
+      (sa:analyze-let@ expr vars funcs ns-binding default-ns))
+     ((return)
+      (sa:analyze-return expr vars funcs ns-binding default-ns))
+     ((predicate)
+      (sa:analyze-predicate expr vars funcs ns-binding default-ns))
+     ((order-by)
+      (sa:analyze-order-by expr vars funcs ns-binding default-ns))
+     ((orderspecs)
+      (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 2.11 Expressions on Sequence Types
+     ((ts)
+      (sa:analyze-typeswitch expr vars funcs ns-binding default-ns))
+     ((treat instance-of)
+      (sa:analyze-treat expr vars funcs ns-binding default-ns))
+     ((cast)
+      (sa:analyze-cast expr vars funcs ns-binding default-ns))
+     ((castable)
+      (sa:analyze-castable expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 2.14 Distinct document order
+     ((ddo)
+      (sa:analyze-ddo expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 3.6. Quantified expressions
+     ((some every)
+      (sa:some-every expr vars funcs ns-binding default-ns))
+     ;-------------------
+     ; 3.7 XQuery 1.0 Functions
+     ((!fn!document)
+      (lropt:propagate expr called-once? #f  ; [*]
+                       var-types prolog processed-funcs
+                       #t
+                       #t  ; only a single item
+                       #t))
+     ((!fn!collection)
+      (lropt:propagate expr called-once? #f  ; [*]
+                       var-types prolog processed-funcs
+                       #t
+                       #f  ; generally, more than one item
+                       #t))
+     ; Functions with no arguments
+     ((!fn!position !fn!last !fn!true !fn!false !se!checkpoint)
+      (values expr #t #t #t processed-funcs '()))
+     ((!fn!count !fn!sum !fn!avg !fn!max !fn!min)
+      (lropt:propagate expr called-once?
+                       #t  ; argument ordering required
+                       var-types prolog processed-funcs
+                       #t #t #t))
+     ((!fn!name
+       !fn!document-uri
+       !fn!node-name
+       !fn!node-kind
+       !fn!namespace-uri
+       !fn!boolean
+       !fn!not
+       !fn!empty
+       !fn!exists
+       !fn!data
+       !fn!error
+       !fn!trace
+       !fn!insert-before
+       !fn!remove
+       !fn!reverse
+       !fn!zero-or-one
+       !fn!one-or-more
+       !fn!exactly-one
+       !fn!concat
+       !fn!distinct-values
+       !fn!string-value
+       !fn!string-length
+       !fn!typed-value
+       !fn!string
+       !fn!contains
+       !fn!translate
+       !fn!deep-equal
+       !fn!replace
+       !fn!matches
+       !fn!subsequence
+       !fn!years-from-duration
+       !fn!months-from-duration
+       !fn!days-from-duration
+       !fn!hours-from-duration
+       !fn!minutes-from-duration
+       !fn!seconds-from-duration
+       !fn!year-from-dateTime
+       !fn!month-from-dateTime
+       !fn!day-from-dateTime
+       !fn!hours-from-dateTime
+       !fn!minutes-from-dateTime
+       !fn!seconds-from-dateTime
+       !fn!timezone-from-dateTime
+       !fn!year-from-date
+       !fn!month-from-date
+       !fn!day-from-date
+       !fn!timezone-from-date
+       !fn!hours-from-time
+       !fn!minutes-from-time
+       !fn!seconds-from-time
+       !fn!timezone-from-time
+       !fn!adjust-dateTime-to-timezone
+       !fn!adjust-date-to-timezone
+       !fn!adjust-time-to-timezone
+       !fn!sql-exec-update
+       !fn!sql-connect
+       !fn!sql-prepare
+       !fn!sql-execute
+       !fn!sql-close
+       !fn!sql-commit
+       !fn!sql-rollback
+       !fn!index-scan
+       !fn!index-scan-between
+       !fn!ftindex-scan
+       !fn!ftscan
+       !fn!fthighlight
+       !fn!fthighlight2
+       !fn!is_ancestor
+       !fn!filter_entry_level
+       !fn!item-at
+       !fn!test
+       !fn!local-name)
+      #f)
+     ;-------------------
+     ; Union operations
+     ((union@ intersect@ except@)       
+      (lropt:propagate expr called-once? #f
+                       var-types prolog processed-funcs
+                       #t  ; union operations perform ordering themselves
+                       #f #f))
+     ;-------------------
+     ; Not expressed in the new logical representation
+     ((fun-call)
+      #f
+      ;(sa:analyze-fun-call expr vars funcs ns-binding default-ns)
+      )
+     ;-------------------    
+     (else  ; unknown operations
+      (lropt:input-error expr processed-funcs)))))
+
+;-------------------------------------------------
+; Propagating
+
+; Unites 2 alists of the form `order-for-variables'
+;  order-for-variables ::= (listof (cons var-name order-required?))
+(define (lropt:unite-order-for-variables alist1 alist2)
+  (if (null? alist1)
+      alist2
+      (let ((pair1 (car alist1)))
+        (cond
+          ((assoc (car pair1) alist2)
+           => (lambda (pair2)
+                (if
+                 (or (eqv? (cdr pair1) (cdr pair2))
+                     ; ordering required for pair2 => we can disregard pair1
+                     (cdr pair2))
+                 (lropt:unite-order-for-variables (cdr alist1) alist2)
+                 (cons pair1
+                       (lropt:unite-order-for-variables
+                        (cdr alist1)                        
+                        (filter  ; TODO: can probably optimize
+                         (lambda (entry) (not (eq? entry pair2)))
+                         alist2))))))
+          (else
+           (cons
+            (pair1)
+            (lropt:unite-order-for-variables (cdr alist1) alist2)))))))
+
+; Propagate processing the expression to its subexpressions
+; The function has the same general signature, except for
+; 1. Parts of the result are passed as arguments, namely,
+;    ddo-auto? zero-or-one? single-level?
+; 2. order-required-for-args ::= order-required? |
+;                                (listof order-required?)
+; order-required-for-args is a boolean when the same ordering is required
+; for all the arguments of the expression.
+; order-required-for-args is a list when different arguments require
+; different ordering specifications. 
+; (length (listof order-required?)) = (length (xlr:op-args expr))
+(define (lropt:propagate expr called-once? order-required-for-args
+                         var-types prolog processed-funcs
+                         ddo-auto? zero-or-one? single-level?)
+  (if  ; optimizing the case for an expression with no arguments
+   (null? (xlr:op-args expr))
+   (values expr ddo-auto? zero-or-one? single-level?
+           processed-funcs
+           '()  ; no variables inside
+           )
+   (call-with-values
+    (lambda ()
+      (if (pair? order-required-for-args)
+          (values car cdr)
+          (values (lambda (x) x) (lambda (x) x))))
+    (lambda (order-accessor order-next)
+      (let loop ((args (xlr:op-args expr))
+                 (order-required-for-args order-required-for-args)
+                 (res '())
+                 (processed-funcs processed-funcs)
+                 (order-for-variables '()))
+        (if
+         (null? args)  ; everyone processed
+         (values (cons (xlr:op-name expr)
+                       (reverse res))
+                 ddo-auto? zero-or-one? single-level?
+                 processed-funcs order-for-variables)
+         (call-with-values
+          (lambda () (lropt:expr (car args)
+                                 called-once?
+                                 (order-accessor order-required-for-args)
+                                 var-types prolog processed-funcs))
+          (lambda (new-arg dummy-auto? dummy-0-or-1? dummy-level?
+                           processed-funcs order-for-vars-in-arg)
+            (loop (cdr args)
+                  (order-next order-required-for-args)
+                  (cons new-arg res)
+                  processed-funcs
+                  (if (null? order-for-variables)
+                      order-for-vars-in-arg
+                      (lropt:unite-order-for-variables
+                       order-for-vars-in-arg  ; this list is generally shorter
+                       order-for-variables)))))))))))
+
+;-------------------------------------------------
+; High-level function
+
+; Rewrites the query:
+;  1. Creates LReturns where appropriate
+;  2. Rewrites XPath axes that involve descendant-or-self
+;  3. Eliminates unnecessary 'ddo operations
+(define (lropt:rewrite-query query)
+  (cond
+    ((or (null? query) (not (pair? query)))
+     ; nothing to do, although it's strange
+     query)
+    ((eq? (xlr:op-name query) 'query)
+     (let ((prolog (xlr:get-query-prolog query)))
+       `(query
+         (prolog
+          ,@prolog
+          ;,@(map mlr:rewrite-func-declaration
+          ;       (xlr:get-query-prolog query))
+          )
+       (query-body
+        ,(call-with-values
+          (lambda ()
+            (lropt:expr
+             (xlr:get-query-body query) 
+             #t  ; called once
+             #t  ; TODO: ordered or unordered depending on prolog
+             '()  ; TODO: probably, external variables here
+             prolog
+             '()  ; no functions processed yet
+             ))
+          (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
+                        processed-funcs unite-order-for-variables)
+            ; TODO: combine processed funcs with prolog
+            body))))))
+    (else  ; update or smth
+     ;(mlr:lreturn+xpath query #t)
+     #f
+     )))
