@@ -142,7 +142,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (close-input-port input-port)
 
 ;;########################################################################################
-;;########################################################################################
+;;## C files
 ;;########################################################################################
 
 (define input-port (open-input-file "errdbg/error.codes"))
@@ -193,7 +193,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (close-input-port input-port)
 
 ;;########################################################################################
-;;########################################################################################
+;;## Schema file
 ;;########################################################################################
 
 (define input-port (open-input-file "errdbg/error.codes"))
@@ -230,7 +230,75 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (close-input-port input-port)
 
 
+;;########################################################################################
+;;### Java file
+;;########################################################################################
 
+(define (process-java-constants group-id)
+  (let ((record (read-record)))
+    (if (not (null? record))
+        (let ((code  (car record))
+              (param (cadr record))
+              (descr (caddr record)))
+          (out "    final static int ")
+          (out (pick-out-code code))
+          (out " = ")
+          (out group-id)
+          (out ";  // ")
+          (out (quote-string descr))
+          (nl)
+          (process-java-constants (+ group-id 1))))))
+
+(define (process-java-array group-id)
+  (let ((record (read-record)))
+    (if (not (null? record))
+        (let ((code  (car record))
+              (param (cadr record))
+              (descr (caddr record)))
+          (out "        ")
+          (if (not (eq? group-id 0)) (out ","))
+          (out "{ \"")
+          (out (pick-out-code code))
+          (out "\", \"")
+          (out (quote-string descr))
+          (out "\"}")
+          (nl)
+          (process-java-array (+ group-id 1))))))
+
+
+;
+; GENERATE JAVA FILE
+;
+(if output-to-file (set! port (open-output-file "ErrorCodes.java")))
+(nl)
+(out "// This file was generated. Don't edit it!!!")
+(nl)
+
+(out "package ru.ispras.sedna.driver;")
+(nl)
+(out "import java.io.*;")
+(nl)
+(out "import java.lang.*;")
+(nl)
+(nl)
+(out "class ErrorCodes {")
+(nl)
+(define input-port (open-input-file "errdbg/error.codes"))
+(process-java-constants 0)
+(close-input-port input-port)
+(nl)
+(out "    static String [][] user_error_code_entry = {")
+(nl)
+(define input-port (open-input-file "errdbg/error.codes"))
+(process-java-array 0)
+(close-input-port input-port)
+(out "    };")
+(nl)
+(out "}")
+(nl)
+(if output-to-file (close-output-port port))
+
+(close-input-port input-port)
 
 
 

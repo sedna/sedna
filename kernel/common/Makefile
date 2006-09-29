@@ -103,4 +103,5 @@ clean: generic_clean
 	-$(REMOVE) gen_error_codes.c
 	-$(REMOVE) gen_error_codes$(EXE_EXT)
 	-$(REMOVE) error_codes_scm.scm
+	-$(REMOVE) ErrorCodes.java
 
