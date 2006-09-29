@@ -70,8 +70,8 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
 {
     *valid = false;
     unsigned char value;             
-    unsigned char delta = 'A'-'a';   //used to create canonical representation with upper case symbols;
-    int counter = 0;                 //number of symbols in hexBinary must be even;
+    unsigned char delta = 'A'-'a';    //used to create canonical representation with upper case symbols;
+    int counter = 0;                  //number of symbols in hexBinary must be even;
     while (start < end)
     {
         value = *start;
@@ -82,9 +82,9 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
         *res_it = value;
         ++counter;
         ++res_it;
-        ++start;
+        start++;
     }
-    if(!(counter & 1)) *valid = true;   //chech evenness at last;
+    if(!(counter & 1)) *valid = true; //chech evenness at last;
 }
 
 inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
@@ -104,6 +104,7 @@ inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
     
     if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:hexBinary type.");
     int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
+    if(reslen > 0) reslen--;
     return tuple_cell::atomic_estr(xs_hexBinary, reslen, start_pos);
 }
 
@@ -176,12 +177,16 @@ inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type
 /******************************************************************************/
 
 inline tuple_cell cast_xs_hexBinary_to_xs_base64Binary(const tuple_cell &c)
-    // !!! FIX ME
-    { throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented"); }
+{ 
+    //implementation in base64Binary.cpp
+    return cast_hexBinary_to_base64Binary(c);
+}
 
 inline tuple_cell cast_xs_base64Binary_to_xs_hexBinary(const tuple_cell &c)
-    // !!! FIX ME
-    { throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented"); }
+{ 
+    //implementation in base64Binary.cpp
+    return cast_base64Binary_to_hexBinary(c);
+}
 
 
 
