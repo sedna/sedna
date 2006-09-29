@@ -12,7 +12,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
-// BASE64 Alphabet: CHAR <-> VALUE 
+// Alphabet: CHAR <-> VALUE 
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -37,32 +37,48 @@
 
 
 
+/// Alphabet mapping for base64Binary representation:
 
-const unsigned char value_to_char[64] =  {'A','B','C','D','E','F','G','H','I','J',
-                                          'K','L','M','N','O','P','Q','R','S','T',
-                                          'U','V','W','X','Y','Z','a','b','c','d',
-                                          'e','f','g','h','i','j','k','l','m','n',
-                                          'o','p','q','r','s','t','u','v','w','x',
-                                          'y','z','0','1','2','3','4','5','6','7',
-                                          '8','9','+','/'};
+const unsigned char b64_value_to_char[64] =  {'A','B','C','D','E','F','G','H','I','J',
+                                              'K','L','M','N','O','P','Q','R','S','T',
+                                              'U','V','W','X','Y','Z','a','b','c','d',
+                                              'e','f','g','h','i','j','k','l','m','n',
+                                              'o','p','q','r','s','t','u','v','w','x',
+                                              'y','z','0','1','2','3','4','5','6','7',
+                                              '8','9','+','/'};
 
-const unsigned char char_to_value[123] = {'_','_','_','_','_','_','_','_','_','_',      //0x
-                                          '_','_','_','_','_','_','_','_','_','_',      //1x
-                                          '_','_','_','_','_','_','_','_','_','_',      //2x
-                                          '_','_','_','_','_','_','_','_','_','_',      //3x
-                                          '_','_','_', 62,'_','_','_', 63, 52, 53,      //4x
-                                           54, 55, 56, 57, 58, 59, 60, 61,'_','_',      //5x
-                                          '_','_','_','_','_', 0 , 1 , 2 , 3 , 4 ,      //6x
-                                           5 , 6 , 7 , 8 , 9 , 10, 11, 12, 13, 14,      //7x
-                                           15, 16, 17, 18, 19, 20, 21, 22, 23, 24,      //8x
-                                           25,'_','_','_','_','_','_', 26, 27, 28,      //9x
-                                           29, 30, 31, 32, 33, 34, 35, 36, 37, 38,      //10x
-                                           39, 40, 41, 42, 43, 44, 45, 46, 47, 48,      //11x
-                                           49, 50, 51};                                 //12x
+const unsigned char b64_char_to_value[123] = {'_','_','_','_','_','_','_','_','_','_',      //0x
+                                              '_','_','_','_','_','_','_','_','_','_',      //1x
+                                              '_','_','_','_','_','_','_','_','_','_',      //2x
+                                              '_','_','_','_','_','_','_','_','_','_',      //3x
+                                              '_','_','_', 62,'_','_','_', 63, 52, 53,      //4x
+                                               54, 55, 56, 57, 58, 59, 60, 61,'_','_',      //5x
+                                              '_','_','_','_','_', 0 , 1 , 2 , 3 , 4 ,      //6x
+                                               5 , 6 , 7 , 8 , 9 , 10, 11, 12, 13, 14,      //7x
+                                               15, 16, 17, 18, 19, 20, 21, 22, 23, 24,      //8x
+                                               25,'_','_','_','_','_','_', 26, 27, 28,      //9x
+                                               29, 30, 31, 32, 33, 34, 35, 36, 37, 38,      //10x
+                                               39, 40, 41, 42, 43, 44, 45, 46, 47, 48,      //11x
+                                               49, 50, 51};                                 //12x
 
+/// Alphabet mapping for hexBinary representation:
+
+const unsigned char hex_value_to_char[16]  = {'0','1','2','3','4','5','6','7','8','9',
+                                              'A','B','C','D','E','F'};
+
+inline unsigned char hex_char_to_value(unsigned char c)
+{
+    if('A' <= c && c <= 'F') return c - 'A' + 10;
+    else return c - '0';
+}
 //////////////////////////////////////////////////////////////////////////////////////////
 
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// Castring from xs:string or xs:untypedAtomic
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 
 
 //this function checks constraints on xs:base64Binary lexical representation
@@ -162,10 +178,158 @@ tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
     
     if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
     int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
+    if(reslen > 0) reslen--;
     return tuple_cell::atomic_estr(xs_base64Binary, reslen, start_pos);
 }
 
 
 
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// Casting from xs:base64Binary to xs:hexBinary.
+// Note! xs:base64Binary must be in the correct canonical form!
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
 
+
+template <class Iterator>
+static inline void base64_to_hex(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it)
+{
+    bool evenness_flag = false;
+
+    unsigned char value;
+    unsigned char previous;
+
+    while(start < end && *start != '=')
+    {
+        value = b64_char_to_value[*start];
+        start++;
+
+        if(evenness_flag)
+        {
+            *res_it = hex_value_to_char[previous | ((value & 48) >> 4)]; //mask = 00110000 bin = 48 dec;
+            ++res_it;
+
+            if(*start != '=')
+            {
+                *res_it = hex_value_to_char[value & 15];                 //mask = 00001111 bin = 15 dec;
+                ++res_it;
+            }
+        }
+        else
+        {
+            previous = (value & 3) << 2;                                 //mask = 00000011 bin = 3  dec;
+            *res_it = hex_value_to_char[(value & 60) >> 2];              //mask = 00111100 bin = 60 dec;
+            ++res_it;
+        }
+        
+        evenness_flag = !evenness_flag;
+    }
+}
+
+
+tuple_cell cast_base64Binary_to_hexBinary(const tuple_cell &c)
+{
+    if (e_string_last_blk==XNULL) 
+    {
+        vmm_alloc_tmp_block(&e_string_last_blk);
+        e_str_blk_hdr::init(XADDR(e_string_last_blk));
+        e_string_first_blk = e_string_last_blk;
+    }
+    
+    e_string_o_iterator<unsigned char> res_it;
+    xptr start_pos = res_it.pos;
+    
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(base64_to_hex, &c, res_it);
+    
+    int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
+    if(reslen > 0) reslen--;
+    return tuple_cell::atomic_estr(xs_hexBinary, reslen, start_pos);
+}
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+// Casting from xs:hexBinary to xs:base64Binary.
+// Note! xs:hexBinary must be in the correct canonical form!
+//////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+
+template <class Iterator>
+static inline void hex_to_base64(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it)
+{
+    int evenness_flag = 0;
+
+    unsigned char value;
+    unsigned char previous;
+
+    int counter;
+
+    while(start < end)
+    {
+        value = hex_char_to_value(*start);
+   
+        if(evenness_flag == 0)
+        {
+            previous = value << 2;
+            evenness_flag++;
+        }
+        else if(evenness_flag == 1)
+        {
+            *res_it = b64_value_to_char[previous | ((value & 12) >> 2)];        //mask = 00001100 bin = 12 dec;
+            ++res_it;
+            ++counter;
+            previous = (value & 3) << 4;                                        //mask = 00000011 bin = 3  dec;
+            evenness_flag++;                                             
+        }
+        else if(evenness_flag == 2)
+        {
+            *res_it = b64_value_to_char[previous | (value & 15)];               //mask = 00001111 bin = 15 dec;
+            ++res_it;
+            ++counter;
+            evenness_flag = 0;
+        }
+
+        start++;
+    }
+
+    if(evenness_flag > 0)                                                       //don't forget to write last symbol,
+    {
+        *res_it = b64_value_to_char[previous];
+        ++res_it;
+        ++counter;
+    }
+                                                                                //and then create appropriate end for base64 type:
+    int tail_type = (counter & 3);                                              //type of tail must be either 2 ("="), 3 ("==" or "= =") 
+
+    if(tail_type > 1) 
+    {
+        *res_it = '='; ++res_it;
+        if(tail_type == 2) { *res_it = '='; ++res_it; }
+    }
+}
+
+
+tuple_cell cast_hexBinary_to_base64Binary(const tuple_cell &c)
+{
+    if (e_string_last_blk==XNULL) 
+    {
+        vmm_alloc_tmp_block(&e_string_last_blk);
+        e_str_blk_hdr::init(XADDR(e_string_last_blk));
+        e_string_first_blk = e_string_last_blk;
+    }
+    
+    e_string_o_iterator<unsigned char> res_it;
+    xptr start_pos = res_it.pos;
+    
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(hex_to_base64, &c, res_it);
+    
+    int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
+    if(reslen > 0) reslen--;
+    return tuple_cell::atomic_estr(xs_base64Binary, reslen, start_pos);
+
+}
 
