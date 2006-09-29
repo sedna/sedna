@@ -6,6 +6,7 @@
 
 #include "sedna.h"
 #include "PPError.h"
+#include "crmutils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
@@ -88,6 +89,8 @@ bool PPFnError::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:trace
 ///////////////////////////////////////////////////////////////////////////////
+extern se_stdlib_ostream crm_out;
+
 PPFnTrace::PPFnTrace(variable_context *_cxt_,
                      PPOpIn _value_child_,
                      PPOpIn _label_child_) : PPIterator(_cxt_),
@@ -127,9 +130,11 @@ void PPFnTrace::close ()
 
 void PPFnTrace::next(tuple &t)
 {
+    bool is_first = false;
     if (first_time)
     {
         first_time = false;
+        is_first = true;
 
         label_child.op->next(t);    
         if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
@@ -142,11 +147,14 @@ void PPFnTrace::next(tuple &t)
         if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
             
         tc = tuple_cell::make_sure_light_atomic(tc);
-        fprintf(stderr, "TRACE: %s\n", tc.get_str_mem());
+        fprintf(stderr, "\nTRACE: %s\n", tc.get_str_mem());
     }
 
     value_child.op->next(t);
-    if (t.is_eos()) first_time = true;
+    if (t.is_eos()) 
+        first_time = true;
+    else 
+        print_tuple_indent(t, crm_out, xml, is_first);
 }
 
 PPIterator* PPFnTrace::copy(variable_context *_cxt_)
