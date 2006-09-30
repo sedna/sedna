@@ -168,6 +168,10 @@ void delete_deep(PPOpIn arg)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	apply_per_statement_triggers(&argseq, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+#endif
+
 	argseq.sort();
 	//  cycle on  sequence
 	xptr_sequence::iterator it=argseq.begin();

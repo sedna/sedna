@@ -830,19 +830,6 @@ xptr getFirstDescandantByScheme(xptr ancestor,schema_node* scm)
 	path.push_back(sc_anc);
 	return scanDescandants(ancestor,path,path.size()-1);
 }
-xptr getFirstDescandantByScheme(xptr_sequence* ancestors,schema_node* scm)
-{
-    xptr_sequence::iterator it2=ancestors->begin();
-    xptr res=XNULL;
-    while(it2!=ancestors->end())
-    {
-        res=getFirstDescandantByScheme(removeIndirection(*it2),scm);
-        if(res!=XNULL) return res;
-        it2++;
-    }
-    return res;
-
-}
 xptr getNextDescandantofSameSort (xptr ancestor,xptr node)
 {
 	CHECKP(node);
