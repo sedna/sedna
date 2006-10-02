@@ -406,6 +406,7 @@ tuple_cell dm_document_uri(xptr node)
                                   d_dsc *d = D_DSC(node);
 							      int size = d->size;
 							      xptr data = d->data;
+								  if (size == 0) return tuple_cell::eos();
 							      CHECKP(data);
 							      data = PSTRDEREF(data);
                                   char *t = new char[size + 1];
