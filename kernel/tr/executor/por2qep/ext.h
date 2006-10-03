@@ -44,7 +44,8 @@ private:
 		int ref_count;
 	};
 	func_cxt *fcxt;
-
+	ExtFunction **fn_ptr;
+	
 	SEDNA_SEQUENCE_ITEM *result;
 	SEDNA_SEQUENCE_ITEM *make_item(const tuple &t);
 	SEDNA_SEQUENCE_ITEM *get_ef_seq(const PPOpIn &inp);
@@ -52,7 +53,7 @@ private:
 	void clear_ef_args(SEDNA_EF_ARGS &args);
 	void free_item(SEDNA_SEQUENCE_ITEM *item);
 public:
-	ExtFunction(const std::string &fname, ULibrary lib);
+	ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_fn_ptr_);
 	ExtFunction(func_cxt *_fcxt_);
 	~ExtFunction();
 	ExtFunction *copy();
