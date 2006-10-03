@@ -27,7 +27,7 @@ SEDNA_SEQUENCE_ITEM *ExtFunction::global_result_item = NULL;
 char *ExtFunction::error_msg_buf = NULL;
 int ExtFunction::instance_count = 0;
 
-ExtFunction::ExtFunction(const std::string &fname, ULibrary lib)
+ExtFunction::ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_fn_ptr_)
 {
 	if (global_result_item == NULL)
 		global_result_item = (SEDNA_SEQUENCE_ITEM *)malloc(sizeof(SEDNA_SEQUENCE_ITEM));
@@ -54,6 +54,9 @@ ExtFunction::ExtFunction(const std::string &fname, ULibrary lib)
 	fcxt->init.ptr		= NULL;
 
 	result = NULL;
+
+	this->fn_ptr = _fn_ptr_;
+	*(this->fn_ptr) = this;
 }
 ExtFunction::ExtFunction(func_cxt *_fcxt_) : fcxt(_fcxt_), result(NULL)
 {
@@ -80,6 +83,7 @@ ExtFunction::~ExtFunction()
 		}
 		delete fcxt;
 		fcxt = NULL;
+		*(this->fn_ptr) = NULL;
 	}
 
 	instance_count--;
@@ -387,10 +391,7 @@ PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, variable_context *c
 	
 	ExtFunction *fn;
 	if (fdesc->fn == NULL)
-	{
-		fn = new ExtFunction(name_str, func_list[name_str]->lib);
-		fdesc->fn = fn;
-	}
+		fn = new ExtFunction(name_str, func_list[name_str]->lib, &fdesc->fn);
 	else
 		fn = fdesc->fn->copy();
 
