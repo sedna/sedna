@@ -30,7 +30,7 @@ class SednaConnectionImpl implements SednaConnection {
 
     public void begin() throws DriverException {
         if (this.isClose) {
-            throw new DriverException(DriverException.SE3028);
+            throw new DriverException(ErrorCodes.SE3028, "");
         }
 
         NetOps.Message msg = new NetOps.Message();
@@ -42,17 +42,16 @@ class SednaConnectionImpl implements SednaConnection {
 
         if ((msg.instruction == NetOps.se_BeginTransactionFailed)
                 || (msg.instruction == NetOps.se_ErrorResponse)) {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction != NetOps.se_BeginTransactionOk) {
-            throw new DriverException(DriverException.SE3008);    // Unknown message from server
+            throw new DriverException(ErrorCodes.SE3008, "");    // Unknown message from server
         }
     }
 
     // closes connection (exits connection process on server)  
     public void close() throws DriverException {
         if (this.isClose) {
-            throw new DriverException(DriverException.SE3028);
+            throw new DriverException(ErrorCodes.SE3028, "");
         }
 
         NetOps.Message msg = new NetOps.Message();
@@ -69,18 +68,16 @@ class SednaConnectionImpl implements SednaConnection {
                 this.bufInputStream.close();
                 this.isClose = true;
             } catch (IOException ioe) {
-                throw new DriverException(
-                    "Transaction rollback. Session is closed.");
+                
             }
         } else if (msg.instruction == NetOps.se_ErrorResponse) {
             this.isClose = true;
 
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction != NetOps.se_CloseConnectionOk) {
             this.isClose = true;
 
-            throw new DriverException(DriverException.SE3008);    // Unknown message from server
+            throw new DriverException(ErrorCodes.SE3008, "");    // Unknown message from server
         }
 
         this.isClose = true;
@@ -88,7 +85,7 @@ class SednaConnectionImpl implements SednaConnection {
 
     public void commit() throws DriverException {
         if (this.isClose) {
-            throw new DriverException(DriverException.SE3028);
+            throw new DriverException(ErrorCodes.SE3028, "");
         }
 
         NetOps.Message msg = new NetOps.Message();
@@ -100,19 +97,17 @@ class SednaConnectionImpl implements SednaConnection {
 
         if (msg.instruction == NetOps.se_CommitTransactionFailed)    // CommitFailed
         {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction == NetOps.se_ErrorResponse) {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction != NetOps.se_CommitTransactionOk) {
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         }
     }
 
     public SednaStatement createStatement() throws DriverException {
         if (isClose()) {
-            throw new DriverException(DriverException.SE5500);
+            throw new DriverException(ErrorCodes.SE5500, "");
         }
 
         SednaStatement st = new SednaStatementImpl(this.outputStream,
@@ -123,7 +118,7 @@ class SednaConnectionImpl implements SednaConnection {
 
     public void rollback() throws DriverException {
         if (this.isClose) {
-            throw new DriverException(DriverException.SE3028);
+            throw new DriverException(ErrorCodes.SE3028, "");
         }
 
         NetOps.Message msg = new NetOps.Message();
@@ -135,13 +130,11 @@ class SednaConnectionImpl implements SednaConnection {
 
         if (msg.instruction == NetOps.se_RollbackTransactionFailed)    // RollbackFailed
         {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction == NetOps.se_ErrorResponse) {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction != NetOps.se_RollbackTransactionOk) {
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         }
     }
 

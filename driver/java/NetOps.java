@@ -86,7 +86,7 @@ class NetOps {
      * false - if bulk Load (it is update) succeeded
      * true - if failed
      */
-    static boolean bulkLoad(InputStream in,
+   static boolean bulkLoad(InputStream in,
                             BufferedInputStream bufInputStream,
                             OutputStream outputStream)
             throws DriverException {
@@ -111,7 +111,7 @@ class NetOps {
             NetOps.writeMsg(msg, outputStream);
             NetOps.readMsg(msg, bufInputStream);
 
-            throw new DriverException(ioe.toString());
+            throw new DriverException(ErrorCodes.SE3007, ioe.toString());            
         } catch (DriverException de) {
             msg.instruction = 400;            // BulkLoadError
             msg.length      = 0;
@@ -132,9 +132,9 @@ class NetOps {
             return false;
         } else if ((msg.instruction == 450) || (msg.instruction == 350)
                    || (msg.instruction == 100)) {
-            throw new DriverException(new String(msg.body, 9, msg.length - 9));
+            throw new DriverException(getErrorInfo(msg.body, msg.length),getErrorCode(msg.body));
         } else {
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         }
     }
 
@@ -151,16 +151,21 @@ class NetOps {
     }
 
     static int readInt(BufferedInputStream bufInputStream)
-            throws IOException, DriverException {
-        int call_res;
+            throws DriverException {
+        int call_res, integer = 0;
         byte int_array[] = new byte[4];
 
-        call_res = bufInputStream.read(int_array, 0, 4);
-        if (call_res != 4) throw new DriverException(DriverException.SE3007);
+        try {
+	        call_res = bufInputStream.read(int_array, 0, 4);
+    	    if (call_res != 4) throw new DriverException(ErrorCodes.SE3007, "");
         
-        int integer = (((int_array[0] & 0xff) << 24)
+        	integer = (((int_array[0] & 0xff) << 24)
                        | ((int_array[1] & 0xff) << 16)
                        | ((int_array[2] & 0xff) << 8) | (int_array[3] & 0xff));
+        }catch (IOException ioe) {
+            throw new DriverException(ErrorCodes.SE3007, ioe.toString());
+        }
+             
         return integer;
     }
 
@@ -172,7 +177,7 @@ class NetOps {
             msg.instruction = NetOps.readInt(bufInputStream);
             msg.length      = NetOps.readInt(bufInputStream);
             if (msg.length > SEDNA_SOCKET_MSG_BUF_SIZE) {
-                throw new DriverException(DriverException.SE3012);
+                throw new DriverException(ErrorCodes.SE3012, "");
             }
 
             if (msg.length != 0) {
@@ -189,7 +194,7 @@ class NetOps {
                 }
             }
         } catch (IOException ioe) {
-            throw new DriverException(DriverException.SE3007);
+            throw new DriverException(ErrorCodes.SE3007, ioe.toString());
         }
     }
 
@@ -222,8 +227,7 @@ class NetOps {
 
         while ((msg.instruction != 370) && (msg.instruction != 375)) {
             if (msg.instruction == 100) {    // ErrorResponse
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             }
 
             if (msg.instruction == 360)    // ItemPart
@@ -252,9 +256,6 @@ class NetOps {
             sitem.hasNextItem = true;
         }
 
-        // csd.flush(charBuf);
-        // strBuf.append(charBuf);
-        // sitem.item = strBuf.toString();
         return sitem;
     }
 
@@ -276,7 +277,7 @@ class NetOps {
     static void writeMsg(Message msg, OutputStream outputStream)
             throws DriverException {
         if (msg.length > SEDNA_SOCKET_MSG_BUF_SIZE) {
-            throw new DriverException(DriverException.SE3012);
+            throw new DriverException(ErrorCodes.SE3012, "");
         }
 
         BufferedOutputStream bufOutputStream =
@@ -292,7 +293,7 @@ class NetOps {
 
             bufOutputStream.flush();
         } catch (IOException ioe) {
-            throw new DriverException(DriverException.SE3006);
+            throw new DriverException(ErrorCodes.SE3006, "");
         }
     }
 
@@ -304,6 +305,18 @@ class NetOps {
      */
     static String getErrorInfo(byte[] body, int length) {
         return new String(body, 9, length - 9);
+    }
+
+    /**
+     *  Gets error code
+     */
+    static int getErrorCode(byte[] body) {
+        
+        int integer = (((body[0] & 0xff) << 24)
+                     | ((body[1] & 0xff) << 16)
+                     | ((body[2] & 0xff) << 8) 
+                     | (body[3] & 0xff));    	
+        return integer;
     }
 
     //~--- inner classes ------------------------------------------------------

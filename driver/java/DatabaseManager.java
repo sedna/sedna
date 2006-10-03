@@ -74,7 +74,7 @@ public class DatabaseManager {
                 msg.length = 2 + 5 + login.length() + 5 + db_name.length();
 
                 if (msg.length > NetOps.SEDNA_SOCKET_MSG_BUF_SIZE) {
-                    throw new DriverException(DriverException.SE3015);
+                    throw new DriverException(ErrorCodes.SE3015, "");
                 }
 
                 int body_position = 0;
@@ -118,8 +118,7 @@ public class DatabaseManager {
             {
                 con = null;
 
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             }
 
             NetOps.readMsg(msg, bufInputStream);
@@ -130,7 +129,7 @@ public class DatabaseManager {
                 msg.length      = 5 + password.length();
 
                 if (msg.length > NetOps.SEDNA_SOCKET_MSG_BUF_SIZE) {
-                    throw new DriverException(DriverException.SE3015);
+                    throw new DriverException(ErrorCodes.SE3015, "");
                 }
 
                 int body_position = 0;
@@ -154,23 +153,22 @@ public class DatabaseManager {
 
             if (msg.instruction == NetOps.se_AuthenticationFailed)    // AuthenicationFailed
             {
-                throw new DriverException(DriverException.SE3053);
+                throw new DriverException(ErrorCodes.SE3053, "");
             }
 
             if (msg.instruction == NetOps.se_ErrorResponse) {
                 con = null;
 
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction != NetOps.se_AuthenticationOK) {
                 con = null;
 
-                throw new DriverException(DriverException.SE3008);
+                throw new DriverException(ErrorCodes.SE3008, "");
             }
         } catch (UnknownHostException e) {
-            throw new DriverException(DriverException.SE3003, url);
+            throw new DriverException(ErrorCodes.SE3003, url);
         } catch (IOException e) {
-            throw new DriverException(DriverException.SE3003, url);
+            throw new DriverException(ErrorCodes.SE3003, url);
         }
 
         return con;
