@@ -71,7 +71,22 @@ inline unsigned char hex_char_to_value(unsigned char c)
     if('A' <= c && c <= 'F') return c - 'A' + 10;
     else return c - '0';
 }
-//////////////////////////////////////////////////////////////////////////////////////////
+
+
+inline bool is_b64_char(unsigned char c)
+{
+    return c <= 122 && b64_char_to_value[c] != '_';
+}
+
+inline bool is_b16_char(unsigned char c)
+{
+    return is_b64_char(c) && (b64_char_to_value[c] & 3) == 0;
+}
+    
+inline bool is_b04_char(unsigned char c)
+{
+   return c == 'A'|| c == 'Q'|| c == 'g'|| c == 'w';
+}
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@
 #include "xs_helper.h"
 #include "dm_accessors.h"
 #include "base64Binary.h"
+#include "XmlNames.h"
 
 
 /******************************************************************************/
@@ -68,7 +69,7 @@ inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
 template <class Iterator>
 static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it, bool *valid)
 {
-    *valid = false;
+    (*valid) = false;
     unsigned char value;             
     unsigned char delta = 'A'-'a';    //used to create canonical representation with upper case symbols;
     int counter = 0;                  //number of symbols in hexBinary must be even;
@@ -84,7 +85,7 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
         ++res_it;
         start++;
     }
-    if(!(counter & 1)) *valid = true; //chech evenness at last;
+    if(!(counter & 1)) (*valid) = true; //chech evenness at last;
 }
 
 inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
@@ -436,7 +437,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
         case xs_gDay             : 
         case xs_gMonth           : if (type == c.get_atomic_type()) return c; 
                                    else return _cast_is_not_supported(c.get_atomic_type(), type);
-        default					: return _cast_is_not_supported(c.get_atomic_type(), type);
+        default					 : return _cast_is_not_supported(c.get_atomic_type(), type);
     }
 }
 
@@ -698,12 +699,12 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
             case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
        	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
             case xs_language          : sat = check_constraints_for_xs_language(&SV); break;
-       	    case xs_NMTOKEN           : 
-       	    case xs_Name              : 
-       	    case xs_NCName            : 
-       	    case xs_ID                : 
-       	    case xs_IDREF             :
-       	    case xs_ENTITY            : sat = true; break;
+       	    case xs_NMTOKEN           : sat = chech_constraints_for_xs_NMTOKEN(&SV); break;
+       	    case xs_Name              : sat = chech_constraints_for_xs_Name(&SV); break;
+       	    case xs_NCName            : sat = chech_constraints_for_xs_NCName(&SV); break; //NCName, ID, IDREF, ENTITY have same the lexical values space.
+       	    case xs_ID                : sat = chech_constraints_for_xs_NCName(&SV); break;
+       	    case xs_IDREF             : sat = chech_constraints_for_xs_NCName(&SV); break;
+       	    case xs_ENTITY            : sat = chech_constraints_for_xs_NCName(&SV); break;
             default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_within_a_branch");
 	    }
     }
