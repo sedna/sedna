@@ -37,8 +37,8 @@ extern bin_op_tuple_cell_tuple_cell op_mul_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_div_tbl[3][3];
 extern bin_op_tuple_cell_tuple_cell op_idiv_tbl[1][1];
 extern bin_op_tuple_cell_tuple_cell op_mod_tbl[1][1];
-extern bin_op_tuple_cell_tuple_cell op_eq_tbl[16][16];
-extern bin_op_tuple_cell_tuple_cell op_ne_tbl[16][16];
+extern bin_op_tuple_cell_tuple_cell op_eq_tbl[14][14];
+extern bin_op_tuple_cell_tuple_cell op_ne_tbl[14][14];
 extern bin_op_tuple_cell_tuple_cell op_gt_tbl[8][8];
 extern bin_op_tuple_cell_tuple_cell op_lt_tbl[8][8];
 extern bin_op_tuple_cell_tuple_cell op_ge_tbl[8][8];
@@ -426,58 +426,52 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
         return 2;
     case xs_duration:
 	return 3;
-    case xs_dayTimeDuration:
-        return 4;
-    case xs_yearMonthDuration:
-        return 5;
     case xs_dateTime:
-       return 6;
+       return 4;
     case xs_gYear:
-        return 7;
+        return 5;
     case xs_gYearMonth:
-        return 8;
+        return 6;
     case xs_gMonth:
-        return 9;
+        return 7;
     case xs_gMonthDay:
-        return 10;
+        return 8;
     case xs_gDay:
-        return 11;
+        return 9;
     case xs_untypedAtomic:
     case xs_string:
     case xs_hexBinary:
     case xs_base64Binary:
     case xs_anyURI:
-        return 12;
+        return 10;
     case xs_QName:
-        return 13;
+        return 11;
     case xs_NOTATION:
-        return 14;
+        return 12;
     case xs_boolean:
-        return 15;
+        return 13;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 12 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 10 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_eq_tbl[16][16] = 
+bin_op_tuple_cell_tuple_cell op_eq_tbl[14][14] = 
 {
-                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	           /*xs:QName*/       /*xs:NOTATION*/       /*xs:bolean*/
-/*numeric*/              {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:date*/              {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:time*/              {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:duration*/          {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:dayTimeDuration*/   {NULL,             NULL,               NULL,               NULL,                      op_dayTimeDuration_equal,           NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:yearMonthDuration*/ {NULL,             NULL,               NULL,               NULL,                      NULL,                               op_yearMonthDuration_equal,           NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:dateTime*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:gYear*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:gYearMonth*/        {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:gMonth*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:gMonthDay*/         {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL,                     NULL,              NULL,                 NULL},
-/*xs:gDay*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL,                     NULL,              NULL,                 NULL},
-/*xs:string*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal,  NULL,              NULL,                 NULL},
-/*xs:QName*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     op_equal_xs_QName, NULL,                 NULL},
-/*xs:NOTATION*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              op_equal_xs_NOTATION, NULL},
-/*xs:boolean*/           {NULL,             NULL,               NULL,               NULL,                      NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 op_boolean_equal}
+                           /*numeric*/        /*xs:date*/         /*xs:time*/         /* xs:duration*/           /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/       /*xs:gMonthDay*/       /*xs_gDay*/     /*xs_string*/	           /*xs:QName*/       /*xs:NOTATION*/       /*xs:bolean*/
+/*numeric*/              {op_numeric_equal, NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:date*/              {NULL,             op_date_equal,      NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:time*/              {NULL,             NULL,               op_time_equal,      NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:duration*/          {NULL,             NULL,               NULL,               op_duration_equal,         NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:dateTime*/          {NULL,             NULL,               NULL,               NULL,                      op_dateTime_equal,             NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gYear*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                          op_gYear_equal,      NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gYearMonth*/        {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                op_gYearMonth_equal,     NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gMonth*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    op_gMonth_equal,    NULL,                  NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gMonthDay*/         {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               op_gMonthDay_equal,    NULL,           NULL,                     NULL,              NULL,                 NULL},
+/*xs:gDay*/              {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  op_gDay_equal,  NULL,                     NULL,              NULL,                 NULL},
+/*xs:string*/            {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           op_map_fn_compare_equal,  NULL,              NULL,                 NULL},
+/*xs:QName*/             {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     op_equal_xs_QName, NULL,                 NULL},
+/*xs:NOTATION*/          {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              op_equal_xs_NOTATION, NULL},
+/*xs:boolean*/           {NULL,             NULL,               NULL,               NULL,                      NULL,                          NULL,                NULL,                    NULL,               NULL,                  NULL,           NULL,                     NULL,              NULL,                 op_boolean_equal}
 };
 
 
@@ -496,58 +490,52 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
         return 2;
     case xs_duration:
 	return 3;
-    case xs_dayTimeDuration:
-        return 4;
-    case xs_yearMonthDuration:
-        return 5;
     case xs_dateTime:
-        return 6;
+        return 4;
     case xs_gYear:
-        return 7;
+        return 5;
     case xs_gYearMonth:
-        return 8;
+        return 6;
     case xs_gMonth:
-        return 9;
+        return 7;
     case xs_gMonthDay:
-        return 10;
+        return 8;
     case xs_gDay:
-        return 11;
+        return 9;
     case xs_untypedAtomic:
     case xs_string:
     case xs_hexBinary:
     case xs_base64Binary:
     case xs_anyURI:
-        return 12;
+        return 10;
     case xs_QName:
-        return 13;
+        return 11;
     case xs_NOTATION:
-        return 14;
+        return 12;
     case xs_boolean:
-        return 15;
+        return 13;
     default:
-        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 12 : -1);
+        return is_derived_from_xs_integer(xtype) ? 0 : (is_derived_from_xs_string(xtype) ? 10 : -1);
     }
 }
 
-bin_op_tuple_cell_tuple_cell op_ne_tbl[16][16] = 
+bin_op_tuple_cell_tuple_cell op_ne_tbl[14][14] = 
 {
-                         /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xs:dayTimeDuration*/             /*xs:yearMonthDuration*/             /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/                   /*xs:QName*/           /*xs:NOTATION*/           /*xs:boolean*/
-/*numeric*/              {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:date*/              {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:time*/              {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:duration*/          {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:dayTimeDuration*/   {NULL,                 NULL,               NULL,               NULL,                     op_dayTimeDuration_not_equal,       NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:yearMonthDuration*/ {NULL,                 NULL,               NULL,               NULL,                     NULL,                               op_yearMonthDuration_not_equal,       NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:dateTime*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:gYear*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:gYearMonth*/        {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:gMonth*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:gMonthDay*/         {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL,                         NULL,                  NULL,                     NULL},
-/*xs:gDay*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL,                         NULL,                  NULL,                     NULL},
-/*xs:string*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal,  NULL,                  NULL,                     NULL},
-/*xs:QName*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         op_not_equal_xs_QName, NULL,                     NULL},
-/*xs:NOTATION*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  op_not_equal_xs_NOTATION, NULL},
-/*xs:boolean*/           {NULL,                 NULL,               NULL,               NULL,                     NULL,                               NULL,                                 NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     op_boolean_not_equal}
+                         /*numeric*/            /*xs:date*/         /*xs:time*/         /*xs:duration*/           /*xs:dateTime*/                /*xs_gYear*/         /*xs:gYearMonth*/        /*xs_gMonth*/         /*xs:gMonthDay*/          /*xs_gDay*/        /*xs_string*/                   /*xs:QName*/           /*xs:NOTATION*/           /*xs:boolean*/
+/*numeric*/              {op_numeric_not_equal, NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:date*/              {NULL,                 op_date_not_equal,  NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:time*/              {NULL,                 NULL,               op_time_not_equal,  NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:duration*/          {NULL,                 NULL,               NULL,               op_duration_not_equal,    NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:dateTime*/          {NULL,                 NULL,               NULL,               NULL,                     op_dateTime_not_equal,         NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gYear*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                          op_gYear_not_equal,  NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gYearMonth*/        {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                op_gYearMonth_not_equal, NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gMonth*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    op_gMonth_not_equal,  NULL,                     NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gMonthDay*/         {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 op_gMonthDay_not_equal,   NULL,              NULL,                         NULL,                  NULL,                     NULL},
+/*xs:gDay*/              {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     op_gDay_not_equal, NULL,                         NULL,                  NULL,                     NULL},
+/*xs:string*/            {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              op_map_fn_compare_not_equal,  NULL,                  NULL,                     NULL},
+/*xs:QName*/             {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         op_not_equal_xs_QName, NULL,                     NULL},
+/*xs:NOTATION*/          {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  op_not_equal_xs_NOTATION, NULL},
+/*xs:boolean*/           {NULL,                 NULL,               NULL,               NULL,                     NULL,                          NULL,                NULL,                    NULL,                 NULL,                     NULL,              NULL,                         NULL,                  NULL,                     op_boolean_not_equal}
 };
 
 
