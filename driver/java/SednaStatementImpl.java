@@ -105,13 +105,11 @@ class SednaStatementImpl implements SednaStatement {
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
                 return false;
             } else if (msg.instruction == NetOps.se_UpdateFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
                 String          file_name = new String(msg.body, 5,
                                                 msg.length - 5);
@@ -127,18 +125,17 @@ class SednaStatementImpl implements SednaStatement {
 
                 return res;    // bulk loading is update...
             } else if (msg.instruction == NetOps.se_ErrorResponse) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             }
 
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         } catch (FileNotFoundException fnfe) {
             msg.instruction = NetOps.se_BulkLoadError;
             NetOps.writeMsg(msg, outputStream);
 
-            throw new DriverException(DriverException.SE4042);
+            throw new DriverException(ErrorCodes.SE4042, "");
         } catch (UnsupportedEncodingException uex) {
-            throw new DriverException(DriverException.SE5502);
+            throw new DriverException(ErrorCodes.SE5502, "");
         } catch (DriverException de) {
             throw de;
         }
@@ -221,13 +218,11 @@ class SednaStatementImpl implements SednaStatement {
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
                 return false;
             } else if (msg.instruction == NetOps.se_UpdateFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
                 String          file_name = new String(msg.body, 5,
                                                 msg.length - 5);
@@ -243,18 +238,17 @@ class SednaStatementImpl implements SednaStatement {
 
                 return res;    // bulk loading is update...
             } else if (msg.instruction == NetOps.se_ErrorResponse) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body,
-                        msg.length));
+                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
             }
 
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         } catch (FileNotFoundException fnfe) {
             msg.instruction = NetOps.se_BulkLoadError;
             NetOps.writeMsg(msg, outputStream);
 
-            throw new DriverException(DriverException.SE4042);
+            throw new DriverException(ErrorCodes.SE4042, "");
         } catch (UnsupportedEncodingException uex) {
-            throw new DriverException(DriverException.SE5502);
+            throw new DriverException(ErrorCodes.SE5502, "");
         } catch (DriverException de) {
             throw de;
         }
@@ -289,13 +283,11 @@ class SednaStatementImpl implements SednaStatement {
         if (msg.instruction == NetOps.se_BulkLoadFromStream) {
             NetOps.bulkLoad(in, this.bufInputStream, this.outputStream);
         } else if (msg.instruction == NetOps.se_ErrorResponse) {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else if (msg.instruction == NetOps.se_QueryFailed) {
-            throw new DriverException(NetOps.getErrorInfo(msg.body,
-                    msg.length));
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
         } else {
-            throw new DriverException(DriverException.SE3008);
+            throw new DriverException(ErrorCodes.SE3008, "");
         }
     }
 

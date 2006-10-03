@@ -28,7 +28,8 @@ all: $(OUTPUT) sednadriver.jar
 $(OUTPUT): 
 	-$(MKDIR) $(OUTPUT)
 
-sednadriver.jar: DriverException.java \
+sednadriver.jar: ErrorCodes.java \
+                 DriverException.java \
                  Debug.java \
                  ResultType.java \
                  NetOps.java \

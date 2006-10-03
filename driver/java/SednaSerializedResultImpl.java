@@ -62,7 +62,7 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
                 }
             } catch (OutOfMemoryError e) {
                 throw new DriverException(
-                    "Can't return item as a string because item is too large.");
+                    ErrorCodes.SE5501, "");
             } catch (DriverException e) {
                 NetOps.driverErrOut(e.toString() + "\n");
 
@@ -102,13 +102,13 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
                 }
             } catch (IOException e) {
                 throw new DriverException(
-                    "Input/Output error while getting next item");
+                    ErrorCodes.SE3007, "");
             } catch (DriverException e) {
                 NetOps.driverErrOut(e.toString() + "\n");
 
                 throw e;
             } catch (OutOfMemoryError e) {
-                throw new DriverException(DriverException.SE5501);
+                throw new DriverException(ErrorCodes.SE5501, "");
             }
         } else {
             return (-1);
