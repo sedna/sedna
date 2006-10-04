@@ -11,6 +11,8 @@
          (PPquery-expr (l2p:lr-query-expr2por
                         (if (eq? (car query-in-lr) 'query)
                             (caddr query-in-lr) query-in-lr))))
+    (set! var-count 0)  ; DL: ad-hoc cleanup
+    (set! funcs-map '())  ; DL: ad-hoc cleanup
     `(query ,PPquery-prolog ,PPquery-expr))
 ; DL: was  
 ;  (if (eq? (car query-in-lr) 'query)
