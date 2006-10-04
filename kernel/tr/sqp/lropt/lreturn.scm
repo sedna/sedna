@@ -196,12 +196,15 @@
 ;  prolog - query prolog, for user-declared function calls
 ;  processed-funcs - alist of user-declared functions with rewritten bodies
 ;
-;  var-types ::= (listof (cons var-name var-type))
+;  var-types ::= (listof  var-type-assoc)
+;  var-type-assoc ::= (list var-name var-type) |
+;                     (list var-name var-type
+;                           ddo-auto? zero-or-one? single-level?)
 ;  var-name ::= (list namespace-uri local-part)
 ;  namespace-uri, local-part ::= strings
 ;  var-type - logical representation for XQuery sequence type
-; Example: ((("" "e") . (one (node-test)))
-;           (("" "s") . (zero-or-more (node-test)) ))
+; Example: ((("" "e") (one (node-test)))
+;           (("" "s") (zero-or-more (node-test)) ))
 ;
 ; processed-funcs ::= (listof (list  func-name
 ;                                    order-required-for-result?
@@ -254,7 +257,8 @@
    (lropt:input-error expr processed-funcs)
    (case (xlr:op-name expr)  ; operation name
      ((var)
-      (sa:variable-wrapped expr vars funcs ns-binding default-ns))
+      (lropt:var expr called-once? order-required?
+                 var-types prolog processed-funcs))
      ;-------------------
      ; 2.2 Constants
      ((const)
@@ -282,7 +286,13 @@
                        #f  ; not single-level
                        ))
      ((unio)
-      #f)
+      ; Generally, arguments of unio are variables, each variable
+      ; is bound with a single item exactly. Ordering is thus not
+      ; required for unio arguments.
+      ; This supposition requires attention in the future, however.
+      (lropt:propagate expr called-once? #f
+                       var-types prolog processed-funcs
+                       #t #t #t))
      ;-------------------
      ; 2.5, 2.6 Arithmetic and comparison operations
      ((+@ -@ *@ div@ idiv@ mod@ /@ unary+@ unary-@
@@ -308,7 +318,14 @@
      ;-------------------
      ; 2.7 Conditional operation
      ((if if@)
-      (sa:analyze-if expr vars funcs ns-binding default-ns))
+      (let ((and-last-two
+             (lambda (test branch alternative)
+               (or branch alternative))))
+        (lropt:propagate expr called-once?
+                         ; order not required for test condition
+                         (list #f order-required? order-required?)
+                         var-types prolog processed-funcs
+                         and-last-two and-last-two and-last-two)))
      ;-------------------
      ; 2.8 Logical operations
      ((and@ or@)
@@ -337,7 +354,8 @@
      ((let@)
       (sa:analyze-let@ expr vars funcs ns-binding default-ns))
      ((return)
-      (sa:analyze-return expr vars funcs ns-binding default-ns))
+      (lropt:return expr called-once? order-required?
+                    var-types prolog processed-funcs))
      ((predicate)
       (sa:analyze-predicate expr vars funcs ns-binding default-ns))
      ((order-by)
@@ -493,26 +511,43 @@
                          alist2))))))
           (else
            (cons
-            (pair1)
+            pair1
             (lropt:unite-order-for-variables (cdr alist1) alist2)))))))
 
 ; Propagate processing the expression to its subexpressions
 ; The function has the same general signature, except for
 ; 1. Parts of the result are passed as arguments, namely,
-;    ddo-auto? zero-or-one? single-level?
-; 2. order-required-for-args ::= order-required? |
+;    ddo-auto-for-result zero-or-one single-level
+; 2. ddo-auto-for-result ::= ddo-auto? |
+;                            (lambda (ddo-auto1? ddo-auto2? ...) ...)
+;  ddo-auto-for-result can be a boolean when the value of ddo-auto? for
+;  expression result is independent of ddo-auto? values for expression
+;  arguments. Otherwise, ddo-auto-for-result can be a predicate that
+;  accepts the ddo-auto? values for all expression arguments and
+;  calculates ddo-auto? for expression result
+; 3. The same semantics applies to zero-or-one and single-level
+; 4. order-required-for-args ::= order-required? |
 ;                                (listof order-required?)
-; order-required-for-args is a boolean when the same ordering is required
-; for all the arguments of the expression.
-; order-required-for-args is a list when different arguments require
-; different ordering specifications. 
-; (length (listof order-required?)) = (length (xlr:op-args expr))
+;  order-required-for-args is a boolean when the same ordering is required
+;  for all the arguments of the expression.
+;  order-required-for-args is a list when different arguments require
+;  different ordering specifications. 
+;  (length (listof order-required?)) = (length (xlr:op-args expr))
 (define (lropt:propagate expr called-once? order-required-for-args
                          var-types prolog processed-funcs
-                         ddo-auto? zero-or-one? single-level?)
+                         ddo-auto-for-result zero-or-one single-level)
   (if  ; optimizing the case for an expression with no arguments
    (null? (xlr:op-args expr))
-   (values expr ddo-auto? zero-or-one? single-level?
+   (values expr
+           (if (procedure? ddo-auto-for-result)
+               (ddo-auto-for-result)
+               ddo-auto-for-result)
+           (if (procedure? zero-or-one)
+               (zero-or-one)
+               zero-or-one)
+           (if (procedure? single-level)
+               (single-level)
+               single-level)
            processed-funcs
            '()  ; no variables inside
            )
@@ -526,19 +561,30 @@
                  (order-required-for-args order-required-for-args)
                  (res '())
                  (processed-funcs processed-funcs)
-                 (order-for-variables '()))
+                 (order-for-variables '())
+                 (ddo-auto-lst '())
+                 (zero-or-1-lst '())
+                 (level-lst '()))
         (if
          (null? args)  ; everyone processed
          (values (cons (xlr:op-name expr)
                        (reverse res))
-                 ddo-auto? zero-or-one? single-level?
+                 (if (procedure? ddo-auto-for-result)
+                     (apply ddo-auto-for-result (reverse ddo-auto-lst))
+                     ddo-auto-for-result)
+                 (if (procedure? zero-or-one)
+                     (apply zero-or-one (reverse zero-or-1-lst))
+                     zero-or-one)
+                 (if (procedure? single-level)
+                     (apply single-level (reverse level-lst))
+                     single-level)
                  processed-funcs order-for-variables)
          (call-with-values
           (lambda () (lropt:expr (car args)
                                  called-once?
                                  (order-accessor order-required-for-args)
                                  var-types prolog processed-funcs))
-          (lambda (new-arg dummy-auto? dummy-0-or-1? dummy-level?
+          (lambda (new-arg auto? zero-or-1? level?
                            processed-funcs order-for-vars-in-arg)
             (loop (cdr args)
                   (order-next order-required-for-args)
@@ -548,11 +594,139 @@
                       order-for-vars-in-arg
                       (lropt:unite-order-for-variables
                        order-for-vars-in-arg  ; this list is generally shorter
-                       order-for-variables)))))))))))
+                       order-for-variables))
+                  (cons auto? ddo-auto-lst)
+                  (cons zero-or-1? zero-or-1-lst)
+                  (cons level? level-lst))))))))))
 
 
 ;=========================================================================
 ; Rewriting special logical operations
+
+; Whether variable contains no more than one item according to
+; its type specification
+(define (lropt:var-type-zero-or-one? type-spec)
+  (or
+   (and (pair? type-spec)
+        (memq (car type-spec) '(optional one)))
+   (any (symbol? type-spec)
+        ; Simple atomic type
+        (not (memq type-spec '(xs:anyType !xs!anyType))))))
+  
+; Variable reference
+(define (lropt:var expr called-once? order-required?
+                   var-types prolog processed-funcs)
+  (let* ((var-name (car (xlr:op-args expr)))
+         (type-entry
+          (cond
+            ((assoc var-name var-types)
+             => (lambda (x) x))
+            (else
+             ; Variable type declaration not found -
+             ; this should not happen!
+             (list var-name #f))))
+         (zero-or-one?
+          (lropt:var-type-zero-or-one? (cadr type-entry))))
+    (if
+     (null? (cddr type-entry))  ; entry contains just 2 members
+     (values expr
+             zero-or-one?  ; would stand for ddo-auto?
+             zero-or-one?  ; zero-or-one?
+             zero-or-one?  ; single-level?
+             processed-funcs             
+             (list  ; order-for-variables
+              (cons var-name
+                    (and order-required? (not zero-or-one?)))))
+     (values expr
+             (or  ; value for ddo-auto?:
+              zero-or-one?  ; in accordance with type
+              (list-ref type-entry 2)  ; the real situation
+              )
+             (or  ; zero-or-one?
+              zero-or-one?  ; in accordance with type
+              (list-ref type-entry 3)  ; the real situation
+              )
+             (or  ; single-level?
+              zero-or-one (list-ref type-entry 4))
+             processed-funcs             
+             (list  ; order-for-variables
+              (cons var-name
+                    (and order-required?
+                         (not zero-or-one?)
+                         (not (list-ref type-entry 2))  ; no ddo-auto
+                         )))))))
+
+; Remove variable entries from alist
+;  vars ::= (listof var-name)
+;  alist ::= (listof (cons var-name whatever))
+; var-name is not an atomic object. Namely,
+;  var-name ::= (list namespace-uri local-name)) 
+(define (lropt:remove-vars-from-alist vars alist)
+  (filter
+   (lambda (key-value)
+     (not (member (car key-value) vars)))
+   alist))
+
+; Return
+(define (lropt:return expr called-once? order-required?
+                      var-types prolog processed-funcs)
+  (let* ((fun-def (cadr (xlr:op-args expr)))
+         (args  ; fun-def arguments
+          (car (xlr:op-args fun-def)))
+         (var-names
+          (map
+           (lambda (pair)
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   )))
+           args)))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args fun-def))  ; function body
+        #f  ; called more than once
+        order-required?
+        (append
+         (map
+          (lambda (name pair)
+            (list name
+                  `(one  ; each variable is bound with exactly 1 item
+                    ,(car pair)  ; argument type
+                    )))
+          var-names
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (car (xlr:op-args expr))  ; child expr inside return
+           called-once?
+           order-required?
+           var-types
+           prolog processed-funcs))
+        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                           processed-funcs child-order-for-vars)
+          (values
+           (list
+            (if
+             (and (not called-once?)
+                  (null? (mlr:find-free-vars (car (xlr:op-args expr)))))
+             'lreturn 'return)
+            new-child
+            (list (xlr:op-name fun-def)  ; == 'fun-def
+                  args
+                  new-body))
+           (and body-ddo-auto? child-ddo-auto?)
+           (and body-0-or-1? child-0-or-1?)
+           (and body-level? child-level?)
+           processed-funcs
+           (lropt:unite-order-for-variables
+            (lropt:remove-vars-from-alist var-names
+                                          body-order-for-vars)
+            child-order-for-vars))))))))
 
 ; DDO
 (define (lropt:ddo expr called-once? order-required?
