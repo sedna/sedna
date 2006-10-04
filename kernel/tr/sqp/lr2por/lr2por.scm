@@ -451,14 +451,18 @@
              ; *** Processing-instruction (PI) constructor ***
              ; Analogue of attribute constructor
              ((eq? op-name 'pi)
-              (if
-               (and (eq? (caar node) `const)
-                    (eq? (cadr (cadr (car node))) '!xs!QName))
-               `(1 (PPPI
-                    ,(caddr (car node)) ,(l2p:any-lr-node2por (cadr node))))
-               `(1 (PPPI
-                    ,(l2p:any-lr-node2por (car node))
-                    ,(l2p:any-lr-node2por (cadr node))))))
+              `(1 (PPPI
+                    ,((if
+                       (and (eq? (caar node) `const)
+                            (eq? (cadr (cadr (car node))) '!xs!QName))
+                       caddr l2p:any-lr-node2por)
+                      (car node))                    
+                    ,(l2p:any-lr-node2por
+                      (if (null? (cdr node))  ; no PI body
+                          '(sequence)
+                          ; TODO: ensure that using '(sequence) is
+                          ; semantically correct
+                          (cadr node))))))
              
              ; *** namespace ***
              ((eq? op-name 'namespace)

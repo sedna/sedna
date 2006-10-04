@@ -1677,7 +1677,11 @@
 (define (sa:attribute-pi-namespace
          expr vars funcs ns-binding default-ns)
   (and
-   (sa:assert-num-args expr 2)
+   (or
+    (and (eq? (sa:op-name expr) 'pi)  ; PI constructor
+         (= (length (sa:op-args expr)) 1)  ; no PI body
+         )
+    (sa:assert-num-args expr 2))
    (if
     (sa:qname-const? (car (sa:op-args expr)))  ; name is constant
     (and
