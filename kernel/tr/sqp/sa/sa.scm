@@ -1655,6 +1655,99 @@
           (cons (append namespaces ns-binding)
                 default-ns)))))))
 
+; Post processing of element constructor
+; Accepts (cons element-constructor var-type)
+; 1. Checks that duplicate attributes are not declared
+; 2. Moves namespace declarations in from of attribute declarations
+; 3. Checks that duplicate namespace prefixes are not declared
+; 4. Checks that built-in namespace prefixes are not re-declared
+; Returns: (cons new-element-constructor var-type)
+(define (sa:post-process-element pair)
+  (let* ((elem (car pair))
+         (body (cadr (sa:op-args elem))))
+    (let loop ((src ((if (and (pair? body)
+                              (eq? (sa:op-name body) 'sequence))
+                         cdr list)
+                     body))
+               (namespaces '())
+               (others '())
+               (prefixes '())
+               (attr-names '()))
+      (cond
+        ((null? src)  ; content processed
+         (let ((new-content
+                (reverse (append others namespaces))))
+           (cons
+            (list
+             (sa:op-name elem)  ; == 'element
+             (car (sa:op-args elem))  ; element name
+             (if (and (not (and (pair? body)
+                                (eq? (sa:op-name body) 'sequence)))
+                      (not (null? new-content))
+                      (null? (cdr new-content)))
+                 (car new-content)
+                 (cons 'sequence new-content)))
+            (cdr pair)  ; var type
+            )))
+        ((and (pair? (car src))
+              (eq? (sa:op-name (car src)) 'attribute))
+         (let ((name (car (sa:op-args (car src)))))
+           (if
+            (and (pair? name)
+                 (eq? (sa:op-name name) 'const)
+                 (equal? (car (sa:op-args name))
+                         '(type !xs!QName)))
+            ; Constant attribute name
+            (if
+             (member (cadr (sa:op-args name)) attr-names)
+             ; Duplicate attribute declared
+             (cl:signal-user-error XQST0040 (sa:qname->string name))
+             (loop (cdr src)
+                   namespaces
+                   (cons (car src) others)
+                   prefixes
+                   (cons (cadr (sa:op-args name)) attr-names)))
+            (loop (cdr src)
+                   namespaces (cons (car src) others)
+                   prefixes attr-names))))
+        ((and (pair? (car src))
+              (eq? (sa:op-name (car src)) 'namespace))
+         (let ((prefix (car (sa:op-args (car src)))))
+           (if
+            (and (pair? prefix)
+                 (eq? (sa:op-name prefix) 'const)
+                 (equal? (car (sa:op-args prefix))
+                         '(type !xs!NCName)))
+            ; Constant namespace prefix
+            (let ((str (cadr (sa:op-args prefix))))
+              (cond
+                ((member str '("xml" "xmlns"))
+                 ; Attempt to re-declare a predefined namespace prefix 
+                 (cl:signal-user-error XQST0070 str))
+                ((member str prefixes)
+                 ; Duplicate prefix declared
+                 (if (string=? str "")
+                     ; Default namespace prefix              
+                     (cl:signal-user-error XQST0071 "xmlns")
+                     (cl:signal-user-error
+                      XQST0071
+                      (string-append "xmlns:" str))))
+                (else
+                 (loop (cdr src)
+                       (cons (car src) namespaces)
+                       others
+                       (cons str prefixes)
+                       attr-names))))
+            ; Computed namespace constructors are not allowed
+            ; ATTENTION: should raise an exception here
+            (loop (cdr src)
+                  (cons (car src) namespaces) others
+                  prefixes attr-names))))
+        (else
+         (loop (cdr src)
+               namespaces (cons (car src) others)
+               prefixes attr-names))))))
+
 ; Element constructor
 (define (sa:analyze-element-constructor expr vars funcs ns-binding default-ns)
   (and
@@ -1663,13 +1756,14 @@
            (sa:xmlns-declarations-in-element expr ns-binding default-ns))
           (ns-binding (car new-xmlns))
           (default-ns (cdr new-xmlns)))
-     (if
-      (sa:qname-const? (car (sa:op-args expr)))  ; name is constant
-      (and
+     (and
+      (or
+       (not (sa:qname-const? (car (sa:op-args expr))))
+       ; If name is constant, it must be correctly resolved
        (sa:resolve-qname
-        (car (sa:op-args expr)) ns-binding (cadr default-ns))
-       (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))
-      (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)))))
+        (car (sa:op-args expr)) ns-binding (cadr default-ns)))
+      (sa:post-process-element
+       (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))))))
      
 ; Constructors for attribute, pi and namespace
 ; TODO: more sophisticated treatment for pi and namespace names is desirable
