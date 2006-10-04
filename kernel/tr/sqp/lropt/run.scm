@@ -137,3 +137,81 @@
 ;          (const (type !xs!QName) ("" "name"))
 ;          (type *)
 ;          (const (type !xs!string) "non-nil"))))))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (ddo
+      (attr-axis
+       (ddo
+        (child
+         (ddo
+          (child
+           (ddo
+            (descendant-or-self
+             (ddo
+              (child
+               (element (const (type !xs!QName) ("" "a")) (sequence))
+               (type
+                (elem-test
+                 (ename
+                  (const (type !xs!QName) ("" "b"))
+                  (type *)
+                  (const (type !xs!string) "non-nil"))))))
+             (type (node-test))))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "c"))
+              (type *)
+              (const (type !xs!string) "non-nil"))))))
+         (type
+          (elem-test
+           (ename
+            (const (type !xs!QName) ("" "d"))
+            (type *)
+            (const (type !xs!string) "non-nil"))))))
+       (type
+        (attr-test
+         (ename
+          (const (type !xs!QName) ("" "e"))
+          (type *)
+          (const (type !xs!string) "non-nil"))))))
+     (fun-def
+      ((xs:anyType (var ("" "x"))))
+      (return
+       (ddo
+        (child
+         (ddo
+          (child
+           (ddo
+            (descendant-or-self
+             (element (const (type !xs!QName) ("" "b")) (sequence))
+             (type (node-test))))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "f"))
+              (type *)
+              (const (type !xs!string) "non-nil"))))))
+         (type
+          (elem-test
+           (ename
+            (const (type !xs!QName) ("" "g"))
+            (type *)
+            (const (type !xs!string) "non-nil"))))))
+       (fun-def
+        ((xs:anyType (var ("" "y"))))
+        (sequence
+          (ddo
+           (child
+            (var ("" "x"))
+            (type
+             (elem-test
+              (ename
+               (const (type !xs!QName) ("" "h"))
+               (type *)
+               (const (type !xs!string) "non-nil"))))))
+          (var ("" "y"))))))))))
