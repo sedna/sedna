@@ -1044,6 +1044,8 @@
       (let* ((prefix (car name-parts))
              (ns-uri
               (cond
+                ((symbol? prefix)  ; wildcard
+                 prefix)
                 ((string=? prefix "")   ; no prefix supplied
                  default-ns)
                 ((assoc prefix ns-binding)
@@ -1177,6 +1179,21 @@
     ((memq (car type-spec) '(comment-test text-test node-test))
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-nodes)))
+    ((eq? (car type-spec) 'pi-test)
+     (if
+      (null? (sa:op-args type-spec))  ; no arguments
+      (cons type-spec sa:type-nodes)
+      (and
+       (sa:assert-num-args type-spec 1)
+       (sa:analyze-const type-spec '() '() ns-binding default-ns)
+       (let ((const-value (caddr (car (sa:op-args type-spec)))))
+         (if
+          (not (or (symbol? const-value) (string? const-value)))
+          #f
+          ;(cons
+          ; (list
+          ;  (car type-spec)  ; == 'pi-test
+          (cons type-spec sa:type-nodes))))))
     ((eq? (car type-spec) 'item-test)
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-any)))

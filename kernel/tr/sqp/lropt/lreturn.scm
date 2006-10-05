@@ -226,16 +226,6 @@
 ;  order-for-variables ::= (listof (cons var-name order-required?))
 ;  var-name - the same as in In-part
 
-; Accessors to a member of `processed-funcs'
-;  processed-func ::= (list  func-name
-;                            order-required-for-result?
-;                            (listof  order-required-for-argument?)
-;                            rewritten-declare-function-clause)
-(define procced-func-name        car)
-(define procced-func-for-result  cadr)
-(define procced-func-for-args    caddr)
-(define procced-func-declaration cadddr)                  
-
 ; Default result to recover from unexpected input error
 (define (lropt:input-error expr processed-funcs)
   ; Can add some message diagnostics here
@@ -1203,6 +1193,68 @@
             (lropt:remove-vars-from-alist var-names
                                           body-order-for-vars)
             child-order-for-vars))))))))
+
+;-------------------
+; Function call
+; The structure of `processed-funcs' repeated here for convenience:
+;  processed-funcs - alist of user-declared functions with rewritten bodies
+; processed-funcs ::= (listof (list  func-name
+;                                    order-required-for-result?
+;                                    (listof  order-required-for-argument?)
+;                                    rewritten-declare-function-clause
+;                             ))
+; order-required-for-result? - may be #f for one function call and may become
+;  #t for another function call. In such a case, the alist entry for the
+;  given function is replaced
+
+; Accessors to a member of `processed-funcs'
+;  processed-func ::= (list  func-name
+;                            order-required-for-result?
+;                            (listof  order-required-for-argument?)
+;                            rewritten-declare-function-clause
+;                            ddo-auto? zero-or-one? single-level?)
+(define lropt:procced-func-name        car)
+(define lropt:procced-func-for-result  cadr)
+(define lropt:procced-func-for-args    caddr)
+(define lropt:procced-func-declaration cadddr)
+(define (lropt:procced-func-ddo-auto? entry)
+  (list-ref entry 4))
+(define (lropt:procced-func-0-or-1? entry)
+  (list-ref entry 5))
+(define (lropt:procced-func-single-level? entry)
+  (list-ref entry 6))
+
+(define (lropt:function-declaration expr called-once? order-required?
+                                    var-types prolog processed-funcs)
+  #f)
+
+; TODO
+(define (lropt:fun-call expr called-once? order-required?
+                        var-types prolog processed-funcs)
+  (let ((func-name  ; together with `(const (type !xs!QName) (...))
+         (car (sa:op-args expr))))
+    (cond
+      ((member func-name processed-funcs)
+       => (lambda (entry)  ; rewritten function found
+            (if
+             (or
+              ; Function body processed for order-required? == #t
+              (lropt:procced-func-for-result entry)
+              ; (lropt:procced-func-for-result entry) == order-required? == #f
+              (not order-required?))
+             ; This rewritten variant fits this function call
+             (lropt:propagate
+              expr called-once?
+              (cons #f  ; for function name
+                    (lropt:procced-func-for-args entry))
+              var-types prolog processed-funcs
+              (lropt:procced-func-ddo-auto? entry)
+              (lropt:procced-func-0-or-1? entry)
+              (lropt:procced-func-single-level? entry))
+             ; Otherwise, function declaration is to be rewritten
+             #f)))
+      (else
+       #f))))
 
 
 ;=========================================================================
