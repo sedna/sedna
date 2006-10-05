@@ -27,7 +27,7 @@ utm getLocalTime()
     retval.utm_millis = systime.wMilliseconds;
 
     GetTimeZoneInformation(&tz_info);
-    retval.utm_gmtoff = -tz_info.Bias;
+    retval.utm_gmtoff = -(tz_info.Bias + tz_info.DaylightBias)*60;
 #else
     time_t t;
     struct tm* tm_ptr;
