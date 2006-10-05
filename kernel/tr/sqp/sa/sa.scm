@@ -2443,6 +2443,7 @@
                  "CREATE-DOCUMENT"
                  "CREATE-COLLECTION"
                  "CREATE-INDEX"
+                 "CREATE-TRIGGER"
                  "LOAD"
                  "DROP"
                  "QUERY"

@@ -7,7 +7,7 @@
 ; precompiled query for dinamic security checking while access to document("...")
 
 
-; precompiled query for stand-alone security checking of privileges non-associated with database objects 
+; precompiled query for stand-alone security checking of privileges non-associated with database objects (associated with a whole database)
 ; (CREATE-DOCUMENT, CREATE-COLLECTION, LOAD, CREATE-USER, RETRIEVE-METADATA (maybe some privilege will be added later))
 (define sc:q2
   (lambda (user privilege error-message)

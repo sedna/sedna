@@ -131,7 +131,7 @@ EXECUTOR_OBJECTS  +=   PPFtIndexScan$(OBJ_EXT) \
 					   PPCreateFtIndex$(OBJ_EXT) \
 					   PPDropFtIndex$(OBJ_EXT)
 endif
-ifeq ($(SE_ENABLE_TRIGGERS),1)
+ifeq ($(ENABLE_TRIGGERS),1)
 EXECUTOR_OBJECTS  +=   PPCreateTrigger$(OBJ_EXT) \
 					   PPDropTrigger$(OBJ_EXT)
 endif

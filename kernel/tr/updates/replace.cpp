@@ -118,6 +118,9 @@ void replace(PPOpIn arg)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	apply_per_statement_triggers(&arg1seq, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+#endif    
 	//sorting arg1seq
 	arg3seq.clear();
 	xptr_sequence::iterator it=arg1seq.begin();
@@ -166,7 +169,7 @@ void replace(PPOpIn arg)
 		{
 			xptr node_child=*sit;
 #ifdef SE_ENABLE_TRIGGERS
-            if(apply_per_node_triggers(node, removeIndirection(node_child), XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
+            if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
 #endif
 			if (is_node_persistent(node_child)) 
 				node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
@@ -211,5 +214,7 @@ void replace(PPOpIn arg)
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
-	
+#ifdef SE_ENABLE_TRIGGERS
+	apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+#endif 
 }

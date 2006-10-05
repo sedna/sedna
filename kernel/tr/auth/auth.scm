@@ -93,12 +93,25 @@
                                                          "User doesn't have privilege CREATE-INDEX")
                                                   (sc:q17 user (car(cdaddr expr)) `index)
                                                   expr
+                                                  ) ))
+                       ( (eq? (caaddr expr) 'create-trigger) (begin
+                                                 (list
+                                                  (sc:q2 user "CREATE-TRIGGER" "User doesn't have privilege CREATE-TRIGGER")
+                                                  (sc:q17 user (car(cdaddr expr)) `trigger)
+                                                  expr
+                                                  )))
+                       ( (eq? (caaddr expr) 'drop-trigger) (begin
+                                                 (list
+                                                  (sc:q4 user "DROP" (car(cdaddr expr)) `trigger 
+                                                         "User doesn't have privilege DROP on the trigger or the trigger does not exist.")              
+                                                  (sc:q5 (car(cdaddr expr)) `trigger)
+                                                  expr
                                                   ) ))                       
                        ( (eq? (caaddr expr) 'drop-document)
                          (cond
                            ( (eq? (length (caddr expr)) 3)                           
                                                  (list
-                                                  (sc:q4 user "DROP" (cadr(cdaddr expr)) `collection "User doesn't have privilege to drop documents in the collection, or collection does not exists")                                                        
+                                                  (sc:q4 user "DROP" (cadr(cdaddr expr)) `collection "User doesn't have privilege to drop documents in the collection, or collection does not exist")                                                        
                                                    expr)                               
                                )
                            ( (eq? (length (caddr expr)) 2)

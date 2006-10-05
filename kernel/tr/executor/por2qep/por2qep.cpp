@@ -2183,8 +2183,9 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         PPXptr *pp_xptr = new PPXptr(cxt, 
                                      var_type);
-
+#ifdef SE_ENABLE_TRIGGERS
         if (qep_parameters) qep_parameters->push_back(pp_xptr);
+#endif
         opit = pp_xptr;
     }
     else if (op == "PPCheckpoint")
@@ -3243,7 +3244,7 @@ d_printf2("\n%d",qe->size());
 #else
 	else if (   op == "PPCreateTrigger"
 		     || op == "PPDropTrigger")
-		throw USER_EXCEPTION2(SE1002, "triggers support disabled");
+		throw USER_EXCEPTION2(SE1002, "Triggers support disabled. Compile Sedna with ENABLE_TRIGGERS=1 if you want to turn this feature on.");
 #endif
     else throw USER_EXCEPTION2(SE1004, "399");
 
