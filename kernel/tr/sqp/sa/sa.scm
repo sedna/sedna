@@ -1051,7 +1051,10 @@
                 (else
                  (cl:signal-user-error
                   XPST0081  ; was: SE5013
-                  prefix ":" (cadr name-parts))))))
+                  (string-append prefix ":"
+                                 (if (symbol? (cadr name-parts))
+                                     (symbol->string (cadr name-parts))
+                                     (cadr name-parts))))))))
         (and
          ns-uri   ; namespace URI found successfully
          (list (sa:op-name qname-const)  ; ='const
@@ -1188,10 +1191,11 @@
    (let ((new-name
           (and
            (sa:proper-qname (car (sa:op-args expr)))
-           (car (sa:op-args expr)))
-          ; DL: was - expansion:
-          ;(sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns)
-          )
+           ; Ensure that the qname can be correctly expanded
+           ; Was: commented out
+           (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns)
+           ; Do not actually expand it until dynamic evaluation phase
+           (car (sa:op-args expr))))
          (new-type
           (if
            (not (and (pair? (cadr (sa:op-args expr)))
@@ -1431,11 +1435,16 @@
 (define (sa:analyze-axis expr vars funcs ns-binding default-ns)
   (and
    (sa:assert-num-args expr 2)
-   (let ((a (sa:analyze-expr (car (sa:op-args expr))
-                             vars funcs ns-binding default-ns))
-         (new-type (sa:analyze-type
-                    (cadr (sa:op-args expr))
-                    vars funcs ns-binding default-ns)))
+   (let*
+       ; Type is to be analyzed _before_ analyzing the subexpr, since
+       ; type analysis may produce XQuery static errors only, while
+       ; subexpr analysis may result in an XQuery dynamic error, e.g.
+       ; when context is not defined
+       ((new-type (sa:analyze-type
+                   (cadr (sa:op-args expr))
+                   vars funcs ns-binding default-ns))
+        (a (sa:analyze-expr (car (sa:op-args expr))
+                            vars funcs ns-binding default-ns)))
      (and
       a new-type
       (if
