@@ -21,6 +21,7 @@
 #include "counted_ptr.h"
 #include "base.h"
 #include "nodes.h"
+#include "utime.h"
 
 typedef __int64 bigint;
 
@@ -104,6 +105,7 @@ public:
     XMLDateTime();
     XMLDateTime(const xs_packed_datetime& storage, xmlscm_type type);
     XMLDateTime(const xs_packed_duration& storage, xmlscm_type type);
+    XMLDateTime(const utm& t);
 
     // -----------------------------------------------------------------------
     // Copy ctor and Assignment operators

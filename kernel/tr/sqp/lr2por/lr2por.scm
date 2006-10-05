@@ -939,6 +939,26 @@
               `(1 (PPAbsPath (collection ,(l2p:getDocorCollNamePor (car node))) ()))
              )
 
+             ; *** !fn!current-dateTime ***
+             ((eq? op-name '!fn!current-dateTime)
+              `(1 (PPFnCurrentDateTime ))
+             )
+
+             ; *** !fn!current-date ***
+             ((eq? op-name '!fn!current-date)
+              `(1 (PPFnCurrentDate ))
+             )
+
+             ; *** !fn!current-time***
+             ((eq? op-name '!fn!current-time)
+              `(1 (PPFnCurrentTime ))
+             )
+
+             ; *** !fn!implicit-timezone***
+             ((eq? op-name '!fn!implicit-timezone)
+              `(1 (PPFnImplicitTimezone ))
+             )
+
              ; *** !fn!years-from-duration ***
              ((eq? op-name '!fn!years-from-duration)
               `(1 (PPFnYearsFromDuration ,(l2p:any-lr-node2por (car node))))

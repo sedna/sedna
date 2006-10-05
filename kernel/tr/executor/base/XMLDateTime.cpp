@@ -185,6 +185,26 @@ XMLDateTime::XMLDateTime()
 	reset();
 }
 
+XMLDateTime::XMLDateTime(const utm& t)
+{
+	reset();
+	setValue(Type, xs_dateTime);
+
+	setValue(CentYear, t.utm_year);
+	setValue(Month, t.utm_mon);
+	setValue(Day, t.utm_mday);
+	setValue(Hour, t.utm_hour);
+	setValue(Minute, t.utm_min);
+	setValue(Second, t.utm_sec);
+	setValue(MiliSecond, (int)(t.utm_millis/1000.0 * DT_MILISECOND_MAX_VALUE + 0.5 ));
+
+	int tz_neg = t.utm_gmtoff >= 0 ? 1 : -1;
+
+	setValue(utc, t.utm_gmtoff == 0 ? UTC_STD :  (t.utm_gmtoff > 0 ? UTC_POS : UTC_NEG ));
+	setValue(tz_hh, tz_neg * t.utm_gmtoff / 3600 );
+	setValue(tz_mm, tz_neg * ( t.utm_gmtoff % 3600 )/ 60 );
+}
+
 XMLDateTime::XMLDateTime(const xs_packed_datetime& dt, xmlscm_type type)
 {
 	reset();
@@ -380,8 +400,10 @@ XMLDateTime XMLDateTime::getTimezone() const
 	XMLDateTime tz;
 	tz.setValue(Type, xs_dayTimeDuration);
 	int neg = (getValue(utc) == UTC_NEG )? -1: 1;
+	tz.setValue(utc, getValue(utc));
 	tz.setValue(Hour, neg * getValue(tz_hh));
 	tz.setValue(Minute, neg * getValue(tz_mm));
+	tz.normalizeDuration();
 	return tz;
 }
 
@@ -445,7 +467,7 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 	{
 		int months = d.getValue(XMLDateTime::CentYear)*12 + d.getValue(XMLDateTime::Month);
 		double multMonths = months * v;
-		int neg = multMonths > 0 ? 1 : -1;
+		int neg = multMonths >= 0 ? 1 : -1;
 		months = neg * (int)floor( neg * multMonths + 0.5);
 		newDuration.setValue(XMLDateTime::Month, months);
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG);
@@ -460,11 +482,13 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		long seconds = d.getValue(XMLDateTime::Second) + d.getValue(XMLDateTime::Minute)*60 
 			+ d.getValue(XMLDateTime::Hour)*60*60 + d.getValue(XMLDateTime::Day)*60*60*24;
 		double seconds_milis = (seconds + milis) * v;
-		int neg = seconds_milis > 0 ? 1 : -1;
+		int neg = seconds_milis >= 0 ? 1 : -1;
 		newDuration.setValue(XMLDateTime::Second, (int)seconds_milis);
 		if (seconds_milis - (int)seconds_milis != 0.0)
 			newDuration.setValue(XMLDateTime::MiliSecond, (int)((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE + neg*0.5));
+		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
 
+		newDuration.normalize();
 	 	return newDuration;
 	}
  }
@@ -503,35 +527,19 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 
     fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
 
-    if (fDuration.getValue(XMLDateTime::Type) == xs_yearMonthDuration )
-    {
-	//add months
-	fNewDate.setValue(XMLDateTime::Month, modulo(dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month), 1, 13));
-	carry = fQuotient(fNewDate.getValue(XMLDateTime::Month), 1, 13);
-	if (fNewDate.getValue(XMLDateTime::Month) <= 0) {
-           fNewDate.setValue(XMLDateTime::Month, fNewDate.getValue(XMLDateTime::Month) + 12);
-           carry--;
-    	}
-
-        //add years (may be modified additionaly below)
-    	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
-    }
-
-    if (fDuration.getValue(XMLDateTime::Type) == xs_dayTimeDuration )
-    {
 	//add miliseconds
 	carry = 0;
 	double milis = dt.getValue(XMLDateTime::MiliSecond)/(double)DT_MILISECOND_MAX_VALUE + 
 			fDuration.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 
-	if (milis>=1.0 || milis <=0.0)
+	if (milis>=1.0 || milis <0.0)
 	{
 		if (milis>=1.0)
 		{
 			milis -= 1.0;
 			carry = 1;
 		}
-		else if (milis <= 0.0)
+		else if (milis < 0.0)
 		{
 			milis += 1.0;
 			carry = -1;
@@ -566,9 +574,20 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         	fNewDate.setValue( XMLDateTime::Hour, fNewDate.getValue(XMLDateTime::Hour) + 24 );
         	carry--;
     	}
-    
+
     	fNewDate.setValue(XMLDateTime::Day, dt.getValue(XMLDateTime::Day) + fDuration.getValue(XMLDateTime::Day) + carry);
-    }
+
+	//add months
+	fNewDate.setValue(XMLDateTime::Month, modulo(dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month), 1, 13));
+	carry = fQuotient(fNewDate.getValue(XMLDateTime::Month), 1, 13);
+	if (fNewDate.getValue(XMLDateTime::Month) <= 0) {
+           fNewDate.setValue(XMLDateTime::Month, fNewDate.getValue(XMLDateTime::Month) + 12);
+           carry--;
+    	}
+
+        //add years (may be modified additionaly below)
+    	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
+
 
     while ( true )
     {
@@ -598,7 +617,6 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         fNewDate.setValue(XMLDateTime::CentYear, fNewDate.getValue(XMLDateTime::CentYear) +  fQuotient(temp, 1, 13));
     }
 
-    //fNewDate->fValue[utc] = UTC_STD_CHAR;
     fNewDate.setValue(XMLDateTime::utc, XMLDateTime::UTC_STD);
     return fNewDate;
 }

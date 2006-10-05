@@ -49,6 +49,7 @@ libcommon_files$(LIB_EXT): sedna$(OBJ_EXT)              \
                            uprocess$(OBJ_EXT)			\
                            upipe$(OBJ_EXT)				\
                            usem$(OBJ_EXT)				\
+                           utime$(OBJ_EXT)				\
                            ushm$(OBJ_EXT)				\
                            uhdd$(OBJ_EXT)				\
                            ummap$(OBJ_EXT)				\
