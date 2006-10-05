@@ -22,9 +22,7 @@ extern "C" {
 //#endif
 
   
-#ifdef _WIN32
-#include <Windows.h>
-#else
+#ifndef _WIN32
 #include <time.h>
 #endif
 
