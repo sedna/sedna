@@ -1,6 +1,6 @@
 /*
  * File:  triggers_utils.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include "triggers_utils.h"

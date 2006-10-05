@@ -61,8 +61,8 @@ endif
 
 # options: triggers is on  - 1
 #          triggers is off - 0
-ifndef SE_ENABLE_TRIGGERS
-SE_ENABLE_TRIGGERS = 1
+ifndef ENABLE_TRIGGERS
+ENABLE_TRIGGERS = 0
 endif
 
 
