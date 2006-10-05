@@ -266,16 +266,34 @@
       (values expr #t #t #t processed-funcs '()))
      ;-------------------
      ; Axes
-     ((attr-axis child self)
-      ; These axes should have been processed by `lropt:ddo'
-      (display (xlr:op-name expr))
-      #f)
-     ((ancestor ancestor-or-self  descendant descendant-or-self
-                following following-sibling parent preceding
-                preceding-sibling)
-      ; ATTENTION: namespace axis
-      (display (xlr:op-name expr))
-      (sa:analyze-axis expr vars funcs ns-binding default-ns))
+     ((ancestor ancestor-or-self)
+      (lropt:ancestor expr called-once? order-required?
+                      var-types prolog processed-funcs))     
+     ((attr-axis child)
+      (lropt:attr-axis expr called-once? order-required?
+                       var-types prolog processed-funcs))
+     ((descendant descendant-or-self)
+      (lropt:descendant expr called-once? order-required?
+                        var-types prolog processed-funcs))
+     ((following)
+      (lropt:following expr called-once? order-required?
+                       var-types prolog processed-funcs))
+     ((following-sibling)
+      (lropt:following-sibling expr called-once? order-required?
+                               var-types prolog processed-funcs))
+     ; ATTENTION: namespace axis
+     ((parent)
+      (lropt:parent expr called-once? order-required?
+                    var-types prolog processed-funcs))
+     ((preceding)
+      (lropt:preceding expr called-once? order-required?
+                       var-types prolog processed-funcs))
+     ((preceding)
+      (lropt:preceding-sibling expr called-once? order-required?
+                               var-types prolog processed-funcs))
+     ((self)
+      (lropt:self expr called-once? order-required?
+                  var-types prolog processed-funcs))
      ;-------------------
      ; 2.4 Sequence
      ((sequence space-sequence spaceseq)
@@ -352,12 +370,14 @@
      ;-------------------
      ; 2.10 FLWOR Operations
      ((let@)
-      (sa:analyze-let@ expr vars funcs ns-binding default-ns))
+      (lropt:let expr called-once? order-required?
+                 var-types prolog processed-funcs))
      ((return)
       (lropt:return expr called-once? order-required?
                     var-types prolog processed-funcs))
      ((predicate)
-      (sa:analyze-predicate expr vars funcs ns-binding default-ns))
+      (lropt:predicate expr called-once? order-required?
+                       var-types prolog processed-funcs))
      ((order-by)
       (sa:analyze-order-by expr vars funcs ns-binding default-ns))
      ((orderspecs)
@@ -380,7 +400,8 @@
      ;-------------------
      ; 3.6. Quantified expressions
      ((some every)
-      (sa:some-every expr vars funcs ns-binding default-ns))
+      (lropt:some-every expr called-once? order-required?
+                        var-types prolog processed-funcs))
      ;-------------------
      ; 3.7 XQuery 1.0 Functions
      ((!fn!document)
@@ -403,14 +424,29 @@
                        #t  ; argument ordering required
                        var-types prolog processed-funcs
                        #t #t #t))
-     ((!fn!name
-       !fn!document-uri
+     ; Accept zero-or-one items for each argument,
+     ; return zero-or-one item in the result
+     ((; 2 Accessors
        !fn!node-name
-       !fn!node-kind
-       !fn!namespace-uri
-       !fn!boolean
-       !fn!not)
-      #f)
+       !fn!string !fn!document-uri
+       ; XQuery datamodel accessors
+       !fn!node-kind !fn!string-value !fn!typed-value
+       ; 7.4 Functions on String Values
+       !fn!concat !fn!string-length !fn!translate
+       ; 7.5 Functions Based on Substring Matching
+       !fn!contains
+       ; 7.6 String Functions that Use Pattern Matching
+       !fn!replace !fn!matches
+       ; 9.3 Functions on Boolean Values
+       !fn!not !fn!boolean
+       ; 14 Functions and Operators on Nodes
+       !fn!name !fn!local-name !fn!namespace-uri
+       ; 15.2 Functions That Test the Cardinality of Sequences
+       !fn!exactly-one)
+      ; The same semantics as for !fn!document
+      (lropt:propagate expr called-once? #f  ; [*]
+                       var-types prolog processed-funcs
+                       #t #t #t))
      ((!fn!empty !fn!exists)
       (lropt:propagate expr called-once? #f  ; order not required
                        var-types prolog processed-funcs
@@ -423,20 +459,11 @@
        !fn!reverse
        !fn!zero-or-one
        !fn!one-or-more
-       !fn!exactly-one
-       !fn!concat
        !fn!distinct-values
-       !fn!string-value
-       !fn!string-length
-       !fn!typed-value
-       !fn!string
-       !fn!contains
-       !fn!translate
        !fn!deep-equal
-       !fn!replace
-       !fn!matches
        !fn!subsequence)
       #f)
+     ; 10.5 Component Extraction Functions on Durations, Dates and Times
      ((!fn!years-from-duration
        !fn!months-from-duration !fn!days-from-duration !fn!hours-from-duration       
        !fn!minutes-from-duration !fn!seconds-from-duration !fn!year-from-dateTime
@@ -466,8 +493,7 @@
        !fn!is_ancestor
        !fn!filter_entry_level
        !fn!item-at
-       !fn!test
-       !fn!local-name)
+       !fn!test)
       #f)
      ;-------------------
      ; Union operations
@@ -609,7 +635,7 @@
   (or
    (and (pair? type-spec)
         (memq (car type-spec) '(optional one)))
-   (any (symbol? type-spec)
+   (and (symbol? type-spec)
         ; Simple atomic type
         (not (memq type-spec '(xs:anyType !xs!anyType))))))
   
@@ -625,6 +651,7 @@
              ; Variable type declaration not found -
              ; this should not happen!
              (list var-name #f))))
+         ;(dummy (pp type-entry))
          (zero-or-one?
           (lropt:var-type-zero-or-one? (cadr type-entry))))
     (if
@@ -647,7 +674,7 @@
               (list-ref type-entry 3)  ; the real situation
               )
              (or  ; single-level?
-              zero-or-one (list-ref type-entry 4))
+              zero-or-one? (list-ref type-entry 4))
              processed-funcs             
              (list  ; order-for-variables
               (cons var-name
@@ -655,6 +682,114 @@
                          (not zero-or-one?)
                          (not (list-ref type-entry 2))  ; no ddo-auto
                          )))))))
+
+;-------------------
+; Axes
+
+; can-sustain-order? - provided that argument expression is ordered, is this
+;  axis capable of producing the automatically ordered result
+(define (lropt:axis-helper can-sustain-order? ddo-auto-handler
+                           zero-or-one-handler single-level-handler)
+  (lambda (expr called-once? order-required?
+                var-types prolog processed-funcs)
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (car (xlr:op-args expr))  ; child expression
+        called-once?
+        (and order-required? can-sustain-order?)
+        var-types prolog processed-funcs))
+     (lambda (new-expr ddo-auto? zero-or-one? single-level?
+                       processed-funcs order-for-vars)
+       (values
+        (list (xlr:op-name expr)  ; axis name
+              new-expr
+              (cadr (xlr:op-args expr))  ; node test specification
+              )
+        (ddo-auto-handler ddo-auto? zero-or-one? single-level?)
+        (zero-or-one-handler zero-or-one? single-level?)
+        (single-level-handler zero-or-one? single-level?)
+        processed-funcs
+        order-for-vars)))))
+
+(define lropt:ancestor
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)))
+   
+(define lropt:ancestor-or-self lropt:ancestor)
+
+; ATTENTION: lropt:child is implemented as an alias for this function
+(define lropt:attr-axis
+  (lropt:axis-helper
+   #t  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) ddo-auto?)
+   (lambda (zero-or-one? single-level?) #f)  ; zero-or-one-handler
+   ; single-level-handler
+   (lambda (zero-or-one? single-level?) single-level?)))
+
+(define lropt:child lropt:attr-axis)
+
+(define lropt:descendant
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?)
+     (and ddo-auto? single-level?))
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)))
+
+(define lropt:descendant-or-self lropt:descendant)
+
+(define lropt:following
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) zero-or-one?)
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)))
+
+(define lropt:following-sibling
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) zero-or-one?)
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) single-level?)))
+
+(define lropt:parent
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) zero-or-one?)
+   (lambda (zero-or-one? single-level?) single-level?)))
+
+(define lropt:preceding
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   ; ATTENTION: preceding axis can yield ddo-auto == #t if
+   ;  a. zero-or-one? and
+   ;  b. The implementation of preceding axis returns its result in
+   ; document order (corresponds to XQuery spec.)
+   (lambda (ddo-auto? zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)))
+
+(define lropt:preceding-sibling
+  (lropt:axis-helper
+   #f  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) #f)
+   (lambda (zero-or-one? single-level?) single-level?)))
+
+(define lropt:self
+  (lropt:axis-helper
+   #t  ; can-sustain-order?
+   (lambda (ddo-auto? zero-or-one? single-level?) ddo-auto?)
+   (lambda (zero-or-one? single-level?) zero-or-one?)
+   (lambda (zero-or-one? single-level?) single-level?)))
+
+;-------------------
+; 2.10 FLWOR Operations
 
 ; Remove variable entries from alist
 ;  vars ::= (listof var-name)
@@ -666,6 +801,77 @@
    (lambda (key-value)
      (not (member (car key-value) vars)))
    alist))
+
+; Let-expression
+(define (lropt:let expr called-once? order-required?
+                   var-types prolog processed-funcs)
+  (let* ((fun-def (cadr (xlr:op-args expr)))
+         (arg  ; fun-def argument
+          (caar (xlr:op-args fun-def)))
+         (var-name
+          (car (xlr:op-args  ; removing embracing 'var
+                (cadr arg)  ; '(var ..)
+                ))))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args fun-def))  ; function body
+        called-once?
+        order-required?
+        (cons (list var-name
+                    (car arg)  ; argument type
+                    )
+              var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (car (xlr:op-args expr))  ; child expr inside let@
+           called-once?
+           (and  ; ordering could not be fulfilled in fun-def body
+            order-required?
+            (not body-ddo-auto?))
+           var-types
+           prolog processed-funcs))
+        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                           processed-funcs child-order-for-vars)
+          (call-with-values
+           (lambda ()
+             (if
+              (and  ; ordering could not be fulfilled in fun-def body
+               order-required?
+               (not body-ddo-auto?))
+              ; Re-processing fun-def body once again to fulfil ordering
+              (lropt:expr
+               (cadr (xlr:op-args fun-def))  ; function body
+               called-once?
+               order-required?
+               (cons (list var-name
+                           (car arg)  ; argument type
+                           child-ddo-auto?  ; child expr was ordered
+                           child-0-or-1?
+                           child-level?)
+                     var-types)
+               prolog processed-funcs)
+              ; Identity
+              (values new-body body-ddo-auto? body-0-or-1? body-level?
+                      processed-funcs body-order-for-vars)))
+            (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                              processed-funcs body-order-for-vars)
+              (values
+               (list (xlr:op-name expr)  ; == 'let@
+                     new-child
+                     (list (xlr:op-name fun-def)  ; == 'fun-def
+                           (car (xlr:op-args fun-def))
+                           new-body))
+               body-ddo-auto? body-0-or-1? body-level?
+               processed-funcs
+               (lropt:unite-order-for-variables
+                (lropt:remove-vars-from-alist (list var-name)
+                                              body-order-for-vars)
+                child-order-for-vars))))))))))
 
 ; Return
 (define (lropt:return expr called-once? order-required?
@@ -727,6 +933,66 @@
             (lropt:remove-vars-from-alist var-names
                                           body-order-for-vars)
             child-order-for-vars))))))))
+
+; Predicate
+; Implemented by analogue with `lropt:return'
+(define (lropt:predicate expr called-once? order-required?
+                         var-types prolog processed-funcs)
+  (let* ((fun-def (cadr (xlr:op-args expr)))
+         (args  ; fun-def arguments
+          (car (xlr:op-args fun-def)))
+         (var-names
+          (map
+           (lambda (pair)
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   )))
+           args)))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args fun-def))  ; function body
+        #f  ; called more than once
+        #f  ; order not required for fun-def body, see also: [*]
+        (append
+         (map
+          (lambda (name pair)
+            (list name
+                  `(one  ; each variable is bound with exactly 1 item
+                    ,(car pair)  ; argument type
+                    )))
+          var-names
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (car (xlr:op-args expr))  ; child expr inside return
+           called-once?
+           order-required?
+           var-types
+           prolog processed-funcs))
+        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                           processed-funcs child-order-for-vars)
+          (values
+           (list
+            (xlr:op-name expr)  ; == 'predicate
+            new-child
+            (list (xlr:op-name fun-def)  ; == 'fun-def
+                  args
+                  new-body))
+           child-ddo-auto? child-0-or-1? child-level?
+           processed-funcs
+           (lropt:unite-order-for-variables
+            (lropt:remove-vars-from-alist var-names
+                                          body-order-for-vars)
+            child-order-for-vars))))))))
+
+;-------------------
+; 2.14 Distinct document order
 
 ; DDO
 (define (lropt:ddo expr called-once? order-required?
@@ -866,6 +1132,77 @@
                ddo-auto?)
            zero-or-one? single-level?
            processed-funcs order-for-variables))))))
+
+;-------------------
+; 3.6. Quantified expressions
+     
+; Some and every
+; Implemented by analogue with `lropt:return'
+(define (lropt:some-every expr called-once? order-required?
+                          var-types prolog processed-funcs)
+  (let* ((fun-def (cadr (xlr:op-args expr)))
+         (args  ; fun-def arguments
+          (car (xlr:op-args fun-def)))
+         (var-names
+          (map
+           (lambda (pair)
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   )))
+           args)))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args fun-def))  ; function body
+        #f  ; called more than once
+        #f  ; no order for result required, see also: [*]
+        (append
+         (map
+          (lambda (name pair)
+            (list name
+                  `(one  ; each variable is bound with exactly 1 item
+                    ,(car pair)  ; argument type
+                    )))
+          var-names
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (car (xlr:op-args expr))  ; child expr inside return
+           called-once?
+           #f  ; order not required
+           var-types
+           prolog processed-funcs))
+        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                           processed-funcs child-order-for-vars)
+          (values
+           (list
+            (if
+             (and (not called-once?)
+                  (null? (mlr:find-free-vars (car (xlr:op-args expr)))))
+             (cond
+               ((assq (xlr:op-name expr)
+                      '((some . lsome) (every . levery)))
+                => cdr)
+               (else
+                (xlr:signal-error
+                 "lropt:some-every: internal error: " expr)))
+             (xlr:op-name expr))
+            new-child
+            (list (xlr:op-name fun-def)  ; == 'fun-def
+                  args
+                  new-body))
+           #t  ; ddo-auto? == #t, since atomic value
+           #t #t  ; zero-or-one? and single-level?
+           processed-funcs
+           (lropt:unite-order-for-variables
+            (lropt:remove-vars-from-alist var-names
+                                          body-order-for-vars)
+            child-order-for-vars))))))))
 
 
 ;=========================================================================
