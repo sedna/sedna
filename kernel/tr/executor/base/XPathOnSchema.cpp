@@ -923,11 +923,7 @@ t_scmnodes_const execute_abs_path_expr_rec(const t_scmnodes_const &nodes, const 
             for (j = 0; j != nto.s; j++)
             {
                 t_scmnodes_const tmp;
-//                if (extended_nodes->find((schema_node*)n1.at(i)) != extended_nodes->end())
                 tmp = execute_node_test(n1.at(i), nto.nt[j], extended_nodes, extender_nodes);
-//                else
-//                    tmp = execute_node_test(n1.at(i), nto.nt[j], NULL, NULL);
-
                 n2 = vector_concat(n2, tmp);
             }
 

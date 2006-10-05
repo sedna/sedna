@@ -80,7 +80,7 @@ IDX_S = -lidx
 IDX_P = -Lidx
 endif
 
-ifeq ($(SE_ENABLE_TRIGGERS), 1)
+ifeq ($(ENABLE_TRIGGERS), 1)
 TRIGGERS_LIB = triggers/libtriggers$(LIB_EXT)
 ifeq ($(PLATFORM), WIN32)
 TRIGGERS_S = $(TRIGGERS_LIB)
@@ -320,7 +320,7 @@ $(AUTH_LIB): libraries
 
 $(RCV_LIB): libraries
 
-ifeq ($(SE_ENABLE_TRIGGERS), 1)
+ifeq ($(ENABLE_TRIGGERS), 1)
 $(TRIGGERS_LIB): libraries
 endif
 
@@ -570,7 +570,7 @@ endif
 	$(MAKE) -C vmm
 	$(MAKE) -C auth
 	$(MAKE) -C rcv
-ifeq ($(SE_ENABLE_TRIGGERS), 1)
+ifeq ($(ENABLE_TRIGGERS), 1)
 	$(MAKE) -C triggers
 endif
 
@@ -584,7 +584,7 @@ clean: generic_clean
 ifeq ($(ENABLE_DTSEARCH), 1)
 	$(MAKE) -C ft clean
 endif
-ifeq ($(SE_ENABLE_TRIGGERS), 1)
+ifeq ($(ENABLE_TRIGGERS), 1)
 	$(MAKE) -C triggers clean
 endif
 	$(MAKE) -C locks clean
