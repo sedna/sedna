@@ -215,3 +215,141 @@
                (type *)
                (const (type !xs!string) "non-nil"))))))
           (var ("" "y"))))))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog)
+   (query-body
+    (ddo
+     (return
+      (ddo
+       (child
+        (element (const (type !xs!QName) ("" "a")) (sequence))
+        (type
+         (elem-test
+          (ename
+           (const (type !xs!QName) ("" "sources"))
+           (type *)
+           (const (type !xs!string) "non-nil"))))))
+      (fun-def
+       ((!xs!anyType (var ("" "$%v"))))
+       (predicate
+        (predicate
+         (ddo
+          (child
+           (var ("" "$%v"))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "source"))
+              (type *)
+              (const (type !xs!string) "non-nil"))))))
+         (fun-def
+          ((!xs!anyType (var ("" "$%v"))))
+          (=@
+           (ddo
+            (child
+             (var ("" "$%v"))
+             (type
+              (elem-test
+               (ename
+                (const (type !xs!QName) ("" "id"))
+                (type *)
+                (const (type !xs!string) "non-nil"))))))
+           (const (type !xs!string) "sql2"))))
+        (fun-def
+         ((!xs!anyType (var ("" "$%v"))))
+         (>@ (!fn!position) (+@ (!fn!last) (const (type !xs!integer) "6")))))))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog)
+   (query-body
+    (let@
+        (ddo
+         (child
+          (ddo
+           (descendant-or-self
+            (ddo
+             (child
+              (ddo
+               (descendant-or-self
+                (sequence
+                  (element (const (type !xs!QName) ("" "a")) (sequence))
+                  (element (const (type !xs!QName) ("" "b")) (sequence))
+                  (element (const (type !xs!QName) ("" "c")) (sequence)))
+                (type (node-test))))
+              (type
+               (elem-test
+                (ename
+                 (const (type !xs!QName) ("" "n"))
+                 (type *)
+                 (const (type !xs!string) "non-nil"))))))
+            (type (node-test))))
+          (type
+           (elem-test
+            (ename
+             (const (type !xs!QName) ("" "m"))
+             (type *)
+             (const (type !xs!string) "non-nil"))))))
+      (fun-def ((xs:anyType (var ("" "x")))) (var ("" "x")))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog)
+   (query-body
+    (some
+     (ddo
+      (child
+       (ddo
+        (descendant-or-self
+         (ddo
+          (child
+           (ddo
+            (descendant-or-self
+             (sequence
+               (element (const (type !xs!QName) ("" "a")) (sequence))
+               (element (const (type !xs!QName) ("" "b")) (sequence))
+               (element (const (type !xs!QName) ("" "c")) (sequence)))
+             (type (node-test))))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "n"))
+              (type *)
+              (const (type !xs!string) "non-nil"))))))
+         (type (node-test))))
+       (type
+        (elem-test
+         (ename
+          (const (type !xs!QName) ("" "m"))
+          (type *)
+          (const (type !xs!string) "non-nil"))))))
+     (fun-def
+      ((xs:anyType (var ("" "x"))))
+      (some
+       (ddo
+        (child
+         (sequence
+           (element (const (type !xs!QName) ("" "e")) (sequence))
+           (element (const (type !xs!QName) ("" "f")) (sequence)))
+         (type
+          (elem-test
+           (ename
+            (const (type !xs!QName) ("" "p"))
+            (type *)
+            (const (type !xs!string) "non-nil"))))))
+       (fun-def
+        ((xs:anyType (var ("" "y"))))
+        (ddo
+         (attr-axis
+          (sequence
+            (var ("" "x"))
+            (element (const (type !xs!QName) ("" "d")) (sequence))
+            (var ("" "y")))
+          (type
+           (attr-test
+            (ename
+             (const (type !xs!QName) ("" "attr"))
+             (type *)
+             (const (type !xs!string) "non-nil")))))))))))))
