@@ -170,19 +170,15 @@ int main(int argc, char *argv[])
             throw USER_EXCEPTION2(SE4609, db_name);
 
         //init global names
-d_printf1("Setting global names...");            
         set_global_names();
         set_global_names(db_name);
-d_printf1("OK\n");            
 
         gov_shared_mem = open_gov_shm(&gov_shm_dsc);
         is_init_gov_shm = true;
         socket_port = ((gov_header_struct *) gov_shared_mem)->lstnr_port_number;
 
-d_printf1("Register session on governer...");            
         //register session on governer
         register_session_on_gov();
-d_printf1("OK\n");            
 
         SednaUserException e = USER_EXCEPTION(SE4400);
         ppc.startup(e);

@@ -67,6 +67,9 @@ void delete_undeep(PPOpIn arg)
 #ifdef SE_ENABLE_FTSEARCH
 	clear_ft_sequences();
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	apply_per_statement_triggers(&argseq, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+#endif
 	it=argseq.end();
 	do
 	{

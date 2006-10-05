@@ -85,9 +85,9 @@ TRIGGERS_LIB = triggers/libtriggers$(LIB_EXT)
 ifeq ($(PLATFORM), WIN32)
 TRIGGERS_S = $(TRIGGERS_LIB)
 else
-#TRIGGERS_S = -Lidx -lidx
-TRIGGERS_S = -lidx
-TRIGGERS_P = -Lidx
+#TRIGGERS_S = -Ltriggers -ltriggers
+TRIGGERS_S = -ltriggers
+TRIGGERS_P = -Ltriggers
 endif
 else
 TRIGGERS_LIB =

@@ -179,11 +179,6 @@ void replace(PPOpIn arg)
 			sit++;
 		}
 		//delete node
-/*#ifdef SE_ENABLE_TRIGGERS
-        bool is_replaced = true;
-#else  
-        bool is_replaced = false;
-#endif*/
 		delete_replaced_node(removeIndirection((*it3).cells[0].get_node()), node);
 	}
 	while (it3!=arg4seq.begin());
