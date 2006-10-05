@@ -423,10 +423,23 @@
                               )
                             ))
                            
+                           ((eq? test-type 'pi-test)
+                            `(1
+                              (,axis
+                               ,(l2p:lr-test2por-test test-type)
+                               ,(let ((pi (cadr type)))  ; pi == '(pi-test ...)
+                                  (if
+                                   (null? (cdr pi))  ; no target specified
+                                   '()
+                                   (list
+                                    (caddr  ; constant value
+                                     (cadr pi)  ; yields '(const (type ...) ...)
+                                     ))))
+                               ,(l2p:any-lr-node2por (car node)))))
+
                            ((or (eq? test-type 'text-test)
                                 (eq? test-type 'node-test)
-                                (eq? test-type 'comment-test)
-                                (eq? test-type 'pi-test))
+                                (eq? test-type 'comment-test))
                             `(1 (,axis ,(l2p:lr-test2por-test test-type) () ,(l2p:any-lr-node2por (car node)))))
                            
                            (else (cl:signal-input-error SE4008 (string-append "unknown test-type: "
@@ -1471,6 +1484,20 @@
                       
                       ((eq? (car item-type) 'text-test)
                           `(,por-occ-ind (text)))
+                      
+                      ; DL: wrong place
+;                      ((eq? (car item-type) 'pi-test)
+;                       (display item-type)
+;                       `(,por-occ-ind
+;                         (processing_instruction
+;                          @(if
+;                             (null? (cdr item-type))
+;                             ; no target specified
+;                             '()
+;                              (list
+;                               (caddr  ; constant value
+;                                (cadr item-type)  ; selects '(const ...)
+;                                ))))))
                       
                       ((eq? (car item-type) 'item-test)
                           `(,por-occ-ind (item)))
