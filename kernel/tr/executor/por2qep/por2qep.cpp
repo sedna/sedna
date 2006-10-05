@@ -2195,7 +2195,24 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPCheckpoint(cxt);
     }
-    else if (op == "PPFnYearsFromDuration" ||
+    else if (op == "PPFnCurrentDateTime" ||
+		op == "PPFnCurrentDate" ||
+		op == "PPFnCurrentTime" ||
+		op == "PPFnImplicitTimezone")
+    {
+        if (   lst->size() != 1
+           ) throw USER_EXCEPTION2(SE1004, "103");
+
+        int type;
+
+        if (op == "PPFnCurrentDateTime") type = PPFnDateTimeFuncNoParam::currentDateTime;
+        if (op == "PPFnCurrentDate") type = PPFnDateTimeFuncNoParam::currentDate;
+        if (op == "PPFnCurrentTime") type = PPFnDateTimeFuncNoParam::currentTime;
+        if (op == "PPFnImplicitTimezone") type = PPFnDateTimeFuncNoParam::implicitTimezone;
+
+        opit = new PPFnDateTimeFuncNoParam(cxt, type);
+    }
+    else if ( op == "PPFnYearsFromDuration" ||
                 op == "PPFnMonthsFromDuration" ||
                 op == "PPFnDaysFromDuration" ||
                 op == "PPFnHoursFromDuration" ||

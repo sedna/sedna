@@ -9,6 +9,40 @@
 #include "PPBase.h"
 
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnDateTimeFuncNoParam
+///////////////////////////////////////////////////////////////////////////////
+class PPFnDateTimeFuncNoParam: public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    bool first_time;
+    int dateTimeFunc;
+
+public:
+
+    enum dateTimeFuncs
+    {
+	currentDateTime=0,
+	currentDate,
+	currentTime,
+	implicitTimezone
+    };
+   
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnDateTimeFuncNoParam(variable_context *_cxt_, int dateTimeFunc);
+    virtual ~PPFnDateTimeFuncNoParam();
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc1Param
 ///////////////////////////////////////////////////////////////////////////////
@@ -25,8 +59,7 @@ protected:
 public:
 
     enum dateTimeFuncs
-    {
-	yearsFromDuration=0,
+    { yearsFromDuration=0,
 	monthsFromDuration,
 	daysFromDuration,
 	hoursFromDuration,

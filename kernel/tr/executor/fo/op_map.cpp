@@ -425,6 +425,8 @@ int simple_type2bin_op_eq_index(xmlscm_type xtype)
     case xs_time:
         return 2;
     case xs_duration:
+    case xs_yearMonthDuration:
+    case xs_dayTimeDuration:
 	return 3;
     case xs_dateTime:
        return 4;
@@ -489,6 +491,8 @@ int simple_type2bin_op_ne_index(xmlscm_type xtype)
     case xs_time:
         return 2;
     case xs_duration:
+    case xs_yearMonthDuration:
+    case xs_dayTimeDuration:
 	return 3;
     case xs_dateTime:
         return 4;

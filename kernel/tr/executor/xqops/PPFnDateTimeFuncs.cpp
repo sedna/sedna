@@ -11,6 +11,64 @@
 #include "strings.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPFnDateTimeFuncNoParam
+///////////////////////////////////////////////////////////////////////////////
+PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(variable_context *_cxt_,int _dateTimeFunc_) : PPIterator(_cxt_), dateTimeFunc(_dateTimeFunc_)
+{
+}
+
+PPFnDateTimeFuncNoParam::~PPFnDateTimeFuncNoParam()
+{
+}
+
+void PPFnDateTimeFuncNoParam::open  ()
+{
+    first_time = true;
+}
+
+void PPFnDateTimeFuncNoParam::reopen()
+{
+    first_time = true;
+}
+
+void PPFnDateTimeFuncNoParam::close ()
+{
+}
+
+void PPFnDateTimeFuncNoParam::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+	utm tm = getLocalTime();
+
+	switch (dateTimeFunc)
+	{
+		case currentDateTime:	t.copy(tuple_cell::atomic(XMLDateTime(tm).getPackedDateTime(), xs_dateTime)); break;
+		case currentDate:	t.copy(tuple_cell::atomic(XMLDateTime(tm).convertTo(xs_date).getPackedDateTime(), xs_date)); break;
+		case currentTime:	t.copy(tuple_cell::atomic(XMLDateTime(tm).convertTo(xs_time).getPackedDateTime(), xs_time)); break;
+		case implicitTimezone:	t.copy(tuple_cell::atomic(XMLDateTime(tm).getTimezone().getPackedDuration(), xs_dayTimeDuration)); break;
+	}
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnDateTimeFuncNoParam::copy(variable_context *_cxt_)
+{
+    PPFnDateTimeFuncNoParam *res = new PPFnDateTimeFuncNoParam(_cxt_,dateTimeFunc);
+    return res;
+}
+
+bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFuncNoParam::result");
+}
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDateTimeFunc::PPFnDateTimeFunc(variable_context *_cxt_,
@@ -159,7 +217,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic(
-						XMLDateTime(tc.get_xs_dateTime(), tc_type).getTimezone().getPackedDateTime(),
+						XMLDateTime(tc.get_xs_dateTime(), tc_type).getTimezone().getPackedDuration(),
 						xs_dayTimeDuration));
 					break;
 		case adjustDateTimeToTimezone:

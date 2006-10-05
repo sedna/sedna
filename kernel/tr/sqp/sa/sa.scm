@@ -525,6 +525,18 @@
      ,sa:type-atomic !fn!subsequence)
     ;----------------------------------------
     ; XML Date/Time functions
+    (,sa:fn-ns "current-dateTime" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-dateTime)
+    (,sa:fn-ns "current-date" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-date)
+    (,sa:fn-ns "current-time" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-time)
+    (,sa:fn-ns "implicit-timezone" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!implicit-timezone)
    (,sa:fn-ns "years-from-duration" 1 1
     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
     ,sa:type-atomic !fn!years-from-duration)
