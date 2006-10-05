@@ -1179,21 +1179,31 @@
     ((memq (car type-spec) '(comment-test text-test node-test))
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-nodes)))
-    ((eq? (car type-spec) 'pi-test)
+    ((eq? (car type-spec) 'pi-test)     
      (if
       (null? (sa:op-args type-spec))  ; no arguments
       (cons type-spec sa:type-nodes)
       (and
        (sa:assert-num-args type-spec 1)
-       (sa:analyze-const type-spec '() '() ns-binding default-ns)
-       (let ((const-value (caddr (car (sa:op-args type-spec)))))
+;       (begin
+;         (display (list type-spec (sa:op-args type-spec)))
+;         #t)
+       (sa:analyze-const (car (sa:op-args type-spec))
+                         '() '() ns-binding default-ns)
+       (let* ((target-const (car (sa:op-args type-spec)))
+              (const-value  (caddr target-const)))
          (if
           (not (or (symbol? const-value) (string? const-value)))
-          #f
-          ;(cons
-          ; (list
-          ;  (car type-spec)  ; == 'pi-test
-          (cons type-spec sa:type-nodes))))))
+          (cl:signal-input-error SE5027 type-spec)
+          (cons
+           (list
+            (car type-spec)  ; == 'pi-test
+            (list (sa:op-name target-const)  ; == 'const
+                  (car (sa:op-args target-const))  ; type specifier
+                  (if (symbol? const-value)
+                      (symbol->string const-value)
+                      const-value)))
+           sa:type-nodes))))))
     ((eq? (car type-spec) 'item-test)
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-any)))
