@@ -53,14 +53,32 @@ void StrMatcher::clear_state()
 	state = root;
 }
 void StrMatcher::reset()
-{	
+{
+	//TODO
 }
 
-int parse(const char *str, int len, write_func f, void *p, pat_class pc)
+int StrMatcher::parse(const char *str, int len, write_func_t f, void *p, pat_class pc)
 {
+	int k = 0;
+	for (int i = 0; i < len; i++)
+	{
+		if (state->next[(unsigned char)str[i]] == NULL)
+		{
+			
+		}
+		else
+		{
+			state = state->next[(unsigned char)str[i]];
+			//TODO: replace if needed
+		}
+	}
+	
 	return 0;
 }
 
+void StrMatcher::flush(write_func_t f, void *p)
+{
+}
 
 
 StrMatcher::StrMatcher()

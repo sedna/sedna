@@ -17,7 +17,7 @@ struct trie_node
 };
 typedef struct trie_node trie_node_t;
 
-typedef void (*write_func)(void *param, const char *str, int len);
+typedef void (*write_func_t)(void *param, const char *str, int len);
 
 class StrMatcher 
 {
@@ -40,10 +40,11 @@ public:
 	void add_str (const char * str, const char * map_str, pat_class pc = (pat_class)-1);
 	void clear_state();
 	void reset();
-	
+
 	// if f == NULL, returs 1 if something matched
 	// if f != NULL, parses and returns number of replaces
-	int parse(const char *str, int len, write_func f, void *p, pat_class pc = (pat_class)-1);
+	int parse(const char *str, int len, write_func_t f, void *p, pat_class pc = (pat_class)-1);
+	void flush(write_func_t f, void *p);
 	
 	StrMatcher();
 };
