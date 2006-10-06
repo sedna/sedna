@@ -12,10 +12,12 @@ struct trie_node
 {
 	int res_ofs;
 	int res_len;
+	int pc;
 	struct trie_node *next[256];
 };
 typedef struct trie_node trie_node_t;
 
+typedef void (*write_func)(void *param, const char *str, int len);
 
 class StrMatcher 
 {
@@ -30,7 +32,7 @@ private:
 	trie_node_t *state;
 	trie_node_t *make_node();
 	void delete_trie(trie_node_t *root);
-	trie_node_t *get_node(trie_node_t *start, const char *str);
+	trie_node_t *get_node(trie_node_t *start, const char *str, int set_pc);
 	void add_string_to_buf(const char *str, int *ofs, int *len);
 	char *last_match;
 	int last_match_len;
@@ -38,11 +40,11 @@ public:
 	void add_str (const char * str, const char * map_str, pat_class pc = (pat_class)-1);
 	void clear_state();
 	void reset();
-	int match_next_symbol(char symb, pat_class pc);//0-no matches 1-full match -1 -prefix match
-	const char * get_buf() {return buf; }
-	unsigned int get_buf_len() {return buf_used;}
-	const char* get_last_match() {return last_match; }
-	int get_last_match_len() {return last_match_len; }
+	
+	// if f == NULL, returs 1 if something matched
+	// if f != NULL, parses and returns number of replaces
+	int parse(const char *str, int len, write_func f, void *p, pat_class pc = (pat_class)-1);
+	
 	StrMatcher();
 };
     

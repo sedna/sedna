@@ -9,16 +9,18 @@ trie_node_t *StrMatcher::make_node()
 	memset(tn->next, 0, sizeof(tn->next));
 	tn->res_ofs = -1;
 	tn->res_len = 0;
+	tn->pc = 0;
 	return tn;
 }
 
-trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str)
+trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_pc)
 {
+	start->pc = (int)start->pc | (int)set_pc;
 	if (*str == 0)
 		return start;
 	if (start->next[(unsigned char)*str] == NULL)
 		start->next[(unsigned char)*str] = make_node();
-	return get_node(start->next[(unsigned char)*str], str+1);
+	return get_node(start->next[(unsigned char)*str], str+1, set_pc);
 }
 
 void StrMatcher::add_string_to_buf(const char *str, int *ofs, int *len)
@@ -41,7 +43,7 @@ void StrMatcher::add_string_to_buf(const char *str, int *ofs, int *len)
 
 void StrMatcher::add_str (const char * str, const char * map_str, pat_class pc)
 {
-	trie_node *node = get_node(root, str);
+	trie_node *node = get_node(root, str, pc);
 	add_string_to_buf(str, &node->res_ofs, &node->res_len);
 }
 
@@ -53,30 +55,14 @@ void StrMatcher::clear_state()
 void StrMatcher::reset()
 {	
 }
-int StrMatcher::match_next_symbol(char symb, pat_class pc)
+
+int parse(const char *str, int len, write_func f, void *p, pat_class pc)
 {
-	if (state->next[(unsigned char)symb] == NULL)
-		return 0;
-	else
-	{
-		state = state->next[(unsigned char)symb];
-		if (buf_used >= buf_len)
-		{
-			buf_len *= 2;
-			buf = (char*)realloc(buf, buf_len);
-		}
-		buf[buf_used] = symb;
-		buf_used++;
-		if (state->res_ofs == -1)
-			return -1;
-		else
-		{
-			last_match = &strings_buf[state->res_ofs];
-			last_match_len = state->res_len;
-			return 1;
-		}
-	}
+	return 0;
 }
+
+
+
 StrMatcher::StrMatcher()
 {
 	strings_buf_len = 32;
