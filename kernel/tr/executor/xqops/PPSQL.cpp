@@ -294,7 +294,7 @@ static char *getStringParameter(PPOpIn content)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast_to_xs_string(res);
+		res=cast(res, xs_string);
 		res=tuple_cell::make_sure_light_atomic(res);
 		if (it!=at_vals.begin())
 		{
@@ -352,7 +352,7 @@ void PPFnSQLConnect::next(tuple &t)
 			options = &arr[3];
 		int h = sql_handle_manager->new_connection(connect_str, connect_str_len, 
 			uid, uid_len, pass, pass_len, options);
-		t.copy(tuple_cell::atomic(h));
+		t.copy(tuple_cell::atomic((__int64)h));
 
 		delete connect_str;
 		if (uid != NULL)
@@ -509,7 +509,7 @@ void PPFnSQLExecute::next(tuple &t)
 
 		if (exec_update)
 		{
-			t.copy(tuple_cell::atomic(executor->update_row_count()));
+			t.copy(tuple_cell::atomic((__int64)executor->update_row_count()));
 			return;
 		}
 	}
@@ -632,7 +632,7 @@ void PPFnSQLPrepare::next(tuple &t)
 		else
 			stmt = handle->prepare_stmt(query, query_len, NULL);
 
-		t.copy(tuple_cell::atomic(sql_handle_manager->new_handle(stmt)));
+		t.copy(tuple_cell::atomic((__int64)sql_handle_manager->new_handle(stmt)));
 	}
 	else
 	{

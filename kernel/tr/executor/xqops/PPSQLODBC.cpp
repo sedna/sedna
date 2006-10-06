@@ -483,7 +483,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 				;
 		}
 	}
-	res=cast_to_xs_string(res);
+	res=cast(res, xs_string);
 	//res=tuple_cell::make_sure_light_atomic(res);
 	if (res.is_light_atomic())
 		charsize+=res.get_strlen_mem()+1;
@@ -496,7 +496,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 		if (!(value.cells_number==1 )) throw USER_EXCEPTION2(SE1003, "in PPFnSQLExecute");
 		res=atomize(value.cells[0]);
 
-		res=cast_to_xs_string(res);
+		res=cast(res, xs_string);
 		//res=tuple_cell::make_sure_light_atomic(res);
 		if (res.is_light_atomic())
 			charsize+=res.get_strlen_mem()+1;
