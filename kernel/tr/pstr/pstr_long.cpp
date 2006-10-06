@@ -1922,7 +1922,7 @@ void pstr_long_write(xptr desc, se_ostream& crmout)
 	}
 }
 
-void pstr_long_writextext(xptr desc, se_ostream& crmout, bool sxmlescape)
+void pstr_long_writextext(xptr desc, se_ostream& crmout)
 {
 	//TODO : use pstr_long_write_suffix
 	CHECKP(desc);

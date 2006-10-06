@@ -6,7 +6,18 @@
 #include "sedna.h"
 #include "vmm.h"
 #include "PPStaticContext.h"
-
+void static_context::init_context()
+{
+	stm.reset();//REDO!!!!
+	stm.add_str(">","&gt;");
+	stm.add_str("<","&lt;");
+	stm.add_str("&","&amp;");
+	stm.add_str("\"","&quot;",pat_attribute);
+}
+void static_context::add_char_mapping(const char* str, const char* rep_str,int pc )
+{
+	stm.add_str(str,rep_str,pc);
+}
 static_context::static_context()
 {
         output_method = se_output_method_xml;
@@ -33,6 +44,9 @@ static_context::static_context()
 		tmp=xml_ns::init("http://www.w3.org/2005/04/xquery-local-functions","local",false);
 		insc_ns["local"].push_back(tmp);
 		ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
+		init_context();
+
+		
 }
 xml_ns* static_context::get_ns_pair(const char* prefix,const char* uri)
 {
@@ -165,4 +179,5 @@ void static_context::clear_context()
 		tmp=xml_ns::init("http://www.w3.org/2003/11/xquery-local-functions","local",false);
 		insc_ns["local"].push_back(tmp);
 		ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
+		init_context();
 }

@@ -5,7 +5,12 @@
 
 #include "sedna.h"
 #include "exec_output.h"
-
+#include "PPBase.h"
+using namespace tr_globals;
+ void write_func(void *param, const char *str, int len)
+ {
+	 ((se_ostream*)param)->write(str,len);
+ }
 se_ostream& se_ostream::operator<<(__int64 n)
 {
 	char z[20];
@@ -24,9 +29,10 @@ se_ostream& se_ostream::operator<<(__int64 n)
 	return *this;
 }
 
-se_ostream& se_ostream::writextext(char *s, int n, bool sxmlescape)
-{ 
-    int j = 0, i = 0;
+se_ostream& se_ostream::writextext(char *s, int n)
+{
+	st_ct.stm.parse(s,n,write_func,this,(int)pat_element);
+   /* int j = 0, i = 0;
     for (i = 0; i < n; i++)
     {
         switch (s[i])
@@ -64,13 +70,14 @@ se_ostream& se_ostream::writextext(char *s, int n, bool sxmlescape)
 			}
         }
     }
-    this->write(s+j, n-j); 
+    this->write(s+j, n-j); */
     return *this; 
 }
 
 se_ostream& se_ostream::writeattribute(char *s, int n)
 { 
-	int j = 0, i = 0;
+	st_ct.stm.parse(s,n,write_func,this,(int)pat_attribute);
+	/*int j = 0, i = 0;
 	for (i = 0; i < n; i++)
 	{
 		switch (s[i])
@@ -105,7 +112,7 @@ se_ostream& se_ostream::writeattribute(char *s, int n)
 			}
 		}
 	}
-	this->write(s+j, n-j); 
+	this->write(s+j, n-j); */
 	return *this; 
 }
 

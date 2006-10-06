@@ -39,6 +39,8 @@ void PPQueryRoot::open()
     local_lock_mrg->lock(lm_s);
 	first=true;
     child.op->open();
+	if (print_mode==sxml)
+		tr_globals::st_ct.add_char_mapping("\"","\\\"",~pat_attribute);
 //    d_printf1("PPQueryRoot::open() end\n");
 }
 

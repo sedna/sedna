@@ -17,7 +17,7 @@
 #include "uutils.h"
 #include "base.h"
 
-
+void write_func(void *param, const char *str, int len);
 enum executor_ostream_t {eot_std, eot_sock, eot_str, eot_null};
 	
 	
@@ -42,8 +42,8 @@ public:
     virtual se_ostream& operator<<(long double n)                  = 0;
     virtual se_ostream& operator<<(void * n)                       = 0;
     virtual se_ostream& put(char c)                                = 0;
-    virtual se_ostream& write(char *s, int n)                      = 0;
-    virtual se_ostream& writextext(char *s, int n, bool sxmlescape=false);
+    virtual se_ostream& write(const char *s, int n)                      = 0;
+    virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
     virtual void end_of_data(bool res)                             = 0;
@@ -76,7 +76,7 @@ public:
     virtual se_ostream& operator<<(long double n)                                { o_str << n; return *this; }
     virtual se_ostream& operator<<(void * n)                                     { o_str << n; return *this; }
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
-    virtual se_ostream& write(char *s, int n)                                    { o_str.write(s, n); return *this; }
+    virtual se_ostream& write(const char *s, int n)                                    { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
     virtual void end_of_data(bool res)                                           { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
@@ -105,7 +105,7 @@ public:
     virtual se_ostream& operator<<(long double n)                          { return *this; }
     virtual se_ostream& operator<<(void * n)                               { return *this; }
     virtual se_ostream& put(char c)                                        { return *this; }
-    virtual se_ostream& write(char *s, int n)                              { return *this; }
+    virtual se_ostream& write(const char *s, int n)                              { return *this; }
 	virtual se_ostream& flush()                                            { return *this; }
     virtual void end_of_data(bool res)                                     { ; }
     virtual void endline()                                                 { ; }
@@ -230,7 +230,7 @@ public:
                                                    	  res_msg.length += 1;
                                                 	  return *this; }
                                     		
-    virtual se_ostream& write(char *s, int n)		
+    virtual se_ostream& write(const char *s, int n)		
 	{
     	res_msg.instruction = se_ItemPart; //ItemPart message
 

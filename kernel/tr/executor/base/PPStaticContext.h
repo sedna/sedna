@@ -10,6 +10,7 @@
 #include "sedna.h"
 #include "schema.h"
 #include "XPath.h"
+#include "str_matcher.h"
 
 typedef std::pair<std::string,std::string> str_pair;
 typedef std::map< str_pair, xml_ns*> ns_map;
@@ -30,7 +31,7 @@ struct static_context
     se_output_indent output_indent;
     xq_boundary_space boundary_space;
     xq_empty_order empty_order;
-
+	StrMatcher stm; 
 	std::vector<xml_ns*> def_ns;
 	std::vector<xptr> temp_docs;
 	inscmap insc_ns;
@@ -48,6 +49,8 @@ struct static_context
 		return get_ns_pair((prefix.size()>0)?prefix.c_str():NULL,uri.c_str());
 	}
 	xml_ns* add_to_context(const char* prefix,const char* uri);
+	void init_context();
+	void add_char_mapping(const char* str, const char* rep_str,int pc =-1);
 	void remove_from_context(const char* prefix);
 	inline void  remove_from_context(xml_ns* ns)
 	{ remove_from_context(ns->prefix); }
