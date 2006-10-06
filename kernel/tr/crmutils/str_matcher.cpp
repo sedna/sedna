@@ -41,43 +41,66 @@ void StrMatcher::add_string_to_buf(const char *str, int *ofs, int *len)
 	(*len) = strings_buf_used - *ofs;
 }
 
-void StrMatcher::add_str (const char * str, const char * map_str, pat_class pc)
+void StrMatcher::add_str (const char * str, const char * map_str, int pc)
 {
 	trie_node *node = get_node(root, str, pc);
 	add_string_to_buf(str, &node->res_ofs, &node->res_len);
 }
 
-void StrMatcher::clear_state()
-{
-	buf_used = 0;
-	state = root;
-}
 void StrMatcher::reset()
 {
-	//TODO
+	strings_buf_used = 0;
+	buf_used = 0;
+	last_match = NULL;
+	last_match_len = 0;
+	
+	delete_trie(root);
+	
+	root = make_node();
+	state = root;
 }
 
-int StrMatcher::parse(const char *str, int len, write_func_t f, void *p, pat_class pc)
+trie_node_t *StrMatcher::get_ls_node(trie_node_t *node)
+{
+	//TODO
+	return root;
+}
+
+
+int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, int pc)
 {
 	int k = 0;
 	for (int i = 0; i < len; i++)
 	{
-		if (state->next[(unsigned char)str[i]] == NULL)
+		while (state != root && 
+			(state->next[(unsigned char)str[i]] == NULL || (state->next[(unsigned char)str[i]]->pc & pc) == 0))
 		{
-			
+			state = get_ls_node(state);
 		}
-		else
+		if (state->next[(unsigned char)str[i]] != NULL)
 		{
 			state = state->next[(unsigned char)str[i]];
-			//TODO: replace if needed
+			if (state->res_ofs != -1)
+			{
+				//TODO
+			}
 		}
+	}
+	if (k < len)
+	{
+		//TODO: print buf + k..len-1 without last state chars, leave them in buf
 	}
 	
 	return 0;
 }
 
-void StrMatcher::flush(write_func_t f, void *p)
+void StrMatcher::flush(write_func_t write_cb, void *p)
 {
+	if (buf_used > 0)
+	{
+		write_cb(p, buf, buf_used);
+		buf_used = 0;
+	}
 }
 
 
