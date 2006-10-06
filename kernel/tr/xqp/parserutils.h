@@ -9,5 +9,4 @@
 std::string erase_doublequot(char* lex_text);
 std::string replace_entity(char* lex_text, std::string find_ent, std::string replc_ent);
 std::string escape_quot(std::string text);
-
-
+std::string replace_charref(char* lex_text);

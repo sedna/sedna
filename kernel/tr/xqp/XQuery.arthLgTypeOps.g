@@ -171,5 +171,13 @@ caseClauses!:
 	  >>
 	)+
 ;
+/*
+extensionExpr!:
+	(pragma)+ LBRACE {expr} RBRACE
+;
 
+pragma!:
+	PR_OPEN q:qname ((WS|NL) PR_CONTENT ) PR_CLOSE
+;
+*/
 }

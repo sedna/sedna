@@ -2,7 +2,7 @@
 PP = ../../..
 
 
-VPATH = . ..
+VPATH = . .. ../strings
 
 include $(PP)/Makefile.include
 
