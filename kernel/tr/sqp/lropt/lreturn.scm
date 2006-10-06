@@ -495,9 +495,8 @@
      ;-------------------
      ; Not expressed in the new logical representation
      ((fun-call)
-      #f
-      ;(sa:analyze-fun-call expr vars funcs ns-binding default-ns)
-      )
+      (lropt:fun-call expr called-once? order-required?
+                      var-types prolog processed-funcs))
      ;-------------------    
      (else  ; unknown operations
       (lropt:input-error expr processed-funcs)))))
@@ -1224,37 +1223,234 @@
 (define (lropt:procced-func-single-level? entry)
   (list-ref entry 6))
 
+; Constructor for `processed-func'
+; Facilitates further code support
+(define (lropt:make-procced-func name order-for-result? order-for-args
+                                 declaration
+                                 ddo-auto? zero-or-one? single-level?)
+  (list name order-for-result? order-for-args declaration
+        ddo-auto? zero-or-one? single-level?))
+
+; ATTENTION: Since a function is declared in the global scope, only global
+; variables are to be passed to `var-types'. At the momemt (06.10.06)
+; variable declarations are not supported in XQuery prolog in Sedna;
+; `var-types' should thus be null.
+; In the result returned, `order-for-variables' contains information about
+; function arguments.
 (define (lropt:function-declaration expr called-once? order-required?
                                     var-types prolog processed-funcs)
-  #f)
+  (let ((args
+         ; Argument specification, e.g.
+         ; '(((one (node-test))          (var ("" "n")))
+         ;   ((zero-or-more (node-test)) (var ("" "seq"))))
+         (cadr (xlr:op-args expr)))
+        (res-type
+         ; Result type, e.g. '(result-type (zero-or-more (node-test)))
+         (caddr (xlr:op-args expr)))
+        (body
+         ; Function body: '(body ...)
+         (cadddr (xlr:op-args expr))))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr body)  ; body expression
+        ; DL: Legacy value for `called-once?' is #t, although I am not
+        ; sure this is always appropriate
+        #t  ; called-once?
+        order-required?
+        (append
+         (map 
+          (lambda (pair)
+            (list 
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   ))
+             (car pair)  ; argument type
+             ))
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body-expr body-ddo-auto? body-0-or-1? body-level?
+                            processed-funcs body-order-for-vars)
+       (let ((res-0-or-1?  ; whether result type specifies zero-or-one item
+              (lropt:var-type-zero-or-one?
+               (car (xlr:op-args res-type))  ; remove embracing 'result-type
+               )))
+         (values
+          (list (xlr:op-name expr)  ; == 'declare-function
+                (car (xlr:op-args expr))  ; function name
+                args
+                res-type
+                (list (xlr:op-name body)  ; == 'body
+                      new-body-expr))
+          (or res-0-or-1? body-ddo-auto?)
+          (or res-0-or-1? body-0-or-1?)
+          (or res-0-or-1? body-level?)
+          processed-funcs
+          body-order-for-vars))))))
 
-; TODO
+; Getting `processed-func' by function name, adding it to `processed-funcs'
+; if it is not there yet
+;  processed-func ::= (list  func-name
+;                            order-required-for-result?
+;                            (listof  order-required-for-argument?)
+;                            rewritten-declare-function-clause
+;                            ddo-auto? zero-or-one? single-level?)
+; Returns: (values processed-func new-processed-funcs)
+(define (lropt:get+add-processed-func func-name called-once? order-required?
+                                      var-types prolog processed-funcs)
+  (cond
+    ((let ((entry
+            (assoc func-name processed-funcs)))
+       (and entry  ; rewritten function found
+            (or
+             ; Function body processed for order-required? == #t
+             (lropt:procced-func-for-result entry)
+             ; (lropt:procced-func-for-result entry) == order-required? == #f
+             (not order-required?))
+            entry  ; pass it
+            ))
+     => (lambda (entry)
+          (values entry processed-funcs)))
+    ; Function with `func-name' not found among rewritten functions
+    ((assoc func-name
+            (map
+             (lambda (part)
+               (cons (car (xlr:op-args part))  ; function name
+                     part))
+             (filter
+              (lambda (part)
+                (and (pair? part)
+                     (eq? (xlr:op-name part) 'declare-function)))
+              prolog)))
+     => (lambda (pair)  ; declaration found
+          (let* ((declaration (cdr pair))
+                 (args  ; argument specification
+                  (cadr (xlr:op-args declaration))))
+            (call-with-values
+             (lambda ()
+               (lropt:function-declaration
+                declaration
+                called-once? order-required?
+                '()  ; var-types
+                ; ATTENTION: when global variable declarations are added
+                ; to query prolog in Sedna, their variable types are to be
+                ; passed to `var-types'
+                prolog
+                (cons  ; terminate loop for recursive XQuery functions
+                 (let ((res-0-or-1?  ; result type specifies zero-or-one item?
+                        (lropt:var-type-zero-or-one?
+                         (car (xlr:op-args  ; remove embracing 'result-type
+                               ; Result type
+                               (caddr (xlr:op-args declaration)))))))
+                   ; Can use type information here only
+                   (lropt:make-procced-func
+                    func-name
+                    #t  ; order-required-for-result?
+                    ; construct (listof  order-required-for-argument?)
+                    (map
+                     (lambda (arg)
+                       (not
+                        (lropt:var-type-zero-or-one?
+                         (car arg)  ; argument type
+                         )))
+                     args)
+                    declaration
+                    res-0-or-1?  ; ddo-auto?
+                    res-0-or-1?  ; zero-or-one?
+                    res-0-or-1?  ; single-level?
+                    ))
+                 processed-funcs)))
+             (lambda (declaration res-ddo-auto? res-0-or-1? res-level?
+                                  processed-funcs order-for-vars)
+               (let ((entry
+                      (lropt:make-procced-func
+                       func-name
+                       order-required?
+                       (map
+                        (lambda (arg)
+                          (cond
+                            ((assoc
+                              (car (xlr:op-args  ; remove embracing 'var
+                                    (cadr arg)))
+                              order-for-vars)
+                             => cdr)
+                            (else
+                             ; Argument not used inside function body
+                             #f)))
+                        args)
+                       declaration
+                       res-ddo-auto?
+                       res-0-or-1?
+                       res-level?)))
+                 (values entry (cons entry processed-funcs))))))))
+    ; TODO: search among 'declare-external function
+    (else  ; function not declared in the prolog
+     ; This should not happen!!
+     ;(display "Function name not found: ")
+     ;(write func-name)
+     ;(newline)
+     (values #f processed-funcs))))
+
 (define (lropt:fun-call expr called-once? order-required?
                         var-types prolog processed-funcs)
-  (let ((func-name  ; together with `(const (type !xs!QName) (...))
-         (car (sa:op-args expr))))
+  (call-with-values
+   (lambda ()
+     (lropt:get+add-processed-func (car (xlr:op-args expr))  ; func-name
+                                   called-once? order-required?
+                                   var-types prolog processed-funcs))
+   (lambda (entry processed-funcs)
+     (if
+      entry
+      (lropt:propagate expr
+                       called-once?
+                       (cons #f  ; for function name
+                             (lropt:procced-func-for-args entry))
+                       var-types prolog processed-funcs
+                       (lropt:procced-func-ddo-auto? entry)
+                       (lropt:procced-func-0-or-1? entry)
+                       (lropt:procced-func-single-level? entry))
+      ; declare-function for this function not found in prolog
+      ; Recover
+      (lropt:propagate expr called-once?
+                       #t  ; order-required for subexprs
+                       var-types prolog processed-funcs
+                       #f #f #f)))))
+
+; Rewrites query prolog by replacing function-declaration with their
+; processed analogues.
+; Returns rewritten prolog
+; The function should be called after a query body is processed
+(define (lropt:rewrite-prolog prolog processed-funcs)
+  (let loop ((prolog prolog)
+             (processed-funcs processed-funcs)
+             (res '()))
     (cond
-      ((member func-name processed-funcs)
-       => (lambda (entry)  ; rewritten function found
-            (if
-             (or
-              ; Function body processed for order-required? == #t
-              (lropt:procced-func-for-result entry)
-              ; (lropt:procced-func-for-result entry) == order-required? == #f
-              (not order-required?))
-             ; This rewritten variant fits this function call
-             (lropt:propagate
-              expr called-once?
-              (cons #f  ; for function name
-                    (lropt:procced-func-for-args entry))
-              var-types prolog processed-funcs
-              (lropt:procced-func-ddo-auto? entry)
-              (lropt:procced-func-0-or-1? entry)
-              (lropt:procced-func-single-level? entry))
-             ; Otherwise, function declaration is to be rewritten
-             #f)))
-      (else
-       #f))))
+      ((null? prolog)  ; finish processing
+       (reverse res))
+      ((and (pair? (car prolog))
+            (eq? (xlr:op-name (car prolog)) 'declare-function))
+       (call-with-values
+        (lambda ()
+          (lropt:get+add-processed-func
+           (car (xlr:op-args (car prolog)))  ; func-name
+           #f  ; called-once? - we do not care
+           #f  ; order-required? - bind to 0 to choose any existing entry
+           '()  ; var-types
+           prolog processed-funcs))
+        (lambda (entry processed-funcs)
+          (loop (cdr prolog)
+                processed-funcs                
+                (cons
+                 (if entry
+                     (lropt:procced-func-declaration entry)
+                     ; on internal error, keep function-declaration as is
+                     (car prolog))
+                 res)))))
+      (else  ; any other prolog entry
+       (loop (cdr prolog)
+             processed-funcs
+             (cons (car prolog) res))))))
 
 
 ;=========================================================================
@@ -1266,22 +1462,15 @@
 ;  3. Eliminates unnecessary 'ddo operations
 (define (lropt:rewrite-query query)
   (cond
-    ((or (null? query) (not (pair? query)))
+    ((not (pair? query))
      ; nothing to do, although it's strange
      query)
     ((eq? (xlr:op-name query) 'query)
      (let ((prolog (xlr:get-query-prolog query)))
-       `(query
-         (prolog
-          ,@prolog
-          ;,@(map mlr:rewrite-func-declaration
-          ;       (xlr:get-query-prolog query))
-          )
-       (query-body
-        ,(call-with-values
+       (call-with-values
           (lambda ()
             (lropt:expr
-             (xlr:get-query-body query) 
+             (xlr:get-query-body query)
              #t  ; called once
              #t  ; TODO: ordered or unordered depending on prolog
              '()  ; TODO: probably, external variables here
@@ -1289,9 +1478,12 @@
              '()  ; no functions processed yet
              ))
           (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
-                        processed-funcs unite-order-for-variables)
-            ; TODO: combine processed funcs with prolog
-            body))))))
+                        processed-funcs dummy-order-for-variables)
+            `(query
+              (prolog
+               ,@(lropt:rewrite-prolog prolog processed-funcs))
+              (query-body
+               ,body))))))
     (else  ; update or smth
      ;(mlr:lreturn+xpath query #t)
      #f
