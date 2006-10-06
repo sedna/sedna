@@ -120,7 +120,8 @@ public:
     {
 	adjustDateTimeToTimezone=0,
 	adjustDateToTimezone,
-	adjustTimeToTimezone
+	adjustTimeToTimezone,
+	dateTime
     };
    
     virtual void open   ();

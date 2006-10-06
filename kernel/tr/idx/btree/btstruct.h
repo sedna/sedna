@@ -25,6 +25,8 @@ private:
         float  f_v;
         double d_v;
         char*  s_v;
+	xs_packed_duration dur_v;
+	xs_packed_datetime dt_v;
     } v;
     xmlscm_type type;
 
@@ -64,9 +66,10 @@ public:
     void setnew(float nv);
     void setnew(double nv);
     void setnew(const char* nv);
-    void setnew_dateTimeDuration(const char* nv, xmlscm_type t);
+    void setnew_dateTime(const xs_packed_datetime& dt, xmlscm_type t);
+    void setnew_duration(const xs_packed_duration& dur, xmlscm_type t);
 
-    void * data () const { return ((type == xs_string || type == xs_date || type == xs_dateTime || type == xs_time || type == xs_yearMonthDuration || type == xs_dayTimeDuration )? (void*)(v.s_v) : (void*)&v); }
+    void * data () const { return (void*)&v; }
 
 
     xmlscm_type get_type() const { return type; }

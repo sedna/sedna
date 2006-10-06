@@ -981,6 +981,11 @@
               `(1 (PPFnImplicitTimezone ))
              )
 
+             ; *** !fn!dateTime ***
+             ((eq? op-name '!fn!dateTime)
+              `(1 (PPFnDateTime ,@(map l2p:any-lr-node2por node)))
+             )
+
              ; *** !fn!years-from-duration ***
              ((eq? op-name '!fn!years-from-duration)
               `(1 (PPFnYearsFromDuration ,(l2p:any-lr-node2por (car node))))

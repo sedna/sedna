@@ -30,12 +30,11 @@ void bt_key::init(const bt_key& k)
 	case xs_date:
 	case xs_time:
 	case xs_dateTime:
+			v.dt_v = k.v.dt_v; break;
 	case xs_duration:
 	case xs_yearMonthDuration:
 	case xs_dayTimeDuration:
-			  v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
-			  memcpy(v.s_v, k.v.s_v, XMLDateTime::TOTAL_FIELDS * sizeof(int));
-                          break;
+			v.dur_v = k.v.dur_v; break;
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
 }
@@ -59,14 +58,11 @@ void bt_key::init(char* pg, shft key_idx)
 			}
 	case xs_date:
 	case xs_time:
-	case xs_dateTime:
+	case xs_dateTime: v.dt_v = *(xs_packed_datetime*) key_tab_slot; break;
+			
 	case xs_yearMonthDuration:
-	case xs_dayTimeDuration:
-			  {
-				v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
-				memcpy(v.s_v, (void*)key_tab_slot, XMLDateTime::TOTAL_FIELDS * sizeof(int));
-				break;
-			  }
+	case xs_dayTimeDuration:	v.dur_v = *(xs_packed_duration*) key_tab_slot; break;
+
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
 }
@@ -81,10 +77,10 @@ int bt_key::get_size() const
         case xs_string	: return strlen(v.s_v);
 	case xs_date:
 	case xs_time:
-	case xs_dateTime:
+	case xs_dateTime: return sizeof(xs_packed_datetime);
 	case xs_yearMonthDuration:
-	case xs_dayTimeDuration:
-			return XMLDateTime::TOTAL_FIELDS * sizeof(int);
+	case xs_dayTimeDuration: return sizeof(xs_packed_duration);
+
 	default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
     }
 }
@@ -118,14 +114,19 @@ void bt_key::setnew(const char* nv)
     strcpy(v.s_v, nv);
 }
 
-void bt_key::setnew_dateTimeDuration(const char* nv, xmlscm_type t)
+void bt_key::setnew_dateTime(const xs_packed_datetime& dt, xmlscm_type t)
 {
     free();
     type = t;
-    v.s_v = new char[XMLDateTime::TOTAL_FIELDS * sizeof(int)];
-    memcpy(v.s_v, nv, XMLDateTime::TOTAL_FIELDS * sizeof(int));
+    v.dt_v = dt;
 }
 
+void bt_key::setnew_duration(const xs_packed_duration& dur, xmlscm_type t)
+{
+    free();
+    type = t;
+    v.dur_v = dur;
+}
 
 bool operator==(const bt_key& k1, const bt_key& k2)
 {

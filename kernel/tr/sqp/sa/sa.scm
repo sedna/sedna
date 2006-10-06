@@ -562,6 +562,9 @@
     (,sa:fn-ns "implicit-timezone" 0 0
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!implicit-timezone)
+   (,sa:fn-ns "dateTime" 2 2
+    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    ,sa:type-atomic !fn!dateTime)
    (,sa:fn-ns "years-from-duration" 1 1
     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
     ,sa:type-atomic !fn!years-from-duration)
