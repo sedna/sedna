@@ -2206,9 +2206,10 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         int type;
 
         if (op == "PPFnCurrentDateTime") type = PPFnDateTimeFuncNoParam::currentDateTime;
-        if (op == "PPFnCurrentDate") type = PPFnDateTimeFuncNoParam::currentDate;
-        if (op == "PPFnCurrentTime") type = PPFnDateTimeFuncNoParam::currentTime;
-        if (op == "PPFnImplicitTimezone") type = PPFnDateTimeFuncNoParam::implicitTimezone;
+        else if (op == "PPFnCurrentDate") type = PPFnDateTimeFuncNoParam::currentDate;
+        else if (op == "PPFnCurrentTime") type = PPFnDateTimeFuncNoParam::currentTime;
+        else if (op == "PPFnImplicitTimezone") type = PPFnDateTimeFuncNoParam::implicitTimezone;
+        else throw USER_EXCEPTION2(SE1004, "103");
 
         opit = new PPFnDateTimeFuncNoParam(cxt, type);
     }
@@ -2250,28 +2251,28 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         if (lst->size() != 2 && lst->size() != 3)
             throw USER_EXCEPTION2(SE1004, "103");
 
-        if (op == "PPFnYearsFromDuration") type = PPFnDateTimeFunc::yearsFromDuration;
-        if (op == "PPFnMonthsFromDuration") type = PPFnDateTimeFunc::monthsFromDuration;
-        if (op == "PPFnDaysFromDuration") type = PPFnDateTimeFunc::daysFromDuration;
-        if (op == "PPFnHoursFromDuration") type = PPFnDateTimeFunc::hoursFromDuration;
-        if (op == "PPFnMinutesFromDuration") type = PPFnDateTimeFunc::minutesFromDuration;
-        if (op == "PPFnSecondsFromDuration") type = PPFnDateTimeFunc::secondsFromDuration;
-        if (op == "PPFnYearFromDateTime") type = PPFnDateTimeFunc::yearFromDateTime;
-        if (op == "PPFnMonthFromDateTime") type = PPFnDateTimeFunc::monthFromDateTime;
-        if (op == "PPFnDayFromDateTime") type = PPFnDateTimeFunc::dayFromDateTime;
-        if (op == "PPFnHoursFromDateTime") type = PPFnDateTimeFunc::hoursFromDateTime;
-        if (op == "PPFnMinutesFromDateTime") type = PPFnDateTimeFunc::minutesFromDateTime;
-        if (op == "PPFnSecondsFromDateTime") type = PPFnDateTimeFunc::secondsFromDateTime;
-        if (op == "PPFnTimezoneFromDateTime") type = PPFnDateTimeFunc::timezoneFromDateTime;
-        if (op == "PPFnYearFromDate") type = PPFnDateTimeFunc::yearFromDate;
-        if (op == "PPFnMonthFromDate") type = PPFnDateTimeFunc::monthFromDate;
-        if (op == "PPFnDayFromDate") type = PPFnDateTimeFunc::dayFromDate;
-        if (op == "PPFnTimezoneFromDate") type = PPFnDateTimeFunc::timezoneFromDate;
-        if (op == "PPFnHoursFromTime") type = PPFnDateTimeFunc::hoursFromTime;
-        if (op == "PPFnMinutesFromTime") type = PPFnDateTimeFunc::minutesFromTime;
-        if (op == "PPFnSecondsFromTime") type = PPFnDateTimeFunc::secondsFromTime;
-        if (op == "PPFnTimezoneFromTime") type = PPFnDateTimeFunc::timezoneFromTime;
-        if (op == "PPFnTimezoneFromTime") type = PPFnDateTimeFunc::timezoneFromTime;
+        if (op == "PPFnYearsFromDuration")   { type = PPFnDateTimeFunc::yearsFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMonthsFromDuration")  { type = PPFnDateTimeFunc::monthsFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnDaysFromDuration")    { type = PPFnDateTimeFunc::daysFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnHoursFromDuration")   { type = PPFnDateTimeFunc::hoursFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMinutesFromDuration") { type = PPFnDateTimeFunc::minutesFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnSecondsFromDuration") { type = PPFnDateTimeFunc::secondsFromDuration; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnYearFromDateTime")    { type = PPFnDateTimeFunc::yearFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMonthFromDateTime")   { type = PPFnDateTimeFunc::monthFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnDayFromDateTime")     { type = PPFnDateTimeFunc::dayFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnHoursFromDateTime")   { type = PPFnDateTimeFunc::hoursFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMinutesFromDateTime") { type = PPFnDateTimeFunc::minutesFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnSecondsFromDateTime") { type = PPFnDateTimeFunc::secondsFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnTimezoneFromDateTime"){ type = PPFnDateTimeFunc::timezoneFromDateTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnYearFromDate")        { type = PPFnDateTimeFunc::yearFromDate; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMonthFromDate")       { type = PPFnDateTimeFunc::monthFromDate; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnDayFromDate")         { type = PPFnDateTimeFunc::dayFromDate; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnTimezoneFromDate")    { type = PPFnDateTimeFunc::timezoneFromDate; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnHoursFromTime")       { type = PPFnDateTimeFunc::hoursFromTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnMinutesFromTime")     { type = PPFnDateTimeFunc::minutesFromTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnSecondsFromTime")     { type = PPFnDateTimeFunc::secondsFromTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnTimezoneFromTime")    { type = PPFnDateTimeFunc::timezoneFromTime; goto fn_dt_funcs_correct_type; }
+        if (op == "PPFnTimezoneFromTime")    { type = PPFnDateTimeFunc::timezoneFromTime; goto fn_dt_funcs_correct_type; }
         if (op == "PPFnAdjustDateTimeToTimezone")
         {
                 if (lst->size() == 3)
@@ -2281,6 +2282,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                 }
                 else
                         type = PPFnDateTimeFunc::adjustDateTimeToTimezone;
+                goto fn_dt_funcs_correct_type;
         }
         if (op == "PPFnAdjustDateToTimezone")
         {
@@ -2291,6 +2293,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                 }
                 else
                         type = PPFnDateTimeFunc::adjustDateToTimezone;
+                goto fn_dt_funcs_correct_type;
         }
         if (op == "PPFnAdjustTimeToTimezone")
         {
@@ -2301,7 +2304,12 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                 }
                 else
                         type = PPFnDateTimeFunc::adjustTimeToTimezone;
+                goto fn_dt_funcs_correct_type;
         }
+        
+        throw USER_EXCEPTION2(SE1004, "103");
+
+fn_dt_funcs_correct_type:
 
         if (nFunctionArgs == 1)
                 opit = new PPFnDateTimeFunc(cxt,

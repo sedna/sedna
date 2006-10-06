@@ -1,6 +1,6 @@
 /*
  * File:  utime.c
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
@@ -29,6 +29,8 @@ utm getLocalTime()
     GetTimeZoneInformation(&tz_info);
     retval.utm_gmtoff = -(tz_info.Bias + tz_info.DaylightBias)*60;
 #else
+    // !!! Calling localtime is not thread safe (use localtime_r 
+    //     instead if you want thread safe code)
     time_t t;
     struct tm* tm_ptr;
     time(&t);

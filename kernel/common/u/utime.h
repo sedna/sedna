@@ -1,6 +1,6 @@
 /*
  * File:  utime.h
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
@@ -13,19 +13,7 @@
 extern "C" {
 #endif
 
-//#if defined _WIN32
-// WIN32 defined
-//#elif defined POSIX
-// POSIX defined
-//#else
-//#error Unknown platform, unknown threads...
-//#endif
-
   
-#ifndef _WIN32
-#include <time.h>
-#endif
-
 // Define the time structure class in the spirit of extended POSIX tm
 // structure
 
