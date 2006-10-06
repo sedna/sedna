@@ -353,3 +353,81 @@
              (const (type !xs!QName) ("" "attr"))
              (type *)
              (const (type !xs!string) "non-nil")))))))))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog
+    (declare-function
+     (const (type !xs!QName) ("http://www.w3.org/2004/07/xpath-functions" "all_after"))
+     (((one (node-test)) (var ("" "n"))) ((zero-or-more (node-test)) (var ("" "seq"))))
+     (result-type (zero-or-more (node-test)))
+     (body
+      (if@
+       (!fn!empty (var ("" "seq")))
+       (var ("" "seq"))
+       (if@
+        (is@
+         (var ("" "n"))
+         (predicate
+          (var ("" "seq"))
+          (fun-def
+           ((!xs!anyType (var ("" "$%v"))))
+           (eq@ (!fn!position) (const (type !xs!integer) "1")))))
+        (predicate
+         (var ("" "seq"))
+         (fun-def
+          ((!xs!anyType (var ("" "$%v"))))
+          (>@ (!fn!position) (const (type !xs!integer) "1"))))
+        (fun-call
+         (const
+          (type !xs!QName)
+          ("http://www.w3.org/2004/07/xpath-functions" "all_after"))
+         (var ("" "n"))
+         (predicate
+          (var ("" "seq"))
+          (fun-def
+           ((!xs!anyType (var ("" "$%v"))))
+           (>@ (!fn!position) (const (type !xs!integer) "1")))))))))
+    (declare-function
+     (const (type !xs!QName) ("http://www.w3.org/2004/07/xpath-functions" "foll_sibl"))
+     (((zero-or-more (node-test)) (var ("" "nset"))))
+     (result-type (zero-or-more (node-test)))
+     (body
+      (if@
+       (!fn!empty (var ("" "nset")))
+       (var ("" "nset"))
+       (if@
+        (eq@ (!fn!count (var ("" "nset"))) (const (type !xs!integer) "1"))
+        (fun-call
+         (const
+          (type !xs!QName)
+          ("http://www.w3.org/2004/07/xpath-functions" "all_after"))
+         (var ("" "nset"))
+         (ddo
+          (child
+           (ddo (parent (var ("" "nset")) (type (node-test))))
+           (type (node-test)))))
+        (return
+         (var ("" "nset"))
+         (fun-def
+          ((xs:anyType (var ("" "m"))))
+          (fun-call
+           (const
+            (type !xs!QName)
+            ("http://www.w3.org/2004/07/xpath-functions" "foll_sibl"))
+           (var ("" "m"))))))))))
+   (query-body
+    (fun-call
+     (const (type !xs!QName) ("http://www.w3.org/2004/07/xpath-functions" "foll_sibl"))
+     (ddo
+      (child
+       (ddo
+        (descendant-or-self
+         (!fn!document (const (type !xs!string) "regions"))
+         (type (node-test))))
+       (type
+        (elem-test
+         (ename
+          (const (type !xs!QName) ("" "australia"))
+          (type *)
+          (const (type !xs!string) "non-nil"))))))))))
