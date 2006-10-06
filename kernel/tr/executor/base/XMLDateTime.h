@@ -326,5 +326,6 @@ inline bool XMLDateTime::isNormalized() const
     //--------------------------------------------------------------------------
     XMLDateTime adjustToTimezone(const XMLDateTime& d);
     XMLDateTime adjustToTimezone(const XMLDateTime& d, const XMLDateTime& tz);
+    XMLDateTime fnDateTime(const XMLDateTime& dt, const XMLDateTime& t);
 
 #endif

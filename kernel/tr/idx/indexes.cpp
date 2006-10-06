@@ -35,9 +35,9 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
         case xs_string			: key.setnew(ltc.get_str_mem());	break;
 	case xs_date                    :
 	case xs_dateTime                :
-	case xs_time                    :
+	case xs_time                    : key.setnew_dateTime(ltc.get_xs_dateTime(), ltc.get_atomic_type()); break;
 	case xs_yearMonthDuration      :
-	case xs_dayTimeDuration        : key.setnew_dateTimeDuration(ltc.get_str_mem(), ltc.get_atomic_type()); break;
+	case xs_dayTimeDuration        : key.setnew_duration(ltc.get_xs_duration(), ltc.get_atomic_type()); break;
 
         default					: throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
     }
@@ -139,6 +139,7 @@ index_cell* create_index (PathExpr *object_path, PathExpr *key_path, xmlscm_type
 					// будет вызываться автоматически
 
                     try {
+
 						//VIII. Evaluate key: (cast typed-value(node_key) as key_type)->bt_key
                         tuple_cell tc = cast(dm_typed_value(node_key), keytype);
 

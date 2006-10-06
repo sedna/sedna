@@ -356,7 +356,7 @@ tuple_cell op_dayTimeDuration_equal(const tuple_cell &a1, const tuple_cell &a2)
 tuple_cell op_duration_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || (a1.get_atomic_type() != xs_duration && a1.get_atomic_type() != xs_dayTimeDuration && a1.get_atomic_type() != xs_yearMonthDuration ) ||
-	!a2.is_atomic() || (a2.get_atomic_type() != xs_duration && a1.get_atomic_type() != xs_dayTimeDuration && a1.get_atomic_type() != xs_yearMonthDuration ))
+	!a2.is_atomic() || (a2.get_atomic_type() != xs_duration && a2.get_atomic_type() != xs_dayTimeDuration && a2.get_atomic_type() != xs_yearMonthDuration ))
 	throw USER_EXCEPTION2(SE1003, "Calling op:duration-equal on invalid arguments");
 
     return tuple_cell::atomic(xs_dateTime_equal(
@@ -479,7 +479,7 @@ tuple_cell op_dayTimeDuration_not_equal(const tuple_cell &a1, const tuple_cell &
 tuple_cell op_duration_not_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || (a1.get_atomic_type() != xs_duration && a1.get_atomic_type() != xs_dayTimeDuration && a1.get_atomic_type() != xs_yearMonthDuration ) ||
-	!a2.is_atomic() || (a2.get_atomic_type() != xs_duration && a1.get_atomic_type() != xs_dayTimeDuration && a1.get_atomic_type() != xs_yearMonthDuration ))
+	!a2.is_atomic() || (a2.get_atomic_type() != xs_duration && a2.get_atomic_type() != xs_dayTimeDuration && a2.get_atomic_type() != xs_yearMonthDuration ))
 	throw USER_EXCEPTION2(SE1003, "Calling op:duration-not-equal on invalid arguments");
 
     return tuple_cell::atomic(!xs_dateTime_equal(

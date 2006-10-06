@@ -32,11 +32,11 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
 	case xs_date:
 	case xs_dateTime:
 	case xs_time:
+				return XMLDateTime::compare( XMLDateTime(k1.v.dt_v, k1.type), XMLDateTime(k2.v.dt_v, k2.type));
+
 	case xs_yearMonthDuration:
 	case xs_dayTimeDuration:
-//	{
-//		return XMLDateTime::compare( XMLDateTime(k1.v.s_v), XMLDateTime(k2.v.s_v) );
-//	}
+			return XMLDateTime::compare( XMLDateTime(k1.v.dur_v, k1.type), XMLDateTime(k2.v.dur_v, k2.type));
 
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
@@ -91,12 +91,13 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
 	
 	case xs_date:
 	case xs_dateTime:
-	case xs_time:
+	case xs_time: 	
+			return XMLDateTime::compare( XMLDateTime(*(xs_packed_datetime*)tab_el, k2.type), XMLDateTime(k2.v.dt_v, k2.type));
+
 	case xs_yearMonthDuration:
 	case xs_dayTimeDuration:
-//			{
-//			    return XMLDateTime::compare( XMLDateTime((char*)tab_el), XMLDateTime(k2.v.s_v) );
-//			}
+			return XMLDateTime::compare( XMLDateTime(*(xs_packed_duration*)tab_el, k2.type), XMLDateTime(k2.v.dur_v, k2.type));
+
         default			: throw USER_EXCEPTION2(SE1008, "Unsupported type of index");
 	}
 }

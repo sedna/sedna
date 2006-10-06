@@ -575,6 +575,11 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         	carry--;
     	}
 
+	//copy timezone
+	fNewDate.setValue(XMLDateTime::utc, dt.getValue(XMLDateTime::utc));
+	fNewDate.setValue(XMLDateTime::tz_hh, dt.getValue(XMLDateTime::tz_hh));
+	fNewDate.setValue(XMLDateTime::tz_mm, dt.getValue(XMLDateTime::tz_mm));
+
     	fNewDate.setValue(XMLDateTime::Day, dt.getValue(XMLDateTime::Day) + fDuration.getValue(XMLDateTime::Day) + carry);
 
 	//add months
@@ -617,7 +622,6 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         fNewDate.setValue(XMLDateTime::CentYear, fNewDate.getValue(XMLDateTime::CentYear) +  fQuotient(temp, 1, 13));
     }
 
-    fNewDate.setValue(XMLDateTime::utc, XMLDateTime::UTC_STD);
     return fNewDate;
 }
 
@@ -647,15 +651,49 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 
 	// compute the difference between the two timezones
 	XMLDateTime dtTz = dt.getTimezone();
-	XMLDateTime diff = subtractDurations(dtTz, tz);
+	XMLDateTime diff = subtractDurations(tz, dtTz);
 
 	int utc_type = ( tz.getValue(XMLDateTime::Hour) < 0 )?XMLDateTime::UTC_NEG:XMLDateTime::UTC_POS;
+
 	fNewDate.setValue(XMLDateTime::utc, utc_type);
 	fNewDate.setValue(XMLDateTime::tz_hh, tz.getValue(XMLDateTime::Hour));
 	fNewDate.setValue(XMLDateTime::tz_mm, tz.getValue(XMLDateTime::Minute));
 	fNewDate = addDurationToDateTime(fNewDate, diff);
 	return fNewDate;
 }
+
+XMLDateTime fnDateTime(const XMLDateTime& d, const XMLDateTime& t)
+{
+	XMLDateTime fNewDateTime = d;
+
+	fNewDateTime.setValue(XMLDateTime::Type, xs_dateTime);
+
+	// Special case for hour, 24 is a lexical form of 0 and we can't normalize time (we'll lose the timezone).
+	// Hence we handle it here
+
+	int hours = t.getValue(XMLDateTime::Hour);
+	hours = hours == 24 ? 0 : hours;
+ 	fNewDateTime.setValue(XMLDateTime::Hour, hours);
+
+	fNewDateTime.setValue(XMLDateTime::Minute, t.getValue(XMLDateTime::Minute));
+	fNewDateTime.setValue(XMLDateTime::Second, t.getValue(XMLDateTime::Second));
+	fNewDateTime.setValue(XMLDateTime::MiliSecond, t.getValue(XMLDateTime::MiliSecond));
+
+	if (fNewDateTime.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
+	{	
+		fNewDateTime.setValue(XMLDateTime::utc, t.getValue(XMLDateTime::utc));
+		fNewDateTime.setValue(XMLDateTime::tz_hh, t.getValue(XMLDateTime::tz_hh));
+		fNewDateTime.setValue(XMLDateTime::tz_mm, t.getValue(XMLDateTime::tz_mm));
+	}
+
+	else if (t.getValue(XMLDateTime::utc) != XMLDateTime::UTC_UNKNOWN)
+	{
+		if (XMLDateTime::compare(d.getTimezone(), t.getTimezone()) != 0)
+			throw USER_EXCEPTION2(FORG0008, "Different timezones in the components of date time, passed to fn:dateTime");
+	}
+
+	return fNewDateTime;
+} 
 
 int XMLDateTime::compare(const XMLDateTime& lValue
                             , const XMLDateTime& rValue)
@@ -1522,7 +1560,7 @@ void XMLDateTime::normalize()
 void XMLDateTime::normalizeDateTime()
 {
 
-    int negate = (getValue(utc) == UTC_POS)? 1: -1;
+    int negate = (getValue(utc) == UTC_POS)? -1: 1;
     int temp;
     int carry;
     
