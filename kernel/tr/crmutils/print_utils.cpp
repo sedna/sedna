@@ -18,7 +18,8 @@
 #include "e_string.h"
 #include "casting_operations.h"
 #include "xs_helper.h"
-
+#include "PPBase.h"
+using namespace tr_globals;
 se_stdlib_ostream crm_out(std::cerr);
 typedef  std::map<  std::string,int> nspt_map;
 static nspt_map  xm_nsp;
@@ -709,7 +710,7 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 			crmout<<"\"";
 			if (xq_type!=text && xq_type!=attribute)
 				crmout.write(data,size);
-			else crmout.writextext(data,size,true);
+			else crmout.writextext(data,size);
 			crmout<<"\"";
 		}
 	}
@@ -717,12 +718,12 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 	{
 		if (ptype!=xml)
 		 crmout<<"\"";
-		pstr_long_writextext(txt,crmout,ptype!=xml);
+		pstr_long_writextext(txt,crmout);
 		if (ptype!=xml)
 		 crmout<<"\"";
 		//crmout.writextext(data,size);
 	}
-	
+	st_ct.stm.flush(write_func,&crmout);
 		
 }
 void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,bool is_first)
@@ -740,18 +741,21 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 				if (tup.cells[i].is_string_type())
 				{
 					//crmout<<tup.cells[i].get_str_mem();
-					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem(),ptype!=xml);
+					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());
+					
 				}
 				else
 				{
                     get_lexical_representation_for_fixed_size_atomic(tr_globals::mem_str_buf2, tup.cells[i], ptype);
-                    crmout << tr_globals::mem_str_buf2;
+					crmout.writextext(tr_globals::mem_str_buf2,strlen(tr_globals::mem_str_buf2));
 				}
+				
 			}
 			else
 			{
 				print_tuple_cell(crmout,tup.cells[i]);				
 			}
+			st_ct.stm.flush(write_func,&crmout);
 		}
 		if (ind && i<(tup.cells_number-1)) crmout<<" ,";
 	}
