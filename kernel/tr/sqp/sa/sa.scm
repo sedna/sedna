@@ -874,8 +874,10 @@
                  (value (caddr (caddr expr))))
              (if
               (not
-               (equal? name
-                       `(const (type !xs!QName) (,sa:se-ns "output"))))
+               (or (equal? name
+                       `(const (type !xs!QName) (,sa:se-ns "output")))
+                   (equal? name
+                       `(const (type !xs!QName) (,sa:se-ns "character-map")))))
               (cl:signal-user-error
                SE5055
                (sa:qname->string (cadr expr)) ", expanded to "
