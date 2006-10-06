@@ -385,18 +385,18 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
 
     switch (c.get_atomic_type())
     {
-        case xs_untypedAtomic	 : 
-        case xs_string			: return cast_string_type_to_xs_dateTime(c, type);
-        case xs_duration		: 
-        case xs_yearMonthDuration	:
-        case xs_dayTimeDuration  	: 
+        case xs_untypedAtomic    : 
+        case xs_string           : return cast_string_type_to_xs_dateTime(c, type);
+        case xs_duration         : 
+        case xs_yearMonthDuration:
+        case xs_dayTimeDuration  : 
             switch(type)
             {
-		case xs_duration:
-		case xs_yearMonthDuration:
-		case xs_dayTimeDuration: return cast_xs_duration_to_xs_duration(c, type);
+                case xs_duration         :
+                case xs_yearMonthDuration:
+                case xs_dayTimeDuration  : return cast_xs_duration_to_xs_duration(c, type);
                 default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
-	    }
+            }
 	
         case xs_dateTime         :
             switch(type)
