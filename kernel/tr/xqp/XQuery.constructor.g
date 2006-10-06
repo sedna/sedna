@@ -130,7 +130,7 @@ elementContent!:
 	>>
 	| per:predefinedEntityRef   << val += #per->getText();>>
 //	| cdataSection           
-//	| charRef       not supported know
+	| cr:charRef <<val += #cr->getText();>>
 //	| xmlComment
 //	| xmlPI
 	)*
@@ -301,6 +301,7 @@ quotAttrValueContent!:
 	| DOUBLELBRACE <<val += "{";>>
 	| DOUBLERBRACE <<val += "}";>>
 	| per:predefinedEntityRef <<val += #per->getText();>>
+	| cr:charRef <<val += #cr->getText();>>
 	| ee:enclosedExpr 
 	<<
 	  if (val.empty())
@@ -363,6 +364,7 @@ aposAttrValueContent!:
 	| DOUBLELBRACE <<val += "{";>>
 	| DOUBLERBRACE <<val += "}";>>
 	| per:predefinedEntityRef <<val += #per->getText();>>
+	| cr:charRef <<val += #cr->getText();>>
 	| ee:enclosedExpr 
 	<<
 	  if (val.empty())
@@ -418,6 +420,11 @@ predefinedEntityRef!:
 	)
 ;	
 
+charRef!:
+	(  d:DEC_CHARREF <<#0=#[$d->getText(), AST_CHAR_SEQ];>>
+	 | h:HEX_CHARREF <<#0=#[$h->getText(), AST_CHAR_SEQ];>>
+	)
+;
              
 computedConstructor!:
 	  cec:compElemConstructor  <<#0=#cec;>>

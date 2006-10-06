@@ -6,6 +6,8 @@
 #include "sedna.h"
 #include <string>
 #include <stdlib.h>
+#include <string.h>
+#include "utf8.h"
 
 using namespace std;
 
@@ -114,3 +116,50 @@ string replace_entity(char* lex_text, string find_ent, string replc_ent)
 }
 
 
+string replace_charref(char* lex_text)
+{
+   string text = std::string(lex_text);
+   string::size_type posb = 0, pose = 0;
+   string char_ref;
+   int char_code;
+   string str_char_code;
+
+   //replace dec char ref
+   for (;;)
+   {
+      posb = text.find("&#", posb);
+      if (posb == string::npos) break;
+
+      pose = text.find(";", posb);
+      if (pose == string::npos) break;
+
+      char_ref =  text.substr(posb+2, pose - (posb+2));
+
+      char_code = atoi(char_ref.c_str());
+//      printf("char_code=%d\n", char_code);
+      str_char_code = string(utf8_encode_char(char_code));
+
+
+      text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
+   }
+
+   //replace hex char ref
+   for (;;)
+   {
+      posb = text.find("&#x", posb);
+      if (posb == string::npos) break;
+
+      pose = text.find(";", posb);
+      if (pose == string::npos) break;
+
+      char_ref =  text.substr(posb+3, pose - (posb+3));
+
+      char_code = strtol(char_ref.c_str(), NULL, 16);
+//      printf("char_code=%d\n", char_code);
+      str_char_code = string(utf8_encode_char(char_code));
+
+      text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
+   }
+
+   return text;
+}

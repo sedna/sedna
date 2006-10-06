@@ -259,7 +259,7 @@ virtual void errstd(const char *s){
 #token INTEGERLITERAL  "[0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DOUBLELITERAL   "((\.[0-9]+) | ([0-9]+{\.[0-9]*})) (e | E) {\+| \-} [0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DECIMALLITERAL  "(\.[0-9]+) |  ([0-9]+\.[0-9]*)" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
-#token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"|~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'|~[\'&])*\')"
+#token STRINGLITERAL "(\"(&lt;|&gt;|&amp;|&quot;|&apos;|\"\"| &#([0-9])+; | &#x([0-9a-fA-F])+; |~[\"&])*\") | (\'(&lt;|&gt;|&amp;|&quot;|&apos;|\'\'| &#([0-9])+; | &#x([0-9a-fA-F])+; | ~[\'&])*\')"
 <<
   std::string res = erase_doublequot(lextext());
   replstr(res.c_str());
@@ -269,12 +269,28 @@ virtual void errstd(const char *s){
   replace_entity(lextext(), "&amp;", "&");
   replace_entity(lextext(), "&quot;", "\\\"");
   replace_entity(lextext(), "&apos;", "\\\'");
+  res = replace_charref(lextext());
+  replstr(res.c_str());
 
   int num = strlen(lextext());
   for (int i=0;i<num; i++)
       if ((lextext())[i] == '\n') 
          newline();
 >>
+
+#token DEC_CHARREF "&#([0-9])+;" 
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+#token HEX_CHARREF "&#x([0-9a-fA-F])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
 
 // tokens for processing instruction constructor
 
@@ -382,6 +398,20 @@ virtual void errstd(const char *s){
 #token AMPAMP "&amp;"
 #token AMPEQUOT "&quot;"
 #token AMPEAPOS "&apos;"
+#token DEC_CHARREF "&#([0-9])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
+#token HEX_CHARREF "&#x([0-9a-fA-F])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
 
 #token OPENCDATA "\<\!\[CDATA\["
 <<
