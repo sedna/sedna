@@ -4,7 +4,7 @@
 
 enum pat_class
 {
-	pat_attribure	= 1,
+	pat_attribute	= 1,
 	pat_element		= 2
 };
 
@@ -37,6 +37,7 @@ private:
 public:
 	void add_str (const char * str, const char * map_str, pat_class pc = (pat_class)-1);
 	void clear_state();
+	void reset();
 	int match_next_symbol(char symb, pat_class pc);//0-no matches 1-full match -1 -prefix match
 	const char * get_buf() {return buf; }
 	unsigned int get_buf_len() {return buf_used;}
