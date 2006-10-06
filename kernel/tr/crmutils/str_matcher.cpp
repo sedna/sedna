@@ -50,6 +50,9 @@ void StrMatcher::clear_state()
 	buf_used = 0;
 	state = root;
 }
+void StrMatcher::reset()
+{	
+}
 int StrMatcher::match_next_symbol(char symb, pat_class pc)
 {
 	if (state->next[(unsigned char)symb] == NULL)
