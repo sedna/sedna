@@ -3400,6 +3400,14 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
                         }
                         else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
                     }
+                    else if (strcmp(pr, SE_NAMESPACE) == 0 && strcmp(lp, "character-map") == 0)
+                    {
+                        // Call add_char_mapping in string matcher. We should substitute 'name' with 
+                        // 'value'. Addition check could be needed for name and value
+
+                        // !!!   Uncomment this when everybody is ready   !!!
+                        //tr_globals::st_ct.add_char_mapping(name, value);
+                    }
                     else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
                 }
             }
