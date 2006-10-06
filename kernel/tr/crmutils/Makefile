@@ -31,6 +31,7 @@ $(CRMUTILS_LIB): file_utils$(OBJ_EXT)		\
                  debug_utils$(OBJ_EXT)		\
                  scheme_utils$(OBJ_EXT)		\
                  system_tables$(OBJ_EXT)	\
+                 str_matcher$(OBJ_EXT)	\
                  node_utils$(OBJ_EXT)		\
                  exec_output$(OBJ_EXT)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
