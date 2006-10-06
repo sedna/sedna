@@ -13,6 +13,7 @@ struct trie_node
 	int res_ofs;
 	int res_len;
 	int pc;
+	int len;
 	struct trie_node *next[256];
 };
 typedef struct trie_node trie_node_t;
@@ -30,13 +31,11 @@ private:
 	int buf_used;
 	trie_node_t *root;
 	trie_node_t *state;
-	trie_node_t *make_node();
+	trie_node_t *make_node(trie_node_t *p);
 	void delete_trie(trie_node_t *root);
 	trie_node_t *get_node(trie_node_t *start, const char *str, int set_pc);
 	trie_node_t *get_ls_node(trie_node_t *node);
 	void add_string_to_buf(const char *str, int *ofs, int *len);
-	char *last_match;
-	int last_match_len;
 public:
 	void add_str (const char * str, const char * map_str, int pc = -1);
 	void reset();

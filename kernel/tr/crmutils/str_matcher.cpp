@@ -3,14 +3,23 @@
 #include <string.h>
 
 
-trie_node_t *StrMatcher::make_node()
+trie_node_t *StrMatcher::make_node(trie_node_t *parent)
 {
 	trie_node_t *tn = (trie_node_t *)malloc(sizeof(trie_node_t));
 	memset(tn->next, 0, sizeof(tn->next));
 	tn->res_ofs = -1;
 	tn->res_len = 0;
 	tn->pc = 0;
+	if (parent == NULL)
+		tn->len = 0;
+	else
+		tn->len = parent->len + 1;
 	return tn;
+}
+
+void StrMatcher::delete_trie(trie_node_t *root)
+{
+	//TODO
 }
 
 trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_pc)
@@ -19,7 +28,7 @@ trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_p
 	if (*str == 0)
 		return start;
 	if (start->next[(unsigned char)*str] == NULL)
-		start->next[(unsigned char)*str] = make_node();
+		start->next[(unsigned char)*str] = make_node(start);
 	return get_node(start->next[(unsigned char)*str], str+1, set_pc);
 }
 
@@ -51,12 +60,10 @@ void StrMatcher::reset()
 {
 	strings_buf_used = 0;
 	buf_used = 0;
-	last_match = NULL;
-	last_match_len = 0;
 	
 	delete_trie(root);
 	
-	root = make_node();
+	root = make_node(NULL);
 	state = root;
 }
 
@@ -65,7 +72,6 @@ trie_node_t *StrMatcher::get_ls_node(trie_node_t *node)
 	//TODO
 	return root;
 }
-
 
 int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, int pc)
 {
@@ -112,9 +118,7 @@ StrMatcher::StrMatcher()
 	buf_len = 16;
 	buf = (char*)malloc(buf_len);
 	buf_used = 0;
-	last_match = NULL;
-	last_match_len = 0;
 	
-	root = make_node();
+	root = make_node(NULL);
 	state = root;
 }
