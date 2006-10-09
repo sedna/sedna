@@ -369,9 +369,11 @@
       (lropt:predicate expr called-once? order-required?
                        var-types prolog processed-funcs))
      ((order-by)
-      (sa:analyze-order-by expr vars funcs ns-binding default-ns))
+      (lropt:order-by expr called-once? order-required?
+                      var-types prolog processed-funcs))
      ((orderspecs)
-      (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns))
+      (lropt:orderspecs expr called-once? order-required?
+                        var-types prolog processed-funcs))
      ;-------------------
      ; 2.11 Expressions on Sequence Types
      ((ts)
@@ -979,6 +981,213 @@
             (lropt:remove-vars-from-alist var-names
                                           body-order-for-vars)
             child-order-for-vars))))))))
+
+; Processes fun-def
+; Additional arguments: arg-cardinality-one? additional-arg-info
+;  arg-cardinality-one? - whether the cardinality of the anonymous function
+; argument is (zero or) one.
+;  additional-arg-info ::=
+;     '() |
+;     (list arg-ddo-auto? arg-zero-or-one? arg-single-level?)
+; Additional return value: (listof argument-name)
+(define (lropt:fun-def expr called-once? order-required?
+                       var-types prolog processed-funcs
+                       arg-cardinality-one? additional-arg-info)
+  (let* ((args  ; fun-def arguments
+          (car (xlr:op-args expr)))
+         (var-names
+          (map
+           (lambda (pair)
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   )))
+           args)))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args expr))  ; function body
+        called-once? order-required?
+        (append         
+         (map
+          (if
+           arg-cardinality-one?
+           (lambda (name pair)
+             (cons name
+                   (cons
+                    `(one  ; each variable is bound with exactly 1 item
+                      ,(car pair)  ; argument type
+                      )
+                    additional-arg-info)))
+           (lambda (name pair)
+             (cons name
+                   (cons (car pair) additional-arg-info))))
+          var-names
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (values
+        (list (xlr:op-name expr)  ; == 'fun-def
+              args
+              new-body)
+        body-ddo-auto? body-0-or-1? body-level?
+        processed-funcs body-order-for-vars
+        var-names)))))
+
+(define (lropt:order-by expr called-once? order-required?
+                        var-types prolog processed-funcs)
+  (call-with-values
+   (lambda ()
+     (lropt:fun-def (cadr (xlr:op-args expr))  ; fun-def
+                    called-once?
+                    #f  ; order not required
+                    var-types prolog processed-funcs
+                    #t  ; value for arg-cardinality-one?
+                    '()  ; additional-arg-info
+                    ))
+   (lambda (new-fun-def def-ddo-auto? def-0-or-1? def-level?
+                        processed-funcs def-order-for-vars var-names)
+     (call-with-values
+      (lambda ()
+        (lropt:expr
+         (car (xlr:op-args expr))  ; child expr inside return
+         called-once?
+         #f  ; order not required - child is reordered anyway
+         var-types
+         prolog processed-funcs))
+      (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                         processed-funcs child-order-for-vars)
+        (values
+         (list (xlr:op-name expr)  ; == 'order-by
+               new-child new-fun-def)
+         #f  ; in general, ddo is not achieved
+         child-0-or-1? child-level?
+         processed-funcs
+         (lropt:unite-order-for-variables
+          (lropt:remove-vars-from-alist var-names def-order-for-vars)
+          child-order-for-vars)))))))
+
+(define (lropt:orderspecs expr called-once? order-required?
+                          var-types prolog processed-funcs)
+  (let loop ((src (xlr:op-args expr))
+             (res '())
+             (processed-funcs processed-funcs)
+             (order-for-vars '()))
+    (cond
+      ((null? src)
+       (values
+        (cons (xlr:op-name expr)  ; == 'orderspecs
+              (reverse res))
+        #f #f #f  ; dummy values for ddo-auto? zero-or-one? single-level?
+        processed-funcs order-for-vars))
+      ((and (pair? (car src))
+            (eq? (xlr:op-name (car src)) 'orderspec))
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (cadr (xlr:op-args (car src)))  ; expr in ordermodifier
+           called-once?
+           #f  ; order not required
+           var-types
+           prolog processed-funcs))
+        (lambda (new-child dummy-ddo-auto? dummy-0-or-1? dummy-level?
+                           processed-funcs child-order-for-vars)
+          (loop (cdr src)
+                (cons
+                 (list (xlr:op-name (car src))  ; == 'orderspec
+                       (car (xlr:op-args (car src)))  ; ordermodifier
+                       new-child)
+                 res)
+                processed-funcs
+                (lropt:unite-order-for-variables
+                 child-order-for-vars order-for-vars)))))
+      (else
+       (loop (cdr src)
+             (cons (car src) res)
+             processed-funcs order-for-vars)))))
+
+;-------------------
+; 2.11 Expressions on Sequence Types
+
+; The typeswitch operator has the following logical representation:
+; (ts
+;  (if@
+;   (lt@ (const (type !xs!integer) "1") (const (type !xs!integer) "2"))
+;   (const (type !xs!integer) "3")
+;   (const (type !xs!double) "4.5E4"))
+;  (cases
+;   (case (type (one !xs!string))
+;    (fun-def
+;     ((!xs!anytype (var ("" "i"))))
+;     (element
+;      (const (type !xs!QName) ("" "wrap"))
+;      (const (type !xs!string) "test failed"))))      
+;   (default
+;    (fun-def
+;     ((!xs!anytype (var ("" "%v"))))
+;     (element
+;      (const (type !xs!QName) ("" "wrap"))
+;      (const (type !xs!string) "test failed"))))))
+;(define (lropt:ts expr called-once? order-required?
+;                  var-types prolog processed-funcs)
+;  (letrec
+;      ((
+;        (lambda (
+;     
+;  (let ((cases-node  ; bound to '(cases ...)
+;         (cadr (xlr:op-args expr))))
+;    (let loop ((src (xlr:op-args cases-node))
+;               (res '())
+;               (ddo-auto? #t)
+;               (zero-or-one? #t)
+;               (single-level? #t)
+;               (processed-funcs processed-funcs)
+;               (order-for-vars '()))
+;    (cond
+;      ((null? src)
+;       (call-with-values
+;        (lambda ()
+;          (lropt:expr
+;           (car (xlr:op-args expr))  ; child expr inside typeswitch
+;           called-once?
+;           (and order-required? (not ddo-auto?))
+;           var-types
+;           prolog processed-funcs))
+;        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+;                           processed-funcs child-order-for-vars)
+;          (values
+;           (list (xlr:op-name expr)  ; == 'ts
+;                 new-child
+;                 (cons cases-node  ; == 'cases
+;                       (reverse res)))
+;           ddo-auto? zero-or-one? single-level?
+;           processed-funcs order-for-vars))
+;      ((and (pair? (car src))
+;            (eq? (xlr:op-name (car src)) 'orderspec))
+;       (call-with-values
+;        (lambda ()
+;          (lropt:expr
+;           (cadr (xlr:op-args (car src)))  ; expr in ordermodifier
+;           called-once?
+;           #f  ; order not required
+;           var-types
+;           prolog processed-funcs))
+;        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+;                           processed-funcs child-order-for-vars)
+;          (loop (cdr src)
+;                (cons
+;                 (list (xlr:op-name (car src))  ; == 'orderspec
+;                       (car (xlr:op-args (car src)))  ; ordermodifier
+;                       new-child)
+;                 res)
+;                (and ddo-auto? child-ddo-auto?)
+;                (and zero-or-one? child-0-or-1?)
+;                (and single-level? child-level?)
+;                processed-funcs
+;                (lropt:unite-order-for-variables
+;                 child-order-for-vars order-for-vars)))))
+
 
 ;-------------------
 ; 2.14 Distinct document order
