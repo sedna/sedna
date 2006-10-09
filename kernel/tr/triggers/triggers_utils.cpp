@@ -126,7 +126,7 @@ schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node* scm_no
     
     return nodes_triggers;
 }
-trigger_cell* find_trigger_for_newly_inserted_node(schema_node* parent, schema_node* ins_node, t_triggers_set* treated_triggers)
+trigger_cell* find_trigger_for_newly_inserted_node(schema_node* parent, const char* ins_node_name, t_item ins_node_type, t_triggers_set* treated_triggers)
 {
     schema_trigger_cell* sc_trigger;
 	// check if insert into a document (not into constructor)
@@ -137,10 +137,10 @@ trigger_cell* find_trigger_for_newly_inserted_node(schema_node* parent, schema_n
 	while (sc_trigger!=NULL)
 	{
 		if((sc_trigger->trigger->trigger_event == TRIGGER_INSERT_EVENT)&&
-           (sc_trigger->trigger->trigger_granularity == TRIGGER_FOR_EACH_NODE))
-            if( ((strcmp(sc_trigger->trigger->innode.name,"*") == 0)||(strcmp(sc_trigger->trigger->innode.name,ins_node->name) == 0)) && 
-                (sc_trigger->trigger->innode.type == ins_node->type) &&
-                (sc_trigger->trigger->trigger_time == TRIGGER_BEFORE) &&            
+           (sc_trigger->trigger->trigger_granularity == TRIGGER_FOR_EACH_NODE)&&
+		   (sc_trigger->trigger->trigger_time == TRIGGER_BEFORE))
+            if( ((strcmp(sc_trigger->trigger->innode.name,"*") == 0)||(strcmp(sc_trigger->trigger->innode.name,ins_node_name) == 0)) && 
+                (sc_trigger->trigger->innode.type == ins_node_type) &&
                 (sc_trigger->trigger->fits_to_trigger_path_to_parent(parent)) &&
                 (treated_triggers->find(sc_trigger->trigger) == treated_triggers->end()))
 				    return sc_trigger->trigger;

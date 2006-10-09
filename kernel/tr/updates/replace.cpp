@@ -178,6 +178,10 @@ void replace(PPOpIn arg)
 			
 			sit++;
 		}
+
+#ifdef SE_ENABLE_TRIGGERS
+        apply_per_node_triggers(XNULL, removeIndirection((*it3).cells[0].get_node()), XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+#endif
 		//delete node
 		delete_replaced_node(removeIndirection((*it3).cells[0].get_node()), node);
 	}

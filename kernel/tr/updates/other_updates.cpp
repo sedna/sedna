@@ -9,6 +9,9 @@
 #include "xptr_sequence.h"
 #include "micro.h"
 #include "auc.h"
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
 // Rename operation
 void rename(PPOpIn arg,const char* name)
 {
@@ -51,6 +54,7 @@ void rename(PPOpIn arg,const char* name)
 	argseq.sort();
 	//changing to indirection
 	xptr_sequence::iterator it=argseq.begin();
+    xptr res;
 	while (it!=argseq.end())
 	{
 		xptr node=*it;
@@ -73,6 +77,13 @@ void rename(PPOpIn arg,const char* name)
 		xptr left=node;
 		xptr parent=removeIndirection(desc->pdsc);
 		CHECKP(node);
+#ifdef SE_ENABLE_TRIGGERS
+        if (apply_per_node_triggers(XNULL, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT, name, type) == XNULL)
+    		return;
+        if (apply_per_node_triggers(XNULL, node, parent, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
+    		return;
+#endif
+        
 		switch(type)
 		{
 		case attribute:
@@ -100,7 +111,7 @@ void rename(PPOpIn arg,const char* name)
 		case element:
 			{
 				//1.INSERT
-				xptr res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL);
+				res=insert_element(left, XNULL, parent,name,((e_dsc*)desc)->type,NULL);
 				CHECKP(indir);
 				copy_content(res,*((xptr*)XADDR(indir)),XNULL);
 				//2.DELETE
@@ -109,8 +120,9 @@ void rename(PPOpIn arg,const char* name)
 				break;
 			}
 		}
-
-	
+#ifdef SE_ENABLE_TRIGGERS
+        apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+#endif
 		if (it==argseq.begin()) break;
 	}
 	while (true);

@@ -15,7 +15,7 @@
 #include "schema.h"
 
 
-xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event);
+xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event, const char* new_name = NULL, t_item new_type = element);
 
 void apply_per_statement_triggers(xptr_sequence* target_seq, xptr_sequence* upd_seq, trigger_time time, trigger_event event);
 
