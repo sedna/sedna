@@ -112,7 +112,7 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 		{
 			state = get_ls_node(state);
 		}
-		if (state->next[(unsigned char)str[i]] != NULL)
+		if (state->next[(unsigned char)str[i]] != NULL && ((state->next[(unsigned char)str[i]]->pc & pc) != 0))
 		{
 			state = state->next[(unsigned char)str[i]];
 			if (state->res_ofs != -1)
