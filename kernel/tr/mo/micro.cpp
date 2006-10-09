@@ -1949,7 +1949,7 @@ void delete_replaced_node (xptr deleted_node, xptr inserted_node)
 	if (type==document)
 		throw USER_EXCEPTION(SE2036);
 #ifdef SE_ENABLE_FTSEARCH
-init_ft_sequences (node,XNULL,XNULL);
+init_ft_sequences (deleted_node,XNULL,XNULL);
 #endif
 #ifdef FASTDELETE
 	delete_node_inner (deleted_node,block,type);

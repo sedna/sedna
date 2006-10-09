@@ -9,7 +9,7 @@
 #include "ext.h"
 #include "e_string.h"
 #include "op_map.h"
-
+    
 #ifdef SE_ENABLE_TRIGGERS
 #include "triggers_data.h"
 #endif

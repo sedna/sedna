@@ -118,7 +118,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPRetrieveMetadata$(OBJ_EXT)		\
                        por2qep$(OBJ_EXT)				\
                        ext$(OBJ_EXT)					\
-                       scheme_tree$(OBJ_EXT)			
+                       scheme_tree$(OBJ_EXT)
 
 ifeq ($(SQL_CONNECTION),1)
 EXECUTOR_OBJECTS  +=   PPSQL$(OBJ_EXT)					\
@@ -132,8 +132,8 @@ EXECUTOR_OBJECTS  +=   PPFtIndexScan$(OBJ_EXT) \
 					   PPDropFtIndex$(OBJ_EXT)
 endif
 ifeq ($(ENABLE_TRIGGERS),1)
-EXECUTOR_OBJECTS  +=   PPCreateTrigger$(OBJ_EXT) \
-					   PPDropTrigger$(OBJ_EXT)
+EXECUTOR_OBJECTS  +=   PPCreateTrigger$(OBJ_EXT)		\
+                       PPDropTrigger$(OBJ_EXT)	
 endif
 
 

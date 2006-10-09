@@ -42,7 +42,7 @@ schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node* scm_no
 
 // finds trigger that must be fired before inserting a new node 
 // (when there is no the corresponding node in the descriptive schema)
-trigger_cell* find_trigger_for_newly_inserted_node(schema_node* parent, schema_node* ins_node, t_triggers_set* treated_triggers);
+trigger_cell* find_trigger_for_newly_inserted_node(schema_node* parent, const char* ins_node_name, t_item ins_node_type, t_triggers_set* treated_triggers);
 
 // finds trigger that must be fired (according to the specified time, event, granularity) for the node
 trigger_cell* find_trigger_for_node(schema_node* node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* treated_triggers);

@@ -12,19 +12,24 @@ static t_triggers_set after_statement_triggers;
 
 typedef std::map< schema_node*, std::vector<trigger_cell*> > node_triggers_map;
 
-xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
+xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name, t_item node_type)
 {
    	if (auth == BLOCK_AUTH_CHECK) return new_var;
     
-    if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
+    if (((new_var==XNULL)&&(name==NULL))||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return new_var;
     
+    if(name==NULL)
+    {
+        name=GETNAME(GETSCHEMENODEX(new_var));
+		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+    }
+
     //if the node is not element or attribute - return
-    t_item node_type = GETTYPE(GETSCHEMENODEX(new_var));
-    if((node_type!=element)&&(node_type!=attribute))
-        return new_var;
+   	if((node_type!=element)&&(node_type!=attribute))
+       	return new_var;        
 
 	t_triggers_set treated_triggers;
     schema_node* scm_parent_node;
@@ -35,13 +40,15 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
     trigger_cell* trc;
     while(true)
 	{
-		if(scm_parent_node->has_child_by_schema(NULL, GETNAME(GETSCHEMENODEX(new_var)), node_type)<0)
-            trc = find_trigger_for_newly_inserted_node(scm_parent_node, GETSCHEMENODEX(new_var), &treated_triggers);
+		if(scm_parent_node->has_child_by_schema(NULL, name, node_type)<0)
+            trc = find_trigger_for_newly_inserted_node(scm_parent_node, name, node_type, &treated_triggers);
         else
-            trc = find_trigger_for_node(scm_parent_node->get_child(NULL,GETNAME(GETSCHEMENODEX(new_var)), GETTYPE(GETSCHEMENODEX(new_var))), TRIGGER_INSERT_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
+            trc = find_trigger_for_node(scm_parent_node->get_child(NULL,name, node_type), TRIGGER_INSERT_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
         if(trc == NULL)
            return new_var;
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
+		name=GETNAME(GETSCHEMENODEX(new_var));
+		node_type = GETTYPE(GETSCHEMENODEX(new_var));
         treated_triggers.insert(trc);
     }
 }
@@ -410,13 +417,13 @@ void apply_after_statement_triggers()
     }
 }
 
-xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event)
+xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event, const char* new_name, t_item new_type)
 {
     switch (time){
         case TRIGGER_BEFORE:
          switch (event){
              case TRIGGER_INSERT_EVENT:
-                  return apply_before_insert_triggers(new_var, where_var);
+                  return apply_before_insert_triggers(new_var, where_var, new_name, new_type);
                   
              case TRIGGER_DELETE_EVENT:
                   return apply_before_delete_triggers(old_var);
