@@ -431,3 +431,39 @@
           (const (type !xs!QName) ("" "australia"))
           (type *)
           (const (type !xs!string) "non-nil"))))))))))
+
+(lropt:rewrite-query
+ '(query
+   (prolog)
+   (query-body
+    (ts
+     (ddo
+      (child
+       (ddo
+        (descendant-or-self
+         (ddo
+          (child
+           (ddo
+            (descendant-or-self
+             (element (const (type !xs!QName) ("" "x")) (sequence))
+             (type (node-test))))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "a"))
+              (type *)
+              (const (type !xs!string) "non-nil"))))))
+         (type (node-test))))
+       (type
+        (elem-test
+         (ename
+          (const (type !xs!QName) ("" "b"))
+          (type *)
+          (const (type !xs!string) "non-nil"))))))
+     (cases
+         (case (type (zero-or-more (node-test)))
+           (fun-def ((!xs!anytype (var ("" "n")))) (var ("" "n"))))
+       (default
+        (fun-def
+         ((!xs!anytype (var ("" "%v"))))
+         (element (const (type !xs!QName) ("" "y")) (sequence)))))))))
