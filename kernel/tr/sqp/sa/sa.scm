@@ -109,22 +109,26 @@
         (remove-starting-space (string->list str))))))))
 
 ; str = "indent=yes; method=xml;"
+; Result: '(("indent" . "yes") ("method" . "xml"))
+(define (sa:string->key-value-pairs str)
+  (map
+   (lambda (pair)
+     (cons (sa:remove-boundary-spaces (car pair))
+           (sa:remove-boundary-spaces (cadr pair))))
+   (filter
+    (lambda (lst) (= (length lst) 2))  ; name-value pairs
+    (map
+     (lambda (sub) (sa:string-split sub '(#\=)))
+     (sa:string-split str '(#\;))))))
+
+; str = "indent=yes; method=xml;"
 ; key = "indent" => result = "yes"
 ; If key not found, returns #f
 (define (sa:extract-suboption str key)
   (cond
-   ((assoc key
-           (map
-            (lambda (pair)
-              (cons (sa:remove-boundary-spaces (car pair))
-                    (sa:remove-boundary-spaces (cadr pair))))
-            (filter
-             (lambda (lst) (= (length lst) 2))  ; name-value pairs
-             (map
-              (lambda (sub) (sa:string-split sub '(#\=)))
-              (sa:string-split str '(#\;))))))
+   ((assoc key (sa:string->key-value-pairs str))
     => cdr)
-   (else #f))  
+   (else #f))
 ;  (let ((pattern (append (string->list key) '(#\=))))
 ;    (let loop ((src (string->list str))
 ;               (key pattern))
@@ -871,38 +875,78 @@
            (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
            (let ((name 
                   (sa:resolve-qname (cadr expr) ns-binding sa:se-ns))
-                 (value (caddr (caddr expr))))
-             (if
-              (not
-               (or (equal? name
-                       `(const (type !xs!QName) (,sa:se-ns "output")))
-                   (equal? name
-                       `(const (type !xs!QName) (,sa:se-ns "character-map")))))
-              (cl:signal-user-error
-               SE5055
-               (sa:qname->string (cadr expr)) ", expanded to "
-               (sa:qname->string name))
+                 (value (caddr (caddr expr)))
+                 (supported-options
+                  `(((const (type !xs!QName) (,sa:se-ns "output"))
+                     "method" "indent")
+                    ((const (type !xs!QName) (,sa:se-ns "character-map"))))))
+;             (if
+;              (not
+;               (or (equal? name
+;                       `(const (type !xs!QName) (,sa:se-ns "output")))
+;                   (equal? name
+;                       `(const (type !xs!QName) (,sa:se-ns "character-map")))))
+;              (cl:signal-user-error
+;               SE5055
+;               (sa:qname->string (cadr expr)) ", expanded to "
+;               (sa:qname->string name))
               (loop
-               (cons
-                (cons
-                 (car expr)  ; declare-option
-                 (cons
-                  name
-                  (filter
-                   (lambda (x) x)
-                   (map
-                    (lambda (sub)
-                      (cond
-                        ((sa:extract-suboption value sub)
-                         => (lambda (v)
-                              `((const (type !xs!string) ,sub)
-                                (const (type !xs!string) ,v))))
-                        (else #f)))
-                    '("method" "indent")))))
-                new-prlg)
+               (cond
+                 ((assoc name supported-options)
+                  => (lambda (option-entry)
+                       (let* ((key-value-pairs
+                               (sa:string->key-value-pairs value))
+                              (key-value-pairs
+                               (if
+                                (null? (cdr option-entry))
+                                ; Accept all key-value pairs
+                                key-value-pairs
+                                (filter
+                                 (lambda (x) x)
+                                 (map
+                                  ; search for supported key-value pairs,
+                                  ; in that order
+                                  (lambda (expected-suboption)
+                                    (assoc expected-suboption
+                                           key-value-pairs))
+                                  (cdr option-entry))))))
+                         (if
+                          (null? key-value-pairs)
+                          ; No expected suboptions found - ignoring option
+                          new-prlg
+                          (cons
+                           (cons (car expr)  ; declare-option
+                                 (cons
+                                  name
+                                  (map
+                                   (lambda (pair)
+                                     `((const (type !xs!string) ,(car pair))
+                                       (const (type !xs!string) ,(cdr pair))))
+                                   key-value-pairs)))
+                           new-prlg)))))
+                 (else
+                  ; Unknown options
+                  new-prlg))
+;               (cons
+;                (cons
+;                 (car expr)  ; declare-option
+;                 (cons
+;                  name
+;                  (filter
+;                   (lambda (x) x)
+;                   (map
+;                    (lambda (sub)
+;                      (cond
+;                        ((sa:extract-suboption value sub)
+;                         => (lambda (v)
+;                              `((const (type !xs!string) ,sub)
+;                                (const (type !xs!string) ,v))))
+;                        (else #f)))
+;                    '("method" "indent")))))
+;                new-prlg)
                funcs triples
                ns-binding default-elem-ns default-func-ns
-               (cdr prolog))))))
+               (cdr prolog)))))
          ((declare-namespace)
           (and
            (sa:assert-num-args expr 2)

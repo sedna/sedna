@@ -1,4 +1,5 @@
 (require (lib "defmacro.ss"))
+(require (rename (lib "pretty.ss") pp pretty-print))
 (define-macro (declare . x) #t)
 (define-macro (cl:signal-input-error code . msg)
   `(begin
