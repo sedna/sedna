@@ -434,7 +434,7 @@
        ; 9.3 Functions on Boolean Values
        !fn!not !fn!boolean
        ; 14 Functions and Operators on Nodes
-       !fn!name !fn!local-name !fn!namespace-uri
+       !fn!name !fn!local-name !fn!namespace-uri !fn!number
        ; 15.2 Functions That Test the Cardinality of Sequences
        !fn!exactly-one)
       ; The same semantics as for !fn!document
@@ -1816,6 +1816,132 @@
 
 
 ;=========================================================================
+; Update, manage and retrieve-metadata queries
+
+;------------------------------------------------
+; Update
+
+; Update replace operation
+(define (lropt:replace expr called-once? order-required?
+                       var-types prolog processed-funcs)
+  (let* ((fun-def (cadr (xlr:op-args expr)))
+         (args  ; fun-def arguments
+          (car (xlr:op-args fun-def)))
+         (var-names
+          (map
+           (lambda (pair)
+             (car (xlr:op-args  ; removing embracing 'var
+                   (cadr pair)  ; '(var ..)
+                   )))
+           args)))
+    (call-with-values
+     (lambda ()
+       (lropt:expr
+        (cadr (xlr:op-args fun-def))  ; function body
+        #f  ; called more than once
+        order-required?
+        (append
+         (map
+          (lambda (name pair)
+            (list name
+                  `(one  ; each variable is bound with exactly 1 item
+                    ,(car pair)  ; argument type
+                    )))
+          var-names
+          args)
+         var-types)
+        prolog processed-funcs))
+     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                       processed-funcs body-order-for-vars)
+       (call-with-values
+        (lambda ()
+          (lropt:expr
+           (car (xlr:op-args expr))  ; child expr inside return
+           called-once?
+           order-required?
+           var-types
+           prolog processed-funcs))
+        (lambda (target child-ddo-auto? child-0-or-1? child-level?
+                        processed-funcs child-order-for-vars)
+          (values
+           (list
+            (xlr:op-name expr)  ; == 'replace
+            `(return
+              ,target
+              (list (xlr:op-name fun-def)  ; == 'fun-def
+                    args
+                    `(sequence
+                       ,(cadr  ; yields '(var ...)
+                         (car  ; fun-def has the only argument
+                          arg))
+                       ,new-body
+                       (const (type !se!separator) 1)))))
+           ; we do not care about ddo-auto, zero-or-one and single-level in
+           ; the caller
+           #f #f #f
+           processed-funcs
+           (lropt:unite-order-for-variables
+            (lropt:remove-vars-from-alist var-names
+                                          body-order-for-vars)
+            child-order-for-vars))))))))
+         
+; Update operation
+(define (lropt:update expr called-once? order-required?
+                      var-types prolog processed-funcs)
+  (if
+   (and (pair? expr) (eq? (car expr) 'replace))
+   (lropt:replace expr called-once? order-required?
+                  var-types prolog processed-funcs)
+   (lropt:propagate expr called-once? order-required?
+                    var-types prolog processed-funcs
+                    #f #f #f)))
+
+;------------------------------------------------
+; Manage
+
+; Create index operation
+(define (lropt:create-index expr called-once? order-required?
+                            var-types prolog processed-funcs)
+  (call-with-values
+   (lambda ()
+     (lropt:expr (cadr (xlr:op-args expr))  ; second argument
+                 called-once? order-required?
+                 var-types prolog processed-funcs))
+   (lambda (second second-ddo-auto? second-0-or-1? second-level?
+                   processed-funcs second-order-for-vars)
+     (lambda ()
+       (lropt:expr (caddr (xlr:op-args expr))  ; third argument
+                   called-once? order-required?
+                   var-types prolog processed-funcs))
+     (lambda (third third-ddo-auto? third-0-or-1? third-level?
+                    processed-funcs third-order-for-vars)
+       (values
+        (list
+         (xlr:op-name expr)  ; == 'create-index
+         (car (xlr:op-args expr))
+         second
+         third
+         (cadddr (xlr:op-args expr)))
+        ; we do not care about ddo-auto, zero-or-one and single-level in
+        ; the caller
+        #f #f #f
+        processed-funcs
+        (lropt:unite-order-for-variables
+         second-order-for-vars third-order-for-vars))))))
+  
+; Manage operation
+(define (lropt:manage expr called-once? order-required?
+                      var-types prolog processed-funcs)
+  (if
+   (and (pair? expr) (eq? (car expr) 'create-index))
+   (lropt:create-index expr called-once? order-required?
+                       var-types prolog processed-funcs)
+   (lropt:propagate expr called-once? order-required?
+                    var-types prolog processed-funcs
+                    #f #f #f)))
+
+
+;=========================================================================
 ; High-level function
 
 ; Rewrites the query:
@@ -1823,30 +1949,32 @@
 ;  2. Rewrites XPath axes that involve descendant-or-self
 ;  3. Eliminates unnecessary 'ddo operations
 (define (lropt:rewrite-query query)
-  (cond
-    ((not (pair? query))
-     ; nothing to do, although it's strange
-     query)
-    ((eq? (xlr:op-name query) 'query)
-     (let ((prolog (xlr:get-query-prolog query)))
-       (call-with-values
-          (lambda ()
-            (lropt:expr
-             (xlr:get-query-body query)
-             #t  ; called once
-             #t  ; TODO: ordered or unordered depending on prolog
-             '()  ; TODO: probably, external variables here
-             prolog
-             '()  ; no functions processed yet
-             ))
-          (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
-                        processed-funcs dummy-order-for-variables)
-            `(query
-              (prolog
-               ,@(lropt:rewrite-prolog prolog processed-funcs))
-              (query-body
-               ,body))))))
-    (else  ; update or smth
-     ;(mlr:lreturn+xpath query #t)
-     #f
-     )))
+  (if
+   (not (pair? query))
+   query  ; nothing to do, although it's strange   
+   (let ((prolog (xlr:get-query-prolog query)))
+     (call-with-values
+      (lambda ()
+        (if
+         (memq (xlr:op-name query) '(query retrieve-metadata))
+         (let ((identity (lambda (x) x)))
+           (lropt:propagate (cadr (xlr:op-args query))
+                            #t  ; called once
+                            #t  ; TODO: ordered/unordered depending on prolog
+                            '()  ; TODO: probably, external variables here
+                            prolog
+                            '()  ; no functions processed yet
+                            identity identity identity))
+         ((case (xlr:op-name query)
+            ((update) lropt:update)
+            ((manage) lropt:manage)
+            (else  ; this should not happen
+             lropt:expr))
+          (cadr (xlr:op-args query))
+          #t #t '() prolog '())))
+      (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
+                    processed-funcs dummy-order-for-variables)
+        (list (xlr:op-name query)
+              (cons 'prolog
+                    (lropt:rewrite-prolog prolog processed-funcs))
+              body))))))

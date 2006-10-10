@@ -432,6 +432,9 @@
     (,sa:fn-ns "namespace-uri" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!namespace-uri)
+    (,sa:fn-ns "number" 0 1
+     ,(lambda (num-args) `(,sa:type-any))
+     ,sa:type-atomic !fn!numbers)
     (,sa:fn-ns "boolean" 1 1
      ,(lambda (num-args) `(,sa:type-any))
      ,sa:type-atomic !fn!boolean)
@@ -2685,7 +2688,7 @@
              pair   ; everything is ok
              (cl:signal-user-error SE5051 fourth))))
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!string
-                 !fn!local-name)
+                 !fn!local-name !fn!number)
        (if
         (null? (cdr expr))  ; no argument
         (cons (list (sa:op-name expr)  ; function name
