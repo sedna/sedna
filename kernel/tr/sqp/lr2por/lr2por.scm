@@ -721,6 +721,11 @@
               `(1 (PPIntersect ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )             
              
+             ; *** number ***
+             ((eq? op-name '!fn!number)
+              `(1 (PPFnNumber ,(l2p:any-lr-node2por (car node))))
+             )
+             
              ; *** boolean ***
              ((eq? op-name '!fn!boolean)
               `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))
