@@ -11,6 +11,7 @@
 #include "dm_accessors.h"
 #include "base64Binary.h"
 #include "XmlNames.h"
+#include "uri.h"
 
 
 /******************************************************************************/
@@ -113,8 +114,16 @@ inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
 
 
 inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
-    // !!! FIX ME
-    { throw USER_EXCEPTION2(SE1002, "XML Schema simple type is not implemented"); }
+{ 
+    if(chech_constraints_for_xs_anyURI(&c))
+    {
+        tuple_cell res(c);
+        res.set_xtype(xs_anyURI);
+        return res;
+    }
+    else
+        throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
+}
 
 inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 {
@@ -167,7 +176,8 @@ inline tuple_cell cast_xs_boolean_to_string_type(const tuple_cell &c, xmlscm_typ
 }
 
 inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type res_type)
-{ // !!! FIX ME: some conversion needed
+{   // !!! FIX ME: some conversion needed
+    // !!! IS: what kind of conversion do you mean???
     tuple_cell res(c);
     res.set_xtype(res_type);
     return res;

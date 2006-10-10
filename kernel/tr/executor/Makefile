@@ -34,6 +34,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        decimal64$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
                        base64Binary$(OBJ_EXT)           \
+                       uri$(OBJ_EXT)                    \
                        XmlNames$(OBJ_EXT)               \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\
