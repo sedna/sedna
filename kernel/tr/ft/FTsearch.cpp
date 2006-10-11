@@ -395,7 +395,7 @@ SednaSearchJob::SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_cus
 	if (hilight)
 	{
 		if (_cm_ == ft_xml_hl)
-			hl=new SednaConvertJob(ft_xml,_custom_tree_, hl_fragment);	
+			hl=new SednaConvertJob(ft_xml_ne,_custom_tree_, hl_fragment);	
 		else
 			hl=new SednaConvertJob(_cm_,_custom_tree_, hl_fragment);
 	}
@@ -741,7 +741,7 @@ void SednaStringHighlighter<Iterator>::putch(const int ch)
 
 static inline bool is_tag_char(int ch)
 {
-	return ((!iswpunct(ch) && !iswspace(ch) && ch != '<' && ch != SednaStringHighlighter<char*>::EOF_ch) || ch == '-');
+	return ((!iswpunct(ch) && !iswspace(ch) && ch != SednaConvertJob::opentag_code && ch != SednaConvertJob::closetag_code && ch != SednaStringHighlighter<char*>::EOF_ch) || ch == '-');
 }
 
 
@@ -750,9 +750,7 @@ inline static bool iswordchar(int ch);
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_end, bool copy)
 {
-	//TODO: implement
-
-	U_ASSERT(cur_ch == '<');
+	U_ASSERT(cur_ch == SednaConvertJob::opentag_code);
 	if (copy && !hl_fragment)
 		putch(cur_ch);
 	cur_ch = getch(str_it, str_end);
@@ -793,9 +791,9 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 	}
 	do
 	{
-		if (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+		if (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
 		{
-			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
 			{
 				if (copy && !hl_fragment)
 					putch(cur_ch);
@@ -822,7 +820,7 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 			if (copy && !hl_fragment)
 				putch(cur_ch);
 			cur_ch = getch(str_it, str_end);
-			if (cur_ch == '>')
+			if (cur_ch == SednaConvertJob::closetag_code)
 			{
 				tag_l--;//FIXME
 				break;
@@ -830,7 +828,7 @@ void SednaStringHighlighter<Iterator>::copy_tag(Iterator &str_it, Iterator &str_
 		}
 		else
 		{
-			if (cur_ch == EOF_ch || cur_ch == '>')
+			if (cur_ch == EOF_ch || cur_ch == SednaConvertJob::closetag_code)
 				break;
 			if (copy && !hl_fragment)
 				putch(cur_ch);
@@ -853,7 +851,7 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 {
 	while (cur_ch != EOF_ch)
 	{
-		if (cur_ch == (int)'<')
+		if (cur_ch == SednaConvertJob::opentag_code)
 		{
 			copy_tag(str_it, str_end);
 		}
@@ -873,14 +871,22 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 				current_ht_idx++;
 			}
 			if (hl_word)
-				result->append_mstr("<hit>");
-			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			{
+				putch(SednaConvertJob::opentag_code);
+				result->append_mstr("hit");
+				putch(SednaConvertJob::closetag_code);
+			}
+			while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
 			{
 				putch(cur_ch);
 				cur_ch = getch(str_it, str_end);
 			}
 			if (hl_word)
-				result->append_mstr("</hit>");
+			{
+				putch(SednaConvertJob::opentag_code);
+				result->append_mstr("/hit");
+				putch(SednaConvertJob::closetag_code);
+			}
 		}
 	}
 }
@@ -889,6 +895,7 @@ inline static bool iswordchar(int ch)
 {
 	//TODO: try to use pcre tables
 	return (((!(iswpunct(ch) || iswspace(ch)
+		|| ch == SednaConvertJob::closetag_code || ch == SednaConvertJob::opentag_code
 		|| (ch >= 127 && ch <= 159)
 		|| ch == 697 || ch == 698
 		||(ch >= 706 && ch <= 719)
@@ -991,7 +998,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 
 	while (cur_ch != EOF_ch)
 	{
-		if (cur_ch == (int)'<')
+		if (cur_ch == SednaConvertJob::opentag_code)
 		{
 			parse_tag();
 		}
@@ -1069,7 +1076,7 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 			}
 			}
 			last_eff_ch = cur_ch; //no need to update it in the loop, we only need to know it's not punctuation
-			while (iswordchar(cur_ch) && cur_ch != '<' && cur_ch != EOF_ch)
+			while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
 				cur_ch = getch(str_it, str_end);
 		}
 	}
@@ -1077,11 +1084,14 @@ void SednaStringHighlighter<Iterator>::parse_doc()
 	fragment_end_split = false;
 }
 
+const char * SednaConvertJob::opentag_str = "\xEE\xA0\x81";
+const char * SednaConvertJob::closetag_str = "\xEE\xA0\x82";
+
 void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 {
 	in_buf.clear();
 	CHECKP(node);
-	print_node_to_buffer(node,in_buf,cm,custom_tree);
+	print_node_to_buffer(node,in_buf,cm,custom_tree,opentag_str, closetag_str);
 	if (in_buf.get_type() == text_mem)
 	{
 		char *str_it = (char*)in_buf.get_ptr_to_text();

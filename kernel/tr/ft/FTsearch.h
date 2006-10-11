@@ -161,7 +161,11 @@ public:
 	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_);
 	void convert_node(xptr& node,long* ht,long ht_cnt);
 	virtual void OnOutput(const char * txt, int length);
+	static const int opentag_code = 0xE801;
+	static const int closetag_code = 0xE802;
 private:
+	static const char * opentag_str;
+	static const char * closetag_str;
 	t_str_buf in_buf;
 	SednaTextInputStream *tis;
 	dtsFileInfo fileInfo;

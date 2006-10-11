@@ -9,6 +9,7 @@
 #include "sedna.h"
 #include "sm_vmm_data.h"
 #include "micro.h"
+#include "strings.h"
 
 //typedef int pstr_long_off_t;
 typedef __int64 pstr_long_off_t;
@@ -69,6 +70,7 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
 
 void pstr_long_write(xptr desc,se_ostream& crmout);
 void pstr_long_writextext(xptr desc, se_ostream& crmout);
+void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p);
 void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
 void pstr_long_copy_to_buffer(char *buf, xptr desc);
 

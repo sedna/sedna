@@ -156,7 +156,7 @@ void clear_temporary(void);
 //various output of xml document to string_buffer
 
 #ifdef SE_ENABLE_FTSEARCH
-void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset<ft_custom_cell,unsigned short> * custom_tree=NULL);
+void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset<ft_custom_cell,unsigned short> * custom_tree=NULL, const char *opentag="<", const char *closetag=">");
 #endif
 #endif
 
