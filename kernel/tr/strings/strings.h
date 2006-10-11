@@ -11,6 +11,9 @@
 #include "tuple.h"
 #include "e_string.h"
 #include "micro.h"
+
+typedef void (*string_consumer_fn)(const char *str, int len, void *p);
+
 #include "pstr_long.h"
 #include "e_string_o_iterator.h"
 #include "e_string_iterator.h"
@@ -129,6 +132,10 @@ public:
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
 };
 void print_tuple_cell(se_ostream& crmout,const tuple_cell& cell);
+
+void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
+
+
 extern CharsetHandler	*charset_handler;
 extern CollationHandler	*collation_handler;
 

@@ -1,6 +1,8 @@
 #ifndef _STR_MATCHER_H
 #define _STR_MATCHER_H
 
+#include "tuple.h"
+
 enum pat_class
 {
 	pat_attribute	= 1,
@@ -41,9 +43,10 @@ public:
 	void add_str (const char * str, const char * map_str, int pc = -1);
 	void reset();
 
-	// if f == NULL, returs 1 if something matched
-	// if f != NULL, parses and returns number of replaces
+	// if write_cb == NULL, returs 1 if something matched
+	// if write_cb != NULL, parses and returns number of replaces
 	int parse(const char *str, int len, write_func_t write_cb, void *p, int pc = -1);
+	int StrMatcher::parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc);
 	void flush(write_func_t write_cb, void *p);
 	
 	StrMatcher();

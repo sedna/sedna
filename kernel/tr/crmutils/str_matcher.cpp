@@ -1,6 +1,7 @@
 #include "str_matcher.h"
 #include <stdlib.h>
 #include <string.h>
+#include "strings.h"
 
 
 trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)
@@ -104,6 +105,7 @@ inline void put_prefix(char *where, trie_node_t *node)
 
 int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, int pc)
 {
+	//TODO: implement (write_cb == 0) case
 	int k = -buf_used;
 	for (int i = 0; i < len; i++)
 	{
@@ -140,7 +142,31 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 	}
 	put_prefix(buf, state);
 	
-	return 0;
+	return 0; //TODO: return number of replaces
+}
+
+struct feed_to_matcher_state
+{
+	int res_counter;
+	StrMatcher *sm_ptr;
+	write_func_t write_cb;
+	void *p;
+	int pc;
+};
+typedef struct feed_to_matcher_state feed_to_matcher_state_t;
+
+static void feed_to_matcher(const char *str, int len, void *p)
+{
+	feed_to_matcher_state_t* s = (feed_to_matcher_state_t*)p;
+	if (s->write_cb != NULL || s->res_counter == 0)
+		s->res_counter += s->sm_ptr->parse(str, len, s->write_cb, s->p, s->pc);
+}
+
+int StrMatcher::parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc)
+{
+	feed_to_matcher_state_t s = {0, this, write_cb, p, pc};
+	feed_tuple_cell(feed_to_matcher, &s, *tc);
+	return s.res_counter;
 }
 
 void StrMatcher::flush(write_func_t write_cb, void *p)
