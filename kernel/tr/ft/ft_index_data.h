@@ -19,7 +19,7 @@ class QName;
 enum ft_index_type
 {
 	ft_xml,
-	ft_xml_ne, //xml without escaping special chars
+	ft_xml_ne, //xml without escaping special chars in elements, replacing " with \u+e803 in attributes
 	ft_xml_hl,
 	ft_string_value,
 	ft_delimited_value,
