@@ -968,6 +968,8 @@ static void make_escape_sm()
 	escape_sm->add_str("&", "&amp;", ~pat_attribute);
 	escape_sm->add_str("<", "&lt;", ~pat_attribute);
 	escape_sm->add_str(">", "&gt;", ~pat_attribute);
+	escape_sm->add_str("\"", "&quot;", pat_attribute);
+	escape_sm->add_str("\"", "\xEE\xA0\x83", pat_custom1);
 }
 static void tbuf_write_cb(void *param, const char *str, int len)
 {
@@ -987,7 +989,17 @@ static void print_text(xptr txt, t_str_buf& tbuf, t_item xq_type, bool escapes =
 	}
 	tuple_cell tc=tuple_cell::atomic_pstr(xs_string,size,ind_ptr);
 	if (!escapes)
-		tbuf.append(tc);
+	{
+		if (xq_type == attribute)
+		{
+			if (escape_sm == NULL)
+				make_escape_sm();
+			escape_sm->parse_tc(&tc, tbuf_write_cb, &tbuf, pat_custom1);
+			escape_sm->flush(tbuf_write_cb, &tbuf);
+		}
+		else
+			tbuf.append(tc);
+	}
 	else
 	{
 		if (escape_sm == NULL)
@@ -1176,7 +1188,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			case ft_delimited_value:tbuf<<" ";break;
 			}
 			CHECKP(node);
-			print_text(node,tbuf,cdata,false);
+			print_text(node,tbuf,cdata,type!=ft_xml_ne);
 			if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) tbuf<< "]]"<<closetag;
 			break;
 		}

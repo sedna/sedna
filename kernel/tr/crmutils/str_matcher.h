@@ -6,7 +6,8 @@
 enum pat_class
 {
 	pat_attribute	= 1,
-	pat_element		= 2
+	pat_element		= 2,
+	pat_custom1		= 4
 };
 
 struct trie_node
