@@ -54,7 +54,7 @@ private:
 	void free_item(SEDNA_SEQUENCE_ITEM *item);
 public:
 	ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_fn_ptr_);
-	ExtFunction(func_cxt *_fcxt_);
+	ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_);
 	~ExtFunction();
 	ExtFunction *copy();
 	void invoke(const arr_of_PPOpIn &arr);
@@ -82,6 +82,7 @@ private:
 	void load_func_list();
 public:
 	ExtFunctionManager() {}
+	~ExtFunctionManager();
 	PPIterator *make_pp_ext_func(char *name, variable_context *cxt, arr_of_PPOpIn arr);
 };
 
