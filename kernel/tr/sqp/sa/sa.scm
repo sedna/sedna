@@ -109,8 +109,9 @@
         (remove-starting-space (string->list str))))))))
 
 ; str = "indent=yes; method=xml;"
+; delim - a character to delimit several suboptions, #\; in the above example
 ; Result: '(("indent" . "yes") ("method" . "xml"))
-(define (sa:string->key-value-pairs str)
+(define (sa:string->key-value-pairs str delim)
   (map
    (lambda (pair)
      (cons (sa:remove-boundary-spaces (car pair))
@@ -119,14 +120,14 @@
     (lambda (lst) (= (length lst) 2))  ; name-value pairs
     (map
      (lambda (sub) (sa:string-split sub '(#\=)))
-     (sa:string-split str '(#\;))))))
+     (sa:string-split str (list delim))))))
 
 ; str = "indent=yes; method=xml;"
 ; key = "indent" => result = "yes"
 ; If key not found, returns #f
-(define (sa:extract-suboption str key)
+(define (sa:extract-suboption str key delim)
   (cond
-   ((assoc key (sa:string->key-value-pairs str))
+   ((assoc key (sa:string->key-value-pairs str delim))
     => cdr)
    (else #f))
 ;  (let ((pattern (append (string->list key) '(#\=))))
@@ -881,8 +882,9 @@
                  (value (caddr (caddr expr)))
                  (supported-options
                   `(((const (type !xs!QName) (,sa:se-ns "output"))
-                     "method" "indent")
-                    ((const (type !xs!QName) (,sa:se-ns "character-map"))))))
+                     #\; "method" "indent")
+                    ((const (type !xs!QName) (,sa:se-ns "character-map"))
+                     #\!))))
 ;             (if
 ;              (not
 ;               (or (equal? name
@@ -898,10 +900,11 @@
                  ((assoc name supported-options)
                   => (lambda (option-entry)
                        (let* ((key-value-pairs
-                               (sa:string->key-value-pairs value))
+                               (sa:string->key-value-pairs
+                                value (cadr option-entry)))
                               (key-value-pairs
                                (if
-                                (null? (cdr option-entry))
+                                (null? (cddr option-entry))
                                 ; Accept all key-value pairs
                                 key-value-pairs
                                 (filter
@@ -912,7 +915,7 @@
                                   (lambda (expected-suboption)
                                     (assoc expected-suboption
                                            key-value-pairs))
-                                  (cdr option-entry))))))
+                                  (cddr option-entry))))))
                          (if
                           (null? key-value-pairs)
                           ; No expected suboptions found - ignoring option
