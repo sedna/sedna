@@ -1031,7 +1031,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			while (GETTYPE(GETSCHEMENODEX(child))==attribute)
 			{	
 				
-				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree);
+				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL) break;
@@ -1041,7 +1041,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 			while (child!=XNULL)
 			{
 				CHECKP(child);
-				print_node_to_buffer(child,tbuf,type,custom_tree);
+				print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 			}			
@@ -1081,7 +1081,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 				CHECKP(child);			
 			while (GETTYPE(GETSCHEMENODEX(child))==attribute)
 			{	
-				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree);
+				if (type==ft_xml || type==ft_xml_ne || type==ft_xml_hl) print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL)  break;
@@ -1105,7 +1105,7 @@ void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset
 				CHECKP(child);
 				//CHECKP(child);
 				cit=(GETSCHEMENODEX(child)->type==element);
-				print_node_to_buffer(child,tbuf,type,custom_tree);
+				print_node_to_buffer(child,tbuf,type,custom_tree,opentag,closetag);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;				
 			}
