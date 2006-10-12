@@ -58,7 +58,7 @@ ExtFunction::ExtFunction(const std::string &fname, ULibrary lib, ExtFunction **_
 	this->fn_ptr = _fn_ptr_;
 	*(this->fn_ptr) = this;
 }
-ExtFunction::ExtFunction(func_cxt *_fcxt_) : fcxt(_fcxt_), result(NULL)
+ExtFunction::ExtFunction(func_cxt *_fcxt_, ExtFunction **_fn_ptr_) : fcxt(_fcxt_), fn_ptr(_fn_ptr_), result(NULL)
 {
 	instance_count++;
 	fcxt->ref_count++;
@@ -113,7 +113,7 @@ void ExtFunction::free_item(SEDNA_SEQUENCE_ITEM *item)
 
 ExtFunction *ExtFunction::copy()
 {
-	return new ExtFunction(fcxt);
+	return new ExtFunction(fcxt, this->fn_ptr);
 }
 
 SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
@@ -397,3 +397,8 @@ PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, variable_context *c
 
 	return new PPExtFunCall(cxt, arr, fn);
 }
+
+ExtFunctionManager::~ExtFunctionManager()
+{
+}
+
