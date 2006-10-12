@@ -433,8 +433,8 @@
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!namespace-uri)
     (,sa:fn-ns "number" 0 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-atomic !fn!numbers)
+     ,(lambda (num-args) (sa:make-list sa:type-any num-args))
+     ,sa:type-atomic !fn!number)
     (,sa:fn-ns "boolean" 1 1
      ,(lambda (num-args) `(,sa:type-any))
      ,sa:type-atomic !fn!boolean)
