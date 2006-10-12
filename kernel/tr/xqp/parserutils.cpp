@@ -124,6 +124,25 @@ string replace_charref(char* lex_text)
    int char_code;
    string str_char_code;
 
+   //replace hex char ref
+   for (;;)
+   {
+      posb = text.find("&#x", posb);
+      if (posb == string::npos) break;
+
+      pose = text.find(";", posb);
+      if (pose == string::npos) break;
+
+      char_ref =  text.substr(posb+3, pose - (posb+3));
+
+      char_code = strtol(char_ref.c_str(), NULL, 16);
+//      printf("char_code=%d\n", char_code);
+      str_char_code = string(utf8_encode_char(char_code));
+
+      text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
+   }
+
+
    //replace dec char ref
    for (;;)
    {
@@ -139,24 +158,6 @@ string replace_charref(char* lex_text)
 //      printf("char_code=%d\n", char_code);
       str_char_code = string(utf8_encode_char(char_code));
 
-
-      text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
-   }
-
-   //replace hex char ref
-   for (;;)
-   {
-      posb = text.find("&#x", posb);
-      if (posb == string::npos) break;
-
-      pose = text.find(";", posb);
-      if (pose == string::npos) break;
-
-      char_ref =  text.substr(posb+3, pose - (posb+3));
-
-      char_code = strtol(char_ref.c_str(), NULL, 16);
-//      printf("char_code=%d\n", char_code);
-      str_char_code = string(utf8_encode_char(char_code));
 
       text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
    }
