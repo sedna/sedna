@@ -761,7 +761,7 @@
      "unsignedShort"
      "unsignedByte"
      "untypedAtomic"
-     "positiveInteger"))    
+     "positiveInteger"))
   ))
 
 ;-------------------------------------------------
@@ -1213,7 +1213,13 @@
                   ;(("xs" "IDREFS") . !xs!IDREFS)
                   (("xs" "ENTITY") . !xs!ENTITY)
                   ;(("xs" "ENTITIES") . !xs!ENTITIES)
-                  ))
+                  ;----------
+                  ; XQuery predefined schema types
+                  (("xs" "untyped") . !xs!untyped)
+                  (("xs" "untypedAtomic") . !xs!untypedAtomic)
+                  (("xs" "dayTimeDuration") . !xs!dayTimeDuration)
+                  (("xs" "yearMonthDuration") . !xs!yearMonthDuration)
+                  (("xs" "anyAtomicType") . !xs!anyAtomicType)))
          => cdr)
         (else
          type-spec))
