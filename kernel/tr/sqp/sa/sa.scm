@@ -1828,6 +1828,17 @@
                      (cl:signal-user-error
                       XQST0071
                       (string-append "xmlns:" str))))
+                ((not  ; not a constant namespace value
+                  (let ((ns-value
+                         (cadr (sa:op-args (car src)))))
+                    (and (pair? ns-value)
+                         (eq? (sa:op-name ns-value) 'const))))
+                 (if (string=? str "")
+                     ; Default namespace prefix              
+                     (cl:signal-user-error XQST0022 "xmlns")
+                     (cl:signal-user-error
+                      XQST0022
+                      (string-append "xmlns:" str))))
                 (else
                  (loop (cdr src)
                        (cons (car src) namespaces)
