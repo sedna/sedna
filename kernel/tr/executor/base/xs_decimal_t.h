@@ -53,6 +53,12 @@ public:
     bool is_zero() const;
     void print() const;
 
+    xs_decimal_t abs() const;
+    xs_decimal_t ceil() const;
+    xs_decimal_t floor() const;
+    xs_decimal_t round() const;
+    xs_decimal_t round_half_to_even() const;
+
     xs_decimal_t operator - ();
     xs_decimal_t operator - (const xs_decimal_t & d) const { return numerical_operation(d, noi_sub); }
     xs_decimal_t operator + (const xs_decimal_t & d) const { return numerical_operation(d, noi_add); }

@@ -1768,6 +1768,23 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnNumber(cxt, 
                               make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnAbs" || op == "PPFnCeiling" || op == "PPFnFloor" || op == "PPFnRound")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "73");
+
+        PPNumericFuncs::value_func func = NULL;
+        if (op == "PPFnAbs") func = &PPNumericFuncs::fn_abs;
+        else if (op == "PPFnCeiling") func = &PPNumericFuncs::fn_ceiling;
+        else if (op == "PPFnFloor") func = &PPNumericFuncs::fn_floor;
+        else if (op == "PPFnRound") func = &PPNumericFuncs::fn_round;
+        else throw USER_EXCEPTION2(SE1004, "73");
+
+        opit = new PPNumericFuncs(cxt, 
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  func);
+    }
     else if (op == "PPSpaceSequence")
     {
         if (   lst->size() == 1

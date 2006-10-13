@@ -309,3 +309,73 @@ void xs_decimal_t::print() const
 { 
     printf("%s", get_c_str(tr_globals::mem_str_buf)); 
 }
+
+
+xs_decimal_t xs_decimal_t::abs() const
+{
+    xs_decimal_t res;
+    decNumber r1, r2;
+    dec_cxt.status = 0;
+    decimal64ToNumber((decimal64*)(v.v1), &r1);
+    decNumberAbs(&r2, &r1, &dec_cxt);
+    decimal64FromNumber((decimal64*)(res.v.v1), &r2, &dec_cxt);
+    return res;
+}
+
+xs_decimal_t xs_decimal_t::ceil() const
+{
+    xs_decimal_t res;
+    decNumber dv, integral, one;
+
+    dec_cxt.status = 0;
+    decimal64ToNumber((decimal64*)(v.v1), &dv);
+	enum rounding old = dec_cxt.round;
+	dec_cxt.round = DEC_ROUND_DOWN;
+    decNumberToIntegralValue(&integral, &dv, &dec_cxt);
+	dec_cxt.round = old;
+
+    if (!decNumberIsNegative(&dv))
+    {
+        decNumberFromString(&one, "1", &dec_cxt);
+        decNumberAdd(&integral, &integral, &one, &dec_cxt);
+    }
+
+    decimal64FromNumber((decimal64*)(res.v.v1), &integral, &dec_cxt);
+    return res;
+}
+
+xs_decimal_t xs_decimal_t::floor() const
+{
+    xs_decimal_t res;
+    decNumber dv, integral, one;
+
+    dec_cxt.status = 0;
+    decimal64ToNumber((decimal64*)(v.v1), &dv);
+	enum rounding old = dec_cxt.round;
+	dec_cxt.round = DEC_ROUND_DOWN;
+    decNumberToIntegralValue(&integral, &dv, &dec_cxt);
+	dec_cxt.round = old;
+
+    if (decNumberIsNegative(&dv))
+    {
+        decNumberFromString(&one, "1", &dec_cxt);
+        decNumberSubtract(&integral, &integral, &one, &dec_cxt);
+    }
+
+    decimal64FromNumber((decimal64*)(res.v.v1), &integral, &dec_cxt);
+    return res;
+}
+
+xs_decimal_t xs_decimal_t::round() const
+{
+    xs_decimal_t c(this->ceil());
+    xs_decimal_t f(this->floor());
+    if ((c - *this) > (*this - f)) return f;
+    else return c;
+}
+
+xs_decimal_t xs_decimal_t::round_half_to_even() const
+{ // !!! Not implemented
+    return *this;
+}
+
