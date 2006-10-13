@@ -1185,45 +1185,58 @@
     ((and (pair? type-spec) (= (length type-spec) 2)
           (string? (car type-spec)) (string? (cadr type-spec)))
      ; external atomic type
-     (cons
-      (cond
-        ; TODO: construct alist at program initialization
-        ((assoc type-spec
-                '((("xs" "int") . !xs!int)
-                  (("xs" "long") . !xs!long)
-                  (("xs" "short") . !xs!short)
-                  (("xs" "byte") . !xs!byte)
-                  (("xs" "nonPositiveInteger") . !xs!nonPositiveInteger)
-                  (("xs" "negativeInteger") . !xs!negativeInteger)
-                  (("xs" "nonNegativeInteger") . !xs!nonNegativeInteger)
-                  (("xs" "positiveInteger") . !xs!positiveInteger)
-                  (("xs" "unsignedLong") . !xs!unsignedLong)
-                  (("xs" "unsignedInt") . !xs!unsignedInt)
-                  (("xs" "unsignedShort") . !xs!unsignedShort)
-                  (("xs" "unsignedByte") . !xs!unsignedByte)
-                  (("xs" "normalizedString") . !xs!normalizedString)
-                  (("xs" "token") . !xs!token)
-                  (("xs" "language") . !xs!language)
-                  (("xs" "Name") . !xs!Name)
-                  (("xs" "NCName") . !xs!NCName)
-                  (("xs" "NMTOKEN") . !xs!NMTOKEN)
-                  ;(("xs" "NMTOKENS") . !xs!NMTOKENS)
-                  (("xs" "ID") . !xs!ID)
-                  (("xs" "IDREF") . !xs!IDREF)
-                  ;(("xs" "IDREFS") . !xs!IDREFS)
-                  (("xs" "ENTITY") . !xs!ENTITY)
-                  ;(("xs" "ENTITIES") . !xs!ENTITIES)
-                  ;----------
-                  ; XQuery predefined schema types
-                  (("xs" "untyped") . !xs!untyped)
-                  (("xs" "untypedAtomic") . !xs!untypedAtomic)
-                  (("xs" "dayTimeDuration") . !xs!dayTimeDuration)
-                  (("xs" "yearMonthDuration") . !xs!yearMonthDuration)
-                  (("xs" "anyAtomicType") . !xs!anyAtomicType)))
-         => cdr)
-        (else
-         type-spec))
-      sa:type-atomic))
+     (cond
+       ; TODO: construct alist at program initialization
+       ((assoc type-spec
+               '((("xs" "int") . !xs!int)
+                 (("xs" "long") . !xs!long)
+                 (("xs" "short") . !xs!short)
+                 (("xs" "byte") . !xs!byte)
+                 (("xs" "nonPositiveInteger") . !xs!nonPositiveInteger)
+                 (("xs" "negativeInteger") . !xs!negativeInteger)
+                 (("xs" "nonNegativeInteger") . !xs!nonNegativeInteger)
+                 (("xs" "positiveInteger") . !xs!positiveInteger)
+                 (("xs" "unsignedLong") . !xs!unsignedLong)
+                 (("xs" "unsignedInt") . !xs!unsignedInt)
+                 (("xs" "unsignedShort") . !xs!unsignedShort)
+                 (("xs" "unsignedByte") . !xs!unsignedByte)
+                 (("xs" "normalizedString") . !xs!normalizedString)
+                 (("xs" "token") . !xs!token)
+                 (("xs" "language") . !xs!language)
+                 (("xs" "Name") . !xs!Name)
+                 (("xs" "NCName") . !xs!NCName)
+                 (("xs" "NMTOKEN") . !xs!NMTOKEN)
+                 ;(("xs" "NMTOKENS") . !xs!NMTOKENS)
+                 (("xs" "ID") . !xs!ID)
+                 (("xs" "IDREF") . !xs!IDREF)
+                 ;(("xs" "IDREFS") . !xs!IDREFS)
+                 (("xs" "ENTITY") . !xs!ENTITY)
+                 ;(("xs" "ENTITIES") . !xs!ENTITIES)
+                 ;----------
+                 ; XQuery predefined schema types:
+                 ; 2.5.1 Predefined Schema Types                
+                 ;(("xs" "anyType") . !xs!anyType)  ; These must not be supported
+                 ;(("xs" "untyped") . !xs!untyped)
+                 ;(("xs" "anySimpleType") . !xs!anySimpleType)
+                 (("xs" "anyAtomicType") . !xs!anyAtomicType)
+                 (("xs" "untypedAtomic") . !xs!untypedAtomic)
+                 (("xs" "dayTimeDuration") . !xs!dayTimeDuration)
+                 (("xs" "yearMonthDuration") . !xs!yearMonthDuration)
+                 ))
+        => (lambda (pair)
+             (cons (cdr pair)
+                   (if
+                    (memq (cdr pair) '(!xs!anyType !xs!untyped))
+                    sa:type-any sa:type-atomic))))
+       ((not (string=? (car type-spec) "xs"))
+        ; TODO: QName resolution in type names
+        (cl:signal-user-error XPST0081 (car type-spec)))
+       (else
+        ; We do not know this type
+        ; Was: (cons type-spec sa:type-atomic)
+        (cl:signal-user-error
+         XPST0051
+         (string-append (car type-spec) ":" (cadr type-spec))))))
     ((eq? (car type-spec) 'doc-test)
      (or
       (and (null? (cdr type-spec))  ; no more arguments
@@ -2005,23 +2018,43 @@
 ;-------------------------------------------------
 ; 2.11 Expressions on Sequence Types
 
+; return-type-lambda ::= (lambda (args) ...)
+; args - rewritten arguments of the operation
+(define (sa:cast-helper return-type-lambda)
+  (lambda (expr vars funcs ns-binding default-ns)
+    (and
+     (sa:assert-num-args expr 2)
+     (let ((args
+            (list
+             (sa:analyze-expr (car (sa:op-args expr))
+                              vars funcs ns-binding default-ns)
+             (sa:analyze-type (cadr (sa:op-args expr))
+                              vars funcs ns-binding default-ns))))
+       (and
+        (not (memv #f args))
+        (let* ((type-spec (caadr args))  ; selects '(type ...)
+               (seq-type (cadr type-spec))
+               (item-type (if (and  ; occurrence indicator presented
+                               (pair? seq-type)
+                               (not (null? (cdr seq-type))))
+                              (cadr seq-type)
+                              seq-type)))
+          (if
+           (eq? item-type '!xs!anyAtomicType)
+           (cl:signal-user-error XPST0080 "Cast as xs:anyAtomicType")
+           (cons (cons (sa:op-name expr)
+                       (map car args))
+                 (return-type-lambda args)))))))))
+
+(define sa:analyze-cast (sa:cast-helper
+                         cdar  ; type of the subexpr
+                         ))
+
 ; Castable
-; Clone of sa:analyze-cast
 ; TODO: analyze single type instead of item type
-(define (sa:analyze-castable expr vars funcs ns-binding default-ns)
-  (and
-   (sa:assert-num-args expr 2)
-   (let ((args (list
-                (sa:analyze-expr
-                 (car (sa:op-args expr)) vars funcs ns-binding default-ns)
-                (sa:analyze-type
-                 (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
-     (if (memv #f args)
-         #f
-         (cons (cons (sa:op-name expr)
-                     (map car args))
-               sa:type-atomic  ; boolean result
-               )))))
+(define sa:analyze-castable
+  (sa:cast-helper
+   (lambda (args) 'sa:type-atomic)))
 
 ; Treat
 (define (sa:analyze-treat expr vars funcs ns-binding default-ns)
@@ -2037,6 +2070,10 @@
          (cons (cons (sa:op-name expr)
                      (map car args))
                (cdadr args))))))
+; DL: XPST0080 is not to be thrown for treat for xs:anyAtomicType
+;(define sa:analyze-treat (sa:cast-helper
+;                          cdadr  ; type of the treat-type
+;                         ))
 
 ; Typeswitch
 (define (sa:analyze-typeswitch expr vars funcs ns-binding default-ns)
@@ -2328,17 +2365,6 @@
                           (rpt (cdr form) (cdr act))))))))))
               (else
                (loop (cdr fs)))))))))))
-
-(define (sa:analyze-cast expr vars funcs ns-binding default-ns)
-  (and
-   (sa:assert-num-args expr 2)
-   (let ((args (list (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns)
-                     (sa:analyze-type (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
-     (if (memv #f args)
-         #f
-         (cons (cons (sa:op-name expr)
-                     (map car args))
-               (cdar args))))))
 
 
 ;==========================================================================
