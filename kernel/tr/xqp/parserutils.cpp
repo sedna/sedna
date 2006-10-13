@@ -142,6 +142,8 @@ string replace_charref(char* lex_text)
       text = text.replace(posb, (pose-posb)+1, str_char_code.c_str(), 0, str_char_code.size());
    }
 
+   posb=0; 
+   pose=0;
 
    //replace dec char ref
    for (;;)
