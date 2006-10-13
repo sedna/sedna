@@ -726,6 +726,23 @@
               `(1 (PPFnNumber ,(l2p:any-lr-node2por (car node))))
              )
              
+             ; 6.4 Functions on Numeric Values
+             ((eq? op-name '!fn!abs)
+              `(1 (PPFnAbs ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!ceiling)
+              `(1 (PPFnCeiling ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!floor)
+              `(1 (PPFnFloor ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!round)
+              `(1 (PPFnRound ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!round-half-to-even)
+              `(1 (PPFnRoundHalfToEven
+                   ,@(map l2p:any-lr-node2por node))))
+             
              ; *** boolean ***
              ((eq? op-name '!fn!boolean)
               `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))

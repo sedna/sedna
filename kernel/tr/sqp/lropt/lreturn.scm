@@ -246,6 +246,8 @@
        !fn!string !fn!document-uri
        ; XQuery datamodel accessors
        !fn!node-kind !fn!string-value !fn!typed-value
+       ; 6.4 Functions on Numeric Values
+       !fn!abs !fn!ceiling !fn!floor !fn!round !fn!round-half-to-even
        ; 7.4 Functions on String Values
        !fn!concat !fn!string-length !fn!translate
        ; 7.5 Functions Based on Substring Matching

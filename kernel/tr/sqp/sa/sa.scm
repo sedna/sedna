@@ -417,6 +417,23 @@
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!false)
     ;----------------------------------------
+    ; 6.4 Functions on Numeric Values
+    (,sa:fn-ns "abs" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!abs)
+    (,sa:fn-ns "ceiling" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!ceiling)
+    (,sa:fn-ns "floor" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!floor)
+    (,sa:fn-ns "round" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!round)
+    (,sa:fn-ns "round-half-to-even" 1 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-nodes !fn!round-half-to-even)
+    ;----------------------------------------
     ; Single-arg atomic function
     (,sa:fn-ns "name" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))

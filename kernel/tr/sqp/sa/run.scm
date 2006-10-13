@@ -20,6 +20,8 @@
 
 (load "sa.scm")
 
+(define go sa:analyze-query)
+
 ;------------------------
 
 (define query

@@ -60,6 +60,8 @@
 
 (load "test/test-lr2por-max.scm")
 
+(define go l2p:lr2por)
+
 (l2p:lr2por
  '(manage
    (prolog)
