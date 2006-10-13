@@ -2255,16 +2255,9 @@
      (null? args)  ; no arguments
      (cl:signal-input-error SE5036 expr)
      (let ((fun-name (sa:resolve-qname
-                      (car args) ns-binding (cadr default-ns)))
-           (actual-args
-            (map
-             (lambda (subexpr)
-               (sa:analyze-expr
-                subexpr vars funcs ns-binding default-ns))
-             (cdr args))))
+                      (car args) ns-binding (cadr default-ns))) )
        (and
         fun-name
-        (not (memv #f actual-args))  ; error detected in arguments
         (let ((name-parts (sa:proper-qname fun-name)))
           (let loop ((fs funcs))
             (cond
@@ -2277,48 +2270,62 @@
               ((and (string=? (caar fs) (car name-parts))
                     (string=? (cadar fs) (cadr name-parts)))
                (let ((fun-declaration (car fs))
-                     (num-actual (length actual-args)))
+                     (num-actual (length
+                                  ; fun-call arguments minus fun-name
+                                  (cdr args))))
                  (if
                   (or (< num-actual (list-ref fun-declaration 2))
                       (and (list-ref fun-declaration 3)  ; max-args
                            (> num-actual (list-ref fun-declaration 3))))
-                  (cl:signal-user-error XPST0017  ; was: SE5038
-                                        (car name-parts) ":" (cadr name-parts))
+                  (cl:signal-user-error
+                   XPST0017  ; was: SE5038
+                   (string-append (car name-parts) ":" (cadr name-parts)))
                   (let ((formal-args
-                         ((list-ref fun-declaration 4) num-actual)))
-                    (let rpt ((form formal-args)
-                              (act actual-args))
-                      (cond
-                        ((null? form) ; all scanned successfully
-                         (sa:fun-call-post-proc  ; post processing
-                          (cons
-                           (if
-                            (= (length fun-declaration) 7)
-                            (let ((extra (list-ref fun-declaration 6)))
-                              (cond
-                                ((not extra)  ; call to external function
-                                 (cons 'ext-fun-call
+                         ((list-ref fun-declaration 4) num-actual))
+                        ; Actual function arguments are to be analyzed ONLY
+                        ; after the function name and the proper number of
+                        ; arguments are matched
+                        (actual-args
+                         (map
+                          (lambda (subexpr)
+                            (sa:analyze-expr
+                             subexpr vars funcs ns-binding default-ns))
+                          (cdr args))))
+                    (and
+                     (not (memv #f actual-args))  ; error detected in arguments
+                     (let rpt ((form formal-args)
+                               (act actual-args))
+                       (cond
+                         ((null? form) ; all scanned successfully
+                          (sa:fun-call-post-proc  ; post processing
+                           (cons
+                            (if
+                             (= (length fun-declaration) 7)
+                             (let ((extra (list-ref fun-declaration 6)))
+                               (cond
+                                 ((not extra)  ; call to external function
+                                  (cons 'ext-fun-call
+                                        (cons fun-name
+                                              (map car actual-args))))
+                                 ((and (pair? extra) (eq? (car extra) 'cast))
+                                  `(cast
+                                    ,@(map car actual-args)
+                                    (type (one ,(cadr extra)))))
+                                 (else  ; Basic name for function provided
+                                  (cons
+                                   (list-ref fun-declaration 6)  ; fun name
+                                   (map car actual-args)))))
+                             (cons (sa:op-name expr) ; ='fun-call
                                    (cons fun-name
-                                        (map car actual-args))))
-                                ((and (pair? extra) (eq? (car extra) 'cast))
-                                 `(cast
-                                   ,@(map car actual-args)
-                                   (type (one ,(cadr extra)))))
-                                (else  ; Basic name for function provided
-                                 (cons
-                                  (list-ref fun-declaration 6)  ; fun name
-                                  (map car actual-args)))))
-                            (cons (sa:op-name expr) ; ='fun-call
-                                  (cons fun-name
-                                        (map car actual-args))))
-                           ; function return type
-                           (list-ref fun-declaration 5))))
-                        ((and (eq? (car form) sa:type-nodes)
-                              (eq? (cdar act) sa:type-atomic))
-                         (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
-                         )
-                        (else
-                         (rpt (cdr form) (cdr act)))))))))
+                                         (map car actual-args))))
+                            ; function return type
+                            (list-ref fun-declaration 5))))
+                         ((and (eq? (car form) sa:type-nodes)
+                               (eq? (cdar act) sa:type-atomic))
+                          (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
+                          )
+                         (else
+                          (rpt (cdr form) (cdr act))))))))))
               (else
                (loop (cdr fs)))))))))))
 
