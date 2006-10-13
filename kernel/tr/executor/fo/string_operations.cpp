@@ -282,10 +282,10 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool do_not_ch
 
 	switch (a1.get_type()) 
 	{
-	case tc_light_atomic: 
+	case tc_light_atomic_var_size: 
 		switch (a2.get_type()) 
 		{
-		case tc_light_atomic: 
+		case tc_light_atomic_var_size: 
             return tuple_cell::atomic(sign(fn_compare_mstr_vs_mstr(a1.get_str_mem(), a2.get_str_mem())));
 
 		case tc_heavy_atomic_estr:
@@ -299,7 +299,7 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool do_not_ch
 	case tc_heavy_atomic_pstr_short:
 		switch (a2.get_type()) 
 		{
-		case tc_light_atomic: 
+		case tc_light_atomic_var_size: 
             return tuple_cell::atomic(-sign(fn_compare_mstr_vs_estr_pstr_short(a2.get_str_mem(), a1.get_str_vmm(), a1.get_strlen_vmm())));
 
 		case tc_heavy_atomic_estr:
@@ -312,7 +312,7 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool do_not_ch
 	case tc_heavy_atomic_pstr_long:
 		switch (a2.get_type()) 
 		{
-		case tc_light_atomic: 
+		case tc_light_atomic_var_size: 
             return tuple_cell::atomic(sign(fn_compare_pstr_long_vs_mstr(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_mem())));
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:

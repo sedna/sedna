@@ -36,30 +36,50 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
     return t;
 }
 
+static void _strip_c_str(const char* t, const char** start, const char** end)
+{
+    int len = strlen(t);
+    *start = t;
+    *end = t + len - 1;
+
+    while (**start != '\0' && 
+           (**start == ' ' || **start == '\t' || **start == '\n' || **start == '\r'))
+        ++(*start);
+
+    while (*end > *start && 
+           (**end == ' ' || **end == '\t' || **end == '\n' || **end == '\r'))
+        --(*end);
+
+    ++(*end);
+}
+
 float c_str2xs_float(const char *t)
 {
     float res = 0.0;
+    const char *start = NULL;
+    const char *end = NULL;
+    _strip_c_str(t, &start, &end);
 
-    if (strcmp(t, "NaN") == 0)
+    if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
     {
         __int32  x = 0x7F800001;
         res = *(float*)&x;
     }
-    else if (strcmp(t, "-INF") == 0)
+    else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
     {
         __int32 x = 0xFF800000;
         res = *(float*)&x;
     }
-    else if (strcmp(t, "INF") == 0)
+    else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
     {
         __int32 x = 0x7F800000;
         res = *(float*)&x;
     }
     else
     {
-        char* stop;
-        res = (float)strtod(t, &stop);
-        if (*stop != '\0') throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
+        char* stop = NULL;
+        res = (float)strtod(start, &stop);
+        if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
     }
 
     return res;
@@ -68,27 +88,30 @@ float c_str2xs_float(const char *t)
 double c_str2xs_double(const char *t)
 {
     double res = 0.0;
+    const char *start = NULL;
+    const char *end = NULL;
+    _strip_c_str(t, &start, &end);
 
-    if (strcmp(t, "NaN") == 0)
+    if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
     {
         __int64  x = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
         res = *(double*)&x;
     }
-    else if (strcmp(t, "-INF") == 0)
+    else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
     {
         __int64 x = ((__int64)0xFFF00000 << (__int64)32);
         res = *(double*)&x;
     }
-    else if (strcmp(t, "INF") == 0)
+    else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
     {
         __int64 x = ((__int64)0x7FF00000 << (__int64)32);
         res = *(double*)&x;
     }
     else
     {
-        char* stop;
-        res = strtod(t, &stop);
-        if (*stop != '\0') throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
+        char* stop = NULL;
+        res = strtod(start, &stop);
+        if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
     }
 
     return res;
@@ -96,18 +119,33 @@ double c_str2xs_double(const char *t)
 
 __int64 c_str2xs_integer(const char *t)
 {
-    char* stop;
-    __int64 res = strto__int64(t, &stop, 10);
-    if (*stop != '\0') throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
+    __int64 res = 0;
+    char* stop = NULL;
+    const char *start = NULL;
+    const char *end = NULL;
+    _strip_c_str(t, &start, &end);
+
+    res = strto__int64(start, &stop, 10);
+    if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
 
     return res;
 }
 
 bool c_str2xs_boolean(const char *t)
 {
-    bool res;
-    if (_stricmp(t, "true") == 0 || _stricmp(t, "1") == 0) res = true;
-    else if (_stricmp(t, "false") == 0 || _stricmp(t, "0") == 0) res = false;
+    bool res = false;
+    const char *start = NULL;
+    const char *end = NULL;
+    _strip_c_str(t, &start, &end);
+
+    if (end - start == 1)
+    {
+        if (strncmp(start, "1", 1) == 0) res = true;
+        else if (strncmp(start, "0", 1) == 0) res = false;
+        else throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
+    }
+    else if ((end - start == 4) && (strncmp(start, "true", 4) == 0)) res = true;
+    else if ((end - start == 5) && (strncmp(start, "false", 5) == 0)) res = false;
     else throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
 
     return res;
@@ -168,7 +206,7 @@ inline int _sprint__int64(char* buffer, __int64 x)
 }
 
 
-char *get_xs_double_lexical_representation(char *s, double d)
+static char *_get_xs_double_lexical_representation(char *s, double d, const char* spec)
 {
     if (u_is_neg_inf(d))
         strcpy(s, "-INF");
@@ -188,7 +226,7 @@ char *get_xs_double_lexical_representation(char *s, double d)
         double d_abs = d < 0 ? -d : d;
         if ((d_abs >= 1000000 || d_abs < 0.000001))
         { // exponential
-            sprintf(s, "%#.12E", d);
+            sprintf(s, spec, d);
             int len = strlen(s);
             int i = 0;
             int E_pos = 0;
@@ -226,6 +264,16 @@ char *get_xs_double_lexical_representation(char *s, double d)
     }
 
     return s;
+}
+
+char *get_xs_double_lexical_representation(char *s, double d)
+{
+    return _get_xs_double_lexical_representation(s, d, "%#.14E");
+}
+
+char *get_xs_float_lexical_representation(char *s, float f)
+{
+    return _get_xs_double_lexical_representation(s, (double)f, "%#.7E");
 }
 
 char *get_xs_integer_lexical_representation(char *s, __int64 v)
@@ -285,7 +333,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
                                         return get_xs_boolean_lexical_representation(s, c.get_xs_boolean());
                                     else 
                                         return (c.get_xs_boolean() ? strcpy(s, "#t") : strcpy(s, "#f"));
-        case xs_float             : return get_xs_double_lexical_representation(s, (double)(c.get_xs_float()));
+        case xs_float             : return get_xs_float_lexical_representation(s, c.get_xs_float());
         case xs_double            : return get_xs_double_lexical_representation(s, c.get_xs_double());
         case xs_decimal           : return c.get_xs_decimal().get_c_str(s);
         case xs_nonPositiveInteger:

@@ -186,7 +186,6 @@ numeric_operations$(OBJ_EXT): numeric_operations.cpp \
   ../../kernel/common/u/uutils.h ../../kernel/common/base.h \
   ../../kernel/tr/nid/nid.h ../../kernel/common/errdbg/exceptions.h \
   ../../kernel/tr/executor/base/xs_decimal_t.h \
-  ../../kernel/tr/executor/base/date.h \
   ../../kernel/common/errdbg/exceptions.h ../../kernel/tr/pstr/pstr.h \
   ../../kernel/tr/executor/base/SequenceType.h \
   ../../kernel/tr/executor/base/XPath.h \

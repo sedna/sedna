@@ -86,7 +86,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 		if (!tc.is_atomic() || !tc.is_string_type())
 			throw USER_EXCEPTION(SE1071);
 		tc = tuple_cell::make_sure_light_atomic(tc);
-		const char *qname = tc.get_xs_QName_mem();
+		const char *qname = tc.get_str_mem();
 
 		NCName* prefix=NULL;
 		separateLocalAndPrefix(prefix,qname);

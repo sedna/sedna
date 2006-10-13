@@ -251,7 +251,7 @@ void serialize_string(const tuple_cell& tc, void* dest)
     int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
     memcpy(dest, &flag, sizeof(bool));                       
-    if(tc.get_type() == tc_light_atomic) memcpy((char*)dest + sizeof(bool), tc.get_str_mem(), length_ser);
+    if(tc.is_light_atomic()) memcpy((char*)dest + sizeof(bool), tc.get_str_mem(), length_ser);
     else copy_text((char*)dest + sizeof(bool), tc.get_str_vmm(), length_ser);
     *((char*)dest+sizeof(bool)+length_ser) = '\0';
 }
@@ -526,7 +526,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_string               : 
                     {
                         serialize_string(t.cells[i], (char*)p+offset); 
-                        if(t.cells[i].get_type() != tc_light_atomic)
+                        if(t.cells[i].is_light_atomic())
                         {
                             CHECKP(v1);
                             VMM_SIGNAL_MODIFICATION(v1);

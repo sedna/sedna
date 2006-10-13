@@ -93,7 +93,7 @@ public:
     {
         switch (tc.get_type())
         {
-            case tc_light_atomic           : return append_mstr(tc.get_str_mem());
+            case tc_light_atomic_var_size  : return append_mstr(tc.get_str_mem());
             case tc_heavy_atomic_estr      :
 			case tc_heavy_atomic_pstr_short: return append_estr(tc.get_str_vmm(), tc.get_strlen_vmm());
             case tc_heavy_atomic_pstr_long : return append_pstr_long(tc.get_str_vmm());

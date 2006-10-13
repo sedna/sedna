@@ -8,6 +8,9 @@
 #include "PPNodeOps.h"
 #include "dm_accessors.h"
 #include "PPSLStub.h"
+#include "xs_helper.h"
+#include "PPUtils.h"
+#include "casting_operations.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,4 +122,96 @@ bool PPFnName::result(PPIterator* cur, variable_context *cxt, void*& r)
     tc.set_xtype(xs_string); // !!! dangerous
     r = new sequence(dm_node_name(tc.get_node()));
     return true;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNumber
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnNumber::PPFnNumber(variable_context *_cxt_,
+                       PPOpIn _child_) : PPIterator(_cxt_),
+                                         child(_child_)
+{
+}
+
+PPFnNumber::~PPFnNumber()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnNumber::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnNumber::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnNumber::close ()
+{
+    child.op->close();
+}
+
+void PPFnNumber::next(tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        child.op->next(t);
+
+        if (t.is_eos())
+        {
+            t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+            return;
+        }
+
+        tuple_cell tc = atomize(child.get(t));
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:number is a sequence of length more than 1");
+
+        if (tc.is_eos())
+        {
+            t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+        }
+        else
+        {
+            try
+            {
+                t.copy(cast(tc, xs_double));
+            }
+            catch(SednaUserException &e)
+            {
+                t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+            }
+        }
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnNumber::copy(variable_context *_cxt_)
+{
+    PPFnNumber *res = new PPFnNumber(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnNumber::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnNumber::result");
 }
