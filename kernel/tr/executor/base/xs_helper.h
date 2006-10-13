@@ -20,9 +20,10 @@ bool    c_str2xs_boolean(const char *t);
 
 
 
-char *get_xs_double_lexical_representation (char *s, double d);
-char *get_xs_integer_lexical_representation(char *s, __int64 v);
-char *get_xs_boolean_lexical_representation(char *s, bool b);
+char *get_xs_double_lexical_representation  (char *s, double d);
+char *get_xs_float_lexical_representation   (char *s, float f);
+char *get_xs_integer_lexical_representation (char *s, __int64 v);
+char *get_xs_boolean_lexical_representation (char *s, bool b);
 char *get_xs_dateTime_lexical_representation(char *s, const XMLDateTime &d);
 
 

@@ -68,7 +68,7 @@ void serialize2lr_xp_op_type(std::ostream &s, xp_op_type type)
 
 void serialize2lr_tuple_cell(std::ostream &s, const tuple_cell &tc)
 {
-    if (tc.get_type() == tc_light_atomic)
+    if (tc.is_light_atomic())
     {
         s << "(const (type ";
         //(const (type !xs!integer) 153)

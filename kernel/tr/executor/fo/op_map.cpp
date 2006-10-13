@@ -564,6 +564,7 @@ int simple_type2bin_op_gt_index(xmlscm_type xtype)
         return 5;
     case xs_string:
     case xs_untypedAtomic: 
+    case xs_anyURI:
         return 6;
     case xs_boolean:
         return 7;
@@ -606,6 +607,7 @@ int simple_type2bin_op_lt_index(xmlscm_type xtype)
         return 5;
     case xs_string:
     case xs_untypedAtomic: 
+    case xs_anyURI:
         return 6;
     case xs_boolean:
         return 7;
@@ -648,6 +650,7 @@ int simple_type2bin_op_ge_index(xmlscm_type xtype)
         return 5;
     case xs_string:
     case xs_untypedAtomic: 
+    case xs_anyURI:
         return 6;
     case xs_boolean:
         return 7;
@@ -691,6 +694,7 @@ int simple_type2bin_op_le_index(xmlscm_type xtype)
         return 5;
     case xs_string:
     case xs_untypedAtomic: 
+    case xs_anyURI:
         return 6;
     case xs_boolean:
         return 7;

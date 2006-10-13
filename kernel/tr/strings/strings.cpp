@@ -251,7 +251,7 @@ void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 
 	switch (tc.get_type())
 	{
-	case tc_light_atomic:
+	case tc_light_atomic_var_size:
 		//crmout.write(tc.get_str_mem(), tc.get_strlen_mem());
 		crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
 		return;
@@ -289,7 +289,7 @@ void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc)
 
 	switch (tc.get_type())
 	{
-	case tc_light_atomic:
+	case tc_light_atomic_var_size:
 		fn(tc.get_str_mem(), tc.get_strlen_mem(), p);
 		return;
 	case tc_heavy_atomic_estr:

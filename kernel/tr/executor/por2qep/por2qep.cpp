@@ -1759,6 +1759,15 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnName(cxt, 
                             make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnNumber")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "73");
+
+        opit = new PPFnNumber(cxt, 
+                              make_pp_op(cxt, lst->at(1).internal.list));
+    }
     else if (op == "PPSpaceSequence")
     {
         if (   lst->size() == 1

@@ -274,7 +274,7 @@ void PPElementConstructor::next  (tuple &t)
 		if (name==NULL)
 		{
 			res=getQnameParameter(qname);
-			name=res.get_xs_QName_mem();
+			name=res.get_str_mem();
 		}
 		//context save
 		xptr parind=cont_parind;
@@ -644,7 +644,7 @@ void PPAttributeConstructor::next  (tuple &t)
 		if (name==NULL)
 		{
 			res1=getQnameParameter(qname);
-			name=res1.get_xs_QName_mem();
+			name=res1.get_str_mem();
 		}
 		NCName* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);
@@ -1059,7 +1059,7 @@ void PPPIConstructor::next  (tuple &t)
 		if (name==NULL)
 		{
 			res1=getQnameParameter(qname);
-			name=res1.get_xs_QName_mem();
+			name=res1.get_str_mem();
 		}
 		NCName* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);

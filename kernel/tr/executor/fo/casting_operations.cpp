@@ -138,7 +138,7 @@ inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 
 inline tuple_cell cast_xs_float_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
-    get_xs_double_lexical_representation(tr_globals::mem_str_buf, (double)c.get_xs_float());
+    get_xs_float_lexical_representation(tr_globals::mem_str_buf, c.get_xs_float());
     return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 

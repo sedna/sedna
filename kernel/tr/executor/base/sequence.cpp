@@ -133,21 +133,27 @@ int sequence::add(const tuple &t)
     {
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
 
-        if (t.cells[i].is_string_type() && (copy_vmm_strings || t.cells[i].is_light_atomic()))
+        if (t.cells[i].is_string_type() /*???variable size???*/&& (copy_vmm_strings || t.cells[i].is_light_atomic()))
         {
             if (txt_eblk == NULL) init_txt_blks();
             int new_blks_num = 0;
             xptr txt_ptr = t.cells[i].is_light_atomic() ? copy_text(t.cells[i].get_str_mem(), &txt_eblk, &new_blks_num) :
                                                           copy_text(t.cells[i].get_str_vmm(), t.cells[i].get_strlen_vmm(), &txt_eblk, &new_blks_num);
+
+            (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
+/*
             (dest_addr + i)->set_xptr(txt_ptr);
             if (t.cells[i].is_light_atomic())
                 (dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
             (dest_addr + i)->_reset_str_ptr();
+*/
             txt_blks_num += new_blks_num;
             CHECKP(eblk);
         }
+/*
         else
             (dest_addr + i)->_reset_str_ptr();
+*/
     }
 
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
@@ -196,9 +202,10 @@ void sequence::get(tuple &t, int pos)
             int strlen = c.get_strlen_vmm();
             char* str = new char[strlen + 1];
             str[strlen] = '\0';
-            copy_text(str, c.get_node(), strlen);
+            copy_text(str, c.get_str_vmm(), strlen);
 
-            c.set_atomic(c.get_atomic_type(), str);
+            c._adjust_restored_tc(str);
+            //c.set_atomic(c.get_atomic_type(), str);
         }
     }
 }

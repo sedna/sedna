@@ -67,7 +67,8 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 		
 		return len;
 	}
-	case tc_light_atomic:
+	case tc_light_atomic_fix_size: 
+	case tc_light_atomic_var_size: 
 	{
 		unsigned char *p = (unsigned char *)tc->get_str_mem();
 		unsigned char *end = p + tc->get_strlen_mem();
@@ -81,7 +82,7 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 		return len;
 	}
 	case tc_heavy_atomic_pstr_long:
-		return pstr_long_length(tc->get_str_vmm());;
+		return pstr_long_length(tc->get_str_vmm());
 	}
 }
 

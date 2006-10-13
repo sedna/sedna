@@ -26,7 +26,8 @@ typedef void (*string_consumer_fn)(const char *str, int len, void *p);
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, tcell_ptr, params) \
 	switch (tcell_ptr->get_type()) \
 	{ \
-	case tc_light_atomic: {\
+	case tc_light_atomic_var_size: \
+	case tc_light_atomic_fix_size: {\
 		char *str = tcell_ptr->get_str_mem(); \
 		int len = tcell_ptr->get_strlen_mem(); \
 		char_iterator start1(str, len, 0); \
