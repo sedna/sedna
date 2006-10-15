@@ -17,7 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-static const unsigned namingBitmap[] = {
+const unsigned namingBitmap[] = {
 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
@@ -99,7 +99,7 @@ static const unsigned namingBitmap[] = {
 0x000000A0, 0x003EFFFE, 0xFFFFFFFE, 0xFFFFFFFF,
 0x661FFFFF, 0xFFFFFFFE, 0xFFFFFFFF, 0x77FFFFFF,
 };
-static const unsigned char nmstrtPages[] = {
+const unsigned char nmstrtPages[] = {
 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00,
 0x00, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 0x10, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -133,7 +133,7 @@ static const unsigned char nmstrtPages[] = {
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
-static const unsigned char namePages[] = {
+const unsigned char namePages[] = {
 0x19, 0x03, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x00,
 0x00, 0x1F, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
 0x10, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -213,7 +213,7 @@ inline int utf8_get_symbol_length(unsigned char start)
 {
     if((start & 128) == 0)   return 1;         //mask = 10000000 - check the highest bit;
     if((start & 224) == 192) return 2;         //mask = 11100000 - 192 means that the highest byte is 110xxxxx;
-    if((start & 240) == 224) return 3;         //mask = 11110000 - 224 means that the highest bute is 1110xxxx;
+    if((start & 240) == 224) return 3;         //mask = 11110000 - 224 means that the highest byte is 1110xxxx;
     return 4;                                  //Note! that we doesn't check if representation correct or not here.
 }
 

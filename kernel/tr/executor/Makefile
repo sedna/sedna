@@ -37,6 +37,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        base64Binary$(OBJ_EXT)           \
                        uri$(OBJ_EXT)                    \
                        XmlNames$(OBJ_EXT)               \
+                       PPUriFuncs$(OBJ_EXT)             \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\
                        PPIf$(OBJ_EXT)					\
