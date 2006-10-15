@@ -17,6 +17,7 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
     xmlscm_type t = evaluate_common_type(t1, t2);    
     
+    ///FIXME!!! xs:anyURI possibly also must be compared as string.
     if(t == xs_string  || is_derived_from_xs_string(t))  return xs_string;
     if(t == xs_integer || is_derived_from_xs_integer(t)) return xs_integer; 
     

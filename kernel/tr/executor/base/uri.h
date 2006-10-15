@@ -10,5 +10,7 @@
 #include "PPBase.h"
 
 bool chech_constraints_for_xs_anyURI(const tuple_cell *tc);
+bool check_constraints_for_absolute_URI(const tuple_cell *tc);
+bool check_constraints_for_relative_URI(const tuple_cell *tc);
 
 #endif
