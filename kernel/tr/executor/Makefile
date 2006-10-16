@@ -32,6 +32,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        xs_decimal_t$(OBJ_EXT)			\
                        decContext$(OBJ_EXT)				\
                        decimal64$(OBJ_EXT)				\
+                       decimal128$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
                        base64Binary$(OBJ_EXT)           \
                        uri$(OBJ_EXT)                    \
