@@ -20,7 +20,9 @@ PPDDO::PPDDO(variable_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
                                child(_child_)
 {
-
+#ifdef TURN_ON_DDO
+	ret_val=XNULL;
+#endif
 }
 
 PPDDO::~PPDDO()
@@ -39,6 +41,7 @@ void PPDDO::open  ()
     child.op->open();
     pos = 0;
     s = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
+	ret_val=XNULL;
 #else
     child.op->open();
 #endif
@@ -50,6 +53,7 @@ void PPDDO::reopen()
     child.op->reopen();
     pos = 0;
     s->clear();
+	ret_val=XNULL;
 #else
     child.op->reopen();
 #endif
@@ -61,6 +65,7 @@ void PPDDO::close ()
     child.op->close();
     pos = 0;
     delete s;
+	ret_val=XNULL;
 #else
     child.op->close();
 #endif
@@ -92,14 +97,25 @@ void PPDDO::next  (tuple &t)
         /*u_ftime(&t_sort2);
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
     }
-
-    if (pos < s->size()) s->get(t,pos++);
+while (true)
+{
+    if (pos < s->size()) 
+	{
+		s->get(t,pos++);
+		if (t.cells[0].get_node()!=ret_val)
+		{
+			ret_val=t.cells[0].get_node();
+			return;
+		}
+	}
     else 
     {
         t.set_eos();
         pos = 0;
         s->clear();
+		return;
     }
+}
 #else
     child.op->next(t);
 #endif

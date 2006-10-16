@@ -45,6 +45,7 @@ protected:
 #ifdef TURN_ON_DDO
     int pos;
     sorted_sequence *s;
+	xptr ret_val;
 #endif
 
     // given parameters
