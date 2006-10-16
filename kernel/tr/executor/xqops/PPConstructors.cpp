@@ -851,6 +851,7 @@ PPCommentConstructor::PPCommentConstructor(variable_context *_cxt_,
                                     content(_content_)
 {
 	at_value=NULL;
+	strm.add_str("--","-");
 	
 }
 
@@ -859,6 +860,7 @@ PPCommentConstructor::PPCommentConstructor(variable_context *_cxt_,
 {
 	at_value=new char[strlen(value)+1];
 	strcpy(at_value,value);
+	strm.add_str("--","-");
 }
 PPCommentConstructor::~PPCommentConstructor()
 {
@@ -915,6 +917,10 @@ void PPCommentConstructor::next  (tuple &t)
 		}
 		else
 			size=strlen(value);
+		
+		int rst=strm.parse(value,size,NULL,NULL);
+		if (rst==1||(size>0 && value[size-1]=='-')) 
+			throw USER_EXCEPTION(XQDY0072);
 		xptr newcomm;
 		if (cont_parind==XNULL || deep_copy )
 			newcomm= insert_comment(XNULL,XNULL,virt_root,value,size);
@@ -969,6 +975,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 {
 	at_name=NULL;
 	at_value=NULL;
+	strm.add_str("?>","--");
 	
 }
 PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
@@ -978,6 +985,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	at_name=new char[strlen(name)+1];
 	strcpy(at_name,name);
 	at_value=NULL;
+	strm.add_str("?>","--");
 	
 }
 PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
@@ -987,6 +995,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	at_name=NULL;
 	at_value=new char[strlen(value)+1];
 	strcpy(at_value,value);
+	strm.add_str("?>","--");
 }
 PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
 					 const char* name, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
@@ -995,6 +1004,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	strcpy(at_name,name);
 	at_value=new char[strlen(value)+1];
 	strcpy(at_value,value);
+	strm.add_str("?>","--");
 }
 PPPIConstructor::~PPPIConstructor()
 {
@@ -1080,7 +1090,9 @@ void PPPIConstructor::next  (tuple &t)
 		}
 		else 
 			size=strlen(value);
-
+		int rst=strm.parse(value,size,NULL,NULL);
+		if (rst==1) 
+			throw USER_EXCEPTION(XQDY0026);
 		//Attribute insertion
 		xptr new_pi;
 		if (cont_parind==XNULL || deep_copy)

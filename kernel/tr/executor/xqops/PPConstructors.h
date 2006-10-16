@@ -153,7 +153,7 @@ protected:
     // obtained parameters and local data
     PPOpIn content;
 	char* at_value;
-	
+	StrMatcher strm;
     
 
     void children(PPOpIn &_content_) {if (at_value==NULL)_content_=content ;}
@@ -243,6 +243,7 @@ protected:
 	PPOpIn content;
 	char* at_name;
 	char* at_value;
+	StrMatcher strm;
     
 
     void children(PPOpIn &_qname_,PPOpIn &_content_) { _qname_ = qname;_content_=content ;}

@@ -119,6 +119,7 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 			state = state->next[(unsigned char)str[i]];
 			if (state->res_ofs != -1)
 			{
+				if (write_cb==NULL) return 1;
 				printpart(k, i - state->len, str, len, write_cb, p, buf, buf_used);
 				write_cb(p, &strings_buf[state->res_ofs], state->res_len);
 				k = i+1;
@@ -127,8 +128,11 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 		}
 		//FIXME: assert state == root in else
 	}
+	if (write_cb==NULL) return 0;
 	if (k < len - state->len)
 	{
+		
+
 		printpart(k, len - 1 - state->len, str, len, write_cb, p, buf, buf_used);
 		k = len - state->len; //FIXME: do this only when asserts enabled
 	}
