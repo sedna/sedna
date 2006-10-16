@@ -232,7 +232,7 @@
                        #t))
      ; Functions with no arguments
      ((!fn!position !fn!last !fn!true !fn!false
-                    !se!checkpoint !fn!current-dateTime)
+                    !se!checkpoint !fn!current-dateTime !fn!static-base-uri)
       (values expr #t #t #t processed-funcs '()))
      ((!fn!count !fn!deep-equal !fn!sum !fn!avg !fn!max !fn!min)
       (lropt:propagate expr called-once?
@@ -241,24 +241,27 @@
                        #t #t #t))
      ; Accept zero-or-one items for each argument,
      ; return zero-or-one item in the result
-     ((; 2 Accessors
+     ((; *** 2 Accessors
        !fn!node-name
        !fn!string !fn!document-uri
-       ; XQuery datamodel accessors
+       ; *** XQuery datamodel accessors
        !fn!node-kind !fn!string-value !fn!typed-value
-       ; 6.4 Functions on Numeric Values
+       ; *** 6.4 Functions on Numeric Values
        !fn!abs !fn!ceiling !fn!floor !fn!round !fn!round-half-to-even
-       ; 7.4 Functions on String Values
-       !fn!concat !fn!string-length !fn!translate
-       ; 7.5 Functions Based on Substring Matching
+       ; *** 7.4 Functions on String Values
+       !fn!concat !fn!string-length !fn!translate !fn!encode-for-uri
+       !fn!iri-to-uri !fn!escape-html-uri
+       ; *** 7.5 Functions Based on Substring Matching
        !fn!contains
-       ; 7.6 String Functions that Use Pattern Matching
+       ; *** 7.6 String Functions that Use Pattern Matching
        !fn!replace !fn!matches
-       ; 9.3 Functions on Boolean Values
+       ; *** 8 Functions on anyURI
+       !fn!resolve-uri
+       ; *** 9.3 Functions on Boolean Values
        !fn!not !fn!boolean
-       ; 14 Functions and Operators on Nodes
+       ; *** 14 Functions and Operators on Nodes
        !fn!name !fn!local-name !fn!namespace-uri !fn!number
-       ; 15.2 Functions That Test the Cardinality of Sequences
+       ; *** 15.2 Functions That Test the Cardinality of Sequences
        !fn!exactly-one)
       ; The same semantics as for !fn!document
       (lropt:propagate expr called-once? #f  ; [*]

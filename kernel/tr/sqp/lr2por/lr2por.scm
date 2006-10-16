@@ -719,7 +719,23 @@
              ; *** intersect ***
              ((eq? op-name 'intersect@)
               `(1 (PPIntersect ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
-             )             
+             )
+             
+             ; *** URI-related functions *** 
+             ((eq? op-name '!fn!static-base-uri)
+              `(1 (PPFnStaticBaseUri)))
+             ((eq? op-name '!fn!encode-for-uri)
+              `(1 (PPFnEncodeForUri
+                   ,(l2p:any-lr-node2por (car node)))))
+             ((eq? op-name '!fn!iri-to-uri)
+              `(1 (PPFnIriToUri
+                   ,(l2p:any-lr-node2por (car node)))))
+             ((eq? op-name '!fn!escape-html-uri)
+              `(1 (PPFnEscapeHtmlUri
+                   ,(l2p:any-lr-node2por (car node)))))
+             ((eq? op-name '!fn!resolve-uri)
+              `(1 (PPFnResolveUri
+                   ,@(map l2p:any-lr-node2por node))))
              
              ; *** number ***
              ((eq? op-name '!fn!number)

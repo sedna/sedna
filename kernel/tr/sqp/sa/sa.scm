@@ -417,6 +417,23 @@
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!false)
     ;----------------------------------------
+    ; URI-related functions
+    (,sa:fn-ns "static-base-uri" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!static-base-uri)
+    (,sa:fn-ns "encode-for-uri" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!encode-for-uri)
+    (,sa:fn-ns "iri-to-uri" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!iri-to-uri)
+    (,sa:fn-ns "escape-html-uri" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!escape-html-uri)
+    (,sa:fn-ns "resolve-uri" 1 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-nodes !fn!resolve-uri)
+    ;----------------------------------------
     ; 6.4 Functions on Numeric Values
     (,sa:fn-ns "abs" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
