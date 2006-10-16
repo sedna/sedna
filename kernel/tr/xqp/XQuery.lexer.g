@@ -508,6 +508,21 @@ virtual void errstd(const char *s){
 
 #token DOUBLEQUOT "\"\""
 
+#token DEC_CHARREF "&#([0-9])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
+#token HEX_CHARREF "&#x([0-9a-fA-F])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
+
 #token CHAR_ATTR "~[\"\'\{\}\<\&]"
 <<
   int num = strlen(lextext());
@@ -539,6 +554,21 @@ virtual void errstd(const char *s){
 #token DOUBLERBRACE "\}\}"
 
 #token DOUBLEAPOS "\'\'"
+
+#token DEC_CHARREF "&#([0-9])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
+#token HEX_CHARREF "&#x([0-9a-fA-F])+;"
+<<
+  std::string res;
+  res = replace_charref(lextext());
+  replstr(res.c_str());
+>>
+
 
 #token CHAR_ATTR "~[\"\'\{\}\<\&]"
 <<
