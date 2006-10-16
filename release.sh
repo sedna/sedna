@@ -158,8 +158,8 @@ get_build_file() {
 
     BUILD=`cat $BUILD_FILE` || failwith "Cannot read build_file"
 
-    rm ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm $BUILD_FILE || failwith "Cannot remove build_file"
+    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
+    rm -f $BUILD_FILE || failwith "Cannot remove build_file"
 }
 
 #script for upload build-number-file
@@ -179,8 +179,8 @@ put_build_file() {
         ftp -s:ftpscript.txt
     fi || failwith "Cannot upload build_file"
 
-    rm ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm $BUILD_FILE || failwith "Cannot remove build_file"
+    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
+    rm -f $BUILD_FILE || failwith "Cannot remove build_file"
 }
 
 #script for uploading results of build to seine
@@ -203,7 +203,7 @@ put_results_to_seine() {
         ftp -s:ftpscript.txt
     fi || failwith "Cannot upload build results to seine"
 
-    rm ftpscript.txt || failwith "Cannot remove build_file"
+    rm -f ftpscript.txt || failwith "Cannot remove build_file"
 }
 
 #script for downloading user name to modis.ispras.ru
@@ -224,8 +224,8 @@ get_modis_ftp_uname() {
 
     FTP_UNAME=`cat modisftpusername.txt` || failwith "Cannot read modisftpusername.txt"
 
-    rm ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm modisftpusername.txt || failwith "Cannot remove modisftpusername.txt"
+    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
+    rm -f modisftpusername.txt || failwith "Cannot remove modisftpusername.txt"
 }
 
 #script for downloading password to modis.ispras.ru
@@ -246,8 +246,8 @@ get_modis_ftp_passw() {
 
     FTP_PASSW=`cat modisftppassword.txt` || failwith "Cannot read modisftppassword.txt"
 
-    rm ftpscript.txt || failwith "Cannot remove ftpscript.txt"
-    rm modisftppassword.txt || failwith "Cannot remove modisftppassword.txt"
+    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
+    rm -f modisftppassword.txt || failwith "Cannot remove modisftppassword.txt"
 }
 
 #script for uploading results of build to modis.ispras.ru
@@ -273,7 +273,7 @@ put_results_to_modis() {
 	    ftp -s:ftpscript.txt
     fi || failwith "Cannot upload build results to modis.ispras.ru"
 
-    rm ftpscript.txt || failwith "Cannot remove build_file"
+    rm -f ftpscript.txt || failwith "Cannot remove build_file"
 }
 
 
@@ -328,7 +328,7 @@ make || failwith "make failed"
 
 
 ##### MAKE INSTALL ############################################################
-rm -r $SEDNA_INSTALL/sedna
+rm -fr $SEDNA_INSTALL/sedna
 make grouped_install || failwith "make install failed"
 ##### MAKE INSTALL ############################################################
 
@@ -348,7 +348,7 @@ fi || failwith "Cannot copy scripts/linux-install.sh"
      sed "s/PLACE_FOR_BINARY_SUM/$SUM/" linux-install.sh >$BIN_FILE_NAME.sh &&
      cat $BIN_FILE_NAME.tar.gz >>$BIN_FILE_NAME.sh &&
      chmod a+x $BIN_FILE_NAME.sh &&
-     rm linux-install.sh);
+     rm -f linux-install.sh);
  fi || failwith "Cannot create selfextracted binary package"
  put_results_to_seine $BIN_FILE_NAME.$DISTR_EXT $SRC_FILE_NAME.$SRC_EXT)
 ##### RELEASE #################################################################
