@@ -13,7 +13,7 @@
 #include "PPBase.h"
 
 extern "C" {
-#include "decimal64.h"
+#include "decimal128.h"
 }
 
 
@@ -33,7 +33,7 @@ static decNumber_bin_fun numerical_ops[] = {
 
 void xs_decimal_t::init()
 {
-    decContextDefault(&dec_cxt, DEC_INIT_DECIMAL64); // initialize
+    decContextDefault(&dec_cxt, DEC_INIT_DECIMAL128); // initialize
     dec_cxt.traps = 0;
 }
 
@@ -68,9 +68,9 @@ void xs_decimal_t::set(bool a)
 {
     dec_cxt.status = 0;
     if (a)
-        decimal64FromString((decimal64*)(v.v1), "1.0", &dec_cxt);
+        decimal128FromString((decimal128*)(v.v1), "1.0", &dec_cxt);
     else
-        decimal64FromString((decimal64*)(v.v1), "0.0", &dec_cxt);
+        decimal128FromString((decimal128*)(v.v1), "0.0", &dec_cxt);
 }
 
 void xs_decimal_t::set(const char *a, bool xs_compliant)
@@ -97,7 +97,7 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
         if (dec_cxt.status & DEC_IEEE_854_Overflow)
             throw USER_EXCEPTION2(FOAR0002, "xs:decimal overflow");
         else if (dec_cxt.status & DEC_IEEE_854_Underflow)
-            decimal64FromString((decimal64*)(v.v1), "0.0", &dec_cxt);
+            decimal128FromString((decimal128*)(v.v1), "0.0", &dec_cxt);
         else // DEC_IEEE_854_Division_by_zero | DEC_IEEE_854_Invalid_operation
             throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
     }
@@ -108,7 +108,7 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
 
     dec_cxt.status = 0;
     //decNumberNormalize(&dv, &dv, &dec_cxt);
-    decimal64FromNumber((decimal64*)(v.v1), &dv, &dec_cxt);
+    decimal128FromNumber((decimal128*)(v.v1), &dv, &dec_cxt);
 }
 
 /*******************************************************************************
@@ -117,7 +117,7 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
 __int64 xs_decimal_t::get_int   () const
 {
     decNumber dv, r;
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
     dec_cxt.status = 0;
 	enum rounding old = dec_cxt.round;
 	dec_cxt.round = DEC_ROUND_DOWN;
@@ -129,13 +129,13 @@ __int64 xs_decimal_t::get_int   () const
 
 float   xs_decimal_t::get_float () const
 {
-	decimal64ToString((decimal64*)(v.v1), tr_globals::mem_str_buf);
+	decimal128ToString((decimal128*)(v.v1), tr_globals::mem_str_buf);
     return c_str2xs_float(tr_globals::mem_str_buf);
 }
 
 double  xs_decimal_t::get_double() const
 {
-	decimal64ToString((decimal64*)(v.v1), tr_globals::mem_str_buf);
+	decimal128ToString((decimal128*)(v.v1), tr_globals::mem_str_buf);
     return c_str2xs_double(tr_globals::mem_str_buf);
 }
 
@@ -143,7 +143,7 @@ bool    xs_decimal_t::get_bool  () const
 {
     decNumber r;
     dec_cxt.status = 0;
-    decimal64ToNumber((decimal64*)(v.v1), &r);
+    decimal128ToNumber((decimal128*)(v.v1), &r);
     return !(decNumberIsZero(&r) || decNumberIsNaN(&r));
 }
 
@@ -154,7 +154,7 @@ char *xs_decimal_t::get_c_str(char *buf) const
     {
         decNumber dv;
         dec_cxt.status = 0;
-        decimal64ToNumber((decimal64*)(v.v1), &dv);
+        decimal128ToNumber((decimal128*)(v.v1), &dv);
         decNumberNormalize(&dv, &dv, &dec_cxt);
         decNumberToString(&dv, buf);
 
@@ -227,7 +227,7 @@ xs_decimal_t xs_decimal_t::operator - ()
     xs_decimal_t res;
     decNumber dv, r;
 
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
     dec_cxt.status = 0;
     decNumberMinus(&r, &dv, &dec_cxt);
 
@@ -246,7 +246,7 @@ xs_decimal_t xs_decimal_t::operator - ()
             throw USER_EXCEPTION2(SE1003, "numerical operation with xs:decimal");
     }
 
-    decimal64FromNumber((decimal64*)(res.v.v1), &r, &dec_cxt);
+    decimal128FromNumber((decimal128*)(res.v.v1), &r, &dec_cxt);
     return res;
 }
 
@@ -255,8 +255,8 @@ xs_decimal_t xs_decimal_t::numerical_operation(const xs_decimal_t & d, int idx) 
     xs_decimal_t res;
     decNumber dv, dd, r;
 
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
-    decimal64ToNumber((decimal64*)(d.v.v1), &dd);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(d.v.v1), &dd);
 
     dec_cxt.status = 0;
     (numerical_ops[idx])(&r, &dv, &dd, &dec_cxt);
@@ -276,7 +276,7 @@ xs_decimal_t xs_decimal_t::numerical_operation(const xs_decimal_t & d, int idx) 
             throw USER_EXCEPTION2(SE1003, "numerical operation with xs:decimal");
     }
 
-    decimal64FromNumber((decimal64*)(res.v.v1), &r, &dec_cxt);
+    decimal128FromNumber((decimal128*)(res.v.v1), &r, &dec_cxt);
     return res;
 }
 
@@ -284,8 +284,8 @@ int xs_decimal_t::compare(const xs_decimal_t & d) const
 {
     decNumber dv, dd, r;
 
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
-    decimal64ToNumber((decimal64*)(d.v.v1), &dd);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(d.v.v1), &dd);
 
     dec_cxt.status = 0;
     decNumberCompare(&r, &dv, &dd, &dec_cxt);
@@ -301,7 +301,7 @@ bool xs_decimal_t::is_zero() const
 {
     decNumber r;
     dec_cxt.status = 0;
-    decimal64ToNumber((decimal64*)(v.v1), &r);
+    decimal128ToNumber((decimal128*)(v.v1), &r);
     return decNumberIsZero(&r);
 }
 
@@ -316,9 +316,9 @@ xs_decimal_t xs_decimal_t::abs() const
     xs_decimal_t res;
     decNumber r1, r2;
     dec_cxt.status = 0;
-    decimal64ToNumber((decimal64*)(v.v1), &r1);
+    decimal128ToNumber((decimal128*)(v.v1), &r1);
     decNumberAbs(&r2, &r1, &dec_cxt);
-    decimal64FromNumber((decimal64*)(res.v.v1), &r2, &dec_cxt);
+    decimal128FromNumber((decimal128*)(res.v.v1), &r2, &dec_cxt);
     return res;
 }
 
@@ -328,7 +328,7 @@ xs_decimal_t xs_decimal_t::ceil() const
     decNumber dv, integral, one;
 
     dec_cxt.status = 0;
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
 	enum rounding old = dec_cxt.round;
 	dec_cxt.round = DEC_ROUND_DOWN;
     decNumberToIntegralValue(&integral, &dv, &dec_cxt);
@@ -340,7 +340,7 @@ xs_decimal_t xs_decimal_t::ceil() const
         decNumberAdd(&integral, &integral, &one, &dec_cxt);
     }
 
-    decimal64FromNumber((decimal64*)(res.v.v1), &integral, &dec_cxt);
+    decimal128FromNumber((decimal128*)(res.v.v1), &integral, &dec_cxt);
     return res;
 }
 
@@ -350,7 +350,7 @@ xs_decimal_t xs_decimal_t::floor() const
     decNumber dv, integral, one;
 
     dec_cxt.status = 0;
-    decimal64ToNumber((decimal64*)(v.v1), &dv);
+    decimal128ToNumber((decimal128*)(v.v1), &dv);
 	enum rounding old = dec_cxt.round;
 	dec_cxt.round = DEC_ROUND_DOWN;
     decNumberToIntegralValue(&integral, &dv, &dec_cxt);
@@ -362,7 +362,7 @@ xs_decimal_t xs_decimal_t::floor() const
         decNumberSubtract(&integral, &integral, &one, &dec_cxt);
     }
 
-    decimal64FromNumber((decimal64*)(res.v.v1), &integral, &dec_cxt);
+    decimal128FromNumber((decimal128*)(res.v.v1), &integral, &dec_cxt);
     return res;
 }
 

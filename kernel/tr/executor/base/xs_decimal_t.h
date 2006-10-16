@@ -16,26 +16,29 @@ class xs_decimal_t
 {
 protected:
     union {
-        char v1[8];
-        __int64 v2;
+        char v1[16];
+        struct {
+            __int64 x;
+            __int64 y;
+        } v2;
     } v;
 
     int compare(const xs_decimal_t & d) const;
-    xs_decimal_t numerical_operation(const xs_decimal_t & d, int idx) const ;
+    xs_decimal_t numerical_operation(const xs_decimal_t & d, int idx) const;
 
     enum numerical_ops_idxs {noi_sub, noi_add, noi_mul, noi_div, noi_idiv, noi_mod};
 
 public:
     static void init();
 
-    xs_decimal_t() { v.v2 = (__int64)0; }
+    xs_decimal_t() { v.v2.x = v.v2.y = (__int64)0; }
     xs_decimal_t(__int64 v)     { this->set(v); }
     xs_decimal_t(float v)       { this->set(v); }
     xs_decimal_t(double v)      { this->set(v); }
     xs_decimal_t(bool v)        { this->set(v); }
     xs_decimal_t(const char* v) { this->set(v); }
 
-    xs_decimal_t(const xs_decimal_t& d) { v.v2 = d.v.v2; }
+    xs_decimal_t(const xs_decimal_t& d) { v.v2.x = d.v.v2.x; v.v2.y = d.v.v2.y; }
     xs_decimal_t &operator =(const xs_decimal_t &d) { v = d.v; return *this; }
 
     void set(__int64 a);
