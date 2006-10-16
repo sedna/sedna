@@ -1873,8 +1873,10 @@
                 ((not  ; not a constant namespace value
                   (let ((ns-value
                          (cadr (sa:op-args (car src)))))
-                    (and (pair? ns-value)
-                         (eq? (sa:op-name ns-value) 'const))))
+                    (or
+                     (and (pair? ns-value)
+                          (eq? (sa:op-name ns-value) 'const))
+                     (equal? ns-value '(sequence)))))
                  (if (string=? str "")
                      ; Default namespace prefix              
                      (cl:signal-user-error XQST0022 "xmlns")
