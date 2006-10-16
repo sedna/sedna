@@ -23,6 +23,7 @@ class PPFnUriEncoding : public PPIterator
 private:
     PPOpIn child;
     uri_function_type type;
+    bool first_time;
 
     const char* error();
 

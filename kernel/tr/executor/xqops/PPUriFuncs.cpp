@@ -122,7 +122,8 @@ PPFnUriEncoding::PPFnUriEncoding(variable_context *_cxt_,
                                  PPOpIn _child_,
                                  uri_function_type _type_) : PPIterator(_cxt_),
                                                              child(_child_),
-                                                             type(_type_)
+                                                             type(_type_),
+                                                             first_time(true)
 {
 }
 
@@ -140,6 +141,7 @@ void PPFnUriEncoding::open  ()
 void PPFnUriEncoding::reopen()
 {
     child.op->reopen();
+    first_time = true;
 }
 
 void PPFnUriEncoding::close ()
@@ -149,47 +151,61 @@ void PPFnUriEncoding::close ()
 
 void PPFnUriEncoding::next  (tuple &t)
 {
-    child.op->next(t);
-    
-    if(t.is_eos()) t.copy(EMPTY_STRING_TC);
+    if(first_time)
+    {
+        child.op->next(t);
         
-    tuple_cell tc = child.get(t);
-    xmlscm_type xtype = tc.get_atomic_type();
+        first_time = false;    
 
-    if(xtype != xs_string        && 
-       xtype != xs_untypedAtomic && 
-       xtype != xs_anyURI        &&
-       !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, error());
-
-    if (e_string_last_blk==XNULL) 
-    {
-        vmm_alloc_tmp_block(&e_string_last_blk);
-        e_str_blk_hdr::init(XADDR(e_string_last_blk));
-        e_string_first_blk = e_string_last_blk;
-    }
+        if(t.is_eos()) 
+        {
+            t.copy(EMPTY_STRING_TC);
+            return;
+        }
+            
+        tuple_cell tc = child.get(t);
+        xmlscm_type xtype = tc.get_atomic_type();
     
-    e_string_o_iterator<unsigned char> res_it;
-    xptr start_pos = res_it.pos;
-
-    switch(type)
-    {
-        case(ENCODE_FOR_URI):
-            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res_it); break;
-        case(IRI_TO_URI):
-            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res_it); break;
-        case(ESCAPE_HTML_URI):
-            STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res_it); break;
-        default: 
-            throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
+        if(xtype != xs_string        && 
+           xtype != xs_untypedAtomic && 
+           xtype != xs_anyURI        &&
+           !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, error());
+    
+        if (e_string_last_blk==XNULL) 
+        {
+            vmm_alloc_tmp_block(&e_string_last_blk);
+            e_str_blk_hdr::init(XADDR(e_string_last_blk));
+            e_string_first_blk = e_string_last_blk;
+        }
+        
+        e_string_o_iterator<unsigned char> res_it;
+        xptr start_pos = res_it.pos;
+    
+        switch(type)
+        {
+            case(ENCODE_FOR_URI):
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res_it); break;
+            case(IRI_TO_URI):
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res_it); break;
+            case(ESCAPE_HTML_URI):
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res_it); break;
+            default: 
+                throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
+        }
+    
+        child.op->next(t);
+        if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
+    
+        int reslen = get_length_of_last_str(start_pos);  //FIXME!!! String length must be __int64;
+        if(reslen > 0) reslen--;
+    
+        t.copy(tuple_cell::atomic_estr(xs_string, reslen, start_pos));
     }
-
-    child.op->next(t);
-    if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
-
-    int reslen = get_length_of_last_str(start_pos);  //FIXME!!! String length must be __int64;
-    if(reslen > 0) reslen--;
-
-    t.copy(tuple_cell::atomic_estr(xs_string, reslen, start_pos));
+    else 
+    {
+        t.set_eos();
+        first_time = true;
+    }
 }
 
 const char* PPFnUriEncoding::error()
