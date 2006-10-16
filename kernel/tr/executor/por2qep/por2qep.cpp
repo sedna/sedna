@@ -1248,7 +1248,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnMin(cxt, 
                            make_pp_op(cxt, lst->at(1).internal.list));
     }
-    /*else if (op == "PPFnEncodeForUri")
+    else if (op == "PPFnEncodeForUri")
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
@@ -1277,7 +1277,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    ESCAPE_HTML_URI);
-    }*/
+    }
     else if (op == "PPFnItemAt")
     {
         if (   lst->size() != 3
