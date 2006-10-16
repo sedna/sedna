@@ -69,7 +69,7 @@ public:
     void setnew_dateTime(const xs_packed_datetime& dt, xmlscm_type t);
     void setnew_duration(const xs_packed_duration& dur, xmlscm_type t);
 
-    void * data () const { return (void*)&v; }
+    void * data () const { return ((type == xs_string )?(void*)(v.s_v):(void*)&v); }
 
 
     xmlscm_type get_type() const { return type; }
