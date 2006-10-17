@@ -20,6 +20,7 @@ void static_context::add_char_mapping(const char* str, const char* rep_str,int p
 }
 static_context::static_context()
 {
+	datetime_initialized =  false;
         output_method = se_output_method_xml;
         output_indent = se_output_indent_yes;
         boundary_space = xq_boundary_space_strip;
@@ -134,6 +135,7 @@ xml_ns* static_context::get_xmlns_by_prefix(const NCName& _prefix)
 }
 void static_context::clear_context()
 {
+	datetime_initialized = false;
 	std::vector<xptr>::iterator cit=temp_docs.begin();
 	while (cit!=temp_docs.end())
 	{
@@ -180,4 +182,17 @@ void static_context::clear_context()
 		insc_ns["local"].push_back(tmp);
 		ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 		init_context();
+}
+
+void static_context::set_datetime()
+{
+	if(! datetime_initialized)
+	{
+		datetime_initialized = true;
+		utm tm = getLocalTime();
+		current_datetime = XMLDateTime(tm);
+		current_date = XMLDateTime(tm).convertTo(xs_date);
+		current_time = XMLDateTime(tm).convertTo(xs_time);
+		implicit_timezone = XMLDateTime(tm).getTimezone();
+	}
 }

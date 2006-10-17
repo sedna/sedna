@@ -36,6 +36,13 @@ struct static_context
 	std::vector<xptr> temp_docs;
 	inscmap insc_ns;
 	ns_map ns_lib;
+
+    XMLDateTime current_datetime;
+    XMLDateTime current_date;
+    XMLDateTime current_time;
+    XMLDateTime implicit_timezone;
+    bool datetime_initialized;
+
     static_context();
 	void clear_context();
     ~static_context() 
@@ -50,6 +57,7 @@ struct static_context
 	}
 	xml_ns* add_to_context(const char* prefix,const char* uri);
 	void init_context();
+	void set_datetime();
 	void add_char_mapping(const char* str, const char* rep_str,int pc =-1);
 	void remove_from_context(const char* prefix);
 	inline void  remove_from_context(xml_ns* ns)

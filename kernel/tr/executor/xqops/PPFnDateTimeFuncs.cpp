@@ -7,6 +7,7 @@
 #include "PPFnDateTimeFuncs.h"
 #include "casting_operations.h"
 #include "PPUtils.h"
+#include "PPBase.h"
 #include "e_string.h"
 #include "strings.h"
 
@@ -39,15 +40,17 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
 {
     if (first_time)
     {
-        first_time = false;
-	utm tm = getLocalTime();
+	first_time = false;
+
+	if (!tr_globals::st_ct.datetime_initialized)
+		tr_globals::st_ct.set_datetime();
 
 	switch (dateTimeFunc)
 	{
-		case currentDateTime:	t.copy(tuple_cell::atomic(XMLDateTime(tm).getPackedDateTime(), xs_dateTime)); break;
-		case currentDate:	t.copy(tuple_cell::atomic(XMLDateTime(tm).convertTo(xs_date).getPackedDateTime(), xs_date)); break;
-		case currentTime:	t.copy(tuple_cell::atomic(XMLDateTime(tm).convertTo(xs_time).getPackedDateTime(), xs_time)); break;
-		case implicitTimezone:	t.copy(tuple_cell::atomic(XMLDateTime(tm).getTimezone().getPackedDuration(), xs_dayTimeDuration)); break;
+		case currentDateTime:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_datetime.getPackedDateTime(), xs_dateTime)); break;
+		case currentDate:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_date.getPackedDateTime(), xs_date)); break;
+		case currentTime:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_time.getPackedDateTime(), xs_time)); break;
+		case implicitTimezone:	t.copy(tuple_cell::atomic(tr_globals::st_ct.implicit_timezone.getPackedDuration(), xs_dayTimeDuration)); break;
 	}
     }
     else 
