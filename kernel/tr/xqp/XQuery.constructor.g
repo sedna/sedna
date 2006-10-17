@@ -307,21 +307,21 @@ quotAttrValueContent!:
 	  if (val.empty())
 	  {
 	    if (cnt == NULL) 
-	      cnt = #ee;
+	      cnt = #(#[AST_SPACE_SEQUENCE], #ee);
 	    else 
-	      cnt->append(#ee); 
+	      cnt->append(#(#[AST_SPACE_SEQUENCE], #ee)); 
 	  }
 	  else
 	  {
 	    if ( cnt == NULL)
 	    {
 	       cnt = #[val, AST_CHAR_SEQ];
-	       cnt->append(#ee);
+	       cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	    }
 	    else
 	    {
 	       cnt->append(#[val, AST_CHAR_SEQ]);
-	       cnt->append(#ee);
+	       cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	    }  
 	  } 
 
@@ -370,21 +370,21 @@ aposAttrValueContent!:
 	  if (val.empty())
 	  {
 	    if (cnt == NULL) 
-	      cnt = #ee;
+	      cnt = #(#[AST_SPACE_SEQUENCE], #ee);
 	    else 
-	      cnt->append(#ee); 
+	      cnt->append(#(#[AST_SPACE_SEQUENCE], #ee)); 
 	  }
 	  else
 	  {
 	    if ( cnt == NULL)
 	    {
 	       cnt = #[val, AST_CHAR_SEQ];
-	       cnt->append(#ee);
+	       cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	    }
 	    else
 	    {
 	       cnt->append(#[val, AST_CHAR_SEQ]);
-	       cnt->append(#ee);
+	       cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	    }  
 	  } 
 
