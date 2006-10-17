@@ -3464,7 +3464,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
                         // 'value'. Addition check could be needed for name and value
 
                         // !!!   Uncomment this when everybody is ready   !!!
-                        //tr_globals::st_ct.add_char_mapping(name, value);
+                        tr_globals::st_ct.add_char_mapping(name, value);
                     }
                     else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
                 }
