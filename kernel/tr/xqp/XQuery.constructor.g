@@ -212,8 +212,8 @@ cdataSection!:
 
 attributeList!:
 	<<ASTBase *atts=NULL;bool isDef=true;>>
-	((WS|NL) 
-	{ ( qn:qname {WS|NL} EQUAL {WS|NL} av1:attributeValue
+	((WS|NL)+ 
+	{ ( qn:qname (WS|NL)* EQUAL (WS|NL)* av1:attributeValue
 
 	    <<
 	      if (#qn->down()->nsiblings() == 1)//there is no prefix
