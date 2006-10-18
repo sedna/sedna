@@ -230,7 +230,7 @@ dirPIConstructor!:
 	LPI  p:piTarget
 	<<#0=#(#[AST_PI_CONSTR], #p);>>
 
-	  { (WS|NL) i:INSTRUCTION <<#0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
+	  { (WS|NL) {i:INSTRUCTION} <<if ($i != NULL) #0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
 ;
 
 piTarget!:
@@ -573,11 +573,11 @@ compXmlPI!:
 	<<
 	  if (#e1 == NULL)
 	  {
-	     #0=#(#[AST_PI_CONSTR], #[$n->getText(), AST_LOCAL_NAME], #e2);
+	     #0=#(#[AST_PI_CONSTR], #[$n->getText(), AST_LOCAL_NAME], #(#[AST_SPACE_SEQUENCE], #e2));
 	  }
 	  else
 	  {
-	     #0=#(#[AST_PI_CONSTR], #e1, #e2);
+	     #0=#(#[AST_PI_CONSTR], #e1, #(#[AST_SPACE_SEQUENCE], #e2));
 	  }
 	>>
 ;
@@ -585,7 +585,7 @@ compXmlPI!:
 compXmlComment!:
 	COMMENT_ LBRACE e:expr RBRACE
 
-	<<#0=#(#[AST_COMMENT_CONSTR], #e);>>
+	<<#0=#(#[AST_COMMENT_CONSTR], #(#[AST_SPACE_SEQUENCE], #e));>>
 ;
 
 }
