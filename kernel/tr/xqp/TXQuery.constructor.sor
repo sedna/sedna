@@ -1,5 +1,16 @@
 /* */
 
+gconstructor! [in_context in_c] >[out_context out_c]:
+	   ec:elemConstructor[in_c] >[out_c]    <<#gconstructor=ec;>>
+	 | ac:attrConstructor[in_c] >[out_c]    <<#gconstructor=ac;>>
+	 | nc:namespaceConstructor[in_c] >[out_c] <<#gconstructor=nc;>>
+	 | dc:docConstructor[in_c] >[out_c] <<#gconstructor=dc;>>
+	 | cc:commentConstructor[in_c] >[out_c] <<#gconstructor=cc;>>
+	 | tc:textConstructor[in_c] >[out_c] <<#gconstructor=tc;>>
+	 | pic:piConstructor[in_c] >[out_c] <<#gconstructor=pic;>>
+;
+
+
 elemConstructor! [in_context in_c] >[out_context out_c]:
 	<<SORASTBase *atts=NULL, *ecnt=NULL, *elname=NULL;
 	>>
@@ -116,12 +127,8 @@ elemContent! [in_context in_c] >[out_context out_c]:
 	| e:expr[in_c] >[out_c]
 	<<elm_cont=e;>>
 
-	| ec:elemConstructor[in_c] >[out_c]    
-	  <<elm_cont=ec;>>
-
-	| ac:attrConstructor[in_c] >[out_c]    
-	  <<elm_cont=ac;>>
-
+	| gc:gconstructor[in_c] >[out_c]
+ 	  <<elm_cont=gc;>>
 	)
 	<<#elemContent=elm_cont;>>
 ;

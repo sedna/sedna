@@ -97,8 +97,6 @@ expr! [in_context in_c] >[out_context out_c]:
 ;
 
 exprSingle! [in_context in_c] >[out_context out_c]:
-//	  c:elemConstructor    <<#exprSingle=c;>>
-//	| a:attrConstructor    <<#exprSingle=a;>>
 	  ie:ifExpr[in_c] >[out_c]
           <<#exprSingle=ie;>>
 

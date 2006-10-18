@@ -104,7 +104,7 @@ defaultDecls!:
 ;
 
 boundarySpaceDecl!:
-	DECLARE BOUNDARYSPACE (PRESERVE <<#0=#[AST_BSPACE_P];>>| STRIP<<#0=#[AST_BSPACE_S];>>)
+	DECLARE BOUNDARYSPACE (PRESERVE <<#0=#[AST_BSPACE_P]; is_preserve_boundary_space = true;>>| STRIP<<#0=#[AST_BSPACE_S]; is_preserve_boundary_space = false;>>)
 
 ;
 

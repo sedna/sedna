@@ -288,13 +288,8 @@ primaryExpr![in_context in_c] >[out_context out_c]:
         }
 	
 	  >>
-	 | ec:elemConstructor[in_c] >[out_c]    <<#primaryExpr=ec;>>
-	 | ac:attrConstructor[in_c] >[out_c]    <<#primaryExpr=ac;>>
-	 | nc:namespaceConstructor[in_c] >[out_c] <<#primaryExpr=nc;>>
-	 | dc:docConstructor[in_c] >[out_c] <<#primaryExpr=dc;>>
-	 | cc:commentConstructor[in_c] >[out_c] <<#primaryExpr=cc;>>
-	 | tc:textConstructor[in_c] >[out_c] <<#primaryExpr=tc;>>
-	 | pic:piConstructor[in_c] >[out_c] <<#primaryExpr=pic;>>
+
+	 | gc:gconstructor[in_c] >[out_c] <<#primaryExpr=gc;>>
 //	 | ale:arithmLogicalExpr <<#primaryExpr=ale;>>
 	)
 ;

@@ -15,8 +15,8 @@ using namespace std;
 
 STACK_INT Lexical_Analizer_State;
 
-bool s_after_pi_target = false;
- 
+bool s_after_pi_target = false; 
+int 
 >>
 
 #lexprefix
@@ -40,7 +40,6 @@ virtual void errstd(const char *s){
 #token STMNT_DELIM "[\n][\\]" <<newline();>>
 #token "[\ \t\r]+" <<skip();>>
 #token "[\n]" <<skip(); newline();>>
-
 
 
 //-------------------------- keywords ------------------
@@ -317,6 +316,7 @@ virtual void errstd(const char *s){
 >>
 
 
+
 /********************* OPEN TAG TOKENS ************************/
 
 #lexclass XML_OPEN_TAG
@@ -389,6 +389,20 @@ virtual void errstd(const char *s){
   mode (START);
   Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
 >>
+
+#token LPI "\<\?" 
+<<
+  s_after_pi_target = false; mode(PITARGET);
+  Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
+>>
+
+
+#token XMLCOMMENTOPEN  "\<!\-\-"
+<<
+  mode(XML_COMMENT);
+  Lexical_Analizer_State.push(XML_ELEMENT_CONTENT);
+>>
+
 
 #token DOUBLELBRACE "\{\{"
 #token DOUBLERBRACE "\}\}"
@@ -530,6 +544,8 @@ virtual void errstd(const char *s){
       if ((lextext())[i] == '\n') 
          newline();
 >>
+
+
 
 
 #token AMPLT "&lt;"
@@ -712,7 +728,10 @@ virtual void errstd(const char *s){
       if ((lextext())[i] == '\n')
          newline();
 
-  if (s_after_pi_target) mode(PIINSTRUCTION);
+  if (s_after_pi_target)
+  {
+     mode(PIINSTRUCTION);
+  }
 >>
 
 #token NAME "[_a-zA-Z]([a-zA-Z0-9_\-\.])*" <<s_after_pi_target = true;>>
@@ -734,8 +753,8 @@ virtual void errstd(const char *s){
   res = std::string("\"") + res + std::string("\"");
   replstr(res.c_str());
 
-  mode (Lexical_Analizer_State.top());
-  Lexical_Analizer_State.pop();
+//  mode (Lexical_Analizer_State.top());
+//  Lexical_Analizer_State.pop();
 >>
 
 #token RPI "\?\>"
@@ -754,7 +773,9 @@ virtual void errstd(const char *s){
   Lexical_Analizer_State.pop();
 >>
 
-#token XMLCOMMENTCONTENT "(~[\-])*"
+#token XMLCOMMENTCONTENT "(~[\-])+"
+
+#lexclass PRAGMA_CONTENT
 
 
 

@@ -5,14 +5,18 @@
 class XQueryParser{
 
 constructor!:
-	  dec:dirElemConstructor <<#0=#dec;>>
-	| dpic:dirPIConstructor	 <<#0=#dpic;>>
-	| cc:computedConstructor <<#0=#cc;>>
-	| dcc:dirCommentConstructor  <<#0=#dcc;>>
+	  cc:computedConstructor <<#0=#cc;>>
+	| dc:dirConstructor  <<#0=#dc;>>
 //	| xc:xmlComment          <<#0=#xc;>>
 //	| xpi:xmlPI              <<#0=#xpi;>>
 //	| cdc:cdataSection       <<#0=#cdc;>>
 ;
+
+dirConstructor!:
+	  dec:dirElemConstructor <<#0=#dec;>>
+	| dpic:dirPIConstructor	 <<#0=#dpic;>>
+	| dcc:dirCommentConstructor  <<#0=#dcc;>>
+;	
 
 dirElemConstructor!:
 	STARTTAGOPEN qn1:qname al:attributeList
@@ -54,7 +58,7 @@ elementContent!:
 	  >>
 	| DOUBLELBRACE              << val += "{"; >>
 	| DOUBLERBRACE              << val += "}"; >>
-	| dec:dirElemConstructor
+	| dec:dirConstructor
 	<<
 	  if (val.empty())
 	  {
@@ -62,29 +66,46 @@ elementContent!:
 	  }
 	  else
 	  {
-	     bool isBoundWhiteSpace = true;
-	     std::string::iterator it;
-            
-	     for (it = val.begin(); it != val.end(); it++)
-	     {
-	        if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
-	          isBoundWhiteSpace = false;
-	     }
 
-	     if (cnt == NULL && isBoundWhiteSpace) cnt = #dec;
-	     else
-	     if (cnt == NULL && !isBoundWhiteSpace)
+	     if (!is_preserve_boundary_space)
 	     {
-	        cnt = #[val, AST_CHAR_SEQ];
-	        cnt->append(#dec);
-	     } 
-	     else
-	     if ( cnt!= NULL && isBoundWhiteSpace)
-	        cnt->append(#dec);
+	       bool isBoundWhiteSpace = true;
+	       std::string::iterator it;
+            
+	       for (it = val.begin(); it != val.end(); it++)
+	       {
+	          if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
+	            isBoundWhiteSpace = false;
+	       }
+
+	       if (cnt == NULL && isBoundWhiteSpace) cnt = #dec;
+	       else
+	       if (cnt == NULL && !isBoundWhiteSpace)
+	       {
+	          cnt = #[val, AST_CHAR_SEQ];
+	          cnt->append(#dec);
+	       } 
+	       else
+	       if ( cnt!= NULL && isBoundWhiteSpace)
+	          cnt->append(#dec);
+	       else
+	       {
+	          cnt->append(#[val, AST_CHAR_SEQ]);
+	          cnt->append(#dec);
+	       }
+	     }
 	     else
 	     {
-	        cnt->append(#[val, AST_CHAR_SEQ]);
-	        cnt->append(#dec);
+	         if (cnt == NULL)
+	         {
+	            cnt = #[val, AST_CHAR_SEQ];
+	            cnt->append(#dec);
+	         }
+	         else
+	         {
+	            cnt->append(#[val, AST_CHAR_SEQ]);
+	            cnt->append(#dec);
+	         }
 	     }
 	  }
 
@@ -99,31 +120,49 @@ elementContent!:
 	  }
 	  else
 	  {
-	     bool isBoundWhiteSpace = true;
-	     std::string::iterator it;
-            
-	     for (it = val.begin(); it != val.end(); it++)
+
+	     if (!is_preserve_boundary_space)
 	     {
-	        if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
-	          isBoundWhiteSpace = false;
+	       bool isBoundWhiteSpace = true;
+	       std::string::iterator it;
+            
+	       for (it = val.begin(); it != val.end(); it++)
+	       {
+	          if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
+	            isBoundWhiteSpace = false;
+	       }
+
+	       if (cnt == NULL && isBoundWhiteSpace) 
+	          cnt = #(#[AST_SPACE_SEQUENCE], #ee);
+	       else
+	       if (cnt == NULL && !isBoundWhiteSpace)
+	       {
+	          cnt = #[val, AST_CHAR_SEQ];
+	          cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
+	       } 
+	       else
+	       if ( cnt!= NULL && isBoundWhiteSpace)
+	          cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
+	       else
+	       {
+	          cnt->append(#[val, AST_CHAR_SEQ]);
+	          cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
+	       }
+	     }
+	     else
+	     {
+	         if (cnt == NULL)
+	         {
+	            cnt = #[val, AST_CHAR_SEQ];
+	            cnt->append(#ee);
+	         }
+	         else
+	         {
+	            cnt->append(#[val, AST_CHAR_SEQ]);
+	            cnt->append(#ee);
+	         }
 	     }
 
-	     if (cnt == NULL && isBoundWhiteSpace) 
-	        cnt = #(#[AST_SPACE_SEQUENCE], #ee);
-	     else
-	     if (cnt == NULL && !isBoundWhiteSpace)
-	     {
-	        cnt = #[val, AST_CHAR_SEQ];
-	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
-	     } 
-	     else
-	     if ( cnt!= NULL && isBoundWhiteSpace)
-	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
-	     else
-	     {
-	        cnt->append(#[val, AST_CHAR_SEQ]);
-	        cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
-	     }
 	  }
 
 	  val = "";
@@ -140,27 +179,44 @@ elementContent!:
 
 	  if ( !(val.empty()) )
 	  {
-	     bool isBoundWhiteSpace = true;
-	     std::string::iterator it;
+	     if (!is_preserve_boundary_space)
+	     {
+
+	       bool isBoundWhiteSpace = true;
+	       std::string::iterator it;
              
-	     for (it = val.begin(); it != val.end(); it++)
-	     {
-	        if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
-	          isBoundWhiteSpace = false;
-	     }
+	       for (it = val.begin(); it != val.end(); it++)
+	       {
+	          if(!(*it == ' ' || *it == '\n' || *it == '\t' || *it == '\r'))
+	            isBoundWhiteSpace = false;
+	       }
 	     
-	     if ( cnt == NULL && isBoundWhiteSpace)
-	       #0= NULL;
-	     else
-	     if ( cnt == NULL && !isBoundWhiteSpace)
-	        #0 = #[val, AST_CHAR_SEQ];
-	     else
-	     if (cnt!=NULL && isBoundWhiteSpace) #0 = cnt;
+	       if ( cnt == NULL && isBoundWhiteSpace)
+	         #0= NULL;
+	       else
+	       if ( cnt == NULL && !isBoundWhiteSpace)
+	         #0 = #[val, AST_CHAR_SEQ];
+	       else
+	       if (cnt!=NULL && isBoundWhiteSpace) #0 = cnt;
+	       else
+	       {
+	         #0 = cnt;
+	         #0->append(#[val, AST_CHAR_SEQ]);
+	       }
+	     }
 	     else
 	     {
-	       #0 = cnt;
-	       #0->append(#[val, AST_CHAR_SEQ]);
+	         if (cnt == NULL)
+	         {
+	            #0 = #[val, AST_CHAR_SEQ];
+	         }
+	         else
+	         {
+	            #0=cnt;
+	            #0->append(#[val, AST_CHAR_SEQ]);
+	         }
 	     }
+
 	  }
 	  else
 	  {
@@ -171,10 +227,10 @@ elementContent!:
 
 
 dirPIConstructor!:
-	LPI {(WS|NL)} p:piTarget
+	LPI  p:piTarget
 	<<#0=#(#[AST_PI_CONSTR], #p);>>
 
-	 (WS|NL) { i:INSTRUCTION <<#0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
+	  { (WS|NL) i:INSTRUCTION <<#0->addChild(#[$i->getText(), AST_STRING_CONST]);>> } RPI
 ;
 
 piTarget!:
@@ -194,8 +250,13 @@ piTarget!:
 
 
 dirCommentConstructor!:
-	XMLCOMMENTOPEN c:XMLCOMMENTCONTENT XMLCOMMENTCLOSE
-	<<#0=#(#[AST_COMMENT_CONSTR], #[$c->getText(), AST_STRING_CONST]);>>
+	XMLCOMMENTOPEN {c:XMLCOMMENTCONTENT} XMLCOMMENTCLOSE
+	<<
+	  if ($c != NULL)
+	     #0=#(#[AST_COMMENT_CONSTR], #[$c->getText(), AST_STRING_CONST]);
+	  else 
+	     #0=#(#[AST_COMMENT_CONSTR], #["", AST_STRING_CONST]);
+	>>
 ;
 
 
