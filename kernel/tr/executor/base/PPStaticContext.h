@@ -43,12 +43,19 @@ struct static_context
     XMLDateTime implicit_timezone;
     bool datetime_initialized;
 
+    char* base_uri;
+
     static_context();
 	void clear_context();
     ~static_context() 
 	{
 		//if (def_ns!=NULL)xml_ns::
 		//NEED DELETION
+		if(base_uri!=NULL)
+		{
+		    delete base_uri;
+		    base_uri = NULL;
+		}
 	}
 	xml_ns* get_ns_pair(const char* prefix,const char* uri);
 	inline xml_ns* get_ns_pair(std::string& prefix,std::string& uri)
@@ -64,8 +71,7 @@ struct static_context
 	{ remove_from_context(ns->prefix); }
 	char * get_uri_by_prefix(const NCName& _prefix, t_item type) const;
 	xml_ns* get_xmlns_by_prefix(const NCName& _prefix);
-	
-
+	void set_base_uri(const char* _base_uri_);
 };
 #endif
 
