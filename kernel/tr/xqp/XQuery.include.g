@@ -12,4 +12,7 @@
 
 #include <iostream>
 #include <string>
+
+extern XQueryDLGLexer* my_lexer;
+extern bool is_preserve_boundary_space;
 >>

@@ -25,6 +25,8 @@ using namespace std;
 
 EXTERN_DECLARE_TIME_VARS
 
+XQueryDLGLexer* my_lexer;
+bool is_preserve_boundary_space;
 
 SORAST* XQuerytoIR(const char* xquery){
 
@@ -52,7 +54,7 @@ SORAST* XQuerytoIR(const char* xquery){
 
   parser.init();
 
-
+  my_lexer = &scan;
   parser.script(&root, &sig, &scan);
   // parser.query(&root, &sig);
   _root=root;
