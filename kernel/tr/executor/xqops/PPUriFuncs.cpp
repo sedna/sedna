@@ -122,8 +122,7 @@ PPFnUriEncoding::PPFnUriEncoding(variable_context *_cxt_,
                                  PPOpIn _child_,
                                  uri_function_type _type_) : PPIterator(_cxt_),
                                                              child(_child_),
-                                                             type(_type_),
-                                                             first_time(true)
+                                                             type(_type_)
 {
 }
 
@@ -135,6 +134,7 @@ PPFnUriEncoding::~PPFnUriEncoding()
 
 void PPFnUriEncoding::open  ()
 {
+    first_time = true;
     child.op->open();
 }
 
@@ -235,3 +235,92 @@ bool PPFnUriEncoding::result(PPIterator* cur, variable_context *cxt, void*& r)
     throw USER_EXCEPTION2(SE1002, "PPFnUriEncoding::result");
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnResolveUri
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnResolveUri
+///////////////////////////////////////////////////////////////////////////////
+PPFnResolveUri::PPFnResolveUri(variable_context *_cxt_,
+                               PPOpIn _relative_) : PPIterator(_cxt_),
+                                                    relative(_relative_),
+                                                    is_base_static(true)
+{
+}
+
+PPFnResolveUri::PPFnResolveUri(variable_context *_cxt_,
+                               PPOpIn _relative_,
+                               PPOpIn _base_) : PPIterator(_cxt_),
+                                                base(_base_),
+                                                is_base_static(false)
+{
+}
+
+
+PPFnResolveUri::~PPFnResolveUri()
+{
+    delete relative.op;
+    relative.op = NULL;
+
+    if(!is_base_static)
+    {
+        delete base.op;
+        base.op = NULL;
+    }
+}
+
+void PPFnResolveUri::open  ()
+{
+    first_time = true;
+    relative.op->open();
+
+    if(!is_base_static) base.op->open();
+}
+
+void PPFnResolveUri::reopen()
+{
+    relative.op->reopen();
+    if(!is_base_static) base.op->reopen();    
+    first_time = true;
+}
+
+void PPFnResolveUri::close ()
+{
+    relative.op->close();
+    if(!is_base_static) base.op->reopen();    
+}
+
+void PPFnResolveUri::next  (tuple &t)
+{
+    if(first_time)
+    {
+        relative.op->next(t);
+        first_time = false;    
+
+        if(t.is_eos()) 
+        {
+        }
+    }
+    else 
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+PPIterator* PPFnResolveUri::copy(variable_context *_cxt_)
+{
+    PPFnResolveUri *res = is_base_static ? new PPFnResolveUri(_cxt_, relative) 
+                                         : new PPFnResolveUri(_cxt_, relative, base);
+    res->relative.op = relative.op->copy(_cxt_);
+    if(!is_base_static) res->base.op = base.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnResolveUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnResolveUri::result");
+}

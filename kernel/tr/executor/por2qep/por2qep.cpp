@@ -1256,7 +1256,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
-                                   ENCODE_FOR_URI);
+                                   PPFnUriEncoding::ESCAPE_HTML_URI);
     }
     else if (op == "PPFnIriToUri")
     {
@@ -1266,7 +1266,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
-                                   IRI_TO_URI);
+                                   PPFnUriEncoding::ESCAPE_HTML_URI);
     }
     else if (op == "PPFnEscapeHtmlUri")
     {
@@ -1276,8 +1276,30 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
-                                   ESCAPE_HTML_URI);
+                                   PPFnUriEncoding::ESCAPE_HTML_URI);
     }
+    /*
+    Not implemented yet!
+    else if (op == "PPFnResolveUri")
+    {
+        if (   lst->size() < 2
+            || lst->size() > 3
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "46.4");
+
+        if(lst->size() == 3)
+        {
+            if(lst->at(2).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "46.5");
+            opit = new PPFnResolveUri(cxt, 
+                                      make_pp_op(cxt, lst->at(1).internal.list),
+                                      make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else
+            opit = new PPFnResolveUri(cxt, 
+                                      make_pp_op(cxt, lst->at(1).internal.list));
+        
+    }*/
     else if (op == "PPFnItemAt")
     {
         if (   lst->size() != 3
@@ -3383,6 +3405,17 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
             tr_globals::st_ct.add_to_context(qp->at(i).internal.list->at(1).internal.str,
                                              qp->at(i).internal.list->at(2).internal.str);
         }
+        /*
+    	Not implemented yet!
+		else if (prolog_decl == "PPBaseUriDecl")
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            tr_globals::st_ct.set_base_uri(qp->at(i).internal.list->at(1).internal.str);
+        }
+        */
         else if (prolog_decl == "PPDefNSDeclElem")
         {
             if (   qp->at(i).internal.list->size() != 2
