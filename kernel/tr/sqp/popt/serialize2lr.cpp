@@ -113,26 +113,19 @@ void serialize2lr_tuple_cell(std::ostream &s, const tuple_cell &tc)
     else s << "UNKNOWN";
 }
 
-void serialize2lr_QName(std::ostream &s, const QName &qname)
+void serialize2lr_QName(std::ostream &s, const char *qname)
 {
-    // (var ("" "$v"))
-    s << "(var (\"";
-    s << qname.Prefix.n;
-    s << "\" \"";
-    s << qname.LocalPart.n;
-    s << "\"))";
+    xs_QName_print_to_lr(qname, s);
 }
 
 void serialize2lr_save_var(std::ostream &s, int idx)
 {
-    QName save_var;
+    // hack!!!
     char save_var_buf[64];
+    memset(save_var_buf, 0xFF, 2 * sizeof(void*));
 
-    sprintf(save_var_buf, "save_var_%d", idx);
-    save_var.Prefix.n = NULL;
-    save_var.LocalPart.n = save_var_buf;
-
-    serialize2lr_QName(s, save_var);
+    sprintf(save_var_buf + 2 * sizeof(void*), "save_var_%d", idx);
+    serialize2lr_QName(s, save_var_buf);
 }
 
 void serialize2lr_db_entity(std::ostream &s, counted_ptr<db_entity> db_ent)
@@ -152,7 +145,7 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
                                  xp_op_path_end_type end_type,
                                  counted_ptr<db_entity> db_ent, 
                                  counted_ptr<xp_tree_strategy> strategy,
-                                 const QName &var,
+                                 const char *var_qname,
                                  const xp_tree &tree)
 {
     if (i == -1)
@@ -164,7 +157,7 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
                                  else
                                      serialize2lr_xp_pred_trans(s, db_ent, strategy, tree);
                                  break;
-            case xp_et_var     : serialize2lr_QName(s, var);
+            case xp_et_var     : serialize2lr_QName(s, var_qname);
                                  break;
             default            : s << "UNKNOWN";
         }
@@ -185,7 +178,7 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
             default                     : s << "(UNKNOWN ";
         }
 
-        serialize2lr_xp_op_path_nto(s, nto, i - 1, end_type, db_ent, strategy, var, tree);
+        serialize2lr_xp_op_path_nto(s, nto, i - 1, end_type, db_ent, strategy, var_qname, tree);
 
         s << " (type (";
         switch (nto[i].nt[0].type)
@@ -204,8 +197,8 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
 
                                                    if (nto[i].nt[0].type == node_test_qname)
                                                    {
-                                                       s << "(\"" << nto[i].nt[0].data.qname.Prefix.n << "\" \"" 
-                                                         << nto[i].nt[0].data.qname.LocalPart.n << "\")";
+                                                       s << "(\"" << xs_QName_get_prefix(nto[i].nt[0].data.qname) << "\" \"" 
+                                                         << xs_QName_get_local_name(nto[i].nt[0].data.qname) << "\")";
                                                    }
                                                    else if (nto[i].nt[0].type == node_test_wildcard_star)
                                                    {
@@ -213,11 +206,11 @@ void serialize2lr_xp_op_path_nto(std::ostream &s,
                                                    }
                                                    else if (nto[i].nt[0].type == node_test_wildcard_ncname_star)
                                                    {
-                                                       s << "(\"" << nto[i].nt[0].data.ncname.n << "\" *)";
+                                                       s << "(\"" << nto[i].nt[0].data.ncname << "\" *)";
                                                    }
                                                    else // node_test_wildcard_star_ncname
                                                    {
-                                                       s << "(* \"" << nto[i].nt[0].data.ncname.n << "\")";
+                                                       s << "(* \"" << nto[i].nt[0].data.ncname << "\")";
                                                    }
 
                                                    s << ") (type *) (const (type !xs!string) \"non-nil\")";
@@ -235,10 +228,10 @@ void serialize2lr_xp_op_path(std::ostream &s,
                              xp_op_path_end_type end_type,
                              counted_ptr<db_entity> db_ent, 
                              counted_ptr<xp_tree_strategy> strategy,
-                             const QName &var,
+                             const char *var_qname,
                              const xp_tree &tree)
 {
-    serialize2lr_xp_op_path_nto(s, path_expr->nto, path_expr->s - 1, end_type, db_ent, strategy, var, tree);
+    serialize2lr_xp_op_path_nto(s, path_expr->nto, path_expr->s - 1, end_type, db_ent, strategy, var_qname, tree);
 /*
 (child
       (child
@@ -256,7 +249,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
                                 counted_ptr<db_entity> db_ent, 
                                 counted_ptr<xp_tree_strategy> strategy,
                                 int j, 
-                                const QName &var,
+                                const char* var_qname,
                                 const xp_tree &tree)
 {
     int n = strategy->n;
@@ -286,14 +279,14 @@ void serialize2lr_xp_pred_group(std::ostream &s,
     {
         if (j > 0 && group[j - 1].es == xpes_top_down)
         {
-            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var, tree);
+            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var_qname, tree);
         }
         else
         {
             s << "(return ";
-            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var, tree);
+            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var_qname, tree);
             s << " (fun-def ((!xs!anyType ";
-            serialize2lr_QName(s, var);
+            serialize2lr_QName(s, var_qname);
             s << ")) (if@ ";
             if (j == n - 1 || group[j + 1].es != xpes_top_down)
             { // do not need and@
@@ -303,7 +296,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
                 s << "(";
                 serialize2lr_xp_op_type(s, group[j].pred->type);
                 s << " ";
-                serialize2lr_xp_op_path(s, path_expr, xp_et_var, db_ent, strategy, var, tree);
+                serialize2lr_xp_op_path(s, path_expr, xp_et_var, db_ent, strategy, var_qname, tree);
                 s << " ";
                 serialize2lr_tuple_cell(s, group[j].pred->tc);
                 s << ") ";
@@ -323,7 +316,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
                     s << "(";
                     serialize2lr_xp_op_type(s, group[k].pred->type);
                     s << " ";
-                    serialize2lr_xp_op_path(s, path_expr, xp_et_var, db_ent, strategy, var, tree);
+                    serialize2lr_xp_op_path(s, path_expr, xp_et_var, db_ent, strategy, var_qname, tree);
                     s << " ";
                     serialize2lr_tuple_cell(s, group[k].pred->tc);
                     s << ") ";
@@ -333,7 +326,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
                 s << ")";
             }
             s << " ";
-            serialize2lr_QName(s, var);
+            serialize2lr_QName(s, var_qname);
             s << " (sequence))))";
         }
     }
@@ -342,7 +335,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         if (j != 0 || strategy->left.get() != NULL)
         { /// if there is something to intersect with... then intersect
             s << "(intersect@ ";
-            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var, tree);
+            serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var_qname, tree);
             s << " ";
         }
         // up
@@ -357,15 +350,15 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         s << ")";
         // end of scan
         s << " (fun-def ((!xs!anyType ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << ")) (if@ (";
         serialize2lr_xp_op_type(s, group[j].pred->type);
         s << " ";
         serialize2lr_tuple_cell(s, group[j].pred->tc);
         s << " ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << ") ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << " (sequence))))";
         // end of return (predicate)
         s << " (const (type !xs!integer) ";
@@ -381,7 +374,7 @@ void serialize2lr_xp_pred_group(std::ostream &s,
     else if (group[j].es == xpes_ad_filter)
     {
         s << "(adfilter ";
-        serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var, tree);
+        serialize2lr_xp_pred_group(s, db_ent, strategy, j - 1, var_qname, tree);
         s << " ";
         // return (predicate)
         s << "(return ";
@@ -393,15 +386,15 @@ void serialize2lr_xp_pred_group(std::ostream &s,
         s << ")";
         // end of scan
         s << " (fun-def ((!xs!anyType ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << ")) (if@ (";
         serialize2lr_xp_op_type(s, group[j].pred->type);
         s << " ";
         serialize2lr_tuple_cell(s, group[j].pred->tc);
         s << " ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << ") ";
-        serialize2lr_QName(s, var);
+        serialize2lr_QName(s, var_qname);
         s << " (sequence))))";
         // end of return (predicate)
         s << ")";
@@ -466,7 +459,7 @@ void serialize2lr_xp_pred_trans(std::ostream &s,
                 PathExpr *path_expr = build_PathExpr(level2scm_middle(from_level, tree),
                                                      level2scm_middle(to_level, tree));
 
-                serialize2lr_xp_op_path(s, path_expr, xp_et_strategy, db_ent, strategy->left, QName(), tree);
+                serialize2lr_xp_op_path(s, path_expr, xp_et_strategy, db_ent, strategy->left, NULL, tree);
                 //!!!delete_PathExpr(path_expr);
             }
             else

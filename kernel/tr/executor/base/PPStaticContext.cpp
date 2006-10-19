@@ -97,9 +97,9 @@ void static_context::remove_from_context(const char* prefix)
 	}
 }
 
-char * static_context::get_uri_by_prefix(const NCName& _prefix,t_item type) const
+char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
 {
-    std::string prefix(_prefix.n);
+    std::string prefix(_prefix);
 	char* uri;
 	if (prefix.size()==0)
 	{
@@ -121,9 +121,9 @@ char * static_context::get_uri_by_prefix(const NCName& _prefix,t_item type) cons
 	return uri;
 }
 
-xml_ns* static_context::get_xmlns_by_prefix(const NCName& _prefix)
+xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix)
 {
-    std::string prefix(_prefix.n);
+    std::string prefix(_prefix);
 	if (prefix.size()==0)
 	{
 		return def_ns.back();		

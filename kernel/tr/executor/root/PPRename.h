@@ -16,7 +16,7 @@ class PPRename : public PPUpdate
 {
     PPOpIn child;
     variable_context *cxt;
-    QName name;
+    const char *qname;
 
 public:
     void open();
@@ -25,7 +25,7 @@ public:
 
     PPRename(PPOpIn _child_, 
              variable_context *_cxt_,
-             QName _name_);
+             const char* _qname_);
     ~PPRename();
 };
 

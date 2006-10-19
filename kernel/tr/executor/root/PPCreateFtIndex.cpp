@@ -70,7 +70,8 @@ void PPCreateFtIndex::close()
 
 
 //FIXME: import it in some other way (this function is in PPConstructors.cpp)
-void separateLocalAndPrefix(NCName*& prefix,const char*& qname);
+//void separateLocalAndPrefix(NCName*& prefix,const char*& qname);
+void separateLocalAndPrefix(char*& prefix,const char*& qname);
 std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules)
 {
 	tuple t(1);

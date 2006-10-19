@@ -13,84 +13,41 @@
 
 #include "sedna.h"
 
+#include "xsd.h"
 #include "scheme_tree.h"
 
-/*******************************************************************************
-The following queries are still possible:
-doc/a/node()/(.|b)
-*******************************************************************************/
- 
-///
-/// NCName
-///
-struct NCName
-{
-    char *n;  // name
-
-    void print(std::ostream& str);
-    void print_to_lr(std::ostream& str);
+enum Axis     
+{ 
+    axis_child,
+    axis_descendant,
+    axis_attribute,
+    axis_self,
+    axis_descendant_or_self,
+    axis_descendant_attr,
+    axis_parent
 };
 
-
-inline bool operator ==(const NCName &n1, const NCName &n2)
-{
-    return strcmp(n1.n, n2.n) == 0;
-}
-
-inline bool operator <(const NCName &n1, const NCName &n2)
-{
-    return strcmp(n1.n, n2.n) < 0;
-}
-
-
-///
-/// QName - qualified name from Namespaces in XML standard
-///
-struct QName
-{
-    NCName Prefix;
-    NCName LocalPart;
-
-    void print(std::ostream& str);
-    void print_to_lr(std::ostream& str);
+enum NodeTestType  
+{ 
+    node_test_processing_instruction, // processing-instruction()
+    node_test_comment,                // comment()
+    node_test_text,                   // text()
+    node_test_node,                   // node()
+    node_test_string,                 // fn:string()
+    node_test_qname,                  // QName
+    node_test_wildcard_star,          // *
+    node_test_wildcard_ncname_star,   // NCName:*
+    node_test_wildcard_star_ncname,   // *:NCName
+    node_test_function_call,          // func(?)
+    node_test_var_name                // $x
 };
-
-
-inline bool operator < (const QName & n1, const QName & n2)
-{
-    if (n1.Prefix == n2.Prefix) return (n1.LocalPart < n2.LocalPart);
-    else return (n1.Prefix < n2.Prefix);
-}
-
-
-enum Axis     { axis_child,
-                axis_descendant,
-                axis_attribute,
-                axis_self,
-                axis_descendant_or_self,
-                axis_descendant_attr,
-                axis_parent
-              };
-
-enum NodeTestType  { node_test_processing_instruction,	// processing-instruction()
-                     node_test_comment,					// comment()
-                     node_test_text,					// text()
-                     node_test_node,					// node()
-                     node_test_string,					// fn:string()
-                     node_test_qname,					// QName
-                     node_test_wildcard_star,			// *
-                     node_test_wildcard_ncname_star,	// NCName:*
-                     node_test_wildcard_star_ncname,	// *:NCName
-                     node_test_function_call,			// func(?)
-                     node_test_var_name					// $x
-                   };
 
 class PPOpIn;
 
 struct NodeTestData
 {
-    NCName ncname;
-    QName qname;
+    char* ncname;
+    char* qname;
     PPOpIn *ppnode;
 };
                      
@@ -131,7 +88,6 @@ typedef PathExpr RelPath;
 
 void *create_PathExpr(const PathExprDistr &distr, bool persistent);
 void delete_PathExpr(PathExpr *expr);
-void set_NCName(NCName *n, const char* value, bool persistent);
 
 struct variable_context;
 void PathExpr2lr(PathExpr *path, std::ostream& str);
@@ -141,6 +97,18 @@ PathExpr *lr2PathExpr(variable_context *cxt, const char *str, bool persistent);
 struct schema_node;
 PathExpr *build_PathExpr(schema_node *from, schema_node *to);
 
+
+void *PathExpr_mem_alloc(size_t size);
+void *PathExpr_pers_alloc(size_t size);
+inline void *PathExpr_malloc(size_t size, bool persistent)
+{
+    return (persistent ? PathExpr_pers_alloc(size) : PathExpr_mem_alloc(size));
+}
+typedef void* (*malloc_func)(size_t);
+inline malloc_func PathExpr_malloc_func(bool persistent)
+{
+    return (persistent ? PathExpr_pers_alloc : PathExpr_mem_alloc);
+}
 
 // free dynamic memory allocated for local PathExprs
 void PathExpr_local_free();

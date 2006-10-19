@@ -26,16 +26,15 @@ xptr PPConstructor::cont_leftind=XNULL;
 int PPConstructor::conscnt=0;
 t_str_buf str_val;
 //UTILS
-void separateLocalAndPrefix(NCName*& prefix,const char*& qname)
+void separateLocalAndPrefix(char*& prefix,const char*& qname)
 {
 	for (int i=0; i<strlen(qname);i++)
 		if (qname[i]==':')
 		{
 			//prefix=new NCName(qname, i);//string(qname,i);
-            prefix=new NCName;
-            prefix->n = new char[i + 1];
-            memcpy(prefix->n, qname, i);
-            prefix->n[i] = '\0';
+            prefix = new char[i + 1];
+            memcpy(prefix, qname, i);
+            prefix[i] = '\0';
 			qname=qname+i+1;
 			return;
 		}
@@ -306,13 +305,12 @@ void PPElementConstructor::next  (tuple &t)
 		}
 		//namespace search
 		
-		NCName* prefix=NULL;
+		char* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);
 		xml_ns* ns=NULL;
 		if (prefix!=NULL)
 		{
-			ns=st_ct.get_xmlns_by_prefix(*prefix);
-            delete prefix->n;
+			ns=st_ct.get_xmlns_by_prefix(prefix);
 			delete prefix;
 		}
 		//Element insertion
@@ -646,16 +644,15 @@ void PPAttributeConstructor::next  (tuple &t)
 			res1=getQnameParameter(qname);
 			name=res1.get_str_mem();
 		}
-		NCName* prefix=NULL;
+		char* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);
 		xml_ns* ns=NULL;
-		if (((prefix==NULL||my_strcmp(prefix->n,"")==0) && my_strcmp(name,"xmlns")==0)
-			||(prefix!=NULL && my_strcmp(prefix->n,"http://www.w3.org/2000/xmlns/")==0 ))
+		if (((prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+			||(prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0 ))
 			throw USER_EXCEPTION(XQDY0044);
 		if (prefix!=NULL)
 		{
-			ns=st_ct.get_xmlns_by_prefix(*prefix);
-            delete prefix->n;
+			ns=st_ct.get_xmlns_by_prefix(prefix);
 			delete prefix;			
 		}
 		const char* value=at_value;
@@ -1071,11 +1068,10 @@ void PPPIConstructor::next  (tuple &t)
 			res1=getQnameParameter(qname);
 			name=res1.get_str_mem();
 		}
-		NCName* prefix=NULL;
+		char* prefix=NULL;
 		separateLocalAndPrefix(prefix,name);
 		if (prefix!=NULL)
         {
-            delete prefix->n;
             delete prefix;
 			throw USER_EXCEPTION(XQDY0041);
         }

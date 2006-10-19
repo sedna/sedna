@@ -30,6 +30,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        SequenceType$(OBJ_EXT)			\
                        xs_helper$(OBJ_EXT)				\
                        xs_decimal_t$(OBJ_EXT)			\
+                       xsd$(OBJ_EXT)					\
                        decContext$(OBJ_EXT)				\
                        decimal64$(OBJ_EXT)				\
                        decimal128$(OBJ_EXT)				\

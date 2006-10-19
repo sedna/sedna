@@ -139,8 +139,8 @@ void PPAxisChild::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
-                         tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
-                         nt_data.qname.LocalPart.n,
+                         tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname), element),
+                         xs_QName_get_local_name(nt_data.qname),
                          element,
                          comp_qname_type);
     }
@@ -196,7 +196,7 @@ void PPAxisChild::next_wildcard_star_ncname(tuple &t)
 
         cur = merge.init(child.get(t).get_node(),
                          NULL,
-                         nt_data.ncname.n,
+                         nt_data.ncname,
                          element,
                          comp_local_type);
     }

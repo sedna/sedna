@@ -147,13 +147,14 @@ public:
 
     xptr get_node() const { return *(xptr*)(&data); }
 
-    __int64            get_xs_integer()  const { return *(__int64*     )(&data); } 
-    xs_decimal_t       get_xs_decimal()  const { return *(xs_decimal_t*)(&data); }
-    float              get_xs_float()    const { return *(float*       )(&data); }
-    double             get_xs_double()   const { return *(double*      )(&data); }
-    bool               get_xs_boolean()  const { return *(bool*        )(&data); }
-    xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data);  }
-    xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data);  }
+    __int64            get_xs_integer()  const { return *(__int64*           )(&data); } 
+    xs_decimal_t       get_xs_decimal()  const { return *(xs_decimal_t*      )(&data); }
+    float              get_xs_float()    const { return *(float*             )(&data); }
+    double             get_xs_double()   const { return *(double*            )(&data); }
+    bool               get_xs_boolean()  const { return *(bool*              )(&data); }
+    xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
+    xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
+//    xs_QName           get_xs_QName()    const { return *(xs_QName*          )(&data); }
 
 /* !!! DELETE LATER */
 /*

@@ -15,7 +15,6 @@
 #include "XPathOnSchema.h"
 
 class PathExpr;
-class QName;
 enum ft_index_type
 {
 	ft_xml,
