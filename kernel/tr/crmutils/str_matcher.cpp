@@ -22,7 +22,14 @@ trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)
 
 void StrMatcher::delete_trie(trie_node_t *root)
 {
-	//TODO
+	for (int i = 0; i<256; i++)
+		if (root->next[i] != NULL)
+		{
+			delete_trie(root->next[i]);
+			root->next[i] = NULL;
+		}
+
+	free(root);
 }
 
 trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_pc)
