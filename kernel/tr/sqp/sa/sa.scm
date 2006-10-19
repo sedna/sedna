@@ -910,86 +910,12 @@
                   (cdr prolog))
             (cl:signal-user-error SE5054 (cadr expr)))))         
          ((declare-option)
-          (and
-           (sa:assert-num-args expr 2)
-           (sa:proper-qname (cadr expr))  ; must be proper qname
-           (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
-           (let ((name 
-                  (sa:resolve-qname (cadr expr) ns-binding sa:se-ns))
-                 (value (caddr (caddr expr)))
-                 (supported-options
-                  `(((const (type !xs!QName) (,sa:se-ns "output"))
-                     #\; "method" "indent")
-                    ((const (type !xs!QName) (,sa:se-ns "character-map"))
-                     #\!))))
-;             (if
-;              (not
-;               (or (equal? name
-;                       `(const (type !xs!QName) (,sa:se-ns "output")))
-;                   (equal? name
-;                       `(const (type !xs!QName) (,sa:se-ns "character-map")))))
-;              (cl:signal-user-error
-;               SE5055
-;               (sa:qname->string (cadr expr)) ", expanded to "
-;               (sa:qname->string name))
-              (loop
-               (cond
-                 ((assoc name supported-options)
-                  => (lambda (option-entry)
-                       (let* ((key-value-pairs
-                               (sa:string->key-value-pairs
-                                value (cadr option-entry)))
-                              (key-value-pairs
-                               (if
-                                (null? (cddr option-entry))
-                                ; Accept all key-value pairs
-                                key-value-pairs
-                                (filter
-                                 (lambda (x) x)
-                                 (map
-                                  ; search for supported key-value pairs,
-                                  ; in that order
-                                  (lambda (expected-suboption)
-                                    (assoc expected-suboption
-                                           key-value-pairs))
-                                  (cddr option-entry))))))
-                         (if
-                          (null? key-value-pairs)
-                          ; No expected suboptions found - ignoring option
-                          new-prlg
-                          (cons
-                           (cons (car expr)  ; declare-option
-                                 (cons
-                                  name
-                                  (map
-                                   (lambda (pair)
-                                     `((const (type !xs!string) ,(car pair))
-                                       (const (type !xs!string) ,(cdr pair))))
-                                   key-value-pairs)))
-                           new-prlg)))))
-                 (else
-                  ; Unknown options
-                  new-prlg))
-;               (cons
-;                (cons
-;                 (car expr)  ; declare-option
-;                 (cons
-;                  name
-;                  (filter
-;                   (lambda (x) x)
-;                   (map
-;                    (lambda (sub)
-;                      (cond
-;                        ((sa:extract-suboption value sub)
-;                         => (lambda (v)
-;                              `((const (type !xs!string) ,sub)
-;                                (const (type !xs!string) ,v))))
-;                        (else #f)))
-;                    '("method" "indent")))))
-;                new-prlg)
-               funcs triples
-               ns-binding default-elem-ns default-func-ns
-               (cdr prolog)))))
+          (loop
+           ; Processing moved to a separate function
+           (sa:prolog-declare-option expr new-prlg ns-binding)
+           funcs triples
+           ns-binding default-elem-ns default-func-ns
+           (cdr prolog)))
          ((declare-namespace)
           (and
            (sa:assert-num-args expr 2)
@@ -1122,6 +1048,96 @@
                (cdr prolog))))))
          (else
           (cl:signal-input-error SE5012 expr)))))))
+
+; Processes a declare-option prolog-clause
+; reversed-prolog - already processed prolog clauses, in reverse order
+; Returns the modified `reversed-prolog', by optionally cons'ing a new
+; member to `reversed-prolog'
+; The function may raise exceptions for an ill-formed declare-option clause
+(define sa:prolog-declare-option
+  (let ((option-string->key+value-pairs
+         (lambda (str delim-char)
+           (map
+            (lambda (pair)
+              (if
+               ; There is exactly one #\= character in the substring
+               (= (length (cdr pair)) 2)
+               (cons (sa:remove-boundary-spaces (cadr pair))
+                     (sa:remove-boundary-spaces (caddr pair)))
+               (cl:signal-user-error SE5067 (car pair))))
+            (map
+             (lambda (sub)
+               (cons sub  ; preserve initial substring
+                     (sa:string-split sub '(#\=))))
+             (filter
+              (lambda (sub)  ; ignore adjacent delim-char
+                (not (string=? sub "")))
+              (sa:string-split str (list delim-char))))))))
+    (lambda (expr reversed-prolog ns-binding)
+      (and
+       (sa:assert-num-args expr 2)
+       (sa:proper-qname (cadr expr))  ; must be proper qname
+       (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
+       (let ((name
+              (sa:resolve-qname (cadr expr) ns-binding sa:se-ns))
+             (value (caddr (caddr expr))))
+         (let ((qname-pair
+                (cadr (sa:op-args name))))
+           ; Cannot use `case' here, since case relies on a `eqv?' comparison
+           (cond
+             ((equal? qname-pair `(,sa:se-ns "output"))
+              (let ((keys+values
+                     (option-string->key+value-pairs value #\;)))
+                (cond
+                  ((let ((unknown-keys
+                          (map car
+                               (filter
+                                (lambda (pair)
+                                  (not
+                                   (member (car pair)
+                                           '("method" "indent"))))
+                                keys+values))))
+                     (and
+                      (not (null? unknown-keys))
+                      unknown-keys))
+                   => (lambda (unknown-keys)
+                        ;(pp unknown-keys)
+                        (cl:signal-user-error
+                         SE5068
+                         (apply
+                          string-append
+                          (cdr
+                           (apply
+                            append
+                            (map
+                             (lambda (key) (list ", " key))
+                             unknown-keys)))))))
+                  (else
+                   (cons
+                    (cons (car expr)  ; declare-option
+                          (cons
+                           name
+                           (map
+                            (lambda (pair)
+                              `((const (type !xs!string) ,(car pair))
+                                (const (type !xs!string) ,(cdr pair))))
+                            keys+values)))
+                    reversed-prolog)))))
+             ((equal? qname-pair `(,sa:se-ns "character-map"))
+              (let ((delim-char #\!))
+                (cons
+                 (cons (car expr)  ; declare-option
+                       (cons
+                        name
+                        (map
+                         (lambda (pair)
+                           `((const (type !xs!string) ,(car pair))
+                             (const (type !xs!string) ,(cdr pair))))
+                         (option-string->key+value-pairs value delim-char))))
+                 reversed-prolog)))
+             (else
+              ; Unknown option - silently ignoring it
+              reversed-prolog))))))))
 
 ;-------------------------------------------------
 ; Namespaces-specific analysis

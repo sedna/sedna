@@ -1567,6 +1567,12 @@ sedna-err:SE5065
 sedna-err:SE5066
 
     Orderspecs expected.
+sedna-err:SE5067
+
+    Malformed name-value pair in Sedna-specific option declaration.
+sedna-err:SE5068
+
+    Unknown key(s) given in se:output option.
 sedna-err:SE5100
 
     Error in Scheme part.
