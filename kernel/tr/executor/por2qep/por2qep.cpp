@@ -158,7 +158,7 @@ void set_axis_parameters(scheme_list *lst,
         if (lst->at(2).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "110");
 
-        set_NCName(&(nt_data.ncname), lst->at(2).internal.str, persistent);
+        nt_data.ncname = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -170,8 +170,10 @@ void set_axis_parameters(scheme_list *lst,
             || lst->at(2).internal.list->at(1).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "111");
 
-        set_NCName(&(nt_data.qname.Prefix), lst->at(2).internal.list->at(0).internal.str, persistent);
-        set_NCName(&(nt_data.qname.LocalPart), lst->at(2).internal.list->at(1).internal.str, persistent);
+        nt_data.qname = xs_QName_create(NULL,
+                                        lst->at(2).internal.list->at(0).internal.str, 
+                                        lst->at(2).internal.list->at(1).internal.str, 
+                                        PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -222,8 +224,10 @@ void make_element_data(scheme_list *lst, sequence_type &st)
         else if (str == "element_name_wildcard") st.type.ed.ede = st_ede_name_wildcard; 
         else throw USER_EXCEPTION2(SE1004, "123");
 
-        set_NCName(&(st.type.ed.name1.Prefix), lst->at(1).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ed.name1.LocalPart), lst->at(1).internal.list->at(1).internal.str, false);
+        st.type.ed.qname1 = xs_QName_create(NULL,
+                                            lst->at(1).internal.list->at(0).internal.str, 
+                                            lst->at(1).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
     }
     else if (lst->size() == 3)
     {
@@ -243,11 +247,15 @@ void make_element_data(scheme_list *lst, sequence_type &st)
         if (str == "element_name_name") st.type.ed.ede = st_ede_name_name;
         else throw USER_EXCEPTION2(SE1004, "125");
 
-        set_NCName(&(st.type.ed.name1.Prefix), lst->at(1).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ed.name1.LocalPart), lst->at(1).internal.list->at(1).internal.str, false);
+        st.type.ed.qname1 = xs_QName_create(NULL,
+                                            lst->at(1).internal.list->at(0).internal.str, 
+                                            lst->at(1).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
 
-        set_NCName(&(st.type.ed.name2.Prefix), lst->at(2).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ed.name2.LocalPart), lst->at(2).internal.list->at(1).internal.str, false);
+        st.type.ed.qname2 = xs_QName_create(NULL,
+                                            lst->at(2).internal.list->at(0).internal.str, 
+                                            lst->at(2).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
     }
     else throw USER_EXCEPTION2(SE1004, "126");
 }
@@ -285,8 +293,10 @@ void make_attribute_data(scheme_list *lst, sequence_type &st)
         else if (str == "attribute_name_wildcard") st.type.ad.ade = st_ade_name_wildcard;
         else throw USER_EXCEPTION2(SE1004, "130");
 
-        set_NCName(&(st.type.ad.name1.Prefix), lst->at(1).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ad.name1.LocalPart), lst->at(1).internal.list->at(1).internal.str, false);
+        st.type.ad.qname1 = xs_QName_create(NULL,
+                                            lst->at(1).internal.list->at(0).internal.str, 
+                                            lst->at(1).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
     }
     else if (lst->size() == 3)
     {
@@ -306,11 +316,15 @@ void make_attribute_data(scheme_list *lst, sequence_type &st)
         if (str == "attribute_name_name") st.type.ad.ade = st_ade_name_name;
         else throw USER_EXCEPTION2(SE1004, "132");
 
-        set_NCName(&(st.type.ad.name1.Prefix), lst->at(1).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ad.name1.LocalPart), lst->at(1).internal.list->at(1).internal.str, false);
+        st.type.ad.qname1 = xs_QName_create(NULL,
+                                            lst->at(1).internal.list->at(0).internal.str, 
+                                            lst->at(1).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
 
-        set_NCName(&(st.type.ad.name2.Prefix), lst->at(2).internal.list->at(0).internal.str, false);
-        set_NCName(&(st.type.ad.name2.LocalPart), lst->at(2).internal.list->at(1).internal.str, false);
+        st.type.ad.qname2 = xs_QName_create(NULL,
+                                            lst->at(2).internal.list->at(0).internal.str, 
+                                            lst->at(2).internal.list->at(1).internal.str, 
+                                            PathExpr_malloc_func(false));
     }
     else throw USER_EXCEPTION2(SE1004, "133");
 }
@@ -2971,13 +2985,16 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
         int cxt_size = atoi(qe->at(1).internal.num);
 
         variable_context *cxt = new variable_context(cxt_size);
-        QName name;
-        set_NCName(&(name.Prefix), qe->at(3).internal.list->at(0).internal.str, false);
-        set_NCName(&(name.LocalPart), qe->at(3).internal.list->at(1).internal.str, false);
+        char* qname;
+        qname = xs_QName_create(NULL,
+                                qe->at(3).internal.list->at(0).internal.str, 
+                                qe->at(3).internal.list->at(1).internal.str, 
+                                PathExpr_malloc_func(false));
+
 
         return new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
                             cxt,
-                            name);
+                            qname);
     }
     else if (op == "PPReplace")
     {

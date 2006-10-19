@@ -25,15 +25,15 @@ inline bool comp_type(schema_node* scm_node, t_item type)
     return comp_type(scm_node, NULL, NULL, type);
 }
 
-inline bool comp_qname_type(const schema_node *scm_node, const QName& qn, t_item type)
+inline bool comp_qname_type(const schema_node *scm_node, const char *qn, t_item type)
 {
     return comp_qname_type(scm_node, 
-                           tr_globals::st_ct.get_uri_by_prefix(qn.Prefix, type), 
-                           qn.LocalPart.n, 
+                           tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(qn), type), 
+                           xs_QName_get_local_name(qn), 
                            type);
 }
 
-inline bool comp_uri_type(const schema_node *scm_node, const NCName& ncn, t_item type)
+inline bool comp_uri_type(const schema_node *scm_node, const char *ncn, t_item type)
 {
     return comp_uri_type(scm_node, 
                          tr_globals::st_ct.get_uri_by_prefix(ncn, type), 
@@ -41,9 +41,9 @@ inline bool comp_uri_type(const schema_node *scm_node, const NCName& ncn, t_item
                          type);
 }
 
-inline bool comp_local_type(const schema_node* scm_node, const NCName& ncn, t_item type)
+inline bool comp_local_type(const schema_node* scm_node, const char *ncn, t_item type)
 {
-    return comp_local_type(scm_node, NULL, ncn.n, type);
+    return comp_local_type(scm_node, NULL, ncn, type);
 }
 
 t_scmnodes_const descendant_or_self_nodes(const schema_node *node, node_type_restriction restriction, bool check = false)

@@ -168,8 +168,8 @@ void PPAxisAncestor::next_qname(tuple &t)
 		{
 			CHECKP(cur);
 			if (comp_qname_type(GETSCHEMENODEX(cur),
-                              tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
-                              nt_data.qname.LocalPart.n, 
+                              tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname), element),
+                              xs_QName_get_local_name(nt_data.qname), 
                               element))
 							  break;
 			cur = get_parent_node(cur);
@@ -181,8 +181,8 @@ void PPAxisAncestor::next_qname(tuple &t)
 	{
 		CHECKP(cur);		
 		if (comp_qname_type(GETSCHEMENODEX(cur),
-                              tr_globals::st_ct.get_uri_by_prefix(nt_data.qname.Prefix, element),
-                              nt_data.qname.LocalPart.n, 
+                              tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname), element),
+                              xs_QName_get_local_name(nt_data.qname), 
                               element))
 							  return;
 		cur = get_parent_node(cur);
@@ -283,7 +283,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 			CHECKP(cur);
 			if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
-                              nt_data.ncname.n, 
+                              nt_data.ncname, 
                               element))
 							  break;
 			cur = get_parent_node(cur);
@@ -297,7 +297,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
 		CHECKP(cur);		
 		if (comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
-                              nt_data.ncname.n, 
+                              nt_data.ncname, 
                               element))
 							  return;
 		cur = get_parent_node(cur);

@@ -79,7 +79,7 @@ struct xp_level
 {
     int n;
     counted_ptr<xp_pred> preds;
-    QName qname;
+    char *qname;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

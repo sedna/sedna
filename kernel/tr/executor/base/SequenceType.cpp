@@ -99,8 +99,8 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                     case st_ede_name				: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *name*");
                     case st_ede_wildcard_wildcard	: return true;
                     case st_ede_wildcard_name		: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *wildcard-wildcard*");
-                    case st_ede_name_wildcard		: return (strlen(it.ed.name1.Prefix.n) == 0 && 
-                                                              strcmp(GETSCHEMENODEX(p)->name, it.ed.name1.LocalPart.n) == 0);
+                    case st_ede_name_wildcard		: return (strlen(xs_QName_get_prefix(it.ed.qname1)) == 0 && 
+                                                              strcmp(GETSCHEMENODEX(p)->name, xs_QName_get_local_name(it.ed.qname1)) == 0);
                     case st_ede_name_name			: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *name-name*");
                     default							: throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
                 }
@@ -122,8 +122,8 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                     case st_ade_name				: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *name*");
                     case st_ade_wildcard_wildcard	: return true;
                     case st_ade_wildcard_name		: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *wildcard-wildcard*");
-					case st_ade_name_wildcard		: return (strlen(it.ad.name1.Prefix.n) == 0 && 
-                                                              strcmp(GETSCHEMENODEX(p)->name, it.ad.name1.LocalPart.n) == 0);
+					case st_ade_name_wildcard		: return (strlen(xs_QName_get_prefix(it.ad.qname1)) == 0 && 
+                                                              strcmp(GETSCHEMENODEX(p)->name, xs_QName_get_local_name(it.ad.qname1)) == 0);
                     case st_ade_name_name			: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *name-name*");
                     default							: throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
                 }

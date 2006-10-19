@@ -92,18 +92,18 @@ void PPAxisSelf::next   (tuple &t)
 					if (type!=pr_ins) continue;
 					else
 					{
-						if (strlen(nt_data.ncname.n)==0) return;
+						if (strlen(nt_data.ncname)==0) return;
 						else
 						{
 							pi_dsc* desc=(pi_dsc*)XADDR(node);
 							int tsize=desc->target;
-							if (tsize==strlen(nt_data.ncname.n))
+							if (tsize==strlen(nt_data.ncname))
 							{
 								xptr ind_ptr=desc->data;
 								CHECKP(ind_ptr);
 								shft shift= *((shft*)XADDR(ind_ptr));
 								char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-								if (strcmp(nt_data.ncname.n, std::string(data,tsize).c_str()) == 0) return;
+								if (strcmp(nt_data.ncname, std::string(data,tsize).c_str()) == 0) return;
 								else continue;
 							}
 						}
@@ -167,14 +167,14 @@ void PPAxisSelf::next   (tuple &t)
 					if (nt_type==node_test_qname) 
 					{
 						fun=comp_qname_type;
-						uri=st_ct.get_uri_by_prefix(nt_data.qname.Prefix,element) ;
-						local=nt_data.qname.LocalPart.n;
+						uri=st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname),element);
+						local=xs_QName_get_local_name(nt_data.qname);
 					}
 					else
 					if (nt_type==node_test_wildcard_star_ncname) 
 					{
 						fun=comp_local_type;
-						local=nt_data.ncname.n;
+						local=nt_data.ncname;
 					}
 					else if (nt_type==node_test_wildcard_ncname_star) 
 					{

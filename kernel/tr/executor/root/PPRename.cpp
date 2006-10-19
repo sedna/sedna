@@ -11,10 +11,10 @@
 
 PPRename::PPRename(PPOpIn _child_, 
                    variable_context *_cxt_,
-                   QName _name_) : PPUpdate(),
-                                   child(_child_),
-                                   cxt(_cxt_),
-                                   name(_name_)
+                   const char *_qname_) : PPUpdate(),
+                                          child(_child_),
+                                          cxt(_cxt_),
+                                          qname(_qname_)
 {
 }
 
@@ -39,6 +39,6 @@ void PPRename::close()
 
 void PPRename::execute()
 {
-    rename(child, name.LocalPart.n);
+    rename(child, xs_QName_get_local_name(qname));
 }
 
