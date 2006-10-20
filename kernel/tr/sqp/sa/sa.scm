@@ -942,18 +942,25 @@
             (let ((prefix (symbol->string (car (sa:op-args expr))))
                   (ns-uri (cadr (sa:op-args
                                  (cadr (sa:op-args expr))))))
-              (if
-               (or
-                (member prefix   ; can redefine
-                        '("xs" "xsi" "fn" "xdt" "local" "se"))
-                (not (assoc prefix ns-binding)))
-               (loop (cons expr new-prlg)
-                     funcs triples
-                     (cons (cons prefix ns-uri) ns-binding)
-                     default-elem-ns default-func-ns
-                     (cdr prolog))
-               (cl:signal-user-error XQST0033 prefix)  ; was: SE5009
-               )))))
+              (cond
+                ((or (member prefix '("xml" "xmlns"))
+                     (member ns-uri
+                             '("http://www.w3.org/XML/1998/namespace")))
+                 => (lambda (reason)
+                      (cl:signal-user-error XQST0070 (car reason))))
+                ((and
+                  (assoc prefix ns-binding)  ; prefix redeclaration
+                  (not
+                   (member prefix   ; can redefine
+                           '("xs" "xsi" "fn" "xdt" "local" "se"))))
+                 (cl:signal-user-error XQST0033 prefix)  ; was: SE5009
+                 )
+                (else
+                 (loop (cons expr new-prlg)
+                       funcs triples
+                       (cons (cons prefix ns-uri) ns-binding)
+                       default-elem-ns default-func-ns
+                       (cdr prolog))))))))
          ((declare-default-element-namespace)
           (and
            (sa:assert-num-args expr 1)
@@ -1236,7 +1243,13 @@
                  prefix)
                 ((string=? prefix "")   ; no prefix supplied
                  default-ns)
-                ((assoc prefix ns-binding)
+                ((let ((entry
+                        (assoc prefix ns-binding)))
+                   (and entry  ; declaration found
+                        (cdr entry)  ; not undeclaration
+                        (not  ; not undeclaration - condition 2
+                         (equal? (cdr entry) ""))
+                        entry))
                  => cdr)
                 (else
                  (cl:signal-user-error
