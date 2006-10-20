@@ -910,12 +910,13 @@
                   (cdr prolog))
             (cl:signal-user-error SE5054 (cadr expr)))))         
          ((declare-option)
-          (loop
-           ; Processing moved to a separate function
-           (sa:prolog-declare-option expr new-prlg ns-binding)
-           funcs triples
-           ns-binding default-elem-ns default-func-ns
-           (cdr prolog)))
+          (let ((new-prlg
+                 ; Processing moved to a separate function
+                 (sa:prolog-declare-option expr new-prlg ns-binding)))
+            (and new-prlg  ; no error detected
+                 (loop new-prlg funcs triples
+                       ns-binding default-elem-ns default-func-ns
+                       (cdr prolog)))))
          ((declare-namespace)
           (and
            (sa:assert-num-args expr 2)
@@ -1049,6 +1050,18 @@
          (else
           (cl:signal-input-error SE5012 expr)))))))
 
+; If the alist contains a pair of equal keys, returns that key
+; Otherwise, returns #f
+(define (sa:equal?-keys alist)
+  (cond
+    ((null? alist) #f)
+    ((assoc (caar alist)
+            (cdr alist))
+     => car  ; key+value pair found
+     )
+    (else
+     (sa:equal?-keys (cdr alist)))))
+
 ; Processes a declare-option prolog-clause
 ; reversed-prolog - already processed prolog clauses, in reverse order
 ; Returns the modified `reversed-prolog', by optionally cons'ing a new
@@ -1089,6 +1102,10 @@
               (let ((keys+values
                      (option-string->key+value-pairs value #\;)))
                 (cond
+                  ((null? keys+values)
+                   (cl:signal-user-error
+                    SE5069
+                    (string-append (car qname-pair) ":" (cadr qname-pair))))
                   ((let ((unknown-keys
                           (map car
                                (filter
@@ -1112,6 +1129,27 @@
                             (map
                              (lambda (key) (list ", " key))
                              unknown-keys)))))))
+                  ((sa:equal?-keys keys+values)
+                   => (lambda (key)
+                        (cl:signal-user-error SE5070 key)))
+                  ((let ((method-pair
+                          (assoc "method" keys+values)))
+                     (and method-pair  ; method key binding presented
+                          (not  ; unknown option value
+                           (member (cdr method-pair) '("xml" "html")))
+                          (cdr method-pair)  ; always true
+                          ))
+                   => (lambda (value)
+                        (cl:signal-user-error SE5071 value)))
+                  ((let ((indent-pair
+                          (assoc "indent" keys+values)))
+                     (and indent-pair  ; method key binding presented
+                          (not  ; unknown option value
+                           (member (cdr indent-pair) '("yes" "no")))
+                          (cdr indent-pair)  ; always true
+                          ))
+                   => (lambda (value)
+                        (cl:signal-user-error SE5072 value)))
                   (else
                    (cons
                     (cons (car expr)  ; declare-option

@@ -1573,6 +1573,18 @@ sedna-err:SE5067
 sedna-err:SE5068
 
     Unknown key(s) given in se:output option.
+sedna-err:SE5069
+
+    Empty option value for Sedna-specific option.
+sedna-err:SE5070
+
+    Duplicate key entry in se:output option.
+sedna-err:SE5071
+
+    Unknown value bound with a "method" key in se:output option.
+sedna-err:SE5072
+
+    Unknown value bound with an "indent" key in se:output option.
 sedna-err:SE5100
 
     Error in Scheme part.
