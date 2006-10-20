@@ -400,7 +400,7 @@ XMLDateTime XMLDateTime::getTimezone() const
 	XMLDateTime tz;
 	tz.setValue(Type, xs_dayTimeDuration);
 	int neg = (getValue(utc) == UTC_NEG )? -1: 1;
-	tz.setValue(utc, getValue(utc));
+	tz.setValue(utc, getValue(utc) == UTC_NEG?UTC_NEG:UTC_POS );
 	tz.setValue(Hour, neg * getValue(tz_hh));
 	tz.setValue(Minute, neg * getValue(tz_mm));
 	tz.normalizeDuration();
@@ -583,8 +583,9 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
     	fNewDate.setValue(XMLDateTime::Day, dt.getValue(XMLDateTime::Day) + fDuration.getValue(XMLDateTime::Day) + carry);
 
 	//add months
-	fNewDate.setValue(XMLDateTime::Month, modulo(dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month), 1, 13));
-	carry = fQuotient(fNewDate.getValue(XMLDateTime::Month), 1, 13);
+    	temp = dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month) + carry;
+	carry = fQuotient(temp, 1, 13);
+	fNewDate.setValue(XMLDateTime::Month, modulo(temp, 1, 13));
 	if (fNewDate.getValue(XMLDateTime::Month) <= 0) {
            fNewDate.setValue(XMLDateTime::Month, fNewDate.getValue(XMLDateTime::Month) + 12);
            carry--;
@@ -592,7 +593,6 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 
         //add years (may be modified additionaly below)
     	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
-
 
     while ( true )
     {
@@ -654,11 +654,14 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 	XMLDateTime diff = subtractDurations(tz, dtTz);
 
 	int utc_type = ( tz.getValue(XMLDateTime::Hour) < 0 )?XMLDateTime::UTC_NEG:XMLDateTime::UTC_POS;
+	int neg = utc_type==XMLDateTime::UTC_NEG?-1:1;
 
 	fNewDate.setValue(XMLDateTime::utc, utc_type);
-	fNewDate.setValue(XMLDateTime::tz_hh, tz.getValue(XMLDateTime::Hour));
-	fNewDate.setValue(XMLDateTime::tz_mm, tz.getValue(XMLDateTime::Minute));
+	fNewDate.setValue(XMLDateTime::tz_hh, neg*tz.getValue(XMLDateTime::Hour));
+	fNewDate.setValue(XMLDateTime::tz_mm, neg*tz.getValue(XMLDateTime::Minute));
+
 	fNewDate = addDurationToDateTime(fNewDate, diff);
+
 	return fNewDate;
 }
 
@@ -706,6 +709,24 @@ int XMLDateTime::compare(const XMLDateTime& lValue
 
     XMLDateTime lTemp = lValue;
     XMLDateTime rTemp = rValue;
+
+    // Special case for xs:time, we need to use the comparison for dateTime
+    // with an arbitrary dateTime value
+
+    if (lTemp.getValue(XMLDateTime::Type) == xs_time)
+    {
+	lTemp.setValue(XMLDateTime::Type, xs_dateTime);
+	rTemp.setValue(XMLDateTime::Type, xs_dateTime);
+
+	lTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
+	rTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
+
+	lTemp.setValue(XMLDateTime::CentYear, MONTH_DEFAULT);
+	rTemp.setValue(XMLDateTime::CentYear, MONTH_DEFAULT);
+
+	lTemp.setValue(XMLDateTime::CentYear, DAY_DEFAULT);
+	rTemp.setValue(XMLDateTime::CentYear, DAY_DEFAULT);
+    }	
 
     lTemp.normalize();
     rTemp.normalize();
@@ -832,7 +853,7 @@ void XMLDateTime::parseDateTime(const char* buf)
 
     //fStart is supposed to point to 'T'
     if (buf[fStart++] != DATETIME_SEPARATOR)
-	throw USER_EXCEPTION2(FODT017, "Missing a time separator in dateTime value");
+	throw USER_EXCEPTION2(FORG0001, "Missing a time separator in dateTime value");
 
     getTime(buf, fStart, fEnd);
     validateDateTime();
@@ -850,7 +871,7 @@ void XMLDateTime::parseDay(const char* buf)
     if (buf[0] != DATE_SEPARATOR ||
         buf[1] != DATE_SEPARATOR ||
         buf[2] != DATE_SEPARATOR  )
-	throw USER_EXCEPTION2(FODT004, "invalid gDay value");
+	throw USER_EXCEPTION2(FORG0001, "invalid gDay value");
 
     //initialize values
     setValue(Day, parseInt(buf, start+3, start+5));
@@ -859,7 +880,7 @@ void XMLDateTime::parseDay(const char* buf)
     {        
         int pos = indexOf(UTC_SET, buf[DAY_SIZE]);
         if (pos == -1 )
-	    throw USER_EXCEPTION2(FODT004, "invalid gDay value");
+	    throw USER_EXCEPTION2(FORG0001, "invalid gDay value");
         else
         {
     	    setValue(utc, pos+1);
@@ -880,7 +901,7 @@ void XMLDateTime::parseMonth(const char* fBuffer)
     int fStart=0, fEnd=strlen(fBuffer);
 
     if (fBuffer[0] != DATE_SEPARATOR || fBuffer[1] != DATE_SEPARATOR  || fEnd < 4 )
-	throw USER_EXCEPTION2(FODT005, "invalid gMonth value");
+	throw USER_EXCEPTION2(FORG0001, "invalid gMonth value");
 
     // REVISIT: allow both --MM and --MM-- now. 
     // need to remove the following lines to disallow --MM-- 
@@ -900,7 +921,7 @@ void XMLDateTime::parseMonth(const char* fBuffer)
     {      
         int pos = indexOf(UTC_SET, fBuffer[fStart]);
         if ( pos == NOT_FOUND )
-		throw USER_EXCEPTION2(FODT005, "invalid gMonth value");
+		throw USER_EXCEPTION2(FORG0001, "invalid gMonth value");
         else
         {
     	    setValue(utc, pos+1);
@@ -952,7 +973,7 @@ void XMLDateTime::parseMonthDay(const char* fBuffer)
     if (fBuffer[0] != DATE_SEPARATOR ||
         fBuffer[1] != DATE_SEPARATOR ||
         fBuffer[4] != DATE_SEPARATOR )
-	throw USER_EXCEPTION2(FODT006, "invalid gMonthDay value");
+	throw USER_EXCEPTION2(FORG0001, "invalid gMonthDay value");
 
 	
     //initialize
@@ -963,7 +984,7 @@ void XMLDateTime::parseMonthDay(const char* fBuffer)
     {        
         int pos = indexOf(UTC_SET, fBuffer[MONTHDAY_SIZE]);
         if ( pos == NOT_FOUND )
-		throw USER_EXCEPTION2(FODT006, "invalid gMonthDay value");
+		throw USER_EXCEPTION2(FORG0001, "invalid gMonthDay value");
         else
         {
     	    setValue(utc, pos+1);
@@ -1003,12 +1024,12 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     char c = fBuffer[fStart++];
     if ( (c != DURATION_STARTER) &&
          (c != '-')            )
-	throw USER_EXCEPTION2(FODT007, "invalid duration start");
+	throw USER_EXCEPTION2(FORG0001, "invalid duration start");
 
     // 'P' must ALWAYS be present in either case
     if ( (c == '-') &&
          (fBuffer[fStart++]!= DURATION_STARTER ))
-	throw USER_EXCEPTION2(FODT007, "invalid duration");
+	throw USER_EXCEPTION2(FORG0001, "invalid duration");
 
     // java code
     //date[utc]=(c=='-')?'-':0;
@@ -1023,7 +1044,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     // eg P-1234, invalid
     //
     if (indexOf(fBuffer, fStart, fEnd, '-') != NOT_FOUND)
-	throw USER_EXCEPTION2(FODT007, "invalid duration");
+	throw USER_EXCEPTION2(FORG0001, "invalid duration");
 
     //at least one number and designator must be seen after P
     bool designator = false;
@@ -1064,7 +1085,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 
     if ( (fEnd == endDate) &&   // 'T' absent
          (fStart != fEnd)   )   // something after Day
-	throw USER_EXCEPTION2(FODT007, "invalid duration");
+	throw USER_EXCEPTION2(FORG0001, "invalid duration");
 
     if ( fEnd != endDate ) // 'T' present
     {
@@ -1108,7 +1129,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
                  * make usure there is something after the '.' and before the end.
                  */
                 if ( mlsec+1 == end )
-		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in duration");
+		throw USER_EXCEPTION2(FORG0001, "invalid milisecond value in duration");
 
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 int rawMilis = parseInt(fBuffer, mlsec+1, end);
@@ -1128,11 +1149,11 @@ void XMLDateTime::parseDuration(const char* fBuffer)
         // P1Y1M1DT is illigal value as well
         if ( (fStart != fEnd) ||
               fBuffer[--fStart] == DATETIME_SEPARATOR )
-	throw USER_EXCEPTION2(FODT007, "no time after time separator in duration");
+	throw USER_EXCEPTION2(FORG0001, "no time after time separator in duration");
     }
 
     if ( !designator )
-    throw USER_EXCEPTION2(FODT007, "invalid duration");
+    throw USER_EXCEPTION2(FORG0001, "invalid duration");
 
     normalize();
 
@@ -1154,12 +1175,12 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     char c = fBuffer[fStart++];
     if ( (c != DURATION_STARTER) &&
          (c != '-')            )
-	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration start");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration start");
 
     // 'P' must ALWAYS be present in either case
     if ( (c == '-') &&
          (fBuffer[fStart++]!= DURATION_STARTER ))
-	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
 
     // java code
     //date[utc]=(c=='-')?'-':0;
@@ -1174,7 +1195,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     // eg P-1234, invalid
     //
     if (indexOf(fBuffer, fStart, fEnd, '-') != NOT_FOUND)
-	throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
 
     //at least one number and designator must be seen after P
     bool designator = false;
@@ -1199,7 +1220,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     }
 
     if ( !designator )
-    throw USER_EXCEPTION2(FODT007, "invalid xs_yearMonthDuration");
+    throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
 
     normalize();
 }
@@ -1221,12 +1242,12 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
     char c = fBuffer[fStart++];
     if ( (c != DURATION_STARTER) &&
          (c != '-')            )
-	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration start");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration start");
 
     // 'P' must ALWAYS be present in either case
     if ( (c == '-') &&
          (fBuffer[fStart++]!= DURATION_STARTER ))
-	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
 
     setValue(utc, (fBuffer[0] == '-'? UTC_NEG : UTC_POS));
 
@@ -1238,7 +1259,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
     // eg P-1234, invalid
     //
     if (indexOf(fBuffer, fStart, fEnd, '-') != NOT_FOUND)
-	throw USER_EXCEPTION2(FODT007, "invalid duration");
+	throw USER_EXCEPTION2(FORG0001, "invalid duration");
 
     //at least one number and designator must be seen after P
     bool designator = false;
@@ -1260,7 +1281,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 
     if ( (fEnd == endDate) &&   // 'T' absent
          (fStart != fEnd)   )   // something after Day
-	throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
+	throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
 
     if ( fEnd != endDate ) // 'T' present
     {
@@ -1304,7 +1325,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
                  * make usure there is something after the '.' and before the end.
                  */
                 if ( mlsec+1 == end )
-		throw USER_EXCEPTION2(FODT007, "invalid milisecond value in xs_dayTimeDuration");
+		throw USER_EXCEPTION2(FORG0001, "invalid milisecond value in xs_dayTimeDuration");
 
                 setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 int rawMilis = parseInt(fBuffer, mlsec+1, end);
@@ -1324,11 +1345,11 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
         // P1Y1M1DT is illigal value as well
         if ( (fStart != fEnd) ||
               fBuffer[--fStart] == DATETIME_SEPARATOR )
-	throw USER_EXCEPTION2(FODT007, "no time after time separator in xs_dayTimeDuration");
+	throw USER_EXCEPTION2(FORG0001, "no time after time separator in xs_dayTimeDuration");
     }
 
     if ( !designator )
-    throw USER_EXCEPTION2(FODT007, "invalid xs_dayTimeDuration");
+    throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
 
     normalize();
 }
@@ -1351,13 +1372,13 @@ void XMLDateTime::getDate(const char* fBuffer, int& fStart, int& fEnd)
 
     // Ensure enough chars in buffer
     if ( (fStart+YMD_MIN_SIZE) > fEnd)
-	throw USER_EXCEPTION2(FODT008, "incomplete date");
+	throw USER_EXCEPTION2(FORG0001, "incomplete date");
 
     getYearMonth(fBuffer, fStart, fEnd);    // Scan YearMonth and
                        // fStart point to the next '-'
 
     if (fBuffer[fStart++] != DATE_SEPARATOR)
-	throw USER_EXCEPTION2(FODT008, "invalid date, CCYY-MM must be followed by a '-' sign");
+	throw USER_EXCEPTION2(FORG0001, "invalid date, CCYY-MM must be followed by a '-' sign");
 
     setValue(Day, parseInt(fBuffer, fStart, fStart+2));
     fStart += 2 ;  //fStart points right after the Day
@@ -1379,13 +1400,13 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
 
     // Ensure enough chars in buffer
     if ( (fStart+TIME_MIN_SIZE) > fEnd)
-	throw USER_EXCEPTION2(FODT009, "incomplete time");
+	throw USER_EXCEPTION2(FORG0001, "incomplete time");
         //"Imcomplete Time Format"
 
     // check (fixed) format first
     if ((fBuffer[fStart + 2] != TIME_SEPARATOR) ||
         (fBuffer[fStart + 5] != TIME_SEPARATOR)  )
-	throw USER_EXCEPTION2(FODT009, "invalid time format");
+	throw USER_EXCEPTION2(FORG0001, "invalid time format");
         //("Error in parsing time" );
 
     //
@@ -1410,7 +1431,7 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
         fStart++;   // skip the '.'
         // make sure we have some thing between the '.' and fEnd
         if (fStart >= fEnd)
-	throw USER_EXCEPTION2(FODT009, "invalid time: no digits after the '.'");
+	throw USER_EXCEPTION2(FORG0001, "invalid time: no digits after the '.'");
             //("ms shall be present once '.' is present" );
 
 	int rawMilis;
@@ -1434,7 +1455,7 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
 
 	}
     else if(sign == 0 || sign != fStart)
-	throw USER_EXCEPTION2(FODT010, "seconds have more than 2 digits");
+	throw USER_EXCEPTION2(FORG0001, "seconds have more than 2 digits");
         // seconds has more than 2 digits
 
     //parse UTC time zone (hh:mm)
@@ -1455,7 +1476,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
 
     // Ensure enough chars in buffer
     if ( (fStart+YMONTH_MIN_SIZE) > fEnd)
-	throw USER_EXCEPTION2(FODT011, "incomplete year month format");
+	throw USER_EXCEPTION2(FORG0001, "incomplete year month format");
         //"Imcomplete YearMonth Format";
 
     // skip the first leading '-'
@@ -1466,7 +1487,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
     //
     int yearSeparator = indexOf(fBuffer, start, fEnd, DATE_SEPARATOR);
     if ( yearSeparator == NOT_FOUND)
-	throw USER_EXCEPTION2(FODT011, "year separator is missing or misplaced");
+	throw USER_EXCEPTION2(FORG0001, "year separator is missing or misplaced");
         //("Year separator is missing or misplaced");
 
     setValue(CentYear, parseIntYear(fBuffer,fStart,yearSeparator));
@@ -1476,7 +1497,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
     //gonna check we have enough byte for month
     //
     if ((fStart + 2) > fEnd )
-	throw USER_EXCEPTION2(FODT012, "no month specified");
+	throw USER_EXCEPTION2(FORG0001, "no month specified");
         //"no month in buffer"
 
     setValue(Month, parseInt(fBuffer,fStart, yearSeparator + 3));
@@ -1491,7 +1512,7 @@ void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd)
   	if ( fStart < fEnd ) {
         int pos = indexOf(UTC_SET, fBuffer[fStart]);
     	if (pos == NOT_FOUND) 
-	   throw USER_EXCEPTION2(FODT0003, "no UTC sign in the timezone");
+	   throw USER_EXCEPTION2(FORG0001, "no UTC sign in the timezone");
    		else { 
     	    	setValue(utc, pos+1);
   	        getTimeZone(fBuffer,fStart,fEnd);   		
@@ -1514,7 +1535,7 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
     if ( fBuffer[sign] == UTC_STD_CHAR )
     {
         if ((sign + 1) != fEnd )
-	throw USER_EXCEPTION2(FODT0003, "extra characters after Z in timezone");
+	throw USER_EXCEPTION2(FORG0001, "extra characters after Z in timezone");
             //"Error in parsing time zone");
 
         return;	
@@ -1528,7 +1549,7 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
     //
     if ( ( ( sign + TIMEZONE_SIZE + 1) != fEnd )      ||
          ( fBuffer[sign + 3] != TIMEZONE_SEPARATOR ) )
-	throw USER_EXCEPTION2(FODT0003, "error parsing time zone");
+	throw USER_EXCEPTION2(FORG0001, "error parsing time zone");
         //("Error in parsing time zone");
 
     setValue(tz_hh, parseInt(fBuffer,sign+1, sign+3));
@@ -1702,6 +1723,11 @@ void XMLDateTime::normalizeDuration()
     //add years
     setValue(CentYear, getValue(CentYear) + carry*negate);
 
+    // For the special case, where all values are zero, but the sign is negative, adjust the sign to positive
+    if (getValue(MiliSecond) == 0 && getValue(Second) == 0 && getValue(Minute) == 0 && getValue(Hour) == 0 &&	
+	getValue(Day) == 0 && getValue(Month) == 0 && getValue(CentYear) == 0 )
+	setValue(utc, UTC_POS);
+
     return;
 }
 
@@ -1712,18 +1738,18 @@ void XMLDateTime::validateDateTime() const
     //          or reporting an error message should be sufficient?
     if (( getValue(Type)==xs_date || getValue(Type)==xs_dateTime || getValue(Type)==xs_gYear || getValue(Type)==xs_gYearMonth )
 		 && getValue(CentYear) == 0 )
-	throw USER_EXCEPTION2(FODT011, "0000 is an illegal value for year");
+	throw USER_EXCEPTION2(FORG0001, "0000 is an illegal value for year");
         //"The year \"0000\" is an illegal year value");
 
     if ((getValue(Type)==xs_date || getValue(Type)==xs_dateTime || getValue(Type)==xs_gMonth || getValue(Type)==xs_gYearMonth)
 	&& ( getValue(Month) < 1  || getValue(Month) > 12  ))
-	throw USER_EXCEPTION2(FODT012, "invalid month value, must be between 1 and 12");
+	throw USER_EXCEPTION2(FORG0001, "invalid month value, must be between 1 and 12");
 		//"The month must have values 1 to 12");
 
     //validate days
     if ((getValue(Type)==xs_date || getValue(Type)==xs_dateTime || getValue(Type)==xs_gMonthDay || getValue(Type)==xs_gDay)
     	&& ( getValue(Day) > maxDayInMonthFor( getValue(CentYear), getValue(Month)) || getValue(Day) == 0 ))
-	throw USER_EXCEPTION2(FODT008, "invalid day value");
+	throw USER_EXCEPTION2(FORG0001, "invalid day value");
         //"The day must have values 1 to 31");
 
     //validate hours
@@ -1732,19 +1758,19 @@ void XMLDateTime::validateDateTime() const
         ((getValue(Hour) == 24) && ((getValue(Minute) !=0) ||
                                   (getValue(Second) !=0) ||
                                   (getValue(MiliSecond) !=0))))
-	throw USER_EXCEPTION2(FODT013, "invalid hour, values must be between 0 and 23");
+	throw USER_EXCEPTION2(FORG0001, "invalid hour, values must be between 0 and 23");
         //("Hour must have values 0-23");
 
     //validate minutes
     if ( getValue(Minute) < 0 ||
          getValue(Minute) > 59 )
-	throw USER_EXCEPTION2(FODT014,"invalid minutes, values must be between 0 and 59");
+	throw USER_EXCEPTION2(FORG0001,"invalid minutes, values must be between 0 and 59");
         //"Minute must have values 0-59");
 
     //validate seconds
     if ( getValue(Second) < 0 ||
          getValue(Second) > 60 )
-	throw USER_EXCEPTION2(FODT010,"invalid seconds, values must be between 0 and 60");
+	throw USER_EXCEPTION2(FORG0001,"invalid seconds, values must be between 0 and 60");
         //"Second must have values 0-60");
 
     //validate time-zone hours
@@ -1809,7 +1835,7 @@ int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end) c
     for (int i=start; i < end; i++) {
 
         if (fBuffer[i] < '0' || fBuffer[i] > '9')
-	throw USER_EXCEPTION2(FODT015, "invalid numeric character in dateTime or duration");
+	throw USER_EXCEPTION2(FORG0001, "invalid numeric character in dateTime or duration");
 
         retVal = (retVal * 10) + (unsigned int) (fBuffer[i] - '0');
     }
@@ -1831,10 +1857,10 @@ int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int e
 
     int length = end - start;
     if (length < 4)
-    throw USER_EXCEPTION2(FODT011, "invalid year, year must be in 'CCYY' format");
+    throw USER_EXCEPTION2(FORG0001, "invalid year, year must be in 'CCYY' format");
         //"Year must have 'CCYY' format");
     else if (length > 4 && fBuffer[start] == '0')
-	throw USER_EXCEPTION2(FODT011, "leading zeros in year are only allowed if otherwise the year would have fewer than four digits");
+	throw USER_EXCEPTION2(FORG0001, "leading zeros in year are only allowed if otherwise the year would have fewer than four digits");
         //"Leading zeros are required if the year value would otherwise have fewer than four digits;
         // otherwise they are forbidden");
 
