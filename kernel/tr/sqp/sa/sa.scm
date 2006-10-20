@@ -886,15 +886,30 @@
           (and
            (sa:assert-num-args expr 1)
            (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
-           (if
-            (member (cadr expr)  ; predefined values
-                    '((const (type !xs!string) "strip")
-                      (const (type !xs!string) "preserve")))
-            (loop (cons expr new-prlg)
-                  funcs triples
-                  ns-binding default-elem-ns default-func-ns
-                  (cdr prolog))
-            (cl:signal-user-error SE5054 (cadr expr)))))
+           (cond
+             ((not
+               (member (cadr expr)  ; predefined values
+                       '((const (type !xs!string) "strip")
+                         (const (type !xs!string) "preserve"))))
+              (cl:signal-user-error SE5054 (cadr expr)))
+             ((assq 'boundary-space-decl
+                    (filter pair? new-prlg))
+              ; Multiple boundary-space declarations
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0068
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
          ((declare-default-order)  ; Default order for empty sequences
           ; Clone of boundary-space-decl
           (and
