@@ -7,6 +7,7 @@
      (display ,(symbol->string code))
      (display ": ")
      (for-each display (list ,@msg))
+     ;(/ 1 0)
      #f))
 (define-macro (cl:signal-user-error code . msg)
   `(begin
@@ -15,7 +16,7 @@
                   (symbol->string (quote ,code))
                   (quote ,code)))
      (display ": ")
-     (for-each write (list ,@msg))     
+     (for-each write (list ,@msg))
      #f))
 
 (load "sa.scm")

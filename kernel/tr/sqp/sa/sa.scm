@@ -370,7 +370,9 @@
     ("xsi" . "http://www.w3.org/2001/XMLSchema-instance")
     ("fn" . ,sa:fn-ns)
     ("xdt" . ,sa:xdt-ns)
-    ("local" . "http://www.w3.org/2004/07/xquery-local-functions")
+    ("local" . "http://www.w3.org/2005/xquery-local-functions"
+     ; was: "http://www.w3.org/2004/07/xquery-local-functions"
+     )
     ("se" . ,sa:se-ns)
     ))
 
@@ -1047,46 +1049,86 @@
                   (sa:analyze-body (cadddr (sa:op-args expr)))))
              (and
               fun-qname formal-args return-type body
-              (loop
-               (cons #f new-prlg)  ; new prolog
-               (let ((qname-parts (sa:proper-qname fun-qname)))
-                 (cons   ; funcs
-                  (list                   
-                   (car qname-parts) (cadr qname-parts)  ; name
-                   (length formal-args) (length formal-args) ; min and max args
-                   (let ((arg-types (map cadr formal-args)))
-                     (lambda (num-args) arg-types))
-                   return-type)
-                  funcs))
-               (cons  ; triples
-                (list
-                 (list (sa:op-name expr)  ; ='declare-function
-                       fun-qname
-                       ; Function arguments:
-                       ; was: (cadr (sa:op-args expr))
-                       (map
-                        (lambda (before after)
-                          (list
-                           (caddr after)  ; rewritten type
-                           ; Keep the name unresolved - it is processed later
-                           (cadr before)
-                           ;(list (sa:op-name (cadr before))  ; == 'var
-                           ;      (car after)  ; resolved name
-                           ;      )
-                           ))
-                        (cadr (sa:op-args expr))
-                        formal-args)
+              (let ((qname-parts (sa:proper-qname fun-qname)))
+                (let ((ns-uri (car qname-parts))
+                      (local (cadr qname-parts))
+                      (arity (length formal-args)))
+                  (cond
+                    ((equal? ns-uri "")
+                     ; The function belongs to no namespace
+                     (cl:signal-user-error XQST0060 local))
+                    ((member
+                      ns-uri
+                      (map
+                       cdr
+                       (filter
+                        (lambda (pair)
+                          (member (car pair)
+                                  '("xml" "xs" "xsi"
+                                    ; TODO: "fn"
+                                    "xdt")))
+                        sa:predefined-ns-prefixes)))
+                     (cl:signal-user-error
+                      XQST0045
+                      (string-append ns-uri ":" local)))
+                    ((not
+                      (null?
+                       (filter
+                        (lambda (entry)
+                          (and
+                           (equal? (car entry) ns-uri)
+                           (string=? (cadr entry) local)
+                           (<= (caddr entry)  ; minimal number of arguments
+                               arity)
+                           (>= (caddr entry)  ; maximal number of arguments
+                               arity)))
+                        funcs)))
+                     ; Multiple declaration of the function with same number
+                     ; of arguments
+                     (cl:signal-user-error
+                      XQST0034
+                      (string-append ns-uri ":" local
+                                     ", arity = " (number->string arity))))
+                    (else
+                     (loop
+                      (cons #f new-prlg)  ; new prolog
+                      (cons   ; funcs
+                       (list                   
+                        ns-uri local  ; name
+                        arity arity ; min and max args
+                        (let ((arg-types (map cadr formal-args)))
+                          (lambda (num-args) arg-types))
+                        return-type)
+                       funcs)
+                      (cons  ; triples
                        (list
-                        (sa:op-name  ; == 'result-type
-                         (caddr (sa:op-args expr))  ; result type specification
-                         )
-                        (car return-type)  ; rewritten type
-                        )
-                       (cadddr (sa:op-args expr)))
-                 formal-args return-type)
-                triples)
-               ns-binding default-elem-ns default-func-ns
-               (cdr prolog))))))
+                        (list (sa:op-name expr)  ; ='declare-function
+                              fun-qname
+                              ; Function arguments:
+                              ; was: (cadr (sa:op-args expr))
+                              (map
+                               (lambda (before after)
+                                 (list
+                                  (caddr after)  ; rewritten type
+                                  ; Keep the name unresolved - it is processed later
+                                  (cadr before)
+                                  ;(list (sa:op-name (cadr before))  ; == 'var
+                                  ;      (car after)  ; resolved name
+                                  ;      )
+                                  ))
+                               (cadr (sa:op-args expr))
+                               formal-args)
+                              (list
+                               (sa:op-name  ; == 'result-type
+                                (caddr (sa:op-args expr))  ; result type specification
+                                )
+                               (car return-type)  ; rewritten type
+                               )
+                              (cadddr (sa:op-args expr)))
+                        formal-args return-type)
+                       triples)
+                      ns-binding default-elem-ns default-func-ns
+                      (cdr prolog))))))))))
          (else
           (cl:signal-input-error SE5012 expr)))))))
 
@@ -1371,7 +1413,9 @@
                     sa:type-any sa:type-atomic))))
        ((not (string=? (car type-spec) "xs"))
         ; TODO: QName resolution in type names
-        (cl:signal-user-error XPST0081 (car type-spec)))
+        (cl:signal-user-error
+         XPST0051  ; was: XPST0081
+         (car type-spec)))
        (else
         ; We do not know this type
         ; Was: (cons type-spec sa:type-atomic)
@@ -1522,7 +1566,7 @@
           ((list-contains-equal-members (map car vars))
            => (lambda (name-pair)
                 (cl:signal-user-error
-                 XQST0089
+                 XQST0039   ; was: XQST0089
                  (if  ; no namespace in variable name
                   (string=? (car name-pair) "")
                   (cadr name-pair)
@@ -2440,7 +2484,7 @@
      (null? args)  ; no arguments
      (cl:signal-input-error SE5036 expr)
      (let ((fun-name (sa:resolve-qname
-                      (car args) ns-binding (cadr default-ns))) )
+                      (car args) ns-binding (cadr default-ns))))
        (and
         fun-name
         (let ((name-parts (sa:proper-qname fun-name)))
