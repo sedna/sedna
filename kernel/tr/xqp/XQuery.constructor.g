@@ -554,14 +554,14 @@ compNSConstructor!:
 compDocConstructor!:
 	LDOCUMENT LBRACE e:expr RBRACE
 
-	<<#0=#(#[AST_DOCUMENT_CONSTR], #e);>>
+	<<#0=#(#[AST_DOCUMENT_CONSTR], #(#[AST_SPACE_SEQUENCE], #e));>>
 	
 ;
 
 compTextConstructor!:
 	TEXT LBRACE e:expr RBRACE
 
-	<<#0=#(#[AST_TEXT_CONSTR], #e);>>
+	<<#0=#(#[AST_TEXT_CONSTR], #(#[AST_SPACE_SEQUENCE], #e));>>
 ;
 
 compXmlPI!:
