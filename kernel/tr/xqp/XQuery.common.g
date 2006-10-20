@@ -180,6 +180,8 @@ localPart2!:
 	| TYPESWITCH <<#0=#["typeswitch", AST_LOCAL_NAME];>>
 	| CASE <<#0=#["case", AST_LOCAL_NAME];>>
 	| LDOCUMENT <<#0=#["document", AST_LOCAL_NAME];>>
+	| IMPORT <<#0=#["import", AST_LOCAL_NAME];>>
+	| MODULE <<#0=#["module", AST_LOCAL_NAME];>>
 ;
 
 prefixPart1!:
@@ -306,6 +308,8 @@ prefixPart2!:
 	| TYPESWITCH <<#0=#["typeswitch", AST_PREFIX];>>
 	| CASE <<#0=#["case", AST_PREFIX];>>
 	| LDOCUMENT <<#0=#["document", AST_PREFIX];>>
+	| IMPORT <<#0=#["import", AST_PREFIX];>>
+	| MODULE <<#0=#["module", AST_PREFIX];>>
 ;
 
 ncname!: 

@@ -23,6 +23,7 @@ queryProlog!:
 	   | dopt:declareOption
 	     <<if(prolog == NULL) prolog=#dopt; else prolog->append(#dopt);>>
 
+	   | imp:importModule <<if(prolog == NULL) prolog=#imp; else prolog->append(#imp);>>
 
 	  ) SEMICOLON
 	)*
@@ -111,6 +112,15 @@ boundarySpaceDecl!:
 declareOption!:
 	DECLARE OPTION qn:qname s:STRINGLITERAL
 	<<#0=#(#[AST_DECLARE_OPT], #qn, #[$s->getText(), AST_STRING_CONST]);>>
+;
+/*
+import!:
+	importModule
+;
+*/
+importModule!:
+	IMPORT {MODULE NAMESPACE ncname EQUAL}   STRINGLITERAL {AT_ STRINGLITERAL  (COMMA  STRINGLITERAL)*}
+	<<throw USER_EXCEPTION(XQST0016 );>>
 ;
 
 }
