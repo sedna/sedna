@@ -264,9 +264,9 @@ virtual void errstd(const char *s){
 //  replstr((std::string("\"") + res + std::string("\"")).c_str());
   replace_entity(lextext(), "&lt;", "<");
   replace_entity(lextext(), "&gt;", ">");
-  replace_entity(lextext(), "&amp;", "&");
   replace_entity(lextext(), "&quot;", "\\\"");
   replace_entity(lextext(), "&apos;", "\\\'");
+  replace_entity(lextext(), "&amp;", "&");
   res = replace_charref(lextext());
   replstr(res.c_str());
 
