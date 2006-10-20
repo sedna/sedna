@@ -16,7 +16,6 @@ using namespace std;
 STACK_INT Lexical_Analizer_State;
 
 bool s_after_pi_target = false; 
-int 
 >>
 
 #lexprefix

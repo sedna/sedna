@@ -35,10 +35,25 @@ dirElemConstructor!:
 
 	   ENDTAGOPEN qn2:qname {WS|NL} ENDTAGCLOSE
 
-	   <<if (strcmp(((AST*)(#qn1->down()))->getText(), ((AST*)(#qn2->down()))->getText()) != 0)
+	   <<//check whether local names of start and end tags are equal
+	     if (strcmp(((AST*)(#qn1->down()))->getText(), ((AST*)(#qn2->down()))->getText()) != 0)
 	        throw USER_EXCEPTION2(XPST0003, ("start tag " + std::string("\'<") + ((AST*)(#qn1->down()))->getText() + ">\'" +
 	                                       " does not match close tag " + "\'</" + ((AST*)(#qn2->down()))->getText()  + ">\'" +
 	                                       ", line: " + int2string(LT(1)->getLine())).c_str());
+
+	     //check whether the prefixes consistency
+	     if ((#qn1->down()->right() == NULL && #qn2->down()->right() != NULL) ||
+	         (#qn1->down()->right() != NULL && #qn2->down()->right() == NULL)) 
+	        throw USER_EXCEPTION2(XPST0003, (std::string("start tag does not match close tag, line: ") + int2string(LT(1)->getLine())).c_str());
+
+	     if (#qn1->down()->right() != NULL && #qn2->down()->right() != NULL)
+	     {
+	        if (strcmp(((AST*)(#qn1->down()->right()))->getText(), ((AST*)(#qn2->down()->right()))->getText()) != 0)
+	           throw USER_EXCEPTION2(XPST0003, (std::string("start tag does not match close tag, line: ") + int2string(LT(1)->getLine())).c_str());
+	         
+	     }
+
+
 	    #0=#(#[AST_ELEMENT],
 		     #(#[AST_ELEMENT_NAME], #qn2),
 		     #(#[AST_ELEMENT_ATTRIBUTES], #al),
