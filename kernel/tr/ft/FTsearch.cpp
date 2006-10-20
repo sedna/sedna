@@ -544,6 +544,11 @@ void *SednaSearchJob::ThreadFunc( void* lpParam )
 			((SednaSearchJob*)lpParam)->save_field_flags = opts.fieldFlags;
 			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
 			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
+			                        + std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
+
+			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
+					
 			dtssSetOptions(opts, result);
 		}
 		((SednaSearchJob*)lpParam)->Execute();
