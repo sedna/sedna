@@ -116,7 +116,7 @@ inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
 
 inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 { 
-    if(chech_constraints_for_xs_anyURI(&c))
+    if(Uri::chech_constraints_for_xs_anyURI(&c))
     {
         tuple_cell res(c);
         res.set_xtype(xs_anyURI);

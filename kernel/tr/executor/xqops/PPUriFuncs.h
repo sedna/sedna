@@ -60,6 +60,7 @@ private:
 
     bool first_time;
     bool is_base_static;
+    bool need_reopen;
 
 public:
     virtual void open   ();
