@@ -25,7 +25,7 @@ tuple_cell dm_node_name		(xptr node);
 tuple_cell dm_parent		(xptr node);
 tuple_cell dm_string_value	(xptr node);
 tuple_cell dm_typed_value	(xptr node);
-tuple_cell dm_type_name		(xptr node);
+//tuple_cell dm_type_name		(xptr node);
 tuple_cell dm_nilled		(xptr node);
 tuple_cell dm_document_uri	(xptr node);
 

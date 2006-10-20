@@ -306,18 +306,21 @@ void PPElementConstructor::next  (tuple &t)
 		//namespace search
 		
 		char* prefix=NULL;
+		xml_ns* ns=NULL;
 		if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
 		{
-			prefix=(char*)xs_QName_get_prefix(name);
+			//prefix=(char*)xs_QName_get_prefix(name);
+			ns=xs_QName_get_xmlns(name);
 			name=xs_QName_get_local_name(name);
 		}
 		else
-			separateLocalAndPrefix(prefix,name);
-		xml_ns* ns=NULL;
-		if (prefix!=NULL)
 		{
-			ns=st_ct.get_xmlns_by_prefix(prefix);
-			delete prefix;
+			separateLocalAndPrefix(prefix,name);
+			if (prefix!=NULL)
+			{
+				ns=st_ct.get_xmlns_by_prefix(prefix);
+				delete prefix;
+			}
 		}
 		//Element insertion
 		xptr new_element;
@@ -651,21 +654,27 @@ void PPAttributeConstructor::next  (tuple &t)
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
+		
+		xml_ns* ns=NULL;
 		if (!res1.is_eos()&&res1.get_atomic_type()==xs_QName)
 		{
-			prefix=(char*)xs_QName_get_prefix(name);
+			ns=xs_QName_get_xmlns(name);
 			name=xs_QName_get_local_name(name);
+			if (((ns->prefix==NULL||my_strcmp(ns->prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+				||(ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0 ))
+				throw USER_EXCEPTION(XQDY0044);
 		}
 		else
-			separateLocalAndPrefix(prefix,name);
-		xml_ns* ns=NULL;
-		if (((prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
-			||(prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0 ))
-			throw USER_EXCEPTION(XQDY0044);
-		if (prefix!=NULL)
 		{
-			ns=st_ct.get_xmlns_by_prefix(prefix);
-			delete prefix;			
+			separateLocalAndPrefix(prefix,name);
+			if (((prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+				||(prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0 ))
+				throw USER_EXCEPTION(XQDY0044);
+			if (prefix!=NULL)
+			{
+				ns=st_ct.get_xmlns_by_prefix(prefix);
+				delete prefix;			
+			}
 		}
 		const char* value=at_value;
 		tuple_cell res;
@@ -1085,14 +1094,18 @@ void PPPIConstructor::next  (tuple &t)
 		{
 			prefix=(char*)xs_QName_get_prefix(name);
 			name=xs_QName_get_local_name(name);
+			if (prefix!=NULL)
+				throw USER_EXCEPTION(XQDY0041);			
 		}
 		else
+		{
 			separateLocalAndPrefix(prefix,name);
-		if (prefix!=NULL)
-        {
-            delete prefix;
-			throw USER_EXCEPTION(XQDY0041);
-        }
+			if (prefix!=NULL)
+			{
+			    delete prefix;
+				throw USER_EXCEPTION(XQDY0041);
+			}
+		}
 		const char* value=at_value;
 		tuple_cell res;
 		int size;

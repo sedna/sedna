@@ -126,7 +126,8 @@ struct xp_op
 {
     xp_op_type type;
     int pred_num;
-    char *qname; // variable name for predicate
+    char *ncname_prefix; // variable name for predicate
+    char *ncname_local;  // variable name for predicate
     PathExpr *path_expr;
     xp_op *op1; // for path, pred, general and value comparison
     xp_op *op2; // for pred, general and value comparison

@@ -89,6 +89,18 @@ static void *_xs_QName_decode(const void *source)
     return (void*)(*(int*)source ^ *((int*)source + 1));                             
 }                                                                                     
 
+static int _xs_QName_separator_position(const char *prefix_and_local)
+{
+    int i = 0;
+    
+    while (prefix_and_local[i] != '\0')
+        if (prefix_and_local[i] == ':') return i;
+        else i++;
+
+    return 0;
+}
+
+/*
 char *xs_QName_create(const char* uri,
                       const char* prefix, 
                       const char *local_part, 
@@ -102,6 +114,46 @@ char *xs_QName_create(const char* uri,
     _xs_QName_encode(xmlns, qname);
 
     return qname;
+}
+*/
+char *xs_QName_create(xml_ns* xmlns,
+                      const char *local_part, 
+                      void* (*alloc_func)(size_t))
+{
+    int lp_size = strlen(local_part);
+    char *qname = (char*)alloc_func(lp_size + 2 * sizeof(void*) + 1);
+    strcpy(qname + 2 * sizeof(void*), local_part);
+
+    _xs_QName_encode(xmlns, qname);
+
+    return qname;
+}
+
+char *xs_QName_create(const char* prefix_and_local, 
+                      void* (*alloc_func)(size_t))
+{
+    U_ASSERT(prefix_and_local);
+
+    // separate prefix and local name 
+    int pos = _xs_QName_separator_position(prefix_and_local);
+
+    if (pos)
+    {
+        // find xmlns by calling get_xmlns_by_prefix
+        xml_ns* xmlns = tr_globals::st_ct.get_xmlns_by_prefix(prefix_and_local, pos);
+        return xs_QName_create(xmlns, prefix_and_local + pos + 1, alloc_func);
+    }
+    else
+    {
+        return xs_QName_create((xml_ns*)NULL, prefix_and_local, alloc_func);
+    }
+}
+
+char *xs_QName_create(const char* uri,
+                      const char* prefix_and_local, 
+                      void* (*alloc_func)(size_t))
+{
+    return NULL;
 }
 
 void xs_QName_release(char *qname, void (*free_func)(void*))
@@ -136,6 +188,11 @@ const char *xs_QName_get_uri(const char* qname)
 const char *xs_QName_get_local_name(const char* qname)
 { 
     return qname + 2 * sizeof(void*); 
+}
+
+xml_ns *xs_QName_get_xmlns(const char* qname)
+{
+    return (xml_ns*)_xs_QName_decode(qname);
 }
 
 void xs_QName_print(const char* qname, std::ostream& str)

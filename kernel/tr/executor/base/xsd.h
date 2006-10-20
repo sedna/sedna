@@ -84,6 +84,7 @@ inline bool operator <(const NCName &n1, const NCName &n2)
 
 
 
+struct xml_ns;
 
 ///
 /// XML Schema Part 2 QName (qualified name from Namespaces in XML standard) Functions
@@ -94,14 +95,23 @@ inline bool operator <(const NCName &n1, const NCName &n2)
 /// we should aware of memory being allocated. For this purpose we provide addition 
 /// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
 /// paramters to xs_QName_create.
-char *xs_QName_create(const char* uri,
-                      const char* prefix, 
+// when xmlns is known use this function
+char *xs_QName_create(xml_ns* xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t));
+// backups xs:QName() function (prefix_and_local constains prefix and local part separated by ':')
+char *xs_QName_create(const char* prefix_and_local, 
+                      void* (*alloc_func)(size_t));
+// backups fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
+char *xs_QName_create(const char* uri,
+                      const char* prefix_and_local, 
+                      void* (*alloc_func)(size_t));
+
 void  xs_QName_release(char *qname, void (*free_func)(void*));
 const char *xs_QName_get_prefix(const char* qname);
 const char *xs_QName_get_uri(const char* qname);
 const char *xs_QName_get_local_name(const char* qname);
+xml_ns     *xs_QName_get_xmlns(const char* qname);
 void  xs_QName_print(const char* qname, std::ostream& str);
 void  xs_QName_print_to_lr(const char* qname, std::ostream& str);
 

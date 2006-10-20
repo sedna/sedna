@@ -122,9 +122,10 @@ char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
 	return uri;
 }
 
-xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix)
+xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 {
-    std::string prefix(_prefix);
+    if (count < 0) count = strlen(_prefix);
+    std::string prefix(_prefix, count);
 	if (prefix.size()==0)
 	{
 		return def_ns.back();		

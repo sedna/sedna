@@ -71,7 +71,7 @@ struct static_context
 	inline void  remove_from_context(xml_ns* ns)
 	{ remove_from_context(ns->prefix); }
 	char * get_uri_by_prefix(const char* _prefix, t_item type) const;
-	xml_ns* get_xmlns_by_prefix(const char* _prefix);
+	xml_ns* get_xmlns_by_prefix(const char* _prefix, int count = -1);
 	void set_base_uri(const char* _base_uri_);
 };
 #endif

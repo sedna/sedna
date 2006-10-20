@@ -74,8 +74,7 @@ void PPFnName::next  (tuple &t)
         }
         else
         {
-            tc.set_xtype(xs_string); // !!! dangerous
-            t.copy(tc);
+            t.copy(cast_primitive_to_xs_string(tc));
         }
     }
     else

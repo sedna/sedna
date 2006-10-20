@@ -740,9 +740,19 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 			{
 				if (tup.cells[i].is_string_type())
 				{
+                    if (tup.cells[i].get_atomic_type() == xs_QName)
+                    {
+                        const char *prefix = xs_QName_get_prefix(tup.cells[i].get_str_mem());
+                        if (prefix && strlen(prefix) != 0)
+                        {
+                            crmout.writextext((char*)prefix, strlen(prefix));
+                            crmout.writextext(":", 1);
+                        }
+                        crmout.writextext((char*)xs_QName_get_local_name(tup.cells[i].get_str_mem()), 
+                                          strlen(xs_QName_get_local_name(tup.cells[i].get_str_mem())));
+                    }
 					//crmout<<tup.cells[i].get_str_mem();
-					crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());
-					
+					else crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());					
 				}
 				else
 				{

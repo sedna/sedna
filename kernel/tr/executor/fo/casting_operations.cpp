@@ -12,6 +12,7 @@
 #include "base64Binary.h"
 #include "XmlNames.h"
 #include "uri.h"
+#include "xsd.h"
 
 
 /******************************************************************************/
@@ -128,9 +129,9 @@ inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 {
     // !!! FIXME: check lexical representation
-    tuple_cell res(c);
-    res.set_xtype(xs_QName);
-    return res;
+    tuple_cell tmp = tuple_cell::make_sure_light_atomic(c);
+    char *qname = xs_QName_create(tmp.get_str_mem(), malloc);
+    return tuple_cell::atomic(xs_QName, qname);
 }
 
 
@@ -181,6 +182,28 @@ inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type
     tuple_cell res(c);
     res.set_xtype(res_type);
     return res;
+}
+
+inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c)
+{
+    U_ASSERT(c.is_light_atomic()); // xs:QName value is always ligth atomic
+
+    const char *prefix = xs_QName_get_prefix(c.get_str_mem());
+    const char *local  = xs_QName_get_local_name (c.get_str_mem());
+    char *res = NULL;
+    if (prefix)
+    {
+        res = new char[strlen(prefix) + strlen(local) + 2];
+        strcpy(res, prefix);
+        strcat(res, ":");
+        strcat(res, local);
+    }
+    else
+    {
+        res = new char[strlen(local) + 1];
+        strcpy(res, local);
+    }
+    return tuple_cell::atomic(xs_string, res);
 }
 
 
@@ -292,11 +315,7 @@ tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
                                       return res;
                                   }
         case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_string);
-        case xs_QName			: { // !!! FIX ME: don't know what to do
-                                      tuple_cell res(c);
-                                      res.set_xtype(xs_string);
-                                      return res;
-                                  }
+        case xs_QName			: return cast_xs_QName_to_string_type(c);
         case xs_NOTATION		: { // !!! FIX ME: don't know what to do
                                       tuple_cell res(c);
                                       res.set_xtype(xs_string);

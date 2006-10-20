@@ -152,13 +152,21 @@ void set_axis_parameters(scheme_list *lst,
     else if (type == "var_name") nt_type = node_test_var_name;
     else throw USER_EXCEPTION2(SE1004, "109");
 
-    if (nt_type == node_test_wildcard_ncname_star ||
-        nt_type == node_test_wildcard_star_ncname)
+    if (nt_type == node_test_wildcard_ncname_star)
     {
         if (lst->at(2).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "110");
 
-        nt_data.ncname = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        return;
+    }
+
+    if (nt_type == node_test_wildcard_star_ncname)
+    {
+        if (lst->at(2).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "110");
+
+        nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -170,10 +178,8 @@ void set_axis_parameters(scheme_list *lst,
             || lst->at(2).internal.list->at(1).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "111");
 
-        nt_data.qname = xs_QName_create(NULL,
-                                        lst->at(2).internal.list->at(0).internal.str, 
-                                        lst->at(2).internal.list->at(1).internal.str, 
-                                        PathExpr_malloc_func(persistent));
+        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
+        nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -224,10 +230,8 @@ void make_element_data(scheme_list *lst, sequence_type &st)
         else if (str == "element_name_wildcard") st.type.ed.ede = st_ede_name_wildcard; 
         else throw USER_EXCEPTION2(SE1004, "123");
 
-        st.type.ed.qname1 = xs_QName_create(NULL,
-                                            lst->at(1).internal.list->at(0).internal.str, 
-                                            lst->at(1).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ed.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ed.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
     }
     else if (lst->size() == 3)
     {
@@ -247,15 +251,11 @@ void make_element_data(scheme_list *lst, sequence_type &st)
         if (str == "element_name_name") st.type.ed.ede = st_ede_name_name;
         else throw USER_EXCEPTION2(SE1004, "125");
 
-        st.type.ed.qname1 = xs_QName_create(NULL,
-                                            lst->at(1).internal.list->at(0).internal.str, 
-                                            lst->at(1).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ed.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ed.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
 
-        st.type.ed.qname2 = xs_QName_create(NULL,
-                                            lst->at(2).internal.list->at(0).internal.str, 
-                                            lst->at(2).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ed.ncname2_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ed.ncname2_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
     }
     else throw USER_EXCEPTION2(SE1004, "126");
 }
@@ -293,10 +293,8 @@ void make_attribute_data(scheme_list *lst, sequence_type &st)
         else if (str == "attribute_name_wildcard") st.type.ad.ade = st_ade_name_wildcard;
         else throw USER_EXCEPTION2(SE1004, "130");
 
-        st.type.ad.qname1 = xs_QName_create(NULL,
-                                            lst->at(1).internal.list->at(0).internal.str, 
-                                            lst->at(1).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ad.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ad.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
     }
     else if (lst->size() == 3)
     {
@@ -316,15 +314,11 @@ void make_attribute_data(scheme_list *lst, sequence_type &st)
         if (str == "attribute_name_name") st.type.ad.ade = st_ade_name_name;
         else throw USER_EXCEPTION2(SE1004, "132");
 
-        st.type.ad.qname1 = xs_QName_create(NULL,
-                                            lst->at(1).internal.list->at(0).internal.str, 
-                                            lst->at(1).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ad.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ad.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
 
-        st.type.ad.qname2 = xs_QName_create(NULL,
-                                            lst->at(2).internal.list->at(0).internal.str, 
-                                            lst->at(2).internal.list->at(1).internal.str, 
-                                            PathExpr_malloc_func(false));
+        st.type.ad.ncname2_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        st.type.ad.ncname2_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
     }
     else throw USER_EXCEPTION2(SE1004, "133");
 }
@@ -2985,16 +2979,14 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
         int cxt_size = atoi(qe->at(1).internal.num);
 
         variable_context *cxt = new variable_context(cxt_size);
-        char* qname;
-        qname = xs_QName_create(NULL,
-                                qe->at(3).internal.list->at(0).internal.str, 
-                                qe->at(3).internal.list->at(1).internal.str, 
-                                PathExpr_malloc_func(false));
 
+        char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
+        char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
 
         return new PPRename(make_pp_op(cxt, qe->at(2).internal.list),
                             cxt,
-                            qname);
+                            ncname_prefix,
+                            ncname_local);
     }
     else if (op == "PPReplace")
     {

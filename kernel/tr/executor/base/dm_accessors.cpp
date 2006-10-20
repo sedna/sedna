@@ -24,22 +24,20 @@ tuple_cell dm_node_name(xptr node)
     switch (GETSCHEMENODE(XADDR(node))->type)
     {
         case document		: return tuple_cell::eos();
-		case element		: {
-								  const char* p = GETSCHEMENODE(XADDR(node))->xmlns ? 
-									              GETSCHEMENODE(XADDR(node))->xmlns->prefix :
-								                  NULL;
-								  return tuple_cell::atomic_xs_QName_deep(p, GETSCHEMENODE(XADDR(node))->name);
-							  }
+		case element		: 
         case attribute		: {
-								  const char* p = GETSCHEMENODE(XADDR(node))->xmlns ? 
-									              GETSCHEMENODE(XADDR(node))->xmlns->prefix :
-								                  NULL;
-								  return tuple_cell::atomic_xs_QName_deep(p, GETSCHEMENODE(XADDR(node))->name);
+                                  xml_ns *xmlns = GETSCHEMENODE(XADDR(node))->xmlns;
+                                  const char *n = GETSCHEMENODE(XADDR(node))->name;
+                                  char *qname = xs_QName_create(xmlns, n, malloc);
+								  return tuple_cell::atomic(xs_QName, qname);
 							  }
         case xml_namespace	: {
                                   ns_dsc *ns = NS_DSC(node);
                                   if (ns->ns->prefix) 
-                                      return tuple_cell::atomic_xs_QName_deep(NULL, ns->ns->prefix);
+                                  {
+                                      char *qname = xs_QName_create((xml_ns*)NULL, ns->ns->prefix, malloc);
+                                      return tuple_cell::atomic(xs_QName, qname);
+                                  }
                                   else 
                                       return tuple_cell::eos();
                               }
@@ -52,7 +50,9 @@ tuple_cell dm_node_name(xptr node)
                                   char *t = new char[target + 1];
 							      t[target] = '\0';
                                   e_str_copy_to_buffer(t, data, target);
-                                  return tuple_cell::atomic(xs_QName, t);
+                                  char *qname = xs_QName_create((xml_ns*)NULL, t, malloc);
+                                  delete [] t;
+                                  return tuple_cell::atomic(xs_QName, qname);
                               }
         case comment		: return tuple_cell::eos();
         case text			: return tuple_cell::eos();
@@ -361,7 +361,7 @@ const char* xmlscm_type2c_str(xmlscm_type type)
         default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema type passed to dm:type"); 
     }
 }
-
+/*
 tuple_cell dm_type_name(xptr node)
 {
     CHECKP(node);
@@ -378,7 +378,7 @@ tuple_cell dm_type_name(xptr node)
         default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:type-name");
     }
 }
-
+*/
 tuple_cell dm_nilled(xptr node)
 {
     CHECKP(node);

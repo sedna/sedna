@@ -622,7 +622,8 @@ int popt_build_preds(counted_ptr<uncovered_xp> uncovered_tree, xp_tree *tree, in
 
     tree->levels[level].n = n;
     tree->levels[level].preds = counted_ptr<xp_pred>(new xp_pred[n]);
-    tree->levels[level].qname = uncovered_tree->op->qname;
+    tree->levels[level].ncname_prefix = uncovered_tree->op->ncname_prefix;
+    tree->levels[level].ncname_local = uncovered_tree->op->ncname_local;
 
     for (j = 0; j < n; j++)
     {
