@@ -54,8 +54,8 @@ tuple_cell getQnameParameter(PPOpIn qname)
 	}
 	else
 		if	(is_derived_from_xs_string(xtype)||xtype==xs_string);
-		else if(xtype!=xs_QName)
-			throw USER_EXCEPTION(XPTY0004);
+	else if(xtype!=xs_QName)
+		throw USER_EXCEPTION(XPTY0004);
 	res=tuple_cell::make_sure_light_atomic(res);
 	qname.op->next(name);
 	if (!(name.is_eos())) throw USER_EXCEPTION(XPTY0004);
@@ -306,7 +306,13 @@ void PPElementConstructor::next  (tuple &t)
 		//namespace search
 		
 		char* prefix=NULL;
-		separateLocalAndPrefix(prefix,name);
+		if (!res.is_eos()&&res.get_atomic_type()==xs_QName)
+		{
+			prefix=(char*)xs_QName_get_prefix(name);
+			name=xs_QName_get_local_name(name);
+		}
+		else
+			separateLocalAndPrefix(prefix,name);
 		xml_ns* ns=NULL;
 		if (prefix!=NULL)
 		{
@@ -645,7 +651,13 @@ void PPAttributeConstructor::next  (tuple &t)
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
-		separateLocalAndPrefix(prefix,name);
+		if (!res1.is_eos()&&res1.get_atomic_type()==xs_QName)
+		{
+			prefix=(char*)xs_QName_get_prefix(name);
+			name=xs_QName_get_local_name(name);
+		}
+		else
+			separateLocalAndPrefix(prefix,name);
 		xml_ns* ns=NULL;
 		if (((prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
 			||(prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0 ))
@@ -1069,7 +1081,13 @@ void PPPIConstructor::next  (tuple &t)
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
-		separateLocalAndPrefix(prefix,name);
+		if (!res1.is_eos()&&res1.get_atomic_type()==xs_QName)
+		{
+			prefix=(char*)xs_QName_get_prefix(name);
+			name=xs_QName_get_local_name(name);
+		}
+		else
+			separateLocalAndPrefix(prefix,name);
 		if (prefix!=NULL)
         {
             delete prefix;
