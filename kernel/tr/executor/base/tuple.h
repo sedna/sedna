@@ -361,7 +361,7 @@ public:
     {
         return tuple_cell(tc_heavy_atomic_estr, _xtype_, _p_, _size_);
     }
-
+/*
     static tuple_cell atomic_xs_QName_deep(const char *_prefix_, const char *_name_)
     {
         char *tmp = NULL;
@@ -381,7 +381,7 @@ public:
         }
         return tuple_cell(xs_QName, tmp, true);
     }
-
+*/
     static tuple_cell atomic_se_separator()
     {
         return tuple_cell(tc_light_atomic_fix_size | se_separator);

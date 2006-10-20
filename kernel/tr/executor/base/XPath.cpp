@@ -106,16 +106,23 @@ void delete_PathExpr(PathExpr *path)
                 switch (nt.type)
                 {
                     case node_test_wildcard_ncname_star:
+                        {
+                            xs_NCName_release(nt.data.ncname_prefix, pers_free);
+                            nt.data.ncname_prefix = NULL;
+                            break;
+                        }
                     case node_test_wildcard_star_ncname:
                         {
-                            xs_NCName_release(nt.data.ncname, pers_free);
-                            nt.data.ncname = NULL;
+                            xs_NCName_release(nt.data.ncname_local, pers_free);
+                            nt.data.ncname_local = NULL;
                             break;
                         }
                     case node_test_qname:
                         {
-                            xs_QName_release(nt.data.qname, pers_free);
-                            nt.data.qname = NULL;
+                            xs_NCName_release(nt.data.ncname_prefix, pers_free);
+                            nt.data.ncname_prefix = NULL;
+                            xs_NCName_release(nt.data.ncname_local, pers_free);
+                            nt.data.ncname_local = NULL;
                             break;
                         }
                     default: ;
@@ -156,10 +163,13 @@ void NodeTest::print(std::ostream& str)
         case node_test_text                  : str << "text()"; break;
         case node_test_node                  : str << "node()"; break;
         case node_test_string                : str << "[string]"; break;
-        case node_test_qname                 : xs_QName_print(data.qname, str); break;
+        case node_test_qname                 : xs_NCName_print(data.ncname_prefix, str); 
+                                               str << ":";
+                                               xs_NCName_print(data.ncname_local, str); 
+                                               break;
         case node_test_wildcard_star         : str << "*"; break;
-        case node_test_wildcard_ncname_star  : xs_NCName_print(data.ncname, str); str << ":*"; break;
-        case node_test_wildcard_star_ncname  : str << "*:"; xs_NCName_print(data.ncname, str); break;
+        case node_test_wildcard_ncname_star  : xs_NCName_print(data.ncname_prefix, str); str << ":*"; break;
+        case node_test_wildcard_star_ncname  : str << "*:"; xs_NCName_print(data.ncname_local, str); break;
         case node_test_function_call         : str << "[function]"; break;
         case node_test_var_name              : str << "[var]"; break;
         default                              : str << "UNKNOWN";
@@ -190,10 +200,20 @@ void NodeTest::print_to_lr(std::ostream& str)
         case node_test_text                  : str << "text ()"; break;
         case node_test_node                  : str << "node ()"; break;
         case node_test_string                : str << "string ()"; break;
-        case node_test_qname                 : str << "qname "; xs_QName_print_to_lr(data.qname, str); break;
+        case node_test_qname                 : str << "qname "; 
+                                               str << "(";
+                                               xs_NCName_print_to_lr(data.ncname_prefix, str); 
+                                               str << " ";
+                                               xs_NCName_print_to_lr(data.ncname_local, str); 
+                                               str << ")";
+                                               break;
         case node_test_wildcard_star         : str << "wildcard_star ()"; break;
-        case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star "; xs_NCName_print_to_lr(data.ncname, str); break;
-        case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname "; xs_NCName_print_to_lr(data.ncname, str); break;
+        case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star "; 
+                                               xs_NCName_print_to_lr(data.ncname_prefix, str); 
+                                               break;
+        case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname "; 
+                                               xs_NCName_print_to_lr(data.ncname_local, str); 
+                                               break;
         case node_test_function_call         : str << "function_call ()"; break;
         case node_test_var_name              : str << "var_name ()"; break;
         default                              : str << "UNKNOWN";
@@ -304,14 +324,21 @@ void set_node_test_parameters(variable_context *cxt,
     else throw USER_EXCEPTION2(SE1004, "Path expression");
 
 
-    if (nt.type == node_test_wildcard_ncname_star ||
-        nt.type == node_test_wildcard_star_ncname)
+    if (nt.type == node_test_wildcard_ncname_star)
     {
         if (lst->at(2).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "Path expression");
 
+        nt.data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        return;
+    }
 
-        nt.data.ncname = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+    if (nt.type == node_test_wildcard_star_ncname)
+    {
+        if (lst->at(2).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "Path expression");
+
+        nt.data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -323,10 +350,8 @@ void set_node_test_parameters(variable_context *cxt,
             || lst->at(2).internal.list->at(1).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "Path expression");
 
-        nt.data.qname = xs_QName_create(NULL,
-                                        lst->at(2).internal.list->at(0).internal.str, 
-                                        lst->at(2).internal.list->at(1).internal.str, 
-                                        PathExpr_malloc_func(persistent));
+        nt.data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
+        nt.data.ncname_local =  xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
         return;
     }
 
@@ -418,10 +443,8 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
         {
             case element      : {
                                     path_expr->nto[i].nt->type = node_test_qname;
-                                    path_expr->nto[i].nt->data.qname = xs_QName_create(NULL,
-                                                                                       cur->name, 
-                                                                                       cur->xmlns->uri, 
-                                                                                       PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
                                     break;
                                 }
             case text         : {
@@ -430,10 +453,8 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
                                 }
             case attribute    : {
                                     path_expr->nto[i].nt->type = node_test_qname;
-                                    path_expr->nto[i].nt->data.qname = xs_QName_create(NULL,
-                                                                                       cur->name, 
-                                                                                       cur->xmlns->uri, 
-                                                                                       PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
+                                    path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
                                     break;
                                 }
             case document     : throw USER_EXCEPTION2(SE1003, "build_PathExpr: document as a child node");

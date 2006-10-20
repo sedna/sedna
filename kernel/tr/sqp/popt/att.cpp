@@ -47,10 +47,8 @@ xp_op *make_xp_op(scheme_list *lst)
 
         op->type = xp_op_pred;
         op->pred_num = atoi(lst->at(1).internal.num);
-        op->qname = xs_QName_create(NULL,
-                                    lst->at(2).internal.list->at(0).internal.str, 
-                                    lst->at(2).internal.list->at(1).internal.str, 
-                                    malloc);
+        op->ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, malloc);
+        op->ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, malloc);
         op->op1 = make_xp_op(lst->at(3).internal.list);
         op->op2 = make_xp_op(lst->at(4).internal.list);
     }
@@ -172,7 +170,8 @@ void delete_xp_op(xp_op *op)
         case xp_op_pred		:
             delete_xp_op(op->op1);
             delete_xp_op(op->op2);
-            xs_QName_release(op->qname, free);
+            xs_NCName_release(op->ncname_prefix, free);
+            xs_NCName_release(op->ncname_local, free);
             break;
         case xp_op_and		:
         case xp_op_or		:

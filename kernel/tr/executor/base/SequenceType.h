@@ -50,15 +50,19 @@ enum st_attr_data_enum
 struct st_elem_data
 {
     st_elem_data_enum ede;
-    char *qname1;
-    char *qname2;
+    char *ncname1_prefix;
+    char *ncname1_local;
+    char *ncname2_prefix;
+    char *ncname2_local;
 };
 
 struct st_attr_data
 {
     st_attr_data_enum ade;
-    char *qname1;
-    char *qname2;
+    char *ncname1_prefix;
+    char *ncname1_local;
+    char *ncname2_prefix;
+    char *ncname2_local;
 };
 
 enum st_item_type_enum

@@ -25,11 +25,11 @@ inline bool comp_type(schema_node* scm_node, t_item type)
     return comp_type(scm_node, NULL, NULL, type);
 }
 
-inline bool comp_qname_type(const schema_node *scm_node, const char *qn, t_item type)
+inline bool comp_qname_type_m(const schema_node *scm_node, const char *ncname_prefix, const char* ncname_local, t_item type)
 {
     return comp_qname_type(scm_node, 
-                           tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(qn), type), 
-                           xs_QName_get_local_name(qn), 
+                           tr_globals::st_ct.get_uri_by_prefix(ncname_prefix, type), 
+                           ncname_local, 
                            type);
 }
 
@@ -94,7 +94,7 @@ t_scmnodes_const execute_node_test_axis_child(const schema_node *node, const Nod
     case node_test_qname					: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_qname_type(ref->snode, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(ref->snode, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(ref->snode);
             return res;
         }
@@ -107,14 +107,14 @@ t_scmnodes_const execute_node_test_axis_child(const schema_node *node, const Nod
     case node_test_wildcard_ncname_star		: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_uri_type(ref->snode, nt.data.ncname, PNK_ELEMENT))
+                if (comp_uri_type(ref->snode, nt.data.ncname_prefix, PNK_ELEMENT))
                     res.push_back(ref->snode);
             return res;
         }
     case node_test_wildcard_star_ncname		: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_local_type(ref->snode, nt.data.ncname, PNK_ELEMENT))
+                if (comp_local_type(ref->snode, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(ref->snode);
             return res;
         }
@@ -151,7 +151,7 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -166,7 +166,7 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_uri_type(*it, nt.data.ncname, PNK_ELEMENT))
+                if (comp_uri_type(*it, nt.data.ncname_prefix, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -174,7 +174,7 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_local_type(*it, nt.data.ncname, PNK_ELEMENT))
+                if (comp_local_type(*it, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -203,7 +203,7 @@ t_scmnodes_const execute_node_test_axis_attribute(const schema_node *node, const
     case node_test_qname					: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_qname_type(ref->snode, nt.data.qname, PNK_ATTRIBUTE))
+                if (comp_qname_type_m(ref->snode, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(ref->snode);
             return res;
         }
@@ -216,14 +216,14 @@ t_scmnodes_const execute_node_test_axis_attribute(const schema_node *node, const
     case node_test_wildcard_ncname_star		: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_uri_type(ref->snode, nt.data.ncname, PNK_ATTRIBUTE))
+                if (comp_uri_type(ref->snode, nt.data.ncname_prefix, PNK_ATTRIBUTE))
                     res.push_back(ref->snode);
             return res;
         }
     case node_test_wildcard_star_ncname		: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_local_type(ref->snode, nt.data.ncname, PNK_ATTRIBUTE))
+                if (comp_local_type(ref->snode, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(ref->snode);
             return res;
         }
@@ -254,7 +254,7 @@ t_scmnodes_const execute_node_test_axis_self(const schema_node *node, const Node
     case node_test_string					: throw USER_EXCEPTION2(SE1002, "XPath on Schema: node_test_string on axis self");
     case node_test_qname					: 
         {
-            if (comp_qname_type(node, nt.data.qname, PNK_ELEMENT))
+            if (comp_qname_type_m(node, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                 res.push_back(node);
             return res;
         }
@@ -265,13 +265,13 @@ t_scmnodes_const execute_node_test_axis_self(const schema_node *node, const Node
         }
     case node_test_wildcard_ncname_star		: 
         {
-            if (comp_uri_type(node, nt.data.ncname, PNK_ELEMENT))
+            if (comp_uri_type(node, nt.data.ncname_prefix, PNK_ELEMENT))
                 res.push_back(node);
             return res;
         }
     case node_test_wildcard_star_ncname		: 
         {
-            if (comp_local_type(node, nt.data.ncname, PNK_ELEMENT))
+            if (comp_local_type(node, nt.data.ncname_local, PNK_ELEMENT))
                 res.push_back(node);
             return res;
         }
@@ -308,7 +308,7 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -323,7 +323,7 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_uri_type(*it, nt.data.ncname, PNK_ELEMENT))
+                if (comp_uri_type(*it, nt.data.ncname_prefix, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -331,7 +331,7 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, dm_children_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_local_type(*it, nt.data.ncname, PNK_ELEMENT))
+                if (comp_local_type(*it, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -363,7 +363,7 @@ t_scmnodes_const execute_node_test_axis_descendant_attr(const schema_node *node,
         {
             t_scmnodes_const tmp = descendant_nodes(node, is_node);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ATTRIBUTE))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(*it);
             return res;
         }
@@ -378,7 +378,7 @@ t_scmnodes_const execute_node_test_axis_descendant_attr(const schema_node *node,
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_attribute_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_uri_type(*it, nt.data.ncname, PNK_ATTRIBUTE))
+                if (comp_uri_type(*it, nt.data.ncname_prefix, PNK_ATTRIBUTE))
                     res.push_back(*it);
             return res;
         }
@@ -386,7 +386,7 @@ t_scmnodes_const execute_node_test_axis_descendant_attr(const schema_node *node,
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_attribute_accessor_filter);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_local_type(*it, nt.data.ncname, PNK_ATTRIBUTE))
+                if (comp_local_type(*it, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(*it);
             return res;
         }
@@ -557,11 +557,11 @@ t_scmnodes_const execute_node_test_axis_child(const schema_node *node, const Nod
     case node_test_qname					: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_qname_type(ref->snode, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(ref->snode, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(ref->snode);
             if (extender_nodes)
                 for (i=extender_nodes->begin(); i!=extender_nodes->end(); i++)
-                    if (comp_qname_type((*i), nt.data.qname, PNK_ELEMENT))
+                    if (comp_qname_type_m((*i), nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                         res.push_back(*i);
             return res;
         }
@@ -629,7 +629,7 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
         {
             t_scmnodes_const tmp = descendant_nodes(node, dm_children_accessor_filter, extended_nodes, extender_nodes);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -685,11 +685,11 @@ t_scmnodes_const execute_node_test_axis_attribute(const schema_node *node, const
     case node_test_qname					: 
         {
             for (sc_ref* ref = node->first_child; ref != NULL; ref = ref->next)
-                if (comp_qname_type(ref->snode, nt.data.qname, PNK_ATTRIBUTE))
+                if (comp_qname_type_m(ref->snode, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(ref->snode);
             if (extender_nodes)
                 for (i=extender_nodes->begin(); i!=extender_nodes->end(); i++)
-                    if (comp_qname_type((*i), nt.data.qname, PNK_ATTRIBUTE))
+                    if (comp_qname_type_m((*i), nt.data.ncname_prefix, nt.data.ncname_local, PNK_ATTRIBUTE))
                         res.push_back(*i);
             return res;
         }
@@ -751,7 +751,7 @@ t_scmnodes_const execute_node_test_axis_self(const schema_node *node, const Node
     case node_test_string					: throw USER_EXCEPTION2(SE1002, "XPath on Schema: node_test_string on axis self");
     case node_test_qname					: 
         {
-            if (comp_qname_type(node, nt.data.qname, PNK_ELEMENT))
+            if (comp_qname_type_m(node, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                 res.push_back(node);
             return res;
         }
@@ -805,7 +805,7 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, dm_children_accessor_filter, extended_nodes, extender_nodes);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ELEMENT))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ELEMENT))
                     res.push_back(*it);
             return res;
         }
@@ -860,7 +860,7 @@ t_scmnodes_const execute_node_test_axis_descendant_attr(const schema_node *node,
         {
             t_scmnodes_const tmp = descendant_nodes(node, is_node, extended_nodes, extender_nodes);
             for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
-                if (comp_qname_type(*it, nt.data.qname, PNK_ATTRIBUTE))
+                if (comp_qname_type_m(*it, nt.data.ncname_prefix, nt.data.ncname_local, PNK_ATTRIBUTE))
                     res.push_back(*it);
             return res;
         }

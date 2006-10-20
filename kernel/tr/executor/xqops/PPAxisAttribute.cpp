@@ -127,8 +127,8 @@ void PPAxisAttribute::next_qname(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
-                         tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname), attribute),
-                         xs_QName_get_local_name(nt_data.qname),
+                         tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname_prefix, attribute),
+                         nt_data.ncname_local,
                          attribute,
                          comp_qname_type);
     }
@@ -163,7 +163,7 @@ void PPAxisAttribute::next_wildcard_ncname_star(tuple &t)
         if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
-                         tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname, attribute),
+                         tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname_prefix, attribute),
                          NULL,
                          attribute,
                          comp_uri_type);
@@ -184,7 +184,7 @@ void PPAxisAttribute::next_wildcard_star_ncname(tuple &t)
 
         cur = merge.init(child.get(t).get_node(),
                          NULL,
-                         nt_data.ncname,
+                         nt_data.ncname_local,
                          attribute,
                          comp_local_type);
     }

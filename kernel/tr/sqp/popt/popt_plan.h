@@ -79,7 +79,8 @@ struct xp_level
 {
     int n;
     counted_ptr<xp_pred> preds;
-    char *qname;
+    char *ncname_prefix;
+    char *ncname_local;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

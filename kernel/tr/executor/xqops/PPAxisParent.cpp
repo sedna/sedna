@@ -140,8 +140,8 @@ void PPAxisParent::next_qname(tuple &t)
 		if (cur==XNULL) continue;
         CHECKP(cur);
         if (!comp_qname_type(GETSCHEMENODEX(cur),
-                              tr_globals::st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname), element),
-                              xs_QName_get_local_name(nt_data.qname), 
+                              tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname_prefix, element),
+                              nt_data.ncname_local, 
                               element))
             cur = XNULL;
     }
@@ -188,7 +188,7 @@ void PPAxisParent::next_wildcard_ncname_star(tuple &t)
         CHECKP(cur);
         if (!
               comp_uri_type(GETSCHEMENODEX(cur),
-                            tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname, element),
+                            tr_globals::st_ct.get_uri_by_prefix(nt_data.ncname_prefix, element),
                             NULL, 
                             element))
             cur = XNULL;
@@ -214,7 +214,7 @@ void PPAxisParent::next_wildcard_star_ncname(tuple &t)
         if (!
               comp_local_type(GETSCHEMENODEX(cur),
                               NULL,
-                              nt_data.ncname, 
+                              nt_data.ncname_local, 
                               element))
             cur = XNULL;
     }
@@ -300,7 +300,7 @@ sequence *PPAxisParent::next_qname_s(sequence *data_seq, PPAxisParent* cur_op)
 
         if (cur != NULL &&
             GETSCHEMENODEX(cur)->type == element && 
-            strcmp(GETSCHEMENODEX(cur)->name, xs_QName_get_local_name(cur_op->nt_data.qname)) == 0)
+            strcmp(GETSCHEMENODEX(cur)->name, cur_op->nt_data.ncname_local) == 0)
         {
             t.cells[0] = tuple_cell::node(cur);
             res_seq->add(t);

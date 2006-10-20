@@ -46,8 +46,8 @@ class PPOpIn;
 
 struct NodeTestData
 {
-    char* ncname;
-    char* qname;
+    char* ncname_prefix;
+    char* ncname_local;
     PPOpIn *ppnode;
 };
                      

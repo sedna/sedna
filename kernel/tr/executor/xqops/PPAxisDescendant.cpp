@@ -158,7 +158,7 @@ void PPAxisDescendant::next_node(tuple &t)
 }
 void PPAxisDescendant::next_processing_instruction(tuple &t)
 {
-	if (strlen(nt_data.ncname)==0)
+	if (strlen(nt_data.ncname_local)==0)
 		next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
 	else
 		while (true)
@@ -171,21 +171,21 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 				CHECKP(tmp);
 				pi_dsc* desc=(pi_dsc*)XADDR(tmp);
 				int tsize=desc->target;
-				if (tsize==strlen(nt_data.ncname))
+				if (tsize==strlen(nt_data.ncname_local))
 				{
 					xptr ind_ptr=desc->data;
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname, std::string(data,tsize).c_str()) == 0) return;
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
 				}
 			}
 		}   
 }
 void PPAxisDescendant::next_qname(tuple &t)
 {
-	char * uri=st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname),element) ;
-	next_qname_and_text(t,uri,xs_QName_get_local_name(nt_data.qname),element,comp_qname_type);
+	char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
+	next_qname_and_text(t,uri,nt_data.ncname_local,element,comp_qname_type);
 }
 void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
 {
@@ -259,13 +259,13 @@ void PPAxisDescendant::next_text(tuple &t)
 }
 void PPAxisDescendant::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname,element) ;
+    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
 	next_qname_and_text(t,uri,NULL,element,comp_uri_type);
 }
 
 void PPAxisDescendant::next_wildcard_star_ncname(tuple &t)
 {
-    next_qname_and_text(t,NULL,nt_data.ncname,element,comp_local_type);
+    next_qname_and_text(t,NULL,nt_data.ncname_local,element,comp_local_type);
 }
 void PPAxisDescendant::next_wildcard_star(tuple &t)
 {
@@ -356,18 +356,18 @@ void PPAxisDescendantAttr::next_node(tuple &t)
 }
 void PPAxisDescendantAttr::next_qname(tuple &t)
 {
-	char * uri=st_ct.get_uri_by_prefix(xs_QName_get_prefix(nt_data.qname),attribute) ;
-	next_qname_and_text(t,uri,xs_QName_get_local_name(nt_data.qname),attribute,comp_qname_type);
+	char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,attribute);
+	next_qname_and_text(t,uri,nt_data.ncname_local,attribute,comp_qname_type);
 }
 void PPAxisDescendantAttr::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname,attribute) ;
+    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,attribute) ;
 	next_qname_and_text(t,uri,NULL,attribute,comp_uri_type);
 }
 
 void PPAxisDescendantAttr::next_wildcard_star_ncname(tuple &t)
 {
-    next_qname_and_text(t,NULL,nt_data.ncname,attribute,comp_local_type);
+    next_qname_and_text(t,NULL,nt_data.ncname_local,attribute,comp_local_type);
 }
 
 void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
