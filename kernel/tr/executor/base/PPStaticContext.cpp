@@ -13,6 +13,7 @@ void static_context::init_context()
 	stm.add_str("<","&lt;");
 	stm.add_str("&","&amp;");
 	stm.add_str("\"","&quot;",pat_attribute);
+	preserve_type=false;
 }
 void static_context::add_char_mapping(const char* str, const char* rep_str,int pc )
 {
@@ -207,7 +208,6 @@ void static_context::set_datetime()
 		implicit_timezone = XMLDateTime(tm).getTimezone();
 	}
 }
-
 void static_context::set_base_uri(const char* _base_uri_)
 {
     base_uri = new char[strlen(_base_uri_) + 1];
