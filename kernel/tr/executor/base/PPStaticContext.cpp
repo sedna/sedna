@@ -190,7 +190,7 @@ void static_context::clear_context()
 		ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 		init_context();
 
-	if(base_uri!=NULL)
+	if(base_uri != NULL)
 	{
 	    delete base_uri;
 	    base_uri = NULL;
@@ -211,6 +211,7 @@ void static_context::set_datetime()
 }
 void static_context::set_base_uri(const char* _base_uri_)
 {
+    if(base_uri != NULL) delete base_uri;
     base_uri = new char[strlen(_base_uri_) + 1];
     strcpy(base_uri, _base_uri_);
 }

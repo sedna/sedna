@@ -1286,8 +1286,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    PPFnUriEncoding::ESCAPE_HTML_URI);
     }
-    /*
-    Not implemented yet!
+    /*//Not implemented yet!
     else if (op == "PPFnResolveUri")
     {
         if (   lst->size() < 2
