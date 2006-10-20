@@ -1040,8 +1040,26 @@
                 (list
                  (list (sa:op-name expr)  ; ='declare-function
                        fun-qname
-                       (cadr (sa:op-args expr))
-                       (caddr (sa:op-args expr))
+                       ; Function arguments:
+                       ; was: (cadr (sa:op-args expr))
+                       (map
+                        (lambda (before after)
+                          (list
+                           (caddr after)  ; rewritten type
+                           ; Keep the name unresolved - it is processed later
+                           (cadr before)
+                           ;(list (sa:op-name (cadr before))  ; == 'var
+                           ;      (car after)  ; resolved name
+                           ;      )
+                           ))
+                        (cadr (sa:op-args expr))
+                        formal-args)
+                       (list
+                        (sa:op-name  ; == 'result-type
+                         (caddr (sa:op-args expr))  ; result type specification
+                         )
+                        (car return-type)  ; rewritten type
+                        )
                        (cadddr (sa:op-args expr)))
                  formal-args return-type)
                 triples)
@@ -1270,9 +1288,13 @@
 (define (sa:analyze-item-type type-spec ns-binding default-ns)
   (cond
     ((symbol? type-spec)  ; XML Schema built-in type
-     (cons type-spec
-           (if (memq type-spec '(xs:anyType !xs!anyType))
-               sa:type-nodes sa:type-atomic)))
+     (if
+      ; Detect parser bug, for XQTS tests like annex-1 - 5
+      (memq type-spec '(optional zero-or-more one-or-more one))
+      (cl:signal-input-error SE5016 type-spec)
+      (cons type-spec
+            (if (memq type-spec '(xs:anyType !xs!anyType))
+                sa:type-nodes sa:type-atomic))))
     ((and (pair? type-spec) (= (length type-spec) 2)
           (string? (car type-spec)) (string? (cadr type-spec)))
      ; external atomic type
@@ -1328,7 +1350,8 @@
         (cl:signal-user-error
          XPST0051
          (string-append (car type-spec) ":" (cadr type-spec))))))
-    ((eq? (car type-spec) 'doc-test)
+    ((and (pair? type-spec)
+          (eq? (car type-spec) 'doc-test))
      (or
       (and (null? (cdr type-spec))  ; no more arguments
            (cons type-spec sa:type-nodes))
@@ -1341,7 +1364,8 @@
               (cons (list (car type-spec)
                           (car new-ename))
                     (cdr new-ename)))))))
-    ((memq (car type-spec) '(elem-test attr-test))
+    ((and (pair? type-spec)
+          (memq (car type-spec) '(elem-test attr-test)))
      (and
       (sa:assert-num-args type-spec 1)
       (let ((new-ename (sa:analyze-ename
@@ -1350,10 +1374,12 @@
              (cons (list (car type-spec)
                          (car new-ename))
                    (cdr new-ename))))))
-    ((memq (car type-spec) '(comment-test text-test node-test))
+    ((and (pair? type-spec)
+          (memq (car type-spec) '(comment-test text-test node-test)))
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-nodes)))
-    ((eq? (car type-spec) 'pi-test)     
+    ((and (pair? type-spec)
+          (eq? (car type-spec) 'pi-test))
      (if
       (null? (sa:op-args type-spec))  ; no arguments
       (cons type-spec sa:type-nodes)
@@ -1378,7 +1404,8 @@
                       (symbol->string const-value)
                       const-value)))
            sa:type-nodes))))))
-    ((eq? (car type-spec) 'item-test)
+    ((and (pair? type-spec)
+          (eq? (car type-spec) 'item-test))
      (and (sa:assert-num-args type-spec 0)
           (cons type-spec sa:type-any)))
     (else
