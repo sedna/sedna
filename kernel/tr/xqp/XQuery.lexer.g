@@ -113,6 +113,8 @@ virtual void errstd(const char *s){
 #token TO "to"
 #token INSTANCE "instance"
 #token TREAT "treat"
+#token IMPORT "import"
+#token MODULE "module"
 
 
 /*  This keywords are added for update expressions      */
