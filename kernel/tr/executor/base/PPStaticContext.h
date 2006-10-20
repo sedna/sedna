@@ -42,6 +42,7 @@ struct static_context
     XMLDateTime current_time;
     XMLDateTime implicit_timezone;
     bool datetime_initialized;
+	bool preserve_type;
 
     char* base_uri;
 
@@ -64,7 +65,7 @@ struct static_context
 	}
 	xml_ns* add_to_context(const char* prefix,const char* uri);
 	void init_context();
-	void set_datetime();
+	void set_datetime();	
 	void add_char_mapping(const char* str, const char* rep_str,int pc =-1);
 	void remove_from_context(const char* prefix);
 	inline void  remove_from_context(xml_ns* ns)

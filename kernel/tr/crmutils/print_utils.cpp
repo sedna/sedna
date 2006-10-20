@@ -565,7 +565,7 @@ nsfree:
 		}
 	case text:
 		{
-			if(wi) 
+			if(wi&&indent) 
 			{
 				crmout<< "\n";
 				print_indent(crmout,indent) ;
