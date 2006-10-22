@@ -1548,18 +1548,18 @@
                       ((eq? (car item-type) 'text-test)
                           `(,por-occ-ind (text)))
                       
-                      ; DL: wrong place
-;                      ((eq? (car item-type) 'pi-test)
-;                       `(,por-occ-ind
-;                         (processing_instruction
-;                          @(if
-;                             (null? (cdr item-type))
-;                             ; no target specified
-;                             '()
-;                              (list
-;                               (caddr  ; constant value
-;                                (cadr item-type)  ; selects '(const ...)
-;                                ))))))
+                      ; DL: in expressions like instance-of
+                      ((eq? (car item-type) 'pi-test)
+                       `(,por-occ-ind
+                         (processing_instruction
+                          ,@(if
+                             (null? (cdr item-type))
+                             ; no target specified
+                             '()
+                             (list
+                              (caddr  ; constant value
+                               (cadr item-type)  ; selects '(const ...)
+                               ))))))
                       
                       ((eq? (car item-type) 'item-test)
                           `(,por-occ-ind (item)))
