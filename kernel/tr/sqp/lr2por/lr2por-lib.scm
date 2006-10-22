@@ -149,116 +149,161 @@
   
 (define (l2p:findPPAbsPath e)
   (let rpt ((expr e) (first-call #t)) 
-        (cond 
-          ;In case of atom unary calc ops
-          ((member (xlr:op-name expr) l2p:abs-xpath-axis)
-           (let ((first-arg (rpt (car (xlr:op-args expr)) #f)))
-             (if first-arg
-                 `(PPAbsPath 
-                   ,(cadr first-arg)
-                   ,(reverse
-                     (cons
-                      (list
-                       (let ((what (xlr:type-value (cadr (xlr:op-args expr)))))
-                         (if (eq? (xlr:op-name expr) 'attr-axis)
-                         `(PPAxisAttribute
-                           ,@(cond 
-                               ((eq? (car what) 'attr-test)
-                                (if (eq? (car (cadr what)) 'ename)
-                                    (cond
-                                      ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
-                                       `(wildcard_star ()))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (car (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
-                                      (else 
-                                       `(qname 
-                                         (,(xlr:namespace-name (cadr (cadr what)))
-                                         ,(xlr:local-name (cadr (cadr what))))))) 
-                                    (cl:signal-error "l2p:findPPAbsPath: instruction is not supported - "
-                                           (car (cadr what)))))
-                               ((eq? (car what) 'node-test)
-                                '(wildcard_star ()))
-                               (else (cl:signal-error "l2p:findPPAbsPath: unknown attibute axis KindTest"))))
-                         `(,(l2p:tran-lr-keyword2por-keyword (xlr:op-name expr))
-                           ,@(cond 
-                               ((eq? (car what) 'doc-test)
-                                (if (null? (cdr what))
-                                    `(doc_node)
-                                    (cl:signal-error "l2p:findPPAbsPath: KindTest document(element()) is not supported")))
-                               ((eq? (car what) 'elem-test)
-                                (if (eq? (car (cadr what)) 'ename)
-                                    (cond
-                                      ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
-                                       `(wildcard_star ()))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (car (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
-                                      (else 
-                                       `(qname 
-                                         (,(xlr:namespace-name (cadr (cadr what)))
-                                         ,(xlr:local-name (cadr (cadr what))))))) 
-                                    (cl:signal-error "l2p:findPPAbsPath: instruction is not supported - "
-                                           (car (cadr what)))))
-                               ((eq? (car what) 'attr-test)
-                                (if (eq? (car (cadr what)) 'ename)
-                                    (cond
-                                      ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
-                                       `(wildcard_star ()))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (car (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_star_ncname ,(xlr:local-name (cadr (cadr what)))))
-                                      ((and (eq? (car (cadr (cadr what))) 'const)
-                                            (equal? (cadr (cadr (cadr what))) '(type !xs!QName))
-                                            (pair? (caddr (cadr (cadr what))))
-                                            (eq? (cadr (caddr (cadr (cadr what)))) '*))
-                                       `(wildcard_ncname_star ,(xlr:namespace-name (cadr (cadr what)))))
-                                      (else 
-                                       `(qname 
-                                         (,(xlr:namespace-name (cadr (cadr what)))
-                                         ,(xlr:local-name (cadr (cadr what))))))) 
-                                    (cl:signal-error "l2p:findPPAbsPath: instruction is not supported - "
-                                           (car (cadr what)))))
-                               ((eq? (car what) 'comment-test)
-                                `(comment ()))
-                               ((eq? (car what) 'text-test)
-                                `(text ()))
-                               ((eq? (car what) 'node-test)
-                                `(node ()))
-                               ((eq? (car what) 'item-test)
-                                `(item ()))
-                               (else (cl:signal-error "l2p:findPPAbsPath: unknown KindTest")))))))
-                      (reverse (caddr first-arg)))))
-                 #f)))
-          ((and (eq? (xlr:op-name expr) '!fn!document) (eq? (length (xlr:op-args expr)) 1))
-;           (if first-call
-;               #f
-               `(PPAbsPath (document ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
-                           ())
-;           )
-          )
-          ((eq? (xlr:op-name expr) '!fn!collection)
-           (if first-call
-               #f
-               `(PPAbsPath (collection ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
-                           ())))
-          ((eq? (xlr:op-name expr) 'ddo)
-           (rpt (car (xlr:op-args expr)) #t))
-          (else #f))))
+    (cond 
+      ;In case of atom unary calc ops
+      ((member (xlr:op-name expr) l2p:abs-xpath-axis)
+       (let ((first-arg (rpt (car (xlr:op-args expr)) #f)))
+         (if
+          first-arg
+          `(PPAbsPath 
+            ,(cadr first-arg)
+            ,(reverse
+              (cons
+               (list
+                (let ((what (xlr:type-value (cadr (xlr:op-args expr)))))
+                  (if
+                   (eq? (xlr:op-name expr) 'attr-axis)
+                   `(PPAxisAttribute
+                     ,@(cond 
+                         ((eq? (car what) 'attr-test)
+                          (if
+                           (eq? (car (cadr what)) 'ename)
+                           (cond
+                             ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
+                              `(wildcard_star ()))
+                             ((and
+                               (eq? (car (cadr (cadr what))) 'const)
+                               (equal? (cadr (cadr (cadr what)))
+                                       '(type !xs!QName))
+                               (pair? (caddr (cadr (cadr what))))
+                               (eq? (car (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_star_ncname
+                                ,(xlr:local-name (cadr (cadr what)))))
+                             ((and (eq? (car (cadr (cadr what))) 'const)
+                                   (equal? (cadr (cadr (cadr what)))
+                                           '(type !xs!QName))
+                                   (pair? (caddr (cadr (cadr what))))
+                                   (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_ncname_star
+                                ,(xlr:namespace-name (cadr (cadr what)))))
+                             (else 
+                              `(qname 
+                                (,(xlr:namespace-name (cadr (cadr what)))
+                                 ,(xlr:local-name (cadr (cadr what))))))) 
+                           (cl:signal-error
+                            "l2p:findPPAbsPath: instruction is not supported - "
+                            (car (cadr what)))))
+                         ((eq? (car what) 'node-test)
+                          '(wildcard_star ()))
+                         (else
+                          (cl:signal-error
+                           "l2p:findPPAbsPath: unknown attibute axis KindTest"))))
+                   `(,(l2p:tran-lr-keyword2por-keyword (xlr:op-name expr))
+                     ,@(cond 
+                         ((eq? (car what) 'doc-test)
+                          (if
+                           (null? (cdr what))
+                           `(doc_node)
+                           (cl:signal-error
+                            "l2p:findPPAbsPath: KindTest document(element()) is not supported")))
+                         ((eq? (car what) 'elem-test)
+                          (if
+                           (eq? (car (cadr what)) 'ename)
+                           (cond
+                             ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
+                              `(wildcard_star ()))
+                             ((and
+                               (eq? (car (cadr (cadr what))) 'const)
+                               (equal? (cadr (cadr (cadr what)))
+                                       '(type !xs!QName))
+                               (pair? (caddr (cadr (cadr what))))
+                               (eq? (car (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_star_ncname
+                                ,(xlr:local-name (cadr (cadr what)))))
+                             ((and
+                               (eq? (car (cadr (cadr what))) 'const)
+                               (equal? (cadr (cadr (cadr what)))
+                                       '(type !xs!QName))
+                               (pair? (caddr (cadr (cadr what))))
+                               (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_ncname_star
+                                ,(xlr:namespace-name (cadr (cadr what)))))
+                             (else 
+                              `(qname 
+                                (,(xlr:namespace-name (cadr (cadr what)))
+                                 ,(xlr:local-name (cadr (cadr what))))))) 
+                           (cl:signal-error
+                            "l2p:findPPAbsPath: instruction is not supported - "
+                            (car (cadr what)))))
+                         ((eq? (car what) 'attr-test)
+                          (if
+                           (eq? (car (cadr what)) 'ename)
+                           (cond
+                             ((equal? (cadr (cadr what))
+                                      '(const (type !xs!QName) *))
+                              `(wildcard_star ()))
+                             ((and
+                               (eq? (car (cadr (cadr what))) 'const)
+                               (equal? (cadr (cadr (cadr what)))
+                                       '(type !xs!QName))
+                               (pair? (caddr (cadr (cadr what))))
+                               (eq? (car (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_star_ncname
+                                ,(xlr:local-name (cadr (cadr what)))))
+                             ((and
+                               (eq? (car (cadr (cadr what))) 'const)
+                               (equal? (cadr (cadr (cadr what)))
+                                       '(type !xs!QName))
+                               (pair? (caddr (cadr (cadr what))))
+                               (eq? (cadr (caddr (cadr (cadr what)))) '*))
+                              `(wildcard_ncname_star
+                                ,(xlr:namespace-name (cadr (cadr what)))))
+                             (else 
+                              `(qname 
+                                (,(xlr:namespace-name (cadr (cadr what)))
+                                 ,(xlr:local-name (cadr (cadr what))))))) 
+                           (cl:signal-error
+                            "l2p:findPPAbsPath: instruction is not supported - "
+                            (car (cadr what)))))
+                         ((eq? (car what) 'comment-test)
+                          `(comment ()))
+                         ((eq? (car what) 'text-test)
+                          `(text ()))
+                         ((eq? (car what) 'node-test)
+                          `(node ()))
+                         ((eq? (car what) 'item-test)
+                          `(item ()))
+                         ((eq? (car what) 'pi-test)
+                          ; DL: implemented by analogue with *** axis ***
+                          ; processing in "lr2por.scm"
+                          ;(pp what)
+                          (list
+                           (l2p:lr-test2por-test (car what))
+                           (if
+                            (null? (cdr what))  ; no target specified
+                            '()
+                            (list
+                             (caddr  ; constant value
+                              (cadr what)  ; yields '(const (type ...) ...)
+                              )))))
+                         (else
+                          (cl:signal-error
+                           "l2p:findPPAbsPath: unknown KindTest")))))))
+               (reverse (caddr first-arg)))))
+          #f)))
+      ((and (eq? (xlr:op-name expr) '!fn!document) (eq? (length (xlr:op-args expr)) 1))
+       ;           (if first-call
+       ;               #f
+       `(PPAbsPath (document ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
+                   ())
+       ;           )
+       )
+      ((eq? (xlr:op-name expr) '!fn!collection)
+       (if first-call
+           #f
+           `(PPAbsPath (collection ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
+                       ())))
+      ((eq? (xlr:op-name expr) 'ddo)
+       (rpt (car (xlr:op-args expr)) #t))
+      (else #f))))
                        

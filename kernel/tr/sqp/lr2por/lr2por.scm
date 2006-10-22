@@ -1550,7 +1550,6 @@
                       
                       ; DL: wrong place
 ;                      ((eq? (car item-type) 'pi-test)
-;                       (display item-type)
 ;                       `(,por-occ-ind
 ;                         (processing_instruction
 ;                          @(if
