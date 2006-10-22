@@ -2007,102 +2007,116 @@
 ; 4. Checks that built-in namespace prefixes are not re-declared
 ; Returns: (cons new-element-constructor var-type)
 (define (sa:post-element pair ns-binding default-ns)
-  (let* ((elem (car pair))
-         (body (cadr (sa:op-args elem))))
-    (let loop ((src ((if (and (pair? body)
-                              (eq? (sa:op-name body) 'sequence))
-                         cdr list)
-                     body))
-               (namespaces '())
-               (others '())
-               (prefixes '())
-               (attr-names '()))
-      (cond
-        ((null? src)  ; content processed
-         (let ((new-content
-                (reverse (append others namespaces))))
-           (cons
-            (list
-             (sa:op-name elem)  ; == 'element
-             (car (sa:op-args elem))  ; element name
-             (if (and (not (and (pair? body)
-                                (eq? (sa:op-name body) 'sequence)))
-                      (not (null? new-content))
-                      (null? (cdr new-content)))
-                 (car new-content)
-                 (cons 'sequence new-content)))
-            (cdr pair)  ; var type
-            )))
-        ((and (pair? (car src))
-              (eq? (sa:op-name (car src)) 'attribute))
-         (let ((name (car (sa:op-args (car src)))))
-           (if
-            (sa:qname-const? name)
-            ; Constant attribute name
-            (let ((name
-                   (sa:resolve-qname name ns-binding (cadr default-ns))))
-              (if
-               (member (cadr (sa:op-args name)) attr-names)
-               ; Duplicate attribute declared
-               (cl:signal-user-error XQST0040 (sa:qname->string name))
-               (loop (cdr src)
-                     namespaces
-                     (cons (car src) others)
-                     prefixes
-                     (cons (cadr (sa:op-args name)) attr-names))))
-            (loop (cdr src)
-                  namespaces (cons (car src) others)
-                  prefixes attr-names))))
-        ((and (pair? (car src))
-              (eq? (sa:op-name (car src)) 'namespace))
-         (let ((prefix (car (sa:op-args (car src)))))
-           (if
-            (and (pair? prefix)
-                 (eq? (sa:op-name prefix) 'const)
-                 (equal? (car (sa:op-args prefix))
-                         '(type !xs!NCName)))
-            ; Constant namespace prefix
-            (let ((str (cadr (sa:op-args prefix))))
-              (cond
-                ((member str '("xml" "xmlns"))
-                 ; Attempt to re-declare a predefined namespace prefix 
-                 (cl:signal-user-error XQST0070 str))
-                ((member str prefixes)
-                 ; Duplicate prefix declared
-                 (if (string=? str "")
-                     ; Default namespace prefix              
-                     (cl:signal-user-error XQST0071 "xmlns")
-                     (cl:signal-user-error
-                      XQST0071
-                      (string-append "xmlns:" str))))
-                ((not  ; not a constant namespace value
-                  (let ((ns-value
-                         (cadr (sa:op-args (car src)))))
-                    (or
-                     (and (pair? ns-value)
-                          (eq? (sa:op-name ns-value) 'const))
-                     (equal? ns-value '(sequence)))))
-                 (if (string=? str "")
-                     ; Default namespace prefix              
-                     (cl:signal-user-error XQST0022 "xmlns")
-                     (cl:signal-user-error
-                      XQST0022
-                      (string-append "xmlns:" str))))
-                (else
-                 (loop (cdr src)
-                       (cons (car src) namespaces)
-                       others
-                       (cons str prefixes)
-                       attr-names))))
-            ; Computed namespace constructors are not allowed
-            ; ATTENTION: should raise an exception here
-            (loop (cdr src)
-                  (cons (car src) namespaces) others
-                  prefixes attr-names))))
-        (else
-         (loop (cdr src)
-               namespaces (cons (car src) others)
-               prefixes attr-names))))))
+  (and
+   pair  ; error propagation
+   (let* ((elem (car pair))
+          (body (cadr (sa:op-args elem))))
+     (let loop ((src ((if (and (pair? body)
+                               (eq? (sa:op-name body) 'sequence))
+                          cdr list)
+                      body))
+                (namespaces '())
+                (others '())
+                (prefixes '())
+                (attr-names '()))
+       (cond
+         ((null? src)  ; content processed
+          (let ((new-content
+                 (reverse (append others namespaces))))
+            (cons
+             (list
+              (sa:op-name elem)  ; == 'element
+              (car (sa:op-args elem))  ; element name
+              (if (and (not (and (pair? body)
+                                 (eq? (sa:op-name body) 'sequence)))
+                       (not (null? new-content))
+                       (null? (cdr new-content)))
+                  (car new-content)
+                  (cons 'sequence new-content)))
+             (cdr pair)  ; var type
+             )))
+         ((and (pair? (car src))
+               (eq? (sa:op-name (car src)) 'attribute))
+          (let ((name (car (sa:op-args (car src)))))
+            (if
+             (sa:qname-const? name)
+             ; Constant attribute name
+             (let ((name
+                    (sa:resolve-qname name ns-binding (cadr default-ns))))
+               (if
+                (member (cadr (sa:op-args name)) attr-names)
+                ; Duplicate attribute declared
+                (cl:signal-user-error XQST0040 (sa:qname->string name))
+                (loop (cdr src)
+                      namespaces
+                      (cons (car src) others)
+                      prefixes
+                      (cons (cadr (sa:op-args name)) attr-names))))
+             (loop (cdr src)
+                   namespaces (cons (car src) others)
+                   prefixes attr-names))))
+         ((and (pair? (car src))
+               (eq? (sa:op-name (car src)) 'namespace))
+          (let ((prefix (car (sa:op-args (car src)))))
+            (if
+             (and (pair? prefix)
+                  (eq? (sa:op-name prefix) 'const)
+                  (equal? (car (sa:op-args prefix))
+                          '(type !xs!NCName)))
+             ; Constant namespace prefix
+             (let ((str (cadr (sa:op-args prefix))))
+               (cond
+                 ((member str '("xml" "xmlns"))
+                  ; Attempt to re-declare a predefined namespace prefix 
+                  (cl:signal-user-error XQST0070 str))
+                 ((member str prefixes)
+                  ; Duplicate prefix declared
+                  (if (string=? str "")
+                      ; Default namespace prefix              
+                      (cl:signal-user-error XQST0071 "xmlns")
+                      (cl:signal-user-error
+                       XQST0071
+                       (string-append "xmlns:" str))))
+                 ((not  ; not a constant namespace value
+                   (let ((ns-value
+                          (cadr (sa:op-args (car src)))))
+                     (or
+                      (and (pair? ns-value)
+                           (eq? (sa:op-name ns-value) 'const))
+                      (equal? ns-value '(sequence)))))
+                  (if (string=? str "")
+                      ; Default namespace prefix              
+                      (cl:signal-user-error XQST0022 "xmlns")
+                      (cl:signal-user-error
+                       XQST0022
+                       (string-append "xmlns:" str))))
+                 ((member (cadr (sa:op-args (car src)))  ; namespace value
+                          '("" (sequence)))
+                  ; Prefix undeclaration
+                  ; Undeclaration is specified in XML Namespaces 1.1, an
+                  ; XQuery implementation may not support undeclaration.
+                  ; That is what we do here
+                  (if (string=? str "")
+                      ; Default namespace prefix              
+                      (cl:signal-user-error XQST0085 "xmlns")
+                      (cl:signal-user-error
+                       XQST0085
+                       (string-append "xmlns:" str))))
+                 (else
+                  (loop (cdr src)
+                        (cons (car src) namespaces)
+                        others
+                        (cons str prefixes)
+                        attr-names))))
+             ; Computed namespace constructors are not allowed
+             ; ATTENTION: should raise an exception here
+             (loop (cdr src)
+                   (cons (car src) namespaces) others
+                   prefixes attr-names))))
+         (else
+          (loop (cdr src)
+                namespaces (cons (car src) others)
+                prefixes attr-names)))))))
 
 ; Element constructor
 (define (sa:analyze-element-constructor expr vars funcs ns-binding default-ns)
