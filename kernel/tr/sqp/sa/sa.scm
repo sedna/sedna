@@ -1504,34 +1504,44 @@
    (not (and (pair? expr) (not (null? expr))
              (eq? (sa:op-name expr) 'ename)))
    (cl:signal-input-error SE5017 expr)
-   (let ((new-name
-          (and
-           (sa:proper-qname (car (sa:op-args expr)))
-           ; Ensure that the qname can be correctly expanded
-           ; Was: commented out
-           (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns
-                             ; DL: should be?: (car default-ns)
-                             )
-           ; Do not actually expand it until dynamic evaluation phase
-           (car (sa:op-args expr))))
-         (new-type
+   ; Ad-hoc solution for parser bug that reveals on XQTS test
+   ; "ForExprType002" and the like
+   (let ((expr
           (if
-           (not (and (pair? (cadr (sa:op-args expr)))
-                     (not (null? (cadr (sa:op-args expr))))
-                     (eq? (caadr (sa:op-args expr)) 'type)))
-           (cl:signal-input-error SE5018 (cadr (sa:op-args expr)))
-           (cadr (sa:op-args expr))))
-         (new-nil
-          (sa:analyze-string-const
-           (caddr (sa:op-args expr))
-           '() '() ns-binding (list default-ns ""))))
+           (= (length (sa:op-args expr)) 2)
+           ; Nillable part missing
+           (append expr '((const (type !xs!string) "non-nil")))
+           expr)))
      (and
-      new-name new-type new-nil
-      (cons (list (sa:op-name expr)  ; ='ename
-                  new-name
-                  new-type
-                  (car new-nil))
-            sa:type-nodes)))))
+      (sa:assert-num-args expr 3)
+      (let ((new-name
+             (and
+              (sa:proper-qname (car (sa:op-args expr)))
+              ; Ensure that the qname can be correctly expanded
+              ; Was: commented out
+              (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns
+                                ; DL: should be?: (car default-ns)
+                                )
+              ; Do not actually expand it until dynamic evaluation phase
+              (car (sa:op-args expr))))
+            (new-type
+             (if
+              (not (and (pair? (cadr (sa:op-args expr)))
+                        (not (null? (cadr (sa:op-args expr))))
+                        (eq? (caadr (sa:op-args expr)) 'type)))
+              (cl:signal-input-error SE5018 (cadr (sa:op-args expr)))
+              (cadr (sa:op-args expr))))
+            (new-nil
+             (sa:analyze-string-const
+              (caddr (sa:op-args expr))
+              '() '() ns-binding (list default-ns ""))))
+        (and
+         new-name new-type new-nil
+         (cons (list (sa:op-name expr)  ; ='ename
+                     new-name
+                     new-type
+                     (car new-nil))
+               sa:type-nodes)))))))
 
 ; Is given (listof (list sequence-type var-name))
 ; Returns:  vars or #f
