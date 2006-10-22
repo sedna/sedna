@@ -1174,12 +1174,21 @@
        (sa:proper-qname (cadr expr))  ; must be proper qname
        (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
        (let ((name
-              (sa:resolve-qname (cadr expr) ns-binding sa:se-ns))
+              (sa:resolve-qname (cadr expr) ns-binding
+                                ""
+                                ; Was: sa:se-ns
+                                ; Sedna namespace is not the default namespace
+                                ))
              (value (caddr (caddr expr))))
          (let ((qname-pair
                 (cadr (sa:op-args name))))
            ; Cannot use `case' here, since case relies on a `eqv?' comparison
            (cond
+             ((or (not (car qname-pair))
+                  (string=? (car qname-pair) ""))
+              ; See Sect. 4.16 in XQuery specification and
+              ; XQTS test "K-OptionDeclarationProlog-1"
+              (cl:signal-user-error XPST0081 (cadr qname-pair)))
              ((equal? qname-pair `(,sa:se-ns "output"))
               (let ((keys+values
                      (option-string->key+value-pairs value #\;)))
@@ -1411,17 +1420,24 @@
                    (if
                     (memq (cdr pair) '(!xs!anyType !xs!untyped))
                     sa:type-any sa:type-atomic))))
-       ((not (string=? (car type-spec) "xs"))
-        ; TODO: QName resolution in type names
-        (cl:signal-user-error
-         XPST0051  ; was: XPST0081
-         (car type-spec)))
+;       ((not (string=? (car type-spec) "xs"))
+;        ; TODO: QName resolution in type names
+;        (cl:signal-user-error
+;         XPST0051  ; was: XPST0081
+;         (car type-spec)))
        (else
-        ; We do not know this type
-        ; Was: (cons type-spec sa:type-atomic)
-        (cl:signal-user-error
-         XPST0051
-         (string-append (car type-spec) ":" (cadr type-spec))))))
+        (and
+         ; Must be resolved correctly
+         ; TODO: This should be moved towards the beginning of the function,
+         ; namespace URI should be analyzed instead of prefix
+         (sa:resolve-qname
+          `(const (type !xs!QName) ,type-spec)
+          ns-binding default-ns)
+         ; We do not know this type
+         ; Was: (cons type-spec sa:type-atomic)
+         (cl:signal-user-error
+          XPST0051
+          (string-append (car type-spec) ":" (cadr type-spec)))))))
     ((and (pair? type-spec)
           (eq? (car type-spec) 'doc-test))
      (or
@@ -1493,7 +1509,9 @@
            (sa:proper-qname (car (sa:op-args expr)))
            ; Ensure that the qname can be correctly expanded
            ; Was: commented out
-           (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns)
+           (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns
+                             ; DL: should be?: (car default-ns)
+                             )
            ; Do not actually expand it until dynamic evaluation phase
            (car (sa:op-args expr))))
          (new-type
@@ -1565,12 +1583,29 @@
         (cond  ; equal expanded variable names?
           ((list-contains-equal-members (map car vars))
            => (lambda (name-pair)
-                (cl:signal-user-error
-                 XQST0039   ; was: XQST0089
-                 (if  ; no namespace in variable name
-                  (string=? (car name-pair) "")
-                  (cadr name-pair)
-                  (string-append (car name-pair) ":" (cadr name-pair))))))
+                (if
+                 (null?
+                  (filter
+                   (lambda (triple)
+                     ; triple ::= (list var-name sa:type var-type)
+                     (and
+                      (equal? (car triple) name-pair)
+                      (memv (caddr triple)
+                            '(!se!positional-var se:positional-var))))
+                   vars))
+                 ; Not a positional variable
+                 (cl:signal-user-error
+                  XQST0039
+                  (if  ; no namespace in variable name
+                   (string=? (car name-pair) "")
+                   (cadr name-pair)
+                   (string-append (car name-pair) ":" (cadr name-pair))))
+                 (cl:signal-user-error
+                  XQST0089
+                  (if  ; no namespace in variable name
+                   (string=? (car name-pair) "")
+                   (cadr name-pair)
+                   (string-append (car name-pair) ":" (cadr name-pair)))))))
           (else
            vars)))))))
 
