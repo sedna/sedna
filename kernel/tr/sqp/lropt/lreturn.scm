@@ -259,6 +259,9 @@
        !fn!resolve-uri
        ; *** 9.3 Functions on Boolean Values
        !fn!not !fn!boolean
+       ; *** 11 Functions Related to QNames
+       !fn!QName !fn!prefix-from-QName !fn!local-name-from-QName
+       !fn!namespace-uri-from-QName
        ; *** 14 Functions and Operators on Nodes
        !fn!name !fn!local-name !fn!namespace-uri !fn!number
        ; *** 15.2 Functions That Test the Cardinality of Sequences
