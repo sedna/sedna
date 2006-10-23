@@ -512,8 +512,8 @@
     (,sa:fn-ns "count" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!count)
-    (,sa:fn-ns "error" 0 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+    (,sa:fn-ns "error" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!error)
     ;----------------------------------------
     (,sa:fn-ns "trace" 2 2
