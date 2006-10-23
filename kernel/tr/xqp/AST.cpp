@@ -12,7 +12,7 @@
 using namespace std;
 
 //int count = 0;
-/*
+
 void* ast_massive;
 int ast_massive_pos = 0;
 int ast_massive_cells = 1024;
@@ -61,7 +61,7 @@ void free_ast_vector()
   ast_massive_cells = 1024;
 
 }
-*/
+
 
 // called when #[string, tokentype] is seen in an action
 AST::AST(char *s, ANTLRTokenType tok)
@@ -138,7 +138,7 @@ AST::~AST()
   //d_printf1("destructor finished\n");
 }
 
-/*
+
 void* AST::operator new (size_t  size) {
   //d_printf2("caled begin AST::new size=%d\n", size);
   void * p = malloc(size);
@@ -157,7 +157,7 @@ void* AST::operator new (size_t  size) {
 };
 
 void AST::operator delete (void *p){;};
- */
+
 
 
 PCCTS_AST*
