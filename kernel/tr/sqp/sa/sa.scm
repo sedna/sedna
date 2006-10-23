@@ -271,11 +271,11 @@
      ; 2.9 Constructors
      ((element)
       (sa:analyze-element-constructor expr vars funcs ns-binding default-ns))
-     ((attribute pi namespace)
-      (sa:attribute-pi-namespace expr vars funcs ns-binding default-ns))
-     ((document
-       text
-       comment)
+     ((attribute namespace)
+      (sa:attribute-namespace expr vars funcs ns-binding default-ns))
+     ((pi)
+      (sa:pi-constructor expr vars funcs ns-binding default-ns))
+     ((document text comment)
       (sa:document-text-comment expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 2.10 FLWOR Operations
@@ -451,7 +451,21 @@
      ,sa:type-atomic !fn!round)
     (,sa:fn-ns "round-half-to-even" 1 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!round-half-to-even)
+     ,sa:type-atomic !fn!round-half-to-even)
+    ;----------------------------------------    
+    ; 11 Functions Related to QNames
+    (,sa:fn-ns "QName" 2 2
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-atomic !fn!QName)
+    (,sa:fn-ns "prefix-from-QName" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!prefix-from-QName)
+    (,sa:fn-ns "local-name-from-QName" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!local-name-from-QName)
+    (,sa:fn-ns "namespace-uri-from-QName" 1 1
+     ,(lambda (num-args) `(,sa:type-atomic))
+     ,sa:type-atomic !fn!namespace-uri-from-QName)
     ;----------------------------------------
     ; Single-arg atomic function
     (,sa:fn-ns "name" 0 1
@@ -2100,18 +2114,17 @@
                       (cl:signal-user-error
                        XQST0022
                        (string-append "xmlns:" str))))
-                 ((member (cadr (sa:op-args (car src)))  ; namespace value
-                          '("" (sequence)))
-                  ; Prefix undeclaration
+                 (; Prefix undeclaration
+                  (and
+                   (not (string=? str ""))  ; not default namespace
+                   (member (cadr (sa:op-args (car src)))  ; namespace value
+                           '("" (sequence))))                  
                   ; Undeclaration is specified in XML Namespaces 1.1, an
                   ; XQuery implementation may not support undeclaration.
                   ; That is what we do here
-                  (if (string=? str "")
-                      ; Default namespace prefix              
-                      (cl:signal-user-error XQST0085 "xmlns")
-                      (cl:signal-user-error
-                       XQST0085
-                       (string-append "xmlns:" str))))
+                  (cl:signal-user-error
+                   XQST0085
+                   (string-append "xmlns:" str)))
                  (else
                   (loop (cdr src)
                         (cons (car src) namespaces)
@@ -2150,7 +2163,7 @@
 ; Constructors for attribute, pi and namespace
 ; TODO: more sophisticated treatment for pi and namespace names is desirable
 ; QUESTION: how many arguments constructors must have?
-(define (sa:attribute-pi-namespace
+(define (sa:attribute-namespace
          expr vars funcs ns-binding default-ns)
   (and
    (or
@@ -2165,6 +2178,42 @@
       (car (sa:op-args expr)) ns-binding (cadr default-ns))
      (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))
     (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))))
+
+(define (sa:pi-constructor expr vars funcs ns-binding default-ns)
+  (and
+   (or
+    (= (length (sa:op-args expr)) 1)  ; no PI body
+    (sa:assert-num-args expr 2))
+   (or
+    (not
+     (let ((target
+            (car (sa:op-args expr))))
+       (and
+        (pair? target)
+        (eq? (car target) 'const)  ; constant PI target
+        (= (length target) 3)
+        (let ((value
+               (cadr (sa:op-args target))))
+          (string-ci=?
+           (cond
+             ((symbol? value) (symbol->string value))
+             ((string? value) value)
+             (else  ; this should not happen
+              ""))
+           "xml")))))
+    (cl:signal-user-error
+     XPST0003
+     (string-append
+      "The PITarget of a processing instruction may not "
+      "consist of the characters \"XML\" in any combination "
+      "of upper and lower case.")))
+   (or
+    (not
+     (sa:qname-const? (car (sa:op-args expr)))  ; name is constant
+     )
+    (sa:resolve-qname
+     (car (sa:op-args expr)) ns-binding (cadr default-ns)))
+   (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)))
 
 ; Constructors for document node, text node, comment node
 (define (sa:document-text-comment expr vars funcs ns-binding default-ns)
