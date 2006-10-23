@@ -1286,7 +1286,6 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                    make_pp_op(cxt, lst->at(1).internal.list),
                                    PPFnUriEncoding::ESCAPE_HTML_URI);
     }
-    /*//Not implemented yet!
     else if (op == "PPFnResolveUri")
     {
         if (   lst->size() < 2
@@ -1306,7 +1305,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
             opit = new PPFnResolveUri(cxt, 
                                       make_pp_op(cxt, lst->at(1).internal.list));
         
-    }*/
+    }
     else if (op == "PPFnItemAt")
     {
         if (   lst->size() != 3

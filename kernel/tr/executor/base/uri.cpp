@@ -4,212 +4,539 @@
  */
 
 #include "sedna.h"
+#include "strings.h"
 #include "uri.h"
-#include "e_string.h"
 
 #define PCRE_STATIC
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
 
 #include "pcre.h"
+#include <stack>
+
+typedef std::stack<int> stack_of_int;
+
+enum remover_state {BEGIN, SLASH, DOT, DOUBLE_DOT, SLASH_DOT, SLASH_DOUBLE_DOT, SYMBOL};
+
+#define MAX_SCHEME_NAME_SIZE 10
 
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
-/// Regexps constructed from the URI EBNF defined by the RFC 2396
+/// Regexps constructed from the URI ABNF defined by the RFC 3986
 /////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////
+/*
+   General syntax
+   ==============
+   The Java code below was used to generate regular expressions for URI and 
+   relative_ref. This code was created based on ABNF presented in RFC 3986.
+
+  String gen_delims       = "[:/\\?#\\[\\]@]";
+  String sub_delims       = "[!$&'\\(\\)\\*\\+,;=]";
+  String alpha            = "[a-zA-Z]";
+  String alphanum         = "[0-9a-zA-Z]";
+  String hex              = "[0-9a-fA-F]";
+  String pct_encoded      = "%" + hex + "{2}";
+  String reserved         = "[:/\\?#\\[\\]@!$&'\\(\\)\\*\\+,;=]";
+  String unreserved       = "[0-9a-zA-Z\\-\\._~]";
+  String pchar            = "(" + unreserved + "|" + pct_encoded + "|[!$&'\\(\\)\\*\\+,;=@:])";
+  String query            = "(" + pchar + "|[/\\?])*";
+  String fragment         = "(" + pchar + "|[/\\?])*";
+  String segment          = pchar + "*";
+  String segment_nz       = pchar + "+";
+  String segment_nz_nc    = "(" + unreserved + "|" + pct_encoded + "|[!$&'\\(\\)\\*\\+,;=@])+";
+  String path_abempty     = "(/" + segment + ")*";
+  String path_absolute    = "(/" + "(" + segment_nz + "(/" + segment + ")*)?)";
+  String path_noscheme    = "(" + segment_nz_nc + "(/" + segment + ")*)";
+  String path_rootless    = "(" + segment_nz + "(/" + segment + ")*)";
+  String path             = "(" + path_abempty + "|" + path_absolute + "|" + path_noscheme + "|" + path_rootless + ")?";
+  String dec_octet        = "[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])";
+  String reg_name         = "(" + unreserved + "|" + pct_encoded + "|" + sub_delims + ")*";
+  String IPv4address      = "("+ dec_octet + "\\.){3}" + dec_octet;
+  String h16              = hex + "{1,4}";
+  String ls32             = "((" + h16 + ":" + h16 + ")|(" +  IPv4address + "))";
+  String IPv6address      = "(((" + h16 + ":){6}" + ls32 + ")"                                  + "|" + 
+                            "(::(" + h16 + ":){5}" + ls32 + ")"                                 + "|" +
+                            "((" + h16 + ")*::(" + h16 + ":){4}" + ls32 + ")"                   + "|" +
+                            "(((" + h16 + ":)?"+ h16 + ")*::(" + h16 + ":){3}" + ls32 + ")"     + "|" +
+                            "(((" + h16 + ":){0,2}"+ h16 + ")*::(" + h16 + ":){2}" + ls32 + ")" + "|" +
+                            "(((" + h16 + ":){0,3}"+ h16 + ")*::" + h16 + ":" + ls32 + ")"      + "|" +
+                            "(((" + h16 + ":){0,4}"+ h16 + ")*::" + ls32 + ")"                  + "|" +
+                            "(((" + h16 + ":){0,5}"+ h16 + ")*::" + h16 + ")"                   + "|" +
+                            "(((" + h16 + ":){0,6}"+ h16 + ")*::))";
+  String IPvFuture        = "(v" + hex + "+\\.(" + unreserved + "|" + "[!$&'\\(\\)\\*\\+,;=:])+)";
+  String IP_literal       = "(\\[(" + IPv6address + "|" + IPvFuture  + ")\\])";
+  String port             = "[0-9]*";
+  String host             = "(" + IP_literal + "|" + IPv4address  + "|" + reg_name + ")";
+  String userinfo         = "(" + unreserved  + "|" + pct_encoded  + "|" + "[!$&'\\(\\)\\*\\+,;=:])*";
+  String authority        = "((" + userinfo + "@)?" + host + "(:" + port + ")?)";
+  String scheme           = alpha + "[A-Za-z0-9\\+\\-\\.]*";
+  String relative_part    = "((//" + authority + path_abempty + ")" + "|" + path_absolute + "|" + path_noscheme + ")*";
+  String relative_ref     = relative_part + "(\\?" + query + ")?" + "(#" + fragment + ")?";
+  String hier_part        = "((//" + authority + path_abempty + ")" + "|" + path_absolute + "|" + path_rootless + ")*";
+  String absolute_URI     = scheme + ":" + hier_part + "(\\?" + query + ")?" ;
+  String URI              = scheme + ":" + hier_part + "(\\?" + query + ")?" + "(#" + fragment + ")?";
+  String URI_reference    = "(" + URI + ")|(" + relative_ref +")";
+  
+
+   HTTP specific URI:
+   ==================
+  String hostname         = "(" + unreserved + "|" + pct_encoded + "|" + sub_delims + ")+";
+  String old_host         = "(" + IP_literal + "|" + IPv4address  + "|" + hostname + ")";
+  String http_URI         = "http:" + "//" + old_host + "(:" + port + ")?" + "(" + path_absolute + "(\\?" + query + ")?)?";
+*/
+  
+const char* URI = 
+"^[a-zA-Z][A-Za-z0-9\\+\\-\\.]*:((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@\
+)?((\\[(((([0-9a-fA-F]{1,4}:){6}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2}\
+)|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::([0-9a-\
+fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(\
+25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(([0-9a-fA-F]{1,4})*::([0-9\
+a-fA-F]{1,4}:){4}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])\
+|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:)?[0-\
+9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){3}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[\
+0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(((\
+[0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){2}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4}\
+)|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0"
+"-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4})*::[0-9a-fA-F]{1,4}:(([0-9a-fA-F]{\
+1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0\
+-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4})*::(([0-9a-fA\
+-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-\
+9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4})*::[0-9a-\
+fA-F]{1,4})|((([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})*::))|(v[0-9a-fA-F]+\\.([0-9a-zA-Z\\-\\._~]|[\
+!$&'\\(\\)\\*\\+,;=:])+))\\])|([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([\
+1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])|([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\
+\\+,;=])*)(:[0-9]*)?)(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)|(/(([0-9a-zA-\
+Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\
+\\)\\*\\+,;=@:])*)*)?)|(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9a-zA-Z\
+\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*))*(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&\
+'\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\
+\\?])*)?$";
+
+const char* http_URI =
+"^http://((\\[(((([0-9a-fA-F]{1,4}:){6}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[\
+0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::\
+([0-9a-fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][\
+0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(([0-9a-fA-F]{1,4})*\
+::([0-9a-fA-F]{1,4}:){4}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4\
+][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4\
+}:)?[0-9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){3}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-\
+9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\
+)))|((([0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){2}(([0-9a-fA-F]{1,4}:[0-9a-fA-\
+F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2"
+"})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,3}[0-9a-fA-F]{1,4})*::[0-9a-fA-F]{1,4}:(([0-9a\
+-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|(\
+[1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4})*::(([\
+0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-\
+9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4})*:\
+:[0-9a-fA-F]{1,4})|((([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4})*::))|(v[0-9a-fA-F]+\\.([0-9a-zA-Z\\- \
+\\._~]|[!$&'\\(\\)\\*\\+,;=:])+))\\])|([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}\
+[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])|([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\\
+(\\)\\*\\+,;=])+)(:[0-9]*)?((/(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9\
+a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)?)(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]\
+{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;\
+=@:])|[/\\?])*)?)?$";
+
+const char* relative_ref = 
+"^((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@)?((\\[(((([0-9a-fA-F]{1,4}:){6\
+}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}\
+[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::([0-9a-fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}\
+:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|\
+(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(([0-9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){4}(([0-9a-fA-F]{1,4}\
+:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|\
+(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:)?[0-9a-fA-F]{1,4})*::([0-9a-fA-F]{1,4}:){\
+3}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3\
+}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4}:){0,2}[0-9a-fA-F]{1,4}\
+)*::([0-9a-fA-F]{1,4}:){2}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-\
+4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|((([0-9a-fA-F]{1,4\
+}:){0,3}[0-9a-fA-F]{1,4})*::[0-9a-fA-F]{1,4}:(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9]\
+)|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))\
+|((([0-9a-fA-F]{1,4}:){0,4}[0-9a-fA-F]{1,4})*::(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-\
+9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))"
+"))|((([0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4})*::[0-9a-fA-F]{1,4})|((([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA\
+-F]{1,4})*::))|(v[0-9a-fA-F]+\\.([0-9a-zA-Z\\-\\._~]|[!$&'\\(\\)\\*\\+,;=:])+))\\])|([0-9]|([1-9][0-9\
+])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])|(\
+[0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=])*)(:[0-9]*)?)(/([0-9a-zA-Z\\-\\._~]|%[0-9a-\
+fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)|(/(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:]\
+)+(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)?)|(([0-9a-zA-Z\\-\\._~]|%[0-9a-\
+fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@])+(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*))\
+*(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]\
+|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?$";
 
 
-/****************************************************************************
-  EBNF presented in form of regular expressions:
- ****************************************************************************
-   
-  hex "[0-9a-fA-F]"           
-  escaped "%" + hex + "{2}"     
-  mark "[\\-_\\.!~\\*'\\(\\)]"  
-  unreserved "(" + alphanum + "|" + mark + ")"  
-  reserved "[;/\\?:@&=\\+$,\\[\\]]"  
-  uric "(" + reserved + "|" + unreserved + "|" + escaped + ")"     
-  fragment uric + "*"
-  query uric + "*"
-  pchar "(" + unreserved + "|" + escaped + "|[:@&=\\+$,])"
-  param pchar + "*"
-  segment "(" + param + "(;" + param + ")*)"
-  pathSegments "(" + segment + "(/" + segment + ")*)"
-  port "[0-9]*"
-  __upTo3digits "[0-9]{1,3}"
-  IPv4address __upTo3digits + "\\." + __upTo3digits + "\\." + __upTo3digits + "\\." + __upTo3digits
-  hex4 hex + "{1,4}"
-  hexseq hex4 + "(:" + hex4 + ")*"
-  hexpart "((" + hexseq + "(::(" + hexseq + ")?)?)|(::(" + hexseq + ")?))"
-  IPv6address "((" + hexpart + "(:" + IPv4address + ")?)|(::" + IPv4address + "))"
-  IPv6reference "\\[" + IPv6address + "\\]"
-  domainlabel alphanum + "([0-9A-Za-z\\-]*" + alphanum + ")?"
-  toplabel alpha + "([0-9A-Za-z\\-]*" + alphanum + ")?"
-  hostname "(" + domainlabel + "\\.)*" + toplabel + "(\\.)?"
-  host "((" + hostname + ")|(" + IPv4address + ")|(" + IPv6reference + "))"
-  hostport host + "(:" + port + ")?"
-  userinfo "(" + unreserved + "|" + escaped + "|[;:&=\\+$,])*"
-  server "((" + userinfo + "@)?" + hostport + ")?"
-  regName "(" + unreserved + "|" + escaped + "|[$,;:@&=\\+])+"
-  authority "((" + server + ")|(" + regName + "))"
-  scheme alpha + "[A-Za-z0-9\\+\\-\\.]*"
-  relSegment "(" + unreserved + "|" + escaped + "|[;@&=\\+$,])+"
-  absPath "/" + pathSegments
-  relPath relSegment + "(" + absPath + ")?"
-  netPath "//" + authority + "(" + absPath + ")?"
-  uricNoSlash "(" + unreserved + "|" + escaped + "|[;\\?:@&=\\+$,])"
-  opaquePart uricNoSlash + "(" + uric + ")*"
-  hierPart "((" + netPath + ")|(" + absPath + "))(\\?" + query + ")?"
-  //   path            "(("+absPath+")|("+opaquePart+"))?"
-  relativeURI "((" + netPath + ")|(" + absPath + ")|(" + relPath + "))(\\?" + query + ")?"
-  absoluteURI scheme + ":((" + hierPart + ")|(" + opaquePart + "))"
-  uriRef "(" + absoluteURI + "|" + relativeURI + ")?(#" + fragment + ")?"
+const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
+                                          0x00, 0x16, 0x00, 0x00, 
+                                          0x7F, 0xFF, 0xFF, 0xE0, 
+                                          0x7F, 0xFF, 0xFF, 0xE0};
+/*
+00000000  // 0x00 00-07;
+00000000  // 0x00 08-15;
+00000000  // 0x00 16-23;
+00000000  // 0x00 24-31;
+00000000  // 0x00 32-39;
+00010110  // 0x16 40-47;
+00000000  // 0x00 48-55;
+00000000  // 0x00 56-63;
+01111111  // 0x7F 64-71;
+11111111  // 0xFF 72-79;
+11111111  // 0xFF 80-87;
+11100000  // 0xE0 88-95;
+01111111  // 0x7F 96-103;
+11111111  // 0xFF 104-111;
+11111111  // 0xFF 112-119;
+11100000  // 0xE0 120-127;
+*/
 
-******************************************************************************/
+#define IS_BYTE_SCHEME_ALLOWED(byte) \
+    (byte & 0x80 ? 0 : (scheme_allowed[(byte >> 3)] & (0x80 >> (byte & 7))))
 
+#define TO_LOWER_CASE(byte) \
+    ('A' <= byte && byte <= 'Z' \
+    ? 'a' + (byte - 'A') \
+    : byte)
 
-const char* relativeURI = 
-"^((//(((((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;:&=\\+$,])*@)?((([0-9a-zA-Z]([0-9A\
--Za-z\\-]*[0-9a-zA-Z])?\\.)*[a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?(\\.)?)|([0-9]{1,3}\\.[0-9]{1,3}\\\
-.[0-9]{1,3}\\.[0-9]{1,3})|(\\[(((([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*(::([0-9a-fA-F]{1,4}(:[0-9a-f\
-A-F]{1,4})*)?)?)|(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?))(:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\
-\\.[0-9]{1,3})?)|(::[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))\\]))(:[0-9]*)?)?)|((([0-9a-\
-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[$,;:@&=\\+])+))(/(((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)\
-])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])\
-*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~"
-"\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?)|(/(((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a\
--fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/(((\
-[0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\\
-)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;@&\
-=\\+$,])+(/(((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-\
-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-f\
-A-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?))\
-(\\?([;/\\?:@&=\\+$,\\[\\]]|([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2})*)?$";
+template <class Iterator>
+static inline void is_scheme_defined(Iterator &start, const Iterator &end, bool* res, char** scheme)
+{
+    *res = false;
 
-const char* absoluteURI =
-"^[a-zA-Z][A-Za-z0-9\\+\\-\\.]*:((((//(((((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;:&=\
-\\+$,])*@)?((([0-9a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?\\.)*[a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?(\\\
-.)?)|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})|(\\[(((([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4}\
-)*(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?)?)|(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?))(:[0-9]\
-{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})?)|(::[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3\
-}))\\]))(:[0-9]*)?)?)|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[$,;:@&=\\+])+))(/(((([\
-0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)\
-])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+"
-"$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?)|(/(((([0-9a-zA-Z\
-]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a\
--fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;((\
-[0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*)))(\\?([;/\\?:@&=\\+$,\\[\\]]\
-|([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2})*)?)|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0\
--9a-fA-F]{2}|[;\\?:@&=\\+$,])(([;/\\?:@&=\\+$,\\[\\]]|([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA\
--F]{2}))*))$";
+    int counter = 0;
+    if(start == end) return;
+    unsigned char value = *start;
+    if(('A' > value || value > 'Z') && 
+       ('a' > value || value > 'z')) return;
+    (*scheme)[counter++] = TO_LOWER_CASE(value);
+    ++start;
+    
+    while(start < end)
+    {
+        value = *start;
+        if(!IS_BYTE_SCHEME_ALLOWED(value)) break;
+        ++start;
+        if(counter <= MAX_SCHEME_NAME_SIZE) (*scheme)[counter++] = TO_LOWER_CASE(value);
+    }
 
-const char* uriRef = 
-"^([a-zA-Z][A-Za-z0-9\\+\\-\\.]*:((((//(((((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;:&\
-=\\+$,])*@)?((([0-9a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?\\.)*[a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?(\\\
-.)?)|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})|(\\[(((([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})\
-*(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?)?)|(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?))(:[0-9]{1\
-,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3})?)|(::[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))\
-\\]))(:[0-9]*)?)?)|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[$,;:@&=\\+])+))(/(((([0-9a\
--zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[\
-0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(\
-;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?)|(/(((([0-9a-zA-Z]|[\\-_\
-\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2\
-}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-\
-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*)))(\\?([;/\\?:@&=\\+$,\\[\\]]|([0-9a-zA\
--Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2})*)?)|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2\
-}|[;\\?:@&=\\+$,])(([;/\\?:@&=\\+$,\\[\\]]|([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}))*))|\
-((//(((((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;:&=\\+$,])*@)?((([0-9a-zA-Z]([0-9A-Za\
--z\\-]*[0-9a-zA-Z])?\\.)*[a-zA-Z]([0-9A-Za-z\\-]*[0-9a-zA-Z])?(\\.)?)|([0-9]{1,3}\\.[0-9]{1,3}\\.[0-"
-"9]{1,3}\\.[0-9]{1,3})|(\\[(((([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{\
-1,4})*)?)?)|(::([0-9a-fA-F]{1,4}(:[0-9a-fA-F]{1,4})*)?))(:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-\
-9]{1,3})?)|(::[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}))\\]))(:[0-9]*)?)?)|((([0-9a-zA-Z]|[\
-\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[$,;:@&=\\+])+))(/(((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9\
-a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/(((\
-[0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)\
-])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?)|(/(((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[\
-:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|\
-[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA\
--F]{2}|[:@&=\\+$,])*)*))*))|((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[;@&=\\+$,])+(/(((\
-([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\\
-)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*)(/((([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+\
-$,])*(;(([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2}|[:@&=\\+$,])*)*))*))?))(\\?([;/\\?:@&=\\\
-+$,\\[\\]]|([0-9a-zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2})*)?)?(#([;/\\?:@&=\\+$,\\[\\]]|([0-9a\
--zA-Z]|[\\-_\\.!~\\*'\\(\\)])|%[0-9a-fA-F]{2})*)?$";
+    (*scheme)[counter] = '\0';
 
+    if(*start == ':') *res= true;
+}
+
+//////////////////////////////////////////////////////////////////////////
+/// TODO: I don't know why but if we inline __local_check 
+///       into Uri:check we fail to compile
+//////////////////////////////////////////////////////////////////////////
+bool __local_check_constraints(const tuple_cell *tc)
+{
+    //////////////////////////////////////////////////////////////////////
+    /// Possibly, in future we will need to convert IRI (RFC 3987, which 
+    /// is allowed by XPath Functions spec. as value for xs:anyURI type) 
+    /// to URIbefore run constraints checking. It can be achieved using 
+    /// fn:iri-to-uri() implementation.
+    //////////////////////////////////////////////////////////////////////
+    bool is_scheme = false;
+    char* scheme = new char[MAX_SCHEME_NAME_SIZE + 1];
+    
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_scheme_defined, tc, &is_scheme, &scheme); 
+
+    if(is_scheme)
+    {
+         bool result;
+         const char* re = URI;
+
+         ///////////////////////////////////////////////////////////////
+         /// RFC 3986 does not define scheme specific checking, but
+         /// in some cases it is better to check absolute URI over scheme 
+         /// specific regular expression.
+         /// In future we can add any scheme specific checking using
+         /// one more strcmp instruction and one more scheme specific
+         /// regular expression.
+         if(strcmp("http", scheme) == 0) re = http_URI;
+         ///////////////////////////////////////////////////////////////
+
+         result = collation_handler->matches(tc, re);
+         delete scheme;
+         return result;
+    }
+    else
+    {
+         delete scheme;
+         return collation_handler->matches(tc, relative_ref);
+    }
+}
 
 bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
 {
-    return collation_handler->matches(tc, uriRef);
+    return __local_check_constraints(tc);    
 }
+//////////////////////////////////////////////////////////////////////////
 
-bool Uri::check_constraints_for_absolute_URI(const tuple_cell *tc)
+char* remove_dot_segments(const char* path)
 {
-    return collation_handler->matches(tc, absoluteURI);
-}
+    stack_of_int positions;
+    int source_length = strlen(path);
+    char* output_buffer = new char[source_length + 1];
+    int output_position = 0;
 
-bool Uri::check_constraints_for_relative_URI(const tuple_cell *tc)
-{
-    return collation_handler->matches(tc, relativeURI);
-}
+    remover_state state = BEGIN;
 
-void Uri::resolve(const char* relative, const char* base, t_str_buf &dest)
-{
-    /*PcrePattern re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$", PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
-    int len = strlen(relative); 
-	char_iterator start(relative, len, 0);
-	char_iterator end(relative, len, len);
-    int match_flags = PCRE_NO_UTF8_CHECK;
-    PcreMatcher<char_iterator> matcher(re);
-    
-    if (matcher.matches(start, end, start, match_flags))
+    for(int i = 0; i < source_length; i++)
     {
-        
-        for (int i = 0; i < matcher.groupCount(); i++)
+        char lexem = path[i];
+        switch(state)
         {
-			char bb[12];
-			char_iterator s = matcher.start(i), e = matcher.end(i);
-			u_itoa(i, bb, 10);
-			dest << "group "<<bb<<":";
-			while (s<e)
-				dest << *s++;
-			dest << "\n";
-		}
-	}
-	else
-		throw USER_EXCEPTION2(SE1003, "Incorrect relative URI reference in resolve URI.");*/
+            case BEGIN:
+                if(lexem == '/')      state = SLASH;
+                else if(lexem == '.') state = DOT;
+                else                
+                { 
+                    state = SYMBOL; 
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case SLASH:
+                if(lexem == '.') state = SLASH_DOT;
+                else if (lexem == '/')
+                {
+                    state = SLASH;
+                    positions.push(output_position);
+                    output_buffer[output_position++] = '/';
+                }
+                else 
+                { 
+                    state = SYMBOL; 
+                    positions.push(output_position);
+                    output_buffer[output_position++] = '/';
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case DOT:
+                if(lexem == '/') state = BEGIN;  
+                else if(lexem == '.') state = DOUBLE_DOT;
+                else 
+                { 
+                    state = SYMBOL; 
+                    output_buffer[output_position++] = '.'; 
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case DOUBLE_DOT:  
+                if(lexem == '/') state = BEGIN;
+                else 
+                { 
+                    state = SYMBOL; 
+                    output_buffer[output_position++] = '.';
+                    output_buffer[output_position++] = '.';  
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case SLASH_DOT: 
+                if(lexem == '/') state = SLASH;
+                else if(lexem == '.') state = SLASH_DOUBLE_DOT;
+                else 
+                {
+                    state = SYMBOL; 
+                    positions.push(output_position);
+                    output_buffer[output_position++] = '/';
+                    output_buffer[output_position++] = '.';  
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case SLASH_DOUBLE_DOT: 
+                if(lexem == '/')
+                {
+                    state = SLASH;
+                    if(positions.size()) 
+                    {
+                        output_position = positions.top(); 
+                        positions.pop();                    
+                    }
+                    else output_position = 0;
+                }
+                else 
+                {
+                    state = SYMBOL; 
+                    positions.push(output_position);
+                    output_buffer[output_position++] = '/';
+                    output_buffer[output_position++] = '.';
+                    output_buffer[output_position++] = '.';  
+                    output_buffer[output_position++] = lexem; 
+                }
+                break;
+            case SYMBOL:
+                if(lexem == '/') state = SLASH;
+                else output_buffer[output_position++] = lexem;
+                break;
+            default: throw USER_EXCEPTION2(SE1003, "Impossible case in remove_dot_segments.");
+        }    
+    }
+    
+    if(state == SLASH_DOUBLE_DOT)
+    {
+        if(!positions.size()) output_position = 0;
+        else { output_position = positions.top(); positions.pop(); }
+    }
+    
+    if(state == SLASH_DOUBLE_DOT || state == SLASH || state == SLASH_DOT) output_buffer[output_position++] = '/';
+
+    output_buffer[output_position] = '\0';
+
+    char* result;
+    if(output_position)
+    {
+        result = new char[output_position + 1];
+        strcpy(result, output_buffer);
+    }
+    else result = NULL;
+
+    delete output_buffer;
+    output_buffer = NULL;
+
+    return result;
+}
+
+bool Uri::resolve(const char* relative, const char* base, t_str_buf &dest)
+{
+    Uri R = parse(relative);      /// Parsed relative URI which we are going to resolve.
+    
+    if(R.scheme_defined)
+    {
+        if(R.fragment_defined)    
+            throw USER_EXCEPTION2(FORG0009, "Relative URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
+        return false;             /// If we have absolute URI given as $relative argument then we have nothing to do.
+    }
+
+    Uri B = parse(base);          /// Parsed base-uri over which we are going to resolve relative URI.
+    
+    if(B.scheme_defined)
+    {
+        if(B.fragment_defined)    
+            throw USER_EXCEPTION2(FORG0009, "Base URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
+    }
+    else 
+        throw USER_EXCEPTION2(FORG0009, "Base URI is relative. Absolute URI expected.");
+    
+    Uri T;                        /// Target URI which we will return after recomposition.
+
+    if(R.authority_defined)
+    {
+        T.authority         = R.authority; 
+        T.authority_defined = true;
+        if(R.get_path() != NULL)
+            T.path          = str_counted_ptr(remove_dot_segments(R.get_path()));
+        T.query = R.query; 
+        T.query_defined     = R.query_defined; 
+    }
+    else
+    {
+        if(R.get_path() == NULL)
+        {
+           T.path = B.path;
+           if(R.query_defined) 
+           {
+              T.query = R.query;
+              T.query_defined = true;
+           }
+           else
+           {
+              T.query = B.query;
+              T.query_defined = B.query_defined;
+           }
+        }
+        else
+        {
+           if(R.get_path()[0] == '/')
+              T.path = str_counted_ptr(remove_dot_segments(R.get_path()));
+           else
+           {
+             /////////////////////////////////////////////////////////////////////////////////////////////
+             /// Merge Paths Algorithm: (from RFC 3986 certainly :))
+             /// ===== ===== ==========
+             /// If the base URI has a defined authority component and an empty path, then 
+             /// return a string consisting of "/" concatenated with the reference's path; otherwise,
+             /// return a string consisting of the reference's path component appended to 
+             /// all but the last segment of the base URI's path (i.e., excluding any characters after 
+             /// the right-most "/" in the base URI path, or excluding the entire base URI path if 
+             /// it does not contain any "/" characters).
+             /////////////////////////////////////////////////////////////////////////////////////////////
+
+             char* temp_path;
+             char* base_path = B.get_path();
+             if(B.authority_defined && base_path == NULL)
+             {
+                 temp_path = new char[strlen(R.get_path()) + 2];
+                 temp_path[0] = '/';
+                 strcpy(temp_path + 1, R.get_path());
+             }
+             else
+             {
+                 int last_slash_pos = -1;
+                 int counter        = 0;        
+
+                 if(base_path != NULL)
+                 {
+                    while(base_path[counter] != '\0')
+                    {
+                        if(base_path[counter] == '/') last_slash_pos = counter;
+                        counter++;
+                    }
+                 }
+
+                 int base_path_fragment_length = last_slash_pos + 1;
+
+                 temp_path = new char[base_path_fragment_length + strlen(R.get_path()) + 1];
+                 if(base_path_fragment_length) 
+                     memcpy(temp_path, base_path, base_path_fragment_length);
+                 strcpy(temp_path + base_path_fragment_length, R.get_path());
+             }
+             
+             /////////////////////////////////////////////////////////////////////////////////////////////
+             /// Now we must have temp_path == merge(B.path, R.path);
+             /////////////////////////////////////////////////////////////////////////////////////////////
+
+             T.path = str_counted_ptr(remove_dot_segments(temp_path));
+             delete temp_path;
+           }
+           T.query = R.query;
+           T.query_defined = R.query_defined;
+        }
+        T.authority = B.authority;
+        T.authority_defined = B.authority_defined;
+    }
+
+    T.scheme           = B.scheme;
+    T.scheme_defined   = true;
+    T.fragment         = R.fragment;
+    T.fragment_defined = R.fragment_defined;
+
+    T.recompose(dest);
+    return true;
 }
 
 void Uri::recompose(t_str_buf &dest)
 {
-
-   if (get_scheme() != NULL)
+   if (scheme_defined)
    { 
-      dest << get_scheme();
+      if (get_scheme() != NULL) dest << get_scheme();
       dest << ":";
    }
-
-   if (get_authority() != NULL)
+   if (authority_defined)
    {
       dest << "//";
-      dest << get_authority();
+      if (get_authority() != NULL) dest << get_authority();
    }
-
    if (get_path() != NULL) 
    {
        dest << get_path();
    }
-
-   if (get_query() != NULL)
+   if (query_defined)
    {
       dest << "?";
-      dest << get_query();
+      if (get_query() != NULL) dest << get_query();
    }
-
-   if (get_fragment() != NULL)
+   if (fragment_defined)
    {
       dest << "#";
-      dest << get_fragment();
+      if (get_fragment() != NULL) dest << get_fragment();
    }
 }
 
@@ -226,25 +553,46 @@ Uri Uri::parse(const char* u)
 
     if (matcher.matches(start, end, start, match_flags))
     {
+        ////////////////////////////////////////////////////////////////
+        /// If matcher matched our URI it contains the following groups
+        ///    $0 = whole parsed string;      -- this group we don't use.
+        ///    $1 = scheme + ':';             -- if this group is not empty then scheme component is defined;
+        ///    $2 = scheme;                   -- scheme component itself; 
+        ///    $3 = '//' + authority;         -- if this group is not empty then authority component is defined;
+        ///    $4 = authority;                -- authority component itself; 
+        ///    $5 = path;                     -- path component, it could be empty but not undefined;
+        ///    $6 = '?' + query;              -- if this group is not empty then query component is defined;
+        ///    $7 = query;                    -- query component itself; 
+        ///    $8 = '#' + fragment;           -- if this group is not empty then fragment component is defined;
+        ///    $9 = fragment;                 -- fragment component itself;    
+        /// For the details see RFC 3986.
+        //////////////////////////////////////////////////////////////// 
+        
         for (int i = 1; i < matcher.groupCount(); i++) 
         {
             char_iterator s = matcher.start(i);
             char_iterator e = matcher.end(i);
+            if( s == e ) continue;
             int shift = 0;
-            if(i == 1 || i == 3 || i == 6 || i == 8) 
+
+            switch(i)
             {
-                continue;
+                case 1 : res.scheme_defined    = true; continue;
+                case 3 : res.authority_defined = true; continue;
+                case 6 : res.query_defined     = true; continue;
+                case 8 : res.fragment_defined  = true; continue;
             }
+
             while(s < e)
             {
                 *(buffer+shift) = *s;
                 s++;
                 shift++;
             }
-            if(shift == 0) continue;
-            *(buffer+shift) = '\0';
-            char* component = new char[shift+1];
-            strcpy(component, buffer);
+            *(buffer+shift) = '\0';                 /// TODO: It is very ugly way to create components.
+            char* component = new char[shift+1];    ///       We have char* u, char* buffer and char* component
+            strcpy(component, buffer);              ///       and two strcpy-ies.
+
             switch(i)
             {
                 case 2 : res.scheme    = str_counted_ptr(component); break;
@@ -252,7 +600,7 @@ Uri Uri::parse(const char* u)
                 case 5 : res.path      = str_counted_ptr(component); break;
                 case 7 : res.query     = str_counted_ptr(component); break;
                 case 9 : res.fragment  = str_counted_ptr(component); break;
-                default: throw USER_EXCEPTION2(SE1003, "Impossible case in Uri:parse.");
+                default: throw USER_EXCEPTION2(SE1003, "Impossible case in Uri::parse.");
             }
         }
     }

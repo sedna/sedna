@@ -5,7 +5,6 @@
 
 #include "sedna.h"
 #include "PPUriFuncs.h"
-#include "e_string.h"
 #include "strings.h"
 #include "uri.h"
 
@@ -300,90 +299,80 @@ void PPFnResolveUri::next  (tuple &t)
 {
     if(first_time)
     {
-        t_str_buf result;
         relative.op->next(t);
-        tuple_cell base_tc;
 
-        ////////////////////////////////////////////////
-        /// Check type of the first argument.
+        if(t.is_eos()) 
+        {
+            if(is_base_static) need_reopen = true;
+            return;
+        }
+        
+        t_str_buf result;
+        tuple r(relative.ts);
+        tuple_cell base_tc;
+        first_time = false;
+
         tuple_cell relative_tc = relative.get(t);
         xmlscm_type xtype = relative_tc.get_atomic_type();
         if(xtype != xs_string        && 
            xtype != xs_untypedAtomic && 
            xtype != xs_anyURI        &&
            !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
-        ////////////////////////////////////////////////
- 
-        if(is_base_static)
-        {
-            if(t.is_eos()) return;
-            first_time = false;
-            
-            if (tr_globals::st_ct.base_uri == NULL)
-                throw USER_EXCEPTION2(FONS0005, "The base-uri property is not initialized in the static context (fn:resolve-uri).");
 
-            relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
+        relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
             if(!Uri::chech_constraints_for_xs_anyURI(&relative_tc))
                 throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
+        
+        if(is_base_static)
+        {
+            if (tr_globals::st_ct.base_uri == NULL) throw USER_EXCEPTION(FONS0005); //base uri property is not defined in static context.
 
             base_tc = tuple_cell::atomic(xs_string, tr_globals::st_ct.base_uri);
             if(!Uri::chech_constraints_for_xs_anyURI(&base_tc))
-                throw USER_EXCEPTION2(FORG0002, "The base-uri property defined in the prolog contains invalid URI (fn:resolve-uri).");
-
+                throw USER_EXCEPTION2(FORG0002, "Base URI property defined in the prolog contains invalid URI (fn:resolve-uri).");
         }
         else
         {
-            if(need_reopen) base.op->reopen();
-            need_reopen = true;
-            if(t.is_eos()) return;   
-            
-            first_time = false;
-            
+            if(need_reopen) base.op->reopen();   
             tuple b(base.ts);
             base.op->next(b);
             
-            ////////////////////////////////////////////////
-            /// Check if we have 'eos' as second argument.
             if(b.is_eos())
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument could not be emty sequence.");
-            ////////////////////////////////////////////////
 
-            ////////////////////////////////////////////////
-            /// Check type of the second argument.
             base_tc = base.get(b);
             xtype = base_tc.get_atomic_type();
             if(xtype != xs_string        && 
                xtype != xs_untypedAtomic && 
                xtype != xs_anyURI        &&
                !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
-            ////////////////////////////////////////////////
-            
-            relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
-            if(!Uri::chech_constraints_for_xs_anyURI(&relative_tc))
-                throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
-            
+
             base_tc = tuple_cell::make_sure_light_atomic(base_tc);
             if(!Uri::chech_constraints_for_xs_anyURI(&base_tc))
                 throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
 
-            Uri &u = Uri::parse(relative_tc.get_str_mem());
-            u.recompose(result);
-
             base.op->next(b);
             if(!b.is_eos()) 
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument contains more than one item.");
-
             need_reopen = false;
         }
 
-        relative.op->next(t);
-        if(!t.is_eos()) 
+        relative.op->next(r);
+        if(!r.is_eos()) 
             throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
-        
-        if (result.get_type() == text_mem)
-            t.copy(tuple_cell::atomic_deep(xs_string, (char*)result.get_ptr_to_text()));
+
+        if(Uri::resolve(relative_tc.get_str_mem(), base_tc.get_str_mem(), result))
+        {
+            if (result.get_type() == text_mem)
+                t.copy(tuple_cell::atomic_deep(xs_anyURI, (char*)result.get_ptr_to_text()));
+            else
+                t.copy(tuple_cell::atomic_estr(xs_anyURI, result.get_size(), *(xptr*)result.get_ptr_to_text()));
+        }
         else
-            t.copy(tuple_cell::atomic_estr(xs_string, result.get_size(), *(xptr*)result.get_ptr_to_text()));
+        {
+            tuple_cell* tc = &(t.cells[0]);
+            tc->set_xtype(xs_anyURI);
+        }
     }
     else 
     {
