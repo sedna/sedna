@@ -89,13 +89,12 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 		tc = tuple_cell::make_sure_light_atomic(tc);
 		const char *qname = tc.get_str_mem();
 
-		NCName* prefix=NULL;
+		char* prefix=NULL;
 		separateLocalAndPrefix(prefix,qname);
 		xml_ns* ns=NULL;
 		if (prefix!=NULL)
 		{
-			ns=tr_globals::st_ct.get_xmlns_by_prefix(*prefix);
-            delete prefix->n;
+			ns=tr_globals::st_ct.get_xmlns_by_prefix(prefix);
 			delete prefix;			
 		}
 		char* name = new char[strlen(qname)+1];
