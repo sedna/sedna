@@ -956,6 +956,33 @@ sedna-err:SE3070
 sedna-err:SE3071
 
     Failed to load authorization metadata.
+sedna-err:SE3072
+
+    User does not have privilege.
+sedna-err:SE3073
+
+    User is not allowed to grant this privilege.
+sedna-err:SE3074
+
+    User is not allowed to grant this role.
+sedna-err:SE3075
+
+    User is not allowed to revoke this privilege, or the grantee does not have this privilege.
+sedna-err:SE3076
+
+    User is not allowed to revoke this role, or the grantee does not have this role.
+sedna-err:SE3077
+
+    User is not allowed to alter specified user.
+sedna-err:SE3078
+
+    User is not allowed to drop specified user.
+sedna-err:SE3079
+
+    User with this name already exists.
+sedna-err:SE3080
+
+    Role with this name already exists.
 
 
 ########### concerning security ####################
