@@ -1917,7 +1917,7 @@ void XMLDateTime::printDateTime(char* buf) const
     }
 
     if (utcSize) {
-        if (getValue(utc) != UTC_STD && getValue(tz_hh) != 0 && getValue(tz_mm) != 0)
+        if (getValue(utc) != UTC_STD && (getValue(tz_hh) != 0 || getValue(tz_mm) != 0))
 	{
 		*retPtr++ = UTC_SET[getValue(utc)-1];
                 fillString(retPtr, getValue(tz_hh), 2);
@@ -2019,7 +2019,7 @@ void XMLDateTime::printDate(char* buf) const
 	}
 
         if (utcSize) {
-            if (getValue(utc) != UTC_STD && getValue(tz_hh) != 0 && getValue(tz_mm) != 0)
+            if (getValue(utc) != UTC_STD && (getValue(tz_hh) != 0 || getValue(tz_mm) != 0))
 	    {
 		*retPtr++ = UTC_SET[getValue(utc)-1];
                 fillString(retPtr, getValue(tz_hh), 2);
@@ -2132,7 +2132,7 @@ void XMLDateTime::printTime(char* buf) const
     }
 
     if (utcSize) {
-        if (getValue(utc) != UTC_STD && getValue(tz_hh) != 0 && getValue(tz_mm) != 0)
+        if (getValue(utc) != UTC_STD && ( getValue(tz_hh) != 0 || getValue(tz_mm) != 0))
 	{
 		*retPtr++ = UTC_SET[getValue(utc)-1];
                 fillString(retPtr, getValue(tz_hh), 2);
