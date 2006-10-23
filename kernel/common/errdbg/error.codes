@@ -369,48 +369,6 @@ err:FODT0003
 
 	Invalid timezone value. 
 
-err:FODT004
-
-    Invalid gDay value
-err:FODT005
-
-    Invalid gMonth value
-err:FODT006
-
-    Invalid gMonthDay value
-err:FODT007
-
-    Invalid duration start
-err:FODT008
-
-    Invalid date
-err:FODT009
-
-    Invalid time
-err:FODT010
-
-    Invalid seconds
-err:FODT011
-
-    Invalid gMonthYear
-err:FODT012
-
-    Invalid month
-err:FODT013
-
-    Invalid hour
-err:FODT014
-
-    Invalid minutes
-err:FODT015
-
-    Invalid numeric value in dateTime or duration
-err:FODT016
-
-    String representation of dateTime value is too long
-err:FODT017
-
-    Invalid dateTime value, missing a separator
 err:FONS0004
 
 	No namespace found for prefix. 
