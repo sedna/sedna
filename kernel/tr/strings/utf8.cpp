@@ -392,6 +392,66 @@ bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 	}
 }
 
+int utf8_parse_char(const char *str, int *byte_len)
+{
+	//FIXME: this works bad with incorrent utf-8 strings
+	int r;
+
+	if (((unsigned char *)str)[0] < 128)
+	{
+		r = ((unsigned char *)str)[0];
+		if (byte_len)
+			*byte_len = 1;
+	}
+	else if (((unsigned char *)str)[0] < 224) // ch mustbe >= 192
+	{
+		r = ((unsigned char *)str)[0] - 192; r <<= 6;
+		r += ((unsigned char *)str)[1] - 128;
+		if (byte_len)
+			*byte_len = 2;
+	}
+	else if (((unsigned char *)str)[0] < 240)
+	{
+		r = (((unsigned char *)str)[0]-224); r <<= 6;
+		r += ((unsigned char *)str)[1] - 128; r <<= 6;
+		r += ((unsigned char *)str)[2] - 128;
+		if (byte_len)
+			*byte_len = 3;
+	}
+	else if (((unsigned char *)str)[0] < 248)
+	{
+		r = (((unsigned char *)str)[0]-240); r <<= 6;
+		r += ((unsigned char *)str)[1] - 128; r <<= 6;
+		r += ((unsigned char *)str)[2] - 128; r <<= 6;
+		r += ((unsigned char *)str)[3] - 128;
+		if (byte_len)
+			*byte_len = 4;
+	}
+	else if (((unsigned char *)str)[0] < 252)
+	{
+		r = (((unsigned char *)str)[0]-248); r <<= 6;
+		r += ((unsigned char *)str)[1] - 128; r <<= 6;
+		r += ((unsigned char *)str)[2] - 128; r <<= 6;
+		r += ((unsigned char *)str)[3] - 128; r <<= 6;
+		r += ((unsigned char *)str)[4] - 128;
+		if (byte_len)
+			*byte_len = 5;
+	}
+	else // ch mustbe < 254
+	{
+		r = (((unsigned char *)str)[0]-252); r <<= 6;
+		r += ((unsigned char *)str)[1] - 128; r <<= 6;
+		r += ((unsigned char *)str)[2] - 128; r <<= 6;
+		r += ((unsigned char *)str)[3] - 128; r <<= 6;
+		r += ((unsigned char *)str)[4] - 128; r <<= 6;
+		r += ((unsigned char *)str)[5] - 128;
+		if (byte_len)
+			*byte_len = 6;
+	}
+	return r;
+}
+
+
 const char *utf8_encode_char(int c)
 {
 	static char rbuf[5];

@@ -1,7 +1,9 @@
 #include "str_matcher.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "strings.h"
+#include "utf8.h"
 
 
 trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)
@@ -66,6 +68,26 @@ void StrMatcher::add_str (const char * str, const char * map_str, int pc)
 	add_string_to_buf(map_str, &node->res_ofs, &node->res_len);
 }
 
+
+typedef void (*replace_cb)(const char *occur, int occur_len, write_func_t write_cb, void *p);
+static void print_unicode_escape(const char *occur, int occur_len, write_func_t write_cb, void *p)
+{
+	char buf[15];
+	int c = sprintf(buf, "&#%d;", utf8_parse_char(occur));
+	write_cb(p, buf, c);
+}
+
+void StrMatcher::add_unicode_escape_range (int start_symbol, int end_symbol, int pc)
+{
+	for (int symbol = start_symbol; symbol <= end_symbol; symbol++)
+	{
+		const char *str = utf8_encode_char(symbol);
+		trie_node *node = get_node(root, str, pc);
+		node->res_ofs = (int)print_unicode_escape;
+		node->res_len = -1;
+	}
+}
+
 void StrMatcher::reset()
 {
 	strings_buf_used = 0;
@@ -83,7 +105,7 @@ trie_node_t *StrMatcher::get_ls_node(trie_node_t *node)
 	return root;
 }
  
-#define _MIN_(a,b) (a) < (b) ? (a) : (b)
+#define _MIN_(a,b) ((a) < (b) ? (a) : (b))
 inline void printpart(int from, int to, const char *str, int len, 
 	write_func_t write_cb, void *p, char *buf, int buf_used)
 {
@@ -98,6 +120,22 @@ inline void printpart(int from, int to, const char *str, int len,
 		//FIXME: assert(from >= 0)
 		//FIXME: assert(to >= from)
 		write_cb(p, str+from, 1+to-from);
+	}
+}
+inline void copypart(char *dst, int from, int to, const char *str, int len, 
+					  char *buf, int buf_used)
+{
+	if (from < 0)
+	{
+		memcpy(dst, buf + buf_used + from, _MIN_(buf_used, 1+to-from));
+		if (to >= 0)
+			memcpy(dst + _MIN_(buf_used, 1+to-from), str, 1+to);
+	}
+	else
+	{
+		//FIXME: assert(from >= 0)
+		//FIXME: assert(to >= from)
+		memcpy(dst, str+from, 1+to-from);
 	}
 }
 
@@ -128,7 +166,15 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 			{
 				if (write_cb==NULL) return 1;
 				printpart(k, i - state->len, str, len, write_cb, p, buf, buf_used);
-				write_cb(p, &strings_buf[state->res_ofs], state->res_len);
+				if (state->res_len == -1)
+				{
+					char *str_part = (char*)malloc(state->len + 1);
+					copypart(str_part, i + 1 - state->len, i, str, len, buf, buf_used);
+					str_part[state->len] = 0;
+					((replace_cb)state->res_ofs)(str_part, state->len, write_cb, p);
+				}
+				else
+					write_cb(p, &strings_buf[state->res_ofs], state->res_len);
 				k = i+1;
 				state = root;
 			}
@@ -138,8 +184,6 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 	if (write_cb==NULL) return 0;
 	if (k < len - state->len)
 	{
-		
-
 		printpart(k, len - 1 - state->len, str, len, write_cb, p, buf, buf_used);
 		k = len - state->len; //FIXME: do this only when asserts enabled
 	}
