@@ -759,6 +759,24 @@
               `(1 (PPFnRoundHalfToEven
                    ,@(map l2p:any-lr-node2por node))))
              
+             ; 11 Functions Related to QNames
+             ((eq? op-name '!fn!QName)
+              `(1 (PPFnQName
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node)))))
+             ((eq? op-name '!fn!prefix-from-QName)
+              `(1 (PPFnPrefixFromQName
+                   ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!local-name-from-QName)
+              `(1 (PPFnLocalNameFromQName
+                   ,(l2p:any-lr-node2por (car node))))
+             )
+             ((eq? op-name '!fn!namespace-uri-from-QName)
+              `(1 (PPFnNamespaceUriFromQName
+                   ,(l2p:any-lr-node2por (car node))))
+             )
+             
              ; *** boolean ***
              ((eq? op-name '!fn!boolean)
               `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))
