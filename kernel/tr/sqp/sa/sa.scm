@@ -931,15 +931,32 @@
           (and
            (sa:assert-num-args expr 1)
            (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
-           (if
-            (member (cadr expr)  ; predefined values
-                    '((const (type !xs!string) "empty-greatest")
-                      (const (type !xs!string) "empty-least")))
-            (loop (cons expr new-prlg)
-                  funcs triples
-                  ns-binding default-elem-ns default-func-ns
-                  (cdr prolog))
-            (cl:signal-user-error SE5054 (cadr expr)))))         
+           (cond
+             ((not
+               (member (cadr expr)  ; predefined values
+                       '((const (type !xs!string) "empty-greatest")
+                         (const (type !xs!string) "empty-least"))))
+              (cl:signal-user-error SE5054 (cadr expr)))
+             ((assq 'declare-default-order
+                    (filter pair? new-prlg))
+              ; Multiple declare-default-order declarations
+              ; Clone from boundary-space.
+              ; TODO: think of uniting into a single function
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0069
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
          ((declare-option)
           (let ((new-prlg
                  ; Processing moved to a separate function
@@ -1364,17 +1381,26 @@
 ; default-ns - default element namespace
 ; Returns (cons new-type-spec type)
 (define (sa:analyze-seq-type type-spec ns-binding default-ns)
-  (if
-   (and (pair? type-spec)
-        (memq (car type-spec) '(optional zero-or-more one-or-more one)))
-   (and 
-    (sa:assert-num-args type-spec 1)
-    (let ((new-type (sa:analyze-item-type
-                     (cadr type-spec) ns-binding default-ns)))
-      (and new-type
-           (cons (list (car type-spec) (car new-type))
-                 (cdr new-type)))))
-   (sa:analyze-item-type type-spec ns-binding default-ns)))
+  (cond
+    ((and (pair? type-spec)
+          (memq (car type-spec)
+                '(optional zero-or-more one-or-more one)))
+     (and 
+      (sa:assert-num-args type-spec 1)
+      (let ((new-type (sa:analyze-item-type
+                       (cadr type-spec) ns-binding default-ns)))
+        (and new-type
+             (cons (list (car type-spec) (car new-type))
+                   (cdr new-type))))))
+    ((memq type-spec '(optional zero-or-more one-or-more one))
+     ; Detect parser bug, for XQTS tests like annex-1 - 5
+     ; ATTENTION: This solution might be dangerous, remove this ASAP
+     (cons (list type-spec
+                 '!xs!anyAtomicType   ; Was: '!xs!untypedAtomic
+                 )
+           sa:type-atomic))
+    (else
+     (sa:analyze-item-type type-spec ns-binding default-ns))))
 
 ; ItemType
 ; TODO: more sophisticated treatment for built-in types
@@ -1766,19 +1792,22 @@
 ; Particular case: a string constant is assumed
 (define (sa:analyze-string-const expr vars funcs ns-binding default-ns)
   (if
-   (not (sa:assert-num-args expr 2))
-   #f
-   (let ((type (car (sa:op-args expr)))
-         (value (cadr (sa:op-args expr))))
-     (cond
-       ((not (and (pair? type) (eq? (sa:op-name type) 'type)))
-        (cl:signal-input-error SE5026 expr))
-       ((and (eq? (cadr type)  ; type 
-                  '!xs!string)
-             (string? value))
-        (cons expr sa:type-atomic))
-       (else
-        (cl:signal-input-error SE5027 expr))))))
+   (not (and (pair? expr)
+             (eq? (sa:op-name expr) 'const)))
+   (cl:signal-input-error SE5014 expr)
+   (and
+    (sa:assert-num-args expr 2)
+    (let ((type (car (sa:op-args expr)))
+          (value (cadr (sa:op-args expr))))
+      (cond
+        ((not (and (pair? type) (eq? (sa:op-name type) 'type)))
+         (cl:signal-input-error SE5026 expr))
+        ((and (eq? (cadr type)  ; type 
+                   '!xs!string)
+              (string? value))
+         (cons expr sa:type-atomic))
+        (else
+         (cl:signal-input-error SE5027 expr)))))))
 
 ; Whether the expr is the representation for QName constant
 (define (sa:qname-const? expr)
@@ -3102,6 +3131,28 @@
                     '(const (type !xs!string) "default")
                     (cadr (sa:op-args expr)))))
         (and
+         ; Temporary solution for collations in ordermodifier
+         (let ((collations
+                (filter
+                 (lambda (x)
+                   (and (pair? x)
+                        (eq? (sa:op-name x) 'collation)))
+                 (list c1 c2))))
+           (or
+            (null? collations)
+            (letrec ((sa:flatten
+                      (lambda (lst)
+                        (if
+                         (pair? lst)
+                         (append (sa:flatten (car lst))
+                                 (sa:flatten (cdr lst)))
+                         (list lst)))))
+              (cl:signal-user-error
+               XQST0076
+               (apply string-append
+                      (cons "" 
+                            (filter string?
+                                    (sa:flatten (car collations)))))))))
          (sa:analyze-string-const c1 '() '() '() sa:default-ns)
          (sa:analyze-string-const c2 '() '() '() sa:default-ns)
          (let ((v1 (caddr c1))  ; value of the first constant
@@ -3115,9 +3166,7 @@
               (cons expr sa:type-any))))))))))
 
 ;(orderspec
-; (ordermodifier 
-;  (const (type !xs!string) "asc")
-;  (const (type !xs!string) "empty-greatest"))
+; (ordermodifier ...)
 ; (*@ (var $x1) (var $x2) (var $x3) (var $x4)))
 (define (sa:analyze-orderspec expr vars funcs ns-binding default-ns)
   (if
