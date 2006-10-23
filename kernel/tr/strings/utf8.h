@@ -150,5 +150,6 @@ public:
 };
 
 
+int utf8_parse_char(const char *str, int *byte_len = NULL);
 const char *utf8_encode_char(int c);
 

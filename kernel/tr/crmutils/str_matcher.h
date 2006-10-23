@@ -42,6 +42,7 @@ private:
 	void add_string_to_buf(const char *str, int *ofs, int *len);
 public:
 	void add_str (const char * str, const char * map_str, int pc = -1);
+	void add_unicode_escape_range (int start_symbol, int end_symbol, int pc = -1);
 	void reset();
 
 	// if write_cb == NULL, returs 1 if something matched
