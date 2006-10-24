@@ -196,7 +196,7 @@ const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
     : byte)
 
 template <class Iterator>
-static inline void is_scheme_defined(Iterator &start, const Iterator &end, bool* res, char** scheme)
+static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool* res, char** scheme)
 {
     *res = false;
 
@@ -221,11 +221,7 @@ static inline void is_scheme_defined(Iterator &start, const Iterator &end, bool*
     if(*start == ':') *res= true;
 }
 
-//////////////////////////////////////////////////////////////////////////
-/// TODO: I don't know why but if we inline __local_check 
-///       into Uri:check we fail to compile
-//////////////////////////////////////////////////////////////////////////
-bool __local_check_constraints(const tuple_cell *tc)
+bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
 {
     //////////////////////////////////////////////////////////////////////
     /// Possibly, in future we will need to convert IRI (RFC 3987, which 
@@ -236,7 +232,7 @@ bool __local_check_constraints(const tuple_cell *tc)
     bool is_scheme = false;
     char* scheme = new char[MAX_SCHEME_NAME_SIZE + 1];
     
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_scheme_defined, tc, &is_scheme, &scheme); 
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_URI_with_scheme, tc, &is_scheme, &scheme); 
 
     if(is_scheme)
     {
@@ -263,12 +259,6 @@ bool __local_check_constraints(const tuple_cell *tc)
          return collation_handler->matches(tc, relative_ref);
     }
 }
-
-bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
-{
-    return __local_check_constraints(tc);    
-}
-//////////////////////////////////////////////////////////////////////////
 
 char* remove_dot_segments(const char* path)
 {
@@ -540,18 +530,14 @@ void Uri::recompose(t_str_buf &dest)
    }
 }
 
-Uri Uri::parse(const char* u)
+Uri Uri::parse(const char* uri)
 {
     PcrePattern re("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?$", PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
-    int len = strlen(u); 
-    char_iterator start((char*)u, len, 0);
-    char_iterator end((char*)u, len, len);
-    int match_flags = PCRE_NO_UTF8_CHECK;
-    PcreMatcher<char_iterator> matcher(re);
-    char* buffer = new char[len + 1];
+    int uri_len = strlen(uri); 
+    PcreMatcher<const char*> matcher(re);
     Uri res;
 
-    if (matcher.matches(start, end, start, match_flags))
+    if (matcher.matches(uri, uri + uri_len, uri, PCRE_NO_UTF8_CHECK))
     {
         ////////////////////////////////////////////////////////////////
         /// If matcher matched our URI it contains the following groups
@@ -570,10 +556,10 @@ Uri Uri::parse(const char* u)
         
         for (int i = 1; i < matcher.groupCount(); i++) 
         {
-            char_iterator s = matcher.start(i);
-            char_iterator e = matcher.end(i);
-            if( s == e ) continue;
-            int shift = 0;
+            const char* s = matcher.start(i);
+            const char* e = matcher.end(i);
+            int group_len = e - s; 
+            if( !group_len ) continue;
 
             switch(i)
             {
@@ -583,15 +569,9 @@ Uri Uri::parse(const char* u)
                 case 8 : res.fragment_defined  = true; continue;
             }
 
-            while(s < e)
-            {
-                *(buffer+shift) = *s;
-                s++;
-                shift++;
-            }
-            *(buffer+shift) = '\0';                 /// TODO: It is very ugly way to create components.
-            char* component = new char[shift+1];    ///       We have char* u, char* buffer and char* component
-            strcpy(component, buffer);              ///       and two strcpy-ies.
+            char* component = new char[group_len + 1];
+            memcpy(component, s, group_len);
+            component[group_len] = '\0';
 
             switch(i)
             {
