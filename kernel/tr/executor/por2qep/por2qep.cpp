@@ -1264,7 +1264,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
-                                   PPFnUriEncoding::ESCAPE_HTML_URI);
+                                   PPFnUriEncoding::ENCODE_FOR_URI);
     }
     else if (op == "PPFnIriToUri")
     {
@@ -1274,7 +1274,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnUriEncoding(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list),
-                                   PPFnUriEncoding::ESCAPE_HTML_URI);
+                                   PPFnUriEncoding::IRI_TO_URI);
     }
     else if (op == "PPFnEscapeHtmlUri")
     {
