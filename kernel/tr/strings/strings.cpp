@@ -247,3 +247,9 @@ void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc)
 		return;
 	}
 }
+
+void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc)
+{
+	    feed_tuple_cell(writextext_cb, &crmout, tc);
+}
+

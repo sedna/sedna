@@ -9,7 +9,7 @@
 #include "sedna.h"
 
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
-void writextext_cb(const char *str, int len, void *p);
+extern void writextext_cb(const char *str, int len, void *p);
 
 /// Base abstract class for string cursor classes
 class str_cursor
