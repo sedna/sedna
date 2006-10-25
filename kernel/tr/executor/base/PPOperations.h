@@ -53,6 +53,7 @@
 #include "PPSequenceOps.h"
 #include "PPNodeOps.h"
 #include "PPNumericFuncs.h"
+#include "PPQName.h"
 #include "PPStore.h"
 #include "PPAxisChild.h"
 #include "PPAxisAttribute.h"

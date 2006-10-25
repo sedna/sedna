@@ -1596,28 +1596,6 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFilterEL(cxt,
                          make_pp_op(cxt, lst->at(1).internal.list));
     }
-	else if (op == "PPConGen1")
-    {
-        if (   lst->size() != 3
-            || lst->at(1).type != SCM_NUMBER
-            || lst->at(2).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "58");
-
-        var_dsc dsc = atoi(lst->at(1).internal.num);
-
-        opit = new PPConGen1(cxt,
-                             dsc,
-                             make_pp_op(cxt, lst->at(2).internal.list));
-    }
-    else if (op == "PPConGen2")
-    {
-        if (   lst->size() != 2
-            || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "59");
-
-        opit = new PPConGen2(cxt,
-                             make_pp_op(cxt, lst->at(1).internal.list));
-    }
     else if (op == "PPFnContains")
     {
         if (   lst->size() != 3
@@ -1865,14 +1843,57 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 		//bool tmp=false;
         opit = new PPSpaceSequence(cxt, arr,lst->at(lst->size()-1).internal.b);
     }
-    else if (op == "PPFnError")
+
+
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    if (opit) return PPOpIn(opit, ts);
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////
+
+
+    if (op == "PPFnError")
     {
-        if (   lst->size() != 2
-            || lst->at(1).type != SCM_LIST
+        if (   lst->size() < 1 
+            || lst->size() > 4
            ) throw USER_EXCEPTION2(SE1004, "76");
 
+        PPOpIn child_err, child_descr, child_obj;
+        if (lst->size() == 4)
+        {
+            if (lst->at(3).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "76");
+            child_obj = make_pp_op(cxt, lst->at(3).internal.list);
+        }
+
+        if (lst->size() >= 3)
+        {
+            if (lst->at(2).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "76");
+            child_descr = make_pp_op(cxt, lst->at(2).internal.list);
+        }
+
+        if (lst->size() >= 2)
+        {
+            if (lst->at(1).type != SCM_LIST)
+                throw USER_EXCEPTION2(SE1004, "76");
+            child_err = make_pp_op(cxt, lst->at(1).internal.list);
+        }
+
         opit = new PPFnError(cxt, 
-                             make_pp_op(cxt, lst->at(1).internal.list));
+                             child_err, child_descr, child_obj);
+    }
+	else if (op == "PPFnTrace")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "76");
+
+		opit = new PPFnTrace(cxt,
+                             make_pp_op(cxt, lst->at(1).internal.list),
+                             make_pp_op(cxt, lst->at(2).internal.list));
     }
     else if (op == "PPTest")
     {
@@ -2442,17 +2463,47 @@ fn_dt_funcs_correct_type:
                                  make_pp_op(cxt, lst->at(1).internal.list),
                                  make_pp_op(cxt, lst->at(2).internal.list));
     }
-	else if (op == "PPFnTrace")
+	else if (op == "PPFnQName")
     {
         if (   lst->size() != 3
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "108");
 
-		opit = new PPFnTrace(cxt,
+		opit = new PPFnQName(cxt,
                              make_pp_op(cxt, lst->at(1).internal.list),
                              make_pp_op(cxt, lst->at(2).internal.list));
     }
+	else if (op == "PPFnPrefixFromQName")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "109");
+
+		opit = new PPFnPrefixFromQName(cxt,
+                                       make_pp_op(cxt, lst->at(1).internal.list));
+    }
+	else if (op == "PPFnLocalNameFromQName")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "110");
+
+		opit = new PPFnLocalNameFromQName(cxt,
+                                          make_pp_op(cxt, lst->at(1).internal.list));
+    }
+	else if (op == "PPFnNamespaceUriFromQName")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "111");
+
+		opit = new PPFnNamespaceUriFromQName(cxt,
+                                             make_pp_op(cxt, lst->at(1).internal.list));
+    }
+
+
+
 #ifdef SQL_CONNECTION
     else if (op == "PPFnSQLConnect")
     {
@@ -2774,52 +2825,6 @@ fn_dt_funcs_correct_type:
 
 
 
-/*
-    else if (op == "PPSFRound")
-    {
-        if (   lst->size() != 2
-            || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "42");
-
-        return new PPSFRound(gqid, 
-                             qp, 
-                             make_pp_op(gqid, qp, asqV, lst->at(1).internal.list));
-    }
-    else if (op == "PPSFUpperCase")
-    {
-        if (   lst->size() != 2
-            || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "43");
-
-        return new PPSFUpperCase(gqid, 
-                                 qp, 
-                                 make_pp_op(gqid, qp, asqV, lst->at(1).internal.list));
-    }
-    else if (op == "PPSFLowerCase")
-    {
-        if (   lst->size() != 2
-            || lst->at(1).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "44");
-
-        return new PPSFLowerCase(gqid, 
-                                 qp, 
-                                 make_pp_op(gqid, qp, asqV, lst->at(1).internal.list));
-    }
-    else if (op == "PPSFSubstring")
-    {
-        if (   lst->size() != 4
-            || lst->at(1).type != SCM_LIST
-            || lst->at(2).type != SCM_LIST
-            || lst->at(3).type != SCM_LIST
-           ) throw USER_EXCEPTION2(SE1004, "45");
-
-        return new PPSFSubstring(gqid, 
-                                 qp, 
-                                 make_pp_op(gqid, qp, asqV, lst->at(1).internal.list),
-                                 make_pp_op(gqid, qp, asqV, lst->at(2).internal.list),
-                                 make_pp_op(gqid, qp, asqV, lst->at(3).internal.list));
-    }
-*/
     else throw USER_EXCEPTION2(SE1004, ("Wrong plan representation, unknown operation " + op).c_str());
 
     return PPOpIn(opit, ts);

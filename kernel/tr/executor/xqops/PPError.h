@@ -16,9 +16,18 @@ class PPFnError : public PPIterator
 {
 protected:
     // obtained parameters and local data
-    PPOpIn child;
+    PPOpIn child_err;
+    PPOpIn child_descr;
+    PPOpIn child_obj;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+    void children(PPOpIn &_child_err_,
+                  PPOpIn &_child_descr_,
+                  PPOpIn &_child_obj_) 
+    { 
+        _child_err_   = child_err; 
+        _child_descr_ = child_descr;
+        _child_obj_   = child_obj; 
+    }
 
 public:
     virtual void open   ();
@@ -31,7 +40,9 @@ public:
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
 
     PPFnError(variable_context *_cxt_, 
-              PPOpIn _child_);
+              PPOpIn &_child_err_,
+              PPOpIn &_child_descr_,
+              PPOpIn &_child_obj_);
     virtual ~PPFnError();
 };
 

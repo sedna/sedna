@@ -11,78 +11,118 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
 ///////////////////////////////////////////////////////////////////////////////
-PPFnError::PPFnError(variable_context *_cxt_,
-                     PPOpIn _child_) : PPIterator(_cxt_),
-                                       child(_child_)
+PPFnError::PPFnError(variable_context *_cxt_, 
+                     PPOpIn &_child_err_,
+                     PPOpIn &_child_descr_,
+                     PPOpIn &_child_obj_) : PPIterator(_cxt_),
+                                            child_err(_child_err_),
+                                            child_descr(_child_descr_),
+                                            child_obj(_child_obj_)
 {
 }
 
 PPFnError::~PPFnError()
 {
-    delete child.op;
-    child.op = NULL;
+    if (child_err.op)
+    {
+        delete child_err.op;
+        child_err.op = NULL;
+    }
+    if (child_descr.op)
+    {
+        delete child_descr.op;
+        child_descr.op = NULL;
+    }
+    if (child_obj.op)
+    {
+        delete child_obj.op;
+        child_obj.op = NULL;
+    }
 }
 
 void PPFnError::open  ()
 {
-    child.op->open();
+    if (child_err.op) child_err.op->open();
+    if (child_descr.op) child_descr.op->open();
+    if (child_obj.op) child_obj.op->open();
 }
 
 void PPFnError::reopen()
 {
-    child.op->reopen();
+    if (child_err.op) child_err.op->reopen();
+    if (child_descr.op) child_descr.op->reopen();
+    if (child_obj.op) child_obj.op->reopen();
 }
 
 void PPFnError::close ()
 {
-    child.op->close();
+    if (child_err.op) child_err.op->close();
+    if (child_descr.op) child_descr.op->close();
+    if (child_obj.op) child_obj.op->close();
 }
 
 void PPFnError::next  (tuple &t)
 {
-    child.op->next(t);
+    tuple_cell err_name_tc; // eos by default
+    tuple_cell err_descr_tc; // eos by default
 
-    if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+    if (child_err.op)
+    {
+        child_err.op->next(t);
+        if (t.is_eos() && !(child_descr.op)) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
-    tuple_cell tc = child.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+        if (!t.is_eos())
+        {
+            err_name_tc = child_err.get(t);
+            if (!err_name_tc.is_atomic() || err_name_tc.get_atomic_type() != xs_QName)
+                throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
-    child.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
-        
-    tc = tuple_cell::make_sure_light_atomic(tc);
+            err_name_tc = tuple_cell::make_sure_light_atomic(err_name_tc);
+            child_err.op->next(t);
 
-    throw USER_EXCEPTION2(FOER0000, tc.get_str_mem());
+            if (!t.is_eos())
+                throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+        }
+    }
+
+    if (child_descr.op)
+    {
+        child_descr.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+
+        err_descr_tc = child_descr.get(t);
+        if (!err_descr_tc.is_atomic() || err_descr_tc.get_atomic_type() != xs_string)
+            throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+
+        err_descr_tc = tuple_cell::make_sure_light_atomic(err_descr_tc);
+        child_descr.op->next(t);
+
+        if (!t.is_eos())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+    }
+
+
+    const char *err_name = err_name_tc.is_eos() ? 
+                           "FOER0000" : 
+                           xs_QName_get_local_name(err_name_tc.get_str_mem());
+    const char *err_descr = err_descr_tc.is_eos() ? NULL : err_descr_tc.get_str_mem();
+
+    throw USER_EXCEPTION_FNERROR(err_name, err_descr);
 }
 
 PPIterator* PPFnError::copy(variable_context *_cxt_)
 {
-    PPFnError *res = new PPFnError(_cxt_, child);
-    res->child.op = child.op->copy(_cxt_);
+    PPFnError *res = new PPFnError(_cxt_, child_err, child_descr, child_obj);
+    if (child_err.op)   res->child_err.op   = child_err.op->copy(_cxt_);
+    if (child_descr.op) res->child_descr.op = child_descr.op->copy(_cxt_);
+    if (child_obj.op)   res->child_obj.op   = child_obj.op->copy(_cxt_);
 
     return res;
 }
 
 bool PPFnError::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
-    PPOpIn child;
-    ((PPFnError*)cur)->children(child);
-
-    void *err_r;
-    bool err_s = (child.op->res_fun())(child.op, cxt, err_r);
-
-    if (!err_s) // if expression is not strict
-    { // create PPFnError and transmit state
-        child.op = (PPIterator*)err_r;
-        r = new PPFnError(cxt, child);
-        return false;
-    }
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!
-    r = new sequence(my_boolean_not_e(effective_boolean_value((sequence*)not_r)));
-    delete ((sequence*)not_r);
-*/
-    return true;
+	throw USER_EXCEPTION2(SE1002, "PPFnError::result");
 }
 
 

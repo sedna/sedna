@@ -7,34 +7,7 @@
 
 #include "xsd.h"
 #include "schema.h"
-
-
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#include "persistent_db_data.h"
 #include "PPBase.h"
-xml_ns* find_or_construct_xml_ns(const char* prefix, const char* uri, bool persistent)
-{
-    xml_ns *xmlns = NULL;
-    if (persistent)
-    {
-        const char *urim = uri;// or '!uri ? "" : uri'
-        const char *prefixm = (prefix ? prefix : "");
-        xmlns = (xml_ns*)(entry_point->nslist->find(urim, prefixm));
-        if (xmlns == NULL) 
-        { 
-            xmlns = xml_ns::init(urim, prefixm, true);
-            entry_point->nslist->put(xmlns);
-        }
-    }
-    else
-    {
-        xmlns = tr_globals::st_ct.get_ns_pair(prefix, uri);
-    }
-
-    return xmlns;
-}
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
 
 ///
@@ -100,22 +73,6 @@ static int _xs_QName_separator_position(const char *prefix_and_local)
     return 0;
 }
 
-/*
-char *xs_QName_create(const char* uri,
-                      const char* prefix, 
-                      const char *local_part, 
-                      void* (*alloc_func)(size_t))
-{
-    int lp_size = strlen(local_part);
-    char *qname = (char*)alloc_func(lp_size + 2 * sizeof(void*) + 1);
-    strcpy(qname + 2 * sizeof(void*), local_part);
-
-    xml_ns *xmlns = find_or_construct_xml_ns(prefix, uri ? uri : "", IS_PH_PTR(qname));
-    _xs_QName_encode(xmlns, qname);
-
-    return qname;
-}
-*/
 char *xs_QName_create(xml_ns* xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t))
@@ -153,7 +110,33 @@ char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t))
 {
-    return NULL;
+    U_ASSERT(prefix_and_local);
+
+    xml_ns* xmlns = NULL;
+    const char *local = NULL;
+    int pos = 0;
+    if (!uri) uri = "";
+
+    // FIXME: check lexical representation
+
+    // separate prefix and local name 
+    pos = _xs_QName_separator_position(prefix_and_local);
+    if (pos) 
+        local = prefix_and_local + pos + 1;
+    else 
+        local = prefix_and_local;
+
+
+    if (*uri) // uri is present
+        xmlns = tr_globals::st_ct.get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
+    else
+    { // uri is empty...
+        if (pos) // ... and prefix is not empty
+            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+        // prefix is empty already (xmlns = NULL)
+    }
+
+    return xs_QName_create(xmlns, local, alloc_func);
 }
 
 void xs_QName_release(char *qname, void (*free_func)(void*))

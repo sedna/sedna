@@ -660,15 +660,20 @@ void PPAttributeConstructor::next  (tuple &t)
 		{
 			ns=xs_QName_get_xmlns(name);
 			name=xs_QName_get_local_name(name);
-			if (((ns->prefix==NULL||my_strcmp(ns->prefix,"")==0) && my_strcmp(name,"xmlns")==0)
-				||(ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0 ))
+			if (ns!=NULL &&
+                (
+				 ((ns->prefix==NULL || my_strcmp(ns->prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+				 ||
+                 (ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0 )
+                ))
 				throw USER_EXCEPTION(XQDY0044);
 		}
 		else
 		{
 			separateLocalAndPrefix(prefix,name);
-			if (((prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
-				||(prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0 ))
+			if ((
+				        (prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
+				     || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
 				throw USER_EXCEPTION(XQDY0044);
 			if (prefix!=NULL)
 			{

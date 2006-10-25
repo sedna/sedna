@@ -871,14 +871,17 @@
 
              ; *** contains ***
              ((eq? op-name '!fn!contains)
-              `(1 (PPFnContains ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
+              `(1 (PPFnContains
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node))))
              )
              
              ; *** translate ***
              ((eq? op-name '!fn!translate)
-              `(1 (PPFnTranslate ,(l2p:any-lr-node2por (car node)) 
-								 ,(l2p:any-lr-node2por (cadr node))
-								 ,(l2p:any-lr-node2por (caddr node))))
+              `(1 (PPFnTranslate
+                   ,(l2p:any-lr-node2por (car node)) 
+                   ,(l2p:any-lr-node2por (cadr node))
+                   ,(l2p:any-lr-node2por (caddr node))))
              )
              
              ; *** deep-equal ***
@@ -926,8 +929,10 @@
              
              ; *** error ***
              ((eq? op-name '!fn!error) 
-              `(1 (PPFnError ,(l2p:any-lr-node2por (car node))))
-             )
+              `(1 (PPFnError 
+                   ,@(map l2p:any-lr-node2por node)
+                   ; Was: ,(l2p:any-lr-node2por (car node))
+                   )))
  
              ; *** trace ***
 		     ((eq? op-name '!fn!trace)
