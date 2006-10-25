@@ -570,3 +570,75 @@ void e_str_copy_to_buffer(char *dest, const xptr &src, int count)
 }
 
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// e_str_cursor class implementation
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+int e_str_cursor::copy_blk(char *buf)
+{
+    if (!m_count) return 0;
+
+    CHECKP(m_str);
+    int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (int)XADDR(m_str);
+    if (len >= m_count)
+    {
+        len = m_count;
+        memcpy(buf, XADDR(m_str), len);
+        m_str = m_str + len;
+    }
+    else
+    {
+        memcpy(buf, XADDR(m_str), len);
+        m_str = E_STR_PROLONGATION(m_str);
+    }
+    m_count -= len;
+    return len;
+}
+
+int e_str_cursor::get_blk(char **ptr)
+{
+    if (!m_count) return 0;
+
+    CHECKP(m_str);
+    int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (int)XADDR(m_str);
+    if (len >= m_count)
+    {
+        len = m_count;
+        *ptr = (char*)(XADDR(m_str));
+        m_str = m_str + len;
+    }
+    else
+    {
+        *ptr = (char*)(XADDR(m_str));
+        m_str = E_STR_PROLONGATION(m_str);
+    }
+    m_count -= len;
+    return len;
+}
+
+
+
+
+
+
+
+void estr_feed(string_consumer_fn fn, void *p, xptr src, int count) // or pstr,  FIXME: int count
+{
+	while (count > 0)
+	{
+		CHECKP(src);
+
+		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (int)(XADDR(src));
+		int real_count = s_min(src_spc_blk, count);
+
+		fn((char*)XADDR(src), real_count, p);
+
+		if (real_count == count) return;
+
+		src = E_STR_PROLONGATION(src);
+		count = count - real_count;
+	}
+}

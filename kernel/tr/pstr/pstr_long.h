@@ -9,7 +9,7 @@
 #include "sedna.h"
 #include "sm_vmm_data.h"
 #include "micro.h"
-#include "strings.h"
+#include "strings_base.h"
 
 //typedef int pstr_long_off_t;
 typedef __int64 pstr_long_off_t;
@@ -69,8 +69,13 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
 
 void pstr_long_write(xptr desc,se_ostream& crmout);
-void pstr_long_writextext(xptr desc, se_ostream& crmout);
 void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p);
+inline void pstr_long_writextext(xptr desc, se_ostream& crmout)
+{
+    pstr_long_feed(desc, writextext_cb, &crmout);
+}
+
+
 void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size);
 void pstr_long_copy_to_buffer(char *buf, xptr desc);
 
@@ -82,7 +87,7 @@ void pstr_long_str_info(xptr desc);
 #endif
 
 
-class pstr_long_cursor
+class pstr_long_cursor : public str_cursor
 {
 	//TODO!!!!! blk should point to last_blk or last_blk->pred when pointer is at eof \
 	//			is cursor < 0, then blk should NEVER point to last_blk				   \   in get_blk/copy_blk
@@ -123,12 +128,12 @@ public:
 
     // block oriented copy. buf must have size not less than a page size
 	// returns number of bytes copied, 0 if end of string reached.
-    int copy_blk(char *buf);
+    virtual int copy_blk(char *buf);
 	// get's a pointer to string part in the current block and moves cursor to the next block
 	// (same as copy_blk, but without copy)
 	// returns the length of the string part 
 	//     or 0 if end of string reached (*ptr is not modified in this case)
-	int get_blk(char **ptr);
+	virtual int get_blk(char **ptr);
 
 
 	// like get_blk, but gets data from the first byte in the current block till 

@@ -15,7 +15,6 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        xptr_sequence$(OBJ_EXT)			\
                        sorted_sequence$(OBJ_EXT)		\
                        dm_accessors$(OBJ_EXT)			\
-                       e_string$(OBJ_EXT)				\
                        ext_sort$(OBJ_EXT)				\
                        compare$(OBJ_EXT)				\
                        bit_set$(OBJ_EXT)				\
