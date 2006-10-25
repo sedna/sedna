@@ -10,13 +10,14 @@ The following primary exceptions are defined for Sedna (later referred as
 "the system").
 
                          SednaException
-                         //          \\
-                        //            \\
-                       //              \\
-       SednaSystemException            SednaUserException
-               ||                            //       \\
-               ||                           //         \\
-     SednaSystemEnvException   SednaUserEnvException SednaUserSoftException
+                         //          \\______________________
+                        //            \\_____________________\\
+                       //                                     \\
+       SednaSystemException                               SednaUserException
+               ||                                ________//      ||       \\____________
+               ||                              / ________/       ||        \____________\\
+               ||                             //                 ||                      \\
+     SednaSystemEnvException   SednaUserExceptionFnError SednaUserEnvException SednaUserSoftException
 
 
 SednaException -- abstract base exception class. You cannot use it for raising
@@ -31,7 +32,7 @@ The output to a user produced as the reaction to this error says that it was
 environment (operating system) fault and the system can not be longer running.
 For the previous exception responsibility is on the developers.
 
-SednaUserException -- use it in when some kind of error happens but this error
+SednaUserException -- use it when some kind of error happens but this error
 is not fatal for the system but rather a recoverable error. Most errors of 
 this type are errors caused by users (wrong queries they sends). But they can
 be other errors such as "can not connect to sm because sm is not running"
@@ -39,6 +40,8 @@ caused by trn. The reaction on this error is to produce correct message to the
 user with an explanation of the problem. Error codes and descriptions of errors
 are defined in error.codes file, which is in the same directory as the file you
 are reading now.
+
+SednaUserExceptionFnError -- use it for errors raised by users (fn:error function).
 
 SednaUserEnvException -- the same as SednaUserException with a bit different
 semantics.  Use this exception to notify the user that the system cannot do
@@ -80,6 +83,7 @@ For raising exception it is better to use these macroses:
 #define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
 #define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
 #define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define USER_EXCEPTION_FNERROR(err_name, err_descr) SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
 #define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
 #define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
 #define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
@@ -149,6 +153,12 @@ Errors could be outputted to the user in the format of <sedna-message>:
                      user_error_code_entries[internal_code].descr, \
                      details)), \
      SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code))
+
+#define USER_EXCEPTION_FNERROR(err_name, err_descr) \
+    (elog(EL_ERROR, ("(%s) %s", \
+                     err_name, \
+                     err_descr)), \
+     SednaUserExceptionFnError(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
 
 #define USER_ENV_EXCEPTION(msg, rollback) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
@@ -285,6 +295,43 @@ public:
 
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
+};
+
+class SednaUserExceptionFnError : public SednaUserException
+{
+protected:
+    std::string error_name;
+    std::string error_descr;
+
+public:
+    SednaUserExceptionFnError(const char* _file_, 
+                              const char* _function_,
+                              int _line_,
+                              const char* _error_name_,
+                              const char* _error_descr_) : 
+                                    SednaUserException(_file_,
+                                                       _function_,
+                                                       _line_,
+                                                       SE9000), 
+                                    error_name(_error_name_),
+                                    error_descr(_error_descr_ ? _error_descr_ : "") {}
+
+    virtual std::string getMsg() const
+    {
+        U_ASSERT(error_name.size() != 0);
+
+        std::string res;
+        res += "SEDNA Message: ERROR ";
+        res += error_name + "\n";
+        res += "    " + (error_descr.size() == 0 ? std::string("User defined error") : error_descr) + "\n";
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+        return res;
+    }
+
+    virtual int  get_code() const { return internal_code; }
+    virtual bool need_rollback() { return true; }
 };
 
 class SednaUserEnvException : public SednaUserException

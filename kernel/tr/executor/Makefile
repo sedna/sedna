@@ -60,6 +60,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPNodeOps$(OBJ_EXT)				\
                        PPBooleanOps$(OBJ_EXT)			\
                        PPNumericFuncs$(OBJ_EXT)			\
+                       PPQName$(OBJ_EXT)				\
                        PPConstructors$(OBJ_EXT)			\
                        PPSpaceSequence$(OBJ_EXT)		\
                        PPGeneralComparison$(OBJ_EXT)	\
