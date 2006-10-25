@@ -1,0 +1,30 @@
+/*
+ * File:  strings_base.h
+ * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#ifndef _STRINGS_BASE_H
+#define _STRINGS_BASE_H
+
+#include "sedna.h"
+
+typedef void (*string_consumer_fn)(const char *str, int len, void *p);
+void writextext_cb(const char *str, int len, void *p);
+
+/// Base abstract class for string cursor classes
+class str_cursor
+{
+public:
+    /// Block oriented copy. buf must have size not less than a page size
+    virtual int copy_blk(char *buf) = 0;
+	/// Gets a pointer to string part in the current block and moves cursor to the next block
+	/// (same as copy_blk, but without copy)
+	/// returns the length of the string part 
+	/// or 0 if end of string reached (*ptr is not modified in this case)
+    /// The function calls CHECKP on the given string, so the pointer is
+    /// valid until next call to CHECKP
+	virtual int get_blk(char **ptr) = 0;
+};
+
+
+#endif //_STRINGS_BASE_H

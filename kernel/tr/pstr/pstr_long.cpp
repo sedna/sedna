@@ -1922,35 +1922,6 @@ void pstr_long_write(xptr desc, se_ostream& crmout)
 	}
 }
 
-void pstr_long_writextext(xptr desc, se_ostream& crmout)
-{
-	//TODO : use pstr_long_write_suffix
-	CHECKP(desc);
-	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
-
-	CHECKP(intl_last_blk);
-	xptr start = (PSTR_LONG_LAST_BLK_FTR(intl_last_blk))->start;
-	xptr blk = BLOCKXPTR(start);
-	intl_ftr.cursor = (PSTR_LONG_LAST_BLK_FTR(intl_last_blk))->cursor;
-	int ofs = (char*)XADDR(start) - (char*)XADDR(blk);
-
-	while (blk != intl_last_blk)
-	{
-		CHECKP(blk);
-		if (((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk == intl_last_blk && intl_ftr.cursor < 0)
-			crmout.writextext((char*)XADDR(blk) + ofs, -ofs-intl_ftr.cursor);
-		else
-			crmout.writextext((char*)XADDR(blk) + ofs, PAGE_SIZE-ofs);
-		blk = ((struct pstr_long_blk_hdr *)XADDR(blk))->next_blk;
-		ofs = PSTR_LONG_BLK_HDR_SIZE;
-	}
-	if (intl_ftr.cursor > 0)
-	{
-		CHECKP(blk);
-		crmout.writextext((char*)XADDR(blk) + ofs, intl_ftr.cursor-ofs);
-	}
-}
-//FIXME: this funtion is almost the same as pstr_long_writextext
 void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
 {
 	//TODO : use pstr_long_write_suffix

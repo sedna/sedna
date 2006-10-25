@@ -228,61 +228,7 @@ t_str_buf::~t_str_buf()
 	if (m_buf_size > 0)
 		free(m_buf);
 }
-static void estr_writextext(se_ostream& crmout, xptr src, int count) // or pstr,  FIXME: int count
-{ //FIXME - use e_str_cursor
-	while (count > 0)
-	{
-		CHECKP(src);
 
-		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (int)(XADDR(src));
-		int real_count = s_min(src_spc_blk, count);
-
-		crmout.writextext((char*)XADDR(src), real_count);
-
-		if (real_count == count) return;
-
-		src = E_STR_PROLONGATION(src);
-		count = count - real_count;
-	}
-}
-void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
-{
-	tuple_cell cell = cast(tc, xs_string);
-
-	switch (tc.get_type())
-	{
-	case tc_light_atomic_var_size:
-		//crmout.write(tc.get_str_mem(), tc.get_strlen_mem());
-		crmout.writextext(tc.get_str_mem(), tc.get_strlen_mem());
-		return;
-	case tc_heavy_atomic_estr:
-	case tc_heavy_atomic_pstr_short:
-		estr_writextext(crmout, tc.get_str_vmm(), tc.get_strlen_vmm());
-		return;
-	case tc_heavy_atomic_pstr_long:
-		pstr_long_writextext(tc.get_str_vmm(), crmout);
-		return;
-	}
-}
-
-//FIXME: this function is essentialy the same as est_writextext
-static void estr_feed(string_consumer_fn fn, void *p, xptr src, int count) // or pstr,  FIXME: int count
-{ //FIXME - use e_str_cursor
-	while (count > 0)
-	{
-		CHECKP(src);
-
-		int src_spc_blk = BLK_BEGIN_INT(XADDR(src)) + PAGE_SIZE - (int)(XADDR(src));
-		int real_count = s_min(src_spc_blk, count);
-
-		fn((char*)XADDR(src), real_count, p);
-
-		if (real_count == count) return;
-
-		src = E_STR_PROLONGATION(src);
-		count = count - real_count;
-	}
-}
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc)
 {
 	tuple_cell cell = cast(tc, xs_string);

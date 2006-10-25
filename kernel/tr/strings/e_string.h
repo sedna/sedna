@@ -10,8 +10,10 @@
 #include "sedna.h"
 
 #include "sm_vmm_data.h"
+#include "strings_base.h"
 #include "vmm.h"
 #include "tuple.h"
+
 
 #define BLK_BEGIN_INT(p)			((int)(p) & PAGE_BIT_MASK)
 #define E_STR_PROLONGATION(p)		(((e_str_blk_hdr*)(BLK_BEGIN_INT(XADDR(p))))->nblk + sizeof(e_str_blk_hdr))
@@ -128,7 +130,7 @@ extern e_str e_str_global;
 }
 
 
-class e_str_cursor
+class e_str_cursor : public str_cursor
 {
 private:
     xptr m_str;
@@ -136,52 +138,14 @@ private:
 public:
     e_str_cursor(const xptr& str, int count) : m_str(str), m_count(count) {}
     /// Block oriented copy. buf must have size not less than a page size
-    int copy_blk(char *buf)
-    {
-        if (!m_count) return 0;
-
-        CHECKP(m_str);
-        int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (int)XADDR(m_str);
-        if (len >= m_count)
-        {
-            len = m_count;
-            memcpy(buf, XADDR(m_str), len);
-            m_str = m_str + len;
-        }
-        else
-        {
-            memcpy(buf, XADDR(m_str), len);
-            m_str = E_STR_PROLONGATION(m_str);
-        }
-        m_count -= len;
-        return len;
-    }
+    virtual int copy_blk(char *buf);
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
 	/// (same as copy_blk, but without copy)
 	/// returns the length of the string part 
 	/// or 0 if end of string reached (*ptr is not modified in this case)
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
-	int get_blk(char **ptr)
-    {
-        if (!m_count) return 0;
-
-        CHECKP(m_str);
-        int len = BLK_BEGIN_INT(XADDR(m_str)) + PAGE_SIZE - (int)XADDR(m_str);
-        if (len >= m_count)
-        {
-            len = m_count;
-            *ptr = (char*)(XADDR(m_str));
-            m_str = m_str + len;
-        }
-        else
-        {
-            *ptr = (char*)(XADDR(m_str));
-            m_str = E_STR_PROLONGATION(m_str);
-        }
-        m_count -= len;
-        return len;
-    }
+	virtual int get_blk(char **ptr);
 };
 
 
@@ -249,6 +213,10 @@ public:
     tuple_cell content() { return tuple_cell::atomic(tc_heavy_atomic_estr, xs_string, m_size, m_start); }
 };
 
+
+
+
+void estr_feed(string_consumer_fn fn, void *p, xptr src, int count); // or pstr,  FIXME: int count
 
 #endif
 
