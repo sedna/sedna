@@ -29,27 +29,30 @@ exprSingle!:
 //	  ie:ifExpr          <<#0=#ie;>>
 ;
 
+/*
 qname!:
-     <<bool p1_=false, p2_=false, l1_=false, l2_=false;>>
-	( {(p1:prefixPart1 <<p1_=true;>> | p2:prefixPart2 <<p2_=true;>>) COLON} (l1:localPart1 <<l1_ = true;>>| l2:localPart2<<l2_=true;>>)
-	  <<
-        if (l1_ == NULL)
-	    {
-	       if (p1_ == NULL)
-	   	       #0=#(#[AST_QNAME], #l2, #p2);
-	       else
-	   	       #0=#(#[AST_QNAME], #l2, #p1);
-	    }
-	    else
-	    {
-	       if (p1_ == NULL)
-	   	       #0=#(#[AST_QNAME], #l1, #p2);
-	       else
-	   	       #0=#(#[AST_QNAME], #l1, #p1);
+	  l1:localPart1 <<#0=#(#[AST_QNAME], #l1);>>
+	| l2:localPart2 <<#0=#(#[AST_QNAME], #l2);>>
+	| q:FULLQNAME
+	<<
+	   std::string qn = $q->getText(), prefix, local;
+	   int pos = qn.find(':');//always must found colon (:)
+	   prefix = qn.substr(0, pos);
+	   local = qn.substr(pos+1, qn.size()-(pos+1));
+	   #0=#(#[AST_QNAME], #[local.c_str(), AST_LOCAL_NAME], #[prefix.c_str(), AST_PREFIX]);
+	>>
+;
+*/
 
-	    }
-	  >>
+
+qname!:
+     << ASTBase* pref = NULL, *local= NULL;>>
+	( {(p1:prefixPart1 <<pref=#p1;>> | p2:prefixPart2 <<pref=#p2;>>| p3:prefixPart3 <<pref=#p3;>>) COLON} (l1:localPart1 <<local=#l1;>> | l2:localPart2 <<local=#l2;>> | l3:localPart3 <<local=#l3;>>)
 	)
+	  <<
+	     #0=#(#[AST_QNAME], local, pref);
+	  >>
+
 ;
 
 prefix!:
@@ -179,10 +182,27 @@ localPart2!:
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_LOCAL_NAME];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_LOCAL_NAME];>>
 	| CASE <<#0=#["case", AST_LOCAL_NAME];>>
-	| LDOCUMENT <<#0=#["document", AST_LOCAL_NAME];>>
+;
+
+localPart3!:
+	  LDOCUMENT <<#0=#["document", AST_LOCAL_NAME];>>
 	| IMPORT <<#0=#["import", AST_LOCAL_NAME];>>
 	| MODULE <<#0=#["module", AST_LOCAL_NAME];>>
-;
+	| VALIDATE <<#0=#["validate", AST_LOCAL_NAME];>>
+	| LAX <<#0=#["lax", AST_LOCAL_NAME];>>
+	| STRICT_ <<#0=#["strict", AST_LOCAL_NAME];>>
+	| SSHEMA <<#0=#["schema", AST_LOCAL_NAME];>>
+	| BASEURI <<#0=#["base-uri", AST_LOCAL_NAME];>>
+	| CONSTRUCTION <<#0=#["construction", AST_LOCAL_NAME];>>
+	| ORDERING <<#0=#["ordering", AST_LOCAL_NAME];>>
+	| ORDERED <<#0=#["ordered", AST_LOCAL_NAME];>>
+	| UNORDERED <<#0=#["unordered", AST_LOCAL_NAME];>>
+	| COPYNAMESPACE <<#0=#["copy-namespaces", AST_LOCAL_NAME];>>
+	| NOPRESERVE <<#0=#["no-preserve", AST_LOCAL_NAME];>>
+	| INHERIT <<#0=#["inherit", AST_LOCAL_NAME];>>
+	| NOINHERIT <<#0=#["no-inherit", AST_LOCAL_NAME];>>
+	| VARIABLE <<#0=#["variable", AST_LOCAL_NAME];>>
+;	
 
 prefixPart1!:
   	  nn:NCNAME <<#0=#[$nn->getText(), AST_PREFIX];>>
@@ -307,14 +327,29 @@ prefixPart2!:
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_PREFIX];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_PREFIX];>>
 	| CASE <<#0=#["case", AST_PREFIX];>>
-	| LDOCUMENT <<#0=#["document", AST_PREFIX];>>
+;
+
+prefixPart3!:
+	  LDOCUMENT <<#0=#["document", AST_PREFIX];>>
 	| IMPORT <<#0=#["import", AST_PREFIX];>>
 	| MODULE <<#0=#["module", AST_PREFIX];>>
+	| VALIDATE <<#0=#["validate", AST_PREFIX];>>
+	| LAX <<#0=#["lax", AST_PREFIX];>>
+	| STRICT_ <<#0=#["strict", AST_PREFIX];>>
+	| SSHEMA <<#0=#["schema", AST_PREFIX];>>
+	| BASEURI <<#0=#["base-uri", AST_PREFIX];>>
+	| CONSTRUCTION <<#0=#["construction", AST_PREFIX];>>
+	| ORDERING <<#0=#["ordering", AST_PREFIX];>>
+	| ORDERED <<#0=#["ordered", AST_PREFIX];>>
+	| UNORDERED <<#0=#["unordered", AST_PREFIX];>>
+	| VARIABLE <<#0=#["variable", AST_PREFIX];>>
 ;
+
 
 ncname!: 
 	  l1:localPart1 <<#0=#l1;>>
 	| l2:localPart2 <<#0=#l2;>>
+	| l3:localPart3 <<#0=#l3;>>
 ;
 
 /*

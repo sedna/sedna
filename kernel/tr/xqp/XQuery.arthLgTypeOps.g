@@ -144,6 +144,12 @@ intersectExceptExpr!:
 valueExpr!:
 	  pe:pathExpr <<#0=#pe;>>
 //	| validateExpr
+	| ee:extensionExpr <<#0=#ee;>>
+;
+
+validateExpr!:
+	VALIDATE {(LAX | STRICT_)} LBRACE expr RBRACE
+	<<throw USER_EXCEPTION(XQST0075);>>	
 ;
 
 typeswitchExpr!:
@@ -171,13 +177,22 @@ caseClauses!:
 	  >>
 	)+
 ;
-/*
+
 extensionExpr!:
-	(pragma)+ LBRACE {expr} RBRACE
+	p:pragmas LBRACE {e:expr} RBRACE
+	<<#0=#(#[AST_EXTENSION_EXPR], #p, #e);>>
 ;
 
-pragma!:
-	PR_OPEN q:qname ((WS|NL) PR_CONTENT ) PR_CLOSE
+pragmas!:
+	<<#0=#(#[AST_PRAGMAS]);>>
+	(PR_OPEN  {c:prcontent}  PR_CLOSE 
+
+	 <<#0->addChild(#(#[AST_PRAGMA], #c));>>	
+	)+
 ;
-*/
+
+prcontent!:
+	p:PR_CONTENT <<#0=#[$p->getText(), AST_STRING_CONST];>>
+;
+
 }
