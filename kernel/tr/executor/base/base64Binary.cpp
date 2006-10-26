@@ -105,7 +105,11 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
 {
     (*valid) = false;
 
-    if(start == end) return; //empty string is not allowed here
+    if(start == end)
+    {
+        (*valid) = true;
+        return;
+    }
     
     unsigned char previous = *start;
     unsigned char value;
@@ -140,13 +144,13 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
                 {
                     
                     case 3: 
-                        if(!is_b16_char(last_saved_char)) return;            //previous char must be from the b16 char-set;
+                        if(!is_b16_char(last_saved_char)) return;    //previous char must be from the b16 char-set;
                         *res_it = value;
                         ++res_it;
                         break;
 
                     case 2:
-                        if(!is_b04_char(last_saved_char)) return;            //previous char must be from the b04 char-set;
+                        if(!is_b04_char(last_saved_char)) return;     //previous char must be from the b04 char-set;
                         
                         *res_it = value;                              //save current "=" before go on;
                         ++res_it;                 
@@ -169,7 +173,7 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
         ++start;
     }
 
-    //if we did not reach the tail symbol "=" than we must chech that we do not have 
+    //if we did not reach the tail symbol "=" then we must chech that we do not have 
     //spaces at the end and that we have the whole number of the (b64 b64 b64 b64) groups. 
     if(!end_reached && (previous == ' ' || (counter & 3) != 0)) return;
 

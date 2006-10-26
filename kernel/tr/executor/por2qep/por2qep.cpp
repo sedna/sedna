@@ -523,34 +523,35 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else throw USER_EXCEPTION2(SE1004, "155");
 
     // !xs!anySimpleType --> xs_anySimpleType
+    // also xs:anyAtomicType
 
     return xtype;
 }
 
 orb_modifier make_order_by_modifier(scheme_list *lst)
 {
-	if (   lst->size() != 2
+    if (   lst->size() != 2
         || lst->at(0).type != SCM_SYMBOL
         || lst->at(1).type != SCM_SYMBOL)
         throw USER_EXCEPTION2(SE1004, "156");
+        
+    orb_modifier m;    
+        
+    string status = string(lst->at(0).internal.symb);
+    
+    if(status == "greatest") m.status = ORB_EMPTY_GREATEST;
+    else if(status == "least") m.status = ORB_EMPTY_LEAST;
+    else if(status == "default")
+    	m.status = tr_globals::st_ct.empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;	
+    else throw USER_EXCEPTION2(SE1004, "157");
 
-	orb_modifier m;    
-
-	string status = string(lst->at(0).internal.symb);
-
-	if(status == "greatest") m.status = ORB_EMPTY_GREATEST;
-	else if(status == "least") m.status = ORB_EMPTY_LEAST;
-	else if(status == "default")
-		m.status = tr_globals::st_ct.empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;	
-	else throw USER_EXCEPTION2(SE1004, "157");
-
-	string order = string(lst->at(1).internal.symb);
-	
-	if(order == "ascending" || order == "default") m.order = ORB_ASCENDING;
-	else if(order == "descending") m.order = ORB_DESCENDING;
-	else throw USER_EXCEPTION2(SE1004, "158");
-
-	return m;
+    string order = string(lst->at(1).internal.symb);
+    
+    if(order == "ascending" || order == "default") m.order = ORB_ASCENDING;
+    else if(order == "descending") m.order = ORB_DESCENDING;
+    else throw USER_EXCEPTION2(SE1004, "158");
+    
+    return m;
 }
 
 
