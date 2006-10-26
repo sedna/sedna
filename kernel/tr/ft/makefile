@@ -10,8 +10,6 @@ VPATH = $(PP)/kernel/tr $(PP)/libs/dtsearch/common
 
 include $(PP)/Makefile.include
 
-
-
 all: libft$(LIB_EXT)
 	@echo ===================================================================
 	@echo FT DONE
@@ -34,6 +32,13 @@ DTOBJS = dtsviewr$(OBJ_EXT) \
 		       dinputstream$(OBJ_EXT) \
 		       dtsfc$(OBJ_EXT) \
 		       dtsearch$(OBJ_EXT)
+
+
+CPPFLAGS_DTS = $(filter-out -I../../../kernel/common%,$(CPPFLAGS))
+
+dfile$(OBJ_EXT): dfile.cpp
+	$(CCX) $(CPPFLAGS_DTS) $<
+
 
 ################################################################################
 # ft.lib                                                                       #
