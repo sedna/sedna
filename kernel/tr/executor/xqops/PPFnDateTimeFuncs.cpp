@@ -226,12 +226,17 @@ void PPFnDateTimeFunc::next  (tuple &t)
 		case adjustDateTimeToTimezone:
 		case adjustDateToTimezone:
 		case adjustTimeToTimezone:
+					// extract implicit timezone from static context and use it to adjust the datetime
+					if (!tr_globals::st_ct.datetime_initialized)
+						tr_globals::st_ct.set_datetime();
+
 					if (tc_type != xs_date &&
 						tc_type != xs_dateTime &&
 						tc_type != xs_time)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
-					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(tc.get_xs_dateTime(), tc_type)).getPackedDateTime(), tc_type));
+					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(tc.get_xs_dateTime(), tc_type),
+										  tr_globals::st_ct.implicit_timezone).getPackedDateTime(), tc_type));
 					break;
 		default:		throw USER_EXCEPTION2(XPTY0004, "Invalid date/time function");
 		}

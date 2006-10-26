@@ -27,7 +27,7 @@ typedef __int64 bigint;
 
 typedef struct 
 {
-  unsigned int year;
+  int year;
   unsigned int day:9;
   unsigned int month:4;
   unsigned int hour:5;

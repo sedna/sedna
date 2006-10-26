@@ -581,6 +581,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 	fNewDate.setValue(XMLDateTime::tz_mm, dt.getValue(XMLDateTime::tz_mm));
 
     	fNewDate.setValue(XMLDateTime::Day, dt.getValue(XMLDateTime::Day) + fDuration.getValue(XMLDateTime::Day) + carry);
+	carry = 0;
 
 	//add months
     	temp = dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month) + carry;
@@ -622,6 +623,22 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         fNewDate.setValue(XMLDateTime::CentYear, fNewDate.getValue(XMLDateTime::CentYear) +  fQuotient(temp, 1, 13));
     }
 
+    //Handle the transition of CentYear through 0. 0 is not a valid year
+    if (dt.getValue(XMLDateTime::CentYear) < 0 && fNewDate.getValue(XMLDateTime::CentYear) >= 0 )
+	fNewDate.setValue(XMLDateTime::CentYear, fNewDate.getValue(XMLDateTime::CentYear) + 1);
+
+    else if (dt.getValue(XMLDateTime::CentYear) > 0 && fNewDate.getValue(XMLDateTime::CentYear) <= 0 )
+	fNewDate.setValue(XMLDateTime::CentYear, fNewDate.getValue(XMLDateTime::CentYear) - 1);
+
+
+    if (fNewDate.getValue(XMLDateTime::Type) == xs_date)
+    {
+	fNewDate.setValue(XMLDateTime::Hour, 0);
+	fNewDate.setValue(XMLDateTime::Minute, 0);
+	fNewDate.setValue(XMLDateTime::Second, 0);
+	fNewDate.setValue(XMLDateTime::MiliSecond, 0);
+    }
+	 
     return fNewDate;
 }
 
@@ -649,6 +666,7 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 {
 	XMLDateTime fNewDate = dt;
 
+
 	// compute the difference between the two timezones
 	XMLDateTime dtTz = dt.getTimezone();
 	XMLDateTime diff = subtractDurations(tz, dtTz);
@@ -656,11 +674,20 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 	int utc_type = ( tz.getValue(XMLDateTime::Hour) < 0 )?XMLDateTime::UTC_NEG:XMLDateTime::UTC_POS;
 	int neg = utc_type==XMLDateTime::UTC_NEG?-1:1;
 
-	fNewDate.setValue(XMLDateTime::utc, utc_type);
+	// check the timezone
+	if (neg*tz.getValue(XMLDateTime::Hour) > 14 || (neg*tz.getValue(XMLDateTime::Hour) == 14 && tz.getValue(XMLDateTime::Minute) != 0))
+		throw USER_EXCEPTION2(FODT0003, "invalid timezone hours, values must be between -14 and 14");
+	if (tz.getValue(XMLDateTime::Second) != 0 || tz.getValue(XMLDateTime::MiliSecond) !=0 )
+		throw USER_EXCEPTION2(FODT0003, "invalid timezone, non-integral number of minutes");
+
+ 	fNewDate.setValue(XMLDateTime::utc, utc_type);
 	fNewDate.setValue(XMLDateTime::tz_hh, neg*tz.getValue(XMLDateTime::Hour));
 	fNewDate.setValue(XMLDateTime::tz_mm, neg*tz.getValue(XMLDateTime::Minute));
 
-	fNewDate = addDurationToDateTime(fNewDate, diff);
+	//If the dateTime has an unknown timezone, simply set the timezone. Otherwise adjust
+	// the dateTime to the new timezone.
+	if (dt.getValue(XMLDateTime::utc) != XMLDateTime::UTC_UNKNOWN)
+		fNewDate = addDurationToDateTime(fNewDate, diff);
 
 	return fNewDate;
 }
@@ -711,7 +738,7 @@ int XMLDateTime::compare(const XMLDateTime& lValue
     XMLDateTime rTemp = rValue;
 
     // Special case for xs:time, we need to use the comparison for dateTime
-    // with an arbitrary dateTime value
+    // with an arbitrary dateTime value and also we need to normalize the hours
 
     if (lTemp.getValue(XMLDateTime::Type) == xs_time)
     {
@@ -721,11 +748,16 @@ int XMLDateTime::compare(const XMLDateTime& lValue
 	lTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
 	rTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
 
-	lTemp.setValue(XMLDateTime::CentYear, MONTH_DEFAULT);
-	rTemp.setValue(XMLDateTime::CentYear, MONTH_DEFAULT);
+	lTemp.setValue(XMLDateTime::Month, MONTH_DEFAULT);
+	rTemp.setValue(XMLDateTime::Month, MONTH_DEFAULT);
 
-	lTemp.setValue(XMLDateTime::CentYear, DAY_DEFAULT);
-	rTemp.setValue(XMLDateTime::CentYear, DAY_DEFAULT);
+	lTemp.setValue(XMLDateTime::Day, DAY_DEFAULT);
+	rTemp.setValue(XMLDateTime::Day, DAY_DEFAULT);
+
+	if (lTemp.getValue(XMLDateTime::Hour) == 24)
+		lTemp.setValue(XMLDateTime::Hour, 0);
+	if (rTemp.getValue(XMLDateTime::Hour) == 24)
+		rTemp.setValue(XMLDateTime::Hour, 0);
     }	
 
     lTemp.normalize();
@@ -778,6 +810,7 @@ int XMLDateTime::compare(const XMLDateTime& lValue
    */
    if (lTemp.getValue(Type) ==xs_date && rTemp.getValue(Type) == xs_date && (   lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD))
    {
+
 	int lNeg = lTemp.getValue(utc) == UTC_POS ? 1 : -1;
 	int rNeg = rTemp.getValue(utc) == UTC_POS ? 1 : -1;
 
@@ -1620,9 +1653,11 @@ void XMLDateTime::normalizeDateTime()
     // Special case for xs:date
     if (getValue(Type) == xs_date && (getValue(Hour) != 0 || getValue(Minute) != 0 ))
     {
-	setValue(utc, UTC_NEG);
-	setValue(tz_hh, getValue(Hour));
-	setValue(tz_mm, getValue(Minute));
+	negate = (getValue(Hour)<0 || getValue(Minute)<0) ? -1 : 1;
+
+	setValue(utc, negate==1 ? UTC_NEG : UTC_POS );
+	setValue(tz_hh, negate*getValue(Hour));
+	setValue(tz_mm, negate*getValue(Minute));
 	setValue(Hour, 0);
 	setValue(Minute, 0);
     }
@@ -1776,12 +1811,12 @@ void XMLDateTime::validateDateTime() const
     //validate time-zone hours
     if ( (abs(getValue(tz_hh)) > 14) ||
          ((abs(getValue(tz_hh)) == 14) && (getValue(tz_mm)!= 0)) )
-	throw USER_EXCEPTION2(FODT0003, "invalid timezone hours, values must be between -14 and 14");
+	throw USER_EXCEPTION2(FORG0001, "invalid timezone hours, values must be between -14 and 14");
         //"Time zone should have range -14..+14");
 
     //validate time-zone minutes
     if ( abs(getValue(tz_mm)) > 59 )
-	throw USER_EXCEPTION2(FODT0003, "invalid timezone minutes, values must be between 0 and 59");
+	throw USER_EXCEPTION2(FORG0001, "invalid timezone minutes, values must be between 0 and 59");
         //("Minute must have values 0-59");
 	
     return;
