@@ -18,12 +18,25 @@ queryProlog!:
 	   | bsd:boundarySpaceDecl
 	     <<if(prolog == NULL) prolog=#bsd; else prolog->append(#bsd);>>
 
+	   | dbur:declareBaseURI
+	     <<if(prolog == NULL) prolog=#dbur; else prolog->append(#dbur);>>
 
+	   | dconstr:declareConstruction
+	     <<if(prolog == NULL) prolog=#dconstr; else prolog->append(#dconstr);>>
+
+	   | dord:declareOrdering
+	     <<if(prolog == NULL) prolog=#dord; else prolog->append(#dord);>>
+
+	   | dcns:declareCopyNamespace
+	     <<if(prolog == NULL) prolog=#dcns; else prolog->append(#dcns);>>
 
 	   | dopt:declareOption
 	     <<if(prolog == NULL) prolog=#dopt; else prolog->append(#dopt);>>
 
-	   | imp:importModule <<if(prolog == NULL) prolog=#imp; else prolog->append(#imp);>>
+	   | dv:declareVar
+	     <<if(prolog == NULL) prolog=#dv; else prolog->append(#dv);>>
+
+	   | imp:import <<if(prolog == NULL) prolog=#imp; else prolog->append(#imp);>>
 
 	  ) SEMICOLON
 	)*
@@ -81,6 +94,12 @@ namespaceDecl!:
 	>>
 ;
 
+declareVar!:
+	DECLARE VARIABLE v:varRef {td:typeDeclaration} 
+	(  COLONEQUALS e:exprSingle <<#0=#(#[AST_VAR_DECL_EXPR], #v, #e, #td);>>
+	 | EXTERNAL <<#0=#(#[AST_VAR_DECL_EXT], #v, #td);>>
+	)
+;
 
 defaultDecls!:
 	DECLARE DEFAULT 
@@ -98,6 +117,7 @@ defaultDecls!:
 
 	      | LEAST <<#0=#[AST_DEF_ORDER_EL];>>
 	     )
+	 | COLLATION s3:STRINGLITERAL <<#0=#(#[AST_DEF_COLL], #[$s3->getText(), AST_STRING_CONST]);>>
 
 
 	 )
@@ -113,14 +133,54 @@ declareOption!:
 	DECLARE OPTION qn:qname s:STRINGLITERAL
 	<<#0=#(#[AST_DECLARE_OPT], #qn, #[$s->getText(), AST_STRING_CONST]);>>
 ;
-/*
-import!:
-	importModule
+
+declareBaseURI!:
+
+	DECLARE BASEURI s:STRINGLITERAL
+	<<#0=#(#[AST_DECL_BURI], #[$s->getText(), AST_STRING_CONST]);>>
 ;
-*/
+
+declareConstruction!:
+	DECLARE CONSTRUCTION (STRIP <<#0=#[AST_DECL_CONSTR_S];>> | PRESERVE <<#0=#[AST_DECL_CONSTR_P];>>)
+;
+
+declareOrdering!:
+	DECLARE ORDERING (ORDERED <<#0=#[AST_DECL_ORD];>> | UNORDERED <<#0=#[AST_DECL_UNORD];>>)
+;
+
+declareCopyNamespace!:
+	DECLARE COPYNAMESPACE p:preserveMode COMMA i:inheritMode
+	<<#0=#(#[AST_DECL_COPY_NS], #p, #i);>>
+;
+
+preserveMode!:
+	  PRESERVE  <<#0=#["preserve", AST_STRING_CONST];>>
+	| NOPRESERVE <<#0=#["no-preserve", AST_STRING_CONST];>>
+;
+
+inheritMode!:
+	  INHERIT <<#0=#["inherit", AST_STRING_CONST];>>
+	| NOINHERIT <<#0=#["no-inherit", AST_STRING_CONST];>>
+;
+
+import!:
+	  importModule
+	| importSchema
+;
+
 importModule!:
 	IMPORT {MODULE NAMESPACE ncname EQUAL}   STRINGLITERAL {AT_ STRINGLITERAL  (COMMA  STRINGLITERAL)*}
-	<<throw USER_EXCEPTION(XQST0016 );>>
+	<<throw USER_EXCEPTION(XQST0016);>>
+;
+
+importSchema!:
+	IMPORT SSHEMA { schemaPrefix } STRINGLITERAL  {AT_ STRINGLITERAL (COMMA STRINGLITERAL)*}
+	<<throw USER_EXCEPTION(XQST0009);>>
+;
+
+schemaPrefix!:
+	  (NAMESPACE ncname  EQUAL)
+	| (DEFAULT ELEMENT NAMESPACE)
 ;
 
 }

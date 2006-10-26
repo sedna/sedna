@@ -59,7 +59,10 @@ virtual void errstd(const char *s){
 #token IN_ "in"
 #token WHERE "where"
 #token STABLE "stable"
+#token ORDERING "ordering"
+#token ORDERED "ordered"
 #token ORDER "order"
+#token UNORDERED "unordered"
 #token BY "by"
 #token CBY "BY"
 #token AT_ "at"
@@ -115,7 +118,17 @@ virtual void errstd(const char *s){
 #token TREAT "treat"
 #token IMPORT "import"
 #token MODULE "module"
-
+#token VALIDATE "validate"
+#token LAX "lax"
+#token STRICT_ "strict"
+#token SSHEMA "schema"
+#token BASEURI "base\-uri"
+#token CONSTRUCTION "construction"
+#token COPYNAMESPACE "copy\-namespaces"
+#token NOPRESERVE "no\-preserve"
+#token INHERIT "inherit"
+#token NOINHERIT "no\-inherit"
+#token VARIABLE "variable"
 
 /*  This keywords are added for update expressions      */
 #token UPDATE "UPDATE" <<mode(UPDATE_CLASS);>>
@@ -202,6 +215,14 @@ virtual void errstd(const char *s){
 #token INTERSECT "intersect"
 #token EXCEPT "except"
 
+#token PR_OPEN "\(\#"
+
+<<
+  mode(PRAGMA_CONTENT);
+  Lexical_Analizer_State.push(START);
+>>
+
+
 #token SLASH "\/"
 #token SLASHSLASH "\/\/"
 #token DOT "."
@@ -256,6 +277,7 @@ virtual void errstd(const char *s){
 
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*"
 #token NCNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" //it is the subset of specification
+//#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 #token INTEGERLITERAL  "[0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DOUBLELITERAL   "((\.[0-9]+) | ([0-9]+{\.[0-9]*})) (e | E) {\+| \-} [0-9]+" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
 #token DECIMALLITERAL  "(\.[0-9]+) |  ([0-9]+\.[0-9]*)" <<replstr((std::string("\"") + lextext() + std::string("\"")).c_str());>>
@@ -339,6 +361,7 @@ virtual void errstd(const char *s){
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*"
 #token XMLNS "xmlns"
 #token NCNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" //it is the subset of specification
+//#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 
 
 //#token 	     "[\ \t]*" <<skip();>>
@@ -494,6 +517,7 @@ virtual void errstd(const char *s){
 >>
 //#token QNAME "[_a-zA-Z]([a-zA-Z0-9_\-])*" <<printf("xml end tag QNAME\n");>>
 #token NCNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*" //it is the subset of specification
+//#token FULLQNAME "[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*:[_a-zA-Z\0x80-\0xfe]([a-zA-Z0-9_\-\.\0x80-\0xfe])*"
 #token COLON "\:"
 #token WS "[\ \t\r]+"
 #token NL "([\n])+" 
@@ -778,7 +802,13 @@ virtual void errstd(const char *s){
 
 #lexclass PRAGMA_CONTENT
 
+#token PR_CLOSE "\#\)"
+<<
+  mode (Lexical_Analizer_State.top());
+  Lexical_Analizer_State.pop();
+>>
 
+#token PR_CONTENT "(~[\#])*" <<printf("PR_CONTENT=%s\n", lextext());>>
 
 #lexclass UPDATE_CLASS
 

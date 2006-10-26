@@ -93,6 +93,7 @@ primaryExpr!:
 	| cie:contextItemExpr              <<#0=#cie;>>
 	| fc:functionCall                  <<#0=#fc;>>
 	| c:constructor                    <<#0=#c;>>
+	| v:validateExpr                   <<#0=#v;>>
 ;
 
 contextItemExpr!:

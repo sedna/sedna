@@ -34,6 +34,7 @@ arithmLogicalTypeExpr![in_context in_c] >[out_context out_c]:
 	| rpe:relativePathExpr[in_c] >[out_c]
 
 	  <<#arithmLogicalExpr=rpe;>>
+	| exe:extensionExpr[in_c] >[out_c]  <<#arithmLogicalExpr=exe;>>
 ;
 
 
@@ -57,4 +58,18 @@ caseClauses![in_context in_c] >[out_context out_c]:
 	     <<#caseClauses->addChild(#(#["case"], #(#["type"], t), #(#["fun-def"], #(#[], #(#["!xs!anytype"], v)), e)));>>
 	   )+
 	 )
+;
+
+extensionExpr![in_context in_c] >[out_context out_c]:
+	<<
+	  SORASTBase* pragmas=#["pragmas"];
+	>>
+
+	#(AST_EXTENSION_EXPR #(AST_PRAGMAS 
+	   (#(AST_PRAGMA q:qname s:AST_STRING_CONST)
+	      <<pragmas->addChild(#(#["pragma"], q, #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"") + std::string(s->getText()) + std::string("\"")])));
+	      >>
+	   )+) {e:expr[in_c] >[out_c]})
+
+	<<#extensionExpr=#(#["extension-expr"], pragmas, e);>>
 ;

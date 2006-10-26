@@ -166,3 +166,40 @@ string replace_charref(char* lex_text)
 
    return text;
 }
+
+/*
+enum pragma_states {START_WS, P_PREFIX, P_LOC_NAME, NEXT_WS, PRCONTENT};
+
+void * extract_pragma_content(char* text, char* qname, char* pr_content)
+{
+  state = START_WS;
+  string loc_name, prefix;
+
+  for (int i=0; i<strlen(text); i++)
+  {
+     if (state == START_WS)
+     {
+         if (text[i] == ' ' || text[i] == '\t' || text[i] == '\r' || text[i] == '\n') continue;
+         else state = P_PREFIX;
+     }
+
+     if (state == P_PREFIX)
+     {
+        if ((text[i] >= 'a' && text[i] <= 'z') || (text[i] >= 'A' && text[i] <= 'Z')  || (text[i] >= '0' && text[i] <= '9') ||
+	     text[i] == '_' || text[i] == '-' || text[i] == '.')
+        {
+             prefix +=text[i];
+             continue;
+        }
+        else
+        if (text[i] == ':')
+        {
+             state = P_LOC_NAME;
+             continue;
+        }
+        else
+        if (text[i] == )
+     }
+  }
+}
+*/
