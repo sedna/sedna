@@ -373,6 +373,14 @@ static inline void utf8_matches_bool (const Iterator &start, const Iterator &end
 	*res = matcher.matches(start, end, start, match_flags);
 }
 
+static inline void utf8_matches_bool_c (const char *str, const PcrePattern &re, bool *res)
+{
+	int match_flags = PCRE_NO_UTF8_CHECK;
+	PcreMatcher<const char*> matcher(re);
+
+	*res = matcher.matches(str, str+strlen(str), str, match_flags);
+}
+
 bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 {
 	try
@@ -380,6 +388,25 @@ bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 		PcrePattern re(regex, PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
 		bool res;
 		STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(utf8_matches_bool, tc, re, &res);
+		return res;
+	}
+	catch (const PcreCompileException &e)
+	{
+		throw USER_EXCEPTION2(FORX0002, e.what());
+	}
+	catch (const std::exception &e)
+	{
+		throw USER_EXCEPTION2(FORX0002, e.what());
+	}
+}
+
+bool CollationHandler_utf8::matches (const char *tc, const char *regex)
+{
+	try
+	{
+		PcrePattern re(regex, PCRE_UTF8 | PCRE_NO_UTF8_CHECK);
+		bool res;
+		utf8_matches_bool_c(tc, re, &res);
 		return res;
 	}
 	catch (const PcreCompileException &e)

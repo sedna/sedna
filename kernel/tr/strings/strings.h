@@ -181,6 +181,7 @@ public:
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
+	virtual bool matches (const char *tc, const char *regex) = 0;
 };
 
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
