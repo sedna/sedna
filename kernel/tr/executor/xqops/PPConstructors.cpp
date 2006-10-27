@@ -1111,6 +1111,8 @@ void PPPIConstructor::next  (tuple &t)
 				throw USER_EXCEPTION(XQDY0041);
 			}
 		}
+		if(collation_handler->matches(name, "^(?i:xml)$"))
+			throw USER_EXCEPTION(XQDY0064);
 		const char* value=at_value;
 		tuple_cell res;
 		int size;
