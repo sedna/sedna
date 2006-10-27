@@ -722,6 +722,12 @@
               `(1 (PPIntersect ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )
              
+             ; *** 2 Accessors *** 
+             ((eq? op-name '!fn!nilled)
+              `(1 (PPFnNilled ,(l2p:any-lr-node2por (car node)))))
+             ((eq? op-name '!fn!base-uri)
+              `(1 (PPFnBaseURI ,(l2p:any-lr-node2por (car node)))))
+             
              ; *** URI-related functions *** 
              ((eq? op-name '!fn!static-base-uri)
               `(1 (PPFnStaticBaseUri)))
@@ -915,7 +921,7 @@
              
              ; *** node-name ***
              ((eq? op-name '!fn!node-name) 
-              `(1 (PPDmNodeName ,(l2p:any-lr-node2por (car node))))
+              `(1 (PPFnNodeName ,(l2p:any-lr-node2por (car node))))
              )
              
              ; *** !fn!name ***

@@ -494,7 +494,9 @@ tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value)
 xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 {
     xmlscm_type xtype;
-    if (strcmp(type, "!xs!untypedAtomic") == 0)           xtype = xs_untypedAtomic;
+
+    if (strcmp(type, "!xs!anyAtomicType") == 0)           xtype = xs_anyAtomicType;
+    else if (strcmp(type, "!xs!untypedAtomic") == 0)      xtype = xs_untypedAtomic;
     else if (strcmp(type, "!xs!gYearMonth") == 0)         xtype = xs_gYearMonth;
     else if (strcmp(type, "!xs!gYear") == 0)              xtype = xs_gYear;
     else if (strcmp(type, "!xs!gMonthDay") == 0)          xtype = xs_gMonthDay;
@@ -542,7 +544,6 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else throw USER_EXCEPTION2(SE1004, "155");
 
     // !xs!anySimpleType --> xs_anySimpleType
-    // also xs:anyAtomicType
 
     return xtype;
 }
@@ -737,6 +738,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPSequence(cxt, arr);
     }
+
     else if (op == "PPDmNodeKind")
     {
         if (   lst->size() != 2
@@ -746,15 +748,39 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPDmNodeKind(cxt, 
                                 make_pp_op(cxt, lst->at(1).internal.list));
     }
-    else if (op == "PPDmNodeName")
+    else if (op == "PPFnNodeName")
     {
         if (   lst->size() != 2
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "14");
 
-        opit = new PPDmNodeName(cxt, 
+        opit = new PPFnNodeName(cxt, 
                                 make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnBaseURI")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "15");
+
+        opit = new PPFnBaseURI(cxt, 
+                               make_pp_op(cxt, lst->at(1).internal.list));
+    }
+    else if (op == "PPFnNilled")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "16");
+
+        opit = new PPFnNilled(cxt, 
+                              make_pp_op(cxt, lst->at(1).internal.list));
+    }
+
+
+
+
+
+/* !!! DELETE THIS LATER    !!!*/
     else if (op == "PPDmStringValue")
     {
         if (   lst->size() != 2
@@ -773,6 +799,11 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPDmTypedValue(cxt, 
                                   make_pp_op(cxt, lst->at(1).internal.list));
     }
+/* !!! DELETE THIS LATER    !!!*/
+
+
+
+
     else if (op == "PPFnEmpty")
     {
         if (   lst->size() != 2

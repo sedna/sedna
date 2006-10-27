@@ -13,6 +13,8 @@
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)
 {
+    if (t2 == xs_anyAtomicType) return true;
+
     switch (t1)
     {
         case xs_untypedAtomic		: return false;
