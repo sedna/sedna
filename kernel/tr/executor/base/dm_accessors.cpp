@@ -10,11 +10,12 @@
 #include "PPUtils.h"
 #include "pstr.h"
 #include "d_printf.h"
+#include "node_utils.h"
 
 tuple_cell dm_base_uri(xptr node)
 {
-    // !!!!!!!!!!!!!!!!!!!!!!!!!! this implementation is naive...
-    return tuple_cell::eos();
+    xptr res = getBaseUri(node);
+    return (res == NULL ? tuple_cell::eos() : tuple_cell::node(res));
 }
 
 tuple_cell dm_node_name(xptr node)

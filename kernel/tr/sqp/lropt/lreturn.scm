@@ -242,8 +242,8 @@
      ; Accept zero-or-one items for each argument,
      ; return zero-or-one item in the result
      ((; *** 2 Accessors
-       !fn!node-name
-       !fn!string !fn!document-uri
+       !fn!node-name !fn!nilled
+       !fn!string !fn!base-uri !fn!document-uri
        ; *** XQuery datamodel accessors
        !fn!node-kind !fn!string-value !fn!typed-value
        ; *** 6.4 Functions on Numeric Values

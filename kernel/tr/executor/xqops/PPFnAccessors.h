@@ -11,15 +11,94 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPDmNodeKind
+///////////////////////////////////////////////////////////////////////////////
+class PPDmNodeKind : public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn child;
+    bool first_time;
+
+    void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPDmNodeKind(variable_context *_cxt_,
+                 PPOpIn _child_);
+    virtual ~PPDmNodeKind();
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnNodeKind
 ///////////////////////////////////////////////////////////////////////////////
 typedef PPDmNodeKind PPFnNodeKind;
 
 
+///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNodeName
 ///////////////////////////////////////////////////////////////////////////////
-typedef PPDmNodeName PPFnNodeName;
+class PPFnNodeName : public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn child;
+    bool first_time;
+
+    void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnNodeName(variable_context *_cxt_,
+                 PPOpIn _child_);
+    virtual ~PPFnNodeName();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNilled
+///////////////////////////////////////////////////////////////////////////////
+class PPFnNilled : public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn child;
+    bool first_time;
+
+    void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnNilled(variable_context *_cxt_,
+               PPOpIn _child_);
+    virtual ~PPFnNilled();
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,6 +155,32 @@ public:
     virtual ~PPFnData();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnBaseURI
+///////////////////////////////////////////////////////////////////////////////
+class PPFnBaseURI : public PPIterator
+{
+protected:
+    // obtained parameters and local data
+    PPOpIn child;
+    bool first_time;
+
+    void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnBaseURI(variable_context *_cxt_,
+                PPOpIn _child_);
+    virtual ~PPFnBaseURI();
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDocumentURI

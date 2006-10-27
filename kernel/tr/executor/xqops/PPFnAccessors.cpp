@@ -12,6 +12,320 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+/// PPDmNodeKind
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPDmNodeKind::PPDmNodeKind(variable_context *_cxt_,
+                           PPOpIn _child_) : PPIterator(_cxt_),
+                                             child(_child_)
+{
+}
+
+PPDmNodeKind::~PPDmNodeKind()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPDmNodeKind::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPDmNodeKind::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPDmNodeKind::close ()
+{
+    child.op->close();
+}
+
+void PPDmNodeKind::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        child.op->next(t);
+
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+
+        dm_node_kind_type res = dm_node_kind(child.get(t).get_node());
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+
+        switch (res)
+        {
+        case nk_document				: 
+             t.copy(tuple_cell::atomic_deep(xs_string, "document"));
+             break;
+        case nk_element					: 
+             t.copy(tuple_cell::atomic_deep(xs_string, "element"));
+             break;
+        case nk_attribute				: 
+             t.copy(tuple_cell::atomic_deep(xs_string, "attribute"));
+             break;
+        case nk_text					:
+             t.copy(tuple_cell::atomic_deep(xs_string, "text"));
+             break;
+        case nk_namespace				:
+             t.copy(tuple_cell::atomic_deep(xs_string, "namespace"));
+             break;
+        case nk_processing_instruction	:
+             t.copy(tuple_cell::atomic_deep(xs_string, "processing-instruction"));
+             break;
+        case nk_comment					:
+             t.copy(tuple_cell::atomic_deep(xs_string, "comment"));
+             break;
+        default							: 
+             throw USER_EXCEPTION2(SE1003, "Unexpected value in fn:node-kind");
+        }
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPDmNodeKind::copy(variable_context *_cxt_)
+{
+    PPDmNodeKind *res = new PPDmNodeKind(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPDmNodeKind::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    PPOpIn child;
+    ((PPDmNodeKind*)cur)->children(child);
+
+    void *nk_r;
+    bool nk_s = (child.op->res_fun())(child.op, cxt, nk_r);
+
+    if (!nk_s) // if expression is not strict
+    { // create PPDmNodeKind and transmit state
+        child.op = (PPIterator*)nk_r;
+        r = new PPDmNodeKind(cxt, child);
+        return false;
+    }
+
+    sequence *d_seq = (sequence*)nk_r;
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+    const tuple_cell &tc = d_seq->get_00();
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+
+    dm_node_kind_type res = dm_node_kind(tc.get_node());
+
+    switch (res)
+    {
+        case nk_document				: 
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "document"));
+             return true;
+        case nk_element					: 
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "element"));
+             return true;
+        case nk_attribute				: 
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "attribute"));
+             return true;
+        case nk_text					:
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "text"));
+             return true;
+        case nk_namespace				:
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "namespace"));
+             return true;
+        case nk_processing_instruction	:
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "processing-instruction"));
+             return true;
+        case nk_comment					:
+             r = new sequence(tuple_cell::atomic_deep(xs_string, "comment"));
+             return true;
+        default							: 
+             throw USER_EXCEPTION2(SE1003, "Unexpected value in fn:node-kind");
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNodeName
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnNodeName::PPFnNodeName(variable_context *_cxt_,
+                           PPOpIn _child_) : PPIterator(_cxt_),
+                                             child(_child_)
+{
+}
+
+PPFnNodeName::~PPFnNodeName()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnNodeName::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnNodeName::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnNodeName::close ()
+{
+    child.op->close();
+}
+
+void PPFnNodeName::next  (tuple &t)
+{
+    if (first_time)
+    {
+		child.op->next(t);
+
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+
+        tuple_cell tc = dm_node_name(child.get(t).get_node());
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+
+        if (tc.is_eos()) t.set_eos();
+		else 
+		{
+			t.copy(tc);
+			first_time = false;
+		}
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnNodeName::copy(variable_context *_cxt_)
+{
+    PPFnNodeName *res = new PPFnNodeName(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnNodeName::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    PPOpIn child;
+    ((PPFnNodeName*)cur)->children(child);
+
+    void *nn_r;
+    bool nn_s = (child.op->res_fun())(child.op, cxt, nn_r);
+
+    if (!nn_s) // if expression is not strict
+    { // create PPFnNodeName and transmit state
+        child.op = (PPIterator*)nn_r;
+        r = new PPFnNodeName(cxt, child);
+        return false;
+    }
+
+    sequence *d_seq = (sequence*)nn_r;
+    if (d_seq->size() != 1) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+    const tuple_cell &tc = d_seq->get_00();
+    if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+
+    r = new sequence(dm_node_name(tc.get_node()));
+    return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNilled
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnNilled::PPFnNilled(variable_context *_cxt_,
+                       PPOpIn _child_) : PPIterator(_cxt_),
+                                         child(_child_)
+{
+}
+
+PPFnNilled::~PPFnNilled()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnNilled::open  ()
+{
+    child.op->open();
+}
+
+void PPFnNilled::reopen()
+{
+    child.op->reopen();
+}
+
+void PPFnNilled::close ()
+{
+    child.op->close();
+}
+
+void PPFnNilled::next  (tuple &t)
+{
+    if (first_time)
+    {
+		child.op->next(t);
+        if (t.is_eos()) return;
+
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
+
+        tuple_cell tc = dm_nilled(child.get(t).get_node());
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
+
+        if (tc.is_eos()) t.set_eos();
+		else 
+		{
+			t.copy(tc);
+			first_time = false;
+		}
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnNilled::copy(variable_context *_cxt_)
+{
+    PPFnNilled *res = new PPFnNilled(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnNilled::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnNilled::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnString
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -146,6 +460,80 @@ PPIterator* PPFnData::copy(variable_context *_cxt_)
 bool PPFnData::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnData::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnBaseURI
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnBaseURI::PPFnBaseURI(variable_context *_cxt_,
+                         PPOpIn _child_) : PPIterator(_cxt_),
+                                           child(_child_)
+{
+}
+
+PPFnBaseURI::~PPFnBaseURI()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnBaseURI::open  ()
+{
+    child.op->open();
+}
+
+void PPFnBaseURI::reopen()
+{
+    child.op->reopen();
+}
+
+void PPFnBaseURI::close ()
+{
+    child.op->close();
+}
+
+void PPFnBaseURI::next  (tuple &t)
+{
+    if (first_time)
+    {
+		child.op->next(t);
+        if (t.is_eos()) return;
+
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
+
+        tuple_cell tc = dm_base_uri(child.get(t).get_node());
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
+
+        if (tc.is_eos()) t.set_eos();
+		else 
+		{
+			t.copy(tc);
+			first_time = false;
+		}
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnBaseURI::copy(variable_context *_cxt_)
+{
+    PPFnBaseURI *res = new PPFnBaseURI(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnBaseURI::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnBaseURI::result");
 }
 
 

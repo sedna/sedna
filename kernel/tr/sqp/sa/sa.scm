@@ -419,6 +419,14 @@
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!false)
     ;----------------------------------------
+    ; 2 Accessors
+    (,sa:fn-ns "nilled" 1 1
+     ,(lambda (num-args) `(,sa:type-nodes))
+     ,sa:type-atomic !fn!nilled)
+    (,sa:fn-ns "base-uri" 0 1
+     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
+     ,sa:type-atomic !fn!base-uri)
+    ;----------------------------------------
     ; URI-related functions
     (,sa:fn-ns "static-base-uri" 0 0
      ,(lambda (num-args) '())
@@ -2685,7 +2693,11 @@
                                    (cons fun-name
                                          (map car actual-args))))
                             ; function return type
-                            (list-ref fun-declaration 5))))
+                            (list-ref fun-declaration 5))
+                           vars
+                           funcs
+                           ns-binding
+                           default-ns))
                          ((and (eq? (car form) sa:type-nodes)
                                (eq? (cdar act) sa:type-atomic))
                           (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
@@ -3047,7 +3059,7 @@
       (and new (car new)))))
 
 ; Post processing of the function call
-(define (sa:fun-call-post-proc pair)
+(define (sa:fun-call-post-proc pair vars funcs ns-binding default-ns)
   (let ((expr (car pair)))
     (case (sa:op-name expr)
       ((!fn!index-scan)
@@ -3070,14 +3082,19 @@
              pair   ; everything is ok
              (cl:signal-user-error SE5051 fourth))))
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!string
-                 !fn!local-name !fn!number)
+                 !fn!local-name !fn!number !fn!base-uri)
        (if
         (null? (cdr expr))  ; no argument
-        (cons (list (sa:op-name expr)  ; function name
-                    sa:context-item  ; adding context item as argument
-                    )
-              (cdr pair)  ; return type
-              )
+        (let ((context-pair
+               (sa:analyze-expr
+                sa:context-item  ; adding context item as argument
+                vars funcs ns-binding default-ns)))
+          (and
+           context-pair
+           (cons (list (sa:op-name expr)  ; function name
+                       (car context-pair))
+                 (cdr pair)  ; return type
+                 )))
         pair))
       (else  ; any other function call
        pair))))
