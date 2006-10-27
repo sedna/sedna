@@ -1241,3 +1241,36 @@ bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_nod
     }
     return false;
 }
+
+/* return base uri if exists*/
+xptr getBaseUri(xptr node)
+{
+	xptr tmp=node;
+	while (tmp!=XNULL)
+	{
+		CHECKP(tmp);
+		node_blk_hdr* block=GETBLOCKBYNODE(tmp);
+		schema_node* scm_node=block->snode;
+		sc_ref* sc=scm_node->first_child;
+		int cnt=-1;
+		while (sc!=NULL)
+		{
+			++cnt;
+			if (sc->type==attribute && sc->xmlns!=NULL && my_strcmp("base",sc->name)==0  && my_strcmp("xml",sc->xmlns->prefix)==0)
+			{
+				if (
+					block->dsc_size>=((shft)size_of_node(block)+((shft)cnt+1)*
+									((shft)sizeof(xptr))) 
+									&& 
+					((*(xptr*)(((char*)XADDR(tmp))+(shft)size_of_node(block)+(shft)cnt*
+					((shft)sizeof(xptr))))!=XNULL)) 
+					return (*(xptr*)(((char*)XADDR(tmp))+(shft)size_of_node(block)+
+						 (shft)cnt*((shft)sizeof(xptr))));
+			}
+		sc=sc->next;
+	}
+	tmp=removeIndirection(((n_dsc*)XADDR(tmp))->pdsc);
+	}
+	return XNULL;
+
+}

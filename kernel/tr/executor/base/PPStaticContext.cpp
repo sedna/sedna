@@ -14,6 +14,8 @@ void static_context::init_context()
 	stm.add_str("&","&amp;");
 	stm.add_str("\"","&quot;",pat_attribute);
 	preserve_type=false;
+	cn_preserve=false;
+	cn_inherit=false;
 }
 void static_context::add_char_mapping(const char* str, const char* rep_str,int pc )
 {

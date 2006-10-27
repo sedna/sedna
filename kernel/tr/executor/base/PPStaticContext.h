@@ -43,6 +43,8 @@ struct static_context
     XMLDateTime implicit_timezone;
     bool datetime_initialized;
 	bool preserve_type;
+	bool cn_preserve;
+	bool cn_inherit;
 
     char* base_uri;
 

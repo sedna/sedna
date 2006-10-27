@@ -137,6 +137,10 @@ xptr	getRightmostDescriptorWithPstrInThisBlock(xptr blk,xptr node);
 void getSchemeDescendantsOrSelf(schema_node* scm,const char* uri,const char* name, t_item type,  comp_schema cfun,std::vector<schema_node*> &result);
 void getSchemeDescendants(schema_node* scm,const char* uri,const char* name, t_item type, comp_schema cfun,std::vector<schema_node*> &result);
 
+/* return base uri if exists*/
+xptr getBaseUri(xptr node);
+
+
 /* return the vector of schema node descandants of the current schema node*/
 
 int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item type, comp_schema cfun,xptr& first, xptr*& res);
