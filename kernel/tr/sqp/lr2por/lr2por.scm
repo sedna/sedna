@@ -431,10 +431,11 @@
                                   (if
                                    (null? (cdr pi))  ; no target specified
                                    '()
-                                   (list
+                                   ;(list
                                     (caddr  ; constant value
                                      (cadr pi)  ; yields '(const (type ...) ...)
-                                     ))))
+                                     );)
+                                  ))
                                ,(l2p:any-lr-node2por (car node)))))
 
                            ((or (eq? test-type 'text-test)
@@ -1579,10 +1580,11 @@
                              (null? (cdr item-type))
                              ; no target specified
                              '()
-                             (list
+                             ;(list
                               (caddr  ; constant value
                                (cadr item-type)  ; selects '(const ...)
-                               ))))))
+                               );)
+                             ))))
                       
                       ((eq? (car item-type) 'item-test)
                           `(,por-occ-ind (item)))

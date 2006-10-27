@@ -92,7 +92,7 @@ void PPAxisSelf::next   (tuple &t)
 					if (type!=pr_ins) continue;
 					else
 					{
-						if (strlen(nt_data.ncname_local)==0) return;
+						if (!nt_data.ncname_local) return;
 						else
 						{
 							pi_dsc* desc=(pi_dsc*)XADDR(node);

@@ -81,7 +81,7 @@ void PPAxisFP::close ()
 
 void PPAxisFP::next_processing_instruction(tuple &t)
 {
-    if (strlen(nt_data.ncname_local)==0)
+    if (!nt_data.ncname_local)
 		next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
 	else
 		while (true)

@@ -282,10 +282,11 @@
                            (if
                             (null? (cdr what))  ; no target specified
                             '()
-                            (list
+                            ;(list
                              (caddr  ; constant value
                               (cadr what)  ; yields '(const (type ...) ...)
-                              )))))
+                              );)
+                           )))
                          (else
                           (cl:signal-error
                            "l2p:findPPAbsPath: unknown KindTest")))))))

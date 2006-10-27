@@ -95,6 +95,7 @@ tuple_cell dm_parent(xptr node)
 
 enum dm_string_value_result_type {dsvrt_empty, dsvrt_pstr_both, dsvrt_e_str};
 
+// FIXME: rewrite this code with stmt_str_buf when it appears
 struct dm_string_value_result
 {
     dm_string_value_result_type type;
@@ -120,6 +121,7 @@ void dm_string_value_traverse(xptr node)
 
     switch (node_type)
     {
+        case document:
         case element:   {
                             xptr p = first_child(node);
 
