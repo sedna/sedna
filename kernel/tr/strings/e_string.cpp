@@ -71,7 +71,6 @@ void copy_text(char *dest, xptr src, int count)
     copy_text(dest + real_count, E_STR_PROLONGATION(src), count - real_count);
 }
 
-
 xptr copy_text(xptr src, int count, xptr *txt_blk, int *new_blks_num)
 {
     if (new_blks_num)
@@ -208,7 +207,6 @@ void copy_text(xptr dest, const char *src, xptr *txt_blk, int *new_blks_num)
     copy_text(new_dest + sizeof(e_str_blk_hdr), src + real_count, txt_blk, new_blks_num);
     if (new_blks_num) *new_blks_num += 1;
 }
-
 
 int get_length_of_last_str (xptr pos)
 {

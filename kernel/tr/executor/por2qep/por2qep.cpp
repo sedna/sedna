@@ -152,6 +152,9 @@ void set_axis_parameters(scheme_list *lst,
     else if (type == "var_name") nt_type = node_test_var_name;
     else throw USER_EXCEPTION2(SE1004, "109");
 
+    nt_data.ncname_prefix = NULL;
+    nt_data.ncname_local  = NULL;
+
     if (nt_type == node_test_wildcard_ncname_star)
     {
         if (lst->at(2).type != SCM_STRING)
@@ -180,6 +183,22 @@ void set_axis_parameters(scheme_list *lst,
 
         nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
         nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
+        return;
+    }
+
+    if (nt_type == node_test_processing_instruction)
+    {
+        if (   lst->at(2).type == SCM_LIST
+            && lst->at(2).internal.list->size() == 0)
+        {
+            nt_data.ncname_local  = NULL;
+        }
+        else if (lst->at(2).type == SCM_STRING)
+        {
+            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        }
+        else throw USER_EXCEPTION2(SE1004, "110");
+
         return;
     }
 
