@@ -58,6 +58,9 @@
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(func, tcell_ptr, p1, p2, p3)     STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1, p2, p3))
 #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(func, tcell_ptr, p1, p2, p3, p4) STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1, p2, p3, p4))
 
+
+//TODO: rewrite these 2 classes
+
 // FIXME rename it to op_str_buf
 class t_str_buf
 {
@@ -106,12 +109,12 @@ public:
                                                           return *this; }
     virtual t_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
 };
-/*
-class stmt_str_buf
+
+class stmt_str_buf_impl
 {
 private:
 	xptr m_ptr;
-	e_str m_estr;
+	e_str m_estr_;
 	str_counted_ptr m_str_ptr;
 	int m_len;//FIXME (don't use int type)
 	char *m_buf;
@@ -124,9 +127,9 @@ private:
 	void move_to_estr();
 public:
 #define USTRBUF_INIT m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0)
-	t_str_buf() : USTRBUF_INIT {}
-	t_str_buf(const tuple_cell &tc) : USTRBUF_INIT { append(tc); }
-	t_str_buf(const char *str) : USTRBUF_INIT { append(str); }
+	stmt_str_buf_impl() : USTRBUF_INIT {}
+	stmt_str_buf_impl(const tuple_cell &tc) : USTRBUF_INIT { append(tc); }
+	stmt_str_buf_impl(const char *str) : USTRBUF_INIT { append(str); }
 #undef USTRBUF_INIT
 	text_type get_type() { return m_ttype; }
 	void * get_ptr_to_text() {
@@ -146,15 +149,59 @@ public:
 	void set(const tuple_cell &tc) { clear(); append(tc); }
 	void set(const char *str) { clear(); append(str); }
 	
-	~t_str_buf();
+	tuple_cell get_tuple_cell() { 
 	
-	t_str_buf(const t_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for t_str_buf is not implemented"); }
-    t_str_buf& operator=(const t_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for t_str_buf is not implemented"); }
-	virtual t_str_buf& operator<<(const char *s)	{ this->append(s); 
-                                                          return *this; }
-    virtual t_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
+		if (m_flags & f_text_in_buf)
+		{
+			tuple_cell tc = tuple_cell::atomic(xs_string, m_buf);
+			m_buf = NULL;
+			m_buf_size = 0;
+			m_flags = 0;
+			m_ptr = XNULL;
+			m_len = 0;
+			return tc;
+		}
+		else
+		{
+			tuple_cell tc = (get_type() == text_mem) ?
+							tuple_cell::atomic_deep(xs_string, (char*)get_ptr_to_text())
+						   :tuple_cell::atomic_estr(xs_string, get_size(), *(xptr*)get_ptr_to_text());
+			clear();
+			return tc;
+		}
+	}
+	
+	~stmt_str_buf_impl();
+	
+	stmt_str_buf_impl(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf_impl is not implemented"); }
+    stmt_str_buf_impl& operator=(const stmt_str_buf_impl&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf_impl is not implemented"); }
 };
-*/
+
+class stmt_str_buf
+{
+private:
+	static stmt_str_buf_impl buf_impl;
+	static bool used;
+	stmt_str_buf_impl *m_impl;
+public:
+	stmt_str_buf() { if (used) throw USER_EXCEPTION(SE1003); m_impl = &buf_impl; used = true; }
+	~stmt_str_buf() { used = false; }
+
+	void clear() {m_impl->clear();}
+	void append(const tuple_cell &tc) {m_impl->append(tc);}
+	void append(const char *str) {m_impl->append(str);}
+	void append(const char *str, int add_len) {m_impl->append(str, add_len);}
+
+	tuple_cell get_tuple_cell() {return m_impl->get_tuple_cell(); } //also clears
+
+	stmt_str_buf(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf is not implemented"); }
+    stmt_str_buf& operator=(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf is not implemented"); }
+
+	stmt_str_buf& operator<<(const char *s)	{ this->append(s); 
+                                                          return *this; }
+    stmt_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
+};
+
 
 class CharCounter
 {
@@ -181,6 +228,7 @@ public:
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
+	virtual bool matches (const char *tc, const char *regex) = 0;
 };
 
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
