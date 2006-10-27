@@ -332,9 +332,9 @@ void PPElementConstructor::next  (tuple &t)
 		else
 		{
 			if (leftind!=XNULL)
-				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,xs_untyped,ns);
+				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(st_ct.preserve_type)?xs_anyType:xs_untyped,ns);
 			else
-				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,xs_untyped,ns);
+				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(st_ct.preserve_type)?xs_anyType:xs_untyped,ns);
 			conscnt++;
 		}
 		int cnt=conscnt;
@@ -448,7 +448,7 @@ void PPElementConstructor::next  (tuple &t)
 				{
 					if (typ==document)
 					{
-						xptr res = copy_content(removeIndirection(indir),node,left,false);
+						xptr res = copy_content(removeIndirection(indir),node,left,st_ct.preserve_type);
 						if (res!=XNULL)					
 						{
 							left=res;
@@ -457,7 +457,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 					else
 					{
-						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,st_ct.preserve_type);
 						cont_leftind=((n_dsc*)XADDR(left))->indir;
 					}
 						
@@ -1426,7 +1426,7 @@ void PPDocumentConstructor::next  (tuple &t)
 				{
 					if (typ==document)
 					{
-						xptr res = copy_content(removeIndirection(indir),node,left,false);
+						xptr res = copy_content(removeIndirection(indir),node,left,st_ct.preserve_type);
 						if (res!=XNULL)					
 							left=res;
 						else 
@@ -1437,7 +1437,7 @@ void PPDocumentConstructor::next  (tuple &t)
 						
 					}
 					else
-						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,false);
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,st_ct.preserve_type);
 						
 				}
 				cont_leftind=((n_dsc*)XADDR(left))->indir;
