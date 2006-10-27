@@ -24,6 +24,7 @@
 
 #include "sedna.h"
 #include "XMLDateTime.h"
+#include "PPBase.h"
 
 #ifndef MAX_MEM_STR_SIZE
 #define MAX_MEM_STR_SIZE 100
@@ -70,9 +71,9 @@ static const int NOT_FOUND       = -1;
 
 //define constants to be used in assigning default values for
 //all date/time excluding duration
-static const int YEAR_DEFAULT  = 2000;
-static const int MONTH_DEFAULT = 01;
-static const int DAY_DEFAULT   = 15;
+static const int YEAR_DEFAULT  = 1972;
+static const int MONTH_DEFAULT = 12;
+static const int DAY_DEFAULT   = 31;
 
 static const int DUR_MILISECOND_DIGITS = 3;
 static const int DT_MILISECOND_DIGITS = 5;
@@ -169,7 +170,7 @@ void normalizeMilisAndSeconds( double& milis, int& seconds )
 	if (secondsNeg != milisNeg && seconds != 0 && milis != 0.0)
 	{
 		seconds = seconds + carry - secondsNeg*1;
-		milis = milisNeg * (1.0 - milisNeg * milis);
+		milis = secondsNeg * (1.0 - milisNeg * milis);
 	}
 	else
 		seconds += carry;
@@ -647,10 +648,119 @@ XMLDateTime subtractDurationFromDateTime(const XMLDateTime& d1, const XMLDateTim
 	return addDurationToDateTime(d1, multiplyDuration(d, -1.0));
 }
 
+int rollMonth(int month)
+{
+	if (month < 0)
+		return month+12;
+	if (month >12)
+		return month-12;
+	return month;
+}
+
 XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
 {
-	//FIXME: Implement this function
-	return d1;
+    XMLDateTime result;
+    result.setValue(XMLDateTime::Type, xs_dayTimeDuration);
+
+    // We always subtract the smaller value from the bigger one, therefore the final duration value
+    // will be positive during the calculation and we will negate it in the end, if necessary
+    int neg=1;
+
+    XMLDateTime lTemp = d1, rTemp = d2;
+
+    if (XMLDateTime::compare(d1,d2) == XMLDateTime::LESS_THAN)
+    {
+	neg = -1;
+	lTemp = d2;
+	rTemp = d1;
+    }
+
+    // Normalize the values, if the values are times, add the default date components
+    if (lTemp.getValue(XMLDateTime::Type) == xs_time)
+    {
+
+	lTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
+	rTemp.setValue(XMLDateTime::CentYear, YEAR_DEFAULT);
+
+	lTemp.setValue(XMLDateTime::Month, MONTH_DEFAULT);
+	rTemp.setValue(XMLDateTime::Month, MONTH_DEFAULT);
+
+	lTemp.setValue(XMLDateTime::Day, DAY_DEFAULT);
+	rTemp.setValue(XMLDateTime::Day, DAY_DEFAULT);
+
+	if (lTemp.getValue(XMLDateTime::Hour) == 24)
+		lTemp.setValue(XMLDateTime::Hour, 0);
+	if (rTemp.getValue(XMLDateTime::Hour) == 24)
+		rTemp.setValue(XMLDateTime::Hour, 0);
+    }	
+
+    lTemp.setValue(XMLDateTime::Type, xs_dateTime);
+    rTemp.setValue(XMLDateTime::Type, xs_dateTime);
+
+    if (lTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
+    {	
+	if (!tr_globals::st_ct.datetime_initialized)
+		tr_globals::st_ct.set_datetime();
+	lTemp = adjustToTimezone(lTemp, tr_globals::st_ct.implicit_timezone);
+    }	
+
+    if (rTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
+    {	
+	if (!tr_globals::st_ct.datetime_initialized)
+		tr_globals::st_ct.set_datetime();
+	rTemp = adjustToTimezone(rTemp, tr_globals::st_ct.implicit_timezone);
+    }	
+
+    lTemp.normalize();
+    rTemp.normalize();
+
+    int days = 0;
+
+    for (int i=lTemp.getValue(XMLDateTime::CentYear); i>rTemp.getValue(XMLDateTime::CentYear); i--)
+    {
+	if (isLeapYear(i-1))
+		days += 366;
+	else
+		days += 365;
+    }
+
+    if (lTemp.getValue(XMLDateTime::Month) >= rTemp.getValue(XMLDateTime::Month))
+    {
+	for (int month=rTemp.getValue(XMLDateTime::Month); month < lTemp.getValue(XMLDateTime::Month); month++)
+		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month );
+    }
+    else
+    {
+	for (int month=1;  month < lTemp.getValue(XMLDateTime::Month); month++)
+		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month);
+	for (int month=1; month < rTemp.getValue(XMLDateTime::Month); month++)
+		days -= maxDayInMonthFor( rTemp.getValue(XMLDateTime::CentYear), month );
+    }
+
+    days += lTemp.getValue(XMLDateTime::Day) - rTemp.getValue(XMLDateTime::Day);
+
+    // Process times
+    int seconds = 0;
+    seconds += ( lTemp.getValue(XMLDateTime::Hour) - rTemp.getValue(XMLDateTime::Hour) ) * 60 * 60 ;
+    seconds += ( lTemp.getValue(XMLDateTime::Minute) - rTemp.getValue(XMLDateTime::Minute) ) * 60 ;
+    seconds +=  lTemp.getValue(XMLDateTime::Second) - rTemp.getValue(XMLDateTime::Second) ;
+
+    double milis = ( lTemp.getValue(XMLDateTime::MiliSecond) - rTemp.getValue(XMLDateTime::MiliSecond)) / (double)DT_MILISECOND_MAX_VALUE;
+    normalizeMilisAndSeconds( milis, seconds );
+
+    if (seconds < 0 || milis < 0 )
+    {
+	days --;
+	seconds += 60*60*24;
+	normalizeMilisAndSeconds( milis, seconds );
+    }		
+
+    result.setValue(XMLDateTime::utc, neg==1 ? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
+    result.setValue(XMLDateTime::Day, neg*days);
+    result.setValue(XMLDateTime::Second, neg*seconds);
+    result.setValue(XMLDateTime::MiliSecond, neg*milis*DUR_MILISECOND_MAX_VALUE + neg*0.5);
+    result.normalizeDuration();
+    return result;
 }
 
 XMLDateTime adjustToTimezone(const XMLDateTime& dt)
