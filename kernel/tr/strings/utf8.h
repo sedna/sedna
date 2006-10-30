@@ -13,6 +13,7 @@ public:
 	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str);
 	virtual CharCounter* new_char_counter();
 	virtual void free_char_counter(CharCounter *);
+	virtual tuple_cell toupper(const tuple_cell *tc);
 };
 
 class CollationHandler_utf8 : public CollationHandler

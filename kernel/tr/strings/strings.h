@@ -231,6 +231,7 @@ public:
 	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str) = 0;
 	virtual CharCounter* new_char_counter() = 0;
 	virtual void free_char_counter(CharCounter *) = 0;
+	virtual tuple_cell toupper(const tuple_cell *tc) = 0;
 };
 
 class CollationHandler
