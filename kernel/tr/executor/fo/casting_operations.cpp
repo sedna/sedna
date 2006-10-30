@@ -9,7 +9,7 @@
 #include "casting_operations.h"
 #include "xs_helper.h"
 #include "dm_accessors.h"
-#include "base64Binary.h"
+#include "binary.h"
 #include "XmlNames.h"
 #include "uri.h"
 #include "xsd.h"
@@ -63,67 +63,15 @@ inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
     { return tuple_cell::atomic(c_str2xs_boolean(_get_pointer_to_c_str(c))); }
 
 
-
-//this function checks constraints on xs:hexBinary lexical representation
-//if given value doesn't conform to constraints valid will be 'false'
-//else valid will be true and res_it will contain canonical representation of the 
-//given value.
-template <class Iterator>
-static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it, bool *valid)
-{
-    (*valid) = false;
-    unsigned char value;             
-    unsigned char delta = 'A'-'a';    //used to create canonical representation with upper case symbols;
-    int counter = 0;                  //number of symbols in hexBinary must be even;
-    while (start < end)
-    {
-        value = *start;
-        if( !(('0' <= value && value <= '9') || 
-              ('a' <= value && value <= 'f') || 
-              ('A' <= value && value <= 'F')) ) return;
-        if('a' <= value && value <= 'f') value += delta;
-        *res_it = value;
-        ++counter;
-        ++res_it;
-        start++;
-    }
-    if(!(counter & 1)) (*valid) = true; //chech evenness at last;
-}
-
-inline tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
-{ 
-    if (e_string_last_blk==XNULL) 
-    {
-        vmm_alloc_tmp_block(&e_string_last_blk);
-        e_str_blk_hdr::init(XADDR(e_string_last_blk));
-        e_string_first_blk = e_string_last_blk;
-    }
-    
-    e_string_o_iterator<unsigned char> res_it;
-    xptr start_pos = res_it.pos;
-    bool valid;
-
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_hexBinary, &c, res_it, &valid);
-    
-    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:hexBinary type.");
-    int reslen = get_length_of_last_str(start_pos);  //FIXME!!! Possibly it must be __int64???
-    if(reslen > 0) reslen--;
-    return tuple_cell::atomic_estr(xs_hexBinary, reslen, start_pos);
-}
-
-
-
-
 inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 { 
-    if(Uri::chech_constraints_for_xs_anyURI(&c))
-    {
-        tuple_cell res(c);
-        res.set_xtype(xs_anyURI);
-        return res;
-    }
-    else
-        throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
+    bool valid;
+    tuple_cell res = Uri::chech_constraints_for_xs_anyURI(&c, &valid);
+    
+    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
+
+    res.set_xtype(xs_anyURI);
+    return res;
 }
 
 inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
@@ -177,8 +125,7 @@ inline tuple_cell cast_xs_boolean_to_string_type(const tuple_cell &c, xmlscm_typ
 }
 
 inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type res_type)
-{   // !!! FIX ME: some conversion needed
-    // !!! IS: what kind of conversion do you mean???
+{   
     tuple_cell res(c);
     res.set_xtype(res_type);
     return res;
@@ -646,20 +593,57 @@ static bool check_constraints_for_xs_positiveInteger(const __int64& value)
 
 
 template <class Iterator>
-static inline void check_constraints_for_xs_normalizedString(Iterator &start, const Iterator &end, bool *res)
+static inline void replace_string_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
 {
-	(*res) = false;
-
-	while (start < end)
-	{
-		if (*start == '\n' || *start == '\r' || *start == '\t') return;
-		start++;
-	}
-
-	(*res) = true;
+    unsigned char value;
+    __int64 spaces_counter = 0;
+    
+    while(start < end) 
+    {
+        value = *start;
+        if (value != ' ' && value != '\n' && value != '\t' && value != '\r') break;
+        start++;
+    }
+    
+    while(start < end)
+    {
+        value = *start++;
+        if (value == ' ' || value == '\n' || value == '\t' || value == '\r ') spaces_counter++;
+        else 
+        {
+            while(spaces_counter) { out_buf << ' '; spaces_counter--; }
+            out_buf << value;
+        }
+    }
 }
 
 template <class Iterator>
+static inline void collapse_string_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
+{
+    unsigned char value;
+    bool is_space = false;
+    
+    while(start < end) 
+    {
+        value = *start;
+        if (value != ' ' && value != '\n' && value != '\t' && value != '\r') break;
+        start++;
+    }
+    
+    while(start < end)
+    {
+        value = *start++;
+        if (value == ' ' || value == '\n' || value == '\t' || value == '\r ') is_space = true;
+        else 
+        {
+            if(is_space) { out_buf << ' '; is_space = false; }
+            out_buf << value;
+        }
+    }
+}
+
+
+/*template <class Iterator>
 static inline void check_constraints_for_xs_token(Iterator &start, const Iterator &end, bool *res)
 {
 	(*res) = start == end;
@@ -678,16 +662,13 @@ static inline void check_constraints_for_xs_token(Iterator &start, const Iterato
 	if(previous == ' ') return;
 
 	(*res) = true;
-}
+}*/
 
 static inline bool check_constraints_for_xs_language(const tuple_cell *value)
 {
-	char const* regex = "^([a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*)$";
+	char const* regex = "^[\\n\\r\\t ]*[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*[\\n\\r\\t ]*$";
 	return collation_handler->matches(value, regex);
 }
-
-
-
 
 static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type)
 {
@@ -697,6 +678,8 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     U_ASSERT(base_type == xs_integer || base_type == xs_string);
 
     bool sat = false;
+    bool need_string_normalization = false;
+    
     if (base_type == xs_integer)
     {
         __int64 value = SV.get_xs_integer();
@@ -721,25 +704,39 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     }
     else if (base_type == xs_string)
     {
+        xmlscm_type ST = SV.get_atomic_type();
+        need_string_normalization = (ST <= xs_normalizedString && TT > ST);
+        
         switch (TT)
         {
-            case xs_string            : sat = true; break;
-            case xs_normalizedString  : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_normalizedString, &SV, &sat); break;
-       	    case xs_token             : STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(check_constraints_for_xs_token, &SV, &sat); break;
+            case xs_string            : 
+            case xs_normalizedString  : 
+       	    case xs_token             : sat = true; break;
             case xs_language          : sat = check_constraints_for_xs_language(&SV); break;
-       	    case xs_NMTOKEN           : sat = chech_constraints_for_xs_NMTOKEN(&SV); break;
-       	    case xs_Name              : sat = chech_constraints_for_xs_Name(&SV); break;
-       	    case xs_NCName            : sat = chech_constraints_for_xs_NCName(&SV); break; //NCName, ID, IDREF, ENTITY have same the lexical values space.
-       	    case xs_ID                : sat = chech_constraints_for_xs_NCName(&SV); break;
-       	    case xs_IDREF             : sat = chech_constraints_for_xs_NCName(&SV); break;
-       	    case xs_ENTITY            : sat = chech_constraints_for_xs_NCName(&SV); break;
+       	    case xs_NMTOKEN           : sat = chech_constraints_for_xs_NMTOKEN(&SV);  break;
+       	    case xs_Name              : sat = chech_constraints_for_xs_Name(&SV);     break;
+       	    case xs_NCName            : ///
+       	    case xs_ID                : /// NCName, ID, IDREF, ENTITY have just the same lexical values space.
+       	    case xs_IDREF             : ///
+       	    case xs_ENTITY            : sat = chech_constraints_for_xs_NCName(&SV);   break;
             default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_within_a_branch");
 	    }
     }
 
     if (!sat) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
 
-    tuple_cell TV(SV);
+    tuple_cell TV;
+    
+    if(need_string_normalization) 
+    {
+        stmt_str_buf res;
+        if(TT == xs_token) { STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(collapse_string_normalization, &SV, res); }
+        else               { STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(replace_string_normalization, &SV, res); }
+        TV = res.get_tuple_cell();
+    }
+    else
+        TV = SV;
+
     TV.set_xtype(TT);
     return TV;
 }

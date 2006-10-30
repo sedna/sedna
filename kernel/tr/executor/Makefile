@@ -34,7 +34,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        decimal64$(OBJ_EXT)				\
                        decimal128$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
-                       base64Binary$(OBJ_EXT)           \
+                       binary$(OBJ_EXT)                 \
                        uri$(OBJ_EXT)                    \
                        XmlNames$(OBJ_EXT)               \
                        PPUriFuncs$(OBJ_EXT)             \

@@ -41,71 +41,53 @@ allowed one byte ASCII characters in IRI are determined from RFC 3987.
     (byte & 0x80 ? 0 : (iri_1byte_allowed[(byte >> 3)] & (0x80 >> (byte & 7))))
 
 
-inline void hex_encode_utf8_byte(unsigned char byte, e_string_o_iterator<unsigned char> &o_itr)
+inline void hex_encode_utf8_byte(unsigned char byte, stmt_str_buf &out_buf)
 {
-    *o_itr = '%';
-    ++o_itr;
-    *o_itr = hex_value_to_char[((byte & 0xF0) >> 4)];
-    ++o_itr;
-    *o_itr = hex_value_to_char[(byte & 15)];
-    ++o_itr;
+    out_buf << '%';
+    out_buf << hex_value_to_char[((byte & 0xF0) >> 4)];
+    out_buf << hex_value_to_char[(byte & 15)];
 }
 
 
 template <class Iterator>
-static inline void encode_for_uri(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it)
+static inline void encode_for_uri(Iterator &start, const Iterator &end, stmt_str_buf &res)
 {
     unsigned char value;
 
     while(start < end)
     {
         value = *start;
-        if(IS_BYTE_URI_UNRESERVED(value))
-        {
-            *res_it = value;
-            ++res_it;
-        }
-        else
-            hex_encode_utf8_byte(value, res_it);
+        if(IS_BYTE_URI_UNRESERVED(value)) res << value;
+        else hex_encode_utf8_byte(value, res);
         ++start;
     }
 }
 
 template <class Iterator>
-static inline void iri_to_uri(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it)
+static inline void iri_to_uri(Iterator &start, const Iterator &end, stmt_str_buf &res)
 {
     unsigned char value;
     
     while(start < end)
     {
         value = *start;
-        if(IS_IRI_ALLOWED(value))
-        {
-            *res_it = value;
-            ++res_it;
-        }
-        else
-            hex_encode_utf8_byte(value, res_it);
+        if(IS_IRI_ALLOWED(value)) res << value;
+        else hex_encode_utf8_byte(value, res);
         ++start;
 
     }
 }
 
 template <class Iterator>
-static inline void escape_html_uri(Iterator &start, const Iterator &end, e_string_o_iterator<unsigned char> &res_it)
+static inline void escape_html_uri(Iterator &start, const Iterator &end, stmt_str_buf &res)
 {
     unsigned char value;
 
     while(start < end)
     {
         value = *start;
-        if(32 <= value && value <= 126)
-        {
-            *res_it = value;
-            ++res_it;
-        }
-        else
-            hex_encode_utf8_byte(value, res_it);
+        if(32 <= value && value <= 126) res << value;
+        else hex_encode_utf8_byte(value, res);
         ++start;
     }
 }
@@ -170,24 +152,16 @@ void PPFnUriEncoding::next  (tuple &t)
            xtype != xs_anyURI        &&
            !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, error());
     
-        if (e_string_last_blk==XNULL) 
-        {
-            vmm_alloc_tmp_block(&e_string_last_blk);
-            e_str_blk_hdr::init(XADDR(e_string_last_blk));
-            e_string_first_blk = e_string_last_blk;
-        }
-        
-        e_string_o_iterator<unsigned char> res_it;
-        xptr start_pos = res_it.pos;
+        stmt_str_buf res;
     
         switch(type)
         {
             case(ENCODE_FOR_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res_it); break;
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res); break;
             case(IRI_TO_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res_it); break;
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res); break;
             case(ESCAPE_HTML_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res_it); break;
+                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res); break;
             default: 
                 throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
         }
@@ -195,10 +169,7 @@ void PPFnUriEncoding::next  (tuple &t)
         child.op->next(t);
         if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
     
-        int reslen = get_length_of_last_str(start_pos);  //FIXME!!! String length must be __int64;
-        if(reslen > 0) reslen--;
-    
-        t.copy(tuple_cell::atomic_estr(xs_string, reslen, start_pos));
+        t.copy(res.get_tuple_cell());
     }
     else 
     {
@@ -239,9 +210,6 @@ bool PPFnUriEncoding::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnResolveUri
 ///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnResolveUri
 ///////////////////////////////////////////////////////////////////////////////
 PPFnResolveUri::PPFnResolveUri(variable_context *_cxt_,
                                PPOpIn _relative_) : PPIterator(_cxt_),
@@ -307,10 +275,10 @@ void PPFnResolveUri::next  (tuple &t)
             return;
         }
         
-        t_str_buf result;
         tuple r(relative.ts);
         tuple_cell base_tc;
         first_time = false;
+        bool valid = false;
 
         tuple_cell relative_tc = relative.get(t);
         xmlscm_type xtype = relative_tc.get_atomic_type();
@@ -319,17 +287,16 @@ void PPFnResolveUri::next  (tuple &t)
            xtype != xs_anyURI        &&
            !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
 
+        relative_tc = Uri::chech_constraints_for_xs_anyURI(&relative_tc, &valid);
+        if(!valid) throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
         relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
-            if(!Uri::chech_constraints_for_xs_anyURI(&relative_tc))
-                throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
         
         if(is_base_static)
         {
             if (tr_globals::st_ct.base_uri == NULL) throw USER_EXCEPTION(FONS0005); //base uri property is not defined in static context.
-
-            base_tc = tuple_cell::atomic(xs_string, tr_globals::st_ct.base_uri);
-            if(!Uri::chech_constraints_for_xs_anyURI(&base_tc))
-                throw USER_EXCEPTION2(FORG0002, "Base URI property defined in the prolog contains invalid URI (fn:resolve-uri).");
+            base_tc = tuple_cell::atomic_deep(xs_string, tr_globals::st_ct.base_uri);
+            base_tc = Uri::chech_constraints_for_xs_anyURI(&base_tc, &valid);
+            if(!valid) throw USER_EXCEPTION2(FORG0002, "Base URI property defined in the prolog contains invalid URI (fn:resolve-uri).");
         }
         else
         {
@@ -347,9 +314,8 @@ void PPFnResolveUri::next  (tuple &t)
                xtype != xs_anyURI        &&
                !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
 
-            base_tc = tuple_cell::make_sure_light_atomic(base_tc);
-            if(!Uri::chech_constraints_for_xs_anyURI(&base_tc))
-                throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
+            base_tc = Uri::chech_constraints_for_xs_anyURI(&base_tc, &valid);
+            if(!valid) throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
 
             base.op->next(b);
             if(!b.is_eos()) 
@@ -357,22 +323,20 @@ void PPFnResolveUri::next  (tuple &t)
             need_reopen = false;
         }
 
+        base_tc = tuple_cell::make_sure_light_atomic(base_tc);
+
         relative.op->next(r);
         if(!r.is_eos()) 
             throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
 
-        if(Uri::resolve(relative_tc.get_str_mem(), base_tc.get_str_mem(), result))
-        {
-            if (result.get_type() == text_mem)
-                t.copy(tuple_cell::atomic_deep(xs_anyURI, (char*)result.get_ptr_to_text()));
-            else
-                t.copy(tuple_cell::atomic_estr(xs_anyURI, result.get_size(), *(xptr*)result.get_ptr_to_text()));
-        }
-        else
-        {
-            tuple_cell* tc = &(t.cells[0]);
-            tc->set_xtype(xs_anyURI);
-        }
+        stmt_str_buf result;
+        if(Uri::resolve(relative_tc.get_str_mem(), base_tc.get_str_mem(), result)) 
+            t.copy(result.get_tuple_cell());
+        else 
+            t.copy(relative_tc);
+        
+        tuple_cell* tc = &(t.cells[0]);
+        tc->set_xtype(xs_anyURI);
     }
     else 
     {
@@ -393,4 +357,56 @@ PPIterator* PPFnResolveUri::copy(variable_context *_cxt_)
 bool PPFnResolveUri::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnResolveUri::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStaticBaseUri
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnStaticBaseUri::PPFnStaticBaseUri(variable_context *_cxt_) : PPIterator(_cxt_)
+{
+}
+
+PPFnStaticBaseUri::~PPFnStaticBaseUri() { }
+
+void PPFnStaticBaseUri::open  ()        { first_time = true; }
+
+void PPFnStaticBaseUri::reopen()        { first_time = true; }
+
+void PPFnStaticBaseUri::close ()        { }
+
+void PPFnStaticBaseUri::next  (tuple &t)
+{
+    if(first_time)
+    {
+        first_time = false;    
+
+        if ( tr_globals::st_ct.base_uri == NULL ) 
+        {
+            t.copy( EMPTY_STRING_TC );
+            (&t.cells[0]) -> set_xtype(xs_anyURI);
+        }
+        else 
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri) );
+    }
+    else 
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+
+PPIterator* PPFnStaticBaseUri::copy(variable_context *_cxt_)
+{
+    PPFnStaticBaseUri *res = new PPFnStaticBaseUri(_cxt_);
+    return res;
+}
+
+bool PPFnStaticBaseUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnStaticBaseUri::result");
 }

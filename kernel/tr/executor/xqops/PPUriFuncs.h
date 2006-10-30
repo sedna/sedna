@@ -45,7 +45,6 @@ public:
                     PPOpIn _child_,
                     uri_function_type _type_);
     virtual ~PPFnUriEncoding();
-
 };
 
 
@@ -80,6 +79,29 @@ public:
     virtual ~PPFnResolveUri();
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStaticBaseUri
+///////////////////////////////////////////////////////////////////////////////
+class PPFnStaticBaseUri : public PPIterator
+{
+
+private:
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnStaticBaseUri(variable_context *_cxt_);
+    virtual ~PPFnStaticBaseUri();
+};
 
 
 #endif

@@ -2314,6 +2314,12 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnDocumentURI(cxt, 
                                    make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnStaticBaseUri")
+    {
+        if (  lst->size() != 1  ) throw USER_EXCEPTION2(SE1004, "101.1");
+
+        opit = new PPFnStaticBaseUri(cxt);
+    }
     else if (op == "PPRange")
     {
         if (   lst->size() != 3
@@ -3468,9 +3474,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
             tr_globals::st_ct.add_to_context(qp->at(i).internal.list->at(1).internal.str,
                                              qp->at(i).internal.list->at(2).internal.str);
         }
-        /*
-    	Not implemented yet!
-		else if (prolog_decl == "PPBaseUriDecl")
+        else if (prolog_decl == "PPBaseURIDecl")
         {
             if (   qp->at(i).internal.list->size() != 2
                 || qp->at(i).internal.list->at(1).type != SCM_STRING)
@@ -3478,7 +3482,6 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
 
             tr_globals::st_ct.set_base_uri(qp->at(i).internal.list->at(1).internal.str);
         }
-        */
         else if (prolog_decl == "PPDefNSDeclElem")
         {
             if (   qp->at(i).internal.list->size() != 2

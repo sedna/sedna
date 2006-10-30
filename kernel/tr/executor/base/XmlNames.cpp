@@ -184,29 +184,37 @@ const unsigned char namePages[] = {
    mask.
 */
 #define UTF8_GET_NAMING3(pages, byte) \
-  (namingBitmap[((pages)[((((byte)[0]) & 0xF) << 4) \
+    (namingBitmap[((pages)[((((byte)[0]) & 0xF) << 4) \
                              + ((((byte)[1]) >> 2) & 0xF)] \
                        << 3) \
                       + ((((byte)[1]) & 3) << 1) \
                       + ((((byte)[2]) >> 5) & 1)] \
          & (1 << (((byte)[2]) & 0x1F)))
 
+#define IS_WHITESPACE(byte) \
+    (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
+
+
+
+const unsigned char utf8_naming1[16] = {0x00, 0x00, 0x00, 0x00,
+                                        0x00, 0x06, 0xFF, 0xE0, 
+                                        0x7F, 0xFF, 0xFF, 0xE1, 
+                                        0x7F, 0xFF, 0xFF, 0xE0};
+
+const unsigned char utf8_nmstrt1[16] = {0x00, 0x00, 0x00, 0x00,
+                                        0x00, 0x00, 0x00, 0x20, 
+                                        0x7F, 0xFF, 0xFF, 0xE1, 
+                                        0x7F, 0xFF, 0xFF, 0xE0};
+
+
 /* Is 1 byte UTF-8 symbol is NameChar */
-inline bool utf8_is_naming1(unsigned char c)
-{
-    return ( ('A' <= c && c <= 'Z') || 
-             ('a' <= c && c <= 'z') ||
-             ('0' <= c && c <= '9') ||
-             c == '.' || c == '-' || c == '_' || c == ':' );
-}
+#define UTF8_GET_NAMING1(byte) \
+    (byte & 0x80 ? 0 : (utf8_naming1[(byte >> 3)] & (0x80 >> (byte & 7))))
+
 
 /* Is 1 byte UTF-8 symbol is correct start name symbol */
-inline bool utf8_is_nmstrt1(unsigned char c)
-{
-    return ( ('A' <= c && c <= 'Z') || 
-             ('a' <= c && c <= 'z') ||
-             c == '_' || c == ':' );
-}
+#define UTF8_GET_NMSTRT1(byte) \
+    (byte & 0x80 ? 0 : (utf8_nmstrt1[(byte >> 3)] & (0x80 >> (byte & 7))))
 
 
 inline int utf8_get_symbol_length(unsigned char start)
@@ -230,9 +238,13 @@ template <class Iterator>
 static inline void check_constraints_for_name_type(Iterator &start, const Iterator &end, bool *res, bool check_first, bool colon_allowed)
 {
     (*res) = false;
-    if(start == end) return;     // empty string is not allowed;
+
+    while(start < end && IS_WHITESPACE(*start)) { start++; } // start will be equal to the end or will point at first non-whitespace symbol;
+    if(start == end) return;                                 // strings contained only whitespaces and empty strings are not allowed;
+
     int len = 0;
-    unsigned char value[3];     
+    unsigned char value[3];
+    bool whitespace_reached = false;
 
     if(check_first)
     {
@@ -241,7 +253,15 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
         
         switch(len)
         {
-            case 1: if(!utf8_is_nmstrt1(value[0]) || (!colon_allowed && value[0] == ':')) return; break;
+            case 1: 
+            {
+                if(!UTF8_GET_NMSTRT1(value[0]) || (!colon_allowed && value[0] == ':')) 
+                {
+                    if(IS_WHITESPACE(value[0])) whitespace_reached = true;
+                    else return;
+                }
+                break;
+            }
             case 2: 
             {
                 ++start; value[1] = *start;
@@ -255,19 +275,27 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
                 if(UTF8_GET_NAMING3(nmstrtPages, value) == 0) return; 
                 break;
             }
-            case 4: return;      // can't include 4-byte UTF-8 symbols.
-         }
+            case 4: return;      // can't contain 4-byte (or more) UTF-8 symbols.
+        }
         ++start;
     }
     
-    while(start < end)
+    while(start < end && !whitespace_reached)
     {
        value[0] = *start;
        len = utf8_get_symbol_length(value[0]);
        
        switch(len)
        {
-           case 1: if(!utf8_is_naming1(value[0]) || (!colon_allowed && value[0] == ':')) return; break;
+           case 1: 
+           {
+                if(!UTF8_GET_NAMING1(value[0]) || (!colon_allowed && value[0] == ':')) 
+                {
+                    if(IS_WHITESPACE(value[0])) whitespace_reached = true;
+                    else return;
+                }
+                break;
+           }
            case 2: 
            {
                ++start; value[1] = *start;
@@ -281,12 +309,13 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
                if(UTF8_GET_NAMING3(namePages, value) == 0) return; 
                break;
            }
-           case 4: return;      // can't include 4-byte UTF-8 symbols.
+           case 4: return;      // can't contain 4-byte (or more) UTF-8 symbols.
        }
        ++start;            
     }
 
-    (*res) = true;
+    if(whitespace_reached) while(start < end && IS_WHITESPACE(*start)) { start++; }
+    if(start == end) (*res) = true;
 }
 
 bool chech_constraints_for_xs_NMTOKEN(const tuple_cell *tc)
