@@ -934,6 +934,109 @@
                     funcs triples
                     ns-binding default-elem-ns default-func-ns
                     (cdr prolog))))))
+         ((declare-default-collation)  ; Default collation
+          (and
+           (sa:assert-num-args expr 1)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (cond
+             ((assq (sa:op-name expr)  ; == 'declare-default-collation
+                    (filter pair? new-prlg))
+              ; Multiple default collation declarations
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0038
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
+         ((declare-base-uri)
+          (and
+           (sa:assert-num-args expr 1)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (cond
+             ((assq (sa:op-name expr)  ; == 'declare-base-uri
+                    (filter pair? new-prlg))
+              ; Multiple base URI declarations
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0032
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
+         ((declare-construction)
+          ; Almost identical clone of boundary space declaration
+          ; TODO: unite them
+          (and
+           (sa:assert-num-args expr 1)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (cond
+             ((not
+               (member (cadr expr)  ; predefined values
+                       '((const (type !xs!string) "strip")
+                         (const (type !xs!string) "preserve"))))
+              (cl:signal-user-error SE5054 (cadr expr)))
+             ((assq (sa:op-name expr)  ; == 'declare-construction
+                    (filter pair? new-prlg))
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0067
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
+         ((declare-order)  ; Ordering mode
+          (and
+           (sa:assert-num-args expr 1)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (cond
+             ((not
+               (member (cadr expr)  ; predefined values
+                       '((const (type !xs!string) "ordered")
+                         (const (type !xs!string) "unordered"))))
+              (cl:signal-user-error SE5054 (cadr expr)))
+             ((assq (sa:op-name expr)
+                    (filter pair? new-prlg))
+              ; Multiple ordering mode declarations
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0065
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry))  ; '(const ...)
+                      )
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
          ((declare-default-order)  ; Default order for empty sequences
           ; Clone of boundary-space-decl
           (and
@@ -960,6 +1063,43 @@
                      " and "
                      (caddr 
                       (car (sa:op-args expr)))))))
+             (else
+              (loop (cons expr new-prlg)
+                    funcs triples
+                    ns-binding default-elem-ns default-func-ns
+                    (cdr prolog))))))
+         ((declare-copy-namespaces)
+          (and
+           (sa:assert-num-args expr 2)
+           (sa:analyze-string-const (cadr expr) '() '() '() sa:default-ns)
+           (sa:analyze-string-const (caddr expr) '() '() '() sa:default-ns)
+           (cond
+             ((not
+               (and
+                (member (cadr expr)  ; predefined values
+                        '((const (type !xs!string) "preserve")
+                          (const (type !xs!string) "no-preserve")))
+                (member (caddr expr)
+                        '((const (type !xs!string) "inherit")
+                          (const (type !xs!string) "no-inherit")))))
+              (cl:signal-user-error SE5054 (cadr expr)))
+             ((assq (sa:op-name expr)
+                    (filter pair? new-prlg))
+              => (lambda (entry)
+                   (cl:signal-user-error
+                    XQST0055
+                    (string-append
+                     (caddr  ; const value
+                      (car (sa:op-args entry)))
+                     ", "
+                     (caddr
+                      (cadr (sa:op-args entry)))
+                     " and "
+                     (caddr 
+                      (car (sa:op-args expr)))
+                     ", "
+                     (caddr 
+                      (cadr (sa:op-args expr)))))))
              (else
               (loop (cons expr new-prlg)
                     funcs triples
