@@ -512,8 +512,8 @@
     (,sa:fn-ns "count" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!count)
-    (,sa:fn-ns "error" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
+    (,sa:fn-ns "error" 0 3
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!error)
     ;----------------------------------------
     (,sa:fn-ns "trace" 2 2
@@ -2228,6 +2228,15 @@
        (and
         (pair? target)
         (eq? (car target) 'const)  ; constant PI target
+        (or
+         (null?  ; no PI content => direct PI constructor
+          (cdr (sa:op-args expr)))
+         (not
+          (and  ; PI content is a space-seq => a computed PI constructor
+           (pair? (cadr (sa:op-args expr)))
+           (eq? (sa:op-name
+                 (cadr (sa:op-args expr)))
+                'space-sequence))))
         (= (length target) 3)
         (let ((value
                (cadr (sa:op-args target))))
