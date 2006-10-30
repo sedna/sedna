@@ -203,7 +203,7 @@ void PPSubsMatch::next  (tuple &t)
 			if (t1c.get_atomic_type()==xs_untypedAtomic)
 				t1c.set_xtype(xs_string);
 			else
-				if (!t1c.is_string_type())
+				if (!is_string_type(t1c.get_atomic_type()))
 			throw USER_EXCEPTION(XPTY0004);
 		}
 		tuple_cell t2c= t2.cells[0];
@@ -214,7 +214,7 @@ void PPSubsMatch::next  (tuple &t)
 			if (t2c.get_atomic_type()==xs_untypedAtomic)
 				t2c.set_xtype(xs_string);
 			else		
-				if (!t2c.is_string_type())
+				if (!is_string_type(t2c.get_atomic_type()))
 					throw USER_EXCEPTION(XPTY0004);
 		}
 		bool mark=false;

@@ -232,7 +232,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
             tuple_cell tc = t.cells[0];
             tc = atomize(tc);
             
-            if(tc.is_numeric_type())
+            if(is_numeric_type(tc.get_atomic_type()))
             {
                 double_values.push_back(get_numeric_value(tc));
             }

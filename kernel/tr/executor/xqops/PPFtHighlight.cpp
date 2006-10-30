@@ -94,7 +94,7 @@ void PPFtHighlight::next(tuple &t)
 		if (t.is_eos())
 			throw USER_EXCEPTION(SE1071);
 		tc = t.cells[0];
-		if (!tc.is_atomic() || !tc.is_string_type())
+		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw USER_EXCEPTION(SE1071);
 
 		sj->set_request(tc);

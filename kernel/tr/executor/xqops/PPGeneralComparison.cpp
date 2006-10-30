@@ -72,12 +72,12 @@ void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell
 		cell2=cast_primitive_to_xs_string(cell2);
 		return; 
 	}
-	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.is_numeric_type())
+	if (cell1.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell2.get_atomic_type()))
 	{
 		cell1=cast(cell1, xs_double);
 		return; 
 	}
-	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.is_numeric_type())
+	if (cell2.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell1.get_atomic_type()))
 	{
 		cell2=cast(cell2, xs_double);
 		return; 
@@ -166,7 +166,7 @@ bool PPGeneralComparison::result(PPIterator* cur, variable_context *cxt, void*& 
 xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 {
 	xmlscm_type ret_type=xs_untyped;
-	if (value.is_string_type())
+	if (is_string_type(value.get_atomic_type()))
 	{
 		if (min_str)
 		{
@@ -232,7 +232,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		return ret_type;
 	}
-	if (value.is_numeric_type())
+	if (is_numeric_type(value.get_atomic_type()))
 	{
 		if (min_num)
 		{
@@ -273,7 +273,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 {
 	xmlscm_type ret_type=xs_untyped;
-	if (value.is_string_type())
+	if (is_string_type(value.get_atomic_type()))
 	{
 		if (max_str)
 		{
@@ -339,7 +339,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		return ret_type;
 	}
-	if (value.is_numeric_type())
+	if (is_numeric_type(value.get_atomic_type()))
 	{
 		if (max_num)
 		{

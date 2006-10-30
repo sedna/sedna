@@ -223,7 +223,7 @@ tuple_cell op_subtract_dayTimeDurations(const tuple_cell &a1, const tuple_cell &
 tuple_cell op_multiply_yearMonthDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || a1.get_atomic_type() != xs_yearMonthDuration ||
-	!a2.is_atomic() || !a2.is_numeric_type())
+	!a2.is_atomic() || !is_numeric_type(a2.get_atomic_type()))
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-yearMonthDuration-by-numeric on invalid arguments");
 
     return tuple_cell::atomic(multiplyDuration(
@@ -239,7 +239,7 @@ tuple_cell op_multiply_numeric_by_yearMonthDuration(const tuple_cell &a1, const 
 tuple_cell op_multiply_dayTimeDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || a1.get_atomic_type() != xs_dayTimeDuration ||
-	!a2.is_atomic() || !a2.is_numeric_type())
+	!a2.is_atomic() || !is_numeric_type(a2.get_atomic_type()))
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-dayTimeDuration-by-numeric on invalid arguments");
 
     return tuple_cell::atomic(multiplyDuration(
@@ -255,7 +255,7 @@ tuple_cell op_multiply_numeric_by_dayTimeDuration(const tuple_cell &a1, const tu
 tuple_cell op_divide_yearMonthDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || a1.get_atomic_type() != xs_yearMonthDuration ||
-	!a2.is_atomic() || !a2.is_numeric_type())
+	!a2.is_atomic() || !is_numeric_type(a2.get_atomic_type()))
 	throw USER_EXCEPTION2(SE1003, "Calling op:divide-yearMonthDuration-by-numeric on invalid arguments");
 
     return tuple_cell::atomic(divideDuration(
@@ -266,7 +266,7 @@ tuple_cell op_divide_yearMonthDuration_by_numeric(const tuple_cell &a1, const tu
 tuple_cell op_divide_dayTimeDuration_by_numeric(const tuple_cell &a1, const tuple_cell &a2)
 {
     if (!a1.is_atomic() || a1.get_atomic_type() != xs_dayTimeDuration ||
-	!a2.is_atomic() || !a2.is_numeric_type())
+	!a2.is_atomic() || !is_numeric_type(a2.get_atomic_type()))
 	throw USER_EXCEPTION2(SE1003, "Calling op:divide-dayTimeDuration-by-numeric on invalid arguments");
 
     return tuple_cell::atomic(divideDuration(

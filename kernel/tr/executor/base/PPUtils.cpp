@@ -93,14 +93,14 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
 		    case xs_float			: 
 		    {
                 double v = (double)(t.get_xs_float());
-                if (_isnan(v) || is_zero(v)) 
+                if (u_is_nan(v) || is_zero(v)) 
                     return tuple_cell::atomic(false);
                 break;
             }
             case xs_double			: 
             {
                 double v = t.get_xs_double();
-                if (_isnan(v) || is_zero(v)) 
+                if (u_is_nan(v) || is_zero(v)) 
                    return tuple_cell::atomic(false);
                 break;
             }
