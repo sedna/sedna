@@ -1832,13 +1832,21 @@
         (if
          (memq (xlr:op-name query) '(query retrieve-metadata))
          (let ((identity (lambda (x) x)))
-           (lropt:propagate (cadr (xlr:op-args query))
-                            #t  ; called once
-                            #t  ; TODO: ordered/unordered depending on prolog
-                            '()  ; TODO: probably, external variables here
-                            prolog
-                            '()  ; no functions processed yet
-                            identity identity identity))
+           (lropt:propagate
+            (cadr (xlr:op-args query))
+            #t  ; called once
+            (let  ; ordered/unordered depending on prolog
+                ; TODO: think of duplicate elimination
+                ((order-decl
+                  (assq 'declare-order (filter pair? prolog))))
+              (not
+               (and order-decl
+                    (equal? (car (xlr:op-args order-decl))
+                            '(const (type !xs!string) "unordered")))))
+            '()  ; TODO: probably, external variables here
+            prolog
+            '()  ; no functions processed yet
+            identity identity identity))
          ((case (xlr:op-name query)
             ((update) lropt:update)
             ((manage) lropt:manage)

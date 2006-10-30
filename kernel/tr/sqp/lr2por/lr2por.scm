@@ -69,21 +69,41 @@
 
 (define (l2p:lr-prolog-decl2por prolog-decl)
   (cond
-    ((eq? (car prolog-decl) 'declare-function)
-     (l2p:lr-named-fun-def2por prolog-decl))
-    ((eq? (car prolog-decl) 'declare-namespace)
-     (l2p:lr-decl-ns2por prolog-decl))
-    ((eq? (car prolog-decl) 'declare-default-element-namespace)
-     (l2p:decl-def-elem-ns2por prolog-decl))
-    ((eq? (car prolog-decl) 'declare-default-function-namespace)
-     (l2p:decl-def-func-ns2por prolog-decl))
+    ; TODO: rewrite as case
+    ; *** 4.3 Boundary-space Declaration
     ((eq? (car prolog-decl) 'boundary-space-decl)
      `(PPBoundarySpaceDecl ,(caddr (cadr prolog-decl))))
+    ; *** 4.4 - 4.7
+    ((assq (car prolog-decl)
+           '((declare-default-collation . PPDefaultCollationDecl)
+             (declare-base-uri          . PPBaseURIDecl)
+             (declare-construction      . PPConstructionDecl)
+             (declare-order             . PPOrderingModeDecl)))
+     => (lambda (pair)
+          (list (cdr pair)
+                (caddr (cadr prolog-decl)))))
+    ; *** 4.8 Empty Order Declaration
     ((eq? (car prolog-decl) 'declare-default-order)
      `(PPEmptyOrderDecl
        ,(cdr (assoc (caddr (cadr prolog-decl))
                     '(("empty-greatest" . greatest)
                       ("empty-least" . least))))))
+    ; *** 4.9 Copy-Namespaces Declaration
+    ((eq? (car prolog-decl) 'declare-copy-namespaces)
+     `(PPCopyNamespacesDecl ,(caddr (cadr prolog-decl))
+                            ,(caddr (caddr prolog-decl))))
+    ; *** 4.12 Namespace Declaration
+    ((eq? (car prolog-decl) 'declare-namespace)
+     (l2p:lr-decl-ns2por prolog-decl))
+    ; *** 4.13 Default Namespace Declaration
+    ((eq? (car prolog-decl) 'declare-default-element-namespace)
+     (l2p:decl-def-elem-ns2por prolog-decl))
+    ((eq? (car prolog-decl) 'declare-default-function-namespace)
+     (l2p:decl-def-func-ns2por prolog-decl))
+    ; *** 4.15 Function Declaration
+    ((eq? (car prolog-decl) 'declare-function)
+     (l2p:lr-named-fun-def2por prolog-decl))
+    ; *** 4.16 Option Declaration
     ((eq? (car prolog-decl) 'declare-option)
      `(PPOptionDecl
        (,(caddr (cadr prolog-decl))  ; option QName
