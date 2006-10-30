@@ -84,7 +84,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 			break;
 
 		tc = t.cells[0];
-		if (!tc.is_atomic() || !tc.is_string_type())
+		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw USER_EXCEPTION(SE1071);
 		tc = tuple_cell::make_sure_light_atomic(tc);
 		const char *qname = tc.get_str_mem();
@@ -106,7 +106,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 			throw USER_EXCEPTION(SE1071);
 
 		tc = t.cells[0];
-		if (!tc.is_atomic() || !tc.is_string_type())
+		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw USER_EXCEPTION(SE1071);
 		tc = tuple_cell::make_sure_light_atomic(tc);
 

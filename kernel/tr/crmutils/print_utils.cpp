@@ -738,7 +738,12 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 		{
 			if (tup.cells[i].is_light_atomic())
 			{
-				if (tup.cells[i].is_string_type())
+				if (is_fixed_size_type(tup.cells[i].get_atomic_type()))
+				{
+                    get_lexical_representation_for_fixed_size_atomic(tr_globals::mem_str_buf2, tup.cells[i], ptype);
+					crmout.writextext(tr_globals::mem_str_buf2,strlen(tr_globals::mem_str_buf2));
+				}
+                else
 				{
                     if (tup.cells[i].get_atomic_type() == xs_QName)
                     {
@@ -754,12 +759,6 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 					//crmout<<tup.cells[i].get_str_mem();
 					else crmout.writextext(tup.cells[i].get_str_mem(), tup.cells[i].get_strlen_mem());					
 				}
-				else
-				{
-                    get_lexical_representation_for_fixed_size_atomic(tr_globals::mem_str_buf2, tup.cells[i], ptype);
-					crmout.writextext(tr_globals::mem_str_buf2,strlen(tr_globals::mem_str_buf2));
-				}
-				
 			}
 			else
 			{

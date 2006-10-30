@@ -93,10 +93,10 @@ int sequence::add(const tuple &t)
         int tuple_str_len = 0;
         for (int i = 0; i < tuple_size; i++)
         {
-            if (t.cells[i].is_string_type() && (copy_vmm_strings || t.cells[i].is_light_atomic()))
+            if (t.cells[i].get_type() == tc_light_atomic_var_size || 
+                (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
             {
-                tuple_str_len += t.cells[i].is_light_atomic() ? t.cells[i].get_strlen_mem() :
-                                                                t.cells[i].get_strlen_vmm();
+                tuple_str_len += t.cells[i].get_strlen();
             }
         }
 
@@ -133,7 +133,9 @@ int sequence::add(const tuple &t)
     {
         memcpy(dest_addr + i, t.cells + i, sizeof(tuple_cell));
 
-        if (t.cells[i].is_string_type() /*???variable size???*/&& (copy_vmm_strings || t.cells[i].is_light_atomic()))
+        if (t.cells[i].get_type() == tc_light_atomic_var_size || 
+            (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
+
         {
             if (txt_eblk == NULL) init_txt_blks();
             int new_blks_num = 0;
@@ -141,19 +143,9 @@ int sequence::add(const tuple &t)
                                                           copy_text(t.cells[i].get_str_vmm(), t.cells[i].get_strlen_vmm(), &txt_eblk, &new_blks_num);
 
             (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
-/*
-            (dest_addr + i)->set_xptr(txt_ptr);
-            if (t.cells[i].is_light_atomic())
-                (dest_addr + i)->set_size((dest_addr + i)->get_strlen_mem());
-            (dest_addr + i)->_reset_str_ptr();
-*/
             txt_blks_num += new_blks_num;
             CHECKP(eblk);
         }
-/*
-        else
-            (dest_addr + i)->_reset_str_ptr();
-*/
     }
 
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
@@ -196,7 +188,7 @@ void sequence::get(tuple &t, int pos)
 
     for (int i = 0; i < tuple_size; i++) 
     {
-        if (t.cells[i].is_light_atomic() && !(t.cells[i].is_fixed_size_type()))
+        if (t.cells[i].get_type() == tc_light_atomic_var_size)
         {
             tuple_cell &c = t.cells[i];
             int strlen = c.get_strlen_vmm();

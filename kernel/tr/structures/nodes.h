@@ -16,7 +16,6 @@
 #include "base.h"
 #include "sm_vmm_data.h"
 #include "numb_scheme.h"
-#include "sm_vmm_data.h"
 
 struct schema_node;
 struct xml_ns;

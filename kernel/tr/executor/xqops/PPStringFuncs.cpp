@@ -274,7 +274,7 @@ void PPFnTranslate::next  (tuple &t)
 		if (map_tc.get_atomic_type()==xs_untypedAtomic)
 			map_tc.set_xtype(xs_string);
 		else
-			if (!map_tc.is_string_type())
+			if (!is_string_type(map_tc.get_atomic_type()))
 				throw USER_EXCEPTION2(XPTY0004, "2nd argument of fn:translate is not a string");
 		map_tc = tuple_cell::make_sure_light_atomic(map_tc);
 		map_str.op->next(t);
@@ -289,7 +289,7 @@ void PPFnTranslate::next  (tuple &t)
 		if (trans_tc.get_atomic_type()==xs_untypedAtomic)
 			trans_tc.set_xtype(xs_string);
 		else
-			if (!trans_tc.is_string_type())
+			if (!is_string_type(trans_tc.get_atomic_type()))
 				throw USER_EXCEPTION2(XPTY0004, "3rd argument of fn:translate is not a string");
 		trans_tc = tuple_cell::make_sure_light_atomic(trans_tc);
 		trans_str.op->next(t);

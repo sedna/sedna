@@ -150,7 +150,7 @@ void PPPatMatch::next  (tuple &t)
 			if (t1c.get_atomic_type()==xs_untypedAtomic)
 				t1c.set_xtype(xs_string);
 			else
-				if (!t1c.is_string_type())
+				if (!is_string_type(t1c.get_atomic_type()))
 			throw USER_EXCEPTION(XPTY0004);
 		}
 		seq2.op->next(t);
@@ -162,7 +162,7 @@ void PPPatMatch::next  (tuple &t)
 			if (t2c.get_atomic_type()==xs_untypedAtomic)
 				t2c.set_xtype(xs_string);
 			else		
-				if (!t2c.is_string_type())
+				if (!is_string_type(t2c.get_atomic_type()))
 					throw USER_EXCEPTION(XPTY0004);
 		}
 		tuple_cell t3c;
@@ -178,7 +178,7 @@ void PPPatMatch::next  (tuple &t)
 				if (t3c.get_atomic_type()==xs_untypedAtomic)
 				t3c.set_xtype(xs_string);
 				else		
-				if (!t3c.is_string_type())
+				if (!is_string_type(t3c.get_atomic_type()))
 					throw USER_EXCEPTION(XPTY0004);
 			}
 			if (ch_cnt>3)
@@ -192,7 +192,7 @@ void PPPatMatch::next  (tuple &t)
 					if (t4c.get_atomic_type()==xs_untypedAtomic)
 						t4c.set_xtype(xs_string);
 					else		
-						if (!t4c.is_string_type())
+						if (!is_string_type(t4c.get_atomic_type()))
 							throw USER_EXCEPTION(XPTY0004);
 				}
 			}

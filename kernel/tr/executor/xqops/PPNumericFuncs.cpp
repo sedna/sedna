@@ -165,7 +165,7 @@ void PPNumericFuncs::next  (tuple &t)
 
         first_time = false;
 
-        if (!(child.get(t).is_atomic()) || !(child.get(t).is_numeric_type())) throw USER_EXCEPTION2(XPTY0004, error());
+        if (!(child.get(t).is_atomic()) || !(is_numeric_type(child.get(t).get_atomic_type()))) throw USER_EXCEPTION2(XPTY0004, error());
         tuple_cell tc = (this->*func)(child.get(t));
 
         child.op->next(t);
