@@ -59,20 +59,22 @@ public:
     
     ////////////////////////////////////////////////////////////////////
     /// Check constraints for URI type as described in RFC 3986.
+    /// If URI is valid returns normalized value, else returns 
+    /// copy of the same tuple cell.
     ////////////////////////////////////////////////////////////////////
-    static bool chech_constraints_for_xs_anyURI   (const tuple_cell *tc);
+    static tuple_cell chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *valid);
     
     ////////////////////////////////////////////////////////////////////
     /// Resolves URI as described in RFC 3986.
     /// If $base is relative URI then throws FORG0009.
     /// Else $dest will be initialized with target URI.
     ////////////////////////////////////////////////////////////////////
-    static bool resolve(const char* relative, const char* base, t_str_buf &dest);
+    static bool resolve(const char* relative, const char* base, stmt_str_buf &dest);
 
     ////////////////////////////////////////////////////////////////////
     /// Component recomposition algorithm implementation (RFC 3986). 
     ////////////////////////////////////////////////////////////////////
-    void recompose(t_str_buf &dest);
+    void recompose(stmt_str_buf &dest);
 
     ////////////////////////////////////////////////////////////////////
     /// Parses given string into uri components.

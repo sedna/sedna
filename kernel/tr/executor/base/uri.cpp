@@ -87,7 +87,7 @@ enum remover_state {BEGIN, SLASH, DOT, DOUBLE_DOT, SLASH_DOT, SLASH_DOUBLE_DOT, 
 */
   
 const char* URI = 
-"^[a-zA-Z][A-Za-z0-9\\+\\-\\.]*:((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@\
+"^[\\n\\r\\t ]*[a-zA-Z][A-Za-z0-9\\+\\-\\.]*:((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@\
 )?((\\[(((([0-9a-fA-F]{1,4}:){6}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2}\
 )|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::([0-9a-\
 fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(\
@@ -111,10 +111,10 @@ Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9a-zA-Z\\-\\._~]|%[0-9
 \\)\\*\\+,;=@:])*)*)?)|(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9a-zA-Z\
 \\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*))*(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&\
 '\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\
-\\?])*)?$";
+\\?])*)?[\\n\\r\\t ]*$";
 
 const char* http_URI =
-"^http://((\\[(((([0-9a-fA-F]{1,4}:){6}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[\
+"^[\\n\\r\\t ]*http://((\\[(((([0-9a-fA-F]{1,4}:){6}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[\
 0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::\
 ([0-9a-fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][\
 0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(([0-9a-fA-F]{1,4})*\
@@ -135,10 +135,10 @@ F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([
 (\\)\\*\\+,;=])+)(:[0-9]*)?((/(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])+(/([0-9\
 a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)?)(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]\
 {2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;\
-=@:])|[/\\?])*)?)?$";
+=@:])|[/\\?])*)?)?[\\n\\r\\t ]*$";
 
 const char* relative_ref = 
-"^((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@)?((\\[(((([0-9a-fA-F]{1,4}:){6\
+"^[\\n\\r\\t ]*((//((([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=:])*@)?((\\[(((([0-9a-fA-F]{1,4}:){6\
 }(([0-9a-fA-F]{1,4}:[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}\
 [0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5]))))|(::([0-9a-fA-F]{1,4}:){5}(([0-9a-fA-F]{1,4}\
 :[0-9a-fA-F]{1,4})|(([0-9]|([1-9][0-9])|(1[0-9]{2})|(2[0-4][0-9])|(25[0-5])\\.){3}[0-9]|([1-9][0-9])|\
@@ -161,7 +161,7 @@ fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)|(/(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!
 )+(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*)?)|(([0-9a-zA-Z\\-\\._~]|%[0-9a-\
 fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@])+(/([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])*)*))\
 *(\\?(([0-9a-zA-Z\\-\\._~]|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?(#(([0-9a-zA-Z\\-\\._~]\
-|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?$";
+|%[0-9a-fA-F]{2}|[!$&'\\(\\)\\*\\+,;=@:])|[/\\?])*)?[\\n\\r\\t ]*$";
 
 
 const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
@@ -195,17 +195,31 @@ const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
     ? 'a' + (byte - 'A') \
     : byte)
 
+#define IS_WHITESPACE(byte) \
+    (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
+
+
 template <class Iterator>
-static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool* res, char** scheme)
+static inline void URI_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
+{
+    while(start < end &&  IS_WHITESPACE(*start)) { start++; }
+    while(start < end && !IS_WHITESPACE(*start)) { out_buf << (*start++); }
+}
+
+template <class Iterator>
+static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool* res, char* scheme_buf)
 {
     *res = false;
-
     int counter = 0;
-    if(start == end) return;
-    unsigned char value = *start;
+    unsigned char value;
+
+    while(start < end && IS_WHITESPACE(*start)) { start++; }
+    
+    if(start == end) return;    
+    value = *start;
     if(('A' > value || value > 'Z') && 
        ('a' > value || value > 'z')) return;
-    (*scheme)[counter++] = TO_LOWER_CASE(value);
+    scheme_buf[counter++] = TO_LOWER_CASE(value);
     ++start;
     
     while(start < end)
@@ -213,15 +227,15 @@ static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool
         value = *start;
         if(!IS_BYTE_SCHEME_ALLOWED(value)) break;
         ++start;
-        if(counter <= MAX_SCHEME_NAME_SIZE) (*scheme)[counter++] = TO_LOWER_CASE(value);
+        if(counter <= MAX_SCHEME_NAME_SIZE) scheme_buf[counter++] = TO_LOWER_CASE(value);
     }
 
-    (*scheme)[counter] = '\0';
+    scheme_buf[counter] = '\0';
 
     if(*start == ':') *res= true;
 }
 
-bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
+tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *valid)
 {
     //////////////////////////////////////////////////////////////////////
     /// Possibly, in future we will need to convert IRI (RFC 3987, which 
@@ -230,15 +244,13 @@ bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
     /// fn:iri-to-uri() implementation.
     //////////////////////////////////////////////////////////////////////
     bool is_scheme = false;
-    char* scheme = new char[MAX_SCHEME_NAME_SIZE + 1];
+    char scheme_buf[MAX_SCHEME_NAME_SIZE + 1];
+    const char* re = URI;
     
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_URI_with_scheme, tc, &is_scheme, &scheme); 
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_URI_with_scheme, in_tc, &is_scheme, scheme_buf); 
 
     if(is_scheme)
     {
-         bool result;
-         const char* re = URI;
-
          ///////////////////////////////////////////////////////////////
          /// RFC 3986 does not define scheme specific checking, but
          /// in some cases it is better to check absolute URI over scheme 
@@ -246,18 +258,24 @@ bool Uri::chech_constraints_for_xs_anyURI(const tuple_cell *tc)
          /// In future we can add any scheme specific checking using
          /// one more strcmp instruction and one more scheme specific
          /// regular expression.
-         if(strcmp("http", scheme) == 0) re = http_URI;
+         if(strcmp("http", scheme_buf) == 0) re = http_URI;
          ///////////////////////////////////////////////////////////////
+    }
+    else 
+        re = relative_ref;
 
-         result = collation_handler->matches(tc, re);
-         delete scheme;
-         return result;
-    }
-    else
+    (*valid) = collation_handler->matches(in_tc, re);
+
+    if(*valid)
     {
-         delete scheme;
-         return collation_handler->matches(tc, relative_ref);
+        stmt_str_buf out_buf;
+        STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(URI_normalization, in_tc, out_buf);
+        tuple_cell rc = out_buf.get_tuple_cell();
+        rc.set_xtype(xs_anyURI);
+        return rc;
     }
+
+    return *in_tc;
 }
 
 char* remove_dot_segments(const char* path)
@@ -384,7 +402,7 @@ char* remove_dot_segments(const char* path)
     return result;
 }
 
-bool Uri::resolve(const char* relative, const char* base, t_str_buf &dest)
+bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
 {
     Uri R = parse(relative);      /// Parsed relative URI which we are going to resolve.
     
@@ -502,7 +520,7 @@ bool Uri::resolve(const char* relative, const char* base, t_str_buf &dest)
     return true;
 }
 
-void Uri::recompose(t_str_buf &dest)
+void Uri::recompose(stmt_str_buf &dest)
 {
    if (scheme_defined)
    { 
