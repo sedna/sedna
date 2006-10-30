@@ -132,7 +132,7 @@ public:
 	stmt_str_buf_impl(const char *str) : USTRBUF_INIT { append(str); }
 #undef USTRBUF_INIT
 	text_type get_type() { return m_ttype; }
-	void * get_ptr_to_text() {
+	const void * get_ptr_to_text() {
 		if (m_flags & f_text_in_buf)
 			return m_buf;
 		else if (m_len == 0)
