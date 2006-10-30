@@ -295,6 +295,8 @@
       (sa:analyze-typeswitch expr vars funcs ns-binding default-ns))
      ((treat instance-of)
       (sa:analyze-treat expr vars funcs ns-binding default-ns))
+     ((cast)
+      (sa:analyze-cast expr vars funcs ns-binding default-ns))
      ((castable)
       (sa:analyze-castable expr vars funcs ns-binding default-ns))
      ;-------------------
@@ -333,8 +335,6 @@
      ; Not expressed in the new logical representation
      ((fun-call)
       (sa:analyze-fun-call expr vars funcs ns-binding default-ns))
-     ((cast)
-      (sa:analyze-cast expr vars funcs ns-binding default-ns))
      ((spaceseq)
       (sa:propagate expr vars funcs ns-binding default-ns 'sa:atomic))
      ;-------------------     
@@ -796,7 +796,7 @@
      "base64Binary"
      "anyURI"
      "QName"
-     "NOTATION"
+     ; "NOTATION"  ; See "3.12.5 Constructor Functions"
      "normalizedString"
      "token"
      "language"
@@ -2525,12 +2525,32 @@
                                (not (null? (cdr seq-type))))
                               (cadr seq-type)
                               seq-type)))
-          (if
-           (eq? item-type '!xs!anyAtomicType)
-           (cl:signal-user-error XPST0080 "Cast as xs:anyAtomicType")
-           (cons (cons (sa:op-name expr)
-                       (map car args))
-                 (return-type-lambda args)))))))))
+          (cond
+            ((assq item-type
+                   '((!xs!anyAtomicType . "xs:anyAtomicType")
+                     (!xs!NOTATION      . "xs:NOTATION")))
+             => (lambda (pair)
+                  (cl:signal-user-error
+                   XPST0080
+                   (string-append
+                    (symbol->string (sa:op-name expr))
+                    " as "
+                    (cdr pair)))))
+            ((assq item-type
+                   '((!xs!anySimpleType . "xs:anySimpleType")
+                     (!xs!anyType       . "xs:anyType")
+                     (xs:anyType        . "xs:anyType")))
+             => (lambda (pair)
+                  (cl:signal-user-error
+                   XPST0051
+                   (string-append
+                    (symbol->string (sa:op-name expr))
+                    " as "
+                    (cdr pair)))))
+            (else
+             (cons (cons (sa:op-name expr)
+                         (map car args))
+                   (return-type-lambda args))))))))))
 
 (define sa:analyze-cast (sa:cast-helper
                          cdar  ; type of the subexpr
@@ -3244,6 +3264,21 @@
                        (car context-pair))
                  (cdr pair)  ; return type
                  )))
+        pair))
+      ((cast)
+       ; Special check for xs:QName constructor function
+       ; See "3.12.5 Constructor Functions" in XQuery specification
+       (if
+        (and
+         (equal? (cadr (sa:op-args expr))
+                 '(type (one !xs!QName)))
+         (pair? (car (sa:op-args expr)))
+         (not 
+          (eq? (sa:op-name (car (sa:op-args expr)))
+               'const)))
+        (cl:signal-user-error
+         XPTY0004
+         "xs:QName constructor function for non-constant argument")
         pair))
       (else  ; any other function call
        pair))))
