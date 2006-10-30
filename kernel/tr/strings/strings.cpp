@@ -284,6 +284,7 @@ void stmt_str_buf_impl::clear()
 	if (m_flags & f_text_in_estr_buf)
 		m_ptr = XNULL;
 	m_flags = 0;
+	m_ttype = text_mem;
 }
 
 //pre: text is not in estr buf

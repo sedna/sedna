@@ -135,6 +135,11 @@ public:
 	void * get_ptr_to_text() {
 		if (m_flags & f_text_in_buf)
 			return m_buf;
+		else if (m_len == 0)
+		{
+			U_ASSERT(m_ttype == text_mem);
+			return "";
+		}
 		else if (m_ttype == text_mem)
 			return m_str_ptr.get();
 		else
@@ -159,6 +164,7 @@ public:
 			m_flags = 0;
 			m_ptr = XNULL;
 			m_len = 0;
+			m_ttype = text_mem;
 			return tc;
 		}
 		else
@@ -185,7 +191,7 @@ private:
 	stmt_str_buf_impl *m_impl;
 public:
 	stmt_str_buf() { if (used) throw USER_EXCEPTION(SE1003); m_impl = &buf_impl; used = true; }
-	~stmt_str_buf() { used = false; }
+	~stmt_str_buf() { m_impl->clear(); used = false; }
 
 	void clear() {m_impl->clear();}
 	void append(const tuple_cell &tc) {m_impl->append(tc);}
@@ -200,6 +206,11 @@ public:
 	stmt_str_buf& operator<<(const char *s)	{ this->append(s); 
                                                           return *this; }
     stmt_str_buf& operator<<(char c)		{ this->append(&c, 1); return *this; }
+	stmt_str_buf& operator++() { return *this; }
+	stmt_str_buf& operator++(int) { return *this; }
+	stmt_str_buf& operator*() { return *this; }
+	stmt_str_buf& operator=(char c) { this->append(&c, 1); return *this; }
+
 };
 
 
