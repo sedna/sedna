@@ -249,6 +249,39 @@ void CharsetHandler_utf8::free_char_counter(CharCounter *char_counter)
 	delete char_counter;
 }
 
+//FIXME1: do not include this
+//FIXME2: it is already included in pcre_matcher_base.h
+//#include "ucp.c"
+
+template <class Iterator>
+static inline void utf8_toupper(const Iterator &start, const Iterator &end, stmt_str_buf *sb)
+{
+	utf8_o_iterator<stmt_str_buf> outp(*sb);
+	utf8_iterator<Iterator> it(start);
+
+	while (it.base_iterator() < end)
+	{
+		const int c = *it;
+		int c_type, c_case;
+		++it;
+		ucp_findchar(c, &c_type, &c_case);
+		if (c_case != 0 && c_type == ucp_Ll)
+			*outp++ = c_case;
+		else
+			*outp++ = c;
+	}
+}
+
+
+tuple_cell CharsetHandler_utf8::toupper(const tuple_cell *tc)
+{
+	stmt_str_buf sb;
+
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(utf8_toupper, tc, &sb);
+	
+	return sb.get_tuple_cell();
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Collation Handler
 //////////////////////////////////////////////////////////////////////////
