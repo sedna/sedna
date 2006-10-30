@@ -878,22 +878,16 @@
 
              ; *** contains ***
              ((eq? op-name '!fn!contains)
-v v v v v v v
               `(1 (PPFnContains
                    ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node))))
-^ ^ ^ ^ ^ ^ ^
-             )
+                   ,(l2p:any-lr-node2por (cadr node)))))
              
              ; *** translate ***
              ((eq? op-name '!fn!translate)
-v v v v v v v
               `(1 (PPFnTranslate
                    ,(l2p:any-lr-node2por (car node)) 
                    ,(l2p:any-lr-node2por (cadr node))
-                   ,(l2p:any-lr-node2por (caddr node))))
-^ ^ ^ ^ ^ ^ ^
-             )
+                   ,(l2p:any-lr-node2por (caddr node)))))
              
              ; *** deep-equal ***
              ((eq? op-name '!fn!deep-equal)
