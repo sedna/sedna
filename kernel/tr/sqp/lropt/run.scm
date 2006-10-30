@@ -7,6 +7,8 @@
 (load "../xquery-lr-lib.scm")
 (load "lreturn.scm")
 
+(define go lropt:rewrite-query)
+
 ;------------------------
 
 (lropt:rewrite-query
