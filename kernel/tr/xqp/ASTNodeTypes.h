@@ -197,7 +197,9 @@ enum ASTNodeType { 	 AST_QUERY=1,
 			 AST_DECL_UNORD,
 			 AST_DECL_COPY_NS,
 			 AST_VAR_DECL_EXT,
-			 AST_VAR_DECL_EXPR
+			 AST_VAR_DECL_EXPR,
+			 AST_ABS_SL_PATH,
+			 AST_ABS_SLSL_PATH
  };
 
 #endif
