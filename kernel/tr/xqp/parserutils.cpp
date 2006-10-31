@@ -11,6 +11,13 @@
 
 using namespace std;
 
+bool check_char_wellformedness(int c)
+{
+  if (c == 0x9 || c == 0xA || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x1000 && c <= 0x10ffff))
+     return true;
+  else return false;
+}
+
 string erase_doublequot(char* lex_text)
 {
   string lex = lex_text;
@@ -136,6 +143,10 @@ string replace_charref(char* lex_text)
       char_ref =  text.substr(posb+3, pose - (posb+3));
 
       char_code = strtol(char_ref.c_str(), NULL, 16);
+
+      if (!check_char_wellformedness(char_code))
+	throw USER_EXCEPTION(XQST0090);
+
 //      printf("char_code=%d\n", char_code);
       str_char_code = string(utf8_encode_char(char_code));
 
@@ -157,6 +168,10 @@ string replace_charref(char* lex_text)
       char_ref =  text.substr(posb+2, pose - (posb+2));
 
       char_code = atoi(char_ref.c_str());
+
+      if (!check_char_wellformedness(char_code))
+	throw USER_EXCEPTION(XQST0090);
+
 //      printf("char_code=%d\n", char_code);
       str_char_code = string(utf8_encode_char(char_code));
 
@@ -203,3 +218,4 @@ void * extract_pragma_content(char* text, char* qname, char* pr_content)
   }
 }
 */
+
