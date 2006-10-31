@@ -251,9 +251,8 @@ void serialize_string(const tuple_cell& tc, void* dest)
     __int64 length_all = tc.get_strlen();
     int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
-    memcpy(dest, &flag, sizeof(bool));                       
-    if(tc.is_light_atomic()) memcpy((char*)dest + sizeof(bool), tc.get_str_mem(), length_ser);
-    else copy_text((char*)dest + sizeof(bool), tc.get_str_vmm(), length_ser);
+    memcpy(dest, &flag, sizeof(bool));
+    tc.copy_string((char*)dest + sizeof(bool), length_ser);
     *((char*)dest+sizeof(bool)+length_ser) = '\0';
 }
 

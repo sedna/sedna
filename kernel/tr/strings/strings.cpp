@@ -40,14 +40,14 @@ void t_str_buf::move_to_mem_buf()
 		m_ttype = text_mem;
 		return;
 	case text_estr:
-		copy_text(m_buf, m_ptr, m_len);
+		e_str_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
 		m_flags |= f_text_in_buf;
 		m_ttype = text_mem;
 		return;
 	case text_doc:
 		if (m_len < PSTRMAXSIZE)
-			copy_text(m_buf, m_ptr, m_len);
+			e_str_copy_to_buffer(m_buf, m_ptr, m_len);
 		else
 			pstr_long_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
@@ -158,7 +158,7 @@ void t_str_buf::append(const tuple_cell &tc)
 				{
 				case tc_heavy_atomic_estr:
 				case tc_heavy_atomic_pstr_short:
-					copy_text(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
+					e_str_copy_to_buffer(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
 					m_buf[new_len] = 0;
 					m_len = new_len;
 					return;
@@ -250,14 +250,14 @@ void stmt_str_buf_impl::move_to_mem_buf()
 		m_ttype = text_mem;
 		return;
 	case text_estr:
-		copy_text(m_buf, m_ptr, m_len);
+		e_str_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
 		m_flags |= f_text_in_buf;
 		m_ttype = text_mem;
 		return;
 	case text_doc:
 		if (m_len < PSTRMAXSIZE)
-			copy_text(m_buf, m_ptr, m_len);
+			e_str_copy_to_buffer(m_buf, m_ptr, m_len);
 		else
 			pstr_long_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
@@ -369,7 +369,7 @@ void stmt_str_buf_impl::append(const tuple_cell &tc)
 				{
 				case tc_heavy_atomic_estr:
 				case tc_heavy_atomic_pstr_short:
-					copy_text(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
+					e_str_copy_to_buffer(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
 					m_buf[new_len] = 0;
 					m_len = new_len;
 					return;

@@ -141,20 +141,10 @@ SEDNA_SEQUENCE_ITEM *ExtFunction::make_item(const tuple &t)
 	default:
 		res = cast(res, xs_string);
 		node->data.type = SEDNATYPE_string;
-		int len;
-		if (res.is_light_atomic())
-		{
-			len = res.get_strlen_mem();
-			node->data.val_string = (SEDNA_string)malloc(len+1);
-			memcpy(node->data.val_string, res.get_str_mem(), len);
-		}
-		else
-		{
-			len = res.get_strlen_vmm();
-			node->data.val_string = (SEDNA_string)malloc(len+1);
-			copy_text(node->data.val_string, res.get_str_vmm(), len);
-		}
-		node->data.val_string[len] = 0;
+		int len = res.get_strlen();
+        //TODO: check len < MAX_WE_CAN_ALLOC
+		node->data.val_string = (SEDNA_string)malloc(len+1);
+        res.copy_string(node->data.val_string);
 		break;
 	}
 	node->next = NULL;

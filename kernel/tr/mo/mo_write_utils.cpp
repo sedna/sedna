@@ -1834,7 +1834,7 @@ void copy_to_buffer(char * buf,const void* src, int size, text_type ttype)
 	}
 	else
 	{ //ttype == text_estr
-		copy_text(buf, *(xptr*)src, size);
+		e_str_copy_to_buffer(buf, *(xptr*)src, size);
 		return;
 	}
 }
