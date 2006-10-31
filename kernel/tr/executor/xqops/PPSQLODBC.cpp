@@ -10,7 +10,6 @@
 #include "casting_operations.h"
 #include "d_printf.h"
 #include "e_string.h"
-#include "e_string_o_iterator.h"
 #include "PPSQLODBC.h"
 
 #ifndef WIN32
@@ -510,24 +509,14 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 	int shift=0;
 	for (int i=0;i<at_vals.size();i++)
 	{
-		if (at_vals[i].is_light_atomic())
-		{
-			memcpy(tmp+shift,at_vals[i].get_str_mem(),at_vals[i].get_strlen_mem());
-			shift+=at_vals[i].get_strlen_mem();
-		}
-		else 
-		{
-			copy_text(tmp+shift, at_vals[i].get_str_vmm(), at_vals[i].get_strlen_vmm());
-			shift+=at_vals[i].get_strlen_vmm();
-		}
+        at_vals[i].copy_string(tmp+shift);
+        shift += at_vals[i].get_strlen();
+
 		if (i<(at_vals.size()-1))
 			tmp[shift++]=' ';
 	}
 	tmp[charsize-1]=0;
-	tuple_cell result=tuple_cell::atomic_deep(xs_string,tmp);
-	delete [] tmp;
-	result=tuple_cell::make_sure_light_atomic(result);
-	return result;
+	return tuple_cell::atomic(xs_string,tmp);
 }
 
 void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)

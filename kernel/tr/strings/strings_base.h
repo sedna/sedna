@@ -24,6 +24,15 @@ public:
     /// The function calls CHECKP on the given string, so the pointer is
     /// valid until next call to CHECKP
 	virtual int get_blk(char **ptr) = 0;
+
+	void copy_to_c_str(char *dst)
+    {
+        int c = 0;
+        while ( (c = copy_blk(dst)) > 0 )
+            dst += c;
+        *dst = 0;
+    }
+
 };
 
 

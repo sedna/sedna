@@ -12,10 +12,7 @@
 #include "PPUtils.h"
 #include "node_utils.h"
 #include "casting_operations.h"
-#include "pstr.h"
-//we need copy_text, for options
-#include "e_string.h"
-#include "strings.h"
+#include "dm_accessors.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 
@@ -58,15 +55,9 @@ int SQLOptionGetBool(const char *value)
 
 static char *copy_attr_value(xptr attr)
 {
-	int size = A_DSC(attr)->size;
-	xptr data = A_DSC(attr)->data;
-	char *value;
-
-    CHECKP(data);
-	value = new char[size+1];
-	copy_text(value, PSTRDEREF(data), size);
-	value[size] = 0;
-	return value;
+    tuple_cell tc = dm_string_value(attr);
+	char *value = new char[tc.get_strlen()+1];
+    return tc.copy_string(value);
 }
 
 bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)

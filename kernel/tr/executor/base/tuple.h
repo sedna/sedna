@@ -439,10 +439,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////
     void print(bool b = true) const;
 
-    static tuple_cell make_sure_light_atomic(const tuple_cell& tc);
+    /// FIXME: Add good comment to these functions (how to call, memory management)
 
+    static tuple_cell make_sure_light_atomic(const tuple_cell& tc);
     /// copy content of the string to buf (!!! FIXME: not very well designed approach...)
-    void copy_string(char *buf);
+    char* copy_string(char *buf) const;
+    char* copy_string(char *buf, __int64 n) const;
 };
 
 
