@@ -73,7 +73,7 @@ moveExpr!:
 	 | PRECEDING <<pos=#[AST_PRECEDING];>>
 	 | FOLLOWING <<pos=#[AST_FOLLOWING];>>
 	)
-	rpe:relativePathExpr
+	rpe:pathExpr
 	<<#0=#(#[AST_MOVE], #v, #st, #e, #rpe, pos);>>
 ;
 

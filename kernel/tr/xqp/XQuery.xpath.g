@@ -5,9 +5,38 @@
 class XQueryParser{
 
 pathExpr!:
-	(//  SLASH relativePathExpr     //doens not correspond to the specification
-	 //| SLASHSLASH relativePathExpr
-	  rpe:relativePathExpr <<#0=#rpe;>>
+	<<ASTBase* steps;>>
+	(  SLASH rpe1:relativePathExpr 
+	   <<
+	     steps = #(#[AST_FILTER_PATH_STEP],
+	                   #(#[AST_TREAT], 
+	                     #(#[AST_RELATIVE_PATH], #(#[AST_FILTER_PATH_STEP], #(#[AST_FCALL], #(#[AST_QNAME], #["root", AST_LOCAL_NAME], #["fn", AST_PREFIX])) ,#[AST_PREDICATES])),
+	                     #(#[AST_TYPE], #[AST_DOCUMENT_TEST])),	                   
+	                   #[AST_PREDICATES]
+	              );
+	     steps->append(#rpe1);
+	     #0=#(#[AST_RELATIVE_PATH], steps);
+
+	   >>
+	 | SLASHSLASH rpe2:relativePathExpr
+	   <<
+	     steps = #(#[AST_FILTER_PATH_STEP],
+	                   #(#[AST_TREAT], 
+	                     #(#[AST_RELATIVE_PATH], #(#[AST_FILTER_PATH_STEP], #(#[AST_FCALL], #(#[AST_QNAME], #["root", AST_LOCAL_NAME], #["fn", AST_PREFIX])) ,#[AST_PREDICATES])),
+	                     #(#[AST_TYPE], #[AST_DOCUMENT_TEST])),	                   
+	                   #[AST_PREDICATES]
+	              );
+
+             steps->append(#(#[AST_AXIS_PATH_STEP],
+	                      #(#[AST_STEP], 
+	                        #(#[AST_AXIS], #[AST_DESCENDANT_OR_SELF_AXIS]),
+	                        #(#[AST_TEST], #[AST_NODE_TEST])),
+                                #[AST_PREDICATES]));
+
+	     steps->append(#rpe2);
+	     #0=#(#[AST_RELATIVE_PATH], steps);
+	   >>
+	 | rpe3:relativePathExpr <<#0=#(#[AST_RELATIVE_PATH], #rpe3);>>
 	)
 ;       
 
@@ -39,7 +68,7 @@ relativePathExpr!:
 	 >>
 	 se2:stepExpr[sl] <<steps->append(#se2);>> )*                      
 
-	<<#0=#(#[AST_RELATIVE_PATH], steps);>>
+	<<#0= steps;>>
 ;
 
 slashes! > [std::string sl]:
