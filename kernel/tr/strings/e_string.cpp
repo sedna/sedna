@@ -292,6 +292,16 @@ void e_str::reset()
     last_blk = first_blk;
 }
 
+void e_str::truncate(const xptr &ptr)
+{
+	last_blk = BLOCKXPTR(ptr);
+	CHECKP(last_blk);
+	((e_str_blk_hdr*)XADDR(last_blk))->cursor = ptr - last_blk;
+	VMM_SIGNAL_MODIFICATION(last_blk);
+
+	m_size = 0;
+}
+
 xptr e_str::append_mstr(const char *src)
 {
     xptr dest = xptr_for_data();

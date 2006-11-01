@@ -83,6 +83,7 @@ private:
 public:
     e_str() : m_blks(0), m_size(0) {}
     void reset();
+    void truncate(const xptr &ptr);
 	void clear()
 	{
 		m_blks = 0;
