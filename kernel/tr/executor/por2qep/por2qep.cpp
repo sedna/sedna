@@ -3464,15 +3464,27 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
     {
         string prolog_decl(qp->at(i).internal.list->at(0).internal.symb);
 
-        if (prolog_decl == "PPNSDecl") 
+        // FIXME: Add Version Declaration
+        // FIXME: Add Module Declaration
+        if (prolog_decl == "PPBoundarySpaceDecl")  
         {
-            if (   qp->at(i).internal.list->size() != 3
-                || qp->at(i).internal.list->at(1).type != SCM_STRING
-                || qp->at(i).internal.list->at(2).type != SCM_STRING)
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
                 throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
-            tr_globals::st_ct.add_to_context(qp->at(i).internal.list->at(1).internal.str,
-                                             qp->at(i).internal.list->at(2).internal.str);
+            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "strip") == 0)
+                tr_globals::st_ct.boundary_space = xq_boundary_space_strip;
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "preserve") == 0)
+                tr_globals::st_ct.boundary_space = xq_boundary_space_preserve;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        else if (prolog_decl == "PPDefaultCollationDecl")
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            tr_globals::st_ct.set_default_collation_uri(qp->at(i).internal.list->at(1).internal.str);
         }
         else if (prolog_decl == "PPBaseURIDecl")
         {
@@ -3482,20 +3494,100 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
 
             tr_globals::st_ct.set_base_uri(qp->at(i).internal.list->at(1).internal.str);
         }
+        else if (prolog_decl == "PPConstructionDecl")  
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "strip") == 0)
+                tr_globals::st_ct.preserve_type = false;
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "preserve") == 0)
+                tr_globals::st_ct.preserve_type = true;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        else if (prolog_decl == "PPOrderingModeDecl")  
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "ordered") == 0)
+                tr_globals::st_ct.preserve_type = false;
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "unordered") == 0)
+                tr_globals::st_ct.preserve_type = true;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        else if (prolog_decl == "PPEmptyOrderDecl")
+        {
+            if (   qp->at(i).internal.list->size() != 2
+                || qp->at(i).internal.list->at(1).type != SCM_SYMBOL)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(1).internal.symb, "greatest") == 0)
+                tr_globals::st_ct.empty_order = xq_empty_order_greatest;
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.symb, "least") == 0)
+                tr_globals::st_ct.empty_order = xq_empty_order_least;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        else if (prolog_decl == "PPCopyNamespacesDecl")  
+        {
+            if (   qp->at(i).internal.list->size() != 3
+                || qp->at(i).internal.list->at(1).type != SCM_STRING
+                || qp->at(i).internal.list->at(2).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "preserve") == 0)
+                tr_globals::st_ct.cn_preserve = true;
+            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "no-preserve") == 0)
+                tr_globals::st_ct.cn_preserve = false;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(qp->at(i).internal.list->at(2).internal.str, "inherit") == 0)
+                tr_globals::st_ct.cn_inherit = true;
+            else if (strcmp(qp->at(i).internal.list->at(2).internal.str, "no-inherit") == 0)
+                tr_globals::st_ct.cn_inherit = false;
+            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+        }
+        // FIXME: Add Schema Import
+        // FIXME: Add Module Import
+        else if (prolog_decl == "PPNSDecl") 
+        {
+            if (   qp->at(i).internal.list->size() != 3
+                || qp->at(i).internal.list->at(1).type != SCM_STRING
+                || qp->at(i).internal.list->at(2).type != SCM_STRING)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            // FIXME: Check lexical representation and normalize URI and NCName (or should we add this check to add_to_context)
+            tr_globals::st_ct.add_to_context(qp->at(i).internal.list->at(1).internal.str,
+                                             qp->at(i).internal.list->at(2).internal.str);
+        }
         else if (prolog_decl == "PPDefNSDeclElem")
         {
             if (   qp->at(i).internal.list->size() != 2
                 || qp->at(i).internal.list->at(1).type != SCM_STRING)
                 throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
+            // FIXME: Check lexical representation and normalize URI (or should we add this check to add_to_context)
             tr_globals::st_ct.add_to_context(NULL,
                                              qp->at(i).internal.list->at(1).internal.str);
         }
-        else if (prolog_decl == "PPDefNSDeclFun")  {}
+        else if (prolog_decl == "PPDefNSDeclFun")  
+        {
+            // FIXME: Not Implemented
+        }
+        // FIXME: Add Variable Declaration
+        else if (prolog_decl == "PPFunDecl") 
+        { 
+            make_pp_fun(qp->at(i).internal.list, tr_globals::qp.fun_decls[j]); 
+            j++; 
+        }
         else if (prolog_decl == "PPOptionDecl")  
         {
             if (qp->at(i).internal.list->size() < 2)
                 throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            // FIXME: Check lexical representation for QName
 
             int k = 0, q = 0;
             for (k = 1; k < qp->at(i).internal.list->size(); k++)
@@ -3504,13 +3596,6 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
                     throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
                 scheme_list *single = qp->at(i).internal.list->at(k).internal.list;
-/*
-                int x1 = single->size();
-                scheme_type x2 = single->at(0).type;
-                int x3 = single->at(0).internal.list->size();
-                scheme_type x4 = single->at(0).internal.list->at(0).type;
-                scheme_type x5 = single->at(0).internal.list->at(1).type;
-*/
 
                 if (   single->size() < 2
                     || single->at(0).type != SCM_LIST
@@ -3561,48 +3646,12 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
                     {
                         // Call add_char_mapping in string matcher. We should substitute 'name' with 
                         // 'value'. Addition check could be needed for name and value
-
-                        // !!!   Uncomment this when everybody is ready   !!!
                         tr_globals::st_ct.add_char_mapping(name, value);
                     }
                     else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
                 }
             }
         }
-        else if (prolog_decl == "PPBoundarySpaceDecl")  
-        {
-            if (   qp->at(i).internal.list->size() != 2
-                || qp->at(i).internal.list->at(1).type != SCM_STRING)
-                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-
-            if (strcmp(qp->at(i).internal.list->at(1).internal.str, "strip") == 0)
-            {
-                tr_globals::st_ct.boundary_space = xq_boundary_space_strip;
-            }
-            else if (strcmp(qp->at(i).internal.list->at(1).internal.str, "preserve") == 0)
-            {
-                tr_globals::st_ct.boundary_space = xq_boundary_space_preserve;
-            }
-            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-        }
-        else if (prolog_decl == "PPEmptyOrderDecl")  
-        {
-            if (   qp->at(i).internal.list->size() != 2
-                || qp->at(i).internal.list->at(1).type != SCM_SYMBOL)
-                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-
-            string s = string(qp->at(i).internal.list->at(1).internal.symb);
-            if (s == "greatest")
-            {
-                tr_globals::st_ct.empty_order = xq_empty_order_greatest;
-            }
-            else if (s == "least")
-            {
-                tr_globals::st_ct.empty_order = xq_empty_order_least;
-            }
-            else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-        }
-        else if (prolog_decl == "PPFunDecl") { make_pp_fun(qp->at(i).internal.list, tr_globals::qp.fun_decls[j]); j++; }
         else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
     }
 

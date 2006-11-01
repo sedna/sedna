@@ -184,8 +184,10 @@ CHECKP(xpg);
                     throw USER_EXCEPTION2(SE1008, "Cannot follow XNULL left-most pointer");
 				xpg = BT_LMP(pg);
 				goto next_level_call;
-			} else if (key_idx == BT_RIGHTMOST)
+			} else if (key_idx == BT_RIGHTMOST) {
+				if (BT_KEY_NUM(pg) == 0) return false;
 				key_idx = BT_KEY_NUM(pg) - 1 ;
+			}
 			else 
 				key_idx--;
 		}
