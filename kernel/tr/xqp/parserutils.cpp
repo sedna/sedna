@@ -18,6 +18,8 @@ bool check_char_wellformedness(int c)
   else return false;
 }
 
+
+
 string erase_doublequot(char* lex_text)
 {
   string lex = lex_text;
@@ -107,14 +109,15 @@ string escape_quot(string text)
 string replace_entity(char* lex_text, string find_ent, string replc_ent)
 {
   string lex = lex_text;
-  string::size_type pos;
+  string::size_type pos = 0;
 
   for(;;)
   {
-    pos = lex.find(find_ent);
+    pos = lex.find(find_ent, pos);
     if (pos == string::npos) break;
 
-    lex = lex.replace(pos, find_ent.size(), replc_ent);     
+    lex = lex.replace(pos, find_ent.size(), replc_ent);
+    pos++;     
   }
 
   strcpy(lex_text, lex.c_str());
