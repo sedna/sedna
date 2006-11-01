@@ -269,7 +269,7 @@ primaryExpr![in_context in_c] >[out_context out_c]:
 	    SORASTBase* prefix = qn;
 	    SORASTBase* loc_name = qn->down();
 
-	    
+/*	    
         if (std::string(((SORAST *)loc_name)->getText()) == "\"true\"")
         {
            #primaryExpr=#(#["const"], #(#["type"], #["!xs!boolean"]), #["true"]);
@@ -281,11 +281,12 @@ primaryExpr![in_context in_c] >[out_context out_c]:
         }
         else
         {
+*/
            #primaryExpr=#(#["fun-call"],
                           #(#["const"], #(#["type"], #["!xs!QName"]), qn),
                           f_params);
            
-        }
+//        }
 	
 	  >>
 
