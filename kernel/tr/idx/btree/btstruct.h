@@ -30,7 +30,12 @@ private:
     } v;
     xmlscm_type type;
 
-    void free() { if (type == xs_string) delete [] v.s_v; v.s_v = NULL; }	/* free allocated dynamic memory */
+    void free() 
+    { 
+        if (type == xs_string) 
+            delete [] v.s_v; 
+        v.s_v = NULL; 
+    }	/* free allocated dynamic memory */
 
     void init(const bt_key& k);
     void init(char* pg, shft key_idx);
