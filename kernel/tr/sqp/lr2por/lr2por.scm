@@ -757,12 +757,24 @@
              ((eq? op-name '!fn!iri-to-uri)
               `(1 (PPFnIriToUri
                    ,(l2p:any-lr-node2por (car node)))))
-             ((eq? op-name '!fn!escape-html-uri)
-              `(1 (PPFnEscapeHtmlUri
-                   ,(l2p:any-lr-node2por (car node)))))
-             ((eq? op-name '!fn!resolve-uri)
-              `(1 (PPFnResolveUri
-                   ,@(map l2p:any-lr-node2por node))))
+;             ((eq? op-name '!fn!escape-html-uri)
+;              `(1 (PPFnEscapeHtmlUri
+;                   ,(l2p:any-lr-node2por (car node)))))
+;             ((eq? op-name '!fn!resolve-uri)
+;              `(1 (PPFnResolveUri
+;                   ,@(map l2p:any-lr-node2por node))))
+             
+             ((assq op-name '((!fn!escape-html-uri . PPFnEscapeHtmlUri)
+                              (!fn!resolve-uri . PPFnResolveUri)
+                              (!fn!true . PPFnTrue)
+                              (!fn!false . PPFnFalse)))
+              => (lambda (pair)
+                   `(1 (,(cdr pair) ,@(map l2p:any-lr-node2por node)))))
+             
+;             ((eq? op-name '!fn!true)
+;              `(1 (PPFnTrue)))
+;             ((eq? op-name '!fn!false)
+;              `(1 (PPFnFalse)))
              
              ; *** number ***
              ((eq? op-name '!fn!number)
