@@ -3001,6 +3001,12 @@
         (sa:analyze-full-text-create expr vars funcs ns-binding default-ns))
        ((drop-fulltext-index)
         (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns))
+       ;-------------------
+       ; Trigger operations
+       ((create-trigger)
+        (sa:analyze-trigger-create expr vars funcs ns-binding default-ns))
+       ((drop-trigger)
+        (sa:analyze-trigger-drop expr vars funcs ns-binding default-ns))
        (else
         (cl:signal-input-error SE5046 expr)))
      => (lambda (new-expr) new-expr))
@@ -3310,6 +3316,85 @@
                         )))
       (and new (car new)))))
 
+;-------------------------------------------------
+; Trigger manage operations
+
+(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 6)
+   (if
+    (not
+     (list? (list-ref (sa:op-args expr) 5)))
+    (cl:signal-input-error SE5075
+                           (list-ref (sa:op-args expr) 5))
+    (let ((first  (sa:analyze-string-const (car (sa:op-args expr))
+                                           vars funcs ns-binding default-ns))
+          (second (sa:analyze-string-const (cadr (sa:op-args expr))
+                                           vars funcs ns-binding default-ns))
+          (third  (sa:analyze-string-const (caddr (sa:op-args expr))
+                                           vars funcs ns-binding default-ns))
+          (fourth (sa:analyze-expr (cadddr (sa:op-args expr))
+                                   vars funcs ns-binding default-ns))
+          (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
+                                           vars funcs ns-binding default-ns))
+          (sixth  (map
+                   (lambda (statement)
+                     ((if
+                       (and (pair? statement)
+                            (memq (sa:op-name statement)
+                                  '(insert-into insert-preceding insert-following rename
+                                                delete delete_undeep
+                                                replace move-into move-preceding move-following)))
+                       (lambda x
+                         (cons
+                          (apply sa:analyze-update x)
+                          sa:type-nodes))
+                       sa:analyze-expr)
+                      statement vars funcs ns-binding default-ns))
+                   (list-ref (sa:op-args expr) 5))))
+      (and
+       first second third fourth fifth
+       (null? (filter 
+               (lambda (x) (not x))
+               sixth))
+       (cond
+         ((not (member (car second)
+                       '((const (type !xs!string) "BEFORE")
+                         (const (type !xs!string) "AFTER"))))
+          (cl:signal-user-error SE5073
+                                (caddr (car second))))
+         ((not (member (car third)
+                       '((const (type !xs!string) "INSERT")
+                         (const (type !xs!string) "DELETE")
+                         (const (type !xs!string) "REPLACE"))))
+          (cl:signal-user-error SE5074
+                                (caddr (car third))))
+         ((not (member (car fifth)
+                       '((const (type !xs!string) "NODE")
+                         (const (type !xs!string) "STATEMENT"))))
+          (cl:signal-user-error SE5076
+                                (caddr (car fifth))))
+         (else
+          (list
+           (sa:op-name expr)  ; operation name
+           (car first)  ; remove argument type
+           (car second)
+           (car third)
+           (sa:structural-absolute-xpath? (car fourth))
+           (car fifth)
+           (map car sixth)
+           ))))))))
+
+; Clone from sa:analyze-manage-document
+(define (sa:analyze-trigger-drop
+         expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 1)
+   (let ((new
+          (sa:propagate expr vars funcs ns-binding default-ns
+                        'sa:atomic  ; dummy
+                        )))
+     (and new (car new)))))
 
 ;==========================================================================
 ; Order by

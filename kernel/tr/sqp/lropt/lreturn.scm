@@ -1804,6 +1804,7 @@
           second-order-for-vars third-order-for-vars)))))))
   
 ; Manage operation
+; TODO: add create-trigger here
 (define (lropt:manage expr called-once? order-required?
                       var-types prolog processed-funcs)
   (if
