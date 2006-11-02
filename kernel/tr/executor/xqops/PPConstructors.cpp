@@ -24,7 +24,7 @@ xptr PPConstructor::last_elem=XNULL;
 xptr PPConstructor::cont_parind=XNULL;
 xptr PPConstructor::cont_leftind=XNULL;
 int PPConstructor::conscnt=0;
-t_str_buf str_val;
+op_str_buf str_val;
 //UTILS
 void separateLocalAndPrefix(char*& prefix,const char*& qname)
 {

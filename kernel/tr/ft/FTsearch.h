@@ -51,7 +51,7 @@ class SednaTextInputStream {
         long pos;
 		e_string_iterator_first *estr_it;
         dtsFileInfo* fileInfo;
-		t_str_buf in_buf;
+		op_str_buf in_buf;
 		ft_index_type cm;
 		pers_sset<ft_custom_cell,unsigned short>* custom_tree;
     };
@@ -166,7 +166,7 @@ public:
 private:
 	static const char * opentag_str;
 	static const char * closetag_str;
-	t_str_buf in_buf;
+	op_str_buf in_buf;
 	SednaTextInputStream *tis;
 	dtsFileInfo fileInfo;
 

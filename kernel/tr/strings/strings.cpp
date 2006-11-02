@@ -87,7 +87,7 @@ void str_buf_base::move_to_estr()
 		m_flags |= f_text_in_estr_buf;
 		return;
 	}
-	throw USER_EXCEPTION2(SE1003, "Impossible case in t_str_buf::move_to_estr()");
+	throw USER_EXCEPTION2(SE1003, "Impossible case in op_str_buf::move_to_estr()");
 }
 
 void str_buf_base::clear()

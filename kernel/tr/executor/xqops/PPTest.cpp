@@ -17,7 +17,7 @@ using namespace std;
 //#include <dtsfc.h> 
 //#include "FTsearch.h"
 //#include "FTindex.h"
-//t_str_buf req_buf;
+//op_str_buf req_buf;
 //SednaSearchJob sj;
 bool fit;
 //#include <dtsfclib.h>

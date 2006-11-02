@@ -252,7 +252,7 @@ void PPFnSQLConnect::close ()
 }
 
 //FIXME
-static t_str_buf str_val;
+static op_str_buf str_val;
 //copied from PPConstructors.cpp
 static char *getStringParameter(PPOpIn content)
 {
