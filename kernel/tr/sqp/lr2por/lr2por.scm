@@ -1457,6 +1457,31 @@
                                 ,ind-name)
               ))
              
+             ((eq? op-name 'create-trigger)
+              (let* ((time    (string->symbol
+                               (caddr (cadr node))))
+                     (event   (string->symbol
+                               (caddr (caddr node))))
+                     (AbsPath (l2p:findPPAbsPath (cadddr node)))
+                     (entity (cadr AbsPath))
+                     (abs-path (caddr AbsPath))
+                     (granularity (string->symbol
+                                   (caddr (list-ref node 4))))
+                     (action (map
+                              l2p:any-lr-node2por
+                              (list-ref node 5)))
+                     (name (l2p:any-lr-node2por (car node))))
+                ;(pp (cadddr node))
+                ;(pp AbsPath)
+                `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
+                                  ,time
+                                  ,event
+                                  ,entity
+                                  ,abs-path
+                                  ,granularity
+                                  ,action
+                                  ,name)))
+             
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!
               (let ((ind-name (l2p:any-lr-node2por (car node)))
@@ -1474,11 +1499,12 @@
                                           '()))
               )))
              
-             ((memv op-name '(drop-index drop-fulltext-index))
+             ((memv op-name '(drop-index drop-fulltext-index drop-collection))
               (let* ((ind-name (l2p:any-lr-node2por (car node))))
               `(,(cdr
                   (assq op-name '((drop-index . PPDropIndex)
-                                  (drop-fulltext-index . PPDropFtIndex))))
+                                  (drop-fulltext-index . PPDropFtIndex)
+                                  (drop-collection . PPDropCollection))))
                 ,(if (eq? var-count 0) 0 (+ var-count 1))
                 ,ind-name)))
              
@@ -1496,10 +1522,10 @@
                   `(PPDropDocument ,doc-context
                                    ,doc))))
              
-             ((eq? op-name 'drop-collection)
+             ((eq? op-name 'drop-trigger)
               (let* ((col (l2p:any-lr-node2por (car node))))
-                `(PPDropCollection ,(if (eq? var-count 0) 0 (+ var-count 1))
-                                   ,col)))
+                `(PPDropTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
+                                ,col)))
              
              ((eq? op-name 'retrieve-metadata-documents)
               (if (eq? (length node) 2)

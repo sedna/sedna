@@ -241,3 +241,31 @@
     (return
      (sequence (const (type !xs!integer) "1") (const (type !xs!integer) "2"))
      (fun-def (((one ("xs" "int")) (var ("" "x")))) (var ("" "x")))))))
+
+(go
+   '(manage
+  (prolog)
+  (create-trigger
+    (const (type !xs!string) "trig")
+    (const (type !xs!string) "AFTER")
+    (const (type !xs!string) "REPLACE")
+    (ddo
+     (child
+      (fun-call (const (type !xs!QName) ("" "doc")) (const (type !xs!string) "a.xml"))
+      (type (elem-test (ename (const (type !xs!QName) ("" "people")) (type *) (const (type !xs!string) "non-nil"))))))
+    (const (type !xs!string) "STATEMENT")
+    ((delete
+       (ddo
+        (child
+         (ddo
+          (child
+           (fun-call (const (type !xs!QName) ("" "doc")) (const (type !xs!string) "w.xml"))
+           (type (elem-test (ename (const (type !xs!QName) ("" "site")) (type *) (const (type !xs!string) "non-nil"))))))
+         (type (elem-test (ename (const (type !xs!QName) ("" "people")) (type *) (const (type !xs!string) "non-nil")))))))
+     (ddo
+      (child
+       (ddo
+        (child
+         (fun-call (const (type !xs!QName) ("" "doc")) (const (type !xs!string) "a.xml"))
+         (type (elem-test (ename (const (type !xs!QName) ("" "site")) (type *) (const (type !xs!string) "non-nil"))))))
+       (type (elem-test (ename (const (type !xs!QName) ("" "people")) (type *) (const (type !xs!string) "non-nil"))))))))))
