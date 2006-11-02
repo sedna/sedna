@@ -1893,6 +1893,7 @@ static void pstr_long_write_suffix(xptr start, se_ostream& crmout)
 	//TODO
 }
 
+//TODO: remove, use pstr_long_feed
 void pstr_long_write(xptr desc, se_ostream& crmout)
 {
 	//TODO : use pstr_long_write_suffix
@@ -1951,8 +1952,6 @@ void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
 	}
 }
 
-//pre: size == string size
-//FIXME!!!! do not ignore size, remove precond.
 void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size)
 {
 	intl_last_blk = data;
@@ -1967,13 +1966,25 @@ void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size)
 		CHECKP(cur.blk);
 		if (((struct pstr_long_blk_hdr *)XADDR(cur.blk))->next_blk == cur.last_blk && cur.cursor < 0)
 		{
+			if (-cur.ofs-cur.cursor >= size)
+			{
+				memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
+				return;
+			}
 			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, -cur.ofs-cur.cursor);
 			buf += -cur.ofs-cur.cursor;
+			size -= -cur.ofs-cur.cursor;
 		}
 		else
 		{
+			if (PAGE_SIZE-cur.ofs >= size)
+			{
+				memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
+				return;
+			}
 			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, PAGE_SIZE-cur.ofs);
 			buf += PAGE_SIZE-cur.ofs;
+			size -= PAGE_SIZE-cur.ofs;
 		}
 		cur.blk = ((struct pstr_long_blk_hdr *)XADDR(cur.blk))->next_blk;
 		cur.ofs = PSTR_LONG_BLK_HDR_SIZE;
@@ -1981,7 +1992,10 @@ void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size)
 	if (cur.cursor > 0)
 	{
 		CHECKP(cur.blk);
-		memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, cur.cursor-cur.ofs);
+		if (cur.cursor-cur.ofs > size)
+			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, size);
+		else
+			memcpy(buf, (char*)XADDR(cur.blk) + cur.ofs, cur.cursor-cur.ofs);
 	}
 }
 

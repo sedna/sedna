@@ -144,22 +144,9 @@ void str_buf_base::append(const tuple_cell &tc)
 					m_flags = f_text_in_buf; //clear f_text_in_estr_buf
 					clear_estr_buf();
 				}
-				switch (tc.get_type())
-				{
-				case tc_heavy_atomic_estr:
-				case tc_heavy_atomic_pstr_short:
-					e_str_copy_to_buffer(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
-					m_buf[new_len] = 0;
-					m_len = new_len;
-					return;
-				case tc_heavy_atomic_pstr_long:
-					pstr_long_copy_to_buffer(m_buf + m_len, tc.get_str_vmm(), tc.get_strlen_vmm());
-					m_buf[new_len] = 0;
-					m_len = new_len;
-					return;
-
-				}
-				throw USER_EXCEPTION2(SE1003, "Impossible case in t_str_buf::append");
+				tc.copy_string(m_buf + m_len);
+				m_buf[new_len] = 0;
+				m_len = new_len;
 			}
 			else
 			{
