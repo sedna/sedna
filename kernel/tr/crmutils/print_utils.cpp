@@ -941,7 +941,7 @@ void sxml_print_descriptive_schema_col(const char * colname, se_ostream& crmout)
 
 //printings to buffer
 #ifdef SE_ENABLE_FTSEARCH
-void print_name_space(xml_ns* nsd,t_str_buf& tbuf,ft_index_type type)
+void print_name_space(xml_ns* nsd,op_str_buf& tbuf,ft_index_type type)
 {
 	switch (type)
 			{
@@ -982,10 +982,10 @@ static void make_escape_sm()
 }
 static void tbuf_write_cb(void *param, const char *str, int len)
 {
-	t_str_buf* tbuf = (t_str_buf*)param;
+	op_str_buf* tbuf = (op_str_buf*)param;
 	tbuf->append(str, len);
 }
-static void print_text(xptr txt, t_str_buf& tbuf, t_item xq_type, bool escapes = true)
+static void print_text(xptr txt, op_str_buf& tbuf, t_item xq_type, bool escapes = true)
 {
 	int size =((t_dsc*)XADDR(txt))->size;
 	xptr ind_ptr=((t_dsc*)XADDR(txt))->data;
@@ -1029,7 +1029,7 @@ static void print_text(xptr txt, t_str_buf& tbuf, t_item xq_type, bool escapes =
 }
 
 
-void print_node_to_buffer(xptr node,t_str_buf& tbuf,ft_index_type type,pers_sset<ft_custom_cell,unsigned short> * custom_tree, const char *opentag, const char *closetag)
+void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sset<ft_custom_cell,unsigned short> * custom_tree, const char *opentag, const char *closetag)
 {
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{

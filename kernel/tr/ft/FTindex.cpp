@@ -103,7 +103,7 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 }
 void SednaIndexJob::set_index_name(tuple_cell& request)
 {
-	this->IndexName.set(t_str_buf(request).c_str());
+	this->IndexName.set(op_str_buf(request).c_str());
 }
 void SednaIndexJob::create_index(std::vector<xptr> *first_nodes)
 {

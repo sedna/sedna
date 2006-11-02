@@ -60,7 +60,7 @@ class SampleDataSource : public GenericDataSource {
     protected:
         xptr node;
 		int pos;
-		t_str_buf in_buf;
+		op_str_buf in_buf;
     };
 //
 //  SampleDataSource is a data source based on a table of
@@ -409,7 +409,7 @@ SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hil
 }
 void SednaSearchJob::set_request(tuple_cell& request)
 {
-	this->Request.setU8(t_str_buf(request).c_str());
+	this->Request.setU8(op_str_buf(request).c_str());
 }
 void SednaSearchJob::stop_thread(bool ignore_errors)
 {
@@ -500,7 +500,7 @@ void SednaSearchJob::get_next_result(tuple &t)
 }
 void SednaSearchJob::set_index(tuple_cell& name)
 {
-	ft_index_cell* ft_idx=ft_index_cell::find_index(t_str_buf(name).c_str());
+	ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(name).c_str());
 	if (ft_idx==NULL)
 		throw USER_EXCEPTION(SE1061);
 #ifdef _WIN32

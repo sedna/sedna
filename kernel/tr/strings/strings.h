@@ -138,19 +138,18 @@ public:
     str_buf_base& operator<<(char c)        { append(&c, 1); return *this; }
 };
 
-// FIXME rename it to op_str_buf
-class t_str_buf : public str_buf_base
+class op_str_buf : public str_buf_base
 {
 public:
-	t_str_buf() : str_buf_base() {}
-	t_str_buf(const tuple_cell &tc) : str_buf_base() { append(tc); }
-	t_str_buf(const char *str) : str_buf_base() { append(str); }
+	op_str_buf() : str_buf_base() {}
+	op_str_buf(const tuple_cell &tc) : str_buf_base() { append(tc); }
+	op_str_buf(const char *str) : str_buf_base() { append(str); }
 
 	void set(const tuple_cell &tc) { clear(); append(tc); }
 	void set(const char *str) { clear(); append(str); }
 
-	t_str_buf(const t_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for t_str_buf is not implemented"); }
-    t_str_buf& operator=(const t_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for t_str_buf is not implemented"); }
+	op_str_buf(const op_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for op_str_buf is not implemented"); }
+    op_str_buf& operator=(const op_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for op_str_buf is not implemented"); }
 };
 
 // string buffer for use in operations
