@@ -1,7 +1,9 @@
 /* */
 
 create!:
-	<<in_context in_c; out_context out_c;>>
+	<<in_context in_c; out_context out_c;
+	  SORASTBase* lst;
+	>>
 	(  #(AST_CREATE_COLLECTION e1:exprSingle[in_c] >[out_c])
 	   <<#create=#(#["create-collection"], e1); >>
 
@@ -64,6 +66,29 @@ create!:
 
 	   >>
 
+	 | #(AST_CREATE_TRIGGER ct_s1:AST_STRING_CONST ct_s2:AST_STRING_CONST ct_s3:AST_STRING_CONST
+	     ct_rpe:relativePathExpr[in_c] >[out_c]  ct_s4:AST_STRING_CONST
+	     <<#create=#(#["create-trigger"], 
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[ct_s1->getText()]),
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[ct_s2->getText()]),
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[ct_s3->getText()]),
+	                    ct_rpe,
+	                    #(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                       #[ct_s4->getText()]));
+	    >>
+
+	     #(AST_DO_STMNT_LIST ct_doe1:triggerDoStmt[in_c] >[out_c] <<lst=#(#[], ct_doe1);>> (ct_doe2:triggerDoStmt[in_c] >[out_c] <<lst->addChild(ct_doe2);>>)*)
+
+	     <<#create->addChild(lst);>>
+	    )
+
 
 	 | #(AST_DROP_COLLECTION   e3:exprSingle[in_c] >[out_c])
 	   <<#create=#(#["drop-collection"], e3);>>
@@ -100,6 +125,15 @@ create!:
 	   <<
 	     #create=#(#["drop-fulltext-index"], q5_1);
 	   >>
+
+	 | #(AST_DROP_TRIGGER dt_s:AST_STRING_CONST)
+	   <<
+	     #create=#(#["drop-trigger"],
+                   #(#["const"],
+	                 #(#["type"], #["!xs!string"]),
+	                 #[dt_s->getText()]));
+	   >>
+
 
 
 	 | #(AST_ALTER_USER s27:AST_STRING_CONST s28:AST_STRING_CONST)
@@ -246,4 +280,9 @@ userList!:
 	  | AST_USER_PUBLIC
 	    <<#privList=#(#[], #(#["const"], #(#["type"], #["!xs!string"]), #["\"PUBLIC\""]));>>
 	 
+;
+
+triggerDoStmt![in_context in_c] >[out_context out_c]: 
+	  ue:updateExpr <<#triggerDoStmt=ue;>>
+	| es:exprSingle[in_c] >[out_c] <<#triggerDoStmt=es;>>
 ;

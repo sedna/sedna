@@ -202,6 +202,17 @@ localPart3!:
 	| INHERIT <<#0=#["inherit", AST_LOCAL_NAME];>>
 	| NOINHERIT <<#0=#["no-inherit", AST_LOCAL_NAME];>>
 	| VARIABLE <<#0=#["variable", AST_LOCAL_NAME];>>
+	| TRIGGER <<#0=#["TRIGGER", AST_LOCAL_NAME];>>
+	| BEFORE <<#0=#["BEFORE", AST_LOCAL_NAME];>>
+	| AFTER <<#0=#["AFTER", AST_LOCAL_NAME];>>
+	| CINSERT <<#0=#["INSERT", AST_LOCAL_NAME];>>
+	| CDELETE <<#0=#["DELETE", AST_LOCAL_NAME];>>
+	| CREPLACE <<#0=#["REPLACE", AST_LOCAL_NAME];>>
+	| EACH <<#0=#["EACH", AST_LOCAL_NAME];>>
+	| CNODE <<#0=#["NODE", AST_LOCAL_NAME];>>
+	| STATEMENT <<#0=#["STATEMENT", AST_LOCAL_NAME];>>
+	| CDO <<#0=#["DO", AST_LOCAL_NAME];>>
+
 ;	
 
 prefixPart1!:
@@ -343,6 +354,17 @@ prefixPart3!:
 	| ORDERED <<#0=#["ordered", AST_PREFIX];>>
 	| UNORDERED <<#0=#["unordered", AST_PREFIX];>>
 	| VARIABLE <<#0=#["variable", AST_PREFIX];>>
+	| TRIGGER <<#0=#["TRIGGER", AST_PREFIX];>>
+	| BEFORE <<#0=#["BEFORE", AST_PREFIX];>>
+	| AFTER <<#0=#["AFTER", AST_PREFIX];>>
+	| CINSERT <<#0=#["INSERT", AST_PREFIX];>>
+	| CDELETE <<#0=#["DELETE", AST_PREFIX];>>
+	| CREPLACE <<#0=#["REPLACE", AST_PREFIX];>>
+	| EACH <<#0=#["EACH", AST_PREFIX];>>
+	| CNODE <<#0=#["NODE", AST_PREFIX];>>
+	| STATEMENT <<#0=#["STATEMENT", AST_PREFIX];>>
+	| CDO <<#0=#["DO", AST_PREFIX];>>
+
 ;
 
 

@@ -163,8 +163,16 @@ virtual void errstd(const char *s){
 #token PASSWORD "PASSWORD"
 #token ALL "ALL"
 #token PUBLIC "PUBLIC"
-
-
+#token TRIGGER "TRIGGER"
+#token BEFORE "BEFORE"
+#token AFTER "AFTER"
+#token CINSERT "INSERT"
+#token CDELETE "DELETE"
+#token CREPLACE "REPLACE"
+#token EACH "EACH"
+#token CNODE "NODE"
+#token STATEMENT "STATEMENT"
+#token CDO "DO"
 
 /* transaction manage operations */
 #token COMMIT "COMMIT"

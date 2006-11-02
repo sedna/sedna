@@ -4,6 +4,7 @@ class XQueryParser {
 
 createExpr![XQueryDLGLexer* lexer_] :
           <<std::string stream; bool b;
+	    ASTBase* lst;
 	      >>
 	  CREATE 
 	  ( ( CCOLLECTION e1:exprSingle
@@ -44,6 +45,15 @@ createExpr![XQueryDLGLexer* lexer_] :
 	      >>
 
 	     )
+
+	   | (TRIGGER <<#0=#[AST_CREATE_TRIGGER];>> ct_s:STRINGLITERAL <<#0->addChild(#[$ct_s->getText(), AST_STRING_CONST]);>>
+	      (BEFORE <<#0->addChild(#["\"BEFORE\"", AST_STRING_CONST]);>> | AFTER <<#0->addChild(#["\"AFTER\"", AST_STRING_CONST]);>>)
+	      (CINSERT <<#0->addChild(#["\"INSERT\"", AST_STRING_CONST]);>> | CDELETE <<#0->addChild(#["\"DELETE\"", AST_STRING_CONST]);>>| CREPLACE <<#0->addChild(#["\"REPLACE\"", AST_STRING_CONST]);>>)
+	      CON ct_pe:pathExpr <<#0->addChild(#ct_pe);>>
+	      FOR_ EACH (CNODE <<#0->addChild(#["\"NODE\"", AST_STRING_CONST]);>> | STATEMENT <<#0->addChild(#["\"STATEMENT\"", AST_STRING_CONST]);>>)
+	      CDO LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
+	      <<#0->addChild(lst);>>
+	     )
 	      
 
 	  )
@@ -79,6 +89,8 @@ createExpr![XQueryDLGLexer* lexer_] :
 	   | (FULLTEXT INDEX n4:exprSingle
 	      <<#0=#(#[AST_DROP_FULLTEXT_INDEX], #n4);>>
 	     )
+
+	   | (TRIGGER dt_s:STRINGLITERAL <<#0=#(#[AST_DROP_TRIGGER], #[$dt_s->getText(), AST_STRING_CONST]);>>)
 
 	  )
 
@@ -222,6 +234,11 @@ userList!:
 	  PUBLIC 
 	  <<#0=#[AST_USER_PUBLIC];>>
 	)
+;
+
+triggerDoStmt!:
+	  es:exprSingle <<#0=#es;>>
+	| ue:updateExpr <<#0=#ue;>>
 ;
 
 /*collection!:
