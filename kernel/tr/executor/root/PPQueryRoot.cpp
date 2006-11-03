@@ -40,7 +40,13 @@ void PPQueryRoot::open()
 	first=true;
     child.op->open();
 	if (print_mode==sxml)
-		tr_globals::st_ct.add_char_mapping("\"","\\\"",~pat_attribute);
+	{
+		tr_globals::st_ct.add_char_mapping("<","<",-1);
+		tr_globals::st_ct.add_char_mapping(">",">",-1);
+		tr_globals::st_ct.add_char_mapping("&","&",-1);
+		tr_globals::st_ct.add_char_mapping("\"","\\\"",-1);		
+		tr_globals::st_ct.add_char_mapping("\\","\\\\",-1);
+	}
 //    d_printf1("PPQueryRoot::open() end\n");
 }
 

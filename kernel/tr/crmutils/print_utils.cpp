@@ -459,25 +459,30 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				sch=sch->next;
 				cnt++;
 			}
-			//attributes
-			if (ptype==sxml )  crmout << "(@";
+			//attributes			
 			CHECKP(child);
-			while (GETTYPE(GETSCHEMENODEX(child))==attribute)
-			{	
-				print_node_with_indent(child,crmout,wi,0,ptype);
-				CHECKP(child);
-				child=((n_dsc*)XADDR(child))->rdsc;
-				if (child==XNULL)  break;
-				CHECKP(child);
+			if (GETTYPE(GETSCHEMENODEX(child))==attribute)
+			{
+				if (ptype==sxml )  crmout << "(@";
+				do
+				{	
+					print_node_with_indent(child,crmout,wi,0,ptype);
+					CHECKP(child);
+					child=((n_dsc*)XADDR(child))->rdsc;
+					if (child==XNULL)  break;
+					CHECKP(child);
+				} while (GETTYPE(GETSCHEMENODEX(child))==attribute);
+				if (ptype==sxml )  crmout << ")";
 			}
 			if (child==XNULL)
 			{
-				crmout << ((ptype==xml )? "/>": "))");
+				crmout << ((ptype==xml )? "/>": ")");
 				//return;
 				goto nsfree;
 			}
 			else
-			crmout<< ((ptype==xml )? ">": ")");
+			crmout<< ((ptype==xml )? ">": "");
+
 			while (child!=XNULL)
 			{
 				CHECKP(child);
