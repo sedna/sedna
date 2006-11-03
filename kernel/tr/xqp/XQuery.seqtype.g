@@ -14,7 +14,7 @@ sequenceType!:
 
 	   <<#0=#(#[AST_TYPE], #it, #oi);>>
 
-	 | EMPTY LPAR RPAR
+	 | EMPTYSEQ LPAR RPAR
 	   <<#0=#(#[AST_TYPE], #[AST_EMPTY]);>>
        )
 ;

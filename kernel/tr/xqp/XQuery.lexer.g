@@ -85,6 +85,7 @@ virtual void errstd(const char *s){
 #token ATTRIBUTE "attribute"
 #token XMLNS "xmlns"
 #token DEFINE  "define"
+#token EMPTYSEQ "empty\-sequence"
 #token EMPTY "empty"
 //#token EMPTY_GREATEST "empty([\ \t\n])*greatest"
 //#token EMPTY_LEAST "empty([\ \t\n])*least"
