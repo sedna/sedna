@@ -15,10 +15,17 @@ xptr getNextByOrderAttribute(xptr source)
 {
 	CHECKP(source);
 	xptr right=GETRIGHTPOINTER(source);
-	if (right==XNULL)return XNULL;
-	CHECKP(right);
-	if ((GETTYPE((GETBLOCKBYNODE(right))->snode)!=attribute)) return XNULL;
-	return right;
+	while (right!=XNULL)
+	{
+		CHECKP(right);
+		switch (GETTYPE((GETBLOCKBYNODE(right))->snode))
+		{
+		case attribute: return right;
+		case xml_namespace: right=GETRIGHTPOINTER(source);
+		default: return XNULL;
+		}	
+	}
+	return XNULL;
 }
 
 /*returns the first attribute child by document order*/

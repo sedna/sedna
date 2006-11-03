@@ -33,6 +33,7 @@ $(CRMUTILS_LIB): file_utils$(OBJ_EXT)		\
                  system_tables$(OBJ_EXT)	\
                  str_matcher$(OBJ_EXT)	\
                  node_utils$(OBJ_EXT)		\
+                 namespace_utils$(OBJ_EXT)		\
                  exec_output$(OBJ_EXT)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 

@@ -143,75 +143,107 @@ bool PPFnConcat::result(PPIterator* cur, variable_context *cxt, void*& r)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// PPFnStringLength
+/// PPFnString2CodePoints
 ///////////////////////////////////////////////////////////////////////////////
-PPFnStringLength::PPFnStringLength(variable_context *_cxt_,
+PPFnString2CodePoints::PPFnString2CodePoints(variable_context *_cxt_,
                                    PPOpIn _child_) : PPIterator(_cxt_),
                                                      child(_child_)
 {
 }
 
-PPFnStringLength::~PPFnStringLength()
+PPFnString2CodePoints::~PPFnString2CodePoints()
 {
     delete child.op;
     child.op = NULL;
+
 }
 
-void PPFnStringLength::open  ()
+void PPFnString2CodePoints::open  ()
 {
     child.op->open();
-    first_time = true;
+    first_time = true;	
+	
 }
 
-void PPFnStringLength::reopen()
+void PPFnString2CodePoints::reopen()
 {
     child.op->reopen();
-    first_time = true;
+    first_time = true;	
+	
 }
 
-void PPFnStringLength::close ()
+void PPFnString2CodePoints::close ()
 {
     child.op->close();
 }
 
-void PPFnStringLength::next  (tuple &t)
+template <class Iterator>
+static inline void utf8_getcharcode(const Iterator &start, const Iterator &end, bool *str_end, int *ofs, int *ch)
+{
+	Iterator a = start;
+	a += *ofs;
+	if (a < end)
+	{
+		utf8_iterator<Iterator> it(a);
+		*ch = *it;
+		++it;
+		*ofs = it.base_iterator() - start;
+		*str_end = false;
+	}
+	else
+	{
+		*str_end = true;
+	}
+}
+
+
+void PPFnString2CodePoints::next  (tuple &t)
 {
     if (first_time)
     {
-        first_time = false;
-        int len = 0;
+        
+        
 
         child.op->next(t);
         if (!t.is_eos())
         {
-            tuple_cell tc = child.get(t);
-            tc = cast(atomize(tc), xs_string);
-			len = charset_handler->length(&tc);
-
+			first_time = false;
+            in_str = child.get(t);
+            in_str = cast(atomize(in_str), xs_string);
+			position=0;
             child.op->next(t);
             if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
         }
-
-        t.copy(tuple_cell::atomic((__int64)len));
+		else return;
+       // t.copy(tuple_cell::atomic((__int64)len));
     }
-    else 
-    {
-        first_time = true;
-        t.set_eos();
-    }
+	bool end;
+	int code;
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_getcharcode, &in_str, &end, &position, &code);
+	if (!end)
+	{
+		t.copy(tuple_cell::atomic((__int64)code));
+	}
+	else
+	{
+		first_time = true;
+		in_str.set_eos();
+		position=0;
+		t.set_eos();
+	}    
 }
 
-PPIterator* PPFnStringLength::copy(variable_context *_cxt_)
+PPIterator* PPFnString2CodePoints::copy(variable_context *_cxt_)
 {
-    PPFnStringLength *res = new PPFnStringLength(_cxt_, child);
+    PPFnString2CodePoints *res = new PPFnString2CodePoints(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
 }
 
-bool PPFnStringLength::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnString2CodePoints::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
-    throw USER_EXCEPTION2(SE1002, "PPFnStringLength::result");
+    throw USER_EXCEPTION2(SE1002, "PPFnString2CodePoints::result");
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -329,4 +361,77 @@ PPIterator* PPFnTranslate::copy(variable_context *_cxt_)
 bool PPFnTranslate::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnTranslate::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStringLength
+///////////////////////////////////////////////////////////////////////////////
+PPFnStringLength::PPFnStringLength(variable_context *_cxt_,
+                                   PPOpIn _child_) : PPIterator(_cxt_),
+                                                     child(_child_)
+{
+}
+
+PPFnStringLength::~PPFnStringLength()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnStringLength::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnStringLength::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnStringLength::close ()
+{
+    child.op->close();
+}
+
+void PPFnStringLength::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+        int len = 0;
+
+        child.op->next(t);
+        if (!t.is_eos())
+        {
+            tuple_cell tc = child.get(t);
+            tc = cast(atomize(tc), xs_string);
+			len = charset_handler->length(&tc);
+
+            child.op->next(t);
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
+        }
+
+        t.copy(tuple_cell::atomic((__int64)len));
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnStringLength::copy(variable_context *_cxt_)
+{
+    PPFnStringLength *res = new PPFnStringLength(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnStringLength::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnStringLength::result");
 }

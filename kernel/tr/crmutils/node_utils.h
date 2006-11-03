@@ -253,5 +253,11 @@ bool inline is_next_node_attribute (xptr node)
 
 //checks if the node is the descendant of one of the nodes in the vector
 bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_node*>* scm_nodes_set );
+
+//Namespaces
+void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result);
+void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result);
+void get_namespaces_for_inherit(xptr node,std::vector<xml_ns*> &result);
+xml_ns* generate_pref(int ctr,const char* uri);
 #endif
 
