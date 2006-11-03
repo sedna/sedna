@@ -248,8 +248,13 @@
        !fn!node-kind !fn!string-value !fn!typed-value
        ; *** 6.4 Functions on Numeric Values
        !fn!abs !fn!ceiling !fn!floor !fn!round !fn!round-half-to-even
+       ; *** 7 Functions on Strings
+       !fn!codepoints-to-string !fn!string-to-codepoints
+       !fn!compare !fn!codepoint-equal
        ; *** 7.4 Functions on String Values
-       !fn!concat !fn!string-length !fn!translate !fn!encode-for-uri
+       !fn!concat !fn!string-join !fn!substring !fn!string-length
+       !fn!normalize-space !fn!normalize-unicode
+       !fn!upper-case !fn!lower-case !fn!translate !fn!encode-for-uri       
        !fn!iri-to-uri !fn!escape-html-uri
        ; *** 7.5 Functions Based on Substring Matching
        !fn!contains

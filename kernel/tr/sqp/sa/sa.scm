@@ -378,6 +378,14 @@
 
 (define sa:default-ns (list "" sa:fn-ns))
 
+; Helpers for creating lists of 'sa:atomic or 'sa:nodes values
+(define (sa:multiple-atomic num-args)
+  (sa:make-list sa:type-atomic num-args))
+(define (sa:multiple-nodes num-args)
+  (sa:make-list sa:type-nodes num-args))
+(define (sa:multiple-any num-args)
+  (sa:make-list sa:type-any num-args))
+
 ; Functions from XQuery 1.0 and XPath 2.0 Functions and Operators
 ;  funcs ::=(listof
 ;             (list fun-uri fun-name
@@ -389,9 +397,119 @@
 ;  (lambda (num-args) ... ) - given num-args, produces (listof arg-type)
 ;  arg-type ::= sa:type-atomic | sa:type-nodes
 ;  return-type ::= sa:type-atomic | sa:type-nodes
-(define xquery-functions
+(define sa:xquery-functions
   (append
-  `(
+  `(;----------------------------------------
+    ; 2 Accessors
+    (,sa:fn-ns "node-name" 1 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!node-name)
+    (,sa:fn-ns "nilled" 1 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!nilled)
+    (,sa:fn-ns "string" 0 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!string)
+    (,sa:fn-ns "data" 1 1
+     ,sa:multiple-any
+     ,sa:type-atomic !fn!data)
+    (,sa:fn-ns "base-uri" 0 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!base-uri)
+    (,sa:fn-ns "document-uri" 1 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!document-uri)
+    ;----------------------------------------
+    ; 3 The Error Function
+    (,sa:fn-ns "error" 0 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!error)
+    ;----------------------------------------
+    ; 4 The Trace Function
+    (,sa:fn-ns "trace" 2 2
+     ,sa:multiple-any
+     ,sa:type-any !fn!trace)
+    ;----------------------------------------
+    ; 5 Constructor Functions
+    ; Entries for most of constructor functions are presented in the end
+    ; of sa:xquery-functions definition
+    (,sa:fn-ns "dateTime" 2 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!dateTime)
+    ;----------------------------------------
+    ; 6 Functions and Operators on Numerics
+    ; 6.4 Functions on Numeric Values
+    (,sa:fn-ns "abs" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!abs)
+    (,sa:fn-ns "ceiling" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!ceiling)
+    (,sa:fn-ns "floor" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!floor)
+    (,sa:fn-ns "round" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!round)
+    (,sa:fn-ns "round-half-to-even" 1 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!round-half-to-even)
+    ;----------------------------------------
+    ; 7 Functions on Strings
+    ; *** 7.2 Functions to Assemble and Disassemble Strings
+    (,sa:fn-ns "codepoints-to-string" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!codepoints-to-string)
+    (,sa:fn-ns "string-to-codepoints" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!string-to-codepoints)
+    ; *** 7.3 Equality and Comparison of Strings
+    (,sa:fn-ns "compare" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!compare)
+    (,sa:fn-ns "codepoint-equal" 2 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!codepoint-equal)
+    ; *** 7.4 Functions on String Values
+    (,sa:fn-ns "concat" 2 #f
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!concat)
+    (,sa:fn-ns "string-join" 2 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!string-join)
+    (,sa:fn-ns "substring" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!substring)
+    (,sa:fn-ns "string-length" 0 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!string-length)
+    (,sa:fn-ns "normalize-space" 0 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!normalize-space)
+    (,sa:fn-ns "normalize-unicode" 1 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!normalize-unicode)
+    (,sa:fn-ns "upper-case" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!upper-case)
+    (,sa:fn-ns "lower-case" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!lower-case)
+    (,sa:fn-ns "translate" 3 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!translate)
+    (,sa:fn-ns "encode-for-uri" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!encode-for-uri)
+    (,sa:fn-ns "iri-to-uri" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!iri-to-uri)
+    (,sa:fn-ns "escape-html-uri" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!escape-html-uri)
+    ; *** 7.5 Functions Based on Substring Matching
+    
+    
     ;----------------------------------------
     ; Document and collection
     (,sa:fn-ns "doc" 1 2
@@ -419,47 +537,15 @@
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!false)
     ;----------------------------------------
-    ; 2 Accessors
-    (,sa:fn-ns "nilled" 1 1
-     ,(lambda (num-args) `(,sa:type-nodes))
-     ,sa:type-atomic !fn!nilled)
-    (,sa:fn-ns "base-uri" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!base-uri)
-    ;----------------------------------------
     ; URI-related functions
     (,sa:fn-ns "static-base-uri" 0 0
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!static-base-uri)
-    (,sa:fn-ns "encode-for-uri" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!encode-for-uri)
-    (,sa:fn-ns "iri-to-uri" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!iri-to-uri)
-    (,sa:fn-ns "escape-html-uri" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!escape-html-uri)
     (,sa:fn-ns "resolve-uri" 1 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!resolve-uri)
     ;----------------------------------------
-    ; 6.4 Functions on Numeric Values
-    (,sa:fn-ns "abs" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!abs)
-    (,sa:fn-ns "ceiling" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!ceiling)
-    (,sa:fn-ns "floor" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!floor)
-    (,sa:fn-ns "round" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!round)
-    (,sa:fn-ns "round-half-to-even" 1 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!round-half-to-even)
+
     ;----------------------------------------    
     ; 11 Functions Related to QNames
     (,sa:fn-ns "QName" 2 2
@@ -479,12 +565,6 @@
     (,sa:fn-ns "name" 0 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!name)
-    (,sa:fn-ns "document-uri" 1 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!document-uri)
-    (,sa:fn-ns "node-name" 1 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!node-name)
     (,sa:fn-ns "node-kind" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!node-kind)
@@ -506,19 +586,10 @@
     (,sa:fn-ns "exists" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))     
      ,sa:type-atomic !fn!exists)
-    (,sa:fn-ns "data" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-atomic !fn!data)
     (,sa:fn-ns "count" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!count)
-    (,sa:fn-ns "error" 0 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!error)
     ;----------------------------------------
-    (,sa:fn-ns "trace" 2 2
-     ,(lambda (num-args) (list sa:type-any sa:type-atomic))
-     ,sa:type-any !fn!trace)
     (,sa:fn-ns "insert-before" 3 3
      ,(lambda (num-args) (list sa:type-any sa:type-atomic sa:type-any))
      ,sa:type-any !fn!insert-before)
@@ -551,9 +622,7 @@
     (,sa:fn-ns "min" 0 #f
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!min)
-    (,sa:fn-ns "concat" 2 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!concat)
+    
     ;----------------------------------------
     ; String functions
     (,sa:fn-ns "distinct-values" 1 1
@@ -562,21 +631,12 @@
     (,sa:fn-ns "string-value" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!string-value)
-    (,sa:fn-ns "string-length" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!string-length)
     (,sa:fn-ns "typed-value" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!typed-value)
-    (,sa:fn-ns "string" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!string)
     (,sa:fn-ns "contains" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!contains)
-    (,sa:fn-ns "translate" 3 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!translate)
     (,sa:fn-ns "deep-equal" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!deep-equal)
@@ -603,9 +663,7 @@
     (,sa:fn-ns "implicit-timezone" 0 0
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!implicit-timezone)
-   (,sa:fn-ns "dateTime" 2 2
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!dateTime)
+   
    (,sa:fn-ns "years-from-duration" 1 1
     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
     ,sa:type-atomic !fn!years-from-duration)
@@ -845,7 +903,7 @@
   ;; triples ::= (listof (fun-body formal-args return-type))
   ; triples ::= (listof (declare-function formal-args return-type))
   (let loop ((new-prlg '())
-             (funcs xquery-functions)
+             (funcs sa:xquery-functions)
              (triples '())
              (ns-binding sa:predefined-ns-prefixes)
              (default-elem-ns #f)
@@ -3256,8 +3314,8 @@
                        (const (type !xs!string) "HINTR")))
              pair   ; everything is ok
              (cl:signal-user-error SE5051 fourth))))
-      ((!fn!name !fn!namespace-uri !fn!string-length !fn!string
-                 !fn!local-name !fn!number !fn!base-uri)
+      ((!fn!name !fn!namespace-uri !fn!string-length !fn!normalize-space
+                 !fn!string !fn!local-name !fn!number !fn!base-uri)
        (if
         (null? (cdr expr))  ; no argument
         (let ((context-pair
