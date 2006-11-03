@@ -739,64 +739,89 @@
              
              ; *** intersect ***
              ((eq? op-name 'intersect@)
-              `(1 (PPIntersect ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
+              `(1 (PPIntersect
+                   ,(l2p:any-lr-node2por (car node))
+                   ,(l2p:any-lr-node2por (cadr node))))
              )
+                          
+             ;----------------------------------------
+             ; XQuery and XPath functions
+             ((assq
+               op-name
+               '(;----------------------------------------
+                 ; *** 2 Accessors ***
+                 (!fn!node-name .    PPFnNodeName)
+                 (!fn!nilled .       PPFnNilled)
+                 (!fn!string .       PPFnString)
+                 (!fn!data .         PPFnData)
+                 (!fn!base-uri .     PPFnBaseURI)
+                 (!fn!document-uri . PPFnDocumentURI)
+                 ;----------------------------------------
+                 ; 3 The Error Function
+                 (!fn!error . PPFnError)
+                 ;----------------------------------------
+                 ; 4 The Trace Function
+                 (!fn!trace . PPFnTrace)
+                 ;----------------------------------------
+                 ; 5 Constructor Functions
+                 ; Most of the constructor functions are transformed to a cast
+                 ; operation
+                 (!fn!dateTime . PPFnDateTime)
+                 ;----------------------------------------
+                 ; 6 Functions and Operators on Numerics
+                 ; 6.4 Functions on Numeric Values
+                 (!fn!abs .                PPFnAbs)
+                 (!fn!ceiling .            PPFnCeiling)
+                 (!fn!floor .              PPFnFloor)
+                 (!fn!round .              PPFnRound)
+                 (!fn!round-half-to-even . PPFnRoundHalfToEven)
+                 ;----------------------------------------
+                 ; 7 Functions on Strings
+                 ; *** 7.2 Functions to Assemble and Disassemble Strings
+                 (!fn!codepoints-to-string . PPFnCodepointsToString)
+                 (!fn!string-to-codepoints . PPFnStringToCodepoints)
+                 ; *** 7.3 Equality and Comparison of Strings
+                 (!fn!compare .         PPFnCompare)
+                 (!fn!codepoint-equal . PPFnCodepointEqual)
+                 ; *** 7.4 Functions on String Values
+                 (!fn!concat .            PPFnConcat)
+                 (!fn!string-join .       PPFnStringJoin)
+                 (!fn!substring .         PPFnSubstring)
+                 (!fn!string-length .     PPFnStringLength)
+                 (!fn!normalize-space .   PPFnNormalizeSpace)
+                 (!fn!normalize-unicode . PPFnNormalizeUnicode)
+                 (!fn!upper-case .        PPFnUpperCase)
+                 (!fn!lower-case .        PPFnLowerCase)
+                 (!fn!translate .         PPFnTranslate)
+                 (!fn!encode-for-uri .    PPFnEncodeForUri)
+                 (!fn!iri-to-uri .        PPFnIriToUri)
+                 (!fn!escape-html-uri .   PPFnEscapeHtmlUri)
+                 ; *** 7.5 Functions Based on Substring Matching
+                 
+                 
+                 (!fn!true . PPFnTrue)
+                 (!fn!false . PPFnFalse)
+                 ))
+              => (lambda (pair)
+                   `(1 ,(cons (cdr pair)
+                              (map l2p:any-lr-node2por node)))))
              
-             ; *** 2 Accessors *** 
-             ((eq? op-name '!fn!nilled)
-              `(1 (PPFnNilled ,(l2p:any-lr-node2por (car node)))))
-             ((eq? op-name '!fn!base-uri)
-              `(1 (PPFnBaseURI ,(l2p:any-lr-node2por (car node)))))
+             
+             
+             
+             ;----------------------------------------
              
              ; *** URI-related functions *** 
              ((eq? op-name '!fn!static-base-uri)
-              `(1 (PPFnStaticBaseUri)))
-             ((eq? op-name '!fn!encode-for-uri)
-              `(1 (PPFnEncodeForUri
-                   ,(l2p:any-lr-node2por (car node)))))
-             ((eq? op-name '!fn!iri-to-uri)
-              `(1 (PPFnIriToUri
-                   ,(l2p:any-lr-node2por (car node)))))
-;             ((eq? op-name '!fn!escape-html-uri)
-;              `(1 (PPFnEscapeHtmlUri
-;                   ,(l2p:any-lr-node2por (car node)))))
-;             ((eq? op-name '!fn!resolve-uri)
-;              `(1 (PPFnResolveUri
-;                   ,@(map l2p:any-lr-node2por node))))
-             
-             ((assq op-name '((!fn!escape-html-uri . PPFnEscapeHtmlUri)
-                              (!fn!resolve-uri . PPFnResolveUri)
-                              (!fn!true . PPFnTrue)
-                              (!fn!false . PPFnFalse)))
-              => (lambda (pair)
-                   `(1 (,(cdr pair) ,@(map l2p:any-lr-node2por node)))))
-             
-;             ((eq? op-name '!fn!true)
-;              `(1 (PPFnTrue)))
-;             ((eq? op-name '!fn!false)
-;              `(1 (PPFnFalse)))
+              `(1 (PPFnStaticBaseUri)))            
+             ((eq? op-name '!fn!resolve-uri)
+              `(1 (PPFnResolveUri
+                   ,@(map l2p:any-lr-node2por node))))
              
              ; *** number ***
              ((eq? op-name '!fn!number)
               `(1 (PPFnNumber ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; 6.4 Functions on Numeric Values
-             ((eq? op-name '!fn!abs)
-              `(1 (PPFnAbs ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!ceiling)
-              `(1 (PPFnCeiling ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!floor)
-              `(1 (PPFnFloor ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!round)
-              `(1 (PPFnRound ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!round-half-to-even)
-              `(1 (PPFnRoundHalfToEven
-                   ,@(map l2p:any-lr-node2por node))))
+             )                
              
              ; 11 Functions Related to QNames
              ((eq? op-name '!fn!QName)
@@ -903,79 +928,29 @@
               `(1 (PPFnItemAt ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )
              
-             ; *** concat ***
-             ((eq? op-name '!fn!concat)
-              `(1 (PPFnConcat ,@(map l2p:any-lr-node2por node)))
-             )
-
              ; *** contains ***
              ((eq? op-name '!fn!contains)
               `(1 (PPFnContains
                    ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))
-             
-             ; *** translate ***
-             ((eq? op-name '!fn!translate)
-              `(1 (PPFnTranslate
-                   ,(l2p:any-lr-node2por (car node)) 
-                   ,(l2p:any-lr-node2por (cadr node))
-                   ,(l2p:any-lr-node2por (caddr node)))))
+                   ,(l2p:any-lr-node2por (cadr node)))))                         
              
              ; *** deep-equal ***
              ((eq? op-name '!fn!deep-equal)
               `(1 (PPFnDeepEqual
                    ,(l2p:any-lr-node2por (car node))
                    ,(l2p:any-lr-node2por (cadr node)))))
-             
-             ; *** string-length ***
-             ((eq? op-name '!fn!string-length)
-              `(1 (PPFnStringLength ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** string ***
-             ((eq? op-name '!fn!string)
-              `(1 (PPFnString ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** data ***
-             ((eq? op-name '!fn!data)
-              `(1 (PPFnData ,(l2p:any-lr-node2por (car node))))
-             )
+                                 
+            
              
              ; *** empty ***
              ((eq? op-name '!fn!empty)
               `(1 (PPFnEmpty ,(l2p:any-lr-node2por (car node))))
-             )
-
-             
-             
-             ; *** node-name ***
-             ((eq? op-name '!fn!node-name) 
-              `(1 (PPFnNodeName ,(l2p:any-lr-node2por (car node))))
              )
              
              ; *** !fn!name ***
              ((eq? op-name '!fn!name) 
               `(1 (PPFnName ,(l2p:any-lr-node2por (car node))))
              )
-             
-             ; *** !fn!document-uri ***
-             ((eq? op-name '!fn!document-uri) 
-              `(1 (PPFnDocumentURI ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** error ***
-             ((eq? op-name '!fn!error) 
-              `(1 (PPFnError 
-                   ,@(map l2p:any-lr-node2por node)
-                   ; Was: ,(l2p:any-lr-node2por (car node))
-                   )))
- 
-             ; *** trace ***
-		     ((eq? op-name '!fn!trace)
-              `(1 (PPFnTrace
-			       ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))
              
              ; *** checkpoint ***
              ((eq? op-name '!fn!checkpoint) 
@@ -1055,11 +1030,6 @@
              ; *** !fn!implicit-timezone***
              ((eq? op-name '!fn!implicit-timezone)
               `(1 (PPFnImplicitTimezone ))
-             )
-
-             ; *** !fn!dateTime ***
-             ((eq? op-name '!fn!dateTime)
-              `(1 (PPFnDateTime ,@(map l2p:any-lr-node2por node)))
              )
 
              ; *** !fn!years-from-duration ***
