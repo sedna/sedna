@@ -13,7 +13,7 @@ using namespace std;
 
 bool check_char_wellformedness(int c)
 {
-  if (c == 0x9 || c == 0xA || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x1000 && c <= 0x10ffff))
+  if (c == 0x9 || c == 0xA || c == 0xD || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff))
      return true;
   else return false;
 }
