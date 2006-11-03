@@ -674,8 +674,8 @@
      ,sa:atomic-and-node
      ,sa:type-atomic !fn!lang)
     (,sa:fn-ns "root" 0 1
-     ,sa:multiple-node
-     ,sa:type-node !fn!root)
+     ,sa:multiple-nodes
+     ,sa:type-nodes !fn!root)
     
     
     
