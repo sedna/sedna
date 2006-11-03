@@ -257,19 +257,23 @@
        !fn!upper-case !fn!lower-case !fn!translate !fn!encode-for-uri       
        !fn!iri-to-uri !fn!escape-html-uri
        ; *** 7.5 Functions Based on Substring Matching
-       !fn!contains
+       !fn!contains !fn!starts-with !fn!ends-with !fn!substring-before
+       !fn!substring-after
        ; *** 7.6 String Functions that Use Pattern Matching
-       !fn!replace !fn!matches
+       !fn!matches !fn!replace !fn!tokenize
        ; *** 8 Functions on anyURI
        !fn!resolve-uri
-       ; *** 9.3 Functions on Boolean Values
-       !fn!not !fn!boolean
+       ; *** 9 Functions and Operators on Boolean Values
+       !fn!not
        ; *** 11 Functions Related to QNames
-       !fn!QName !fn!prefix-from-QName !fn!local-name-from-QName
-       !fn!namespace-uri-from-QName
+       !fn!resolve-QName !fn!QName
+       !fn!prefix-from-QName !fn!local-name-from-QName
+       !fn!namespace-uri-from-QName !fn!namespace-uri-for-prefix
+       !fn!in-scope-prefixes
        ; *** 14 Functions and Operators on Nodes
-       !fn!name !fn!local-name !fn!namespace-uri !fn!number
+       !fn!name !fn!local-name !fn!namespace-uri !fn!number !fn!lang !fn!root
        ; *** 15.2 Functions That Test the Cardinality of Sequences
+       !fn!boolean
        !fn!exactly-one)
       ; The same semantics as for !fn!document
       (lropt:propagate expr called-once? #f  ; [*]

@@ -749,7 +749,7 @@
              ((assq
                op-name
                '(;----------------------------------------
-                 ; *** 2 Accessors ***
+                 ; 2 Accessors
                  (!fn!node-name .    PPFnNodeName)
                  (!fn!nilled .       PPFnNilled)
                  (!fn!string .       PPFnString)
@@ -769,7 +769,7 @@
                  (!fn!dateTime . PPFnDateTime)
                  ;----------------------------------------
                  ; 6 Functions and Operators on Numerics
-                 ; 6.4 Functions on Numeric Values
+                 ; *** 6.4 Functions on Numeric Values
                  (!fn!abs .                PPFnAbs)
                  (!fn!ceiling .            PPFnCeiling)
                  (!fn!floor .              PPFnFloor)
@@ -797,10 +797,72 @@
                  (!fn!iri-to-uri .        PPFnIriToUri)
                  (!fn!escape-html-uri .   PPFnEscapeHtmlUri)
                  ; *** 7.5 Functions Based on Substring Matching
-                 
-                 
-                 (!fn!true . PPFnTrue)
+                 (!fn!contains .          PPFnContains)
+                 (!fn!starts-with .       PPFnStartsWith)
+                 (!fn!ends-with .         PPFnEndsWith)
+                 (!fn!substring-before .  PPFnSubstringBefore)
+                 (!fn!substring-after .   PPFnSubstringAfter)
+                 ; *** 7.6 String Functions that Use Pattern Matching
+                 ; Functions !fn!matches !fn!replace have a different
+                 ; physical representation and are mapped individually
+                 (!fn!tokenize .          PPFnTokenize)
+                 ;----------------------------------------
+                 ; 8 Functions on anyURI
+                 (!fn!resolve-uri . PPFnResolveUri)
+                 ;----------------------------------------    
+                 ; 9 Functions and Operators on Boolean Values
+                 (!fn!true .  PPFnTrue)
                  (!fn!false . PPFnFalse)
+                 (!fn!not .   PPFnNot)
+                 ;----------------------------------------
+                 ; 10 Functions and Operators on Durations, Dates and Times
+                 ; *** 10.5 Component Extraction Functions on Durations, Dates and Times
+                 (!fn!years-from-duration .    PPFnYearsFromDuration)
+                 (!fn!months-from-duration .   PPFnMonthsFromDuration)
+                 (!fn!days-from-duration .     PPFnDaysFromDuration)
+                 (!fn!hours-from-duration .    PPFnHoursFromDuration)
+                 (!fn!minutes-from-duration .  PPFnMinutesFromDuration)
+                 (!fn!seconds-from-duration .  PPFnSecondsFromDuration)
+                 (!fn!year-from-dateTime .     PPFnYearFromDateTime)
+                 (!fn!month-from-dateTime .    PPFnMonthFromDateTime)
+                 (!fn!day-from-dateTime .      PPFnDayFromDateTime)
+                 (!fn!hours-from-dateTime .    PPFnHoursFromDateTime)
+                 (!fn!minutes-from-dateTime .  PPFnMinutesFromDateTime)
+                 (!fn!seconds-from-dateTime .  PPFnSecondsFromDateTime)
+                 (!fn!timezone-from-dateTime . PPFnTimezoneFromDateTime)
+                 (!fn!year-from-date .         PPFnYearFromDate)
+                 (!fn!month-from-date .        PPFnMonthFromDate)
+                 (!fn!day-from-date .          PPFnDayFromDate)
+                 (!fn!timezone-from-date .     PPFnTimezoneFromDate)
+                 (!fn!hours-from-time .        PPFnHoursFromTime)
+                 (!fn!minutes-from-time .      PPFnMinutesFromTime)
+                 (!fn!seconds-from-time .      PPFnSecondsFromTime)
+                 (!fn!timezone-from-time .     PPFnTimezoneFromTime)
+                 ; *** 10.7 Timezone Adjustment Functions on Dates and Time Values
+                 (!fn!adjust-dateTime-to-timezone
+                  . PPFnAdjustDateTimeToTimezone)
+                 (!fn!adjust-date-to-timezone
+                  . PPFnAdjustDateToTimezone)
+                 (!fn!adjust-time-to-timezone
+                  . PPFnAdjustTimeToTimezone)
+                 ;----------------------------------------    
+                 ; 11 Functions Related to QNames
+                 (!fn!resolve-QName .            PPFnResolveQName)
+                 (!fn!QName .                    PPFnQName)
+                 (!fn!prefix-from-QName .        PPFnPrefixFromQName)
+                 (!fn!local-name-from-QName .    PPFnLocalNameFromQName)
+                 (!fn!namespace-uri-from-QName . PPFnNamespaceUriFromQName)
+                 (!fn!namespace-uri-for-prefix . PPFnNamespaceUriForPrefix)
+                 (!fn!in-scope-prefixes        . PPFnInScopePrefixes)
+                 ;----------------------------------------
+                 ; 14 Functions and Operators on Nodes
+                 (!fn!name .          PPFnName)
+                 (!fn!local-name .    PPFnLocalName)
+                 (!fn!namespace-uri . PPFnNamespaceUri)
+                 (!fn!number .        PPFnNumber)
+                 (!fn!lang .          PPFnLang)
+                 (!fn!root .          PPFnRoot)
+                 
                  ))
               => (lambda (pair)
                    `(1 ,(cons (cdr pair)
@@ -814,42 +876,14 @@
              ; *** URI-related functions *** 
              ((eq? op-name '!fn!static-base-uri)
               `(1 (PPFnStaticBaseUri)))            
-             ((eq? op-name '!fn!resolve-uri)
-              `(1 (PPFnResolveUri
-                   ,@(map l2p:any-lr-node2por node))))
              
-             ; *** number ***
-             ((eq? op-name '!fn!number)
-              `(1 (PPFnNumber ,(l2p:any-lr-node2por (car node))))
-             )                
              
-             ; 11 Functions Related to QNames
-             ((eq? op-name '!fn!QName)
-              `(1 (PPFnQName
-                   ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))
-             ((eq? op-name '!fn!prefix-from-QName)
-              `(1 (PPFnPrefixFromQName
-                   ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!local-name-from-QName)
-              `(1 (PPFnLocalNameFromQName
-                   ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!namespace-uri-from-QName)
-              `(1 (PPFnNamespaceUriFromQName
-                   ,(l2p:any-lr-node2por (car node))))
-             )
              
              ; *** boolean ***
              ((eq? op-name '!fn!boolean)
               `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))
              )
              
-             ; *** not ***
-             ((eq? op-name '!fn!not)
-              `(1 (PPFnNot ,(l2p:any-lr-node2por (car node))))
-             )
              ; *** string-value ***
              ((eq? op-name '!fn!string-value)
               `(1 (PPDmStringValue ,(l2p:any-lr-node2por (car node))))
@@ -927,12 +961,7 @@
              ((eq? op-name '!fn!item-at)
               `(1 (PPFnItemAt ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )
-             
-             ; *** contains ***
-             ((eq? op-name '!fn!contains)
-              `(1 (PPFnContains
-                   ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))                         
+            
              
              ; *** deep-equal ***
              ((eq? op-name '!fn!deep-equal)
@@ -946,11 +975,7 @@
              ((eq? op-name '!fn!empty)
               `(1 (PPFnEmpty ,(l2p:any-lr-node2por (car node))))
              )
-             
-             ; *** !fn!name ***
-             ((eq? op-name '!fn!name) 
-              `(1 (PPFnName ,(l2p:any-lr-node2por (car node))))
-             )
+
              
              ; *** checkpoint ***
              ((eq? op-name '!fn!checkpoint) 
@@ -1030,126 +1055,6 @@
              ; *** !fn!implicit-timezone***
              ((eq? op-name '!fn!implicit-timezone)
               `(1 (PPFnImplicitTimezone ))
-             )
-
-             ; *** !fn!years-from-duration ***
-             ((eq? op-name '!fn!years-from-duration)
-              `(1 (PPFnYearsFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!months-from-duration***
-             ((eq? op-name '!fn!months-from-duration)
-              `(1 (PPFnMonthsFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!days-from-duration ***
-             ((eq? op-name '!fn!days-from-duration)
-              `(1 (PPFnDaysFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!hours-from-duration ***
-             ((eq? op-name '!fn!hours-from-duration)
-              `(1 (PPFnHoursFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!minutes-from-duration ***
-             ((eq? op-name '!fn!minutes-from-duration)
-              `(1 (PPFnMinutesFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!seconds-from-duration ***
-             ((eq? op-name '!fn!seconds-from-duration)
-              `(1 (PPFnSecondsFromDuration ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!year-from-dateTime***
-             ((eq? op-name '!fn!year-from-dateTime)
-              `(1 (PPFnYearFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!month-from-dateTime***
-             ((eq? op-name '!fn!month-from-dateTime)
-              `(1 (PPFnMonthFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!day-from-dateTime***
-             ((eq? op-name '!fn!day-from-dateTime)
-              `(1 (PPFnDayFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!hours-from-dateTime***
-             ((eq? op-name '!fn!hours-from-dateTime)
-              `(1 (PPFnHoursFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!minutes-from-dateTime***
-             ((eq? op-name '!fn!minutes-from-dateTime)
-              `(1 (PPFnMinutesFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!seconds-from-dateTime***
-             ((eq? op-name '!fn!seconds-from-dateTime)
-              `(1 (PPFnSecondsFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!timezone-from-dateTime***
-             ((eq? op-name '!fn!timezone-from-dateTime)
-              `(1 (PPFnTimezoneFromDateTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!year-from-date***
-             ((eq? op-name '!fn!year-from-date)
-              `(1 (PPFnYearFromDate ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!month-from-date***
-             ((eq? op-name '!fn!month-from-date)
-              `(1 (PPFnMonthFromDate ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!day-from-date***
-             ((eq? op-name '!fn!day-from-date)
-              `(1 (PPFnDayFromDate ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!timezone-from-date***
-             ((eq? op-name '!fn!timezone-from-date)
-              `(1 (PPFnTimezoneFromDate ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!hours-from-time***
-             ((eq? op-name '!fn!hours-from-time)
-              `(1 (PPFnHoursFromTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!minutes-from-time***
-             ((eq? op-name '!fn!minutes-from-time)
-              `(1 (PPFnMinutesFromTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!seconds-from-time***
-             ((eq? op-name '!fn!seconds-from-time)
-              `(1 (PPFnSecondsFromTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!timezone-from-time***
-             ((eq? op-name '!fn!timezone-from-time)
-              `(1 (PPFnTimezoneFromTime ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** !fn!adjust-dateTime-to-timezone***
-             ((eq? op-name '!fn!adjust-dateTime-to-timezone)
-              `(1 (PPFnAdjustDateTimeToTimezone ,@(map l2p:any-lr-node2por node)))
-             )
-
-             ; *** !fn!adjust-date-to-timezone***
-             ((eq? op-name '!fn!adjust-date-to-timezone)
-              `(1 (PPFnAdjustDateToTimezone ,@(map l2p:any-lr-node2por node)))
-             )
-
-             ; *** !fn!adjust-time-to-timezone***
-             ((eq? op-name '!fn!adjust-time-to-timezone)
-              `(1 (PPFnAdjustTimeToTimezone ,@(map l2p:any-lr-node2por node)))
              )
 
              ; *** !fn!sql-connect ***

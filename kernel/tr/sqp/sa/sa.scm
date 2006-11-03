@@ -389,6 +389,10 @@
   (sa:make-list sa:type-nodes num-args))
 (define (sa:multiple-any num-args)
   (sa:make-list sa:type-any num-args))
+(define (sa:atomic-and-node num-args)
+  (if (= num-args 1)
+      (list sa:type-atomic)
+      (list sa:type-atomic sa:type-nodes)))
 
 ; Functions from XQuery 1.0 and XPath 2.0 Functions and Operators
 ;  funcs ::=(listof
@@ -512,6 +516,201 @@
      ,sa:multiple-atomic
      ,sa:type-atomic !fn!escape-html-uri)
     ; *** 7.5 Functions Based on Substring Matching
+    (,sa:fn-ns "contains" 2 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!contains)
+    (,sa:fn-ns "starts-with" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!starts-with)
+    (,sa:fn-ns "ends-with" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!ends-with)
+    (,sa:fn-ns "substring-before" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!substring-before)
+    (,sa:fn-ns "substring-after" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!substring-after)
+    ; *** 7.6 String Functions that Use Pattern Matching
+    (,sa:fn-ns "matches" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!matches)
+    (,sa:fn-ns "replace" 3 4
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!replace)
+    (,sa:fn-ns "tokenize" 2 3
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!tokenize)
+    ;----------------------------------------
+    ; 8 Functions on anyURI
+    (,sa:fn-ns "resolve-uri" 1 2
+     ,sa:multiple-atomic
+     ,sa:type-nodes !fn!resolve-uri)
+    ;----------------------------------------    
+    ; 9 Functions and Operators on Boolean Values
+    (,sa:fn-ns "true" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!true)
+    (,sa:fn-ns "false" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!false)
+    (,sa:fn-ns "not" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!not)
+    ;----------------------------------------
+    ; 10 Functions and Operators on Durations, Dates and Times
+    ; 10.5 Component Extraction Functions on Durations, Dates and Times
+    (,sa:fn-ns "years-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!years-from-duration)
+    (,sa:fn-ns "months-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!months-from-duration)
+    (,sa:fn-ns "days-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!days-from-duration)
+    (,sa:fn-ns "hours-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!hours-from-duration)
+    (,sa:fn-ns "minutes-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!minutes-from-duration)
+    (,sa:fn-ns "seconds-from-duration" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!seconds-from-duration)
+    (,sa:fn-ns "year-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!year-from-dateTime)
+    (,sa:fn-ns "month-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!month-from-dateTime)
+    (,sa:fn-ns "day-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!day-from-dateTime)
+    (,sa:fn-ns "hours-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!hours-from-dateTime)
+    (,sa:fn-ns "minutes-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!minutes-from-dateTime)
+    (,sa:fn-ns "seconds-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!seconds-from-dateTime)
+    (,sa:fn-ns "timezone-from-dateTime" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!timezone-from-dateTime)
+    (,sa:fn-ns "year-from-date" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!year-from-date)
+    (,sa:fn-ns "month-from-date" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!month-from-date)
+    (,sa:fn-ns "day-from-date" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!day-from-date)
+    (,sa:fn-ns "timezone-from-date" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!timezone-from-date)
+    (,sa:fn-ns "hours-from-time" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!hours-from-time)
+    (,sa:fn-ns "minutes-from-time" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!minutes-from-time)
+    (,sa:fn-ns "seconds-from-time" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!seconds-from-time)
+    (,sa:fn-ns "timezone-from-time" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!timezone-from-time)
+    ; *** 10.7 Timezone Adjustment Functions on Dates and Time Values
+    (,sa:fn-ns "adjust-dateTime-to-timezone" 1 2
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!adjust-dateTime-to-timezone)
+    (,sa:fn-ns "adjust-date-to-timezone" 1 2
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!adjust-date-to-timezone)
+    (,sa:fn-ns "adjust-time-to-timezone" 1 2
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!adjust-time-to-timezone)
+    ;----------------------------------------
+    ; 11 Functions Related to QNames
+    (,sa:fn-ns "resolve-QName" 2 2
+     ,(lambda (num-args) (list sa:type-atomic sa:type-nodes))
+     ,sa:type-atomic !fn!resolve-QName)
+    (,sa:fn-ns "QName" 2 2
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!QName)
+    (,sa:fn-ns "prefix-from-QName" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!prefix-from-QName)
+    (,sa:fn-ns "local-name-from-QName" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!local-name-from-QName)
+    (,sa:fn-ns "namespace-uri-from-QName" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!namespace-uri-from-QName)
+    (,sa:fn-ns "namespace-uri-for-prefix" 2 2
+     ,sa:atomic-and-node
+     ,sa:type-atomic !fn!namespace-uri-for-prefix)
+    (,sa:fn-ns "in-scope-prefixes" 1 1
+     ,sa:multiple-atomic
+     ,sa:type-atomic !fn!in-scope-prefixes)
+    ;----------------------------------------
+    ; 14 Functions and Operators on Nodes
+    (,sa:fn-ns "name" 0 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!name)
+    (,sa:fn-ns "local-name" 0 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!local-name)
+    (,sa:fn-ns "namespace-uri" 0 1
+     ,sa:multiple-nodes
+     ,sa:type-atomic !fn!namespace-uri)
+    (,sa:fn-ns "number" 0 1
+     ,sa:multiple-any
+     ,sa:type-atomic !fn!number)
+    (,sa:fn-ns "lang" 1 2
+     ,sa:atomic-and-node
+     ,sa:type-atomic !fn!lang)
+    (,sa:fn-ns "root" 0 1
+     ,sa:multiple-node
+     ,sa:type-node !fn!root)
+    
+    
+    
+    
+    
+    
+    
+
+    ;----------------------------------------
+    
+    (,sa:fn-ns "current-dateTime" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-dateTime)
+    (,sa:fn-ns "current-date" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-date)
+    (,sa:fn-ns "current-time" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!current-time)
+    (,sa:fn-ns "implicit-timezone" 0 0
+     ,(lambda (num-args) '())
+     ,sa:type-atomic !fn!implicit-timezone)
+   
+   
+
+   
+   (,sa:xs-ns "yearMonthDuration" 1 1
+     ,(lambda (num-args) (list sa:type-any))
+     ,sa:type-atomic
+     (cast !xs!yearMonthDuration))
+   (,sa:xs-ns "dayTimeDuration" 1 1
+     ,(lambda (num-args) (list sa:type-any))
+     ,sa:type-atomic
+     (cast !xs!dayTimeDuration))
+    
     
     
     ;----------------------------------------
@@ -534,56 +733,25 @@
     (,sa:fn-ns "last" 0 0
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!last)
-    (,sa:fn-ns "true" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!true)
-    (,sa:fn-ns "false" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!false)
+    
     ;----------------------------------------
     ; URI-related functions
     (,sa:fn-ns "static-base-uri" 0 0
      ,(lambda (num-args) '())
      ,sa:type-atomic !fn!static-base-uri)
-    (,sa:fn-ns "resolve-uri" 1 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!resolve-uri)
+    
     ;----------------------------------------
 
-    ;----------------------------------------    
-    ; 11 Functions Related to QNames
-    (,sa:fn-ns "QName" 2 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!QName)
-    (,sa:fn-ns "prefix-from-QName" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!prefix-from-QName)
-    (,sa:fn-ns "local-name-from-QName" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!local-name-from-QName)
-    (,sa:fn-ns "namespace-uri-from-QName" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!namespace-uri-from-QName)
     ;----------------------------------------
     ; Single-arg atomic function
-    (,sa:fn-ns "name" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!name)
+    
     (,sa:fn-ns "node-kind" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
      ,sa:type-atomic !fn!node-kind)
-    (,sa:fn-ns "namespace-uri" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!namespace-uri)
-    (,sa:fn-ns "number" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-any num-args))
-     ,sa:type-atomic !fn!number)
+   
     (,sa:fn-ns "boolean" 1 1
      ,(lambda (num-args) `(,sa:type-any))
      ,sa:type-atomic !fn!boolean)
-    (,sa:fn-ns "not" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!not)
     (,sa:fn-ns "empty" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!empty)
@@ -638,116 +806,18 @@
     (,sa:fn-ns "typed-value" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!typed-value)
-    (,sa:fn-ns "contains" 2 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!contains)
+    
     (,sa:fn-ns "deep-equal" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!deep-equal)
-    (,sa:fn-ns "replace" 3 4
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!replace)
-    (,sa:fn-ns "matches" 2 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!matches)
+    
+    
     (,sa:fn-ns "subsequence" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic !fn!subsequence)
     ;----------------------------------------
     ; XML Date/Time functions
-    (,sa:fn-ns "current-dateTime" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-dateTime)
-    (,sa:fn-ns "current-date" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-date)
-    (,sa:fn-ns "current-time" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-time)
-    (,sa:fn-ns "implicit-timezone" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!implicit-timezone)
-   
-   (,sa:fn-ns "years-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!years-from-duration)
-   (,sa:fn-ns "months-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!months-from-duration)
-   (,sa:fn-ns "days-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!days-from-duration)
-   (,sa:fn-ns "hours-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!hours-from-duration)
-   (,sa:fn-ns "minutes-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!minutes-from-duration)
-   (,sa:fn-ns "seconds-from-duration" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!seconds-from-duration)
-   (,sa:fn-ns "year-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!year-from-dateTime)
-   (,sa:fn-ns "month-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!month-from-dateTime)
-   (,sa:fn-ns "day-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!day-from-dateTime)
-   (,sa:fn-ns "hours-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!hours-from-dateTime)
-   (,sa:fn-ns "minutes-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!minutes-from-dateTime)
-   (,sa:fn-ns "seconds-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!seconds-from-dateTime)
-   (,sa:fn-ns "timezone-from-dateTime" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!timezone-from-dateTime)
-   (,sa:fn-ns "year-from-date" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!year-from-date)
-   (,sa:fn-ns "month-from-date" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!month-from-date)
-   (,sa:fn-ns "day-from-date" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!day-from-date)
-   (,sa:fn-ns "timezone-from-date" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!timezone-from-date)
-   (,sa:fn-ns "hours-from-time" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!hours-from-time)
-   (,sa:fn-ns "minutes-from-time" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!minutes-from-time)
-   (,sa:fn-ns "seconds-from-time" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!seconds-from-time)
-   (,sa:fn-ns "timezone-from-time" 1 1
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!timezone-from-time)
-   (,sa:fn-ns "adjust-dateTime-to-timezone" 1 2
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!adjust-dateTime-to-timezone)
-   (,sa:fn-ns "adjust-date-to-timezone" 1 2
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!adjust-date-to-timezone)
-   (,sa:fn-ns "adjust-time-to-timezone" 1 2
-    ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-    ,sa:type-atomic !fn!adjust-time-to-timezone)
-   (,sa:xs-ns "yearMonthDuration" 1 1
-     ,(lambda (num-args) (list sa:type-any))
-     ,sa:type-atomic
-     (cast !xs!yearMonthDuration))
-   (,sa:xs-ns "dayTimeDuration" 1 1
-     ,(lambda (num-args) (list sa:type-any))
-     ,sa:type-atomic
-     (cast !xs!dayTimeDuration))
+    
    ;----------------------------------------
    ; SQL extension by Roman Pastuhov
    (,sa:sql-ns "exec-update" 2 #f
@@ -822,9 +892,7 @@
     (,sa:fn-ns "test" 0 #f
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-any !fn!test)
-    (,sa:fn-ns "local-name" 0 1
-     ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!local-name)
+    
     (,sa:fn-ns "ends-with" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-atomic)        
@@ -3345,7 +3413,8 @@
              pair   ; everything is ok
              (cl:signal-user-error SE5051 fourth))))
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!normalize-space
-                 !fn!string !fn!local-name !fn!number !fn!base-uri)
+                 !fn!string !fn!local-name !fn!number !fn!base-uri
+                 !fn!root)
        (if
         (null? (cdr expr))  ; no argument
         (let ((context-pair
