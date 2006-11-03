@@ -483,11 +483,13 @@ PPFnBaseURI::~PPFnBaseURI()
 void PPFnBaseURI::open  ()
 {
     child.op->open();
+    first_time = true;
 }
 
 void PPFnBaseURI::reopen()
 {
     child.op->reopen();
+    first_time = true;
 }
 
 void PPFnBaseURI::close ()

@@ -14,8 +14,39 @@
 
 tuple_cell dm_base_uri(xptr node)
 {
-    xptr res = getBaseUri(node);
-    return (res == NULL ? tuple_cell::eos() : tuple_cell::node(res));
+    CHECKP(node);
+
+    t_item node_type = GETSCHEMENODE(XADDR(node))->type;
+    if (node_type == xml_namespace) 
+        return tuple_cell::eos();
+
+    if (node_type == attribute || node_type == pr_ins || node_type == comment || node_type == text)
+    {
+        xptr parent = GETPARENTPOINTER(node);
+        if (parent == NULL) 
+            return tuple_cell::eos();
+
+        CHECKP(parent);
+        node = *((xptr*)XADDR(parent));
+
+        CHECKP(node);
+        if (GETSCHEMENODE(XADDR(node))->type != document || GETSCHEMENODE(XADDR(node))->type != element)
+            return tuple_cell::eos();
+    }
+
+    xptr xml_base_node = getBaseUri(node);
+
+    if (xml_base_node != NULL)
+    {
+        tuple_cell tc = dm_string_value(xml_base_node);
+        return cast_primitive_to_xs_anyURI(tc);
+    }
+
+    // xml_base_node == NULL
+    if (IS_TMP_BLOCK(node) && tr_globals::st_ct.base_uri)
+        return tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri);
+
+    return tuple_cell::eos();
 }
 
 tuple_cell dm_node_name(xptr node)
