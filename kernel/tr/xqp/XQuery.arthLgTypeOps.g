@@ -20,6 +20,8 @@ andExpr!:
 	left:comparisonExpr <<#0=#left;>> (AND right:comparisonExpr <<#0=#(#["and", AST_B_OP], #0, #right);>>)*
 ;
 
+
+
 comparisonExpr!:
 	<<ASTBase* op=NULL;>>
 	re1:rangeExpr       <<#0=#re1;>>
@@ -86,13 +88,25 @@ intersectExceptExpr!:
 ;
 
 instanceOfExpr!:
-	<<ASTBase *op=NULL; bool treat=false;>>
-	{  MINUS  <<op=#["unary-", AST_UNARY_OP];>>
-	 | PLUS   <<op=#["unary+", AST_UNARY_OP];>>
-	}//does not corresponds to the specification
+	<<ASTBase *ops=NULL, *it;
+	  bool treat=false;
+	  int iter=0, treat_pos=0, instance_pos=0, pos=0;
+	>>
+	
+	(  MINUS  <<if (ops == NULL) ops=#["unary-", AST_UNARY_OP]; else ops->append(#["unary-", AST_UNARY_OP]);>>
+	 | PLUS   <<if (ops == NULL) ops=#["unary+", AST_UNARY_OP]; else ops->append(#["unary+", AST_UNARY_OP]);>>
+	)*
 	 ue:valueExpr
-	 <<if(op==NULL) #0=#ue;
-	   else #0=#(op, #ue);
+	 <<
+	   #0=#ue;
+	   if(ops!=NULL)
+	   {
+	    
+	      for (it=(ASTBase*)ops; it != NULL; it=(ASTBase*)((ASTBase*)it)->right())
+	      {
+	          #0=#(#[((AST*)it)->getText(), AST_UNARY_OP], #0);	         
+	      }
+	   }
 	 >>
 
 	{CAST AS sts1:singleType
@@ -103,20 +117,60 @@ instanceOfExpr!:
 	 <<#0=#(#[AST_CASTABLE], #0, #sts2);>>
 	}
 
-	{( TREAT AS
-	  <<treat=true;>>
+	(( TREAT AS
+	  <<pos++; treat_pos = pos;>>
 	 |
-	  INSTANCE OF
-	) st:sequenceType 
+	  INSTANCE OF  <<pos++; instance_pos=pos;>>
+	 )
+	  st:sequenceType
+	 <<if(treat_pos == pos) #0=#(#[AST_TREAT], #0, #st);
+	   else #0=#(#[AST_INSTANCE_OF], #0, #st);
+	 >>
+
+	 )*
+
+	<<
+	  if (pos > 2 || treat_pos == 2 || (instance_pos == 2 && treat_pos ==0))
+		throw USER_EXCEPTION2(XPST0003, (std::string("unexpected treat or instance of expressions") + ", line: " + int2string(LT(1)->getLine())).c_str());	     
+	>>
+
+	
+
+
+/*
+	{ TREAT AS st1:sequenceType
+	  <<#0=#(#[AST_TREAT], #0, #st1);>>
+	}
+	{
+	  INSTANCE OF st2:sequenceType 
+	  <<#0=#(#[AST_INSTANCE_OF], #0, #st2);>>
+	}
 
 	<<if(treat) #0=#(#[AST_TREAT], #0, #st);
 	  else #0=#(#[AST_INSTANCE_OF], #0, #st);
 	>>
-	}
+*/
 	
         
 ;
+/*
+auxTreatInstanceOf![ASTBase* e]:
+	{ate:auxtreatExpr }
+	 
+	{aie:auxinstanceOfExpr}
+;
 
+auxtreatExpr!:
+	TREAT AS st1:sequenceType
+	  <<#0=#(#[AST_TREAT], #0, #st1);>>
+;
+
+auxinstanceOfExpr!:
+	  INSTANCE OF st2:sequenceType 
+	  <<#0=#(#[AST_INSTANCE_OF], #0, #st2);>>
+
+;
+*/
 
 /*
 instanceOfExpr!:
