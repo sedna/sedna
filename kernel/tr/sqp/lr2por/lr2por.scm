@@ -1574,9 +1574,10 @@
 (define (l2p:lr-sequenceType2por-sequenceType SeqType)
   (let ((lr-occ-ind (car SeqType)))
         (cond 
-          ((eq? lr-occ-ind 'empty-test) `(empty xdt_untypedAtomic))
-
-             
+          ((eq? lr-occ-ind 'empty-test)
+           '(empty (item))
+           ; DL: was: `(empty xdt_untypedAtomic)
+           )
           ((or (eq? lr-occ-ind 'one)
                (eq? lr-occ-ind 'optional)
                (eq? lr-occ-ind 'zero-or-more)

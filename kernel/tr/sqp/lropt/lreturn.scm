@@ -552,7 +552,7 @@
 (define (lropt:var-type-zero-or-one? type-spec)
   (or
    (and (pair? type-spec)
-        (memq (car type-spec) '(optional one)))
+        (memq (car type-spec) '(optional one empty-test)))
    (and (symbol? type-spec)
         ; Simple atomic type
         (not (memq type-spec '(xs:anyType !xs!anyType !xs!anytype))))))
