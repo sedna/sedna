@@ -300,6 +300,10 @@
      ((castable)
       (sa:analyze-castable expr vars funcs ns-binding default-ns))
      ;-------------------
+     ; XQuery 3.14 Extension Expressions
+     ((extension-expr)
+      (sa:analyze-extension-expression expr vars funcs ns-binding default-ns))
+     ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
       (sa:analyze-ddo expr vars funcs ns-binding default-ns))
@@ -1598,6 +1602,11 @@
         (and new-type
              (cons (list (car type-spec) (car new-type))
                    (cdr new-type))))))
+    ((equal? type-spec '(empty-test))
+     ; empty-sequence() sequence type
+     (and 
+      (sa:assert-num-args type-spec 0)
+      (cons type-spec sa:type-any)))
     ((memq type-spec '(optional zero-or-more one-or-more one))
      ; Detect parser bug, for XQTS tests like annex-1 - 5
      ; ATTENTION: This solution might be dangerous, remove this ASAP
@@ -2719,6 +2728,27 @@
                      (car new-fun))
                (cdr new-fun))))))))
 
+;-------------------------------------------------
+; XQuery 3.14 Extension Expressions
+
+(define (sa:analyze-extension-expression
+         expr vars funcs ns-binding default-ns)
+  (and
+   (or
+    (not (null? (sa:op-args expr)))  ; at least 1 argument
+    (sa:assert-num-args expr 2))
+   ; TODO: first argument must be 'pragmas, with one or more nested
+   ; 'pragma, resolve namespace prefix for each pragma
+   (or
+    (not (null?  ; at least 2 arguments
+          (cdr (sa:op-args expr))))
+    (cl:signal-user-error XQST0079
+                          ""  ; some details about pragmas can be added here
+                          ))
+   ; Fallback
+   (sa:analyze-expr (cadr (sa:op-args expr))
+                    vars funcs ns-binding default-ns)))
+    
 ;-------------------------------------------------
 ; 2.14 Distinct doc order
 
