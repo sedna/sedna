@@ -383,6 +383,7 @@
 (define sa:default-ns (list "" sa:fn-ns))
 
 ; Helpers for creating lists of 'sa:atomic or 'sa:nodes values
+(define (sa:no-arguments num-args) '())
 (define (sa:multiple-atomic num-args)
   (sa:make-list sa:type-atomic num-args))
 (define (sa:multiple-nodes num-args)
@@ -549,10 +550,10 @@
     ;----------------------------------------    
     ; 9 Functions and Operators on Boolean Values
     (,sa:fn-ns "true" 0 0
-     ,(lambda (num-args) '())
+     ,sa:no-arguments
      ,sa:type-atomic !fn!true)
     (,sa:fn-ns "false" 0 0
-     ,(lambda (num-args) '())
+     ,sa:no-arguments
      ,sa:type-atomic !fn!false)
     (,sa:fn-ns "not" 1 1
      ,sa:multiple-atomic
@@ -659,49 +660,131 @@
     ;----------------------------------------
     ; 14 Functions and Operators on Nodes
     (,sa:fn-ns "name" 0 1
-     ,sa:multiple-nodes
-     ,sa:type-atomic !fn!name)
+      ,sa:multiple-nodes
+      ,sa:type-atomic !fn!name)
     (,sa:fn-ns "local-name" 0 1
-     ,sa:multiple-nodes
-     ,sa:type-atomic !fn!local-name)
+      ,sa:multiple-nodes
+      ,sa:type-atomic !fn!local-name)
     (,sa:fn-ns "namespace-uri" 0 1
-     ,sa:multiple-nodes
-     ,sa:type-atomic !fn!namespace-uri)
+      ,sa:multiple-nodes
+      ,sa:type-atomic !fn!namespace-uri)
     (,sa:fn-ns "number" 0 1
-     ,sa:multiple-any
-     ,sa:type-atomic !fn!number)
+      ,sa:multiple-any
+      ,sa:type-atomic !fn!number)
     (,sa:fn-ns "lang" 1 2
-     ,sa:atomic-and-node
-     ,sa:type-atomic !fn!lang)
+      ,sa:atomic-and-node
+      ,sa:type-atomic !fn!lang)
     (,sa:fn-ns "root" 0 1
-     ,sa:multiple-nodes
-     ,sa:type-nodes !fn!root)
-    
-    
-    
-    
-    
-    
-    
-
+      ,sa:multiple-nodes
+      ,sa:type-nodes !fn!root)
     ;----------------------------------------
-    
+    ; 15 Functions and Operators on Sequences
+    ; *** 15.1 General Functions and Operators on Sequences
+    (,sa:fn-ns "boolean" 1 1
+      ,sa:multiple-any
+      ,sa:type-atomic !fn!boolean)
+    (,sa:fn-ns "index-of" 2 3
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!index-of)
+    (,sa:fn-ns "empty" 1 1
+      ,sa:multiple-any
+      ,sa:type-atomic !fn!empty)
+    (,sa:fn-ns "exists" 1 1
+      ,sa:multiple-any
+      ,sa:type-atomic !fn!exists)
+    (,sa:fn-ns "distinct-values" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!distinct-values)
+    (,sa:fn-ns "insert-before" 3 3
+      ,(lambda (num-args) (list sa:type-any sa:type-atomic sa:type-any))
+      ,sa:type-any !fn!insert-before)
+    (,sa:fn-ns "remove" 2 2
+      ,(lambda (num-args) (list sa:type-any sa:type-atomic))
+      ,sa:type-any !fn!remove)
+    (,sa:fn-ns "reverse" 1 1
+      ,sa:multiple-any
+      ,sa:type-any !fn!reverse)
+    (,sa:fn-ns "subsequence" 2 3
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!subsequence)
+    (,sa:fn-ns "unordered" 1 1
+      ,sa:multiple-any
+      ,sa:type-any !fn!unordered)
+    ; *** 15.2 Functions That Test the Cardinality of Sequences
+    (,sa:fn-ns "zero-or-one" 1 1
+     ,sa:multiple-any
+     ,sa:type-any !fn!zero-or-one)
+    (,sa:fn-ns "one-or-more" 1 1
+     ,sa:multiple-any
+     ,sa:type-any !fn!one-or-more)
+    (,sa:fn-ns "exactly-one" 1 1
+     ,sa:multiple-any
+     ,sa:type-any !fn!exactly-one)
+    ; *** 15.3 Equals, Union, Intersection and Except
+    (,sa:fn-ns "deep-equal" 2 2
+      ,sa:multiple-any
+      ,sa:type-atomic !fn!deep-equal)
+    ; *** 15.4 Aggregate Functions
+    (,sa:fn-ns "count" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!count)
+    (,sa:fn-ns "avg" 0 #f
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!avg)
+    (,sa:fn-ns "max" 0 #f
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!max)
+    (,sa:fn-ns "min" 0 #f
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!min)
+    (,sa:fn-ns "sum" 0 #f
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!sum)
+    ; *** 15.5 Functions and Operators that Generate Sequences
+    (,sa:fn-ns "id" 1 2
+      ,sa:atomic-and-node
+      ,sa:type-nodes !fn!id)
+    (,sa:fn-ns "idref" 1 2
+      ,sa:atomic-and-node
+      ,sa:type-nodes !fn!idref)
+    (,sa:fn-ns "doc" 1 2
+      ,sa:multiple-atomic
+      ,sa:type-nodes !fn!document)
+    (,sa:fn-ns "doc-available" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-atomic !fn!doc-available)
+    (,sa:fn-ns "collection" 1 1
+      ,sa:multiple-atomic
+      ,sa:type-nodes !fn!collection)
+    ;----------------------------------------
+    ; 16 Context Functions
+    (,sa:fn-ns "position" 0 0
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!position)
+    (,sa:fn-ns "last" 0 0
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!last)
     (,sa:fn-ns "current-dateTime" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-dateTime)
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!current-dateTime)
     (,sa:fn-ns "current-date" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-date)
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!current-date)
     (,sa:fn-ns "current-time" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!current-time)
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!current-time)
     (,sa:fn-ns "implicit-timezone" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!implicit-timezone)
-   
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!implicit-timezone)
+    (,sa:fn-ns "default-collation" 0 0
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!default-collation)
+    (,sa:fn-ns "static-base-uri" 0 0
+      ,sa:no-arguments
+      ,sa:type-atomic !fn!static-base-uri)
    
 
-   
+   ;----------------------------------------
    (,sa:xs-ns "yearMonthDuration" 1 1
      ,(lambda (num-args) (list sa:type-any))
      ,sa:type-atomic
@@ -715,30 +798,14 @@
     
     ;----------------------------------------
     ; Document and collection
-    (,sa:fn-ns "doc" 1 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!document)
     ; this one for backward compatiblity
     (,sa:fn-ns "document" 1 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!document)
-    (,sa:fn-ns "collection" 1 1
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-nodes !fn!collection)
-    ;----------------------------------------
-    ; Function without arguments
-    (,sa:fn-ns "position" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!position)
-    (,sa:fn-ns "last" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!last)
-    
+
     ;----------------------------------------
     ; URI-related functions
-    (,sa:fn-ns "static-base-uri" 0 0
-     ,(lambda (num-args) '())
-     ,sa:type-atomic !fn!static-base-uri)
+    
     
     ;----------------------------------------
 
@@ -747,59 +814,17 @@
     
     (,sa:fn-ns "node-kind" 1 1
      ,(lambda (num-args) (sa:make-list sa:type-nodes num-args))
-     ,sa:type-atomic !fn!node-kind)
-   
-    (,sa:fn-ns "boolean" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-atomic !fn!boolean)
-    (,sa:fn-ns "empty" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!empty)
-    (,sa:fn-ns "exists" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))     
-     ,sa:type-atomic !fn!exists)
-    (,sa:fn-ns "count" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!count)
+     ,sa:type-atomic !fn!node-kind)    
+    
     ;----------------------------------------
-    (,sa:fn-ns "insert-before" 3 3
-     ,(lambda (num-args) (list sa:type-any sa:type-atomic sa:type-any))
-     ,sa:type-any !fn!insert-before)
-    (,sa:fn-ns "remove" 2 2
-     ,(lambda (num-args) (list sa:type-any sa:type-atomic))
-     ,sa:type-any !fn!remove)
-    (,sa:fn-ns "reverse" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-any !fn!reverse)
-    (,sa:fn-ns "zero-or-one" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-any !fn!zero-or-one)
-    (,sa:fn-ns "one-or-more" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-any !fn!one-or-more)
-    (,sa:fn-ns "exactly-one" 1 1
-     ,(lambda (num-args) `(,sa:type-any))
-     ,sa:type-any !fn!exactly-one)
+    
+    
     ;----------------------------------------
     ; Multiarg atomic functions
-    (,sa:fn-ns "sum" 0 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!sum)
-    (,sa:fn-ns "avg" 0 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!avg)
-    (,sa:fn-ns "max" 0 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!max)
-    (,sa:fn-ns "min" 0 #f
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!min)
     
     ;----------------------------------------
     ; String functions
-    (,sa:fn-ns "distinct-values" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic !fn!distinct-values)
+    
     (,sa:fn-ns "string-value" 1 1
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!string-value)
@@ -807,14 +832,10 @@
      ,(lambda (num-args) `(,sa:type-atomic))
      ,sa:type-atomic !fn!typed-value)
     
-    (,sa:fn-ns "deep-equal" 2 2
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!deep-equal)
     
     
-    (,sa:fn-ns "subsequence" 2 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic !fn!subsequence)
+    
+    
     ;----------------------------------------
     ; XML Date/Time functions
     
@@ -892,14 +913,6 @@
     (,sa:fn-ns "test" 0 #f
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-any !fn!test)
-    
-    (,sa:fn-ns "ends-with" 2 3
-     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
-     ,sa:type-atomic)        
-    ; This one is not from Functions and Operators
-    (,sa:fn-ns "QName" 1 1
-     ,(lambda (num-args) `(,sa:type-atomic))
-     ,sa:type-atomic)
     
     )
   (map

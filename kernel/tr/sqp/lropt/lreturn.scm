@@ -232,7 +232,8 @@
                        #t))
      ; Functions with no arguments
      ((!fn!position !fn!last !fn!true !fn!false
-                    !se!checkpoint !fn!current-dateTime !fn!static-base-uri)
+                    !se!checkpoint !fn!current-dateTime !fn!static-base-uri
+                    !fn!default-collation)
       (values expr #t #t #t processed-funcs '()))
      ((!fn!count !fn!deep-equal !fn!sum !fn!avg !fn!max !fn!min)
       (lropt:propagate expr called-once?
@@ -273,16 +274,35 @@
        ; *** 14 Functions and Operators on Nodes
        !fn!name !fn!local-name !fn!namespace-uri !fn!number !fn!lang !fn!root
        ; *** 15.2 Functions That Test the Cardinality of Sequences
-       !fn!boolean
-       !fn!exactly-one)
+       !fn!boolean !fn!exactly-one
+       ; *** 15.5 Functions and Operators that Generate Sequences
+       !fn!doc-available)
       ; The same semantics as for !fn!document
       (lropt:propagate expr called-once? #f  ; [*]
                        var-types prolog processed-funcs
                        #t #t #t))
+     ((!fn!index-of)
+      (lropt:propagate expr called-once?
+                       (lambda (arg-lng)
+                         (cons #t  ; order required for first argument
+                               (xlr:make-list #f (- arg-lng 1))))
+                       var-types prolog processed-funcs
+                       (lambda x (car x))  ; ddo-auto of the first argument
+                       #f  ; several atomic values are returned
+                       #t))
      ((!fn!empty !fn!exists)
       (lropt:propagate expr called-once? #f  ; order not required
                        var-types prolog processed-funcs
                        #t #t #t))
+     ((!fn!unordered)
+;      (let ((identity (lambda (x) x)))
+;        (lropt:propagate expr called-once? #f  ; order not required
+;                         var-types prolog processed-funcs
+;                         identity identity identity))
+      ; Function call is removed
+      (lropt:expr (car (xlr:op-args expr))
+                  called-once? #f  ; order not required
+                  var-types prolog processed-funcs))
      ((!fn!data !fn!distinct-values !fn!zero-or-one !fn!one-or-more)
       (let ((identity (lambda (x) x)))
         ; NOTE: Should be updated when collations are introduced to
@@ -290,6 +310,10 @@
         (lropt:propagate expr called-once? order-required?
                          var-types prolog processed-funcs
                          identity identity identity)))
+     ((!fn!id !fn!idref)
+      (lropt:propagate expr called-once? #f  ; [*]
+                       var-types prolog processed-funcs
+                       #f #f #f))
      ((!fn!error)  ; 3 The Error Function
       (lropt:propagate expr called-once?
                        (lambda (arg-lng)
