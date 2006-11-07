@@ -39,11 +39,11 @@ public:
     /// not defined or empty. Use 'defined' accessors to check
     /// if component defined or not.
     ////////////////////////////////////////////////////////////////////
-    char* const get_scheme()    { return scheme.get();    }  
-    char* const get_authority() { return authority.get(); } 
-    char* const get_path()      { return path.get();      }
-    char* const get_query()     { return query.get();     } 
-    char* const get_fragment()  { return fragment.get();  } 
+    char* get_scheme()    const { return scheme.get();    }  
+    char* get_authority() const { return authority.get(); } 
+    char* get_path()      const { return path.get();      }
+    char* get_query()     const { return query.get();     } 
+    char* get_fragment()  const { return fragment.get();  } 
     
     ////////////////////////////////////////////////////////////////////
     /// Accessors to chech if component is defined or not.
@@ -51,11 +51,11 @@ public:
     /// does not appear in the URI reference; the path component is 
     /// never undefined, though it may be empty.
     ////////////////////////////////////////////////////////////////////
-    bool is_scheme_defined()    { return scheme_defined;    }
-    bool is_authority_defined() { return authority_defined; }
-    bool is_path_defined()      { return true;              }
-    bool is_query_defined()     { return query_defined;     }
-    bool is_fragment_defined()  { return fragment_defined;  }
+    bool is_scheme_defined()    const { return scheme_defined;    }
+    bool is_authority_defined() const { return authority_defined; }
+    bool is_path_defined()      const { return true;              }
+    bool is_query_defined()     const { return query_defined;     }
+    bool is_fragment_defined()  const { return fragment_defined;  }
     
     ////////////////////////////////////////////////////////////////////
     /// Check constraints for URI type as described in RFC 3986.
@@ -74,13 +74,13 @@ public:
     ////////////////////////////////////////////////////////////////////
     /// Component recomposition algorithm implementation (RFC 3986). 
     ////////////////////////////////////////////////////////////////////
-    void recompose(stmt_str_buf &dest);
+    void recompose(stmt_str_buf &dest) const;
 
     ////////////////////////////////////////////////////////////////////
     /// Parses given string into uri components.
     /// Throws SE1003 if string contains invalid URI.
     ////////////////////////////////////////////////////////////////////
-    static Uri parse(const char* u);
+    static Uri parse(const char* u); 
 };
 
 #endif

@@ -17,13 +17,16 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
     xmlscm_type t = evaluate_common_type(t1, t2);    
     
-    ///FIXME!!! xs:anyURI possibly also must be compared as string.
-    if(t == xs_string  || is_derived_from_xs_string(t))  return xs_string;
-    if(t == xs_integer || is_derived_from_xs_integer(t)) return xs_integer; 
+    if(t == xs_string  || is_derived_from_xs_string(t) || t == xs_anyURI)  
+        return xs_string;
+    if(t == xs_integer || is_derived_from_xs_integer(t)) 
+        return xs_integer; 
     
-    ///FIXME!!! Some other 'date types' have a gt operator.
     switch(t)    
     {   
+        case xs_time                  :
+        case xs_date                  :
+        case xs_dateTime              :
         case xs_yearMonthDuration     : 
         case xs_dayTimeDuration       : 
         case xs_float                 : 
@@ -343,7 +346,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
         else if(!is_eos2 && !is_eos1)        
         {
             switch (type)
-              {
+            {
                 case xs_float                  : 
                 {
                     float value1, value2;
@@ -402,7 +405,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     else 
                     {
-                        char* prefix = new char[ORB_STRING_PREFIX_SIZE+1]; 
+                        char* prefix = new char[ORB_STRING_PREFIX_SIZE + 1]; 
                         CHECKP(v1);
                         get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
                         strcpy(prefix, (char*)addr1+offset+sizeof(bool));
@@ -427,7 +430,9 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     break;
                 }
-                ///FIXME!!! Some other 'date types' have a gt operator.
+                case xs_time                 :
+                case xs_date                 :
+                case xs_dateTime             :
                 case xs_yearMonthDuration    : 
                 case xs_dayTimeDuration      : 
                 {
@@ -526,14 +531,16 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_string               : 
                     {
                         serialize_string(t.cells[i], (char*)p+offset); 
-                        if(t.cells[i].is_light_atomic())
+                        if(!t.cells[i].is_light_atomic())
                         {
                             CHECKP(v1);
                             VMM_SIGNAL_MODIFICATION(v1);
                         }
                         break;
                     }
-                    ///FIXME!!! Some other 'date types' have a gt operator.
+                    case xs_time                 :
+                    case xs_date                 :
+                    case xs_dateTime             :
                     case xs_yearMonthDuration    : 
                     case xs_dayTimeDuration      : memcpy((char*)p+offset, &(t.cells[i].get_xs_duration()), type_size); break;
                     default                       : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
@@ -650,9 +657,11 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        
-        ///FIXME!!! Some other 'date types' have a gt operator.
-        case xs_yearMonthDuration   : 
-        case xs_dayTimeDuration     : {memcpy(buffer + pos, &(tc.get_xs_duration()), type_size); break;}
+        case xs_time                 :
+        case xs_date                 :
+        case xs_dateTime             :
+        case xs_yearMonthDuration    : 
+        case xs_dayTimeDuration      : {memcpy(buffer + pos, &(tc.get_xs_duration()), type_size); break;}
         default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
     }
 
@@ -661,6 +670,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+
 void temp_buffer::copy_to_buffer      (const void* addr, int size)        
 {
     memcpy(buffer + pos, addr, size);

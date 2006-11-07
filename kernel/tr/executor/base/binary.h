@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _BASE64BIMARY_H
-#define _BASE64BINARY_H
+#ifndef _BIMARY_H
+#define _BINARY_H
 
 #include "sedna.h"
 #include "PPBase.h"
