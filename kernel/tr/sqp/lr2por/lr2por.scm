@@ -32,8 +32,15 @@
    (eq? 'prolog (car query-prolog-in-lr)) 
    (begin
      ; add all function names to the global func-list
-     (map 
-      (lambda (y) (l2p:add-func-name (caddr (cadr y))))
+     (map
+      ; DL: Every declare-function has a single arity value
+      (lambda (y)
+        (l2p:add-func-name
+         (list
+          (caddr (cadr y))  ; function name
+          (length (caddr y))  ; function arity
+         ; DL: was: (caddr (cadr y))
+         )))
       (filter
        (lambda (x) (if (eq? (car x) 'declare-function) #t #f))
        (cdr query-prolog-in-lr)))
@@ -1164,12 +1171,25 @@
              
              ; *** fun-call ***
              ((eq? op-name 'fun-call)
-               (let* ((func-index (l2p:find-func-index (caddr (car node)) funcs-map)))
-                 (if (eq? func-index #f)
-                     (cl:signal-input-error SE4008 (string-append "unknown function call: "
-                                                     (cadr (caddr (car node)))))
-                     `(1 (PPFunCall ,func-index ,@(map l2p:any-lr-node2por (cdr node)))))))
-             
+               (let ((func-index
+                      (l2p:find-func-index
+                       (list
+                        (caddr (car node))  ; function name
+                        (length (cdr node))  ; number of arguments
+                        )
+                       ; DL: was: (caddr (car node))
+                       funcs-map)))
+                 (if
+                  (eq? func-index #f)
+                  (cl:signal-input-error
+                   SE4008
+                   (string-append "unknown function call: "
+                                  (cadr (caddr (car node)))
+                                  ", arity == "
+                                  (number->string (length (cdr node)))))
+                  `(1 (PPFunCall
+                       ,func-index
+                       ,@(map l2p:any-lr-node2por (cdr node)))))))
              
              ; *** ext-fun-call ***
              ((eq? op-name 'ext-fun-call)
@@ -1680,11 +1700,15 @@
       (set! funcs-map (append funcs-map `((,func-name ,(length funcs-map)))))
   ))
 
+; DL: func-name is now a list:
+; func-name ::= (list function-name arity)
 (define (l2p:find-func-index func-name funcs-list)
-
   (cond ((null? funcs-list) #f)
-        ((and (string=? (caaar funcs-list) (car func-name)) (string=? (cadaar funcs-list) (cadr func-name)))
-              (cadar funcs-list))
+        ((equal? func-name (caar funcs-list))
+         ; DL: was:
+;         (and (string=? (caaar funcs-list) (car func-name))
+;              (string=? (cadaar funcs-list) (cadr func-name)))
+         (cadar funcs-list))
         (else (l2p:find-func-index func-name (cdr funcs-list)))))
 
 ;(define init-var-param 1)
