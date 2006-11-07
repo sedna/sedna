@@ -1566,10 +1566,18 @@
 ;                            ddo-auto? zero-or-one? single-level?)
 ; Returns: (values processed-func new-processed-funcs)
 (define (lropt:get+add-processed-func func-name called-once? order-required?
-                                      var-types prolog processed-funcs)
+                                      var-types prolog processed-funcs
+                                      arity)
   (cond
     ((let ((entry
-            (assoc func-name processed-funcs)))
+            (assoc
+             func-name
+             (filter  ; all entries with a given arity
+              (lambda (entry)
+                (= (length 
+                    (lropt:procced-func-for-args entry))
+                   arity))
+              processed-funcs))))
        (and entry  ; rewritten function found
             (or
              ; Function body processed for order-required? == #t
@@ -1586,10 +1594,13 @@
              (lambda (part)
                (cons (car (xlr:op-args part))  ; function name
                      part))
-             (filter
+             (filter  ; all function declarations with a given arity
               (lambda (part)
                 (and (pair? part)
-                     (eq? (xlr:op-name part) 'declare-function)))
+                     (eq? (xlr:op-name part) 'declare-function)
+                     (= (length  ; arity of the declaration
+                         (cadr (xlr:op-args part)))
+                        arity)))
               prolog)))
      => (lambda (pair)  ; declaration found
           (let* ((declaration (cdr pair))
@@ -1666,7 +1677,10 @@
    (lambda ()
      (lropt:get+add-processed-func (car (xlr:op-args expr))  ; func-name
                                    called-once? order-required?
-                                   var-types prolog processed-funcs))
+                                   var-types prolog processed-funcs
+                                   (length  ; arity
+                                    (cdr (xlr:op-args expr)))
+                                   ))
    (lambda (entry processed-funcs)
      (if
       entry
@@ -1705,7 +1719,10 @@
            #f  ; called-once? - we do not care
            #f  ; order-required? - bind to 0 to choose any existing entry
            '()  ; var-types
-           prolog processed-funcs))
+           prolog processed-funcs
+           (length  ; arity
+            (cadr (xlr:op-args (car prolog)))  ; function arguments
+            )))
         (lambda (entry processed-funcs)
           (loop (cdr prolog)
                 processed-funcs                

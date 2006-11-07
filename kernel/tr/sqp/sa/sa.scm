@@ -2958,7 +2958,53 @@
      (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic))))
 
 ;-------------------------------------------------
-; Not expressed in the new logical representation
+; Function call
+
+; namespace-uri, local-name - function name
+; arity - number of arguments in the function call
+; Returns either the corresponding '(declare-function ...)
+; S-expression or #f
+(define (sa:find-function-declaration-by-name-and-arity
+         namespace-uri local-name arity funcs)
+  (let loop ((fs funcs))
+    (cond
+      ((null? fs)  ; all functions scanned
+       #f)
+      ((and (string=? (caar fs) namespace-uri)
+            (string=? (cadar fs) local-name)
+            (>= arity
+                ; Minimal number of arguments
+                (list-ref (car fs) 2))
+            (or
+             (not  ; infinite max number of arguments
+              (list-ref (car fs) 3))
+             (<= arity
+                 (list-ref (car fs) 3))))
+       (car fs))
+      (else
+       (loop (cdr fs))))))
+
+; fun-call - something like  '(fun-call
+;                               (const (type !xs!QName) ("local" "myName"))
+;                               (const (type !xs!integer) "4"))
+; Returns either the corresponding '(declare-function ...)
+; S-expression or #f
+; Function call expression is considered syntactically correct
+; The function can raise the exception if the function name cannot be
+; properly expanded
+(define (sa:find-declaration-for-function-call
+         fun-call funcs ns-binding default-ns)
+  (let ((fun-name (sa:resolve-qname (car (sa:op-args fun-call))
+                                    ns-binding (cadr default-ns))))
+    (and
+     fun-name
+     (let ((name-parts (sa:proper-qname fun-name)))
+       (sa:find-function-declaration-by-name-and-arity
+        (car name-parts)
+        (cadr name-parts)
+        (length  ; arity
+         (cdr (sa:op-args fun-call)))
+        funcs)))))
 
 ; Function call
 (define (sa:analyze-fun-call expr vars funcs ns-binding default-ns)
@@ -2970,28 +3016,15 @@
                       (car args) ns-binding (cadr default-ns))))
        (and
         fun-name
-        (let ((name-parts (sa:proper-qname fun-name)))
-          (let loop ((fs funcs))
-            (cond
-              ((null? fs)  ; all functions scanned
-               (cl:signal-user-error XPST0017  ; was: SE5037
-                                     (cadr (caddr  ; extract function name
-                                            (car (sa:op-args expr))))
-                                     ; expr
-                                     ))
-              ((and (string=? (caar fs) (car name-parts))
-                    (string=? (cadar fs) (cadr name-parts)))
-               (let ((fun-declaration (car fs))
-                     (num-actual (length
-                                  ; fun-call arguments minus fun-name
-                                  (cdr args))))
-                 (if
-                  (or (< num-actual (list-ref fun-declaration 2))
-                      (and (list-ref fun-declaration 3)  ; max-args
-                           (> num-actual (list-ref fun-declaration 3))))
-                  (cl:signal-user-error
-                   XPST0017  ; was: SE5038
-                   (string-append (car name-parts) ":" (cadr name-parts)))
+        (let ((name-parts (sa:proper-qname fun-name))
+              (num-actual (length  ; arity
+                           (cdr (sa:op-args expr)))))
+          (cond
+            ((sa:find-function-declaration-by-name-and-arity
+              (car name-parts) (cadr name-parts)
+              num-actual
+              funcs)
+             => (lambda (fun-declaration)
                   (let ((formal-args
                          ((list-ref fun-declaration 4) num-actual))
                         ; Actual function arguments are to be analyzed ONLY
@@ -3041,9 +3074,15 @@
                           (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
                           )
                          (else
-                          (rpt (cdr form) (cdr act))))))))))
-              (else
-               (loop (cdr fs)))))))))))
+                          (rpt (cdr form) (cdr act)))))))))
+              (else  ; Function declaration not found
+               (cl:signal-user-error
+                XPST0017  ; was: SE5037
+                (string-append (car name-parts) ":" (cadr name-parts))
+;                (cadr (caddr  ; extract function name
+;                       (car (sa:op-args expr))))
+                ; expr
+                )))))))))
 
 
 ;==========================================================================
