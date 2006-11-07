@@ -17,6 +17,7 @@ bool is_derived(xmlscm_type t1, xmlscm_type t2)
 
     switch (t1)
     {
+        case xs_anyAtomicType       : return false;
         case xs_untypedAtomic		: return false;
         case xs_dateTime			: return false;
         case xs_date				: return false;
