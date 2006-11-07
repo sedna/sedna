@@ -862,28 +862,64 @@
                  (!fn!number .        PPFnNumber)
                  (!fn!lang .          PPFnLang)
                  (!fn!root .          PPFnRoot)
+                 ;----------------------------------------
+                 ; 15 Functions and Operators on Sequences
+                 (!fn!boolean .         PPFnBoolean)
+                 (!fn!index-of .        PPFnIndexOf)
+                 (!fn!empty .           PPFnEmpty)
+                 (!fn!exists .          PPFnExists)
+                 (!fn!distinct-values . PPFnDistinctValues)
+                 (!fn!insert-before .   PPFnInsertBefore)
+                 (!fn!remove .          PPFnRemove)
+                 (!fn!reverse .         PPFnReverse)
+                 (!fn!subsequence .     PPFnSubsequence)
+                 (!fn!unordered .       PPFnUnordered)
+                 ; *** 15.2 Functions That Test the Cardinality of Sequences
+                 (!fn!zero-or-one .     PPFnZeroOrOne)
+                 (!fn!one-or-more .     PPFnOneOrMore)
+                 (!fn!exactly-one .     PPFnExactlyOne)
+                 ; *** 15.3 Equals, Union, Intersection and Except
+                 (!fn!deep-equal .      PPFnDeepEqual)
+                 ; *** 15.4 Aggregate Functions
+                 (!fn!count .           PPFnCount)
+                 (!fn!avg .             PPFnAvg)
+                 ;(!fn!max .             PPFnMax)
+                 ;(!fn!min .             PPFnMin)
+                 ;(!fn!sum .             PPFnSum)
+                 ; *** 15.5 Functions and Operators that Generate Sequences
+                 (!fn!id .              PPFnId)
+                 (!fn!idref .           PPFnIdref)
+                 (!fn!doc-available .   PPFnDocAvailable)
+                 ;----------------------------------------
+                 ; 16 Context Functions
+                 (!fn!current-dateTime .  PPFnCurrentDateTime)
+                 (!fn!current-date .      PPFnCurrentDate)
+                 (!fn!current-time .      PPFnCurrentTime)
+                 (!fn!implicit-timezone . PPFnImplicitTimezone)
+                 (!fn!default-collation . PPFnDefaultCollation)
+                 (!fn!static-base-uri .   PPFnStaticBaseUri)
+
                  
                  ))
               => (lambda (pair)
                    `(1 ,(cons (cdr pair)
                               (map l2p:any-lr-node2por node)))))
              
-             
-             
+             ((assq op-name '((!fn!max . PPFnMax)
+                              (!fn!min . PPFnMin)
+                              (!fn!sum . PPFnSum)))
+              ; Ignore the second argument
+              ; TODO: should be implemented in accordance with the
+              ; specification
+              => (lambda (pair)
+                   `(1 ,(list (cdr pair)
+                              (l2p:any-lr-node2por (car node))))))
              
              ;----------------------------------------
-             
-             ; *** URI-related functions *** 
-             ((eq? op-name '!fn!static-base-uri)
-              `(1 (PPFnStaticBaseUri)))            
+                   
              
              
-             
-             ; *** boolean ***
-             ((eq? op-name '!fn!boolean)
-              `(1 (PPFnBoolean ,(l2p:any-lr-node2por (car node))))
-             )
-             
+                        
              ; *** string-value ***
              ((eq? op-name '!fn!string-value)
               `(1 (PPDmStringValue ,(l2p:any-lr-node2por (car node))))
@@ -893,89 +929,18 @@
              ((eq? op-name '!fn!typed-value)
               `(1 (PPDmTypedValue ,(l2p:any-lr-node2por (car node))))
              )
+                                      
              
-             ((eq? op-name '!fn!insert-before)
-              ; 3 arguments
-              `(1 (PPFnInsertBefore
-                   ;,(l2p:any-lr-node2por (car node))
-                   ;,(l2p:any-lr-node2por (cadr node))
-                   ;,(l2p:any-lr-node2por (caddr node))
-                   ,@(map l2p:any-lr-node2por node)
-                   )))
-             ((eq? op-name '!fn!remove)
-              `(1 (PPFnRemove
-                   ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))
              
-             ((eq? op-name '!fn!reverse)
-              `(1 (PPFnReverse ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!subsequence)
-              `(1 (PPFnSubsequence ,@(map l2p:any-lr-node2por node)))
-             )
-             ((eq? op-name '!fn!exists)
-              `(1 (PPFnExists ,(l2p:any-lr-node2por (car node))))
-             )
              
-             ; *** Functions That Test the Cardinality of Sequences ***
-             ((eq? op-name '!fn!zero-or-one)
-              `(1 (PPFnZeroOrOne ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!one-or-more)
-              `(1 (PPFnOneOrMore ,(l2p:any-lr-node2por (car node))))
-             )
-             ((eq? op-name '!fn!exactly-one)
-              `(1 (PPFnExactlyOne ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** sum ***
-             ((eq? op-name '!fn!sum)
-              `(1 (PPFnSum ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** avg ***
-             ((eq? op-name '!fn!avg)
-              `(1 (PPFnAvg ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** max ***
-             ((eq? op-name '!fn!max)
-              `(1 (PPFnMax ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** min ***
-             ((eq? op-name '!fn!min)
-              `(1 (PPFnMin ,(l2p:any-lr-node2por (car node))))
-             )
-             
-             ; *** count ***
-             ((eq? op-name '!fn!count)
-              `(1 (PPFnCount ,(l2p:any-lr-node2por (car node))))
-             )
-             ; *** distinct-values ***
-             ((eq? op-name '!fn!distinct-values)
-              `(1 (PPFnDistinctValues ,(l2p:any-lr-node2por (car node))))
-             )
-                          
              ; *** item-at ***
              ((eq? op-name '!fn!item-at)
               `(1 (PPFnItemAt ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
              )
             
-             
-             ; *** deep-equal ***
-             ((eq? op-name '!fn!deep-equal)
-              `(1 (PPFnDeepEqual
-                   ,(l2p:any-lr-node2por (car node))
-                   ,(l2p:any-lr-node2por (cadr node)))))
-                                 
+                                            
             
-             
-             ; *** empty ***
-             ((eq? op-name '!fn!empty)
-              `(1 (PPFnEmpty ,(l2p:any-lr-node2por (car node))))
-             )
-
+         
              
              ; *** checkpoint ***
              ((eq? op-name '!fn!checkpoint) 
@@ -1037,25 +1002,7 @@
               `(1 (PPAbsPath (collection ,(l2p:getDocorCollNamePor (car node))) ()))
              )
 
-             ; *** !fn!current-dateTime ***
-             ((eq? op-name '!fn!current-dateTime)
-              `(1 (PPFnCurrentDateTime ))
-             )
 
-             ; *** !fn!current-date ***
-             ((eq? op-name '!fn!current-date)
-              `(1 (PPFnCurrentDate ))
-             )
-
-             ; *** !fn!current-time***
-             ((eq? op-name '!fn!current-time)
-              `(1 (PPFnCurrentTime ))
-             )
-
-             ; *** !fn!implicit-timezone***
-             ((eq? op-name '!fn!implicit-timezone)
-              `(1 (PPFnImplicitTimezone ))
-             )
 
              ; *** !fn!sql-connect ***
              ((eq? op-name '!fn!sql-connect)
