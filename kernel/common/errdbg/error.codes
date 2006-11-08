@@ -1582,6 +1582,9 @@ sedna-err:SE5075
 sedna-err:SE5076
 
     Unknown granularity specified in CREATE TRIGGER statement.
+sedna-err:SE5077
+
+    Variable declaration expected.
 sedna-err:SE5100
 
     Error in Scheme part.

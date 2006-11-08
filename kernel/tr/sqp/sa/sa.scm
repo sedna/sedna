@@ -167,15 +167,16 @@
       (and
        prolog-res  ; processed correctly
        (let* ((new-prolog (car prolog-res))
-              (funcs (cadr prolog-res))
+              (funcs      (cadr prolog-res))
               (ns-binding (caddr prolog-res))
-              (default-ns (cadddr prolog-res)))
+              (default-ns (cadddr prolog-res))
+              (vars       (list-ref prolog-res 4)))
          (cond           
            ((eq? (sa:op-name query) 'query)
             (let ((pair   ; = (new-query . type)
                    (sa:analyze-expr
-                    (sa:get-query-body query) '()
-                    funcs ns-binding default-ns)))
+                    (sa:get-query-body query)
+                    vars funcs ns-binding default-ns)))
               (and
                pair
                `(query ,(cons 'prolog new-prolog)
@@ -187,7 +188,7 @@
             => (lambda (pair)
                  (let ((new ((cdr pair)
                              (cadr (sa:op-args query))
-                             '() funcs ns-binding default-ns)))
+                             vars funcs ns-binding default-ns)))
                    (and new
                         (list (sa:op-name query)
                               (cons 'prolog new-prolog)
@@ -998,23 +999,49 @@
      (null? prolog)  ; prolog viewed
      (let ((default-ns (list (or default-elem-ns "")
                              (sa:default-func-ns->string default-func-ns))))
-       (let rpt ((new-prlg new-prlg)
-                 (triples triples)
-                 (prolog-res '()))
+       ; new-prlg and triples must be reversed, since global-vars are added
+       ; to static context in the order of their declaration
+       (let rpt ((new-prlg (reverse new-prlg))
+                 (triples (reverse triples))
+                 (prolog-res '())
+                 (variables '()))
          (cond
            ((null? new-prlg)  ; all function bodies checked
-            (list prolog-res
+            (list (reverse prolog-res)
                   funcs
-                  ns-binding default-ns))
-           (; #f is added to `new-prlg' for 'declare-function
-            (car new-prlg)  ; doesn't correspond to function declaration
+                  ns-binding default-ns variables))
+           ((and (pair? (car new-prlg))
+                 (eq? (sa:op-name (car new-prlg))
+                      'declare-global-var))
+            (let ((expr (car new-prlg)))
+              (let ((var-wrapped (car (sa:op-args expr)))
+                    (initial-expr-pair
+                     (sa:analyze-expr (cadr (sa:op-args expr))
+                                      variables funcs ns-binding default-ns))
+                    (type-pair (caddr (sa:op-args expr))))
+              (and
+               initial-expr-pair
+               (rpt (cdr new-prlg)
+                    triples
+                    (cons
+                     (list (sa:op-name expr)  ; == 'declare-global-var
+                           var-wrapped
+                           (car initial-expr-pair)
+                           (car type-pair))
+                     prolog-res)
+                    (cons (cons (car (sa:op-args var-wrapped))
+                                (cdr type-pair))
+                          variables))))))
+           ; #f is added to `new-prlg' for 'declare-function
+           ((car new-prlg)  ; doesn't correspond to function declaration
             (rpt (cdr new-prlg)
                  triples
-                 (cons (car new-prlg) prolog-res)))
+                 (cons (car new-prlg) prolog-res)
+                 variables))
            (else  ; corresponds to function declaration from (car triples)
             (let* ((declaration (caar triples))                 
                    (body (cadr (list-ref (sa:op-args (caar triples)) 3)))
-                   (vars (cadar triples))
+                   (vars (append (cadar triples) variables))
                    (return-type (caddar triples))
                    (res (sa:analyze-expr
                          body vars funcs ns-binding default-ns)))
@@ -1043,7 +1070,8 @@
                           (list
                            (car (cadddr (sa:op-args func-decl)))  ; ='body
                            (car res))))
-                       prolog-res)))
+                       prolog-res)
+                       variables))
                 (else
                  (cl:signal-user-error XPTY0004  ; was: SE5007
                                        body))))))))
@@ -1311,6 +1339,70 @@
                   default-elem-ns
                   (cadr (sa:op-args (car (sa:op-args expr))))
                   (cdr prolog)))))
+         ((declare-global-var)
+          (and
+           (or
+            (memv (length (sa:op-args expr)) '(2 3))
+            (sa:assert-num-args expr 3))
+           (or
+            (and  ; first argument has the form '(var ...)
+             (pair? (car (sa:op-args expr)))
+             (eq? (sa:op-name (car (sa:op-args expr)))
+                  'var))
+            (cl:signal-input-error SE5077 (car (sa:op-args expr))))
+           (sa:assert-num-args (car (sa:op-args expr)) 1)
+           (let ((var-name
+                  (sa:expand-var-name
+                   (car (sa:op-args
+                         (car (sa:op-args expr))))
+                   ns-binding
+                   (or default-elem-ns "")))
+                 (type-pair
+                  (sa:analyze-seq-type
+                   (if (null? (cddr (sa:op-args expr)))
+                       ; no type supplied
+                       '(zero-or-more (item-test))
+                       (caddr (sa:op-args expr)))
+                   ns-binding default-elem-ns)))
+             ; Cannot analyze variable value now, since not all
+             ; XQuery function declarations are generally processed
+             (and
+              var-name type-pair
+              (or
+               (not
+                (member
+                 var-name
+                 (map  ; extract variable names only
+                  (lambda (entry)
+                    (car (sa:op-args
+                          (car (sa:op-args entry)))))
+                  (filter 
+                   (lambda (entry)
+                     (and (pair? entry)
+                          (eq? (sa:op-name entry)
+                               (sa:op-name expr)  ; == 'declare-global-var
+                               )))
+                   new-prlg))))
+               (cl:signal-user-error
+                XQST0049 
+                (if
+                (string=? (car var-name) "")  ; no namespace URI
+                (cadr var-name)
+                (string-append (car var-name) ":" (cadr var-name)))))
+              (loop
+               (cons   ; new prolog
+                (list (sa:op-name expr)  ; ='declare-global-var
+                      (list (sa:op-name (car (sa:op-args expr)))  ; == 'var
+                            var-name)
+                      (cadr (sa:op-args expr))
+                      ; ATTENTION: temporary spoilt type representation
+                      type-pair
+                      ; DL: was: (car type-pair)
+                      )
+                new-prlg)
+               funcs triples
+               ns-binding default-elem-ns default-func-ns
+               (cdr prolog))))))
          ((declare-external-function)
           (and
            (sa:assert-num-args expr 3)
@@ -2023,7 +2115,8 @@
      (else
       (cl:signal-user-error XPST0081 (car var-name))  ; was: SE5024
       ))))
-
+; expr ::= `(var ...)
+; Returns (cons `(var ...) var-type)
 (define (sa:variable-wrapped expr vars funcs ns-binding default-ns)
   (and
    (sa:assert-num-args expr 1)
