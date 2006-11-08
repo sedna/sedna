@@ -148,6 +148,20 @@ inline void put_prefix(char *where, trie_node_t *node)
 	}
 }
 
+/*
+	I think a quick pretest here could be a performance gain. 
+	Up to 4 bytes can be tested simultaneously using int32 arithmetic, mmx intstructions
+	allows a simultaneous 8 bytes test and sse2 has capacity for 16 bytes.
+	See these entries 
+	http://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
+	http://graphics.stanford.edu/~seander/bithacks.html#HasBetweenInWord
+	- Common escaped characters (<>&"\) are in ascii range and can be tested using ZeroInWord method.
+    - A test for characters not in ascii range can be implemented by comparing "head byte"
+	  of UTF-8 encoded character (those that have 2 high bits set) against a respective value
+	  using ZeroInWord method (rather inaccurate after all).
+    - A test for unicode escape range can be done with HasBetweenInWord method on the "head byte".
+	ZNV
+*/ 
 int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, int pc)
 {
 	//TODO: implement (write_cb == 0) case
