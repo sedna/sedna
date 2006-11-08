@@ -60,7 +60,7 @@ public:
     xs_decimal_t ceil() const;
     xs_decimal_t floor() const;
     xs_decimal_t round() const;
-    xs_decimal_t round_half_to_even() const;
+    xs_decimal_t round_half_to_even(__int64 precision) const;
 
     xs_decimal_t operator - ();
     xs_decimal_t operator - (const xs_decimal_t & d) const { return numerical_operation(d, noi_sub); }
@@ -74,12 +74,17 @@ public:
     bool         operator >=(const xs_decimal_t & d) const { return compare(d) >= 0; }
     bool         operator < (const xs_decimal_t & d) const { return compare(d) <  0; }
     bool         operator <=(const xs_decimal_t & d) const { return compare(d) <= 0; }
+
+
+    friend xs_decimal_t modf(const xs_decimal_t &x, xs_decimal_t* /*out*/intptr);
 };
 
 inline xs_decimal_t fmod(const xs_decimal_t & d1, const xs_decimal_t & d2)
 {
     return d1 % d2;
 }
+
+xs_decimal_t modf(const xs_decimal_t &x, xs_decimal_t* /*out*/intptr);
 
 
 #endif
