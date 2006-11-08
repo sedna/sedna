@@ -269,3 +269,30 @@
          (fun-call (const (type !xs!QName) ("" "doc")) (const (type !xs!string) "a.xml"))
          (type (elem-test (ename (const (type !xs!QName) ("" "site")) (type *) (const (type !xs!string) "non-nil"))))))
        (type (elem-test (ename (const (type !xs!QName) ("" "people")) (type *) (const (type !xs!string) "non-nil"))))))))))
+
+(go
+ '(query
+   (prolog
+    (declare-global-var
+     (var ("" "var"))
+     (fun-call (const (type !xs!QName) ("local" "func1")))
+     (one !xs!integer))
+    (declare-function
+     (const (type !xs!QName) ("local" "func1"))
+     ()
+     (result-type (zero-or-more (item-test)))
+     (body (fun-call (const (type !xs!QName) ("local" "func2")))))
+    (declare-function
+     (const (type !xs!QName) ("local" "func2"))
+     ()
+     (result-type (zero-or-more (item-test)))
+     (body (fun-call (const (type !xs!QName) ("local" "func3")))))
+    (declare-global-var
+     (var ("" "var2"))
+     (fun-call (const (type !xs!QName) ("local" "func2"))))
+    (declare-function
+     (const (type !xs!QName) ("local" "func3"))
+     ()
+     (result-type (zero-or-more (item-test)))
+     (body (var ("" "var2")))))
+   (query-body (fun-call (const (type !xs!QName) ("" "boolean")) (var ("" "var"))))))
