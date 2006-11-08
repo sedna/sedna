@@ -2067,7 +2067,115 @@
    (not (eq? (sa:op-name expr) 'body))
    (cl:signal-input-error SE5022 expr)
    (sa:assert-num-args expr 1)))
-   
+
+;-------------------------------------------------
+; Declare-variable helpers
+
+; Performs apply append for lists and removes equal? duplicates
+(define (sa:apply-append-remove-equal-duplicates lsts)
+  (cond
+    ((null? lsts) lsts)
+    ((null? (cdr lsts)) (car lsts))
+    (else
+     (let loop ((first (car lsts))
+                (second (cadr lsts)))
+       (if
+        (null? first)
+        (sa:apply-append-remove-equal-duplicates
+         (cons second (cddr lsts)))
+        (loop (cdr first)
+              (if
+               (member (car first) second)
+               second
+               (cons (car first) second))))))))
+
+; Returns: (list (listof var-name)
+;                (listof (list function-name arity)))
+; var-name, function-name ::= (list namespace-uri local-part)
+; expr is considered properly-formed
+(define (sa:free-variables-and-function-calls expr)
+  (letrec
+      ((tree-walk
+        (lambda (expr bound-vars)
+          (if
+           (not (and (pair? expr)
+                     (symbol? (car expr))))
+           '(() ())
+           (case (sa:op-name expr)
+             ((var)
+              (let ((var-name
+                     (car (sa:op-args expr))))
+                (list (if (member var-name bound-vars)
+                          '()
+                          (list (car (sa:op-args expr))))
+                      '())))
+             ((fun-call)
+              (list '()
+                    (list (list (cadr (sa:op-args  ; function name
+                                       (car (sa:op-args expr))  ; '(const ...)
+                                       ))
+                                (length (cdr (sa:op-args expr)))))))
+             ((fun-def)
+              (tree-walk
+               (cadr (sa:op-args expr))  ; fun-def body
+               (append
+                (map
+                 (lambda (arg)
+                   (car (sa:op-args
+                         (cadr arg)  ; addresses '(var ...)
+                         )))
+                 (car (sa:op-args expr))  ; arguments
+                 )
+                bound-vars)))
+             (else  ; Recursive propagation
+              (let ((kid-results
+                     (map
+                      (lambda (kid) (tree-walk kid bound-vars))
+                      (sa:op-args expr))))
+                (list
+                 (sa:apply-append-remove-equal-duplicates
+                  (map car kid-results))
+                 (sa:apply-append-remove-equal-duplicates
+                  (map cadr kid-results))))))))))
+    (tree-walk expr '())))
+
+; Like `member', but uses a predicate condition
+(define (sa:mem-pred lst pred?)
+  (cond
+    ((null? lst) #f)
+    ((pred? (car lst)) lst)
+    (else 
+     (sa:mem-pred (cdr lst) pred?))))
+
+; graph ::= (listof
+;             (cons node (listof node)))
+; Each list '(node1 node2 node3 ... nodek) denotes that the graph contains
+; node1 and arcs node1 -> node2, node1 -> node3, etc.
+; Even if the node does not contain any outgoing arcs, it still must be
+; presented in the graph - in the form of (list node)
+(define (sa:graph-contains-cycles? graph)
+  (let ((sa:remove-node-from-graph
+         (lambda (node graph)
+           (map
+            (lambda (single)
+              (filter
+               (lambda (item) (not (equal? item node)))
+               single))
+            (filter
+             (lambda (single)
+               (not (equal? (car single) node)))
+             graph)))))
+    (cond
+      ((null? graph)  ; no cycles
+       #f)
+      ((sa:mem-pred graph
+                    ; no outgoing arcs for that node
+                    (lambda (single) (null? (cdr single))))
+       => (lambda (sub)
+            (sa:graph-contains-cycles?
+             (sa:remove-node-from-graph (caar sub) graph))))
+      (else  ; graph contains a cycle
+       #t))))
 
 ;==========================================================================
 ; Analysis for different operations
@@ -3572,6 +3680,13 @@
                        (car context-pair))
                  (cdr pair)  ; return type
                  )))
+        pair))
+      ((!fn!position !fn!last)
+       ; See XQTS tests like "position-2"
+       (and
+        (sa:analyze-expr  ; context item defined
+         sa:context-item
+         vars funcs ns-binding default-ns)
         pair))
       ((cast)
        ; Special check for xs:QName constructor function
