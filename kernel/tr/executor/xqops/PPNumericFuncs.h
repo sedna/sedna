@@ -33,7 +33,6 @@ public:
     tuple_cell fn_ceiling           (const tuple_cell& tc);
     tuple_cell fn_floor             (const tuple_cell& tc);
     tuple_cell fn_round             (const tuple_cell& tc);
-    tuple_cell fn_round_half_to_even(const tuple_cell& tc);
 
     virtual void open   ();
     virtual void reopen ();
@@ -50,98 +49,20 @@ public:
     virtual ~PPNumericFuncs();
 };
 
-/*
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnCeiling
-///////////////////////////////////////////////////////////////////////////////
-class PPFnCeiling : public PPIterator
-{
-protected:
-    PPOpIn child;
-    bool first_time;
-
-    void children(PPOpIn &_child_) { _child_ = child; }
-
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
-
-    PPFnCeiling(variable_context *_cxt_,
-                PPOpIn _child_);
-    virtual ~PPFnCeiling();
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnFloor
-///////////////////////////////////////////////////////////////////////////////
-class PPFnFloor : public PPIterator
-{
-protected:
-    PPOpIn child;
-    bool first_time;
-
-    void children(PPOpIn &_child_) { _child_ = child; }
-
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
-
-    PPFnFloor(variable_context *_cxt_,
-                PPOpIn _child_);
-    virtual ~PPFnFloor();
-};
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnRound
-///////////////////////////////////////////////////////////////////////////////
-class PPFnRound : public PPIterator
-{
-protected:
-    PPOpIn child;
-    bool first_time;
-
-    void children(PPOpIn &_child_) { _child_ = child; }
-
-public:
-    virtual void open   ();
-    virtual void reopen ();
-    virtual void close  ();
-    virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t);
-
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
-
-    PPFnRound(variable_context *_cxt_,
-                PPOpIn _child_);
-    virtual ~PPFnRound();
-};
-
-
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnRoundHalfToEven
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnRoundHalfToEven : public PPIterator
 {
 protected:
-    PPOpIn child;
+    PPOpIn child_arg;
+    PPOpIn child_p;
+    __int64 precision;
     bool first_time;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+    void children(PPOpIn &_child_arg_, PPOpIn &_child_p_) { _child_arg_ = child_arg; _child_p_ = child_p; }
+
+    tuple_cell round_half_to_even(const tuple_cell& tc, __int64 precision);
 
 public:
     virtual void open   ();
@@ -154,9 +75,12 @@ public:
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
 
     PPFnRoundHalfToEven(variable_context *_cxt_,
-                        PPOpIn _child_);
+                        PPOpIn _child_arg_,
+                        __int64 _precision_);
+    PPFnRoundHalfToEven(variable_context *_cxt_,
+                        PPOpIn _child_arg_,
+                        PPOpIn _child_p_);
     virtual ~PPFnRoundHalfToEven();
 };
-*/
 
 #endif

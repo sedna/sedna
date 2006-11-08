@@ -96,7 +96,7 @@ tuple_cell PPNumericFuncs::fn_floor(const tuple_cell& tc)
         case xs_decimal: return tuple_cell::atomic(floor_decimal(tc.get_xs_decimal()));
         case xs_float:   return tuple_cell::atomic(floor_float  (tc.get_xs_float()));
         case xs_double:  return tuple_cell::atomic(floor_double (tc.get_xs_double()));
-        default:         throw USER_EXCEPTION2(SE1003, "Impossible case in fn:ceiling");
+        default:         throw USER_EXCEPTION2(SE1003, "Impossible case in fn:floor");
     }
 }
 
@@ -128,16 +128,9 @@ tuple_cell PPNumericFuncs::fn_round(const tuple_cell& tc)
         case xs_decimal: return tuple_cell::atomic(round_decimal(tc.get_xs_decimal()));
         case xs_float:   return tuple_cell::atomic(round_float  (tc.get_xs_float()));
         case xs_double:  return tuple_cell::atomic(round_double (tc.get_xs_double()));
-        default:         throw USER_EXCEPTION2(SE1003, "Impossible case in fn:ceiling");
+        default:         throw USER_EXCEPTION2(SE1003, "Impossible case in fn:round");
     }
 }
-
-tuple_cell PPNumericFuncs::fn_round_half_to_even(const tuple_cell& tc)
-{
-    return tc;
-} // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
 
 const char* PPNumericFuncs::error()
 {
@@ -149,8 +142,6 @@ const char* PPNumericFuncs::error()
         return "Argument of fn:floor is not a numeric";
     else if (func == &PPNumericFuncs::fn_round)
         return "Argument of fn:round is not a numeric";
-    else if (func == &PPNumericFuncs::fn_round_half_to_even)
-        return "Argument of fn:round-half-to-even is not a numeric";
     else throw USER_EXCEPTION2(SE1003, "Impossible case in PPNumericFuncs::error");
 }
 
@@ -190,4 +181,203 @@ PPIterator* PPNumericFuncs::copy(variable_context *_cxt_)
 bool PPNumericFuncs::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPNumericFuncs::result");
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnRoundHalfToEven
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnRoundHalfToEven::PPFnRoundHalfToEven(variable_context *_cxt_,
+                                         PPOpIn _child_arg_,
+                                         __int64 _precision_) : PPIterator(_cxt_),
+                                                                child_arg(_child_arg_),
+                                                                precision(_precision_)
+{
+}
+
+PPFnRoundHalfToEven::PPFnRoundHalfToEven(variable_context *_cxt_,
+                                         PPOpIn _child_arg_,
+                                         PPOpIn _child_p_) : PPIterator(_cxt_),
+                                                             child_arg(_child_arg_),
+                                                             child_p(_child_p_),
+                                                             precision(0)
+{
+}
+
+PPFnRoundHalfToEven::~PPFnRoundHalfToEven()
+{
+    delete child_arg.op;
+    child_arg.op = NULL;
+    if (child_p.op)
+    {
+        delete child_p.op;
+        child_p.op = NULL;
+    }
+}
+
+void PPFnRoundHalfToEven::open()
+{
+    child_arg.op->open();
+    if (child_p.op) child_p.op->open();
+    first_time = true;
+}
+
+void PPFnRoundHalfToEven::reopen()
+{
+    child_arg.op->reopen();
+    if (child_p.op) child_p.op->reopen();
+    first_time = true;
+}
+
+void PPFnRoundHalfToEven::close()
+{
+    child_arg.op->close();
+    if (child_p.op) child_p.op->close();
+}
+
+
+__int64 round_half_to_even_integer(__int64 d, __int64 precision)
+{   
+    if (precision < 0)
+    {
+        __int64 y = 1;
+        for (__int64 j = 0; j < -precision; j++) y *= 10;
+
+        return (d / y) * y;
+    }
+    else
+    {
+        return d;
+    }
+}
+
+#define round_half_to_even_decimal(v, p) ((v).round_half_to_even(p))
+
+double round_half_to_even_double(double d, __int64 precision)
+{   
+    double m_i = 0, m_f = 0;
+    __int64 y = 1;
+
+    __int64 p = precision < 0 ? -precision : precision;
+    for (__int64 j = 0; j < p; j++) y *= 10;
+
+    if (precision < 0)
+    {
+        m_f = modf(d / y, &m_i);
+        return m_i * y;
+    }
+    else
+    {
+        double i = 0;
+        double f = modf(d, &i);
+
+        m_f = modf(f * y, &m_i);
+
+        if (m_f == 0.5)
+        {
+            if (m_i == 0) 
+            {
+                if (((__int64)i % 2) == 1) 
+                {
+                    i += 1;
+                }
+            }
+            else
+            {
+                if (((__int64)m_i % 2) == 1) 
+                {
+                    m_i += 1;
+                }
+            }
+        }
+
+        return i + m_i / y;
+    }
+}
+
+float round_half_to_even_float(float d, __int64 precision)
+{
+    return (float)round_half_to_even_double((float)d, precision);
+}
+
+tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, __int64 precision)
+{
+    xmlscm_type res_type = primitive_base_type(tc.get_atomic_type());
+    switch (res_type)
+    {
+        case xs_integer: return tuple_cell::atomic(round_half_to_even_integer(tc.get_xs_integer(), precision));
+        case xs_decimal: return tuple_cell::atomic(round_half_to_even_decimal(tc.get_xs_decimal(), precision));
+        case xs_float:   return tuple_cell::atomic(round_half_to_even_float  (tc.get_xs_float(),   precision));
+        case xs_double:  return tuple_cell::atomic(round_half_to_even_double (tc.get_xs_double(),  precision));
+        default:         throw USER_EXCEPTION2(SE1003, "Impossible case in fn:round-half-to-even");
+    }
+}
+
+void PPFnRoundHalfToEven::next(tuple &t)
+{
+    if (first_time)
+    {
+        child_arg.op->next(t);
+
+        if (t.is_eos())
+            return;
+
+        tuple_cell tc_arg = child_arg.get(t);
+        if (!(tc_arg.is_atomic()) || !(is_numeric_type(tc_arg.get_atomic_type()))) 
+            throw USER_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
+
+        child_arg.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
+
+        if (child_p.op)
+        {
+            child_p.op->next(t);
+
+            if (t.is_eos())
+                throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+
+            tuple_cell tc_p = child_p.get(t);
+            if (!(tc_p.is_atomic()) || (tc_p.get_atomic_type() != xs_integer))
+                throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+
+            precision = tc_p.get_xs_integer();
+
+            child_p.op->next(t);
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+        }
+
+        first_time = false;
+        t.copy(round_half_to_even(tc_arg, precision));
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnRoundHalfToEven::copy(variable_context *_cxt_)
+{
+    PPFnRoundHalfToEven *res = NULL;
+    if (child_p.op)
+    {
+        res = new PPFnRoundHalfToEven(_cxt_, child_arg, child_p);
+        res->child_p.op = child_p.op->copy(_cxt_);
+    }
+    else
+    {
+        res = new PPFnRoundHalfToEven(_cxt_, child_arg, precision);
+    }
+
+    res->child_arg.op = child_arg.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnRoundHalfToEven::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnRoundHalfToEven::result");
 }

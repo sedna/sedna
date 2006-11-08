@@ -374,8 +374,59 @@ xs_decimal_t xs_decimal_t::round() const
     else return c;
 }
 
-xs_decimal_t xs_decimal_t::round_half_to_even() const
-{ // !!! Not implemented
-    return *this;
+xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
+{
+    xs_decimal_t m_i, m_f;
+    __int64 y = 1;
+
+    __int64 p = precision < 0 ? -precision : precision;
+    for (__int64 j = 0; j < p; j++) y *= 10;
+
+    if (precision < 0)
+    {
+        m_f = modf(*this / xs_decimal_t(y), &m_i);
+        return m_i * y;
+    }
+    else
+    {
+        xs_decimal_t i;
+        xs_decimal_t f = modf(*this, &i);
+
+        m_f = modf(f * y, &m_i);
+
+        if (m_f == xs_decimal_t(0.5))
+        {
+            if (m_i.is_zero()) 
+            {
+                if ((i.get_int() % 2) == 1) 
+                {
+                    i = i + xs_decimal_t((__int64)1);
+                }
+            }
+            else
+            {
+                if ((m_i.get_int() % 2) == 1) 
+                {
+                    m_i = m_i + xs_decimal_t((__int64)1);
+                }
+            }
+        }
+
+        return i + m_i / y;
+    }
 }
 
+
+xs_decimal_t modf(const xs_decimal_t &x, xs_decimal_t* /*out*/intptr)
+{
+    decNumber dv, i;
+    decimal128ToNumber((decimal128*)(x.v.v1), &dv);
+    dec_cxt.status = 0;
+	enum rounding old = dec_cxt.round;
+	dec_cxt.round = DEC_ROUND_DOWN;
+    decNumberToIntegralValue(&i, &dv, &dec_cxt);
+	dec_cxt.round = old;
+
+    decimal128FromNumber((decimal128*)(intptr->v.v1), &i, &dec_cxt);
+    return x - *intptr;
+}

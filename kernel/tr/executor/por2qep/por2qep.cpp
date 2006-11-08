@@ -1872,6 +1872,27 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                   make_pp_op(cxt, lst->at(1).internal.list),
                                   func);
     }
+    else if (op == "PPFnRoundHalfToEven")
+    {
+        if (   lst->size() == 2
+            && lst->at(1).type == SCM_LIST
+           ) 
+        {
+            opit = new PPFnRoundHalfToEven(cxt, 
+                                           make_pp_op(cxt, lst->at(1).internal.list),
+                                           0);
+        }
+        else if (   lst->size() == 3
+                 && lst->at(1).type == SCM_LIST
+                 && lst->at(2).type == SCM_LIST
+                ) 
+        {
+            opit = new PPFnRoundHalfToEven(cxt, 
+                                           make_pp_op(cxt, lst->at(1).internal.list),
+                                           make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else throw USER_EXCEPTION2(SE1004, "73");
+    }
     else if (op == "PPSpaceSequence")
     {
         if (   lst->size() == 1
