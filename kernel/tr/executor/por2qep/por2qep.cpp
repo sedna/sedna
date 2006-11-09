@@ -2317,6 +2317,24 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 			make_pp_op(cxt, lst->at(2).internal.list),
 			make_pp_op(cxt, lst->at(3).internal.list));
 	}
+	else if (op == "PPFnUpperCase")
+	{
+		if (   lst->size() != 2
+			|| lst->at(1).type != SCM_LIST
+			) throw USER_EXCEPTION2(SE1004, "98.6");
+
+		opit = new PPFnChangeCase(cxt,
+			make_pp_op(cxt, lst->at(1).internal.list), true);
+	}
+	else if (op == "PPFnLowerCase")
+	{
+		if (   lst->size() != 2
+			|| lst->at(1).type != SCM_LIST
+			) throw USER_EXCEPTION2(SE1004, "98.7");
+
+		opit = new PPFnChangeCase(cxt,
+			make_pp_op(cxt, lst->at(1).internal.list), false);
+	}
     else if (op == "PPFnString")
     {
         if (   lst->size() != 2

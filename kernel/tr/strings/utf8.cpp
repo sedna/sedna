@@ -282,6 +282,35 @@ tuple_cell CharsetHandler_utf8::toupper(const tuple_cell *tc)
 	return sb.get_tuple_cell();
 }
 
+template <class Iterator>
+static inline void utf8_tolower(const Iterator &start, const Iterator &end, stmt_str_buf *sb)
+{
+	utf8_o_iterator<stmt_str_buf> outp(*sb);
+	utf8_iterator<Iterator> it(start);
+
+	while (it.base_iterator() < end)
+	{
+		const int c = *it;
+		int c_type, c_case;
+		++it;
+		ucp_findchar(c, &c_type, &c_case);
+		if (c_case != 0 && c_type == ucp_Lu)
+			*outp++ = c_case;
+		else
+			*outp++ = c;
+	}
+}
+
+
+tuple_cell CharsetHandler_utf8::tolower(const tuple_cell *tc)
+{
+	stmt_str_buf sb;
+
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(utf8_tolower, tc, &sb);
+
+	return sb.get_tuple_cell();
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Collation Handler
 //////////////////////////////////////////////////////////////////////////
