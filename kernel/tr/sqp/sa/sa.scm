@@ -1007,9 +1007,13 @@
                  (variables '()))
          (cond
            ((null? new-prlg)  ; all function bodies checked
-            (list (reverse prolog-res)
-                  funcs
-                  ns-binding default-ns variables))
+            (and
+             (sa:no-recursive-dependendencies?
+              prolog-res  ; the order of prolog members is not important here
+              )
+             (list (reverse prolog-res)
+                   funcs
+                   ns-binding default-ns variables)))
            ((and (pair? (car new-prlg))
                  (eq? (sa:op-name (car new-prlg))
                       'declare-global-var))
@@ -1479,7 +1483,9 @@
                         (lambda (pair)
                           (member (car pair)
                                   '("xml" "xs" "xsi"
-                                    ; TODO: "fn"
+                                    ; DL: was commented out for
+                                    ; backward compatibility
+                                    "fn"
                                     "xdt")))
                         sa:predefined-ns-prefixes)))
                      (cl:signal-user-error
@@ -2093,7 +2099,7 @@
 ;                (listof (list function-name arity)))
 ; var-name, function-name ::= (list namespace-uri local-part)
 ; expr is considered properly-formed
-(define (sa:free-variables-and-function-calls expr)
+(define (sa:free-variables-and-function-calls expr bound-vars)
   (letrec
       ((tree-walk
         (lambda (expr bound-vars)
@@ -2110,11 +2116,22 @@
                           (list (car (sa:op-args expr))))
                       '())))
              ((fun-call)
-              (list '()
-                    (list (list (cadr (sa:op-args  ; function name
-                                       (car (sa:op-args expr))  ; '(const ...)
-                                       ))
-                                (length (cdr (sa:op-args expr)))))))
+              (let ((arg-results
+                     (map
+                      (lambda (kid) (tree-walk kid bound-vars))
+                      (cdr  ; except for function name
+                       (sa:op-args expr)))))
+                (list
+                 (sa:apply-append-remove-equal-duplicates
+                  (map car arg-results))
+                 (sa:apply-append-remove-equal-duplicates
+                  (cons
+                   (list
+                    (list (cadr (sa:op-args  ; function name
+                                 (car (sa:op-args expr))  ; '(const ...)
+                                 ))
+                          (length (cdr (sa:op-args expr)))))
+                   (map cadr arg-results))))))
              ((fun-def)
               (tree-walk
                (cadr (sa:op-args expr))  ; fun-def body
@@ -2137,7 +2154,11 @@
                   (map car kid-results))
                  (sa:apply-append-remove-equal-duplicates
                   (map cadr kid-results))))))))))
-    (tree-walk expr '())))
+    (tree-walk expr bound-vars
+;               (if (null? bound-vars)
+;                   bound-vars
+;                   (car bound-vars))
+               )))
 
 ; Like `member', but uses a predicate condition
 (define (sa:mem-pred lst pred?)
@@ -2176,6 +2197,117 @@
              (sa:remove-node-from-graph (caar sub) graph))))
       (else  ; graph contains a cycle
        #t))))
+
+; global-var-decl ::= `(declare-global-var ...)
+(define (sa:build-dependency-graph global-var-decl prolog)
+  ; TODO: can optimize processing of the first node
+  (let loop ((nodes-to-view
+              (list (car (sa:op-args  ; variable name
+                          (car (sa:op-args global-var-decl))  ; `(var ...)
+                          ))))
+             (graph '()))
+    (cond
+      ((null? nodes-to-view)
+       graph)
+      ((assoc (car nodes-to-view) graph)
+       ; Current node is already added to the graph
+       (loop (cdr nodes-to-view)
+             graph))
+      (else
+       (let* ((depends-on-vars-and-funcs
+               (if
+                (number? (cadar nodes-to-view))
+                ; Current node is a function name
+                (let ((fun-name (caar nodes-to-view))
+                      (arity (cadar nodes-to-view)))
+                  (let ((decl-lst
+                         (filter
+                          (lambda (entry)
+                            (and
+                             (pair? entry)
+                             (eq? (sa:op-name entry) 'declare-function)
+                             (= (length
+                                 (cadr (sa:op-args entry))  ; argument list
+                                 )
+                                arity)
+                             (equal?
+                              (caddr  ; function name
+                               (car (sa:op-args entry)))
+                              fun-name)))
+                          prolog)))
+                    (if
+                     (null? decl-lst)  ; this should not happen!
+                     '(() ())
+                     (sa:free-variables-and-function-calls
+                      (car (sa:op-args
+                            (cadddr (sa:op-args  ; addresses `(body ...)
+                                     (car decl-lst)))))
+                      (map
+                       (lambda (arg)
+                         (car (sa:op-args
+                               (cadr arg)  ; addresses '(var ...)
+                               )))
+                       (cadr (sa:op-args (car decl-lst)))  ; arguments
+                       )))))
+                ; Otherwise - current node is a variable name
+                (let ((var-name (car nodes-to-view)))
+                  (let ((decl-lst
+                         (filter
+                          (lambda (entry)
+                            (and
+                             (pair? entry)
+                             (eq? (sa:op-name entry) 'declare-global-var)
+                             (equal?
+                              (car (sa:op-args
+                                    (car (sa:op-args entry))  ; `(var ...)
+                                    ))
+                              var-name)))
+                          prolog)))
+                    (if
+                     (null? decl-lst)  ; this should not happen!
+                     '(() ())
+                     (sa:free-variables-and-function-calls
+                      (cadr (sa:op-args
+                             (car decl-lst)))
+                      '()))))))
+              (dependencies
+               (append (car depends-on-vars-and-funcs)
+                       (cadr depends-on-vars-and-funcs))))
+         (loop (append dependencies (cdr nodes-to-view))
+               (cons
+                (cons (car nodes-to-view) dependencies)
+                graph)))))))
+
+; Checks whether there are no recursive dependencies in the
+; initializing expressions for variables in prolog
+(define (sa:no-recursive-dependendencies? prolog)
+  (null?
+   (filter
+    (lambda (x) (not x))
+    (map
+     (lambda (var-decl)
+       (or
+        (not
+         (sa:graph-contains-cycles?
+          ((lambda (graph)
+             ;(pp graph)
+             graph)
+           (sa:build-dependency-graph var-decl prolog))))
+        (cl:signal-user-error
+         XQST0054
+         (let ((pair
+                (car (sa:op-args  ; variable name
+                      (car (sa:op-args var-decl))  ; `(var ...)
+                      ))))
+           (if (string=? (car pair) "")  ; no namespace URI
+               (cadr pair)
+               (string-append (car pair) ":" (cadr pair)))))))
+     (filter  ; all global variables
+      (lambda (entry)
+        (and (pair? entry)
+             (eq? (sa:op-name entry) 'declare-global-var)))
+      prolog)))))
+  
 
 ;==========================================================================
 ; Analysis for different operations
