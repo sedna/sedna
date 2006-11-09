@@ -128,4 +128,31 @@ public:
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnTranslate
+///////////////////////////////////////////////////////////////////////////////
+class PPFnChangeCase : public PPIterator
+{
+protected:
+	// obtained parameters and local data
+	PPOpIn str;
+	bool to_upper;
+	bool first_time;
+
+public:
+	virtual void open   ();
+	virtual void reopen ();
+	virtual void close  ();
+	virtual strict_fun res_fun () { return result; };
+	virtual void next   (tuple &t);
+
+	virtual PPIterator* copy(variable_context *_cxt_);
+	static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+	PPFnChangeCase(variable_context *_cxt_, 
+		PPOpIn _str_, bool _to_upper_);
+	virtual ~PPFnChangeCase();
+};
+
+
 #endif

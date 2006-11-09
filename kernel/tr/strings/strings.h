@@ -218,6 +218,7 @@ public:
 	virtual CharCounter* new_char_counter() = 0;
 	virtual void free_char_counter(CharCounter *) = 0;
 	virtual tuple_cell toupper(const tuple_cell *tc) = 0;
+	virtual tuple_cell tolower(const tuple_cell *tc) = 0;
 };
 
 class CollationHandler

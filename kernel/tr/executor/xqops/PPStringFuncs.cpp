@@ -332,7 +332,9 @@ void PPFnTranslate::next  (tuple &t)
 		if (!t.is_eos())
 		{
 			tuple_cell tc = str.get(t);
-			tc = cast(atomize(tc), xs_string);
+			tc = atomize(tc);
+			if (!is_string_type(tc.get_atomic_type()))
+				throw USER_EXCEPTION2(XPTY0004, "1st argument of fn:translate is not a string");
 			str.op->next(t);
 			if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:translate as 1st argument is more than 1");
 
@@ -361,6 +363,81 @@ PPIterator* PPFnTranslate::copy(variable_context *_cxt_)
 bool PPFnTranslate::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnTranslate::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnChangeCase
+///////////////////////////////////////////////////////////////////////////////
+PPFnChangeCase::PPFnChangeCase(variable_context *_cxt_,  PPOpIn _str_, bool _to_upper_) : 
+                                      PPIterator(_cxt_), str(_str_), to_upper(_to_upper_)
+{
+}
+
+PPFnChangeCase::~PPFnChangeCase()
+{
+	delete str.op;
+	str.op = NULL;
+}
+
+void PPFnChangeCase::open  ()
+{
+	str.op->open();
+	first_time = true;
+}
+
+void PPFnChangeCase::reopen()
+{
+	str.op->reopen();
+	first_time = true;
+}
+
+void PPFnChangeCase::close ()
+{
+	str.op->close();
+}
+
+void PPFnChangeCase::next  (tuple &t)
+{
+	if (first_time)
+	{
+		first_time = false;
+
+		str.op->next(t);
+		if (!t.is_eos())
+		{
+			const tuple_cell tc = atomize(str.get(t));
+			if (!is_string_type(tc.get_atomic_type()))
+				throw USER_EXCEPTION2(XPTY0004, "1st argument of fn:upper-case or fn:lower-case is not a string"); //FIXME: make 2 sep. err. strings
+			str.op->next(t);
+			if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:upper-case or fn:lower-case as 1st argument is more than 1"); //FIXME: make 2 sep. err. strings
+
+			if (this->to_upper)
+				t.copy(charset_handler->toupper(&tc));
+			else
+				t.copy(charset_handler->tolower(&tc));
+		}
+		else
+			t.copy(EMPTY_STRING_TC);
+	}
+	else 
+	{
+		first_time = true;
+		t.set_eos();
+	}
+}
+
+PPIterator* PPFnChangeCase::copy(variable_context *_cxt_)
+{
+	PPFnChangeCase *res = new PPFnChangeCase(_cxt_, str, to_upper);
+	res->str.op = str.op->copy(_cxt_);
+
+	return res;
+}
+
+bool PPFnChangeCase::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnChangeCase::result");
 }
 
 
