@@ -276,9 +276,9 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	}
 	//remove key from upper layers
 	xptr parent=page_hdr->parent;
-	vmm_delete_block(page);
 	if (parent==XNULL) 
 		return;
+	vmm_delete_block(page);	
 	CHECKP(parent);
 	btree_blk_hdr * par_hdr= (btree_blk_hdr*)XADDR(parent);
 	// fix lmp
