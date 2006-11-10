@@ -67,14 +67,17 @@ lookfor tar
 export OS=`uname` || failwith "Cannot mine operating system name"
 export SEDNA_VERSION=`cat ver` || failwith "Cannot read ver file"
 
+export BUILD_FILE=build-$SEDNA_VERSION
+export BUILD_STATE_FILE=build-state-$SEDNA_VERSION
+
 if test "$OS" "=" "Linux"
 then
-export BUILD_FILE=build-linux-$SEDNA_VERSION
+export OS_DEP_BUILD_STATE=L
 export BUILD_SUFFIX=linux
 export DISTR_EXT=sh
 export SRC_EXT=tar.gz
 else
-export BUILD_FILE=build-$SEDNA_VERSION
+export OS_DEP_BUILD_STATE=W
 export BUILD_SUFFIX=win
 export DISTR_EXT=tar.gz
 export SRC_EXT=tar.gz
@@ -140,13 +143,15 @@ prepare_source() {
 }
 
 
-#script for downloading build-number-file
+#script for downloading build-number-file and build-state-file
 get_build_file() {
+    # get build_file and build_state_file
     echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
     echo "get $BUILD_FILE" >> ftpscript.txt &&
+    echo "get $BUILD_STATE_FILE" >> ftpscript.txt &&
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
@@ -154,22 +159,26 @@ get_build_file() {
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
-    fi || failwith "Cannot get build_file"
+    fi || failwith "Cannot get build_file or build_state_file"
 
     BUILD=`cat $BUILD_FILE` || failwith "Cannot read build_file"
+    STATE=`cat $BUILD_STATE_FILE` || failwith "Cannot read build_state_file"
 
     rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
     rm -f $BUILD_FILE || failwith "Cannot remove build_file"
+    rm -f $BUILD_STATE_FILE || failwith "Cannot remove build_state_file"
 }
 
-#script for upload build-number-file
+#script for uploadind build-number-file and build-state-file
 put_build_file() {
     echo $BUILD > $BUILD_FILE &&
+    echo $STATE > $BUILD_STATE_FILE &&
     echo "open seine.ispras.ru" > ftpscript.txt &&
     echo "anonymous" >> ftpscript.txt &&
     echo "password" >> ftpscript.txt &&
     echo "cd build" >> ftpscript.txt &&
     echo "put $BUILD_FILE" >> ftpscript.txt &&
+    echo "put $BUILD_STATE_FILE" >> ftpscript.txt &&
     echo "close" >> ftpscript.txt &&
     echo "quit" >> ftpscript.txt || failwith "Cannot write to ftpscript.txt"
 
@@ -177,10 +186,11 @@ put_build_file() {
         ncftp <ftpscript.txt
     else
         ftp -s:ftpscript.txt
-    fi || failwith "Cannot upload build_file"
+    fi || failwith "Cannot upload build_file or build_state_file"
 
     rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
     rm -f $BUILD_FILE || failwith "Cannot remove build_file"
+    rm -f $BUILD_STATE_FILE || failwith "Cannot remove build_state_file"
 }
 
 #script for uploading results of build to seine
@@ -273,14 +283,21 @@ put_results_to_modis() {
 	    ftp -s:ftpscript.txt
     fi || failwith "Cannot upload build results to modis.ispras.ru"
 
-    rm -f ftpscript.txt || failwith "Cannot remove build_file"
+    rm -f ftpscript.txt || failwith "Cannot remove ftpscript.txt"
 }
 
 
 
 ##### CREATE BUILD FILE AND SET UP VARIABLES ##################################
 get_build_file
-BUILD=`expr $BUILD + 1` || failwith "Cannot increment BUILD variable"
+
+if test $STATE "=" LW -o $STATE "=" $OS_DEP_BUILD_STATE; then 
+   BUILD=`expr $BUILD + 1` || failwith "Cannot increment BUILD variable"
+   STATE=$OS_DEP_BUILD_STATE
+else 
+   STATE=LW
+fi
+
 echo $BUILD > build || failwith "Cannot write to build file"
 
 FILE_BASE=sedna-$SEDNA_VERSION.$BUILD
