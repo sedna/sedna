@@ -130,8 +130,20 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
 
     switch (nt.type)
     {
-    case node_test_processing_instruction	: return res;
-    case node_test_comment					: return res;
+    case node_test_processing_instruction	:
+		{
+            t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+				if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==pr_ins) res.push_back(*it);
+            return res;
+    }
+    case node_test_comment					: 
+	{
+            t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+				if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==comment) res.push_back(*it);
+            return res;
+    }
     case node_test_text						:
         {
             t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter);
@@ -287,8 +299,20 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
 
     switch (nt.type)
     {
-    case node_test_processing_instruction	: return res;
-    case node_test_comment					: return res;
+    case node_test_processing_instruction	: 
+		{
+            t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==pr_ins) res.push_back(*it);
+            return res;
+        }
+    case node_test_comment					: 
+		{
+            t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==comment) res.push_back(*it);
+            return res;
+        }
     case node_test_text						: 
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter);
@@ -608,8 +632,20 @@ t_scmnodes_const execute_node_test_axis_descendant(const schema_node *node, cons
 
     switch (nt.type)
     {
-    case node_test_processing_instruction	: return res;
-    case node_test_comment					: return res;
+    case node_test_processing_instruction	: 
+		{
+            t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==pr_ins) res.push_back(*it);
+            return res;
+        }
+    case node_test_comment					: 
+		{
+            t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==comment) res.push_back(*it);
+            return res;
+        }
     case node_test_text						:
         {
             t_scmnodes_const tmp = descendant_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
@@ -784,8 +820,20 @@ t_scmnodes_const execute_node_test_axis_descendant_or_self(const schema_node *no
 
     switch (nt.type)
     {
-    case node_test_processing_instruction	: return res;
-    case node_test_comment					: return res;
+    case node_test_processing_instruction	: 
+		{
+            t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==pr_ins) res.push_back(*it);
+            return res;
+        }
+    case node_test_comment					: 
+		{
+            t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
+            for (t_scmnodes_const::iterator it = tmp.begin(); it != tmp.end(); it++)
+                if (/*dm_children_accessor_filter((*it)->type) && */(*it)->type==comment) res.push_back(*it);
+            return res;
+        }
     case node_test_text						: 
         {
             t_scmnodes_const tmp = descendant_or_self_nodes(node, /*is_node*/dm_children_accessor_filter, extended_nodes, extender_nodes);
