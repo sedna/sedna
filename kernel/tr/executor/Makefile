@@ -27,16 +27,15 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        XPath$(OBJ_EXT)					\
                        XPathOnSchema$(OBJ_EXT)			\
                        SequenceType$(OBJ_EXT)			\
-                       xs_helper$(OBJ_EXT)				\
                        xs_decimal_t$(OBJ_EXT)			\
+                       xs_binary$(OBJ_EXT)              \
+                       xs_uri$(OBJ_EXT)                 \
+                       xs_names$(OBJ_EXT)               \
                        xsd$(OBJ_EXT)					\
                        decContext$(OBJ_EXT)				\
                        decimal64$(OBJ_EXT)				\
                        decimal128$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
-                       binary$(OBJ_EXT)                 \
-                       uri$(OBJ_EXT)                    \
-                       XmlNames$(OBJ_EXT)               \
                        PPUriFuncs$(OBJ_EXT)             \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\

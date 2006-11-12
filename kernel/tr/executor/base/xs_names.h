@@ -1,10 +1,10 @@
 /*
- * File:  XmlNames.h
+ * File:  xs_names.h
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _XMLNAMES_H
-#define _XMLNAMES_H
+#ifndef _XS_NAMES_H
+#define _XS_NAMES_H
 
 #include "sedna.h"
 #include "PPBase.h"

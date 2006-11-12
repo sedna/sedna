@@ -1,11 +1,12 @@
 /*
- * File:  base64Binary.cpp
+ * File:  xs_binary.cpp
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 
 #include "sedna.h"
-#include "binary.h"
+#include "xs_binary.h"
+#include "xs_helper.h"
 #include "strings.h"
 
 
@@ -87,9 +88,6 @@ inline bool is_b04_char(unsigned char c)
 {
    return c == 'A'|| c == 'Q'|| c == 'g'|| c == 'w';
 }
-
-#define IS_WHITESPACE(byte) \
-    (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
 
 const unsigned char hex_allowed[16] = {0x00, 0x00, 0x00, 0x00,
                                        0x00, 0x00, 0xFF, 0xC0, 

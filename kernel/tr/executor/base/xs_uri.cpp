@@ -1,11 +1,12 @@
 /*
- * File:  uri.cpp
+ * File:  xs_uri.cpp
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include "sedna.h"
 #include "strings.h"
-#include "uri.h"
+#include "xs_uri.h"
+#include "xs_helper.h"
 
 #define PCRE_STATIC
 #define SUPPORT_UTF8
@@ -198,16 +199,6 @@ const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
     ? 'a' + (byte - 'A') \
     : byte)
 
-#define IS_WHITESPACE(byte) \
-    (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')
-
-
-template <class Iterator>
-static inline void URI_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
-{
-    while(start < end &&  IS_WHITESPACE(*start)) { start++; }
-    while(start < end && !IS_WHITESPACE(*start)) { out_buf << (*start++); }
-}
 
 template <class Iterator>
 static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool* res, char* scheme_buf)
@@ -272,13 +263,20 @@ tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *v
     if(*valid)
     {
         stmt_str_buf out_buf;
-        STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(URI_normalization, in_tc, out_buf);
+        remove_string_normalization(in_tc, out_buf);
         tuple_cell rc = out_buf.get_tuple_cell();
         rc.set_xtype(xs_anyURI);
         return rc;
     }
 
     return *in_tc;
+}
+
+tuple_cell Uri::chech_constraints_for_xs_anyURI(char *s, bool *valid)
+{
+    tuple_cell tc = tuple_cell::atomic(xs_string, s);
+    tc = chech_constraints_for_xs_anyURI(&tc, valid);
+    return tc;
 }
 
 char* remove_dot_segments(const char* path)
