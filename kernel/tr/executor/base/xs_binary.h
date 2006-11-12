@@ -1,10 +1,10 @@
 /*
- * File:  base64Binary.h
+ * File:  xs_binary.h
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _BIMARY_H
-#define _BINARY_H
+#ifndef _XS_BIMARY_H
+#define _XS_BINARY_H
 
 #include "sedna.h"
 #include "PPBase.h"

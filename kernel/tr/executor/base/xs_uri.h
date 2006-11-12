@@ -1,10 +1,10 @@
 /*
- * File:  uri.h
+ * File:  xs_uri.h
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _URI_H
-#define _URI_H
+#ifndef _XS_URI_H
+#define _XS_URI_H
 
 #include "sedna.h"
 #include "PPBase.h"
@@ -63,6 +63,7 @@ public:
     /// copy of the same tuple cell.
     ////////////////////////////////////////////////////////////////////
     static tuple_cell chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *valid);
+    static tuple_cell chech_constraints_for_xs_anyURI(char* s, bool *valid);
     
     ////////////////////////////////////////////////////////////////////
     /// Resolves URI as described in RFC 3986.

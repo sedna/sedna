@@ -353,3 +353,88 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
     }
 }
 
+
+/*******************************************************************************
+ * XML Schema datatypes normalization routines
+ ******************************************************************************/
+
+template <class Iterator>
+static inline void _replace_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
+{
+    unsigned char value;
+    __int64 spaces_counter = 0;
+    
+    while(start < end && IS_WHITESPACE(*start)) { start++; }
+    
+    while(start < end)
+    {
+        value = *start++;
+        if (IS_WHITESPACE(value)) spaces_counter++;
+        else 
+        {
+            while(spaces_counter) { out_buf << ' '; spaces_counter--; }
+            out_buf << value;
+        }
+    }
+}
+
+template <class Iterator>
+static inline void _collapse_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
+{
+    unsigned char value;
+    bool is_space = false;
+    
+    while(start < end && IS_WHITESPACE(*start)) { start++; }
+
+    while(start < end)
+    {
+        value = *start++;
+        if (IS_WHITESPACE(value)) is_space = true;
+        else 
+        {
+            if(is_space) { out_buf << ' '; is_space = false; }
+            out_buf << value;
+        }
+    }
+}
+
+template <class Iterator>
+static inline void _remove_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
+{
+    while(start < end &&  IS_WHITESPACE(*start)) { start++; }
+    while(start < end && !IS_WHITESPACE(*start)) { out_buf << (*start++); }
+}
+
+
+void replace_string_normalization (const tuple_cell *tc, stmt_str_buf& out_buf)
+{
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(_replace_normalization, tc, out_buf);
+}
+
+void collapse_string_normalization(const tuple_cell *tc, stmt_str_buf& out_buf)
+{
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(_collapse_normalization, tc, out_buf);
+}
+
+void remove_string_normalization  (const tuple_cell *tc, stmt_str_buf& out_buf)
+{
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(_remove_normalization, tc, out_buf);
+}
+
+
+
+void replace_string_normalization (const char *s, stmt_str_buf& out_buf)
+{
+    _replace_normalization<const char*> (s, s + strlen(s), out_buf);    
+}
+
+void collapse_string_normalization(const char *s, stmt_str_buf& out_buf)
+{
+    _collapse_normalization<const char*> (s, s + strlen(s), out_buf);    
+}
+
+void remove_string_normalization  (const char *s, stmt_str_buf& out_buf)
+{
+    _remove_normalization<const char*> (s, s + strlen(s), out_buf);    
+}
+

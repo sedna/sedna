@@ -9,9 +9,9 @@
 #include "casting_operations.h"
 #include "xs_helper.h"
 #include "dm_accessors.h"
-#include "binary.h"
-#include "XmlNames.h"
-#include "uri.h"
+#include "xs_binary.h"
+#include "xs_names.h"
+#include "xs_uri.h"
 #include "xsd.h"
 
 
@@ -591,79 +591,6 @@ static bool check_constraints_for_xs_positiveInteger(const __int64& value)
     return value > 0;
 }
 
-
-template <class Iterator>
-static inline void replace_string_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
-{
-    unsigned char value;
-    __int64 spaces_counter = 0;
-    
-    while(start < end) 
-    {
-        value = *start;
-        if (value != ' ' && value != '\n' && value != '\t' && value != '\r') break;
-        start++;
-    }
-    
-    while(start < end)
-    {
-        value = *start++;
-        if (value == ' ' || value == '\n' || value == '\t' || value == '\r ') spaces_counter++;
-        else 
-        {
-            while(spaces_counter) { out_buf << ' '; spaces_counter--; }
-            out_buf << value;
-        }
-    }
-}
-
-template <class Iterator>
-static inline void collapse_string_normalization(Iterator &start, const Iterator &end, stmt_str_buf& out_buf)
-{
-    unsigned char value;
-    bool is_space = false;
-    
-    while(start < end) 
-    {
-        value = *start;
-        if (value != ' ' && value != '\n' && value != '\t' && value != '\r') break;
-        start++;
-    }
-    
-    while(start < end)
-    {
-        value = *start++;
-        if (value == ' ' || value == '\n' || value == '\t' || value == '\r ') is_space = true;
-        else 
-        {
-            if(is_space) { out_buf << ' '; is_space = false; }
-            out_buf << value;
-        }
-    }
-}
-
-
-/*template <class Iterator>
-static inline void check_constraints_for_xs_token(Iterator &start, const Iterator &end, bool *res)
-{
-	(*res) = start == end;
-	
-	if(*res) return;
-	
-	unsigned char previous = *start;
-
-	while (start < end)
-	{
-		if (*start == '\n' || *start == '\r' || *start == '\t' || (*start == ' ' && previous == ' ')) return;
-        previous = *start;
-		start++;
-	}
-
-	if(previous == ' ') return;
-
-	(*res) = true;
-}*/
-
 static inline bool check_constraints_for_xs_language(const tuple_cell *value)
 {
 	char const* regex = "^[\\n\\r\\t ]*[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*[\\n\\r\\t ]*$";
@@ -730,8 +657,8 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
     if(need_string_normalization) 
     {
         stmt_str_buf res;
-        if(TT == xs_token) { STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(collapse_string_normalization, &SV, res); }
-        else               { STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(replace_string_normalization, &SV, res); }
+        if(TT == xs_token) { collapse_string_normalization(&SV, res); }
+        else               { replace_string_normalization(&SV, res);  }
         TV = res.get_tuple_cell();
     }
     else
