@@ -72,6 +72,31 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPFnNormalizeSpace
+///////////////////////////////////////////////////////////////////////////////
+class PPFnNormalizeSpace : public PPIterator
+{
+protected:
+    PPOpIn child;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnNormalizeSpace(variable_context *_cxt_, 
+                       PPOpIn _child_);
+    virtual ~PPFnNormalizeSpace();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnString2CodePoints
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnString2CodePoints : public PPIterator

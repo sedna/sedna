@@ -10,6 +10,8 @@
 #include "PPUtils.h"
 #include "e_string.h"
 #include "strings.h"
+#include "xs_helper.h"
+#include "dm_accessors.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -512,3 +514,86 @@ bool PPFnStringLength::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnStringLength::result");
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNormalizeSpace
+///////////////////////////////////////////////////////////////////////////////
+PPFnNormalizeSpace::PPFnNormalizeSpace(variable_context *_cxt_,
+                                       PPOpIn _child_) : PPIterator(_cxt_),
+                                                         child(_child_)
+{
+}
+
+PPFnNormalizeSpace::~PPFnNormalizeSpace()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnNormalizeSpace::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnNormalizeSpace::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnNormalizeSpace::close ()
+{
+    child.op->close();
+}
+
+void PPFnNormalizeSpace::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        child.op->next(t);
+        if (!t.is_eos())
+        {
+            tuple_cell tc = child.get(t);
+            
+            if (tc.is_node())
+                tc = dm_string_value(tc.get_node());
+            else
+            {
+                xmlscm_type xtype = tc.get_atomic_type();
+                if(xtype != xs_string        && 
+                   xtype != xs_untypedAtomic && 
+                   xtype != xs_anyURI        &&
+                   !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
+            }
+
+            child.op->next(t);
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:normalize-space. Argument contains more than one item.");
+            stmt_str_buf result;
+            collapse_string_normalization(&tc, result);
+            t.copy(result.get_tuple_cell());
+        }
+        else
+            t.copy(EMPTY_STRING_TC);
+    }
+    else 
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnNormalizeSpace::copy(variable_context *_cxt_)
+{
+    PPFnNormalizeSpace *res = new PPFnNormalizeSpace(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnNormalizeSpace::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnNormalizeSpace::result");
+}
+

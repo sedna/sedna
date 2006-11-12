@@ -2297,6 +2297,15 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnStringLength(cxt,
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnNormalizeSpace")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "98.1");
+
+        opit = new PPFnNormalizeSpace(cxt,
+                                      make_pp_op(cxt, lst->at(1).internal.list));
+    }
 	else if (op == "PPFnStringToCodepoints")
     {
         if (   lst->size() != 2
