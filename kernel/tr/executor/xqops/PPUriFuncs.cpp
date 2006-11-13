@@ -5,6 +5,7 @@
 
 #include "sedna.h"
 #include "PPUriFuncs.h"
+#include "PPUtils.h"
 #include "strings.h"
 #include "xs_uri.h"
 
@@ -138,38 +139,38 @@ void PPFnUriEncoding::next  (tuple &t)
         
         first_time = false;    
 
-        if(t.is_eos()) 
+        if(!t.is_eos()) 
         {
+            tuple_cell tc = child.get(t);
+            if(!tc.is_atomic()) tc = atomize(tc);
+            xmlscm_type xtype = tc.get_atomic_type();
+        
+            if(xtype != xs_string        && 
+               xtype != xs_untypedAtomic && 
+               xtype != xs_anyURI        &&
+               !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, error());
+        
+            stmt_str_buf res;
+        
+            switch(type)
+            {
+                case(ENCODE_FOR_URI):
+                    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res);  break;
+                case(IRI_TO_URI):
+                    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res);      break;
+                case(ESCAPE_HTML_URI):
+                    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res); break;
+                default: 
+                    throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
+            }
+        
+            child.op->next(t);
+            if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
+        
+            t.copy(res.get_tuple_cell());
+        }
+        else
             t.copy(EMPTY_STRING_TC);
-            return;
-        }
-            
-        tuple_cell tc = child.get(t);
-        xmlscm_type xtype = tc.get_atomic_type();
-    
-        if(xtype != xs_string        && 
-           xtype != xs_untypedAtomic && 
-           xtype != xs_anyURI        &&
-           !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, error());
-    
-        stmt_str_buf res;
-    
-        switch(type)
-        {
-            case(ENCODE_FOR_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(encode_for_uri, &tc, res); break;
-            case(IRI_TO_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(iri_to_uri, &tc, res); break;
-            case(ESCAPE_HTML_URI):
-                STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(escape_html_uri, &tc, res); break;
-            default: 
-                throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
-        }
-    
-        child.op->next(t);
-        if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
-    
-        t.copy(res.get_tuple_cell());
     }
     else 
     {
@@ -281,6 +282,7 @@ void PPFnResolveUri::next  (tuple &t)
         bool valid = false;
 
         tuple_cell relative_tc = relative.get(t);
+        if(!relative_tc.is_atomic()) relative_tc = atomize(relative_tc);
         xmlscm_type xtype = relative_tc.get_atomic_type();
         if(xtype != xs_string        && 
            xtype != xs_untypedAtomic && 
@@ -309,6 +311,7 @@ void PPFnResolveUri::next  (tuple &t)
 
             base_tc = base.get(b);
             xtype = base_tc.get_atomic_type();
+            if(!base_tc.is_atomic()) base_tc = atomize(base_tc);            
             if(xtype != xs_string        && 
                xtype != xs_untypedAtomic && 
                xtype != xs_anyURI        &&

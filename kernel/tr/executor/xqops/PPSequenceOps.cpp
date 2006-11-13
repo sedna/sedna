@@ -614,6 +614,7 @@ void PPFnSubsequence::next(tuple &t)
         if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
         
         tc = start_child.get(st);
+        if(!tc.is_atomic()) tc = atomize(tc);
         xmlscm_type xtype = tc.get_atomic_type();
         
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
@@ -632,6 +633,7 @@ void PPFnSubsequence::next(tuple &t)
             if (lt.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
             
             tc = start_child.get(lt);
+            if(!tc.is_atomic()) tc = atomize(tc);
             xtype = tc.get_atomic_type();
 
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
@@ -737,6 +739,7 @@ void PPFnRemove::next(tuple &t)
         if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
         
         tuple_cell tc = pos_child.get(st);
+        if(!tc.is_atomic()) tc = atomize(tc);
         xmlscm_type xtype = tc.get_atomic_type();
 
         if(!(xtype == xs_untypedAtomic ||
@@ -846,8 +849,9 @@ void PPFnInsertBefore::next(tuple &t)
         if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
         
         tuple_cell tc = pos_child.get(st);
+        if(!tc.is_atomic()) tc = atomize(tc);
         xmlscm_type xtype = tc.get_atomic_type();
-
+        
         if(!(xtype == xs_untypedAtomic ||
              xtype == xs_integer ||
              is_derived_from_xs_integer(xtype)))  
