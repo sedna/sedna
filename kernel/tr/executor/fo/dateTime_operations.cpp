@@ -38,7 +38,7 @@ tuple_cell op_add_dayTimeDuration_to_date(const tuple_cell &a1, const tuple_cell
 
 tuple_cell op_add_date_to_dayTimeDuration(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return op_add_dayTimeDuration_to_time(a2,a1);
+    return op_add_dayTimeDuration_to_date(a2,a1);
 }
 
 tuple_cell op_add_dayTimeDuration_to_time(const tuple_cell &a1, const tuple_cell &a2)

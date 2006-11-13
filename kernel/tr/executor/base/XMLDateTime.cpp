@@ -154,6 +154,24 @@ static int adjustMiliseconds(int value, int actualLen, int maxLen)
 	return value;
 }
 
+static void handleWhitespace(const char * buf, int& start, int& end)
+{
+	int i;
+	for (i=start; i<end; i++)
+		if (! isspace(buf[i]))
+			break;
+
+	start = i;
+
+	if (start == end) return;
+
+	for (i=end-1; i>=start; i--)
+		if (! isspace(buf[i]))
+			break;
+
+	end = i+1;
+}
+
 void normalizeMilisAndSeconds( double& milis, int& seconds )
 {
 	int milisNeg = milis >= 0 ? 1 : -1;
@@ -523,10 +541,27 @@ XMLDateTime divideDuration(const XMLDateTime& d, double v)
 
 XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDuration)
 {
-    XMLDateTime fNewDate;
-    int carry;
+    	XMLDateTime fNewDate;
+    	int carry;
 
-    fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
+    	fNewDate.setValue(XMLDateTime::Type, dt.getValue(XMLDateTime::Type));
+
+	//add months
+    	int temp = dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month);
+	carry = fQuotient(temp, 1, 13);
+	fNewDate.setValue(XMLDateTime::Month, modulo(temp, 1, 13));
+	if (fNewDate.getValue(XMLDateTime::Month) <= 0) {
+           fNewDate.setValue(XMLDateTime::Month, fNewDate.getValue(XMLDateTime::Month) + 12);
+           carry--;
+    	}
+
+        //add years (may be modified additionaly below)
+    	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
+	//copy timezone
+
+	fNewDate.setValue(XMLDateTime::utc, dt.getValue(XMLDateTime::utc));
+	fNewDate.setValue(XMLDateTime::tz_hh, dt.getValue(XMLDateTime::tz_hh));
+	fNewDate.setValue(XMLDateTime::tz_mm, dt.getValue(XMLDateTime::tz_mm));
 
 	//add miliseconds
 	carry = 0;
@@ -550,7 +585,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 	fNewDate.setValue(XMLDateTime::MiliSecond, (int)(milis * DT_MILISECOND_MAX_VALUE + 0.5));
 
 	//add seconds
-    	int temp = dt.getValue(XMLDateTime::Second) + fDuration.getValue(XMLDateTime::Second) + carry;
+    	temp = dt.getValue(XMLDateTime::Second) + fDuration.getValue(XMLDateTime::Second) + carry;
     	carry = fQuotient (temp, 60);
     	fNewDate.setValue(XMLDateTime::Second,  mod(temp, 60, carry));
     	if (fNewDate.getValue(XMLDateTime::Second) < 0) {
@@ -576,25 +611,23 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
         	carry--;
     	}
 
-	//copy timezone
-	fNewDate.setValue(XMLDateTime::utc, dt.getValue(XMLDateTime::utc));
-	fNewDate.setValue(XMLDateTime::tz_hh, dt.getValue(XMLDateTime::tz_hh));
-	fNewDate.setValue(XMLDateTime::tz_mm, dt.getValue(XMLDateTime::tz_mm));
+	/*
+	 *  Add days according to the W3C algorithm
+         *
+ 	 *	if S[day] > maximumDayInMonthFor(E[year], E[month])
+    	 *		tempDays := maximumDayInMonthFor(E[year], E[month])
+	 *	else if S[day] < 1
+    	 *		tempDays := 1
+	 *	else
+    	 *		tempDays := S[day]
+	 *	E[day] := tempDays + D[day] + carry
+	 */
+	if ( dt.getValue(XMLDateTime::Day) > maxDayInMonthFor(fNewDate.getValue(XMLDateTime::CentYear), fNewDate.getValue(XMLDateTime::Month)))
+        	temp = maxDayInMonthFor(fNewDate.getValue(XMLDateTime::CentYear), fNewDate.getValue(XMLDateTime::Month));
+	else 
+		temp = dt.getValue(XMLDateTime::Day);
 
-    	fNewDate.setValue(XMLDateTime::Day, dt.getValue(XMLDateTime::Day) + fDuration.getValue(XMLDateTime::Day) + carry);
-	carry = 0;
-
-	//add months
-    	temp = dt.getValue(XMLDateTime::Month) + fDuration.getValue(XMLDateTime::Month) + carry;
-	carry = fQuotient(temp, 1, 13);
-	fNewDate.setValue(XMLDateTime::Month, modulo(temp, 1, 13));
-	if (fNewDate.getValue(XMLDateTime::Month) <= 0) {
-           fNewDate.setValue(XMLDateTime::Month, fNewDate.getValue(XMLDateTime::Month) + 12);
-           carry--;
-    	}
-
-        //add years (may be modified additionaly below)
-    	fNewDate.setValue(XMLDateTime::CentYear, dt.getValue(XMLDateTime::CentYear) + fDuration.getValue(XMLDateTime::CentYear) + carry);
+    	fNewDate.setValue(XMLDateTime::Day, temp + fDuration.getValue(XMLDateTime::Day) + carry);
 
     while ( true )
     {
@@ -920,9 +953,9 @@ int XMLDateTime::compare(const XMLDateTime& lValue
    */
    if (lTemp.getValue(Type) ==xs_date && rTemp.getValue(Type) == xs_date && (   lTemp.getValue(utc) != UTC_STD || rTemp.getValue(utc) != UTC_STD))
    {
-
-	int lNeg = lTemp.getValue(utc) == UTC_POS ? 1 : -1;
-	int rNeg = rTemp.getValue(utc) == UTC_POS ? 1 : -1;
+	// For timezones, the negative values are bigger than the positive ones
+	int lNeg = lTemp.getValue(utc) == UTC_POS ? - 1 : 1;
+	int rNeg = rTemp.getValue(utc) == UTC_POS ? - 1 : 1;
 
 	if (lTemp.getValue(tz_hh) * lNeg < rTemp.getValue(tz_hh) * rNeg)
 		return LESS_THAN;
@@ -968,6 +1001,7 @@ void XMLDateTime::parseDate(const char* buf)
 {
     setValue(Type, xs_date);
     int start = 0, end = strlen(buf);
+    handleWhitespace(buf, start, end);
     getDate(buf, start, end);
     parseTimeZone(buf, start, end);
     validateDateTime();
@@ -978,6 +1012,7 @@ void XMLDateTime::parseTime(const char* buf)
 
     setValue(Type, xs_time);
     int start=0, end = strlen(buf);
+    handleWhitespace(buf, start, end);
     // time initialize to default values
 
     getTime(buf, start, end);
@@ -992,6 +1027,7 @@ void XMLDateTime::parseDateTime(const char* buf)
 {
     setValue(Type, xs_dateTime);
     int fStart = 0, fEnd = strlen(buf);
+    handleWhitespace(buf, fStart, fEnd);
     getDate(buf,fStart, fEnd);
 
     //fStart is supposed to point to 'T'
@@ -1000,6 +1036,7 @@ void XMLDateTime::parseDateTime(const char* buf)
 
     getTime(buf, fStart, fEnd);
     validateDateTime();
+    normalizeDateTimeWeak();
 }
 
 //
@@ -1519,7 +1556,6 @@ void XMLDateTime::getDate(const char* fBuffer, int& fStart, int& fEnd)
 
     getYearMonth(fBuffer, fStart, fEnd);    // Scan YearMonth and
                        // fStart point to the next '-'
-
     if (fBuffer[fStart++] != DATE_SEPARATOR)
 	throw USER_EXCEPTION2(FORG0001, "invalid date, CCYY-MM must be followed by a '-' sign");
 
@@ -1589,7 +1625,7 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
         else
         {
             rawMilis = parseInt(fBuffer, fStart, sign);  //get ms between UTC sign and fEnd
-	    miliSecondLen = fEnd-fStart;
+	    miliSecondLen = sign-fStart;
         }
 
 	rawMilis = adjustMiliseconds(rawMilis, miliSecondLen, DT_MILISECOND_DIGITS);
@@ -1623,7 +1659,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
         //"Imcomplete YearMonth Format";
 
     // skip the first leading '-'
-    int start = ( fBuffer[0] == '-') ? fStart + 1 : fStart;
+    int start = ( fBuffer[fStart] == '-') ? fStart + 1 : fStart;
 
     //
     // search for year separator '-'
@@ -1644,6 +1680,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
         //"no month in buffer"
 
     setValue(Month, parseInt(fBuffer,fStart, yearSeparator + 3));
+
     fStart += 2;  //fStart points right after the MONTH
 
     return;
@@ -1813,6 +1850,56 @@ void XMLDateTime::normalizeDateTime()
     return;
 }
 
+
+/**
+ * Weak normalization of dateTimes, always performed after parsing
+ *
+ */
+void XMLDateTime::normalizeDateTimeWeak()
+{
+
+    int negate = (getValue(utc) == UTC_POS)? -1: 1;
+    int temp;
+    int carry;
+    
+    //normalize hours: the case of 24 hours
+    if (getValue(Hour) == 24)
+    {
+	setValue(Hour, 0);
+    	setValue(Day, getValue(Day) + 1);   
+    }
+
+    while (1)
+    {
+        temp = maxDayInMonthFor(getValue(CentYear), getValue(Month));
+        if (getValue(Day) < 1)
+        {
+            setValue(Day, getValue(Day) + maxDayInMonthFor(getValue(CentYear), getValue(Month) - 1));
+            carry = -1;
+        }
+        else if ( getValue(Day) > temp )
+        {
+            setValue(Day, getValue(Day) - temp);
+            carry = 1;
+        }
+        else
+        {
+            break;
+        }
+
+        temp = getValue(Month) + carry;
+        setValue(Month, modulo(temp, 1, 13));
+        if (getValue(Month) <=0) {
+            setValue(Month, getValue(Month)+ 12);
+            setValue(CentYear, getValue(CentYear) - 1);
+	}
+        setValue(CentYear, getValue(CentYear) + fQuotient(temp, 1, 13));
+    }
+
+    return;
+}
+
+/**
 /**
  * If timezone present - normalize dateTime  [E Adding durations to dateTimes]
  *
@@ -1914,9 +2001,9 @@ void XMLDateTime::validateDateTime() const
 
     //validate seconds
     if ( getValue(Second) < 0 ||
-         getValue(Second) > 60 )
-	throw USER_EXCEPTION2(FORG0001,"invalid seconds, values must be between 0 and 60");
-        //"Second must have values 0-60");
+         getValue(Second) >= 60 )
+	throw USER_EXCEPTION2(FORG0001,"invalid seconds, values must be between 0 and 59");
+        //"Second must have values 0-59");
 
     //validate time-zone hours
     if ( (abs(getValue(tz_hh)) > 14) ||
@@ -1979,8 +2066,13 @@ int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end) c
     int retVal = 0;
     for (int i=start; i < end; i++) {
 
+ 
         if (fBuffer[i] < '0' || fBuffer[i] > '9')
-	throw USER_EXCEPTION2(FORG0001, "invalid numeric character in dateTime or duration");
+	{
+		char errString[100];
+		sprintf(errString, "invalid numeric character '%c' in dateTime or duration", fBuffer[i]);
+		throw USER_EXCEPTION2(FORG0001, errString);
+	}
 
         retVal = (retVal * 10) + (unsigned int) (fBuffer[i] - '0');
     }
@@ -1998,7 +2090,7 @@ int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end) c
 int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int end) const
 {
     // skip the first leading '-'
-    int start = ( fBuffer[0] == '-') ? fStart + 1 : fStart;
+    int start = ( fBuffer[fStart] == '-') ? fStart + 1 : fStart;
 
     int length = end - start;
     if (length < 4)
@@ -2009,8 +2101,8 @@ int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int e
         //"Leading zeros are required if the year value would otherwise have fewer than four digits;
         // otherwise they are forbidden");
 
-    bool negative = (fBuffer[0] == '-');
-    int  yearVal = parseInt(fBuffer, (negative ? 1 : 0), end);
+    bool negative = (fBuffer[fStart] == '-');
+    int  yearVal = parseInt(fBuffer, (negative ? fStart+1 : fStart), end);
     return ( negative ? (-1) * yearVal : yearVal );
 }
 
