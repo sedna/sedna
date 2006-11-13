@@ -131,8 +131,8 @@ private:
     int sort_size;                                  //Number of these tuple cells. This value is automaticaly
                                                     //evaluated form the 'data_size' and 'child.ts' values
 
-    sequence_tmp *data_cells;                           //Accumulates the first 'data_size' tuple cells. 
-    sequence_tmp *sort_cells;                           //Accumulates other 'sort_size' tuple cells.  
+    sequence_tmp *data_cells;                       //Accumulates the first 'data_size' tuple cells. 
+    sequence_tmp *sort_cells;                       //Accumulates other 'sort_size' tuple cells.  
     
     bool first_time;
     bool need_reinit;
