@@ -175,6 +175,7 @@ public:
 
     void normalize();
     void normalizeDateTime();
+    void normalizeDateTimeWeak();
     void normalizeDuration();
 
     bool isDuration(){ return (getValue(Type) == xs_duration || getValue(Type) == xs_dayTimeDuration || getValue(Type) == xs_yearMonthDuration); }
