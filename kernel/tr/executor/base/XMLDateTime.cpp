@@ -749,12 +749,26 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
 
     int days = 0;
 
-    for (int i=lTemp.getValue(XMLDateTime::CentYear); i>rTemp.getValue(XMLDateTime::CentYear); i--)
+    for (int i=lTemp.getValue(XMLDateTime::CentYear)-1; i>rTemp.getValue(XMLDateTime::CentYear); i--)
     {
-	if (isLeapYear(i-1))
+	if (isLeapYear(i))
 		days += 366;
 	else
 		days += 365;
+    }
+
+    if (lTemp.getValue(XMLDateTime::CentYear) == rTemp.getValue(XMLDateTime::CentYear))
+    {
+	for (int month=lTemp.getValue(XMLDateTime::Month); month < rTemp.getValue(XMLDateTime::Month); month++)
+		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month );
+    }
+    else
+    {
+	for (int month=1; month < lTemp.getValue(XMLDateTime::Month); month++)
+		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month );
+	for (int month=rTemp.getValue(XMLDateTime::Month); month <= 12; month++)
+		days += maxDayInMonthFor( rTemp.getValue(XMLDateTime::CentYear), month );
+		
     }
 
     if (lTemp.getValue(XMLDateTime::Month) >= rTemp.getValue(XMLDateTime::Month))
