@@ -242,7 +242,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 					if (dt.getValue(XMLDateTime::utc) != XMLDateTime::UTC_UNKNOWN)
 					    t.copy(tuple_cell::atomic(dt.getTimezone().getPackedDuration(), xs_dayTimeDuration));
 					else
-					    t.copy(tuple_cell::eos());
+					    t.set_eos();
 
 					break;
 				}
