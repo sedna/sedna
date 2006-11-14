@@ -771,19 +771,6 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
 		
     }
 
-    if (lTemp.getValue(XMLDateTime::Month) >= rTemp.getValue(XMLDateTime::Month))
-    {
-	for (int month=rTemp.getValue(XMLDateTime::Month); month < lTemp.getValue(XMLDateTime::Month); month++)
-		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month );
-    }
-    else
-    {
-	for (int month=1;  month < lTemp.getValue(XMLDateTime::Month); month++)
-		days += maxDayInMonthFor( lTemp.getValue(XMLDateTime::CentYear), month);
-	for (int month=1; month < rTemp.getValue(XMLDateTime::Month); month++)
-		days -= maxDayInMonthFor( rTemp.getValue(XMLDateTime::CentYear), month );
-    }
-
     days += lTemp.getValue(XMLDateTime::Day) - rTemp.getValue(XMLDateTime::Day);
 
     // Process times
@@ -1061,24 +1048,25 @@ void XMLDateTime::parseDay(const char* buf)
 {
     setValue(Type, xs_gDay);
     int start=0, end=strlen(buf);
+    handleWhitespace(buf, start, end);
 
-    if (buf[0] != DATE_SEPARATOR ||
-        buf[1] != DATE_SEPARATOR ||
-        buf[2] != DATE_SEPARATOR  )
+    if (buf[start] != DATE_SEPARATOR ||
+        buf[start+1] != DATE_SEPARATOR ||
+        buf[start+2] != DATE_SEPARATOR  )
 	throw USER_EXCEPTION2(FORG0001, "invalid gDay value");
 
     //initialize values
     setValue(Day, parseInt(buf, start+3, start+5));
 
-    if ( DAY_SIZE < end )
+    if ( start+DAY_SIZE < end )
     {        
-        int pos = indexOf(UTC_SET, buf[DAY_SIZE]);
+        int pos = indexOf(UTC_SET, buf[start+DAY_SIZE]);
         if (pos == -1 )
 	    throw USER_EXCEPTION2(FORG0001, "invalid gDay value");
         else
         {
     	    setValue(utc, pos+1);
-            getTimeZone(buf, DAY_SIZE, end);
+            getTimeZone(buf, start+DAY_SIZE, end);
         }
     }
 
@@ -1093,16 +1081,17 @@ void XMLDateTime::parseMonth(const char* fBuffer)
 {
     setValue(Type, xs_gMonth);
     int fStart=0, fEnd=strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
 
-    if (fBuffer[0] != DATE_SEPARATOR || fBuffer[1] != DATE_SEPARATOR  || fEnd < 4 )
+    if (fBuffer[fStart] != DATE_SEPARATOR || fBuffer[fStart+1] != DATE_SEPARATOR  || fEnd < fStart+4 )
 	throw USER_EXCEPTION2(FORG0001, "invalid gMonth value");
 
     // REVISIT: allow both --MM and --MM-- now. 
     // need to remove the following lines to disallow --MM-- 
     // when the errata is officially in the rec. 
-    setValue(Month, parseInt(fBuffer, 2, 4));
+    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4));
  
-    fStart = 4;
+    fStart = fStart+4;
     if ( fEnd >= fStart+2 && fBuffer[fStart] == DATE_SEPARATOR && fBuffer[fStart+1] == DATE_SEPARATOR ) 
     { 
         fStart += 2; 
@@ -1135,9 +1124,10 @@ void XMLDateTime::parseYear(const char* fBuffer)
 
     setValue(Type, xs_gYear);
     int fStart=0, fEnd=strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
     // skip the first '-' and search for timezone
     //
-    int sign = findUTCSign(fBuffer, (fBuffer[0] == '-') ? 1 : 0, fEnd);
+    int sign = findUTCSign(fBuffer, (fBuffer[fStart] == '-') ? fStart+1 : fStart, fEnd);
 
     if (sign == NOT_FOUND)
     {
@@ -1163,26 +1153,27 @@ void XMLDateTime::parseMonthDay(const char* fBuffer)
 
     setValue(Type, xs_gMonthDay);
     int fStart=0, fEnd = strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
 
-    if (fBuffer[0] != DATE_SEPARATOR ||
-        fBuffer[1] != DATE_SEPARATOR ||
-        fBuffer[4] != DATE_SEPARATOR )
+    if (fBuffer[fStart] != DATE_SEPARATOR ||
+        fBuffer[fStart+1] != DATE_SEPARATOR ||
+        fBuffer[fStart+4] != DATE_SEPARATOR )
 	throw USER_EXCEPTION2(FORG0001, "invalid gMonthDay value");
 
 	
     //initialize
-    setValue(Month, parseInt(fBuffer, 2, 4));	
-    setValue(Day, parseInt(fBuffer, 5, 7));
+    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4));	
+    setValue(Day, parseInt(fBuffer, fStart+5, fStart+7));
 
-    if ( MONTHDAY_SIZE < fEnd )
+    if ( fStart+MONTHDAY_SIZE < fEnd )
     {        
-        int pos = indexOf(UTC_SET, fBuffer[MONTHDAY_SIZE]);
+        int pos = indexOf(UTC_SET, fBuffer[fStart+MONTHDAY_SIZE]);
         if ( pos == NOT_FOUND )
 		throw USER_EXCEPTION2(FORG0001, "invalid gMonthDay value");
         else
         {
     	    setValue(utc, pos+1);
-            getTimeZone(fBuffer,MONTHDAY_SIZE,fEnd);
+            getTimeZone(fBuffer,fStart+MONTHDAY_SIZE,fEnd);
         }
     }
 
@@ -1193,6 +1184,7 @@ void XMLDateTime::parseYearMonth(const char* fBuffer)
 {
     setValue(Type, xs_gYearMonth);
     int fStart=0, fEnd=strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
 
     // get date
     getYearMonth(fBuffer, fStart, fEnd);
