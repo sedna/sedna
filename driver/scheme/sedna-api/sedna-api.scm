@@ -1039,7 +1039,7 @@
       (null? collection-name)  ; it is a standalone document
       (string-append "LOAD STDIN \"" document-name "\"")
       (string-append
-       "LOAD STDIN \"" document-name "\" \"" collection-name "\""))
+       "LOAD STDIN \"" document-name "\" \"" (car collection-name) "\""))
      #t  ; result in the form of SXML
      out)
     (call-with-values
