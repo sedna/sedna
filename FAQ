@@ -34,6 +34,16 @@ G3.  I got one of the following errors trying to run se_cdb:
 
      _________________________________________________________________
 
+                        Windows Specific Questions
+
+     _________________________________________________________________
+
+W1.  When I run se_term utility it just hangs on. It seems that I do everything
+     right because se_gov, se_cdb and se_sm work correctly. 
+     Is it a bug in se_term?
+
+     _________________________________________________________________
+
                          Linux Specific Questions
 
      _________________________________________________________________
@@ -80,11 +90,18 @@ G2.  Typically this error message means that you have upgraded Sedna to a
      migration procedure performed by se_exp utility. See Sedna Administration 
      Guide ('Migration between Releases' section) for details.
 
+
 G3.  Most likely, the reason of the problem is lack of memory. By default Sedna 
      requires 100Mb of memory for every running instance of database. You can 
      vary the required memory size by '-bufs-num' option of se_cdb. For details 
      see documentation provided with the distribution or just run 
      'se_cdb -help'.
+
+
+W1.  No, it is not. More likely you have NOD32 Antivirus installed. It 
+     conflicts with Sedna and some other programs. The bug is in NOD32, 
+     actually. You can solve the problem by uninstalling NOD32 (turning it off
+     will not help).
 
 
 L1.  Actually, not. Wait for several minutes and try again. 
