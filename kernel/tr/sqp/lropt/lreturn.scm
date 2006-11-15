@@ -782,12 +782,14 @@
            prolog processed-funcs))
         (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
                            processed-funcs child-order-for-vars)
+          ;(pp (list new-child new-body child-ddo-auto? body-ddo-auto?))
           (call-with-values
            (lambda ()
              (if
-              (and  ; ordering could not be fulfilled in fun-def body
-               order-required?
-               (not body-ddo-auto?))
+              #t
+;              (and  ; ordering could not be fulfilled in fun-def body
+;               order-required?
+;               (not body-ddo-auto?))
               ; Re-processing fun-def body once again to fulfil ordering
               (lropt:expr
                (cadr (xlr:op-args fun-def))  ; function body
@@ -860,6 +862,8 @@
            prolog processed-funcs))
         (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
                            processed-funcs child-order-for-vars)
+;          (pp (list new-child new-body 
+;                    child-ddo-auto? body-ddo-auto? ))
           (values
            (list
             (if
