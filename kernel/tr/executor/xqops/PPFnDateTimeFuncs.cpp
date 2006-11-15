@@ -392,10 +392,14 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 
 					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(firstArg.get_xs_dateTime(), firstArgType)).getPackedDateTime(), firstArgType));
 					break;
+			case dateTime:
+	    			throw USER_EXCEPTION2(XPTY0004, "Invalid type passed as first argument to fn:dateTime function");
 		}
 	    }
 
         }
+	else if (dateTimeFunc == dateTime)
+	    throw USER_EXCEPTION2(XPTY0004, "Invalid type passed as first argument to fn:dateTime function");
     }
     else 
     {

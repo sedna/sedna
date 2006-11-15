@@ -60,6 +60,9 @@ static const char UTC_SET[]            = {UTC_STD_CHAR           //"Z+-"
                                          , UTC_NEG_CHAR
                                          , 0};
 
+
+static const double ONE_HALF = 0.49999999;
+
 static const int YMD_MIN_SIZE    = 10;   // CCYY-MM-DD
 static const int YMONTH_MIN_SIZE = 7;    // CCYY_MM
 static const int TIME_MIN_SIZE   = 8;    // hh:mm:ss
@@ -215,7 +218,7 @@ XMLDateTime::XMLDateTime(const utm& t)
 	setValue(Hour, t.utm_hour);
 	setValue(Minute, t.utm_min);
 	setValue(Second, t.utm_sec);
-	setValue(MiliSecond, (int)(t.utm_millis/1000.0 * DT_MILISECOND_MAX_VALUE + 0.5 ));
+	setValue(MiliSecond, (int)(t.utm_millis/1000.0 * DT_MILISECOND_MAX_VALUE + ONE_HALF ));
 
 	int tz_neg = t.utm_gmtoff >= 0 ? 1 : -1;
 
@@ -464,7 +467,7 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 	normalizeMilisAndSeconds( milis, seconds );
 	int neg = seconds >= 0 && milis >= 0.0 ? 1 : -1;
 
-	newDuration.setValue(XMLDateTime::MiliSecond, (int)(milis * DUR_MILISECOND_MAX_VALUE + neg * 0.5));
+	newDuration.setValue(XMLDateTime::MiliSecond, (int)(milis * DUR_MILISECOND_MAX_VALUE + neg * ONE_HALF));
  	newDuration.setValue(XMLDateTime::Second, seconds);
 	newDuration.setValue(XMLDateTime::utc, neg == 1 ? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );	
 	newDuration.normalize();
@@ -487,7 +490,8 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		int months = d.getValue(XMLDateTime::CentYear)*12 + d.getValue(XMLDateTime::Month);
 		double multMonths = months * v;
 		int neg = multMonths >= 0 ? 1 : -1;
-		months = neg * (int)floor( neg * multMonths + 0.5);
+
+		months = neg * (int)floor( neg * multMonths + ONE_HALF);
 		newDuration.setValue(XMLDateTime::Month, months);
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG);
 
@@ -504,7 +508,8 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		int neg = seconds_milis >= 0 ? 1 : -1;
 		newDuration.setValue(XMLDateTime::Second, (int)seconds_milis);
 		if (seconds_milis - (int)seconds_milis != 0.0)
-			newDuration.setValue(XMLDateTime::MiliSecond, (int)((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE + neg*0.5));
+			newDuration.setValue(XMLDateTime::MiliSecond, (int)((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE + neg*ONE_HALF));
+
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
 
 		newDuration.normalize();
@@ -582,7 +587,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 		}
 	}
 
-	fNewDate.setValue(XMLDateTime::MiliSecond, (int)(milis * DT_MILISECOND_MAX_VALUE + 0.5));
+	fNewDate.setValue(XMLDateTime::MiliSecond, (int)(milis * DT_MILISECOND_MAX_VALUE + ONE_HALF));
 
 	//add seconds
     	temp = dt.getValue(XMLDateTime::Second) + fDuration.getValue(XMLDateTime::Second) + carry;
@@ -792,7 +797,7 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
     result.setValue(XMLDateTime::utc, neg==1 ? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
     result.setValue(XMLDateTime::Day, neg*days);
     result.setValue(XMLDateTime::Second, neg*seconds);
-    result.setValue(XMLDateTime::MiliSecond, neg*milis*DUR_MILISECOND_MAX_VALUE + neg*0.5);
+    result.setValue(XMLDateTime::MiliSecond, neg*milis*DUR_MILISECOND_MAX_VALUE + neg*ONE_HALF);
     result.normalizeDuration();
     return result;
 }
@@ -1246,6 +1251,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan year
+	if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
         setValue(CentYear, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
@@ -1255,6 +1261,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan month
+	if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
         setValue(Month, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
@@ -1264,6 +1271,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan day
+	if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
         setValue(Day, negate * parseInt(fBuffer, fStart,end));
         fStart = end+1;
         designator = true;
@@ -1283,6 +1291,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
         if ( end != NOT_FOUND )
         {
             //scan hours
+	    if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
             setValue(Hour, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
@@ -1292,6 +1301,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
         if ( end != NOT_FOUND )
         {
             //scan min
+	    if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
             setValue(Minute, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
@@ -1324,6 +1334,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 	    }
             else
             {
+	        if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid duration");
                 setValue(Second, negate * parseInt(fBuffer, fStart,end));
             }
 
@@ -1391,6 +1402,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan year
+	if (fStart==fEnd) throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
         setValue(CentYear, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
@@ -1400,12 +1412,16 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan month
+	if (fStart==fEnd) throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
         setValue(Month, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
     }
 
     if ( !designator )
+    throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
+
+    if (fStart != fEnd)
     throw USER_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
 
     normalize();
@@ -1460,6 +1476,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
     if ( end != NOT_FOUND )
     {
         //scan day
+	if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
         setValue(Day, negate * parseInt(fBuffer, fStart,end));
         fStart = end+1;
         designator = true;
@@ -1479,6 +1496,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
         if ( end != NOT_FOUND )
         {
             //scan hours
+	    if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
             setValue(Hour, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
@@ -1488,6 +1506,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
         if ( end != NOT_FOUND )
         {
             //scan min
+	    if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
             setValue(Minute, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
@@ -1520,6 +1539,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
             }
             else
             {
+	        if (fStart==end) throw USER_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
                 setValue(Second, negate * parseInt(fBuffer, fStart,end));
             }
 
