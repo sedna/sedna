@@ -289,7 +289,7 @@ int arg_scanf(const char* str, arg_rec* argrec)
       char strval[ARGSTRLEN];
 
       /*-- scan for quoted string fist, if no good then try unquoted --*/
-      if (sscanf(str," '%[^']'%n",strval,&length) != 1)
+      if (sscanf(str," \"%[^\"]\"%n",strval,&length) != 1)
          if (sscanf(str,"%s%n",strval,&length) != 1)
             return -1;
 
@@ -630,16 +630,20 @@ int arg_checktable(arg_rec *argtable, /* ptr to argument table */
 
 void arg_catargs(int argc, char **argv, char *str)
   {
-  int i;
+  int i,j;
   str[0]='\0';
   for (i=0; i<argc; i++)
      {
      /*-- if argv[i] has any whitespace then... --*/
      if (strpbrk(argv[i],whitespace))
         {
-        strcat(str,"'");
-        strcat(str,argv[i]);
-        strcat(str,"'");
+		  strcat(str,"\"");
+          for (j=0; j<strlen(argv[i]); j++)
+             if (argv[i][j] == '\"')
+                strcat(str,"'");
+             else
+                strncat(str,argv[i]+j,1);
+        strcat(str,"\"");            
         }
      else
         strcat(str,argv[i]);
