@@ -23,7 +23,6 @@ sequence::sequence(int _tuple_size_,
                    tuple_size(_tuple_size_),
                    tuple_sizeof(_tuple_size_ * sizeof(tuple_cell)),
                    blks_num(0),
-                   txt_blks_num(0),
                    tuples_in_memory(_tuples_in_memory_),
                    max_block_amount(_max_block_amount_),
                    copy_vmm_strings(_copy_vmm_strings_),
@@ -39,7 +38,6 @@ sequence::sequence(const tuple_cell &tc,
                    tuple_size(1),
                    tuple_sizeof(sizeof(tuple_cell)),
                    blks_num(0),
-                   txt_blks_num(0),
                    tuples_in_memory(_tuples_in_memory_),
                    max_block_amount(_max_block_amount_),
                    copy_vmm_strings(_copy_vmm_strings_),
@@ -60,15 +58,6 @@ void sequence::init_blks()
     eblk = bblk;
     blks_num = 1;
     blk_arr.push_back(eblk);
-}
-
-void sequence::init_txt_blks()
-{
-    vmm_alloc_tmp_block(&txt_bblk);
-    e_str_blk_hdr::init(XADDR(txt_bblk));
-
-    txt_eblk = txt_bblk;
-    txt_blks_num = 1;
 }
 
 int sequence::add(const tuple &t)
@@ -101,9 +90,9 @@ int sequence::add(const tuple &t)
         }
 
         if (tuple_str_len != 0)
-            blocks_to_allocate_for_tuple += blocks_to_allocate(&txt_eblk, tuple_str_len);
+            blocks_to_allocate_for_tuple += txt.blks_to_allocate(tuple_str_len);
 
-        if (blks_num + txt_blks_num + blocks_to_allocate_for_tuple > max_block_amount)
+        if (blks_num + txt.blks() + blocks_to_allocate_for_tuple > max_block_amount)
         {
             --seq_size;
             return 1;
@@ -137,6 +126,7 @@ int sequence::add(const tuple &t)
             (copy_vmm_strings && t.cells[i].is_atomic() && !is_fixed_size_type(t.cells[i].get_atomic_type())))
 
         {
+/*
             if (txt_eblk == NULL) init_txt_blks();
             int new_blks_num = 0;
             xptr txt_ptr = t.cells[i].is_light_atomic() ? copy_text(t.cells[i].get_str_mem(), &txt_eblk, &new_blks_num) :
@@ -145,6 +135,14 @@ int sequence::add(const tuple &t)
             (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
             txt_blks_num += new_blks_num;
             CHECKP(eblk);
+*/
+
+
+
+            xptr txt_ptr = txt.append(t.cells[i]);
+            CHECKP(eblk);
+            (dest_addr + i)->_adjust_serialized_tc(txt_ptr);
+            // because _adjust_serialized_tc does not call CHECKP we do not need to call CHECKP(eblk) here
         }
     }
 
@@ -215,14 +213,7 @@ void sequence::clear()
         vmm_delete_block(tmp);
     }
 
-    p = txt_bblk;
-    while (p != NULL)
-    {
-        CHECKP(p);
-        xptr tmp = p;
-        p = SEQ_BLK_HDR(p)->nblk;
-        vmm_delete_block(tmp);
-    }
+	txt.clear(true);
 
     for (int i = 0; i < mem_tuples.size(); i++)
     {
@@ -238,10 +229,6 @@ void sequence::clear()
     bblk = XNULL;       // pointer to the first block of the block chain
     eblk = XNULL;       // pointer to the last block of the block chain
     blks_num = 0;       // number of blocks bound to this node (in chain)
-
-    txt_bblk = XNULL;
-    txt_eblk = XNULL;
-    txt_blks_num = 0;
 
     if (sort_mem)
     {
