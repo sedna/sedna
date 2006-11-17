@@ -34,7 +34,7 @@ void e_str::init()
     U_ASSERT(last_blk == XNULL);
 
 	vmm_alloc_tmp_block(&last_blk);
-	e_str_blk_hdr::init(XADDR(last_blk));
+	e_str_blk_hdr::init(XADDR(last_blk), XNULL);
 	first_blk = last_blk;
     m_blks = 1;
 }
@@ -47,6 +47,7 @@ void e_str::reset()
 
     m_size = 0;    
     last_blk = first_blk;
+	m_blks = 0;
 }
 
 void e_str::truncate(const xptr &ptr)
@@ -88,6 +89,32 @@ xptr e_str::append_pstr_long(const xptr &src)
     return dest;
 }
 
+//allocates block if needed
+//pre: CHECKP(estr_blk)
+//post: CHECKP(estr_blk), for the new value of estr_blk
+static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
+{
+	++m_blks;
+	if (E_STR_BLK_HDR(estr_blk)->nblk == XNULL)
+	{
+		xptr new_blk;
+		vmm_alloc_tmp_block(&new_blk);
+		e_str_blk_hdr::init(XADDR(new_blk), estr_blk);
+		CHECKP(estr_blk);
+		E_STR_BLK_HDR(estr_blk)->nblk = new_blk;
+		VMM_SIGNAL_MODIFICATION(estr_blk);
+		estr_blk = new_blk;
+	}
+	else
+	{
+		estr_blk = E_STR_BLK_HDR(estr_blk)->nblk;
+		CHECKP(estr_blk);
+		E_STR_BLK_HDR(estr_blk)->cursor = sizeof(e_str_blk_hdr);
+		VMM_SIGNAL_MODIFICATION(estr_blk);
+	}
+}
+
+
 xptr e_str::xptr_for_data()
 {
 	if (last_blk == NULL) init();
@@ -95,30 +122,7 @@ xptr e_str::xptr_for_data()
     CHECKP(last_blk);
 
     if (E_STR_BLK_HDR(last_blk)->cursor >= PAGE_SIZE)
-    {
-        ++m_blks;
-
-		if (E_STR_BLK_HDR(last_blk)->nblk == XNULL)
-		{
-			xptr new_blk;
-			vmm_alloc_tmp_block(&new_blk);
-			e_str_blk_hdr::init(XADDR(new_blk));
-			CHECKP(last_blk);
-			E_STR_BLK_HDR(last_blk)->nblk = new_blk;
-			VMM_SIGNAL_MODIFICATION(last_blk);
-			last_blk = new_blk;
-		}
-		else
-		{
-			last_blk = E_STR_BLK_HDR(last_blk)->nblk;
-			CHECKP(last_blk);
-			E_STR_BLK_HDR(last_blk)->cursor = sizeof(e_str_blk_hdr);
-			VMM_SIGNAL_MODIFICATION(last_blk);
-		}
-
-
-        CHECKP(last_blk);
-    }
+		estr_get_next_blk(last_blk, m_blks);
 
     return last_blk + E_STR_BLK_HDR(last_blk)->cursor;
 }
@@ -139,26 +143,7 @@ void e_str::copy_text_mstr(xptr dest, const char *src, int count)
     if (real_count == src_len)
         return;
 
-	if (E_STR_BLK_HDR(last_blk)->nblk == XNULL)
-	{
-		xptr new_dest;
-		vmm_alloc_tmp_block(&new_dest);
-		e_str_blk_hdr::init(XADDR(new_dest));
-
-		CHECKP(last_blk);
-		E_STR_BLK_HDR(last_blk)->nblk = new_dest;
-		VMM_SIGNAL_MODIFICATION(last_blk);
-
-		last_blk = new_dest;
-		++m_blks;
-	}
-	else
-	{
-		last_blk = E_STR_BLK_HDR(last_blk)->nblk;
-		CHECKP(last_blk);
-		E_STR_BLK_HDR(last_blk)->cursor = sizeof(e_str_blk_hdr);
-		VMM_SIGNAL_MODIFICATION(last_blk);
-	}
+	estr_get_next_blk(last_blk, m_blks);
 
     copy_text_mstr(last_blk + sizeof(e_str_blk_hdr), src + real_count, count - real_count);
 }
@@ -194,25 +179,9 @@ void e_str::copy_text_estr(xptr dest, xptr src, int count)
 
     if (src_spc_blk == real_count && dest_spc_blk == real_count)
     { // end of src and dest blocks
-		if (dest_blk->nblk == XNULL)
-		{
-			xptr new_dest;
-			vmm_alloc_tmp_block(&new_dest);
-			e_str_blk_hdr::init(XADDR(new_dest));
-			last_blk = new_dest;
 
-			CHECKP(dest);
-			dest_blk->nblk = new_dest;
-			VMM_SIGNAL_MODIFICATION(dest);
-			++m_blks;
-		}
-		else
-		{
-			last_blk = dest_blk->nblk;
-			CHECKP(last_blk);
-			E_STR_BLK_HDR(last_blk)->cursor = sizeof(e_str_blk_hdr);
-			VMM_SIGNAL_MODIFICATION(last_blk);
-		}
+		U_ASSERT(BLOCKXPTR(dest) == last_blk);
+		estr_get_next_blk(last_blk, m_blks);
 
         CHECKP(src);
         copy_text_estr(last_blk + sizeof(e_str_blk_hdr), E_STR_PROLONGATION(src), count - real_count);
@@ -228,27 +197,10 @@ void e_str::copy_text_estr(xptr dest, xptr src, int count)
 
     if (dest_spc_blk == real_count)
     { // end of dest block, not of src one
-		if (dest_blk->nblk == XNULL)
-		{
-			xptr new_dest;
-			vmm_alloc_tmp_block(&new_dest);
-			e_str_blk_hdr::init(XADDR(new_dest));
-			last_blk = new_dest;
-
-			CHECKP(dest);
-			dest_blk->nblk = new_dest;
-			VMM_SIGNAL_MODIFICATION(dest);
-		}
-		else
-		{
-			last_blk = dest_blk->nblk;
-			CHECKP(last_blk);
-			E_STR_BLK_HDR(last_blk)->cursor = sizeof(e_str_blk_hdr);
-			VMM_SIGNAL_MODIFICATION(last_blk);
-		}
+		U_ASSERT(BLOCKXPTR(dest) == last_blk);
+		estr_get_next_blk(last_blk, m_blks);
 
         copy_text_estr(last_blk + sizeof(e_str_blk_hdr), src + real_count, count - real_count);
-        ++m_blks;
         return;
     }
 
@@ -270,29 +222,11 @@ void e_str::copy_text_pstr_long(xptr dest, xptr src)
 	{
 		if (dest_spc_blk == 0)
 		{
-			if (dest_blk->nblk == XNULL)
-			{
-				xptr new_dest;
-				vmm_alloc_tmp_block(&new_dest);
-				e_str_blk_hdr::init(XADDR(new_dest));
-				last_blk = new_dest;
-	    
-				CHECKP(dest);
-				dest_blk->nblk = new_dest;
-				VMM_SIGNAL_MODIFICATION(dest);
-				++m_blks;
-			}
-			else
-			{
-				last_blk = dest_blk->nblk;
-				CHECKP(last_blk);
-				E_STR_BLK_HDR(last_blk)->cursor = sizeof(e_str_blk_hdr);
-				VMM_SIGNAL_MODIFICATION(last_blk);
-			}
+			U_ASSERT(BLOCKXPTR(dest) == last_blk);
+			estr_get_next_blk(last_blk, m_blks);
 			dest = last_blk + sizeof(e_str_blk_hdr);
 			dest_blk = E_STR_BLK_HDR(dest);
 			dest_spc_blk = E_STR_BLK_FREE_SPACE(dest_blk);
-    
 		}
         const int real_count = s_min(dest_spc_blk, src_spc_blk - copied_count);
         CHECKP(dest);

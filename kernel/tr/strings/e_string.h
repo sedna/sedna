@@ -26,11 +26,13 @@ struct e_str_blk_hdr
 {
     vmm_sm_blk_hdr sm_vmm;	// sm/vmm parameters
     xptr nblk;				// next block
+	xptr pblk;				// pred block
     int cursor;				// cursor
 
-	static void init(void *p) 
+	static void init(void *p, const xptr pblk)
     { 
         ((e_str_blk_hdr*)p)->nblk = XNULL; 
+		((e_str_blk_hdr*)p)->pblk = pblk; 
         ((e_str_blk_hdr*)p)->cursor = sizeof(e_str_blk_hdr);
         VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
     }
@@ -105,6 +107,8 @@ public:
                                                    append_pstr_long(src) :
                                                    append_pstr_short(src, count); }
 
+	//returns number of blocks occupied by the e_string
+	//actual number of allocated block may be larger in case e_str::reset() has been called before
     int blks() const { return m_blks; }
     int size() const { return m_size; }
     // how many new blocks will be allocated if we append a string of length str_len
