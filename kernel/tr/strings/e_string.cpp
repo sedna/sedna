@@ -26,6 +26,22 @@ void init_e_string_blks()
 	e_string_first_blk = e_string_last_blk;
 }
 
+/* !!! delete !!!*/
+
+void copy_text(char *dest,      xptr  src,       int count);
+
+xptr copy_text(xptr  src,       int count,       xptr *txt_blk,           int *new_blks_num = NULL);
+xptr copy_text(const char *src, xptr *txt_blk,   int *new_blks_num = NULL);
+
+void copy_text(xptr  dest,      xptr  src,       int count,     xptr *txt_blk, int *new_blks_num = NULL);
+void copy_text(xptr  dest,      const char *src, xptr *txt_blk, int *new_blks_num = NULL);
+
+int get_length_of_last_str (xptr pos);
+
+int blocks_to_allocate(xptr *txt_blk, int str_len);
+
+
+
 xptr xptr_for_data(xptr *txt_blk, int *new_blks_num = NULL)
 {
 	if (*txt_blk == NULL) init_e_string_blks();
@@ -238,7 +254,7 @@ int blocks_to_allocate(xptr *txt_blk, int str_len)
     if (str_len <= free_space) return 0;
     else return (str_len - free_space) / (PAGE_SIZE - sizeof(e_str_blk_hdr)) + 1;
 }
-
+/**/
 
 
 

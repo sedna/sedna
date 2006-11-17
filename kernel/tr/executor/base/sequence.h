@@ -9,6 +9,7 @@
 
 #include "sedna.h"
 #include "compare.h"
+#include "e_string.h"
 
 
 #define SEQ_NUMBER_OF_TUPLES_IN_MEMORY		100
@@ -65,10 +66,8 @@ protected:
     xptr eblk;			// pointer to the last block of the block chain
     int blks_num;		// number of blocks bound to this node (in chain)
 
-    // the same fo text blocks
-    xptr txt_bblk;
-    xptr txt_eblk;
-    int txt_blks_num;
+    // stores txt data
+    e_str txt;
 
     int tuples_in_memory;
     int max_block_amount;
@@ -76,8 +75,6 @@ protected:
     void *sort_mem;
 
     void init_blks();
-    void init_txt_blks();
-
     void qsort(const order_spec_list& osl, int off, int len);
     void swap(int a, int b);
     int  med3(const order_spec_list& osl, int a, int b, int c);

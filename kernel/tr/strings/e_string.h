@@ -37,7 +37,7 @@ struct e_str_blk_hdr
 };
 
 
-
+/* !!! delete !!!
 void copy_text(char *dest,      xptr  src,       int count);
 
 xptr copy_text(xptr  src,       int count,       xptr *txt_blk,           int *new_blks_num = NULL);
@@ -49,12 +49,12 @@ void copy_text(xptr  dest,      const char *src, xptr *txt_blk, int *new_blks_nu
 int get_length_of_last_str (xptr pos);
 
 int blocks_to_allocate(xptr *txt_blk, int str_len);
+*/
 
 extern xptr e_string_first_blk;
 extern xptr e_string_last_blk;
 
 void init_e_string_blks();
-
 
 
 
@@ -84,8 +84,20 @@ public:
     e_str() : m_blks(0), m_size(0) {}
     void reset();
     void truncate(const xptr &ptr);
-	void clear()
+	void clear(bool del_blks = false)
 	{
+        if (del_blks)
+        {
+            xptr p = first_blk;
+            while (p != NULL)
+            {
+                CHECKP(p);
+                xptr tmp = p;
+                p = E_STR_BLK_HDR(p)->nblk;
+                vmm_delete_block(tmp);
+            }
+        }
+
 		m_blks = 0;
 		m_size = 0;
 		first_blk = XNULL;
