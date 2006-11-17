@@ -190,8 +190,8 @@ typedef unsigned long long int __uint64;
  */
 
 #else
-#define _I64_MAX LLONG_MAX
-#define _I64_MIN LLONG_MIN
+#define _I64_MAX (((__int64)0x7FFFFFFF << 32) | 0xFFFFFFFF)
+#define _I64_MIN (-_I64_MAX - 1)
 #endif 
 
 
