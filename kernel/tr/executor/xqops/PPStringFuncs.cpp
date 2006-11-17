@@ -255,8 +255,6 @@ PPFnTranslate::PPFnTranslate(variable_context *_cxt_,
 							 PPOpIn _str_, PPOpIn _map_str_, PPOpIn _trans_str_) : PPIterator(_cxt_),
 								   str(_str_), map_str(_map_str_), trans_str(_trans_str_)
 {
-	if (e_string_last_blk == XNULL)
-		init_e_string_blks();
 }
 
 PPFnTranslate::~PPFnTranslate()

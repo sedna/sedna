@@ -18,12 +18,6 @@ switch (pmt)
 	case pm_replace: comp_fun = &PPPatMatch::replace;break;
 		break;
 	}
-	if (e_string_last_blk==XNULL) 
-	{
-		vmm_alloc_tmp_block(&e_string_last_blk);
-		e_str_blk_hdr::init(XADDR(e_string_last_blk));
-		e_string_first_blk = e_string_last_blk;
-	}
 }
 PPPatMatch::PPPatMatch(variable_context *_cxt_,
 						 PPOpIn _seq1_, PPOpIn _seq2_,patmatch_type _pmt_):

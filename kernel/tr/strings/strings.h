@@ -15,7 +15,6 @@
 #include "micro.h"
 
 #include "pstr_long.h"
-#include "e_string_o_iterator.h"
 #include "e_string_iterator.h"
 #include "char_iterator.h"
 ///FIXME!!!!!!!!!!!!!!!!

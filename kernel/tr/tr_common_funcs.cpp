@@ -215,9 +215,6 @@ void on_kernel_recovery_statement_end()
 {
     tr_globals::st_ct.clear_context();
 
-    e_string_first_blk = XNULL;
-    e_string_last_blk = XNULL;
-
     tr_globals::e_str_global.clear();
 
     PathExpr_local_free();
