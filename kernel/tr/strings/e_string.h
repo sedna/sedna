@@ -37,28 +37,6 @@ struct e_str_blk_hdr
 };
 
 
-/* !!! delete !!!
-void copy_text(char *dest,      xptr  src,       int count);
-
-xptr copy_text(xptr  src,       int count,       xptr *txt_blk,           int *new_blks_num = NULL);
-xptr copy_text(const char *src, xptr *txt_blk,   int *new_blks_num = NULL);
-
-void copy_text(xptr  dest,      xptr  src,       int count,     xptr *txt_blk, int *new_blks_num = NULL);
-void copy_text(xptr  dest,      const char *src, xptr *txt_blk, int *new_blks_num = NULL);
-
-int get_length_of_last_str (xptr pos);
-
-int blocks_to_allocate(xptr *txt_blk, int str_len);
-*/
-
-extern xptr e_string_first_blk;
-extern xptr e_string_last_blk;
-
-void init_e_string_blks();
-
-
-
-
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -82,8 +60,10 @@ private:
 
 public:
     e_str() : m_blks(0), m_size(0) {}
+	//estring is cleared, but allocated blocks are kept and will be used for future apeends
     void reset();
     void truncate(const xptr &ptr);
+	//abandon current estring and all it's blocks
 	void clear(bool del_blks = false)
 	{
         if (del_blks)
@@ -131,7 +111,7 @@ public:
     int blks_to_allocate(int str_len);
 };
 
-void e_str_copy_to_buffer(char *dest, const xptr &src, int count);
+void e_str_copy_to_buffer(char *dest, xptr src, int count);
 
 
 namespace tr_globals 

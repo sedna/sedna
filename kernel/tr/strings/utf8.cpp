@@ -15,7 +15,7 @@
 #include "char_iterator.h"
 #include "e_string.h"
 #include "e_string_iterator.h"
-#include "e_string_o_iterator.h"
+#include "o_iterators.h"
 #include <sstream>
 
 //////////////////////////////////////////////////////////////////////////
@@ -121,6 +121,38 @@ static inline mapent *me_bsearch(mapent *map_arr, int size, int c)
 	else
 		return NULL;
 }
+
+template <class Iterator>
+static inline void utf8_translate_proc(const Iterator &start, const Iterator &end, tuple &t, mapent *map_arr, int map_len)
+{
+	utf8_iterator<Iterator> arg_it(start);
+
+	stmt_str_buf out_it;
+	utf8_o_iterator<stmt_str_buf> oi(out_it);
+	while (arg_it.base_iterator() < end)
+	{
+		int c = *arg_it;
+		++arg_it;
+
+		//FIXME - not very good to pass &c here
+		mapent *m = me_bsearch(map_arr, map_len, c);
+
+		if (m == NULL)
+		{
+			*oi = c;
+			++oi;
+		}
+		else
+			if (m->dst != -1)
+			{
+				*oi = m->dst;
+				++oi;
+			}
+	}
+
+	t.copy(out_it.get_tuple_cell());
+}
+
 void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str)
 {
 	int map_len = length(map_str);
@@ -149,9 +181,8 @@ void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_
 	qsort(map_arr, map_len, sizeof(mapent), mapent_cmp);
 	if (arg->is_light_atomic())
 	{
-		std::ostringstream st(std::ios::out | std::ios::binary);
-		std::ostream_iterator<char> oi_raw(st);
-		utf8_o_iterator<std::ostream_iterator<char> > oi(oi_raw);
+		stmt_str_buf out_it;
+		utf8_o_iterator<stmt_str_buf > oi(out_it);
 		char_iterator_utf8 arg_it(arg->get_str_mem(), arg->get_strlen_mem(), 0);
 		while (!arg_it.at_end())
 		{
@@ -172,48 +203,12 @@ void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_
 					*oi = m->dst;
 					++oi;
 				}
-
 		}
-		t.copy(tuple_cell::atomic_deep(xs_string,st.str().c_str()));
+		t.copy(out_it.get_tuple_cell());
 	}
 	else
 	{
-		int arg_len = arg->get_strlen_vmm();
-		xptr arg_data = arg->get_str_vmm();
-		e_string_iterator_first start(arg_len, arg_data);
-		e_string_iterator_first end(0, arg_data);
-		utf8_iterator<e_string_iterator> arg_it(start);
-
-		e_string_o_iterator<unsigned char> es_it;
-		utf8_o_iterator<e_string_o_iterator<unsigned char> > oi(es_it);
-		xptr start_pos = es_it.pos;
-
-		while (arg_it.base_iterator() < end)
-		{
-			int c = *arg_it;
-			++arg_it;
-
-			//FIXME - not very good to pass &c here
-			mapent *m = me_bsearch(map_arr, map_len, c);
-
-			if (m == NULL)
-			{
-				*oi = c;
-				++oi;
-			}
-			else
-				if (m->dst != -1)
-				{
-					*oi = m->dst;
-					++oi;
-				}
-		}
-
-		//FIXME: int
-		int len=get_length_of_last_str(start_pos);
-		if (len > 0)
-			len--;
-		t.copy(tuple_cell::atomic_estr(xs_string,len,start_pos));
+		STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_translate_proc, arg, t, map_arr, map_len);
 	}
 	free(map_arr);
 }
@@ -360,16 +355,11 @@ static inline void utf8_replace(const Iterator &start, const Iterator &end, tupl
 	int match_flags = PCRE_NO_UTF8_CHECK;
 
 	PcreMatcher<Iterator> matcher(re);
-	e_string_o_iterator<unsigned char> es_it;
-	xptr start_pos = es_it.pos;
+	stmt_str_buf out_it;
 
-	matcher.replaceAll(es_it, start, end, start, t3->get_str_mem(), match_flags);
+	matcher.replaceAll(out_it, start, end, start, t3->get_str_mem(), match_flags);
 
-	//FIXME: int
-	int len=get_length_of_last_str(start_pos);
-	if (len > 0)
-		len--;
-	t.copy(tuple_cell::atomic_estr(xs_string,len,start_pos));
+	t.copy(out_it.get_tuple_cell());
 }
 
 void CollationHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4)
