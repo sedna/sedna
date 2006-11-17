@@ -83,6 +83,8 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 	}
 	case tc_heavy_atomic_pstr_long:
 		return pstr_long_length(tc->get_str_vmm());
+    default:
+        throw USER_EXCEPTION2(SE1003, "impossible case in CharsetHandler_utf8::length");
 	}
 }
 
@@ -305,6 +307,37 @@ tuple_cell CharsetHandler_utf8::tolower(const tuple_cell *tc)
 
 	return sb.get_tuple_cell();
 }
+
+template <class Iterator>
+static inline void utf8_substring(const Iterator &start, const Iterator &end, stmt_str_buf *sb, __int64 start_pos, __int64 length)
+{
+	utf8_o_iterator<stmt_str_buf> outp(*sb);
+	utf8_iterator<Iterator> it(start);
+
+    while (it.base_iterator() < end && start_pos > 0)
+    {
+        start_pos--;
+        ++it;
+    }
+  
+	while (it.base_iterator() < end && length > 0)
+	{
+		const int c = *it;
+		int c_type, c_case;
+		++it;
+	    *outp++ = c;
+        length--;
+	}
+}
+tuple_cell CharsetHandler_utf8::substring(const tuple_cell *tc, __int64 start_pos, __int64 length)
+{
+	stmt_str_buf sb;
+
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_substring, tc, &sb, start_pos, length);
+
+	return sb.get_tuple_cell();
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // Collation Handler

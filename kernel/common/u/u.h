@@ -184,6 +184,16 @@ typedef unsigned __int64       __uint64;
 typedef unsigned long long int __uint64;
 #endif
 
+#ifdef _WIN32
+/*
+ * Already defined
+ */
+
+#else
+#define _I64_MAX LLONG_MAX
+#define _I64_MIN LLONG_MIN
+#endif 
+
 
 /*
  * usize_t

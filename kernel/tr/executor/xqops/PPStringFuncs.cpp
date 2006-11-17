@@ -12,6 +12,7 @@
 #include "strings.h"
 #include "xs_helper.h"
 #include "dm_accessors.h"
+#include <math.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -595,3 +596,160 @@ bool PPFnNormalizeSpace::result(PPIterator* cur, variable_context *cxt, void*& r
     throw USER_EXCEPTION2(SE1002, "PPFnNormalizeSpace::result");
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubstring
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnSubstring::PPFnSubstring(variable_context *_cxt_,
+                             PPOpIn _str_child_,
+                             PPOpIn _start_child_) : PPIterator(_cxt_),
+                                                     str_child(_str_child_),
+                                                     start_child(_start_child_),
+                                                     is_length(false)
+{
+}
+
+PPFnSubstring::PPFnSubstring(variable_context *_cxt_,
+                             PPOpIn _str_child_,
+                             PPOpIn _start_child_,
+                             PPOpIn _length_child_) : PPIterator(_cxt_),
+                                                      str_child(_str_child_),
+                                                      start_child(_start_child_),
+                                                      length_child(_length_child_),
+                                                      is_length(true)
+{
+}
+
+PPFnSubstring::~PPFnSubstring()
+{
+    delete str_child.op;
+    str_child.op = NULL;
+    delete start_child.op;
+    start_child.op = NULL;
+
+    if(is_length)
+    {
+    	delete length_child.op;
+    	length_child.op = NULL;
+    }
+}
+
+void PPFnSubstring::open  ()
+{
+    str_child.op->open();
+    start_child.op->open();
+    if(is_length) length_child.op->open();
+    first_time = true;
+}
+
+void PPFnSubstring::reopen()
+{
+    str_child.op->reopen();
+    start_child.op->reopen();
+    if(is_length) length_child.op->reopen();
+    first_time = true;
+}
+
+void PPFnSubstring::close ()
+{
+    str_child.op->close();
+    start_child.op->close();
+    if(is_length) length_child.op->close();
+
+}
+
+void PPFnSubstring::next(tuple &t)
+{
+    __int64 start_pos = 0;
+    __int64 length = 0;
+    if (first_time)
+    {
+        tuple_cell tc;
+
+        first_time = false;
+
+        start_child.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:substring.");
+        
+        tc = start_child.get(t);
+        if(!tc.is_atomic()) tc = atomize(tc);
+        xmlscm_type xtype = tc.get_atomic_type();
+        
+        if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
+            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:substring (xs:double or promotable expected).");
+        
+        start_pos = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
+        
+        start_child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:substring.");
+
+        if(is_length)
+        {
+            length_child.op->next(t);
+            if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:substring.");
+            
+            tc = start_child.get(t);
+            tc = atomize(tc);
+            xtype = tc.get_atomic_type();
+
+            if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
+                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:substring (xs:double or promotable expected).");
+
+            length = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
+        
+            length_child.op->next(t);
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:substring.");
+        }
+        
+        str_child.op->next(t);
+        if (t.is_eos())
+        {
+             t.copy(EMPTY_STRING_TC);
+             return;
+        }
+        tc = atomize(str_child.get(t));
+        if (!is_string_type(tc.get_atomic_type()))
+        	throw USER_EXCEPTION2(XPTY0004, "1st argument of fn:substring is not a string");
+        str_child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:substring as 1st argument is more than 1");
+
+        if(is_length)
+        {
+            if (start_pos < 1)
+            {
+                length += start_pos - 1;
+                start_pos = 1;
+            }
+            if (length > 0)
+                t.copy(charset_handler->substring(&tc, start_pos-1, length));
+            else
+                t.copy(EMPTY_STRING_TC);
+        }
+        else
+            t.copy(charset_handler->substring(&tc, start_pos-1, _I64_MAX));
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+PPIterator* PPFnSubstring::copy(variable_context *_cxt_)
+{
+    PPFnSubstring *res = is_length ? new PPFnSubstring(_cxt_, str_child, start_child, length_child) :
+                                     new PPFnSubstring(_cxt_, str_child, start_child);
+                                
+    res->str_child.op = str_child.op->copy(_cxt_);
+    res->start_child.op = start_child.op->copy(_cxt_);
+    if(is_length) res->length_child.op = length_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnSubstring::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnSubstring::result");
+}

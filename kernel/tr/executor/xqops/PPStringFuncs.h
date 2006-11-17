@@ -154,7 +154,7 @@ public:
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// PPFnTranslate
+/// PPFnUpperCase and PPFnLowerCase
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnChangeCase : public PPIterator
 {
@@ -177,6 +177,41 @@ public:
 	PPFnChangeCase(variable_context *_cxt_, 
 		PPOpIn _str_, bool _to_upper_);
 	virtual ~PPFnChangeCase();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubstring
+///////////////////////////////////////////////////////////////////////////////
+class PPFnSubstring : public PPIterator
+{
+protected:
+    PPOpIn str_child;
+    PPOpIn start_child;
+    PPOpIn length_child;
+    
+    bool is_length; 		//equal to length_child.op != NULL;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnSubstring(variable_context *_cxt_, 
+                  PPOpIn _str_child_,
+                  PPOpIn _start_child_);
+
+    PPFnSubstring(variable_context *_cxt_, 
+                  PPOpIn _str_child_,
+                  PPOpIn _start_child_,
+                  PPOpIn _length_child_);
+
+    virtual ~PPFnSubstring();
 };
 
 
