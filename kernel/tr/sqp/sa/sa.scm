@@ -518,7 +518,7 @@
      ,sa:multiple-atomic
      ,sa:type-atomic !fn!escape-html-uri)
     ; *** 7.5 Functions Based on Substring Matching
-    (,sa:fn-ns "contains" 2 2
+    (,sa:fn-ns "contains" 2 3
      ,sa:multiple-atomic
      ,sa:type-atomic !fn!contains)
     (,sa:fn-ns "starts-with" 2 3
@@ -3830,6 +3830,26 @@
         (sa:analyze-expr  ; context item defined
          sa:context-item
          vars funcs ns-binding default-ns)
+        pair))
+      ((!fn!contains)
+       (if  ; collation supplied?
+        (= (length (sa:op-args expr)) 3)
+        (if
+         (equal?  ; default collation?
+          (caddr (sa:op-args expr))
+          '(const
+            (type !xs!string)
+            "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
+         (cons  ; removing the 3rd argument from function call
+          (reverse (cdr (reverse (car pair))))
+          (cdr pair))
+         (cl:signal-user-error
+          FOCH0004
+          (let ((collation (caddr (sa:op-args expr))))
+            (if (and (pair? collation)
+                     (eq? (sa:op-name collation) 'const))
+                (string-append (caddr collation) " in fn:contains")
+                "fn:contains"))))
         pair))
       ((cast)
        ; Special check for xs:QName constructor function
