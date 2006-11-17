@@ -30,13 +30,22 @@ include depend
 endif
 
 
-COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
-
 ifeq ("$(PLATFORM)", "WIN32")
 DRIVER_LIB = $(PP)/driver/c/libsednamt$(LIB_EXT)
 else
 DRIVER_LIB = $(PP)/driver/c/libsedna$(LIB_EXT)
 endif
+
+COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
+ifeq ($(PLATFORM), WIN32)
+COMMON_FILES_S = $(COMMON_FILES_LIB)
+else
+COMMON_FILES_S = -L$(PP)/kernel/common -lcommon_files
+endif
+
+#############################################################################
+# term
+#############################################################################
 
 STERM_OBJS = term_funcs$(OBJ_EXT)\
              term_globals$(OBJ_EXT)\
@@ -45,14 +54,8 @@ STERM_OBJS = term_funcs$(OBJ_EXT)\
              mainloop$(OBJ_EXT)
         
 
-
-
-#############################################################################
-# term
-#############################################################################
-
-$(PP)/bin/se_term$(EXE_EXT): $(STERM_OBJS) $(DRIVER_LIB)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $(STERM_OBJS) $(LSLIBS) $(DRIVER_LIB) $(COMMON_FILES_LIB)
+$(PP)/bin/se_term$(EXE_EXT): $(STERM_OBJS) $(DRIVER_LIB) $(COMMON_FILES_LIB)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $(STERM_OBJS) $(LSLIBS) $(DRIVER_LIB) $(COMMON_FILES_S)
 
 
 #############################################################################

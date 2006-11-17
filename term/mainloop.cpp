@@ -141,8 +141,6 @@ MainLoop(FILE *source)
         }
     }
 
-	set_sedna_data(NULL);
-	
 	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n\n");
 	term_output1("Type:\n");
 	
@@ -557,8 +555,11 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 		{
 			if(!number_of_msg_buf_size)
 			{
-				std::string tmp_file_path_str = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files");
-				if(!uGetUniqueFileName(tmp_file_path_str.c_str(), tmp_file_name, NULL)) throw USER_EXCEPTION(SE4052);
+                char current_dir_buf[4096];
+                char* res  = uGetCurrentWorkingDirectory(current_dir_buf, 4096, __sys_call_error);
+                if (res == NULL)
+                    throw USER_EXCEPTION(SE4602);
+				if(!uGetUniqueFileName(current_dir_buf, tmp_file_name, NULL)) throw USER_EXCEPTION(SE4052);
 				f = fopen(tmp_file_name,"w+t");
 			}
 			number_of_msg_buf_size++;
