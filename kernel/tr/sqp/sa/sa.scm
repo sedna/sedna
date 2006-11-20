@@ -3844,7 +3844,7 @@
           (reverse (cdr (reverse (car pair))))
           (cdr pair))
          (cl:signal-user-error
-          FOCH0004
+          FOCH0002  ; Was: FOCH0004
           (let ((collation (caddr (sa:op-args expr))))
             (if (and (pair? collation)
                      (eq? (sa:op-name collation) 'const))
