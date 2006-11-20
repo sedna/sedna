@@ -16,35 +16,9 @@
 #include "base.h"
 #include "e_string.h"
 
-struct prev_blocks_list_holder
-{
-	struct block_info_t
-	{
-	xptr block_xptr; 
-	char* block_str_start_p; 
-	block_info_t(xptr _b_x_, char* _b_s_p_): block_xptr(_b_x_), block_str_start_p(_b_s_p_) {}; 
-	};
-
-	std::list<block_info_t*> pb_list;
-	typedef std::list<block_info_t*>::iterator pb_list_iterator;
-
-	prev_blocks_list_holder() : pb_list() {}
-	~prev_blocks_list_holder()
-	{
-		for(pb_list_iterator i = pb_list.begin(); 
-			i != pb_list.end();
-			++i)
-		{
-			delete (*i);
-		}
-	}
-};
-		
 class e_string_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 
 {
 private:
-	
-    //friend class tuple_cell;
     friend bool operator ==(const e_string_iterator& it1, const e_string_iterator& it2);
     friend bool operator !=(const e_string_iterator& it1, const e_string_iterator& it2);
     friend bool operator > (const e_string_iterator& it1, const e_string_iterator& it2);
@@ -52,9 +26,6 @@ private:
     friend bool operator < (const e_string_iterator& it1, const e_string_iterator& it2);
     friend bool operator <=(const e_string_iterator& it1, const e_string_iterator& it2);
     	
-	//position of the current block in the list
-	prev_blocks_list_holder::pb_list_iterator cur_block_in_list_pos;
-	
 	//xptr to the current block of the string being iterated over
 	xptr cur_block_xptr;
 	
@@ -70,13 +41,8 @@ private:
 	//the string being iterated over
     xptr s;
 
-protected:
-	//list of prev blocks
-	prev_blocks_list_holder *prev_blocks;
-	
-	e_string_iterator(int _chars_left_, xptr _s_, prev_blocks_list_holder *hld);
 public:	
-
+	e_string_iterator(int _chars_left_, xptr _s_);
 	e_string_iterator(): chars_left(-1) { }
 
 
@@ -90,7 +56,7 @@ public:
     e_string_iterator& operator ++();
     e_string_iterator& operator --();
 
-	//FIXME!
+	//FIXME! (make void or throw exception)
 	e_string_iterator operator ++(int) {e_string_iterator old(*this); ++(*this); return old; }
 	e_string_iterator operator --(int) {e_string_iterator old(*this); --(*this); return old; }
 
@@ -106,14 +72,6 @@ public:
 	int operator -(const e_string_iterator &it) const { return it.chars_left - chars_left; }
     
 };
-
-class e_string_iterator_first : public e_string_iterator
-{
-public:
-	e_string_iterator_first (int _chars_left_, xptr _s_) : e_string_iterator(_chars_left_, _s_, new prev_blocks_list_holder()){}
-	~e_string_iterator_first();
-};
-
 
 inline bool operator ==(const e_string_iterator& it1, const e_string_iterator& it2)
 {
