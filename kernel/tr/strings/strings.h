@@ -38,8 +38,8 @@
 		int len = tcell_ptr->get_strlen_vmm(); \
 		xptr data = tcell_ptr->get_str_vmm(); \
 \
-		e_string_iterator_first start1(len, data); \
-		e_string_iterator_first end1(0, data); \
+		e_string_iterator start1(len, data); \
+		e_string_iterator end1(0, data); \
 		func<e_string_iterator> params; \
 		break; }\
 	case tc_heavy_atomic_pstr_long: {\

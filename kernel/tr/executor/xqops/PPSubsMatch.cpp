@@ -40,7 +40,7 @@ inline void*  create_iterator(tuple_cell& t, int&l)
 		else
 		{
 			l=t.get_strlen_vmm();
-			return new e_string_iterator_first (l,t.get_str_vmm());
+			return new e_string_iterator (l,t.get_str_vmm());
 		}
 	
 }
