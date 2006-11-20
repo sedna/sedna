@@ -5,6 +5,7 @@
 
 
 #include "sedna.h"
+#include <math.h>
 #include "dateTime_operations.h"
 #include "casting_operations.h"
 #include "XMLDateTime.h"
