@@ -142,6 +142,113 @@ bool PPFnConcat::result(PPIterator* cur, variable_context *cxt, void*& r)
     throw USER_EXCEPTION2(SE1002, "PPFnConcat::result");
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStringJoin
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnStringJoin::PPFnStringJoin(variable_context *_cxt_,
+                               PPOpIn _members_,
+                               PPOpIn _separator_) : PPIterator(_cxt_), 
+                                                     members(_members_),
+                                                     separator(_separator_)
+{
+}
+
+PPFnStringJoin::~PPFnStringJoin()
+{
+    delete members.op;
+    members.op = NULL;
+    delete separator.op;
+    separator.op = NULL;
+}
+
+void PPFnStringJoin::open ()
+{
+    members.op -> open();
+    separator.op -> open();
+    first_time = true;
+}
+
+void PPFnStringJoin::reopen ()
+{
+    members.op -> reopen();
+    separator.op -> reopen();
+    first_time = true;
+}
+
+void PPFnStringJoin::close ()
+{
+    members.op -> close();
+    separator.op -> close();
+}
+
+void PPFnStringJoin::next(tuple &t)
+{
+    if (!first_time)
+    {
+        first_time = true;
+        t.set_eos();
+        return;
+    }
+
+    first_time = false;
+    stmt_str_buf result;
+    bool append_sep = false;
+
+    tuple_cell sep;
+    tuple_cell tc;
+    bool is_sep = false;
+
+    separator.op->next(t);
+    if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains zero items.");
+    sep = atomize(separator.get(t));
+    xmlscm_type xtype = sep.get_atomic_type();
+          
+    if(xtype != xs_string        && 
+       xtype != xs_untypedAtomic && 
+       xtype != xs_anyURI        &&
+       !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the separator of fn:string-join (xs_string/derived/promotable is expected).");
+
+    separator.op->next(t);
+    if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains more than one item.");
+
+    is_sep = (sep.get_strlen() > 0);
+    
+    while(true)
+    {
+        members.op->next(t);
+        if (t.is_eos()) break;
+        if(append_sep) result.append(sep);
+        tc = atomize(members.get(t));
+        xmlscm_type xtype = tc.get_atomic_type();
+        
+        if(xtype != xs_string        && 
+           xtype != xs_untypedAtomic && 
+           xtype != xs_anyURI        &&
+           !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the item in first argument of fn:string-join (xs_string/derived/promotable is expected).");
+        
+        result.append(tc);
+        append_sep = is_sep;
+    }
+
+    t.copy(result.get_tuple_cell());
+}
+
+PPIterator* PPFnStringJoin::copy(variable_context *_cxt_)
+{
+    PPFnStringJoin *res = new PPFnStringJoin(_cxt_, members, separator);
+    res->members.op   = members.op->copy(_cxt_);
+    res->separator.op = separator.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnStringJoin::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnStringJoin::result");
+}
+
+
 
 
 
