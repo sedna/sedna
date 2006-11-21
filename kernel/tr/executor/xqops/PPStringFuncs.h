@@ -42,6 +42,31 @@ public:
     virtual ~PPFnConcat();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStringJoin
+///////////////////////////////////////////////////////////////////////////////
+class PPFnStringJoin : public PPIterator
+{
+private:
+    PPOpIn members;
+    PPOpIn separator;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator *copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnStringJoin(variable_context *_cxt_,
+                   PPOpIn _members_,
+                   PPOpIn _separator_);
+    virtual ~PPFnStringJoin();
+};
 
 
 ///////////////////////////////////////////////////////////////////////////////
