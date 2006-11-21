@@ -61,8 +61,6 @@ static const char UTC_SET[]            = {UTC_STD_CHAR           //"Z+-"
                                          , 0};
 
 
-static const double ONE_HALF = 0.49999999;
-
 static const int YMD_MIN_SIZE    = 10;   // CCYY-MM-DD
 static const int YMONTH_MIN_SIZE = 7;    // CCYY_MM
 static const int TIME_MIN_SIZE   = 8;    // hh:mm:ss
@@ -101,6 +99,23 @@ static inline int fQuotient(int a, int b)
 {
     div_t div_result = div(a, b);
     return div_result.quot;
+}
+
+/**
+ * XQuery rounding routine for floating point numbers
+ */
+static inline int xq_round( double v )
+{
+	int sign = v >= 0 ? 1 : -1;
+	double remainder = sign*(v - ((int)v));
+
+	if (remainder >= 0.5 )
+	{
+		if (remainder == 0.5 && sign == -1)
+			return ((int)v);
+		return ((int)v) + sign;
+	}
+	return ((int)v);
 }
 
 static inline int fQuotient(int temp, int low, int high)
@@ -195,8 +210,6 @@ void normalizeMilisAndSeconds( double& milis, int& seconds )
 	}
 	else
 		seconds += carry;
-
-
 }
 
 //---------------------------------------------------------------------------------------
@@ -218,7 +231,7 @@ XMLDateTime::XMLDateTime(const utm& t)
 	setValue(Hour, t.utm_hour);
 	setValue(Minute, t.utm_min);
 	setValue(Second, t.utm_sec);
-	setValue(MiliSecond, (int)(t.utm_millis/1000.0 * DT_MILISECOND_MAX_VALUE + ONE_HALF ));
+	setValue(MiliSecond, xq_round(t.utm_millis/1000.0 * DT_MILISECOND_MAX_VALUE));
 
 	int tz_neg = t.utm_gmtoff >= 0 ? 1 : -1;
 
@@ -467,7 +480,7 @@ XMLDateTime addDurations(const XMLDateTime& d1, const XMLDateTime& d2)
 	normalizeMilisAndSeconds( milis, seconds );
 	int neg = seconds >= 0 && milis >= 0.0 ? 1 : -1;
 
-	newDuration.setValue(XMLDateTime::MiliSecond, (int)(milis * DUR_MILISECOND_MAX_VALUE + neg * ONE_HALF));
+	newDuration.setValue(XMLDateTime::MiliSecond, xq_round(milis * DUR_MILISECOND_MAX_VALUE));
  	newDuration.setValue(XMLDateTime::Second, seconds);
 	newDuration.setValue(XMLDateTime::utc, neg == 1 ? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );	
 	newDuration.normalize();
@@ -491,7 +504,7 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		double multMonths = months * v;
 		int neg = multMonths >= 0 ? 1 : -1;
 
-		months = neg * (int)floor( neg * multMonths + ONE_HALF);
+		months = xq_round( multMonths );
 		newDuration.setValue(XMLDateTime::Month, months);
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG);
 
@@ -508,7 +521,7 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 		int neg = seconds_milis >= 0 ? 1 : -1;
 		newDuration.setValue(XMLDateTime::Second, (int)seconds_milis);
 		if (seconds_milis - (int)seconds_milis != 0.0)
-			newDuration.setValue(XMLDateTime::MiliSecond, (int)((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE + neg*ONE_HALF));
+			newDuration.setValue(XMLDateTime::MiliSecond, xq_round((seconds_milis - (int)seconds_milis)*DUR_MILISECOND_MAX_VALUE));
 
 		newDuration.setValue(XMLDateTime::utc, neg == 1? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
 
@@ -587,7 +600,7 @@ XMLDateTime addDurationToDateTime(const XMLDateTime& dt, const XMLDateTime& fDur
 		}
 	}
 
-	fNewDate.setValue(XMLDateTime::MiliSecond, (int)(milis * DT_MILISECOND_MAX_VALUE + ONE_HALF));
+	fNewDate.setValue(XMLDateTime::MiliSecond, xq_round(milis * DT_MILISECOND_MAX_VALUE));
 
 	//add seconds
     	temp = dt.getValue(XMLDateTime::Second) + fDuration.getValue(XMLDateTime::Second) + carry;
@@ -797,7 +810,7 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
     result.setValue(XMLDateTime::utc, neg==1 ? XMLDateTime::UTC_POS : XMLDateTime::UTC_NEG );
     result.setValue(XMLDateTime::Day, neg*days);
     result.setValue(XMLDateTime::Second, neg*seconds);
-    result.setValue(XMLDateTime::MiliSecond, neg*milis*DUR_MILISECOND_MAX_VALUE + neg*ONE_HALF);
+    result.setValue(XMLDateTime::MiliSecond, xq_round(milis*DUR_MILISECOND_MAX_VALUE));
     result.normalizeDuration();
     return result;
 }
