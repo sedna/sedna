@@ -14,6 +14,7 @@
 #include "crmutils.h"
 #include "metadata.h"
 #include "e_string.h"
+#include "xs_names.h"
 
 using namespace std;
 using namespace tr_globals;
@@ -275,6 +276,8 @@ void PPElementConstructor::next  (tuple &t)
 			res=getQnameParameter(qname);
 			name=res.get_str_mem();
 		}
+		
+
 		//context save
 		xptr parind=cont_parind;
 		xptr leftind=cont_leftind;
@@ -322,6 +325,9 @@ void PPElementConstructor::next  (tuple &t)
 				delete prefix;
 			}
 		}
+		if (!chech_constraints_for_xs_NCName(name)||
+			(ns!=NULL && ns->prefix!=NULL &&!chech_constraints_for_xs_NCName(ns->prefix)))
+			throw USER_EXCEPTION(XQDY0074);
 		//Element insertion
 		xptr new_element;
 		if (parind==XNULL || deep_copy)
@@ -681,6 +687,9 @@ void PPAttributeConstructor::next  (tuple &t)
 				delete prefix;			
 			}
 		}
+		if (!chech_constraints_for_xs_NCName(name)||
+			(ns!=NULL &&  ns->prefix!=NULL && !chech_constraints_for_xs_NCName(ns->prefix)))
+			throw USER_EXCEPTION(XQDY0074);
 		const char* value=at_value;
 		tuple_cell res;
 		int size;
@@ -1111,6 +1120,8 @@ void PPPIConstructor::next  (tuple &t)
 				throw USER_EXCEPTION(XQDY0041);
 			}
 		}
+		if (!chech_constraints_for_xs_NCName(name))
+			throw USER_EXCEPTION(XQDY0041);
 		if(collation_handler->matches(name, "^(?i:xml)$"))
 			throw USER_EXCEPTION(XQDY0064);
 		const char* value=at_value;
@@ -1124,9 +1135,19 @@ void PPPIConstructor::next  (tuple &t)
 		}
 		else 
 			size=strlen(value);
+		
 		int rst=strm.parse(value,size,NULL,NULL);
 		if (rst==1) 
 			throw USER_EXCEPTION(XQDY0026);
+		int wp_k=0;
+		int wp_s=size;
+		while (wp_k<wp_s)
+		{
+			char s=value[0];
+			if (s!=32 && s!=9 && s!=10 && s!=13 )break;
+			++value;--size;
+
+		}
 		//Attribute insertion
 		xptr new_pi;
 		if (cont_parind==XNULL || deep_copy)
