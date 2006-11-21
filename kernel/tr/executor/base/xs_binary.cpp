@@ -391,7 +391,7 @@ static inline void hex_to_base64(Iterator &start, const Iterator &end, stmt_str_
     unsigned char value;
     unsigned char previous;
 
-    int counter;
+    int counter = 0;
 
     while(start < end)
     {
