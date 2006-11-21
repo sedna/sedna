@@ -169,7 +169,7 @@ xml_ns* static_context::add_to_context(const char* prefix,const char* uri)
 }
 void static_context::remove_from_context(const char* prefix)
 {
-	if (prefix==NULL &&def_ns.size()>0)
+	if (prefix==NULL&&def_ns.size()>0)
 	{
 		def_ns.pop_back();
 	}
