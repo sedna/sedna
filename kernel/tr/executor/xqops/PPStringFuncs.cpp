@@ -780,8 +780,7 @@ void PPFnSubstring::next(tuple &t)
         start_child.op->next(t);
         if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:substring.");
         
-        tc = start_child.get(t);
-        if(!tc.is_atomic()) tc = atomize(tc);
+        tc = atomize(start_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
         
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
@@ -797,8 +796,7 @@ void PPFnSubstring::next(tuple &t)
             length_child.op->next(t);
             if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:substring.");
             
-            tc = start_child.get(t);
-            tc = atomize(tc);
+            tc = atomize(start_child.get(t));
             xtype = tc.get_atomic_type();
 
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  

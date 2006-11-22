@@ -141,8 +141,7 @@ void PPFnUriEncoding::next  (tuple &t)
 
         if(!t.is_eos()) 
         {
-            tuple_cell tc = child.get(t);
-            if(!tc.is_atomic()) tc = atomize(tc);
+            tuple_cell tc = atomize(child.get(t));
             xmlscm_type xtype = tc.get_atomic_type();
         
             if(xtype != xs_string        && 
@@ -276,13 +275,11 @@ void PPFnResolveUri::next  (tuple &t)
             return;
         }
         
-        tuple r(relative.ts);
         tuple_cell base_tc;
         first_time = false;
         bool valid = false;
 
-        tuple_cell relative_tc = relative.get(t);
-        if(!relative_tc.is_atomic()) relative_tc = atomize(relative_tc);
+        tuple_cell relative_tc = atomize(relative.get(t));
         xmlscm_type xtype = relative_tc.get_atomic_type();
         if(xtype != xs_string        && 
            xtype != xs_untypedAtomic && 
@@ -303,14 +300,12 @@ void PPFnResolveUri::next  (tuple &t)
         else
         {
             if(need_reopen) base.op->reopen();   
-            tuple b(base.ts);
-            base.op->next(b);
-            
-            if(b.is_eos())
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument could not be emty sequence.");
+      
+            base.op->next(t);
+            if(t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument could not be emty sequence.");
 
-            base_tc = base.get(b);
-            xtype = base_tc.get_atomic_type();
+            base_tc = atomize(base.get(t));
+
             if(!base_tc.is_atomic()) base_tc = atomize(base_tc);            
             if(xtype != xs_string        && 
                xtype != xs_untypedAtomic && 
@@ -320,17 +315,15 @@ void PPFnResolveUri::next  (tuple &t)
             base_tc = Uri::chech_constraints_for_xs_anyURI(&base_tc, &valid);
             if(!valid) throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
 
-            base.op->next(b);
-            if(!b.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument contains more than one item.");
+            base.op->next(t);
+            if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument contains more than one item.");
             need_reopen = false;
         }
 
         base_tc = tuple_cell::make_sure_light_atomic(base_tc);
 
-        relative.op->next(r);
-        if(!r.is_eos()) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
+        relative.op->next(t);
+        if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
 
         stmt_str_buf result;
         if(Uri::resolve(relative_tc.get_str_mem(), base_tc.get_str_mem(), result)) 
@@ -338,8 +331,7 @@ void PPFnResolveUri::next  (tuple &t)
         else 
             t.copy(relative_tc);
         
-        tuple_cell* tc = &(t.cells[0]);
-        tc->set_xtype(xs_anyURI);
+        (&t.cells[0]) -> set_xtype(xs_anyURI);
     }
     else 
     {
