@@ -58,7 +58,7 @@ e_string_iterator& e_string_iterator::operator ++()
 	return *this; 
 }
 
-e_string_iterator& e_string_iterator::operator --() 
+e_string_iterator& e_string_iterator::operator --()
 { 
 	if (cur_p-1 < cur_block_str_start_p)
 	{//jump to the prev block
