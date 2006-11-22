@@ -116,4 +116,59 @@ public:
     virtual ~PPFnNamespaceUriFromQName();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNamespaceUriForPrefix
+///////////////////////////////////////////////////////////////////////////////
+class PPFnNamespaceUriForPrefix : public PPIterator
+{
+protected:
+    PPOpIn child_prefix;
+    PPOpIn child_element;
+    bool first_time;
+
+    void children(PPOpIn &_child_prefix_, PPOpIn &_child_element_) { _child_prefix_ = child_prefix; _child_element_ = child_element; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnNamespaceUriForPrefix(variable_context *_cxt_,
+                              PPOpIn _child_prefix_,
+                              PPOpIn _child_element_);
+    virtual ~PPFnNamespaceUriForPrefix();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnInScopePrefixes
+///////////////////////////////////////////////////////////////////////////////
+class PPFnInScopePrefixes : public PPIterator
+{
+protected:
+    PPOpIn child;
+    std::vector<xml_ns*> xmlns;
+    int pos;
+
+    void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnInScopePrefixes(variable_context *_cxt_,
+                        PPOpIn _child_);
+    virtual ~PPFnInScopePrefixes();
+};
+
 #endif

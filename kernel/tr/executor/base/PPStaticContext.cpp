@@ -6,6 +6,7 @@
 #include "sedna.h"
 #include "vmm.h"
 #include "PPStaticContext.h"
+#include "xs_uri.h"
 
 static_context::static_context()
 {
@@ -51,6 +52,7 @@ void static_context::_init_context()
     output_method = se_output_method_xml;
     output_indent = se_output_indent_yes;
 
+    set_default_collation_uri("http://www.w3.org/2005/xpath-functions/collation/codepoint");
 
 	datetime_initialized = false;
 
@@ -247,8 +249,37 @@ void static_context::set_base_uri(const char* _base_uri_)
 
 void static_context::set_default_collation_uri(const char* _default_collation_uri_)
 {
-    // FIXME: check lexical representation for uri and normalize it
+    default_collation_handler = get_collation(_default_collation_uri_);
+
     if (default_collation_uri != NULL) delete default_collation_uri;
     default_collation_uri = new char[strlen(_default_collation_uri_) + 1];
     strcpy(default_collation_uri, _default_collation_uri_);
+}
+
+CollationHandler* static_context::get_collation(const char *uri)
+{
+    // FIXME: check lexical representation for uri and normalize it
+    if (!uri) return get_default_collation();
+
+    // resolve uri if needed
+    const char *resolved_uri = uri;
+    tuple_cell tc;
+    if (base_uri)
+    {
+        stmt_str_buf dest;
+        bool resolve_res = Uri::resolve(uri, base_uri, dest);
+        if (resolve_res) // uri was relative
+        {
+            tc = tuple_cell::make_sure_light_atomic(dest.get_tuple_cell());
+            resolved_uri = tc.get_str_mem();
+        }
+    }
+    // FIXME: what if uri is relative uri and base_uri is NULL?
+
+    // ask collation manager for collation handler
+    CollationHandler *ch = collation_manager.get_collation_handler(resolved_uri);
+    if (!ch)
+        throw USER_EXCEPTION(FOCH0002);
+
+    return ch;
 }

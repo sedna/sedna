@@ -3,7 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#ifndef _E_STRING_O_ITERATOR_H
+#ifndef _O_ITERATORS_H
 #define _O_ITERATORS_H
 
 #include "sedna.h"

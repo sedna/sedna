@@ -2647,6 +2647,26 @@ fn_dt_funcs_correct_type:
 		opit = new PPFnNamespaceUriFromQName(cxt,
                                              make_pp_op(cxt, lst->at(1).internal.list));
     }
+	else if (op == "PPFnNamespaceUriForPrefix")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "112");
+
+		opit = new PPFnNamespaceUriForPrefix(cxt,
+                                             make_pp_op(cxt, lst->at(1).internal.list),
+                                             make_pp_op(cxt, lst->at(2).internal.list));
+    }
+	else if (op == "PPFnInScopePrefixes")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "113");
+
+		opit = new PPFnInScopePrefixes(cxt,
+                                       make_pp_op(cxt, lst->at(1).internal.list));
+    }
 
 
 
