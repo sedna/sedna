@@ -296,3 +296,14 @@
      (result-type (zero-or-more (item-test)))
      (body (var ("" "var2")))))
    (query-body (fun-call (const (type !xs!QName) ("" "boolean")) (var ("" "var"))))))
+
+(go
+ '(query
+   (prolog
+    (version-declaration
+     (const (type !xs!string) "1.0")
+     (const (type !xs!string) "iso-latin-1 ")))
+   (query-body
+    (return
+     (sequence (const (type !xs!integer) "1") (const (type !xs!integer) "2"))
+     (fun-def (((one ("xs" "int")) (var ("" "x")))) (var ("" "x")))))))
