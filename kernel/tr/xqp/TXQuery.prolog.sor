@@ -34,6 +34,10 @@ prolog!:
 	   <<if (prolog_ == NULL) prolog_ =bsd; else prolog_->append(bsd);>>
 	 | dopt:declareOption
 	   <<if (prolog_ == NULL) prolog_ =dopt; else prolog_->append(dopt);>>
+
+	 | vd:versionDecl
+	   <<if (prolog_ == NULL) prolog_ =vd; else prolog_->append(vd);>>
+
 	)*
 	<<#prolog= prolog_;>>
 ;
@@ -79,6 +83,22 @@ param!:
 	#(AST_PARAM v:vardecl st:sequenceType)
 
 	<<#param=#(#[], st, v);>>
+;
+
+
+versionDecl!:
+	#(AST_VERSION_DECL s1:AST_STRING_CONST 
+	<<#versionDecl=#(#["version-declaration"],
+	                   #(#["const"], 
+	                     #(#["type"], #["!xs!string"]),
+	                     #[s1->getText()]));
+	>>
+
+	  {s2:AST_STRING_CONST <<#versionDecl->addChild(#(#["const"], 
+	                                                  #(#["type"], #["!xs!string"]),
+	                                                  #[s2->getText()]));>>
+	  }
+	)
 ;
 
 namespaceDecl!:

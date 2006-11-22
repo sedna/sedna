@@ -222,3 +222,12 @@ void * extract_pragma_content(char* text, char* qname, char* pr_content)
 }
 */
 
+
+
+
+char *encoding_processing(const char *query)
+{
+    char * x = (char*)malloc(strlen(query) + 1);
+    strcpy(x, query);
+    return x;
+}

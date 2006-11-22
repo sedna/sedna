@@ -130,6 +130,9 @@ virtual void errstd(const char *s){
 #token INHERIT "inherit"
 #token NOINHERIT "no\-inherit"
 #token VARIABLE "variable"
+#token XQUERY "xquery"
+#token VERSION "version"
+#token ENCODING "encoding"
 
 /*  This keywords are added for update expressions      */
 #token UPDATE "UPDATE" <<mode(UPDATE_CLASS);>>
