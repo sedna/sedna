@@ -598,7 +598,6 @@ void PPFnSubsequence::close ()
     seq_child.op->close();
     start_child.op->close();
     if(is_length) length_child.op->close();
-
 }
 
 void PPFnSubsequence::next(tuple &t)
@@ -607,14 +606,10 @@ void PPFnSubsequence::next(tuple &t)
     {
         first_time = false;
 
-        tuple st(start_child.ts);
-        tuple_cell tc;
-
-        start_child.op->next(st);
-        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
+        start_child.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
         
-        tc = start_child.get(st);
-        if(!tc.is_atomic()) tc = atomize(tc);
+        tuple_cell tc = atomize(start_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
         
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
@@ -622,18 +617,15 @@ void PPFnSubsequence::next(tuple &t)
         
         start_pos = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         
-        start_child.op->next(st);
-        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
+        start_child.op->next(t);
+        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
 
         if(is_length)
         {
-            tuple lt(length_child.ts);
-        
-            length_child.op->next(lt);
-            if (lt.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
+            length_child.op->next(t);
+            if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
             
-            tc = start_child.get(lt);
-            if(!tc.is_atomic()) tc = atomize(tc);
+            tc = atomize(start_child.get(t));
             xtype = tc.get_atomic_type();
 
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
@@ -641,8 +633,8 @@ void PPFnSubsequence::next(tuple &t)
 
             length = floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
         
-            length_child.op->next(lt);
-            if (!(lt.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
+            length_child.op->next(t);
+            if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
         }
         
         current_pos = 0;           
@@ -652,13 +644,12 @@ void PPFnSubsequence::next(tuple &t)
     {
        bool length_check = true;   //allows to break evaluation before all input is passed 
 
-       while( (!t.is_eos()) && length_check )
-       {
+       do {
            seq_child.op->next(t);
            current_pos++;
            bool length_check = is_length ? (current_pos < start_pos + length) : true;
-           if((!t.is_eos()) && start_pos <= current_pos && length_check) return;
-       }
+           if(!t.is_eos() && start_pos <= current_pos && length_check) return;
+       } while( !t.is_eos() && length_check );
     }
     
     t.set_eos();
@@ -733,13 +724,10 @@ void PPFnRemove::next(tuple &t)
     {
         first_time = false;
 
-        tuple st(pos_child.ts);
+        pos_child.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
         
-        pos_child.op->next(st);
-        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
-        
-        tuple_cell tc = pos_child.get(st);
-        if(!tc.is_atomic()) tc = atomize(tc);
+        tuple_cell tc = atomize(pos_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
 
         if(!(xtype == xs_untypedAtomic ||
@@ -749,8 +737,8 @@ void PPFnRemove::next(tuple &t)
 
         remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
         
-        pos_child.op->next(st);
-        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
+        pos_child.op->next(t);
+        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
 
         current_pos = 0;
     }
@@ -843,13 +831,10 @@ void PPFnInsertBefore::next(tuple &t)
         inserted    = false;
         eos_reached = false;
 
-        tuple st(pos_child.ts);
+        pos_child.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
         
-        pos_child.op->next(st);
-        if (st.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
-        
-        tuple_cell tc = pos_child.get(st);
-        if(!tc.is_atomic()) tc = atomize(tc);
+        tuple_cell tc = atomize(pos_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
         
         if(!(xtype == xs_untypedAtomic ||
@@ -859,8 +844,8 @@ void PPFnInsertBefore::next(tuple &t)
 
         insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
         
-        pos_child.op->next(st);
-        if (!(st.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
+        pos_child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
 
         current_pos = 1;
     }
