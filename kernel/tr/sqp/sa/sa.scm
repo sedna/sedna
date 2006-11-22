@@ -150,6 +150,37 @@
 ;         (loop (cdr src) pattern)))))
   )
        
+; Whether a given string is a proper XML EncName
+; [81]    EncName    ::=    [A-Za-z] ([A-Za-z0-9._] | '-')* 
+(define (sa:proper-EncName? str)
+  (and
+   (> (string-length str) 0)
+   (or
+    (and
+     (char>=? (string-ref str 0) #\A)
+     (char<=? (string-ref str 0) #\Z))
+    (and
+     (char>=? (string-ref str 0) #\a)
+     (char<=? (string-ref str 0) #\z)))
+   (let loop ((i 1))
+     (or
+      (= i (string-length str))
+      (and
+       (or
+        (and
+         (char>=? (string-ref str i) #\A)
+         (char<=? (string-ref str i) #\Z))
+        (and
+         (char>=? (string-ref str i) #\a)
+         (char<=? (string-ref str i) #\z))
+        (and
+         (char>=? (string-ref str i) #\0)
+         (char<=? (string-ref str i) #\9))
+        (char=? (string-ref str i) #\.)
+        (char=? (string-ref str i) #\_)
+        (char=? (string-ref str i) #\-))
+       (loop (+ i 1)))))))
+        
 
 ;==========================================================================
 ; Query parsing
@@ -1081,6 +1112,31 @@
                                        body))))))))
      (let ((expr (car prolog)))
        (case (sa:op-name expr)
+         ((version-declaration)
+          (and
+           (or
+            (= (length (sa:op-args expr)) 1)  ; no encoding supplied
+            (sa:assert-num-args expr 2))
+           (sa:analyze-string-const
+            (car (sa:op-args expr))
+            '() '() '() sa:default-ns)
+           (or
+            (equal? (caddr (car (sa:op-args expr))) "1.0")
+            (cl:signal-user-error XQST0031
+                                  (caddr (car (sa:op-args expr)))))
+           (or
+            (null? (cdr (sa:op-args expr)))  ; no encoding
+            (and
+             (sa:analyze-string-const
+              (cadr (sa:op-args expr))
+              '() '() '() sa:default-ns)
+             (or
+              (sa:proper-EncName? (caddr (cadr (sa:op-args expr))))
+              (cl:signal-user-error XQST0087
+                                    (caddr (cadr (sa:op-args expr)))))))
+           (loop new-prlg funcs triples
+                 ns-binding default-elem-ns default-func-ns
+                 (cdr prolog))))
          ((boundary-space-decl)  ; Boundary space
           (and
            (sa:assert-num-args expr 1)
@@ -3819,8 +3875,12 @@
                 vars funcs ns-binding default-ns)))
           (and
            context-pair
-           (cons (list (sa:op-name expr)  ; function name
-                       (car context-pair))
+           (cons (list
+                  (sa:op-name expr)  ; function name
+                  (if
+                   (eq? (sa:op-name expr) '!fn!normalize-space)
+                   `(!fn!string ,(car context-pair))
+                   (car context-pair)))
                  (cdr pair)  ; return type
                  )))
         pair))
