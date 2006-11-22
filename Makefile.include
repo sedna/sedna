@@ -125,9 +125,7 @@ INSTALL = install
 REMOVE = rm -f
 REMOVE_DIR = rm -f -r
 COPY = cp -r
-LATEX = latex
-DVIPS = dvips
-DVIPDF = dvipdfm
+PDFLATEX = pdflatex
 
 include $(PP)/Makefile.platform
 
@@ -206,7 +204,6 @@ SORCERER = $(PP)/libs/pg/Sorcerer.exe -CPP -transform
 CHICKEN_HOME = $(PP)/libs/chicken
 CHICKEN = $(CHICKEN_HOME)/chicken-static.exe
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
-PS2PDF = ps2pdf.bat
 else
 # UNIX
 CC = gcc -c
@@ -280,7 +277,6 @@ CHICKEN_HOME = $(PP)/libs/chicken
 CHICKEN = $(CHICKEN_HOME)/chicken
 CHICKEN_INCLUDE = $(CHICKEN_HOME)
 #LD_LIBRARY_PATH+=$(CHICKEN_HOME)
-PS2PDF = ps2pdf
 endif
 
 
@@ -298,15 +294,10 @@ CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
 %.c: %.scm
 	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
 
-%.pdf: %.ps
-	$(PS2PDF) $< $@
+%.pdf: %.tex
+	$(PDFLATEX) $<
+	$(PDFLATEX) $<
 
-%.ps: %.dvi
-	$(DVIPS) -o $@ $<
-
-%.dvi: %.tex
-	$(LATEX) $<
-	$(LATEX) $<
 
 ifeq ($(MAKECMDGOALS),clean)
 
