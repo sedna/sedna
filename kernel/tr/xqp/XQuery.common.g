@@ -212,7 +212,9 @@ localPart3!:
 	| CNODE <<#0=#["NODE", AST_LOCAL_NAME];>>
 	| STATEMENT <<#0=#["STATEMENT", AST_LOCAL_NAME];>>
 	| CDO <<#0=#["DO", AST_LOCAL_NAME];>>
-
+	| XQUERY <<#0=#["xquery", AST_LOCAL_NAME];>>
+	| VERSION <<#0=#["version", AST_LOCAL_NAME];>>
+	| ENCODING <<#0=#["encoding", AST_LOCAL_NAME];>>
 ;	
 
 prefixPart1!:
@@ -364,7 +366,9 @@ prefixPart3!:
 	| CNODE <<#0=#["NODE", AST_PREFIX];>>
 	| STATEMENT <<#0=#["STATEMENT", AST_PREFIX];>>
 	| CDO <<#0=#["DO", AST_PREFIX];>>
-
+	| XQUERY <<#0=#["xquery", AST_PREFIX];>>
+	| VERSION <<#0=#["version", AST_PREFIX];>>
+	| ENCODING <<#0=#["encoding", AST_PREFIX];>>
 ;
 
 

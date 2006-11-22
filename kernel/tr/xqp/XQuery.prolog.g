@@ -38,6 +38,8 @@ queryProlog!:
 
 	   | imp:import <<if(prolog == NULL) prolog=#imp; else prolog->append(#imp);>>
 
+	   | vd:versionDecl <<if(prolog == NULL) prolog=#vd; else prolog->append(#vd);>>
+
 	  ) SEMICOLON
 	)*
 
@@ -83,6 +85,14 @@ param!:
 	<<if (#td == NULL) #0=#(#[AST_PARAM], #vr, #(#[AST_TYPE], #[AST_ITEM_TEST], #["zero-or-more", AST_MULTIPLICITY]));
       else #0=#(#[AST_PARAM], #vr, #td);
 	>>
+;
+
+versionDecl!:
+	XQUERY VERSION s1:STRINGLITERAL 
+	<<#0=#(#[AST_VERSION_DECL], #[$s1->getText(), AST_STRING_CONST]);>>
+	{ENCODING s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>}
+
+	
 ;
 
 

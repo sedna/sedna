@@ -65,10 +65,10 @@ SORAST* XQuerytoIR(const char* xquery){
 }
 
 
-StringVector parse_batch(QueryType type, const char* batch)
+StringVector parse_batch(QueryType type, const char* batch1)
 {
 
-  
+     char * batch = NULL;  
      u_ftime(&t1_parser);
 
  try{
@@ -78,6 +78,7 @@ StringVector parse_batch(QueryType type, const char* batch)
      StringVector array;
 
 
+    batch = encoding_processing(batch1);
 //  getchar();
 
 //     malloc_ast_vector();
@@ -104,12 +105,16 @@ StringVector parse_batch(QueryType type, const char* batch)
 
      ADD_TIME(t_total_parser, t1_parser, t2_parser);
 
-
+     free(batch);
+              
      return array;
  } catch(SednaUserException &e) {
 //     free_ast_vector();
      GET_TIME(&t2_parser);
      ADD_TIME(t_total_parser, t1_parser, t2_parser);
+
+     if (batch != NULL)
+         free(batch);
 
      throw;
  }

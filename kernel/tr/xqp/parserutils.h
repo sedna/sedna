@@ -15,4 +15,6 @@ std::string escape_quot(std::string text);
 std::string replace_charref(char* lex_text);
 bool check_char_wellformedness(int c);
 
+char *encoding_processing(const char *query);
+
 #endif
