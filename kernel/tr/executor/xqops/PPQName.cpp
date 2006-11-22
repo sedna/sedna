@@ -6,6 +6,10 @@
 #include "sedna.h"
 
 #include "PPQName.h"
+#include "node_utils.h"
+
+
+#define get_in_scope_namespaces(n, r)  get_in_scope_namespaces_local(n, r)
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -355,4 +359,213 @@ PPIterator* PPFnNamespaceUriFromQName::copy(variable_context *_cxt_)
 bool PPFnNamespaceUriFromQName::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUriFromQName::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNamespaceUriForPrefix
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnNamespaceUriForPrefix::PPFnNamespaceUriForPrefix(variable_context *_cxt_,
+                                                     PPOpIn _child_prefix_,
+                                                     PPOpIn _child_element_) : PPIterator(_cxt_),
+                                                                               child_prefix(_child_prefix_),
+                                                                               child_element(_child_element_)
+{
+}
+
+PPFnNamespaceUriForPrefix::~PPFnNamespaceUriForPrefix()
+{
+    delete child_prefix.op;
+    child_prefix.op = NULL;
+    delete child_element.op;
+    child_element.op = NULL;
+}
+
+void PPFnNamespaceUriForPrefix::open  ()
+{
+    child_prefix.op->open();
+    child_element.op->open();
+    first_time = true;
+}
+
+void PPFnNamespaceUriForPrefix::reopen()
+{
+    child_prefix.op->reopen();
+    child_element.op->reopen();
+    first_time = true;
+}
+
+void PPFnNamespaceUriForPrefix::close ()
+{
+    child_prefix.op->close();
+    child_element.op->close();
+}
+
+void PPFnNamespaceUriForPrefix::next(tuple &t)
+{
+    if (first_time)
+    {
+        tuple_cell prefix_tc;
+        char *prefix = "";
+        child_prefix.op->next(t);
+        if (!t.is_eos())
+        {
+            if (!(child_prefix.get(t).is_atomic()) || child_prefix.get(t).get_atomic_type() != xs_string) 
+                throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+
+            prefix_tc = tuple_cell::make_sure_light_atomic(child_prefix.get(t));
+            prefix = prefix_tc.get_str_mem();
+
+            child_prefix.op->next(t);
+            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+        }
+
+        child_element.op->next(t);
+        if (t.is_eos())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+
+        if (!child_element.get(t).is_node())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+
+        child_element.op->next(t);
+        if (!(t.is_eos())) 
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+
+        xptr node = child_element.get(t).get_node();
+
+        CHECKP(node);
+        if (GETSCHEMENODE(XADDR(node))->type != element)
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+
+
+
+        std::vector<xml_ns*> xmlns;
+        get_in_scope_namespaces(node, xmlns);
+
+        int i = 0;
+        for (i = 0; i < xmlns.size(); ++i)
+        {
+            char *pr = (xmlns[i]->prefix ? xmlns[i]->prefix : "");
+            if (strcmp(pr, prefix) == 0)
+            {
+                t.copy(tuple_cell::atomic_deep(xs_anyURI, xmlns[i]->uri));
+                first_time = false;
+                return;
+            }
+        }
+    }
+
+    first_time = true;
+    t.set_eos();
+}
+
+PPIterator* PPFnNamespaceUriForPrefix::copy(variable_context *_cxt_)
+{
+    PPFnNamespaceUriForPrefix *res = new PPFnNamespaceUriForPrefix(_cxt_, child_prefix, child_element);
+    res->child_prefix.op = child_prefix.op->copy(_cxt_);
+    res->child_element.op = child_element.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnNamespaceUriForPrefix::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUriForPrefix::result");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnInScopePrefixes
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnInScopePrefixes::PPFnInScopePrefixes(variable_context *_cxt_,
+                                         PPOpIn _child_) : PPIterator(_cxt_),
+                                                           child(_child_)
+{
+}
+
+PPFnInScopePrefixes::~PPFnInScopePrefixes()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnInScopePrefixes::open  ()
+{
+    child.op->open();
+    pos = -1;
+}
+
+void PPFnInScopePrefixes::reopen()
+{
+    child.op->reopen();
+    pos = -1;
+    xmlns.clear();
+}
+
+void PPFnInScopePrefixes::close ()
+{
+    child.op->close();
+    pos = -1;
+    xmlns.clear();
+}
+
+void PPFnInScopePrefixes::next  (tuple &t)
+{
+    if (pos < 0)
+    {
+        child.op->next(t);
+
+        if (t.is_eos())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+
+        if (!child.get(t).is_node())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+
+        child.op->next(t);
+        if (!(t.is_eos())) 
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+
+        xptr node = child.get(t).get_node();
+
+        CHECKP(node);
+        if (GETSCHEMENODE(XADDR(node))->type != element)
+            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+
+
+        get_in_scope_namespaces(node, xmlns);
+        pos = 0;
+    }
+
+    if (pos < xmlns.size())
+    {
+        xml_ns* ns = xmlns[pos++];
+        if (ns->prefix)
+            t.copy(tuple_cell::atomic_deep(xs_NCName, ns->prefix));
+        else
+            t.copy(EMPTY_STRING_TC);
+    }
+    else
+    {
+        t.set_eos();
+        pos = -1;
+        xmlns.clear();
+    }
+}
+
+PPIterator* PPFnInScopePrefixes::copy(variable_context *_cxt_)
+{
+    PPFnInScopePrefixes *res = new PPFnInScopePrefixes(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnInScopePrefixes::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnInScopePrefixes::result");
 }

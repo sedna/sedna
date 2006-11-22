@@ -17,6 +17,8 @@ CharsetHandler *charset_handler = &utf8_charset_handler;
 static CollationHandler_utf8 utf8handler;
 CollationHandler *collation_handler = &utf8handler;
 
+CollationManager collation_manager;
+
 #define T_STR_MEMBUF_SIZE 100
 
 void str_buf_base::move_to_mem_buf()
@@ -241,5 +243,19 @@ void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc)
 void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc)
 {
 	    feed_tuple_cell(writextext_cb, &crmout, tc);
+}
+
+
+CollationHandler *CollationManager::get_collation_handler(const char *uri)
+{
+    if (strcmp(uri, "http://www.w3.org/2005/xpath-functions/collation/codepoint") == 0)
+        return &utf8handler;
+    else
+        return NULL;
+}
+
+CollationHandler *CollationManager::get_default_collation_handler()
+{
+    return &utf8handler;
 }
 

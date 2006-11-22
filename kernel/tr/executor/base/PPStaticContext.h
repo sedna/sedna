@@ -11,6 +11,7 @@
 #include "schema.h"
 #include "XPath.h"
 #include "str_matcher.h"
+#include "strings.h"
 
 typedef std::pair<std::string,std::string> str_pair;
 typedef std::map< str_pair, xml_ns*> ns_map;
@@ -55,6 +56,10 @@ struct static_context
     se_output_indent output_indent;
 
 
+    /// stores pointer to default collation handler already resolved using default collation uri and base uri
+    CollationHandler *default_collation_handler;
+
+
     StrMatcher stm; 
     std::vector<xml_ns*> def_ns;
     std::vector<xptr> temp_docs;
@@ -95,6 +100,11 @@ struct static_context
     void set_datetime();
     void set_base_uri(const char* _base_uri_);
     void set_default_collation_uri(const char* _default_collation_uri_);
+
+    /// resolves uri and returns collation handler
+    /// if uri is NULL, returns default collation
+    CollationHandler* get_collation(const char *uri);
+    CollationHandler* get_default_collation() { return default_collation_handler; }
 };
 
 #endif

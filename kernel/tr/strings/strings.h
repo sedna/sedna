@@ -238,7 +238,9 @@ public:
 class CollationManager
 {
 public:
-	CollationHandler *get_handler(const char *uri);
+    // returns NULL if there is no collation handler for such uri
+	CollationHandler *get_collation_handler(const char *uri);
+	CollationHandler *get_default_collation_handler();
 };
 
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
@@ -252,6 +254,7 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 
 extern CharsetHandler	*charset_handler;
 extern CollationHandler	*collation_handler;
+extern CollationManager	collation_manager;
 
 
 #endif //_STRINGS_H
