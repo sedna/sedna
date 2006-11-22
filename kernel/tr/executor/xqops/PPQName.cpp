@@ -448,7 +448,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
         int i = 0;
         for (i = 0; i < xmlns.size(); ++i)
         {
-            char *pr = (xmlns[i]->prefix ? xmlns[i]->prefix : "");
+            const char *pr = (xmlns[i]->prefix ? xmlns[i]->prefix : "");
             if (strcmp(pr, prefix) == 0)
             {
                 t.copy(tuple_cell::atomic_deep(xs_anyURI, xmlns[i]->uri));
