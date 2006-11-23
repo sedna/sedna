@@ -258,7 +258,7 @@ bool PPFnStringJoin::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 PPFnString2CodePoints::PPFnString2CodePoints(variable_context *_cxt_,
                                    PPOpIn _child_) : PPIterator(_cxt_),
-                                                     child(_child_)
+                                                     child(_child_), ucp_it(NULL)
 {
 }
 
@@ -267,6 +267,11 @@ PPFnString2CodePoints::~PPFnString2CodePoints()
     delete child.op;
     child.op = NULL;
 
+	if (ucp_it != NULL)
+	{
+		delete ucp_it;
+		ucp_it = NULL;
+	}
 }
 
 void PPFnString2CodePoints::open  ()
@@ -288,59 +293,35 @@ void PPFnString2CodePoints::close ()
     child.op->close();
 }
 
-template <class Iterator>
-static inline void utf8_getcharcode(const Iterator &start, const Iterator &end, bool *str_end, int *ofs, int *ch)
-{
-	Iterator a = start;
-	a += *ofs;
-	if (a < end)
-	{
-		utf8_iterator<Iterator> it(a);
-		*ch = *it;
-		++it;
-		*ofs = it.base_iterator() - start;
-		*str_end = false;
-	}
-	else
-	{
-		*str_end = true;
-	}
-}
-
 
 void PPFnString2CodePoints::next  (tuple &t)
 {
     if (first_time)
     {
-        
-        
-
         child.op->next(t);
         if (!t.is_eos())
         {
 			first_time = false;
-            in_str = child.get(t);
+            tuple_cell in_str = child.get(t);
             in_str = cast(atomize(in_str), xs_string);
-			position=0;
             child.op->next(t);
             if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
+
+			ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
 		else return;
-       // t.copy(tuple_cell::atomic((__int64)len));
     }
-	bool end;
-	int code;
-	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_getcharcode, &in_str, &end, &position, &code);
-	if (!end)
+	int code = ucp_it->get_next_char();
+	if (code != -1)
 	{
 		t.copy(tuple_cell::atomic((__int64)code));
 	}
 	else
 	{
 		first_time = true;
-		in_str.set_eos();
-		position=0;
 		t.set_eos();
+		delete ucp_it;
+		ucp_it = NULL;
 	}    
 }
 

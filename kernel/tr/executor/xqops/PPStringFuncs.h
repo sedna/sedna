@@ -130,10 +130,7 @@ protected:
     // obtained parameters and local data
     PPOpIn child;
     bool first_time;
-	int position;
-	//int size;
-	//int length;
-	tuple_cell in_str;
+	unicode_cp_iterator *ucp_it;
 
     void children(PPOpIn &_child_) { _child_ = child; }
 

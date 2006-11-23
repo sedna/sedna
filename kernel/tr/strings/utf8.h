@@ -16,16 +16,18 @@ public:
 	virtual tuple_cell toupper(const tuple_cell *tc);
 	virtual tuple_cell tolower(const tuple_cell *tc);
     virtual tuple_cell substring(const tuple_cell *tc, __int64 start_pos, __int64 length);
-};
+	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc);
 
-class CollationHandler_utf8 : public CollationHandler
-{
-public:
 	//all tuple cells must be strings
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4);
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3);
 	virtual bool matches (const tuple_cell *t1, const char *regex);
 	virtual bool matches (const char *t1, const char *regex);
+};
+
+class CollationHandler_utf8 : public CollationHandler
+{
+public:
 };
 
 

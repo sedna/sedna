@@ -1122,7 +1122,7 @@ void PPPIConstructor::next  (tuple &t)
 		}
 		if (!chech_constraints_for_xs_NCName(name))
 			throw USER_EXCEPTION(XQDY0041);
-		if(collation_handler->matches(name, "^(?i:xml)$"))
+		if(charset_handler->matches(name, "^(?i:xml)$"))
 			throw USER_EXCEPTION(XQDY0064);
 		const char* value=at_value;
 		tuple_cell res;
