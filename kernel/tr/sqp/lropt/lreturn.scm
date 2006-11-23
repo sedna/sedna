@@ -747,7 +747,6 @@
      (not (member (car key-value) vars)))
    alist))
 
-; Let-expression
 (define (lropt:let expr called-once? order-required?
                    var-types prolog processed-funcs)
   (let* ((fun-def (cadr (xlr:op-args expr)))
@@ -760,65 +759,116 @@
     (call-with-values
      (lambda ()
        (lropt:expr
-        (cadr (xlr:op-args fun-def))  ; function body
+        (car (xlr:op-args expr))  ; child expr inside let@
         called-once?
-        order-required?
-        (cons (list var-name
-                    (car arg)  ; argument type
-                    )
-              var-types)
+        #t  ; we will always require ordering
+        var-types
         prolog processed-funcs))
-     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
-                       processed-funcs body-order-for-vars)
+     (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                        processed-funcs child-order-for-vars)
        (call-with-values
         (lambda ()
           (lropt:expr
-           (car (xlr:op-args expr))  ; child expr inside let@
+           (cadr (xlr:op-args fun-def))  ; function body
            called-once?
-           (and  ; ordering could not be fulfilled in fun-def body
-            order-required?
-            (not body-ddo-auto?))
-           var-types
+           order-required?
+           (cons (list var-name
+                       (car arg)  ; argument type
+                       child-ddo-auto?  ; child expr was ordered
+                       child-0-or-1?
+                       child-level?)
+                 var-types)
            prolog processed-funcs))
-        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
-                           processed-funcs child-order-for-vars)
-          ;(pp (list new-child new-body child-ddo-auto? body-ddo-auto?))
-          (call-with-values
-           (lambda ()
-             (if
-              #t
-;              (and  ; ordering could not be fulfilled in fun-def body
+        (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+                          processed-funcs body-order-for-vars)
+          ; TODO: we can probably re-process the child expression
+          ; if ordering is not required for fun-def argument
+          (values
+           (list (xlr:op-name expr)  ; == 'let@
+                 new-child
+                 (list (xlr:op-name fun-def)  ; == 'fun-def
+                       (car (xlr:op-args fun-def))
+                       new-body))
+           body-ddo-auto? body-0-or-1? body-level?
+           processed-funcs
+           (lropt:unite-order-for-variables
+            (lropt:remove-vars-from-alist (list var-name)
+                                          body-order-for-vars)
+            child-order-for-vars))))))))
+
+; Previous exponential implementations
+;; Let-expression
+;(define (lropt:let expr called-once? order-required?
+;                   var-types prolog processed-funcs)
+;  (let* ((fun-def (cadr (xlr:op-args expr)))
+;         (arg  ; fun-def argument
+;          (caar (xlr:op-args fun-def)))
+;         (var-name
+;          (car (xlr:op-args  ; removing embracing 'var
+;                (cadr arg)  ; '(var ..)
+;                ))))
+;    (call-with-values
+;     (lambda ()
+;       (lropt:expr
+;        (cadr (xlr:op-args fun-def))  ; function body
+;        called-once?
+;        order-required?
+;        (cons (list var-name
+;                    (car arg)  ; argument type
+;                    )
+;              var-types)
+;        prolog processed-funcs))
+;     (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+;                       processed-funcs body-order-for-vars)
+;       (call-with-values
+;        (lambda ()
+;          (lropt:expr
+;           (car (xlr:op-args expr))  ; child expr inside let@
+;           called-once?
+;           (and  ; ordering could not be fulfilled in fun-def body
+;            order-required?
+;            (not body-ddo-auto?))
+;           var-types
+;           prolog processed-funcs))
+;        (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+;                           processed-funcs child-order-for-vars)
+;          ;(pp (list new-child new-body child-ddo-auto? body-ddo-auto?))
+;          (call-with-values
+;           (lambda ()
+;             (if
+;              #t
+;;              (and  ; ordering could not be fulfilled in fun-def body
+;;               order-required?
+;;               (not body-ddo-auto?))
+;              ; Re-processing fun-def body once again to fulfil ordering
+;              (lropt:expr
+;               (cadr (xlr:op-args fun-def))  ; function body
+;               called-once?
 ;               order-required?
-;               (not body-ddo-auto?))
-              ; Re-processing fun-def body once again to fulfil ordering
-              (lropt:expr
-               (cadr (xlr:op-args fun-def))  ; function body
-               called-once?
-               order-required?
-               (cons (list var-name
-                           (car arg)  ; argument type
-                           child-ddo-auto?  ; child expr was ordered
-                           child-0-or-1?
-                           child-level?)
-                     var-types)
-               prolog processed-funcs)
-              ; Identity
-              (values new-body body-ddo-auto? body-0-or-1? body-level?
-                      processed-funcs body-order-for-vars)))
-            (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
-                              processed-funcs body-order-for-vars)
-              (values
-               (list (xlr:op-name expr)  ; == 'let@
-                     new-child
-                     (list (xlr:op-name fun-def)  ; == 'fun-def
-                           (car (xlr:op-args fun-def))
-                           new-body))
-               body-ddo-auto? body-0-or-1? body-level?
-               processed-funcs
-               (lropt:unite-order-for-variables
-                (lropt:remove-vars-from-alist (list var-name)
-                                              body-order-for-vars)
-                child-order-for-vars))))))))))
+;               (cons (list var-name
+;                           (car arg)  ; argument type
+;                           child-ddo-auto?  ; child expr was ordered
+;                           child-0-or-1?
+;                           child-level?)
+;                     var-types)
+;               prolog processed-funcs)
+;              ; Identity
+;              (values new-body body-ddo-auto? body-0-or-1? body-level?
+;                      processed-funcs body-order-for-vars)))
+;            (lambda (new-body body-ddo-auto? body-0-or-1? body-level?
+;                              processed-funcs body-order-for-vars)
+;              (values
+;               (list (xlr:op-name expr)  ; == 'let@
+;                     new-child
+;                     (list (xlr:op-name fun-def)  ; == 'fun-def
+;                           (car (xlr:op-args fun-def))
+;                           new-body))
+;               body-ddo-auto? body-0-or-1? body-level?
+;               processed-funcs
+;               (lropt:unite-order-for-variables
+;                (lropt:remove-vars-from-alist (list var-name)
+;                                              body-order-for-vars)
+;                child-order-for-vars))))))))))
 
 ; Return
 (define (lropt:return expr called-once? order-required?
