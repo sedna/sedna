@@ -15,7 +15,6 @@
 #include "char_iterator.h"
 #include "e_string.h"
 #include "e_string_iterator.h"
-#include "o_iterators.h"
 #include <sstream>
 
 //////////////////////////////////////////////////////////////////////////
