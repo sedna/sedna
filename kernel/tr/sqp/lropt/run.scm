@@ -469,3 +469,346 @@
         (fun-def
          ((!xs!anytype (var ("" "%v"))))
          (element (const (type !xs!QName) ("" "y")) (sequence)))))))))
+
+(go
+ '(query
+ (prolog
+   (declare-function
+     (const
+      (type !xs!QName)
+      ("http://www.w3.org/2005/xquery-local-functions" "get-ancestor-articles"))
+     (((one (node-test)) (var ("" "a"))) ((one !xs!string) (var ("" "query"))))
+     (result-type (zero-or-more (node-test)))
+     (body
+      (return
+        (ddo
+         (ancestor
+           (var ("" "a"))
+           (type
+            (elem-test
+              (ename
+               (const (type !xs!QName) ("" "article"))
+               (type *)
+               (const (type !xs!string) "non-nil"))))))
+        (fun-def
+          ((xs:anyType (var ("" "anc"))))
+          (element
+            (const (type !xs!QName) ("" "ancestor"))
+            (sequence
+              (attribute
+                (const (type !xs!QName) ("" "id"))
+                (space-sequence
+                  (ddo
+                   (attr-axis
+                     (var ("" "anc"))
+                     (type
+                      (attr-test
+                        (ename
+                         (const (type !xs!QName) ("" "id"))
+                         (type *)
+                         (const (type !xs!string) "non-nil"))))))))
+              (attribute
+                (const (type !xs!QName) ("" "title"))
+                (space-sequence
+                  (ddo
+                   (child
+                    (ddo
+                     (child
+                      (var ("" "anc"))
+                      (type
+                       (elem-test
+                         (ename
+                          (const (type !xs!QName) ("" "meta"))
+                          (type *)
+                          (const (type !xs!string) "non-nil"))))))
+                    (type
+                     (elem-test
+                       (ename
+                        (const (type !xs!QName) ("" "title"))
+                        (type *)
+                        (const (type !xs!string) "non-nil"))))))))))))))
+   (declare-function
+     (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "TO"))
+     (((one !xs!integer) (var ("" "s"))) ((one !xs!integer) (var ("" "f"))))
+     (result-type (zero-or-more !xs!integer))
+     (body
+      (if@
+       (>=@ (var ("" "s")) (var ("" "f")))
+       (sequence)
+       (sequence
+         (var ("" "s"))
+         (fun-call
+           (const
+            (type !xs!QName)
+            ("http://www.w3.org/2005/xquery-local-functions" "TO"))
+           (+@ (var ("" "s")) (const (type !xs!integer) "1"))
+           (var ("" "f"))))))))
+ (query-body
+   (let@
+    (const (type !xs!string) "")
+    (fun-def
+      ((xs:anyType (var ("" "query"))))
+      (let@
+       (var ("" "query"))
+       (fun-def
+         ((xs:anyType (var ("" "query-search-unstemming"))))
+         (let@
+          (var ("" "query"))
+          (fun-def
+            ((xs:anyType (var ("" "query-search"))))
+            (let@
+             (const (type !xs!integer) "1")
+             (fun-def
+               ((xs:anyType (var ("" "is-bre"))))
+               (let@
+                (const (type !xs!integer) "0")
+                (fun-def
+                  ((xs:anyType (var ("" "is-bse"))))
+                  (let@
+                   (const (type !xs!integer) "1")
+                   (fun-def
+                     ((xs:anyType (var ("" "user-id"))))
+                     (let@
+                      (const (type !xs!integer) "10")
+                      (fun-def
+                        ((xs:anyType (var ("" "portion-size"))))
+                        (let@
+                         (cast (const (type !xs!string) "1") (type (one !xs!integer)))
+                         (fun-def
+                           ((xs:anyType (var ("" "cur-page"))))
+                           (let@
+                            (+@
+                             (*@
+                              (-@ (var ("" "cur-page")) (const (type !xs!integer) "1"))
+                              (var ("" "portion-size")))
+                             (const (type !xs!integer) "1"))
+                            (fun-def
+                              ((xs:anyType (var ("" "s"))))
+                              (let@
+                               (*@ (var ("" "cur-page")) (var ("" "portion-size")))
+                               (fun-def
+                                 ((xs:anyType (var ("" "f"))))
+                                 (let@
+                                  (ddo
+                                   (child
+                                    (!fn!document (const (type !xs!string) "alphabet"))
+                                    (type
+                                     (elem-test
+                                       (ename
+                                        (const (type !xs!QName) ("" "ltrs"))
+                                        (type *)
+                                        (const (type !xs!string) "non-nil"))))))
+                                  (fun-def
+                                    ((xs:anyType (var ("" "letters"))))
+                                    (let@
+                                     (!fn!filter_entry_level
+                                       (ddo
+                                        (return
+                                          (!fn!ftindex-scan
+                                            (const (type !xs!string) "fti-body")
+                                            (var ("" "query-search")))
+                                          (fun-def
+                                            ((!xs!anyType (var ("" "$%v"))))
+                                            (predicate
+                                              (parent
+                                                (var ("" "$%v"))
+                                                (type (node-test)))
+                                              (fun-def
+                                                ((!xs!anyType (var ("" "$%v"))))
+                                                (=@
+                                                 (ddo
+                                                  (attr-axis
+                                                    (ddo
+                                                     (ancestor
+                                                       (var ("" "$%v"))
+                                                       (type
+                                                        (elem-test
+                                                          (ename
+                                                           (const
+                                                            (type !xs!QName)
+                                                            ("" "tome"))
+                                                           (type *)
+                                                           (const
+                                                            (type !xs!string)
+                                                            "non-nil"))))))
+                                                    (type
+                                                     (attr-test
+                                                       (ename
+                                                        (const
+                                                         (type !xs!QName)
+                                                         ("" "id"))
+                                                        (type *)
+                                                        (const
+                                                         (type !xs!string)
+                                                         "non-nil"))))))
+                                                 (sequence
+                                                   (const (type !xs!string) "0")
+                                                   (const (type !xs!string) "1")
+                                                   (const (type !xs!string) "2")
+                                                   (const (type !xs!string) "3")
+                                                   (const (type !xs!string) "4")
+                                                   (const (type !xs!string) "5")
+                                                   (const (type !xs!string) "6")))))))))
+                                     (fun-def
+                                       ((xs:anyType (var ("" "body-xml-res"))))
+                                       (let@
+                                        (var ("" "body-xml-res"))
+                                        (fun-def
+                                          ((xs:anyType (var ("" "xml-res"))))
+                                          (let@
+                                           (if@
+                                            (>@
+                                             (!fn!count (var ("" "xml-res")))
+                                             (var ("" "portion-size")))
+                                            (+@
+                                             (var ("" "cur-page"))
+                                             (const (type !xs!integer) "1"))
+                                            (var ("" "cur-page")))
+                                           (fun-def
+                                             ((xs:anyType (var ("" "pages-num"))))
+                                             (element
+                                               (const (type !xs!QName) ("" "top"))
+                                               (element
+                                                 (const
+                                                  (type !xs!QName)
+                                                  ("" "sedna-result"))
+                                                 (element
+                                                   (const (type !xs!QName) ("" "items"))
+                                                   (space-sequence
+                                                     (return
+                                                       (predicate
+                                                         (var ("" "xml-res"))
+                                                         (fun-def
+                                                           ((!xs!anyType
+                                                              (var ("" "$%v"))))
+                                                           (<=@
+                                                            (!fn!position)
+                                                            (var ("" "portion-size")))))
+                                                       (fun-def
+                                                         ((xs:anyType (var ("" "a"))))
+                                                         (element
+                                                           (const
+                                                            (type !xs!QName)
+                                                            ("" "item"))
+                                                           (sequence
+                                                             (attribute
+                                                               (const
+                                                                (type !xs!QName)
+                                                                ("" "tomeid"))
+                                                               (space-sequence
+                                                                 (ddo
+                                                                  (attr-axis
+                                                                    (ddo
+                                                                     (ancestor
+                                                                       (var ("" "a"))
+                                                                       (type
+                                                                        (elem-test
+                                                                          (ename
+                                                                           (const
+                                                                            (type
+                                                                             !xs!QName)
+                                                                            ("" "tome"))
+                                                                           (type *)
+                                                                           (const
+                                                                            (type
+                                                                             !xs!string)
+                                                                            "non-nil"))))))
+                                                                    (type
+                                                                     (attr-test
+                                                                       (ename
+                                                                        (const
+                                                                         (type
+                                                                          !xs!QName)
+                                                                         ("" "id"))
+                                                                        (type *)
+                                                                        (const
+                                                                         (type
+                                                                          !xs!string)
+                                                                         "non-nil"))))))))
+                                                             (element
+                                                               (const
+                                                                (type !xs!QName)
+                                                                ("" "ancestors"))
+                                                               (space-sequence
+                                                                 (fun-call
+                                                                   (const
+                                                                    (type !xs!QName)
+                                                                    ("http://www.w3.org/2005/xquery-local-functions"
+                                                                     "get-ancestor-articles"))
+                                                                   (var ("" "a"))
+                                                                   (var
+                                                                    (""
+                                                                     "query-search")))))
+                                                             (element
+                                                               (const
+                                                                (type !xs!QName)
+                                                                ("" "result"))
+                                                               (sequence
+                                                                 (attribute
+                                                                   (const
+                                                                    (type !xs!QName)
+                                                                    ("" "id"))
+                                                                   (space-sequence
+                                                                     (ddo
+                                                                      (attr-axis
+                                                                        (var ("" "a"))
+                                                                        (type
+                                                                         (attr-test
+                                                                           (ename
+                                                                            (const
+                                                                             (type
+                                                                              !xs!QName)
+                                                                             ("" "id"))
+                                                                            (type *)
+                                                                            (const
+                                                                             (type
+                                                                              !xs!string)
+                                                                             "non-nil"))))))))
+                                                                 (attribute
+                                                                   (const
+                                                                    (type !xs!QName)
+                                                                    ("" "title"))
+                                                                   (space-sequence
+                                                                     (ddo
+                                                                      (child
+                                                                       (ddo
+                                                                        (child
+                                                                         (ddo
+                                                                          (child
+                                                                           (var
+                                                                            ("" "a"))
+                                                                           (type
+                                                                            (elem-test
+                                                                              (ename
+                                                                               (const
+                                                                                (type
+                                                                                 !xs!QName)
+                                                                                (""
+                                                                                 "meta"))
+                                                                               (type *)
+                                                                               (const
+                                                                                (type
+                                                                                 !xs!string)
+                                                                                "non-nil"))))))
+                                                                         (type
+                                                                          (elem-test
+                                                                            (ename
+                                                                             (const
+                                                                              (type
+                                                                               !xs!QName)
+                                                                              (""
+                                                                               "title"))
+                                                                             (type *)
+                                                                             (const
+                                                                              (type
+                                                                               !xs!string)
+                                                                              "non-nil"))))))
+                                                                       (type
+                                                                        (text-test))))))
+                                                                 (element
+                                                                   (const
+                                                                    (type !xs!QName)
+                                                                    ("" "highlight"))
+                                                                   (const
+                                                                    (type !xs!string)
+                                                                    "hl")))))))))))))))))))))))))))))))))))))))))))
