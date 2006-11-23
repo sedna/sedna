@@ -10,6 +10,7 @@
 #include "PPUtils.h"
 #include "e_string.h"
 #include "strings.h"
+#include "utf8.h"
 #include "xs_helper.h"
 #include "dm_accessors.h"
 #include <math.h>
