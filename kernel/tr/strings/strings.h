@@ -208,6 +208,13 @@ public:
 	virtual int count_chars(const char *str, int len) = 0;
 };
 
+class unicode_cp_iterator
+{
+public:
+	//returns -1 if reached end of string
+	virtual int get_next_char() = 0;
+};
+
 class CharsetHandler
 {
 public:
@@ -219,15 +226,17 @@ public:
 	virtual tuple_cell toupper(const tuple_cell *tc) = 0;
 	virtual tuple_cell tolower(const tuple_cell *tc) = 0;
     virtual tuple_cell substring(const tuple_cell *tc, __int64 start_pos, __int64 length) = 0;
+	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc) = 0;
+
+	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
+	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
+	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
+	virtual bool matches (const char *tc, const char *regex) = 0;
 };
 
 class CollationHandler
 {
 public:
-	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
-	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
-	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
-	virtual bool matches (const char *tc, const char *regex) = 0;
 	// compares 2 strings
 	// if function takes str_cursor argument, it's value is undefined after call
 	int compare(str_cursor *a, str_cursor *b);

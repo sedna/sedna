@@ -249,7 +249,7 @@ void PPPatMatch::matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,
 		tflags = tuple_cell::make_sure_light_atomic(*t3);
 	
 	//3. matcher
-	collation_handler->matches(t, t1, &tc, &tflags);
+	charset_handler->matches(t, t1, &tc, &tflags);
 }
 void PPPatMatch::replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
 {
@@ -270,5 +270,5 @@ void PPPatMatch::replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,
 	if (t4 != NULL && !t4->is_eos())
 		tflags = tuple_cell::make_sure_light_atomic(*t4);
 	
-	collation_handler->replace(t, t1, &tc, &tf, &tflags);
+	charset_handler->replace(t, t1, &tc, &tf, &tflags);
 }

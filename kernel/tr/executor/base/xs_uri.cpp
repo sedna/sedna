@@ -258,7 +258,7 @@ tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *v
     else 
         re = relative_ref;
 
-    (*valid) = collation_handler->matches(in_tc, re);
+    (*valid) = charset_handler->matches(in_tc, re);
 
     if(*valid)
     {

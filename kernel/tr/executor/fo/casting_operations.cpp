@@ -594,7 +594,7 @@ static bool check_constraints_for_xs_positiveInteger(const __int64& value)
 static inline bool check_constraints_for_xs_language(const tuple_cell *value)
 {
 	char const* regex = "^[\\n\\r\\t ]*[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*[\\n\\r\\t ]*$";
-	return collation_handler->matches(value, regex);
+	return charset_handler->matches(value, regex);
 }
 
 static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type)

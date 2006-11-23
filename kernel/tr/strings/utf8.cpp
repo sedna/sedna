@@ -337,10 +337,41 @@ tuple_cell CharsetHandler_utf8::substring(const tuple_cell *tc, __int64 start_po
 	return sb.get_tuple_cell();
 }
 
+template <class Iterator>
+class utf8_unicode_cp_iterator : public unicode_cp_iterator
+{
+private:
+	utf8_iterator<Iterator> it;
+	Iterator end;
+public:
+	utf8_unicode_cp_iterator(Iterator _start_, Iterator _end_) : it(_start_), end(_end_) {}
+	virtual int get_next_char();
+};
+template <class Iterator>
+int utf8_unicode_cp_iterator<Iterator>::get_next_char()
+{
+	if (it < end)
+	{
+		int res = *it;
+		++it;
+		return res;
+	}
+	else
+		return -1;
+}
+template <class Iterator>
+static inline void utf8_get_unicode_cp_iterator(const Iterator &start, const Iterator &end, unicode_cp_iterator **res)
+{
+	*res = new utf8_unicode_cp_iterator<Iterator>(start, end);
+}
 
-//////////////////////////////////////////////////////////////////////////
-// Collation Handler
-//////////////////////////////////////////////////////////////////////////
+unicode_cp_iterator *CharsetHandler_utf8::get_unicode_cp_iterator(const tuple_cell *tc)
+{
+	unicode_cp_iterator *res;
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(utf8_get_unicode_cp_iterator, tc, &res);
+	return res;
+}
+
 
 static int get_pcre_flags(tuple_cell *t)
 {
@@ -394,7 +425,7 @@ static inline void utf8_replace(const Iterator &start, const Iterator &end, tupl
 	t.copy(out_it.get_tuple_cell());
 }
 
-void CollationHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4)
+void CharsetHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4)
 {
 	try
 	{
@@ -431,7 +462,7 @@ static inline void utf8_matches (const Iterator &start, const Iterator &end, tup
 	t.copy(tuple_cell::atomic(matcher.matches(start, end, start, match_flags)));
 }
 
-void CollationHandler_utf8::matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
+void CharsetHandler_utf8::matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
 {
 	try
 	{
@@ -465,7 +496,7 @@ static inline void utf8_matches_bool_c (const char *str, const PcrePattern &re, 
 	*res = matcher.matches(str, str+strlen(str), str, match_flags);
 }
 
-bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
+bool CharsetHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 {
 	try
 	{
@@ -484,7 +515,7 @@ bool CollationHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 	}
 }
 
-bool CollationHandler_utf8::matches (const char *tc, const char *regex)
+bool CharsetHandler_utf8::matches (const char *tc, const char *regex)
 {
 	try
 	{
@@ -502,6 +533,16 @@ bool CollationHandler_utf8::matches (const char *tc, const char *regex)
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
 }
+
+
+//////////////////////////////////////////////////////////////////////////
+// Collation Handler
+//////////////////////////////////////////////////////////////////////////
+
+
+//empty
+
+/////////////////////////////////////////////////////////////////////////
 
 int utf8_parse_char(const char *str, int *byte_len)
 {
