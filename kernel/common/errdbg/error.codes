@@ -1154,6 +1154,9 @@ sedna-err:SE4080
 sedna-err:SE4081
 
     Can't get process' image path
+sedna-err:SE4082
+
+    Bad query encoding
 
 
 ###########################################################################
