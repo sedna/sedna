@@ -21,14 +21,14 @@
 namespace tr_globals 
 {
 
-e_str e_str_global;
+estr estr_global;
 
 }
 
 /// TODO: change recursion to iteration
 
 
-void e_str::init()
+void estr::init()
 {
     U_ASSERT(first_blk == XNULL);
     U_ASSERT(last_blk == XNULL);
@@ -39,7 +39,7 @@ void e_str::init()
     m_blks = 1;
 }
 
-void e_str::reset()
+void estr::reset()
 {
     CHECKP(first_blk);
     ((e_str_blk_hdr*)XADDR(first_blk))->cursor = sizeof(e_str_blk_hdr);
@@ -50,7 +50,7 @@ void e_str::reset()
 	m_blks = 0;
 }
 
-void e_str::truncate(const xptr &ptr)
+void estr::truncate(const xptr &ptr)
 {
 	last_blk = BLOCKXPTR(ptr);
 	CHECKP(last_blk);
@@ -60,14 +60,14 @@ void e_str::truncate(const xptr &ptr)
 	m_size = 0;
 }
 
-xptr e_str::append_mstr(const char *src)
+xptr estr::append_mstr(const char *src)
 {
     xptr dest = xptr_for_data();
     copy_text_mstr(dest, src);
     return dest;
 }
 
-xptr e_str::append_mstr(const char *src, int count)
+xptr estr::append_mstr(const char *src, int count)
 {
     xptr dest = xptr_for_data();
     copy_text_mstr(dest, src, count);
@@ -75,14 +75,14 @@ xptr e_str::append_mstr(const char *src, int count)
 }
 
 
-xptr e_str::append_estr(const xptr &src, int count)
+xptr estr::append_estr(const xptr &src, int count)
 {
     xptr dest = xptr_for_data();
     copy_text_estr(dest, src, count);
     return dest;
 }
 
-xptr e_str::append_pstr_long(const xptr &src)
+xptr estr::append_pstr_long(const xptr &src)
 {
     xptr dest = xptr_for_data();
     copy_text_pstr_long(dest, src);
@@ -115,7 +115,7 @@ static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
 }
 
 
-xptr e_str::xptr_for_data()
+xptr estr::xptr_for_data()
 {
 	if (last_blk == NULL) init();
 
@@ -127,7 +127,7 @@ xptr e_str::xptr_for_data()
     return last_blk + E_STR_BLK_HDR(last_blk)->cursor;
 }
 
-void e_str::copy_text_mstr(xptr dest, const char *src, int count)
+void estr::copy_text_mstr(xptr dest, const char *src, int count)
 {
     CHECKP(dest);
 
@@ -148,12 +148,12 @@ void e_str::copy_text_mstr(xptr dest, const char *src, int count)
     copy_text_mstr(last_blk + sizeof(e_str_blk_hdr), src + real_count, count - real_count);
 }
 
-void e_str::copy_text_mstr(xptr dest, const char *src)
+void estr::copy_text_mstr(xptr dest, const char *src)
 {
-	e_str::copy_text_mstr(dest, src, strlen(src));
+	estr::copy_text_mstr(dest, src, strlen(src));
 }
 
-void e_str::copy_text_estr(xptr dest, xptr src, int count)
+void estr::copy_text_estr(xptr dest, xptr src, int count)
 {
     e_str_blk_hdr *dest_blk = E_STR_BLK_HDR(dest);
 
@@ -208,7 +208,7 @@ void e_str::copy_text_estr(xptr dest, xptr src, int count)
 }
 
 
-void e_str::copy_text_pstr_long(xptr dest, xptr src)
+void estr::copy_text_pstr_long(xptr dest, xptr src)
 {
     e_str_blk_hdr *dest_blk = E_STR_BLK_HDR(dest);
 	pstr_long_cursor src_cur(src);
@@ -244,7 +244,7 @@ void e_str::copy_text_pstr_long(xptr dest, xptr src)
     throw USER_EXCEPTION2(SE1003, "Impossible case in copy_text");
 }
 
-int e_str::blks_to_allocate(int str_len)
+int estr::blks_to_allocate(int str_len)
 {
     CHECKP(last_blk);
     int free_space = E_STR_BLK_FREE_SPACE(XADDR(last_blk));
@@ -257,7 +257,7 @@ int e_str::blks_to_allocate(int str_len)
 /// e_str_cursor class implementation
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-int e_str_cursor::copy_blk(char *buf)
+int estr_cursor::copy_blk(char *buf)
 {
     if (!m_count) return 0;
 
@@ -278,7 +278,7 @@ int e_str_cursor::copy_blk(char *buf)
     return len;
 }
 
-int e_str_cursor::get_blk(char **ptr)
+int estr_cursor::get_blk(char **ptr)
 {
     if (!m_count) return 0;
 
@@ -324,7 +324,7 @@ void estr_feed(string_consumer_fn fn, void *p, xptr src, int count) // or pstr, 
 }
 
 //almost the same as estr_feed
-void e_str_copy_to_buffer(char *dest, xptr src, int count)
+void estr_copy_to_buffer(char *dest, xptr src, int count)
 {
 	while (count > 0)
 	{

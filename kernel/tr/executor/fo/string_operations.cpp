@@ -95,7 +95,7 @@ int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, int str
 int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len)
 {
     pstr_long_cursor cur1(str1);
-    e_str_cursor cur2(str2, str2len);
+    estr_cursor cur2(str2, str2len);
 
     char *str1_ptr = NULL, *str2_ptr = NULL;
     int real_count = 0;

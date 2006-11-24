@@ -61,7 +61,7 @@ class str_buf_base
 {
 private:
 	xptr m_ptr;
-	e_str m_estr;
+	estr m_estr;
 	str_counted_ptr m_str_ptr;
 	int m_len;//FIXME (don't use int type)
 	char *m_buf;

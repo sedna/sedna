@@ -81,7 +81,7 @@ tuple_cell dm_node_name(xptr node)
 							      data = PSTRDEREF(data);
                                   char *t = new char[target + 1];
 							      t[target] = '\0';
-                                  e_str_copy_to_buffer(t, data, target);
+                                  estr_copy_to_buffer(t, data, target);
                                   char *qname = xs_QName_create((xml_ns*)NULL, t, malloc);
                                   delete [] t;
                                   return tuple_cell::atomic(xs_QName, qname);
@@ -131,7 +131,7 @@ enum dm_string_value_result_type {dsvrt_empty, dsvrt_pstr_both, dsvrt_e_str};
 struct dm_string_value_result
 {
     dm_string_value_result_type type;
-    e_str_buf buf;
+    estr_buf buf;
     xptr p;
     int size;
 
@@ -445,7 +445,7 @@ tuple_cell dm_document_uri(xptr node)
 							      data = PSTRDEREF(data);
                                   char *t = new char[size + 1];
 							      t[size] = '\0';
-                                  e_str_copy_to_buffer(t, data, size);
+                                  estr_copy_to_buffer(t, data, size);
                                   return tuple_cell::atomic(xs_anyURI, t);
                               }
         case element		: return tuple_cell::eos();

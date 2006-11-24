@@ -215,7 +215,7 @@ void on_kernel_recovery_statement_end()
 {
     tr_globals::st_ct.clear_context();
 
-    tr_globals::e_str_global.clear();
+    tr_globals::estr_global.clear();
 
     PathExpr_local_free();
     PathExpr_reset_pers();

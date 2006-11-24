@@ -192,7 +192,7 @@ void sequence::get(tuple &t, int pos)
             int strlen = c.get_strlen_vmm();
             char* str = new char[strlen + 1];
             str[strlen] = '\0';
-            e_str_copy_to_buffer(str, c.get_str_vmm(), strlen);
+            estr_copy_to_buffer(str, c.get_str_vmm(), strlen);
 
             c._adjust_restored_tc(str);
             //c.set_atomic(c.get_atomic_type(), str);

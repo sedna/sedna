@@ -44,7 +44,7 @@ struct e_str_blk_hdr
 //////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 
-class e_str
+class estr
 {
 private:
     xptr first_blk;
@@ -61,7 +61,7 @@ private:
     void copy_text_pstr_long(xptr dest, xptr src);
 
 public:
-    e_str() : m_blks(0), m_size(0) {}
+    estr() : m_blks(0), m_size(0) {}
 	//estring is cleared, but allocated blocks are kept and will be used for future apeends
     void reset();
     void truncate(const xptr &ptr);
@@ -115,25 +115,25 @@ public:
     int blks_to_allocate(int str_len);
 };
 
-void e_str_copy_to_buffer(char *dest, xptr src, int count);
+void estr_copy_to_buffer(char *dest, xptr src, int count);
 
 
 namespace tr_globals 
 {
 
 /// Global e_strings
-extern e_str e_str_global;
+extern estr estr_global;
 
 }
 
 
-class e_str_cursor : public str_cursor
+class estr_cursor : public str_cursor
 {
 private:
     xptr m_str;
     int  m_count;
 public:
-    e_str_cursor(const xptr& str, int count) : m_str(str), m_count(count) {}
+    estr_cursor(const xptr& str, int count) : m_str(str), m_count(count) {}
     /// Block oriented copy. buf must have size not less than a page size
     virtual int copy_blk(char *buf);
 	/// Gets a pointer to string part in the current block and moves cursor to the next block
@@ -146,16 +146,16 @@ public:
 };
 
 
-class e_str_buf
+class estr_buf
 {
 private:
-    e_str *m_str;
+    estr *m_str;
 
     int m_size;
     xptr m_start;
 
 public:
-    e_str_buf(e_str *str = &tr_globals::e_str_global) : m_str(str), m_size(0) {}
+    estr_buf(estr *str = &tr_globals::estr_global) : m_str(str), m_size(0) {}
     void reinit() { m_size = 0; m_start = XNULL; }
 
     void append(const tuple_cell& tc)

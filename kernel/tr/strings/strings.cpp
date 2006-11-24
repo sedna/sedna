@@ -42,14 +42,14 @@ void str_buf_base::move_to_mem_buf()
 		m_ttype = text_mem;
 		return;
 	case text_estr:
-		e_str_copy_to_buffer(m_buf, m_ptr, m_len);
+		estr_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
 		m_flags |= f_text_in_buf;
 		m_ttype = text_mem;
 		return;
 	case text_doc:
 		if (m_len < PSTRMAXSIZE)
-			e_str_copy_to_buffer(m_buf, m_ptr, m_len);
+			estr_copy_to_buffer(m_buf, m_ptr, m_len);
 		else
 			pstr_long_copy_to_buffer(m_buf, m_ptr, m_len);
 		m_buf[m_len] = 0;
