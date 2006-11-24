@@ -21,7 +21,9 @@
 #include "PPBase.h"
 using namespace tr_globals;
 se_stdlib_ostream crm_out(std::cerr);
-typedef  std::map<  std::string,int> nspt_map;
+typedef std::pair<std::string,std::string> ns_pair;
+typedef  std::map< ns_pair ,xml_ns*> nspt_map;
+static  std::set<std::string> nspt_pref;
 static nspt_map  xm_nsp;
 
 /* prints information in  descriptor */
@@ -341,7 +343,11 @@ void print_descriptive_schema_col(const char * colname, se_ostream& crmout)
 	if (sn!=NULL)print_descriptive(sn,crmout,0);
 	crmout << "\n</XML_DESCRIPTIVE_SCHEMA>";
 }
-inline const std::string pref_to_str(const char* pref)
+inline const ns_pair pref_to_str(xml_ns* ns)
+{
+	return ns_pair((ns->prefix!=NULL)?ns->prefix:"",(ns->uri!=NULL)?ns->uri:"http://www.w3.org/XML/1998/namespace");
+}
+inline const std::string prefix_to_str(char* pref)
 {
 	return std::string((pref!=NULL)?pref:"");
 }
@@ -398,8 +404,9 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			crmout <<((ptype==xml)? "<": "(");
 			schema_node* scn=GETSCHEMENODEX(node);
 			xptr first_ns=XNULL;
-			std::vector<std::string> *att_ns=NULL;
-			bool outerns=false;
+			std::vector<ns_pair> *att_ns=NULL;
+			std::vector<std::string> *pref_ns=NULL;
+			//bool outerns=false;
 			char* name=GETNAME(scn);
 			if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
 				crmout<<scn->xmlns->prefix<<":";
@@ -408,8 +415,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			if(child==XNULL)
 			{
 				
-				if (scn->xmlns!=NULL && xm_nsp.find(pref_to_str(scn->xmlns->prefix))==xm_nsp.end()&&
-				my_strcmp(scn->xmlns->prefix,"xml"))
+				if (scn->xmlns!=NULL && xm_nsp.find(pref_to_str(scn->xmlns))==xm_nsp.end()&&	my_strcmp(scn->xmlns->prefix,"xml"))
 				printNameSpace(scn->xmlns,crmout,ptype);	
 				crmout << ((ptype==xml)? "/>": ")");			
 				return;			
@@ -421,12 +427,24 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			{	
 				if (first_ns==XNULL)
 					first_ns=child;
-				std::string str=pref_to_str(((ns_dsc*)XADDR(child))->ns->prefix);
+				ns_pair str=pref_to_str(((ns_dsc*)XADDR(child))->ns);
 				nspt_map::iterator it_map=xm_nsp.find(str);
-				if (it_map!=xm_nsp.end())
-					it_map->second++;
-				else
-					xm_nsp[str]=1;
+				if (it_map==xm_nsp.end())
+				{
+					xml_ns* sns=((ns_dsc*)XADDR(child))->ns;
+					xm_nsp[str]=sns;
+					if (!att_ns) 
+						att_ns= new std::vector<ns_pair> ;
+					att_ns->push_back(str);
+					
+					if (nspt_pref.find(str.first)==
+					nspt_pref.end())
+					{
+						if (!pref_ns) pref_ns= new std::vector<std::string> ;
+						pref_ns->push_back(str.first);
+						nspt_pref.insert(str.first);
+					}
+				}
 				print_node_with_indent(child,crmout,wi,0,ptype);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
@@ -434,33 +452,66 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				CHECKP(child);
 			}
 			//self namespace
-			if (scn->xmlns!=NULL && xm_nsp.find(pref_to_str(scn->xmlns->prefix))==xm_nsp.end()&&
+			if (scn->xmlns!=NULL && xm_nsp.find(pref_to_str(scn->xmlns))==xm_nsp.end()&&
 				my_strcmp(scn->xmlns->prefix,"xml"))
 			{
-				xm_nsp[pref_to_str(scn->xmlns->prefix)]=1;
+				ns_pair str=pref_to_str(scn->xmlns);
+				xm_nsp[str]=scn->xmlns;
+				if (!att_ns) 
+						att_ns= new std::vector<ns_pair> ;
+				att_ns->push_back(str);
 				printNameSpace(scn->xmlns,crmout,ptype);
-				outerns=true;
+				std::string prf=prefix_to_str(scn->xmlns->prefix);
+				if (nspt_pref.find(prf)==
+					nspt_pref.end())
+				{
+					if (!pref_ns) pref_ns= new std::vector<std::string> ;
+					pref_ns->push_back(prf);
+					nspt_pref.insert(prf);
+
+				}
 			}
 			if (child==XNULL)
 			{
 				crmout << ((ptype==xml )? "/>": "))");
-				return;
+				goto nsfree;
 			}
 			//namespaces for attributes
 			CHECKP(node);
 			xptr* ptr= (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
 			sc_ref* sch=scn->first_child;
 			int cnt=0;
+			int ctr=0;
 			while (sch!=NULL)
 			{
-				if (sch->xmlns!=NULL && sch->type==attribute &&  xm_nsp.find(pref_to_str(sch->xmlns->prefix))== xm_nsp.end()  && *(ptr+cnt)!=XNULL &&!(/*sch->xmlns->uri==NULL && */ my_strcmp(sch->xmlns->prefix,"xml")==0))
+				if (sch->xmlns!=NULL && sch->type==attribute &&  xm_nsp.find(pref_to_str(sch->xmlns))== xm_nsp.end()  && *(ptr+cnt)!=XNULL )
 				{
-					std::string str=pref_to_str(sch->xmlns->prefix);
-					xm_nsp[str]=1;
-					if (!att_ns) 
-						att_ns= new std::vector<std::string> ;
-					att_ns->push_back(str);
-					printNameSpace(sch->xmlns,crmout,ptype);
+					if (!(/*sch->xmlns->uri==NULL && */my_strcmp(sch->xmlns->prefix,"xml")==0))
+					{
+						ns_pair str=pref_to_str(sch->xmlns);
+						xml_ns* xmn=NULL;
+						if (nspt_pref.find(str.first)==nspt_pref.end())
+						{
+							xmn=sch->xmlns;
+						}
+						else
+						{
+							xmn=generate_pref(ctr++,sch->xmlns->uri);
+						}						
+						xm_nsp[str]=xmn;
+						if (!att_ns) 
+							att_ns= new std::vector<ns_pair> ;
+						att_ns->push_back(str);
+						printNameSpace(xmn,crmout,ptype);
+					}
+					else
+					{
+
+						xml_ns* t=xml_ns::init(NULL,"xml",false);
+						ns_pair str=pref_to_str(t);
+						xm_nsp[str]=t;
+					}
+
 				}
 				sch=sch->next;
 				cnt++;
@@ -472,7 +523,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				if (ptype==sxml )  crmout << "(@";
 				do
 				{	
-					print_node_with_indent(child,crmout,wi,0,ptype);
+					print_node_with_indent(child,crmout,wi,indent+1,ptype);
 					CHECKP(child);
 					child=((n_dsc*)XADDR(child))->rdsc;
 					if (child==XNULL)  break;
@@ -521,8 +572,8 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				crmout <<")";
 			//namespaces remove
 nsfree:
-			if (outerns) xm_nsp.erase(pref_to_str(scn->xmlns->prefix));
-			if (first_ns!=XNULL)
+		//	if (outerns) xm_nsp.erase(pref_to_str(scn->xmlns->prefix));
+		/*	if (first_ns!=XNULL)
 			{
 				CHECKP(first_ns);
 				ns_dsc* nsd=(ns_dsc*)XADDR(first_ns);
@@ -534,16 +585,32 @@ nsfree:
 					nsd=(ns_dsc*)getNextSiblingOfSameSort(nsd);				 
 				}
 			}
+			*/
 			if (att_ns)
 			{
-				std::vector<std::string>::const_iterator it=att_ns->begin();
+				std::vector<ns_pair>::const_iterator it=att_ns->begin();
 				while(it!=att_ns->end())
 				{
-					if(--xm_nsp[*it]==0)
+					/*if(--xm_nsp[*it]==0)
 						xm_nsp.erase(*it);
+					it++;*/
+					xm_nsp.erase(*it);
 					it++;
 				}	
 				delete att_ns;
+			}
+			if (pref_ns)
+			{
+				std::vector<std::string>::const_iterator it=pref_ns->begin();
+				while(it!=pref_ns->end())
+				{
+					/*if(--xm_nsp[*it]==0)
+						xm_nsp.erase(*it);
+					it++;*/
+					nspt_pref.erase(*it);
+					it++;
+				}	
+				delete pref_ns;
 			}
 			break;
 		}
@@ -559,14 +626,14 @@ nsfree:
 			if (ptype==xml )
 			{
 				if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-					crmout <<" "<<scn->xmlns->prefix<<":"<< scn->name << "=\"";
+					crmout <<" "<<((indent)?xm_nsp[pref_to_str(scn->xmlns)]->prefix:scn->xmlns->prefix)<<":"<< scn->name << "=\"";
 				else
 					crmout <<" "<< scn->name << "=\"";
 			}
 			else
 			{
 				if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-					crmout <<" ("<<scn->xmlns->prefix<<":"<< scn->name << "  ";
+					crmout <<" ("<<((indent)?xm_nsp[pref_to_str(scn->xmlns)]->prefix:scn->xmlns->prefix)<<":"<< scn->name << "  ";
 				else
 					crmout <<" ("<< scn->name <<"  ";
 			}

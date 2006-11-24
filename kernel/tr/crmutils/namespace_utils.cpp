@@ -79,6 +79,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result)
 		result.push_back(it->second);
 		++it;
 	}
+	result.push_back(xml_ns::init("http://www.w3.org/XML/1998/namespace","xml",false));
 }
 void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result)
 {
