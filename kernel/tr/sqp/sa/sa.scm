@@ -1134,6 +1134,13 @@
               (sa:proper-EncName? (caddr (cadr (sa:op-args expr))))
               (cl:signal-user-error XQST0087
                                     (caddr (cadr (sa:op-args expr)))))))
+           (or
+            (null? new-prlg)  ; the first member
+            (cl:signal-user-error
+             XPST0003
+             (string-append
+              "XQuery version declaration is not the first declaration in "
+              "XQuery main module")))
            (loop new-prlg funcs triples
                  ns-binding default-elem-ns default-func-ns
                  (cdr prolog))))
@@ -4084,6 +4091,15 @@
          (let ((v1 (caddr c1))  ; value of the first constant
                (v2 (caddr c2)))
            (cond
+             ((and 
+               (= (length (sa:op-args expr)) 1)
+               (member v1 '("empty-greatest" "empty-least" "default")))
+              ; The first argument omitted
+              (cons
+               (list (sa:op-name expr)  ; == 'ordermodifier
+                     '(const (type !xs!string) "asc")
+                     c1)
+               sa:type-any))
              ((not (member v1 '("asc" "desc")))
               (cl:signal-input-error SE5061 v1))
              ((not (member v2 '("empty-greatest" "empty-least" "default")))
