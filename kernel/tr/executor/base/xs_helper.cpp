@@ -25,7 +25,7 @@ char *_get_pointer_to_c_str(const tuple_cell &c)
         int size = c.get_strlen_vmm();
         if (size > MAX_MEM_STR_SIZE) throw USER_EXCEPTION2(SE1003, "Buffer overflow");
         t = tr_globals::mem_str_buf;
-        e_str_copy_to_buffer(t, c.get_str_vmm(), size);
+        estr_copy_to_buffer(t, c.get_str_vmm(), size);
         t[size] = '\0';
     }
     else 

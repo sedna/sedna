@@ -102,7 +102,7 @@ void PPFnConcat::next(tuple &t)
 
     if (res_str_len > MAX_MEM_STR_SIZE)
     {
-        e_str_buf buf;
+        estr_buf buf;
         for (i = 0; i < ch_arr.size(); i++)
         {
             buf.append(tcv[i]);

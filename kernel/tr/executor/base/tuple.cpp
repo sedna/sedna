@@ -134,7 +134,7 @@ char* tuple_cell::copy_string(char *buf) const
     {
         case tc_light_atomic_var_size:  return strcpy(buf, get_str_mem()); 
         case tc_heavy_atomic_estr:      
-        case tc_heavy_atomic_pstr_short:e_str_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
+        case tc_heavy_atomic_pstr_short:estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                         buf[get_strlen_vmm()] = '\0';
                                         return buf;
         case tc_heavy_atomic_pstr_long: pstr_long_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
@@ -153,12 +153,12 @@ char* tuple_cell::copy_string(char *buf, __int64 n) const
         case tc_heavy_atomic_estr:      
         case tc_heavy_atomic_pstr_short:if (get_strlen_vmm() < n)
                                         {
-                                            e_str_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
+                                            estr_copy_to_buffer(buf, *(xptr*)(&data), get_strlen_vmm());
                                             buf[get_strlen_vmm()] = '\0';
                                         }
                                         else 
                                         {
-                                            e_str_copy_to_buffer(buf, *(xptr*)(&data), n);
+                                            estr_copy_to_buffer(buf, *(xptr*)(&data), n);
                                         }
                                         return buf;
 

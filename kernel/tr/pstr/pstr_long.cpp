@@ -357,7 +357,7 @@ xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, tex
 	case text_estr:
 		//FIXME!!!!! estr is copied to memory
 		char *tmp = (char*)malloc(size); //FIXME? sb
-		e_str_copy_to_buffer(tmp, *(xptr*)data, size);
+		estr_copy_to_buffer(tmp, *(xptr*)data, size);
 		const xptr res = pstr_long_create_str(desc, tmp, size);
 		free(tmp);
 		return res;
@@ -965,7 +965,7 @@ void pstr_long_append_tail(const xptr desc,const void *data, pstr_long_off_t siz
 	case text_estr:
 		//TODO!!!!!
 		char *tmp = (char*)malloc(size); //FIXME? sb
-		e_str_copy_to_buffer(tmp, *(xptr*)data, size);
+		estr_copy_to_buffer(tmp, *(xptr*)data, size);
 		pstr_long_append_tail_mem(desc, tmp, size);
 		free(tmp);
 		return;
@@ -1640,7 +1640,7 @@ void pstr_long_append_head(xptr desc,const void *data, pstr_long_off_t size, tex
 		{
 			//FIXME!!!!!
 			char *tmp = (char*)malloc(size); //FIXME? sb
-			e_str_copy_to_buffer(tmp, *(xptr*)data, size);
+			estr_copy_to_buffer(tmp, *(xptr*)data, size);
 			pstr_long_append_head(desc, tmp, size);
 			free(tmp);
 			return;

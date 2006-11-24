@@ -67,7 +67,7 @@ protected:
     int blks_num;		// number of blocks bound to this node (in chain)
 
     // stores txt data
-    e_str txt;
+    estr txt;
 
     int tuples_in_memory;
     int max_block_amount;
