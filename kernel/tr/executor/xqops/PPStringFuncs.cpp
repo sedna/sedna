@@ -302,7 +302,7 @@ void PPFnString2CodePoints::next  (tuple &t)
         if (!t.is_eos())
         {
 			first_time = false;
-            tuple_cell in_str = child.get(t);
+			in_str = child.get(t);
             in_str = cast(atomize(in_str), xs_string);
             child.op->next(t);
             if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
@@ -322,6 +322,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 		t.set_eos();
 		delete ucp_it;
 		ucp_it = NULL;
+		in_str.set_eos();
 	}    
 }
 
