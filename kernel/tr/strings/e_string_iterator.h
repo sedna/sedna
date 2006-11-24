@@ -16,15 +16,15 @@
 #include "base.h"
 #include "e_string.h"
 
-class e_string_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 
+class estr_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 
 {
 private:
-    friend bool operator ==(const e_string_iterator& it1, const e_string_iterator& it2);
-    friend bool operator !=(const e_string_iterator& it1, const e_string_iterator& it2);
-    friend bool operator > (const e_string_iterator& it1, const e_string_iterator& it2);
-    friend bool operator >=(const e_string_iterator& it1, const e_string_iterator& it2);
-    friend bool operator < (const e_string_iterator& it1, const e_string_iterator& it2);
-    friend bool operator <=(const e_string_iterator& it1, const e_string_iterator& it2);
+    friend bool operator ==(const estr_iterator& it1, const estr_iterator& it2);
+    friend bool operator !=(const estr_iterator& it1, const estr_iterator& it2);
+    friend bool operator > (const estr_iterator& it1, const estr_iterator& it2);
+    friend bool operator >=(const estr_iterator& it1, const estr_iterator& it2);
+    friend bool operator < (const estr_iterator& it1, const estr_iterator& it2);
+    friend bool operator <=(const estr_iterator& it1, const estr_iterator& it2);
     	
 	//xptr to the current block of the string being iterated over
 	xptr cur_block_xptr;
@@ -42,58 +42,52 @@ private:
     xptr s;
 
 public:	
-	e_string_iterator(int _chars_left_, xptr _s_);
-	e_string_iterator(): chars_left(-1) { }
-
-
-/*	e_string_iterator(const e_string_iterator& _esi_) { *this=_esi_; }
-	e_string_iterator& operator =(const e_string_iterator&);
-
-    ~e_string_iterator();*/
+	estr_iterator(int _chars_left_, xptr _s_);
+	estr_iterator(): chars_left(-1) { }
 
 	unsigned char operator*() const { CHECKP(cur_block_xptr); return *cur_p; }
 
-    e_string_iterator& operator ++();
-    e_string_iterator& operator --();
+    estr_iterator& operator ++();
+    estr_iterator& operator --();
 
 	//FIXME! (make void or throw exception)
-	e_string_iterator operator ++(int) {e_string_iterator old(*this); ++(*this); return old; }
-	e_string_iterator operator --(int) {e_string_iterator old(*this); --(*this); return old; }
+	estr_iterator operator ++(int) {estr_iterator old(*this); ++(*this); return old; }
+	estr_iterator operator --(int) {estr_iterator old(*this); --(*this); return old; }
 
 	//FIXME!
-	e_string_iterator& operator +=(int x) { while (x-- > 0) ++(*this); return *this; }
-	e_string_iterator  operator +(int x) { 
-		e_string_iterator tmp(*this);
+	estr_iterator& operator +=(int x) { while (x-- > 0) ++(*this); return *this; }
+	estr_iterator  operator +(int x) { 
+		estr_iterator tmp(*this);
 		tmp += x;
 		return tmp;
 	}
-	e_string_iterator& operator -=(int x) { while (x-- > 0) --(*this); return *this; }
+	estr_iterator& operator -=(int x) { while (x-- > 0) --(*this); return *this; }
 
-	int operator -(const e_string_iterator &it) const { return it.chars_left - chars_left; }
+	int operator -(const estr_iterator &it) const { return it.chars_left - chars_left; }
     
 };
 
-inline bool operator ==(const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator ==(const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left == it2.chars_left;
 }
-inline bool operator !=(const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator !=(const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left != it2.chars_left;
 }
-inline bool operator > (const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator > (const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left < it2.chars_left;
 }
-inline bool operator >=(const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator >=(const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left <= it2.chars_left;
 }
-inline bool operator < (const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator < (const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left > it2.chars_left;
 }
-inline bool operator <=(const e_string_iterator& it1, const e_string_iterator& it2)
+inline bool operator <=(const estr_iterator& it1, const estr_iterator& it2)
 {
 	return it1.chars_left >= it2.chars_left;
 }

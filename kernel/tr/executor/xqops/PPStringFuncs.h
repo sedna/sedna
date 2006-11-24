@@ -131,6 +131,7 @@ protected:
     PPOpIn child;
     bool first_time;
 	unicode_cp_iterator *ucp_it;
+	tuple_cell in_str;
 
     void children(PPOpIn &_child_) { _child_ = child; }
 

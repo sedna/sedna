@@ -40,7 +40,7 @@ inline void*  create_iterator(tuple_cell& t, int&l)
 		else
 		{
 			l=t.get_strlen_vmm();
-			return new e_string_iterator (l,t.get_str_vmm());
+			return new estr_iterator (l,t.get_str_vmm());
 		}
 	
 }
@@ -271,14 +271,14 @@ void PPSubsMatch::next  (tuple &t)
 			if (t1c.is_heavy_atomic())
 			{
 				if (t2c.is_heavy_atomic())
-					contains<e_string_iterator,e_string_iterator>(*((e_string_iterator*)it1),*((e_string_iterator*)it2),len1,len2,t);
+					contains<estr_iterator,estr_iterator>(*((estr_iterator*)it1),*((estr_iterator*)it2),len1,len2,t);
 				else
-					contains<e_string_iterator,char*>(*((e_string_iterator*)it1),(char*&)it2,len1,len2,t);
+					contains<estr_iterator,char*>(*((estr_iterator*)it1),(char*&)it2,len1,len2,t);
 			}
 			else
 			{
 				if (t2c.is_heavy_atomic())
-					this->contains<char*,e_string_iterator>((char*&)it1,*((e_string_iterator*)it2),len1,len2,t);
+					this->contains<char*,estr_iterator>((char*&)it1,*((estr_iterator*)it2),len1,len2,t);
 				else
 					this->contains<char*,char*>((char*&)it1,(char*&)it2,len1,len2,t);
 			}
