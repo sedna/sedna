@@ -1190,17 +1190,17 @@
                      " and "
                      (caddr 
                       (car (sa:op-args expr)))))))
-             ((not
-               (string=?
-                (caddr  ; collation value
-                 (car (sa:op-args expr)))                    
-                "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
-              ; DL: temporary stub
-              ; "the value specified by a default collation declaration
-              ; is not present in statically known collations"
-              (cl:signal-user-error XQST0038
-                                    (caddr
-                                     (car (sa:op-args expr)))))
+;             ((not
+;               (string=?
+;                (caddr  ; collation value
+;                 (car (sa:op-args expr)))                    
+;                "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
+;              ; DL: temporary stub
+;              ; "the value specified by a default collation declaration
+;              ; is not present in statically known collations"
+;              (cl:signal-user-error XQST0038
+;                                    (caddr
+;                                     (car (sa:op-args expr)))))
              (else
               (loop (cons expr new-prlg)
                     funcs triples
