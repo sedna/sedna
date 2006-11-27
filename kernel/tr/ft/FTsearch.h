@@ -49,7 +49,7 @@ class SednaTextInputStream {
     protected:
         long idTextInputStream;
         long pos;
-		e_string_iterator *estr_it;
+		estr_iterator *estr_it;
         dtsFileInfo* fileInfo;
 		op_str_buf in_buf;
 		ft_index_type cm;
@@ -147,17 +147,17 @@ private:
 	Iterator str_it;
 	Iterator str_end;
 
-	e_str_buf *result;
+	estr_buf *result;
 public:
 	
-	SednaStringHighlighter(const Iterator &_str_it_, const Iterator &_str_end_, long* _ht_,long _ht_cnt_, bool _hl_fragment_, e_str_buf *_result_);
+	SednaStringHighlighter(const Iterator &_str_it_, const Iterator &_str_end_, long* _ht_,long _ht_cnt_, bool _hl_fragment_, estr_buf *_result_);
 	void run();
 };
 
 class SednaConvertJob
 {
 public:
-	e_str_buf result;
+	estr_buf result;
 	SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_);
 	void convert_node(xptr& node,long* ht,long ht_cnt);
 	virtual void OnOutput(const char * txt, int length);
