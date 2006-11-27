@@ -471,6 +471,10 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 
 				}
 			}
+			xptr* ptr=NULL;
+			sc_ref* sch=NULL;
+			int cnt=0;
+			int ctr=0;
 			if (child==XNULL)
 			{
 				crmout << ((ptype==xml )? "/>": "))");
@@ -478,10 +482,8 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			}
 			//namespaces for attributes
 			CHECKP(node);
-			xptr* ptr= (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
-			sc_ref* sch=scn->first_child;
-			int cnt=0;
-			int ctr=0;
+			ptr= (xptr*)((char*)XADDR(node)+sizeof(e_dsc));
+			sch=scn->first_child;
 			while (sch!=NULL)
 			{
 				if (sch->xmlns!=NULL && sch->type==attribute &&  xm_nsp.find(pref_to_str(sch->xmlns))== xm_nsp.end()  && *(ptr+cnt)!=XNULL )
@@ -1295,3 +1297,4 @@ void print_node_to_buffer(xptr node,op_str_buf& tbuf,ft_index_type type,pers_sse
 	}
 }
 #endif
+
