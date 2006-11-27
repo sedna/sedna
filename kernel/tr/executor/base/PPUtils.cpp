@@ -17,6 +17,7 @@
 #include "locks.h"
 #include "metadata.h"
 #include "auc.h"
+#include "xs_uri.h"
 #ifdef SE_ENABLE_TRIGGERS
 #include "triggers_utils.h"
 #endif
@@ -237,8 +238,19 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {
     schema_node *root = NULL;
-//    doc_schema_node *root = NULL;
+    //doc_schema_node *root = NULL;
 
+    bool valid;
+    Uri::check_constraints(db_ent->name, &valid, NULL);
+    
+    if(!valid) 
+    {
+        if (db_ent->type == dbe_document)
+            throw USER_EXCEPTION2(FODC0005, (std::string("Invalid document URI '") + db_ent->name + "'").c_str());
+        else 
+            throw USER_EXCEPTION2(FODC0002, (std::string("Invalid collection URI '") + db_ent->name + "'").c_str());    
+    }
+    
     switch (db_ent->type)
     {
         case dbe_document	: root = find_document  (db_ent->name); break;
@@ -249,9 +261,9 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
     if (!root) 
     {
         if (db_ent->type == dbe_document)
-            throw USER_EXCEPTION2(SE2006, (std::string("Document '") + db_ent->name + "'").c_str());
+            throw USER_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
         else 
-            throw USER_EXCEPTION2(SE2003, (std::string("Collection '") + db_ent->name + "'").c_str());
+            throw USER_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
 #ifdef SE_ENABLE_TRIGGERS
 	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root);

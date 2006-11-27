@@ -1656,7 +1656,7 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
        //TEMPORALLY CHANGED
         opit = PPSubsMatch::PPFnContains(cxt,
                                          make_pp_op(cxt, lst->at(1).internal.list),
-            		make_pp_op(cxt, lst->at(2).internal.list));
+                                         make_pp_op(cxt, lst->at(2).internal.list));
 		//opit = PPPatMatch::PPFnMatch(cxt,
 		//	make_pp_op(cxt, lst->at(1).internal.list),
 		//	make_pp_op(cxt, lst->at(2).internal.list));
@@ -2309,6 +2309,32 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
                                      make_pp_op(cxt, lst->at(1).internal.list),
                                      make_pp_op(cxt, lst->at(2).internal.list));
     }
+    else if (op == "PPFnStartsWith" || op == "PPFnEndsWith")
+    {
+        if (   lst->size() < 3
+            || lst->size() > 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "97.2");
+
+        PPFnStartsEndsWith::FunctionType type = op == "PPFnStartsWith" ? 
+                                                PPFnStartsEndsWith::FN_STARTS_WITH :
+                                                PPFnStartsEndsWith::FN_ENDS_WITH;
+        if(lst->size() == 4)
+        {
+        	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "97.3");
+            opit = new PPFnStartsEndsWith(cxt,
+                                          make_pp_op(cxt, lst->at(1).internal.list),
+                                          make_pp_op(cxt, lst->at(2).internal.list),
+                                          make_pp_op(cxt, lst->at(3).internal.list),
+                                          type);
+        }
+        else
+            opit = new PPFnStartsEndsWith(cxt,
+                                          make_pp_op(cxt, lst->at(1).internal.list),
+                                          make_pp_op(cxt, lst->at(2).internal.list),
+                                          type);
+    }
     else if (op == "PPFnStringLength")
     {
         if (   lst->size() != 2
@@ -2408,6 +2434,12 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         if (  lst->size() != 1  ) throw USER_EXCEPTION2(SE1004, "101.1");
 
         opit = new PPFnStaticBaseUri(cxt);
+    }
+    else if (op == "PPFnDefaultCollation")
+    {
+        if (  lst->size() != 1  ) throw USER_EXCEPTION2(SE1004, "101.2");
+
+        opit = new PPFnDefaultCollation(cxt);
     }
     else if (op == "PPRange")
     {

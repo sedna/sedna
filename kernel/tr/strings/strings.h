@@ -242,6 +242,11 @@ public:
 	int compare(str_cursor *a, str_cursor *b);
 	int compare(str_cursor *a, const char *b);
 	int compare(const char *a, const char *b);
+	
+	// returns 'true' <-> given tuple_cell starts with 'prefix'
+	virtual bool starts_with(const tuple_cell *tc, const tuple_cell* prefix) = 0;
+	// returns 'true' <-> given tuple_cell ends with 'suffix'
+	virtual bool ends_with(const tuple_cell *tc, const tuple_cell* suffix) = 0;
 };
 
 class CollationManager

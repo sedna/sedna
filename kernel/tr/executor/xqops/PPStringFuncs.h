@@ -68,6 +68,53 @@ public:
     virtual ~PPFnStringJoin();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStartsEndsWith
+///////////////////////////////////////////////////////////////////////////////
+class PPFnStartsEndsWith : public PPIterator
+{
+public:
+    enum FunctionType
+    {
+        FN_STARTS_WITH,
+        FN_ENDS_WITH
+    };
+
+private:
+    PPOpIn source;
+    PPOpIn prefix;
+    PPOpIn collation;
+    
+    FunctionType type;
+
+    bool is_collation;
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator *copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    void error(const char* msg);
+    
+    PPFnStartsEndsWith(variable_context *_cxt_,
+                       PPOpIn _source_,
+                       PPOpIn _prefix_,
+                       FunctionType _type_);
+    PPFnStartsEndsWith(variable_context *_cxt_,
+                       PPOpIn _source_,
+                       PPOpIn _prefix_,
+                       PPOpIn _collation_,
+                       FunctionType _type_);
+ 
+    virtual ~PPFnStartsEndsWith();
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnStringLength

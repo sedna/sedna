@@ -8,6 +8,7 @@
 #include "PPUtils.h"
 #include "strings.h"
 #include "xs_uri.h"
+#include "xs_helper.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -286,16 +287,28 @@ void PPFnResolveUri::next  (tuple &t)
            xtype != xs_anyURI        &&
            !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
 
-        relative_tc = Uri::chech_constraints_for_xs_anyURI(&relative_tc, &valid);
+        Uri::Information nfo;
+        Uri::check_constraints(&relative_tc, &valid, &nfo);
         if(!valid) throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
+        
+        if(!nfo.normalized) 
+        {
+            stmt_str_buf result;
+            remove_string_normalization(&relative_tc, result);
+            relative_tc = result.get_tuple_cell();
+        }
+        
         relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
         
         if(is_base_static)
         {
             if (tr_globals::st_ct.base_uri == NULL) throw USER_EXCEPTION(FONS0005); //base uri property is not defined in static context.
             base_tc = tuple_cell::atomic_deep(xs_string, tr_globals::st_ct.base_uri);
-            base_tc = Uri::chech_constraints_for_xs_anyURI(&base_tc, &valid);
+            ////////////////////////////////////////////////////////////////////////////////
+            // Now constraints for the base-uri property are checked in PPStaticContext
+            Uri::check_constraints(&base_tc, &valid, &nfo);
             if(!valid) throw USER_EXCEPTION2(FORG0002, "Base URI property defined in the prolog contains invalid URI (fn:resolve-uri).");
+            ////////////////////////////////////////////////////////////////////////////////
         }
         else
         {
@@ -312,7 +325,7 @@ void PPFnResolveUri::next  (tuple &t)
                xtype != xs_anyURI        &&
                !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:resolve-uri (xs_string/derived/promotable is expected).");
 
-            base_tc = Uri::chech_constraints_for_xs_anyURI(&base_tc, &valid);
+            Uri::check_constraints(&base_tc, &valid, &nfo);
             if(!valid) throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
 
             base.op->next(t);
@@ -320,6 +333,12 @@ void PPFnResolveUri::next  (tuple &t)
             need_reopen = false;
         }
 
+        if(!nfo.normalized) 
+        {
+            stmt_str_buf result;
+            remove_string_normalization(&base_tc, result);
+            base_tc = result.get_tuple_cell();
+        }
         base_tc = tuple_cell::make_sure_light_atomic(base_tc);
 
         relative.op->next(t);
@@ -354,54 +373,3 @@ bool PPFnResolveUri::result(PPIterator* cur, variable_context *cxt, void*& r)
     throw USER_EXCEPTION2(SE1002, "PPFnResolveUri::result");
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-/// PPFnStaticBaseUri
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-PPFnStaticBaseUri::PPFnStaticBaseUri(variable_context *_cxt_) : PPIterator(_cxt_)
-{
-}
-
-PPFnStaticBaseUri::~PPFnStaticBaseUri() { }
-
-void PPFnStaticBaseUri::open  ()        { first_time = true; }
-
-void PPFnStaticBaseUri::reopen()        { first_time = true; }
-
-void PPFnStaticBaseUri::close ()        { }
-
-void PPFnStaticBaseUri::next  (tuple &t)
-{
-    if(first_time)
-    {
-        first_time = false;    
-
-        if ( tr_globals::st_ct.base_uri == NULL ) 
-        {
-            t.copy( EMPTY_STRING_TC );
-            (&t.cells[0]) -> set_xtype(xs_anyURI);
-        }
-        else 
-            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri) );
-    }
-    else 
-    {
-        t.set_eos();
-        first_time = true;
-    }
-}
-
-
-PPIterator* PPFnStaticBaseUri::copy(variable_context *_cxt_)
-{
-    PPFnStaticBaseUri *res = new PPFnStaticBaseUri(_cxt_);
-    return res;
-}
-
-bool PPFnStaticBaseUri::result(PPIterator* cur, variable_context *cxt, void*& r)
-{
-    throw USER_EXCEPTION2(SE1002, "PPFnStaticBaseUri::result");
-}
