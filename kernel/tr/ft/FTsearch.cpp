@@ -223,7 +223,7 @@ void SednaTextInputStream::makeInterface(dtsInputStream& dest,xptr& node)
 	{
 		if (estr_it != NULL)
 			delete estr_it;
-		estr_it = new e_string_iterator(dest.size, *(xptr*)in_buf.get_ptr_to_text());
+		estr_it = new estr_iterator(dest.size, *(xptr*)in_buf.get_ptr_to_text());
 	    dest.read = SednaTextInputStream::readCBestr;
 		dest.seek = SednaTextInputStream::seekCBestr;
 	}
@@ -588,7 +588,7 @@ SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it
 														 long* _ht_,
 														 long _ht_cnt_, 
 														 bool _hl_fragment_, 
-														 e_str_buf *_result_) :
+														 estr_buf *_result_) :
 									str_it(_str_it_),
 									str_end(_str_end_),
 									ht(_ht_),
@@ -1166,9 +1166,9 @@ void SednaConvertJob::convert_node(xptr &node,long* _ht_,long _ht_cnt_)
 	}
 	else
 	{
-		e_string_iterator estr_it(in_buf.get_size(), *(xptr*)in_buf.get_ptr_to_text());
-		e_string_iterator estr_it_end(0, *(xptr*)in_buf.get_ptr_to_text());
-		SednaStringHighlighter<e_string_iterator> hl(estr_it, estr_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
+		estr_iterator estr_it(in_buf.get_size(), *(xptr*)in_buf.get_ptr_to_text());
+		estr_iterator estr_it_end(0, *(xptr*)in_buf.get_ptr_to_text());
+		SednaStringHighlighter<estr_iterator> hl(estr_it, estr_it_end, _ht_, _ht_cnt_, hl_fragment, &result);
 		hl.run();
 	}
 
