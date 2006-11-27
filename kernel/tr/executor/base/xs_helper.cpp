@@ -221,6 +221,14 @@ static char *_get_xs_double_lexical_representation(char *s, double d, const char
         else
             strcpy(s, "0");
     } 
+    else if (d == DBL_MAX)
+        strcpy(s, "1.7976931348623157E308");
+    else if (d == -DBL_MAX)
+        strcpy(s, "-1.7976931348623157E308");
+    else if (d == DBL_MIN)
+        strcpy(s, "4.9E-324");
+    else if (d == -DBL_MIN)
+        strcpy(s, "-4.9E-324");
     else 
     {
         double d_abs = d < 0 ? -d : d;

@@ -54,7 +54,7 @@ void xs_decimal_t::set(float a)
 void xs_decimal_t::set(double a)
 {
     if (u_is_nan(a) || u_is_neg_inf(a) || u_is_pos_inf(a))
-        throw USER_EXCEPTION2(FORG0002, "Cannot convert to xs:decimal type");
+        throw USER_EXCEPTION2(FOCA0002, "Cannot convert to xs:decimal type");
 
     double abs_a = a < 0.0 ? -a : a;
     if (abs_a > XS_DECIMAL_MAX_VALUE_DOUBLE || (a != 0 && abs_a < XS_DECIMAL_MIN_VALUE_DOUBLE))
