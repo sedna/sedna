@@ -33,6 +33,18 @@ private:
     ////////////////////////////////////////////////////////////////////
     
 public:
+    enum UriType
+    {
+        UT_RELATIVE,
+        UT_ABSOLUTE
+    };
+    
+    struct Information
+    {
+        UriType type;     /// one of the possible URI types - relative or absolute;
+        bool normalized;  /// 'true' if given URI is normalized, i.e. it doesn't contain leading and trailing whitespaces.
+    };
+
     ////////////////////////////////////////////////////////////////////
     /// Accessors to parsed URI components as defined in RFC 3986.
     /// Each of the components can be NULL. It means that component is
@@ -59,11 +71,11 @@ public:
     
     ////////////////////////////////////////////////////////////////////
     /// Check constraints for URI type as described in RFC 3986.
-    /// If URI is valid returns normalized value, else returns 
-    /// copy of the same tuple cell.
+    /// If URI is valid 'nfo' contains information described this URI,
+    /// else 'nfo' is unchanged.
     ////////////////////////////////////////////////////////////////////
-    static tuple_cell chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *valid);
-    static tuple_cell chech_constraints_for_xs_anyURI(char* s, bool *valid);
+    static void check_constraints(const tuple_cell *in_tc, bool *valid, Information *nfo);
+    static void check_constraints(const char* s, bool *valid, Information *nfo);
     
     ////////////////////////////////////////////////////////////////////
     /// Resolves URI as described in RFC 3986.

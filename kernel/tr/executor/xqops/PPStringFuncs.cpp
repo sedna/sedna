@@ -250,6 +250,182 @@ bool PPFnStringJoin::result(PPIterator* cur, variable_context *cxt, void*& r)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStartsEndsWith
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+PPFnStartsEndsWith::PPFnStartsEndsWith(variable_context *_cxt_,
+                                       PPOpIn _source_,
+                                       PPOpIn _prefix_,
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_), 
+                                                                                  source(_source_),
+                                                                                  prefix(_prefix_),
+                                                                                  type(_type_),
+                                                                                  is_collation(false)
+{
+}
+
+PPFnStartsEndsWith::PPFnStartsEndsWith(variable_context *_cxt_,
+                                       PPOpIn _source_,
+                                       PPOpIn _prefix_,
+                                       PPOpIn _collation_,
+                                       PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_), 
+                                                                                  source(_source_),
+                                                                                  prefix(_prefix_),
+                                                                                  collation(_collation_),
+                                                                                  type(_type_),
+                                                                                  is_collation(true)
+{
+}
+
+
+PPFnStartsEndsWith::~PPFnStartsEndsWith()
+{
+    delete source.op;
+    source.op = NULL;
+    delete prefix.op;
+    prefix.op = NULL;
+    if(is_collation)
+    {
+        delete collation.op;
+        collation.op = NULL;
+    }
+}
+
+void PPFnStartsEndsWith::open ()
+{
+    source.op -> open();
+    prefix.op -> open();
+    if(is_collation)
+        collation.op -> open();
+    first_time = true;
+}
+
+void PPFnStartsEndsWith::reopen ()
+{
+    source.op -> reopen();
+    prefix.op -> reopen();
+    if(is_collation)
+        collation.op -> reopen();
+    first_time = true;
+}
+
+void PPFnStartsEndsWith::close ()
+{
+    if(is_collation)
+        collation.op -> close();
+    source.op -> close();
+    prefix.op -> close();
+}
+
+void PPFnStartsEndsWith::next(tuple &t)
+{
+    if (!first_time)
+    {
+        first_time = true;
+        t.set_eos();
+        return;
+    }
+    first_time = false;
+
+    CollationHandler* handler;
+    tuple_cell src;
+    __int64 src_len = 0;
+    tuple_cell prf;
+    __int64 prf_len = 0;
+    tuple_cell col;
+
+    source.op->next(t);
+    if (!t.is_eos())
+    { 
+        src = atomize(source.get(t));
+        xmlscm_type xtype = src.get_atomic_type();
+              
+        if(xtype != xs_string        && 
+           xtype != xs_untypedAtomic && 
+           xtype != xs_anyURI        &&
+           !is_derived_from_xs_string(xtype)) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
+    
+        source.op->next(t);                                                                               
+        if (!t.is_eos()) error("Invalid arity of the first argument. Argument contains more than one item ");
+        src_len = src.get_strlen();
+    }
+    
+    prefix.op->next(t);
+    if (!t.is_eos())
+    { 
+        prf = atomize(prefix.get(t));
+        xmlscm_type xtype = prf.get_atomic_type();
+              
+        if(xtype != xs_string        && 
+           xtype != xs_untypedAtomic && 
+           xtype != xs_anyURI        &&
+           !is_derived_from_xs_string(xtype)) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
+    
+        prefix.op->next(t);
+        if (!t.is_eos()) error("Invalid arity of the second argument. Argument contains more than one item ");
+        prf_len = prf.get_strlen();
+    }
+
+    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); return; } 
+    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); return; }
+    
+    if(is_collation)
+    {
+        collation.op->next(t);
+        if(t.is_eos()) error("Invalid arity of the third argument. Argument contains zero items ");
+
+        col = atomize(collation.get(t));
+        xmlscm_type xtype = src.get_atomic_type();
+        if(xtype != xs_string        && 
+           xtype != xs_untypedAtomic && 
+           xtype != xs_anyURI        &&
+           !is_derived_from_xs_string(xtype)) error("Invalid type of the third argument (xs_string/derived/promotable is expected) ");
+
+        collation.op->next(t);
+        if(!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item ");
+        
+        col = tuple_cell::make_sure_light_atomic(col);
+        handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+    }
+    else
+        handler = tr_globals::st_ct.get_collation(NULL);
+    
+    if(type == PPFnStartsEndsWith::FN_STARTS_WITH)
+        t.copy(tuple_cell::atomic(handler->starts_with(&src, &prf)));
+    else if(type == PPFnStartsEndsWith::FN_ENDS_WITH)
+        t.copy(tuple_cell::atomic(handler->ends_with(&src, &prf)));
+    else 
+        throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::next().");
+    
+}
+
+void PPFnStartsEndsWith::error(const char* msg)
+{
+    if(type == PPFnStartsEndsWith::FN_STARTS_WITH)
+        throw USER_EXCEPTION2(XPTY0004, (std::string(msg) + "in fn:starts-with().").c_str());
+    else if(type == PPFnStartsEndsWith::FN_ENDS_WITH)
+        throw USER_EXCEPTION2(XPTY0004, (std::string(msg) + "in fn:ends-with().").c_str());
+    else 
+        throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::error().");
+}
+
+PPIterator* PPFnStartsEndsWith::copy(variable_context *_cxt_)
+{
+    PPFnStartsEndsWith *res = is_collation ?
+                              new PPFnStartsEndsWith(_cxt_, source, prefix, collation, type) :
+                              new PPFnStartsEndsWith(_cxt_, source, prefix, type);
+    res->source.op = source.op->copy(_cxt_);
+    res->prefix.op = prefix.op->copy(_cxt_);
+    if(is_collation) res->collation.op = collation.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnStartsEndsWith::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnStartsEndsWith::result");
+}
 
 
 

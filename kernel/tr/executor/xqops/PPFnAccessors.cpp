@@ -623,3 +623,103 @@ bool PPFnDocumentURI::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDocumentURI::result");
 }
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStaticBaseUri
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnStaticBaseUri::PPFnStaticBaseUri(variable_context *_cxt_) : PPIterator(_cxt_)
+{
+}
+
+PPFnStaticBaseUri::~PPFnStaticBaseUri() { }
+
+void PPFnStaticBaseUri::open  ()        { first_time = true; }
+
+void PPFnStaticBaseUri::reopen()        { first_time = true; }
+
+void PPFnStaticBaseUri::close ()        { }
+
+void PPFnStaticBaseUri::next  (tuple &t)
+{
+    if(first_time)
+    {
+        first_time = false;    
+
+        if ( tr_globals::st_ct.base_uri == NULL ) 
+        {
+            t.copy( EMPTY_STRING_TC );
+            (&t.cells[0]) -> set_xtype(xs_anyURI);
+        }
+        else 
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri) );
+    }
+    else 
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+
+PPIterator* PPFnStaticBaseUri::copy(variable_context *_cxt_)
+{
+    PPFnStaticBaseUri *res = new PPFnStaticBaseUri(_cxt_);
+    return res;
+}
+
+bool PPFnStaticBaseUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnStaticBaseUri::result");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnDefaultCollation
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnDefaultCollation::PPFnDefaultCollation(variable_context *_cxt_) : PPIterator(_cxt_)
+{
+}
+
+PPFnDefaultCollation::~PPFnDefaultCollation() { }
+
+void PPFnDefaultCollation::open  ()        { first_time = true; }
+
+void PPFnDefaultCollation::reopen()        { first_time = true; }
+
+void PPFnDefaultCollation::close ()        { }
+
+void PPFnDefaultCollation::next  (tuple &t)
+{
+    if(first_time)
+    {
+        first_time = false;    
+
+        if ( tr_globals::st_ct.default_collation_uri == NULL ) 
+            throw USER_EXCEPTION2(SE1003, "Default collation property could not be undefined in PPFnDefaultCollation.");
+        else 
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.default_collation_uri) );
+    }
+    else 
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+
+PPIterator* PPFnDefaultCollation::copy(variable_context *_cxt_)
+{
+    PPFnDefaultCollation *res = new PPFnDefaultCollation(_cxt_);
+    return res;
+}
+
+bool PPFnDefaultCollation::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnDefaultCollation::result");
+}
+

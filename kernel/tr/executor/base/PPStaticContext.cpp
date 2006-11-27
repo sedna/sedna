@@ -7,6 +7,7 @@
 #include "vmm.h"
 #include "PPStaticContext.h"
 #include "xs_uri.h"
+#include "xs_helper.h"
 
 static_context::static_context()
 {
@@ -52,10 +53,17 @@ void static_context::_init_context()
     output_method = se_output_method_xml;
     output_indent = se_output_indent_yes;
 
-    set_default_collation_uri("http://www.w3.org/2005/xpath-functions/collation/codepoint");
+    /////////////////////////////////////////////////////////////////////////
+    /// Set codepoint collation as the default one.
+    /// DO NOT call static_context::set_default_collation() here - 
+    /// it is too complex to be called from constructor.
+    const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+    default_collation_uri = new char[strlen(codepoint_collation_uri) + 1];
+    strcpy(default_collation_uri, codepoint_collation_uri);
+    default_collation_handler = collation_manager.get_collation_handler(codepoint_collation_uri);
+    /////////////////////////////////////////////////////////////////////////
 
 	datetime_initialized = false;
-
 
 	stm.reset();//REDO!!!!
 	stm.add_str(">","&gt;");
@@ -239,45 +247,147 @@ void static_context::set_datetime()
 		implicit_timezone = XMLDateTime(tm).getTimezone();
 	}
 }
+
 void static_context::set_base_uri(const char* _base_uri_)
 {
-    // FIXME: check lexical representation for uri and normalize it
+    ///////////////////////////////////////////////////////////////////////
+    /// Check constraints on URILiteral.
+    bool valid;
+    Uri::Information nfo;
+    Uri::check_constraints(_base_uri_, &valid, &nfo);
+    if (!valid) throw USER_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
+    ///////////////////////////////////////////////////////////////////////
+    
+    ///////////////////////////////////////////////////////////////////////
+    /// Delete old value if any.
     if(base_uri != NULL) delete base_uri;
-    base_uri = new char[strlen(_base_uri_) + 1];
-    strcpy(base_uri, _base_uri_);
+    ///////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////
+    /// Normalize URI if needed and create new value.
+    if(!nfo.normalized) 
+    {
+        stmt_str_buf result;
+        remove_string_normalization(_base_uri_, result);
+        tuple_cell tc = result.get_tuple_cell();
+        tc = tuple_cell::make_sure_light_atomic(tc);
+        base_uri = new char[tc.get_strlen() + 1];
+        strcpy(base_uri, tc.get_str_mem());
+    }
+    else
+    {
+        base_uri = new char[strlen(_base_uri_) + 1];
+        strcpy(base_uri, _base_uri_);
+    }
+    ///////////////////////////////////////////////////////////////////////
 }
 
 void static_context::set_default_collation_uri(const char* _default_collation_uri_)
 {
-    default_collation_handler = get_collation(_default_collation_uri_);
+    tuple_cell tc;
+    
+    ///////////////////////////////////////////////////////////////////////
+    /// Check constraints on URILiteral.
+    bool valid;
+    Uri::Information nfo;
+    Uri::check_constraints(_default_collation_uri_, &valid, &nfo);
+    if (!valid) throw USER_EXCEPTION2(XQST0046, "Prolog default-collation property contains invalid URI.");
+    ///////////////////////////////////////////////////////////////////////
+    
+    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
+        throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (it could not be relative while base-uri is not defined).");
+    
+    const char* normalized_value = _default_collation_uri_;
+
+    ///////////////////////////////////////////////////////////////////////
+    /// Normalize URI if needed.
+    if(!nfo.normalized) 
+    {
+        stmt_str_buf result;
+        remove_string_normalization(_default_collation_uri_, result);
+        tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
+        normalized_value = tc.get_str_mem();
+    }
+    ///////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////
+    /// And try to resolve it over base-uri property if it is relative.
+    if(nfo.type == Uri::UT_RELATIVE)
+    {
+       try
+       {
+           stmt_str_buf result;
+           if(!Uri::resolve(normalized_value, base_uri, result))
+               throw USER_EXCEPTION2(SE1003, "Unexpected URI resolving error in set_default_collation.");
+           tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
+           normalized_value = tc.get_str_mem();
+       }
+       catch(SednaUserException &e)
+       {
+           if(e.get_code() == FORG0009) throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (possibly, base-uri contains relative URI).");
+           throw;
+       }
+    }
+    ///////////////////////////////////////////////////////////////////////
+    
+    default_collation_handler = collation_manager.get_collation_handler(normalized_value);
+    if(default_collation_handler == NULL) throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");            
 
     if (default_collation_uri != NULL) delete default_collation_uri;
-    default_collation_uri = new char[strlen(_default_collation_uri_) + 1];
-    strcpy(default_collation_uri, _default_collation_uri_);
+    default_collation_uri = new char[strlen(normalized_value) + 1];
+    strcpy(default_collation_uri, normalized_value);
 }
 
 CollationHandler* static_context::get_collation(const char *uri)
 {
-    // FIXME: check lexical representation for uri and normalize it
     if (!uri) return get_default_collation();
+    
+    ///////////////////////////////////////////////////////////////////////
+    /// Check constraints on the given URI.
+    bool valid;
+    Uri::Information nfo;
+    Uri::check_constraints(uri, &valid, &nfo);
+    if (!valid) throw USER_EXCEPTION2(FOCH0002, "Given URI is not valid.");
+    ///////////////////////////////////////////////////////////////////////
+    
+    if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
+        throw USER_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
 
-    // resolve uri if needed
-    const char *resolved_uri = uri;
     tuple_cell tc;
-    if (base_uri)
+    const char *normalized_value = uri;
+    
+    ///////////////////////////////////////////////////////////////////////
+    /// Normalize URI if needed.
+    if(!nfo.normalized) 
     {
-        stmt_str_buf dest;
-        bool resolve_res = Uri::resolve(uri, base_uri, dest);
-        if (resolve_res) // uri was relative
-        {
-            tc = tuple_cell::make_sure_light_atomic(dest.get_tuple_cell());
-            resolved_uri = tc.get_str_mem();
-        }
+        stmt_str_buf result;
+        remove_string_normalization(normalized_value, result);
+        tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
+        normalized_value = tc.get_str_mem();
     }
-    // FIXME: what if uri is relative uri and base_uri is NULL?
-
-    // ask collation manager for collation handler
-    CollationHandler *ch = collation_manager.get_collation_handler(resolved_uri);
+    ///////////////////////////////////////////////////////////////////////
+    
+    ///////////////////////////////////////////////////////////////////////
+    /// And try to resolve it over base-uri property if it is relative.
+    if(nfo.type == Uri::UT_RELATIVE)
+    {
+       try
+       {
+           stmt_str_buf result;
+           if(!Uri::resolve(normalized_value, base_uri, result))
+               throw USER_EXCEPTION2(SE1003, "Unexpected URI resolving error in get_collation.");
+           tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
+           normalized_value = tc.get_str_mem();
+       }
+       catch(SednaUserException &e)
+       {
+           if(e.get_code() == FORG0009) throw USER_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
+           throw;
+       }
+    }
+    ///////////////////////////////////////////////////////////////////////
+    
+    CollationHandler *ch = collation_manager.get_collation_handler(normalized_value);
     if (!ch)
         throw USER_EXCEPTION(FOCH0002);
 

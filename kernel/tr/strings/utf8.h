@@ -28,6 +28,8 @@ public:
 class CollationHandler_utf8 : public CollationHandler
 {
 public:
+    bool starts_with(const tuple_cell *tc, const tuple_cell* prefix);
+    bool ends_with(const tuple_cell *tc, const tuple_cell* suffix);
 };
 
 

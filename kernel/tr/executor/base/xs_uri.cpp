@@ -201,12 +201,13 @@ const unsigned char scheme_allowed[16] = {0x00, 0x00, 0x00, 0x00,
 
 
 template <class Iterator>
-static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool* res, char* scheme_buf)
+static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iterator &end, bool* res, char* scheme_buf, bool* normalized)
 {
     *res = false;
     int counter = 0;
     unsigned char value;
 
+    if(start < end && IS_WHITESPACE(*start)) *normalized = false;
     while(start < end && IS_WHITESPACE(*start)) { start++; }
     
     if(start == end) return;    
@@ -227,9 +228,15 @@ static inline void is_URI_with_scheme(Iterator &start, const Iterator &end, bool
     scheme_buf[counter] = '\0';
 
     if(*start == ':') *res= true;
+    
+    if(*normalized)
+    {
+        while(start < end && !IS_WHITESPACE(*start)) { start++; }
+        if(start < end) *normalized = false;
+    }
 }
 
-tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *valid)
+void Uri::check_constraints(const tuple_cell *in_tc, bool *valid, Uri::Information *nfo)
 {
     //////////////////////////////////////////////////////////////////////
     /// Possibly, in future we will need to convert IRI (RFC 3987, which 
@@ -237,11 +244,12 @@ tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *v
     /// to URIbefore run constraints checking. It can be achieved using 
     /// fn:iri-to-uri() implementation.
     //////////////////////////////////////////////////////////////////////
-    bool is_scheme = false;
+    bool is_scheme  = false;
+    bool normalized = true;
     char scheme_buf[MAX_SCHEME_NAME_SIZE + 1];
     const char* re = URI;
     
-    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_URI_with_scheme, in_tc, &is_scheme, scheme_buf); 
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(is_URI_with_scheme_and_normalized, in_tc, &is_scheme, scheme_buf, &normalized); 
 
     if(is_scheme)
     {
@@ -260,23 +268,37 @@ tuple_cell Uri::chech_constraints_for_xs_anyURI(const tuple_cell *in_tc, bool *v
 
     (*valid) = charset_handler->matches(in_tc, re);
 
-    if(*valid)
+    if(*valid && nfo != NULL)
     {
-        stmt_str_buf out_buf;
-        remove_string_normalization(in_tc, out_buf);
-        tuple_cell rc = out_buf.get_tuple_cell();
-        rc.set_xtype(xs_anyURI);
-        return rc;
+        nfo -> type = is_scheme ? Uri::UT_ABSOLUTE : Uri::UT_RELATIVE;
+        nfo -> normalized = normalized;
     }
-
-    return *in_tc;
 }
 
-tuple_cell Uri::chech_constraints_for_xs_anyURI(char *s, bool *valid)
+void Uri::check_constraints(const char *s, bool *valid, Uri::Information *nfo)
 {
-    tuple_cell tc = tuple_cell::atomic(xs_string, s);
-    tc = chech_constraints_for_xs_anyURI(&tc, valid);
-    return tc;
+    bool is_scheme  = false;
+    bool normalized = true;
+    char scheme_buf[MAX_SCHEME_NAME_SIZE + 1];
+    const char* re = URI;
+    const char* str = s;  // create copy of s to save its value within is_URI_with_scheme_and_normalized!
+    
+    is_URI_with_scheme_and_normalized<const char*> (str, str + strlen(str), &is_scheme, scheme_buf, &normalized);
+    
+    if(is_scheme)
+    {
+        if(strcmp("http", scheme_buf) == 0) re = http_URI;
+    }
+    else 
+        re = relative_ref;
+
+    (*valid) = charset_handler->matches(s, re);
+
+    if(*valid && nfo != NULL)
+    {
+        nfo -> type = is_scheme ? Uri::UT_ABSOLUTE : Uri::UT_RELATIVE;
+        nfo -> normalized = normalized;
+    }
 }
 
 char* remove_dot_segments(const char* path)
@@ -422,7 +444,7 @@ bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
             throw USER_EXCEPTION2(FORG0009, "Base URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
     }
     else 
-        throw USER_EXCEPTION2(FORG0009, "Base URI is relative. Absolute URI expected.");
+        throw USER_EXCEPTION2(FORG0009, "Base URI is relative. Absolute URI was expected.");
     
     Uri T;                        /// Target URI which we will return after recomposition.
 

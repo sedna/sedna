@@ -65,10 +65,21 @@ inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
 
 inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 { 
-    bool valid;
-    tuple_cell res = Uri::chech_constraints_for_xs_anyURI(&c, &valid);
+    bool valid = false;
+    tuple_cell res;
+    Uri::Information nfo;
+    Uri::check_constraints(&c, &valid, &nfo);
     
     if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
+
+    if(!nfo.normalized)
+    {
+        stmt_str_buf result;
+        remove_string_normalization(&c, result);
+        res = result.get_tuple_cell();
+    }
+    else 
+        res = c;
 
     res.set_xtype(xs_anyURI);
     return res;

@@ -539,8 +539,72 @@ bool CharsetHandler_utf8::matches (const char *tc, const char *regex)
 // Collation Handler
 //////////////////////////////////////////////////////////////////////////
 
+template <class Iterator>
+static inline void utf8_starts_with(const Iterator &start, const Iterator &end, const char* prefix, int pref_len, bool* result)
+{
+    (*result) = true;
+    utf8_iterator<Iterator> src_it(start);
+    char_iterator_utf8 pref_it((char*)prefix, pref_len, 0);
+    
+    while (src_it.base_iterator() < end && !pref_it.at_end())
+    {
+        if ( (*src_it) != (*pref_it) ) 
+        { 
+            (*result) = false; 
+            break; 
+        }
+        ++src_it;
+        ++pref_it;
+    }
+}
 
-//empty
+template <class Iterator>
+static inline void utf8_ends_with(const Iterator &start, const Iterator &end, __int64 src_len, const char* suffix, __int64 suf_len, bool* result)
+{
+    (*result) = true;
+    utf8_iterator<Iterator> src_it(start);
+    char_iterator_utf8 suf_it((char*)suffix, strlen(suffix), 0);
+    
+    for(__int64 i = src_len - suf_len; i > 0; i--) ++src_it;
+
+    while (src_it.base_iterator() < end && !suf_it.at_end())
+    {
+        if ( (*src_it) != (*suf_it) ) 
+        { 
+            (*result) = false; 
+            break; 
+        }
+        ++src_it;
+        ++suf_it;
+    }
+}
+
+bool CollationHandler_utf8::starts_with(const tuple_cell *tc, const tuple_cell *prefix)
+{
+    tuple_cell pref = tuple_cell::make_sure_light_atomic(*prefix);
+    
+    __int64 pref_len = pref.get_strlen();
+    
+    if(tc->get_strlen() < pref_len) return false;
+    
+    bool result;
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_starts_with, tc, pref.get_str_mem(), pref_len, &result);
+    return result;
+}
+
+bool CollationHandler_utf8::ends_with(const tuple_cell *tc, const tuple_cell *suffix)
+{
+    tuple_cell suf = tuple_cell::make_sure_light_atomic(*suffix);
+
+    __int64 src_len = charset_handler->length((tuple_cell*)tc);
+    __int64 suf_len = charset_handler->length((tuple_cell*)suffix);
+    
+    if(src_len < suf_len) return false;
+    
+    bool result;
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(utf8_ends_with, tc, src_len, suf.get_str_mem(), suf_len, &result);
+    return result;
+}
 
 /////////////////////////////////////////////////////////////////////////
 

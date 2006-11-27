@@ -210,5 +210,53 @@ public:
 };
 
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnStaticBaseUri
+///////////////////////////////////////////////////////////////////////////////
+class PPFnStaticBaseUri : public PPIterator
+{
+
+private:
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnStaticBaseUri(variable_context *_cxt_);
+    virtual ~PPFnStaticBaseUri();
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnDefaultCollation
+///////////////////////////////////////////////////////////////////////////////
+class PPFnDefaultCollation : public PPIterator
+{
+
+private:
+    bool first_time;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnDefaultCollation(variable_context *_cxt_);
+    virtual ~PPFnDefaultCollation();
+};
+
+
+
 #endif
 
