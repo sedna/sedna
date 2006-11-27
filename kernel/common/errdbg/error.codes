@@ -316,7 +316,7 @@ err:FOAR0001
 err:FOAR0002 
 
 	Numeric operation overflow/underflow. This error is raised whenever numeric operations result in an overflow or underflow.
-err:FOCA0001 
+err:FOCA0001
 
 	Input value too large for decimal. 
 	
