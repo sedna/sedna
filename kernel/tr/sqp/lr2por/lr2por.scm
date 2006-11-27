@@ -672,16 +672,24 @@
              
              ; *** cast ***
              ((eq? op-name 'cast)
-              (let* ((expr (car node))
-                     (type (cadr node))
-                     )
-  
-                (if (list? (cadr type))
-                   `(1 (PPCast ,(l2p:any-lr-node2por expr) ,(l2p:lr-atomic-type2por-atomic-type (cadadr type)) #t))
-                   `(1 (PPCast ,(l2p:any-lr-node2por expr) ,(l2p:lr-atomic-type2por-atomic-type (cadr type)) #f))
-                )               
-              ) 
-             )
+              (let ((expr (car node))
+                    (type (cadr node)))
+                `(1
+                  (PPCast
+                   ,(l2p:any-lr-node2por expr) 
+                   ,@(if
+                      (list? (cadr type))  ; sequence type
+                      (list
+                       (l2p:lr-atomic-type2por-atomic-type (cadadr type))
+                       ; Can be a null sequence?
+                       (and
+                        (memq (caadr type) '(optional zero-or-more))
+                        #t  ; produce boolean result
+                        ))
+                      ; atomic type
+                      (list
+                       (l2p:lr-atomic-type2por-atomic-type (cadr type))
+                       #f))))))
              
              ; *** instance of ***             
              ((eq? op-name 'instance-of)
