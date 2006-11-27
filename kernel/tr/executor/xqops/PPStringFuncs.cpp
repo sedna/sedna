@@ -821,18 +821,13 @@ void PPFnNormalizeSpace::next  (tuple &t)
         child.op->next(t);
         if (!t.is_eos())
         {
-            tuple_cell tc = child.get(t);
+            tuple_cell tc = atomize(child.get(t));
             
-            if (tc.is_node())
-                tc = dm_string_value(tc.get_node());
-            else
-            {
-                xmlscm_type xtype = tc.get_atomic_type();
-                if(xtype != xs_string        && 
-                   xtype != xs_untypedAtomic && 
-                   xtype != xs_anyURI        &&
-                   !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
-            }
+            xmlscm_type xtype = tc.get_atomic_type();
+            if(xtype != xs_string        && 
+               xtype != xs_untypedAtomic && 
+               xtype != xs_anyURI        &&
+               !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
 
             child.op->next(t);
             if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:normalize-space. Argument contains more than one item.");
