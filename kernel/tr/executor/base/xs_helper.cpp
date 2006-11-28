@@ -10,6 +10,7 @@
 #include "e_string.h"
 #include "utils.h"
 
+
 /*******************************************************************************
  * string to xs datatype conversion functions
  ******************************************************************************/
@@ -62,18 +63,21 @@ float c_str2xs_float(const char *t)
 
     if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
     {
-        __int32  x = 0x7F800001;
-        res = *(float*)&x;
+        //__int32  x = 0x7F800001;
+        //res = *(float*)&x;
+        res = float_NaN;
     }
     else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
     {
-        __int32 x = 0xFF800000;
-        res = *(float*)&x;
+        //__int32 x = 0xFF800000;
+        //res = *(float*)&x;
+        res = float_Neg_INF;
     }
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
     {
-        __int32 x = 0x7F800000;
-        res = *(float*)&x;
+        //__int32 x = 0x7F800000;
+        //res = *(float*)&x;
+        res = float_Pos_INF;
     }
     else
     {
@@ -94,18 +98,21 @@ double c_str2xs_double(const char *t)
 
     if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
     {
-        __int64  x = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
-        res = *(double*)&x;
+        //__int64  x = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
+        //res = *(double*)&x;
+        res = double_NaN;
     }
     else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
     {
-        __int64 x = ((__int64)0xFFF00000 << (__int64)32);
-        res = *(double*)&x;
+        //__int64 x = ((__int64)0xFFF00000 << (__int64)32);
+        //res = *(double*)&x;
+        res = double_Neg_INF;
     }
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
     {
-        __int64 x = ((__int64)0x7FF00000 << (__int64)32);
-        res = *(double*)&x;
+        //__int64 x = ((__int64)0x7FF00000 << (__int64)32);
+        //res = *(double*)&x;
+        res = double_Pos_INF;
     }
     else
     {
@@ -179,6 +186,8 @@ static __int64 double2__int64_bits(double d)
     return u.l;
 }
 
+#define double_sign(d) (double2__int64_bits(d) & FPC_DOUBLESIGNMASK)
+
 static int _sprint__uint64(char* buffer, __uint64 x, bool m) 
 {
     __uint64 quot = x / (__uint64)1000;
@@ -216,7 +225,7 @@ static char *_get_xs_double_lexical_representation(char *s, double d, const char
         strcpy(s, "NaN");
     else if (d == 0.0) 
     {
-        if ((double2__int64_bits(d) & FPC_DOUBLESIGNMASK) != 0) 
+        if (double_sign(d)) 
             strcpy(s, "-0");
         else
             strcpy(s, "0");
@@ -359,6 +368,153 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
         case xs_integer           : return get_xs_integer_lexical_representation(s, c.get_xs_integer());
         default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to get_lexical_representation_for_fixed_size_atomic");
     }
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+/// XML Schema fixed datatypes to fixed datatypes conversion routines.
+/////////////////////////////////////////////////////////////////////////
+__int64 xs_float2xs_integer(float v)
+{
+    if (u_is_neg_inf((double)v) || u_is_pos_inf((double)v) || u_is_nan((double)v))
+        throw USER_EXCEPTION2(FOCA0002, "Error casting xs:float value to xs:integer");
+
+    double i = 0.0;
+    modf((double)v, &i);
+    return (__int64)i;
+}
+
+__int64 xs_double2xs_integer(double v)
+{
+    if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
+        throw USER_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
+
+    double i = 0.0;
+    modf(v, &i);
+    return (__int64)i;
+}
+
+
+/////////////////////////////////////////////////////////////////////////
+/// ANumeric operations.
+/////////////////////////////////////////////////////////////////////////
+
+__int64 _double_NaN = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
+__int64 _double_Neg_INF = ((__int64)0xFFF00000 << (__int64)32);
+__int64 _double_Pos_INF = ((__int64)0x7FF00000 << (__int64)32);
+__int32 _float_NaN = 0x7F800001;
+__int32 _float_Neg_INF = 0xFF800000;
+__int32 _float_Pos_INF = 0x7F800000;
+
+
+double xs_divide(double x, double y)
+{
+    if (y == 0.0)
+    {
+        if (x == 0.0) return double_NaN;
+        int s = (double_sign(x) ? -1 : 1) * (double_sign(y) ? -1 : 1);
+        return s * double_Pos_INF;
+    }
+
+    if ((u_is_neg_inf(x) || u_is_pos_inf(x)) && (u_is_neg_inf(y) || u_is_pos_inf(y)))
+        return double_NaN;
+
+    return x / y;
+}
+
+float xs_divide(float x, float y)
+{
+    if ((double)y == 0.0)
+    {
+        if (x == 0.0) return float_NaN;
+        int s = (double_sign((double)x) ? -1 : 1) * (double_sign((double)y) ? -1 : 1);
+        return s * float_Pos_INF;
+    }
+
+    if ((u_is_neg_inf((double)x) || u_is_pos_inf((double)x)) && (u_is_neg_inf((double)y) || u_is_pos_inf((double)y)))
+        return float_NaN;
+
+    return x / y;
+}
+
+xs_decimal_t xs_divide(__int64 x, __int64 y)
+{
+    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
+    return xs_decimal_t(x) / xs_decimal_t(y);
+}
+
+xs_decimal_t xs_divide(xs_decimal_t x, xs_decimal_t y)
+{
+    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
+    return x / y;
+}
+
+__int64 xs_integer_divide(double x, double y)
+{
+    if (y == 0.0)
+        throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+
+    if (u_is_nan(x) || u_is_nan(y) || u_is_neg_inf(x) || u_is_pos_inf(x))
+        throw USER_EXCEPTION(FOAR0002);
+
+    return xs_double2xs_integer(x / y);
+}
+
+__int64 xs_integer_divide(float x, float y)
+{
+    if ((double)y == 0.0)
+        throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+
+    if (u_is_nan((double)x) || u_is_nan((double)y) || u_is_neg_inf((double)x) || u_is_pos_inf((double)x))
+        throw USER_EXCEPTION(FOAR0002);
+
+    return xs_float2xs_integer(x / y);
+}
+
+__int64 xs_integer_divide(__int64 x, __int64 y)
+{
+    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+    return x / y;
+}
+
+__int64 xs_integer_divide(xs_decimal_t x, xs_decimal_t y)
+{
+    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+    return (x / y).get_int();
+}
+
+double xs_mod(double x, double y)
+{
+    if (u_is_nan(x) || u_is_nan(y) || u_is_neg_inf(x) || u_is_pos_inf(x) || y == 0.0)
+        return double_NaN;
+
+    if (x == 0.0 || u_is_neg_inf(y) || u_is_pos_inf(y)) 
+        return x;
+
+    return fmod(x, y);
+}
+
+float xs_mod(float x, float y)
+{
+    if (u_is_nan((double)x) || u_is_nan((double)y) || u_is_neg_inf((double)x) || u_is_pos_inf((double)x) || (double)y == 0.0)
+        return float_NaN;
+
+    if ((double)x == 0.0 || u_is_neg_inf((double)y) || u_is_pos_inf((double)y)) 
+        return x;
+
+    return fmodf(x, y);
+}
+
+__int64 xs_mod(__int64 x, __int64 y)
+{
+    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
+    return x % y;
+}
+
+xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y)
+{
+    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
+    return x % y;
 }
 
 

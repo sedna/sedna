@@ -39,7 +39,7 @@ int main (int argc, char** argv)
 //  getchar();
   if (argc != 3)
   {
-     d_printf1("bad number of paprameters\n");
+     d_printf1("bad number of parameters\n");
      return -1;
   }
 
