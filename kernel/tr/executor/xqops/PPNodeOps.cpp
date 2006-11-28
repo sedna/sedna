@@ -170,7 +170,7 @@ void PPFnNumber::next(tuple &t)
 
         if (t.is_eos())
         {
-            t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+            t.copy(tuple_cell::atomic(double_NaN));
             return;
         }
 
@@ -181,7 +181,7 @@ void PPFnNumber::next(tuple &t)
 
         if (tc.is_eos())
         {
-            t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+            t.copy(tuple_cell::atomic(double_NaN));
         }
         else
         {
@@ -191,7 +191,7 @@ void PPFnNumber::next(tuple &t)
             }
             catch(SednaUserException &e)
             {
-                t.copy(tuple_cell::atomic(c_str2xs_double("NaN")));
+                t.copy(tuple_cell::atomic(double_NaN));
             }
         }
     }

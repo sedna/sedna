@@ -142,7 +142,7 @@ inline tuple_cell cast_xs_anyURI_to_string_type(const tuple_cell &c, xmlscm_type
     return res;
 }
 
-inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c)
+inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c, xmlscm_type res_type)
 {
     U_ASSERT(c.is_light_atomic()); // xs:QName value is always ligth atomic
 
@@ -161,7 +161,7 @@ inline tuple_cell cast_xs_QName_to_string_type(const tuple_cell &c)
         res = new char[strlen(local) + 1];
         strcpy(res, local);
     }
-    return tuple_cell::atomic(xs_string, res);
+    return tuple_cell::atomic(res_type, res);
 }
 
 
@@ -234,6 +234,7 @@ tuple_cell cast_primitive_to_xs_untypedAtomic(const tuple_cell &c)
                                       return res;
                                   }
         case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_untypedAtomic);
+        case xs_QName			: return cast_xs_QName_to_string_type(c, xs_untypedAtomic);
         default                 : return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic);
     }
 }
@@ -273,7 +274,7 @@ tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
                                       return res;
                                   }
         case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_string);
-        case xs_QName			: return cast_xs_QName_to_string_type(c);
+        case xs_QName			: return cast_xs_QName_to_string_type(c, xs_string);
         case xs_NOTATION		: { // !!! FIX ME: don't know what to do
                                       tuple_cell res(c);
                                       res.set_xtype(xs_string);
@@ -344,13 +345,12 @@ tuple_cell cast_primitive_to_xs_integer(const tuple_cell &c)
     {
         case xs_untypedAtomic	: 
         case xs_string			: return cast_string_type_to_xs_integer(c);
-        case xs_float			: return tuple_cell::atomic((__int64)(floor(c.get_xs_float())));
-        case xs_double			: return tuple_cell::atomic((__int64)(floor(c.get_xs_double())));
+        case xs_float			: return tuple_cell::atomic(xs_float2xs_integer(c.get_xs_float()));
+        case xs_double			: return tuple_cell::atomic(xs_double2xs_integer(c.get_xs_double()));
         case xs_decimal			: return tuple_cell::atomic(c.get_xs_decimal().get_int());
         case xs_integer 		: return c;
-        case xs_boolean			: return c.get_xs_boolean() ? tuple_cell::atomic((__int64)1)
-                                                            : tuple_cell::atomic((__int64)0);
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_decimal);
+        case xs_boolean			: return tuple_cell::atomic(xs_boolean2xs_integer(c.get_xs_boolean()));
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_integer);
     }
 }
 
