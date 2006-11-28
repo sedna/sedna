@@ -329,6 +329,7 @@ static xptr pstr_long_create_str(xptr desc, const char *data, pstr_long_off_t si
 	return intl_last_blk;
 }
 
+void pstr_long_append_tail_estr(const xptr desc,const xptr data, pstr_long_off_t size0);
 xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype)
 {
 	switch (ttype)
@@ -350,17 +351,16 @@ xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, tex
 		{
 			pstr_long_create_str(desc, "", 0);
 			pstr_long_append_tail(desc, data, size, ttype);
-			//FIXME  make appent_tail return last_blk or use intl_last_blk here?
+			//FIXME  make append_tail return last_blk or use intl_last_blk here?
 			CHECKP(desc);
 			return ((struct t_dsc *)XADDR(desc))->data;
 		}
 	case text_estr:
-		//FIXME!!!!! estr is copied to memory
-		char *tmp = (char*)malloc(size); //FIXME? sb
-		estr_copy_to_buffer(tmp, *(xptr*)data, size);
-		const xptr res = pstr_long_create_str(desc, tmp, size);
-		free(tmp);
-		return res;
+		pstr_long_create_str(desc, "", 0);
+		pstr_long_append_tail_estr(desc, *(xptr*)data, size);
+
+		CHECKP(desc);
+		return ((struct t_dsc *)XADDR(desc))->data;
 	}
 
 	//TODO! - exception/assert
@@ -665,12 +665,21 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 	((struct t_dsc *)XADDR(desc))->data = intl_last_blk;
 }
 
+static void pstr_long_append_tail_estr(const xptr desc,const xptr data, pstr_long_off_t size)
+{
+	//FIXME: this function is not tested
+	char *tmp = (char*)malloc(PAGE_SIZE);
+	estr_cursor cur(data, size);
+	int len;
+	while ( (len = cur.copy_blk(tmp)) > 0)
+		pstr_long_append_tail_mem(desc, tmp, len);
+}
 
 ///////////////////////
 /// pstr_long_cursor
 ///////////////////////
 
-pstr_long_cursor::pstr_long_cursor(const xptr &_ptr_, bool end_indicator)
+pstr_long_cursor::pstr_long_cursor(const xptr &_ptr_, int end_indicator)
 {
 	last_blk = _ptr_;
 	CHECKP(last_blk);
@@ -963,11 +972,7 @@ void pstr_long_append_tail(const xptr desc,const void *data, pstr_long_off_t siz
 			return;
 		}
 	case text_estr:
-		//TODO!!!!!
-		char *tmp = (char*)malloc(size); //FIXME? sb
-		estr_copy_to_buffer(tmp, *(xptr*)data, size);
-		pstr_long_append_tail_mem(desc, tmp, size);
-		free(tmp);
+		pstr_long_append_tail_estr(desc, *(xptr*)data, size);
 		return;
 	}
 	//TODO - error
