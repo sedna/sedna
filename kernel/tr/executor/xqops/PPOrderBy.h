@@ -26,7 +26,7 @@
 #define ORB_STRING_PREFIX_SIZE  8                   
 
 
-#define ORB_SERIALIZED_STRING_SIZE sizeof(bool) + ORB_STRING_PREFIX_SIZE + sizeof(char)      
+#define ORB_SERIALIZED_STRING_SIZE (sizeof(bool) + ORB_STRING_PREFIX_SIZE + sizeof(char))
                                                                         //All xs:string based types have ORB_SERIALIZED_STRING_SIZE
                                                                         //bytes after serialization:
                                                                         //sizeof(bool) + prefix size + sizeof(char) 
@@ -37,7 +37,7 @@
                                                                         //serialize tuple cell with this string.
 
 
-#define ORB_SERIALIZED_SIZE(t)  xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t);
+#define ORB_SERIALIZED_SIZE(t)  (xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t));
                                                                                                                 
 ///////////////////////////////////////////////////////////////////////////////
 /// NOTE!
