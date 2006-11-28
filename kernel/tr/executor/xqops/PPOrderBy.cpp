@@ -293,6 +293,20 @@ void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
     #endif
 }
 
+
+static inline int compare_doubles(double value1, double value2, orb_empty_status o)
+{
+    if (value2 == value1) return 0;
+    
+    bool is_nan1 = u_is_nan(value1);
+    bool is_nan2 = u_is_nan(value2);
+
+    if(is_nan1 && !is_nan2) return (o == ORB_EMPTY_GREATEST ? -1 : 1);
+    if(is_nan2 && !is_nan1) return (o == ORB_EMPTY_GREATEST ? 1 : -1);
+    
+    return (value2 > value1 ? 1 : -1);
+} 
+
 //////////////////////////////////////////////////////////////
 /// v2 points to (j-1)-th element
 /// v1 points to (j)-th element
@@ -333,44 +347,37 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
         if(temp2 == NULL) CHECKP(v2);
         bool is_eos2 = bs2.testAt(i);
 
-        if(is_eos1 && !is_eos2)         /// there we have (j)-th is eos and (j-1)-th is not eos
-        {
-            if(m.status == ORB_EMPTY_GREATEST) result = -1 * order;
-            else result = 1 * order;
-        }
-        else if(is_eos2 && !is_eos1)    /// there we have (j-1)-th is eos and (j)-th is not eos    
-        {
-            if(m.status == ORB_EMPTY_GREATEST) result = 1 * order;
-            else result = -1 * order;
-        }
+        if     (is_eos1 && !is_eos2)                   /// there we have (j)-th is eos and (j-1)-th is not eos
+            result = (m.status == ORB_EMPTY_GREATEST ? -1 : 1) * order;
+        else if(is_eos2 && !is_eos1)                   /// there we have (j-1)-th is eos and (j)-th is not eos    
+            result = (m.status == ORB_EMPTY_GREATEST ? 1 : -1) * order;
+        
         else if(!is_eos2 && !is_eos1)        
         {
             switch (type)
             {
-                case xs_float                  : 
+                case xs_float                : 
                 {
                     float value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_float);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_float);
-                    if (value2 == value1) result = 0;
-                    else result = (value2 > value1 ? 1 : -1)*order;
+                    result = compare_doubles((double)value1, (double)value2, m.status) * order;
                     break;
                 }
-                case xs_double                 : 
-                case xs_decimal                : 
+                case xs_double               : 
+                case xs_decimal              : 
                 {
                     double value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_double);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_double);
-                    if (value2 == value1) result = 0;
-                    else result = (value2 > value1 ? 1 : -1)*order;
+                    result = compare_doubles(value1, value2, m.status) * order;
                     break;
                 }
-                case xs_integer                : 
+                case xs_integer              : 
                 {
                     __int64 value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
@@ -381,7 +388,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     else result = (value2 > value1 ? 1 : -1)*order;
                     break;
                 }
-                case xs_boolean                : 
+                case xs_boolean              : 
                 {
                     bool value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
@@ -392,7 +399,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     if(value1 && !value2) result = -1*order;
                     break;
                 }
-                case xs_string                :
+                case xs_string               :
                 {
                     bool flag1, flag2;
                     if(temp1 != NULL || temp2 !=NULL)
@@ -457,7 +464,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     break;
                 }
-                default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
+                default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
             }
         }
         if(result != 0) break;

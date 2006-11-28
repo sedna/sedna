@@ -73,10 +73,7 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
     // 4. If its operand is a singleton value of type xs:string, xs:anyURI, xs:untypedAtomic, 
     //    or a type derived from one of these, fn:boolean returns false if the operand value 
     //    has zero length; otherwise it returns true.
-    else if(is_derived_from_xs_string(xtype) || 
-            xtype == xs_string || 
-            xtype == xs_anyURI || 
-            xtype == xs_untypedAtomic)
+    else if(is_string_type(xtype))
     {
         if (t.is_heavy_atomic() && t.get_strlen_vmm() == 0) 
             return tuple_cell::atomic(false);
