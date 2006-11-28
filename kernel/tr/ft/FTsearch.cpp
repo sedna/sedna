@@ -902,7 +902,7 @@ inline static bool iswordchar(int ch)
 	return (!(
 		ch <= 33
 		|| ch == SednaConvertJob::closetag_code || ch == SednaConvertJob::opentag_code 
-		|| ch == ';' || ch == '-'
+		|| ch == ';' || ch == '-' || ch == '"' || ch == '\''
 		|| (ch >= 35 && ch <= 38)
 		|| (ch >= 40 && ch <= 44)
 		|| (ch >= 46 && ch <= 47)
