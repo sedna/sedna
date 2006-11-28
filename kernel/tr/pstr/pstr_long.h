@@ -90,7 +90,7 @@ void pstr_long_str_info(xptr desc);
 class pstr_long_cursor : public str_cursor
 {
 	//TODO!!!!! blk should point to last_blk or last_blk->pred when pointer is at eof \
-	//			is cursor < 0, then blk should NEVER point to last_blk				   \   in get_blk/copy_blk
+	//			if cursor < 0, then blk should NEVER point to last_blk				   \   in get_blk/copy_blk
 	//			i.e. blk always points to block that contains some string data		   /  
 	//				& if position is not eos, current char is in blk				  /
 	friend void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t size0);
@@ -118,7 +118,8 @@ public:
 	}
 
 	/// sets current position to the end of the string
-	pstr_long_cursor(const xptr &_ptr_, bool end_indicator);
+	/// end_indicator value is ignored, it is used to indicate another constructor only
+	pstr_long_cursor(const xptr &_ptr_, int end_indicator);
 
 	//FIXME
 	xptr blk;
@@ -141,9 +142,8 @@ public:
 	// and moves cursor after the end of the previous block (thus making it incompatible with iterator functions)
 	// or to the string beginning
 	int get_blk_rev(char **ptr);
+
 	bool eos() {return blk == XNULL; } //FIXME
-
-
 };
 
 class pstr_long_iterator : public pstr_long_cursor
