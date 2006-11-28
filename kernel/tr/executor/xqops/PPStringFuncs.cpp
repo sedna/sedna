@@ -204,12 +204,8 @@ void PPFnStringJoin::next(tuple &t)
     separator.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains zero items.");
     sep = atomize(separator.get(t));
-    xmlscm_type xtype = sep.get_atomic_type();
           
-    if(xtype != xs_string        && 
-       xtype != xs_untypedAtomic && 
-       xtype != xs_anyURI        &&
-       !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the separator of fn:string-join (xs_string/derived/promotable is expected).");
+    if(!is_string_type(sep.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the separator of fn:string-join (xs_string/derived/promotable is expected).");
 
     separator.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains more than one item.");
@@ -222,12 +218,8 @@ void PPFnStringJoin::next(tuple &t)
         if (t.is_eos()) break;
         if(append_sep) result.append(sep);
         tc = atomize(members.get(t));
-        xmlscm_type xtype = tc.get_atomic_type();
         
-        if(xtype != xs_string        && 
-           xtype != xs_untypedAtomic && 
-           xtype != xs_anyURI        &&
-           !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the item in first argument of fn:string-join (xs_string/derived/promotable is expected).");
+        if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the item in first argument of fn:string-join (xs_string/derived/promotable is expected).");
         
         result.append(tc);
         append_sep = is_sep;
@@ -340,12 +332,8 @@ void PPFnStartsEndsWith::next(tuple &t)
     if (!t.is_eos())
     { 
         src = atomize(source.get(t));
-        xmlscm_type xtype = src.get_atomic_type();
               
-        if(xtype != xs_string        && 
-           xtype != xs_untypedAtomic && 
-           xtype != xs_anyURI        &&
-           !is_derived_from_xs_string(xtype)) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
+        if(!is_string_type(src.get_atomic_type())) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
     
         source.op->next(t);                                                                               
         if (!t.is_eos()) error("Invalid arity of the first argument. Argument contains more than one item ");
@@ -356,12 +344,8 @@ void PPFnStartsEndsWith::next(tuple &t)
     if (!t.is_eos())
     { 
         prf = atomize(prefix.get(t));
-        xmlscm_type xtype = prf.get_atomic_type();
               
-        if(xtype != xs_string        && 
-           xtype != xs_untypedAtomic && 
-           xtype != xs_anyURI        &&
-           !is_derived_from_xs_string(xtype)) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
+        if(!is_string_type(prf.get_atomic_type())) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
     
         prefix.op->next(t);
         if (!t.is_eos()) error("Invalid arity of the second argument. Argument contains more than one item ");
@@ -377,11 +361,8 @@ void PPFnStartsEndsWith::next(tuple &t)
         if(t.is_eos()) error("Invalid arity of the third argument. Argument contains zero items ");
 
         col = atomize(collation.get(t));
-        xmlscm_type xtype = src.get_atomic_type();
-        if(xtype != xs_string        && 
-           xtype != xs_untypedAtomic && 
-           xtype != xs_anyURI        &&
-           !is_derived_from_xs_string(xtype)) error("Invalid type of the third argument (xs_string/derived/promotable is expected) ");
+
+        if(!is_string_type(col.get_atomic_type())) error("Invalid type of the third argument (xs_string/derived/promotable is expected) ");
 
         collation.op->next(t);
         if(!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item ");
@@ -823,14 +804,11 @@ void PPFnNormalizeSpace::next  (tuple &t)
         {
             tuple_cell tc = atomize(child.get(t));
             
-            xmlscm_type xtype = tc.get_atomic_type();
-            if(xtype != xs_string        && 
-               xtype != xs_untypedAtomic && 
-               xtype != xs_anyURI        &&
-               !is_derived_from_xs_string(xtype)) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
+            if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:normalize-space (xs_string/derived/promotable is expected).");
 
             child.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:normalize-space. Argument contains more than one item.");
+            if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:normalize-space. Argument contains more than one item.");
+            
             stmt_str_buf result;
             collapse_string_normalization(&tc, result);
             t.copy(result.get_tuple_cell());
