@@ -256,7 +256,7 @@ void serialize_string(const tuple_cell& tc, void* dest)
     bool flag = (length_all <= ORB_STRING_PREFIX_SIZE);
     memcpy(dest, &flag, sizeof(bool));
     tc.copy_string((char*)dest + sizeof(bool), length_ser);
-    *((char*)dest+sizeof(bool)+length_ser) = '\0';
+    *((char*)dest + sizeof(bool) + length_ser) = '\0';
 }
 
 void* get_ptr_to_complete_serialized_data(xptr v, char** temp,  const void * Udata)
@@ -543,7 +543,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_dateTime             :
                     case xs_yearMonthDuration    : 
                     case xs_dayTimeDuration      : memcpy((char*)p+offset, &(t.cells[i].get_xs_duration()), type_size); break;
-                    default                       : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
+                    default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
                 }
             }
             offset += type_size;
@@ -576,7 +576,7 @@ void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, cons
             buffer->serialize_to_buffer(t.cells[i]);
         }
     }
-    buffer->copy_to_buffer(bs.get_ptr_to_bytes(), bs.get_size_in_bytes());    
+    buffer->copy_to_buffer(bs.get_ptr_to_bytes(), bs.get_size_in_bytes());
     buffer->copy_from_buffer(0, size1, v1);
     buffer->copy_from_buffer(size1, v2);
 }
@@ -600,12 +600,13 @@ void PPOrderBy::deserialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, co
 {
     if(size1 < sizeof(__int64))
     {
-        int pos;
+        __int64 pos;
         temp_buffer* buffer = ((orb_user_data*)Udata) -> buffer;
         buffer->clear();
         buffer->copy_to_buffer(v1, size1);
         buffer->copy_to_buffer(v2, sizeof(__int64)-size1);
         buffer->copy_from_buffer(&pos);
+        t.cells[0] = tuple_cell::atomic((__int64)pos);
     }
     else
         deserialize(t, v1, Udata);
