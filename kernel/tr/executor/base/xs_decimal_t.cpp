@@ -222,7 +222,7 @@ char *xs_decimal_t::get_c_str(char *buf) const
 /*******************************************************************************
  * OPERATIONS
  ******************************************************************************/
-xs_decimal_t xs_decimal_t::operator - ()
+xs_decimal_t xs_decimal_t::operator - () const
 {
     xs_decimal_t res;
     decNumber dv, r;
@@ -303,6 +303,14 @@ bool xs_decimal_t::is_zero() const
     dec_cxt.status = 0;
     decimal128ToNumber((decimal128*)(v.v1), &r);
     return decNumberIsZero(&r);
+}
+
+bool xs_decimal_t::is_negative() const
+{
+    decNumber r;
+    dec_cxt.status = 0;
+    decimal128ToNumber((decimal128*)(v.v1), &r);
+    return decNumberIsNegative(&r);
 }
 
 void xs_decimal_t::print() const
@@ -390,7 +398,10 @@ xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
     else
     {
         xs_decimal_t i;
-        xs_decimal_t f = modf(*this, &i);
+        int s = 0;
+        xs_decimal_t d = this->is_negative() ? (s = -1, -*this) : (s = 1, *this);
+
+        xs_decimal_t f = modf(d, &i);
 
         m_f = modf(f * y, &m_i);
 
@@ -411,8 +422,19 @@ xs_decimal_t xs_decimal_t::round_half_to_even(__int64 precision) const
                 }
             }
         }
+        else if (m_f > xs_decimal_t(0.5))
+        {
+            if (m_i.is_zero()) 
+            {
+                i = i + xs_decimal_t((__int64)1);
+            }
+            else
+            {
+                m_i = m_i + xs_decimal_t((__int64)1);
+            }
+        }
 
-        return i + m_i / y;
+        return xs_decimal_t((__int64)s) * (i + m_i / y);
     }
 }
 
