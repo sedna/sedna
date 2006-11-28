@@ -149,8 +149,10 @@ int xmlscm_type_size(xmlscm_type xtype);
 
 inline bool is_string_type(xmlscm_type xtype)
 {
-    return (xs_untypedAtomic <= xtype && xtype <= xs_NOTATION) ||
-           (xs_normalizedString <= xtype && xtype <= xs_ENTITY);
+    return (xtype == xs_string        ||
+            xtype == xs_untypedAtomic || 
+            xtype == xs_anyURI        ||
+            (xs_normalizedString <= xtype && xtype <= xs_ENTITY));
 }
 inline bool is_numeric_type(xmlscm_type xtype)
 {

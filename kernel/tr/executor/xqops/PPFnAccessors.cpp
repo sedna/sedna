@@ -195,7 +195,8 @@ void PPFnNodeName::next  (tuple &t)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+        if (t.is_eos()) return;
+
         if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
         tuple_cell tc = dm_node_name(child.get(t).get_node());

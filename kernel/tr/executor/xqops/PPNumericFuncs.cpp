@@ -272,6 +272,8 @@ double round_half_to_even_double(double d, __int64 precision)
     else
     {
         double i = 0;
+        int s = 0;
+        d = d < 0 ? (s = -1, -d) : (s = 1, d);
         double f = modf(d, &i);
 
         m_f = modf(f * y, &m_i);
@@ -293,8 +295,19 @@ double round_half_to_even_double(double d, __int64 precision)
                 }
             }
         }
+        else if (m_f > 0.5)
+        {
+            if (m_i == 0) 
+            {
+                i += 1;
+            }
+            else
+            {
+                m_i += 1;
+            }
+        }
 
-        return i + m_i / y;
+        return s * (i + m_i / y);
     }
 }
 

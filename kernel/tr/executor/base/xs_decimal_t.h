@@ -54,6 +54,7 @@ public:
     char *  get_c_str (char *buf) const;
 
     bool is_zero() const;
+    bool is_negative() const;
     void print() const;
 
     xs_decimal_t abs() const;
@@ -62,7 +63,7 @@ public:
     xs_decimal_t round() const;
     xs_decimal_t round_half_to_even(__int64 precision) const;
 
-    xs_decimal_t operator - ();
+    xs_decimal_t operator - () const;
     xs_decimal_t operator - (const xs_decimal_t & d) const { return numerical_operation(d, noi_sub); }
     xs_decimal_t operator + (const xs_decimal_t & d) const { return numerical_operation(d, noi_add); }
     xs_decimal_t operator * (const xs_decimal_t & d) const { return numerical_operation(d, noi_mul); }

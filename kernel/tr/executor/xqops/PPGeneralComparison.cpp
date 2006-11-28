@@ -166,7 +166,7 @@ bool PPGeneralComparison::result(PPIterator* cur, variable_context *cxt, void*& 
 xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 {
 	xmlscm_type ret_type=xs_untyped;
-	if (is_string_type(value.get_atomic_type()))
+	if (!is_fixed_size_type(value.get_atomic_type()))
 	{
 		if (min_str)
 		{
@@ -273,7 +273,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 {
 	xmlscm_type ret_type=xs_untyped;
-	if (is_string_type(value.get_atomic_type()))
+	if (!is_fixed_size_type(value.get_atomic_type()))
 	{
 		if (max_str)
 		{

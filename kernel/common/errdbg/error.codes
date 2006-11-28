@@ -313,7 +313,7 @@ err:FOAR0001
 	
 	Division by zero. This error is raised whenever an attempt is made to divide by zero.
 
-err:FOAR0002 
+err:FOAR0002
 
 	Numeric operation overflow/underflow. This error is raised whenever numeric operations result in an overflow or underflow.
 err:FOCA0001
