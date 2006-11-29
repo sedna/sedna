@@ -124,6 +124,179 @@ bool PPFnName::result(PPIterator* cur, variable_context *cxt, void*& r)
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnLocalName
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnLocalName::PPFnLocalName(variable_context *_cxt_,
+                             PPOpIn _child_) : PPIterator(_cxt_),
+                                               child(_child_)
+{
+}
+
+PPFnLocalName::~PPFnLocalName()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnLocalName::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnLocalName::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnLocalName::close ()
+{
+    child.op->close();
+}
+
+void PPFnLocalName::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        child.op->next(t);
+
+        if (t.is_eos())
+        {
+            t.copy(EMPTY_STRING_TC);
+            return;
+        }
+
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:local-name is not a node");
+
+        tuple_cell tc = se_node_local_name(child.get(t).get_node());
+        tc.set_xtype(xs_string);
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:local-name is not a node");
+
+        if (tc.is_eos())
+        {
+            t.copy(EMPTY_STRING_TC);
+        }
+        else
+        {
+            t.copy(tc);
+        }
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnLocalName::copy(variable_context *_cxt_)
+{
+    PPFnLocalName *res = new PPFnLocalName(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnLocalName::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnLocalName::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnNamespaceUri
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnNamespaceUri::PPFnNamespaceUri(variable_context *_cxt_,
+                                   PPOpIn _child_) : PPIterator(_cxt_),
+                                                     child(_child_)
+{
+}
+
+PPFnNamespaceUri::~PPFnNamespaceUri()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnNamespaceUri::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnNamespaceUri::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnNamespaceUri::close ()
+{
+    child.op->close();
+}
+
+void PPFnNamespaceUri::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time = false;
+
+        child.op->next(t);
+
+        if (t.is_eos())
+        {
+            t.copy(EMPTY_STRING_TC);
+            return;
+        }
+
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:namespace-uri is not a node");
+
+        tuple_cell tc = se_node_namespace_uri(child.get(t).get_node());
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:namespace-uri is not a node");
+
+        if (tc.is_eos())
+        {
+            t.copy(EMPTY_STRING_TC);
+        }
+        else
+        {
+            t.copy(tc);
+        }
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnNamespaceUri::copy(variable_context *_cxt_)
+{
+    PPFnNamespaceUri *res = new PPFnNamespaceUri(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnNamespaceUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUri::result");
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,4 +386,78 @@ PPIterator* PPFnNumber::copy(variable_context *_cxt_)
 bool PPFnNumber::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNumber::result");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnRoot
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnRoot::PPFnRoot(variable_context *_cxt_,
+                   PPOpIn _child_) : PPIterator(_cxt_),
+                                     child(_child_)
+{
+}
+
+PPFnRoot::~PPFnRoot()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnRoot::open  ()
+{
+    child.op->open();
+    first_time = true;
+}
+
+void PPFnRoot::reopen()
+{
+    child.op->reopen();
+    first_time = true;
+}
+
+void PPFnRoot::close ()
+{
+    child.op->close();
+}
+
+void PPFnRoot::next  (tuple &t)
+{
+    if (first_time)
+    {
+        child.op->next(t);
+
+        if (t.is_eos())
+            return;
+
+        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
+
+        tuple_cell tc = tuple_cell::node(getRoot(child.get(t).get_node()));
+
+        child.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
+
+        first_time = false;
+        t.copy(tc);
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnRoot::copy(variable_context *_cxt_)
+{
+    PPFnRoot *res = new PPFnRoot(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnRoot::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnRoot::result");
 }

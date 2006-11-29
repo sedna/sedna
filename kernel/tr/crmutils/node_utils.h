@@ -139,6 +139,8 @@ void getSchemeDescendants(schema_node* scm,const char* uri,const char* name, t_i
 
 /* return base uri if exists*/
 xptr getBaseUri(xptr node);
+/* return root */
+xptr getRoot(xptr node);
 
 
 /* return the vector of schema node descandants of the current schema node*/

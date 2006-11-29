@@ -8,6 +8,7 @@
 #include "PPStaticContext.h"
 #include "xs_uri.h"
 #include "xs_helper.h"
+#include "utf8.h"
 
 static_context::static_context()
 {

@@ -9,265 +9,73 @@
 #include "string_operations.h"
 #include "e_string.h"
 #include "pstr_long.h"
-
-
-/*******************************************************************************
- * FUNCTIONS TO ASSEMBLE AND DISASSEMBLE STRINGS: BEGIN
- ******************************************************************************/
-
-/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    NOT READY
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
-/*******************************************************************************
- * FUNCTIONS TO ASSEMBLE AND DISASSEMBLE STRINGS: END
- ******************************************************************************/
+#include "PPBase.h"
 
 
 /*******************************************************************************
  * EQUALITY AND COMPARISON OF STRINGS: BEGIN
  ******************************************************************************/
 
-static __int64 sign(int i)
-{
-    if (i > 0) return (__int64)1;
-    if (i < 0) return (__int64)-1;
-    return (__int64)i;
-}
-
-int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, int str2len)
+inline int fn_compare_pstr_long_vs_pstr_long(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
 {
     pstr_long_cursor cur1(str1);
     pstr_long_cursor cur2(str2);
 
-    char *str1_ptr = NULL, *str2_ptr = NULL;
-    int real_count = 0;
-    int cmp_res = 0;
-
-    str2_ptr = tr_globals::e_string_buf;
-    int str2_part_len = cur2.copy_blk(str2_ptr);
-    int str1_part_len = cur1.get_blk(&str1_ptr);
-	xptr str1xptr = ADDR2XPTR(str1_ptr);
-
-    while (true)
-    {
-        real_count = s_min(str1_part_len, str2_part_len);
-        cmp_res = memcmp(str1_ptr, str2_ptr, real_count);
-
-        if (cmp_res != 0) return cmp_res;
-        if (real_count == str1len && real_count == str2len) return 0;
-        if (real_count == str1len) return -1;
-        if (real_count == str2len) return 1;
-
-        str1_ptr += real_count;
-        str1len -= real_count;
-        str1_part_len -= real_count;
-        str2_ptr += real_count;
-        str2len -= real_count;
-        str2_part_len -= real_count;
-
-		if (str1_part_len == 0 && str2_part_len == 0)
-		{
-            str2_ptr = tr_globals::e_string_buf;
-            str2_part_len = cur2.copy_blk(str2_ptr);
-			str1_part_len = cur1.get_blk(&str1_ptr);
-			str1xptr = ADDR2XPTR(str1_ptr);
-			continue;
-		}
-		if (str1_part_len == 0)
-		{
-			str1_part_len = cur1.get_blk(&str1_ptr);
-			str1xptr = ADDR2XPTR(str1_ptr);
-			continue;
-		}
-		if (str2_part_len == 0)
-		{
-            str2_ptr = tr_globals::e_string_buf;
-            str2_part_len = cur2.copy_blk(str2_ptr);
-			CHECKP(str1xptr);
-			continue;
-		}
-
-		throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
-    }
+    return handler->compare(&cur1, &cur2);
 }
 
-int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len)
+inline int fn_compare_pstr_long_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
 {
     pstr_long_cursor cur1(str1);
     estr_cursor cur2(str2, str2len);
 
-    char *str1_ptr = NULL, *str2_ptr = NULL;
-    int real_count = 0;
-    int cmp_res = 0;
-
-    str2_ptr = tr_globals::e_string_buf;
-    int str2_part_len = cur2.copy_blk(str2_ptr);
-    int str1_part_len = cur1.get_blk(&str1_ptr);
-	xptr str1xptr = ADDR2XPTR(str1_ptr);
-
-    while (true)
-    {
-        real_count = s_min(str1_part_len, str2_part_len);
-        cmp_res = memcmp(str1_ptr, str2_ptr, real_count);
-
-        if (cmp_res != 0) return cmp_res;
-        if (real_count == str1len && real_count == str2len) return 0;
-        if (real_count == str1len) return -1;
-        if (real_count == str2len) return 1;
-
-        str1_ptr += real_count;
-        str1len -= real_count;
-        str1_part_len -= real_count;
-        str2_ptr += real_count;
-        str2len -= real_count;
-        str2_part_len -= real_count;
-
-		if (str1_part_len == 0 && str2_part_len == 0)
-		{
-            str2_ptr = tr_globals::e_string_buf;
-            str2_part_len = cur2.copy_blk(str2_ptr);
-			str1_part_len = cur1.get_blk(&str1_ptr);
-			str1xptr = ADDR2XPTR(str1_ptr);
-			continue;
-		}
-		if (str1_part_len == 0)
-		{
-			str1_part_len = cur1.get_blk(&str1_ptr);
-			str1xptr = ADDR2XPTR(str1_ptr);
-			continue;
-		}
-		if (str2_part_len == 0)
-		{
-            str2_ptr = tr_globals::e_string_buf;
-            str2_part_len = cur2.copy_blk(str2_ptr);
-			CHECKP(str1xptr);
-			continue;
-		}
-
-		throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
-    }
+    return handler->compare(&cur1, &cur2);
 }
 
-int fn_compare_pstr_long_vs_mstr(xptr str1, int str1len, const char* str2)
+inline int fn_compare_pstr_long_vs_mstr(xptr str1, int str1len, const char* str2, CollationHandler* handler)
 {
     pstr_long_cursor cur(str1);
-    char *str1_ptr = NULL;
-    int str1_part_len = 0;
-    int str2len = strlen(str2);
-    int real_count = 0;
-    int cmp_res = 0;
 
-    while (true)
-    {
-        str1_part_len = cur.get_blk(&str1_ptr);
-        real_count = s_min(str2len, str1_part_len);
-        cmp_res = memcmp(str1_ptr, str2, real_count);
-
-        if (cmp_res != 0) return cmp_res;
-
-        if (real_count == str1len && real_count == str2len) return 0;
-        if (real_count == str1len) return -1;
-        if (real_count == str2len) return 1;
-
-        if (real_count == str1_part_len)
-        {
-            str1len -= real_count;
-            str2len -= real_count;
-            str2 += real_count;
-        }
-        else
-            throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
-    }
+    return handler->compare(&cur, str2);
 }
 
-int fn_compare_estr_pstr_short_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len)
+inline int fn_compare_estr_pstr_short_vs_estr_pstr_short(xptr str1, int str1len, xptr str2, int str2len, CollationHandler* handler)
 {
-    CHECKP(str1);
-    int str1_spc_blk = BLK_BEGIN_INT(XADDR(str1)) + PAGE_SIZE - (int)(XADDR(str1));
+    estr_cursor cur1(str1, str1len);
+    estr_cursor cur2(str2, str2len);
 
-    CHECKP(str2);
-    int str2_spc_blk = BLK_BEGIN_INT(XADDR(str2)) + PAGE_SIZE - (int)(XADDR(str2));
-
-    int real_count = s_min(s_min(str1_spc_blk, str1len), s_min(str2_spc_blk, str2len));
-
-    memcpy(tr_globals::e_string_buf, XADDR(str2), real_count);
-
-    CHECKP(str1);
-    int cmp_res = memcmp(XADDR(str1), tr_globals::e_string_buf, real_count);
-
-    if (cmp_res != 0) return cmp_res;
-
-    if (real_count == str1len && real_count == str2len) return 0;
-
-    if (real_count == str1len) return -1;
-
-    if (real_count == str2len) return 1;
-
-    if (real_count == str1_spc_blk && real_count == str2_spc_blk)
-    {
-        xptr new_str1 = E_STR_PROLONGATION(str1);
-        CHECKP(str2);
-        xptr new_str2 = E_STR_PROLONGATION(str2);
-        return fn_compare_estr_pstr_short_vs_estr_pstr_short(new_str1, str1len - real_count, 
-                                                             new_str2, str2len - real_count);
-    }
-
-    if (real_count == str1_spc_blk)
-    {
-        xptr new_str1 = E_STR_PROLONGATION(str1);
-        return fn_compare_estr_pstr_short_vs_estr_pstr_short(new_str1,          str1len - real_count, 
-                                                             str2 + real_count, str2len - real_count);
-    }
-
-    if (real_count == str2_spc_blk)
-    {
-        CHECKP(str2);
-        xptr new_str2 = E_STR_PROLONGATION(str2);
-        return fn_compare_estr_pstr_short_vs_estr_pstr_short(str1 + real_count, str1len - real_count, 
-                                                             new_str2,          str2len - real_count);
-    }
-
-    throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
+    return handler->compare(&cur1, &cur2);
 }
 
-int fn_compare_mstr_vs_estr_pstr_short(const char* str1, xptr str2, int str2len)
+inline int fn_compare_mstr_vs_estr_pstr_short(const char* str1, xptr str2, int str2len, CollationHandler* handler)
 {
-    CHECKP(str2);
-
-    int str1len = strlen(str1);
-    int str2_spc_blk = BLK_BEGIN_INT(XADDR(str2)) + PAGE_SIZE - (int)(XADDR(str2));
-    int real_count = s_min(str1len, s_min(str2_spc_blk, str2len));
-
-    int cmp_res = memcmp(str1, XADDR(str2), real_count);
-
-    if (cmp_res != 0) return cmp_res;
-
-    if (real_count == str1len && real_count == str2len) return 0;
-
-    if (real_count == str1len) return -1;
-
-    if (real_count == str2len) return 1;
-
-    if (real_count == str2_spc_blk)
-        return fn_compare_mstr_vs_estr_pstr_short(str1 + real_count, E_STR_PROLONGATION(str2), str2len - real_count);
-
-    throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
+    estr_cursor cur2(str2, str2len);
+    
+    return -(handler->compare(&cur2, str1));
 }
 
-inline int fn_compare_mstr_vs_mstr(const char* str1, const char* str2)
+inline int fn_compare_mstr_vs_mstr(const char* str1, const char* str2, CollationHandler* handler)
 {
-    return strcmp(str1, str2);
+    return handler->compare(str1, str2);
 }
 
-tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool do_not_check_type)
+tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
 {
+    U_ASSERT(a1.is_atomic() && !is_fixed_size_type(a1.get_atomic_type()));
+    U_ASSERT(a2.is_atomic() && !is_fixed_size_type(a2.get_atomic_type()));
+
+    if (!handler) handler = tr_globals::st_ct.get_default_collation();
+
+    if (a1.get_atomic_type() == xs_base64Binary || a1.get_atomic_type() == xs_hexBinary)
+        handler = charset_handler->get_unicode_codepoint_collation();
+
+/*
     if (   a1.is_atomic() && (a1.get_atomic_type() == xs_string || (do_not_check_type && !is_fixed_size_type(a1.get_atomic_type())))
         && a2.is_atomic() && (a2.get_atomic_type() == xs_string || (do_not_check_type && !is_fixed_size_type(a2.get_atomic_type()))))
         ;
     else
         throw USER_EXCEPTION2(XPTY0004, "Calling fn:compare on non-string values");
-
+*/
 /*
     ASSERT(a1.get_type() == tc_light_atomic || 
            a1.get_type() == tc_heavy_atomic_estr || 
@@ -286,40 +94,40 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, bool do_not_ch
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic(sign(fn_compare_mstr_vs_mstr(a1.get_str_mem(), a2.get_str_mem())));
+            return tuple_cell::atomic((__int64)(fn_compare_mstr_vs_mstr(a1.get_str_mem(), a2.get_str_mem(), handler)));
 
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic(sign(fn_compare_mstr_vs_estr_pstr_short(a1.get_str_mem(), a2.get_str_vmm(), a2.get_strlen_vmm())));
+            return tuple_cell::atomic((__int64)(fn_compare_mstr_vs_estr_pstr_short(a1.get_str_mem(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic(-sign(fn_compare_pstr_long_vs_mstr(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_mem())));
+            return tuple_cell::atomic(-(__int64)(fn_compare_pstr_long_vs_mstr(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_mem(), handler)));
 		}
 	case tc_heavy_atomic_estr:
 	case tc_heavy_atomic_pstr_short:
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic(-sign(fn_compare_mstr_vs_estr_pstr_short(a2.get_str_mem(), a1.get_str_vmm(), a1.get_strlen_vmm())));
+            return tuple_cell::atomic(-(__int64)(fn_compare_mstr_vs_estr_pstr_short(a2.get_str_mem(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler)));
 
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic(sign(fn_compare_estr_pstr_short_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm())));
+            return tuple_cell::atomic((__int64)(fn_compare_estr_pstr_short_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic(-sign(fn_compare_pstr_long_vs_estr_pstr_short(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_vmm(), a1.get_strlen_vmm())));
+            return tuple_cell::atomic(-(__int64)(fn_compare_pstr_long_vs_estr_pstr_short(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler)));
 		}
 	case tc_heavy_atomic_pstr_long:
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic(sign(fn_compare_pstr_long_vs_mstr(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_mem())));
+            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_mstr(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_mem(), handler)));
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic(sign(fn_compare_pstr_long_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm())));
+            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic(sign(fn_compare_pstr_long_vs_pstr_long(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm())));
+            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_pstr_long(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
 		}
 	}
 

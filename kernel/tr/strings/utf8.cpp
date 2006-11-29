@@ -21,6 +21,9 @@
 // Charset Handler
 //////////////////////////////////////////////////////////////////////////
 
+CollationHandler_utf8 CharsetHandler_utf8::m_ch;
+
+
 int CharsetHandler_utf8::length (tuple_cell *tc)
 {
 	switch (tc->get_type())
@@ -538,6 +541,104 @@ bool CharsetHandler_utf8::matches (const char *tc, const char *regex)
 //////////////////////////////////////////////////////////////////////////
 // Collation Handler
 //////////////////////////////////////////////////////////////////////////
+
+static inline int sign(int i)
+{
+    if (i > 0) return 1;
+    if (i < 0) return -1;
+    return i;
+}
+
+int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
+{
+    char *str1_ptr = NULL, *str2_ptr = NULL;
+    int cmp_res = 0;
+
+    str2_ptr = tr_globals::e_string_buf;
+    int str2_part_len = cur2->copy_blk(str2_ptr);
+    int str1_part_len = cur1->get_blk(&str1_ptr);
+	xptr str1xptr = ADDR2XPTR(str1_ptr);
+
+    while (true)
+    {
+        const int real_count = s_min(str1_part_len, str2_part_len);
+
+        if (str1_part_len == 0 && str2_part_len == 0) return 0;
+        if (str1_part_len == 0) return -1;
+        if (str2_part_len == 0) return 1;
+
+        cmp_res = memcmp(str1_ptr, str2_ptr, real_count);
+
+        if (cmp_res != 0) return sign(cmp_res);
+
+        str1_ptr += real_count;
+        str1_part_len -= real_count;
+        str2_ptr += real_count;
+        str2_part_len -= real_count;
+
+		if (str1_part_len == 0 && str2_part_len == 0)
+		{
+            str2_ptr = tr_globals::e_string_buf;
+            str2_part_len = cur2->copy_blk(str2_ptr);
+			str1_part_len = cur1->get_blk(&str1_ptr);
+			str1xptr = ADDR2XPTR(str1_ptr);
+			continue;
+		}
+		if (str1_part_len == 0)
+		{
+			str1_part_len = cur1->get_blk(&str1_ptr);
+			str1xptr = ADDR2XPTR(str1_ptr);
+			continue;
+		}
+		if (str2_part_len == 0)
+		{
+            str2_ptr = tr_globals::e_string_buf;
+            str2_part_len = cur2->copy_blk(str2_ptr);
+			CHECKP(str1xptr);
+			continue;
+		}
+
+		throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
+    }
+}
+int CollationHandler_utf8::compare(str_cursor *cur, const char *str2)
+{
+    char *str1_ptr = NULL;
+    int str1_part_len = 0;
+    int str2len = strlen(str2);
+    int cmp_res = 0;
+
+    while (true)
+    {
+        str1_part_len = cur->get_blk(&str1_ptr);
+        if (str1_part_len == 0 && str2len == 0) return 0;
+        if (str1_part_len == 0) return -1;
+        if (str2len == 0) return 1;
+
+        const int real_count = s_min(str2len, str1_part_len);
+
+        cmp_res = memcmp(str1_ptr, str2, real_count);
+
+        if (cmp_res != 0) return sign(cmp_res);
+
+        if (real_count == str1_part_len)
+        {
+            str2len -= real_count;
+            str2 += real_count;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+}
+
+int CollationHandler_utf8::compare(const char *str1, const char *str2)
+{
+    return sign(strcmp(str1, str2));
+}
+
+
 
 template <class Iterator>
 static inline void utf8_starts_with(const Iterator &start, const Iterator &end, const char* prefix, int pref_len, bool* result)

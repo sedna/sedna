@@ -5,10 +5,27 @@
 
 #include "sedna.h"
 #include "strings.h"
+#include "PPBase.h"
 
-class CharsetHandler_utf8 : public CharsetHandler
+
+class CollationHandler_utf8 : public CollationHandler
 {
 public:
+	// compares 2 strings, return -1, 0 or 1
+	// if function takes str_cursor argument, it's value is undefined after call
+	int compare(str_cursor *a, str_cursor *b);
+	int compare(str_cursor *a, const char *b);
+	int compare(const char *a, const char *b);
+
+    bool starts_with(const tuple_cell *tc, const tuple_cell* prefix);
+    bool ends_with(const tuple_cell *tc, const tuple_cell* suffix);
+};
+class CharsetHandler_utf8 : public CharsetHandler
+{
+private:
+    static CollationHandler_utf8 m_ch;
+public:
+    CharsetHandler_utf8() : CharsetHandler(&m_ch) {}
 	virtual int length (tuple_cell *tc);
 	virtual void transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str);
 	virtual CharCounter* new_char_counter();
@@ -25,12 +42,6 @@ public:
 	virtual bool matches (const char *t1, const char *regex);
 };
 
-class CollationHandler_utf8 : public CollationHandler
-{
-public:
-    bool starts_with(const tuple_cell *tc, const tuple_cell* prefix);
-    bool ends_with(const tuple_cell *tc, const tuple_cell* suffix);
-};
 
 
 template <class BaseIterator, typename UChar32 = int>
@@ -354,3 +365,18 @@ int utf8_parse_char(const char *str, int *byte_len = NULL);
 const char *utf8_encode_char(int c);
 
 int utf8_valid(const char *string, int length);
+
+
+
+class CollationManager
+{
+private:
+    static CharsetHandler_utf8 utf8_charset_handler;
+public:
+    CollationManager() { charset_handler =  &utf8_charset_handler; }
+    // returns NULL if there is no collation handler for such uri
+	CollationHandler *get_collation_handler(const char *uri);
+	CollationHandler *get_default_collation_handler();
+};
+extern CollationManager	collation_manager;
+

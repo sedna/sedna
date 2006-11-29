@@ -303,8 +303,12 @@ public:
 	virtual int get_next_char() = 0;
 };
 
+class CollationHandler;
 class CharsetHandler
 {
+protected:
+    CollationHandler *m_ucp_collation_handler;
+    CharsetHandler(CollationHandler *ucp_collation_handler) : m_ucp_collation_handler(ucp_collation_handler) {}
 public:
 	//FIXME: length souldn't be int
 	virtual int length (tuple_cell *tc) = 0;
@@ -320,16 +324,21 @@ public:
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
 	virtual bool matches (const char *tc, const char *regex) = 0;
+
+    inline CollationHandler *get_unicode_codepoint_collation()
+    {
+        return m_ucp_collation_handler;
+    }
 };
 
 class CollationHandler
 {
 public:
-	// compares 2 strings
+	// compares 2 strings, return -1, 0 or 1
 	// if function takes str_cursor argument, it's value is undefined after call
-	int compare(str_cursor *a, str_cursor *b);
-	int compare(str_cursor *a, const char *b);
-	int compare(const char *a, const char *b);
+	virtual int compare(str_cursor *a, str_cursor *b) = 0;
+	virtual int compare(str_cursor *a, const char *b) = 0;
+	virtual int compare(const char *a, const char *b) = 0;
 	
 	// returns 'true' <-> given tuple_cell starts with 'prefix'
 	virtual bool starts_with(const tuple_cell *tc, const tuple_cell* prefix) = 0;
@@ -337,13 +346,9 @@ public:
 	virtual bool ends_with(const tuple_cell *tc, const tuple_cell* suffix) = 0;
 };
 
-class CollationManager
-{
-public:
-    // returns NULL if there is no collation handler for such uri
-	CollationHandler *get_collation_handler(const char *uri);
-	CollationHandler *get_default_collation_handler();
-};
+extern CharsetHandler	*charset_handler;
+
+
 
 void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc);
 
@@ -352,11 +357,6 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 {
     feed_tuple_cell(writextext_cb, &crmout, tc);
 }
-
-
-extern CharsetHandler	*charset_handler;
-extern CollationHandler	*collation_handler;
-extern CollationManager	collation_manager;
 
 
 #endif //_STRINGS_H

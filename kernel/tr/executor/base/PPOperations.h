@@ -87,6 +87,7 @@
 #include "PPDAFilter.h"
 #include "PPUp.h"
 #include "PPUriFuncs.h"
+#include "PPStringsCompare.h"
 #include "PPStringFuncs.h"
 #include "PPRange.h"
 #include "PPXptr.h"

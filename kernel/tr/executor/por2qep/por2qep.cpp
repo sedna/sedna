@@ -1846,6 +1846,24 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnName(cxt, 
                             make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnLocalName")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "73");
+
+        opit = new PPFnLocalName(cxt, 
+                                 make_pp_op(cxt, lst->at(1).internal.list));
+    }
+    else if (op == "PPFnNamespaceUri")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "73");
+
+        opit = new PPFnNamespaceUri(cxt, 
+                                    make_pp_op(cxt, lst->at(1).internal.list));
+    }
     else if (op == "PPFnNumber")
     {
         if (   lst->size() != 2
@@ -1854,6 +1872,15 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         opit = new PPFnNumber(cxt, 
                               make_pp_op(cxt, lst->at(1).internal.list));
+    }
+    else if (op == "PPFnRoot")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "73");
+
+        opit = new PPFnRoot(cxt, 
+                            make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnAbs" || op == "PPFnCeiling" || op == "PPFnFloor" || op == "PPFnRound")
     {
@@ -2268,6 +2295,39 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPUp(cxt,
                         make_pp_op(cxt, lst->at(1).internal.list),
                         scm_node);
+    }
+    else if (op == "PPFnCompare")
+    {
+        if (   lst->size() < 3
+            || lst->size() > 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "95.1");
+
+        if(lst->size() == 4)
+        {
+        	if(lst->at(3).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "95.2");
+            opit = new PPFnCompare(cxt,
+                                   make_pp_op(cxt, lst->at(1).internal.list),
+                                   make_pp_op(cxt, lst->at(2).internal.list),
+                                   make_pp_op(cxt, lst->at(3).internal.list));
+        }
+        else
+            opit = new PPFnCompare(cxt,
+                                   make_pp_op(cxt, lst->at(1).internal.list),
+                                   make_pp_op(cxt, lst->at(2).internal.list));
+    }
+    else if (op == "PPFnCodepointEqual")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "95.3");
+
+        opit = new PPFnCompare(cxt,
+                               make_pp_op(cxt, lst->at(1).internal.list),
+                               make_pp_op(cxt, lst->at(2).internal.list),
+                               true);
     }
     else if (op == "PPFnConcat")
     {

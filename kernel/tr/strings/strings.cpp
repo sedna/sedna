@@ -11,12 +11,10 @@
 #include "casting_operations.h"
 #include "d_printf.h"
 
-static CharsetHandler_utf8 utf8_charset_handler;
-CharsetHandler *charset_handler = &utf8_charset_handler;
 
-static CollationHandler_utf8 utf8handler;
-CollationHandler *collation_handler = &utf8handler;
+CharsetHandler *charset_handler = NULL;
 
+CharsetHandler_utf8 CollationManager::utf8_charset_handler;
 CollationManager collation_manager;
 
 #define T_STR_MEMBUF_SIZE 100
@@ -249,13 +247,13 @@ void print_tuple_cell_dummy(se_ostream& crmout,const tuple_cell& tc)
 CollationHandler *CollationManager::get_collation_handler(const char *uri)
 {
     if (strcmp(uri, "http://www.w3.org/2005/xpath-functions/collation/codepoint") == 0)
-        return &utf8handler;
+        return utf8_charset_handler.get_unicode_codepoint_collation();
     else
         return NULL;
 }
 
 CollationHandler *CollationManager::get_default_collation_handler()
 {
-    return &utf8handler;
+    return utf8_charset_handler.get_unicode_codepoint_collation();
 }
 

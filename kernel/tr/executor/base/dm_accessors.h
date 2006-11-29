@@ -42,8 +42,6 @@ tuple_cell        dm_typed_value (xptr node);
 
 
 
-
-
 /*******************************************************************************
 The following functions seem to be useles because they are implemented as 
 parts of path operators of physical plans. But I'm still going to think about 
@@ -61,14 +59,8 @@ their implementation... (AF)
 ??? dm_unparsed_entity_system_id(xptr node, entityname)
 *******************************************************************************/
 
-
-
-
-
-
-
-
-
+tuple_cell se_node_local_name   (xptr node);
+tuple_cell se_node_namespace_uri(xptr node);
 
 #endif
 
