@@ -123,6 +123,7 @@ primaryExpr!:
 	| fc:functionCall                  <<#0=#fc;>>
 	| c:constructor                    <<#0=#c;>>
 	| v:validateExpr                   <<#0=#v;>>
+	| oe:orderExpr			   <<#0=#oe;>>
 ;
 
 contextItemExpr!:
@@ -294,6 +295,10 @@ literal!:
 	| s:STRINGLITERAL   <<#0=#[$s->getText(), AST_STRING_CONST];>>
 ;
 
+orderExpr!:
+	  ORDERED LBRACE e1:expr RBRACE <<#0=#(#[AST_ORDERED_EXPR], #e1);>>
+	| UNORDERED LBRACE e2:expr RBRACE  <<#0=#(#[AST_UNORDERED_EXPR], #e2);>>
+;
 
 
 }
