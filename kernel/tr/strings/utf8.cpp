@@ -16,12 +16,11 @@
 #include "e_string.h"
 #include "e_string_iterator.h"
 #include <sstream>
+#include "PPBase.h"
 
 //////////////////////////////////////////////////////////////////////////
 // Charset Handler
 //////////////////////////////////////////////////////////////////////////
-
-CollationHandler_utf8 CharsetHandler_utf8::m_ch;
 
 
 int CharsetHandler_utf8::length (tuple_cell *tc)

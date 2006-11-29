@@ -14,9 +14,6 @@
 
 CharsetHandler *charset_handler = NULL;
 
-CharsetHandler_utf8 CollationManager::utf8_charset_handler;
-CollationManager collation_manager;
-
 #define T_STR_MEMBUF_SIZE 100
 
 void str_buf_base::move_to_mem_buf()
