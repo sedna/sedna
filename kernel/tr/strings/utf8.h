@@ -3,10 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#ifndef _UTF8_H
+#define _UTF8_H
+
 #include "sedna.h"
 #include "strings.h"
-#include "PPBase.h"
-
 
 class CollationHandler_utf8 : public CollationHandler
 {
@@ -23,7 +24,7 @@ public:
 class CharsetHandler_utf8 : public CharsetHandler
 {
 private:
-    static CollationHandler_utf8 m_ch;
+    CollationHandler_utf8 m_ch;
 public:
     CharsetHandler_utf8() : CharsetHandler(&m_ch) {}
 	virtual int length (tuple_cell *tc);
@@ -371,12 +372,12 @@ int utf8_valid(const char *string, int length);
 class CollationManager
 {
 private:
-    static CharsetHandler_utf8 utf8_charset_handler;
+    CharsetHandler_utf8 utf8_charset_handler;
 public:
     CollationManager() { charset_handler =  &utf8_charset_handler; }
     // returns NULL if there is no collation handler for such uri
 	CollationHandler *get_collation_handler(const char *uri);
 	CollationHandler *get_default_collation_handler();
 };
-extern CollationManager	collation_manager;
 
+#endif

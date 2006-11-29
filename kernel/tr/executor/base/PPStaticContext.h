@@ -12,6 +12,7 @@
 #include "XPath.h"
 #include "str_matcher.h"
 #include "strings.h"
+#include "utf8.h"
 
 typedef std::pair<std::string,std::string> str_pair;
 typedef std::map< str_pair, xml_ns*> ns_map;
@@ -58,6 +59,7 @@ struct static_context
 
     /// stores pointer to default collation handler already resolved using default collation uri and base uri
     CollationHandler *default_collation_handler;
+	CollationManager collation_manager;
 
 
     StrMatcher stm; 

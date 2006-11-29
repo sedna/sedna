@@ -19,7 +19,7 @@ PPFnCompare::PPFnCompare(variable_context *_cxt_,
                          PPOpIn _str2_child_,
                          bool _is_codepoint_equal_) : PPIterator(_cxt_),
                                                       str1_child(_str1_child_),
-                                                      str2_child(_str1_child_),
+                                                      str2_child(_str2_child_),
                                                       is_codepoint_equal(_is_codepoint_equal_)
 {
 }
@@ -29,7 +29,7 @@ PPFnCompare::PPFnCompare(variable_context *_cxt_,
                          PPOpIn _str2_child_,
                          PPOpIn _collation_child_) : PPIterator(_cxt_),
                                                      str1_child(_str1_child_),
-                                                     str2_child(_str1_child_),
+                                                     str2_child(_str2_child_),
                                                      collation_child(_collation_child_),
                                                      is_codepoint_equal(false)
 {
