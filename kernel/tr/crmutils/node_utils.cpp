@@ -1281,3 +1281,21 @@ xptr getBaseUri(xptr node)
 	return XNULL;
 
 }
+
+xptr getRoot(xptr node)
+{
+	xptr cur = node;
+    xptr p;
+    CHECKP(cur);
+    while (true)
+    {
+        p = GETPARENTPOINTER(cur);
+        if (p == NULL) return cur;
+        p = removeIndirection(p);
+        CHECKP(p);
+        if (GETSCHEMENODE(XADDR(p))->type == virtual_root)
+            return cur;
+        cur = p;
+    }
+}
+

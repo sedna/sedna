@@ -92,6 +92,66 @@ tuple_cell dm_node_name(xptr node)
     }
 }
 
+tuple_cell se_node_local_name(xptr node)
+{
+    CHECKP(node);
+
+    switch (GETSCHEMENODE(XADDR(node))->type)
+    {
+        case document		: return tuple_cell::eos();
+		case element		: 
+        case attribute		: {
+                                  const char *local_name = GETSCHEMENODE(XADDR(node))->name;
+								  return tuple_cell::atomic_deep(xs_NCName, local_name);
+							  }
+        case xml_namespace	: {
+                                  ns_dsc *ns = NS_DSC(node);
+                                  if (ns->ns->prefix) 
+                                  {
+                                      return tuple_cell::atomic_deep(xs_NCName, ns->ns->prefix);
+                                  }
+                                  else 
+                                      return tuple_cell::eos();
+                              }
+        case pr_ins			: {
+                                  pi_dsc *pi = PI_DSC(node);
+                                  shft target = pi->target;
+                                  xptr data = pi->data;
+							      CHECKP(data);
+							      data = PSTRDEREF(data);
+                                  char *t = new char[target + 1];
+							      t[target] = '\0';
+                                  estr_copy_to_buffer(t, data, target);
+                                  return tuple_cell::atomic(xs_NCName, t);
+                              }
+        case comment		: return tuple_cell::eos();
+        case text			: return tuple_cell::eos();
+        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to se_node_local_name");
+    }
+}
+
+tuple_cell se_node_namespace_uri(xptr node)
+{
+    CHECKP(node);
+
+    switch (GETSCHEMENODE(XADDR(node))->type)
+    {
+        case document		: return tuple_cell::eos();
+		case element		: 
+        case attribute		: {
+                                  xml_ns *xmlns = GETSCHEMENODE(XADDR(node))->xmlns;
+                                  if (xmlns && xmlns->uri)
+                                      return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
+                                  else 
+                                      return tuple_cell::eos();
+							  }
+        case xml_namespace	: 
+        case pr_ins			: 
+        case comment		: 
+        case text			: return tuple_cell::eos();
+        default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:node-name");
+    }
+}
 
 xptr get_parent_node(xptr node)
 {

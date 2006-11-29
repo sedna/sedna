@@ -65,32 +65,32 @@ struct xq_unary_op_info_type
 // string compare functions for XQuery B.2 Operator Mapping implementation
 tuple_cell op_map_fn_compare_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() == 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() == 0);
 }
 
 tuple_cell op_map_fn_compare_not_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() != 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() != 0);
 }
 
 tuple_cell op_map_fn_compare_less_than(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() < 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() < 0);
 }
 
 tuple_cell op_map_fn_compare_less_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() <= 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() <= 0);
 }
 
 tuple_cell op_map_fn_compare_greater_than(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() > 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() > 0);
 }
 
 tuple_cell op_map_fn_compare_greater_equal(const tuple_cell &a1, const tuple_cell &a2)
 {
-    return tuple_cell::atomic(fn_compare(a1, a2, true).get_xs_integer() >= 0);
+    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() >= 0);
 }
 
 

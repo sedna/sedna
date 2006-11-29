@@ -94,6 +94,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPADFilter$(OBJ_EXT)				\
                        PPDAFilter$(OBJ_EXT)				\
                        PPUp$(OBJ_EXT)					\
+                       PPStringsCompare$(OBJ_EXT)		\
                        PPStringFuncs$(OBJ_EXT)			\
                        PPCheckpoint$(OBJ_EXT)			\
                        PPXptr$(OBJ_EXT)					\
