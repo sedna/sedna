@@ -329,7 +329,7 @@ static xptr pstr_long_create_str(xptr desc, const char *data, pstr_long_off_t si
 	return intl_last_blk;
 }
 
-void pstr_long_append_tail_estr(const xptr desc,const xptr data, pstr_long_off_t size0);
+static void pstr_long_append_tail_estr(const xptr desc,const xptr data, pstr_long_off_t size0);
 xptr pstr_long_create_str(xptr desc, const void *data, pstr_long_off_t size, text_type ttype)
 {
 	switch (ttype)
