@@ -6,6 +6,94 @@
 #ifndef _STRINGS_H
 #define _STRINGS_H
 
+/**
+
+There are several types of strings in sedna, listred below:
+   estr      - temporary strings stored in vmm memory (temp blocks)
+   pstr      - persistent strings in db, length <= PSTRMAXSIZE
+   pstr_long - persistent strings in db, length > PSTRMAXSIZE
+   char *    - C strings in the heap
+   
+A string in tuple_cell may of any of these types.
+
+
+
+Methods of reading strings:
+
+1. Cursors
+    Cursors allow to traverse a string from the start block by block. Cursors
+  exist for pstr_long and estr strings (other string types are not split to 
+  blocks). These cursors are called pstr_long_cursor and estr_cursor
+  respectivly and have a common ancesor class str_cursor which defines a basic
+  set of operations any string cursor should support.
+                            str_cursor
+                           /          \
+                          /            \
+                 pstr_long_cursor    estr_cursor
+    Cursors are byte-oriented. Data in string parts depends on encoding and
+  a character may be split into several separate string parts for multibyte
+  encodings.
+  
+2. Feeding a string
+    Feeding a string is analogous to using a cursor. String is traversed by
+  portions from the start till the string end. For each portion a callback
+  function is called.
+    There is an usiversal feed_tuple_cell function which feeds a string
+    contained in a tuple_cell to some callback function. There are also feed
+    functions for estr and pstr_long strings, called feed_estr and
+    feed_pstr_long respectively.
+    Feed functions are byte-oriented. Data in string parts depends on encoding and
+  a character may be split into several separate string parts for multibyte
+  encodings.
+    
+3. Bidirectional byte iterators
+    For each string type there is an iterator class, which has interface
+  similar to STL iterators:
+      string type | iterator
+      ------------+-------------
+      estr        | estr_iterator
+      pstr        | estr_iterator
+      pstr_long   | pstr_long_iterator
+      char*       | char_iterator/char*
+    To simplify using of these iterators there is a macro that allows to
+  call appropriate function template instance, which has string start and
+  string end iterators as parameters:
+    #define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_<N>p(func, tcell_ptr, p1, p2, ..., p<N>)
+  here func is the name of function template, tcell_ptr is a pointer to a
+  tuple_cell,p<i> are user parameters.
+    1 <= N <= 4.
+    Function template must have one parameter - iterator type.
+    Instance functions must have N+2 parameters: start iterator, end iterator
+  and N user-defined parameters.
+    End iterator may be used to compare it with other iterators only. Modifying
+  or dereferencing it results in unpredicted behaviour.
+4. unicode_cp_iterator
+    unicode_cp_iterator is an abstaract class with allows forward only traverse
+  of a string character by character. This is achieved by calling
+  get_next_char() function which will return unicode character codes for each
+  character in the string until the end of the string is reached. When this
+  happens an -1 is returned.
+    CharsetHandler has a function which returns unicode_cp_iterator for any
+    tuple_cell (get_unicode_cp_iterator).
+    
+    
+Writing strings:
+
+  Temporary strings may be created using op_str_buf and stmt_str_buf by
+appendings string parts.
+  stmt_str_buf also supports output iterator interface (similar to STL)
+  There may be no more than one instance of stmt_str_buf at any moment. Thus
+operations that use stmt_str_buf must call all functions which may use it
+outside of blocks which contain stmt_str_buf variables and make sure than no
+other instances of stmt_str_buf exist when these functions are called.
+  Strings created by stmt_str_buf are valid until the end of the statement.
+  Strings created by op_str_buf are valid until construction of another string
+by this class has begun (i.e. until op_str_buf::clear() is called)
+  
+
+**/
+
+
 #include "sedna.h"
 
 
