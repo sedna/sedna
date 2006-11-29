@@ -147,6 +147,7 @@
 #include <ucontext.h>
 #include <setjmp.h>
 #include <fcntl.h>
+#include <math.h>
 #endif /* _WIN32 */
 
 
