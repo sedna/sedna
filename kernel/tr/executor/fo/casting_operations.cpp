@@ -435,8 +435,20 @@ tuple_cell cast_primitive_to_xs_boolean(const tuple_cell &c)
     {
         case xs_untypedAtomic	: 
         case xs_string			: return cast_string_type_to_xs_boolean(c);
-        case xs_float			: return c.get_xs_float()   == (float) 0.0e0 ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
-        case xs_double			: return c.get_xs_double()  == (double)0.0e0 ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
+        case xs_float			: 
+        {
+            float value = c.get_xs_float();
+            return (value == (float)0.0e0 || u_is_nan((double)value)) ? 
+                   tuple_cell::atomic(false) : 
+                   tuple_cell::atomic(true);
+        }
+        case xs_double			: 
+        {
+            double value = c.get_xs_double();
+            return (value == (double)0.0e0 || u_is_nan(value)) ? 
+                   tuple_cell::atomic(false) : 
+                   tuple_cell::atomic(true);
+        }
         case xs_decimal			: return c.get_xs_decimal().is_zero()        ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
         case xs_integer 		: return c.get_xs_integer() == (__int64)0    ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
         case xs_boolean			: return c;
