@@ -23,46 +23,61 @@ bool check_char_wellformedness(int c)
 string erase_doublequot(char* lex_text)
 {
   string lex = lex_text;
+  string::size_type pos = 0;
+
+  //replace / on // for Scheme part
+  for(;;)
+  {
+       pos = lex.find("\\", pos);
+       if (pos == string::npos) break;
+
+       lex = lex.replace(pos, 1, "\\\\");
+
+       pos += 2;
+
+  }
+  
+  //further processing
   if (lex.size() >= 3)
   {
-    string find_text = string(1, lex[0]) + string(1, lex[0]);
-    string repl_text = string("\\") + string(1, lex[0]);
-    string text = lex.substr(1, lex.size()-2);//erase first and last characters
-    string::size_type pos;
-    for(;;)
-    {
-      pos = text.find(find_text);
-      if (pos == string::npos) break;
+       string find_text = string(1, lex[0]) + string(1, lex[0]);
+       string repl_text = string("\\") + string(1, lex[0]);
+       string text = lex.substr(1, lex.size()-2);//erase first and last characters
 
-      text = text.replace(pos, 2, repl_text);
-    }
+       for(;;)
+       {
+         pos = text.find(find_text);
+         if (pos == string::npos) break;
 
-    //replase " with \" for Scheme part
-    find_text = "\"";
-    repl_text = "\\\"";
+         text = text.replace(pos, 2, repl_text);
+       }
 
-    pos = 0;
+       //replase " with \" for Scheme part
+       find_text = "\"";
+       repl_text = "\\\"";
 
-    for(;;)
-    {
-      pos = text.find(find_text, pos);
-      if (pos == string::npos) break;
+       pos = 0;
 
-      if (pos == 0)
-         text = text.replace(pos, 1, repl_text);
-      else
-      {
-         if (text[pos-1] != '\\')
+       for(;;)
+       {
+          pos = text.find(find_text, pos);
+          if (pos == string::npos) break;
+
+          if (pos == 0)
              text = text.replace(pos, 1, repl_text);
-      }
+          else
+          {
+             if (text[pos-1] != '\\')
+                text = text.replace(pos, 1, repl_text);
+          }
 
     
 
-      pos +=find_text.size() + 1;
-    }
+          pos +=find_text.size() + 1;
+       }
 
 
-    lex = string("\"") + text + "\"";
+       lex = string("\"") + text + "\"";
   }
   else
   {
