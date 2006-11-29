@@ -291,6 +291,7 @@ primaryExpr![in_context in_c] >[out_context out_c]:
 	  >>
 
 	 | gc:gconstructor[in_c] >[out_c] <<#primaryExpr=gc;>>
+	 | oe:orderExpr[in_c] >[out_c]  <<#primaryExpr=oe;>>
 //	 | ale:arithmLogicalExpr <<#primaryExpr=ale;>>
 	)
 ;
@@ -316,4 +317,9 @@ literal!:
 
             #literal=#(#["const"], #(#["type"], #["!xs!string"]), #[str.c_str()]);
 	  >>
+;
+
+orderExpr![in_context in_c] >[out_context out_c]:
+	  #(AST_ORDERED_EXPR e1:expr[in_c] >[out_c])  <<#orderExpr=#(#["ordered"], e1);>>
+	| #(AST_UNORDERED_EXPR e2:expr[in_c] >[out_c]) <<#orderExpr=#(#["unordered"], e2);>>
 ;
