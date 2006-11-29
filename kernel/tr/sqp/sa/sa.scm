@@ -3103,19 +3103,92 @@
                     " as "
                     (cdr pair)))))
             (else
-             (cons (cons (sa:op-name expr)
-                         (map car args))
-                   (return-type-lambda args))))))))))
+             (and
+              (or
+               (not
+                (and
+                 (eq? item-type '!xs!QName)
+                 (pair? (car (sa:op-args expr)))
+                 (not
+                  (or
+                   (eq? (sa:op-name (car (sa:op-args expr))) 'const)
+                   (let ((after-analysis (caar args)))
+                     (and
+                      (eq? (sa:op-name after-analysis) 'cast)
+                      (equal?
+                       (cadr (sa:op-args after-analysis))
+                       '(type (one !xs!QName)))
+                      (pair? (car (sa:op-args after-analysis)))
+                      (eq? (sa:op-name
+                            (car (sa:op-args after-analysis)))
+                           'const)))))))
+               (begin
+                 (pp (car (sa:op-args expr)))
+                 (pp (car args))
+                 (cl:signal-user-error
+                  XPTY0004
+                  (string-append
+                   (symbol->string (sa:op-name expr))
+                   " as xs:QName for non-constant expression"))))
+              (cons (cons (sa:op-name expr)
+                          (map car args))
+                    (return-type-lambda args)))))))))))
 
 (define sa:analyze-cast (sa:cast-helper
                          cdar  ; type of the subexpr
                          ))
 
 ; Castable
+; A lot of common code with sa:cast-helper
 ; TODO: analyze single type instead of item type
-(define sa:analyze-castable
-  (sa:cast-helper
-   (lambda (args) 'sa:type-atomic)))
+(define (sa:analyze-castable expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 2)
+   (let ((args
+          (list
+           (sa:analyze-expr (car (sa:op-args expr))
+                            vars funcs ns-binding default-ns)
+           (sa:analyze-type (cadr (sa:op-args expr))
+                            vars funcs ns-binding default-ns))))
+     (and
+      (not (memv #f args))
+      (let* ((type-spec (caadr args))  ; selects '(type ...)
+             (seq-type (cadr type-spec))
+             (item-type (if (and  ; occurrence indicator presented
+                             (pair? seq-type)
+                             (not (null? (cdr seq-type))))
+                            (cadr seq-type)
+                            seq-type)))
+        (cond
+          ((and
+            (memq item-type '(!xs!QName !xs!NOTATION))
+            (pair? (car (sa:op-args expr)))
+            (not
+             (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
+           ; Note in XQuery specification, Sect. 3.12.4
+           (cons `(and@
+                   ,(caar args)
+                   (!fn!false))
+                  sa:type-atomic))          
+          ((assq item-type
+                 '((!xs!anyAtomicType . "xs:anyAtomicType")
+                   (!xs!NOTATION      . "xs:NOTATION")))
+           => (lambda (pair)
+                (cl:signal-user-error
+                 XPST0080
+                 (string-append "Castable as " (cdr pair)))))
+          ((assq item-type
+                 '((!xs!anySimpleType . "xs:anySimpleType")
+                   (!xs!anyType       . "xs:anyType")
+                   (xs:anyType        . "xs:anyType")))
+           => (lambda (pair)
+                (cl:signal-user-error
+                 XPST0051
+                 (string-append "Castable as " (cdr pair)))))
+          (else
+           (cons (cons (sa:op-name expr)  ; == 'castable
+                       (map car args))
+                 sa:type-atomic))))))))
 
 ; Treat
 (define (sa:analyze-treat expr vars funcs ns-binding default-ns)
