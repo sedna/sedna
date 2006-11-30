@@ -169,6 +169,7 @@ void PPFnStringJoin::open ()
     members.op -> open();
     separator.op -> open();
     first_time = true;
+    need_clear = false;
 }
 
 void PPFnStringJoin::reopen ()
@@ -176,7 +177,8 @@ void PPFnStringJoin::reopen ()
     members.op -> reopen();
     separator.op -> reopen();
     first_time = true;
-}
+    need_clear = true;
+}         
 
 void PPFnStringJoin::close ()
 {
@@ -189,24 +191,24 @@ void PPFnStringJoin::next(tuple &t)
     if (!first_time)
     {
         first_time = true;
+        need_clear = true;
         t.set_eos();
         return;
     }
 
     first_time = false;
-    stmt_str_buf result;
-    bool append_sep = false;
+    
+    if(need_clear) { tcv.clear(); need_clear = false; }
+
+    bool is_sep = false;
 
     tuple_cell sep;
     tuple_cell tc;
-    bool is_sep = false;
 
     separator.op->next(t);
     if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains zero items.");
     sep = atomize(separator.get(t));
-          
     if(!is_string_type(sep.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the separator of fn:string-join (xs_string/derived/promotable is expected).");
-
     separator.op->next(t);
     if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument of fn:string-join. Argument contains more than one item.");
 
@@ -216,15 +218,17 @@ void PPFnStringJoin::next(tuple &t)
     {
         members.op->next(t);
         if (t.is_eos()) break;
-        if(append_sep) result.append(sep);
         tc = atomize(members.get(t));
-        
         if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the item in first argument of fn:string-join (xs_string/derived/promotable is expected).");
-        
-        result.append(tc);
-        append_sep = is_sep;
+        tcv.push_back(tc);
     }
 
+    stmt_str_buf result;
+    for(int i = 0; i < tcv.size(); i++)
+    {
+        if(is_sep && i) result.append(sep);
+        result.append(tcv[i]);
+    }
     t.copy(result.get_tuple_cell());
 }
 
@@ -436,21 +440,18 @@ void PPFnString2CodePoints::open  ()
 {
     child.op->open();
     first_time = true;	
-	
 }
 
 void PPFnString2CodePoints::reopen()
 {
     child.op->reopen();
     first_time = true;	
-	
 }
 
 void PPFnString2CodePoints::close ()
 {
     child.op->close();
 }
-
 
 void PPFnString2CodePoints::next  (tuple &t)
 {
@@ -459,13 +460,15 @@ void PPFnString2CodePoints::next  (tuple &t)
         child.op->next(t);
         if (!t.is_eos())
         {
-			first_time = false;
-			in_str = child.get(t);
-            in_str = cast(atomize(in_str), xs_string);
-            child.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string-length is more than 1");
+            first_time = false;
+            in_str = atomize(child.get(t));
+            
+            if(!is_string_type(in_str.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:string-to-codepoints (xs_string/derived/promotable is expected).");
 
-			ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
+            child.op->next(t);
+            if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument. Argument contains more than one item in fn:string-to-codepoints.");
+
+		    ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
 		else return;
     }
@@ -516,13 +519,14 @@ void PPFnCodePoints2String::open  ()
 {
     child.op->open();
     first_time = true;	
+    need_clear = false;
 }
 
 void PPFnCodePoints2String::reopen()
 {
     child.op->reopen();
-    codepoints.clear();
-    first_time = true;	
+    first_time = true;
+    need_clear = true;	
 }
 
 void PPFnCodePoints2String::close ()
@@ -535,7 +539,8 @@ void PPFnCodePoints2String::next  (tuple &t)
     if (first_time)
     {
         first_time  = false;
-        
+        if(need_clear)  { codepoints.clear(); need_clear = false; }
+
         while(true)
         {
             child.op->next(t);
@@ -569,7 +574,7 @@ void PPFnCodePoints2String::next  (tuple &t)
 	else
     {
         first_time = true;
-        codepoints.clear();
+        need_clear = true;
         t.set_eos();
     }    
 }

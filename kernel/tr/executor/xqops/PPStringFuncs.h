@@ -52,6 +52,9 @@ private:
     PPOpIn separator;
     bool first_time;
 
+    bool need_clear;
+    std::vector<tuple_cell> tcv;
+
 public:
     virtual void open   ();
     virtual void reopen ();
@@ -207,6 +210,7 @@ protected:
     PPOpIn child;
     bool first_time;
 
+    bool need_clear;
     std::vector<int> codepoints;
 	
 	void children(PPOpIn &_child_) { _child_ = child; }
