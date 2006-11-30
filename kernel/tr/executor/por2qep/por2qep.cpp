@@ -2433,6 +2433,15 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPFnString2CodePoints(cxt,
                                     make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPFnCodepointsToString")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "159.1");
+
+        opit = new PPFnCodePoints2String(cxt,
+                                         make_pp_op(cxt, lst->at(1).internal.list));
+    }
 	else if (op == "PPFnTranslate")
 	{
 		if (   lst->size() != 4

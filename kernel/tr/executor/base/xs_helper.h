@@ -114,6 +114,37 @@ void collapse_string_normalization(const char *s, stmt_str_buf& out_buf);
 void remove_string_normalization  (const char *s, stmt_str_buf& out_buf);
 
 
+/////////////////////////////////////////////////////////////////////////
+/// XML 1.0 and XML 1.1 Char production checking
+/////////////////////////////////////////////////////////////////////////
+
+/// Returns true if the specified character is valid XML 1.1 char. Method
+/// also checks the surrogate character range from 0x10000 to 0x10FFFF.
+/// Char  ::=  [#x1-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+inline bool isXML11Valid(int c) 
+{
+    return    (0x1     <= c && c <= 0xD7FF)
+           || (0xE000  <= c && c <= 0xFFFD)
+           || (0x10000 <= c && c <= 0x10FFFF);
+}
+
+
+/// Table for ASCII symbols optimization.
+const unsigned char xml10_one_byte_valid[16] = {0x00, 0x64, 0x00, 0x00,
+                                                0xFF, 0xFF, 0xFF, 0xFF, 
+                                                0xFF, 0xFF, 0xFF, 0xFF, 
+                                                0xFF, 0xFF, 0xFF, 0xFF};
+
+/// Returns true if the specified character is valid XML 1.1 char. Method
+/// also checks the surrogate character range from 0x10000 to 0x10FFFF.
+/// Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+inline bool isXML10Valid(int c) 
+{
+    return (c & (~0x0 << 7)) ? 
+           ( (0x80 <= c && c <= 0xD7FF) || (0xE000 <= c && c <= 0xFFFD) || (0x10000 <= c && c <= 0x10FFFF) ) :
+           xml10_one_byte_valid[(c >> 3)] & (0x80 >> (c & 7));
+}
+
 
 #endif
 

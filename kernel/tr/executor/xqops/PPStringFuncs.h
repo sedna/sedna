@@ -197,6 +197,36 @@ public:
     virtual ~PPFnString2CodePoints();
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnCodePoints2String
+///////////////////////////////////////////////////////////////////////////////
+class PPFnCodePoints2String : public PPIterator
+{
+protected:
+    PPOpIn child;
+    bool first_time;
+
+    std::vector<int> codepoints;
+	
+	void children(PPOpIn &_child_) { _child_ = child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnCodePoints2String(variable_context *_cxt_, 
+                          PPOpIn _child_);
+    virtual ~PPFnCodePoints2String();
+};
+
+
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnTranslate
 ///////////////////////////////////////////////////////////////////////////////

@@ -414,8 +414,9 @@ bool PPFnStartsEndsWith::result(PPIterator* cur, variable_context *cxt, void*& r
 /// PPFnString2CodePoints
 ///////////////////////////////////////////////////////////////////////////////
 PPFnString2CodePoints::PPFnString2CodePoints(variable_context *_cxt_,
-                                   PPOpIn _child_) : PPIterator(_cxt_),
-                                                     child(_child_), ucp_it(NULL)
+                                             PPOpIn _child_) : PPIterator(_cxt_),
+                                                               child(_child_), 
+                                                               ucp_it(NULL)
 {
 }
 
@@ -495,6 +496,96 @@ bool PPFnString2CodePoints::result(PPIterator* cur, variable_context *cxt, void*
 {
     throw USER_EXCEPTION2(SE1002, "PPFnString2CodePoints::result");
 }
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnCodePoints2String
+///////////////////////////////////////////////////////////////////////////////
+PPFnCodePoints2String::PPFnCodePoints2String(variable_context *_cxt_,
+                                             PPOpIn _child_) : PPIterator(_cxt_),
+                                                               child(_child_)
+{
+}
+
+PPFnCodePoints2String::~PPFnCodePoints2String()
+{
+    delete child.op;
+    child.op = NULL;
+}
+
+void PPFnCodePoints2String::open  ()
+{
+    child.op->open();
+    first_time = true;	
+}
+
+void PPFnCodePoints2String::reopen()
+{
+    child.op->reopen();
+    codepoints.clear();
+    first_time = true;	
+}
+
+void PPFnCodePoints2String::close ()
+{
+    child.op->close();
+}
+
+void PPFnCodePoints2String::next  (tuple &t)
+{
+    if (first_time)
+    {
+        first_time  = false;
+        
+        while(true)
+        {
+            child.op->next(t);
+            if(t.is_eos()) break;
+        
+            tuple_cell tc = atomize(child.get(t));
+            xmlscm_type xtype = tc.get_atomic_type();
+        
+            if(!(xtype == xs_untypedAtomic ||
+                 xtype == xs_integer       ||
+                 is_derived_from_xs_integer(xtype)))  
+                     throw USER_EXCEPTION2(XPTY0004, "Invalid item type in the argument of fn:codepoints-to-string (xs:untypedAtomic, xs:integer or derived expected).");
+
+            __int64 value = (xtype == xs_untypedAtomic ? 
+                             cast(tc, xs_integer).get_xs_integer() : 
+                             tc.get_xs_integer()); 
+            
+            if(value > 0x10FFFF || !isXML10Valid(value)) 
+                throw USER_EXCEPTION2(FOCH0001, "Invalid codepoint in the argument of fn:codepoints-to-string.");
+
+            codepoints.push_back(value);
+        }
+        
+        stmt_str_buf result;
+        
+        for(int i = 0; i < codepoints.size(); i++) 
+            result.append(utf8_encode_char(codepoints[i]));
+        
+        t.copy(result.get_tuple_cell());
+    }
+	else
+    {
+        first_time = true;
+        codepoints.clear();
+        t.set_eos();
+    }    
+}
+
+PPIterator* PPFnCodePoints2String::copy(variable_context *_cxt_)
+{
+    PPFnCodePoints2String *res = new PPFnCodePoints2String(_cxt_, child);
+    res->child.op = child.op->copy(_cxt_);
+    return res;
+}
+
+bool PPFnCodePoints2String::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnCodePoints2String::result");
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnTranslate
