@@ -211,6 +211,10 @@
      ((ddo)
       (lropt:ddo expr called-once? order-required?
                  var-types prolog processed-funcs))
+     ((ordered)
+      (lropt:expr (car (xlr:op-args expr))
+                  called-once? #t  ; ordering required
+                  var-types prolog processed-funcs))
      ;-------------------
      ; 3.6. Quantified expressions
      ((some every)
@@ -294,7 +298,7 @@
       (lropt:propagate expr called-once? #f  ; order not required
                        var-types prolog processed-funcs
                        #t #t #t))
-     ((!fn!unordered)
+     ((!fn!unordered unordered)
 ;      (let ((identity (lambda (x) x)))
 ;        (lropt:propagate expr called-once? #f  ; order not required
 ;                         var-types prolog processed-funcs

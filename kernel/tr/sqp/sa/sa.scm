@@ -339,6 +339,8 @@
      ; 2.14 Distinct document order
      ((ddo)
       (sa:analyze-ddo expr vars funcs ns-binding default-ns))
+     ((ordered unordered)
+      (sa:ordered-unordered expr vars funcs ns-binding default-ns))
      ;-------------------
      ; 3.3. XPath
      ((congen1)
@@ -3123,8 +3125,6 @@
                             (car (sa:op-args after-analysis)))
                            'const)))))))
                (begin
-                 (pp (car (sa:op-args expr)))
-                 (pp (car args))
                  (cl:signal-user-error
                   XPTY0004
                   (string-append
@@ -3325,6 +3325,19 @@
        (cons (list (sa:op-name expr)             
                    (car seq-res))
              (cdr seq-res)))))))
+
+; Ordered and unordered expressions
+(define (sa:ordered-unordered expr vars funcs ns-binding default-ns)
+  (and
+   (sa:assert-num-args expr 1)
+   (let ((seq-res
+          (sa:analyze-expr (car (sa:op-args expr))
+                           vars funcs ns-binding default-ns)))
+     (and
+      seq-res
+      (cons (list (sa:op-name expr)             
+                  (car seq-res))
+            (cdr seq-res))))))
 
 ;-------------------------------------------------
 ; 3.3 XPath
