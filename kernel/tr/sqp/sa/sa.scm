@@ -3160,6 +3160,13 @@
                             (cadr seq-type)
                             seq-type)))
         (cond
+          ((assq item-type
+                   '((!xs!anyAtomicType . "xs:anyAtomicType")
+                     (!xs!NOTATION      . "xs:NOTATION")))
+             => (lambda (pair)
+                  (cl:signal-user-error
+                   XPST0080
+                   (string-append "Castable as " (cdr pair)))))
           ((and
             (memq item-type '(!xs!QName !xs!NOTATION))
             (pair? (car (sa:op-args expr)))
@@ -3167,9 +3174,11 @@
              (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
            ; Note in XQuery specification, Sect. 3.12.4
            (cons `(and@
-                   ,(caar args)
+                   (castable
+                    ,(caar args)
+                    (type (one !xs!string)))
                    (!fn!false))
-                  sa:type-atomic))          
+                  sa:type-atomic))
           ((assq item-type
                  '((!xs!anyAtomicType . "xs:anyAtomicType")
                    (!xs!NOTATION      . "xs:NOTATION")))
