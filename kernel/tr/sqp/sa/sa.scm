@@ -726,7 +726,7 @@
     (,sa:fn-ns "exists" 1 1
       ,sa:multiple-any
       ,sa:type-atomic !fn!exists)
-    (,sa:fn-ns "distinct-values" 1 1
+    (,sa:fn-ns "distinct-values" 1 2
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!distinct-values)
     (,sa:fn-ns "insert-before" 3 3
@@ -762,16 +762,16 @@
     (,sa:fn-ns "count" 1 1
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!count)
-    (,sa:fn-ns "avg" 0 #f
+    (,sa:fn-ns "avg" 1 1
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!avg)
-    (,sa:fn-ns "max" 0 #f
+    (,sa:fn-ns "max" 1 2
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!max)
-    (,sa:fn-ns "min" 0 #f
+    (,sa:fn-ns "min" 1 2
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!min)
-    (,sa:fn-ns "sum" 0 #f
+    (,sa:fn-ns "sum" 1 2
       ,sa:multiple-atomic
       ,sa:type-atomic !fn!sum)
     ; *** 15.5 Functions and Operators that Generate Sequences
