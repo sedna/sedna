@@ -24,10 +24,15 @@ trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)
 
 void StrMatcher::delete_trie(trie_node_t *root)
 {
+	trie_node_t * last = NULL;
 	for (int i = 0; i<256; i++)
 		if (root->next[i] != NULL)
 		{
-			delete_trie(root->next[i]);
+			if (root->next[i] != last && root->next[i] != s3) //FIXME: dirty hack for replace_surr
+			{
+				last = root->next[i];
+				delete_trie(root->next[i]);
+			}
 			root->next[i] = NULL;
 		}
 
@@ -39,7 +44,7 @@ trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_p
 	start->pc = (int)start->pc | (int)set_pc;
 	if (*str == 0)
 		return start;
-	if (start->next[(unsigned char)*str] == NULL)
+	if (start->next[(unsigned char)*str] == NULL || start->next[(unsigned char)*str] == s3) //FIXME: dirty hack is here as well
 		start->next[(unsigned char)*str] = make_node(start, *str);
 	return get_node(start->next[(unsigned char)*str], str+1, set_pc);
 }
@@ -93,10 +98,41 @@ void StrMatcher::reset()
 	strings_buf_used = 0;
 	buf_used = 0;
 	
-	delete_trie(root);
+	if (root != NULL)
+		delete_trie(root);
+	if (s3 != NULL) //FIXME: that is also a part of some dirty hack
+	{
+		trie_node_t *_s3 = s3;
+		s3 = NULL;
+		delete_trie(_s3);
+	}
+
 	
 	root = make_node(NULL, 0);
 	state = root;
+	if (replace_surr)
+	{
+		//240-244
+		trie_node_t *s0 = make_node(root, 0);
+		trie_node_t *s1 = make_node(s0, 0);
+		trie_node_t *s2 = make_node(s1, 0);
+		s3 = make_node(s2, 0);
+		int i;
+
+		s0->pc = s1->pc = s2->pc = s3->pc = -1;
+
+		for (i = 240; i <= 244; i++)
+			root->next[i] = s0;
+		for (i = 0; i <= 255; i++)
+			s0->next[i] = s1;
+		for (i = 0; i <= 255; i++)
+			s1->next[i] = s2;
+		for (i = 0; i <= 255; i++)
+			s2->next[i] = s3;
+
+		s3->res_ofs = (int)print_unicode_escape;
+		s3->res_len = -1;
+	}
 }
 
 trie_node_t *StrMatcher::get_ls_node(trie_node_t *node)
@@ -176,6 +212,7 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 		if (state->next[(unsigned char)str[i]] != NULL && ((state->next[(unsigned char)str[i]]->pc & pc) != 0))
 		{
 			state = state->next[(unsigned char)str[i]];
+			state->ch = (unsigned char)str[i]; //FIXME: this is a dirty hack for replace_surr, and was never tested
 			if (state->res_ofs != -1)
 			{
 				if (write_cb==NULL) return 1;
@@ -257,13 +294,21 @@ StrMatcher::StrMatcher()
 	buf = (char*)malloc(buf_len);
 	buf_used = 0;
 	
-	root = make_node(NULL, 0);
-	state = root;
+	replace_surr = true;
+
+	root = NULL;
+	reset();
 }
 
 StrMatcher::~StrMatcher()
 {
 	delete_trie(root);
+	if (s3 != NULL) //FIXME: that is also a part of some dirty hack
+	{
+		trie_node_t *_s3 = s3;
+		s3 = NULL;
+		delete_trie(_s3);
+	}
 	free(strings_buf);
 	free(buf);
 }
