@@ -17,6 +17,7 @@
                   (quote ,code)))
      (display ": ")
      (for-each write (list ,@msg))
+     ;(/ 1 0)
      #f))
 
 (load "sa.scm")
@@ -24,20 +25,6 @@
 (define go sa:analyze-query)
 
 ;------------------------
-
-(define query
-  '(query
- (prolog (declare-namespace n (const (type !xs!string) "http://vodka.com")))
- (query-body
-   (let@
-    (const (type !xs!integer) 6)
-    (fun-def
-      ((xs:anyType (var ("" "x"))))
-      (+@
-       (+@ (+@ (const (type !xs!integer) 5) (var ("" "x"))) (var ("n" "y")))
-       (var ("" "z"))))))))
-
-(sa:analyze-query query)
 
 (sa:analyze-query
  '(manage (prolog) (drop-index (const (type !xs!QName )("" "pet" )))))
@@ -64,12 +51,12 @@
                       ((const (type !xs!string) "user")
                        (const (type !xs!string) "vasya")))))
 
-(sa:analyze-query
- '(query
-   (prolog)
-   (query-body
-    (fun-call (const (type !xs!QName) ("xs" "NOTATION"))
-              (const (type !xs!string) "a")))))
+;(sa:analyze-query
+; '(query
+;   (prolog)
+;   (query-body
+;    (fun-call (const (type !xs!QName) ("xs" "NOTATION"))
+;              (const (type !xs!string) "a")))))
 
 (sa:analyze-query
  '(manage
@@ -102,137 +89,6 @@
 (sa:analyze-query
  '(query (prolog)
          (query-body (treat (const (type !xs!integer) 1) (type (one !xs!integer))))))
-
-(sa:analyze-query
- '(query
-   (prolog
-    (declare-default-order (const (type !xs!string) "empty-least")))
-   (query-body
-    (return
-     (order-by
-      (return
-       (const (type !xs!integer) 13)
-       (fun-def
-        ((xs:anyType (var ("" "$x1"))))
-        (return
-         (var ("" "$x1"))
-         (fun-def
-          ((xs:anyType (var ("" "$x2"))))
-          (let@
-              (+@ (var ("" "$x1")) (var ("" "$x2")))
-            (fun-def
-             ((xs:anyType (var ("" "$x3"))))
-             (let@
-                 (sequence (var ("" "$x1")) (var ("" "$x2")) (var ("" "$x3")))
-               (fun-def
-                ((xs:anyType (var ("" "$x4"))))
-                (if@
-                 (and@ (<@ (var ("" "$x1")) (var ("" "$x2")))
-                     (=@ (var ("" "$x3")) (var ("" "$x4"))))
-                 (unio (<@ (var ("" "$x1")) (var ("" "$x2")))
-                       (=@ (var ("" "$x3")) (var ("" "$x4"))))
-                 (sequence))))))))))
-      (fun-def
-       ((xs:anyType (var ("" "$x1"))) (!xs!anyType (var ("" "$x2")))
-        (xs:anyType (var ("" "$x3"))) (xs:anyType (var ("" "$x4"))))
-       (orderspecs
-        (const (type !xs!string) "non-stable")
-        (orderspec
-         (ordermodifier 
-          (const (type !xs!string) "asc")
-          (const (type !xs!string) "empty-greatest"))
-         (sequence (var ("" "$x1")) (var ("" "$x2"))
-           (var ("" "$x3")) (var ("" "$x4"))))
-        (orderspec
-         (ordermodifier 
-          (const (type !xs!string) "desc")
-          ;(const (type !xs!string) "empty-least")
-          )
-         (sequence (var ("" "$x1")) (var ("" "$x2"))
-           (var ("" "$x3")) (var ("" "$x4")))))))
-     (fun-def
-      ((xs:anyType (var ("" "$x1"))) (!xs!anyType (var ("" "$x2")))
-       (xs:anyType (var ("" "$x3"))) (xs:anyType (var ("" "$x4"))))
-      (sequence (var ("" "$x1")) (var ("" "$x2"))
-           (var ("" "$x3")) (var ("" "$x4"))))))))
-
-(sa:analyze-query
- '(query
-   (prolog)
-   (query-body
-    (return
-     (order-by
-      (return
-       (ddo
-        (child
-         (ddo
-          (descendant-or-self
-           (fun-call (const (type !xs!QName) ("" "document")) (const (type !xs!string) "a"))
-           (type (node-test))))
-         (type (elem-test (ename (const (type !xs!QName) ("" "book")) (type *) (const (type !xs!string) "non-nil"))))))
-       (fun-def
-        ((xs:anyType (var ("" "b"))))
-        (return
-         (ddo
-          (child
-           (ddo
-            (descendant-or-self
-             (fun-call (const (type !xs!QName) ("" "document")) (const (type !xs!string) "a"))
-             (type (node-test))))
-           (type
-            (elem-test (ename (const (type !xs!QName) ("" "author")) (type *) (const (type !xs!string) "non-nil"))))))
-         (fun-def ((xs:anyType (var ("" "a")))) (unio (var ("" "b")) (var ("" "a")))))))
-      (fun-def
-       ((xs:anyType (var ("" "b"))) (xs:anyType (var ("" "a"))))
-       (orderspecs
-        (const (type !xs!string) "non-stable")
-        (orderspec
-         (ordermodifier)
-         (ddo
-          (child
-           (var ("" "b"))
-           (type
-            (elem-test (ename (const (type !xs!QName) ("" "title")) (type *) (const (type !xs!string) "non-nil")))))))
-        (orderspec
-         (ordermodifier (const (type !xs!string) "desc") (const (type !xs!string) "empty-least"))
-         (ddo
-          (child
-           (var ("" "a"))
-           (type
-            (elem-test (ename (const (type !xs!QName) ("" "price")) (type *) (const (type !xs!string) "non-nil")))))))
-        (orderspec
-         (ordermodifier (const (type !xs!string) "desc"))
-         (ddo
-          (child
-           (var ("" "b"))
-           (type
-            (elem-test
-             (ename (const (type !xs!QName) ("" "salary")) (type *) (const (type !xs!string) "non-nil"))))))))))
-     (fun-def ((xs:anyType (var ("" "b"))) (xs:anyType (var ("" "a")))) (var ("" "b")))))))
-
-(sa:analyze-query
- '(query
-   (prolog)
-   (query-body
-    (return
-     (sequence (const (type !xs!integer) 1) (const (type !xs!integer) 2))
-     (fun-def
-      ((xs:anyType (var ("" "x")))
-       (!se!positional-var (var ("" "n"))))
-      (+@ (var ("" "x")) (const (type !xs!integer) 4)))))))
-
-(sa:analyze-query
- '(query
-   (prolog)
-   (query-body
-    (return
-     (sequence (const (type !xs!integer) "6") (const (type !xs!integer) "7"))
-     (fun-def
-      ((xs:anyType (var ("" "i"))) (se:positional-var (var ("" "i"))))
-      (if@
-       (>@ (var ("" "i")) (const (type !xs!decimal) "6.5"))
-       (var ("" "i"))
-       (sequence)))))))
 
 (sa:analyze-query
  '(query
@@ -307,3 +163,42 @@
     (return
      (sequence (const (type !xs!integer) "1") (const (type !xs!integer) "2"))
      (fun-def (((one ("xs" "int")) (var ("" "x")))) (var ("" "x")))))))
+
+(go
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (element
+      (const (type !xs!QName) ("" "parent2"))
+      (sequence
+        (namespace
+         (const (type !xs!NCName) "foo")
+         (const (type !xs!string) "http://www.example.com/parent2"))
+        (attribute
+         (const (type !xs!QName) ("foo" "attr2"))
+         (const (type !xs!string) "attr2"))
+        (element
+         (const (type !xs!QName) ("" "child2"))
+         (sequence
+           (attribute
+            (const (type !xs!QName) ("" "attr"))
+            (const (type !xs!string) "child"))))))
+     (fun-def
+      ((xs:anyType (var ("" "x"))))
+      (element
+       (const (type !xs!QName) ("" "new"))
+       (sequence
+         (namespace
+          (const (type !xs!NCName) "")
+          (const (type !xs!string) "http://www.example.com"))
+         (space-sequence
+          (ddo
+           (child
+            (ddo (descendant-or-self (var ("" "x")) (type (node-test))))
+            (type
+             (elem-test
+              (ename
+               (const (type !xs!QName) (* "child2"))
+               (type *)
+               (const (type !xs!string) "non-nil"))))))))))))))

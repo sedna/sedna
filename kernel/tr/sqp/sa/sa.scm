@@ -2431,6 +2431,7 @@
      (else
       (cl:signal-user-error XPST0081 (car var-name))  ; was: SE5024
       ))))
+
 ; expr ::= `(var ...)
 ; Returns (cons `(var ...) var-type)
 (define (sa:variable-wrapped expr vars funcs ns-binding default-ns)
@@ -2438,7 +2439,12 @@
    (sa:assert-num-args expr 1)
    (let ((var-name
           (sa:expand-var-name
-           (car (sa:op-args expr)) ns-binding (car default-ns))))
+           (car (sa:op-args expr))
+           ns-binding
+           ; XQuery spec. 3.1.2:
+           ; "An unprefixed variable reference is in no namespace"
+           ""  ; DL: was: (car default-ns)
+           )))
      (and
       var-name
       (cond
@@ -2526,6 +2532,7 @@
 
 ; Axis
 (define (sa:analyze-axis expr vars funcs ns-binding default-ns)
+  ;(pp (list expr vars default-ns))
   (and
    (sa:assert-num-args expr 2)
    (let*
@@ -3083,6 +3090,8 @@
                               (cadr seq-type)
                               seq-type)))
           (cond
+            ((equal? expr '(cast (sequence) (type (optional !xs!QName))))
+             (cons expr sa:type-atomic))
             ((assq item-type
                    '((!xs!anyAtomicType . "xs:anyAtomicType")
                      (!xs!NOTATION      . "xs:NOTATION")))
@@ -3160,6 +3169,8 @@
                             (cadr seq-type)
                             seq-type)))
         (cond
+          ((equal? expr '(castable (sequence) (type (optional !xs!QName))))
+           (cons expr sa:type-atomic))
           ((assq item-type
                    '((!xs!anyAtomicType . "xs:anyAtomicType")
                      (!xs!NOTATION      . "xs:NOTATION")))
@@ -3171,7 +3182,27 @@
             (memq item-type '(!xs!QName !xs!NOTATION))
             (pair? (car (sa:op-args expr)))
             (not
-             (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
+             (or
+              (eq? (sa:op-name (car (sa:op-args expr))) 'const)
+              (let ((after-analysis (caar args)))
+                (or
+                 (and
+                  (eq? (sa:op-name after-analysis) '!fn!QName)
+                  (null?
+                   (filter
+                    (lambda (x)
+                      (not (and (pair? x)
+                                (eq? (sa:op-name x) 'const))))
+                    (sa:op-args after-analysis))))
+                 (and
+                  (eq? (sa:op-name after-analysis) 'cast)
+                  (equal?
+                   (cadr (sa:op-args after-analysis))
+                   '(type (one !xs!QName)))
+                  (pair? (car (sa:op-args after-analysis)))
+                  (eq? (sa:op-name
+                        (car (sa:op-args after-analysis)))
+                       'const)))))))
            ; Note in XQuery specification, Sect. 3.12.4
            (cons `(and@
                    (castable
