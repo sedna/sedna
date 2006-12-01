@@ -433,7 +433,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         tuple t2(length);
                         ud->sort->get(t1, position1);
                         ud->sort->get(t2, position2);
-                        result = (fn_compare(t2.cells[i], t1.cells[i], false).get_xs_integer())*order;
+                        result = fn_compare(t2.cells[i], t1.cells[i])*order;
                     }
                     break;
                 }

@@ -59,7 +59,7 @@ inline int fn_compare_mstr_vs_mstr(const char* str1, const char* str2, Collation
     return handler->compare(str1, str2);
 }
 
-tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+int fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
 {
     U_ASSERT(a1.is_atomic() && !is_fixed_size_type(a1.get_atomic_type()));
     U_ASSERT(a2.is_atomic() && !is_fixed_size_type(a2.get_atomic_type()));
@@ -69,24 +69,6 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandl
     if (a1.get_atomic_type() == xs_base64Binary || a1.get_atomic_type() == xs_hexBinary)
         handler = charset_handler->get_unicode_codepoint_collation();
 
-/*
-    if (   a1.is_atomic() && (a1.get_atomic_type() == xs_string || (do_not_check_type && !is_fixed_size_type(a1.get_atomic_type())))
-        && a2.is_atomic() && (a2.get_atomic_type() == xs_string || (do_not_check_type && !is_fixed_size_type(a2.get_atomic_type()))))
-        ;
-    else
-        throw USER_EXCEPTION2(XPTY0004, "Calling fn:compare on non-string values");
-*/
-/*
-    ASSERT(a1.get_type() == tc_light_atomic || 
-           a1.get_type() == tc_heavy_atomic_estr || 
-           a1.get_type() == tc_heavy_atomic_pstr_short || 
-           a1.get_type() == tc_heavy_atomic_pstr_long);
-
-    ASSERT(a2.get_type() == tc_light_atomic || 
-           a2.get_type() == tc_heavy_atomic_estr || 
-           a2.get_type() == tc_heavy_atomic_pstr_short || 
-           a2.get_type() == tc_heavy_atomic_pstr_long);
-*/
 
 	switch (a1.get_type()) 
 	{
@@ -94,40 +76,40 @@ tuple_cell fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandl
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic((__int64)(fn_compare_mstr_vs_mstr(a1.get_str_mem(), a2.get_str_mem(), handler)));
+            return fn_compare_mstr_vs_mstr(a1.get_str_mem(), a2.get_str_mem(), handler);
 
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic((__int64)(fn_compare_mstr_vs_estr_pstr_short(a1.get_str_mem(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
+            return fn_compare_mstr_vs_estr_pstr_short(a1.get_str_mem(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler);
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic(-(__int64)(fn_compare_pstr_long_vs_mstr(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_mem(), handler)));
+            return -(fn_compare_pstr_long_vs_mstr(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_mem(), handler));
 		}
 	case tc_heavy_atomic_estr:
 	case tc_heavy_atomic_pstr_short:
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic(-(__int64)(fn_compare_mstr_vs_estr_pstr_short(a2.get_str_mem(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler)));
+            return -(fn_compare_mstr_vs_estr_pstr_short(a2.get_str_mem(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler));
 
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic((__int64)(fn_compare_estr_pstr_short_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
+            return fn_compare_estr_pstr_short_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler);
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic(-(__int64)(fn_compare_pstr_long_vs_estr_pstr_short(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler)));
+            return -(fn_compare_pstr_long_vs_estr_pstr_short(a2.get_str_vmm(), a2.get_strlen_vmm(), a1.get_str_vmm(), a1.get_strlen_vmm(), handler));
 		}
 	case tc_heavy_atomic_pstr_long:
 		switch (a2.get_type()) 
 		{
 		case tc_light_atomic_var_size: 
-            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_mstr(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_mem(), handler)));
+            return fn_compare_pstr_long_vs_mstr(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_mem(), handler);
 		case tc_heavy_atomic_estr:
 		case tc_heavy_atomic_pstr_short:
-            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
+            return fn_compare_pstr_long_vs_estr_pstr_short(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler);
 
 		case tc_heavy_atomic_pstr_long:
-            return tuple_cell::atomic((__int64)(fn_compare_pstr_long_vs_pstr_long(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler)));
+            return fn_compare_pstr_long_vs_pstr_long(a1.get_str_vmm(), a1.get_strlen_vmm(), a2.get_str_vmm(), a2.get_strlen_vmm(), handler);
 		}
 	}
 

@@ -15,6 +15,7 @@
 
 
 typedef int (*simle_type2index)(xmlscm_type);
+typedef tuple_cell (*bin_op_tuple_cell_tuple_cell_collation)(const tuple_cell&, const tuple_cell&, CollationHandler* handler);
 
 int simple_type2bin_op_numeric_index(xmlscm_type xtype);
 
@@ -54,6 +55,9 @@ struct xq_binary_op_info_type
     bin_op_tuple_cell_tuple_cell *map_table;
     int map_table_side_size;
     simle_type2index map_index;
+
+    bin_op_tuple_cell_tuple_cell fn_compare_base;
+    bin_op_tuple_cell_tuple_cell_collation fn_compare_collation;
 };
 
 struct xq_unary_op_info_type
@@ -64,35 +68,30 @@ struct xq_unary_op_info_type
 
 // string compare functions for XQuery B.2 Operator Mapping implementation
 tuple_cell op_map_fn_compare_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() == 0);
-}
-
+    { return tuple_cell::atomic(fn_compare(a1, a2) == 0); }
 tuple_cell op_map_fn_compare_not_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() != 0);
-}
-
+    { return tuple_cell::atomic(fn_compare(a1, a2) != 0); }
 tuple_cell op_map_fn_compare_less_than(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() < 0);
-}
-
+    { return tuple_cell::atomic(fn_compare(a1, a2) < 0); }
 tuple_cell op_map_fn_compare_less_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() <= 0);
-}
-
+    { return tuple_cell::atomic(fn_compare(a1, a2) <= 0); }
 tuple_cell op_map_fn_compare_greater_than(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() > 0);
-}
-
+    { return tuple_cell::atomic(fn_compare(a1, a2) > 0); }
 tuple_cell op_map_fn_compare_greater_equal(const tuple_cell &a1, const tuple_cell &a2)
-{
-    return tuple_cell::atomic(fn_compare(a1, a2).get_xs_integer() >= 0);
-}
+    { return tuple_cell::atomic(fn_compare(a1, a2) >= 0); }
 
+tuple_cell op_map_fn_compare_equal_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) == 0); }
+tuple_cell op_map_fn_compare_not_equal_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) != 0); }
+tuple_cell op_map_fn_compare_less_than_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) < 0); }
+tuple_cell op_map_fn_compare_less_equal_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) <= 0); }
+tuple_cell op_map_fn_compare_greater_than_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) > 0); }
+tuple_cell op_map_fn_compare_greater_equal_collation(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler)
+    { return tuple_cell::atomic(fn_compare(a1, a2, handler) >= 0); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -717,23 +716,21 @@ bin_op_tuple_cell_tuple_cell op_le_tbl[8][8] =
 };
 
 
-
 xq_binary_op_info_type xq_binary_op_info[] =
 {
-/*xqbop_add*/  {op_add,  op_numeric_add_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_add_tbl,  6,  simple_type2bin_op_add_index},
-/*xqbop_sub*/  {op_sub,  op_numeric_sub_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_sub_tbl,  6,  simple_type2bin_op_sub_index},
-/*xqbop_mul*/  {op_mul,  op_numeric_mul_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mul_tbl,  3,  simple_type2bin_op_mul_index},
-/*xqbop_div*/  {op_div,  op_numeric_div_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_div_tbl,  3,  simple_type2bin_op_div_index},
-/*xqbop_idiv*/ {op_idiv, op_numeric_idiv_tbl, simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_idiv_tbl, 1,  simple_type2bin_op_idiv_index},
-/*xqbop_mod*/  {op_mod,  op_numeric_mod_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mod_tbl,  1,  simple_type2bin_op_mod_index},
-/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   14, simple_type2bin_op_eq_index},
-/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   14, simple_type2bin_op_ne_index},
-/*xqbop_gt*/   {op_gt,   op_numeric_gt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_gt_tbl,   8,  simple_type2bin_op_gt_index},
-/*xqbop_lt*/   {op_lt,   op_numeric_lt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_lt_tbl,   8, simple_type2bin_op_lt_index},
-/*xqbop_ge*/   {op_ge,   op_numeric_ge_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ge_tbl,   8, simple_type2bin_op_ge_index},
-/*xqbop_le*/   {op_le,   op_numeric_le_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_le_tbl,   8, simple_type2bin_op_le_index}
+/*xqbop_add*/  {op_add,  op_numeric_add_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_add_tbl,  6,  simple_type2bin_op_add_index,  NULL,                            NULL},
+/*xqbop_sub*/  {op_sub,  op_numeric_sub_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_sub_tbl,  6,  simple_type2bin_op_sub_index,  NULL,                            NULL},
+/*xqbop_mul*/  {op_mul,  op_numeric_mul_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mul_tbl,  3,  simple_type2bin_op_mul_index,  NULL,                            NULL},
+/*xqbop_div*/  {op_div,  op_numeric_div_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_div_tbl,  3,  simple_type2bin_op_div_index,  NULL,                            NULL},
+/*xqbop_idiv*/ {op_idiv, op_numeric_idiv_tbl, simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_idiv_tbl, 1,  simple_type2bin_op_idiv_index, NULL,                            NULL},
+/*xqbop_mod*/  {op_mod,  op_numeric_mod_tbl,  simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_mod_tbl,  1,  simple_type2bin_op_mod_index,  NULL,                            NULL},
+/*xqbop_eq*/   {op_eq,   op_numeric_eq_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_eq_tbl,   14, simple_type2bin_op_eq_index,   op_map_fn_compare_equal,         op_map_fn_compare_equal_collation        }, 
+/*xqbop_ne*/   {op_ne,   op_numeric_ne_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ne_tbl,   14, simple_type2bin_op_ne_index,   op_map_fn_compare_not_equal,     op_map_fn_compare_not_equal_collation    }, 
+/*xqbop_gt*/   {op_gt,   op_numeric_gt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_gt_tbl,   8,  simple_type2bin_op_gt_index,   op_map_fn_compare_less_than,     op_map_fn_compare_less_than_collation    }, 
+/*xqbop_lt*/   {op_lt,   op_numeric_lt_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_lt_tbl,   8,  simple_type2bin_op_lt_index,   op_map_fn_compare_less_equal,    op_map_fn_compare_less_equal_collation   }, 
+/*xqbop_ge*/   {op_ge,   op_numeric_ge_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_ge_tbl,   8,  simple_type2bin_op_ge_index,   op_map_fn_compare_greater_than,  op_map_fn_compare_greater_than_collation }, 
+/*xqbop_le*/   {op_le,   op_numeric_le_tbl,   simple_type2bin_op_numeric_index, (bin_op_tuple_cell_tuple_cell*)op_le_tbl,   8,  simple_type2bin_op_le_index,   op_map_fn_compare_greater_equal, op_map_fn_compare_greater_equal_collation}
 };
-
 
 
 const char* _op_numeric_binary_generic_err_c_str(xq_binary_op_type t)
@@ -816,7 +813,7 @@ tuple_cell _op_numeric_generic(xq_binary_op_type t, const tuple_cell &a1, const 
     else
         return ((info.numeric_table)[i1][i2])(a1, a2);
 }
-
+/*
 tuple_cell _op_generic(xq_binary_op_type t, const tuple_cell &a1, const tuple_cell &a2)
 {
     if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
@@ -831,10 +828,33 @@ tuple_cell _op_generic(xq_binary_op_type t, const tuple_cell &a1, const tuple_ce
     bin_op_tuple_cell_tuple_cell op = (info.map_table)[info.map_table_side_size * i1 + i2];
 
     if ((i1 == -1) || (i2 == -1) || (op == NULL))
-	throw USER_EXCEPTION2(XPTY0004, _op_binary_generic_err_c_str(t));
-
+        throw USER_EXCEPTION2(XPTY0004, _op_binary_generic_err_c_str(t));
     else
         return op(a1, a2);
+}
+*/
+tuple_cell _op_generic(xq_binary_op_type t, const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler = NULL)
+{
+    if (a1.is_eos() || a2.is_eos()) return tuple_cell::eos();
+
+    U_ASSERT(a1.is_atomic());
+    U_ASSERT(a2.is_atomic());
+
+    xq_binary_op_info_type &info = xq_binary_op_info[(int)t];
+
+    int i1 = (info.map_index)(a1.get_atomic_type());
+    int i2 = (info.map_index)(a2.get_atomic_type());
+    bin_op_tuple_cell_tuple_cell op = (info.map_table)[info.map_table_side_size * i1 + i2];
+
+    if ((i1 == -1) || (i2 == -1) || (op == NULL))
+        throw USER_EXCEPTION2(XPTY0004, _op_binary_generic_err_c_str(t));
+    else
+    {
+        if (op == info.fn_compare_base)
+            return (info.fn_compare_collation)(a1, a2, handler);
+        else
+            return op(a1, a2);
+    }
 }
 
 bin_op_tuple_cell_tuple_cell get_binary_op(xq_binary_op_type t, xmlscm_type t1, xmlscm_type t2)
@@ -972,6 +992,14 @@ tuple_cell op_lt  (const tuple_cell &a1, const tuple_cell &a2) { return _op_gene
 tuple_cell op_ge  (const tuple_cell &a1, const tuple_cell &a2) { return _op_generic(xqbop_ge,   a1, a2); }
 tuple_cell op_le  (const tuple_cell &a1, const tuple_cell &a2) { return _op_generic(xqbop_le,   a1, a2); }
 
+tuple_cell op_eq   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_eq,   a1, a2, handler); }
+tuple_cell op_ne   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_ne,   a1, a2, handler); }
+tuple_cell op_gt   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_gt,   a1, a2, handler); }
+tuple_cell op_lt   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_lt,   a1, a2, handler); }
+tuple_cell op_ge   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_ge,   a1, a2, handler); }
+tuple_cell op_le   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler) { return _op_generic(xqbop_le,   a1, a2, handler); }
+
+
 tuple_cell op_numeric_add           (const tuple_cell &a1, const tuple_cell &a2) { return _op_numeric_generic(xqbop_add,  a1, a2); }
 tuple_cell op_numeric_subtract      (const tuple_cell &a1, const tuple_cell &a2) { return _op_numeric_generic(xqbop_sub,  a1, a2); }
 tuple_cell op_numeric_multiply      (const tuple_cell &a1, const tuple_cell &a2) { return _op_numeric_generic(xqbop_mul,  a1, a2); }
@@ -990,4 +1018,5 @@ tuple_cell op_minus(const tuple_cell &a1) { return _op_generic(xquop_minus, a1, 
 
 tuple_cell op_numeric_unary_plus (const tuple_cell &a1) { return _op_generic(xquop_plus,  a1, _op_numeric_unary_generic_err_c_str); }
 tuple_cell op_numeric_unary_minus(const tuple_cell &a1) { return _op_generic(xquop_minus, a1, _op_numeric_unary_generic_err_c_str); }
+
 

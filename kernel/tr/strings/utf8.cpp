@@ -597,7 +597,7 @@ int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
 			continue;
 		}
 
-		throw USER_EXCEPTION2(SE1003, "Impossible case in fn_compare");
+		throw USER_EXCEPTION2(SE1003, "Impossible case in CollationHandler_utf8::compare");
     }
 }
 int CollationHandler_utf8::compare(str_cursor *cur, const char *str2)

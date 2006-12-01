@@ -105,10 +105,12 @@ class PPFnDistinctValues : public PPIterator
 {
 protected:
     PPOpIn child;
+    PPOpIn collation_child;
     sequence *s;
-    tuple stored_tuple;
+    CollationHandler* handler;
+    bool has_NaN;
 
-    void children(PPOpIn &_child_) { _child_ = child; }
+    void children(PPOpIn &_child_, PPOpIn &_collation_child_) { _child_ = child; _collation_child_ = collation_child; }
 
 public:
     virtual void open   ();
@@ -122,6 +124,9 @@ public:
 
     PPFnDistinctValues(variable_context *_cxt_,
                        PPOpIn _child_);
+    PPFnDistinctValues(variable_context *_cxt_,
+                       PPOpIn _child_,
+                       PPOpIn &_collation_child_);
     virtual ~PPFnDistinctValues();
 };
 

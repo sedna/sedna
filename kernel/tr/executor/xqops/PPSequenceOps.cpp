@@ -333,8 +333,15 @@ bool PPFnItemAt::result(PPIterator* cur, variable_context *cxt, void*& r)
 
 PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
                                        PPOpIn _child_) : PPIterator(_cxt_),
-                                                         child(_child_),
-                                                         stored_tuple(1)
+                                                         child(_child_)
+{
+}
+
+PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
+                                       PPOpIn _child_,
+                                       PPOpIn &_collation_child_) : PPIterator(_cxt_),
+                                                                    child(_child_),
+                                                                    collation_child(_collation_child_)
 {
 }
 
@@ -342,32 +349,72 @@ PPFnDistinctValues::~PPFnDistinctValues()
 {
     delete child.op;
     child.op = NULL;
+    if (collation_child.op)
+    {
+        delete collation_child.op;
+        collation_child.op = NULL;
+    }
 }
 
 void PPFnDistinctValues::open  ()
 {
     child.op->open();
+    if (collation_child.op)
+        collation_child.op->open();
 
     s = new sequence(1);
+    handler = NULL;
+    has_NaN = false;
 }
 
 void PPFnDistinctValues::reopen()
 {
     child.op->reopen();
+    if (collation_child.op)
+        collation_child.op->reopen();
 
     s->clear();
+    handler = NULL;
+    has_NaN = false;
 }
 
 void PPFnDistinctValues::close ()
 {
     child.op->close();
+    if (collation_child.op)
+        collation_child.op->close();
 
     delete s;
     s = NULL;
+    handler = NULL;
 }
 
 void PPFnDistinctValues::next(tuple &t)
 {
+    if (!handler) // the same as 'first_time'
+    {
+        handler = charset_handler->get_unicode_codepoint_collation();
+
+        if (collation_child.op)
+        {
+            collation_child.op->next(t);
+            if(t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:compare()");
+
+            tuple_cell col = atomize(collation_child.get(t));
+            if (!is_string_type(col.get_atomic_type())) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:distinct-values() (xs_string/derived/promotable is expected)");
+
+            collation_child.op->next(t);
+            if (!t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
+            
+            col = tuple_cell::make_sure_light_atomic(col);
+            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+        }
+    }
+
+
     while (true)
     {
         child.op->next(t);
@@ -375,87 +422,57 @@ void PPFnDistinctValues::next(tuple &t)
         if (t.is_eos())
         {
             s->clear();
+            handler = NULL;
+            has_NaN = false;
             return;
         }
 
         tuple_cell tc = atomize(child.get(t));
+        if ((tc.get_atomic_type() == xs_float  && u_is_nan((double)(tc.get_xs_float()))) || 
+            (tc.get_atomic_type() == xs_double && u_is_nan(tc.get_xs_double())))
+        {
+            if (has_NaN) continue;
+            else
+            {
+                has_NaN = true;
+                goto store_item_and_return;
+            }
+        }
 
         int pos = 0;
         for (pos = 0; pos < s->size(); ++pos)
         {
-            s->get(stored_tuple, pos);
+            s->get(t, pos);
             try {
-                tuple_cell comp_res = value_comp_eq(tc, stored_tuple.cells[0]);
+                tuple_cell comp_res = value_comp_eq(tc, t.cells[0], handler);
                 if (comp_res.get_xs_boolean()) break;
             } catch (SednaUserException &e) {
                 // continue cycle
             }
         }
 
-        if (pos == s->size())
-        {
-            stored_tuple.copy(tc);
-            s->add(stored_tuple);
+        if (pos != s->size()) continue;
 
-            t.copy(tc);
-            return;
-        }
+    store_item_and_return:
+        t.copy(tc);
+        s->add(t);
+        return;
     }
 }
 
 PPIterator* PPFnDistinctValues::copy(variable_context *_cxt_)
 {
-    PPFnDistinctValues *res = new PPFnDistinctValues(_cxt_, child);
+    PPFnDistinctValues *res = new PPFnDistinctValues(_cxt_, child, collation_child);
     res->child.op = child.op->copy(_cxt_);
+    if (collation_child.op)
+        res->collation_child.op = collation_child.op->copy(_cxt_);
 
     return res;
 }
 
 bool PPFnDistinctValues::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
-    PPOpIn child;
-    ((PPFnDistinctValues*)cur)->children(child);
-
-    void *dv_r;
-    bool dv_s = (child.op->res_fun())(child.op, cxt, dv_r);
-
-    if (!dv_s) // if expression is not strict
-    { // create PPFnExists and transmit state
-        child.op = (PPIterator*)dv_r;
-        r = new PPFnDistinctValues(cxt, child);
-        return false;
-    }
-
-    sequence *data_seq = (sequence*)dv_r;
-    sequence *res_seq = new sequence(1);
-    tuple t(1);
-
-    for (int data_pos = 0; data_pos < data_seq->size(); ++data_pos)
-    {
-        data_seq->get(t, data_pos);
-        tuple_cell tc = atomize(t.cells[0]);
-
-        int res_pos = 0;
-        for (res_pos = 0; res_pos < res_seq->size(); ++res_pos)
-        {
-            res_seq->get(t, res_pos);
-            try {
-                tuple_cell comp_res = value_comp_eq(tc, t.cells[0]);
-                if (comp_res.get_xs_boolean()) break;
-            } catch (SednaUserException &e) {
-                // continue cycle
-            }
-        }
-
-        if (res_pos == res_seq->size())
-        {
-            t.copy(tc);
-            res_seq->add(t);
-        }
-    }
-
-    r = res_seq;
-    return true;
+	throw USER_EXCEPTION2(SE1002, "PPFnDistinctValues::result");
 }
 
 

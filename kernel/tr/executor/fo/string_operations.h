@@ -13,9 +13,9 @@
 
 
 // do_not_check_type should be set to true only for XQuery B.2 Operator Mapping implementation
-tuple_cell fn_compare(const tuple_cell &a1, 
-                      const tuple_cell &a2, 
-                      CollationHandler* handler = NULL);
+int fn_compare(const tuple_cell &a1, 
+               const tuple_cell &a2, 
+               CollationHandler* handler = NULL);
 
 
 #endif

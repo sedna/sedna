@@ -8,6 +8,7 @@
 
 #include "sedna.h"
 #include "tuple.h"
+#include "strings.h"
 
 typedef tuple_cell (*bin_op_tuple_cell_tuple_cell)(const tuple_cell&, const tuple_cell&);
 typedef tuple_cell (*un_op_tuple_cell)(const tuple_cell&);
@@ -46,6 +47,13 @@ tuple_cell op_gt   (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_lt   (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_ge   (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_le   (const tuple_cell &a1, const tuple_cell &a2);
+
+tuple_cell op_eq   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_ne   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_gt   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_lt   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_ge   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
+tuple_cell op_le   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
 
 tuple_cell op_numeric_add           (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_numeric_subtract      (const tuple_cell &a1, const tuple_cell &a2);
