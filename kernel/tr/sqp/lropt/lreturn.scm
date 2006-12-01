@@ -298,6 +298,12 @@
       (lropt:propagate expr called-once? #f  ; order not required
                        var-types prolog processed-funcs
                        #t #t #t))
+     ((!fn!distinct-values)
+      (let ((return-first  ; NOTE: number of arguments may differ
+             (lambda x (car x))))
+        (lropt:propagate expr called-once? order-required?
+                         var-types prolog processed-funcs
+                         return-first return-first return-first)))
      ((!fn!unordered unordered)
 ;      (let ((identity (lambda (x) x)))
 ;        (lropt:propagate expr called-once? #f  ; order not required
@@ -307,10 +313,10 @@
       (lropt:expr (car (xlr:op-args expr))
                   called-once? #f  ; order not required
                   var-types prolog processed-funcs))
-     ((!fn!data !fn!distinct-values !fn!zero-or-one !fn!one-or-more)
+     ((!fn!data !fn!zero-or-one !fn!one-or-more)
       (let ((identity (lambda (x) x)))
         ; NOTE: Should be updated when collations are introduced to
-        ; fn:distinct-values in Sednas
+        ; fn:distinct-values in Sedna
         (lropt:propagate expr called-once? order-required?
                          var-types prolog processed-funcs
                          identity identity identity)))
