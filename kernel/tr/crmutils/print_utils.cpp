@@ -26,8 +26,9 @@ typedef  std::map< ns_pair ,xml_ns*> nspt_map;
 static  std::set<std::string> nspt_pref;
 static nspt_map  xm_nsp;
 static bool def_set=false;
-static char* defns_setter="XXX0";
-bool repl_def=false;
+
+
+
 
 /* prints information in  descriptor */
 void print_descriptor(n_dsc* node,int shift, se_ostream& crmout)
@@ -359,8 +360,7 @@ void print_attribute_prefix(se_ostream& crmout,schema_node* scm, int indent)
  char* pref=NULL;
  if (scm->xmlns==NULL)
  {
-	 if(repl_def!=NULL)
-		pref=defns_setter;
+	 pref=NULL;
  }
  else if  (!indent)
 	 pref=scm->xmlns->prefix;
@@ -421,10 +421,8 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				print_indent(crmout,indent) ;
 			}
 			bool curwi=wi;
-			bool lit=false;
-			bool def_reset=false;
-			bool def_inset=false;
-
+			bool lit=false;			
+			bool def_inset=false;			
 			crmout <<((ptype==xml)? "<": "(");
 			schema_node* scn=GETSCHEMENODEX(node);
 			xptr first_ns=XNULL;
@@ -507,7 +505,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			{
 				if (def_set&&scn->xmlns==NULL)
 				{
-					def_reset=true;
+					
 					def_set=false;
 					crmout <<" xmlns=\"\"";
 				}
@@ -535,7 +533,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 					{
 						ns_pair str=pref_to_str(sch->xmlns);
 						xml_ns* xmn=NULL;
-						if (nspt_pref.find(str.first)==nspt_pref.end()&&!((def_reset||scn->xmlns==NULL)&&sch->xmlns->prefix==NULL))
+						if (nspt_pref.find(str.first)==nspt_pref.end())
 						{
 							xmn=sch->xmlns;							
 							if (!pref_ns)pref_ns= new std::vector<std::string>;
@@ -560,17 +558,10 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						xm_nsp[str]=t;
 					}
 
-				}
-				else
-				{
-					if (def_set&&!def_reset&&sch->xmlns==NULL)
-					{
-						repl_def=true;						
-					}
-				}
+				}				
 				sch=sch->next;
 				cnt++;
-			}
+			}			
 			//attributes			
 			CHECKP(child);
 			if (GETTYPE(GETSCHEMENODEX(child))==attribute)
@@ -586,8 +577,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				} while (GETTYPE(GETSCHEMENODEX(child))==attribute);
 				if (ptype==sxml )  crmout << ")";
 			}
-			//clear defns_setter
-			repl_def=false;
+						
 			if (child==XNULL)
 			{
 				crmout << ((ptype==xml )? "/>": ")");
@@ -668,13 +658,10 @@ nsfree:
 					it++;
 				}	
 				delete pref_ns;
-			}
-			if (def_reset)
-			{
-				def_set=true;
-			}
+			}			
 			if (def_inset)
-def_set=false;
+				def_set=false;
+			
 			break;
 		}
 	case xml_namespace:
