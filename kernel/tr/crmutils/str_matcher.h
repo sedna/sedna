@@ -27,6 +27,7 @@ typedef void (*write_func_t)(void *param, const char *str, int len);
 class StrMatcher 
 {
 private:
+	trie_node_t *s3; //dirty hack
 	char *strings_buf;
 	int strings_buf_len;
 	int strings_buf_used;
@@ -40,6 +41,7 @@ private:
 	trie_node_t *get_node(trie_node_t *start, const char *str, int set_pc);
 	trie_node_t *get_ls_node(trie_node_t *node);
 	void add_string_to_buf(const char *str, int *ofs, int *len);
+	bool replace_surr; 
 public:
 	void add_str (const char * str, const char * map_str, int pc = -1);
 	void add_unicode_escape_range (int start_symbol, int end_symbol, int pc = -1);
