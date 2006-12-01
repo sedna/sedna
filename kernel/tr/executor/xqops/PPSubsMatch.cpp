@@ -86,7 +86,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
 	}*/
 	if (l2>l1)
 	{
-		t.copy(tuple_cell::atomic(false));
+		t.copy(tuple_cell::atomic(false));//-1
 		return;
 	}
 	//KARP_RABIN

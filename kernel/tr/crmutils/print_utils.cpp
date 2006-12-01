@@ -25,6 +25,9 @@ typedef std::pair<std::string,std::string> ns_pair;
 typedef  std::map< ns_pair ,xml_ns*> nspt_map;
 static  std::set<std::string> nspt_pref;
 static nspt_map  xm_nsp;
+static bool def_set=false;
+static char* defns_setter="XXX0";
+bool repl_def=false;
 
 /* prints information in  descriptor */
 void print_descriptor(n_dsc* node,int shift, se_ostream& crmout)
@@ -351,6 +354,24 @@ inline const std::string prefix_to_str(char* pref)
 {
 	return std::string((pref!=NULL)?pref:"");
 }
+void print_attribute_prefix(se_ostream& crmout,schema_node* scm, int indent)
+{
+ char* pref=NULL;
+ if (scm->xmlns==NULL)
+ {
+	 if(repl_def!=NULL)
+		pref=defns_setter;
+ }
+ else if  (!indent)
+	 pref=scm->xmlns->prefix;
+ else
+	pref=xm_nsp[pref_to_str(scm->xmlns)]->prefix;
+ if (pref!=NULL)
+ {
+	 crmout<<pref<<":";
+ }
+
+}
 void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_print ptype)
 {
 	switch(GETTYPE(GETSCHEMENODEX(node)))
@@ -401,6 +422,9 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			}
 			bool curwi=wi;
 			bool lit=false;
+			bool def_reset=false;
+			bool def_inset=false;
+
 			crmout <<((ptype==xml)? "<": "(");
 			schema_node* scn=GETSCHEMENODEX(node);
 			xptr first_ns=XNULL;
@@ -444,6 +468,12 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						pref_ns->push_back(str.first);
 						nspt_pref.insert(str.first);
 					}
+					if (sns->prefix==NULL)
+					{
+						if (!def_set)def_inset=false;
+						def_set=true;
+
+					}
 				}
 				print_node_with_indent(child,crmout,wi,0,ptype);
 				CHECKP(child);
@@ -470,7 +500,20 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 					nspt_pref.insert(prf);
 
 				}
+				if (scn->xmlns->prefix==NULL)
+					def_set=true;
 			}
+			else
+			{
+				if (def_set&&scn->xmlns==NULL)
+				{
+					def_reset=true;
+					def_set=false;
+					crmout <<" xmlns=\"\"";
+				}
+			}
+			//case of def_ns
+
 			xptr* ptr=NULL;
 			sc_ref* sch=NULL;
 			int cnt=0;
@@ -492,9 +535,12 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 					{
 						ns_pair str=pref_to_str(sch->xmlns);
 						xml_ns* xmn=NULL;
-						if (nspt_pref.find(str.first)==nspt_pref.end())
+						if (nspt_pref.find(str.first)==nspt_pref.end()&&!((def_reset||scn->xmlns==NULL)&&sch->xmlns->prefix==NULL))
 						{
-							xmn=sch->xmlns;
+							xmn=sch->xmlns;							
+							if (!pref_ns)pref_ns= new std::vector<std::string>;
+							pref_ns->push_back(str.first);
+							nspt_pref.insert(str.first);
 						}
 						else
 						{
@@ -504,7 +550,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						if (!att_ns) 
 							att_ns= new std::vector<ns_pair> ;
 						att_ns->push_back(str);
-						printNameSpace(xmn,crmout,ptype);
+						printNameSpace(xmn,crmout,ptype);					
 					}
 					else
 					{
@@ -514,6 +560,13 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						xm_nsp[str]=t;
 					}
 
+				}
+				else
+				{
+					if (def_set&&!def_reset&&sch->xmlns==NULL)
+					{
+						repl_def=true;						
+					}
 				}
 				sch=sch->next;
 				cnt++;
@@ -533,6 +586,8 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				} while (GETTYPE(GETSCHEMENODEX(child))==attribute);
 				if (ptype==sxml )  crmout << ")";
 			}
+			//clear defns_setter
+			repl_def=false;
 			if (child==XNULL)
 			{
 				crmout << ((ptype==xml )? "/>": ")");
@@ -614,6 +669,12 @@ nsfree:
 				}	
 				delete pref_ns;
 			}
+			if (def_reset)
+			{
+				def_set=true;
+			}
+			if (def_inset)
+def_set=false;
 			break;
 		}
 	case xml_namespace:
@@ -627,17 +688,15 @@ nsfree:
 			schema_node* scn=GETSCHEMENODEX(node);
 			if (ptype==xml )
 			{
-				if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-					crmout <<" "<<((indent)?xm_nsp[pref_to_str(scn->xmlns)]->prefix:scn->xmlns->prefix)<<":"<< scn->name << "=\"";
-				else
-					crmout <<" "<< scn->name << "=\"";
+				
+				crmout <<" ";
+				print_attribute_prefix(crmout,scn,indent);
+				crmout<< scn->name << "=\"";
 			}
 			else
-			{
-				if (scn->xmlns!=NULL && scn->xmlns->prefix!=NULL)
-					crmout <<" ("<<((indent)?xm_nsp[pref_to_str(scn->xmlns)]->prefix:scn->xmlns->prefix)<<":"<< scn->name << "  ";
-				else
-					crmout <<" ("<< scn->name <<"  ";
+			{				
+				print_attribute_prefix(crmout,scn,indent);
+				crmout<< scn->name <<"  ";
 			}
 			print_text(node,crmout,ptype,attribute);
 			crmout <<((ptype==xml )?"\"":")");
@@ -655,7 +714,7 @@ nsfree:
 		}
 	case comment:
 		{
-			if(wi) 
+			if(wi&&indent) 
 			{
 				crmout<< "\n";
 				print_indent(crmout,indent) ;
@@ -679,7 +738,7 @@ nsfree:
 		}
 	case pr_ins:
 		{
-			if(wi) 
+			if(wi&&indent) 
 			{
 				crmout<< "\n";
 				print_indent(crmout,indent) ;
