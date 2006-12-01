@@ -23,23 +23,11 @@ PPFnConcat::PPFnConcat(variable_context *_cxt_,
                        arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_), 
                                                  ch_arr(_ch_arr_)
 {
-    for (i = 0; i < ch_arr.size(); i++)
-    {
-        if (ch_arr[i].ts != 1) throw USER_EXCEPTION2(SE1003, "Children of PPFnConcat operation have different tuple sizes");
-        data.push_back(new tuple(1));
-    }
-
     tcv.resize(ch_arr.size());
 }
 
 PPFnConcat::~PPFnConcat()
 {
-    for (i = 0; i < ch_arr.size(); i++)
-    {
-        delete (data[i]);
-        data[i] = NULL;
-    }
-
     for (i = 0; i < ch_arr.size(); i++) 
     {
         delete (ch_arr[i].op);

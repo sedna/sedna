@@ -18,7 +18,6 @@ class PPFnConcat : public PPIterator
 private:
     int i;
     arr_of_PPOpIn ch_arr;
-    arr_of_tuple_pointer data;
     std::vector<tuple_cell> tcv;
     bool first_time;
 

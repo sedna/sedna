@@ -1425,12 +1425,22 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     }
     else if (op == "PPFnDistinctValues")
     {
-        if (   lst->size() != 2
+        if (   lst->size() < 2
+            || lst->size() > 3
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "48.-3");
 
-        opit = new PPFnDistinctValues(cxt,
-                                      make_pp_op(cxt, lst->at(1).internal.list));
+        if (lst->size() == 3)
+        {
+        	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "48.-3");
+            opit = new PPFnDistinctValues(cxt,
+                                          make_pp_op(cxt, lst->at(1).internal.list),
+                                          make_pp_op(cxt, lst->at(2).internal.list));
+
+        }
+        else
+            opit = new PPFnDistinctValues(cxt,
+                                          make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnReverse")
     {

@@ -125,9 +125,9 @@ void PPFnCompare::next(tuple &t)
 
         first_time = false;
         if (is_codepoint_equal)
-            t.copy(tuple_cell::atomic(fn_compare(tc1, tc2, handler).get_xs_integer() == (__int64)0));
+            t.copy(tuple_cell::atomic(fn_compare(tc1, tc2, handler) == 0));
         else 
-            t.copy(fn_compare(tc1, tc2, handler));
+            t.copy(tuple_cell::atomic((__int64)(fn_compare(tc1, tc2, handler))));
     }
     else
     {
