@@ -284,8 +284,8 @@ void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
         switch(type)
         {
             case xs_float                  : *((float*)value) = *((float*)addr); break;
-            case xs_double                 : 
-            case xs_decimal                : *((double*)value) = *((double*)addr); break;
+            case xs_double                 : *((double*)value) = *((double*)addr); break;
+            case xs_decimal                : *((xs_decimal_t*)value) = *((xs_decimal_t*)addr); break;
             case xs_integer                : *((__int64*)value) = *((__int64*)addr); break;
             case xs_boolean                : *((bool*)value) = *((bool*)addr); break;
             default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented (PPOrderBy).");
@@ -367,7 +367,6 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     break;
                 }
                 case xs_double               : 
-                case xs_decimal              : 
                 {
                     double value1, value2;
                     if(temp1 == NULL) CHECKP(v1);
@@ -375,6 +374,17 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_double);
                     result = compare_doubles(value1, value2, m.status) * order;
+                    break;
+                }
+                case xs_decimal              : 
+                {
+                    xs_decimal_t value1, value2;
+                    if(temp1 == NULL) CHECKP(v1);
+                    get_deserialized_value(&value1, (char*)addr1+offset, xs_decimal);
+                    if(temp2 == NULL) CHECKP(v2);
+                    get_deserialized_value(&value2, (char*)addr2+offset, xs_decimal);
+                    if (value2 == value1) result = 0;
+                    else result = (value2 > value1 ? 1 : -1) * order;
                     break;
                 }
                 case xs_integer              : 
@@ -385,7 +395,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_integer);
                     if (value2 == value1) result = 0;
-                    else result = (value2 > value1 ? 1 : -1)*order;
+                    else result = (value2 > value1 ? 1 : -1) * order;
                     break;
                 }
                 case xs_boolean              : 
@@ -395,8 +405,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     get_deserialized_value(&value1, (char*)addr1+offset, xs_boolean);
                     if(temp2 == NULL) CHECKP(v2);
                     get_deserialized_value(&value2, (char*)addr2+offset, xs_boolean);
-                    if(value2 && !value1) result = 1*order;
-                    if(value1 && !value2) result = -1*order;
+                    if(value2 && !value1) result = 1 * order;
+                    if(value1 && !value2) result = -1 * order;
                     break;
                 }
                 case xs_string               :
@@ -495,7 +505,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
         for(int i = 0; i < t.cells_number; i++)
         {
             common_type &ct = (ud -> header) -> at(i);
-            if (!ct.initialized) continue;              //if t.initialized == false we have a column of eos values
+            if (!ct.initialized) continue;              //if ct.initialized == false we have a column of eos values
             xmlscm_type type = ct.xtype;                //thus we don't need to serialize this column and sort by it
             int type_size = ct.size;
 
@@ -532,7 +542,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                 {
                     case xs_float                : *((float*)((char*)p+offset)) = t.cells[i].get_xs_float(); break;
                     case xs_double               : *((double*)((char*)p+offset)) = t.cells[i].get_xs_double(); break;
-                    case xs_decimal              : *((double*)((char*)p+offset)) = t.cells[i].get_xs_decimal().get_double(); break;
+                    case xs_decimal              : *((xs_decimal_t*)((char*)p+offset)) = t.cells[i].get_xs_decimal(); break;
                     case xs_integer              : *((__int64*)((char*)p+offset)) = t.cells[i].get_xs_integer(); break;
                     case xs_boolean              : *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
                     case xs_string               : 
@@ -661,7 +671,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
     {
         case xs_float                : {float value = tc.get_xs_float(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy(buffer + pos, &value, type_size);  break;}
-        case xs_decimal              : {double value = tc.get_xs_decimal().get_double(); memcpy(buffer + pos, &value, type_size); break;}
+        case xs_decimal              : {xs_decimal_t value = tc.get_xs_decimal(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        
