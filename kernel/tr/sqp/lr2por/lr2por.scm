@@ -898,9 +898,9 @@
                  ; *** 15.4 Aggregate Functions
                  (!fn!count .           PPFnCount)
                  (!fn!avg .             PPFnAvg)
-                 ;(!fn!max .             PPFnMax)
-                 ;(!fn!min .             PPFnMin)
-                 ;(!fn!sum .             PPFnSum)
+                 (!fn!max .             PPFnMax)
+                 (!fn!min .             PPFnMin)
+                 (!fn!sum .             PPFnSum)
                  ; *** 15.5 Functions and Operators that Generate Sequences
                  (!fn!id .              PPFnId)
                  (!fn!idref .           PPFnIdref)
@@ -920,15 +920,15 @@
                    `(1 ,(cons (cdr pair)
                               (map l2p:any-lr-node2por node)))))
              
-             ((assq op-name '((!fn!max . PPFnMax)
-                              (!fn!min . PPFnMin)
-                              (!fn!sum . PPFnSum)))
-              ; Ignore the second argument
-              ; TODO: should be implemented in accordance with the
-              ; specification
-              => (lambda (pair)
-                   `(1 ,(list (cdr pair)
-                              (l2p:any-lr-node2por (car node))))))
+;             ((assq op-name '((!fn!max . PPFnMax)
+;                              (!fn!min . PPFnMin)
+;                              (!fn!sum . PPFnSum)))
+;              ; Ignore the second argument
+;              ; TODO: should be implemented in accordance with the
+;              ; specification
+;              => (lambda (pair)
+;                   `(1 ,(list (cdr pair)
+;                              (l2p:any-lr-node2por (car node))))))
              
              ;----------------------------------------
                    

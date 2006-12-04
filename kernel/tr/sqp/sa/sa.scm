@@ -1101,7 +1101,8 @@
                                (sa:expand-var-name
                                 (cadadr pair)  ; var-name
                                 ns-binding
-                                (or default-elem-ns "")))))
+                                ""  ; DL: was: (or default-elem-ns "")
+                                ))))
                            (cadr (sa:op-args func-decl)))
                           (caddr (sa:op-args func-decl))  ; return type
                           (list
@@ -1436,7 +1437,8 @@
                    (car (sa:op-args
                          (car (sa:op-args expr))))
                    ns-binding
-                   (or default-elem-ns "")))
+                   ""  ; DL: was: (or default-elem-ns "")
+                   ))
                  (type-pair
                   (sa:analyze-seq-type
                    (if (null? (cddr (sa:op-args expr)))
@@ -2091,7 +2093,9 @@
                     (let ((var-name
                            (sa:expand-var-name 
                             (car (sa:op-args (cadr pair)))
-                            ns-binding default-ns)))
+                            ns-binding
+                            ""  ; DL: was: default-ns
+                            )))
                       (and
                        var-name
                        (list var-name (cdr type) (car type)))))
