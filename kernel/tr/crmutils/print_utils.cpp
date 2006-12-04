@@ -682,6 +682,7 @@ nsfree:
 			}
 			else
 			{				
+                crmout <<" (";
 				print_attribute_prefix(crmout,scn,indent);
 				crmout<< scn->name <<"  ";
 			}
