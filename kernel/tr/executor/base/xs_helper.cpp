@@ -291,6 +291,7 @@ char *get_xs_double_lexical_representation(char *s, double d)
 char *get_xs_float_lexical_representation(char *s, float f)
 {
     return _get_xs_double_lexical_representation(s, (double)f, "%#.7E");
+    //return _get_xs_double_lexical_representation(s, round_half_to_even_double((double)f, 6), "%#.7E");
 }
 
 char *get_xs_integer_lexical_representation(char *s, __int64 v)
@@ -516,6 +517,83 @@ xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y)
     if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
     return x % y;
 }
+
+
+double round_half_to_even_double(double d, __int64 precision)
+{   
+    double m_i = 0, m_f = 0;
+    __int64 y = 1;
+
+    __int64 p = precision < 0 ? -precision : precision;
+    for (__int64 j = 0; j < p; j++) y *= 10;
+
+    if (precision < 0)
+    {
+        m_f = modf(d / y, &m_i);
+        return m_i * y;
+    }
+    else
+    {
+        double i = 0;
+        int s = 0;
+        d = d < 0 ? (s = -1, -d) : (s = 1, d);
+        double f = modf(d, &i);
+
+        m_f = modf(f * y, &m_i);
+
+        if (m_f == 0.5)
+        {
+            if (m_i == 0) 
+            {
+                if (((__int64)i % 2) == 1) 
+                {
+                    i += 1;
+                }
+            }
+            else
+            {
+                if (((__int64)m_i % 2) == 1) 
+                {
+                    m_i += 1;
+                }
+            }
+        }
+        else if (m_f > 0.5)
+        {
+            if (m_i == 0) 
+            {
+                i += 1;
+            }
+            else
+            {
+                m_i += 1;
+            }
+        }
+
+        return s * (i + m_i / y);
+    }
+}
+
+float round_half_to_even_float(float d, __int64 precision)
+{
+    return (float)round_half_to_even_double((float)d, precision);
+}
+
+__int64 round_half_to_even_integer(__int64 d, __int64 precision)
+{   
+    if (precision < 0)
+    {
+        __int64 y = 1;
+        for (__int64 j = 0; j < -precision; j++) y *= 10;
+
+        return (d / y) * y;
+    }
+    else
+    {
+        return d;
+    }
+}
+
 
 
 /*******************************************************************************
