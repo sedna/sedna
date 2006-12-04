@@ -56,17 +56,29 @@ template<class a, class b> int memcmp(a& it1,b& it2,int len)
 }
 template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int l2,tuple &t)
 {
-	//2 nd argument empty
-	if (l2==0)
+	int res=PPSubsMatch::contains<a,b>(it1,it2,l1,l2) ;
+	if (res<0)
+	{
+		t.copy(tuple_cell::atomic(false));
+		return;
+	}
+	else
 	{
 		t.copy(tuple_cell::atomic(true));
 		return;
 	}
+}
+template <class a, class b> int PPSubsMatch::contains(a& it1,b& it2,int l1,int l2)
+{
+	//2 nd argument empty
+	if (l2==0)
+	{
+		return 0;
+	}
 	//1 st argument empty
 	if (l1==0)
 	{
-		t.copy(tuple_cell::atomic(false));
-		return;
+		return -1;
 	}
 	//first case
 	
@@ -86,8 +98,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
 	}*/
 	if (l2>l1)
 	{
-		t.copy(tuple_cell::atomic(false));
-		return;
+		return -1;
 	}
 	//KARP_RABIN
 	int d, hx, hy, i;
@@ -108,8 +119,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
    {
       if (hx == hy && memcmp<b,a>(it2, i1, l2) == 0)
 	  {
-		t.copy(tuple_cell::atomic(true));
-		return;
+		return j;
 	  }
 	  hy = ((((hy) - (*i1)*d) << 1) + (*i3));      
       ++j;
@@ -118,8 +128,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
    }
    if (hx == hy && memcmp<b,a>(it2, i1, l2) == 0)
 	  {
-		t.copy(tuple_cell::atomic(true));
-		return;
+		return j;
 	  }
    //KNUTH-PLATT
 	/*
@@ -155,8 +164,7 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
 */
 
 
-   t.copy(tuple_cell::atomic(false));
-   return;
+	return -1;
 	//second case (unrealized)- really big strings
 }
 PPSubsMatch::~PPSubsMatch()

@@ -339,9 +339,9 @@ PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
 
 PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
                                        PPOpIn _child_,
-                                       PPOpIn &_collation_child_) : PPIterator(_cxt_),
-                                                                    child(_child_),
-                                                                    collation_child(_collation_child_)
+                                       PPOpIn _collation_child_) : PPIterator(_cxt_),
+                                                                   child(_child_),
+                                                                   collation_child(_collation_child_)
 {
 }
 
@@ -399,7 +399,7 @@ void PPFnDistinctValues::next(tuple &t)
         {
             collation_child.op->next(t);
             if(t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:compare()");
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:distinct-values()");
 
             tuple_cell col = atomize(collation_child.get(t));
             if (!is_string_type(col.get_atomic_type())) 

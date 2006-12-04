@@ -15,7 +15,6 @@
 
 
 typedef int (*simle_type2index)(xmlscm_type);
-typedef tuple_cell (*bin_op_tuple_cell_tuple_cell_collation)(const tuple_cell&, const tuple_cell&, CollationHandler* handler);
 
 int simple_type2bin_op_numeric_index(xmlscm_type xtype);
 

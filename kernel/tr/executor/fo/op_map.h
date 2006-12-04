@@ -11,6 +11,7 @@
 #include "strings.h"
 
 typedef tuple_cell (*bin_op_tuple_cell_tuple_cell)(const tuple_cell&, const tuple_cell&);
+typedef tuple_cell (*bin_op_tuple_cell_tuple_cell_collation)(const tuple_cell&, const tuple_cell&, CollationHandler* handler);
 typedef tuple_cell (*un_op_tuple_cell)(const tuple_cell&);
 
 enum xq_binary_op_type

@@ -303,9 +303,43 @@ bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, variable_context *cxt
 typedef PPAggrFuncContainer<PPFnCountEssence> PPFnCount;
 typedef PPAggrFuncContainer<PPFnSumEssence> PPFnSum;
 typedef PPAggrFuncContainer<PPFnAvgEssence> PPFnAvg;
-typedef PPAggrFuncContainer<PPFnMaxEssence> PPFnMax;
-typedef PPAggrFuncContainer<PPFnMinEssence> PPFnMin;
+//typedef PPAggrFuncContainer<PPFnMaxEssence> PPFnMax;
+//typedef PPAggrFuncContainer<PPFnMinEssence> PPFnMin;
 
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnMaxMin
+///////////////////////////////////////////////////////////////////////////////
+class PPFnMaxMin : public PPIterator
+{
+private:
+    PPOpIn child;
+    PPOpIn collation;
+    CollationHandler* handler;
+    int i; // 0 means fn:max, 1 means fn:min
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator *copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnMaxMin(variable_context *_cxt_,
+               int _i_,
+               PPOpIn _child_);
+    PPFnMaxMin(variable_context *_cxt_,
+               int _i_,
+               PPOpIn _child_,
+               PPOpIn _collation_);
+    virtual ~PPFnMaxMin();
+};
 
 
 

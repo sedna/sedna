@@ -66,6 +66,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPFnAccessors$(OBJ_EXT)			\
                        PPNodeComparison$(OBJ_EXT)		\
                        PPStore$(OBJ_EXT)				\
+                       PPAggrFuncs$(OBJ_EXT)			\
                        PPAxisSelf$(OBJ_EXT)				\
                        PPAxisChild$(OBJ_EXT)			\
                        PPAxisFP$(OBJ_EXT)				\
