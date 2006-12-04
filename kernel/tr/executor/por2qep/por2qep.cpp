@@ -1292,21 +1292,43 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     }
     else if (op == "PPFnMax")
     {
-        if (   lst->size() != 2
+        if (   lst->size() < 2
+            || lst->size() > 3
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "45");
 
-        opit = new PPFnMax(cxt, 
-                           make_pp_op(cxt, lst->at(1).internal.list));
+        if (lst->size() == 3)
+        {
+        	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "45.1");
+            opit = new PPFnMaxMin(cxt,
+                                  0,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else
+            opit = new PPFnMaxMin(cxt,
+                                  0,
+                                  make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnMin")
     {
-        if (   lst->size() != 2
+        if (   lst->size() < 2
+            || lst->size() > 3
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "46");
 
-        opit = new PPFnMin(cxt, 
-                           make_pp_op(cxt, lst->at(1).internal.list));
+        if (lst->size() == 3)
+        {
+        	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "46.1");
+            opit = new PPFnMaxMin(cxt,
+                                  1,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else
+            opit = new PPFnMaxMin(cxt,
+                                  1,
+                                  make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnEncodeForUri")
     {

@@ -126,7 +126,7 @@ public:
                        PPOpIn _child_);
     PPFnDistinctValues(variable_context *_cxt_,
                        PPOpIn _child_,
-                       PPOpIn &_collation_child_);
+                       PPOpIn _collation_child_);
     virtual ~PPFnDistinctValues();
 };
 
