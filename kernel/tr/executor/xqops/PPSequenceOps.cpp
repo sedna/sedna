@@ -417,6 +417,7 @@ void PPFnDistinctValues::next(tuple &t)
 
     while (true)
     {
+        int pos = 0;
         child.op->next(t);
 
         if (t.is_eos())
@@ -439,7 +440,6 @@ void PPFnDistinctValues::next(tuple &t)
             }
         }
 
-        int pos = 0;
         for (pos = 0; pos < s->size(); ++pos)
         {
             s->get(t, pos);

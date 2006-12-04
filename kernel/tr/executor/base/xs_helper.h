@@ -83,6 +83,12 @@ float        xs_mod(float        x, float        y);
 __int64      xs_mod(__int64      x, __int64      y);
 xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y);
 
+double round_half_to_even_double(double d, __int64 precision);
+float round_half_to_even_float(float d, __int64 precision);
+__int64 round_half_to_even_integer(__int64 d, __int64 precision);
+
+
+
 
 
 /////////////////////////////////////////////////////////////////////////
