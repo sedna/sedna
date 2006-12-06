@@ -301,8 +301,8 @@ bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, variable_context *cxt
 ///////////////////// AGGREGATE FUNCTIONS //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 typedef PPAggrFuncContainer<PPFnCountEssence> PPFnCount;
-typedef PPAggrFuncContainer<PPFnSumEssence> PPFnSum;
-typedef PPAggrFuncContainer<PPFnAvgEssence> PPFnAvg;
+//typedef PPAggrFuncContainer<PPFnSumEssence> PPFnSum;
+//typedef PPAggrFuncContainer<PPFnAvgEssence> PPFnAvg;
 //typedef PPAggrFuncContainer<PPFnMaxEssence> PPFnMax;
 //typedef PPAggrFuncContainer<PPFnMinEssence> PPFnMin;
 
@@ -339,6 +339,38 @@ public:
                PPOpIn _child_,
                PPOpIn _collation_);
     virtual ~PPFnMaxMin();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSumAvg
+///////////////////////////////////////////////////////////////////////////////
+class PPFnSumAvg : public PPIterator
+{
+private:
+    PPOpIn child;
+    PPOpIn zero;
+    bool first_time;
+    int i; // 0 means fn:sum, 1 means fn:avg
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator *copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnSumAvg(variable_context *_cxt_,
+               int _i_,
+               PPOpIn _child_);
+    PPFnSumAvg(variable_context *_cxt_,
+               int _i_,
+               PPOpIn _child_,
+               PPOpIn _zero_);
+    virtual ~PPFnSumAvg();
 };
 
 

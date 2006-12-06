@@ -1274,21 +1274,43 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
     }
     else if (op == "PPFnSum")
     {
-        if (   lst->size() != 2
+        if (   lst->size() < 2
+            || lst->size() > 3
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "43");
 
-        opit = new PPFnSum(cxt,
-                           make_pp_op(cxt, lst->at(1).internal.list));
+        if (lst->size() == 3)
+        {
+        	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "43.1");
+            opit = new PPFnSumAvg(cxt,
+                                  0,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else
+            opit = new PPFnSumAvg(cxt,
+                                  0,
+                                  make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnAvg")
     {
-        if (   lst->size() != 2
+        if (   lst->size() < 2
+            || lst->size() > 3
             || lst->at(1).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "44");
 
-        opit = new PPFnAvg(cxt,
-                           make_pp_op(cxt, lst->at(1).internal.list));
+        if (lst->size() == 3)
+        {
+        	if(lst->at(2).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "44.1");
+            opit = new PPFnSumAvg(cxt,
+                                  1,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list));
+        }
+        else
+            opit = new PPFnSumAvg(cxt,
+                                  1,
+                                  make_pp_op(cxt, lst->at(1).internal.list));
     }
     else if (op == "PPFnMax")
     {

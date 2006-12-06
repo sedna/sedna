@@ -88,6 +88,7 @@ SEDNA_DIRS = $(PP)/kernel/common $(PP)/kernel/common/errdbg \
              $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/executor \
              $(PP)/kernel/tr/executor/base \
              $(PP)/kernel/tr/executor/base/decNumber \
+             $(PP)/kernel/tr/executor/base/lip \
              $(PP)/kernel/tr/executor/fo \
              $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/executor/root \
              $(PP)/kernel/tr/executor/xqops $(PP)/kernel/tr/ft \
