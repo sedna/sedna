@@ -132,8 +132,24 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 }
             }
 
-        case st_pi			: throw USER_EXCEPTION2(SE1002, "type_matches_single for processing instruction");
-        case st_comment		: throw USER_EXCEPTION2(SE1002, "type_matches_single for comment");
+        case st_pi			: 
+            {
+                if (!tc.is_node()) return false;
+                xptr p = tc.get_node();
+
+                CHECKP(p);
+
+                return (GETSCHEMENODEX(p)->type == pr_ins);
+            }
+        case st_comment		: 
+            {
+                if (!tc.is_node()) return false;
+                xptr p = tc.get_node();
+
+                CHECKP(p);
+
+                return (GETSCHEMENODEX(p)->type == comment);
+            }
         case st_text		:
             {
                 if (!tc.is_node()) return false;
