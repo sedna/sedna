@@ -378,7 +378,7 @@ static void fppfppBig(appender &a, __int32 e, __int64 f, __int32 p)
  */
 static void fppfppExponential(appender &a, __int32 e, __int64 f, __int32 p) 
 {
-	char buf[1024];
+	//char buf[1024];
     //long R = f << Math.max(e-p, 0);
     lip R = lip(f) << s_max(e - p, 0);
 	//printf("R = %s\n", R.format(buf, NULL));
@@ -409,8 +409,13 @@ static void fppfppExponential(appender &a, __int32 e, __int64 f, __int32 p)
         k--;
         R *= lip(10);
         Mminus *= lip(10);
-        Mplus = lip(10);
+        Mplus *= lip(10);
     }
+	//printf("R = %s\n", R.format(buf, NULL));
+	//printf("S = %s\n", S.format(buf, NULL));
+	//printf("Mplus = %s\n", Mplus.format(buf, NULL));
+	//printf("R<<1 = %s\n", (R<<1).format(buf, NULL));
+
     while (((R << 1) + Mplus) >= (S << 1))
     {
         S *= 10;

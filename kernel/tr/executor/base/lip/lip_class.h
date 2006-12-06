@@ -6,7 +6,6 @@
 #ifndef __LIP_CLASS_H
 #define __LIP_CLASS_H
 
-#include "sedna.h"
 #include "lip.h"
 
 // LIP - Long Integer Package

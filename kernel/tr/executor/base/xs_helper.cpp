@@ -63,28 +63,17 @@ float c_str2xs_float(const char *t)
     _strip_c_str(t, &start, &end);
 
     if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
-    {
-        //__int32  x = 0x7F800001;
-        //res = *(float*)&x;
         res = float_NaN;
-    }
     else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
-    {
-        //__int32 x = 0xFF800000;
-        //res = *(float*)&x;
         res = float_Neg_INF;
-    }
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
-    {
-        //__int32 x = 0x7F800000;
-        //res = *(float*)&x;
         res = float_Pos_INF;
-    }
     else
     {
         char* stop = NULL;
-        res = (float)strtod(start, &stop);
+        double d = strtod(start, &stop);
         if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
+		res = (float)d;
     }
 
     return res;
@@ -98,23 +87,11 @@ double c_str2xs_double(const char *t)
     _strip_c_str(t, &start, &end);
 
     if ((end - start == 3) && (strncmp(start, "NaN", 3) == 0))
-    {
-        //__int64  x = ((__int64)0x7FF00000 << (__int64)32) | 0x1;
-        //res = *(double*)&x;
         res = double_NaN;
-    }
     else if ((end - start == 4) && (strncmp(start, "-INF", 4) == 0))
-    {
-        //__int64 x = ((__int64)0xFFF00000 << (__int64)32);
-        //res = *(double*)&x;
         res = double_Neg_INF;
-    }
     else if ((end - start == 3) && (strncmp(start, "INF", 3) == 0))
-    {
-        //__int64 x = ((__int64)0x7FF00000 << (__int64)32);
-        //res = *(double*)&x;
         res = double_Pos_INF;
-    }
     else
     {
         char* stop = NULL;
