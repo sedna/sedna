@@ -400,9 +400,10 @@ sequence_type make_sequence_type(scheme_list *lst)
             make_attribute_data(data_lst, st);
             st.type.type = st_attribute;
         }
-        else if (it_type == "pi")
+        else if (it_type == "processing_instruction")
         {
-            throw USER_EXCEPTION2(SE1004, "141");
+            if (it_lst->size() != 1) throw USER_EXCEPTION2(SE1004, "141");
+            st.type.type = st_pi;
         }
         else if (it_type == "comment")
         {
