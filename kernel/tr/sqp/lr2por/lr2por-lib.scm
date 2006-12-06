@@ -31,7 +31,7 @@
 ;(define (l2p:get-subqueries-with-modes-inserted) 
 ;  `(subqueries ,@(l2p:merge-subqueries-and-modes (cdr l2p:subqueries) l2p:subquery-modes)))
 
-(define l2p:abs-xpath-axis '(child descendant attr-axis self descendant-or-self descendant-attr))
+(define l2p:abs-xpath-axis '(child descendant attr-axis self descendant-or-self descendant-attr parent))
 (define l2p:atom-unary-calc-ops '(unary+@ unary-@))
 (define l2p:atom-binary-calc-ops '(+@ -@ eq@ ne@ ge@ gt@ le@ lt@ *@ /@ mod@ idiv@))
 
@@ -134,7 +134,8 @@
             (descendant PPAxisDescendant)
             (self PPAxisSelf)
             (descendant-or-self PPAxisDescendantOrSelf)
-            (descendant-attr PPAxisDescendantAttr)))))
+            (descendant-attr PPAxisDescendantAttr)
+            (parent PPAxisParent)))))
     (if pair
         (cadr pair)
         (cl:signal-error "l2p:tran-lr-keyword2por-keyword: unknown keyword"))))

@@ -25,6 +25,10 @@ void on_kernel_statement_begin(scheme_list *por,
 										  PPQueryEssence* &qep_tree)
 {
     // !!! Additional code review is needed
+    // if qep_tree->open() below throws exception, than we will delete 'global' qep_tree 
+    // in catch block instead of 'local' qep_tree declared in this function. The possible 
+    // solution is to avoid using 'local' qep_tree and pass 'global' qep_tree here by reference
+    // (example: create trigger for inexisting document)
     indirection_table_on_statement_begin();
     xs_decimal_t::init();
     qep_tree = build_qep(por, *s, output_type);
@@ -33,7 +37,7 @@ void on_kernel_statement_begin(scheme_list *por,
     is_qep_opened = true;
 }
 
-void on_kernel_statement_end(PPQueryEssence *qep_tree)
+void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
     if (is_qep_opened)
     {
@@ -44,6 +48,7 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
     if (is_qep_built)
     {
        delete_qep(qep_tree);
+       qep_tree = NULL;
 
        //tr_globals::st_ct.clear_context();
 

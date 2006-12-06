@@ -1476,6 +1476,8 @@
                               l2p:any-lr-node2por
                               (list-ref node 5)))
                      (name (l2p:any-lr-node2por (car node))))
+                ;(pp (cadddr node))
+                ;(pp AbsPath)
                 `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
                                   ,time
                                   ,event
@@ -1483,7 +1485,16 @@
                                   ,abs-path
                                   ,granularity
                                   ,action
-                                  ,name)))
+                                  ,name
+                                  ,@(if (= (length node) 9)  ; optional parameters presented
+                                          (list (list-ref node 6)
+                                                (list-ref node 7)
+                                                (caddr
+                                                (l2p:findPPAbsPath
+                                                 ;l2p:any-lr-node2por
+                                                 (list-ref node 8))
+                                                                     ))
+                                          '()))))
              
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!
