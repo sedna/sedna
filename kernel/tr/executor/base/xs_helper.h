@@ -68,6 +68,10 @@ extern __int32 _float_NaN;
 extern __int32 _float_Neg_INF;
 extern __int32 _float_Pos_INF;
 
+__int64 double2__int64_bits(double d);
+__int32 float2__int32_bits (float  f);
+
+
 double       xs_divide(double       x, double       y);
 float        xs_divide(float        x, float        y);
 xs_decimal_t xs_divide(__int64      x, __int64      y);

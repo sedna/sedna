@@ -9,6 +9,7 @@
 #include "xs_helper.h"
 #include "e_string.h"
 #include "utils.h"
+#include "xs_fp_converter.h"
 
 
 /*******************************************************************************
@@ -167,9 +168,13 @@ bool c_str2xs_boolean(const char *t)
  ******************************************************************************/
 
 #define udouble2_int64_bits(p)
+
+#define udouble2_int64_bits(p)
+#define ufloat2_int32_bits(p)
+
 #define FPC_DOUBLESIGNMASK  ((__int64)0x8000 << (__int64)48) // 0x8000000000000000L
 
-static __int64 double2__int64_bits(double d)
+__int64 double2__int64_bits(double d)
 {
     union {
     __int64 l;
@@ -177,14 +182,28 @@ static __int64 double2__int64_bits(double d)
     } u;
 
     if (u_is_nan(d)) 
-    {
-        u.l = __int64(0x7FF80000);
-        return u.l << 32;
-    }
+        return _double_NaN;
+
     udouble2_int64_bits(&d);
     u.d = d;
     return u.l;
 }
+
+__int32 float2__int32_bits(float f)
+{
+    union {
+    __int32 i;
+    float   f;
+    } u;
+
+    if (u_is_nan((double)f)) 
+        return _float_NaN;
+
+    ufloat2_int32_bits(&f);
+    u.f = f;
+    return u.i;
+}
+
 
 #define double_sign(d) (double2__int64_bits(d) & FPC_DOUBLESIGNMASK)
 
@@ -285,13 +304,14 @@ static char *_get_xs_double_lexical_representation(char *s, double d, const char
 
 char *get_xs_double_lexical_representation(char *s, double d)
 {
-    return _get_xs_double_lexical_representation(s, d, "%#.14E");
+    return get_xs_double_lexical_representation_Saxon(s, d);
+    //return _get_xs_double_lexical_representation(s, d, "%#.14E");
 }
 
 char *get_xs_float_lexical_representation(char *s, float f)
 {
-    return _get_xs_double_lexical_representation(s, (double)f, "%#.7E");
-    //return _get_xs_double_lexical_representation(s, round_half_to_even_double((double)f, 6), "%#.7E");
+    return get_xs_float_lexical_representation_Saxon(s, f);
+    //return _get_xs_double_lexical_representation(s, (double)f, "%#.7E");
 }
 
 char *get_xs_integer_lexical_representation(char *s, __int64 v)

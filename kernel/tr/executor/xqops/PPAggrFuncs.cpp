@@ -177,3 +177,157 @@ bool PPFnMaxMin::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnMaxMin::result");
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSumAvg
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnSumAvg::PPFnSumAvg(variable_context *_cxt_,
+                 int _i_,
+                 PPOpIn _child_) : PPIterator(_cxt_), 
+                                   i(_i_),
+                                   child(_child_)
+{
+}
+
+PPFnSumAvg::PPFnSumAvg(variable_context *_cxt_,
+                 int _i_,
+                 PPOpIn _child_,
+                 PPOpIn _zero_) : PPIterator(_cxt_), 
+                                  i(_i_),
+                                  child(_child_),
+                                  zero(_zero_)
+{
+}
+
+PPFnSumAvg::~PPFnSumAvg()
+{
+    delete child.op;
+    child.op = NULL;
+    if (zero.op)
+    {
+        delete zero.op;
+        zero.op = NULL;
+    }
+}
+
+void PPFnSumAvg::open ()
+{
+    child.op->open();
+    if (zero.op)
+        zero.op->open();
+
+    first_time = true;
+}
+
+void PPFnSumAvg::reopen ()
+{
+    child.op->reopen();
+    if (zero.op)
+        zero.op->reopen();
+
+    first_time = true;
+}         
+
+void PPFnSumAvg::close ()
+{
+    child.op->close();
+    if (zero.op)
+        zero.op->close();
+
+    first_time = true;
+}
+
+void PPFnSumAvg::next(tuple &t)
+{
+    if (first_time) // the same as 'first_time'
+    {
+        first_time = false;
+        tuple_cell res;
+        __int64 n = 0;
+
+        while (true)
+        {
+            child.op->next(t);
+            if (t.is_eos()) 
+                break;
+
+            ++n;
+
+            tuple_cell tca = atomize(child.get(t));
+            xmlscm_type type = tca.get_atomic_type();
+
+            if (type == xs_untypedAtomic)
+            {
+                tca = cast(tca, xs_double);
+                type = xs_double;
+            }
+
+            if (is_numeric_type(type) || type == xs_yearMonthDuration || type == xs_dayTimeDuration)
+                ;
+            else
+                throw USER_EXCEPTION2(FORG0006, "Error in evaluation of fn:sum()");
+
+            if (res.is_eos())
+                res = tca;
+            else
+            {
+                try {
+                    res = op_add(tca, res);
+                } catch (SednaUserException &e) {
+                    throw USER_EXCEPTION2(FORG0006, "Error in evaluation of fn:sum()");
+                }
+            }
+        }
+
+        if (res.is_eos())
+        {
+            if (zero.op)
+            {
+                zero.op->next(t);
+                if (!t.is_eos()) 
+                {
+                    tuple_cell z = atomize(zero.get(t));
+                    zero.op->next(t);
+                    if (!t.is_eos()) 
+                        throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:sum(). Argument contains more than one item");
+
+                    t.copy(z);
+                } else first_time = true;
+            }
+            else 
+            {
+                if (i) t.set_eos();
+                else t.copy(tuple_cell::atomic((__int64)0));
+            }
+        }
+        else
+        {
+            if (i) res = op_div(res, tuple_cell::atomic(n));
+            t.copy(res);
+        }
+    }
+    else
+    {
+        t.set_eos();
+        first_time = true;
+    }
+}
+
+PPIterator* PPFnSumAvg::copy(variable_context *_cxt_)
+{
+    PPFnSumAvg *res = new PPFnSumAvg(_cxt_, i, child, zero);
+    res->child.op = child.op->copy(_cxt_);
+    if (zero.op)
+        res->zero.op = zero.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnSumAvg::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnSumAvg::result");
+}

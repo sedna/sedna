@@ -4,7 +4,7 @@
 
 PP = ../../..
 
-VPATH = base base/decNumber fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
+VPATH = base base/decNumber base/lip fo por2qep root xqops $(PP)/kernel/tr $(PP)/kernel/tr/log
 
 
 include $(PP)/Makefile.include
@@ -20,6 +20,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        bit_set$(OBJ_EXT)				\
                        merge$(OBJ_EXT)					\
                        xs_helper$(OBJ_EXT)				\
+                       xs_fp_converter$(OBJ_EXT)		\
                        xptrChanneledMerge$(OBJ_EXT)		\
                        PPStaticContext$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
@@ -36,6 +37,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        decimal64$(OBJ_EXT)				\
                        decimal128$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
+                       lip$(OBJ_EXT)					\
                        PPUriFuncs$(OBJ_EXT)             \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\
