@@ -15,9 +15,13 @@
 #include "tr/idx/indexes.h"
 #include "tr/executor/base/xs_uri.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "tr/ft/ft_index_data.h"
-#include "tr/updates/updates.h"
+#include "ft_index_data.h"
+#include "updates.h"
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+#include "triggers.h"
+#endif
+
 using namespace std;
 pers_sset<sn_metadata_cell,unsigned short> *metadata;
 USemaphore metadata_sem;//SEMAPHOR!!!
@@ -89,6 +93,15 @@ void delete_document(const char *document_name)
 			ftsci=((doc_schema_node*)snode)->sc_ft_idx;
 		}
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+	    schema_trigger_cell* tcell=((doc_schema_node*)snode)->sc_triggers;
+		while (tcell!=NULL)
+		{
+			trigger_cell::delete_trigger(tcell->trigger->trigger_title);
+			tcell=((doc_schema_node*)snode)->sc_triggers;
+		}
+#endif
+    
 		xptr blk=snode->bblk;
 		if (blk!=XNULL)
 		{
@@ -187,6 +200,15 @@ void delete_collection(const char *collection_name)
 			ftsci=coll->sc_ft_idx;
 		}
 #endif
+#ifdef SE_ENABLE_FTSEARCH
+	    schema_trigger_cell* tcell=coll->sc_triggers;
+		while (tcell!=NULL)
+		{
+			trigger_cell::delete_trigger(tcell->trigger->trigger_title);
+			tcell=coll->sc_triggers;
+		}
+#endif
+    
 	//1. deleting documents from collection
 	bt_key key;
 	key.setnew(" ");

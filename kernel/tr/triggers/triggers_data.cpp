@@ -188,7 +188,7 @@ void trigger_cell::delete_trigger (const char *trigger_title)
 		trigger_cell* tc=trc->obj;
 		doc_schema_node* sm=(trc->obj)->schemaroot;
 		free_triggerdata_cell(trc);
-//		sm->delete_ft_index(ic);
+   		sm->delete_trigger(tc);
 		trigger_sem_up();
 		up_concurrent_micro_ops_number();
 	}

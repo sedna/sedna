@@ -177,7 +177,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var)
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
     
-    if ((old_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
+    if (old_var==XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
     CHECKP(old_var);
 
     //if the node is not element or attribute - return
