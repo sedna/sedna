@@ -6,6 +6,7 @@
 #ifndef __LIP_CLASS_H
 #define __LIP_CLASS_H
 
+#include "sedna.h"
 #include "lip.h"
 
 // LIP - Long Integer Package
@@ -30,7 +31,7 @@ public:
         x = 0;
         zintoz(Value, &x);
     }
-	lip(unsigned __int32 Value)
+	lip(__uint32 Value)
     {
         x = 0;
         zuintoz(Value, &x);
@@ -38,21 +39,21 @@ public:
 	lip(__int64 Value)
     {
         x = 0;
-		unsigned __int64 vv = 0;
-		bool s = false;
+        __uint64 vv = 0;
+        bool s = false;
         if (Value < 0)
         {
-            vv = (unsigned __int64)(-Value);
+            vv = (__uint64)(-Value);
             s = true;
         }
         else
         {
-            vv = (unsigned __int64)Value;
+            vv = (__uint64)Value;
             s = false;
         }        
         verylong upper = 0, lower = 0;
-        zuintoz((unsigned __int32)(vv >> 32), &upper);
-        zuintoz((unsigned __int32)(vv << 32 >> 32), &lower);
+        zuintoz((__uint32)(vv >> 32), &upper);
+        zuintoz((__uint32)(vv << 32 >> 32), &lower);
         zlshift(upper, 32, &upper);
         zor(upper, lower, &x);
         if (s) znegate(&x);
@@ -73,9 +74,9 @@ public:
     {
         return (__int32)ztoint(x);
     }
-	operator unsigned __int32() const 
+	operator __uint32() const 
     {
-        return (unsigned __int32)ztouint(x);
+        return (__uint32)ztouint(x);
     }
 
 // Unary Operators
@@ -94,14 +95,14 @@ public:
 
 	lip& operator --()		// Prefix decrement
     {
-        zsub(x, lip((long)1).x, &x);
+        zsub(x, lip((__int32)1).x, &x);
         return *this;
     }
 
 	lip operator --(int)	// Postfix decrement
     {
         lip res(*this);
-        zsub(x, lip((long)1).x, &x);
+        zsub(x, lip((__int32)1).x, &x);
         return res;
     }
 
