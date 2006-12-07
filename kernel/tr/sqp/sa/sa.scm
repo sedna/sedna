@@ -4143,6 +4143,225 @@
                             (var ("" "testlang"))
                             (const (type !xs!string) "-")))))))))))))
            sa:type-atomic))))
+      ((!fn!id)
+       (let ((second-arg
+              (if
+               ; Second argument not supplied explicitly
+               (null? (cdr (sa:op-args expr)))               
+               (let ((context-pair
+                      (sa:analyze-expr
+                       sa:context-item  ; adding context item as argument
+                       vars funcs ns-binding default-ns)))
+                 (and
+                  context-pair
+                  (car context-pair)))
+               (cadr (sa:op-args expr)))))
+         (and
+          second-arg
+          ; Rewriting the function call to fn:id and !fn!idref into logical
+          ; representation for the following XQuery expression:
+          ;  let $arg      as xs:string* := "arg1",
+          ;      $node     as node()     := <arg2/>,
+          ;      $patterns as xs:string* :=
+          ;        for $s in $arg
+          ;        return
+          ;         fn:concat(' ', fn:normalize-space($s), ' ')
+          ;  return
+          ;   $node/ancestor-or-self::node()[last()]/
+          ;    descendant-or-self::*[@*
+          ;     [self::xml:id or fn:ends-with(fn:lower-case(fn:local-name(.)), 'id')]
+          ;     [let $attr_value as xs:string := fn:concat(' ', fn:string(.), ' ')
+          ;      return
+          ;       some $s as xs:string in $patterns
+          ;       satisfies fn:contains($s, $attr_value)]]
+          (cons
+           `(let@
+                ,(car (sa:op-args expr))
+              (fun-def
+               (((zero-or-more !xs!string) (var ("" "arg"))))
+               (let@
+                   ,second-arg
+                 (fun-def
+                  (((one (node-test)) (var ("" "node"))))
+                  (let@
+                      (return
+                       (var ("" "arg"))
+                       (fun-def
+                        ((xs:anyType (var ("" "s"))))
+                        (!fn!concat
+                         (const (type !xs!string) " ")
+                         (!fn!normalize-space (var ("" "s")))
+                         (const (type !xs!string) " "))))
+                    (fun-def
+                     (((zero-or-more !xs!string) (var ("" "patterns"))))
+                     (ddo
+                      (return
+                       (ddo
+                        (return
+                         (var ("" "node"))
+                         (fun-def
+                          ((!xs!anyType (var ("" "$%v"))))
+                          (predicate
+                           (ancestor-or-self (var ("" "$%v")) (type (node-test)))
+                           (fun-def ((!xs!anyType (var ("" "$%v")))) (!fn!last))))))
+                       (fun-def
+                        ((!xs!anyType (var ("" "$%v"))))
+                        (predicate
+                         (descendant-or-self
+                          (var ("" "$%v"))
+                          (type
+                           (elem-test
+                            (ename
+                             (const (type !xs!QName) *)
+                             (type *)
+                             (const (type !xs!string) "non-nil")))))
+                         (fun-def
+                          ((!xs!anyType (var ("" "$%v"))))
+                          (ddo
+                           (return
+                            (var ("" "$%v"))
+                            (fun-def
+                             ((!xs!anyType (var ("" "$%v"))))
+                             (predicate
+                              (predicate
+                               (attr-axis
+                                (var ("" "$%v"))
+                                (type
+                                 (attr-test
+                                  (ename
+                                   (const (type !xs!QName) *)
+                                   (type *)
+                                   (const (type !xs!string) "non-nil")))))
+                               (fun-def
+                                ((!xs!anyType (var ("" "$%v"))))
+                                (or@
+                                 (ddo
+                                  (self
+                                   (var ("" "$%v"))
+                                   (type
+                                    (elem-test
+                                     (ename
+                                      (const (type !xs!QName) ("xml" "id"))
+                                      (type *)
+                                      (const (type !xs!string) "non-nil"))))))
+                                 (!fn!ends-with
+                                  (!fn!lower-case (!fn!local-name (var ("" "$%v"))))
+                                  (const (type !xs!string) "id")))))
+                              (fun-def
+                               ((!xs!anyType (var ("" "$%v"))))
+                               (let@
+                                   (!fn!concat
+                                    (const (type !xs!string) " ")
+                                    (!fn!string (var ("" "$%v")))
+                                    (const (type !xs!string) " "))
+                                 (fun-def
+                                  (((one !xs!string) (var ("" "attr_value"))))
+                                  (some
+                                   (var ("" "patterns"))
+                                   (fun-def
+                                    ((xs:anyType (var ("" "s"))))
+                                    (!fn!contains
+                                     (var ("" "s"))
+                                     (var ("" "attr_value")))))))))))))))))))))))
+           sa:type-nodes))))
+      ((!fn!idref)
+       (let ((second-arg
+              (if
+               ; Second argument not supplied explicitly
+               (null? (cdr (sa:op-args expr)))               
+               (let ((context-pair
+                      (sa:analyze-expr
+                       sa:context-item  ; adding context item as argument
+                       vars funcs ns-binding default-ns)))
+                 (and
+                  context-pair
+                  (car context-pair)))
+               (cadr (sa:op-args expr)))))
+         (and
+          second-arg
+          ; Rewriting the function call to fn:id and !fn!idref into logical
+          ; representation for the following XQuery expression:
+          ;  let $arg      as xs:string* := "arg1",
+          ;      $node     as node()     := <arg2/>,
+          ;      $patterns as xs:string* :=
+          ;        for $s in $arg
+          ;        return
+          ;         fn:concat(' ', fn:normalize-space($s), ' ')
+          ;  return
+          ;   $node/ancestor-or-self::node()[last()]//
+          ;    @*
+          ;     [fn:contains(fn:lower-case(fn:local-name(.)), 'idref')]
+          ;     [let $attr_value as xs:string := fn:concat(' ', fn:string(.), ' ')
+          ;      return
+          ;       some $s as xs:string in $patterns
+          ;       satisfies fn:contains($s, $attr_value)]
+          (cons
+           `(let@
+                ,(car (sa:op-args expr))
+              (fun-def
+               (((zero-or-more !xs!string) (var ("" "arg"))))
+               (let@
+                   ,second-arg
+                 (fun-def
+                  (((one (node-test)) (var ("" "node"))))
+                  (let@
+                      (return
+                       (var ("" "arg"))
+                       (fun-def
+                        ((xs:anyType (var ("" "s"))))
+                        (!fn!concat
+                         (const (type !xs!string) " ")
+                         (!fn!normalize-space (var ("" "s")))
+                         (const (type !xs!string) " "))))
+                    (fun-def
+                     (((zero-or-more !xs!string) (var ("" "patterns"))))
+                     (ddo
+                      (return
+                       (ddo
+                        (descendant-or-self
+                         (ddo
+                          (return
+                           (var ("" "node"))
+                           (fun-def
+                            ((!xs!anyType (var ("" "$%v"))))
+                            (predicate
+                             (ancestor-or-self (var ("" "$%v")) (type (node-test)))
+                             (fun-def ((!xs!anyType (var ("" "$%v")))) (!fn!last))))))
+                         (type (node-test))))
+                       (fun-def
+                        ((!xs!anyType (var ("" "$%v"))))
+                        (predicate
+                         (predicate
+                          (attr-axis
+                           (var ("" "$%v"))
+                           (type
+                            (attr-test
+                             (ename
+                              (const (type !xs!QName) *)
+                              (type *)
+                              (const (type !xs!string) "non-nil")))))
+                          (fun-def
+                           ((!xs!anyType (var ("" "$%v"))))
+                           (!fn!contains
+                            (!fn!lower-case (!fn!local-name (var ("" "$%v"))))
+                            (const (type !xs!string) "idref"))))
+                         (fun-def
+                          ((!xs!anyType (var ("" "$%v"))))
+                          (let@
+                              (!fn!concat
+                               (const (type !xs!string) " ")
+                               (!fn!string (var ("" "$%v")))
+                               (const (type !xs!string) " "))
+                            (fun-def
+                             (((one !xs!string) (var ("" "attr_value"))))
+                             (some
+                              (var ("" "patterns"))
+                              (fun-def
+                               ((xs:anyType (var ("" "s"))))
+                               (!fn!contains
+                                (var ("" "s"))
+                                (var ("" "attr_value"))))))))))))))))))
+           sa:type-nodes))))
       ((cast)
        ; Special check for xs:QName constructor function
        ; See "3.12.5 Constructor Functions" in XQuery specification
