@@ -4048,6 +4048,101 @@
                 (string-append (caddr collation) " in fn:contains")
                 "fn:contains"))))
         pair))
+      ((!fn!lang)
+       (let ((second-arg
+              (if
+               ; Second argument not supplied explicitly
+               (null? (cdr (sa:op-args expr)))               
+               (let ((context-pair
+                      (sa:analyze-expr
+                       sa:context-item  ; adding context item as argument
+                       vars funcs ns-binding default-ns)))
+                 (and
+                  context-pair
+                  (car context-pair)))
+               (cadr (sa:op-args expr)))))
+         (and
+          second-arg
+          ; Rewriting the function call to fn:lang into logical representation
+          ; for the following XQuery expression:
+          ;  let $testlang as xs:string? := fn:lower-case(fn:string("arg1")),
+          ;      $node     as node()     := <arg2/>,
+          ;      $attr     as node()?    := 
+          ;         $node/ancestor-or-self::*[@xml:lang][1]/@xml:lang
+          ;  return
+          ;   (fn:not(fn:empty($attr))
+          ;    and
+          ;    (let $lang_value as xs:string := fn:lower-case(fn:string($attr))
+          ;    return
+          ;     (($lang_value eq $testlang) or
+          ;      fn:starts-with(
+          ;         $lang_value,
+          ;         fn:concat($testlang, '-')
+          ;      ))
+          ;   ))
+          (cons
+           `(let@
+                (!fn!lower-case (!fn!string ,(car (sa:op-args expr))))
+              (fun-def
+               (((optional !xs!string) (var ("" "testlang"))))
+               (let@
+                   ,second-arg
+                 (fun-def
+                  (((one (node-test)) (var ("" "node"))))
+                  (let@
+                      (ddo
+                       (attr-axis
+                        (ddo
+                         (return
+                          (var ("" "node"))
+                          (fun-def
+                           ((!xs!anyType (var ("" "$%v"))))
+                           (predicate
+                            (predicate
+                             (ancestor-or-self
+                              (var ("" "$%v"))
+                              (type
+                               (elem-test
+                                (ename
+                                 (const (type !xs!QName) *)
+                                 (type *)
+                                 (const (type !xs!string) "non-nil")))))
+                             (fun-def
+                              ((!xs!anyType (var ("" "$%v"))))
+                              (ddo
+                               (attr-axis
+                                (var ("" "$%v"))
+                                (type
+                                 (attr-test
+                                  (ename
+                                   (const (type !xs!QName) ("xml" "lang"))
+                                   (type *)
+                                   (const (type !xs!string) "non-nil"))))))))
+                            (fun-def
+                             ((!xs!anyType (var ("" "$%v"))))
+                             (const (type !xs!integer) "1"))))))
+                        (type
+                         (attr-test
+                          (ename
+                           (const (type !xs!QName) ("xml" "lang"))
+                           (type *)
+                           (const (type !xs!string) "non-nil"))))))
+                    (fun-def
+                     (((optional (node-test)) (var ("" "attr"))))
+                     (and@
+                      (!fn!not (!fn!empty (var ("" "attr"))))
+                      (let@
+                          (!fn!lower-case (!fn!string (var ("" "attr"))))
+                        (fun-def
+                         (((one !xs!string) (var ("" "lang_value"))))
+                         (or@
+                          (eq@ (var ("" "lang_value")) (var ("" "testlang")))
+                          (!fn!starts-with
+                           (var ("" "lang_value"))
+                           (!fn!concat
+                            (var ("" "testlang"))
+                            (const (type !xs!string) "-")))))))))))))
+           sa:type-atomic))))
       ((cast)
        ; Special check for xs:QName constructor function
        ; See "3.12.5 Constructor Functions" in XQuery specification
