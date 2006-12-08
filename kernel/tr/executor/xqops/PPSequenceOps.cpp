@@ -478,6 +478,150 @@ bool PPFnDistinctValues::result(PPIterator* cur, variable_context *cxt, void*& r
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+/// PPFnIndexOf
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnIndexOf::PPFnIndexOf(variable_context *_cxt_,
+                         PPOpIn _seq_child_,
+                         PPOpIn _srch_child_) : PPIterator(_cxt_),
+                                                seq_child(_seq_child_),
+                                                srch_child(_srch_child_)
+{
+}
+
+PPFnIndexOf::PPFnIndexOf(variable_context *_cxt_,
+                         PPOpIn _seq_child_,
+                         PPOpIn _srch_child_,
+                         PPOpIn _collation_child_) : PPIterator(_cxt_),
+                                                     seq_child(_seq_child_),
+                                                     srch_child(_srch_child_),
+                                                     collation_child(_collation_child_)
+{
+}
+
+PPFnIndexOf::~PPFnIndexOf()
+{
+    delete seq_child.op;
+    seq_child.op = NULL;
+    delete srch_child.op;
+    srch_child.op = NULL;
+    if (collation_child.op)
+    {
+        delete collation_child.op;
+        collation_child.op = NULL;
+    }
+}
+
+void PPFnIndexOf::open  ()
+{
+    seq_child.op->open();
+    srch_child.op->open();
+    if (collation_child.op)
+        collation_child.op->open();
+    handler = NULL;
+    pos = 0;
+}
+
+void PPFnIndexOf::reopen()
+{
+    seq_child.op->reopen();
+    srch_child.op->reopen();
+    if (collation_child.op)
+        collation_child.op->reopen();
+    handler = NULL;
+    pos = 0; 
+}
+
+void PPFnIndexOf::close ()
+{
+    seq_child.op->close();
+    srch_child.op->close();
+    if (collation_child.op)
+        collation_child.op->close();
+    handler = NULL;
+}
+
+void PPFnIndexOf::next(tuple &t)
+{
+    if (!handler) // the same as 'first_time'
+    {
+        handler = charset_handler->get_unicode_codepoint_collation();
+
+        if (collation_child.op)
+        {
+            collation_child.op->next(t);
+            if(t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument. Argument contains zero items in fn:index-of()");
+
+            tuple_cell col = atomize(collation_child.get(t));
+            if (!is_string_type(col.get_atomic_type())) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:index-of() (xs_string/derived/promotable is expected)");
+
+            collation_child.op->next(t);
+            if (!t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:index-of(). Argument contains more than one item");
+            
+            col = tuple_cell::make_sure_light_atomic(col);
+            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+        }
+
+        srch_child.op->next(t);
+        if(t.is_eos()) 
+            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:index-of()");
+
+        search_param = atomize(srch_child.get(t));
+
+        srch_child.op->next(t);
+        if (!t.is_eos()) 
+            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:index-of(). Argument contains more than one item");
+    }
+
+    while(true)
+    {
+        seq_child.op->next(t);
+        pos++;
+        
+        if (t.is_eos())
+        {
+            handler = NULL;
+            pos = 0;
+            return;
+        }
+
+        tuple_cell tc = atomize(seq_child.get(t));
+
+        try 
+        {
+            tc = value_comp_eq(tc, search_param, handler);
+            if (tc.get_xs_boolean())  break; 
+        } 
+        catch (SednaUserException &e) { /* continue cycle */ }
+    }
+
+    t.copy(tuple_cell::atomic(pos));
+}
+
+PPIterator* PPFnIndexOf::copy(variable_context *_cxt_)
+{
+    PPFnIndexOf *res = new PPFnIndexOf(_cxt_, seq_child, srch_child, collation_child);
+    res->seq_child.op = seq_child.op->copy(_cxt_);
+    res->srch_child.op = srch_child.op->copy(_cxt_);
+
+    if (collation_child.op)
+        res->collation_child.op = collation_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnIndexOf::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnIndexOf::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnReverse
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
