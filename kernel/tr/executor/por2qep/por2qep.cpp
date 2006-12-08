@@ -2835,14 +2835,20 @@ fn_dt_funcs_correct_type:
     }
 	else if (op == "PPFnDeepEqual")
     {
-        if (   lst->size() != 3
+        if (   lst->size()<3
+			||lst->size()>3
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "107");
-
+		if (lst->size()==3)
 		opit = new PPFnDeepEqual(cxt,
                                  make_pp_op(cxt, lst->at(1).internal.list),
                                  make_pp_op(cxt, lst->at(2).internal.list));
+		else
+			opit = new PPFnDeepEqual(cxt,
+                                 make_pp_op(cxt, lst->at(1).internal.list),
+                                 make_pp_op(cxt, lst->at(2).internal.list),
+								 make_pp_op(cxt, lst->at(3).internal.list));
     }
 	else if (op == "PPFnQName")
     {

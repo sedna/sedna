@@ -11,12 +11,21 @@
 #include "casting_operations.h"
 #include "dm_accessors.h"
 #include "node_utils.h"
+#include "PPUtils.h"
 
 PPFnDeepEqual::PPFnDeepEqual(variable_context *_cxt_,
                    PPOpIn _child1_,
                    PPOpIn _child2_) : PPIterator(_cxt_),
                                       child1(_child1_),
                                       child2(_child2_)
+{
+}
+PPFnDeepEqual::PPFnDeepEqual(variable_context *_cxt_,
+                   PPOpIn _child1_,
+                   PPOpIn _child2_,PPOpIn _collation_) : PPIterator(_cxt_),
+                                      child1(_child1_),
+                                      child2(_child2_),
+									  collation(_collation_)
 {
 }
 bool PPFnDeepEqual::are_nodes_deep_equal(xptr& node1,xptr& node2)
@@ -94,7 +103,7 @@ bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
 	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
 	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
-	if (value_comp_eq(n1,n2).get_xs_boolean())	
+	if (value_comp_eq(n1,n2,handler).get_xs_boolean())	
 		return true;
 	else
 		return false;
@@ -127,6 +136,7 @@ void PPFnDeepEqual::open  ()
 
     eos_reached1 = true;
 	eos_reached2 = true;
+	handler = NULL;
 }
 
 void PPFnDeepEqual::reopen()
@@ -136,19 +146,39 @@ void PPFnDeepEqual::reopen()
 
     eos_reached1 = true;
 	eos_reached2 = true;
+	handler = NULL;
 }
 
 void PPFnDeepEqual::close ()
 {
     child1.op->close();
     child2.op->close();
+	handler = NULL;
 }
 
 void PPFnDeepEqual::next  (tuple &t)
 {
-    if (first_time)
+    if (!handler)
     {
-        first_time = false;
+        handler = charset_handler->get_unicode_codepoint_collation();
+		if (collation.op)
+        {
+            collation.op->next(t);
+            if(t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument." );
+
+            tuple_cell col = atomize(collation.get(t));
+            if (!is_string_type(col.get_atomic_type())) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument ");
+
+            collation.op->next(t);
+            if (!t.is_eos()) 
+                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument " );
+            
+            col = tuple_cell::make_sure_light_atomic(col);
+            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+        }
+
 		if (!eos_reached1) child1.op->reopen();
 		if (!eos_reached2) child2.op->reopen();
 		eos_reached2 = false;
@@ -159,22 +189,37 @@ void PPFnDeepEqual::next  (tuple &t)
 		child2.op->next(cont2);
 		while (!cont1.is_eos() && !cont2.is_eos())
 		{
-			if (cont1.cells[0].is_node() && cont2.cells[0].is_node() )
+			tuple_cell& tc1=cont1.cells[0];
+			tuple_cell& tc2=cont2.cells[0];
+			if (tc1.is_node() && tc2.is_node() )
 			{
-				xptr node1=cont1.cells[0].get_node();
-				xptr node2=cont2.cells[0].get_node();
+				xptr node1=tc1.get_node();
+				xptr node2=tc2.get_node();
 				if (!are_nodes_deep_equal(node1,node2))
 				{
 					t.copy(tuple_cell::atomic(false));
 					return;
 				}
 			}
-			else if (!cont1.cells[0].is_node() && !cont2.cells[0].is_node() )
+			else if (!tc1.is_node() && !tc2.is_node() )
 			{
-				if (!value_comp_eq(cont1.cells[0],cont2.cells[0]).get_xs_boolean())
+				if (((tc1.get_atomic_type()==xs_double && u_is_nan(tc1.get_xs_double()))||(tc1.get_atomic_type()==xs_float && u_is_nan(tc1.get_xs_float())))&&((tc2.get_atomic_type()==xs_double && u_is_nan(tc2.get_xs_double()))||(tc2.get_atomic_type()==xs_float && u_is_nan(tc2.get_xs_float()))))
+				{}
+				else
 				{
-					t.copy(tuple_cell::atomic(false));
-					return;
+					try
+					{
+						if (!value_comp_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
+						{
+							t.copy(tuple_cell::atomic(false));
+							return;
+						}
+					}
+					catch (SednaUserException &e)
+					{
+						t.copy(tuple_cell::atomic(false));
+						return;
+					}
 				}
 			}
 			else
@@ -203,7 +248,7 @@ void PPFnDeepEqual::next  (tuple &t)
     }
     else 
     {
-        first_time = true;
+        handler=NULL;
         t.set_eos();
     }
 }
@@ -221,4 +266,3 @@ bool PPFnDeepEqual::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDeepEqual::result");
 }
-
