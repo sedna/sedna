@@ -307,6 +307,14 @@ static inline int compare_doubles(double value1, double value2, orb_empty_status
     return (value2 > value1 ? 1 : -1);
 } 
 
+
+#define GET_DESERIALIZED_VALUES(pValue1, pValue2, type, offset) \
+    if(temp1 == NULL) CHECKP(v1); \
+    get_deserialized_value((pValue1), (char*)addr1+(offset), (type)); \
+    if(temp2 == NULL) CHECKP(v2); \
+    get_deserialized_value((pValue2), (char*)addr2+(offset), (type));
+
+
 //////////////////////////////////////////////////////////////
 /// v2 points to (j-1)-th element
 /// v1 points to (j)-th element
@@ -359,30 +367,21 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                 case xs_float                : 
                 {
                     float value1, value2;
-                    if(temp1 == NULL) CHECKP(v1);
-                    get_deserialized_value(&value1, (char*)addr1+offset, xs_float);
-                    if(temp2 == NULL) CHECKP(v2);
-                    get_deserialized_value(&value2, (char*)addr2+offset, xs_float);
+                    GET_DESERIALIZED_VALUES(&value1, &value2, xs_float, offset);
                     result = compare_doubles((double)value1, (double)value2, m.status) * order;
                     break;
                 }
                 case xs_double               : 
                 {
                     double value1, value2;
-                    if(temp1 == NULL) CHECKP(v1);
-                    get_deserialized_value(&value1, (char*)addr1+offset, xs_double);
-                    if(temp2 == NULL) CHECKP(v2);
-                    get_deserialized_value(&value2, (char*)addr2+offset, xs_double);
+                    GET_DESERIALIZED_VALUES(&value1, &value2, xs_double, offset);
                     result = compare_doubles(value1, value2, m.status) * order;
                     break;
                 }
                 case xs_decimal              : 
                 {
                     xs_decimal_t value1, value2;
-                    if(temp1 == NULL) CHECKP(v1);
-                    get_deserialized_value(&value1, (char*)addr1+offset, xs_decimal);
-                    if(temp2 == NULL) CHECKP(v2);
-                    get_deserialized_value(&value2, (char*)addr2+offset, xs_decimal);
+                    GET_DESERIALIZED_VALUES(&value1, &value2, xs_decimal, offset);
                     if (value2 == value1) result = 0;
                     else result = (value2 > value1 ? 1 : -1) * order;
                     break;
@@ -390,10 +389,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                 case xs_integer              : 
                 {
                     __int64 value1, value2;
-                    if(temp1 == NULL) CHECKP(v1);
-                    get_deserialized_value(&value1, (char*)addr1+offset, xs_integer);
-                    if(temp2 == NULL) CHECKP(v2);
-                    get_deserialized_value(&value2, (char*)addr2+offset, xs_integer);
+                    GET_DESERIALIZED_VALUES(&value1, &value2, xs_integer, offset);
                     if (value2 == value1) result = 0;
                     else result = (value2 > value1 ? 1 : -1) * order;
                     break;
@@ -401,10 +397,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                 case xs_boolean              : 
                 {
                     bool value1, value2;
-                    if(temp1 == NULL) CHECKP(v1);
-                    get_deserialized_value(&value1, (char*)addr1+offset, xs_boolean);
-                    if(temp2 == NULL) CHECKP(v2);
-                    get_deserialized_value(&value2, (char*)addr2+offset, xs_boolean);
+                    GET_DESERIALIZED_VALUES(&value1, &value2, xs_boolean, offset);
                     if(value2 && !value1) result = 1 * order;
                     if(value1 && !value2) result = -1 * order;
                     break;
@@ -433,17 +426,13 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     if (result == 0 && (!flag1 || !flag2))
                     {
-                        __int64 position1;
-                        __int64 position2;
-                        if(temp1 != NULL) CHECKP(v1);
-                        get_deserialized_value(&position1, addr1, xs_integer);
-                        if(temp2 != NULL) CHECKP(v2);
-                        get_deserialized_value(&position2, addr2, xs_integer);
-                        tuple t1(length);
-                        tuple t2(length);
-                        ud->sort->get(t1, position1);
-                        ud->sort->get(t2, position2);
-                        result = fn_compare(t2.cells[i], t1.cells[i])*order;
+                        __int64 position1, position2;
+                        GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
+                        tuple t(length);
+                        ud->sort->get(t, position1);
+                        tuple_cell tc = t.cells[i];
+                        ud->sort->get(t, position2);
+                        result = fn_compare(t.cells[i], tc)*order;
                     }
                     break;
                 }

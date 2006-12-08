@@ -130,6 +130,46 @@ public:
     virtual ~PPFnDistinctValues();
 };
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnIndexOf
+///////////////////////////////////////////////////////////////////////////////
+class PPFnIndexOf : public PPIterator
+{
+protected:
+    PPOpIn seq_child;
+    PPOpIn srch_child;
+    PPOpIn collation_child;
+
+    tuple_cell search_param;
+    
+    __int64 pos;
+
+    CollationHandler* handler;
+    
+
+    void children(PPOpIn &_seq_child_, PPOpIn &_srch_child_, PPOpIn &_collation_child_) 
+        { _seq_child_ = seq_child; _srch_child_ = srch_child; _collation_child_ = collation_child; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnIndexOf(variable_context *_cxt_,
+                PPOpIn _seq_child_,
+                PPOpIn _srch_child_);
+    PPFnIndexOf(variable_context *_cxt_,
+                PPOpIn _seq_child_,
+                PPOpIn _srch_child_,
+                PPOpIn _collation_child_);
+    virtual ~PPFnIndexOf();
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnReverse
