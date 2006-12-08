@@ -755,7 +755,7 @@
      ,sa:multiple-any
      ,sa:type-any !fn!exactly-one)
     ; *** 15.3 Equals, Union, Intersection and Except
-    (,sa:fn-ns "deep-equal" 2 2
+    (,sa:fn-ns "deep-equal" 2 3
       ,sa:multiple-any
       ,sa:type-atomic !fn!deep-equal)
     ; *** 15.4 Aggregate Functions
