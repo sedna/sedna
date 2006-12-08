@@ -12,10 +12,14 @@
 
 class PPFnDeepEqual : public PPIterator
 {
+	private:
+    
+    CollationHandler* handler;
 protected:
     // given parameters
     PPOpIn child1;
     PPOpIn child2;
+	PPOpIn collation;
 	bool first_time;
     bool eos_reached1;
 	bool eos_reached2;
@@ -34,15 +38,19 @@ public:
     PPFnDeepEqual(variable_context *_cxt_,
              PPOpIn _child1_,
              PPOpIn _child2_);
+	PPFnDeepEqual(variable_context *_cxt_,
+             PPOpIn _child1_,
+             PPOpIn _child2_,
+			 PPOpIn _collation_);
     virtual ~PPFnDeepEqual();
 
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
-	static bool are_nodes_deep_equal(xptr& node1,xptr& node2);
-static bool are_elements_deep_equal(xptr& node1,xptr& node2);
-static bool are_documents_deep_equal(xptr& node1,xptr& node2);
-static bool are_attributes_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2);
-static bool are_text_nodes_equal(xptr& node1,xptr& node2);
-static bool are_pi_equal(xptr& node1,xptr& node2);
+	bool are_nodes_deep_equal(xptr& node1,xptr& node2);
+ bool are_elements_deep_equal(xptr& node1,xptr& node2);
+ bool are_documents_deep_equal(xptr& node1,xptr& node2);
+bool are_attributes_equal(xptr& node1,xptr& node2,schema_node* scm1,schema_node* scm2);
+ bool are_text_nodes_equal(xptr& node1,xptr& node2);
+ bool are_pi_equal(xptr& node1,xptr& node2);
 };
 
 
