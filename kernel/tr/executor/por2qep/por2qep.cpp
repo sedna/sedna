@@ -2078,6 +2078,36 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
         opit = new PPTest(cxt, 
                           make_pp_op(cxt, lst->at(1).internal.list));
     }
+	else if (op=="PPFnTokenize")
+	{
+		if (   lst->size() < 3
+            || lst->size() > 5
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "78");
+
+        __int16 pm = pm_tokenize;
+
+
+        if (lst->size() == 3)
+        {
+            opit = new PPPatMatch(cxt,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list),
+		                          pm);
+        }
+        else if (lst->size() == 4)
+        {
+            opit = new PPPatMatch(cxt,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list),
+                                  make_pp_op(cxt, lst->at(3).internal.list),
+		                          pm);
+        }
+       
+        else throw USER_EXCEPTION2(SE1004, "80");
+
+	}
     else if (op == "PPPatMatch")
     {
         if (   lst->size() < 4

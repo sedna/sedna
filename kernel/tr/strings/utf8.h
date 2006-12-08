@@ -40,6 +40,7 @@ public:
 	//all tuple cells must be strings
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4);
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3);
+	virtual TokenizerResult* tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3);
 	virtual bool matches (const tuple_cell *t1, const char *regex);
 	virtual bool matches (const char *t1, const char *regex);
 };
