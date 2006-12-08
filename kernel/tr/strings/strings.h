@@ -304,6 +304,13 @@ public:
 };
 
 class CollationHandler;
+class TokenizerResult
+{
+public:
+	virtual void get_next_result(tuple& t)=0;
+};
+
+
 class CharsetHandler
 {
 protected:
@@ -322,6 +329,7 @@ public:
 
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4) = 0;
 	virtual void matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
+	virtual TokenizerResult* tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3) = 0;
 	virtual bool matches (const tuple_cell *tc, const char *regex) = 0;
 	virtual bool matches (const char *tc, const char *regex) = 0;
 
@@ -361,6 +369,5 @@ inline void print_tuple_cell(se_ostream& crmout,const tuple_cell& tc)
 {
     feed_tuple_cell(writextext_cb, &crmout, tc);
 }
-
 
 #endif //_STRINGS_H

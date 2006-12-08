@@ -15,8 +15,11 @@ typedef __int16 patmatch_type;
 // Abstract base types
 #define pm_match 0
 #define pm_replace 1
+#define pm_tokenize 2
 class PPPatMatch : public PPIterator
 {
+private:
+	TokenizerResult* tknzr;
 protected:
     typedef void (PPPatMatch::*t_comp_fun)(tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 
@@ -32,6 +35,7 @@ protected:
     t_comp_fun comp_fun;
 	void cf_choice(void);
 	void matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
+	void tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 	void replace (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4);
 	void children(PPOpIn &_seq1_,PPOpIn &_seq2_,PPOpIn &_seq3_,PPOpIn &_seq4_) 
 	{

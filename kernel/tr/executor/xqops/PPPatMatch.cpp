@@ -16,6 +16,11 @@ switch (pmt)
 	{
 	case pm_match: comp_fun = &PPPatMatch::matches;break;
 	case pm_replace: comp_fun = &PPPatMatch::replace;break;
+	case pm_tokenize: 
+		{
+			comp_fun = &PPPatMatch::tokenize;break;
+			tknzr=NULL;
+		}
 		break;
 	}
 }
@@ -67,6 +72,7 @@ void PPPatMatch::open  ()
 			seq4.op->open();
 		}
 	}
+	if (tknzr!=NULL) delete tknzr;
     first_time = true;
  }
 void PPPatMatch::reopen  ()
@@ -81,6 +87,7 @@ void PPPatMatch::reopen  ()
 			seq4.op->reopen();
 		}
 	}
+	if (tknzr!=NULL) delete tknzr;
     first_time = true;
  }
 void PPPatMatch::close  ()
@@ -95,6 +102,7 @@ void PPPatMatch::close  ()
 			seq4.op->close();
 		}
 	}
+	if (tknzr!=NULL) delete tknzr;
 }
 bool PPPatMatch::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
@@ -221,14 +229,57 @@ void PPPatMatch::next  (tuple &t)
 		}
 		//apply function
 		(this->*comp_fun)(t,&t1c,&t2c,&t3c,&t4c);
+		if (tknzr!=NULL)
+		{
+			tknzr->get_next_result(t);
+			if (t.is_eos())
+			{
+				delete tknzr;
+				first_time = true;
+			}
+		}
 	}
     else 
     {
-        first_time = true;
-        t.set_eos();
+		if (tknzr!=NULL)
+		{
+			tknzr->get_next_result(t);
+			if (t.is_eos())
+			{
+				delete tknzr;
+				first_time = true;
+			}
+
+		}
+		else
+		{
+			first_time = true;
+			t.set_eos();
+		}
     }
 }
+void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
+{
+	//Preliminary work
+	//1.if t1 is empty sequence
+	
+	if (t1->is_eos())
+	{
+		t1 = &EMPTY_STRING_TC;
+	}
+	//2. light atomization of second parameter
+	if (t2->is_eos())
+		throw USER_EXCEPTION(XPTY0004);
 
+	tuple_cell tc=tuple_cell::make_sure_light_atomic(*t2);
+	tuple_cell tflags = tuple_cell::eos();
+
+	if (t3 != NULL && !t3->is_eos())
+		tflags = tuple_cell::make_sure_light_atomic(*t3);
+	
+	//3. tokenizer
+	tknzr=charset_handler->tokenize( t1, &tc, &tflags);
+}
 void PPPatMatch::matches (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)
 {
 	//Preliminary work
