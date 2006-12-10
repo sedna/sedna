@@ -20,6 +20,7 @@ public:
 
     bool starts_with(const tuple_cell *tc, const tuple_cell* prefix);
     bool ends_with(const tuple_cell *tc, const tuple_cell* suffix);
+    int contains(const tuple_cell *src, const tuple_cell  *subs);
 };
 class CharsetHandler_utf8 : public CharsetHandler
 {
@@ -34,7 +35,7 @@ public:
 	virtual tuple_cell toupper(const tuple_cell *tc);
 	virtual tuple_cell tolower(const tuple_cell *tc);
     virtual tuple_cell substring(const tuple_cell *tc, __int64 start_pos, __int64 length);
-	virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc);
+    virtual unicode_cp_iterator *get_unicode_cp_iterator(const tuple_cell *tc);
 
 	//all tuple cells must be strings
 	virtual void replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tuple_cell *t3, tuple_cell *t4);

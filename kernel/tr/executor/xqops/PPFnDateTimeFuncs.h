@@ -53,6 +53,7 @@ protected:
     PPOpIn child;
     bool first_time;
     int dateTimeFunc;
+    xmlscm_type expected_type;
 
     void children(PPOpIn &_child_) { _child_ = child; }
 
@@ -95,7 +96,9 @@ public:
     static bool result(PPIterator* cur, variable_context *cxt, void*& r);
 
     PPFnDateTimeFunc(variable_context *_cxt_, 
-                     PPOpIn _child_, int dateTimeFunc);
+                     PPOpIn _child_, 
+                     int dateTimeFunc,
+                     xmlscm_type _expected_type_);
     virtual ~PPFnDateTimeFunc();
 };
 

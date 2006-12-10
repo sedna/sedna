@@ -341,9 +341,13 @@ public:
 	virtual int compare(const char *a, const char *b) = 0;
 	
 	// returns 'true' <-> given tuple_cell starts with 'prefix'
-	virtual bool starts_with(const tuple_cell *tc, const tuple_cell* prefix) = 0;
+	virtual bool starts_with(const tuple_cell *tc, const tuple_cell *prefix) = 0;
 	// returns 'true' <-> given tuple_cell ends with 'suffix'
-	virtual bool ends_with(const tuple_cell *tc, const tuple_cell* suffix) = 0;
+	virtual bool ends_with(const tuple_cell *tc, const tuple_cell *suffix) = 0;
+
+	// returns position of the first occurrence of 'subs' in 'src'
+	// '-1' means that string does not contain given substring.
+    virtual int contains(const tuple_cell *src, const tuple_cell  *subs) = 0;
 };
 
 extern CharsetHandler	*charset_handler;

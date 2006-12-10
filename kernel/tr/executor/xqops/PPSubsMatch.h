@@ -49,8 +49,8 @@ public:
 	////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR Substring Matching
     ////////////////////////////////////////////////////////////////////////////
-	template <class a, class b> static  void contains (a& it1,b& it2,int l1,int l2,tuple &t);
-	 template <class a, class b> static int contains (a& it1,b& it2,int l1,int l2);
+	template <class a, class b> static  void contains (a& it1, b& it2,int l1,int l2,tuple &t);
+	template <class a, class b> static  int  contains (a& it1, b& it2,int l1,int l2);
 	static PPSubsMatch* PPFnContains(variable_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_)
 	{

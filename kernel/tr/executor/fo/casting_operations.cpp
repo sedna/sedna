@@ -75,7 +75,7 @@ inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
     if(!nfo.normalized)
     {
         stmt_str_buf result;
-        remove_string_normalization(&c, result);
+        collapse_string_normalization(&c, result);
         res = result.get_tuple_cell();
     }
     else 

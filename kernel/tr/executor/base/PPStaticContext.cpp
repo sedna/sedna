@@ -269,7 +269,7 @@ void static_context::set_base_uri(const char* _base_uri_)
     if(!nfo.normalized) 
     {
         stmt_str_buf result;
-        remove_string_normalization(_base_uri_, result);
+        collapse_string_normalization(_base_uri_, result);
         tuple_cell tc = result.get_tuple_cell();
         tc = tuple_cell::make_sure_light_atomic(tc);
         base_uri = new char[tc.get_strlen() + 1];
@@ -305,7 +305,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     if(!nfo.normalized) 
     {
         stmt_str_buf result;
-        remove_string_normalization(_default_collation_uri_, result);
+        collapse_string_normalization(_default_collation_uri_, result);
         tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
         normalized_value = tc.get_str_mem();
     }
@@ -362,7 +362,7 @@ CollationHandler* static_context::get_collation(const char *uri)
     if(!nfo.normalized) 
     {
         stmt_str_buf result;
-        remove_string_normalization(normalized_value, result);
+        collapse_string_normalization(normalized_value, result);
         tc = tuple_cell::make_sure_light_atomic(result.get_tuple_cell());
         normalized_value = tc.get_str_mem();
     }

@@ -70,9 +70,9 @@ public:
     bool is_fragment_defined()  const { return fragment_defined;  }
     
     ////////////////////////////////////////////////////////////////////
-    /// Check constraints for URI type as described in RFC 3986.
-    /// If URI is valid 'nfo' contains information described this URI,
-    /// else 'nfo' is unchanged.
+    /// Check constraints for URI type as described in RFC 3986 and
+    /// in XML Schema Part 2. If URI is valid 'nfo' will contain 
+    /// information described this URI, else 'nfo' is unchanged.
     ////////////////////////////////////////////////////////////////////
     static void check_constraints(const tuple_cell *in_tc, bool *valid, Information *nfo);
     static void check_constraints(const char* s, bool *valid, Information *nfo);

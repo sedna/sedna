@@ -283,6 +283,55 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubstringBefore and PPFnSubstringAfter
+///////////////////////////////////////////////////////////////////////////////
+class PPFnSubsBeforeAfter : public PPIterator
+{
+public:
+    enum FunctionType
+    {
+        FN_BEFORE,
+        FN_AFTER
+    };
+
+protected:
+    PPOpIn src_child;
+    PPOpIn srch_child;
+    PPOpIn collation_child;
+
+    FunctionType type;
+
+    CollationHandler* handler;
+
+    void children(PPOpIn &_src_child_, PPOpIn &_srch_child_, PPOpIn &_collation_child_) 
+        { _src_child_ = src_child; _srch_child_ = srch_child; _collation_child_ = collation_child; }
+
+    void error(const char* msg);
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(variable_context *_cxt_);
+    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+
+    PPFnSubsBeforeAfter(variable_context *_cxt_,
+                PPOpIn _src_child_,
+                PPOpIn _srch_child_,
+                FunctionType _type_);
+    PPFnSubsBeforeAfter(variable_context *_cxt_,
+                PPOpIn _src_child_,
+                PPOpIn _srch_child_,
+                PPOpIn _collation_child_,
+                FunctionType _type_);
+    virtual ~PPFnSubsBeforeAfter();
+};
+
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnSubstring
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnSubstring : public PPIterator
