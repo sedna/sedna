@@ -697,6 +697,181 @@ bool PPFnTranslate::result(PPIterator* cur, variable_context *cxt, void*& r)
 	throw USER_EXCEPTION2(SE1002, "PPFnTranslate::result");
 }
 
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnSubsBeforeAfter
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(variable_context *_cxt_,
+                                         PPOpIn _src_child_,
+                                         PPOpIn _srch_child_,
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_),
+                                                                src_child(_src_child_),
+                                                                srch_child(_srch_child_),
+                                                                type(_type_)
+{
+}
+
+PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(variable_context *_cxt_,
+                                         PPOpIn _src_child_,
+                                         PPOpIn _srch_child_,
+                                         PPOpIn _collation_child_,
+                                         PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_),
+                                                                src_child(_src_child_),
+                                                                srch_child(_srch_child_),
+                                                                collation_child(_collation_child_),
+                                                                type(_type_)
+{
+}
+
+PPFnSubsBeforeAfter::~PPFnSubsBeforeAfter()
+{
+    delete src_child.op;
+    src_child.op = NULL;
+    delete srch_child.op;
+    srch_child.op = NULL;
+    if (collation_child.op)
+    {
+        delete collation_child.op;
+        collation_child.op = NULL;
+    }
+}
+
+void PPFnSubsBeforeAfter::open  ()
+{
+    src_child.op->open();
+    srch_child.op->open();
+    if (collation_child.op)
+        collation_child.op->open();
+    handler = NULL;
+}
+
+void PPFnSubsBeforeAfter::reopen()
+{
+    src_child.op->reopen();
+    srch_child.op->reopen();
+    if (collation_child.op)
+        collation_child.op->reopen();
+    handler = NULL;
+}
+
+void PPFnSubsBeforeAfter::close ()
+{
+    src_child.op->close();
+    srch_child.op->close();
+    if (collation_child.op)
+        collation_child.op->close();
+    handler = NULL;
+}
+
+void PPFnSubsBeforeAfter::next(tuple &t)
+{
+    if (handler) // the same as '!first_time'
+    {
+        handler = NULL;
+        t.set_eos();
+        return;
+    }    
+        
+    handler = charset_handler->get_unicode_codepoint_collation();
+
+    if (collation_child.op)
+    {
+        collation_child.op->next(t);
+        if(t.is_eos()) error("Invalid arity of the third argument. Argument contains zero items");
+    
+        tuple_cell col = atomize(collation_child.get(t));
+        if (!is_string_type(col.get_atomic_type())) 
+            error("Invalid type of the third argument (xs_string/derived/promotable is expected)");
+
+        collation_child.op->next(t);
+        if (!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item");
+            
+        col = tuple_cell::make_sure_light_atomic(col);
+        handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+    }
+
+    src_child.op->next(t);
+    tuple_cell src;
+    __int64 src_len = 0;
+
+    if (!t.is_eos())
+    { 
+        src = atomize(src_child.get(t));
+              
+        if(!is_string_type(src.get_atomic_type())) error("Invalid type of the first argument (xs_string/derived/promotable is expected) ");
+    
+        src_child.op->next(t);                                                                               
+        if (!t.is_eos()) error("Invalid arity of the first argument. Argument contains more than one item ");
+        src_len = src.get_strlen();
+    }
+
+    srch_child.op->next(t);
+    tuple_cell srch_str;
+    __int64 srch_str_len = 0;
+
+    if (!t.is_eos())
+    { 
+        srch_str = atomize(srch_child.get(t));
+              
+        if(!is_string_type(srch_str.get_atomic_type())) error("Invalid type of the second argument (xs_string/derived/promotable is expected) ");
+    
+        srch_child.op->next(t);                                                                               
+        if (!t.is_eos()) error("Invalid arity of the second argument. Argument contains more than one item ");
+        srch_str_len = srch_str.get_strlen();
+    }
+    
+    if(src_len == 0 || srch_str_len >= src_len) 
+    {
+        t.copy(EMPTY_STRING_TC);
+    }
+    else if(srch_str_len == 0)
+    {
+        type == PPFnSubsBeforeAfter::FN_BEFORE ? t.copy(EMPTY_STRING_TC) : t.copy(src);    
+    }
+    else
+    {
+        __int64 pos = handler->contains(&src, &srch_str);
+        if(pos >= 0) 
+        {
+            type == PPFnSubsBeforeAfter::FN_BEFORE ? 
+                    t.copy(charset_handler->substring(&src, 0, pos)) :
+                    t.copy(charset_handler->substring(&src, pos + srch_str_len, _I64_MAX));
+        }
+        else
+            t.copy(EMPTY_STRING_TC);
+    }
+}
+
+void PPFnSubsBeforeAfter::error(const char* msg)
+{
+    if(type == PPFnSubsBeforeAfter::FN_BEFORE)
+        throw USER_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:substring-before().").c_str());
+    else if(type == PPFnSubsBeforeAfter::FN_AFTER)
+        throw USER_EXCEPTION2(XPTY0004, (std::string(msg) + " in fn:substring-after().").c_str());
+    else 
+        throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnSubsBeforeAfter::error().");
+}
+
+
+PPIterator* PPFnSubsBeforeAfter::copy(variable_context *_cxt_)
+{
+    PPFnSubsBeforeAfter *res = new PPFnSubsBeforeAfter(_cxt_, src_child, srch_child, collation_child, type);
+    res->src_child.op = src_child.op->copy(_cxt_);
+    res->srch_child.op = srch_child.op->copy(_cxt_);
+
+    if (collation_child.op)
+        res->collation_child.op = collation_child.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnSubsBeforeAfter::result(PPIterator* cur, variable_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPFnSubsBeforeAfter::result");
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnChangeCase

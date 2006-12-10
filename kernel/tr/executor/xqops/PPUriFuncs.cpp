@@ -284,12 +284,6 @@ void PPFnResolveUri::next  (tuple &t)
         Uri::Information nfo;
         Uri::check_constraints(&relative_tc, &valid, &nfo);
         if(!valid) throw USER_EXCEPTION2(FORG0002, "First argument of the fn:resolve-uri is not valid URI.");
-        if(!nfo.normalized) 
-        {
-            stmt_str_buf result;
-            remove_string_normalization(&relative_tc, result);
-            relative_tc = result.get_tuple_cell();
-        }
         relative_tc = tuple_cell::make_sure_light_atomic(relative_tc);
         
         if(is_base_static)
@@ -311,17 +305,11 @@ void PPFnResolveUri::next  (tuple &t)
 
             Uri::check_constraints(&base_tc, &valid, &nfo);
             if(!valid) throw USER_EXCEPTION2(FORG0002, "Second argument of the fn:resolve-uri is not valid URI.");
-            if(!nfo.normalized) 
-            {
-                stmt_str_buf result;
-                remove_string_normalization(&base_tc, result);
-                base_tc = result.get_tuple_cell();
-            }
 
             base.op->next(t);
             if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:resolve-uri. Second argument contains more than one item.");
             need_reopen = false;
-            base_tc = tuple_cell::make_sure_light_atomic(base_tc);
+            base_tc  = tuple_cell::make_sure_light_atomic(base_tc);
             base_uri = base_tc.get_str_mem();
         }
 

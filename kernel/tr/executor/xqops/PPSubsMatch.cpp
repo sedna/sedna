@@ -44,7 +44,7 @@ inline void*  create_iterator(tuple_cell& t, int&l)
 		}
 	
 }
-template<class a, class b> int memcmp(a& it1,b& it2,int len)
+template<class a, class b> int memcmp(a& it1, b& it2,int len)
 {
 	a i1 = it1;
 	b i2 = it2;
@@ -54,7 +54,7 @@ template<class a, class b> int memcmp(a& it1,b& it2,int len)
 	}
 	return 0;
 }
-template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int l2,tuple &t)
+template <class a, class b> void PPSubsMatch::contains(a& it1, b& it2,int l1,int l2,tuple &t)
 {
 	int res=PPSubsMatch::contains<a,b>(it1,it2,l1,l2) ;
 	if (res<0)
@@ -68,7 +68,8 @@ template <class a, class b> void PPSubsMatch::contains(a& it1,b& it2,int l1,int 
 		return;
 	}
 }
-template <class a, class b> int PPSubsMatch::contains(a& it1,b& it2,int l1,int l2)
+
+template <class a, class b> int PPSubsMatch::contains(a& it1, b& it2,int l1,int l2)
 {
 	//2 nd argument empty
 	if (l2==0)
@@ -114,7 +115,8 @@ template <class a, class b> int PPSubsMatch::contains(a& it1,b& it2,int l1,int l
    
    j = 0;
    i1 = it1;
-   a i3=it1+l2;
+   it1 += l2;
+   a i3=it1;
    while (j < l1-l2) 
    {
       if (hx == hy && memcmp<b,a>(it2, i1, l2) == 0)
@@ -167,6 +169,17 @@ template <class a, class b> int PPSubsMatch::contains(a& it1,b& it2,int l1,int l
 	return -1;
 	//second case (unrealized)- really big strings
 }
+
+template int PPSubsMatch::contains<char_iterator, char_iterator>     (char_iterator&, char_iterator&, int, int);
+template int PPSubsMatch::contains<char_iterator, pstr_long_iterator>(char_iterator&, pstr_long_iterator&, int, int);
+template int PPSubsMatch::contains<char_iterator, estr_iterator>     (char_iterator&, estr_iterator&, int, int);
+template int PPSubsMatch::contains<pstr_long_iterator, pstr_long_iterator>(pstr_long_iterator&, pstr_long_iterator&, int, int);
+template int PPSubsMatch::contains<pstr_long_iterator, char_iterator>     (pstr_long_iterator&, char_iterator&, int, int);
+template int PPSubsMatch::contains<pstr_long_iterator, estr_iterator>     (pstr_long_iterator&, estr_iterator&, int, int);
+template int PPSubsMatch::contains<estr_iterator, char_iterator>     (estr_iterator&, char_iterator&, int, int);
+template int PPSubsMatch::contains<estr_iterator, pstr_long_iterator>(estr_iterator&, pstr_long_iterator&, int, int);
+template int PPSubsMatch::contains<estr_iterator, estr_iterator>     (estr_iterator&, estr_iterator&, int, int);
+
 PPSubsMatch::~PPSubsMatch()
 {
 	delete seq1.op;

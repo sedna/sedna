@@ -75,8 +75,12 @@ bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, variable_context *cxt, voi
 /// PPFnDateTimeFunc
 ///////////////////////////////////////////////////////////////////////////////
 PPFnDateTimeFunc::PPFnDateTimeFunc(variable_context *_cxt_,
-                                   PPOpIn _child_, int _dateTimeFunc_) : PPIterator(_cxt_),
-                                                     child(_child_), dateTimeFunc(_dateTimeFunc_)
+                                   PPOpIn _child_, 
+                                   int _dateTimeFunc_,
+                                   xmlscm_type _expected_type_) : PPIterator(_cxt_),
+                                                                  child(_child_), 
+                                                                  dateTimeFunc(_dateTimeFunc_),
+                                                                  expected_type(_expected_type_)
 {
 }
 
@@ -114,14 +118,17 @@ void PPFnDateTimeFunc::next  (tuple &t)
         {
             tuple_cell tc = child.get(t);
             tc = atomize(tc);
- 	    xmlscm_type tc_type = tc.get_atomic_type();
+ 	        xmlscm_type tc_type = tc.get_atomic_type();
+ 	        
+ 	        ///Each item in the atomic sequence that is of type xs:untypedAtomic is cast to the expected atomic type.
+            if(tc_type == xs_untypedAtomic) tc = cast(tc, expected_type);
 
             child.op->next(t);
               if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
 
 	    switch (dateTimeFunc)
 	    {
-		case yearsFromDuration:
+		case yearsFromDuration: //duration
 					if (tc_type != xs_duration &&
 						tc_type != xs_yearMonthDuration )
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
@@ -274,7 +281,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 
 PPIterator* PPFnDateTimeFunc::copy(variable_context *_cxt_)
 {
-    PPFnDateTimeFunc *res = new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc);
+    PPFnDateTimeFunc *res = new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc, expected_type);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
