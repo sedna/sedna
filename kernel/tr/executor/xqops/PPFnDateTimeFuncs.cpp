@@ -121,7 +121,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
  	        xmlscm_type tc_type = tc.get_atomic_type();
  	        
  	        ///Each item in the atomic sequence that is of type xs:untypedAtomic is cast to the expected atomic type.
-            if(tc_type == xs_untypedAtomic) tc = cast(tc, expected_type);
+            if(tc_type == xs_untypedAtomic) { tc = cast(tc, expected_type); tc_type = expected_type; }
 
             child.op->next(t);
               if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
