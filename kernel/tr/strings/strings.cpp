@@ -93,6 +93,7 @@ void str_buf_base::clear()
 	if (m_flags & f_text_in_estr_buf)
 		clear_estr_buf();
 	m_flags = 0;
+	m_ttype = text_mem;
 }
 
 void str_buf_base::append(const tuple_cell &tc)
