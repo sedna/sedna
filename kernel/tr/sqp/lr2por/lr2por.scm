@@ -11,6 +11,7 @@
          (PPquery-expr (l2p:lr-query-expr2por
                         (if (eq? (car query-in-lr) 'query)
                             (caddr query-in-lr) query-in-lr))))
+    ;(pp PPquery-prolog)
     (set! var-count 0)  ; DL: ad-hoc cleanup
     (set! funcs-map '())  ; DL: ad-hoc cleanup
     `(query ,PPquery-prolog ,PPquery-expr))
@@ -32,26 +33,25 @@
    (eq? 'prolog (car query-prolog-in-lr)) 
    (begin
      ; add all function names to the global func-list
-     (map
+     (for-each
       ; DL: Every declare-function has a single arity value
       (lambda (y)
-        (l2p:add-func-name
+        (l2p:add-func-name!
          (list
           (caddr (cadr y))  ; function name
           (length (caddr y))  ; function arity
          ; DL: was: (caddr (cadr y))
          )))
       (filter
-       (lambda (x) (if (eq? (car x) 'declare-function) #t #f))
+       (lambda (x) (eq? (car x) 'declare-function))
        (cdr query-prolog-in-lr)))
      (cons 'query-prolog
            (let ((lr-prolog
                   (map l2p:lr-prolog-decl2por 
                        (filter
                         (lambda (x)
-                          (if
-                           (eq? (car x) 'declare-external-function)
-                           #f #t))
+                          (not
+                           (eq? (car x) 'declare-external-function)))
                         (cdr query-prolog-in-lr)))))
              (if
               (not (null?  ; there are option declarations
@@ -153,7 +153,7 @@
 ; lr-named-fun-def2por - translates named function definition to the POR one
 (define (l2p:lr-named-fun-def2por fun-def-in-lr)
   (set! var-count '0)
-  ;(l2p:add-func-name (string->symbol (cadr (caddr (cadr fun-def-in-lr))))) ; update global function names list
+  ;(l2p:add-func-name! (string->symbol (cadr (caddr (cadr fun-def-in-lr))))) ; update global function names list
   (if (not (eq? 'declare-function (car fun-def-in-lr)))
       (cl:signal-input-error SE4008 "wrong function definition")
       (let* ((args-types 
@@ -1675,8 +1675,13 @@
 )
 
 (define (l2p:rename-vars2unique-numbers fun-def)
-  (let* ((vars-map (l2p:generate-map (map cadr (map cadr (cadr fun-def)))))
-        (new-var-decls (l2p:generate-new-fun-decl vars-map (xlr:var-defs fun-def))))
+  (let* ((vars-map (l2p:generate-map
+                    (map cadr  ; yields variable names
+                         (map cadr
+                              (cadr fun-def)  ; argument list
+                              ))))
+         (new-var-decls
+          (l2p:generate-new-fun-decl vars-map (xlr:var-defs fun-def))))
     ;(display new-var-decls)
     ;(display vars-map)
   `(fun-def ,new-var-decls ,(l2p:rename-vars vars-map (xlr:fun-body fun-def))))
@@ -1685,14 +1690,14 @@
 (define (l2p:generate-map vars)
   (if (null? vars)
       '()
-      (append (list(list (car vars) (l2p:gen-var))) (l2p:generate-map (cdr vars))))
-)
+      (cons (list (car vars) (l2p:gen-var))
+            (l2p:generate-map (cdr vars)))))
 
 (define (l2p:generate-new-fun-decl vars var_decls)
   (if (null? vars)
       `()
-      (append (list (list (caar var_decls) (cadar vars))) (l2p:generate-new-fun-decl (cdr vars) (cdr var_decls))))
-)
+      (cons (list (caar var_decls) (cadar vars))
+            (l2p:generate-new-fun-decl (cdr vars) (cdr var_decls)))))
 
 (define (l2p:rename-vars vars-map expr)
   (if (null? vars-map)
@@ -1702,7 +1707,7 @@
        (xlr:substitute-var-value `(var ,(caar vars-map)) `(var ,(cadar vars-map)) expr)))
 )
 
-(define (l2p:add-func-name func-name)
+(define (l2p:add-func-name! func-name)
   (if (null? funcs-map)
       (set! funcs-map `((,func-name 0)))
       (set! funcs-map (append funcs-map `((,func-name ,(length funcs-map)))))
