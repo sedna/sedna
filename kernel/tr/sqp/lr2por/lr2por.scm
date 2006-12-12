@@ -7,14 +7,23 @@
 ;-------------------------------------------------------------------------------
 ; lp2por
 (define (l2p:lr2por query-in-lr)
-  (let* ((PPquery-prolog (l2p:lr-query-prolog2por (cadr query-in-lr)))
-         (PPquery-expr (l2p:lr-query-expr2por
-                        (if (eq? (car query-in-lr) 'query)
-                            (caddr query-in-lr) query-in-lr))))
-    ;(pp PPquery-prolog)
-    (set! var-count 0)  ; DL: ad-hoc cleanup
-    (set! funcs-map '())  ; DL: ad-hoc cleanup
-    `(query ,PPquery-prolog ,PPquery-expr))
+  (call-with-values
+   (lambda ()
+     (l2p:lr-query-prolog2por (cadr query-in-lr)))
+   (lambda (PPquery-prolog var-binding)
+     (let ((PPquery-expr
+            (l2p:lr-query-expr2por
+             ((lambda (query-expr)
+                (if (null? var-binding)
+                    query-expr
+                    (l2p:rename-vars var-binding query-expr)))
+              (if (eq? (car query-in-lr) 'query)
+                  (caddr query-in-lr) query-in-lr)))))
+       ;(pp PPquery-prolog)
+       (set! var-count 0)  ; DL: ad-hoc cleanup
+       (set! funcs-map '())  ; DL: ad-hoc cleanup
+       `(query ,PPquery-prolog ,PPquery-expr)))))
+
 ; DL: was  
 ;  (if (eq? (car query-in-lr) 'query)
 ;      (let* ((PPquery-prolog (l2p:lr-query-prolog2por (cadr query-in-lr)))
@@ -23,11 +32,13 @@
 ;        `(query ,PPquery-prolog ,PPquery-expr))
 ;      `(query (query-prolog) ,(l2p:lr-query-expr2por query-in-lr))
 ;  )
-)
+
 
 
 ;-------------------------------------------------------------------------------
+
 ; lr-query-prolog2por
+; DL: returns (values por-prolog var-binding)
 (define (l2p:lr-query-prolog2por query-prolog-in-lr)
   (if
    (eq? 'prolog (car query-prolog-in-lr)) 
@@ -45,36 +56,81 @@
       (filter
        (lambda (x) (eq? (car x) 'declare-function))
        (cdr query-prolog-in-lr)))
-     (cons 'query-prolog
-           (let ((lr-prolog
-                  (map l2p:lr-prolog-decl2por 
-                       (filter
-                        (lambda (x)
-                          (not
-                           (eq? (car x) 'declare-external-function)))
-                        (cdr query-prolog-in-lr)))))
-             (if
-              (not (null?  ; there are option declarations
-                    (filter
+     (call-with-values
+      (lambda ()
+        (l2p:fold-prolog-decls 
+         (filter
+          (lambda (x)
+            (not
+             (eq? (car x) 'declare-external-function)))
+          (cdr query-prolog-in-lr))))
+      (lambda (lr-prolog var-binding)
+        (values
+         (cons 'query-prolog
+               (if
+                (not (null?  ; there are option declarations
+                      (filter
+                       (lambda (x)
+                         (and (pair? x) (eq? 'PPOptionDecl (car x))))
+                       lr-prolog)))
+                ; Unite them into one
+                `((PPOptionDecl
+                   ,@(map
+                      cadr  ; single option declaration
+                      (filter
+                       (lambda (x)
+                         (and (pair? x) (eq? 'PPOptionDecl (car x))))
+                       lr-prolog)))
+                  ,@(filter  ; the rest
                      (lambda (x)
-                       (and (pair? x) (eq? 'PPOptionDecl (car x))))
-                     lr-prolog)))
-              ; Unite them into one
-              `((PPOptionDecl
-                 ,@(map
-                    cadr  ; single option declaration
-                    (filter
-                     (lambda (x)
-                       (and (pair? x) (eq? 'PPOptionDecl (car x))))
-                     lr-prolog)))
-                ,@(filter  ; the rest
-                   (lambda (x)
-                     (not (and (pair? x) (eq? 'PPOptionDecl (car x)))))
-                   lr-prolog))
-             lr-prolog))))
+                       (not (and (pair? x) (eq? 'PPOptionDecl (car x)))))
+                     lr-prolog))
+                lr-prolog))
+         var-binding))))
    (cl:signal-input-error SE4008 "argument is not query-prolog")))
 
-(define (l2p:lr-prolog-decl2por prolog-decl)
+; Returns (values por-prolog var-binding)
+(define (l2p:fold-prolog-decls prolog)
+  (let loop ((src prolog)
+             (res '())
+             (var-binding '())
+             (next-var-num 0))
+    ;(pp src)
+    (cond
+      ((null? src)
+       (values (reverse res) var-binding))
+      ((and (pair? (car src))
+            (eq? (caar src) 'declare-global-var))
+       (let ((expr (car src)))
+         (let ((name  (cadr expr))
+               (value (caddr expr))
+               (type  (cadddr expr)))
+         (loop
+          (cdr src)
+          (cons
+           (list 'PPVarDecl
+                 next-var-num
+                 (l2p:any-lr-node2por
+                  (if (null? var-binding)
+                      value
+                      (l2p:rename-vars var-binding value)))
+                 (l2p:lr-sequenceType2por-sequenceType type))
+           res)
+          (cons
+           (list (cadr name)
+                 (list  ; wrapped into a list to distinguish from local variable
+                  next-var-num))
+           var-binding)
+          (+ next-var-num 1)))))
+      (else
+       (loop (cdr src)
+             (cons
+              (l2p:lr-prolog-decl2por (car src) var-binding)
+              res)
+             var-binding
+             next-var-num)))))
+
+(define (l2p:lr-prolog-decl2por prolog-decl var-binding)
   (cond
     ; TODO: rewrite as case
     ; *** 4.3 Boundary-space Declaration
@@ -109,7 +165,7 @@
      (l2p:decl-def-func-ns2por prolog-decl))
     ; *** 4.15 Function Declaration
     ((eq? (car prolog-decl) 'declare-function)
-     (l2p:lr-named-fun-def2por prolog-decl))
+     (l2p:lr-named-fun-def2por prolog-decl var-binding))
     ; *** 4.16 Option Declaration
     ((eq? (car prolog-decl) 'declare-option)
      `(PPOptionDecl
@@ -151,7 +207,7 @@
 
 ;-------------------------------------------------------------------------------
 ; lr-named-fun-def2por - translates named function definition to the POR one
-(define (l2p:lr-named-fun-def2por fun-def-in-lr)
+(define (l2p:lr-named-fun-def2por fun-def-in-lr var-binding)
   (set! var-count '0)
   ;(l2p:add-func-name! (string->symbol (cadr (caddr (cadr fun-def-in-lr))))) ; update global function names list
   (if (not (eq? 'declare-function (car fun-def-in-lr)))
@@ -167,7 +223,8 @@
               (l2p:lr-sequenceType2por-sequenceType (cadr (cadddr fun-def-in-lr)))))
              (body (cadr (cadddr (cdr fun-def-in-lr))))
              (args-num (length args-types))
-             (vars-map (l2p:generate-map var-names))
+             (vars-map (append var-binding
+                               (l2p:generate-map var-names)))
              (new-expr1 (l2p:rename-vars vars-map body)) ;getting body with substituted parameters
              (new-expr2 (l2p:any-lr-node2por new-expr1))
              (context-size var-count))
@@ -214,7 +271,14 @@
          (let ((op-name (car node))
                (node (cdr node))) 
            (cond
-             ((eq? op-name 'var) `(1 (PPVariable ,@node)))
+             ((eq? op-name 'var)
+              ; The identifier for global variable is represented as
+              ; (list identifier)
+              `(1
+                ,(if
+                  (pair? (car node))
+                  `(PPGlobalVariable ,(caar node))
+                  `(PPVariable ,@node))))
              
              ; *** select ***
 ;             ((eq? op-name 'select)
