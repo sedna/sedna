@@ -77,7 +77,7 @@ template<class a, class b> int memcmp(a& it1, b& it2,int len)
 	return 0;
 }
 
-template <class a, class b> static  int  PPSubsMatch::contains (a& it1, b& it2,int l1,int l2)
+template <class a, class b>  int  PPSubsMatch::contains (a& it1, b& it2,int l1,int l2)
 {
     if (l2==0) return 0;
     if (l1==0) return -1;
