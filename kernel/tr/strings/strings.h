@@ -119,7 +119,7 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 		int len = tcell_ptr->get_strlen_mem(); \
 		char_iterator start1(str, len, 0); \
 		char_iterator end1(str, len, len); \
-		func<char_iterator> params; \
+		func params; \
 		break; }\
 	case tc_heavy_atomic_estr: \
 	case tc_heavy_atomic_pstr_short: {\
@@ -128,7 +128,7 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 \
 		estr_iterator start1(len, data); \
 		estr_iterator end1(0, data); \
-		func<estr_iterator> params; \
+		func params; \
 		break; }\
 	case tc_heavy_atomic_pstr_long: {\
 		int len = tcell_ptr->get_strlen_vmm(); \
@@ -136,7 +136,7 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 \
 		pstr_long_iterator start1(data); \
 		pstr_long_iterator end1(data, len); \
-		func<pstr_long_iterator> params; \
+		func params; \
 		break; }\
 	}
 
