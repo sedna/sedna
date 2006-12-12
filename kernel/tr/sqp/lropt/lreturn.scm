@@ -1763,43 +1763,105 @@
                        var-types prolog processed-funcs
                        #f #f #f)))))
 
+;------------------------------------------------
+; Prolog handling
+; A query and prolog are handled in 3 steps:
+; 1. Firstly, global variables are processed to extract var types and their
+;  ordering information
+; 2. Secondly, query body is processed
+; 3. Finally, user-defined XQuery functions are rewritten
+
+; Returns: (values new-prolog var-types processed-funcs
+(define (lropt:declare-vars-from-prolog prolog)
+  (let loop ((src prolog)
+             (res '())
+             (var-types '())
+             (processed-funcs '()))
+    (cond
+      ((null? src)  ; finish processing
+       (values (reverse res) var-types processed-funcs))      
+      ((and (pair? (car src))
+            (eq? (xlr:op-name (car src)) 'declare-global-var))
+       (let* ((expr (car src))
+              (var-name
+               (car (xlr:op-args  ; removing embracing 'var
+                     (car (xlr:op-args expr))  ; '(var ..)
+                     )))
+              (var-type (caddr (xlr:op-args expr)))
+              (zero-or-one?
+               (lropt:var-type-zero-or-one? var-type)))
+         (call-with-values
+          (lambda ()
+            (lropt:expr
+             (cadr (xlr:op-args expr))  ; expression that specifies var value
+             #t  ; called once
+             ; We will always require ordering, unless the variable is
+             ; specified to have a zero-or-one type
+             (not zero-or-one?)
+             var-types
+             prolog processed-funcs))
+          (lambda (new-child child-ddo-auto? child-0-or-1? child-level?
+                             processed-funcs child-order-for-vars)
+            ; We probably do not care about child-order-for-vars
+            (loop (cdr src)
+                  (cons
+                   (list
+                    (xlr:op-name expr)  ; == 'declare-global-var
+                    (car (xlr:op-args expr))  ; var name wrapped with '(var ..)
+                    new-child
+                    (caddr (xlr:op-args expr)))
+                   res)
+                  (cons
+                   (list var-name
+                         var-type
+                         (or child-ddo-auto? zero-or-one?)
+                         (or child-0-or-1? zero-or-one?)
+                         (or child-level? zero-or-one?))
+                   var-types)
+                  processed-funcs)))))
+      (else  ; any different prolog entry
+       (loop (cdr src)
+             (cons (car src) res)
+             var-types
+             processed-funcs)))))
+
 ; Rewrites query prolog by replacing function-declaration with their
 ; processed analogues.
 ; Returns rewritten prolog
 ; The function should be called after a query body is processed
-(define (lropt:rewrite-prolog prolog processed-funcs)
-  (let loop ((prolog prolog)
+(define (lropt:rewrite-prolog prolog processed-funcs var-types)
+  (let loop ((src prolog)
              (processed-funcs processed-funcs)
              (res '()))
     (cond
-      ((null? prolog)  ; finish processing
+      ((null? src)  ; finish processing
        (reverse res))
-      ((and (pair? (car prolog))
-            (eq? (xlr:op-name (car prolog)) 'declare-function))
+      ((and (pair? (car src))
+            (eq? (xlr:op-name (car src)) 'declare-function))
        (call-with-values
         (lambda ()
           (lropt:get+add-processed-func
-           (car (xlr:op-args (car prolog)))  ; func-name
+           (car (xlr:op-args (car src)))  ; func-name
            #f  ; called-once? - we do not care
            #f  ; order-required? - bind to 0 to choose any existing entry
-           '()  ; var-types
+           var-types
            prolog processed-funcs
            (length  ; arity
-            (cadr (xlr:op-args (car prolog)))  ; function arguments
+            (cadr (xlr:op-args (car src)))  ; function arguments
             )))
         (lambda (entry processed-funcs)
-          (loop (cdr prolog)
-                processed-funcs                
+          (loop (cdr src)
+                processed-funcs        
                 (cons
                  (if entry
                      (lropt:procced-func-declaration entry)
                      ; on internal error, keep function-declaration as is
-                     (car prolog))
+                     (car src))
                  res)))))
       (else  ; any other prolog entry
-       (loop (cdr prolog)
+       (loop (cdr src)
              processed-funcs
-             (cons (car prolog) res))))))
+             (cons (car src) res))))))
 
 
 ;=========================================================================
@@ -1940,41 +2002,45 @@
 (define (lropt:rewrite-query query)
   (if
    (not (pair? query))
-   query  ; nothing to do, although it's strange   
-   (let ((prolog (xlr:get-query-prolog query)))
-     (call-with-values
-      (lambda ()
-        (if
-         (memq (xlr:op-name query) '(query retrieve-metadata))
-         (let ((identity (lambda (x) x)))
-           (lropt:propagate
-            (cadr (xlr:op-args query))
-            #t  ; called once
-            (let  ; ordered/unordered depending on prolog
-                ; TODO: think of duplicate elimination
-                ((order-decl
-                  (assq 'declare-order (filter pair? prolog))))
-              (not
-               (and order-decl
-                    (equal? (car (xlr:op-args order-decl))
-                            '(const (type !xs!string) "unordered")))))
-            '()  ; TODO: probably, external variables here
-            prolog
-            '()  ; no functions processed yet
-            identity identity identity))
-         ((case (xlr:op-name query)
-            ((update) lropt:update)
-            ((manage) lropt:manage)
-            (else  ; this should not happen
-             lropt:expr))
-          (cadr (xlr:op-args query))
-          #t #t '() prolog '())))
-      (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
-                    processed-funcs dummy-order-for-variables)
-        (list (xlr:op-name query)
-              (cons 'prolog
-                    (lropt:rewrite-prolog prolog processed-funcs))
-              body))))))
+   query  ; nothing to do, although it's strange
+   (call-with-values
+    (lambda ()
+      (lropt:declare-vars-from-prolog (xlr:get-query-prolog query)))
+    (lambda (prolog var-types processed-funcs)
+      (call-with-values
+       (lambda ()
+         (if
+          (memq (xlr:op-name query) '(query retrieve-metadata))
+          (let ((identity (lambda (x) x)))
+            (lropt:propagate
+             (cadr (xlr:op-args query))
+             #t  ; called once
+             (let  ; ordered/unordered depending on prolog
+                 ; TODO: think of duplicate elimination
+                 ((order-decl
+                   (assq 'declare-order (filter pair? prolog))))
+               (not
+                (and order-decl
+                     (equal? (car (xlr:op-args order-decl))
+                             '(const (type !xs!string) "unordered")))))
+             var-types
+             prolog
+             processed-funcs
+             identity identity identity))
+          ((case (xlr:op-name query)
+             ((update) lropt:update)
+             ((manage) lropt:manage)
+             (else  ; this should not happen
+              lropt:expr))
+           (cadr (xlr:op-args query))
+           #t #t
+           var-types prolog processed-funcs)))
+       (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
+                     processed-funcs dummy-order-for-variables)
+         (list (xlr:op-name query)
+               (cons 'prolog
+                     (lropt:rewrite-prolog prolog processed-funcs var-types))
+               body)))))))
 
 ; Alias for backward compatibility
 (define mlr:rewrite-query lropt:rewrite-query)
