@@ -192,14 +192,14 @@ void PPConstructor::open  ()
 }
 
 
-PPElementConstructor::PPElementConstructor(variable_context *_cxt_, 
+PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy, bool _ns_inside): PPConstructor(_cxt_, _deep_copy),
                                    qname(_qname_), content(_content_),ns_inside(_ns_inside)
 {
 	el_name=NULL;
 	
 }
-PPElementConstructor::PPElementConstructor(variable_context *_cxt_, 
+PPElementConstructor::PPElementConstructor(dynamic_context *_cxt_, 
 					 const char* name, PPOpIn _content_,bool _deep_copy, bool _ns_inside): PPConstructor(_cxt_, _deep_copy),
                                     content(_content_),ns_inside(_ns_inside)
 {
@@ -536,7 +536,7 @@ void PPElementConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPElementConstructor::copy(variable_context *_cxt_)
+PPIterator* PPElementConstructor::copy(dynamic_context *_cxt_)
 {
 	PPElementConstructor *res ;
 	if (el_name!=NULL)
@@ -550,7 +550,7 @@ PPIterator* PPElementConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPElementConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPElementConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -562,7 +562,7 @@ bool PPElementConstructor::result(PPIterator* cur, variable_context *cxt, void*&
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_, 
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                    qname(_qname_), content(_content_)
 {
@@ -570,7 +570,7 @@ PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_,
 	at_value=NULL;
 	//val=new ustring_buffer;
 }
-PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_, 
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
 					 const char* name, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                     content(_content_)
 {
@@ -579,7 +579,7 @@ PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_,
 	at_value=NULL;
 	
 }
-PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_, 
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                    qname(_qname_)
 {
@@ -587,7 +587,7 @@ PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_,
 	at_value=new char[strlen(value)+1];
 	strcpy(at_value,value);
 }
-PPAttributeConstructor::PPAttributeConstructor(variable_context *_cxt_, 
+PPAttributeConstructor::PPAttributeConstructor(dynamic_context *_cxt_, 
 					 const char* name, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
 {
 	at_name=new char[strlen(name)+1];
@@ -725,7 +725,7 @@ void PPAttributeConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPAttributeConstructor::copy(variable_context *_cxt_)
+PPIterator* PPAttributeConstructor::copy(dynamic_context *_cxt_)
 {
 	PPAttributeConstructor *res ;
 	if (at_name!=NULL)
@@ -743,7 +743,7 @@ PPIterator* PPAttributeConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPAttributeConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAttributeConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -757,7 +757,7 @@ bool PPAttributeConstructor::result(PPIterator* cur, variable_context *cxt, void
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPNamespaceConstructor::PPNamespaceConstructor(variable_context *_cxt_, 
+PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_, 
 					 const char* name, PPOpIn _content_): PPConstructor(_cxt_, true),
                                     content(_content_)
 {
@@ -772,7 +772,7 @@ PPNamespaceConstructor::PPNamespaceConstructor(variable_context *_cxt_,
 	
 }
 
-PPNamespaceConstructor::PPNamespaceConstructor(variable_context *_cxt_, 
+PPNamespaceConstructor::PPNamespaceConstructor(dynamic_context *_cxt_, 
 					 const char* name, const char* value): PPConstructor(_cxt_,true)
 {
 	if (name!=NULL&&strlen(name)!=0)
@@ -856,7 +856,7 @@ void PPNamespaceConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPNamespaceConstructor::copy(variable_context *_cxt_)
+PPIterator* PPNamespaceConstructor::copy(dynamic_context *_cxt_)
 {
 	PPNamespaceConstructor *res ;
 	if (at_value!=NULL)	res = new PPNamespaceConstructor(_cxt_, at_name,at_value);
@@ -865,7 +865,7 @@ PPIterator* PPNamespaceConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPNamespaceConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPNamespaceConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -878,7 +878,7 @@ bool PPNamespaceConstructor::result(PPIterator* cur, variable_context *cxt, void
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPCommentConstructor::PPCommentConstructor(variable_context *_cxt_, 
+PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_, 
 					 PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                     content(_content_)
 {
@@ -887,7 +887,7 @@ PPCommentConstructor::PPCommentConstructor(variable_context *_cxt_,
 	
 }
 
-PPCommentConstructor::PPCommentConstructor(variable_context *_cxt_, 
+PPCommentConstructor::PPCommentConstructor(dynamic_context *_cxt_, 
 					 const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
 {
 	at_value=new char[strlen(value)+1];
@@ -976,7 +976,7 @@ void PPCommentConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPCommentConstructor::copy(variable_context *_cxt_)
+PPIterator* PPCommentConstructor::copy(dynamic_context *_cxt_)
 {
 	PPCommentConstructor *res ;
 	if (at_value!=NULL)	res = new PPCommentConstructor(_cxt_, at_value, deep_copy);
@@ -988,7 +988,7 @@ PPIterator* PPCommentConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPCommentConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPCommentConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -1001,7 +1001,7 @@ bool PPCommentConstructor::result(PPIterator* cur, variable_context *cxt, void*&
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                    qname(_qname_), content(_content_)
 {
@@ -1010,7 +1010,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	strm.add_str("?>","--");
 	
 }
-PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
 					 const char* name, PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                     content(_content_)
 {
@@ -1020,7 +1020,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	strm.add_str("?>","--");
 	
 }
-PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                    qname(_qname_)
 {
@@ -1029,7 +1029,7 @@ PPPIConstructor::PPPIConstructor(variable_context *_cxt_,
 	strcpy(at_value,value);
 	strm.add_str("?>","--");
 }
-PPPIConstructor::PPPIConstructor(variable_context *_cxt_, 
+PPPIConstructor::PPPIConstructor(dynamic_context *_cxt_, 
 					 const char* name, const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
 {
 	at_name=new char[strlen(name)+1];
@@ -1171,7 +1171,7 @@ void PPPIConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPPIConstructor::copy(variable_context *_cxt_)
+PPIterator* PPPIConstructor::copy(dynamic_context *_cxt_)
 {
 	PPPIConstructor *res ;
 	if (at_name!=NULL)
@@ -1189,7 +1189,7 @@ PPIterator* PPPIConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPPIConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPPIConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -1203,7 +1203,7 @@ bool PPPIConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPTextConstructor::PPTextConstructor(variable_context *_cxt_, 
+PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_, 
 					 PPOpIn _content_,bool _deep_copy): PPConstructor(_cxt_, _deep_copy),
                                     content(_content_)
 {
@@ -1211,7 +1211,7 @@ PPTextConstructor::PPTextConstructor(variable_context *_cxt_,
 	
 }
 
-PPTextConstructor::PPTextConstructor(variable_context *_cxt_, 
+PPTextConstructor::PPTextConstructor(dynamic_context *_cxt_, 
 					 const char* value,bool _deep_copy): PPConstructor(_cxt_, _deep_copy)
 {
 	at_value=new char[strlen(value)+1];
@@ -1300,7 +1300,7 @@ void PPTextConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPTextConstructor::copy(variable_context *_cxt_)
+PPIterator* PPTextConstructor::copy(dynamic_context *_cxt_)
 {
 	PPTextConstructor *res ;
 	if (at_value!=NULL)	res = new PPTextConstructor(_cxt_, at_value, deep_copy);
@@ -1312,7 +1312,7 @@ PPIterator* PPTextConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPTextConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPTextConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;
@@ -1327,7 +1327,7 @@ bool PPTextConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPDocumentConstructor::PPDocumentConstructor(variable_context *_cxt_, 
+PPDocumentConstructor::PPDocumentConstructor(dynamic_context *_cxt_, 
 					 PPOpIn _content_): PPConstructor(_cxt_,false),
                                     content(_content_)
 {
@@ -1495,7 +1495,7 @@ void PPDocumentConstructor::next  (tuple &t)
     }
 }
 
-PPIterator* PPDocumentConstructor::copy(variable_context *_cxt_)
+PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)
 {
 	PPDocumentConstructor *res ;
 	res = new PPDocumentConstructor(_cxt_, content);
@@ -1503,7 +1503,7 @@ PPIterator* PPDocumentConstructor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDocumentConstructor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDocumentConstructor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     /*INSERT OPERATION HERE*/
     return true;

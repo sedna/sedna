@@ -27,12 +27,14 @@ void PPCreateDocument::open()
 {
     local_lock_mrg->lock(lm_x);
 
+    dynamic_context::global_variables_open();
     name.op->open();
 }
 
 void PPCreateDocument::close()
 {
     name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPCreateDocument::execute()
@@ -70,6 +72,7 @@ PPCreateCollection::~PPCreateCollection()
 
 void PPCreateCollection::open()
 {
+    dynamic_context::global_variables_open();
     name.op->open();
 
     local_lock_mrg->lock(lm_x);
@@ -78,6 +81,7 @@ void PPCreateCollection::open()
 void PPCreateCollection::close()
 {
     name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPCreateCollection::execute()
@@ -120,6 +124,7 @@ PPCreateDocumentInCollection::~PPCreateDocumentInCollection()
 
 void PPCreateDocumentInCollection::open()
 {
+    dynamic_context::global_variables_open();
     document.op->open();
     collection.op->open();
 
@@ -130,6 +135,7 @@ void PPCreateDocumentInCollection::close()
 {
     document.op->close();
     collection.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPCreateDocumentInCollection::execute()

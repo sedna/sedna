@@ -144,11 +144,11 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPPred1(variable_context *_cxt_,
+    PPPred1(dynamic_context *_cxt_,
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
@@ -162,6 +162,7 @@ public:
     virtual var_c_id register_consumer(var_dsc dsc);
     virtual void next(tuple &t, var_dsc dsc, var_c_id id);
     virtual void reopen(var_dsc dsc, var_c_id id);
+    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 
@@ -212,7 +213,7 @@ private:
     }
 
 /*
-    PPPred2(variable_context *_cxt_,
+    PPPred2(dynamic_context *_cxt_,
              arr_of_var_dsc _var_dscs_, 
              PPOpIn _source_child_, 
              PPOpIn _data_child_,
@@ -225,12 +226,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
     
-    PPPred2(variable_context *_cxt_,
+    PPPred2(dynamic_context *_cxt_,
             arr_of_var_dsc _var_dscs_, 
             PPOpIn _source_child_, 
             arr_of_PPOpIn _conjuncts_,
@@ -243,8 +244,9 @@ public:
     virtual ~PPPred2();
 
     virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next(tuple &t, var_dsc dsc, var_c_id id);
+    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
     virtual void reopen(var_dsc dsc, var_c_id id);
+    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 

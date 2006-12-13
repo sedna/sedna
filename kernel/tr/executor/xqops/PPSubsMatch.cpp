@@ -14,7 +14,7 @@
 /// PPSubstringMatch
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPSubsMatch::PPSubsMatch(variable_context *_cxt_,
+PPSubsMatch::PPSubsMatch(dynamic_context *_cxt_,
 						 PPOpIn _seq1_, PPOpIn _seq2_,subsmatch_type _smt_):
 			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_),smt(_smt_)
 {
@@ -219,11 +219,11 @@ void PPSubsMatch::next  (tuple &t)
         t.set_eos();
     }
 }
-bool PPSubsMatch::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPSubsMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
  return true;
 }
-PPIterator* PPSubsMatch::copy(variable_context *_cxt_)
+PPIterator* PPSubsMatch::copy(dynamic_context *_cxt_)
 {
 	PPSubsMatch *res ;
 	res = new PPSubsMatch(_cxt_, seq1,seq2,smt);

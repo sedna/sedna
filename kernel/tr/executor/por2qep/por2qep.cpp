@@ -18,7 +18,7 @@
 
 using namespace std;
 
-PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst);
+PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst);
 CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst);
 
 CalcOp *check_consistence_and_build_unary_calc_op(arr_of_PPOpIn *arr, scheme_list *lst, xq_unary_op_type t)
@@ -126,7 +126,7 @@ CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst)
 }
 
 void set_axis_parameters(scheme_list *lst, 
-                         variable_context *cxt,
+                         dynamic_context *cxt,
                          PPOpIn &child, 
                          NodeTestType &nt_type, 
                          NodeTestData &nt_data,
@@ -576,7 +576,7 @@ orb_modifier make_order_by_modifier(scheme_list *lst)
 }
 
 
-PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
+PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 {
     if (   lst->size() != 2
         || lst->at(0).type != SCM_NUMBER
@@ -717,6 +717,15 @@ PPOpIn make_pp_op(variable_context *cxt, scheme_list *lst)
 
         int var = atoi(lst->at(1).internal.num);
         opit = new PPVariable(cxt, var);
+    }
+    else if (op == "PPGlobalVariable")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_NUMBER
+           ) throw USER_EXCEPTION2(SE1004, "10.5");
+
+        int var = atoi(lst->at(1).internal.num);
+        opit = new PPGlobalVariable(cxt, var);
     }
     else if (op == "PPSequence")
     {
@@ -2850,6 +2859,17 @@ fn_dt_funcs_correct_type:
                                  make_pp_op(cxt, lst->at(2).internal.list),
 								 make_pp_op(cxt, lst->at(3).internal.list));
     }
+	else if (op == "PPFnResolveQName")
+    {
+        if (   lst->size() != 3
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "107.5");
+
+		opit = new PPFnResolveQName(cxt,
+                                    make_pp_op(cxt, lst->at(1).internal.list),
+                                    make_pp_op(cxt, lst->at(2).internal.list));
+    }
 	else if (op == "PPFnQName")
     {
         if (   lst->size() != 3
@@ -3237,7 +3257,7 @@ fn_dt_funcs_correct_type:
     return PPOpIn(opit, ts);
 }
 
-void make_pp_fun(scheme_list *lst, function_declaration &fd)
+void make_pp_fun(scheme_list *lst, dynamic_context *cxt, function_declaration &fd)
 {
     if (   lst->size() != 5
         || lst->at(0).type != SCM_SYMBOL
@@ -3260,10 +3280,10 @@ void make_pp_fun(scheme_list *lst, function_declaration &fd)
     fd.cxt_size = atoi(lst->at(1).internal.num);
     for (i = 0; i < fd.num; i++) 
         fd.args[i] = make_sequence_type(args_list->at(i).internal.list);
-    fd.op = make_pp_op(NULL, lst->at(4).internal.list).op;
+    fd.op = make_pp_op(cxt, lst->at(4).internal.list).op;
 }
 
-PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
+PPQueryEssence *make_pp_qe(scheme_list *qe, dynamic_context_info *info, se_ostream &s, t_print print_mode)
 {
     if (   qe->size() < 1 
         || qe->at(0).type != SCM_SYMBOL)
@@ -3278,9 +3298,9 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "302");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
 
-        variable_context *cxt = new variable_context(cxt_size);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPQueryRoot(cxt,
                                make_pp_op(cxt, qe->at(2).internal.list),
@@ -3299,8 +3319,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
         int cxt1_size = atoi(qe->at(1).internal.num);
         int cxt2_size = atoi(qe->at(3).internal.num);
 
-        variable_context *cxt1 = new variable_context(cxt1_size);
-        variable_context *cxt2 = new variable_context(cxt2_size);
+        dynamic_context *cxt1 = new dynamic_context(info, cxt1_size);
+        dynamic_context *cxt2 = new dynamic_context(info, cxt2_size);
 
         return new PPInsertTo(make_pp_op(cxt1, qe->at(2).internal.list),
                               cxt1,
@@ -3319,8 +3339,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
         int cxt1_size = atoi(qe->at(1).internal.num);
         int cxt2_size = atoi(qe->at(3).internal.num);
 
-        variable_context *cxt1 = new variable_context(cxt1_size);
-        variable_context *cxt2 = new variable_context(cxt2_size);
+        dynamic_context *cxt1 = new dynamic_context(info, cxt1_size);
+        dynamic_context *cxt2 = new dynamic_context(info, cxt2_size);
 
         return new PPInsertFollowing(make_pp_op(cxt1, qe->at(2).internal.list),
                                      cxt1,
@@ -3339,8 +3359,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
         int cxt1_size = atoi(qe->at(1).internal.num);
         int cxt2_size = atoi(qe->at(3).internal.num);
 
-        variable_context *cxt1 = new variable_context(cxt1_size);
-        variable_context *cxt2 = new variable_context(cxt2_size);
+        dynamic_context *cxt1 = new dynamic_context(info, cxt1_size);
+        dynamic_context *cxt2 = new dynamic_context(info, cxt2_size);
 
         return new PPInsertBefore(make_pp_op(cxt1, qe->at(2).internal.list),
                                   cxt1,
@@ -3354,9 +3374,9 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "306");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
 
-        variable_context *cxt = new variable_context(cxt_size);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDeleteDeep(make_pp_op(cxt, qe->at(2).internal.list),
                                 cxt);
@@ -3368,9 +3388,9 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "307");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
 
-        variable_context *cxt = new variable_context(cxt_size);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDeleteUndeep(make_pp_op(cxt, qe->at(2).internal.list),
                                   cxt);
@@ -3386,9 +3406,9 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(3).internal.list->at(1).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "308");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
 
-        variable_context *cxt = new variable_context(cxt_size);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         char *ncname_prefix = xs_NCName_create(qe->at(3).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
         char *ncname_local  = xs_NCName_create(qe->at(3).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
@@ -3405,9 +3425,9 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "309");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
 
-        variable_context *cxt = new variable_context(cxt_size);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPReplace(make_pp_op(cxt, qe->at(2).internal.list),
                              cxt);
@@ -3421,11 +3441,11 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(4).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "310");
 
-        int cxt_size1 = atoi(qe->at(1).internal.num);
-        variable_context *cxt1 = new variable_context(cxt_size1);
+        int var_cxt_size1 = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt1 = new dynamic_context(info, var_cxt_size1);
 
-        int cxt_size2 = atoi(qe->at(3).internal.num);
-        variable_context *cxt2 = new variable_context(cxt_size2);
+        int var_cxt_size2 = atoi(qe->at(3).internal.num);
+        dynamic_context *cxt2 = new dynamic_context(info, var_cxt_size2);
 
         PPOpIn collection;
         if (qe->size() == 7)
@@ -3434,8 +3454,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
                 || qe->at(6).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "311");
 
-            int cxt_size3 = atoi(qe->at(5).internal.num);
-            variable_context *cxt3 = new variable_context(cxt_size3);
+            int var_cxt_size3 = atoi(qe->at(5).internal.num);
+            dynamic_context *cxt3 = new dynamic_context(info, var_cxt_size3);
 
             collection = make_pp_op(cxt3, qe->at(6).internal.list);
         }
@@ -3453,8 +3473,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "312");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPCreateDocument(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3465,8 +3485,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "313");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPCreateCollection(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3479,11 +3499,11 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(4).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "314");
 
-        int cxt_size1 = atoi(qe->at(1).internal.num);
-        variable_context *cxt1 = new variable_context(cxt_size1);
+        int var_cxt_size1 = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt1 = new dynamic_context(info, var_cxt_size1);
 
-        int cxt_size2 = atoi(qe->at(3).internal.num);
-        variable_context *cxt2 = new variable_context(cxt_size2);
+        int var_cxt_size2 = atoi(qe->at(3).internal.num);
+        dynamic_context *cxt2 = new dynamic_context(info, var_cxt_size2);
 
         return new PPCreateDocumentInCollection(make_pp_op(cxt1, qe->at(2).internal.list),
                                                 make_pp_op(cxt2, qe->at(4).internal.list));
@@ -3495,8 +3515,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "315");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDropDocument(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3507,8 +3527,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "316");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDropCollection(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3521,11 +3541,11 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(4).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "317");
 
-        int cxt_size1 = atoi(qe->at(1).internal.num);
-        variable_context *cxt1 = new variable_context(cxt_size1);
+        int var_cxt_size1 = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt1 = new dynamic_context(info, var_cxt_size1);
 
-        int cxt_size2 = atoi(qe->at(3).internal.num);
-        variable_context *cxt2 = new variable_context(cxt_size2);
+        int var_cxt_size2 = atoi(qe->at(3).internal.num);
+        dynamic_context *cxt2 = new dynamic_context(info, var_cxt_size2);
 
         return new PPDropDocumentInCollection(make_pp_op(cxt1, qe->at(2).internal.list),
                                               make_pp_op(cxt2, qe->at(4).internal.list));
@@ -3537,8 +3557,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "318");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPRetrieveDS(make_pp_op(cxt, qe->at(2).internal.list),
                                 dbe_document,
@@ -3551,8 +3571,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "319");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPRetrieveDS(make_pp_op(cxt, qe->at(2).internal.list),
                                 dbe_collection,
@@ -3580,8 +3600,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
                 || qe->at(3).type != SCM_BOOL)
                 throw USER_EXCEPTION2(SE1004, "321");
 
-            int cxt_size = atoi(qe->at(1).internal.num);
-            variable_context *cxt = new variable_context(cxt_size);
+            int var_cxt_size = atoi(qe->at(1).internal.num);
+            dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
             collection = make_pp_op(cxt, qe->at(2).internal.list);
             type = dbe_document;
@@ -3618,8 +3638,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
 
         xmlscm_type key_type = lr_atomic_type2xmlscm_type(lst->at(4).internal.symb);
 
-        int cxt_size = atoi(qe->at(5).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(5).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPCreateIndex(object_path,
                                  key_path,
@@ -3634,8 +3654,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "324");
 
-        int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDropIndex(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3659,8 +3679,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
 		db_entity *db_ent = make_db_entity(lst->at(2).internal.list);
 		PathExpr *object_path = lr2PathExpr(NULL, lst->at(3).internal.list, true);
 
-		int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+		int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
 		if (qe->size() == 7)
 			return new PPCreateFtIndex(object_path,
@@ -3681,8 +3701,8 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, se_ostream &s, t_print print_mode)
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "326");
 
-		int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+		int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
 		return new PPDropFtIndex(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3719,8 +3739,8 @@ d_printf2("\n%d",qe->size());
 		db_entity *db_ent = make_db_entity(lst->at(4).internal.list);
 		PathExpr *trigger_path = lr2PathExpr(NULL, lst->at(5).internal.list, true);
 
-		int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+		int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
 //		trigger_action *tr_action = lr2TriggerAction(lst->at(7).internal.list);
 		PathExpr *path_to_parent = NULL;
@@ -3760,8 +3780,8 @@ d_printf2("\n%d",qe->size());
             || qe->at(2).type != SCM_LIST)
             throw USER_EXCEPTION2(SE1004, "329");
 
-		int cxt_size = atoi(qe->at(1).internal.num);
-        variable_context *cxt = new variable_context(cxt_size);
+		int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
 		return new PPDropTrigger(make_pp_op(cxt, qe->at(2).internal.list));
     }
@@ -3775,41 +3795,9 @@ d_printf2("\n%d",qe->size());
     return NULL;
 }
 
-PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_mode)
+void make_pp_qp(scheme_list *qp, dynamic_context_info *info, int &function_counter, int &var_decl_counter)
 {
     int i = 0;
-
-    if (   lst->size() != 3
-        || lst->at(0).type != SCM_SYMBOL 
-        || string(lst->at(0).internal.symb) != "query"
-        || lst->at(1).type != SCM_LIST 
-        || lst->at(2).type != SCM_LIST
-       )    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-
-    scheme_list *qp = lst->at(1).internal.list;
-    scheme_list *qe = lst->at(2).internal.list;
-
-    // query-prolog sublist
-    if (   qp->size() < 1
-        || qp->at(0).type != SCM_SYMBOL
-        || string(qp->at(0).internal.symb) != "query-prolog"
-       )    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-
-    int qp_size = 0;
-    for (i = 1; i < qp->size(); i++)
-    {
-        if (   qp->at(i).type != SCM_LIST
-            || qp->at(i).internal.list->size() < 1
-            || qp->at(i).internal.list->at(0).type != SCM_SYMBOL)
-            throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
-
-        if (strcmp(qp->at(i).internal.list->at(0).internal.symb, "PPFunDecl") == 0) qp_size++;
-    }
-
-    tr_globals::qp.size = qp_size;
-    tr_globals::qp.fun_decls = new function_declaration[qp_size];
-
-    int j = 0;
     for (i = 1; i < qp->size(); i++) 
     {
         string prolog_decl(qp->at(i).internal.list->at(0).internal.symb);
@@ -3926,11 +3914,45 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
         {
             // FIXME: Not Implemented
         }
-        // FIXME: Add Variable Declaration
+        else if (prolog_decl == "PPVarDecl") 
+        { 
+            if (   qp->at(i).internal.list->size() < 3
+                || qp->at(i).internal.list->size() > 4
+                || qp->at(i).internal.list->at(1).type != SCM_NUMBER
+                || qp->at(i).internal.list->at(2).type != SCM_LIST
+               ) throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            int v_dsc = atoi(qp->at(i).internal.list->at(1).internal.num);
+
+            int var_cxt_size = 10; // FIXME: dirty hack. Static analysis must provide size of var cxt
+            dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
+            
+            PPVarIterator *opit = NULL;
+            if (qp->at(i).internal.list->size() == 4)
+            {
+                if (qp->at(i).internal.list->at(3).type != SCM_LIST)
+                    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+                opit = new PPVarDecl(cxt,
+                                     v_dsc,
+                                     make_pp_op(cxt, qp->at(i).internal.list->at(2).internal.list),
+                                     make_sequence_type(qp->at(i).internal.list->at(3).internal.list));
+     
+            }
+            else
+            {
+                opit = new PPVarDecl(cxt,
+                                     v_dsc,
+                                     make_pp_op(cxt, qp->at(i).internal.list->at(2).internal.list));
+            }
+
+            dynamic_context::glb_var_cxt.producers[var_decl_counter].op = opit;
+            var_decl_counter++;
+        }
         else if (prolog_decl == "PPFunDecl") 
         { 
-            make_pp_fun(qp->at(i).internal.list, tr_globals::qp.fun_decls[j]); 
-            j++; 
+            make_pp_fun(qp->at(i).internal.list, NULL, dynamic_context::funct_cxt.fun_decls[function_counter]);
+            function_counter++; 
         }
         else if (prolog_decl == "PPOptionDecl")  
         {
@@ -4004,8 +4026,82 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
         }
         else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
     }
+}
 
-    return make_pp_qe(qe, s, print_mode);
+PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_mode)
+{
+    int i = 0, j = 0;
+
+    if (   lst->size() < 3
+        || lst->at(0).type != SCM_SYMBOL 
+        || string(lst->at(0).internal.symb) != "query")
+        throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+    int funcs_num = 0;
+    int var_decls_num = 0;
+
+    // check constraints for modules
+    for (i = 1; i < lst->size() - 2; i++)
+    {
+        if (lst->at(i).type != SCM_LIST)
+            throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+        scheme_list *m = lst->at(i).internal.list;
+
+        if (   m->size() < 1
+            || m->at(0).type != SCM_SYMBOL
+            || string(m->at(0).internal.symb) != "module"
+           )    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+        for (j = 1; j < m->size(); j++)
+        {
+            if (   m->at(j).type != SCM_LIST
+                || m->at(j).internal.list->size() < 1
+                || m->at(j).internal.list->at(0).type != SCM_SYMBOL)
+                throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+            if (strcmp(m->at(j).internal.list->at(0).internal.symb, "PPFunDecl") == 0) funcs_num++;
+            if (strcmp(m->at(j).internal.list->at(0).internal.symb, "PPVarDecl") == 0) var_decls_num++;
+        }
+
+    }
+
+    scheme_list *qp = lst->at(lst->size() - 2).internal.list;
+    scheme_list *qe = lst->at(lst->size() - 1).internal.list;
+
+    // query-prolog sublist
+    if (   qp->size() < 1
+        || qp->at(0).type != SCM_SYMBOL
+        || string(qp->at(0).internal.symb) != "query-prolog"
+       )    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+    for (j = 1; j < qp->size(); j++)
+    {
+        if (   qp->at(j).type != SCM_LIST
+            || qp->at(j).internal.list->size() < 1
+            || qp->at(j).internal.list->at(0).type != SCM_SYMBOL)
+            throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
+
+        if (strcmp(qp->at(j).internal.list->at(0).internal.symb, "PPFunDecl") == 0) funcs_num++;
+        if (strcmp(qp->at(j).internal.list->at(0).internal.symb, "PPVarDecl") == 0) var_decls_num++;
+    }
+
+    // set static structures of dynamic_context
+    dynamic_context::static_set(funcs_num, var_decls_num, lst->size() - 2);
+
+    // process all modules and query prolog
+    int function_counter = 0;
+    int var_decl_counter = 0;
+    dynamic_context_info *info = NULL;
+    for (i = 1; i < lst->size() - 1; i++)
+    {
+        info = dynamic_context::create_info();
+
+        // function has side effects: cxt, function_counter and var_decl_counter are being changed inside
+        make_pp_qp(lst->at(i).internal.list, info, function_counter, var_decl_counter);
+    }
+
+    return make_pp_qe(qe, info, s, print_mode);
 }
 
 PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)
@@ -4033,14 +4129,14 @@ PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode)
     return qep;
 }
 
-qep_subtree *build_qep(const char* por, int cxt_size)
+qep_subtree *build_qep(const char* por, int var_cxt_size)
 {
     scheme_list *pp_op_in_scheme_lst = NULL;
     pp_op_in_scheme_lst = make_tree_from_scheme_list(por);
 
     qep_subtree *res = new qep_subtree();
 
-    res->cxt = new variable_context(cxt_size);
+    res->cxt = dynamic_context::create_unmanaged(var_cxt_size);
     res->tree = make_pp_op(res->cxt, pp_op_in_scheme_lst);
 
     delete_scheme_list(pp_op_in_scheme_lst);
@@ -4052,15 +4148,12 @@ void delete_qep(PPQueryEssence *qep)
 {
     delete qep;
 
-    delete [] tr_globals::qp.fun_decls;
-    tr_globals::qp.fun_decls = NULL;
-
-    tr_globals::qp.size = 0;
+    dynamic_context::static_clear();
 }
 
 void delete_qep(qep_subtree *qep)
 {
-    delete (qep->cxt);
+    dynamic_context::destroy_unmanaged(qep->cxt);
     qep->cxt = NULL;
     delete (qep->tree.op);
     qep->tree.op = NULL;

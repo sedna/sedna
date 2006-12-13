@@ -51,20 +51,20 @@ public:
     virtual void close  ();
     virtual void next   (tuple &t) ;
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	virtual strict_fun res_fun () { return result; };
-    PPPatMatch(variable_context *_cxt_,
+    PPPatMatch(dynamic_context *_cxt_,
 		PPOpIn _seq1_, PPOpIn _seq2_ , patmatch_type _pmt_);
-	PPPatMatch(variable_context *_cxt_,
+	PPPatMatch(dynamic_context *_cxt_,
 		PPOpIn _seq1_, PPOpIn _seq2_ , PPOpIn _seq3_ ,patmatch_type _pmt_);
-	PPPatMatch(variable_context *_cxt_,
+	PPPatMatch(dynamic_context *_cxt_,
 		PPOpIn _seq1_, PPOpIn _seq2_ , PPOpIn _seq3_ , PPOpIn _seq4_ , patmatch_type _pmt_);
     virtual ~PPPatMatch();
 	////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR Pattern Matching
     ////////////////////////////////////////////////////////////////////////////
-	static PPPatMatch* PPFnMatch(variable_context *_cxt_, 
+	static PPPatMatch* PPFnMatch(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_)
 	{
 		return new PPPatMatch(_cxt_,_seq1_,_seq2_,pm_match);

@@ -6,7 +6,10 @@
 #include "sedna.h"
 #include "PPVariable.h"
 
-PPVariable::PPVariable(variable_context *_cxt_, 
+///////////////////////////////////////////////////////////////////////////////
+/// PPVariable
+///////////////////////////////////////////////////////////////////////////////
+PPVariable::PPVariable(dynamic_context *_cxt_, 
                        var_dsc _dsc_) : PPIterator(_cxt_), 
                                         dsc(_dsc_)
 {
@@ -19,15 +22,14 @@ PPVariable::~PPVariable()
 
 void PPVariable::open ()
 {
-    if (cxt == NULL) 
-        throw USER_EXCEPTION2(SE1003, "Context is not set up in PPVariable");
+    U_ASSERT(cxt);
 
-    id = cxt->producers[dsc].op->register_consumer(dsc);
+    id = cxt->var_cxt.producers[dsc].op->register_consumer(dsc);
 }
 
 void PPVariable::reopen ()
 {
-    cxt->producers[dsc].op->reopen(dsc, id);
+    cxt->var_cxt.producers[dsc].op->reopen(dsc, id);
 }
 
 void PPVariable::close ()
@@ -37,19 +39,20 @@ void PPVariable::close ()
 
 void PPVariable::next (tuple &t)
 {
-    cxt->producers[dsc].op->next(t, dsc, id);
+    cxt->var_cxt.producers[dsc].op->next(t, dsc, id);
 
 //    if (t.is_eos()) cxt->producers[dsc].op->reopen(dsc, id);
 }
 
-PPIterator* PPVariable::copy(variable_context *_cxt_)
+PPIterator* PPVariable::copy(dynamic_context *_cxt_)
 {
     PPVariable *res = new PPVariable(_cxt_, dsc);
     return res;
 }
 
-bool PPVariable::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPVariable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
+/*
     producer &p = cxt->producers[((PPVariable*)cur)->dsc];
 
     sequence *res_seq = new sequence(1);
@@ -61,4 +64,53 @@ bool PPVariable::result(PPIterator* cur, variable_context *cxt, void*& r)
     };
 
     return strict_op_result(cur, res_seq, cxt, r);
+*/
+	throw USER_EXCEPTION2(SE1002, "PPVariable::result");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPGlobalVariable
+///////////////////////////////////////////////////////////////////////////////
+PPGlobalVariable::PPGlobalVariable(dynamic_context *_cxt_, 
+                                   var_dsc _dsc_) : PPIterator(_cxt_), 
+                                                    dsc(_dsc_)
+{
+}
+
+PPGlobalVariable::~PPGlobalVariable()
+{
+    // nothing to do
+}
+
+void PPGlobalVariable::open ()
+{
+    U_ASSERT(cxt);
+
+    id = dynamic_context::glb_var_cxt.producers[dsc].op->register_consumer(dsc);
+}
+
+void PPGlobalVariable::reopen ()
+{
+    dynamic_context::glb_var_cxt.producers[dsc].op->reopen(dsc, id);
+}
+
+void PPGlobalVariable::close ()
+{
+    dynamic_context::glb_var_cxt.producers[dsc].op->close(dsc, id);
+}
+
+void PPGlobalVariable::next (tuple &t)
+{
+    dynamic_context::glb_var_cxt.producers[dsc].op->next(t, dsc, id);
+}
+
+PPIterator* PPGlobalVariable::copy(dynamic_context *_cxt_)
+{
+    PPGlobalVariable *res = new PPGlobalVariable(_cxt_, dsc);
+    return res;
+}
+
+bool PPGlobalVariable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
+{
+	throw USER_EXCEPTION2(SE1002, "PPGlobalVariable::result");
 }

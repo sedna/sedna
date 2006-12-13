@@ -53,7 +53,7 @@ AnyKindTest    ::=    <"node" "("> ")"
 
 
 
-PPAbsPath::PPAbsPath(variable_context *_cxt_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_),
                                                         path_expr(_path_expr_),
@@ -63,7 +63,7 @@ PPAbsPath::PPAbsPath(variable_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(variable_context *_cxt_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_) : PPIterator(_cxt_),
@@ -74,7 +74,7 @@ PPAbsPath::PPAbsPath(variable_context *_cxt_,
 {
 }
 
-PPAbsPath::PPAbsPath(variable_context *_cxt_, 
+PPAbsPath::PPAbsPath(dynamic_context *_cxt_, 
                      PathExpr *_path_expr_, 
                      counted_ptr<db_entity> _db_ent_,
                      PPOpIn _name_,
@@ -219,7 +219,7 @@ bool PPAbsPath::determine_root()
 	return false;
 }
 
-PPIterator* PPAbsPath::copy(variable_context *_cxt_)
+PPIterator* PPAbsPath::copy(dynamic_context *_cxt_)
 {
     PPAbsPath *res = NULL;
 
@@ -259,7 +259,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
     qsort(merged_seq_arr, scmnodes_num, sizeof(xptr), doc_order_merge_cmp);
 }
 
-bool PPAbsPath::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAbsPath::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     sequence *res_seq = NULL;

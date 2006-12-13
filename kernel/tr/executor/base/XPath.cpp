@@ -289,7 +289,7 @@ void PathExpr2lr(PathExpr *path, std::ostream& str)
     path->print_to_lr(str);
 }
 
-void set_node_test_parameters(variable_context *cxt,
+void set_node_test_parameters(dynamic_context *cxt,
                               scheme_list *lst, 
                               NodeTest &nt, //out parameter
                               bool persistent)
@@ -367,7 +367,7 @@ void set_node_test_parameters(variable_context *cxt,
     }
 }
 
-PathExpr *lr2PathExpr(variable_context *cxt, scheme_list *path_lst, bool persistent)
+PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persistent)
 {
     int i = 0, j = 0;
     PathExprDistr distr(path_lst->size(), 0);
@@ -402,7 +402,7 @@ PathExpr *lr2PathExpr(variable_context *cxt, scheme_list *path_lst, bool persist
     return path_expr;
 }
 
-PathExpr *lr2PathExpr(variable_context *cxt, const char *str, bool persistent)
+PathExpr *lr2PathExpr(dynamic_context *cxt, const char *str, bool persistent)
 {
     scheme_list *lst = make_tree_from_scheme_list(str);
     PathExpr *path = lr2PathExpr(cxt, lst, persistent);

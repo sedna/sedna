@@ -26,22 +26,22 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	static void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
-    PPNodeComparison(variable_context *_cxt_, 
+    PPNodeComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_, int _type_);
     virtual ~PPNodeComparison();
 	////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR General Comparisons
     ////////////////////////////////////////////////////////////////////////////
-    static PPNodeComparison* PPEQNodeComparison(variable_context *_cxt_, 
+    static PPNodeComparison* PPEQNodeComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPNodeComparison* PPLTNodeComparison(variable_context *_cxt_, 
+	static PPNodeComparison* PPLTNodeComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPNodeComparison* PPGTNodeComparison(variable_context *_cxt_, 
+	static PPNodeComparison* PPGTNodeComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPNodeComparison* PPANNodeComparison(variable_context *_cxt_, 
+	static PPNodeComparison* PPANNodeComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
 	
 };

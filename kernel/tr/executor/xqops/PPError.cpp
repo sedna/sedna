@@ -11,7 +11,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error
 ///////////////////////////////////////////////////////////////////////////////
-PPFnError::PPFnError(variable_context *_cxt_, 
+PPFnError::PPFnError(dynamic_context *_cxt_, 
                      PPOpIn &_child_err_,
                      PPOpIn &_child_descr_,
                      PPOpIn &_child_obj_) : PPIterator(_cxt_),
@@ -110,7 +110,7 @@ void PPFnError::next  (tuple &t)
     throw USER_EXCEPTION_FNERROR(err_name, err_descr);
 }
 
-PPIterator* PPFnError::copy(variable_context *_cxt_)
+PPIterator* PPFnError::copy(dynamic_context *_cxt_)
 {
     PPFnError *res = new PPFnError(_cxt_, child_err, child_descr, child_obj);
     if (child_err.op)   res->child_err.op   = child_err.op->copy(_cxt_);
@@ -120,7 +120,7 @@ PPIterator* PPFnError::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnError::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnError::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnError::result");
 }
@@ -131,7 +131,7 @@ bool PPFnError::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 extern se_stdlib_ostream crm_out;
 
-PPFnTrace::PPFnTrace(variable_context *_cxt_,
+PPFnTrace::PPFnTrace(dynamic_context *_cxt_,
                      PPOpIn _value_child_,
                      PPOpIn _label_child_) : PPIterator(_cxt_),
                                              value_child(_value_child_),
@@ -197,7 +197,7 @@ void PPFnTrace::next(tuple &t)
         print_tuple_indent(t, crm_out, xml, is_first);
 }
 
-PPIterator* PPFnTrace::copy(variable_context *_cxt_)
+PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
 {
     PPFnTrace *res = new PPFnTrace(_cxt_, value_child, label_child);
     res->value_child.op = value_child.op->copy(_cxt_);
@@ -206,7 +206,7 @@ PPIterator* PPFnTrace::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnTrace::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnTrace::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnTrace::result");
 }

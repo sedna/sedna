@@ -26,14 +26,14 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPScan(variable_context *_cxt_, 
+    PPScan(dynamic_context *_cxt_, 
            schema_node *_scm_node_,
            counted_ptr<db_entity> _db_ent_);
     virtual ~PPScan();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

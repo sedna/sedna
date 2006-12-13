@@ -8,7 +8,7 @@
 #include "PPFtHighlight.h"
 #include "FTsearch.h"
 
-PPFtHighlight::PPFtHighlight(variable_context *_cxt_,
+PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                 PPOpIn _seq_,
 				PPOpIn _query_,
 				bool _hl_fragment_) :
@@ -114,7 +114,7 @@ void PPFtHighlight::next(tuple &t)
 	}
 }
 
-PPIterator*  PPFtHighlight::copy(variable_context *_cxt_)
+PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
 {
 	PPFtHighlight *res;
 	res = new PPFtHighlight(_cxt_, seq, query, hl_fragment);
@@ -124,7 +124,7 @@ PPIterator*  PPFtHighlight::copy(variable_context *_cxt_)
 	return res;
 }
 
-bool PPFtHighlight::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFtHighlight::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFtScan::result");
 }

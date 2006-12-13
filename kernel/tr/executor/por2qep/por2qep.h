@@ -14,7 +14,7 @@
 
 struct qep_subtree
 {
-    variable_context *cxt;
+    dynamic_context *cxt;
     PPOpIn tree;
 };
 

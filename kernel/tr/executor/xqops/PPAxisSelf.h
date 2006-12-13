@@ -38,10 +38,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t) ; 
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAxisSelf(variable_context *_cxt_,
+    PPAxisSelf(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);

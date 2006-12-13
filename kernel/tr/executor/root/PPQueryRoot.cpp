@@ -11,7 +11,7 @@
 #include "locks.h"
 
 
-PPQueryRoot::PPQueryRoot(variable_context *_cxt_,
+PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_,
                          se_ostream& _s_,
                          t_print _print_mode_) : PPQueryEssence(),
@@ -38,6 +38,7 @@ void PPQueryRoot::open()
 //    d_printf1("PPQueryRoot::open() begin\n");
     local_lock_mrg->lock(lm_s);
 	first=true;
+    dynamic_context::global_variables_open();
     child.op->open();
 	if (print_mode==sxml)
 	{
@@ -53,6 +54,7 @@ void PPQueryRoot::open()
 void PPQueryRoot::close()
 {
     child.op->close();
+    dynamic_context::global_variables_close();
 }
 
 bool PPQueryRoot::next()

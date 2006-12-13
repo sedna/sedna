@@ -26,10 +26,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnTrue(variable_context *_cxt_);
+    PPFnTrue(dynamic_context *_cxt_);
     virtual ~PPFnTrue();
 };
 
@@ -50,10 +50,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnFalse(variable_context *_cxt_);
+    PPFnFalse(dynamic_context *_cxt_);
     virtual ~PPFnFalse();
 };
 
@@ -78,10 +78,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnNot(variable_context *_cxt_, 
+    PPFnNot(dynamic_context *_cxt_, 
             PPOpIn _child_);
     virtual ~PPFnNot();
 };
@@ -105,10 +105,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnBoolean(variable_context *_cxt_,
+    PPFnBoolean(dynamic_context *_cxt_,
 				PPOpIn _child_);
     virtual ~PPFnBoolean();
 };

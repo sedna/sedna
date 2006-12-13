@@ -10,7 +10,7 @@
 
 
 
-PPScan::PPScan(variable_context *_cxt_, 
+PPScan::PPScan(dynamic_context *_cxt_, 
                schema_node *_scm_node_,
                counted_ptr<db_entity> _db_ent_) : PPIterator(_cxt_),
                                                   scm_node(_scm_node_),
@@ -71,13 +71,13 @@ void PPScan::next(tuple &t)
         t.copy(tuple_cell::node(res));
 }
 
-PPIterator* PPScan::copy(variable_context *_cxt_)
+PPIterator* PPScan::copy(dynamic_context *_cxt_)
 {
     PPScan *res = new PPScan(_cxt_, scm_node, db_ent);
     return res;
 }
 
-bool PPScan::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPScan::result");
 }

@@ -40,10 +40,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPNumericFuncs(variable_context *_cxt_,
+    PPNumericFuncs(dynamic_context *_cxt_,
                    PPOpIn _child_,
                    PPNumericFuncs::value_func _func_);
     virtual ~PPNumericFuncs();
@@ -71,13 +71,13 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnRoundHalfToEven(variable_context *_cxt_,
+    PPFnRoundHalfToEven(dynamic_context *_cxt_,
                         PPOpIn _child_arg_,
                         __int64 _precision_);
-    PPFnRoundHalfToEven(variable_context *_cxt_,
+    PPFnRoundHalfToEven(dynamic_context *_cxt_,
                         PPOpIn _child_arg_,
                         PPOpIn _child_p_);
     virtual ~PPFnRoundHalfToEven();

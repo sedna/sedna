@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnEmpty::PPFnEmpty(variable_context *_cxt_,
+PPFnEmpty::PPFnEmpty(dynamic_context *_cxt_,
                      PPOpIn _child_) : PPIterator(_cxt_),
                                        child(_child_)
 {
@@ -70,7 +70,7 @@ void PPFnEmpty::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnEmpty::copy(variable_context *_cxt_)
+PPIterator* PPFnEmpty::copy(dynamic_context *_cxt_)
 {
     PPFnEmpty *res = new PPFnEmpty(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -78,7 +78,7 @@ PPIterator* PPFnEmpty::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnEmpty::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnEmpty::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPFnEmpty*)cur)->children(child);
@@ -109,7 +109,7 @@ bool PPFnEmpty::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnExists::PPFnExists(variable_context *_cxt_,
+PPFnExists::PPFnExists(dynamic_context *_cxt_,
                        PPOpIn _child_) : PPIterator(_cxt_),
                                          child(_child_)
 {
@@ -160,7 +160,7 @@ void PPFnExists::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnExists::copy(variable_context *_cxt_)
+PPIterator* PPFnExists::copy(dynamic_context *_cxt_)
 {
     PPFnExists *res = new PPFnExists(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -168,7 +168,7 @@ PPIterator* PPFnExists::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnExists::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnExists::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPFnExists*)cur)->children(child);
@@ -197,7 +197,7 @@ bool PPFnExists::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPFnItemAt
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnItemAt::PPFnItemAt(variable_context *_cxt_,
+PPFnItemAt::PPFnItemAt(dynamic_context *_cxt_,
                        PPOpIn _seq_child_,
                        PPOpIn _pos_child_) : PPIterator(_cxt_),
                                              seq_child(_seq_child_),
@@ -272,7 +272,7 @@ void PPFnItemAt::next(tuple &t)
     }
 }
 
-PPIterator* PPFnItemAt::copy(variable_context *_cxt_)
+PPIterator* PPFnItemAt::copy(dynamic_context *_cxt_)
 {
     PPFnItemAt *res = new PPFnItemAt(_cxt_, seq_child, pos_child);
     res->seq_child.op = seq_child.op->copy(_cxt_);
@@ -281,7 +281,7 @@ PPIterator* PPFnItemAt::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnItemAt::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnItemAt::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn seq_child, pos_child;
     ((PPFnItemAt*)cur)->children(seq_child, pos_child);
@@ -331,13 +331,13 @@ bool PPFnItemAt::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
+PPFnDistinctValues::PPFnDistinctValues(dynamic_context *_cxt_,
                                        PPOpIn _child_) : PPIterator(_cxt_),
                                                          child(_child_)
 {
 }
 
-PPFnDistinctValues::PPFnDistinctValues(variable_context *_cxt_,
+PPFnDistinctValues::PPFnDistinctValues(dynamic_context *_cxt_,
                                        PPOpIn _child_,
                                        PPOpIn _collation_child_) : PPIterator(_cxt_),
                                                                    child(_child_),
@@ -460,7 +460,7 @@ void PPFnDistinctValues::next(tuple &t)
     }
 }
 
-PPIterator* PPFnDistinctValues::copy(variable_context *_cxt_)
+PPIterator* PPFnDistinctValues::copy(dynamic_context *_cxt_)
 {
     PPFnDistinctValues *res = new PPFnDistinctValues(_cxt_, child, collation_child);
     res->child.op = child.op->copy(_cxt_);
@@ -470,7 +470,7 @@ PPIterator* PPFnDistinctValues::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnDistinctValues::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnDistinctValues::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnDistinctValues::result");
 }
@@ -482,7 +482,7 @@ bool PPFnDistinctValues::result(PPIterator* cur, variable_context *cxt, void*& r
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnIndexOf::PPFnIndexOf(variable_context *_cxt_,
+PPFnIndexOf::PPFnIndexOf(dynamic_context *_cxt_,
                          PPOpIn _seq_child_,
                          PPOpIn _srch_child_) : PPIterator(_cxt_),
                                                 seq_child(_seq_child_),
@@ -490,7 +490,7 @@ PPFnIndexOf::PPFnIndexOf(variable_context *_cxt_,
 {
 }
 
-PPFnIndexOf::PPFnIndexOf(variable_context *_cxt_,
+PPFnIndexOf::PPFnIndexOf(dynamic_context *_cxt_,
                          PPOpIn _seq_child_,
                          PPOpIn _srch_child_,
                          PPOpIn _collation_child_) : PPIterator(_cxt_),
@@ -602,7 +602,7 @@ void PPFnIndexOf::next(tuple &t)
     t.copy(tuple_cell::atomic(pos));
 }
 
-PPIterator* PPFnIndexOf::copy(variable_context *_cxt_)
+PPIterator* PPFnIndexOf::copy(dynamic_context *_cxt_)
 {
     PPFnIndexOf *res = new PPFnIndexOf(_cxt_, seq_child, srch_child, collation_child);
     res->seq_child.op = seq_child.op->copy(_cxt_);
@@ -614,7 +614,7 @@ PPIterator* PPFnIndexOf::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnIndexOf::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnIndexOf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnIndexOf::result");
 }
@@ -626,7 +626,7 @@ bool PPFnIndexOf::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnReverse::PPFnReverse(variable_context *_cxt_,
+PPFnReverse::PPFnReverse(dynamic_context *_cxt_,
                          PPOpIn _child_) : PPIterator(_cxt_),
                                            child(_child_),
 								           s(NULL)
@@ -684,14 +684,14 @@ void PPFnReverse::next (tuple &t)
     }
 }
 
-PPIterator* PPFnReverse::copy(variable_context *_cxt_)
+PPIterator* PPFnReverse::copy(dynamic_context *_cxt_)
 {
     PPFnReverse *res = new PPFnReverse(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPFnReverse::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnReverse::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnReverse::result");
 }
@@ -703,7 +703,7 @@ bool PPFnReverse::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnSubsequence::PPFnSubsequence(variable_context *_cxt_,
+PPFnSubsequence::PPFnSubsequence(dynamic_context *_cxt_,
                                  PPOpIn _seq_child_,
                                  PPOpIn _start_child_) : PPIterator(_cxt_),
                                                          seq_child(_seq_child_),
@@ -712,7 +712,7 @@ PPFnSubsequence::PPFnSubsequence(variable_context *_cxt_,
 {
 }
 
-PPFnSubsequence::PPFnSubsequence(variable_context *_cxt_,
+PPFnSubsequence::PPFnSubsequence(dynamic_context *_cxt_,
                                  PPOpIn _seq_child_,
                                  PPOpIn _start_child_,
                                  PPOpIn _length_child_) : PPIterator(_cxt_),
@@ -817,7 +817,7 @@ void PPFnSubsequence::next(tuple &t)
     first_time = true; 
 }
 
-PPIterator* PPFnSubsequence::copy(variable_context *_cxt_)
+PPIterator* PPFnSubsequence::copy(dynamic_context *_cxt_)
 {
     PPFnSubsequence *res = is_length ? new PPFnSubsequence(_cxt_, seq_child, start_child, length_child) :
                                        new PPFnSubsequence(_cxt_, seq_child, start_child);
@@ -829,7 +829,7 @@ PPIterator* PPFnSubsequence::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnSubsequence::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnSubsequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnSubsequence::result");
 }
@@ -841,7 +841,7 @@ bool PPFnSubsequence::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnRemove::PPFnRemove(variable_context *_cxt_,
+PPFnRemove::PPFnRemove(dynamic_context *_cxt_,
                        PPOpIn _seq_child_,
                        PPOpIn _pos_child_) : PPIterator(_cxt_),
                                              seq_child(_seq_child_),
@@ -916,7 +916,7 @@ void PPFnRemove::next(tuple &t)
     if(t.is_eos()) first_time = true; 
 }
 
-PPIterator* PPFnRemove::copy(variable_context *_cxt_)
+PPIterator* PPFnRemove::copy(dynamic_context *_cxt_)
 {
     PPFnRemove *res =  new PPFnRemove(_cxt_, seq_child, pos_child);
                                 
@@ -926,7 +926,7 @@ PPIterator* PPFnRemove::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnRemove::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnRemove::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnRemove::result");
 }
@@ -938,7 +938,7 @@ bool PPFnRemove::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnInsertBefore::PPFnInsertBefore(variable_context *_cxt_,
+PPFnInsertBefore::PPFnInsertBefore(dynamic_context *_cxt_,
                                    PPOpIn _seq_child_,
                                    PPOpIn _pos_child_,
                                    PPOpIn _ins_child_) : PPIterator(_cxt_),
@@ -1035,7 +1035,7 @@ void PPFnInsertBefore::next(tuple &t)
     if(inserted && eos_reached) first_time = true;
 }
 
-PPIterator* PPFnInsertBefore::copy(variable_context *_cxt_)
+PPIterator* PPFnInsertBefore::copy(dynamic_context *_cxt_)
 {
     PPFnInsertBefore *res =  new PPFnInsertBefore(_cxt_, seq_child, pos_child, ins_child);
                                 
@@ -1046,7 +1046,7 @@ PPIterator* PPFnInsertBefore::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnInsertBefore::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnInsertBefore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnInsertBefore::result");
 }
@@ -1058,7 +1058,7 @@ bool PPFnInsertBefore::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnZeroOrOne::PPFnZeroOrOne(variable_context *_cxt_,
+PPFnZeroOrOne::PPFnZeroOrOne(dynamic_context *_cxt_,
                              PPOpIn _child_) : PPIterator(_cxt_),
                                                child(_child_)
 {
@@ -1108,7 +1108,7 @@ void PPFnZeroOrOne::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnZeroOrOne::copy(variable_context *_cxt_)
+PPIterator* PPFnZeroOrOne::copy(dynamic_context *_cxt_)
 {
     PPFnZeroOrOne *res = new PPFnZeroOrOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -1116,7 +1116,7 @@ PPIterator* PPFnZeroOrOne::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnZeroOrOne::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnZeroOrOne::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnZeroOrOne::result");
 }
@@ -1128,7 +1128,7 @@ bool PPFnZeroOrOne::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnOneOrMore::PPFnOneOrMore(variable_context *_cxt_,
+PPFnOneOrMore::PPFnOneOrMore(dynamic_context *_cxt_,
                              PPOpIn _child_) : PPIterator(_cxt_),
                                                child(_child_)
 {
@@ -1168,7 +1168,7 @@ void PPFnOneOrMore::next  (tuple &t)
     else first_time = false;
 }
 
-PPIterator* PPFnOneOrMore::copy(variable_context *_cxt_)
+PPIterator* PPFnOneOrMore::copy(dynamic_context *_cxt_)
 {
     PPFnOneOrMore *res = new PPFnOneOrMore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -1176,7 +1176,7 @@ PPIterator* PPFnOneOrMore::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnOneOrMore::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnOneOrMore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnOneOrMore::result");
 }
@@ -1188,7 +1188,7 @@ bool PPFnOneOrMore::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnExactlyOne::PPFnExactlyOne(variable_context *_cxt_,
+PPFnExactlyOne::PPFnExactlyOne(dynamic_context *_cxt_,
                                PPOpIn _child_) : PPIterator(_cxt_),
                                                  child(_child_)
 {
@@ -1236,7 +1236,7 @@ void PPFnExactlyOne::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnExactlyOne::copy(variable_context *_cxt_)
+PPIterator* PPFnExactlyOne::copy(dynamic_context *_cxt_)
 {
     PPFnExactlyOne *res = new PPFnExactlyOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -1244,7 +1244,7 @@ PPIterator* PPFnExactlyOne::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnExactlyOne::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnExactlyOne::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnExactlyOne::result");
 }

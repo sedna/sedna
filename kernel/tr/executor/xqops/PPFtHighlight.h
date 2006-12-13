@@ -30,16 +30,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFtHighlight(variable_context *_cxt_,
+    PPFtHighlight(dynamic_context *_cxt_,
                 PPOpIn _seq_,
                 PPOpIn _query_,
 				bool _hl_fragment_);
 
     virtual ~PPFtHighlight();
 
-	static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

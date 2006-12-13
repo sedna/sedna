@@ -17,7 +17,7 @@ using namespace tr_globals;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAxisSelf::PPAxisSelf(variable_context *_cxt_, 
+PPAxisSelf::PPAxisSelf(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_) : PPIterator(_cxt_),
@@ -51,13 +51,13 @@ void PPAxisSelf::close ()
 }
 
 
-bool PPAxisSelf::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisSelf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	return true;
 }
 
 
-PPIterator* PPAxisSelf::copy(variable_context *_cxt_)
+PPIterator* PPAxisSelf::copy(dynamic_context *_cxt_)
 {
     PPAxisSelf *res = new PPAxisSelf(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);

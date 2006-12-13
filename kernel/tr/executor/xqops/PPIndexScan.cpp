@@ -13,7 +13,7 @@
 #include "casting_operations.h"
 
 
-PPIndexScan::PPIndexScan(variable_context *_cxt_, 
+PPIndexScan::PPIndexScan(dynamic_context *_cxt_, 
                          const std::string &_index_name_,
                          const tuple_cell& _tc_,
                          const tuple_cell& _tc2_,
@@ -27,7 +27,7 @@ PPIndexScan::PPIndexScan(variable_context *_cxt_,
 {
 }
 
-PPIndexScan::PPIndexScan(variable_context *_cxt_,
+PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          const std::string &_index_name_,
                          PPOpIn _child_,
                          const tuple_cell& _tc2_,
@@ -40,7 +40,7 @@ PPIndexScan::PPIndexScan(variable_context *_cxt_,
 {
 }
 
-PPIndexScan::PPIndexScan(variable_context *_cxt_,
+PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          const std::string &_index_name_,
                          const tuple_cell& _tc_,
                          PPOpIn _child2_,
@@ -53,7 +53,7 @@ PPIndexScan::PPIndexScan(variable_context *_cxt_,
 {
 }
 
-PPIndexScan::PPIndexScan(variable_context *_cxt_,
+PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
                          const std::string &_index_name_,
                          PPOpIn _child_,
                          PPOpIn _child2_,
@@ -273,7 +273,7 @@ void PPIndexScan::next_between(tuple &t)
     DEREF_AND_SET
 }
 
-PPIterator* PPIndexScan::copy(variable_context *_cxt_)
+PPIterator* PPIndexScan::copy(dynamic_context *_cxt_)
 {
     PPIndexScan *res = NULL;
 
@@ -301,7 +301,7 @@ PPIterator* PPIndexScan::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPIndexScan::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPIndexScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPIndexScan::result");
 }

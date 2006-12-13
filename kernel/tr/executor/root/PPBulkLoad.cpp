@@ -44,6 +44,7 @@ void PPBulkLoad::open()
 {
     local_lock_mrg->lock(lm_x);
 
+    dynamic_context::global_variables_open();
     filename.op->open();
     document.op->open();
     if (collection.op) collection.op->open();
@@ -54,6 +55,7 @@ void PPBulkLoad::close()
     filename.op->close();
     document.op->close();
     if (collection.op) collection.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPBulkLoad::execute()

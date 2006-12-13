@@ -10,7 +10,7 @@
 #include "locks.h"
 
 PPRename::PPRename(PPOpIn _child_, 
-                   variable_context *_cxt_,
+                   dynamic_context *_cxt_,
                    const char *_ncname_prefix_,
                    const char *_ncname_local_) : PPUpdate(),
                                                  child(_child_),
@@ -31,12 +31,14 @@ PPRename::~PPRename()
 void PPRename::open()
 {
     local_lock_mrg->lock(lm_x);
+    dynamic_context::global_variables_open();
     child.op->open();
 }
 
 void PPRename::close()
 {
     child.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPRename::execute()

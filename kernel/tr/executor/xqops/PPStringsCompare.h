@@ -29,15 +29,15 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnCompare(variable_context *_cxt_, 
+    PPFnCompare(dynamic_context *_cxt_, 
                 PPOpIn _str1_child_,
                 PPOpIn _str2_child_,
                 bool _is_codepoint_equal_ = false);
 
-    PPFnCompare(variable_context *_cxt_, 
+    PPFnCompare(dynamic_context *_cxt_, 
                 PPOpIn _str1_child_,
                 PPOpIn _str2_child_,
                 PPOpIn _collation_child_);

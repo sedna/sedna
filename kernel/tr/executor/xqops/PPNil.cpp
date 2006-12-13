@@ -6,7 +6,7 @@
 #include "sedna.h"
 #include "PPNil.h"
 
-PPNil::PPNil(variable_context *_cxt_) : PPIterator(_cxt_)
+PPNil::PPNil(dynamic_context *_cxt_) : PPIterator(_cxt_)
 {
 }
 
@@ -31,13 +31,13 @@ void PPNil::next(tuple &t)
     t.set_eos();
 }
 
-PPIterator* PPNil::copy(variable_context *_cxt_)
+PPIterator* PPNil::copy(dynamic_context *_cxt_)
 {
     PPNil *res = new PPNil(_cxt_);
     return res;
 }
 
-bool PPNil::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPNil::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     r = new sequence(1);
     return true;

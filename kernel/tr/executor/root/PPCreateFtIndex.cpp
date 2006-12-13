@@ -55,6 +55,7 @@ PPCreateFtIndex::~PPCreateFtIndex()
 void PPCreateFtIndex::open()
 {
     root = get_schema_node(db_ent, "Unknown entity passed to PPCreateIndex");
+    dynamic_context::global_variables_open();
     index_name.op->open();
 	if (cust_rules.op)
 		cust_rules.op->open();
@@ -66,6 +67,7 @@ void PPCreateFtIndex::close()
     root = NULL;
 	if (cust_rules.op)
 		cust_rules.op->close();
+    dynamic_context::global_variables_close();
 }
 
 

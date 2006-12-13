@@ -9,7 +9,7 @@
 #include "FTsearch.h"
 #include "PPCreateFtIndex.h"
 
-PPFtScan::PPFtScan(variable_context *_cxt_,
+PPFtScan::PPFtScan(dynamic_context *_cxt_,
                 PPOpIn _seq_,
 				PPOpIn _query_,
 				PPOpIn _index_type_,
@@ -23,7 +23,7 @@ PPFtScan::PPFtScan(variable_context *_cxt_,
 {
 }
 
-PPFtScan::PPFtScan(variable_context *_cxt_,
+PPFtScan::PPFtScan(dynamic_context *_cxt_,
                 PPOpIn _seq_,
 				PPOpIn _query_,
 				PPOpIn _index_type_) :
@@ -175,7 +175,7 @@ void PPFtScan::next(tuple &t)
 	}
 }
 
-PPIterator*  PPFtScan::copy(variable_context *_cxt_)
+PPIterator*  PPFtScan::copy(dynamic_context *_cxt_)
 {
 	PPFtScan *res;
 	if (cust_rules.op)
@@ -191,7 +191,7 @@ PPIterator*  PPFtScan::copy(variable_context *_cxt_)
 	return res;
 }
 
-bool PPFtScan::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFtScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFtScan::result");
 }

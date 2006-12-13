@@ -37,26 +37,26 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	static void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
-    PPGeneralComparison(variable_context *_cxt_, 
+    PPGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_);
     virtual ~PPGeneralComparison();
 	////////////////////////////////////////////////////////////////////////////
     /// FACTORIES FOR General Comparisons
     ////////////////////////////////////////////////////////////////////////////
-    static PPGeneralComparison* PPGTGeneralComparison(variable_context *_cxt_, 
+    static PPGeneralComparison* PPGTGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPLTGeneralComparison(variable_context *_cxt_, 
+	static PPGeneralComparison* PPLTGeneralComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPGEGeneralComparison(variable_context *_cxt_, 
+	static PPGeneralComparison* PPGEGeneralComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPLEGeneralComparison(variable_context *_cxt_, 
+	static PPGeneralComparison* PPLEGeneralComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPNEGeneralComparison(variable_context *_cxt_, 
+	static PPGeneralComparison* PPNEGeneralComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
-	static PPGeneralComparison* PPEQGeneralComparison(variable_context *_cxt_, 
+	static PPGeneralComparison* PPEQGeneralComparison(dynamic_context *_cxt_, 
 		PPOpIn _seq1_, PPOpIn _seq2_); 
 
 };
@@ -100,19 +100,19 @@ protected:
 	bool compare_minmax(xmlscm_type type_info,bool min_changed);
 	bool compare_minmax_le(xmlscm_type type_info,bool min_changed);
 public:
-		PPLMGeneralComparison(variable_context *_cxt_, 
+		PPLMGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_, bool _more_);
-		PPLMGeneralComparison(variable_context *_cxt_, 
+		PPLMGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_, bool _more_,bool strict);
-		virtual PPIterator* copy(variable_context *_cxt_);
+		virtual PPIterator* copy(dynamic_context *_cxt_);
 		virtual void next   (tuple &t);
 };
 class PPNEQGeneralComparison : public PPGeneralComparison
 {
 public:
-	//virtual PPIterator* copy(variable_context *_cxt_);
+	//virtual PPIterator* copy(dynamic_context *_cxt_);
 	virtual void next   (tuple &t);
-	PPNEQGeneralComparison(variable_context *_cxt_, 
+	PPNEQGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_);
 
 };
@@ -120,11 +120,11 @@ public:
 class PPEQLGeneralComparison : public PPGeneralComparison
 {
 public:
-	//virtual PPIterator* copy(variable_context *_cxt_);
+	//virtual PPIterator* copy(dynamic_context *_cxt_);
 	virtual void next   (tuple &t);
-	PPEQLGeneralComparison(variable_context *_cxt_, 
+	PPEQLGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_);
-	virtual PPIterator* copy(variable_context *_cxt_);
+	virtual PPIterator* copy(dynamic_context *_cxt_);
 
 };
 

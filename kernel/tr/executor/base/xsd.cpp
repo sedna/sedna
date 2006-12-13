@@ -8,6 +8,7 @@
 #include "xsd.h"
 #include "schema.h"
 #include "PPBase.h"
+#include "xs_names.h"
 
 
 ///
@@ -117,7 +118,7 @@ char *xs_QName_create(const char* uri,
     int pos = 0;
     if (!uri) uri = "";
 
-    // FIXME: check lexical representation
+    // XQuery spec doesn't say that we have to check lexical representation for uri (AF)
 
     // separate prefix and local name 
     pos = _xs_QName_separator_position(prefix_and_local);
@@ -126,9 +127,16 @@ char *xs_QName_create(const char* uri,
     else 
         local = prefix_and_local;
 
+    if (!chech_constraints_for_xs_NCName(local))
+        throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
     if (*uri) // uri is present
+    {
+        if (!chech_constraints_for_xs_NCName(prefix_and_local, pos))
+            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+
         xmlns = tr_globals::st_ct.get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
+    }
     else
     { // uri is empty...
         if (pos) // ... and prefix is not empty
@@ -138,6 +146,56 @@ char *xs_QName_create(const char* uri,
 
     return xs_QName_create(xmlns, local, alloc_func);
 }
+
+char *xs_QName_create(const char* prefix_and_local,
+                      const xptr& elem_node,
+                      void* (*alloc_func)(size_t))
+{
+    U_ASSERT(prefix_and_local);
+
+    // separate prefix and local name 
+    int pos = _xs_QName_separator_position(prefix_and_local);
+
+    const char *src_prefix = NULL;
+    const char *src_local  = NULL;
+    if (!pos)
+    {
+        src_prefix = "";
+        pos = 1;
+        src_local = prefix_and_local;
+    }
+    else
+    {
+        src_prefix = prefix_and_local;
+        src_local  = prefix_and_local + pos + 1;
+
+        if (!chech_constraints_for_xs_NCName(src_prefix, pos))
+            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
+    }
+
+    if (!chech_constraints_for_xs_NCName(src_local))
+        throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
+
+    std::vector<xml_ns*> xmlns;
+    get_in_scope_namespaces(elem_node, xmlns);
+    const char *tgt_prefix = NULL;
+
+    for (int i = 0; i < xmlns.size(); i++)
+    {
+        tgt_prefix = xmlns[i]->prefix ? xmlns[i]->prefix : "";
+        if (strncmp(tgt_prefix, src_prefix, pos) == 0)
+        {
+            return xs_QName_create(xmlns[i], src_local, alloc_func);
+        }
+    }
+
+    if (src_local == prefix_and_local)
+        return xs_QName_create((xml_ns*)NULL, src_local, alloc_func);
+
+    throw USER_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
+}
+
+
 
 void xs_QName_release(char *qname, void (*free_func)(void*))
 {

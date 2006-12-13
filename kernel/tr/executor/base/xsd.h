@@ -10,6 +10,7 @@
 #include "sedna.h"
 
 #include <iostream>
+#include "xptr.h"
 
 
 /**
@@ -99,13 +100,18 @@ struct xml_ns;
 char *xs_QName_create(xml_ns* xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t));
-// backups xs:QName() function (prefix_and_local constains prefix and local part separated by ':')
+// backs up xs:QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* prefix_and_local, 
                       void* (*alloc_func)(size_t));
-// backups fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
+// backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t));
+// backs up fn:resolve-QName() function (prefix_and_local constains prefix and local part separated by ':')
+char *xs_QName_create(const char* prefix_and_local,
+                      const xptr& elem_node,
+                      void* (*alloc_func)(size_t));
+
 
 void  xs_QName_release(char *qname, void (*free_func)(void*));
 const char *xs_QName_get_prefix(const char* qname);

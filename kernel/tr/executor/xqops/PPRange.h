@@ -28,10 +28,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	int getIntFromOp(PPOpIn & op);
-    PPRange(variable_context *_cxt_,
+    PPRange(dynamic_context *_cxt_,
                const PPOpIn &_start_,const PPOpIn &_end_);
     virtual ~PPRange();
 };

@@ -34,12 +34,14 @@ void PPRetrieveMetadata::open()
 {
     local_lock_mrg->lock(lm_s);
 
+    dynamic_context::global_variables_open();
     if (collection.op) collection.op->open();
 }
 
 void PPRetrieveMetadata::close()
 {
     if (collection.op) collection.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPRetrieveMetadata::execute()

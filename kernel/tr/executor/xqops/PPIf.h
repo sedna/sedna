@@ -19,7 +19,7 @@ private:
 
     bool eos_reached;
 
-    PPIf(variable_context *_cxt_,
+    PPIf(dynamic_context *_cxt_,
          PPOpIn _if_child_, 
          PPOpIn _then_child_, 
          PPOpIn _else_child_,
@@ -41,15 +41,15 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPIf(variable_context *_cxt_,
+    PPIf(dynamic_context *_cxt_,
          PPOpIn _if_child_, 
          PPOpIn _then_child_, 
          PPOpIn _else_child_);
     virtual ~PPIf();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

@@ -105,7 +105,7 @@ protected:
 	bool handle_manager_carrier;
 
 public:
-	PPFnSQLBase(variable_context *_cxt_);
+	PPFnSQLBase(dynamic_context *_cxt_);
 };
 
 
@@ -123,9 +123,9 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFnSQLConnect(variable_context *_cxt_, const arr_of_PPOpIn &arr);
+    PPFnSQLConnect(dynamic_context *_cxt_, const arr_of_PPOpIn &arr);
     virtual ~PPFnSQLConnect();
 };
 
@@ -148,9 +148,9 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFnSQLExecute(variable_context *_cxt_, const arr_of_PPOpIn &arr, bool _exec_update_);
+    PPFnSQLExecute(dynamic_context *_cxt_, const arr_of_PPOpIn &arr, bool _exec_update_);
     virtual ~PPFnSQLExecute();
 };
 
@@ -168,11 +168,11 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-	PPFnSQLPrepare(variable_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
+	PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
 		PPOpIn _options_);
-	PPFnSQLPrepare(variable_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_);
+	PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_);
     virtual ~PPFnSQLPrepare();
 };
 
@@ -187,8 +187,8 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-	PPFnSQLClose(variable_context *_cxt_, PPOpIn _connection_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+	PPFnSQLClose(dynamic_context *_cxt_, PPOpIn _connection_);
     virtual ~PPFnSQLClose();
 };
 
@@ -203,8 +203,8 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-	PPFnSQLCommit(variable_context *_cxt_, PPOpIn _connection_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+	PPFnSQLCommit(dynamic_context *_cxt_, PPOpIn _connection_);
     virtual ~PPFnSQLCommit();
 };
 
@@ -219,8 +219,8 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-	PPFnSQLRollback(variable_context *_cxt_, PPOpIn _connection_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+	PPFnSQLRollback(dynamic_context *_cxt_, PPOpIn _connection_);
     virtual ~PPFnSQLRollback();
 };
 

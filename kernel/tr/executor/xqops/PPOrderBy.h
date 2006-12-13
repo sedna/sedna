@@ -159,16 +159,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPOrderBy(variable_context *_cxt_,
+    PPOrderBy(dynamic_context *_cxt_,
               bool _stable_,
               PPOpIn _child_,
               arr_of_orb_modifier _modifiers_,
               int _data_size_);
     virtual ~PPOrderBy();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

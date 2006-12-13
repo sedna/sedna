@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFuncNoParam
 ///////////////////////////////////////////////////////////////////////////////
-PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(variable_context *_cxt_,int _dateTimeFunc_) : PPIterator(_cxt_), dateTimeFunc(_dateTimeFunc_)
+PPFnDateTimeFuncNoParam::PPFnDateTimeFuncNoParam(dynamic_context *_cxt_,int _dateTimeFunc_) : PPIterator(_cxt_), dateTimeFunc(_dateTimeFunc_)
 {
 }
 
@@ -60,13 +60,13 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnDateTimeFuncNoParam::copy(variable_context *_cxt_)
+PPIterator* PPFnDateTimeFuncNoParam::copy(dynamic_context *_cxt_)
 {
     PPFnDateTimeFuncNoParam *res = new PPFnDateTimeFuncNoParam(_cxt_,dateTimeFunc);
     return res;
 }
 
-bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFuncNoParam::result");
 }
@@ -74,7 +74,7 @@ bool PPFnDateTimeFuncNoParam::result(PPIterator* cur, variable_context *cxt, voi
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc
 ///////////////////////////////////////////////////////////////////////////////
-PPFnDateTimeFunc::PPFnDateTimeFunc(variable_context *_cxt_,
+PPFnDateTimeFunc::PPFnDateTimeFunc(dynamic_context *_cxt_,
                                    PPOpIn _child_, 
                                    int _dateTimeFunc_,
                                    xmlscm_type _expected_type_) : PPIterator(_cxt_),
@@ -279,7 +279,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnDateTimeFunc::copy(variable_context *_cxt_)
+PPIterator* PPFnDateTimeFunc::copy(dynamic_context *_cxt_)
 {
     PPFnDateTimeFunc *res = new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc, expected_type);
     res->child.op = child.op->copy(_cxt_);
@@ -287,7 +287,7 @@ PPIterator* PPFnDateTimeFunc::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnDateTimeFunc::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnDateTimeFunc::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFunc::result");
 }
@@ -295,7 +295,7 @@ bool PPFnDateTimeFunc::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFunc2Params
 ///////////////////////////////////////////////////////////////////////////////
-PPFnDateTimeFunc2Params::PPFnDateTimeFunc2Params(variable_context *_cxt_,
+PPFnDateTimeFunc2Params::PPFnDateTimeFunc2Params(dynamic_context *_cxt_,
                                    PPOpIn _child1_, PPOpIn _child2_, int _dateTimeFunc_) : PPIterator(_cxt_),
                                                      child1(_child1_), child2(_child2_),
 							dateTimeFunc(_dateTimeFunc_)
@@ -411,7 +411,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnDateTimeFunc2Params::copy(variable_context *_cxt_)
+PPIterator* PPFnDateTimeFunc2Params::copy(dynamic_context *_cxt_)
 {
     PPFnDateTimeFunc2Params *res = new PPFnDateTimeFunc2Params(_cxt_, child1, child2,dateTimeFunc);
     res->child1.op = child1.op->copy(_cxt_);
@@ -420,7 +420,7 @@ PPIterator* PPFnDateTimeFunc2Params::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnDateTimeFunc2Params::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnDateTimeFunc2Params::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDateTimeFunc::result");
 }

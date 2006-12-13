@@ -46,7 +46,7 @@ void PPExtFunCall::next(tuple &t)
 		first_time = true;
 }
 
-PPIterator* PPExtFunCall::copy(variable_context *_cxt_)
+PPIterator* PPExtFunCall::copy(dynamic_context *_cxt_)
 {
 	PPExtFunCall *res = new PPExtFunCall(_cxt_, arr, func->copy());
 
@@ -56,7 +56,7 @@ PPIterator* PPExtFunCall::copy(variable_context *_cxt_)
 	return res;
 }
 
-PPExtFunCall::PPExtFunCall(variable_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_)
+PPExtFunCall::PPExtFunCall(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_)
 		: PPIterator(_cxt_), arr(_arr_), func(_func_)
 {
 }

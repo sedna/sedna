@@ -45,7 +45,7 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPOrderBy::PPOrderBy(variable_context *_cxt_,
+PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
                      bool _stable_,
                      PPOpIn _child_,
                      arr_of_orb_modifier _modifiers_,
@@ -222,7 +222,7 @@ void PPOrderBy::next  (tuple &t)
     }
 }
 
-PPIterator* PPOrderBy::copy(variable_context *_cxt_)
+PPIterator* PPOrderBy::copy(dynamic_context *_cxt_)
 {
     PPOrderBy *res = new PPOrderBy(_cxt_, 
                                    stable, 
@@ -234,7 +234,7 @@ PPIterator* PPOrderBy::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPOrderBy::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPOrderBy::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPOrderBy::result");
 }

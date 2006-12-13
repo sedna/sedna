@@ -15,7 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPCast::PPCast(variable_context *_cxt_,
+PPCast::PPCast(dynamic_context *_cxt_,
                PPOpIn _child_,
                xmlscm_type _target_type_,
                bool _can_be_empty_seq_) : PPIterator(_cxt_),
@@ -78,7 +78,7 @@ void PPCast::next  (tuple &t)
     }
 }
 
-PPIterator* PPCast::copy(variable_context *_cxt_)
+PPIterator* PPCast::copy(dynamic_context *_cxt_)
 {
     PPCast *res = new PPCast(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
@@ -86,7 +86,7 @@ PPIterator* PPCast::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPCast::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPCast::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPCast*)cur)->children(child);
@@ -142,7 +142,7 @@ bool PPCast::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-PPCastable::PPCastable(variable_context *_cxt_,
+PPCastable::PPCastable(dynamic_context *_cxt_,
                PPOpIn _child_,
                xmlscm_type _target_type_,
                bool _can_be_empty_seq_) : PPIterator(_cxt_),
@@ -205,7 +205,7 @@ void PPCastable::next  (tuple &t)
     }
 }
 
-PPIterator* PPCastable::copy(variable_context *_cxt_)
+PPIterator* PPCastable::copy(dynamic_context *_cxt_)
 {
     PPCastable *res = new PPCastable(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
@@ -213,7 +213,7 @@ PPIterator* PPCastable::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPCastable::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPCastable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPCastable::result");
 }
@@ -233,7 +233,7 @@ bool PPCastable::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPInstanceOf::PPInstanceOf(variable_context *_cxt_,
+PPInstanceOf::PPInstanceOf(dynamic_context *_cxt_,
                            PPOpIn _child_,
                            const sequence_type& _st_) : PPIterator(_cxt_),
                                                         child(_child_),
@@ -287,7 +287,7 @@ void PPInstanceOf::next  (tuple &t)
     }
 }
 
-PPIterator* PPInstanceOf::copy(variable_context *_cxt_)
+PPIterator* PPInstanceOf::copy(dynamic_context *_cxt_)
 {
     PPInstanceOf *res = new PPInstanceOf(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
@@ -295,7 +295,7 @@ PPIterator* PPInstanceOf::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPInstanceOf::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPInstanceOf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPInstanceOf::result");
 }
@@ -315,7 +315,7 @@ bool PPInstanceOf::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPTreat::PPTreat(variable_context *_cxt_,
+PPTreat::PPTreat(dynamic_context *_cxt_,
                  PPOpIn _child_,
                  const sequence_type& _st_) : PPIterator(_cxt_),
                                               child(_child_),
@@ -381,7 +381,7 @@ void PPTreat::next(tuple &t)
     pos=0;
 }
 
-PPIterator* PPTreat::copy(variable_context *_cxt_)
+PPIterator* PPTreat::copy(dynamic_context *_cxt_)
 {
     PPTreat *res = new PPTreat(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
@@ -389,7 +389,7 @@ PPIterator* PPTreat::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPTreat::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPTreat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPTreat::result");
 }
@@ -409,7 +409,7 @@ bool PPTreat::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPTypeswitch::PPTypeswitch(variable_context *_cxt_,
+PPTypeswitch::PPTypeswitch(dynamic_context *_cxt_,
                            arr_of_var_dsc _var_dscs_, 
                            PPOpIn _source_child_, 
                            const arr_of_sequence_type& _types_,
@@ -454,7 +454,7 @@ void PPTypeswitch::open ()
     
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
         p.cvc = new complex_var_consumption;
@@ -530,7 +530,7 @@ void PPTypeswitch::next(tuple &t)
     }
 }
 
-PPIterator* PPTypeswitch::copy(variable_context *_cxt_)
+PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
 {
     PPTypeswitch *res = new PPTypeswitch(_cxt_, 
                                          var_dscs, 
@@ -550,14 +550,14 @@ PPIterator* PPTypeswitch::copy(variable_context *_cxt_)
 
 var_c_id PPTypeswitch::register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(cxt->producers[dsc].cvc);
+    complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
 
     if (cvc[id] < s->size())
@@ -594,19 +594,23 @@ void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].svc->at(id) = 0;
+    cxt->var_cxt.producers[dsc].svc->at(id) = 0;
+}
+
+void PPTypeswitch::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPTypeswitch::reinit_consumer_table()
 {
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }
 
-bool PPTypeswitch::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPTypeswitch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPTypeswitch::result");
 }

@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnName::PPFnName(variable_context *_cxt_,
+PPFnName::PPFnName(dynamic_context *_cxt_,
                    PPOpIn _child_) : PPIterator(_cxt_),
                                      child(_child_)
 {
@@ -84,7 +84,7 @@ void PPFnName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnName::copy(variable_context *_cxt_)
+PPIterator* PPFnName::copy(dynamic_context *_cxt_)
 {
     PPFnName *res = new PPFnName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -92,7 +92,7 @@ PPIterator* PPFnName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPFnName*)cur)->children(child);
@@ -130,7 +130,7 @@ bool PPFnName::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnLocalName::PPFnLocalName(variable_context *_cxt_,
+PPFnLocalName::PPFnLocalName(dynamic_context *_cxt_,
                              PPOpIn _child_) : PPIterator(_cxt_),
                                                child(_child_)
 {
@@ -197,7 +197,7 @@ void PPFnLocalName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnLocalName::copy(variable_context *_cxt_)
+PPIterator* PPFnLocalName::copy(dynamic_context *_cxt_)
 {
     PPFnLocalName *res = new PPFnLocalName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -205,7 +205,7 @@ PPIterator* PPFnLocalName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnLocalName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnLocalName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnLocalName::result");
 }
@@ -217,7 +217,7 @@ bool PPFnLocalName::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnNamespaceUri::PPFnNamespaceUri(variable_context *_cxt_,
+PPFnNamespaceUri::PPFnNamespaceUri(dynamic_context *_cxt_,
                                    PPOpIn _child_) : PPIterator(_cxt_),
                                                      child(_child_)
 {
@@ -283,7 +283,7 @@ void PPFnNamespaceUri::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnNamespaceUri::copy(variable_context *_cxt_)
+PPIterator* PPFnNamespaceUri::copy(dynamic_context *_cxt_)
 {
     PPFnNamespaceUri *res = new PPFnNamespaceUri(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -291,7 +291,7 @@ PPIterator* PPFnNamespaceUri::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnNamespaceUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnNamespaceUri::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUri::result");
 }
@@ -304,7 +304,7 @@ bool PPFnNamespaceUri::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnNumber::PPFnNumber(variable_context *_cxt_,
+PPFnNumber::PPFnNumber(dynamic_context *_cxt_,
                        PPOpIn _child_) : PPIterator(_cxt_),
                                          child(_child_)
 {
@@ -375,7 +375,7 @@ void PPFnNumber::next(tuple &t)
     }
 }
 
-PPIterator* PPFnNumber::copy(variable_context *_cxt_)
+PPIterator* PPFnNumber::copy(dynamic_context *_cxt_)
 {
     PPFnNumber *res = new PPFnNumber(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -383,7 +383,7 @@ PPIterator* PPFnNumber::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnNumber::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnNumber::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNumber::result");
 }
@@ -394,7 +394,7 @@ bool PPFnNumber::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnRoot::PPFnRoot(variable_context *_cxt_,
+PPFnRoot::PPFnRoot(dynamic_context *_cxt_,
                    PPOpIn _child_) : PPIterator(_cxt_),
                                      child(_child_)
 {
@@ -449,7 +449,7 @@ void PPFnRoot::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnRoot::copy(variable_context *_cxt_)
+PPIterator* PPFnRoot::copy(dynamic_context *_cxt_)
 {
     PPFnRoot *res = new PPFnRoot(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -457,7 +457,7 @@ PPIterator* PPFnRoot::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnRoot::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnRoot::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnRoot::result");
 }

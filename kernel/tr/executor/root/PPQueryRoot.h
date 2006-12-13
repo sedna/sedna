@@ -20,13 +20,13 @@ private:
     PPOpIn child;
     tuple data;
     se_ostream& s;
-    variable_context *cxt;
+    dynamic_context *cxt;
     t_print print_mode;
 	bool first;
 
 
 public:
-    PPQueryRoot(variable_context *_cxt_,
+    PPQueryRoot(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 se_ostream& _s_,
                 t_print _print_mode_);

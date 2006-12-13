@@ -13,7 +13,7 @@
 
 using namespace std;
 
-PPSequence::PPSequence(variable_context *_cxt_,
+PPSequence::PPSequence(dynamic_context *_cxt_,
                        const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_),
                                                         ch_arr(_ch_arr_)
 {
@@ -72,7 +72,7 @@ void PPSequence::next(tuple &t)
     it = 0;
 }
 
-PPIterator* PPSequence::copy(variable_context *_cxt_)
+PPIterator* PPSequence::copy(dynamic_context *_cxt_)
 {
     PPSequence *res = new PPSequence(_cxt_, ch_arr);
 
@@ -82,7 +82,7 @@ PPIterator* PPSequence::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPSequence::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     arr_of_PPOpIn ch_arr;
     ((PPSequence*)cur)->children(ch_arr);

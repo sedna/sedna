@@ -32,10 +32,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPDmStringValue(variable_context *_cxt_,
+    PPDmStringValue(dynamic_context *_cxt_,
                     PPOpIn _child_);
     virtual ~PPDmStringValue();
 };
@@ -59,10 +59,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPDmTypedValue(variable_context *_cxt_,
+    PPDmTypedValue(dynamic_context *_cxt_,
                    PPOpIn _child_);
     virtual ~PPDmTypedValue();
 };
@@ -86,10 +86,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPDmDocumentURI(variable_context *_cxt_,
+    PPDmDocumentURI(dynamic_context *_cxt_,
                     PPOpIn _child_);
     virtual ~PPDmDocumentURI();
 };

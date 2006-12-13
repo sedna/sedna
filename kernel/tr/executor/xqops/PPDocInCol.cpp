@@ -10,7 +10,7 @@
 #include "metadata.h"
 #include "PPUtils.h"
 
-PPDocInCol::PPDocInCol(variable_context *_cxt_, 
+PPDocInCol::PPDocInCol(dynamic_context *_cxt_, 
                        PPOpIn _col_name_op_,
                        PPOpIn _doc_name_op_) : PPIterator(_cxt_),
                                                col_name_op(_col_name_op_),
@@ -99,7 +99,7 @@ void PPDocInCol::next(tuple &t)
     }
 }
 
-PPIterator* PPDocInCol::copy(variable_context *_cxt_)
+PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)
 {
     PPDocInCol *res = new PPDocInCol(_cxt_, col_name_op, doc_name_op);
     res->col_name_op.op = col_name_op.op->copy(_cxt_);
@@ -107,7 +107,7 @@ PPIterator* PPDocInCol::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDocInCol::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDocInCol::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     return true;
 }

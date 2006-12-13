@@ -15,7 +15,7 @@
 class PPRename : public PPUpdate
 {
     PPOpIn child;
-    variable_context *cxt;
+    dynamic_context *cxt;
     const char *ncname_prefix;
     const char *ncname_local;
 
@@ -25,7 +25,7 @@ public:
     void execute();
 
     PPRename(PPOpIn _child_, 
-             variable_context *_cxt_,
+             dynamic_context *_cxt_,
              const char *_ncname_prefix_,
              const char *_ncname_local_);
     ~PPRename();

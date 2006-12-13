@@ -47,7 +47,7 @@ protected:
     virtual void next_wildcard_star_ncname		(tuple &t);
     virtual void next_function_call				(tuple &t);
 	void next_var_name					(tuple &t);
-	PPAxisAncestor(variable_context *_cxt_,
+	PPAxisAncestor(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_,bool _self_);
@@ -62,10 +62,10 @@ public:
 		(this->*next_fun)(t); 
 	}
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAxisAncestor(variable_context *_cxt_,
+    PPAxisAncestor(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);
@@ -74,7 +74,7 @@ public:
 class PPAxisAncestorOrSelf : public PPAxisAncestor
 {
 	public:
-	PPAxisAncestorOrSelf(variable_context *_cxt_,
+	PPAxisAncestorOrSelf(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);

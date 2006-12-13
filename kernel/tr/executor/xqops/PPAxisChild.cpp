@@ -15,7 +15,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAxisChild::PPAxisChild(variable_context *_cxt_, 
+PPAxisChild::PPAxisChild(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_) : PPIterator(_cxt_),
@@ -358,7 +358,7 @@ sequence *PPAxisChild::next_var_name_s(sequence *data_seq, PPAxisChild* cur_op)
     throw USER_EXCEPTION2(SE1002, "PPAxisChild::next_var_name_s");
 }
 
-PPIterator* PPAxisChild::copy(variable_context *_cxt_)
+PPIterator* PPAxisChild::copy(dynamic_context *_cxt_)
 {
     PPAxisChild *res = new PPAxisChild(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
@@ -366,7 +366,7 @@ PPIterator* PPAxisChild::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPAxisChild::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisChild::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPAxisChild*)cur)->children(child);

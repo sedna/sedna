@@ -34,12 +34,14 @@ void PPCreateIndex::open()
 {
     local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
     root = get_schema_node(db_ent, "Unknown entity passed to PPCreateIndex");
+    dynamic_context::global_variables_open();
     index_name.op->open();
 }
 
 void PPCreateIndex::close()
 {
     index_name.op->close();
+    dynamic_context::global_variables_close();
     root = NULL;
 }
 

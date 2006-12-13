@@ -367,10 +367,11 @@ bool chech_constraints_for_xs_Name(const char* s)
     return res;
 }
 
-bool chech_constraints_for_xs_NCName(const char* s)
+bool chech_constraints_for_xs_NCName(const char* s, int n)
 {
     bool res = false;
-    check_constraints_for_name_type<const char*> (s, s + strlen(s), &res, true, false);
+    check_constraints_for_name_type<const char*> (s, s + n, &res, true, false);
     return res;
 }
+
 

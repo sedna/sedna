@@ -13,7 +13,7 @@
 class PPDeleteUndeep : public PPUpdate
 {
     PPOpIn child;
-    variable_context *cxt;
+    dynamic_context *cxt;
 
 public:
     void open();
@@ -21,7 +21,7 @@ public:
     void execute();
 
     PPDeleteUndeep(PPOpIn _child_, 
-                   variable_context *_cxt_);
+                   dynamic_context *_cxt_);
     ~PPDeleteUndeep();
 };
 

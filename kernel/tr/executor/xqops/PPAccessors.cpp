@@ -17,7 +17,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPDmStringValue::PPDmStringValue(variable_context *_cxt_,
+PPDmStringValue::PPDmStringValue(dynamic_context *_cxt_,
                                  PPOpIn _child_) : PPIterator(_cxt_),
                                                    child(_child_)
 {
@@ -71,7 +71,7 @@ void PPDmStringValue::next  (tuple &t)
     }
 }
 
-PPIterator* PPDmStringValue::copy(variable_context *_cxt_)
+PPIterator* PPDmStringValue::copy(dynamic_context *_cxt_)
 {
     PPDmStringValue *res = new PPDmStringValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -79,7 +79,7 @@ PPIterator* PPDmStringValue::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDmStringValue::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDmStringValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPDmStringValue*)cur)->children(child);
@@ -110,7 +110,7 @@ bool PPDmStringValue::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPDmTypedValue::PPDmTypedValue(variable_context *_cxt_,
+PPDmTypedValue::PPDmTypedValue(dynamic_context *_cxt_,
                                PPOpIn _child_) : PPIterator(_cxt_),
                                                  child(_child_)
 {
@@ -164,7 +164,7 @@ void PPDmTypedValue::next  (tuple &t)
     }
 }
 
-PPIterator* PPDmTypedValue::copy(variable_context *_cxt_)
+PPIterator* PPDmTypedValue::copy(dynamic_context *_cxt_)
 {
     PPDmTypedValue *res = new PPDmTypedValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -172,7 +172,7 @@ PPIterator* PPDmTypedValue::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDmTypedValue::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDmTypedValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPDmTypedValue*)cur)->children(child);
@@ -202,7 +202,7 @@ bool PPDmTypedValue::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPDmDocumentURI::PPDmDocumentURI(variable_context *_cxt_,
+PPDmDocumentURI::PPDmDocumentURI(dynamic_context *_cxt_,
                                  PPOpIn _child_) : PPIterator(_cxt_),
                                                    child(_child_)
 {
@@ -259,7 +259,7 @@ void PPDmDocumentURI::next  (tuple &t)
     }
 }
 
-PPIterator* PPDmDocumentURI::copy(variable_context *_cxt_)
+PPIterator* PPDmDocumentURI::copy(dynamic_context *_cxt_)
 {
     PPDmDocumentURI *res = new PPDmDocumentURI(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -267,7 +267,7 @@ PPIterator* PPDmDocumentURI::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDmDocumentURI::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDmDocumentURI::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPDmDocumentURI*)cur)->children(child);

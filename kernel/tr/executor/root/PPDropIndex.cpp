@@ -24,12 +24,14 @@ PPDropIndex::~PPDropIndex()
 void PPDropIndex::open()
 {
     local_lock_mrg->lock(lm_x); // because Leon changes the descriptive schema of the document/collection
+    dynamic_context::global_variables_open();
     index_name.op->open();
 }
 
 void PPDropIndex::close()
 {
     index_name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropIndex::execute()

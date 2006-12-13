@@ -33,10 +33,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator *copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator *copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnConcat(variable_context *_cxt_,
+    PPFnConcat(dynamic_context *_cxt_,
                arr_of_PPOpIn _ch_arr_);
     virtual ~PPFnConcat();
 };
@@ -61,10 +61,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator *copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator *copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnStringJoin(variable_context *_cxt_,
+    PPFnStringJoin(dynamic_context *_cxt_,
                    PPOpIn _members_,
                    PPOpIn _separator_);
     virtual ~PPFnStringJoin();
@@ -99,16 +99,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator *copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator *copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
     void error(const char* msg);
     
-    PPFnStartsEndsWith(variable_context *_cxt_,
+    PPFnStartsEndsWith(dynamic_context *_cxt_,
                        PPOpIn _source_,
                        PPOpIn _prefix_,
                        FunctionType _type_);
-    PPFnStartsEndsWith(variable_context *_cxt_,
+    PPFnStartsEndsWith(dynamic_context *_cxt_,
                        PPOpIn _source_,
                        PPOpIn _prefix_,
                        PPOpIn _collation_,
@@ -137,10 +137,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnStringLength(variable_context *_cxt_, 
+    PPFnStringLength(dynamic_context *_cxt_, 
                      PPOpIn _child_);
     virtual ~PPFnStringLength();
 };
@@ -161,10 +161,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnNormalizeSpace(variable_context *_cxt_, 
+    PPFnNormalizeSpace(dynamic_context *_cxt_, 
                        PPOpIn _child_);
     virtual ~PPFnNormalizeSpace();
 };
@@ -191,10 +191,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnString2CodePoints(variable_context *_cxt_, 
+    PPFnString2CodePoints(dynamic_context *_cxt_, 
                      PPOpIn _child_);
     virtual ~PPFnString2CodePoints();
 };
@@ -221,10 +221,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnCodePoints2String(variable_context *_cxt_, 
+    PPFnCodePoints2String(dynamic_context *_cxt_, 
                           PPOpIn _child_);
     virtual ~PPFnCodePoints2String();
 };
@@ -247,10 +247,10 @@ public:
 	virtual strict_fun res_fun () { return result; };
 	virtual void next   (tuple &t);
 
-	virtual PPIterator* copy(variable_context *_cxt_);
-	static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+	virtual PPIterator* copy(dynamic_context *_cxt_);
+	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-	PPFnTranslate(variable_context *_cxt_, 
+	PPFnTranslate(dynamic_context *_cxt_, 
 		PPOpIn _str_, PPOpIn _map_str_, PPOpIn _trans_str_);
 	virtual ~PPFnTranslate();
 };
@@ -274,10 +274,10 @@ public:
 	virtual strict_fun res_fun () { return result; };
 	virtual void next   (tuple &t);
 
-	virtual PPIterator* copy(variable_context *_cxt_);
-	static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+	virtual PPIterator* copy(dynamic_context *_cxt_);
+	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-	PPFnChangeCase(variable_context *_cxt_, 
+	PPFnChangeCase(dynamic_context *_cxt_, 
 		PPOpIn _str_, bool _to_upper_);
 	virtual ~PPFnChangeCase();
 };
@@ -315,14 +315,14 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnSubsBeforeAfter(variable_context *_cxt_,
+    PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                 PPOpIn _src_child_,
                 PPOpIn _srch_child_,
                 FunctionType _type_);
-    PPFnSubsBeforeAfter(variable_context *_cxt_,
+    PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                 PPOpIn _src_child_,
                 PPOpIn _srch_child_,
                 PPOpIn _collation_child_,
@@ -351,14 +351,14 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnSubstring(variable_context *_cxt_, 
+    PPFnSubstring(dynamic_context *_cxt_, 
                   PPOpIn _str_child_,
                   PPOpIn _start_child_);
 
-    PPFnSubstring(variable_context *_cxt_, 
+    PPFnSubstring(dynamic_context *_cxt_, 
                   PPOpIn _str_child_,
                   PPOpIn _start_child_,
                   PPOpIn _length_child_);

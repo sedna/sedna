@@ -7,9 +7,119 @@
 
 #include "PPQName.h"
 #include "node_utils.h"
+#include "PPUtils.h"
 
 
-#define get_in_scope_namespaces(n, r)  get_in_scope_namespaces_local(n, r)
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPFnResolveQName
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+PPFnResolveQName::PPFnResolveQName(dynamic_context *_cxt_,
+                     PPOpIn _child_qname_,
+                     PPOpIn _child_elem_) : PPIterator(_cxt_),
+                                             child_qname(_child_qname_),
+                                             child_elem(_child_elem_)
+{
+}
+
+PPFnResolveQName::~PPFnResolveQName()
+{
+    delete child_qname.op;
+    child_qname.op = NULL;
+    delete child_elem.op;
+    child_elem.op = NULL;
+}
+
+void PPFnResolveQName::open  ()
+{
+    child_qname.op->open();
+    child_elem.op->open();
+    first_time = true;
+}
+
+void PPFnResolveQName::reopen()
+{
+    child_qname.op->reopen();
+    child_elem.op->reopen();
+    first_time = true;
+}
+
+void PPFnResolveQName::close ()
+{
+    child_qname.op->close();
+    child_elem.op->close();
+}
+
+void PPFnResolveQName::next(tuple &t)
+{
+    if (first_time)
+    {
+        child_qname.op->next(t);
+        if (t.is_eos())
+            return;
+
+        first_time = false;
+        tuple_cell qname_tc = atomize(child_qname.get(t));
+
+        if (!is_string_type(qname_tc.get_atomic_type())) 
+            throw USER_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+
+        child_qname.op->next(t);
+        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+
+        qname_tc = tuple_cell::make_sure_light_atomic(qname_tc);
+
+
+        child_elem.op->next(t);
+
+        if (t.is_eos())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+
+        if (!child_elem.get(t).is_node())
+            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+
+        xptr node = child_elem.get(t).get_node();
+
+        child_elem.op->next(t);
+        if (!(t.is_eos())) 
+            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+
+        CHECKP(node);
+        if (GETSCHEMENODE(XADDR(node))->type != element)
+            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+
+
+        char *qname = xs_QName_create(qname_tc.get_str_mem(),
+                                      node, 
+                                      malloc);
+
+        t.copy(tuple_cell::atomic(xs_QName, qname));
+    }
+    else
+    {
+        first_time = true;
+        t.set_eos();
+    }
+}
+
+PPIterator* PPFnResolveQName::copy(dynamic_context *_cxt_)
+{
+    PPFnResolveQName *res = new PPFnResolveQName(_cxt_, child_qname, child_elem);
+    res->child_qname.op = child_qname.op->copy(_cxt_);
+    res->child_elem.op = child_elem.op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPFnResolveQName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPFnResolveQName::result");
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -17,7 +127,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnQName::PPFnQName(variable_context *_cxt_,
+PPFnQName::PPFnQName(dynamic_context *_cxt_,
                      PPOpIn _child_uri_,
                      PPOpIn _child_qname_) : PPIterator(_cxt_),
                                              child_uri(_child_uri_),
@@ -98,7 +208,7 @@ void PPFnQName::next(tuple &t)
     }
 }
 
-PPIterator* PPFnQName::copy(variable_context *_cxt_)
+PPIterator* PPFnQName::copy(dynamic_context *_cxt_)
 {
     PPFnQName *res = new PPFnQName(_cxt_, child_uri, child_qname);
     res->child_uri.op = child_uri.op->copy(_cxt_);
@@ -107,7 +217,7 @@ PPIterator* PPFnQName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnQName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnQName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnQName::result");
 }
@@ -119,7 +229,7 @@ bool PPFnQName::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnPrefixFromQName::PPFnPrefixFromQName(variable_context *_cxt_,
+PPFnPrefixFromQName::PPFnPrefixFromQName(dynamic_context *_cxt_,
                                          PPOpIn _child_) : PPIterator(_cxt_),
                                                            child(_child_)
 {
@@ -186,7 +296,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnPrefixFromQName::copy(variable_context *_cxt_)
+PPIterator* PPFnPrefixFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnPrefixFromQName *res = new PPFnPrefixFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -194,7 +304,7 @@ PPIterator* PPFnPrefixFromQName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnPrefixFromQName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnPrefixFromQName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnPrefixFromQName::result");
 }
@@ -205,7 +315,7 @@ bool PPFnPrefixFromQName::result(PPIterator* cur, variable_context *cxt, void*& 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnLocalNameFromQName::PPFnLocalNameFromQName(variable_context *_cxt_,
+PPFnLocalNameFromQName::PPFnLocalNameFromQName(dynamic_context *_cxt_,
                                                PPOpIn _child_) : PPIterator(_cxt_),
                                                                  child(_child_)
 {
@@ -266,7 +376,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnLocalNameFromQName::copy(variable_context *_cxt_)
+PPIterator* PPFnLocalNameFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnLocalNameFromQName *res = new PPFnLocalNameFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -274,7 +384,7 @@ PPIterator* PPFnLocalNameFromQName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnLocalNameFromQName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnLocalNameFromQName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnLocalNameFromQName::result");
 }
@@ -285,7 +395,7 @@ bool PPFnLocalNameFromQName::result(PPIterator* cur, variable_context *cxt, void
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnNamespaceUriFromQName::PPFnNamespaceUriFromQName(variable_context *_cxt_,
+PPFnNamespaceUriFromQName::PPFnNamespaceUriFromQName(dynamic_context *_cxt_,
                                                      PPOpIn _child_) : PPIterator(_cxt_),
                                                                        child(_child_)
 {
@@ -348,7 +458,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnNamespaceUriFromQName::copy(variable_context *_cxt_)
+PPIterator* PPFnNamespaceUriFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnNamespaceUriFromQName *res = new PPFnNamespaceUriFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -356,7 +466,7 @@ PPIterator* PPFnNamespaceUriFromQName::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnNamespaceUriFromQName::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnNamespaceUriFromQName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUriFromQName::result");
 }
@@ -368,7 +478,7 @@ bool PPFnNamespaceUriFromQName::result(PPIterator* cur, variable_context *cxt, v
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnNamespaceUriForPrefix::PPFnNamespaceUriForPrefix(variable_context *_cxt_,
+PPFnNamespaceUriForPrefix::PPFnNamespaceUriForPrefix(dynamic_context *_cxt_,
                                                      PPOpIn _child_prefix_,
                                                      PPOpIn _child_element_) : PPIterator(_cxt_),
                                                                                child_prefix(_child_prefix_),
@@ -462,7 +572,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
     t.set_eos();
 }
 
-PPIterator* PPFnNamespaceUriForPrefix::copy(variable_context *_cxt_)
+PPIterator* PPFnNamespaceUriForPrefix::copy(dynamic_context *_cxt_)
 {
     PPFnNamespaceUriForPrefix *res = new PPFnNamespaceUriForPrefix(_cxt_, child_prefix, child_element);
     res->child_prefix.op = child_prefix.op->copy(_cxt_);
@@ -471,7 +581,7 @@ PPIterator* PPFnNamespaceUriForPrefix::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnNamespaceUriForPrefix::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnNamespaceUriForPrefix::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNamespaceUriForPrefix::result");
 }
@@ -482,7 +592,7 @@ bool PPFnNamespaceUriForPrefix::result(PPIterator* cur, variable_context *cxt, v
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnInScopePrefixes::PPFnInScopePrefixes(variable_context *_cxt_,
+PPFnInScopePrefixes::PPFnInScopePrefixes(dynamic_context *_cxt_,
                                          PPOpIn _child_) : PPIterator(_cxt_),
                                                            child(_child_)
 {
@@ -526,11 +636,11 @@ void PPFnInScopePrefixes::next  (tuple &t)
         if (!child.get(t).is_node())
             throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
+        xptr node = child.get(t).get_node();
+
         child.op->next(t);
         if (!(t.is_eos())) 
             throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
-
-        xptr node = child.get(t).get_node();
 
         CHECKP(node);
         if (GETSCHEMENODE(XADDR(node))->type != element)
@@ -557,7 +667,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnInScopePrefixes::copy(variable_context *_cxt_)
+PPIterator* PPFnInScopePrefixes::copy(dynamic_context *_cxt_)
 {
     PPFnInScopePrefixes *res = new PPFnInScopePrefixes(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -565,7 +675,7 @@ PPIterator* PPFnInScopePrefixes::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnInScopePrefixes::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnInScopePrefixes::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnInScopePrefixes::result");
 }

@@ -548,7 +548,7 @@ void PPPredRange::print_state()
 /// PPPred1
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPPred1::PPPred1(variable_context *_cxt_,
+PPPred1::PPPred1(dynamic_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
                  arr_of_PPOpIn _conjuncts_,
@@ -599,7 +599,7 @@ void PPPred1::open ()
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -608,7 +608,7 @@ void PPPred1::open ()
 
     if (pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -752,7 +752,7 @@ void PPPred1::next(tuple &t)
     t.set_eos();
 }
 
-PPIterator* PPPred1::copy(variable_context *_cxt_)                      
+PPIterator* PPPred1::copy(dynamic_context *_cxt_)                      
 {
     
     PPPred1 *res = new PPPred1(_cxt_, 
@@ -775,13 +775,13 @@ PPIterator* PPPred1::copy(variable_context *_cxt_)
 
 var_c_id PPPred1::register_consumer(var_dsc dsc)
 {
-    cxt->producers[dsc].svc->push_back(true);
-    return cxt->producers[dsc].svc->size() - 1;
+    cxt->var_cxt.producers[dsc].svc->push_back(true);
+    return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
 void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)                     
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
     {
@@ -798,7 +798,11 @@ void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPPred1::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].svc->at(id) = true;
+    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+}
+
+void PPPred1::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPPred1::reinit_consumer_table()
@@ -806,18 +810,18 @@ inline void PPPred1::reinit_consumer_table()
     int j;
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 
     if (pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 
-bool PPPred1::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPPred1::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     PPOpIn data_child, source_child;
@@ -922,7 +926,7 @@ bool PPPred1::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPPred2::PPPred2(variable_context *_cxt_,
+PPPred2::PPPred2(dynamic_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_,
                  arr_of_PPOpIn _conjuncts_, 
@@ -947,7 +951,7 @@ PPPred2::PPPred2(variable_context *_cxt_,
 }
 
 /*
-PPPred2::PPPred2(variable_context *_cxt_,
+PPPred2::PPPred2(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -993,7 +997,7 @@ void PPPred2::open ()
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -1001,14 +1005,14 @@ void PPPred2::open ()
     }
     if(pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
         p.tuple_pos = 0;
     }
     {
-        producer &p = cxt->producers[lst_dsc];
+        producer &p = cxt->var_cxt.producers[lst_dsc];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -1160,7 +1164,7 @@ void PPPred2::next(tuple &t)
     pos = 0;
 }
 
-PPIterator* PPPred2::copy(variable_context *_cxt_)
+PPIterator* PPPred2::copy(dynamic_context *_cxt_)
 {
     PPPred2 *res = new PPPred2(_cxt_, 
                                var_dscs, 
@@ -1182,13 +1186,13 @@ PPIterator* PPPred2::copy(variable_context *_cxt_)
 
 var_c_id PPPred2::register_consumer(var_dsc dsc)
 {
-    cxt->producers[dsc].svc->push_back(true);
-    return cxt->producers[dsc].svc->size() - 1;
+    cxt->var_cxt.producers[dsc].svc->push_back(true);
+    return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
 void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
     {
@@ -1206,7 +1210,11 @@ void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPPred2::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].svc->at(id) = true;
+    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+}
+
+void PPPred2::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPPred2::reinit_consumer_table()
@@ -1214,21 +1222,21 @@ inline void PPPred2::reinit_consumer_table()
     int j;
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
     if(pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
     {
-        producer &p = cxt->producers[lst_dsc];
+        producer &p = cxt->var_cxt.producers[lst_dsc];
         for (j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 
-bool PPPred2::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPPred2::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     PPOpIn data_child, source_child;

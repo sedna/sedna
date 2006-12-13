@@ -22,11 +22,13 @@ PPDropFtIndex::~PPDropFtIndex()
 void PPDropFtIndex::open()
 {
     index_name.op->open();
+    dynamic_context::global_variables_open();
 }
 
 void PPDropFtIndex::close()
 {
     index_name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropFtIndex::execute()

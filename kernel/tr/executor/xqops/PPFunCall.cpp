@@ -121,7 +121,7 @@ void fun_arg::next(tuple /*out*/ &t, var_c_id /*out*/ &id)
 ////////////////////////////////////////////////////////////////////////////////
 /// PPFunCall
 ////////////////////////////////////////////////////////////////////////////////
-PPFunCall::PPFunCall(variable_context *_cxt_,
+PPFunCall::PPFunCall(dynamic_context *_cxt_,
                      const arr_of_PPOpIn &_ch_arr_,
                      function_id _fn_id_) : PPVarIterator(_cxt_),
                                             ch_arr(_ch_arr_),
@@ -198,7 +198,7 @@ void PPFunCall::close ()
 
     if (new_cxt)
     {
-        for (i = 0; i < args_num; i++) new_cxt->producers[i].s = NULL;
+        for (i = 0; i < args_num; i++) new_cxt->var_cxt.producers[i].s = NULL;
         delete new_cxt;
         new_cxt = NULL;
     }
@@ -253,7 +253,7 @@ void PPFunCall::next(tuple &t)
             args = new fun_arg*[args_num];
 
             for (i = 0; i < args_num; i++)
-                args[i] = new fun_arg(&(tr_globals::qp.fun_decls[fn_id].args[i]),
+                args[i] = new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
                                       ch_arr[i].op);
 #ifdef STRICT_FUNS
         }
@@ -269,20 +269,20 @@ void PPFunCall::next(tuple &t)
         }
 #endif
 
-        function_declaration &fd = tr_globals::qp.fun_decls[fn_id];
+        function_declaration &fd = dynamic_context::funct_cxt.fun_decls[fn_id];
 
 #ifdef STRICT_FUNS
         if (new_cxt == NULL)
 #endif
-            new_cxt = new variable_context(fd.cxt_size);
+            new_cxt = new dynamic_context(cxt, fd.cxt_size);
 
 #ifdef STRICT_FUNS
         if (strict_mode)
         {
             for (i = 0; i < args_num; i++)
             {
-                new_cxt->producers[i].type = pt_seq;
-                new_cxt->producers[i].s = args[i]->get_sequence();
+                new_cxt->var_cxt.producers[i].type = pt_seq;
+                new_cxt->var_cxt.producers[i].s = args[i]->get_sequence();
             }
 
             void *fun_r;
@@ -314,12 +314,12 @@ void PPFunCall::next(tuple &t)
 #endif
             for (i = 0; i < args_num; i++)
             {
-                new_cxt->producers[i].type = pt_lazy_complex;
-                new_cxt->producers[i].op = this;
-                new_cxt->producers[i].cvc = new complex_var_consumption;
-                new_cxt->producers[i].tuple_pos = 0;
+                new_cxt->var_cxt.producers[i].type = pt_lazy_complex;
+                new_cxt->var_cxt.producers[i].op = this;
+                new_cxt->var_cxt.producers[i].cvc = new complex_var_consumption;
+                new_cxt->var_cxt.producers[i].tuple_pos = 0;
             }
-      
+
             body = fd.op->copy(new_cxt);
 
             body->open();
@@ -343,7 +343,7 @@ void PPFunCall::next(tuple &t)
     if (t.is_eos()) need_reopen = true;
 }
 
-PPIterator* PPFunCall::copy(variable_context *_cxt_)
+PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
 {
     PPFunCall *res = new PPFunCall(_cxt_, ch_arr, fn_id);
 
@@ -355,32 +355,37 @@ PPIterator* PPFunCall::copy(variable_context *_cxt_)
 
 var_c_id PPFunCall::register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(new_cxt->producers[dsc].cvc);
+    complex_var_consumption &cvc = *(new_cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPFunCall::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    args[dsc]->next(t, new_cxt->producers[dsc].cvc->at(id));
+    args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
 }
 
 void PPFunCall::reopen(var_dsc dsc, var_c_id id)
 {
-    new_cxt->producers[dsc].cvc->at(id) = 0;
+    new_cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+}
+
+void PPFunCall::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPFunCall::reinit_consumer_table()
 {
     for (int i = 0; i < args_num; i++)
     {
-        complex_var_consumption *cvc = new_cxt->producers[i].cvc;
+        complex_var_consumption *cvc = new_cxt->var_cxt.producers[i].cvc;
         for (int j = 0; j < cvc->size(); j++) cvc->at(j) = 0;
     }
 }
 
-bool PPFunCall::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFunCall::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
+/*
     function_declaration &fd = tr_globals::qp.fun_decls[((PPFunCall*)cur)->fn_id];
 
     arr_of_PPOpIn ch_arr;
@@ -443,4 +448,6 @@ bool PPFunCall::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     return strict_op_result(cur, (sequence*)fun_r, cxt, r);
+*/
+    return true;
 }
