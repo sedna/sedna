@@ -8,7 +8,7 @@
 #include "PPFtIndexScan.h"
 #include "FTsearch.h"
 
-PPFtIndexScan::PPFtIndexScan(variable_context *_cxt_,
+PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
                 PPOpIn _idx_name_,
 				PPOpIn _query_) :
 						PPIterator(_cxt_),
@@ -112,7 +112,7 @@ void PPFtIndexScan::next(tuple &t)
 	}
 }
 
-PPIterator*  PPFtIndexScan::copy(variable_context *_cxt_)
+PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
 {
 	PPFtIndexScan *res = new PPFtIndexScan(_cxt_, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
@@ -121,7 +121,7 @@ PPIterator*  PPFtIndexScan::copy(variable_context *_cxt_)
 	return res;
 }
 
-bool PPFtIndexScan::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFtIndexScan::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFtIndexScan::result");
 }

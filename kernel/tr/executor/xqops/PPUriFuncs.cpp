@@ -101,7 +101,7 @@ static inline void escape_html_uri(Iterator &start, const Iterator &end, stmt_st
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnUriEncoding::PPFnUriEncoding(variable_context *_cxt_,
+PPFnUriEncoding::PPFnUriEncoding(dynamic_context *_cxt_,
                                  PPOpIn _child_,
                                  uri_function_type _type_) : PPIterator(_cxt_),
                                                              child(_child_),
@@ -190,14 +190,14 @@ const char* PPFnUriEncoding::error()
     }
 }
 
-PPIterator* PPFnUriEncoding::copy(variable_context *_cxt_)
+PPIterator* PPFnUriEncoding::copy(dynamic_context *_cxt_)
 {
     PPFnUriEncoding *res = new PPFnUriEncoding(_cxt_, child, type);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPFnUriEncoding::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnUriEncoding::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnUriEncoding::result");
 }
@@ -208,14 +208,14 @@ bool PPFnUriEncoding::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPFnResolveUri
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnResolveUri::PPFnResolveUri(variable_context *_cxt_,
+PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
                                PPOpIn _relative_) : PPIterator(_cxt_),
                                                     relative(_relative_),
                                                     is_base_static(true)
 {
 }
 
-PPFnResolveUri::PPFnResolveUri(variable_context *_cxt_,
+PPFnResolveUri::PPFnResolveUri(dynamic_context *_cxt_,
                                PPOpIn _relative_,
                                PPOpIn _base_) : PPIterator(_cxt_),
                                                 relative(_relative_),
@@ -331,7 +331,7 @@ void PPFnResolveUri::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnResolveUri::copy(variable_context *_cxt_)
+PPIterator* PPFnResolveUri::copy(dynamic_context *_cxt_)
 {
     PPFnResolveUri *res = is_base_static ? new PPFnResolveUri(_cxt_, relative) 
                                          : new PPFnResolveUri(_cxt_, relative, base);
@@ -340,7 +340,7 @@ PPIterator* PPFnResolveUri::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnResolveUri::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnResolveUri::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnResolveUri::result");
 }

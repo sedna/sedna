@@ -10,7 +10,7 @@ using namespace std;
 
 PPStore::t_stored_seqs PPStore::stored_seqs;
 
-PPStore::PPStore(variable_context *_cxt_,
+PPStore::PPStore(dynamic_context *_cxt_,
                  PPOpIn _child_) : PPIterator(_cxt_),
                                    child(_child_),
 								   s(NULL)
@@ -76,14 +76,14 @@ void PPStore::next (tuple &t)
     }
 }
 
-PPIterator* PPStore::copy(variable_context *_cxt_)
+PPIterator* PPStore::copy(dynamic_context *_cxt_)
 {
     PPStore *res = new PPStore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPStore::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPStore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     PPOpIn child;

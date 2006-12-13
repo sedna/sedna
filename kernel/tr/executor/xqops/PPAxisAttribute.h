@@ -65,10 +65,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t) { (this->*next_fun)(t); }
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAxisAttribute(variable_context *_cxt_,
+    PPAxisAttribute(dynamic_context *_cxt_,
                     PPOpIn _child_,
                     NodeTestType _nt_type_,
                     NodeTestData _nt_data_);

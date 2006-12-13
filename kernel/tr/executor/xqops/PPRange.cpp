@@ -35,7 +35,7 @@ int PPRange::getIntFromOp(PPOpIn & op)
 	return res.get_xs_integer();
 }
 
-PPRange::PPRange(variable_context *_cxt_,
+PPRange::PPRange(dynamic_context *_cxt_,
                const PPOpIn& _start_,const PPOpIn& _end_) : PPIterator(_cxt_),
                                                         start_op(_start_),end_op(_end_)
 {
@@ -97,14 +97,14 @@ void PPRange::next(tuple &t)
     cur++;
 }
 
-PPIterator* PPRange::copy(variable_context *_cxt_)
+PPIterator* PPRange::copy(dynamic_context *_cxt_)
 {
     PPRange *res = new PPRange(_cxt_, start_op,end_op);
 	res->start_op.op=start_op.op->copy(_cxt_);
 	res->end_op.op=end_op.op->copy(_cxt_);
     return res;
 }
-bool PPRange::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPRange::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
  return true;
 }

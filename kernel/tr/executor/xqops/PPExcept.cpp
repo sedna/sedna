@@ -10,7 +10,7 @@
 #include "merge.h"
 
 
-PPExcept::PPExcept(variable_context *_cxt_,
+PPExcept::PPExcept(dynamic_context *_cxt_,
                    PPOpIn _child1_,
                    PPOpIn _child2_) : PPIterator(_cxt_),
                                       child1(_child1_),
@@ -115,7 +115,7 @@ void PPExcept::next  (tuple &t)
     }
 }
 
-PPIterator* PPExcept::copy(variable_context *_cxt_)
+PPIterator* PPExcept::copy(dynamic_context *_cxt_)
 {
     PPExcept *res = new PPExcept(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
@@ -124,7 +124,7 @@ PPIterator* PPExcept::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPExcept::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPExcept::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPExcept::result");
 }

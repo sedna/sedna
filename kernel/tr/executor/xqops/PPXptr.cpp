@@ -6,11 +6,11 @@
 #include "sedna.h"
 #include "PPXptr.h"
 
-PPXptr::PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_) : PPIterator(_cxt_), var_type(_var_type_)
+PPXptr::PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_) : PPIterator(_cxt_), var_type(_var_type_)
 {
 }
 
-PPXptr::PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_) : PPIterator(_cxt_), 
+PPXptr::PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_) : PPIterator(_cxt_), 
                                                                                       var_type(_var_type_),
                                                                                       p(_p_)
 {
@@ -49,13 +49,13 @@ void PPXptr::next (tuple &t)
     }
 }
 
-PPIterator* PPXptr::copy(variable_context *_cxt_)
+PPIterator* PPXptr::copy(dynamic_context *_cxt_)
 {
     PPXptr *res = new PPXptr(_cxt_, var_type, p);
     return res;
 }
 
-bool PPXptr::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPXptr::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPXptr::result");
 }

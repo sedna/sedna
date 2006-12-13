@@ -11,7 +11,7 @@
 #include "PPSResLStub.h"
 
 
-PPSelect::PPSelect(variable_context *_cxt_,
+PPSelect::PPSelect(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_) : PPVarIterator(_cxt_),
@@ -23,7 +23,7 @@ PPSelect::PPSelect(variable_context *_cxt_,
 {
 }
 
-PPSelect::PPSelect(variable_context *_cxt_,
+PPSelect::PPSelect(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -59,7 +59,7 @@ void PPSelect::open ()
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -103,7 +103,7 @@ void PPSelect::next(tuple &t)
     }
 }
 
-PPIterator* PPSelect::copy(variable_context *_cxt_)
+PPIterator* PPSelect::copy(dynamic_context *_cxt_)
 {
     PPSelect *res = new PPSelect(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
@@ -113,13 +113,13 @@ PPIterator* PPSelect::copy(variable_context *_cxt_)
 
 var_c_id PPSelect::register_consumer(var_dsc dsc)
 {
-    cxt->producers[dsc].svc->push_back(true);
-    return cxt->producers[dsc].svc->size() - 1;
+    cxt->var_cxt.producers[dsc].svc->push_back(true);
+    return cxt->var_cxt.producers[dsc].svc->size() - 1;
 }
 
 void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
     {
@@ -135,20 +135,25 @@ void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPSelect::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].svc->at(id) = true;
+    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+}
+
+void PPSelect::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPSelect::reinit_consumer_table()
 {
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 
-bool PPSelect::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPSelect::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
+/*
     PPOpIn data_child, source_child;
     ((PPSelect*)cur)->children(source_child, data_child);
 
@@ -231,5 +236,7 @@ bool PPSelect::result(PPIterator* cur, variable_context *cxt, void*& r)
     }
 
     r = res_seq;
+    return true;
+*/
     return true;
 }

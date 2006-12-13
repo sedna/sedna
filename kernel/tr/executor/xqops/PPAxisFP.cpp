@@ -18,7 +18,7 @@ using namespace tr_globals;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAxisFP::PPAxisFP(variable_context *_cxt_, 
+PPAxisFP::PPAxisFP(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_, bool _following_) : PPIterator(_cxt_),
@@ -248,14 +248,14 @@ void PPAxisFP::next_var_name(tuple &t)
 
 
 
-PPIterator* PPAxisFP::copy(variable_context *_cxt_)
+PPIterator* PPAxisFP::copy(dynamic_context *_cxt_)
 {
     PPAxisFP *res = new PPAxisFP(_cxt_, child, nt_type, nt_data,following);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPAxisFP::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisFP::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     return true;
 }

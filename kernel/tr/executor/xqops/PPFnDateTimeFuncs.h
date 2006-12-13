@@ -36,10 +36,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnDateTimeFuncNoParam(variable_context *_cxt_, int dateTimeFunc);
+    PPFnDateTimeFuncNoParam(dynamic_context *_cxt_, int dateTimeFunc);
     virtual ~PPFnDateTimeFuncNoParam();
 };
 
@@ -92,10 +92,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnDateTimeFunc(variable_context *_cxt_, 
+    PPFnDateTimeFunc(dynamic_context *_cxt_, 
                      PPOpIn _child_, 
                      int dateTimeFunc,
                      xmlscm_type _expected_type_);
@@ -133,10 +133,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnDateTimeFunc2Params(variable_context *_cxt_, 
+    PPFnDateTimeFunc2Params(dynamic_context *_cxt_, 
                      PPOpIn _child1_, PPOpIn _child2_, int dateTimeFunc);
     virtual ~PPFnDateTimeFunc2Params();
 };

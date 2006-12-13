@@ -20,7 +20,7 @@
 static bin_op_tuple_cell_tuple_cell_collation PPFnMaxMin_fun_arr[] = {op_gt, op_lt};
 static const char* PPFnMaxMin_fun_name[] = {"fn:max()", "fn:min()"};
 
-PPFnMaxMin::PPFnMaxMin(variable_context *_cxt_,
+PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        int _i_,
                        PPOpIn _child_) : PPIterator(_cxt_), 
                                          i(_i_),
@@ -28,7 +28,7 @@ PPFnMaxMin::PPFnMaxMin(variable_context *_cxt_,
 {
 }
 
-PPFnMaxMin::PPFnMaxMin(variable_context *_cxt_,
+PPFnMaxMin::PPFnMaxMin(dynamic_context *_cxt_,
                        int _i_,
                        PPOpIn _child_,
                        PPOpIn _collation_) : PPIterator(_cxt_), 
@@ -163,7 +163,7 @@ void PPFnMaxMin::next(tuple &t)
     }
 }
 
-PPIterator* PPFnMaxMin::copy(variable_context *_cxt_)
+PPIterator* PPFnMaxMin::copy(dynamic_context *_cxt_)
 {
     PPFnMaxMin *res = new PPFnMaxMin(_cxt_, i, child, collation);
     res->child.op = child.op->copy(_cxt_);
@@ -173,7 +173,7 @@ PPIterator* PPFnMaxMin::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnMaxMin::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnMaxMin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnMaxMin::result");
 }
@@ -185,7 +185,7 @@ bool PPFnMaxMin::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnSumAvg::PPFnSumAvg(variable_context *_cxt_,
+PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                  int _i_,
                  PPOpIn _child_) : PPIterator(_cxt_), 
                                    i(_i_),
@@ -193,7 +193,7 @@ PPFnSumAvg::PPFnSumAvg(variable_context *_cxt_,
 {
 }
 
-PPFnSumAvg::PPFnSumAvg(variable_context *_cxt_,
+PPFnSumAvg::PPFnSumAvg(dynamic_context *_cxt_,
                  int _i_,
                  PPOpIn _child_,
                  PPOpIn _zero_) : PPIterator(_cxt_), 
@@ -317,7 +317,7 @@ void PPFnSumAvg::next(tuple &t)
     }
 }
 
-PPIterator* PPFnSumAvg::copy(variable_context *_cxt_)
+PPIterator* PPFnSumAvg::copy(dynamic_context *_cxt_)
 {
     PPFnSumAvg *res = new PPFnSumAvg(_cxt_, i, child, zero);
     res->child.op = child.op->copy(_cxt_);
@@ -327,7 +327,7 @@ PPIterator* PPFnSumAvg::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnSumAvg::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnSumAvg::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnSumAvg::result");
 }

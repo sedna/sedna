@@ -83,7 +83,7 @@ private:
 public:
 	ExtFunctionManager() {}
 	~ExtFunctionManager();
-	PPIterator *make_pp_ext_func(char *name, variable_context *cxt, arr_of_PPOpIn arr);
+	PPIterator *make_pp_ext_func(char *name, dynamic_context *cxt, arr_of_PPOpIn arr);
 };
 
 extern ExtFunctionManager ext_function_manager;

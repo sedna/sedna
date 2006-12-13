@@ -16,7 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPNumericFuncs::PPNumericFuncs(variable_context *_cxt_,
+PPNumericFuncs::PPNumericFuncs(dynamic_context *_cxt_,
                                PPOpIn _child_,
                                PPNumericFuncs::value_func _func_) : PPIterator(_cxt_),
                                                                     child(_child_),
@@ -171,7 +171,7 @@ void PPNumericFuncs::next  (tuple &t)
     }
 }
 
-PPIterator* PPNumericFuncs::copy(variable_context *_cxt_)
+PPIterator* PPNumericFuncs::copy(dynamic_context *_cxt_)
 {
     PPNumericFuncs *res = new PPNumericFuncs(_cxt_, child, func);
     res->child.op = child.op->copy(_cxt_);
@@ -179,7 +179,7 @@ PPIterator* PPNumericFuncs::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPNumericFuncs::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPNumericFuncs::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPNumericFuncs::result");
 }
@@ -191,7 +191,7 @@ bool PPNumericFuncs::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPFnRoundHalfToEven
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnRoundHalfToEven::PPFnRoundHalfToEven(variable_context *_cxt_,
+PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
                                          PPOpIn _child_arg_,
                                          __int64 _precision_) : PPIterator(_cxt_),
                                                                 child_arg(_child_arg_),
@@ -199,7 +199,7 @@ PPFnRoundHalfToEven::PPFnRoundHalfToEven(variable_context *_cxt_,
 {
 }
 
-PPFnRoundHalfToEven::PPFnRoundHalfToEven(variable_context *_cxt_,
+PPFnRoundHalfToEven::PPFnRoundHalfToEven(dynamic_context *_cxt_,
                                          PPOpIn _child_arg_,
                                          PPOpIn _child_p_) : PPIterator(_cxt_),
                                                              child_arg(_child_arg_),
@@ -298,7 +298,7 @@ void PPFnRoundHalfToEven::next(tuple &t)
     }
 }
 
-PPIterator* PPFnRoundHalfToEven::copy(variable_context *_cxt_)
+PPIterator* PPFnRoundHalfToEven::copy(dynamic_context *_cxt_)
 {
     PPFnRoundHalfToEven *res = NULL;
     if (child_p.op)
@@ -316,7 +316,7 @@ PPIterator* PPFnRoundHalfToEven::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnRoundHalfToEven::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnRoundHalfToEven::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnRoundHalfToEven::result");
 }

@@ -200,16 +200,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAggrFuncContainer(variable_context *_cxt_, 
+    PPAggrFuncContainer(dynamic_context *_cxt_, 
                         PPOpIn _child_);
     virtual ~PPAggrFuncContainer();
 };
 
 template<class Essence>
-PPAggrFuncContainer<Essence>::PPAggrFuncContainer(variable_context *_cxt_, 
+PPAggrFuncContainer<Essence>::PPAggrFuncContainer(dynamic_context *_cxt_, 
                                                   PPOpIn _child_) : PPIterator(_cxt_), 
                                                                     child(_child_)
 {
@@ -270,7 +270,7 @@ void PPAggrFuncContainer<Essence>::next(tuple &t)
 }
 
 template<class Essence>
-PPIterator* PPAggrFuncContainer<Essence>::copy(variable_context *_cxt_)
+PPIterator* PPAggrFuncContainer<Essence>::copy(dynamic_context *_cxt_)
 {
     PPAggrFuncContainer<Essence> *res = new PPAggrFuncContainer<Essence>(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -278,7 +278,7 @@ PPIterator* PPAggrFuncContainer<Essence>::copy(variable_context *_cxt_)
 }
 
 template<class Essence>
-bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn child;
     ((PPAggrFuncContainer<Essence>*)cur)->children(child);
@@ -328,13 +328,13 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator *copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator *copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnMaxMin(variable_context *_cxt_,
+    PPFnMaxMin(dynamic_context *_cxt_,
                int _i_,
                PPOpIn _child_);
-    PPFnMaxMin(variable_context *_cxt_,
+    PPFnMaxMin(dynamic_context *_cxt_,
                int _i_,
                PPOpIn _child_,
                PPOpIn _collation_);
@@ -360,13 +360,13 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator *copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator *copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnSumAvg(variable_context *_cxt_,
+    PPFnSumAvg(dynamic_context *_cxt_,
                int _i_,
                PPOpIn _child_);
-    PPFnSumAvg(variable_context *_cxt_,
+    PPFnSumAvg(dynamic_context *_cxt_,
                int _i_,
                PPOpIn _child_,
                PPOpIn _zero_);

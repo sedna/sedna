@@ -13,7 +13,7 @@
 #include "node_utils.h"
 #include "PPUtils.h"
 
-PPFnDeepEqual::PPFnDeepEqual(variable_context *_cxt_,
+PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                    PPOpIn _child1_,
                    PPOpIn _child2_) : PPIterator(_cxt_),
                                       child1(_child1_),
@@ -253,7 +253,7 @@ void PPFnDeepEqual::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnDeepEqual::copy(variable_context *_cxt_)
+PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
 {
     PPFnDeepEqual *res = new PPFnDeepEqual(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
@@ -262,7 +262,7 @@ PPIterator* PPFnDeepEqual::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnDeepEqual::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnDeepEqual::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnDeepEqual::result");
 }

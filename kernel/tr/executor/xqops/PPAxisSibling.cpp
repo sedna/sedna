@@ -17,7 +17,7 @@ using namespace tr_globals;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPAxisSibling::PPAxisSibling(variable_context *_cxt_, 
+PPAxisSibling::PPAxisSibling(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_, bool _following_) : PPIterator(_cxt_),
@@ -269,14 +269,14 @@ void PPAxisSibling::next_var_name(tuple &t)
 
 
 
-PPIterator* PPAxisSibling::copy(variable_context *_cxt_)
+PPIterator* PPAxisSibling::copy(dynamic_context *_cxt_)
 {
     PPAxisSibling *res = new PPAxisSibling(_cxt_, child, nt_type, nt_data,following);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPAxisSibling::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisSibling::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     return true;
 }

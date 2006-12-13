@@ -8,7 +8,7 @@
 #include "merge.h"
 
 
-PPUnion::PPUnion(variable_context *_cxt_,
+PPUnion::PPUnion(dynamic_context *_cxt_,
                  PPOpIn _child1_,
                  PPOpIn _child2_) : PPIterator(_cxt_),
                                     child1(_child1_),
@@ -112,7 +112,7 @@ void PPUnion::next  (tuple &t)
     }
 }
 
-PPIterator* PPUnion::copy(variable_context *_cxt_)
+PPIterator* PPUnion::copy(dynamic_context *_cxt_)
 {
     PPUnion *res = new PPUnion(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
@@ -121,7 +121,7 @@ PPIterator* PPUnion::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPUnion::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPUnion::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPUnion::result");
 }

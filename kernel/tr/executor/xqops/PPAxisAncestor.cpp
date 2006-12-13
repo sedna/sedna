@@ -29,7 +29,7 @@ void PPAxisAncestor::init_function()
         default									: throw USER_EXCEPTION2(SE1003, "Unexpected node test");
     }
 }
-PPAxisAncestor::PPAxisAncestor(variable_context *_cxt_, 
+PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
 						 NodeTestData _nt_data_):PPIterator(_cxt_),
@@ -40,7 +40,7 @@ PPAxisAncestor::PPAxisAncestor(variable_context *_cxt_,
 	self=false; 
 	init_function();
 }
-PPAxisAncestor::PPAxisAncestor(variable_context *_cxt_, 
+PPAxisAncestor::PPAxisAncestor(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_,bool _self_) : PPIterator(_cxt_),
@@ -76,7 +76,7 @@ void PPAxisAncestor::close ()
 {
     child.op->close();
 }
-PPIterator* PPAxisAncestor::copy(variable_context *_cxt_)
+PPIterator* PPAxisAncestor::copy(dynamic_context *_cxt_)
 {
     PPAxisAncestor *res = new PPAxisAncestor(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
@@ -84,12 +84,12 @@ PPIterator* PPAxisAncestor::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPAxisAncestor::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisAncestor::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	return true;
 }
 
-PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(variable_context *_cxt_, 
+PPAxisAncestorOrSelf::PPAxisAncestorOrSelf(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
 						 NodeTestData _nt_data_):PPAxisAncestor(_cxt_, _child_, _nt_type_, _nt_data_,true)

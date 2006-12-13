@@ -6,31 +6,31 @@
 #include "sedna.h"
 #include "PPNodeComparison.h"
 
-PPNodeComparison* PPNodeComparison::PPGTNodeComparison(variable_context *_cxt_, 
+PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
 	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,1);
 }
-PPNodeComparison* PPNodeComparison::PPLTNodeComparison(variable_context *_cxt_, 
+PPNodeComparison* PPNodeComparison::PPLTNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
 	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,-1);
 }
-PPNodeComparison* PPNodeComparison::PPEQNodeComparison(variable_context *_cxt_, 
+PPNodeComparison* PPNodeComparison::PPEQNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
 	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,0);
 }
-PPNodeComparison* PPNodeComparison::PPANNodeComparison(variable_context *_cxt_, 
+PPNodeComparison* PPNodeComparison::PPANNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
 	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,2);
 }
-PPNodeComparison::PPNodeComparison(variable_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_,int _type_): PPIterator(_cxt_),
+PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_,int _type_): PPIterator(_cxt_),
                                     seq1(_seq1_),seq2(_seq2_),type(_type_)
 {
 }
-PPIterator* PPNodeComparison::copy(variable_context *_cxt_)
+PPIterator* PPNodeComparison::copy(dynamic_context *_cxt_)
 {
 	PPNodeComparison *res ;
 	res = new PPNodeComparison(_cxt_, seq1,seq2,type);
@@ -56,7 +56,7 @@ void PPNodeComparison::reopen()
 	seq2.op->reopen();
     first_time = true;
 }
-bool PPNodeComparison::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPNodeComparison::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
  return true;
 }

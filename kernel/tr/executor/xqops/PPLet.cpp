@@ -10,7 +10,7 @@
 #include "PPSResLStub.h"
 
 
-PPLet::PPLet(variable_context *_cxt_,
+PPLet::PPLet(dynamic_context *_cxt_,
              arr_of_var_dsc _var_dscs_, 
              PPOpIn _source_child_, 
              PPOpIn _data_child_) : PPVarIterator(_cxt_),
@@ -22,7 +22,7 @@ PPLet::PPLet(variable_context *_cxt_,
 {
 }
 
-PPLet::PPLet(variable_context *_cxt_,
+PPLet::PPLet(dynamic_context *_cxt_,
              arr_of_var_dsc _var_dscs_, 
              PPOpIn _source_child_, 
              PPOpIn _data_child_,
@@ -37,7 +37,7 @@ PPLet::PPLet(variable_context *_cxt_,
 }
 
 
-//PPLet::PPLet(variable_context *_cxt_,
+//PPLet::PPLet(dynamic_context *_cxt_,
 //             arr_of_var_dsc _var_dscs_, 
 //             PPOpIn _source_child_, 
 //             PPOpIn _data_child_,
@@ -70,7 +70,7 @@ void PPLet::open ()
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
         p.op = this;
         p.cvc = new complex_var_consumption;
@@ -125,7 +125,7 @@ void PPLet::next(tuple &t)
     if (t.is_eos()) need_reopen = true;
 }
 
-PPIterator* PPLet::copy(variable_context *_cxt_)
+PPIterator* PPLet::copy(dynamic_context *_cxt_)
 {
     PPLet *res = need_to_check_type ? new PPLet(_cxt_, var_dscs, source_child, data_child, st)
                                     : new PPLet(_cxt_, var_dscs, source_child, data_child);
@@ -136,14 +136,14 @@ PPIterator* PPLet::copy(variable_context *_cxt_)
 
 var_c_id PPLet::register_consumer(var_dsc dsc)
 {
-    complex_var_consumption &cvc = *(cxt->producers[dsc].cvc);
+    complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
     cvc.push_back(0);
     return cvc.size() - 1;
 }
 
 void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
 
     if (cvc[id] < s->size())
@@ -180,19 +180,23 @@ void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPLet::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].cvc->at(id) = 0;
+    cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+}
+
+void PPLet::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPLet::reinit_consumer_table()
 {
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
     }
 }
 
-bool PPLet::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     PPOpIn data_child, source_child;

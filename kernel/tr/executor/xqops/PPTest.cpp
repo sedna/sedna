@@ -27,7 +27,7 @@ bool fit;
 /// PPTest
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPTest::PPTest(variable_context *_cxt_,
+PPTest::PPTest(dynamic_context *_cxt_,
 						 PPOpIn _seq_):
 			PPIterator(_cxt_), seq(_seq_) 
 {
@@ -175,11 +175,11 @@ void PPTest::next  (tuple &t)
 	*/
 	
 }
-bool PPTest::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPTest::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
   return true;
 }
-PPIterator* PPTest::copy(variable_context *_cxt_)
+PPIterator* PPTest::copy(dynamic_context *_cxt_)
 {
 	PPTest *res ;
 	res = new PPTest(_cxt_, seq);

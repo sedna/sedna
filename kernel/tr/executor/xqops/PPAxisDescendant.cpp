@@ -33,7 +33,7 @@ void PPAxisDescendant::init_function()
     }
 	merge_tree=NULL;
 }
-PPAxisDescendant::PPAxisDescendant(variable_context *_cxt_, 
+PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
 						 NodeTestData _nt_data_):PPIterator(_cxt_),
@@ -44,7 +44,7 @@ PPAxisDescendant::PPAxisDescendant(variable_context *_cxt_,
 	self=false; 
 	init_function();
 }
-PPAxisDescendant::PPAxisDescendant(variable_context *_cxt_, 
+PPAxisDescendant::PPAxisDescendant(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
                          NodeTestData _nt_data_,bool _self_) : PPIterator(_cxt_),
@@ -88,7 +88,7 @@ void PPAxisDescendant::close ()
 {
     child.op->close();
 }
-PPIterator* PPAxisDescendant::copy(variable_context *_cxt_)
+PPIterator* PPAxisDescendant::copy(dynamic_context *_cxt_)
 {
     PPAxisDescendant *res = new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
@@ -96,7 +96,7 @@ PPIterator* PPAxisDescendant::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPAxisDescendant::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPAxisDescendant::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	return true;
 }
@@ -320,14 +320,14 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	while (descstack.size()>0) descstack.pop_back();
 	cur=XNULL;
 }
-PPAxisDescendantOrSelf::PPAxisDescendantOrSelf(variable_context *_cxt_, 
+PPAxisDescendantOrSelf::PPAxisDescendantOrSelf(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
 						 NodeTestData _nt_data_):PPAxisDescendant(_cxt_, _child_, _nt_type_, _nt_data_,true)
 {
  
 }
-PPAxisDescendantAttr::PPAxisDescendantAttr(variable_context *_cxt_, 
+PPAxisDescendantAttr::PPAxisDescendantAttr(dynamic_context *_cxt_, 
                          PPOpIn _child_,
                          NodeTestType _nt_type_,
 						 NodeTestData _nt_data_):PPAxisDescendant(_cxt_, _child_, _nt_type_, _nt_data_)

@@ -10,7 +10,7 @@
 #include "PPSResLStub.h"
 
 
-/*PPReturn::PPReturn(variable_context *_cxt_,
+/*PPReturn::PPReturn(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_) : PPVarIterator(_cxt_),
@@ -21,7 +21,7 @@
 {
 }*/
 
-PPReturn::PPReturn(variable_context *_cxt_,
+PPReturn::PPReturn(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -37,7 +37,7 @@ PPReturn::PPReturn(variable_context *_cxt_,
 {
 }
 
-PPReturn::PPReturn(variable_context *_cxt_,
+PPReturn::PPReturn(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -51,7 +51,7 @@ PPReturn::PPReturn(variable_context *_cxt_,
 {
 }
 
-/*PPReturn::PPReturn(variable_context *_cxt_,
+/*PPReturn::PPReturn(dynamic_context *_cxt_,
                    arr_of_var_dsc _var_dscs_, 
                    PPOpIn _source_child_, 
                    PPOpIn _data_child_,
@@ -83,7 +83,7 @@ void PPReturn::open ()
 
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -92,7 +92,7 @@ void PPReturn::open ()
 
     if (pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         p.type = pt_lazy_simple;
         p.op = this;
         p.svc = new simple_var_consumption;
@@ -155,7 +155,7 @@ void PPReturn::next(tuple &t)
     }
 }
 
-PPIterator* PPReturn::copy(variable_context *_cxt_)
+PPIterator* PPReturn::copy(dynamic_context *_cxt_)
 {
     PPReturn *res = need_to_check_type ? new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc, st) 
                                        : new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc); 
@@ -168,14 +168,14 @@ PPIterator* PPReturn::copy(variable_context *_cxt_)
 
 var_c_id PPReturn::register_consumer(var_dsc dsc)
 {
-    simple_var_consumption &svc = *(cxt->producers[dsc].svc);
+    simple_var_consumption &svc = *(cxt->var_cxt.producers[dsc].svc);
     svc.push_back(true);
     return svc.size() - 1;
 }
 
 void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    producer &p = cxt->producers[dsc];
+    producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
     {
@@ -192,25 +192,29 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
 
 void PPReturn::reopen(var_dsc dsc, var_c_id id)
 {
-    cxt->producers[dsc].svc->at(id) = true;
+    cxt->var_cxt.producers[dsc].svc->at(id) = true;
+}
+
+void PPReturn::close(var_dsc dsc, var_c_id id)
+{
 }
 
 inline void PPReturn::reinit_consumer_table()
 {
     for (int i = 0; i < var_dscs.size(); i++)
     {
-        producer &p = cxt->producers[var_dscs[i]];
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
         for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 
     if (pos_dsc >= 0)
     {
-        producer &p = cxt->producers[pos_dsc];
+        producer &p = cxt->var_cxt.producers[pos_dsc];
         for (int j = 0; j < p.svc->size(); j++) p.svc->at(j) = true;
     }
 }
 
-bool PPReturn::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPReturn::result");
 

@@ -271,10 +271,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPCalculate(variable_context *_cxt_,
+    PPCalculate(dynamic_context *_cxt_,
                 arr_of_PPOpIn *_ch_arr_,
                 CalcOp *_tree_);
     virtual ~PPCalculate();

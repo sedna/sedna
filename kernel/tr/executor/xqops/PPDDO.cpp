@@ -16,7 +16,7 @@ char* PPDDO::temp_buffer=NULL;//new char[MAXINTERNALPREFIX];
 int PPDDO::buf_lgth=0;//MAXINTERNALPREFIX;
 
 
-PPDDO::PPDDO(variable_context *_cxt_,
+PPDDO::PPDDO(dynamic_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
                                child(_child_)
 {
@@ -121,7 +121,7 @@ while (true)
 #endif
 }
 
-PPIterator* PPDDO::copy(variable_context *_cxt_)
+PPIterator* PPDDO::copy(dynamic_context *_cxt_)
 {
     PPDDO *res = new PPDDO(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -129,7 +129,7 @@ PPIterator* PPDDO::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPDDO::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPDDO::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 #ifdef TURN_ON_DDO
     return true;

@@ -13,7 +13,7 @@
 class PPReplace : public PPUpdate
 {
     PPOpIn child;
-    variable_context *cxt;
+    dynamic_context *cxt;
 
 public:
     void open();
@@ -21,7 +21,7 @@ public:
     void execute();
 
     PPReplace(PPOpIn _child_, 
-              variable_context *_cxt_);
+              dynamic_context *_cxt_);
     ~PPReplace();
 };
 

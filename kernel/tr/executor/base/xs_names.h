@@ -40,8 +40,14 @@ bool chech_constraints_for_xs_NCName  (const tuple_cell *tc);
 /// -- char* must point to zero ended C-string contained
 ///    possibly non-normalized value.
 ////////////////////////////////////////////////////////////////
-bool chech_constraints_for_xs_NMTOKEN (const char* s);
-bool chech_constraints_for_xs_Name    (const char* s);
-bool chech_constraints_for_xs_NCName  (const char* s);
+bool        chech_constraints_for_xs_NMTOKEN (const char* s);
+bool        chech_constraints_for_xs_Name    (const char* s);
+bool        chech_constraints_for_xs_NCName  (const char* s, int n);
+inline bool chech_constraints_for_xs_NCName  (const char* s)
+{
+    return chech_constraints_for_xs_NCName(s, strlen(s));
+}
+
+
 
 #endif

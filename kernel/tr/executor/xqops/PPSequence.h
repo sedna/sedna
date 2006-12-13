@@ -27,10 +27,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPSequence(variable_context *_cxt_,
+    PPSequence(dynamic_context *_cxt_,
                const arr_of_PPOpIn &_children_);
     virtual ~PPSequence();
 };

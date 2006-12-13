@@ -39,23 +39,23 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPAbsPath(variable_context *_cxt_, 
+    PPAbsPath(dynamic_context *_cxt_, 
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_);
-    PPAbsPath(variable_context *_cxt_, 
+    PPAbsPath(dynamic_context *_cxt_, 
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_);
-    PPAbsPath(variable_context *_cxt_, 
+    PPAbsPath(dynamic_context *_cxt_, 
               PathExpr *_path_expr_, 
               counted_ptr<db_entity> _db_ent_,
               PPOpIn _name_,
               schema_node *_root_);
     virtual ~PPAbsPath();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

@@ -11,7 +11,7 @@
 
 
 
-PPConst::PPConst(variable_context *_cxt_,
+PPConst::PPConst(dynamic_context *_cxt_,
                  const tuple_cell &_c_) : PPIterator(_cxt_)
 {
     c = _c_;
@@ -64,13 +64,13 @@ void PPConst::next(tuple &t)
     }
 }
 
-PPIterator* PPConst::copy(variable_context *_cxt_)
+PPIterator* PPConst::copy(dynamic_context *_cxt_)
 {
     PPConst *res = new PPConst(_cxt_, c);
     return res;
 }
 
-bool PPConst::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPConst::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     r = new sequence(((PPConst*)cur)->c);
     return true;

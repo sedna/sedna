@@ -37,7 +37,6 @@ $(RCV_LIB):    rcv_funcs$(OBJ_EXT)
 
 clean: generic_clean
 	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(LOCKS_LIB)
 	-$(REMOVE) *$(LIB_EXT)
 	-$(REMOVE) depend
 	-$(REMOVE) depend.errors

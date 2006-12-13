@@ -8,7 +8,7 @@
 #include "dm_accessors.h"
 
 
-PPUp::PPUp(variable_context *_cxt_,
+PPUp::PPUp(dynamic_context *_cxt_,
            PPOpIn _child_,
            schema_node *_scm_node_) : PPIterator(_cxt_),
                                       child(_child_),
@@ -70,7 +70,7 @@ void PPUp::next  (tuple &t)
     }
 }
 
-PPIterator* PPUp::copy(variable_context *_cxt_)
+PPIterator* PPUp::copy(dynamic_context *_cxt_)
 {
     PPUp *res = new PPUp(_cxt_, child, scm_node);
     res->child.op = child.op->copy(_cxt_);
@@ -78,7 +78,7 @@ PPIterator* PPUp::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPUp::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPUp::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPUp::result");
 }

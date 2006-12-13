@@ -8,6 +8,7 @@
 #define _PPBASE_H
 
 #include <vector>
+#include <list>
 #include <map>
 #include "sedna.h"
 #include "sequence.h"
@@ -28,6 +29,7 @@ class PPOpIn;
 
 class sequence;
 class sequence::iterator;
+class dynamic_context;
 
 
 /*******************************************************************************
@@ -39,26 +41,23 @@ typedef int var_c_id;	// var consumption id
 // every element of the array is the info about consumption of specific cosumer
 typedef std::vector<bool> simple_var_consumption;
 
-typedef std::vector<int> complex_var_consumption;
+typedef std::vector<int>  complex_var_consumption;
 
-struct congen1_usage
-{
-    int counter;
-    int total;
-    int over;
+typedef std::list<int>    free_entries_list;
 
-    congen1_usage() : counter(1), total(0), over(0) {}
-    void reopen() { counter = 1; over = 0; }
-};
+// function descriptor
+typedef int function_id;
 
-///Variable context:
+
+/*******************************************************************************
+ * Variable context
+ ******************************************************************************/
 // type of a producer
 enum producer_type { pt_not_defined,
                      pt_tuple,
                      pt_seq,			// producer is strict operation, so sequence is already built
                      pt_lazy_simple,	// producer is lazy simle
                      pt_lazy_complex,	// producer is lazy complex
-                     pt_congen1			// 'global' variable for con-gen1
                    };
 
 // producer structure
@@ -72,7 +71,6 @@ struct producer
     complex_var_consumption *cvc;
     int tuple_pos;
     tuple *t;
-    congen1_usage *c1u;
 
     producer() : type(pt_not_defined), 
                  s(NULL), 
@@ -80,8 +78,7 @@ struct producer
                  svc(NULL), 
                  cvc(NULL), 
                  tuple_pos(0), 
-                 t(NULL),
-                 c1u(NULL) {}
+                 t(NULL) {}
     ~producer()
     {
         switch (type)
@@ -91,7 +88,6 @@ struct producer
             case pt_seq			: delete s; break;
             case pt_lazy_simple	: delete svc; break;
             case pt_lazy_complex: delete cvc; break;
-            case pt_congen1		: delete c1u; break;
             default				: throw USER_EXCEPTION2(SE1003, "Unexpected case in producer::~producer");
         }
     }
@@ -106,6 +102,181 @@ struct variable_context
 	variable_context(int _size_) : size(_size_) { size > 0 ? producers = new producer[size] : producers = NULL; }
     ~variable_context() { delete [] producers; }
 };
+
+/*******************************************************************************
+ * Global Variable (declare variable) context
+ ******************************************************************************/
+struct global_producer
+{
+    PPVarIterator *op;				// pointer to operation with next(i) method
+    complex_var_consumption cvc;
+    free_entries_list fel;
+
+    global_producer() : op(NULL) {}
+    ~global_producer() { delete op; op = NULL; }
+    void open();
+    void close();
+};
+
+struct global_variable_context
+{
+    int size;					// size of context (number of producers in array)
+    global_producer *producers;	// array of producers
+
+    global_variable_context() : size(0), producers(NULL) {}
+    ~global_variable_context() { clear(); }
+    void set(int _size_) 
+    { 
+        size = _size_; 
+        producers = size > 0 ? new global_producer[size] : NULL; 
+    }
+    void clear()
+    {
+        delete [] producers;
+        producers = NULL;
+        size = 0;
+    }
+    void open()
+    {
+        for (int i = 0; i < size; i++)
+            producers[i].open();
+    }
+    void close()
+    {
+        for (int i = 0; i < size; i++)
+            producers[i].close();
+    }
+};
+
+/*******************************************************************************
+ * Functions context
+ ******************************************************************************/
+struct function_declaration
+{
+    sequence_type ret_st;
+    int num;
+    sequence_type *args;
+    PPIterator *op;
+    int cxt_size;
+
+    function_declaration() : num(0), args(NULL) {}
+    ~function_declaration() { delete [] args; }
+};
+
+struct function_context
+{
+    int size;
+    function_declaration *fun_decls;
+
+    function_context() : size(0), fun_decls(NULL) {}
+    ~function_context() { clear(); }
+    void set(int _size_) 
+    { 
+        size = _size_; 
+        fun_decls = size > 0 ? new function_declaration[size] : NULL; 
+    }
+    void clear()
+    {
+        delete [] fun_decls;
+        fun_decls = NULL;
+        size = 0;
+    }
+};
+
+/*******************************************************************************
+ * Dynamic context
+ ******************************************************************************/
+class dynamic_context_info
+{
+};
+
+class dynamic_context
+{
+public:
+    variable_context var_cxt;
+    dynamic_context_info *info;
+
+    dynamic_context(dynamic_context_info *_info_, int _var_cxt_size_) 
+        : info(_info_), var_cxt(_var_cxt_size_)
+    {
+    }
+
+    dynamic_context(dynamic_context *_cxt_, int _var_cxt_size_) 
+        : info(_cxt_->info), var_cxt(_var_cxt_size_)
+    { 
+    }
+
+    ~dynamic_context() {}
+
+
+
+
+    static global_variable_context glb_var_cxt;
+    static function_context funct_cxt;
+    static dynamic_context_info **infos;
+    static int infos_num;
+    static int infos_pos;
+
+    static void static_clear()
+    {
+        glb_var_cxt.clear();
+        funct_cxt.clear();
+
+        for (infos_pos = 0; infos_pos < infos_num; infos_pos++)
+        {
+            delete infos[infos_pos];
+            infos[infos_pos] = NULL;
+        }
+        infos_num = 0;
+        infos_pos = 0;
+        delete [] infos;
+        infos = NULL;
+    }
+
+    static void static_set(int _funcs_num_, int _var_decls_num_, int _infos_num_)
+    {
+        funct_cxt.set(_funcs_num_);
+        glb_var_cxt.set(_var_decls_num_);
+
+        U_ASSERT(_infos_num_ > 0);
+        infos_num = _infos_num_;
+        infos_pos = 0;
+        infos = new dynamic_context_info*[infos_num];
+    }
+
+    static dynamic_context_info *create_info()
+    {
+        U_ASSERT(infos_pos < infos_num);
+
+        dynamic_context_info *info = new dynamic_context_info;
+        infos[infos_pos++] = info;
+        return info;
+    }
+
+    static dynamic_context *create_unmanaged(int _var_cxt_size_)
+    {
+        return new dynamic_context(new dynamic_context_info, _var_cxt_size_);
+    }
+
+    static void destroy_unmanaged(dynamic_context *cxt)
+    {
+        delete cxt->info;
+        delete cxt;
+    }
+
+    static void global_variables_open()
+    {
+        glb_var_cxt.open();
+    }
+
+    static void global_variables_close()
+    {
+        glb_var_cxt.close();
+    }
+};
+
+
+
 
 /// Array of PPOpIn
 typedef std::vector<PPOpIn>			arr_of_PPOpIn;
@@ -134,63 +305,13 @@ struct PPOpIn
 /// Type for 'result' function
 /// return true, if strict
 /// r can be sequence* or PPIterator depending on return value
-typedef bool (*strict_fun)(PPIterator* cur, variable_context *cxt, void*& r);
+typedef bool (*strict_fun)(PPIterator* cur, dynamic_context *cxt, void*& r);
 
 
 /// function forms result of the strict operation (e.g. switches operation from
 /// strict to lazy if size of the result sequence is too large)
-bool strict_op_result(PPIterator* cur, sequence *res_seq, variable_context *cxt, void*& r);
+bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, void*& r);
 
-
-/*
-// variable consumer descriptor in the form of xxxyyyyyy, 
-// where xxx - identifier of variable,
-//       yyyyyy - identifier of the consumer of variable
-typedef int var_dsc;
-
-// map global variable id to local variable id
-typedef std::map<int, int> var_gid2var_lid;
-
-// Consumer Table
-typedef std::vector< std::vector<bool> > consumer_table;
-
-
-// Complex consumer table
-typedef std::vector<sequence::iterator> consumers_positions;
-
-struct var_consumption
-{
-    sequence *seq;
-    consumers_positions positions;
-};
-
-typedef std::vector<var_consumption> complex_consumer_table;
-*/
-
-/// Query prolog:
-typedef int function_id;	// function descriptor
-
-struct function_declaration
-{
-    sequence_type ret_st;
-    int num;
-    sequence_type *args;
-    PPIterator *op;
-    int cxt_size;
-
-    function_declaration() : num(0), args(NULL) {}
-    ~function_declaration() { delete [] args; }
-};
-
-struct query_prolog
-{
-    int size;
-    function_declaration *fun_decls;
-
-    query_prolog() : size(0), fun_decls(NULL) {}
-    query_prolog(int _size_) : size(_size_) { size > 0 ? fun_decls = new function_declaration[size] : fun_decls = NULL; }
-    ~query_prolog() { delete [] fun_decls; }
-};
 
 
 /*******************************************************************************
@@ -200,7 +321,7 @@ struct query_prolog
 class PPIterator
 {
 protected:
-    variable_context *cxt;
+    dynamic_context *cxt;
 public:
     virtual void open          ()         = 0;
     virtual void reopen        ()         = 0;
@@ -208,9 +329,9 @@ public:
     virtual strict_fun res_fun ()         = 0;
     virtual void next          (tuple &t) = 0;
 
-    virtual PPIterator* copy(variable_context *_cxt_) = 0;
+    virtual PPIterator* copy(dynamic_context *_cxt_) = 0;
 
-    PPIterator(variable_context *_cxt_) : cxt(_cxt_) {}
+    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_) {}
 	virtual bool is_const(){return false;}
     virtual ~PPIterator() {}
 };
@@ -228,7 +349,10 @@ public:
     /// set id to the beginning of the sequence
     virtual void reopen(var_dsc dsc, var_c_id id) = 0;
 
-    PPVarIterator(variable_context *_cxt_) : PPIterator(_cxt_) {}
+    /// close and release resources
+    virtual void close(var_dsc dsc, var_c_id id) = 0;
+
+    PPVarIterator(dynamic_context *_cxt_) : PPIterator(_cxt_) {}
     virtual ~PPVarIterator() {}
 	
 };
@@ -284,8 +408,6 @@ struct db_entity
 namespace tr_globals 
 {
 
-/// Query prolog (list of functions defined in prolog)
-extern query_prolog qp;
 extern static_context st_ct;
 
 

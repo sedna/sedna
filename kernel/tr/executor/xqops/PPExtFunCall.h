@@ -27,9 +27,9 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPExtFunCall(variable_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_);
+    PPExtFunCall(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, ExtFunction *_func_);
 
     virtual ~PPExtFunCall();
 };

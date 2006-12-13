@@ -29,12 +29,14 @@ void PPRetrieveDS::open()
 {
     local_lock_mrg->lock(lm_s);
 
+    dynamic_context::global_variables_open();
     name.op->open();
 }
 
 void PPRetrieveDS::close()
 {
     name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPRetrieveDS::execute()

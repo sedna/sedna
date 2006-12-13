@@ -26,12 +26,14 @@ void PPDropDocument::open()
 {
     local_lock_mrg->lock(lm_x);
 
+    dynamic_context::global_variables_open();
     name.op->open();
 }
 
 void PPDropDocument::close()
 {
     name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropDocument::execute()
@@ -69,6 +71,7 @@ PPDropCollection::~PPDropCollection()
 
 void PPDropCollection::open()
 {
+    dynamic_context::global_variables_open();
     name.op->open();
 
     local_lock_mrg->lock(lm_x);
@@ -77,6 +80,7 @@ void PPDropCollection::open()
 void PPDropCollection::close()
 {
     name.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropCollection::execute()
@@ -119,6 +123,7 @@ PPDropDocumentInCollection::~PPDropDocumentInCollection()
 
 void PPDropDocumentInCollection::open()
 {
+    dynamic_context::global_variables_open();
     document.op->open();
     collection.op->open();
 
@@ -129,6 +134,7 @@ void PPDropDocumentInCollection::close()
 {
     document.op->close();
     collection.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDropDocumentInCollection::execute()

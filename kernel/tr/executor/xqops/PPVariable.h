@@ -9,6 +9,9 @@
 #include "sedna.h"
 #include "PPBase.h"
 
+///////////////////////////////////////////////////////////////////////////////
+/// PPVariable
+///////////////////////////////////////////////////////////////////////////////
 class PPVariable : public PPIterator
 {
 private:
@@ -22,12 +25,36 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPVariable(variable_context *_cxt_, var_dsc _dsc_);
+    PPVariable(dynamic_context *_cxt_, var_dsc _dsc_);
     virtual ~PPVariable();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+};
+
+///////////////////////////////////////////////////////////////////////////////
+/// PPGlobalVariable
+///////////////////////////////////////////////////////////////////////////////
+class PPGlobalVariable : public PPIterator
+{
+private:
+    var_dsc dsc;
+    var_c_id id;
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+
+    PPGlobalVariable(dynamic_context *_cxt_, var_dsc _dsc_);
+    virtual ~PPGlobalVariable();
+
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 #endif

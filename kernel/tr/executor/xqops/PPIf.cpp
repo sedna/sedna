@@ -10,7 +10,7 @@
 #include "PPUtils.h"
 
 
-PPIf::PPIf(variable_context *_cxt_,
+PPIf::PPIf(dynamic_context *_cxt_,
            PPOpIn _if_child_, 
            PPOpIn _then_child_, 
            PPOpIn _else_child_) : PPIterator(_cxt_),
@@ -24,7 +24,7 @@ PPIf::PPIf(variable_context *_cxt_,
 
 }
 
-PPIf::PPIf(variable_context *_cxt_,
+PPIf::PPIf(dynamic_context *_cxt_,
            PPOpIn _if_child_, 
            PPOpIn _then_child_, 
            PPOpIn _else_child_,
@@ -98,7 +98,7 @@ void PPIf::next(tuple &t)
     }
 }
 
-PPIterator* PPIf::copy(variable_context *_cxt_)
+PPIterator* PPIf::copy(dynamic_context *_cxt_)
 {
     PPIf *res = new PPIf(_cxt_, if_child, then_child, else_child);
     res->if_child.op   = if_child.op->copy(_cxt_);
@@ -108,7 +108,7 @@ PPIterator* PPIf::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPIf::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPIf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     PPOpIn if_child, then_child, else_child;
     ((PPIf*)cur)->children(if_child, then_child, else_child);

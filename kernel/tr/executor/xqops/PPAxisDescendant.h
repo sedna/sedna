@@ -67,7 +67,7 @@ protected:
     static sequence *next_var_name_s				(sequence *data_seq, PPAxisChild* cur_op);
 
 */
-	PPAxisDescendant(variable_context *_cxt_,
+	PPAxisDescendant(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_,bool _self_);
@@ -82,10 +82,10 @@ public:
 		(this->*next_fun)(t); 
 	}
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAxisDescendant(variable_context *_cxt_,
+    PPAxisDescendant(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);
@@ -94,7 +94,7 @@ public:
 class PPAxisDescendantOrSelf : public PPAxisDescendant
 {
 	public:
-	PPAxisDescendantOrSelf(variable_context *_cxt_,
+	PPAxisDescendantOrSelf(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);
@@ -109,7 +109,7 @@ protected:
 	void next_wildcard_ncname_star		(tuple &t);
     void next_wildcard_star_ncname		(tuple &t);
 public:
-	PPAxisDescendantAttr(variable_context *_cxt_,
+	PPAxisDescendantAttr(dynamic_context *_cxt_,
                 PPOpIn _child_,
                 NodeTestType _nt_type_,
                 NodeTestData _nt_data_);

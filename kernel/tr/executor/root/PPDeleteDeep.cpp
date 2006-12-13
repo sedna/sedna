@@ -10,9 +10,9 @@
 #include "locks.h"
 
 PPDeleteDeep::PPDeleteDeep(PPOpIn _child_, 
-                           variable_context *_cxt_) : PPUpdate(),
-                                                      child(_child_),
-                                                      cxt(_cxt_)
+                           dynamic_context *_cxt_) : PPUpdate(),
+                                                     child(_child_),
+                                                     cxt(_cxt_)
 {
 }
 
@@ -27,12 +27,14 @@ PPDeleteDeep::~PPDeleteDeep()
 void PPDeleteDeep::open()
 {
     local_lock_mrg->lock(lm_x);
+    dynamic_context::global_variables_open();
     child.op->open();
 }
 
 void PPDeleteDeep::close()
 {
     child.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPDeleteDeep::execute()

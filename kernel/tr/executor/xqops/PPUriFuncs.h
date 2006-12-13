@@ -38,10 +38,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnUriEncoding(variable_context *_cxt_,
+    PPFnUriEncoding(dynamic_context *_cxt_,
                     PPOpIn _child_,
                     uri_function_type _type_);
     virtual ~PPFnUriEncoding();
@@ -68,12 +68,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnResolveUri(variable_context *_cxt_,
+    PPFnResolveUri(dynamic_context *_cxt_,
                    PPOpIn _relative_);
-    PPFnResolveUri(variable_context *_cxt_,
+    PPFnResolveUri(dynamic_context *_cxt_,
                    PPOpIn _relative_,
                    PPOpIn _base_);
     virtual ~PPFnResolveUri();

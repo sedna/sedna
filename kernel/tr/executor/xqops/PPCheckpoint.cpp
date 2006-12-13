@@ -7,7 +7,7 @@
 #include "PPCheckpoint.h"
 #include "log.h"
 
-PPCheckpoint::PPCheckpoint(variable_context *_cxt_) : PPIterator(_cxt_)
+PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_) : PPIterator(_cxt_)
 {
 }
 
@@ -38,13 +38,13 @@ void PPCheckpoint::next (tuple &t)
     // call checkpoint here
 }
 
-PPIterator* PPCheckpoint::copy(variable_context *_cxt_)
+PPIterator* PPCheckpoint::copy(dynamic_context *_cxt_)
 {
     PPCheckpoint *res = new PPCheckpoint(_cxt_);
     return res;
 }
 
-bool PPCheckpoint::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPCheckpoint::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPCheckpoint::result");
 }

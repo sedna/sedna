@@ -14,7 +14,7 @@
 /// PPFnCompare
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnCompare::PPFnCompare(variable_context *_cxt_,
+PPFnCompare::PPFnCompare(dynamic_context *_cxt_,
                          PPOpIn _str1_child_,
                          PPOpIn _str2_child_,
                          bool _is_codepoint_equal_) : PPIterator(_cxt_),
@@ -24,7 +24,7 @@ PPFnCompare::PPFnCompare(variable_context *_cxt_,
 {
 }
 
-PPFnCompare::PPFnCompare(variable_context *_cxt_,
+PPFnCompare::PPFnCompare(dynamic_context *_cxt_,
                          PPOpIn _str1_child_,
                          PPOpIn _str2_child_,
                          PPOpIn _collation_child_) : PPIterator(_cxt_),
@@ -136,7 +136,7 @@ void PPFnCompare::next(tuple &t)
     }
 }
 
-PPIterator* PPFnCompare::copy(variable_context *_cxt_)
+PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)
 {
     PPFnCompare *res = NULL;
     if (collation_child.op)
@@ -154,7 +154,7 @@ PPIterator* PPFnCompare::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnCompare::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnCompare::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnCompare::result");
 }

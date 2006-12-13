@@ -17,7 +17,7 @@ private:
     bool first_time;
     trigger_parameter_type var_type;
 
-    PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_);
+    PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_, const xptr &_p_);
 
 public:
     virtual void open   ();
@@ -26,12 +26,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPXptr(variable_context *_cxt_, trigger_parameter_type _var_type_);
+    PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_);
     virtual ~PPXptr();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
     void set_xptr(const xptr& _p_) { p = _p_; }
     trigger_parameter_type get_type() const { return var_type; }

@@ -202,12 +202,12 @@ bool PPFnSQLBase::checkBaseInitial()
 		return false;
 }
 
-PPFnSQLBase::PPFnSQLBase(variable_context *_cxt_) : PPConstructor(_cxt_,false)
+PPFnSQLBase::PPFnSQLBase(dynamic_context *_cxt_) : PPConstructor(_cxt_,false)
 {
 	handle_manager_carrier = false;
 }
 
-PPFnSQLConnect::PPFnSQLConnect(variable_context *_cxt_, const arr_of_PPOpIn &_arr_) : PPFnSQLBase(_cxt_), arr(_arr_)
+PPFnSQLConnect::PPFnSQLConnect(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_) : PPFnSQLBase(_cxt_), arr(_arr_)
 {
 }
 
@@ -356,7 +356,7 @@ void PPFnSQLConnect::next(tuple &t)
 	}
 }
 
-PPIterator* PPFnSQLConnect::copy(variable_context *_cxt_)
+PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
 {
     PPFnSQLConnect *res = new PPFnSQLConnect(_cxt_, arr);
 
@@ -366,7 +366,7 @@ PPIterator* PPFnSQLConnect::copy(variable_context *_cxt_)
 	return res;
 }
 
-PPFnSQLExecute::PPFnSQLExecute(variable_context *_cxt_, const arr_of_PPOpIn &_arr_, bool _exec_update_) : PPFnSQLBase(_cxt_), 
+PPFnSQLExecute::PPFnSQLExecute(dynamic_context *_cxt_, const arr_of_PPOpIn &_arr_, bool _exec_update_) : PPFnSQLBase(_cxt_), 
 									arr(_arr_), handle(NULL), executor(NULL), exec_update(_exec_update_)
 {
 }
@@ -519,7 +519,7 @@ void PPFnSQLExecute::next(tuple &t)
 	}
 }
 
-PPIterator* PPFnSQLExecute::copy(variable_context *_cxt_)
+PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLExecute *res = new PPFnSQLExecute(_cxt_, arr, exec_update);
 
@@ -533,12 +533,12 @@ PPIterator* PPFnSQLExecute::copy(variable_context *_cxt_)
 //////////////////////////////////////////////////////////////////////////
 // PPFnSQLPrepare
 
-PPFnSQLPrepare::PPFnSQLPrepare(variable_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
+PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_,
 							   PPOpIn _options_) : PPFnSQLBase(_cxt_), has_options(true),
 							   connection(_connection_), statement(_statement_), options(_options_)
 {
 }
-PPFnSQLPrepare::PPFnSQLPrepare(variable_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_)
+PPFnSQLPrepare::PPFnSQLPrepare(dynamic_context *_cxt_, PPOpIn _connection_, PPOpIn _statement_)
 								: PPFnSQLBase(_cxt_), has_options(false), connection(_connection_),
 							   statement(_statement_)
 {
@@ -631,7 +631,7 @@ void PPFnSQLPrepare::next(tuple &t)
 		t.set_eos();
 	}
 }
-PPIterator * PPFnSQLPrepare::copy(variable_context *_cxt_)
+PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLPrepare *res;
 	if (has_options)
@@ -649,7 +649,7 @@ PPIterator * PPFnSQLPrepare::copy(variable_context *_cxt_)
 
 //////////////////////////////////////////////////////////////////////////
 // PPFnSQLClose
-PPFnSQLClose::PPFnSQLClose(variable_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+PPFnSQLClose::PPFnSQLClose(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
 {
 }
 PPFnSQLClose::~PPFnSQLClose()
@@ -707,7 +707,7 @@ void PPFnSQLClose::next(tuple &t)
 	t.set_eos();
 }
 
-PPIterator * PPFnSQLClose::copy(variable_context *_cxt_)
+PPIterator * PPFnSQLClose::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLClose *res;
 	res = new PPFnSQLClose(_cxt_, connection);
@@ -719,7 +719,7 @@ PPIterator * PPFnSQLClose::copy(variable_context *_cxt_)
 
 //////////////////////////////////////////////////////////////////////////
 // PPFnSQLCommit
-PPFnSQLCommit::PPFnSQLCommit(variable_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+PPFnSQLCommit::PPFnSQLCommit(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
 {
 }
 PPFnSQLCommit::~PPFnSQLCommit()
@@ -773,7 +773,7 @@ void PPFnSQLCommit::next(tuple &t)
 	t.set_eos();
 }
 
-PPIterator * PPFnSQLCommit::copy(variable_context *_cxt_)
+PPIterator * PPFnSQLCommit::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLCommit *res;
 	res = new PPFnSQLCommit(_cxt_, connection);
@@ -785,7 +785,7 @@ PPIterator * PPFnSQLCommit::copy(variable_context *_cxt_)
 
 //////////////////////////////////////////////////////////////////////////
 // PPFnSQLRollback
-PPFnSQLRollback::PPFnSQLRollback(variable_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
+PPFnSQLRollback::PPFnSQLRollback(dynamic_context *_cxt_, PPOpIn _connection_) : PPFnSQLBase(_cxt_), connection(_connection_)
 {
 }
 PPFnSQLRollback::~PPFnSQLRollback()
@@ -839,7 +839,7 @@ void PPFnSQLRollback::next(tuple &t)
 	t.set_eos();
 }
 
-PPIterator * PPFnSQLRollback::copy(variable_context *_cxt_)
+PPIterator * PPFnSQLRollback::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLRollback *res;
 	res = new PPFnSQLRollback(_cxt_, connection);

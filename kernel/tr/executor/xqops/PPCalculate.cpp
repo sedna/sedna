@@ -14,7 +14,7 @@
 using namespace std;
 
 
-PPCalculate::PPCalculate(variable_context *_cxt_, 
+PPCalculate::PPCalculate(dynamic_context *_cxt_, 
                          arr_of_PPOpIn *_ch_arr_,
                          CalcOp *_tree_) : PPIterator(_cxt_),
                                            ch_arr(_ch_arr_),
@@ -73,7 +73,7 @@ void PPCalculate::next(tuple &t)
     }
 }
 
-PPIterator* PPCalculate::copy(variable_context *_cxt_)
+PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
 {
 	int i = 0;
     arr_of_PPOpIn *new_ch_arr = new arr_of_PPOpIn(ch_arr->size());
@@ -93,7 +93,7 @@ PPIterator* PPCalculate::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPCalculate::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     arr_of_PPOpIn *ch_arr = new arr_of_PPOpIn;
     ((PPCalculate*)cur)->children(ch_arr);

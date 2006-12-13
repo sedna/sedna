@@ -11,6 +11,34 @@
 #include "PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+/// PPFnResolveQName
+///////////////////////////////////////////////////////////////////////////////
+class PPFnResolveQName : public PPIterator
+{
+protected:
+    PPOpIn child_qname;
+    PPOpIn child_elem;
+    bool first_time;
+
+    void children(PPOpIn &_child_qname_, PPOpIn &_child_elem_) { _child_qname_ = child_qname; _child_elem_ = child_elem; }
+
+public:
+    virtual void open   ();
+    virtual void reopen ();
+    virtual void close  ();
+    virtual strict_fun res_fun () { return result; };
+    virtual void next   (tuple &t);
+
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+
+    PPFnResolveQName(dynamic_context *_cxt_,
+                     PPOpIn _child_qname_,
+                     PPOpIn _child_elem_);
+    virtual ~PPFnResolveQName();
+};
+
+///////////////////////////////////////////////////////////////////////////////
 /// PPFnQName
 ///////////////////////////////////////////////////////////////////////////////
 class PPFnQName : public PPIterator
@@ -29,10 +57,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnQName(variable_context *_cxt_,
+    PPFnQName(dynamic_context *_cxt_,
               PPOpIn _child_uri_,
               PPOpIn _child_qname_);
     virtual ~PPFnQName();
@@ -56,10 +84,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnPrefixFromQName(variable_context *_cxt_,
+    PPFnPrefixFromQName(dynamic_context *_cxt_,
                         PPOpIn _child_);
     virtual ~PPFnPrefixFromQName();
 };
@@ -82,10 +110,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnLocalNameFromQName(variable_context *_cxt_,
+    PPFnLocalNameFromQName(dynamic_context *_cxt_,
                            PPOpIn _child_);
     virtual ~PPFnLocalNameFromQName();
 };
@@ -108,10 +136,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnNamespaceUriFromQName(variable_context *_cxt_,
+    PPFnNamespaceUriFromQName(dynamic_context *_cxt_,
                               PPOpIn _child_);
     virtual ~PPFnNamespaceUriFromQName();
 };
@@ -135,10 +163,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnNamespaceUriForPrefix(variable_context *_cxt_,
+    PPFnNamespaceUriForPrefix(dynamic_context *_cxt_,
                               PPOpIn _child_prefix_,
                               PPOpIn _child_element_);
     virtual ~PPFnNamespaceUriForPrefix();
@@ -163,10 +191,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnInScopePrefixes(variable_context *_cxt_,
+    PPFnInScopePrefixes(dynamic_context *_cxt_,
                         PPOpIn _child_);
     virtual ~PPFnInScopePrefixes();
 };

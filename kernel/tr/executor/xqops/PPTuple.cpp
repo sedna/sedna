@@ -10,7 +10,7 @@
 
 using namespace std;
 
-PPTuple::PPTuple(variable_context *_cxt_,
+PPTuple::PPTuple(dynamic_context *_cxt_,
                  const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_),
                                                   ch_arr(_ch_arr_),
                                                   lt(1)
@@ -77,7 +77,7 @@ void PPTuple::next(tuple &t)
     }
 }
 
-PPIterator* PPTuple::copy(variable_context *_cxt_)
+PPIterator* PPTuple::copy(dynamic_context *_cxt_)
 {
     PPTuple *res = new PPTuple(_cxt_, ch_arr);
 
@@ -87,7 +87,7 @@ PPIterator* PPTuple::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPTuple::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPTuple::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
     arr_of_PPOpIn ch_arr;

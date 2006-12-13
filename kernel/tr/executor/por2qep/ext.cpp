@@ -371,7 +371,7 @@ void ExtFunctionManager::load_func_list()
 }
 
 
-PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, variable_context *cxt, arr_of_PPOpIn arr)
+PPIterator *ExtFunctionManager::make_pp_ext_func(char *name, dynamic_context *cxt, arr_of_PPOpIn arr)
 {
 	std::string name_str(name);
 	load_func_list();

@@ -34,8 +34,8 @@ protected:
 public:
 	static bool checkInitial();
 	virtual void open   ();
-	static bool result(PPIterator* cur, variable_context *cxt, void*& r);
-    PPConstructor(variable_context *_cxt_,bool _deep_copy) : PPIterator(_cxt_),deep_copy(_deep_copy) 
+	static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
+    PPConstructor(dynamic_context *_cxt_,bool _deep_copy) : PPIterator(_cxt_),deep_copy(_deep_copy) 
 	{
 	 schema_carrier=false;
 	}
@@ -66,12 +66,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPElementConstructor(variable_context *_cxt_, 
+    PPElementConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
-	PPElementConstructor(variable_context *_cxt_, 
+	PPElementConstructor(dynamic_context *_cxt_, 
            const char* name, PPOpIn _content_,bool _deep_copy, bool _ns_inside);
     virtual ~PPElementConstructor();
 };
@@ -99,16 +99,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPAttributeConstructor(variable_context *_cxt_, 
+    PPAttributeConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy);
-	PPAttributeConstructor(variable_context *_cxt_, 
+	PPAttributeConstructor(dynamic_context *_cxt_, 
            const char* name, PPOpIn _content_,bool _deep_copy);
-	PPAttributeConstructor(variable_context *_cxt_, 
+	PPAttributeConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, const char* value,bool _deep_copy);
-	PPAttributeConstructor(variable_context *_cxt_, 
+	PPAttributeConstructor(dynamic_context *_cxt_, 
            const char* name, const char* value,bool _deep_copy);
     virtual ~PPAttributeConstructor();
 };
@@ -134,12 +134,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPNamespaceConstructor(variable_context *_cxt_, 
+    PPNamespaceConstructor(dynamic_context *_cxt_, 
            const char* name, PPOpIn _content_);
-	PPNamespaceConstructor(variable_context *_cxt_, 
+	PPNamespaceConstructor(dynamic_context *_cxt_, 
            const char* name, const char* value);
     virtual ~PPNamespaceConstructor();
 };
@@ -165,12 +165,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPCommentConstructor(variable_context *_cxt_, 
+    PPCommentConstructor(dynamic_context *_cxt_, 
             PPOpIn _content_,bool _deep_copy);
-	PPCommentConstructor(variable_context *_cxt_, 
+	PPCommentConstructor(dynamic_context *_cxt_, 
             const char* value,bool _deep_copy);
     virtual ~PPCommentConstructor();
 };
@@ -196,12 +196,12 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPTextConstructor(variable_context *_cxt_, 
+    PPTextConstructor(dynamic_context *_cxt_, 
             PPOpIn _content_,bool _deep_copy);
-	PPTextConstructor(variable_context *_cxt_, 
+	PPTextConstructor(dynamic_context *_cxt_, 
             const char* value,bool _deep_copy);
     virtual ~PPTextConstructor();
 };
@@ -223,10 +223,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPDocumentConstructor(variable_context *_cxt_, 
+    PPDocumentConstructor(dynamic_context *_cxt_, 
             PPOpIn _content_);
     virtual ~PPDocumentConstructor();
 };
@@ -255,16 +255,16 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPPIConstructor(variable_context *_cxt_, 
+    PPPIConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, PPOpIn _content_,bool _deep_copy);
-	PPPIConstructor(variable_context *_cxt_, 
+	PPPIConstructor(dynamic_context *_cxt_, 
            const char* name, PPOpIn _content_,bool _deep_copy);
-	PPPIConstructor(variable_context *_cxt_, 
+	PPPIConstructor(dynamic_context *_cxt_, 
             PPOpIn _qname_, const char* value,bool _deep_copy);
-	PPPIConstructor(variable_context *_cxt_, 
+	PPPIConstructor(dynamic_context *_cxt_, 
            const char* name, const char* value,bool _deep_copy);
     virtual ~PPPIConstructor();
 };

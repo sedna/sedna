@@ -10,13 +10,13 @@
 #include "locks.h"
 
 PPInsertTo::PPInsertTo(PPOpIn _child1_, 
-                       variable_context *_cxt1_,
+                       dynamic_context *_cxt1_,
                        PPOpIn _child2_,
-                       variable_context *_cxt2_) : PPUpdate(),
-                                                   child1(_child1_),
-                                                   cxt1(_cxt1_),
-                                                   child2(_child2_),
-                                                   cxt2(_cxt2_)
+                       dynamic_context *_cxt2_) : PPUpdate(),
+                                                  child1(_child1_),
+                                                  cxt1(_cxt1_),
+                                                  child2(_child2_),
+                                                  cxt2(_cxt2_)
 {
 }
 
@@ -35,6 +35,7 @@ PPInsertTo::~PPInsertTo()
 void PPInsertTo::open()
 {
     local_lock_mrg->lock(lm_x);
+    dynamic_context::global_variables_open();
     child1.op->open();
     child2.op->open();
 }
@@ -43,6 +44,7 @@ void PPInsertTo::close()
 {
     child1.op->close();
     child2.op->close();
+    dynamic_context::global_variables_close();
 }
 
 void PPInsertTo::execute()

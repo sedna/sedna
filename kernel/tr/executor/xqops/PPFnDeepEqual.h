@@ -33,9 +33,9 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFnDeepEqual(variable_context *_cxt_,
+    PPFnDeepEqual(dynamic_context *_cxt_,
              PPOpIn _child1_,
              PPOpIn _child2_);
 	PPFnDeepEqual(variable_context *_cxt_,
@@ -44,7 +44,7 @@ public:
 			 PPOpIn _collation_);
     virtual ~PPFnDeepEqual();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	bool are_nodes_deep_equal(xptr& node1,xptr& node2);
  bool are_elements_deep_equal(xptr& node1,xptr& node2);
  bool are_documents_deep_equal(xptr& node1,xptr& node2);

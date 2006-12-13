@@ -70,7 +70,7 @@ private:
     fun_conv_rules *body_fcr;
     fun_arg** args;
     int args_num;
-    variable_context *new_cxt;
+    dynamic_context *new_cxt;
     bool need_reopen;
 #ifdef STRICT_FUNS
     sequence* s;
@@ -92,18 +92,19 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPFunCall(variable_context *_cxt_,
+    PPFunCall(dynamic_context *_cxt_,
               const arr_of_PPOpIn &_ch_arr_,
               function_id _fn_id_);
     virtual ~PPFunCall();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
     virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next(tuple &t, var_dsc dsc, var_c_id id);
+    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
     virtual void reopen(var_dsc dsc, var_c_id id);
+    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 

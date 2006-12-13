@@ -23,9 +23,9 @@ public:
     virtual strict_fun res_fun () { return NULL; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPSResLStub(variable_context *_cxt_, PPIterator *_op_, sequence *_s_);
+    PPSResLStub(dynamic_context *_cxt_, PPIterator *_op_, sequence *_s_);
     virtual ~PPSResLStub();
 };
 

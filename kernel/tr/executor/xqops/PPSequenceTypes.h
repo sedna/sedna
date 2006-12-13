@@ -41,15 +41,15 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPCast(variable_context *_cxt_,
+    PPCast(dynamic_context *_cxt_,
            PPOpIn _child_,
            xmlscm_type _target_type_,
            bool _can_be_empty_seq_);
     virtual ~PPCast();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,15 +77,15 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPCastable(variable_context *_cxt_,
+    PPCastable(dynamic_context *_cxt_,
                PPOpIn _child_,
                xmlscm_type _target_type_,
                bool _can_be_empty_seq_);
     virtual ~PPCastable();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -118,14 +118,14 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPInstanceOf(variable_context *_cxt_,
+    PPInstanceOf(dynamic_context *_cxt_,
                  PPOpIn _child_,
                  const sequence_type& _st_);
     virtual ~PPInstanceOf();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -155,14 +155,14 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPTreat(variable_context *_cxt_,
+    PPTreat(dynamic_context *_cxt_,
             PPOpIn _child_,
             const sequence_type& _st_);
     virtual ~PPTreat();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -204,11 +204,11 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
     
-    PPTypeswitch(variable_context *_cxt_,
+    PPTypeswitch(dynamic_context *_cxt_,
                  arr_of_var_dsc _var_dscs_, 
                  PPOpIn _source_child_, 
                  const arr_of_sequence_type& _types_,
@@ -218,8 +218,9 @@ public:
     virtual ~PPTypeswitch();
 
     virtual var_c_id register_consumer(var_dsc dsc);
-    virtual void next(tuple &t, var_dsc dsc, var_c_id id);
+    virtual void next  (tuple &t, var_dsc dsc, var_c_id id);
     virtual void reopen(var_dsc dsc, var_c_id id);
+    virtual void close (var_dsc dsc, var_c_id id);
 };
 
 #endif

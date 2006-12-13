@@ -12,7 +12,7 @@
 
 using namespace std;
 tuple_cell PPSpaceSequence::space_tup = tuple_cell::atomic_deep(xs_string, " ");
-PPSpaceSequence::PPSpaceSequence(variable_context *_cxt_,
+PPSpaceSequence::PPSpaceSequence(dynamic_context *_cxt_,
                        const arr_of_PPOpIn &_ch_arr_, bool _isAtomized_) : PPSequence(_cxt_,_ch_arr_),isAtomized(_isAtomized_)
 {
 	space=false;
@@ -27,7 +27,7 @@ PPSpaceSequence::~PPSpaceSequence()
         ch_arr[it].op = NULL;
     }
 }
-PPIterator* PPSpaceSequence::copy(variable_context *_cxt_)
+PPIterator* PPSpaceSequence::copy(dynamic_context *_cxt_)
 {
 	PPSpaceSequence *res = new PPSpaceSequence(_cxt_, ch_arr,isAtomized);
 

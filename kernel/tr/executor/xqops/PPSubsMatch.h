@@ -41,10 +41,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPSubsMatch(variable_context *_cxt_, PPOpIn _seq1_, PPOpIn _seq2_, subsmatch_type _smt_);
+    PPSubsMatch(dynamic_context *_cxt_, PPOpIn _seq1_, PPOpIn _seq2_, subsmatch_type _smt_);
     virtual ~PPSubsMatch();
 	
 	////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ public:
     template <class a, class b> static  void contains (a& it1, b& it2,int l1,int l2,tuple &t);
     template <class a, class b> static  int  contains (a& it1, b& it2,int l1,int l2);
 	
-	static PPSubsMatch* PPFnContains(variable_context *_cxt_, 
+	static PPSubsMatch* PPFnContains(dynamic_context *_cxt_, 
                                      PPOpIn _seq1_, 
                                      PPOpIn _seq2_)
 	{

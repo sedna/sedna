@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnConcat
 ///////////////////////////////////////////////////////////////////////////////
-PPFnConcat::PPFnConcat(variable_context *_cxt_,
+PPFnConcat::PPFnConcat(dynamic_context *_cxt_,
                        arr_of_PPOpIn _ch_arr_) : PPIterator(_cxt_), 
                                                  ch_arr(_ch_arr_)
 {
@@ -115,7 +115,7 @@ void PPFnConcat::next(tuple &t)
     t.copy(res);
 }
 
-PPIterator* PPFnConcat::copy(variable_context *_cxt_)
+PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
 {
     PPFnConcat *res = new PPFnConcat(_cxt_, ch_arr);
 
@@ -126,7 +126,7 @@ PPIterator* PPFnConcat::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnConcat::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnConcat::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnConcat::result");
 }
@@ -136,7 +136,7 @@ bool PPFnConcat::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPFnStringJoin
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnStringJoin::PPFnStringJoin(variable_context *_cxt_,
+PPFnStringJoin::PPFnStringJoin(dynamic_context *_cxt_,
                                PPOpIn _members_,
                                PPOpIn _separator_) : PPIterator(_cxt_), 
                                                      members(_members_),
@@ -220,7 +220,7 @@ void PPFnStringJoin::next(tuple &t)
     t.copy(result.get_tuple_cell());
 }
 
-PPIterator* PPFnStringJoin::copy(variable_context *_cxt_)
+PPIterator* PPFnStringJoin::copy(dynamic_context *_cxt_)
 {
     PPFnStringJoin *res = new PPFnStringJoin(_cxt_, members, separator);
     res->members.op   = members.op->copy(_cxt_);
@@ -228,7 +228,7 @@ PPIterator* PPFnStringJoin::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnStringJoin::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnStringJoin::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnStringJoin::result");
 }
@@ -239,7 +239,7 @@ bool PPFnStringJoin::result(PPIterator* cur, variable_context *cxt, void*& r)
 /// PPFnStartsEndsWith
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnStartsEndsWith::PPFnStartsEndsWith(variable_context *_cxt_,
+PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
                                        PPFnStartsEndsWith::FunctionType _type_) : PPIterator(_cxt_), 
@@ -250,7 +250,7 @@ PPFnStartsEndsWith::PPFnStartsEndsWith(variable_context *_cxt_,
 {
 }
 
-PPFnStartsEndsWith::PPFnStartsEndsWith(variable_context *_cxt_,
+PPFnStartsEndsWith::PPFnStartsEndsWith(dynamic_context *_cxt_,
                                        PPOpIn _source_,
                                        PPOpIn _prefix_,
                                        PPOpIn _collation_,
@@ -384,7 +384,7 @@ void PPFnStartsEndsWith::error(const char* msg)
         throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::error().");
 }
 
-PPIterator* PPFnStartsEndsWith::copy(variable_context *_cxt_)
+PPIterator* PPFnStartsEndsWith::copy(dynamic_context *_cxt_)
 {
     PPFnStartsEndsWith *res = is_collation ?
                               new PPFnStartsEndsWith(_cxt_, source, prefix, collation, type) :
@@ -395,7 +395,7 @@ PPIterator* PPFnStartsEndsWith::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnStartsEndsWith::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnStartsEndsWith::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnStartsEndsWith::result");
 }
@@ -405,7 +405,7 @@ bool PPFnStartsEndsWith::result(PPIterator* cur, variable_context *cxt, void*& r
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnString2CodePoints
 ///////////////////////////////////////////////////////////////////////////////
-PPFnString2CodePoints::PPFnString2CodePoints(variable_context *_cxt_,
+PPFnString2CodePoints::PPFnString2CodePoints(dynamic_context *_cxt_,
                                              PPOpIn _child_) : PPIterator(_cxt_),
                                                                child(_child_), 
                                                                ucp_it(NULL)
@@ -475,7 +475,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 	}    
 }
 
-PPIterator* PPFnString2CodePoints::copy(variable_context *_cxt_)
+PPIterator* PPFnString2CodePoints::copy(dynamic_context *_cxt_)
 {
     PPFnString2CodePoints *res = new PPFnString2CodePoints(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -483,7 +483,7 @@ PPIterator* PPFnString2CodePoints::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnString2CodePoints::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnString2CodePoints::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnString2CodePoints::result");
 }
@@ -491,7 +491,7 @@ bool PPFnString2CodePoints::result(PPIterator* cur, variable_context *cxt, void*
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnCodePoints2String
 ///////////////////////////////////////////////////////////////////////////////
-PPFnCodePoints2String::PPFnCodePoints2String(variable_context *_cxt_,
+PPFnCodePoints2String::PPFnCodePoints2String(dynamic_context *_cxt_,
                                              PPOpIn _child_) : PPIterator(_cxt_),
                                                                child(_child_)
 {
@@ -567,14 +567,14 @@ void PPFnCodePoints2String::next  (tuple &t)
     }    
 }
 
-PPIterator* PPFnCodePoints2String::copy(variable_context *_cxt_)
+PPIterator* PPFnCodePoints2String::copy(dynamic_context *_cxt_)
 {
     PPFnCodePoints2String *res = new PPFnCodePoints2String(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPFnCodePoints2String::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnCodePoints2String::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnCodePoints2String::result");
 }
@@ -583,7 +583,7 @@ bool PPFnCodePoints2String::result(PPIterator* cur, variable_context *cxt, void*
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnTranslate
 ///////////////////////////////////////////////////////////////////////////////
-PPFnTranslate::PPFnTranslate(variable_context *_cxt_, 
+PPFnTranslate::PPFnTranslate(dynamic_context *_cxt_, 
 							 PPOpIn _str_, PPOpIn _map_str_, PPOpIn _trans_str_) : PPIterator(_cxt_),
 								   str(_str_), map_str(_map_str_), trans_str(_trans_str_)
 {
@@ -682,7 +682,7 @@ void PPFnTranslate::next  (tuple &t)
 	}
 }
 
-PPIterator* PPFnTranslate::copy(variable_context *_cxt_)
+PPIterator* PPFnTranslate::copy(dynamic_context *_cxt_)
 {
 	PPFnTranslate *res = new PPFnTranslate(_cxt_, str, map_str, trans_str);
 	res->str.op = str.op->copy(_cxt_);
@@ -692,7 +692,7 @@ PPIterator* PPFnTranslate::copy(variable_context *_cxt_)
 	return res;
 }
 
-bool PPFnTranslate::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnTranslate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnTranslate::result");
 }
@@ -703,7 +703,7 @@ bool PPFnTranslate::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(variable_context *_cxt_,
+PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
                                          PPFnSubsBeforeAfter::FunctionType _type_) : PPIterator(_cxt_),
@@ -713,7 +713,7 @@ PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(variable_context *_cxt_,
 {
 }
 
-PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(variable_context *_cxt_,
+PPFnSubsBeforeAfter::PPFnSubsBeforeAfter(dynamic_context *_cxt_,
                                          PPOpIn _src_child_,
                                          PPOpIn _srch_child_,
                                          PPOpIn _collation_child_,
@@ -855,7 +855,7 @@ void PPFnSubsBeforeAfter::error(const char* msg)
 }
 
 
-PPIterator* PPFnSubsBeforeAfter::copy(variable_context *_cxt_)
+PPIterator* PPFnSubsBeforeAfter::copy(dynamic_context *_cxt_)
 {
     PPFnSubsBeforeAfter *res = new PPFnSubsBeforeAfter(_cxt_, src_child, srch_child, collation_child, type);
     res->src_child.op = src_child.op->copy(_cxt_);
@@ -867,7 +867,7 @@ PPIterator* PPFnSubsBeforeAfter::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnSubsBeforeAfter::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnSubsBeforeAfter::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnSubsBeforeAfter::result");
 }
@@ -876,7 +876,7 @@ bool PPFnSubsBeforeAfter::result(PPIterator* cur, variable_context *cxt, void*& 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnChangeCase
 ///////////////////////////////////////////////////////////////////////////////
-PPFnChangeCase::PPFnChangeCase(variable_context *_cxt_,  PPOpIn _str_, bool _to_upper_) : 
+PPFnChangeCase::PPFnChangeCase(dynamic_context *_cxt_,  PPOpIn _str_, bool _to_upper_) : 
                                       PPIterator(_cxt_), str(_str_), to_upper(_to_upper_)
 {
 }
@@ -934,7 +934,7 @@ void PPFnChangeCase::next  (tuple &t)
 	}
 }
 
-PPIterator* PPFnChangeCase::copy(variable_context *_cxt_)
+PPIterator* PPFnChangeCase::copy(dynamic_context *_cxt_)
 {
 	PPFnChangeCase *res = new PPFnChangeCase(_cxt_, str, to_upper);
 	res->str.op = str.op->copy(_cxt_);
@@ -942,7 +942,7 @@ PPIterator* PPFnChangeCase::copy(variable_context *_cxt_)
 	return res;
 }
 
-bool PPFnChangeCase::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnChangeCase::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnChangeCase::result");
 }
@@ -951,7 +951,7 @@ bool PPFnChangeCase::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnStringLength
 ///////////////////////////////////////////////////////////////////////////////
-PPFnStringLength::PPFnStringLength(variable_context *_cxt_,
+PPFnStringLength::PPFnStringLength(dynamic_context *_cxt_,
                                    PPOpIn _child_) : PPIterator(_cxt_),
                                                      child(_child_)
 {
@@ -1007,7 +1007,7 @@ void PPFnStringLength::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnStringLength::copy(variable_context *_cxt_)
+PPIterator* PPFnStringLength::copy(dynamic_context *_cxt_)
 {
     PPFnStringLength *res = new PPFnStringLength(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -1015,7 +1015,7 @@ PPIterator* PPFnStringLength::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnStringLength::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnStringLength::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnStringLength::result");
 }
@@ -1023,7 +1023,7 @@ bool PPFnStringLength::result(PPIterator* cur, variable_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnNormalizeSpace
 ///////////////////////////////////////////////////////////////////////////////
-PPFnNormalizeSpace::PPFnNormalizeSpace(variable_context *_cxt_,
+PPFnNormalizeSpace::PPFnNormalizeSpace(dynamic_context *_cxt_,
                                        PPOpIn _child_) : PPIterator(_cxt_),
                                                          child(_child_)
 {
@@ -1082,14 +1082,14 @@ void PPFnNormalizeSpace::next  (tuple &t)
     }
 }
 
-PPIterator* PPFnNormalizeSpace::copy(variable_context *_cxt_)
+PPIterator* PPFnNormalizeSpace::copy(dynamic_context *_cxt_)
 {
     PPFnNormalizeSpace *res = new PPFnNormalizeSpace(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
 
-bool PPFnNormalizeSpace::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnNormalizeSpace::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
     throw USER_EXCEPTION2(SE1002, "PPFnNormalizeSpace::result");
 }
@@ -1100,7 +1100,7 @@ bool PPFnNormalizeSpace::result(PPIterator* cur, variable_context *cxt, void*& r
 /// PPFnSubstring
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-PPFnSubstring::PPFnSubstring(variable_context *_cxt_,
+PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
                              PPOpIn _str_child_,
                              PPOpIn _start_child_) : PPIterator(_cxt_),
                                                      str_child(_str_child_),
@@ -1109,7 +1109,7 @@ PPFnSubstring::PPFnSubstring(variable_context *_cxt_,
 {
 }
 
-PPFnSubstring::PPFnSubstring(variable_context *_cxt_,
+PPFnSubstring::PPFnSubstring(dynamic_context *_cxt_,
                              PPOpIn _str_child_,
                              PPOpIn _start_child_,
                              PPOpIn _length_child_) : PPIterator(_cxt_),
@@ -1233,7 +1233,7 @@ void PPFnSubstring::next(tuple &t)
     }
 }
 
-PPIterator* PPFnSubstring::copy(variable_context *_cxt_)
+PPIterator* PPFnSubstring::copy(dynamic_context *_cxt_)
 {
     PPFnSubstring *res = is_length ? new PPFnSubstring(_cxt_, str_child, start_child, length_child) :
                                      new PPFnSubstring(_cxt_, str_child, start_child);
@@ -1245,7 +1245,7 @@ PPIterator* PPFnSubstring::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFnSubstring::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFnSubstring::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 	throw USER_EXCEPTION2(SE1002, "PPFnSubstring::result");
 }

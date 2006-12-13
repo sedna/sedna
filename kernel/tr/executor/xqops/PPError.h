@@ -36,10 +36,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnError(variable_context *_cxt_, 
+    PPFnError(dynamic_context *_cxt_, 
               PPOpIn &_child_err_,
               PPOpIn &_child_descr_,
               PPOpIn &_child_obj_);
@@ -69,10 +69,10 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 
-    PPFnTrace(variable_context *_cxt_, 
+    PPFnTrace(dynamic_context *_cxt_, 
               PPOpIn _value_child_,
               PPOpIn _label_child_);
     virtual ~PPFnTrace();

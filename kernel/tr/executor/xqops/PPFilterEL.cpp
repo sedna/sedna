@@ -14,7 +14,7 @@
 using namespace std;
 
 
-PPFilterEL::PPFilterEL(variable_context *_cxt_,
+PPFilterEL::PPFilterEL(dynamic_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
                                child(_child_)
 {
@@ -122,7 +122,7 @@ void PPFilterEL::next  (tuple &t)
 	
 }
 
-PPIterator* PPFilterEL::copy(variable_context *_cxt_)
+PPIterator* PPFilterEL::copy(dynamic_context *_cxt_)
 {
     PPFilterEL *res = new PPFilterEL(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
@@ -130,7 +130,7 @@ PPIterator* PPFilterEL::copy(variable_context *_cxt_)
     return res;
 }
 
-bool PPFilterEL::result(PPIterator* cur, variable_context *cxt, void*& r)
+bool PPFilterEL::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 return true;
 }

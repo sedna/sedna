@@ -23,13 +23,13 @@ public:
 	virtual bool is_const() { return true; }
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPConst(variable_context *_cxt_,
+    PPConst(dynamic_context *_cxt_,
             const tuple_cell& _c_);
     virtual ~PPConst();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 #endif

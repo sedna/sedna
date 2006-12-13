@@ -61,31 +61,31 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t) { (this->*next_fun)(t); }
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPIndexScan(variable_context *_cxt_,
+    PPIndexScan(dynamic_context *_cxt_,
                 const std::string &_index_name_,
                 const tuple_cell& _tc_,
                 const tuple_cell& _tc2_,
                 index_scan_condition _isc_);
-    PPIndexScan(variable_context *_cxt_,
+    PPIndexScan(dynamic_context *_cxt_,
                 const std::string &_index_name_,
                 PPOpIn _child_,
                 const tuple_cell& _tc2_,
                 index_scan_condition _isc_);
-    PPIndexScan(variable_context *_cxt_,
+    PPIndexScan(dynamic_context *_cxt_,
                 const std::string &_index_name_,
                 const tuple_cell& _tc_,
                 PPOpIn _child2_,
                 index_scan_condition _isc_);
-    PPIndexScan(variable_context *_cxt_,
+    PPIndexScan(dynamic_context *_cxt_,
                 const std::string &_index_name_,
                 PPOpIn _child_,
                 PPOpIn _child2_,
                 index_scan_condition _isc_);
     virtual ~PPIndexScan();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 };
 
 

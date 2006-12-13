@@ -61,13 +61,13 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
-    virtual PPIterator* copy(variable_context *_cxt_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
-    PPDDO(variable_context *_cxt_,
+    PPDDO(dynamic_context *_cxt_,
           PPOpIn _child_);
     virtual ~PPDDO();
 
-    static bool result(PPIterator* cur, variable_context *cxt, void*& r);
+    static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
 	static int compare_less (xptr v1,xptr v2, const void * Udata);
 	static int get_size (tuple& t, const void * Udata);
 	static void serialize (tuple& t,xptr v1, const void * Udata);

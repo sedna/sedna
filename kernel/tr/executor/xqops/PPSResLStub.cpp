@@ -8,7 +8,7 @@
 #include "PPSResLStub.h"
 
 
-PPSResLStub::PPSResLStub(variable_context *_cxt_, 
+PPSResLStub::PPSResLStub(dynamic_context *_cxt_, 
                          PPIterator *_op_, 
                          sequence *_s_) : PPIterator(_cxt_), 
                                           op(_op_), 
@@ -63,7 +63,7 @@ void PPSResLStub::next(tuple &t)
     op->next(t);
 }
 
-PPIterator* PPSResLStub::copy(variable_context *_cxt_)
+PPIterator* PPSResLStub::copy(dynamic_context *_cxt_)
 {
     throw USER_EXCEPTION2(SE1003, "Method PPSResLStub::copy must not be called");
 }
