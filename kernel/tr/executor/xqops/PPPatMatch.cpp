@@ -32,13 +32,13 @@ PPPatMatch::PPPatMatch(variable_context *_cxt_,
 }
 PPPatMatch::PPPatMatch(variable_context *_cxt_,
 						 PPOpIn _seq1_, PPOpIn _seq2_,PPOpIn _seq3_,patmatch_type _pmt_):
-			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_), seq3(_seq3_),pmt(_pmt_),ch_cnt(3)
+			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_), seq3(_seq3_),pmt(_pmt_),ch_cnt(3),tknzr(NULL)
 {
 	cf_choice();
 }
 PPPatMatch::PPPatMatch(variable_context *_cxt_,
 						 PPOpIn _seq1_, PPOpIn _seq2_,PPOpIn _seq3_,PPOpIn _seq4_,patmatch_type _pmt_):
-			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_), seq3(_seq3_), seq4(_seq4_),pmt(_pmt_),ch_cnt(4)
+			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_), seq3(_seq3_), seq4(_seq4_),pmt(_pmt_),ch_cnt(4),tknzr(NULL)
 {
 	cf_choice();
 }
