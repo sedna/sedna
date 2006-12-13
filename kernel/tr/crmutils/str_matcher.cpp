@@ -36,7 +36,8 @@ void StrMatcher::delete_trie(trie_node_t *root)
 			root->next[i] = NULL;
 		}
 
-	free(root);
+	if (root != s3) //FIXME: one more part of this dirty dirty hack
+		free(root);
 }
 
 trie_node_t *StrMatcher::get_node(trie_node_t *start, const char *str, int set_pc)
@@ -103,8 +104,9 @@ void StrMatcher::reset()
 	if (s3 != NULL) //FIXME: that is also a part of some dirty hack
 	{
 		trie_node_t *_s3 = s3;
-		s3 = NULL;
 		delete_trie(_s3);
+		free(s3);
+		s3 = NULL;
 	}
 
 	
@@ -297,6 +299,7 @@ StrMatcher::StrMatcher()
 	replace_surr = true;
 
 	root = NULL;
+	s3 = NULL;
 	reset();
 }
 
@@ -306,8 +309,9 @@ StrMatcher::~StrMatcher()
 	if (s3 != NULL) //FIXME: that is also a part of some dirty hack
 	{
 		trie_node_t *_s3 = s3;
-		s3 = NULL;
 		delete_trie(_s3);
+		free(s3);
+		s3 = NULL;
 	}
 	free(strings_buf);
 	free(buf);
