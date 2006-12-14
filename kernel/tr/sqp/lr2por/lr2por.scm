@@ -108,13 +108,21 @@
          (loop
           (cdr src)
           (cons
-           (list 'PPVarDecl
-                 next-var-num
-                 (l2p:any-lr-node2por
-                  (if (null? var-binding)
-                      value
-                      (l2p:rename-vars var-binding value)))
-                 (l2p:lr-sequenceType2por-sequenceType type))
+           (begin
+             (set! var-count 0)
+             (let* ((por-value
+                     (l2p:any-lr-node2por
+                      (if (null? var-binding)
+                          value
+                          (l2p:rename-vars var-binding value))))
+                    (context var-count))
+               (begin
+                 (set! var-count 0)
+                 (list 'PPVarDecl
+                       next-var-num
+                       context
+                       por-value
+                       (l2p:lr-sequenceType2por-sequenceType type)))))
            res)
           (cons
            (list (cadr name)
@@ -223,8 +231,8 @@
               (l2p:lr-sequenceType2por-sequenceType (cadr (cadddr fun-def-in-lr)))))
              (body (cadr (cadddr (cdr fun-def-in-lr))))
              (args-num (length args-types))
-             (vars-map (append var-binding
-                               (l2p:generate-map var-names)))
+             (vars-map (append (l2p:generate-map var-names)
+                               var-binding))
              (new-expr1 (l2p:rename-vars vars-map body)) ;getting body with substituted parameters
              (new-expr2 (l2p:any-lr-node2por new-expr1))
              (context-size var-count))
