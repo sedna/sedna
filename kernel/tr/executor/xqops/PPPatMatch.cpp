@@ -26,7 +26,7 @@ switch (pmt)
 }
 PPPatMatch::PPPatMatch(variable_context *_cxt_,
 						 PPOpIn _seq1_, PPOpIn _seq2_,patmatch_type _pmt_):
-			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_),pmt(_pmt_),ch_cnt(2)
+			PPIterator(_cxt_), seq1(_seq1_) , seq2(_seq2_),pmt(_pmt_),ch_cnt(2),tknzr(NULL)
 {
 	cf_choice();
 }
@@ -72,7 +72,11 @@ void PPPatMatch::open  ()
 			seq4.op->open();
 		}
 	}
-	if (tknzr!=NULL) delete tknzr;
+	if (tknzr!=NULL)
+	{
+		delete tknzr;
+		tknzr = NULL;
+	}
     first_time = true;
  }
 void PPPatMatch::reopen  ()
@@ -87,7 +91,11 @@ void PPPatMatch::reopen  ()
 			seq4.op->reopen();
 		}
 	}
-	if (tknzr!=NULL) delete tknzr;
+	if (tknzr!=NULL)
+	{
+		delete tknzr;
+		tknzr = NULL;
+	}
     first_time = true;
  }
 void PPPatMatch::close  ()
@@ -102,7 +110,11 @@ void PPPatMatch::close  ()
 			seq4.op->close();
 		}
 	}
-	if (tknzr!=NULL) delete tknzr;
+	if (tknzr!=NULL)
+	{
+		delete tknzr;
+		tknzr = NULL;
+	}
 }
 bool PPPatMatch::result(PPIterator* cur, variable_context *cxt, void*& r)
 {
@@ -235,6 +247,7 @@ void PPPatMatch::next  (tuple &t)
 			if (t.is_eos())
 			{
 				delete tknzr;
+				tknzr = NULL;
 				first_time = true;
 			}
 		}
@@ -247,6 +260,7 @@ void PPPatMatch::next  (tuple &t)
 			if (t.is_eos())
 			{
 				delete tknzr;
+				tknzr = NULL;
 				first_time = true;
 			}
 
