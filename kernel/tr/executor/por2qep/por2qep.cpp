@@ -3916,34 +3916,35 @@ void make_pp_qp(scheme_list *qp, dynamic_context_info *info, int &function_count
         }
         else if (prolog_decl == "PPVarDecl") 
         { 
-            if (   qp->at(i).internal.list->size() < 3
-                || qp->at(i).internal.list->size() > 4
+            if (   qp->at(i).internal.list->size() < 4
+                || qp->at(i).internal.list->size() > 5
                 || qp->at(i).internal.list->at(1).type != SCM_NUMBER
-                || qp->at(i).internal.list->at(2).type != SCM_LIST
+                || qp->at(i).internal.list->at(2).type != SCM_NUMBER
+                || qp->at(i).internal.list->at(3).type != SCM_LIST
                ) throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
             int v_dsc = atoi(qp->at(i).internal.list->at(1).internal.num);
+            int var_cxt_size = atoi(qp->at(i).internal.list->at(2).internal.num);
 
-            int var_cxt_size = 10; // FIXME: dirty hack. Static analysis must provide size of var cxt
             dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
             
             PPVarIterator *opit = NULL;
-            if (qp->at(i).internal.list->size() == 4)
+            if (qp->at(i).internal.list->size() == 5)
             {
-                if (qp->at(i).internal.list->at(3).type != SCM_LIST)
+                if (qp->at(i).internal.list->at(4).type != SCM_LIST)
                     throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
                 opit = new PPVarDecl(cxt,
                                      v_dsc,
-                                     make_pp_op(cxt, qp->at(i).internal.list->at(2).internal.list),
-                                     make_sequence_type(qp->at(i).internal.list->at(3).internal.list));
+                                     make_pp_op(cxt, qp->at(i).internal.list->at(3).internal.list),
+                                     make_sequence_type(qp->at(i).internal.list->at(4).internal.list));
      
             }
             else
             {
                 opit = new PPVarDecl(cxt,
                                      v_dsc,
-                                     make_pp_op(cxt, qp->at(i).internal.list->at(2).internal.list));
+                                     make_pp_op(cxt, qp->at(i).internal.list->at(3).internal.list));
             }
 
             dynamic_context::glb_var_cxt.producers[var_decl_counter].op = opit;

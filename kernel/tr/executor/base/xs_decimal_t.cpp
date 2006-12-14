@@ -333,7 +333,7 @@ xs_decimal_t xs_decimal_t::abs() const
 xs_decimal_t xs_decimal_t::ceil() const
 {
     xs_decimal_t res;
-    decNumber dv, integral, one;
+    decNumber dv, integral, one, r;
 
     dec_cxt.status = 0;
     decimal128ToNumber((decimal128*)(v.v1), &dv);
@@ -342,10 +342,18 @@ xs_decimal_t xs_decimal_t::ceil() const
     decNumberToIntegralValue(&integral, &dv, &dec_cxt);
 	dec_cxt.round = old;
 
-    if (!decNumberIsNegative(&dv))
+    dec_cxt.status = 0;
+    decNumberCompare(&r, &dv, &integral, &dec_cxt);
+
+    U_ASSERT(!(dec_cxt.status & DEC_Errors));
+
+    if (!decNumberIsZero(&r))
     {
-        decNumberFromString(&one, "1", &dec_cxt);
-        decNumberAdd(&integral, &integral, &one, &dec_cxt);
+        if (!decNumberIsNegative(&dv))
+        {
+            decNumberFromString(&one, "1", &dec_cxt);
+            decNumberAdd(&integral, &integral, &one, &dec_cxt);
+        }
     }
 
     decimal128FromNumber((decimal128*)(res.v.v1), &integral, &dec_cxt);
@@ -355,7 +363,7 @@ xs_decimal_t xs_decimal_t::ceil() const
 xs_decimal_t xs_decimal_t::floor() const
 {
     xs_decimal_t res;
-    decNumber dv, integral, one;
+    decNumber dv, integral, one, r;
 
     dec_cxt.status = 0;
     decimal128ToNumber((decimal128*)(v.v1), &dv);
@@ -364,10 +372,18 @@ xs_decimal_t xs_decimal_t::floor() const
     decNumberToIntegralValue(&integral, &dv, &dec_cxt);
 	dec_cxt.round = old;
 
-    if (decNumberIsNegative(&dv))
+    dec_cxt.status = 0;
+    decNumberCompare(&r, &dv, &integral, &dec_cxt);
+
+    U_ASSERT(!(dec_cxt.status & DEC_Errors));
+
+    if (!decNumberIsZero(&r))
     {
-        decNumberFromString(&one, "1", &dec_cxt);
-        decNumberSubtract(&integral, &integral, &one, &dec_cxt);
+        if (decNumberIsNegative(&dv))
+        {
+            decNumberFromString(&one, "1", &dec_cxt);
+            decNumberSubtract(&integral, &integral, &one, &dec_cxt);
+        }
     }
 
     decimal128FromNumber((decimal128*)(res.v.v1), &integral, &dec_cxt);
