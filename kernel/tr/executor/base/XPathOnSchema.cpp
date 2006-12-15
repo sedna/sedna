@@ -76,8 +76,18 @@ t_scmnodes_const execute_node_test_axis_child(const schema_node *node, const Nod
 
     switch (nt.type)
     {
-    case node_test_processing_instruction	: return res;
-    case node_test_comment					: return res;
+    case node_test_processing_instruction	:
+		{
+			for (sc_ref *ref = node->first_child; ref != NULL; ref = ref->next)
+				if (/*dm_children_accessor_filter(ref->type) && */is_pi(ref->type)) {res.push_back(ref->snode); break;}
+            return res;
+		}
+    case node_test_comment					: 
+		{
+			for (sc_ref *ref = node->first_child; ref != NULL; ref = ref->next)
+				if (/*dm_children_accessor_filter(ref->type) && */is_comment(ref->type)) {res.push_back(ref->snode);break;}
+            return res;
+		}
     case node_test_text						: 
         {
             for (sc_ref *ref = node->first_child; ref != NULL; ref = ref->next)
