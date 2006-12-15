@@ -132,8 +132,9 @@ char *xs_QName_create(const char* uri,
 
     if (*uri) // uri is present
     {
-        if (!chech_constraints_for_xs_NCName(prefix_and_local, pos))
-            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+		if (pos)
+			if (!chech_constraints_for_xs_NCName(prefix_and_local, pos))
+				throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
         xmlns = tr_globals::st_ct.get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
     }

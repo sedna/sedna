@@ -38,7 +38,7 @@ public:
     PPFnDeepEqual(dynamic_context *_cxt_,
              PPOpIn _child1_,
              PPOpIn _child2_);
-	PPFnDeepEqual(variable_context *_cxt_,
+	PPFnDeepEqual(dynamic_context *_cxt_,
              PPOpIn _child1_,
              PPOpIn _child2_,
 			 PPOpIn _collation_);
