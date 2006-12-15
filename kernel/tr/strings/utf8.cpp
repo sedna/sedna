@@ -489,29 +489,72 @@ class utf8_tokenize_result : public TokenizerResult
 {
 private:
 	Iterator start, end, pos;
+	bool ret_empty;
+	PcrePattern re;
 public:
-	utf8_tokenize_result(Iterator _start_, Iterator _end_) : start(_start_), end(_end_), pos(_start_) {}
+	utf8_tokenize_result(Iterator _start_, Iterator _end_, tuple_cell *t2, tuple_cell *t3) : start(_start_), end(_end_), pos(_start_), re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3)), ret_empty(false) 
+	{
+		PcreMatcher<const char *>m(re);
+		const char * x = "";
+		if (m.matches(x, x+1, x, PCRE_NO_UTF8_CHECK))
+			throw USER_EXCEPTION(FORX0003);
+	}
 	virtual void get_next_result(tuple& t);
 };
 template <class Iterator>
 void utf8_tokenize_result<Iterator>::get_next_result(tuple& t)
 {
-	//TODO
-	t.set_eos();
+	if (pos >= end)
+	{
+		if (ret_empty)
+		{
+			t.copy(EMPTY_STRING_TC);
+			ret_empty = false;
+		}
+		else
+			t.set_eos();
+		return;
+	}
+
+	int match_flags = PCRE_NO_UTF8_CHECK;
+	PcreMatcher<Iterator> matcher(re);
+
+	Iterator ms, me;
+	if (matcher.matches(start, end, pos, match_flags))
+	{
+		ms = matcher.start(0);
+		me = matcher.end(0);
+		if (ms == me)
+			throw USER_EXCEPTION(FORX0003);
+		if (me >= end)
+			ret_empty = true;
+	}
+	else
+	{
+		ms = end;
+		me = end;
+	}
+	stmt_str_buf b;
+	while (pos < ms)
+	{
+		b << *pos;
+		++pos;
+	}
+	pos = me;
+	t.copy(b.get_tuple_cell());
 }
 template <class Iterator>
-static inline void utf8_tokenize(const Iterator &start, const Iterator &end, const PcrePattern &re, TokenizerResult **res)
+static inline void utf8_tokenize(const Iterator &start, const Iterator &end, tuple_cell *t2, tuple_cell *t3, TokenizerResult **res)
 {
-	*res = new utf8_tokenize_result<Iterator>(start, end);
+	*res = new utf8_tokenize_result<Iterator>(start, end, t2, t3);
 }
 
 TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2, tuple_cell *t3)
 {
 	try
 	{
-	PcrePattern re(t2->get_str_mem(), PCRE_UTF8 | PCRE_NO_UTF8_CHECK | get_pcre_flags(t3));
-	TokenizerResult *res;
-	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(utf8_tokenize, t1, re, &res);
+	TokenizerResult *res = NULL;
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_tokenize, t1, t2, t3, &res);
 	return res;
 	}
 	catch (const PcreCompileException &e)
@@ -522,9 +565,6 @@ TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2,
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-
-
-
 }
 
 
