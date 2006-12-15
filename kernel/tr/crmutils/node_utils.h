@@ -216,6 +216,14 @@ inline xptr getNodeAncestorByScheme (xptr node, schema_node* scm_anc)
 typedef bool (*node_type_restriction)(t_item);
 
 bool is_text(t_item t);
+inline bool is_comment(t_item t)
+{
+	return t==comment;
+}
+inline bool is_pi(t_item t)
+{
+	return t==pr_ins;
+}
 bool is_node(t_item t);
 bool dm_children_accessor_filter(t_item t);
 bool dm_attribute_accessor_filter(t_item t);

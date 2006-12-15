@@ -127,13 +127,19 @@ PPFnDeepEqual::~PPFnDeepEqual()
     child1.op = NULL;
     delete child2.op;
     child2.op = NULL;
+	if (collation.op)
+    {
+        delete collation.op;
+        collation.op = NULL;
+    }
 }
 
 void PPFnDeepEqual::open  ()
 {
     child1.op->open();
     child2.op->open();
-
+	if (collation.op)
+        collation.op->reopen();
     eos_reached1 = true;
 	eos_reached2 = true;
 	handler = NULL;
@@ -143,7 +149,8 @@ void PPFnDeepEqual::reopen()
 {
     child1.op->reopen();
     child2.op->reopen();
-
+	if (collation.op)
+        collation.op->reopen();
     eos_reached1 = true;
 	eos_reached2 = true;
 	handler = NULL;
@@ -153,6 +160,8 @@ void PPFnDeepEqual::close ()
 {
     child1.op->close();
     child2.op->close();
+	if (collation.op)
+        collation.op->close();
 	handler = NULL;
 }
 

@@ -2845,7 +2845,7 @@ fn_dt_funcs_correct_type:
 	else if (op == "PPFnDeepEqual")
     {
         if (   lst->size()<3
-			||lst->size()>3
+			||lst->size()>4
             || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION2(SE1004, "107");
