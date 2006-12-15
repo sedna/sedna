@@ -271,11 +271,13 @@ PPFnNilled::~PPFnNilled()
 void PPFnNilled::open  ()
 {
     child.op->open();
+	first_time = true;
 }
 
 void PPFnNilled::reopen()
 {
     child.op->reopen();
+	first_time = true;
 }
 
 void PPFnNilled::close ()
