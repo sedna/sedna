@@ -765,6 +765,30 @@ void PPFnSubsBeforeAfter::close ()
     handler = NULL;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////
+/// We need byte based version of substring because PPSubsMatch::contains is byte based.
+template <class Iterator>
+static inline void byte_based_substring_call_stub(Iterator &start, const Iterator &end, stmt_str_buf &res, __int64 start_pos, __int64 length)
+{
+    while (start < end && start_pos > 0) { start_pos--; start++; }
+
+    while (start < end && length > 0)
+    {
+        res << (*start);
+        start++;
+        length--;
+    }
+}
+
+static inline tuple_cell byte_based_substring(const tuple_cell *tc, __int64 start_pos, __int64 length)
+{
+	stmt_str_buf res;
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(byte_based_substring_call_stub, tc, res, start_pos, length);
+	return res.get_tuple_cell();
+}
+///////////////////////////////////////////////////////////////////////////////////////////
+
+
 void PPFnSubsBeforeAfter::next(tuple &t)
 {
     if (handler) // the same as '!first_time'
@@ -836,8 +860,8 @@ void PPFnSubsBeforeAfter::next(tuple &t)
         if(pos >= 0) 
         {
             type == PPFnSubsBeforeAfter::FN_BEFORE ? 
-                    t.copy(charset_handler->substring(&src, 0, pos)) :
-                    t.copy(charset_handler->substring(&src, pos + srch_str_len, _I64_MAX));
+                    t.copy(byte_based_substring(&src, 0, pos)) :
+                    t.copy(byte_based_substring(&src, pos + srch_str_len, _I64_MAX));
         }
         else
             t.copy(EMPTY_STRING_TC);
