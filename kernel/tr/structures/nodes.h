@@ -116,8 +116,9 @@ struct n_dsc {
 #define xs_QName				31
 #define xs_NOTATION				32
 
-// Special Sedna type
+// Special Sedna types
 #define se_separator		    33
+#define se_sequence             34
 
 // Types derived from xs:string
 #define xs_normalizedString		41

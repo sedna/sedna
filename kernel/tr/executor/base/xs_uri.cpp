@@ -249,7 +249,7 @@ void Uri::check_constraints(const tuple_cell *in_tc, bool *valid, Uri::Informati
     //////////////////////////////////////////////////////////////////////
     /// Possibly, in future we will need to convert IRI (RFC 3987, which 
     /// is allowed by XPath Functions spec. as value for xs:anyURI type) 
-    /// to URIbefore run constraints checking. It can be achieved using 
+    /// to URI before run constraints checking. It can be achieved using 
     /// fn:iri-to-uri() implementation.
     //////////////////////////////////////////////////////////////////////
     bool is_scheme  = false;

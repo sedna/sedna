@@ -9,7 +9,6 @@
 
 using namespace std;
 
-
 /// Returns the least common type that has a gt operator.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
@@ -143,7 +142,7 @@ void PPOrderBy::next  (tuple &t)
 
             for(i = 0; i < source.cells_number; i++)
             {    
-                if(i < data_size)  data_tuple.cells[i] = source.cells[i];
+                if(i < data_size) data_tuple.cells[i] = source.cells[i];
                 else                
                 {
                     if(source.cells[i].is_eos()) 
@@ -738,5 +737,250 @@ void temp_buffer::create_empty_block  (int start, int size)
 {
     memset(buffer + start, '0', size);    
 }
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+/// PPSTuple
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+PPSTuple::PPSTuple(dynamic_context *_cxt_,
+                   const arr_of_PPOpIn &_ch_arr_) : PPIterator(_cxt_),
+                                                    ch_arr(_ch_arr_),
+                                                    lt(1)
+{
+}
+
+PPSTuple::~PPSTuple()
+{
+    for (i = 0; i < ch_arr.size(); i++) 
+    {
+        delete (ch_arr[i].op);
+        ch_arr[i].op = NULL;
+    }
+}
+
+void PPSTuple::open ()
+{
+    for (i = 0; i < ch_arr.size(); i++) 
+        ch_arr[i].op->open();
+    i = 0;
+}
+
+void PPSTuple::reopen ()
+{
+    for (i = 0; i < ch_arr.size(); i++) 
+        ch_arr[i].op->reopen();
+    i = 0;
+}
+
+void PPSTuple::close ()
+{
+    for (i = 0; i < ch_arr.size(); i++)
+        ch_arr[i].op->close();
+    i = 0;
+}
+
+void PPSTuple::next(tuple &t)
+{
+    if (!i)
+    {
+        t.eos = false;
+        for (; i < ch_arr.size(); i++)
+        {
+            ch_arr[i].op->next(lt);
+            if (lt.is_eos())
+            {
+                t.cells[i] = tuple_cell::eos();
+            }
+            else
+            {
+                t.cells[i] = ch_arr[i].get(lt);
+                ch_arr[i].op->next(lt);
+                if(!lt.is_eos())
+                {
+                    sequence_tmp* st = new sequence_tmp(1);
+                    tuple prev_lt(1);
+                    prev_lt.copy(t.cells[i]);
+                    st -> add(prev_lt);
+                    while(!lt.is_eos()) 
+                    {
+                        st -> add(lt);
+                        ch_arr[i].op->next(lt);
+                    }
+                    t.cells[i] = tuple_cell::atomic_se_sequence(st);
+                }
+            }
+        }
+    }
+    else 
+    {
+        t.set_eos();
+        i = 0;
+    }
+}
+
+PPIterator* PPSTuple::copy(dynamic_context *_cxt_)
+{
+    PPSTuple *res = new PPSTuple(_cxt_, ch_arr);
+
+    for (i = 0; i < ch_arr.size(); i++)
+        res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
+
+    return res;
+}
+
+bool PPSTuple::result(PPIterator* cur, dynamic_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPSTuple::result");
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+/// PPSLet
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+
+PPSLet::PPSLet(dynamic_context *_cxt_,
+             arr_of_var_dsc _var_dscs_, 
+             PPOpIn _source_child_, 
+             PPOpIn _data_child_) : PPVarIterator(_cxt_),
+                                    var_dscs(_var_dscs_),
+                                    source_child(_source_child_),
+                                    data_child(_data_child_),
+                                    source(_source_child_.ts)
+{
+}
+
+PPSLet::~PPSLet()
+{
+    delete source_child.op;
+    source_child.op = NULL;
+    delete data_child.op;
+    data_child.op = NULL;
+}
+
+
+void PPSLet::open ()
+{
+    source_child.op->open();
+    need_reopen = false;
+    first_time = true;
+    s = NULL;
+    for (int i = 0; i < var_dscs.size(); i++)
+    {
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        p.type = pt_lazy_complex;
+        p.op = this;
+        p.cvc = new complex_var_consumption;
+        p.tuple_pos = i;
+    }
+
+	data_child.op->open();
+}
+
+void PPSLet::reopen ()
+{
+    source_child.op->reopen();
+    data_child.op->reopen();
+    first_time = true;
+    if(s != NULL) { delete s; s = NULL; }
+    reinit_consumer_table();
+}
+
+void PPSLet::close ()
+{
+    source_child.op->close();
+    data_child.op->close();
+    if(s != NULL) { delete s; s = NULL; }
+}
+
+void PPSLet::next(tuple &t)
+{
+    if (need_reopen)
+    {
+        source_child.op->reopen();
+        need_reopen = false;
+        first_time  = true;
+        if(s != NULL) { delete s; s = NULL; }
+        reinit_consumer_table();
+    }
+
+    data_child.op->next(t);
+
+    if (t.is_eos()) need_reopen = true;
+}
+
+PPIterator* PPSLet::copy(dynamic_context *_cxt_)
+{
+    PPSLet *res = new PPSLet(_cxt_, var_dscs, source_child, data_child);
+    res->source_child.op = source_child.op->copy(_cxt_);
+    res->data_child.op = data_child.op->copy(_cxt_);
+    return res;
+}
+
+var_c_id PPSLet::register_consumer(var_dsc dsc)
+{
+    complex_var_consumption &cvc = *(cxt->var_cxt.producers[dsc].cvc);
+    cvc.push_back(0);
+    return cvc.size() - 1;
+}
+
+void PPSLet::next(tuple &t, var_dsc dsc, var_c_id id)
+{
+    producer &p = cxt->var_cxt.producers[dsc];
+    complex_var_consumption &cvc = *(p.cvc);
+
+    if(first_time)
+    {
+        source_child.op->next(source);
+        tuple_cell tc = source_child.get(source);
+        if(tc.is_atomic() && tc.get_atomic_type() == se_sequence)
+        {
+            s = tc.get_sequence_ptr(); 
+            size = s->size();
+        }
+        else
+            size = 1;
+        first_time = false;
+    }
+    
+    if (cvc[id] < size)
+    {
+        if(size != 1) s->get(source, cvc[id]);
+        t.copy(source.cells[p.tuple_pos]);
+        cvc[id]++;
+    }
+    else
+    {
+        t.set_eos();
+        cvc[id] = 0;
+    }
+}
+
+void PPSLet::reopen(var_dsc dsc, var_c_id id)
+{
+    cxt->var_cxt.producers[dsc].cvc->at(id) = 0;
+}
+
+void PPSLet::close(var_dsc dsc, var_c_id id)
+{
+}
+
+inline void PPSLet::reinit_consumer_table()
+{
+    for (int i = 0; i < var_dscs.size(); i++)
+    {
+        producer &p = cxt->var_cxt.producers[var_dscs[i]];
+        for (int j = 0; j < p.cvc->size(); j++) p.cvc->at(j) = 0;
+    }
+}
+
+bool PPSLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
+{
+    throw USER_EXCEPTION2(SE1002, "PPSLet::result");
+}

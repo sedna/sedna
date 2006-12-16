@@ -15,6 +15,8 @@
 #include "pstr.h"
 #include "XMLDateTime.h"
 
+class sequence_tmp;
+
 /// Array of int pairs
 typedef std::pair<int, int>			int_pair;
 typedef std::vector<int_pair>		arr_of_int_pairs;
@@ -197,8 +199,9 @@ public:
     bool               get_xs_boolean()  const { return *(bool*              )(&data); }
     xs_packed_datetime get_xs_dateTime() const { return *(xs_packed_datetime*)(&data); }
     xs_packed_duration get_xs_duration() const { return *(xs_packed_duration*)(&data); }
-
-    void*              get_binary_data() const { return (void*)(&data); }
+    
+    sequence_tmp*      get_sequence_ptr()const { return *(sequence_tmp**     )(&data); }
+    void*              get_binary_data() const { return  (void*              )(&data); }
 
 
     /// variable size atomic values
@@ -289,8 +292,13 @@ public:
     {
         t = tc_light_atomic_fix_size | _type_;
         *(xs_packed_duration*)(&(data)) = _data_;
-
-
+    }
+    // for se_sequence atomics
+    tuple_cell(sequence_tmp* _sequence_ptr_)
+    {
+        t = tc_light_atomic_fix_size | se_sequence;
+        data.x = data.y = (__int64)0;
+        *((sequence_tmp**)(&data)) = _sequence_ptr_;
     }
     // for variable size light atomics (without deep copy)
     tuple_cell(xmlscm_type _xtype_, char *_str_)
@@ -394,6 +402,11 @@ public:
     static tuple_cell atomic_se_separator()
     {
         return tuple_cell(tc_light_atomic_fix_size | se_separator);
+    }
+
+    static tuple_cell atomic_se_sequence(sequence_tmp* _sequence_)
+    {
+        return tuple_cell(_sequence_);
     }
 
     ////////////////////////////////////////////////////////////////////////////
