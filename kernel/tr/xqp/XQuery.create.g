@@ -54,6 +54,7 @@ createExpr![XQueryDLGLexer* lexer_] :
 	      CDO LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
 	      <<#0->addChild(lst);>>
 	     )
+
 	      
 
 	  )
@@ -91,6 +92,8 @@ createExpr![XQueryDLGLexer* lexer_] :
 	     )
 
 	   | (TRIGGER dt_s:STRINGLITERAL <<#0=#(#[AST_DROP_TRIGGER], #[$dt_s->getText(), AST_STRING_CONST]);>>)
+	   | ( CMODULE m_st1:STRINGLITERAL <<#0=#(#[AST_DROP_MODULE], #[$m_st1->getText(), AST_STRING_CONST]);>> )
+
 
 	  )
 
@@ -102,21 +105,26 @@ createExpr![XQueryDLGLexer* lexer_] :
 
     |
 
-     LOAD (  s5_1:STRINGLITERAL <<stream=$s5_1->getText();>>
-           | STDIN              <<stream = "\"/STDIN/\"";>>
-          )
-            s6_1:STRINGLITERAL {s7_1:STRINGLITERAL}
+     LOAD (( (  s5_1:STRINGLITERAL <<stream=$s5_1->getText();>>
+            | STDIN              <<stream = "\"/STDIN/\"";>>
+            )
+              s6_1:STRINGLITERAL {s7_1:STRINGLITERAL}
 
-	  <<if($s7_1==NULL)
-	       #0=#(#[AST_LOAD_FILE], #[stream, AST_STRING_CONST],
-                                  #[$s6_1->getText(), AST_STRING_CONST]);
-	    else
-	       #0=#(#[AST_LOAD_FILE], #[stream, AST_STRING_CONST],
-                                  #[$s6_1->getText(), AST_STRING_CONST],
-	                              #[$s7_1->getText(), AST_STRING_CONST]);
+	     <<if($s7_1==NULL)
+	         #0=#(#[AST_LOAD_FILE], #[stream, AST_STRING_CONST],
+                                    #[$s6_1->getText(), AST_STRING_CONST]);
+	       else
+	          #0=#(#[AST_LOAD_FILE], #[stream, AST_STRING_CONST],
+                                    #[$s6_1->getText(), AST_STRING_CONST],
+	                                #[$s7_1->getText(), AST_STRING_CONST]);
 
-	  >>
+	     >>
+	    )
+	   | (CMODULE lm_st1:STRINGLITERAL lm_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_MODULE], #[$lm_st1->getText(), AST_STRING_CONST], #[$lm_st2->getText(), AST_STRING_CONST]);>>)
 
+	   | (COR CREPLACE CMODULE lr_st1:STRINGLITERAL lr_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_OR_REPL_MODULE], #[$lr_st1->getText(), AST_STRING_CONST], #[$lr_st2->getText(), AST_STRING_CONST]);>>)
+	
+	   )
 	| LOADFILE e5_1:exprSingle CAS e6_1:exprSingle {CIN_ e7_1:exprSingle}
       <<
          if (#e7_1 == NULL)

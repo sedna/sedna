@@ -196,6 +196,8 @@ virtual void errstd(const char *s){
 #token SCHEMA "SCHEMA"
 #token CWITH "WITH"
 #token STATISTICS "STATISTICS"
+#token CMODULE "MODULE"
+#token COR "OR"
 
 
 //-------------------------- operations -----------------

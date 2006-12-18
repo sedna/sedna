@@ -215,6 +215,8 @@ localPart3!:
 	| XQUERY <<#0=#["xquery", AST_LOCAL_NAME];>>
 	| VERSION <<#0=#["version", AST_LOCAL_NAME];>>
 	| ENCODING <<#0=#["encoding", AST_LOCAL_NAME];>>
+	| CMODULE <<#0=#["MODULE", AST_LOCAL_NAME];>>
+	| COR <<#0=#["OR", AST_LOCAL_NAME];>>
 ;	
 
 prefixPart1!:
@@ -369,6 +371,8 @@ prefixPart3!:
 	| XQUERY <<#0=#["xquery", AST_PREFIX];>>
 	| VERSION <<#0=#["version", AST_PREFIX];>>
 	| ENCODING <<#0=#["encoding", AST_PREFIX];>>
+	| CMODULE <<#0=#["MODULE", AST_PREFIX];>>
+	| COR <<#0=#["or", AST_PREFIX];>>
 ;
 
 
