@@ -113,7 +113,7 @@ struct global_producer
     free_entries_list fel;
 
     global_producer() : op(NULL) {}
-    ~global_producer() { delete op; op = NULL; }
+    ~global_producer();
     void open();
     void close();
 };

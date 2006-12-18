@@ -17,6 +17,7 @@ int dynamic_context::infos_pos = 0;
 
 
 
+global_producer::~global_producer() { delete op; op = NULL; }
 void global_producer::open() { op->open(); }
 void global_producer::close() { ((PPIterator*)op)->close(); }
 
