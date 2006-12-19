@@ -105,7 +105,7 @@ elementTestContent!:
 
 
 nillable!:
-	NILLABLE
+	QMARK
 	<<#0=#[AST_NIL];>>
 ;
 

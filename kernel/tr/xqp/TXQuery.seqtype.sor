@@ -276,7 +276,7 @@ elemNameorWildcard!:
 
 nillable!:
 	AST_NIL 
-	 <<#nillable=#(#["const"], #(#["type"], #["!xs!string"]), #["nil"]);>>
+	 <<#nillable=#(#["const"], #(#["type"], #["!xs!string"]), #["qmark"]);>>
         
 ;
 
