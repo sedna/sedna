@@ -1880,6 +1880,8 @@
 ; TODO: more sophisticated treatment for built-in types
 (define (sa:analyze-item-type type-spec ns-binding default-ns)
   (cond
+    ((eq? type-spec 'doc-test)
+     (cons (list type-spec) sa:type-nodes))
     ((symbol? type-spec)  ; XML Schema built-in type
      (if
       ; Detect parser bug, for XQTS tests like annex-1 - 5
@@ -1959,7 +1961,8 @@
            (cons type-spec sa:type-nodes))
       (and
        (sa:assert-num-args type-spec 1)
-       (let ((new-ename (sa:analyze-ename
+       (let ((new-ename (sa:analyze-item-type
+                         ;sa:analyze-ename
                          (car (sa:op-args type-spec))
                          ns-binding default-ns)))
          (and new-ename
@@ -2039,16 +2042,29 @@
               ; Do not actually expand it until dynamic evaluation phase
               (car (sa:op-args expr))))
             (new-type
-             (if
-              (not (and (pair? (cadr (sa:op-args expr)))
-                        (not (null? (cadr (sa:op-args expr))))
-                        (eq? (caadr (sa:op-args expr)) 'type)))
-              (cl:signal-input-error SE5018 (cadr (sa:op-args expr)))
-              (cadr (sa:op-args expr))))
+             (let ((type-node (cadr (sa:op-args expr))))
+               (and
+                (or
+                 (and (pair? type-node)
+                      (not (null? type-node))
+                      (eq? (sa:op-name type-node) 'type))
+                 (cl:signal-input-error SE5018 (cadr (sa:op-args expr))))
+                (let ((type-pair
+                       (sa:analyze-item-type (car (sa:op-args type-node))
+                                             ns-binding default-ns)))
+                  (and
+                   type-pair
+                   (list (sa:op-name type-node)  ; == 'type
+                         (car type-pair)))))))
             (new-nil
-             (sa:analyze-string-const
-              (caddr (sa:op-args expr))
-              '() '() ns-binding (list default-ns ""))))
+             (if
+              (equal? (caddr (sa:op-args expr))
+                      '(const (type !xs!string) qmark))
+              (cons '(const (type !xs!string) "qmark")
+                    sa:type-atomic)
+              (sa:analyze-string-const
+               (caddr (sa:op-args expr))
+               '() '() ns-binding (list default-ns "")))))
         (and
          new-name new-type new-nil
          (cons (list (sa:op-name expr)  ; ='ename
