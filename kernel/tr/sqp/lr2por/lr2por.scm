@@ -347,7 +347,6 @@
                            '()
                            por-arg-types))))
                     )
-                ;(pp new-fun-def)
                 (list
                  (l2p:tuple-size right-PhysOp)
                  (if
@@ -1544,62 +1543,68 @@
 
 (define (l2p:lr-sequenceType2por-sequenceType SeqType)
   (let ((lr-occ-ind (car SeqType)))
-        (cond 
-          ((eq? lr-occ-ind 'empty-test)
-           '(empty (item))
-           ; DL: was: `(empty xdt_untypedAtomic)
-           )
-          ((or (eq? lr-occ-ind 'one)
-               (eq? lr-occ-ind 'optional)
-               (eq? lr-occ-ind 'zero-or-more)
-               (eq? lr-occ-ind 'one-or-more))
-              (let* ((item-type (cadr SeqType))
-                     (por-occ-ind (l2p:lr-oocur-ind2por-occur-ind lr-occ-ind)))
-                (cond ((symbol? item-type) ;built-in atomic type
-                          `(,por-occ-ind ,(l2p:lr-atomic-type2por-atomic-type item-type)))
-                      ((string? (car item-type)) ;not built-in atomic type
-                          (cl:signal-user-error SE4008 (string-append " non built-in type is not supported: "
-                                                (apply string-append item-type))))
-                      
-                      ((eq? (car item-type) 'doc-test)
-                          `(,por-occ-ind (document ,(l2p:lr-elem-test2por-elem-test (cadr item-type)))))
-                      
-                      ((eq? (car item-type) 'elem-test)
-                          `(,por-occ-ind (element ,(l2p:lr-elem-test2por-elem-test item-type))))
-                      
-                      ((eq? (car item-type) 'attr-test)
-                          `(,por-occ-ind (attribute ,(l2p:lr-attr-test2por-attr-test item-type))))
-                      
-                      ((eq? (car item-type) 'comment-test)
-                          `(,por-occ-ind (comment)))
-                      
-                      ((eq? (car item-type) 'text-test)
-                          `(,por-occ-ind (text)))
-                      
-                      ; DL: in expressions like instance-of
-                      ((eq? (car item-type) 'pi-test)
-                       `(,por-occ-ind
-                         (processing_instruction
-                          ,@(if
-                             (null? (cdr item-type))
-                             ; no target specified
-                             '()
-                             ;(list
-                              (caddr  ; constant value
-                               (cadr item-type)  ; selects '(const ...)
-                               );)
-                             ))))
-                      
-                      ((eq? (car item-type) 'item-test)
-                          `(,por-occ-ind (item)))
-                      
-                      ((eq? (car item-type) 'node-test)
-                          `(,por-occ-ind (node)))
+    (cond 
+      ((eq? lr-occ-ind 'empty-test)
+       '(empty (item))
+       ; DL: was: `(empty xdt_untypedAtomic)
+       )
+      ((or (eq? lr-occ-ind 'one)
+           (eq? lr-occ-ind 'optional)
+           (eq? lr-occ-ind 'zero-or-more)
+           (eq? lr-occ-ind 'one-or-more))
+       (let* ((item-type (cadr SeqType))
+              (por-occ-ind (l2p:lr-oocur-ind2por-occur-ind lr-occ-ind)))
+         (cond
+           ((symbol? item-type)  ; built-in atomic type
+            (list por-occ-ind
+                  (l2p:lr-atomic-type2por-atomic-type item-type)))
+           ((string? (car item-type)) ; not built-in atomic type
+            (cl:signal-user-error
+             SE4008
+             (string-append " non built-in type is not supported: "
+                            (apply string-append item-type))))
+           ((eq? (car item-type) 'comment-test)
+            `(,por-occ-ind (comment)))
+           ((eq? (car item-type) 'text-test)
+            `(,por-occ-ind (text)))
+           ((eq? (car item-type) 'node-test)
+            `(,por-occ-ind (node)))
+           ((eq? (car item-type) 'item-test)
+            `(,por-occ-ind (item)))
+           ((eq? (car item-type) 'pi-test)
+            ; DL: in expressions like instance-of
+            `(,por-occ-ind
+              (pi   ; Was: processing_instruction
+               ,@(if
+                  (null? (cdr item-type))  ; no target specified
+                  '()
+                  (caddr  ; constant value
+                   (cadr item-type)  ; selects '(const ...)
+                   )))))
+           ((eq? (car item-type) 'elem-test)
+            (list por-occ-ind
+                  `(element ,(l2p:lr-elem-test2por-elem-test item-type))))
+           ((eq? (car item-type) 'attr-test)
+            (list por-occ-ind
+                  `(attribute ,(l2p:lr-elem-test2por-elem-test
+                                ; was: l2p:lr-attr-test2por-attr-test
+                                item-type))))                      
+           ((eq? (car item-type) 'doc-test)
+            (list
+             por-occ-ind
+             (if
+              (null? (cdr item-type))  ; no contents
+              '(document)
+              `(document ,(l2p:lr-elem-test2por-elem-test (cadr item-type))))))
+
                       
                       (else (cl:signal-input-error SE4008 (string-append "unknown item-type: "
                                        (symbol->string (car item-type))))))))
-          (else (cl:signal-error SE4008 (string-input-append "unknown occurance indicator: "
-                                      (symbol->string lr-occ-ind)))))))
+          (else
+           (cl:signal-error
+            SE4008
+            (string-input-append "unknown occurence indicator: "
+                                 (symbol->string lr-occ-ind)))))))
 
 
 
@@ -1662,45 +1667,87 @@
         
 (define (l2p:lr-elem-test2por-elem-test elem-test)
   (let ((test-type (caadr elem-test)))
-    (cond ((eq? test-type 'ename)
-              (let* ((elem-name (cadr (cadr elem-test)))
-                     (elem-type (caddr (cadr elem-test))))
-                (cond ((and (eq? (caddr elem-name) 'unspecified) ; element()
-                            (eq? (cadr elem-type) 'unspecified)) 
-                       `())
-                      
-                      ((and (eq? (caddr elem-name) '*) ; element(*)
-                            (eq? (cadr elem-type) 'unspecified))
-                       `(element_wildcard))
-                      
-                      ((and (list? (caddr elem-name))
-                            (eq? (cadr elem-type) 'unspecified)) ; element(fo:name)
-                       `(element_name ,(caddr elem-name)))
-                      
-                      ((and (eq? (caddr elem-name) '*) ; element(*,*)
-                            (eq? (cadr elem-type) '*))
-                       `(element_wildcard_wildcard))
-                      
-                      ((and (eq? (caddr elem-name) '*) ; element(*, fo:type-name)
-                            (list? (cadr elem-type)))
-                       `(element_wildcard_name ,(cadr elem-type)))
-                      
-                      ((and (list? (caddr elem-name)) ; element(fo:name, *)
-                            (eq? (cadr elem-type) '*))
-                       `(element_name_wildcard ,(caddr elem-name)))
-                      
-                      ((and (list? (caddr elem-name))
-                            (list? (cadr elem-type)))
-                       `(element_name_name ,(caddr elem-name) ,(cadr elem-type)))
-                      
-                      (else (cl:signal-input-error SE4008 (string-append 
-                                    (string-append "unknown combination of element name and element test: "
-                                                  (l2p:list2string elem-name))
-                                    (l2p:list2string elem-type)))))))
-                                                                  
-          ((eq? test-type 'sname)
-              (cl:signal-user-error SE4008 "sname is not supported in elem-test"))
-          (else (cl:signal-input-error SE4008 (string-append "unknown test-type: " (symbol->string test-type)))))))
+    (cond
+      ((eq? test-type 'ename)
+       (let* ((ename (cadr elem-test))
+              (elem-name (cadr ename))
+              (elem-type (caddr ename)))
+         (let ((name-pair (caddr elem-name))
+               (type-value (cadr elem-type)))
+           (call-with-values
+            (lambda ()
+              (if
+               (memq name-pair '(unspecified *))
+               (values 'wildcard '())
+               (let ((parts
+                      (map
+                       (lambda (part)
+                         (if (eq? part '*)
+                             (cons "wildcard" "")
+                             (cons "name" part)))
+                       name-pair)))
+                 (values (string->symbol
+                          (string-append (caar parts) "-" (caadr parts)))
+                         (map cdr parts)))))
+            (lambda (node-name-enum str-str)
+              (call-with-values
+               (lambda ()
+                 (if
+                  (memq type-value '(unspecified *))
+                  (values 'nothing '!xs!anyType)
+                  (values
+                   (if
+                    (equal? (cadddr ename)
+                            '(const (type !xs!string) "qmark"))
+                    'optional
+                    'present)
+                   type-value)))
+               (lambda (type-name-enum single-type)
+                 (list node-name-enum
+                       type-name-enum
+                       str-str
+                       (l2p:lr-atomic-type2por-atomic-type single-type)))))))))
+;      (cond
+;           ((and (eq? (caddr elem-name) 'unspecified) ; element()
+;                 (eq? (cadr elem-type) 'unspecified)) 
+;            `())
+;           
+;           ((and (eq? (caddr elem-name) '*) ; element(*)
+;                 (eq? (cadr elem-type) 'unspecified))
+;            `(element_wildcard))
+;           
+;           ((and (list? (caddr elem-name))
+;                 (eq? (cadr elem-type) 'unspecified)) ; element(fo:name)
+;            `(element_name ,(caddr elem-name)))
+;           
+;           ((and (eq? (caddr elem-name) '*) ; element(*,*)
+;                 (eq? (cadr elem-type) '*))
+;            `(element_wildcard_wildcard))
+;           
+;           ((and (eq? (caddr elem-name) '*) ; element(*, fo:type-name)
+;                 (list? (cadr elem-type)))
+;            `(element_wildcard_name ,(cadr elem-type)))
+;           
+;           ((and (list? (caddr elem-name)) ; element(fo:name, *)
+;                 (eq? (cadr elem-type) '*))
+;            `(element_name_wildcard ,(caddr elem-name)))
+;           
+;           ((and (list? (caddr elem-name))
+;                 (list? (cadr elem-type)))
+;            `(element_name_name ,(caddr elem-name) ,(cadr elem-type)))
+;           
+;           (else (cl:signal-input-error SE4008 (string-append 
+;                                                (string-append "unknown combination of element name and element test: "
+;                                                               (l2p:list2string elem-name))
+;                                                (l2p:list2string elem-type)))))
+      ((eq? test-type 'sname)
+       (cl:signal-user-error
+        SE4008
+        "sname is not supported in elem-test"))
+      (else
+       (cl:signal-input-error
+        SE4008
+        (string-append "unknown test-type: " (symbol->string test-type)))))))
        
 
 (define (l2p:lr-attr-test2por-attr-test attr-test)
