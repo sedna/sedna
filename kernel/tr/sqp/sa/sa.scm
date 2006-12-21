@@ -1845,6 +1845,48 @@
 (define (sa:can-be-cast? from to)
   (not (and (eq? from sa:type-atomic)
             (eq? to sa:type-nodes))))
+
+; Signature: (lambda (type-pair abstract+complex-types-allowed?) ...)
+; Example:  '("xs" "int") #t --> '!xs!int
+; Example:  '("xs" "non-existing-type") #t --> #f
+(define sa:map-xs-type-pair
+  (let ((type-string->pair
+         (lambda (str)
+            (cons str (string->symbol (string-append "!xs!" str))))))
+    (let ((concrete-simple-types-alist
+           (map
+            type-string->pair
+            ; Depth-first traversal of type hierarchy in XQuery data model
+            ; http://www.w3.org/TR/xpath-datamodel/#types-hierarchy
+            '("anyAtomicType"
+              "string" "normalizedString" "token" "language" "NMTOKEN"
+              "Name" "NCName" "ID" "IDREF" "ENTITY"
+              "untypedAtomic" "dateTime" "date" "time"
+              "duration" "yearMonthDuration" "dayTimeDuration"
+              "float" "double" "decimal"
+              "integer" "nonPositiveInteger" "negativeInteger"
+              "long" "int" "short" "byte"
+              "nonNegativeInteger" "positiveInteger"
+              "unsignedLong" "unsignedInt" "unsignedShort" "unsignedByte"
+              "gYearMonth" "gMonthDay" "gDay" "gMonth"
+              "boolean" "base64Binary" "hexBinary" "anyURI"
+              "QName" "NOTATION")))
+          (other-types-alist
+           (map
+            type-string->pair
+            '("anyType" "anySimpleType"
+              "IDREFS" "NMTOKENS" "ENTITIES"
+              "untyped"))))
+      (lambda (type-pair abstract+complex-types-allowed?)
+        (cond
+          ((not (string=? (car type-pair) "xs"))
+           #f)
+          ((assoc (cadr type-pair) concrete-simple-types-alist)
+           => cdr)
+          ((and abstract+complex-types-allowed?
+                (assoc (cadr type-pair) other-types-alist))
+           => cdr)
+          (else #f))))))
   
 ; SequenceType
 ; default-ns - default element namespace
@@ -1876,8 +1918,35 @@
     (else
      (sa:analyze-item-type type-spec ns-binding default-ns))))
 
+; AtomicType
+; Returns (cons rewritten-type sa:type-atomic)
+(define (sa:analyze-atomic-type type-spec)
+  (cond
+   ((symbol? type-spec)
+    (cons type-spec sa:type-atomic))
+   ((sa:map-xs-type-pair type-spec #f)
+    => (lambda (x) (cons x sa:type-atomic)))
+   (else
+    (cl:signal-input-error SE5016 type-spec))))
+
+; Returns (cons rewritten-type sa:type-atomic)
+; The returned type always belongs to sa:type-atomic category
+; ns-binding and default-ns are dummy arguments here and are provided for 
+; mere unification purposes with sa:analyze-seq-type
+(define (sa:analyze-single-type type-spec ns-binding default-ns)
+  (if
+   (and (pair? type-spec)
+        (memq (car type-spec) '(optional one)))
+   (and
+    (sa:assert-num-args type-spec 1)
+    (let ((new-type (sa:analyze-atomic-type (cadr type-spec))))
+      (and new-type
+           (cons (list (car type-spec) (car new-type))
+                 (cdr new-type)))))
+  (sa:analyze-atomic-type type-spec)))
+
 ; ItemType
-; TODO: more sophisticated treatment for built-in types
+; Is presented in SequenceType only
 (define (sa:analyze-item-type type-spec ns-binding default-ns)
   (cond
     ((eq? type-spec 'doc-test)
@@ -1894,48 +1963,55 @@
           (string? (car type-spec)) (string? (cadr type-spec)))
      ; external atomic type
      (cond
-       ; TODO: construct alist at program initialization
-       ((assoc type-spec
-               '((("xs" "int") . !xs!int)
-                 (("xs" "long") . !xs!long)
-                 (("xs" "short") . !xs!short)
-                 (("xs" "byte") . !xs!byte)
-                 (("xs" "nonPositiveInteger") . !xs!nonPositiveInteger)
-                 (("xs" "negativeInteger") . !xs!negativeInteger)
-                 (("xs" "nonNegativeInteger") . !xs!nonNegativeInteger)
-                 (("xs" "positiveInteger") . !xs!positiveInteger)
-                 (("xs" "unsignedLong") . !xs!unsignedLong)
-                 (("xs" "unsignedInt") . !xs!unsignedInt)
-                 (("xs" "unsignedShort") . !xs!unsignedShort)
-                 (("xs" "unsignedByte") . !xs!unsignedByte)
-                 (("xs" "normalizedString") . !xs!normalizedString)
-                 (("xs" "token") . !xs!token)
-                 (("xs" "language") . !xs!language)
-                 (("xs" "Name") . !xs!Name)
-                 (("xs" "NCName") . !xs!NCName)
-                 (("xs" "NMTOKEN") . !xs!NMTOKEN)
-                 ;(("xs" "NMTOKENS") . !xs!NMTOKENS)
-                 (("xs" "ID") . !xs!ID)
-                 (("xs" "IDREF") . !xs!IDREF)
-                 ;(("xs" "IDREFS") . !xs!IDREFS)
-                 (("xs" "ENTITY") . !xs!ENTITY)
-                 ;(("xs" "ENTITIES") . !xs!ENTITIES)
-                 ;----------
-                 ; XQuery predefined schema types:
-                 ; 2.5.1 Predefined Schema Types                
-                 ;(("xs" "anyType") . !xs!anyType)  ; These must not be supported
-                 ;(("xs" "untyped") . !xs!untyped)
-                 ;(("xs" "anySimpleType") . !xs!anySimpleType)
-                 (("xs" "anyAtomicType") . !xs!anyAtomicType)
-                 (("xs" "untypedAtomic") . !xs!untypedAtomic)
-                 (("xs" "dayTimeDuration") . !xs!dayTimeDuration)
-                 (("xs" "yearMonthDuration") . !xs!yearMonthDuration)
-                 ))
-        => (lambda (pair)
-             (cons (cdr pair)
+       ((sa:map-xs-type-pair type-spec #t)
+        => (lambda (new-type)
+             (cons new-type
                    (if
-                    (memq (cdr pair) '(!xs!anyType !xs!untyped))
+                    (memq new-type '(!xs!anyType !xs!untyped))
                     sa:type-any sa:type-atomic))))
+       ; Older variant of the above branch:
+;       ((assoc type-spec
+;               '((("xs" "int") . !xs!int)
+;                 (("xs" "long") . !xs!long)
+;                 (("xs" "short") . !xs!short)
+;                 (("xs" "byte") . !xs!byte)
+;                 (("xs" "nonPositiveInteger") . !xs!nonPositiveInteger)
+;                 (("xs" "negativeInteger") . !xs!negativeInteger)
+;                 (("xs" "nonNegativeInteger") . !xs!nonNegativeInteger)
+;                 (("xs" "positiveInteger") . !xs!positiveInteger)
+;                 (("xs" "unsignedLong") . !xs!unsignedLong)
+;                 (("xs" "unsignedInt") . !xs!unsignedInt)
+;                 (("xs" "unsignedShort") . !xs!unsignedShort)
+;                 (("xs" "unsignedByte") . !xs!unsignedByte)
+;                 (("xs" "normalizedString") . !xs!normalizedString)
+;                 (("xs" "token") . !xs!token)
+;                 (("xs" "language") . !xs!language)
+;                 (("xs" "Name") . !xs!Name)
+;                 (("xs" "NCName") . !xs!NCName)
+;                 (("xs" "NMTOKEN") . !xs!NMTOKEN)
+;                 ;(("xs" "NMTOKENS") . !xs!NMTOKENS)
+;                 (("xs" "ID") . !xs!ID)
+;                 (("xs" "IDREF") . !xs!IDREF)
+;                 ;(("xs" "IDREFS") . !xs!IDREFS)
+;                 (("xs" "ENTITY") . !xs!ENTITY)
+;                 ;(("xs" "ENTITIES") . !xs!ENTITIES)
+;                 ;----------
+;                 ; XQuery predefined schema types:
+;                 ; 2.5.1 Predefined Schema Types                
+;                 ;(("xs" "anyType") . !xs!anyType)  ; These must not be supported
+;                 ;(("xs" "untyped") . !xs!untyped)
+;                 ;(("xs" "anySimpleType") . !xs!anySimpleType)
+;                 (("xs" "anyAtomicType") . !xs!anyAtomicType)
+;                 (("xs" "untypedAtomic") . !xs!untypedAtomic)
+;                 (("xs" "dayTimeDuration") . !xs!dayTimeDuration)
+;                 (("xs" "yearMonthDuration") . !xs!yearMonthDuration)
+;                 ))
+;        => (lambda (pair)
+;             (cons (cdr pair)
+;                   (if
+;                    (memq (cdr pair) '(!xs!anyType !xs!untyped))
+;                    sa:type-any sa:type-atomic))))
+       
 ;       ((not (string=? (car type-spec) "xs"))
 ;        ; TODO: QName resolution in type names
 ;        (cl:signal-user-error
@@ -2562,7 +2638,7 @@
        ; type analysis may produce XQuery static errors only, while
        ; subexpr analysis may result in an XQuery dynamic error, e.g.
        ; when context is not defined
-       ((new-type (sa:analyze-type
+       ((new-type (sa:analyse-wrapped-sequence-type
                    (cadr (sa:op-args expr))
                    vars funcs ns-binding default-ns))
         (a (sa:analyze-expr (car (sa:op-args expr))
@@ -2580,21 +2656,26 @@
                    (car new-type))
              sa:type-nodes))))))
 
-; `(type ,something)
-(define (sa:analyze-type expr vars funcs ns-binding default-ns)
-  (cond
-    ((not (and (pair? expr)  ; '() is not a pair
-               (eq? (sa:op-name expr) 'type)))
-     (cl:signal-input-error SE5030 expr))
-    ((and (sa:assert-num-args expr 1)
-          (sa:analyze-seq-type
-           (car (sa:op-args expr)) ns-binding (car default-ns)))
-     => (lambda (pair)
-          (cons (list (sa:op-name expr)  ; ='type
-                      (car pair))
-                (cdr pair))))
-    (else  ; error message already displayed
-     #f)))
+; Analysing `(type ,something)
+(define (sa:wrapped-type-helper type-analyser)
+  (lambda (expr vars funcs ns-binding default-ns)
+    (cond
+      ((not (and (pair? expr)  ; '() is not a pair
+                 (eq? (sa:op-name expr) 'type)))
+       (cl:signal-input-error SE5030 expr))
+      ((and (sa:assert-num-args expr 1)
+            (type-analyser
+             (car (sa:op-args expr)) ns-binding (car default-ns)))
+       => (lambda (pair)
+            (cons (list (sa:op-name expr)  ; ='type
+                        (car pair))
+                  (cdr pair))))
+      (else  ; error message already displayed
+       #f))))
+(define sa:analyse-wrapped-sequence-type
+  (sa:wrapped-type-helper sa:analyze-seq-type))
+(define sa:analyze-wrapped-single-type
+  (sa:wrapped-type-helper sa:analyze-single-type))
 
 ;-------------------------------------------------
 ; 2.4 Sequence operations
@@ -3100,8 +3181,9 @@
             (list
              (sa:analyze-expr (car (sa:op-args expr))
                               vars funcs ns-binding default-ns)
-             (sa:analyze-type (cadr (sa:op-args expr))
-                              vars funcs ns-binding default-ns))))
+             (sa:analyze-wrapped-single-type
+              (cadr (sa:op-args expr))
+              vars funcs ns-binding default-ns))))
        (and
         (not (memv #f args))
         (let* ((type-spec (caadr args))  ; selects '(type ...)
@@ -3179,8 +3261,9 @@
           (list
            (sa:analyze-expr (car (sa:op-args expr))
                             vars funcs ns-binding default-ns)
-           (sa:analyze-type (cadr (sa:op-args expr))
-                            vars funcs ns-binding default-ns))))
+           (sa:analyze-wrapped-single-type
+            (cadr (sa:op-args expr))
+            vars funcs ns-binding default-ns))))
      (and
       (not (memv #f args))
       (let* ((type-spec (caadr args))  ; selects '(type ...)
@@ -3259,7 +3342,7 @@
    (let ((args (list
                 (sa:analyze-expr
                  (car (sa:op-args expr)) vars funcs ns-binding default-ns)
-                (sa:analyze-type
+                (sa:analyse-wrapped-sequence-type
                  (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
      (if (memv #f args)
          #f
@@ -3325,8 +3408,9 @@
     (else
      (and
       (sa:assert-num-args expr 2)
-      (let ((type-pair (sa:analyze-type (car (sa:op-args expr))
-                                        vars funcs ns-binding default-ns))
+      (let ((type-pair (sa:analyse-wrapped-sequence-type
+                        (car (sa:op-args expr))
+                        vars funcs ns-binding default-ns))
             (func-pair (sa:analyze-fun-def (cadr (sa:op-args expr))
                                            vars funcs ns-binding default-ns)))
         (and
@@ -4388,19 +4472,26 @@
                                 (var ("" "attr_value"))))))))))))))))))
            sa:type-nodes))))
       ((cast)
+       (pp expr)
        ; Special check for xs:QName constructor function
        ; See "3.12.5 Constructor Functions" in XQuery specification
        (if
-        (and
-         (equal? (cadr (sa:op-args expr))
+        (equal? (cadr (sa:op-args expr))
                  '(type (one !xs!QName)))
-         (pair? (car (sa:op-args expr)))
-         (not 
-          (eq? (sa:op-name (car (sa:op-args expr)))
-               'const)))
-        (cl:signal-user-error
-         XPTY0004
-         "xs:QName constructor function for non-constant argument")
+        (cond
+          ((and
+            (pair? (car (sa:op-args expr)))
+            (not (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
+           (cl:signal-user-error
+            XPTY0004
+            "xs:QName constructor function for non-constant argument"))
+          ((equal? (car (sa:op-args expr))
+                   '(const (type !xs!string) ""))
+           (cl:signal-user-error
+            FORG0001
+            "Attempting to cast empty string as xs:QName"))
+          (else
+           pair))
         pair))
       (else  ; any other function call
        pair))))
