@@ -256,4 +256,12 @@ void xs_QName_print_to_lr(const char* qname, std::ostream& str)
     str << "\")";
 }
 
+bool _xs_QName_not_equal(const char *prefix, const char *local, const xptr &node)
+{
+	xml_ns* node_ns = GETSCHEMENODE(XADDR(node))->xmlns;
+	char* node_uri = node_ns ? node_ns->uri : NULL;
+    const char *node_local = GETSCHEMENODE(XADDR(node))->name;
+    char* uri = prefix ? (tr_globals::st_ct.get_xmlns_by_prefix(prefix)->uri) : NULL;
 
+    return _xs_QName_not_equal(node_uri, node_local, uri, local);
+}

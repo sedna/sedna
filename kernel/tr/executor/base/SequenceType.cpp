@@ -62,6 +62,8 @@ bool is_derived(xmlscm_type t1, xmlscm_type t2)
 		case xs_unsignedShort       : return (t2 == xs_integer || t2 == xs_decimal || t2 == xs_nonNegativeInteger || t2 == xs_unsignedLong || t2 == xs_unsignedInt);
 		case xs_unsignedByte        : return (t2 == xs_integer || t2 == xs_decimal || t2 == xs_nonNegativeInteger || t2 == xs_unsignedLong || t2 == xs_unsignedInt || t2 == xs_unsignedShort);
 		case xs_positiveInteger     : return (t2 == xs_integer || t2 == xs_decimal || t2 == xs_nonNegativeInteger);
+        // special case for xs:untyped
+		case xs_untyped             : return false;
         default						: throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to is_derived");
     }
 }
@@ -76,72 +78,142 @@ xmlscm_type primitive_base_type(xmlscm_type t)
         return t;
 }
 
+inline bool _check_st_elem_data(const xptr &p, const st_item_type& it)
+{
+    switch (it.info.ea.nne)
+    {
+        case st_nne_wildcard: 
+            break;
+        case st_nne_name:
+            if (_xs_QName_not_equal(it.info.ea.node_name_prefix, it.info.ea.node_name_local, p))
+                return false;
+            break;
+        default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
+    }
+
+    switch (it.info.ea.tne)
+    {
+        case st_tne_nothing : break;
+        case st_tne_optional: {
+                                  xmlscm_type type = E_DSC(p)->type;
+                                  return is_same_or_derived(type, it.info.ea.type_name);
+                              }
+        case st_tne_present : { // because dm:nilled always returns false we do not check it here
+                                  xmlscm_type type = E_DSC(p)->type;
+                                  return is_same_or_derived(type, it.info.ea.type_name);
+                              }
+        default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
+    }
+
+    return true;
+}
+
+inline bool _check_st_attr_data(const xptr &p, const st_item_type& it)
+{
+    switch (it.info.ea.nne)
+    {
+        case st_nne_wildcard: 
+            break;
+        case st_nne_name:
+            if (_xs_QName_not_equal(it.info.ea.node_name_prefix, it.info.ea.node_name_local, p))
+                return false;
+            break;
+        default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
+    }
+
+    switch (it.info.ea.tne)
+    {
+        case st_tne_nothing : break;
+        case st_tne_optional: {
+                                  xmlscm_type type = A_DSC(p)->type;
+                                  return is_same_or_derived(type, it.info.ea.type_name);
+                              }
+        case st_tne_present : { // because dm:nilled always returns false we do not check it here
+                                  xmlscm_type type = A_DSC(p)->type;
+                                  return is_same_or_derived(type, it.info.ea.type_name);
+                              }
+        default             : throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
+    }
+
+    return true;
+}
+
 bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 {
     switch (it.type)
     {
-        case st_atomic_type	:
-            if (tc.is_atomic()) return is_same_or_derived(tc.get_atomic_type(), it.single_type);
+        case st_atomic_type:
+            if (tc.is_atomic()) return is_same_or_derived(tc.get_atomic_type(), it.info.single_type);
             else return false;
 
-        case st_document	: throw USER_EXCEPTION2(SE1002, "type_matches_single for document node");
-
-        case st_element		: 
+        case st_document: 
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
 
                 CHECKP(p);
 
+                return (GETSCHEMENODEX(p)->type == document);
+            }
+
+        case st_document_element:
+            {
+                if (!tc.is_node()) return false;
+                xptr p = tc.get_node();
+
+                CHECKP(p);
+                if (GETSCHEMENODEX(p)->type != document) return false;
+
+
+                p = getFirstByOrderElementChild(p);
+                if (p == NULL || getNextByOrderElement(p) != NULL) return false;
+
+                CHECKP(p);
+                return _check_st_elem_data(p, it);
+            }
+
+        case st_element:
+            {
+                if (!tc.is_node()) return false;
+                xptr p = tc.get_node();
+
+                CHECKP(p);
                 if (GETSCHEMENODEX(p)->type != element) return false;
 
-                switch (it.ed.ede)
-                {
-                    case st_ede_nothing				: return true;
-                    case st_ede_wildcard			: return true;
-                    case st_ede_name				: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *name*");
-                    case st_ede_wildcard_wildcard	: return true;
-                    case st_ede_wildcard_name		: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *wildcard-wildcard*");
-                    case st_ede_name_wildcard		: return (strlen(it.ed.ncname1_prefix) == 0 && 
-                                                              strcmp(GETSCHEMENODEX(p)->name, it.ed.ncname1_local) == 0);
-                    case st_ede_name_name			: throw USER_EXCEPTION2(SE1002, "type_matches_single for element *name-name*");
-                    default							: throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
-                }
+                return _check_st_elem_data(p, it);
             }
 
-        case st_attribute	:
+        case st_attribute:
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
 
                 CHECKP(p);
-
                 if (GETSCHEMENODEX(p)->type != attribute) return false;
 
-                switch (it.ad.ade)
-                {
-                    case st_ade_nothing				: return true;
-                    case st_ade_wildcard			: return true;
-                    case st_ade_name				: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *name*");
-                    case st_ade_wildcard_wildcard	: return true;
-                    case st_ade_wildcard_name		: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *wildcard-wildcard*");
-					case st_ade_name_wildcard		: return (strlen(it.ad.ncname1_prefix) == 0 && 
-                                                              strcmp(GETSCHEMENODEX(p)->name, it.ad.ncname1_local) == 0);
-                    case st_ade_name_name			: throw USER_EXCEPTION2(SE1002, "type_matches_single for attribute *name-name*");
-                    default							: throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
-                }
+                return _check_st_attr_data(p, it);
             }
 
-        case st_pi			: 
+        case st_pi: 
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
 
                 CHECKP(p);
 
-                return (GETSCHEMENODEX(p)->type == pr_ins);
+                if (GETSCHEMENODEX(p)->type != pr_ins) return false;
+                if (!it.info.ncname) return true;
+
+                pi_dsc *pi = PI_DSC(p);
+                shft target = pi->target;
+                xptr data = pi->data;
+                CHECKP(data);
+                data = PSTRDEREF(data);
+                bool res = (strncmp((char*)XADDR(data), it.info.ncname, target) == 0);
+                return res;
             }
-        case st_comment		: 
+
+        case st_comment: 
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
@@ -150,7 +222,8 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
 
                 return (GETSCHEMENODEX(p)->type == comment);
             }
-        case st_text		:
+
+        case st_text:
             {
                 if (!tc.is_node()) return false;
                 xptr p = tc.get_node();
@@ -160,9 +233,14 @@ bool type_matches_single(const tuple_cell& tc, const st_item_type& it)
                 return (GETSCHEMENODEX(p)->type == text);
             }
 
-        case st_node		: return tc.is_node();
-        case st_item		: return true;
-        default				: throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
+        case st_node:
+            return tc.is_node();
+
+        case st_item:
+            return true;
+
+        default:
+            throw USER_EXCEPTION2(SE1003, "Impossible case in type_matches_single");
     }
 }
 
@@ -221,10 +299,6 @@ bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached,
     return true;
 }
 
-bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st)
-{
-    return type_matches(child, NULL, t, eos_reached, st);
-}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 

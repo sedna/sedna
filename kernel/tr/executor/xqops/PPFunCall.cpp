@@ -46,12 +46,12 @@ void fun_conv_rules::next(tuple &t)
     {
         tc = atomize(tc);
 
-        if(st->type.single_type != xs_anyAtomicType)
+        if(st->type.info.single_type != xs_anyAtomicType)
         {
             if (tc.get_atomic_type() == xs_untypedAtomic)
-                tc = cast(tc, st->type.single_type);
+                tc = cast(tc, st->type.info.single_type);
             else
-                type_promotion(tc, st->type.single_type);
+                type_promotion(tc, st->type.info.single_type);
         }
 
         t.copy(tc);

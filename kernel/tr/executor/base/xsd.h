@@ -121,11 +121,37 @@ xml_ns     *xs_QName_get_xmlns(const char* qname);
 void  xs_QName_print(const char* qname, std::ostream& str);
 void  xs_QName_print_to_lr(const char* qname, std::ostream& str);
 
-/*
-inline bool operator < (const QName & n1, const QName & n2)
+
+
+inline bool _xs_QName_equal(const char* uri1, const char *local1, const char *uri2, const char *local2)
 {
-    return strcmp(n1.data, n2.data) < 0;
+    if (uri1 != uri2)
+    {
+        if (uri1 == NULL || uri2 == NULL) return false;
+        if (strcmp(uri1, uri2) != 0) return false;
+    }
+
+    return strcmp(local1, local2) == 0;
 }
-*/
+
+inline bool _xs_QName_not_equal(const char* uri1, const char *local1, const char *uri2, const char *local2)
+{
+    if (strcmp(local1, local2) != 0) return true;
+
+    if (uri1 == NULL || uri2 == NULL)
+    {
+        if (uri1 == uri2) return false;
+        else return true;
+    }
+
+    return strcmp(uri1, uri2) != 0;
+}
+
+// This function is used for Sequence Type implementation and intended to be faster
+// than creating xs:QNames from prefix and local part and calling dm:node-name (bla-bla-bla)
+// Parameters:
+// prefix could be NULL
+// node must be element or attribute and CHECKP should be called on node already
+bool _xs_QName_not_equal(const char *prefix, const char *local, const xptr &node);
 
 #endif

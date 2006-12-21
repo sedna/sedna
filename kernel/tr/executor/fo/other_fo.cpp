@@ -20,15 +20,6 @@ tuple_cell op_not_equal_xs_NOTATION(const tuple_cell &a1, const tuple_cell &a2)
 
 
 /*******************************************************************************
- * OPERATORS ON xs:anyURI
- ******************************************************************************/
-/* !!! FIX ME: Implement these functions here
-
-   fn:resolve-uri($relative as xs:string?) as xs:anyURI?
-   fn:resolve-uri($relative as xs:string?, $base as xs:string) as xs:anyURI?
-*/
-
-/*******************************************************************************
  * FUNCTIONS RELATED TO xs:QName
  ******************************************************************************/
 tuple_cell op_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
@@ -44,13 +35,7 @@ tuple_cell op_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
     const char *local1 = xs_QName_get_local_name(qname1);
     const char *local2 = xs_QName_get_local_name(qname2);
 
-    if (uri1 != uri2)
-    {
-        if (uri1 == NULL || uri2 == NULL) return tuple_cell::atomic(false);
-        if (strcmp(uri1, uri2) != 0) return tuple_cell::atomic(false);
-    }
-
-    return tuple_cell::atomic(strcmp(local1, local2) == 0);
+    return tuple_cell::atomic(_xs_QName_equal(uri1, local1, uri2, local2));
 }
 
 tuple_cell op_not_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
@@ -66,19 +51,5 @@ tuple_cell op_not_equal_xs_QName(const tuple_cell &a1, const tuple_cell &a2)
     const char *local1 = xs_QName_get_local_name(qname1);
     const char *local2 = xs_QName_get_local_name(qname2);
 
-    if (strcmp(local1, local2) != 0) return tuple_cell::atomic(true);
-
-    if (uri1 == NULL || uri2 == NULL)
-    {
-        if (uri1 == uri2) return tuple_cell::atomic(false);
-        else return tuple_cell::atomic(true);
-    }
-
-    return tuple_cell::atomic(strcmp(uri1, uri2) != 0);
+    return tuple_cell::atomic(_xs_QName_not_equal(uri1, local1, uri2, local2));
 }
-
-
-/* !!! FIX ME: Implement other functions related to xs:QName here */
-
-
-
