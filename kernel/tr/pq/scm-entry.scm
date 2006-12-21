@@ -135,5 +135,27 @@
     '()
     ))
 
+; Clone of process-query-in-scheme for module processing
+(define (process-module-in-scheme . step-id-dummy)
+  (let* ((lr-query (get-scm-input-string))
+         (query    `(#t ,(cl:string->scheme-list lr-query)))         
+         (query    (if
+                    (car query)
+                    (handle-exceptions
+                     ex
+                     `(#f ,(cl:get-exception-message ex))
+                     `(#t ,(sa:analyze-module (cadr query))))
+                    query))
+         (query     (if
+                     (car query)
+                     (handle-exceptions
+                      ex
+                      `(#f ,(cl:get-exception-message ex))
+                      `(#t ,@(map 
+                              (lambda (q) (mlr:rewrite-module q))
+                              (cdr query))))
+                     query)))
+    (set-scm-output-string (cl:scheme-list->string query))
+    '()))
 
 (return-to-host)
