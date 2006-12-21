@@ -216,130 +216,54 @@ void set_axis_parameters(scheme_list *lst,
     //throw USER_EXCEPTION2(SE1004, "113");
 }
 
-void make_element_data(scheme_list *lst, sequence_type &st)
+void make_elem_attr_data(scheme_list *lst, sequence_type &st)
 {
-    if (lst->size() == 0)
+    if (   lst->size() != 4
+        || lst->at(0).type != SCM_SYMBOL
+        || lst->at(1).type != SCM_SYMBOL
+        || lst->at(2).type != SCM_LIST
+        || lst->at(3).type != SCM_SYMBOL)
+        throw USER_EXCEPTION2(SE1004, "120");
+
+    string node_name_enum = string(lst->at(0).internal.symb);
+    string node_type_enum = string(lst->at(1).internal.symb);
+
+    if (node_name_enum == "wildcard")
+        st.type.info.ea.nne = st_nne_wildcard;
+    else if (node_name_enum == "name")
+        st.type.info.ea.nne = st_nne_name;
+    else throw USER_EXCEPTION2(SE1004, "121");
+
+    if (node_type_enum == "nothing")
+        st.type.info.ea.tne = st_tne_nothing;
+    else if (node_type_enum == "optional")
+        st.type.info.ea.tne = st_tne_optional;
+    else if (node_type_enum == "present")
+        st.type.info.ea.tne = st_tne_present;
+    else throw USER_EXCEPTION2(SE1004, "122");
+
+
+    scheme_list *name = NULL;
+    if (st.type.info.ea.nne == st_nne_name)
     {
-        st.type.ed.ede = st_ede_nothing;
+        name = lst->at(2).internal.list;
+        if (   name->size() != 2
+            || name->at(0).type != SCM_STRING
+            || name->at(1).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "123");
+
+        if (strlen(name->at(0).internal.str) > 0)
+            st.type.info.ea.node_name_prefix = xs_NCName_create(name->at(0).internal.str, PathExpr_malloc_func(false));
+        else 
+            st.type.info.ea.node_name_prefix = NULL;
+
+        st.type.info.ea.node_name_local  = xs_NCName_create(name->at(1).internal.str, PathExpr_malloc_func(false));
     }
-    else if (lst->size() == 1)
+
+    if (st.type.info.ea.tne == st_tne_optional || st.type.info.ea.tne == st_tne_present)
     {
-        if (lst->at(0).type != SCM_SYMBOL)
-            throw USER_EXCEPTION2(SE1004, "120");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "element_wildcard") st.type.ed.ede = st_ede_wildcard;
-        else if (str == "element_wildcard_wildcard") st.type.ed.ede = st_ede_wildcard_wildcard;
-        else throw USER_EXCEPTION2(SE1004, "121");
+        st.type.info.ea.type_name = lr_atomic_type2xmlscm_type(lst->at(3).internal.symb);
     }
-    else if (lst->size() == 2)
-    {
-        if (   lst->at(0).type != SCM_SYMBOL
-            || lst->at(1).type != SCM_LIST
-            || lst->at(1).internal.list->size() != 2
-            || lst->at(1).internal.list->at(0).type != SCM_STRING
-            || lst->at(1).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "122");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "element_name") st.type.ed.ede = st_ede_name;
-        else if (str == "element_wildcard_name") st.type.ed.ede = st_ede_wildcard_name;
-        else if (str == "element_name_wildcard") st.type.ed.ede = st_ede_name_wildcard; 
-        else throw USER_EXCEPTION2(SE1004, "123");
-
-        st.type.ed.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ed.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-    }
-    else if (lst->size() == 3)
-    {
-        if (   lst->at(0).type != SCM_SYMBOL
-            || lst->at(1).type != SCM_LIST
-            || lst->at(1).internal.list->size() != 2
-            || lst->at(1).internal.list->at(0).type != SCM_STRING
-            || lst->at(1).internal.list->at(1).type != SCM_STRING
-            || lst->at(2).type != SCM_LIST
-            || lst->at(2).internal.list->size() != 2
-            || lst->at(2).internal.list->at(0).type != SCM_STRING
-            || lst->at(2).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "124");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "element_name_name") st.type.ed.ede = st_ede_name_name;
-        else throw USER_EXCEPTION2(SE1004, "125");
-
-        st.type.ed.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ed.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-
-        st.type.ed.ncname2_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ed.ncname2_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-    }
-    else throw USER_EXCEPTION2(SE1004, "126");
-}
-
-void make_attribute_data(scheme_list *lst, sequence_type &st)
-{
-    if (lst->size() == 0)
-    {
-        st.type.ad.ade = st_ade_nothing;
-    }
-    else if (lst->size() == 1)
-    {
-        if (lst->at(0).type != SCM_SYMBOL)
-            throw USER_EXCEPTION2(SE1004, "127");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "attribute_wildcard") st.type.ad.ade = st_ade_wildcard;
-        else if (str == "attribute_wildcard_wildcard") st.type.ad.ade = st_ade_wildcard_wildcard;
-        else throw USER_EXCEPTION2(SE1004, "128");
-    }
-    else if (lst->size() == 2)
-    {
-        if (   lst->at(0).type != SCM_SYMBOL
-            || lst->at(1).type != SCM_LIST
-            || lst->at(1).internal.list->size() != 2
-            || lst->at(1).internal.list->at(0).type != SCM_STRING
-            || lst->at(1).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "129");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "attribute_name") st.type.ad.ade = st_ade_name;
-        else if (str == "attribute_wildcard_name") st.type.ad.ade = st_ade_wildcard_name;
-        else if (str == "attribute_name_wildcard") st.type.ad.ade = st_ade_name_wildcard;
-        else throw USER_EXCEPTION2(SE1004, "130");
-
-        st.type.ad.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ad.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-    }
-    else if (lst->size() == 3)
-    {
-        if (   lst->at(0).type != SCM_SYMBOL
-            || lst->at(1).type != SCM_LIST
-            || lst->at(1).internal.list->size() != 2
-            || lst->at(1).internal.list->at(0).type != SCM_STRING
-            || lst->at(1).internal.list->at(1).type != SCM_STRING
-            || lst->at(2).type != SCM_LIST
-            || lst->at(2).internal.list->size() != 2
-            || lst->at(2).internal.list->at(0).type != SCM_STRING
-            || lst->at(2).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "131");
-
-        string str = string(lst->at(0).internal.symb);
-
-        if (str == "attribute_name_name") st.type.ad.ade = st_ade_name_name;
-        else throw USER_EXCEPTION2(SE1004, "132");
-
-        st.type.ad.ncname1_prefix = xs_NCName_create(lst->at(1).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ad.ncname1_local  = xs_NCName_create(lst->at(1).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-
-        st.type.ad.ncname2_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(false));
-        st.type.ad.ncname2_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(false));
-    }
-    else throw USER_EXCEPTION2(SE1004, "133");
 }
 
 sequence_type make_sequence_type(scheme_list *lst)
@@ -360,7 +284,7 @@ sequence_type make_sequence_type(scheme_list *lst)
 
     if (lst->at(1).type == SCM_SYMBOL)
     {
-        st.type.single_type = lr_atomic_type2xmlscm_type(lst->at(1).internal.symb);
+        st.type.info.single_type = lr_atomic_type2xmlscm_type(lst->at(1).internal.symb);
         st.type.type = st_atomic_type;
     }
     else if (lst->at(1).type == SCM_LIST)
@@ -375,12 +299,19 @@ sequence_type make_sequence_type(scheme_list *lst)
 
         if (it_type == "document")
         {
-            if (   it_lst->size() != 2
-                || it_lst->at(1).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "138");
+            if (it_lst->size() == 1)
+            {
+                st.type.type = st_document;
+            }
+            else if (it_lst->size() == 2)
+            {
+                if (it_lst->at(1).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "138");
 
-            scheme_list *data_lst = it_lst->at(1).internal.list;
-            make_element_data(data_lst, st);
-            st.type.type = st_document;
+                scheme_list *data_lst = it_lst->at(1).internal.list;
+                make_elem_attr_data(data_lst, st);
+                st.type.type = st_document_element;
+            }
+            else throw USER_EXCEPTION2(SE1004, "138.5");
         }
         else if (it_type == "element")
         {
@@ -388,7 +319,7 @@ sequence_type make_sequence_type(scheme_list *lst)
                 || it_lst->at(1).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "139");
 
             scheme_list *data_lst = it_lst->at(1).internal.list;
-            make_element_data(data_lst, st);
+            make_elem_attr_data(data_lst, st);
             st.type.type = st_element;
         }
         else if (it_type == "attribute")
@@ -397,13 +328,20 @@ sequence_type make_sequence_type(scheme_list *lst)
                 || it_lst->at(1).type != SCM_LIST) throw USER_EXCEPTION2(SE1004, "140");
 
             scheme_list *data_lst = it_lst->at(1).internal.list;
-            make_attribute_data(data_lst, st);
+            make_elem_attr_data(data_lst, st);
             st.type.type = st_attribute;
         }
-        else if (it_type == "processing_instruction")
+        else if (it_type == "pi")
         {
-            if (it_lst->size() != 1) throw USER_EXCEPTION2(SE1004, "141");
+            if (   it_lst->size() < 1
+                || it_lst->size() > 2) throw USER_EXCEPTION2(SE1004, "141");
             st.type.type = st_pi;
+            if (it_lst->size() == 2)
+            {
+                if (it_lst->at(2).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "141.5");
+                st.type.info.ncname = xs_NCName_create(it_lst->at(2).internal.str, PathExpr_malloc_func(false));
+            }
+            else st.type.info.ncname = NULL;
         }
         else if (it_type == "comment")
         {
@@ -496,30 +434,51 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 {
     xmlscm_type xtype;
 
-    if (strcmp(type, "!xs!anyAtomicType") == 0)           xtype = xs_anyAtomicType;
-    else if (strcmp(type, "!xs!untypedAtomic") == 0)      xtype = xs_untypedAtomic;
+    // Abstract base types
+    if (strcmp(type, "!xs!anyType") == 0)                 xtype = xs_anyType;
+    else if (strcmp(type, "!xs!anySimpleType") == 0)      xtype = xs_anySimpleType;
+    else if (strcmp(type, "!xs!anyAtomicType") == 0)      xtype = xs_anyAtomicType;
+
+    // Built-in complex types
+    else if (strcmp(type, "!xs!untyped") == 0)            xtype = xs_untyped;
+
+    // Built-in atomic types (Primitive types)
+    else if (strcmp(type, "!xs!dateTime") == 0)           xtype = xs_dateTime;
+    else if (strcmp(type, "!xs!date") == 0)               xtype = xs_date;
+    else if (strcmp(type, "!xs!time") == 0)               xtype = xs_time;
+    else if (strcmp(type, "!xs!duration") == 0)           xtype = xs_duration;
+    else if (strcmp(type, "!xs!yearMonthDuration") == 0)  xtype = xs_yearMonthDuration;
+    else if (strcmp(type, "!xs!dayTimeDuration") == 0)    xtype = xs_dayTimeDuration;
     else if (strcmp(type, "!xs!gYearMonth") == 0)         xtype = xs_gYearMonth;
     else if (strcmp(type, "!xs!gYear") == 0)              xtype = xs_gYear;
     else if (strcmp(type, "!xs!gMonthDay") == 0)          xtype = xs_gMonthDay;
     else if (strcmp(type, "!xs!gDay") == 0)               xtype = xs_gDay;
     else if (strcmp(type, "!xs!gMonth") == 0)             xtype = xs_gMonth;
-    else if (strcmp(type, "!xs!dateTime") == 0)           xtype = xs_dateTime;
-    else if (strcmp(type, "!xs!time") == 0)               xtype = xs_time;
-    else if (strcmp(type, "!xs!date") == 0)               xtype = xs_date;
-    else if (strcmp(type, "!xs!duration") == 0)           xtype = xs_duration;
-    else if (strcmp(type, "!xs!yearMonthDuration") == 0)  xtype = xs_yearMonthDuration;
-    else if (strcmp(type, "!xs!dayTimeDuration") == 0)    xtype = xs_dayTimeDuration;
-    else if (strcmp(type, "!xs!boolean") == 0)            xtype = xs_boolean;
-    else if (strcmp(type, "!xs!base64Binary") == 0)       xtype = xs_base64Binary;
-    else if (strcmp(type, "!xs!hexBinary") == 0)          xtype = xs_hexBinary;
     else if (strcmp(type, "!xs!float") == 0)              xtype = xs_float;
     else if (strcmp(type, "!xs!double") == 0)             xtype = xs_double;
+    else if (strcmp(type, "!xs!decimal") == 0)            xtype = xs_decimal;
+    else if (strcmp(type, "!xs!integer") == 0)            xtype = xs_integer;
+    else if (strcmp(type, "!xs!boolean") == 0)            xtype = xs_boolean;
+    else if (strcmp(type, "!xs!untypedAtomic") == 0)      xtype = xs_untypedAtomic;
+    else if (strcmp(type, "!xs!string") == 0)             xtype = xs_string;
+    else if (strcmp(type, "!xs!base64Binary") == 0)       xtype = xs_base64Binary;
+    else if (strcmp(type, "!xs!hexBinary") == 0)          xtype = xs_hexBinary;
     else if (strcmp(type, "!xs!anyURI") == 0)             xtype = xs_anyURI;
     else if (strcmp(type, "!xs!QName") == 0)              xtype = xs_QName;
     else if (strcmp(type, "!xs!NOTATION") == 0)           xtype = xs_NOTATION;
-    else if (strcmp(type, "!xs!string") == 0)             xtype = xs_string;
-    else if (strcmp(type, "!xs!decimal") == 0)            xtype = xs_decimal;
-    else if (strcmp(type, "!xs!integer") == 0)            xtype = xs_integer;
+
+    // Types derived from xs:string
+    else if (strcmp(type, "!xs!normalizedString") == 0)   xtype = xs_normalizedString;
+    else if (strcmp(type, "!xs!token") == 0)              xtype = xs_token;
+    else if (strcmp(type, "!xs!language") == 0)           xtype = xs_language;
+    else if (strcmp(type, "!xs!NMTOKEN") == 0)            xtype = xs_NMTOKEN;
+    else if (strcmp(type, "!xs!Name") == 0)               xtype = xs_Name;
+    else if (strcmp(type, "!xs!NCName") == 0)             xtype = xs_NCName;
+    else if (strcmp(type, "!xs!ID") == 0)                 xtype = xs_ID;
+    else if (strcmp(type, "!xs!IDREF") == 0)              xtype = xs_IDREF;
+    else if (strcmp(type, "!xs!ENTITY") == 0)             xtype = xs_ENTITY;
+
+    // Types derived from xs:integer
     else if (strcmp(type, "!xs!nonPositiveInteger") == 0) xtype = xs_nonPositiveInteger;
     else if (strcmp(type, "!xs!negativeInteger") == 0)    xtype = xs_negativeInteger;
     else if (strcmp(type, "!xs!long") == 0)               xtype = xs_long;
@@ -532,19 +491,11 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     else if (strcmp(type, "!xs!unsignedShort") == 0)      xtype = xs_unsignedShort;
     else if (strcmp(type, "!xs!unsignedByte") == 0)       xtype = xs_unsignedByte;
     else if (strcmp(type, "!xs!positiveInteger") == 0)    xtype = xs_positiveInteger;
-    else if (strcmp(type, "!xs!normalizedString") == 0)   xtype = xs_normalizedString;
-    else if (strcmp(type, "!xs!token") == 0)              xtype = xs_token;
-    else if (strcmp(type, "!xs!language") == 0)           xtype = xs_language;
-    else if (strcmp(type, "!xs!NMTOKEN") == 0)            xtype = xs_NMTOKEN;
-    else if (strcmp(type, "!xs!Name") == 0)               xtype = xs_Name;
-    else if (strcmp(type, "!xs!NCName") == 0)             xtype = xs_NCName;
-    else if (strcmp(type, "!xs!ID") == 0)                 xtype = xs_ID;
-    else if (strcmp(type, "!xs!IDREF") == 0)              xtype = xs_IDREF;
-    else if (strcmp(type, "!xs!ENTITY") == 0)             xtype = xs_ENTITY;
-    else if (strcmp(type, "!se!separator") == 0)          xtype = se_separator;
-    else throw USER_EXCEPTION2(SE1004, "155");
 
-    // !xs!anySimpleType --> xs_anySimpleType
+    // Special Sedna types
+    else if (strcmp(type, "!se!separator") == 0)          xtype = se_separator;
+    else if (strcmp(type, "!se!sequence") == 0)           xtype = se_sequence;
+    else throw USER_EXCEPTION2(SE1004, "155");
 
     return xtype;
 }

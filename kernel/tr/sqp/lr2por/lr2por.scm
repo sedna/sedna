@@ -1603,8 +1603,8 @@
           (else
            (cl:signal-error
             SE4008
-            (string-input-append "unknown occurence indicator: "
-                                 (symbol->string lr-occ-ind)))))))
+            (string-append "unknown occurence indicator: "
+                           (symbol->string lr-occ-ind)))))))
 
 
 
@@ -1679,16 +1679,18 @@
               (if
                (memq name-pair '(unspecified *))
                (values 'wildcard '())
-               (let ((parts
-                      (map
-                       (lambda (part)
-                         (if (eq? part '*)
-                             (cons "wildcard" "")
-                             (cons "name" part)))
-                       name-pair)))
-                 (values (string->symbol
-                          (string-append (caar parts) "-" (caadr parts)))
-                         (map cdr parts)))))
+               (values 'name name-pair)
+;               (let ((parts
+;                      (map
+;                       (lambda (part)
+;                         (if (eq? part '*)
+;                             (cons "wildcard" "")
+;                             (cons "name" part)))
+;                       name-pair)))
+;                 (values (string->symbol
+;                          (string-append (caar parts) "-" (caadr parts)))
+;                         (map cdr parts)))
+               ))
             (lambda (node-name-enum str-str)
               (call-with-values
                (lambda ()

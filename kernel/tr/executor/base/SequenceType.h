@@ -25,50 +25,33 @@ enum st_occurence_indicator
     st_one_or_more
 };
 
-enum st_elem_data_enum 
+enum st_node_name_enum
 {
-    st_ede_nothing,
-    st_ede_wildcard,
-    st_ede_name,
-    st_ede_wildcard_wildcard,
-    st_ede_wildcard_name,
-    st_ede_name_wildcard,
-    st_ede_name_name,
+    st_nne_wildcard,
+    st_nne_name
 };
 
-enum st_attr_data_enum 
+enum st_type_name_enum
 {
-    st_ade_nothing,
-    st_ade_wildcard,
-    st_ade_name,
-    st_ade_wildcard_wildcard,
-    st_ade_wildcard_name,
-    st_ade_name_wildcard,
-    st_ade_name_name,
+    st_tne_nothing,
+    st_tne_optional,
+    st_tne_present,
 };
 
-struct st_elem_data
+struct st_elem_attr_data
 {
-    st_elem_data_enum ede;
-    char *ncname1_prefix;
-    char *ncname1_local;
-    char *ncname2_prefix;
-    char *ncname2_local;
-};
-
-struct st_attr_data
-{
-    st_attr_data_enum ade;
-    char *ncname1_prefix;
-    char *ncname1_local;
-    char *ncname2_prefix;
-    char *ncname2_local;
+    st_node_name_enum nne;
+    st_type_name_enum tne;
+    char *node_name_prefix;
+    char *node_name_local;
+    xmlscm_type type_name;
 };
 
 enum st_item_type_enum
 {
     st_atomic_type,
     st_document,
+    st_document_element,
     st_element,
     st_attribute,
     st_pi,
@@ -82,9 +65,11 @@ enum st_item_type_enum
 struct st_item_type
 {
     st_item_type_enum type;
-    xmlscm_type single_type;
-    st_elem_data ed;
-    st_attr_data ad;
+    union {
+        xmlscm_type single_type; // AtomicType for atomic values
+        char *ncname;            // for processing-instruction
+        st_elem_attr_data ea;    // information for ElementTest and AttributeTest
+    } info;
 };
 
 /// sequence type
@@ -104,11 +89,13 @@ inline bool is_same_or_derived(xmlscm_type t1, xmlscm_type t2)
     return (t1 == t2) ? true : is_derived(t1, t2);
 }
 
-bool type_matches_single(const tuple_cell& tc, const st_item_type& it);
+bool        type_matches_single(const tuple_cell& tc, const st_item_type& it);
+bool        type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st);
+inline bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st)
+{
+    return type_matches(child, NULL, t, eos_reached, st);
+}
 
-bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached, const sequence_type& st);
-
-bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequence_type& st);
 
 void type_promotion(tuple_cell /*out*/&tc, xmlscm_type type);
 

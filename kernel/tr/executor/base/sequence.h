@@ -100,25 +100,26 @@ public:
     iterator end() { return iterator(seq_size, this); }
 
     // returns 0 - if success, 1 - if block limit is exhausted
-    int  add(const tuple &t);
-    void get(tuple &t, const iterator& it);
-    void get(tuple &t, int pos);
+    virtual int  add(const tuple &t);
+    virtual void get(tuple &t, const iterator& it);
+    virtual void get(tuple &t, int pos);
+
     int  get_tuple_size() const { return tuple_size; }
 
-    tuple operator[](int i)
+    virtual tuple operator[](int i)
     { 
         tuple res(tuple_size); 
         get(res, i);
         return res;
     }
 
-    void clear();
+    virtual void clear();
     sequence(const sequence&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for sequence is not implemented"); }
     sequence& operator=(const sequence&) { throw USER_EXCEPTION2(SE1003, "Assign operator for sequence is not implemented"); }
-    void copy(sequence* s);
-    void copy(sequence* s, iterator _begin, iterator _end);
+    virtual void copy(sequence* s);
+    virtual void copy(sequence* s, iterator _begin, iterator _end);
 
-    const tuple_cell& get_00() const
+    virtual tuple_cell get_00() const
     {
         if (seq_size == 0) throw USER_EXCEPTION2(SE1003, "Empty sequence passed to sequence::get_00");
         return ((tuple_cell*)(mem_tuples[0]))[0];
@@ -167,11 +168,11 @@ public:
 
     ~sequence_tmp() {}
 
-    int  add(const tuple &t);
-    void get(tuple &t, const iterator& it);
-    void get(tuple &t, int pos);
+    virtual int  add(const tuple &t);
+    virtual void get(tuple &t, const iterator& it);
+    virtual void get(tuple &t, int pos);
 
-    tuple operator[](int i)
+    virtual tuple operator[](int i)
     { 
         tuple res(tuple_size); 
         get(res, i);
@@ -180,10 +181,10 @@ public:
 
     sequence_tmp(const sequence_tmp&) : sequence(1) { throw USER_EXCEPTION2(SE1003, "Copy constructor for sequence_tmp is not implemented"); }
     sequence_tmp& operator=(const sequence_tmp&) { throw USER_EXCEPTION2(SE1003, "Assign operator for sequence_tmp is not implemented"); }
-    void copy(sequence_tmp* s);
-    void copy(sequence_tmp* s, iterator _begin, iterator _end);
+    virtual void copy(sequence_tmp* s);
+    virtual void copy(sequence_tmp* s, iterator _begin, iterator _end);
 
-    tuple_cell get_00() const;
+    virtual tuple_cell get_00() const;
 };
 
 //////////////////////////////////////////////////////////////////////////////

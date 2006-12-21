@@ -62,5 +62,6 @@ their implementation... (AF)
 tuple_cell se_node_local_name   (xptr node);
 tuple_cell se_node_namespace_uri(xptr node);
 
+
 #endif
 
