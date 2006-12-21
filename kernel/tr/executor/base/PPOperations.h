@@ -74,6 +74,7 @@
 #include "PPFunCall.h"
 #include "PPSpaceSequence.h"
 #include "PPError.h"
+#include "PPDebug.h"
 #include "PPTest.h"
 #include "PPDocInCol.h"
 #include "PPTuple.h"
