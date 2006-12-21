@@ -38,6 +38,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        decimal128$(OBJ_EXT)				\
                        decNumber$(OBJ_EXT)				\
                        lip$(OBJ_EXT)					\
+                       PPDebug$(OBJ_EXT)                \
                        PPUriFuncs$(OBJ_EXT)             \
                        PPSLStub$(OBJ_EXT)				\
                        PPSResLStub$(OBJ_EXT)			\

@@ -2928,7 +2928,36 @@ fn_dt_funcs_correct_type:
 		opit = new PPFnInScopePrefixes(cxt,
                                        make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPDebug")
+    {
+        if (   lst->size() < 2
+            || lst->size() > 3
+            || lst->at(1).type != SCM_STRING
+           ) throw USER_EXCEPTION2(SE1004, "114");
 
+        char* op_name = new char[strlen(lst->at(1).internal.str) + 1];
+        strcpy(op_name, lst->at(1).internal.str);
+        str_counted_ptr child_name(op_name);
+        
+        if (lst->size() == 3)
+        {
+            if(lst->at(2).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "115");
+            
+            char* op_info = new char[strlen(lst->at(2).internal.str) + 1];
+            strcpy(op_info, lst->at(2).internal.str);
+            str_counted_ptr child_info(op_info);
+  		    
+  		    opit = new PPDebug(cxt,
+                               make_pp_op(cxt, lst->at(1).internal.list),
+                               child_name,
+                               child_info);
+
+        }
+        else
+		    opit = new PPDebug(cxt,
+                               make_pp_op(cxt, lst->at(1).internal.list),
+                               child_name);
+    }
 
 
 #ifdef SQL_CONNECTION
