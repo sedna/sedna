@@ -1326,6 +1326,9 @@
               `(PPDeleteUndeep ,context ,operand )
              ))
              
+             ;---------------------
+             ; Manage operations
+             
              ((eq? op-name 'load)
               (let* ((client-file (l2p:any-lr-node2por (car node)))
                      (file-context (if (eq? var-count 0) 0 (+ var-count 1)))
@@ -1359,7 +1362,23 @@
                                                  ,col))
                   `(PPCreateDocument ,doc-context
                                      ,doc))))
-
+             
+             ; Module management
+             ((assq op-name '((load-module . #f)
+                              (load-or-replace-module . #t)))
+              => (lambda (pair)
+                   (let*  ; order of evaluation is significant due to set!
+                       ((filename (l2p:any-lr-node2por (car node)))
+                        (module-name-in-db
+                         (begin
+                           (set! var-count 0)
+                           (l2p:any-lr-node2por (cadr node)))))
+                     (list 'PPLoadModule
+                           filename
+                           module-name-in-db
+                           (cdr pair)))))
+             ((eq? op-name 'drop-module)
+              `(PPDropModule ,(l2p:any-lr-node2por (car node))))
              
              ((eq? op-name 'create-collection)
               (let* ((col (l2p:any-lr-node2por (car node))))
