@@ -227,6 +227,8 @@
            (else
             (cl:signal-input-error SE5004 query)))))))))
 
+(define sa:analyze-module sa:analyze-query)
+
 ; Analyzes an expression
 ;  vars ::= (listof (cons var-name var-type))
 ;  var-name ::= 
@@ -3752,6 +3754,13 @@
         (sa:analyze-trigger-create expr vars funcs ns-binding default-ns))
        ((drop-trigger)
         (sa:analyze-trigger-drop expr vars funcs ns-binding default-ns))
+       ;-------------------
+       ; Module operations
+       ((load-module load-or-replace-module)
+        (sa:module-load expr))
+       ((drop-module)
+        (sa:module-drop expr))
+       ;-------------------
        (else
         (cl:signal-input-error SE5046 expr)))
      => (lambda (new-expr) new-expr))
@@ -4486,6 +4495,29 @@
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
+
+;-------------------------------------------------
+; XQuery module management
+
+; args-inverter - a function that may invert argument list
+(define (sa:module-helper num-args args-inverter)
+  (lambda (expr)
+    (and
+     (sa:assert-num-args expr num-args)
+     (let ((args
+            (map
+             (lambda (arg)
+               (sa:analyze-string-const arg '() '() '() ""))
+             (sa:op-args expr))))
+       (and
+        (not (memv #f args))
+        (cons
+         (sa:op-name expr)
+         (args-inverter (map car args))))))))
+        
+(define sa:module-drop (sa:module-helper 1 (lambda (x) x)))
+(define sa:module-load (sa:module-helper 2 reverse))
+
 
 ;==========================================================================
 ; Order by

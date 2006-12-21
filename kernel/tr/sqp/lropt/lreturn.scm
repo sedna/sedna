@@ -2044,7 +2044,7 @@
 
 ; Alias for backward compatibility
 (define mlr:rewrite-query lropt:rewrite-query)
-
+(define mlr:rewrite-module mlr:rewrite-query)
 
 ;=========================================================================
 ; Older implementation, without DDO handling
