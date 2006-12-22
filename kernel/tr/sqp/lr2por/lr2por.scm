@@ -19,7 +19,6 @@
                     (l2p:rename-vars var-binding query-expr)))
               (if (eq? (car query-in-lr) 'query)
                   (caddr query-in-lr) query-in-lr)))))
-       ;(pp PPquery-prolog)
        (set! var-count 0)  ; DL: ad-hoc cleanup
        (set! funcs-map '())  ; DL: ad-hoc cleanup
        `(query ,PPquery-prolog ,PPquery-expr)))))
@@ -95,7 +94,6 @@
              (res '())
              (var-binding '())
              (next-var-num 0))
-    ;(pp src)
     (cond
       ((null? src)
        (values (reverse res) var-binding))
@@ -320,6 +318,7 @@
 ;             )
              ; *** return ***
              ((eq? op-name 'return)
+              (let ((node (l2p:return-order-by node)))
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
                      ;(right-operand
                      ; (substitute-var-value-in-fun-body context var-name value expr))
@@ -372,7 +371,7 @@
                     ,right-PhysOp
                     ,(cadar reverse-new-arg-lst)  ; var-dsc for positional var argument
                     ,@(make-por-arg-types (reverse (cdr reverse-new-arg-lst))))))
-                ))
+                )))
                                                   
              ; *** predicate ***
              ((eq? op-name 'predicate)
@@ -384,10 +383,11 @@
              
              ((eq? op-name 'tmp-tuple)
               `(,(length node)
-                (PPTuple ,@(map l2p:any-lr-node2por node))))
+                (PPSTuple ,@(map l2p:any-lr-node2por node))))
              
              ; *** lreturn ***
              ((eq? op-name 'lreturn)
+              (let ((node (l2p:return-order-by node)))
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
                      ;(right-operand (substitute-var-value-in-fun-body context var-name value expr))
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
@@ -416,7 +416,6 @@
                            '()
                            por-arg-types))))
                     )
-                ;(pp new-fun-def)
                 (list
                  tsr
                  (if
@@ -437,9 +436,9 @@
                     ,right-PhysOp
                     ,(cadar reverse-new-arg-lst)
                     ,@(make-por-arg-types
-                       (reverse (cdr reverse-new-arg-lst))))))))
+                       (reverse (cdr reverse-new-arg-lst)))))))))
              
-             ((eq? op-name 'let@)
+             ((memq op-name '(let@ slet@))
               (let* ((new-fun-def (l2p:rename-vars2unique-numbers (cadr node)))
                      ;(right-operand (substitute-var-value-in-fun-body context var-name value expr))
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
@@ -462,9 +461,8 @@
                                  ,lr-fun-arg-type)
                                lr-fun-arg-type))))))
                        
-                  ;(pp new-fun-def)
                   `(,(l2p:tuple-size right-PhysOp)
-                    (PPLet 
+                    (,(if (eq? op-name 'slet@) 'PPSLet 'PPLet)
                      ,(map  cadr (cadr new-fun-def))
                      ,left-PhysOp
                      ,right-PhysOp
@@ -1419,8 +1417,6 @@
                               l2p:any-lr-node2por
                               (list-ref node 5)))
                      (name (l2p:any-lr-node2por (car node))))
-                ;(pp (cadddr node))
-                ;(pp AbsPath)
                 `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
                                   ,time
                                   ,event
@@ -1508,10 +1504,14 @@
              
 
                           
-             (else (cl:signal-input-error SE4008 (string-append "unknown logical operation given: "
-                                                    (symbol->string op-name)))))))
-        (else (cl:signal-input-error SE4008 "unknown logical operation given: "
-                                     (symbol->string node)))))
+             (else
+              (cl:signal-input-error
+               SE4008
+               (string-append "unknown logical operation given: "
+                              (symbol->string op-name)))))))
+        (else
+         (cl:signal-input-error
+          SE4008 "unknown logical operation given: " (symbol->string node)))))
 
 ;--------------------------------------------------------------------------------
 (define (l2p:tuple-size PhysOp)
@@ -1586,9 +1586,10 @@
                ,@(if
                   (null? (cdr item-type))  ; no target specified
                   '()
-                  (caddr  ; constant value
-                   (cadr item-type)  ; selects '(const ...)
-                   )))))
+                  (list
+                   (caddr  ; constant value
+                    (cadr item-type)  ; selects '(const ...)
+                    ))))))
            ((eq? (car item-type) 'elem-test)
             (list por-occ-ind
                   `(element ,(l2p:lr-elem-test2por-elem-test item-type))))
@@ -2034,7 +2035,6 @@
                             (l2p:gen-var)
                             667  ; we don't care
                             )))
-           ;(pp source-child)
            ((lambda (x)
              ;(pp x)
              x)
@@ -2101,21 +2101,155 @@
 ;=========================================================================
 ; Order-by
 
+(define (l2p:list-partition lst pred?)
+  (let loop ((src lst)
+             (satisfies '())
+             (fails '()))
+    (cond
+      ((null? src)
+       (values (reverse satisfies)
+               (reverse fails)))
+      ((pred? (car lst))
+       (loop (cdr src)
+             (cons (car lst) satisfies)
+             fails))
+      (else
+       (loop (cdr src)
+             satisfies
+             (cons (car lst) fails))))))
+
+(define (l2p:union-remove-equal lst1 lst2)
+  (cond
+    ((null? lst1) lst2)
+    ((member (car lst1) lst2)
+     (l2p:union-remove-equal (cdr lst1) lst2))
+    (else 
+     (cons (car lst1)
+           (l2p:union-remove-equal (cdr lst1) lst2)))))
+
 ; Replaces each 'unio with 'tmp-tuple and extends its arguments with ExprSingle-list
 ; from OrderSpecList
+; expr-single-lst - over these expressions the ordering criteria are specified
+; Returns: (values rewritten-expr for-variables let-variables)
 (define (l2p:replace-unio2tmp-tuple expr expr-single-lst)
-  (cond
-    ((not (pair? expr))  ; leaf node
-     expr)
-    ((eq? (car expr) 'unio)
-     ;(write expr)
-     ;(newline)
-     (cons 'tmp-tuple
-           (append (cdr expr) expr-single-lst)))    
-    (else
-     (map
-      (lambda (kid) (l2p:replace-unio2tmp-tuple kid expr-single-lst))
-      expr))))
+  (letrec ((tree-walk
+            (lambda (expr for-variables let-variables)
+              (cond
+                ((not (pair? expr))  ; leaf node
+                 (values expr for-variables let-variables))
+                ((eq? (car expr) 'unio)
+                 (call-with-values
+                  (lambda ()
+                    (l2p:list-partition
+                     (cdr expr)
+                     (lambda (x) (member x let-variables))))
+                  (lambda (let-vars for-vars)
+                    (values
+                     (cons 'tmp-tuple   
+                           (append for-vars
+                                   let-vars
+                                   expr-single-lst))
+                     for-vars
+                     let-vars))))
+                ((memq (car expr) '(let@ return lreturn))
+                 (call-with-values
+                  (lambda ()
+                    (let* ((fun-def (caddr expr))
+                           (args (cadr fun-def))
+                           ; the only argument
+                           (var-wrapped (cadar args))
+                           (var-name (cadr var-wrapped)))
+                      (if
+                       (eq? (car expr) 'let@)
+                       (values for-variables (cons var-name let-variables))
+                       (values (cons var-name for-variables) let-variables))))
+                  (lambda (new-for-variables new-let-variables)
+                    (call-with-values
+                     (lambda ()
+                       (tree-walk (cadr expr) for-variables let-variables))
+                     (lambda (sub1 for1 let1)
+                       (call-with-values
+                        (lambda ()
+                          (tree-walk (caddr expr)
+                                     new-for-variables
+                                     new-let-variables))
+                        (lambda (sub2 for2 let2)
+                          (values
+                           (list (car expr) sub1 sub2)
+                           (l2p:union-remove-equal for1 for2)
+                           (l2p:union-remove-equal let1 let2)))))))))
+                (else
+                 (let loop ((kids (cdr expr))
+                            (res '())
+                            (for-vars '())
+                            (let-vars '()))
+                   (if
+                    (null? kids)
+                    (values (cons (car expr) (reverse res))
+                            for-vars let-vars)
+                    (call-with-values
+                     (lambda ()
+                       (tree-walk (car kids) for-variables let-variables))
+                     (lambda (new-kid for3 let3)
+                       (loop (cdr kids)
+                             (cons new-kid res)
+                             (l2p:union-remove-equal for-vars for3)
+                             (l2p:union-remove-equal let-vars let3)))))))))))
+    (tree-walk expr '() '())))
+; The older implementation that fails to avoid the
+; SEDNA Message: ERROR SE1003
+; Sedna XQuery processor error.
+; Details: The tuple cell value is a sequence in PPTuple
+; See e.g. xmp-queries-results-q4
+;(define (l2p:replace-unio2tmp-tuple expr expr-single-lst)
+;  (cond
+;    ((not (pair? expr))  ; leaf node
+;     expr)
+;    ((eq? (car expr) 'unio)
+;     ;(write expr)
+;     ;(newline)
+;     (cons 'tmp-tuple
+;           (append (cdr expr) expr-single-lst)))    
+;    (else
+;     (map
+;      (lambda (kid) (l2p:replace-unio2tmp-tuple kid expr-single-lst))
+;      expr))))
+
+; If return-expr contains order-by as its first subexpr, rewrites arg-lst
+; accordingly. 
+; Otherwise, returns arg-lst unchanged
+(define (l2p:return-order-by arg-lst)
+  (letrec ((form-slets
+            (lambda (var-lst last-body)
+              (if
+               (null? var-lst)
+               last-body
+               `(slet@
+                 (var ,(car var-lst))
+                 (fun-def
+                  ((xs:anyType (var ,(car var-lst))))
+                  ,(form-slets (cdr var-lst) last-body)))))))
+    (if
+     (not (and (pair? arg-lst)
+               (pair? (car arg-lst))
+               (eq? (caar arg-lst) 'order-by)))
+     arg-lst
+     (let* ((order-expr (car arg-lst))
+            (subexpr (cadr order-expr))
+            (fun-def (caddr order-expr))
+            (orderspecs (caddr fun-def))
+            (stable-const (cadr orderspecs))
+            (spec-lst (cddr orderspecs)))
+       (call-with-values
+        (lambda ()
+          (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
+        (lambda (subexpr-with-tmp-tuple for-variables let-variables)
+          (let ((second-fun (cadr arg-lst)))
+            (list
+             subexpr-with-tmp-tuple
+             (list (car second-fun)
+                   (cadr second-fun)
+                   (form-slets let-variables (caddr second-fun)))))))))))
 
 (define (l2p:order-by2por arg-lst)
   (let* ((subexpr (car arg-lst))
@@ -2123,33 +2257,32 @@
          (orderspecs (caddr fun-def))
          (stable-const (cadr orderspecs))
          (spec-lst (cddr orderspecs)))
-    `(,(length (cadr fun-def))  ; Tuple size
-      (PPOrderBy
-       ,(if (string=? (caddr stable-const)  ; constant value
-                      "stable")
-            #t #f)
-       ,(l2p:any-lr-node2por
-         (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
-       ,(map
-          (lambda (modif)
-            (if
-             (null? (cdr modif))  ; no arguments at all
-             '(default default)
-             (list
-              (cond
-                ((null? (cddr modif))  ; no empty status
-                 'default)
-                ((assoc (caddr (caddr modif))  ; value of the 1st const
-                        '(("empty-greatest" . greatest)
-                          ("empty-least" . least)))
-                 => cdr)
-                (else
-                 'default))
-              (cdr (assoc (caddr (cadr modif))  ; value of the 1st const
-                          '(("asc" . ascending)
-                            ("desc" . descending)))))))
-          (map cadr spec-lst)  ; list of ordermodifier
-          )))))
+       `(,(length (cadr fun-def))  ; Tuple size
+         (PPOrderBy
+          ,(if (string=? (caddr stable-const)  ; constant value
+                         "stable")
+               #t #f)
+          ,(l2p:any-lr-node2por subexpr)
+          ,(map
+            (lambda (modif)
+              (if
+               (null? (cdr modif))  ; no arguments at all
+               '(default default)
+               (list
+                (cond
+                  ((null? (cddr modif))  ; no empty status
+                   'default)
+                  ((assoc (caddr (caddr modif))  ; value of the 1st const
+                          '(("empty-greatest" . greatest)
+                            ("empty-least" . least)))
+                   => cdr)
+                  (else
+                   'default))
+                (cdr (assoc (caddr (cadr modif))  ; value of the 1st const
+                            '(("asc" . ascending)
+                              ("desc" . descending)))))))
+            (map cadr spec-lst)  ; list of ordermodifier
+            )))))
 
 ;=========================================================================
 ; Typeswitch

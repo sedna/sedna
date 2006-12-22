@@ -62,6 +62,42 @@
 
 (define go l2p:lr2por)
 
+(go
+   '(query
+ (prolog)
+ (query-body
+   (return
+     (order-by
+       (let@
+        (sequence
+          (const (type !xs!integer) "1")
+          (const (type !xs!integer) "2")
+          (const (type !xs!integer) "3"))
+        (fun-def
+          ((xs:anyType (var ("" "a"))))
+          (return
+            (sequence
+              (const (type !xs!integer) "4")
+              (const (type !xs!integer) "6")
+              (const (type !xs!integer) "5"))
+            (fun-def
+              ((xs:anyType (var ("" "last"))))
+              (unio (var ("" "a")) (var ("" "last")))))))
+       (fun-def
+         ((xs:anyType (var ("" "a"))) (xs:anyType (var ("" "last"))))
+         (orderspecs
+           (const (type !xs!string) "non-stable")
+           (orderspec (ordermodifier) (var ("" "last"))))))
+     (fun-def
+       ((xs:anyType (var ("" "a"))) (xs:anyType (var ("" "last"))))
+       (element
+         (const (type !xs!QName) ("" "res"))
+         (sequence
+           (element (const (type !xs!QName) ("" "a")) (space-sequence (var ("" "a"))))
+           (element
+             (const (type !xs!QName) ("" "last"))
+             (space-sequence (var ("" "last")))))))))))
+
 (l2p:lr2por
  '(manage
    (prolog)
