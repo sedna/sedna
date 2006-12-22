@@ -181,6 +181,7 @@ bool PPConstructor::checkInitial()
 			nid_create_root(virt_root,false);
             //nid_print(virt_root);
 			last_elem=XNULL;
+			str_val.reset();
 			return true;
 		 }
 		else return false;

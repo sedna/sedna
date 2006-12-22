@@ -214,6 +214,7 @@ public:
 	}
 	int get_size() { return m_len; } //FIXME (don't use int type)
 	void clear();
+	void reset() { clear(); m_ptr = XNULL; m_estr.clear();}
 	void append(const char *str, int add_len);//always copy to inner buffer
 	void append(const char *str);//always copy to inner buffer
 	void append(const tuple_cell &tc);
