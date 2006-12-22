@@ -1368,16 +1368,24 @@
               => (lambda (pair)
                    (let*  ; order of evaluation is significant due to set!
                        ((filename (l2p:any-lr-node2por (car node)))
+                        (file-context
+                         (if (eq? var-count 0) 0 (+ var-count 1)))
                         (module-name-in-db
                          (begin
                            (set! var-count 0)
-                           (l2p:any-lr-node2por (cadr node)))))
+                           (l2p:any-lr-node2por (cadr node))))
+                        (name-context
+                         (if (eq? var-count 0) 0 (+ var-count 1))))
                      (list 'PPLoadModule
+                           file-context
                            filename
+                           name-context
                            module-name-in-db
                            (cdr pair)))))
              ((eq? op-name 'drop-module)
-              `(PPDropModule ,(l2p:any-lr-node2por (car node))))
+              (let ((context (if (eq? var-count 0) 0 (+ var-count 1))))
+              `(PPDropModule ,context
+                             ,(l2p:any-lr-node2por (car node)))))
              
              ((eq? op-name 'create-collection)
               (let* ((col (l2p:any-lr-node2por (car node))))
@@ -1603,8 +1611,8 @@
           (else
            (cl:signal-error
             SE4008
-            (string-append "unknown occurence indicator: "
-                           (symbol->string lr-occ-ind)))))))
+            (string-input-append "unknown occurence indicator: "
+                                 (symbol->string lr-occ-ind)))))))
 
 
 
@@ -1679,18 +1687,16 @@
               (if
                (memq name-pair '(unspecified *))
                (values 'wildcard '())
-               (values 'name name-pair)
-;               (let ((parts
-;                      (map
-;                       (lambda (part)
-;                         (if (eq? part '*)
-;                             (cons "wildcard" "")
-;                             (cons "name" part)))
-;                       name-pair)))
-;                 (values (string->symbol
-;                          (string-append (caar parts) "-" (caadr parts)))
-;                         (map cdr parts)))
-               ))
+               (let ((parts
+                      (map
+                       (lambda (part)
+                         (if (eq? part '*)
+                             (cons "wildcard" "")
+                             (cons "name" part)))
+                       name-pair)))
+                 (values (string->symbol
+                          (string-append (caar parts) "-" (caadr parts)))
+                         (map cdr parts)))))
             (lambda (node-name-enum str-str)
               (call-with-values
                (lambda ()
