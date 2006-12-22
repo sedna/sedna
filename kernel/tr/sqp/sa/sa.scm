@@ -980,14 +980,14 @@
      "token"
      "language"
      "NMTOKEN"
-     "NMTOKENS"
+     ;"NMTOKENS"
      "Name"
      "NCName"
      "ID"
      "IDREF"
-     "IDREFS"
+     ;"IDREFS"
      "ENTITY"
-     "ENTITIES"
+     ;"ENTITIES"
      "integer"
      "nonPositiveInteger"
      "negativeInteger"
@@ -1875,7 +1875,7 @@
            (map
             type-string->pair
             '("anyType" "anySimpleType"
-              "IDREFS" "NMTOKENS" "ENTITIES"
+              ;"IDREFS" "NMTOKENS" "ENTITIES"
               "untyped"))))
       (lambda (type-pair abstract+complex-types-allowed?)
         (cond
@@ -4472,7 +4472,6 @@
                                 (var ("" "attr_value"))))))))))))))))))
            sa:type-nodes))))
       ((cast)
-       (pp expr)
        ; Special check for xs:QName constructor function
        ; See "3.12.5 Constructor Functions" in XQuery specification
        (if
