@@ -1920,12 +1920,23 @@
 
 ; AtomicType
 ; Returns (cons rewritten-type sa:type-atomic)
-(define (sa:analyze-atomic-type type-spec)
+(define (sa:analyze-atomic-type type-spec ns-binding default-ns)
   (cond
    ((symbol? type-spec)
     (cons type-spec sa:type-atomic))
    ((sa:map-xs-type-pair type-spec #f)
     => (lambda (x) (cons x sa:type-atomic)))
+   ((and (pair? type-spec) (= (length type-spec) 2)
+         (string? (car type-spec)) (string? (cadr type-spec)))
+    (and
+     ; Must be resolved correctly
+     (sa:resolve-qname
+      `(const (type !xs!QName) ,type-spec)
+      ns-binding default-ns)
+     ; We do not know this type
+     (cl:signal-user-error
+      XPST0051
+      (string-append (car type-spec) ":" (cadr type-spec)))))
    (else
     (cl:signal-input-error SE5016 type-spec))))
 
@@ -1939,11 +1950,12 @@
         (memq (car type-spec) '(optional one)))
    (and
     (sa:assert-num-args type-spec 1)
-    (let ((new-type (sa:analyze-atomic-type (cadr type-spec))))
+    (let ((new-type (sa:analyze-atomic-type
+                     (cadr type-spec) ns-binding default-ns)))
       (and new-type
            (cons (list (car type-spec) (car new-type))
                  (cdr new-type)))))
-  (sa:analyze-atomic-type type-spec)))
+  (sa:analyze-atomic-type type-spec ns-binding default-ns)))
 
 ; ItemType
 ; Is presented in SequenceType only
