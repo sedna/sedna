@@ -1588,6 +1588,12 @@ sedna-err:SE5076
 sedna-err:SE5077
 
     Variable declaration expected.
+sedna-err:SE5078
+
+    LibraryModule expected, given unexpected.
+sedna-err:SE5079
+
+    Unexpected ModuleDecl supplied.
 sedna-err:SE5100
 
     Error in Scheme part.

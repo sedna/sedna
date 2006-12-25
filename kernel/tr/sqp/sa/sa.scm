@@ -194,7 +194,7 @@
    (cl:signal-input-error SE5003 query)
    (and
     (sa:assert-num-args query 2)
-    (let ((prolog-res (sa:analyze-prolog (sa:get-query-prolog query))))
+    (let ((prolog-res (sa:analyze-prolog (sa:get-query-prolog query) '())))
       (and
        prolog-res  ; processed correctly
        (let* ((new-prolog (car prolog-res))
@@ -226,8 +226,6 @@
                               new)))))
            (else
             (cl:signal-input-error SE5004 query)))))))))
-
-(define sa:analyze-module sa:analyze-query)
 
 ; Analyzes an expression
 ;  vars ::= (listof (cons var-name var-type))
@@ -1019,14 +1017,14 @@
 ;  new-prolog - modified logical representation for prolog
 ;  ns-binding ::= (listof (cons prefix ns-URI))
 ;  default-ns ::= (list default-element-ns default-function-ns)
-(define (sa:analyze-prolog prolog)
+(define (sa:analyze-prolog prolog ns-binding)
   ; new-prlg contains #f members at the places of function declarationss
   ;; triples ::= (listof (fun-body formal-args return-type))
   ; triples ::= (listof (declare-function formal-args return-type))
   (let loop ((new-prlg '())
              (funcs sa:xquery-functions)
              (triples '())
-             (ns-binding sa:predefined-ns-prefixes)
+             (ns-binding (append ns-binding sa:predefined-ns-prefixes))
              (default-elem-ns #f)
              (default-func-ns #f)
              (prolog prolog))
@@ -4772,3 +4770,64 @@
                   (car new-value)
                   (car new-fun))
             (cdr new-fun))))))
+
+
+;==========================================================================
+; XQuery module analysis 
+
+; Example:
+;(lib-module
+;  (module-decl
+;    (const (type !xs!NCName) math)
+;    (const (type !xs!string) "http://example.org/math-functions"))
+;  (prolog
+;    (declare-function
+;      (const (type !xs!QName) ("local" "f"))
+;      ()
+;      (result-type (zero-or-more (item-test)))
+;      (body (const (type !xs!string) "petya")))))
+(define (sa:analyze-module query)
+  (and
+   (or (pair? query)
+       (cl:signal-input-error SE5003 query))
+   (or (eq? (sa:op-name query) 'lib-module)
+       (cl:signal-input-error SE5078 (sa:op-name query)))
+   (sa:assert-num-args query 2)
+   (let ((module-decl (car (sa:op-args query))))
+     (and
+      (or (and (pair? module-decl)
+               (eq? (sa:op-name module-decl) 'module-decl))
+          (cl:signal-input-error SE5079 (sa:op-name module-decl)))
+      (sa:assert-num-args module-decl 2)
+      (let ((module-prefix
+             (sa:analyze-const (car (sa:op-args module-decl))
+                               '() '() '() ""))
+            (module-uri
+             (sa:analyze-string-const (cadr (sa:op-args module-decl))
+                                      '() '() '() "")))
+        (and
+         module-prefix module-uri
+         (or
+          (symbol? (caddr (car module-prefix)))  ; prefix
+          (cl:signal-input-error SE5008 (cadr expr)))
+         (let ((prefix (symbol->string (caddr (car module-prefix))))
+               (ns-uri (caddr (car module-uri))))
+           (cond
+             ((equal? ns-uri "")
+              (cl:signal-user-error XQST0088))
+             ((or (member prefix '("xml" "xmlns"))
+                  (member ns-uri
+                          '("http://www.w3.org/XML/1998/namespace")))
+              => (lambda (reason)
+                   (cl:signal-user-error XQST0070 (car reason))))
+             (else
+              (let ((prolog-res (sa:analyze-prolog
+                                 (sa:get-query-prolog query)
+                                 (list (cons prefix ns-uri)))))
+                prolog-res  ; processed correctly
+                (let* ((new-prolog (car prolog-res)))
+                  (list (sa:op-name query)  ; == 'lib-module
+                        (list (sa:op-name module-decl)  ; == 'module-decl
+                              (car module-prefix)
+                              (car module-uri))
+                        (cons 'prolog new-prolog)))))))))))))

@@ -202,3 +202,15 @@
                (const (type !xs!QName) (* "child2"))
                (type *)
                (const (type !xs!string) "non-nil"))))))))))))))
+
+(sa:analyze-module
+   '(lib-module
+  (module-decl
+    (const (type !xs!NCName) math)
+    (const (type !xs!string) "http://example.org/math-functions"))
+  (prolog
+    (declare-function
+      (const (type !xs!QName) ("local" "f"))
+      ()
+      (result-type (zero-or-more (item-test)))
+      (body (const (type !xs!string) "petya"))))))

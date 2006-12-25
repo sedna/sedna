@@ -2044,7 +2044,6 @@
 
 ; Alias for backward compatibility
 (define mlr:rewrite-query lropt:rewrite-query)
-(define mlr:rewrite-module mlr:rewrite-query)
 
 ;=========================================================================
 ; Older implementation, without DDO handling
@@ -2093,7 +2092,7 @@
                (map cadr (xlr:var-defs expr))  ; function argument names
                bound-vars)))
             (else  ; any other expression
-             (mlr:map-append              
+             (mlr:map-append
               (lambda (sub-expr) (expr-walk sub-expr bound-vars))
               (xlr:op-args expr)))))))
     (expr-walk expr '())))
@@ -2226,3 +2225,65 @@
 ;        ,(mlr:lreturn+xpath (xlr:get-query-body query) #t))))
 ;    (else  ; update or smth
 ;     (mlr:lreturn+xpath query #t))))
+
+;=========================================================================
+; Module handling
+;(lib-module
+;  (module-decl
+;    (const (type !xs!NCName) math)
+;    (const (type !xs!string) "http://example.org/math-functions"))
+;  (prolog
+;    (declare-function
+;      (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "f"))
+;      ()
+;      (result-type (zero-or-more (item-test)))
+;      (body (const (type !xs!string) "petya")))))
+
+; DL: i'm fed up with fold not being a R5RS function
+(define (lropt:fold f init lst)
+  (if (null? lst)
+      init
+      (lropt:fold f (f init (car lst)) (cdr lst))))
+
+; Returns new-processed-funcs
+(define (lropt:process-all-functions-in-prolog
+         prolog var-types processed-funcs)
+  (lropt:fold
+   (lambda (processed-funcs expr)
+     (call-with-values
+      (lambda ()
+        (lropt:get+add-processed-func
+         (car (xlr:op-args expr))  ; func-name
+         ; func-name includes `(const (type !xs!QName) ...)         
+         #f  ; called-once?
+         #t  ; order-required?
+         var-types prolog processed-funcs
+         (length  ; arity
+          (cadr (xlr:op-args expr))  ; argument list 
+          )))
+      (lambda (entry processed-funcs)
+        processed-funcs)))
+   processed-funcs
+   (filter
+    (lambda (x)
+      (and (pair? x) (eq? (xlr:op-name x) 'declare-function)))
+    prolog)))
+
+(define (mlr:rewrite-module query)
+  (if
+   (not (and (pair? query)
+             (eq? (xlr:op-name query) 'lib-module)))
+   query  ; nothing to do, although it's strange
+   (call-with-values
+    (lambda ()
+      (lropt:declare-vars-from-prolog
+       ; xlr:get-query-prolog finds prolog in any argument position
+       (xlr:get-query-prolog query)))
+    (lambda (prolog var-types processed-funcs)
+      (let ((processed-funcs (lropt:process-all-functions-in-prolog
+                              prolog var-types processed-funcs)))
+        (list (xlr:op-name query)  ; == 'lib-module
+              (car (xlr:op-args query))  ; ModuleDecl
+              (cons
+               'prolog
+               (lropt:rewrite-prolog prolog processed-funcs var-types))))))))
