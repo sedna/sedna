@@ -812,3 +812,15 @@
                                                                    (const
                                                                     (type !xs!string)
                                                                     "hl")))))))))))))))))))))))))))))))))))))))))))
+
+(mlr:rewrite-module
+ '(lib-module
+   (module-decl
+    (const (type !xs!NCName) math)
+    (const (type !xs!string) "http://example.org/math-functions"))
+   (prolog
+    (declare-function
+     (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "f"))
+     ()
+     (result-type (zero-or-more (item-test)))
+     (body (const (type !xs!string) "petya"))))))
