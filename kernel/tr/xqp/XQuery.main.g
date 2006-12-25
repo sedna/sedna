@@ -8,7 +8,7 @@ class XQueryParser
 
 script![XQueryDLGLexer* lexer_] :
 	<<ASTBase* last_sib = NULL;>>
-	q1:query[$lexer_]
+	q1:module
 
 	 <<
 	  // $lexer_->mode($lexer_->SCRIPT_LANGUAGE);
@@ -16,7 +16,7 @@ script![XQueryDLGLexer* lexer_] :
 	   last_sib = #q1;
 	 >>
 	( STMNT_DELIM   
-	  q2:query[$lexer_] 
+	  q2:module
 	  <<
 	     last_sib->setRight(#q2);
 	     last_sib = #q2;
@@ -54,25 +54,58 @@ exception
 	>>
 
 
+module!:
+	(lm:libraryModule <<#0=#(#[AST_MODULE], #lm);>> | mm:mainModule <<#0=#(#[AST_MODULE], #mm);>>)
+	
+;
 
-query![XQueryDLGLexer* lexer_] :
-	   qp:queryProlog
+versionDecl!:
+	XQUERY VERSION s1:STRINGLITERAL 
+	<<#0=#(#[AST_VERSION_DECL], #[$s1->getText(), AST_STRING_CONST]);>>
+	{ENCODING s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>}
+;
+
+libraryModule!:
+	 md:moduleDecl p:queryProlog
+	<<
+	  #0=#(#[AST_LIB_MODULE], #md, #(#[AST_PROLOG], #p));
+	>>
+;
+
+moduleDecl!:
+	MODULE NAMESPACE nc:ncname EQUAL s:STRINGLITERAL SEMICOLON
+	<<#0=#(#[AST_MODULE_DECL], #nc, #[$s->getText(), AST_STRING_CONST]);>>
+;
+
+mainModule!:
+	q:query <<#0=#(#[AST_MAIN_MODULE], #q);>>
+;
+
+
+
+query!:
+	<<ASTBase* prol=NULL;>>
+	  {vd:versionDecl}  qp:queryProlog
+
+	  <<if (#vd==NULL) prol = #qp;
+	    else {prol=#vd; prol->append(#qp);}
+	  >>
+	 
 	 (
-       ce:createExpr[$lexer_] <<#0=#ce;>>
-	   <<#0=#(#[AST_CREATE], #(#[AST_PROLOG], #qp), #ce);>>
+	   ce:createExpr <<#0=#ce;>>
+	   <<#0=#(#[AST_CREATE], #(#[AST_PROLOG], prol), #ce);>>
 
 	 | e:expr
 	
-	   <<#0=#(#[AST_QUERY], #(#[AST_PROLOG], #qp), #(#[AST_EXPR], #e));>>
+	   <<#0=#(#[AST_QUERY], #(#[AST_PROLOG], prol), #(#[AST_EXPR], #e));>>
 
 	 | ue:updateExpr
 	  
-	   <<#0=#(#[AST_UPDATE], #(#[AST_PROLOG], #qp), #ue);>>
-
-
+	   <<#0=#(#[AST_UPDATE], #(#[AST_PROLOG], prol), #ue);>>
+           
 	 | md:metadataExpr
 
-	   <<#0=#(#[AST_METADATA], #(#[AST_PROLOG], #qp), #md);>>
+	   <<#0=#(#[AST_METADATA], #(#[AST_PROLOG], prol), #md);>>
 
 	 | ROLLBACK <<#0=#[AST_ROLLBACK];>>
 

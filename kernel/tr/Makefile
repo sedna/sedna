@@ -470,6 +470,9 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(CRMUTILS_S)				\
                                $(IDX_S)						\
                                $(FT_S)						\
+                               $(PQ_S)						\
+                               $(SQP_S)						\
+                               $(XQP_S)						\
                                $(TRIGGERS_S)						\
                                $(BTREE_S)					\
                                $(HL_PHYS_LOG_S)				\

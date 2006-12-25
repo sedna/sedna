@@ -13,7 +13,7 @@
 #include "XQuerytoLR.h"
 
 int process_query_in_scheme (char *str, int step_id);
-
+std::string prepare_module(FILE* f, std::string& out_module_name);
 
 StmntsArray *prepare_stmnt(QueryType type, const char *stmnt);
 

@@ -38,7 +38,7 @@ queryProlog!:
 
 	   | imp:import <<if(prolog == NULL) prolog=#imp; else prolog->append(#imp);>>
 
-	   | vd:versionDecl <<if(prolog == NULL) prolog=#vd; else prolog->append(#vd);>>
+//	   | vd:versionDecl <<if(prolog == NULL) prolog=#vd; else prolog->append(#vd);>>
 
 	  ) SEMICOLON
 	)*
@@ -87,13 +87,6 @@ param!:
 	>>
 ;
 
-versionDecl!:
-	XQUERY VERSION s1:STRINGLITERAL 
-	<<#0=#(#[AST_VERSION_DECL], #[$s1->getText(), AST_STRING_CONST]);>>
-	{ENCODING s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>}
-
-	
-;
 
 
 namespaceDecl!:
@@ -179,8 +172,12 @@ import!:
 ;
 
 importModule!:
-	IMPORT {MODULE NAMESPACE ncname EQUAL}   STRINGLITERAL {AT_ STRINGLITERAL  (COMMA  STRINGLITERAL)*}
-	<<throw USER_EXCEPTION(XQST0016);>>
+	IMPORT {MODULE NAMESPACE nc:ncname EQUAL}   s1:STRINGLITERAL {AT_ s2:STRINGLITERAL 
+	<<#0=#(#[AST_IMPORT_MODULE], #nc, #[$s1->getText(), AST_STRING_CONST], #[$s2->getText(), AST_STRING_CONST]);>>
+	(COMMA  s3:STRINGLITERAL <<#0->addChild(#[$s3->getText(), AST_STRING_CONST]);>>)*}
+
+//	<<throw USER_EXCEPTION(XQST0016);>>
+	
 ;
 
 importSchema!:

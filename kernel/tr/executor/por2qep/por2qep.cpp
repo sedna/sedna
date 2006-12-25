@@ -3471,6 +3471,28 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, dynamic_context_info *info, se_ostre
                               collection,
                               s);
     }
+	else if (op == "PPLoadModule")
+    {
+        if ( qe->size() != 6
+            || qe->at(1).type != SCM_NUMBER
+            || qe->at(2).type != SCM_LIST
+            || qe->at(3).type != SCM_NUMBER
+            || qe->at(4).type != SCM_LIST
+	    || qe->at(5).type != SCM_BOOL)
+            throw USER_EXCEPTION2(SE1004, "310.5");
+
+        int var_cxt_size1 = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt1 = new dynamic_context(info, var_cxt_size1);
+
+        int var_cxt_size2 = atoi(qe->at(3).internal.num);
+        dynamic_context *cxt2 = new dynamic_context(info, var_cxt_size2);
+
+        return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
+								make_pp_op(cxt2, qe->at(4).internal.list),
+								qe->at(5).internal.b,
+								s  // is passed to this function
+								);
+    }
     else if (op == "PPCreateDocument")
     {
         if (   qe->size() != 3
@@ -3524,6 +3546,18 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, dynamic_context_info *info, se_ostre
         dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
 
         return new PPDropDocument(make_pp_op(cxt, qe->at(2).internal.list));
+    }
+    else if (op == "PPDropModule")
+    {
+        if (   qe->size() != 3
+            || qe->at(1).type != SCM_NUMBER
+            || qe->at(2).type != SCM_LIST)
+            throw USER_EXCEPTION2(SE1004, "315.5");
+
+        int var_cxt_size = atoi(qe->at(1).internal.num);
+        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
+
+        return new PPDropModule(make_pp_op(cxt, qe->at(2).internal.list));
     }
     else if (op == "PPDropCollection")
     {

@@ -12,7 +12,7 @@
 #include "usem.h"
 #include "pping.h"
 #include "tr_functions.h"
-
+#include "tr_utils.h"
 
 #ifndef _WIN32
 #define _atoi64 atoll
@@ -32,7 +32,7 @@ SSMMsg *sm_server = NULL;
 
 
 
-
+DECLARE_TIME_VARS
 
 int main (int argc, char** argv)
 {
