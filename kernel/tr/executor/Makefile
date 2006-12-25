@@ -23,6 +23,7 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        xs_fp_converter$(OBJ_EXT)		\
                        xptrChanneledMerge$(OBJ_EXT)		\
                        PPStaticContext$(OBJ_EXT)		\
+                       dynamic_context$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
                        PPUtils$(OBJ_EXT)				\
                        XPath$(OBJ_EXT)					\

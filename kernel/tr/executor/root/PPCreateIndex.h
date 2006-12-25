@@ -20,6 +20,7 @@ class PPCreateIndex : public PPUpdate
     xmlscm_type key_type;
     counted_ptr<db_entity> db_ent;
     PPOpIn index_name;
+    dynamic_context *cxt;
 
     // obtained parameters and local data
     schema_node *root;
@@ -33,7 +34,8 @@ public:
                   PathExpr *_key_path_,
                   xmlscm_type _key_type_,
                   counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_);
+                  PPOpIn _index_name_,
+                  dynamic_context *_cxt_);
 
     ~PPCreateIndex();
 };

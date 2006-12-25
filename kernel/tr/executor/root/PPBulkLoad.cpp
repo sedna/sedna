@@ -16,12 +16,18 @@
 extern client_core *client;
 
 PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
+                       dynamic_context *_cxt1_,
                        PPOpIn _document_,
+                       dynamic_context *_cxt2_,
                        PPOpIn _collection_,
+                       dynamic_context *_cxt3_,
                        se_ostream& _s_) : filename(_filename_),
-                                                document(_document_),
-                                                collection(_collection_),
-                                                s(_s_)
+                                          document(_document_),
+                                          collection(_collection_),
+                                          cxt1(_cxt1_),
+                                          cxt2(_cxt2_),
+                                          cxt3(_cxt3_),
+                                          s(_s_)
 {
 }
 
@@ -38,6 +44,13 @@ PPBulkLoad::~PPBulkLoad()
         delete collection.op;
         collection.op = NULL;
     }
+
+    delete cxt1;
+    cxt1 = NULL;
+    delete cxt2;
+    cxt2 = NULL;
+    delete cxt3;
+    cxt3 = NULL;
 }
 
 void PPBulkLoad::open()
@@ -105,7 +118,7 @@ void PPBulkLoad::execute()
     else
           write_to_logical_log = false;
     
-    bool boundary_space_strip = (tr_globals::st_ct.boundary_space == xq_boundary_space_strip);
+    bool boundary_space_strip = (cxt1->st_cxt->boundary_space/*tr_globals::st_ct.boundary_space*/ == xq_boundary_space_strip);
 
     try {
    	    if (collection.op == NULL) 

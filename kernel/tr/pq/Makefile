@@ -31,6 +31,7 @@ scm-debug.scm: scm-debug.scm.m4
 	$(M4) -D EL_DEBUG=$(EL_DEBUG) < $< > $@
 
 PQ_OBJS = pq$(OBJ_EXT) 					\
+          modules$(OBJ_EXT) 			\
           scm-entry$(OBJ_EXT)			\
           scm-debug$(OBJ_EXT)
 

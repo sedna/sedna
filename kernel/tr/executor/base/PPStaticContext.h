@@ -10,26 +10,13 @@
 #include "sedna.h"
 #include "schema.h"
 #include "XPath.h"
-#include "str_matcher.h"
-#include "strings.h"
-#include "utf8.h"
 
-typedef std::pair<std::string,std::string> str_pair;
-typedef std::map< str_pair, xml_ns*> ns_map;
-typedef std::map<std::string,std::vector<xml_ns*> > inscmap;
+#include "dynamic_context.h"
 
 
-enum se_output_method {se_output_method_xml};
 
-enum se_output_indent {se_output_indent_yes, se_output_indent_no};
 
-enum xq_boundary_space {xq_boundary_space_strip, xq_boundary_space_preserve};
-
-enum xq_ordering_mode {xq_ordering_mode_ordered, xq_ordering_mode_unordered};
-
-enum xq_empty_order {xq_empty_order_greatest, xq_empty_order_least};
-
-struct static_context
+struct pp_static_context
 {
     /// Prolog Declarations
     /// ~~~~~~~~~~~~~~~~~~~
@@ -76,8 +63,8 @@ struct static_context
     bool datetime_initialized;
 
 
-    static_context();
-    ~static_context() ;
+    pp_static_context();
+    ~pp_static_context() ;
     void _init_context();
     void _release_resources();
     void clear_context();

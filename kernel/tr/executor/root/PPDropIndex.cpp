@@ -11,7 +11,7 @@
 #include "locks.h"
 
 
-PPDropIndex::PPDropIndex(PPOpIn _index_name_) : index_name(_index_name_)
+PPDropIndex::PPDropIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {
 }
 
@@ -19,6 +19,9 @@ PPDropIndex::~PPDropIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropIndex::open()

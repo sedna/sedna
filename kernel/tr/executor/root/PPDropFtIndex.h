@@ -15,16 +15,15 @@
 class PPDropFtIndex : public PPUpdate
 {
     // given parameters
-    PathExpr *object_path;
-	ft_index_type index_type;
     PPOpIn index_name;
+    dynamic_context *cxt;
+
 public:
     void open();
     void close();
     void execute();
 
-    PPDropFtIndex(PPOpIn _index_name_);
-
+    PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_);
     ~PPDropFtIndex();
 };
 

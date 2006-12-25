@@ -15,7 +15,9 @@ PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
                              PathExpr *_key_path_,
                              xmlscm_type _key_type_,
                              counted_ptr<db_entity> _db_ent_,
-                             PPOpIn _index_name_) : object_path(_object_path_),
+                             PPOpIn _index_name_,
+                             dynamic_context *_cxt_) :
+                                                    object_path(_object_path_),
                                                     key_path(_key_path_),
                                                     key_type(_key_type_),
                                                     db_ent(_db_ent_),
@@ -28,6 +30,9 @@ PPCreateIndex::~PPCreateIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateIndex::open()

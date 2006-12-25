@@ -15,6 +15,7 @@ class PPRetrieveMetadata : public PPQueryEssence
     // given parameters
     db_entity_type type;
     PPOpIn collection;
+    dynamic_context *cxt;
     bool output_statistics;
     se_ostream& s;
 
@@ -28,6 +29,7 @@ public:
 
     PPRetrieveMetadata(db_entity_type _type_,
                        PPOpIn _collection_,
+                       dynamic_context *_cxt_,
                        bool _output_statistics_,
                        se_ostream& _s_);
 

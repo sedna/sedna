@@ -14,13 +14,14 @@ class PPDropIndex : public PPUpdate
 {
     // given parameters
     PPOpIn index_name;
+    dynamic_context *cxt;
 
 public:
     void open();
     void close();
     void execute();
 
-    PPDropIndex(PPOpIn _index_name_);
+    PPDropIndex(PPOpIn _index_name_, dynamic_context *_cxt_);
 
     ~PPDropIndex();
 };

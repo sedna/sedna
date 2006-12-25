@@ -15,6 +15,9 @@
 #include "vmm.h"
 #include <vector>
 
+class sequence;
+class PPOpIn;
+
 /// occurence indicator
 enum st_occurence_indicator
 {

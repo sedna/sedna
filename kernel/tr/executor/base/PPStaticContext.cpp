@@ -10,7 +10,7 @@
 #include "xs_helper.h"
 #include "utf8.h"
 
-static_context::static_context()
+pp_static_context::pp_static_context()
 {
 	def_ns.push_back(NULL);
 	xml_ns* tmp=xml_ns::init(NULL,"xml",false);
@@ -36,12 +36,12 @@ static_context::static_context()
 	_init_context();
 }
 
-static_context::~static_context() 
+pp_static_context::~pp_static_context() 
 {
     _release_resources();
 }
 
-void static_context::_init_context()
+void pp_static_context::_init_context()
 {
     boundary_space = xq_boundary_space_strip;
     default_collation_uri = NULL;
@@ -56,7 +56,7 @@ void static_context::_init_context()
 
     /////////////////////////////////////////////////////////////////////////
     /// Set codepoint collation as the default one.
-    /// DO NOT call static_context::set_default_collation() here - 
+    /// DO NOT call pp_static_context::set_default_collation() here - 
     /// it is too complex to be called from constructor.
     const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     default_collation_uri = new char[strlen(codepoint_collation_uri) + 1];
@@ -73,7 +73,7 @@ void static_context::_init_context()
 	stm.add_str("\"","&quot;", pat_attribute);
 }
 
-void static_context::_release_resources()
+void pp_static_context::_release_resources()
 {
 	//if (def_ns!=NULL)xml_ns::
 	//NEED DELETION
@@ -90,7 +90,7 @@ void static_context::_release_resources()
 }
 
 
-void static_context::clear_context()
+void pp_static_context::clear_context()
 {
     std::vector<xptr>::iterator cit=temp_docs.begin();
     while (cit!=temp_docs.end())
@@ -142,13 +142,13 @@ void static_context::clear_context()
 	_init_context();
 }
 
-void static_context::add_char_mapping(const char* str, const char* rep_str,int pc )
+void pp_static_context::add_char_mapping(const char* str, const char* rep_str,int pc )
 {
 	stm.add_str(str,rep_str,pc);
 }
 
 
-xml_ns* static_context::get_ns_pair(const char* prefix,const char* uri)
+xml_ns* pp_static_context::get_ns_pair(const char* prefix,const char* uri)
 {
 	const char* pref=(prefix==NULL)?"":prefix;
 	ns_map::iterator it=ns_lib.find(str_pair(uri,pref));
@@ -163,7 +163,7 @@ xml_ns* static_context::get_ns_pair(const char* prefix,const char* uri)
 	}
 }
 
-xml_ns* static_context::add_to_context(const char* prefix,const char* uri)
+xml_ns* pp_static_context::add_to_context(const char* prefix,const char* uri)
 {
 	xml_ns * res=get_ns_pair(prefix,uri);
 	if (prefix==NULL)
@@ -178,7 +178,7 @@ xml_ns* static_context::add_to_context(const char* prefix,const char* uri)
 	}
 	return res;
 }
-void static_context::remove_from_context(const char* prefix)
+void pp_static_context::remove_from_context(const char* prefix)
 {
 	if (prefix==NULL&&def_ns.size()>0)
 	{
@@ -194,7 +194,7 @@ void static_context::remove_from_context(const char* prefix)
 	}
 }
 
-char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
+char * pp_static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
 {
     std::string prefix(_prefix);
 	char* uri;
@@ -218,7 +218,7 @@ char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
 	return uri;
 }
 
-xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix, int count)
+xml_ns* pp_static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 {
     if (count < 0) count = strlen(_prefix);
     std::string prefix(_prefix, count);
@@ -236,7 +236,7 @@ xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 	}
 }
 
-void static_context::set_datetime()
+void pp_static_context::set_datetime()
 {
 	if (!datetime_initialized)
 	{
@@ -249,7 +249,7 @@ void static_context::set_datetime()
 	}
 }
 
-void static_context::set_base_uri(const char* _base_uri_)
+void pp_static_context::set_base_uri(const char* _base_uri_)
 {
     ///////////////////////////////////////////////////////////////////////
     /// Check constraints on URILiteral.
@@ -283,7 +283,7 @@ void static_context::set_base_uri(const char* _base_uri_)
     ///////////////////////////////////////////////////////////////////////
 }
 
-void static_context::set_default_collation_uri(const char* _default_collation_uri_)
+void pp_static_context::set_default_collation_uri(const char* _default_collation_uri_)
 {
     tuple_cell tc;
     
@@ -339,7 +339,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     strcpy(default_collation_uri, normalized_value);
 }
 
-CollationHandler* static_context::get_collation(const char *uri)
+CollationHandler* pp_static_context::get_collation(const char *uri)
 {
     if (!uri) return get_default_collation();
     

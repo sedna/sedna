@@ -12,8 +12,10 @@
 
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,
+                           dynamic_context *_cxt_,
                            db_entity_type _type_,
                            se_ostream& _s_) : name(_name_),
+                                              cxt(_cxt_),
                                               type(_type_),
                                               s(_s_)
 {
@@ -23,6 +25,9 @@ PPRetrieveDS::~PPRetrieveDS()
 {
     delete name.op;
     name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPRetrieveDS::open()

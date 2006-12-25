@@ -26,22 +26,28 @@ ft_index_type str2index_type(const char *str)
 }
 
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
-                  char *_index_type_,
-                  counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_,
-				  PPOpIn _cust_rules_) :	object_path(_object_path_),
-                                            db_ent(_db_ent_),
-                                            index_name(_index_name_),
-											cust_rules(_cust_rules_)
+                                 char *_index_type_,
+                                 counted_ptr<db_entity> _db_ent_,
+                                 PPOpIn _index_name_,
+                                 PPOpIn _cust_rules_,
+                                 dynamic_context *_cxt_) :
+                                                        object_path(_object_path_),
+                                                        db_ent(_db_ent_),
+                                                        index_name(_index_name_),
+               											cust_rules(_cust_rules_),
+                                                        cxt(_cxt_)
 {
 	index_type = str2index_type(_index_type_);
 }
 PPCreateFtIndex::PPCreateFtIndex(PathExpr *_object_path_,
-                  char *_index_type_,
-                  counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_) :	object_path(_object_path_),
-                                            db_ent(_db_ent_),
-                                            index_name(_index_name_)
+                                 char *_index_type_,
+                                 counted_ptr<db_entity> _db_ent_,
+                                 PPOpIn _index_name_,
+                                 dynamic_context *_cxt_) :
+                                                        object_path(_object_path_),
+                                                        db_ent(_db_ent_),
+                                                        index_name(_index_name_),
+                                                        cxt(_cxt_)
 {
 	index_type = str2index_type(_index_type_);
 }
@@ -50,6 +56,9 @@ PPCreateFtIndex::~PPCreateFtIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateFtIndex::open()
