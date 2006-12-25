@@ -24,6 +24,7 @@ class PPCreateFtIndex : public PPUpdate
 	PPOpIn cust_rules;
     counted_ptr<db_entity> db_ent;
     PPOpIn index_name;
+    dynamic_context *cxt;
 
     // obtained parameters and local data
     schema_node *root;
@@ -32,15 +33,19 @@ public:
     void close();
     void execute();
 
-    PPCreateFtIndex(PathExpr *_object_path_,
-                  char* _index_type_,
-                  counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_,
-				  PPOpIn _cust_rules_);
-    PPCreateFtIndex(PathExpr *_object_path_,
-                  char *_index_type_,
-                  counted_ptr<db_entity> _db_ent_,
-                  PPOpIn _index_name_);
+    PPCreateFtIndex(static_context *_st_cxt_,
+                    PathExpr *_object_path_,
+                    char* _index_type_,
+                    counted_ptr<db_entity> _db_ent_,
+                    PPOpIn _index_name_,
+                    PPOpIn _cust_rules_,
+                    dynamic_context *_cxt_);
+    PPCreateFtIndex(static_context *_st_cxt_,
+                    PathExpr *_object_path_,
+                    char *_index_type_,
+                    counted_ptr<db_entity> _db_ent_,
+                    PPOpIn _index_name_,
+                    dynamic_context *_cxt_);
 
     ~PPCreateFtIndex();
 };

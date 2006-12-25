@@ -8,7 +8,7 @@
 #include "PPDropFtIndex.h"
 #include "PPUtils.h"
 
-PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_) :	index_name(_index_name_)
+PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {
 }
 
@@ -17,6 +17,9 @@ PPDropFtIndex::~PPDropFtIndex()
 {
     delete index_name.op;
     index_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropFtIndex::open()

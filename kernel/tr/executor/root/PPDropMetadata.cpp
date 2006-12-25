@@ -12,7 +12,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropDocument
 ///////////////////////////////////////////////////////////////////////////////
-PPDropDocument::PPDropDocument(PPOpIn _name_) : name(_name_)
+PPDropDocument::PPDropDocument(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
 {
 }
 
@@ -20,6 +20,9 @@ PPDropDocument::~PPDropDocument()
 {
     delete name.op;
     name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropDocument::open()
@@ -59,7 +62,7 @@ void PPDropDocument::execute()
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropCollection
 ///////////////////////////////////////////////////////////////////////////////
-PPDropCollection::PPDropCollection(PPOpIn _name_) : name(_name_)
+PPDropCollection::PPDropCollection(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
 {
 }
 
@@ -67,6 +70,9 @@ PPDropCollection::~PPDropCollection()
 {
     delete name.op;
     name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPDropCollection::open()
@@ -107,8 +113,12 @@ void PPDropCollection::execute()
 /// PPDropDocumentInCollection
 ///////////////////////////////////////////////////////////////////////////////
 PPDropDocumentInCollection::PPDropDocumentInCollection(PPOpIn _document_,
-                                                       PPOpIn _collection_) : document(_document_),
-                                                                              collection(_collection_)
+                                                       dynamic_context *_cxt1_,
+                                                       PPOpIn _collection_,
+                                                       dynamic_context *_cxt2_) : document(_document_),
+                                                                                  collection(_collection_),
+                                                                                  cxt1(_cxt1_),
+                                                                                  cxt2(_cxt2_)
 {
 }
 
@@ -119,6 +129,11 @@ PPDropDocumentInCollection::~PPDropDocumentInCollection()
 
     delete collection.op;
     collection.op = NULL;
+
+    delete cxt1;
+    cxt1 = NULL;
+    delete cxt2;
+    cxt2 = NULL;
 }
 
 void PPDropDocumentInCollection::open()

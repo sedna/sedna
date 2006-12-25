@@ -19,9 +19,9 @@ struct qep_subtree
 };
 
 
-PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode = xml);
-PPQueryEssence *build_qep(scheme_list *por, se_ostream& s, t_print print_mode = xml);
-qep_subtree  *build_qep(const char* por, int cxt_size);
+PPQueryEssence *build_qep(const char*  por, se_ostream& s, t_print print_mode = xml);
+PPQueryEssence *build_qep(scheme_list* por, se_ostream& s, t_print print_mode = xml);
+qep_subtree    *build_qep(const char*  por, int cxt_size);
 
 void delete_qep(PPQueryEssence *qep);
 void delete_qep(qep_subtree *qep);

@@ -13,7 +13,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 /// PPCreateDocument
 ///////////////////////////////////////////////////////////////////////////////
-PPCreateDocument::PPCreateDocument(PPOpIn _name_) : name(_name_)
+PPCreateDocument::PPCreateDocument(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
 {
 }
 
@@ -21,6 +21,9 @@ PPCreateDocument::~PPCreateDocument()
 {
     delete name.op;
     name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateDocument::open()
@@ -60,7 +63,7 @@ void PPCreateDocument::execute()
 ///////////////////////////////////////////////////////////////////////////////
 /// PPCreateCollection
 ///////////////////////////////////////////////////////////////////////////////
-PPCreateCollection::PPCreateCollection(PPOpIn _name_) : name(_name_)
+PPCreateCollection::PPCreateCollection(PPOpIn _name_, dynamic_context *_cxt_) : name(_name_), cxt(_cxt_)
 {
 }
 
@@ -68,6 +71,9 @@ PPCreateCollection::~PPCreateCollection()
 {
     delete name.op;
     name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateCollection::open()
@@ -108,8 +114,12 @@ void PPCreateCollection::execute()
 /// PPCreateDocumentInCollection
 ///////////////////////////////////////////////////////////////////////////////
 PPCreateDocumentInCollection::PPCreateDocumentInCollection(PPOpIn _document_,
-                                                           PPOpIn _collection_) : document(_document_),
-                                                                                  collection(_collection_)
+                                                           dynamic_context *_cxt1_,
+                                                           PPOpIn _collection_,
+                                                           dynamic_context *_cxt2_) : document(_document_),
+                                                                                      cxt1(_cxt1_),
+                                                                                      collection(_collection_),
+                                                                                      cxt2(_cxt2_)
 {
 }
 
@@ -120,6 +130,11 @@ PPCreateDocumentInCollection::~PPCreateDocumentInCollection()
 
     delete collection.op;
     collection.op = NULL;
+
+    delete cxt1;
+    cxt1 = NULL;
+    delete cxt2;
+    cxt2 = NULL;
 }
 
 void PPCreateDocumentInCollection::open()
