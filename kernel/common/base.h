@@ -99,6 +99,7 @@ struct vmm_region_values
 #endif
 
 
+#define MODULES_COLLECTION_NAME "$modules"
 
 /*
 #ifdef _WIN32

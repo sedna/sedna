@@ -1391,6 +1391,7 @@
                            name-context
                            module-name-in-db
                            (cdr pair)))))
+
              ((eq? op-name 'drop-module)
               (let ((context (if (eq? var-count 0) 0 (+ var-count 1))))
               `(PPDropModule ,context

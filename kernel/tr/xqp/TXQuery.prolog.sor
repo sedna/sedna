@@ -38,6 +38,9 @@ prolog!:
 	 | vd:versionDecl
 	   <<if (prolog_ == NULL) prolog_ =vd; else prolog_->append(vd);>>
 
+	 | im:importModule
+	   <<if (prolog_ == NULL) prolog_ =im; else prolog_->append(im);>>
+
 	)*
 	<<#prolog= prolog_;>>
 ;
@@ -85,7 +88,6 @@ param!:
 	<<#param=#(#[], st, v);>>
 ;
 
-
 versionDecl!:
 	#(AST_VERSION_DECL s1:AST_STRING_CONST 
 	<<#versionDecl=#(#["version-declaration"],
@@ -100,6 +102,8 @@ versionDecl!:
 	  }
 	)
 ;
+
+
 
 namespaceDecl!:
 	#(AST_DECL_NSP p:AST_PREFIX s:AST_STRING_CONST)
@@ -208,3 +212,15 @@ emptyOrderDecl!:
 	    <<#emptyOrderDecl= #(#["declare-default-order"], #(#["const"], #(#["type"], #["!xs!string"]), #["\"empty-least\""]));>>
 	)
 ;
+
+importModule!:
+	#(AST_IMPORT_MODULE l:AST_LOCAL_NAME s1:AST_STRING_CONST s2:AST_STRING_CONST
+	<<#importModule=#(#["import-module"],
+	                  #(#["const"], #(#["type"], #["!xs!NCName"]), #[std::string("\"")+std::string(l->getText())+ std::string("\"")]),
+	                  #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s1->getText())+ std::string("\"")]),
+	                  #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s2->getText())+ std::string("\"")]));>>
+	 (s3:AST_STRING_CONST 
+	<<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s3->getText())+ std::string("\"")]));>>)*)
+;
+
+

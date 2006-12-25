@@ -5,6 +5,7 @@
 
 #include "sedna.h"
 #include <iostream>
+#include <string>
 #include "pq.h"
 #include "d_printf.h"
 #include "XQuerytoLR.h"
@@ -136,6 +137,75 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
 }
 
 
+
+std::string prepare_module(FILE* f, std::string& out_module_name)
+{
+   //read from file
+   char buf[1000];
+   string  plain_batch_text;
+   int status = 0;
+
+
+   while(!feof(f))
+   {
+     
+      size_t len= fread(buf, sizeof(char), sizeof(buf), f);
+
+      plain_batch_text.append(buf, len);
+   }
+
+   StringVector v = parse_batch(TL_XQuery, plain_batch_text.c_str());
+
+
+   scm_input_string = (char*)malloc(v[0].size() + 1); // I call malloc here because this memory
+                                                                  // will be freed later by Chicken (Andrey)
+   if (scm_input_string == NULL)
+      throw USER_EXCEPTION(SE4009);
+
+   strcpy(scm_input_string, v[0].c_str());
+
+   char query_string[128];
+   memset(query_string, '\0', 128);
+   strcat(query_string, "(process-module-in-scheme ");
+   strcat(query_string, int2string((int)TL_XQuery).c_str());
+   strcat(query_string, ")");
+
+   C_word scheme_eval_res;
+   status = CHICKEN_eval_string(query_string, &scheme_eval_res);
+   if (status != 1)
+   {
+       char buf[1024];
+       CHICKEN_get_error_message (buf, 1024);
+       //d_printf2("Error evaluating Scheme part = %s\n", buf);
+       throw USER_EXCEPTION2(SE4004, buf);
+   }
+
+
+    string pc_module(scm_output_string);
+
+    free(scm_output_string);
+
+    scm_input_string = NULL;
+    scm_output_string = NULL;
+
+    scheme_list *qep_trees_in_scheme_lst = NULL;
+    qep_trees_in_scheme_lst = make_tree_from_scheme_list(pc_module.c_str());
+    
+    if (   qep_trees_in_scheme_lst->size() < 3
+        || qep_trees_in_scheme_lst->at(0).type != SCM_BOOL) 
+       throw USER_EXCEPTION(SE4005);
+
+
+    if (!qep_trees_in_scheme_lst->at(0).internal.b)
+    {
+       string  error = (qep_trees_in_scheme_lst->at(1).internal.list)->at(2).internal.str;
+       // d_printf2("error str=%s\n", error.c_str());
+       throw USER_EXCEPTION2(atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num), error.c_str());
+    }
+
+    out_module_name = qep_trees_in_scheme_lst->at(2).internal.str;
+    return qep_trees_in_scheme_lst->at(1).internal.str;
+}
 
 
 

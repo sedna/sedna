@@ -28,7 +28,7 @@ PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
 PPBulkLoad::~PPBulkLoad()
 {
     delete filename.op;
-    document.op = NULL;
+    filename.op = NULL;
 
     delete document.op;
     document.op = NULL;

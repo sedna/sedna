@@ -119,6 +119,8 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        PPDeleteUndeep$(OBJ_EXT)			\
                        PPRename$(OBJ_EXT)				\
                        PPBulkLoad$(OBJ_EXT)				\
+                       PPLoadModule$(OBJ_EXT)				\
+                       PPDropModule$(OBJ_EXT)				\
                        PPCreateIndex$(OBJ_EXT)			\
                        PPCreateMetadata$(OBJ_EXT)		\
                        PPDropMetadata$(OBJ_EXT)			\

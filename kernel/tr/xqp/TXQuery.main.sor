@@ -26,7 +26,7 @@ script!:
 	  ASTBase* res = NULL;
 	>>
 	#(AST_SCRIPT <<#script=#[AST_SCRIPT];>>
-	  (q:query 
+	  (q:module 
 	    <<
 	      std::string QueryList;
 	      ((SORAST*)q)->preorder(&QueryList);
@@ -42,6 +42,22 @@ script!:
 	  )+
 	)
 ;
+
+module!:
+	#(AST_MODULE (  #(AST_MAIN_MODULE q:query <<#module=q;>>) 
+	              | #(AST_LIB_MODULE md:moduleDecl #(AST_PROLOG p:prolog)) <<#module=#(#["lib-module"], md, #(#[], #["prolog"], p));>> 
+	             )
+	)
+;
+
+
+moduleDecl!:
+	#(AST_MODULE_DECL l:AST_LOCAL_NAME s:AST_STRING_CONST)
+	<<#moduleDecl=#(#["module-decl"], 
+	               #(#["const"], #(#["type"], #["!xs!NCName"]), #[l->getText()]),
+	               #(#["const"], #(#["type"], #["!xs!string"]), #[std::string(s->getText())]));>>
+;
+
 
 query!:
 	 <<out_context _out_c_;>>

@@ -2,7 +2,7 @@
 
 class XQueryParser {
 
-createExpr![XQueryDLGLexer* lexer_] :
+createExpr!:
           <<std::string stream; bool b;
 	    ASTBase* lst;
 	      >>
