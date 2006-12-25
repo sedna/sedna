@@ -592,7 +592,7 @@ t_scmnodes_const execute_node_test_axis_child(const schema_node *node, const Nod
                 if (ref->type == PNK_ELEMENT) res.push_back(ref->snode);
             if (extender_nodes)
                 for (i=extender_nodes->begin(); i!=extender_nodes->end(); i++)
-                    if (ref->type == PNK_ELEMENT) res.push_back(*i);
+                    if ((*i)->type == PNK_ELEMENT) res.push_back(*i);
             return res;
         }
     case node_test_wildcard_ncname_star		: 
