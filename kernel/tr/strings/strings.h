@@ -150,6 +150,7 @@ class str_buf_base
 private:
 	xptr m_ptr;
 	estr m_estr;
+	bool m_mem_only;
 	str_counted_ptr m_str_ptr;
 	int m_len;//FIXME (don't use int type)
 	char *m_buf;
@@ -163,7 +164,8 @@ private:
 	void move_to_mem_buf();
 	void move_to_estr();
 protected:
-	str_buf_base() : m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0) {}
+	str_buf_base() : m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0), m_mem_only(false) {}
+	str_buf_base(bool _mem_only_) : m_buf_size(0), m_buf(NULL), m_len(0), m_ptr(XNULL), m_flags(0), m_mem_only(_mem_only_) {}
 	//gets tuple_cell, it's data in estr buffer won't be overwrited
 	tuple_cell get_tuple_cell() {
 		if (m_flags & f_text_in_buf)
@@ -198,6 +200,7 @@ protected:
 		}
 	}
 public:
+	bool mem_only() { return m_mem_only; }
 	text_type get_type() { return m_ttype; }
 	const void * get_ptr_to_text() {
 		if (m_flags & f_text_in_buf)
@@ -219,6 +222,7 @@ public:
 	void append(const char *str);//always copy to inner buffer
 	void append(const tuple_cell &tc);
 	char *c_str();
+	char *get_str();
 
 	~str_buf_base();
 
@@ -246,6 +250,7 @@ class stmt_str_buf_impl: public str_buf_base
 {
 public:
 	stmt_str_buf_impl() : str_buf_base() {}
+	stmt_str_buf_impl(int mem_only) : str_buf_base(true) {}
 	stmt_str_buf_impl(const tuple_cell &tc) : str_buf_base() { append(tc); }
 	stmt_str_buf_impl(const char *str) : str_buf_base() { append(str); }
 	void set(const tuple_cell &tc) { clear(); append(tc); }
@@ -265,8 +270,9 @@ private:
 	static bool used;
 	stmt_str_buf_impl *m_impl;
 public:
-	stmt_str_buf() { if (used) throw USER_EXCEPTION(SE1003); m_impl = &buf_impl; used = true; }
-	~stmt_str_buf() { m_impl->clear(); used = false; }
+	stmt_str_buf() { if (used) throw USER_EXCEPTION(SE1003); m_impl = &buf_impl; used = true; U_ASSERT(!m_impl->mem_only()); }
+	stmt_str_buf(int mem_only) { m_impl = new stmt_str_buf_impl(mem_only); U_ASSERT(m_impl->mem_only()); }
+	~stmt_str_buf() { m_impl->clear(); if (m_impl->mem_only()) delete m_impl; else used = false; }
 
 	void clear() {m_impl->clear();}
 	void append(const tuple_cell &tc) {m_impl->append(tc);}
@@ -274,6 +280,7 @@ public:
 	void append(const char *str, int add_len) {m_impl->append(str, add_len);}
 
 	tuple_cell get_tuple_cell() {return m_impl->get_tuple_cell(); } //also clears
+	char *get_str() { return m_impl->get_str(); } //also clears, applicable to mem_only buffers only
 
 	stmt_str_buf(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Copy constructor for stmt_str_buf is not implemented"); }
     stmt_str_buf& operator=(const stmt_str_buf&) { throw USER_EXCEPTION2(SE1003, "Assign operator for stmt_str_buf is not implemented"); }
