@@ -793,39 +793,19 @@ bool CollationHandler_utf8::ends_with(const tuple_cell *tc, const tuple_cell *su
     return result;
 }
 
+
+template <class Iterator1, class Iterator2>
+static inline void utf8_contains_part2(Iterator2 &start1, const Iterator2 &end1, int *res, Iterator1 &start, const int len)
+{
+	int len1 = end1 - start1;
+	(*res) = PPSubsMatch::contains<Iterator1, Iterator2>(start, start1, len, len1);
+}
+
 template <class Iterator>
 static inline void utf8_contains(Iterator &start, const Iterator &end, const tuple_cell *subs, int *res)
 {
     int len = end - start;
-    switch (subs->get_type()) 
-    {
-        case tc_light_atomic_var_size: 
-        case tc_light_atomic_fix_size: 
-        {
-             char *str = subs->get_str_mem();
-             int len1 = subs->get_strlen_mem();
-             char_iterator start1(str, len1, 0);
-             (*res) = PPSubsMatch::contains<Iterator, char_iterator>(start, start1, len, len1);
-             break; 
-        }
-        case tc_heavy_atomic_estr: 
-        case tc_heavy_atomic_pstr_short: 
-        {
-             int len1 = subs->get_strlen_vmm();
-             xptr data = subs->get_str_vmm();
-             estr_iterator start1(len1, data);
-             (*res) = PPSubsMatch::contains<Iterator, estr_iterator>(start, start1, len, len1);
-             break; 
-        }
-        case tc_heavy_atomic_pstr_long: 
-        {
-             int len1 = subs->get_strlen_vmm();
-             xptr data = subs->get_str_vmm();
-             pstr_long_iterator start1(data);
-             (*res) = PPSubsMatch::contains<Iterator, pstr_long_iterator>(start, start1, len, len1);
-		     break; 
-        }
-    }
+	STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(utf8_contains_part2, subs, res, start, len);
 }
 
 int CollationHandler_utf8::contains(const tuple_cell *src, const tuple_cell *subs)
