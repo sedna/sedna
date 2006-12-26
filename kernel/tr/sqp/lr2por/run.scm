@@ -391,3 +391,35 @@
          (element
           (const (type !xs!QName) ("" "last"))
           (space-sequence (var ("" "last")))))))))))
+
+(porc:process-query
+ (go
+  '(query
+    (prolog
+     (declare-function
+      (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "fn1"))
+      (((one !xs!integer) (var ("" "n"))))
+      (result-type (one !xs!integer))
+      (body
+       (fun-call
+        (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "fn2"))
+        (var ("" "n")))))
+     (declare-function
+      (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "fn2"))
+      (((one !xs!integer) (var ("" "n"))))
+      (result-type (one !xs!integer))
+      (body
+       (if@
+        (=@ (var ("" "n")) (const (type !xs!integer) "1"))
+        (const (type !xs!integer) "1")
+        (+@
+         (var ("" "n"))
+         (fun-call
+          (const
+           (type !xs!QName)
+           ("http://www.w3.org/2005/xquery-local-functions" "fn1"))
+          (-@ (var ("" "n")) (const (type !xs!integer) "1"))))))))
+    (query-body
+     (fun-call
+      (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "fn1"))
+      (const (type !xs!integer) "4"))))))

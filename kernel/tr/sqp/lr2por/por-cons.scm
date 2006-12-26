@@ -46,25 +46,28 @@
 ; Higher-level functions
 
 ; Returns the new query
-(define (porc:process-query query)
-  (if
-   (not (and (list? query) (= (length query) 3)
-             (eq? (car query) 'query)
-             (pair? (cadr query))
-             (eq? (caadr query) 'query-prolog)
-             (pair? (caddr query))))             
-   query  ; an error occured, query is kept as is
-   (let ((query-prolog (cadr query))
-         (query-essense (caddr query)))
-     (list
-      (car query)   ; = 'query
-      (cons (car query-prolog)
-            (porc:process-prolog (cdr query-prolog)))
-      (porc:process-essense query-essense)))))
+(define (porc:process-query query . debug-mode?)
+  (let ((debug-mode?
+         (and (not (null? debug-mode?))
+              (car debug-mode?))))
+    (if
+     (not (and (list? query) (= (length query) 3)
+               (eq? (car query) 'query)
+               (pair? (cadr query))
+               (eq? (caadr query) 'query-prolog)
+               (pair? (caddr query))))             
+     query  ; an error occured, query is kept as is
+     (let ((query-prolog (cadr query))
+           (query-essense (caddr query)))
+       (list
+        (car query)   ; = 'query
+        (cons (car query-prolog)
+              (porc:process-prolog (cdr query-prolog) debug-mode?))
+        (porc:process-essense query-essense debug-mode?))))))
 
 ; Process the query prolog
 ; Query bodies may contain constructors
-(define (porc:process-prolog prolog-decl-lst)
+(define (porc:process-prolog prolog-decl-lst debug-mode?)
   (if
    (null? prolog-decl-lst)
    prolog-decl-lst
@@ -79,12 +82,13 @@
              (caddr curr-decl)  ; args types
              (cadddr curr-decl)  ; result type
              (car
-              (porc:process-phys-op (list-ref curr-decl 4) #t #f #f)))
+              (porc:process-phys-op
+               (list-ref curr-decl 4) #t #f #f debug-mode?)))
        curr-decl)
-      (porc:process-prolog (cdr prolog-decl-lst))))))
+      (porc:process-prolog (cdr prolog-decl-lst) debug-mode?)))))
 
 ; Processes query essense
-(define (porc:process-essense query-essense)
+(define (porc:process-essense query-essense debug-mode?)
   (cond
     ((not (and (pair? query-essense)
                (not (null? query-essense))))
@@ -97,7 +101,7 @@
      query-essense)
     (else
      (car (porc:propagate
-           porc:process-phys-op query-essense #t #f #f)))))
+           porc:process-phys-op query-essense #t #f #f debug-mode?)))))
 
 
 ;==========================================================================
@@ -108,18 +112,20 @@
 ; prefix-redeclared?
 
 ; Iterates a list of operations in the map style
-(define (porc:map func op-lst copy? ns-prefix in-attr?)
+(define (porc:map func op-lst copy? ns-prefix in-attr? debug-mode?)
   (let ((alist
          (map
-          (lambda (op) (func op copy? ns-prefix in-attr?))
+          (lambda (op) (func op copy? ns-prefix in-attr? debug-mode?))
           op-lst)))
     (list (map car alist)
           (porc:map-append cadr alist)
           (porc:lst-or (map caddr alist)))))
 
 ; Propagates the operation
-(define (porc:propagate func op copy? ns-prefix in-attr?)
-  (let ((new (porc:map func (cdr op) copy? ns-prefix in-attr?)))
+(define (porc:propagate func op copy? ns-prefix in-attr? debug-mode?)
+  (let ((new
+         (porc:map
+          func (cdr op) copy? ns-prefix in-attr? debug-mode?)))
     (cons
      (cons (car op) (car new))
      (cdr new))))
@@ -134,40 +140,72 @@
 ; attribute constructor
 
 ; PhysOp
-(define (porc:process-phys-op expr copy? ns-prefix in-attr?)
+(define (porc:process-phys-op
+         expr copy? ns-prefix in-attr? debug-mode?)
   (cond
     ((or (not (pair? expr)) (null? expr))  ; atomic
      (list expr '() #f))
     ((and (number? (car expr))
           (= (length expr) 2))
      (let ((new
-            (porc:process-op (cadr expr) copy? ns-prefix in-attr?)))
-      (cons
-       (list (car expr)  ; number - tuple size
-             (car new))
-       (cdr new))))
+            (porc:process-op
+             (cadr expr) copy? ns-prefix in-attr? debug-mode?)))
+       (cond
+         ((and (pair? (cadr expr))
+                (eq? (caadr expr) 'PPDebug))
+          (cons
+           (if
+            debug-mode?
+            ; Avoid inserting a nested PPDebug
+            (list (car expr)
+                  (list (caadr expr)  ; == 'PPDebug
+                        (cadadr expr)  ; original PPDebug arguments            
+                        (caddr
+                         (cadr  ; inner (PPDebug ...)
+                          (caddr  ; `(tuple-size inner-PPDebug)
+                           (car new)  ; outer (PPDebug ...)
+                           )))))
+            ; Removing this PPDebug
+            (caddr (car new)))
+           (cdr new)))
+         ((and debug-mode?
+               (pair? (car new))
+               (not (eq? (caar new) 'PPDebug)))
+          ; Wrapping into PPDebug
+          (cons
+           `(,(car expr)  ; tuple size
+             (PPDebug
+              (,(symbol->string (caar new))  ; physical operation name
+               "")
+              (,(car expr) ,(car new))))
+           (cdr new)))
+         (else  
+          (cons (list (car expr)  ; number - tuple size
+                      (car new))
+                (cdr new))))))
     ((pair? (car expr))  ; a-la SXPath nodeset
      (porc:map
-      porc:process-phys-op expr copy? ns-prefix in-attr?))
+      porc:process-phys-op expr copy? ns-prefix in-attr? debug-mode?))
     (else  ; propagate
      (porc:propagate
-      porc:process-phys-op expr copy? ns-prefix in-attr?))))
+      porc:process-phys-op expr copy? ns-prefix in-attr? debug-mode?))))
      
 ; Op
-(define (porc:process-op op copy? ns-prefix in-attr?)
+(define (porc:process-op op copy? ns-prefix in-attr? debug-mode?)
   (cond
     ((or (not (pair? op)) (null? op))
      (list op '() #f))
     ((eq? (car op) 'PPSequence)
      ; Sequence preserves the value of copy? and ns-prefix
      (porc:propagate
-      porc:process-phys-op op copy? ns-prefix in-attr?))
+      porc:process-phys-op op copy? ns-prefix in-attr? debug-mode?))
     ((eq? (car op) 'PPIf)
      (let ((cnd  ; condition
-            (porc:process-phys-op (cadr op) #t ns-prefix in-attr?))
+            (porc:process-phys-op
+             (cadr op) #t ns-prefix in-attr? debug-mode?))
            (altern
             (porc:map porc:process-phys-op
-                      (cddr op) copy? ns-prefix in-attr?)))
+                      (cddr op) copy? ns-prefix in-attr? debug-mode?)))
        (list (cons (car op)  ;='PPIf
                    (cons (car cnd)
                          (car altern)))
@@ -185,10 +223,11 @@
                  #f  ; will match nothing
                  ))
             (name
-             (porc:process-phys-op (cadr op) #t #f in-attr?))
+             (porc:process-phys-op
+              (cadr op) #t #f in-attr? debug-mode?))
             (value
              (porc:process-phys-op
-              (caddr op) #f this-ns-prefix in-attr?)))
+              (caddr op) #f this-ns-prefix in-attr? debug-mode?)))
       (list
        (list (car op)  ; = 'PPElement or 'PPAttribute
              (car name)
@@ -204,13 +243,13 @@
      ; Attribute, pi, comment and computed text node constructors must
      ; have in-attr? == #t for their content
      (let ((name
-            (porc:process-phys-op (cadr op) #t #f #t))
+            (porc:process-phys-op (cadr op) #t #f #t debug-mode?))
            (value
             ; Constructors inside attribute values have to be copied
             ; due to fn:string-value implicitly invoked
             (porc:process-phys-op (caddr op)
                                   #t  ; was: #f
-                                  #f #t)))
+                                  #f #t debug-mode?)))
       (list
        (list (car op)  ; = 'PPElement or 'PPAttribute
              (car name)
@@ -223,11 +262,11 @@
     ((and (eq? (car op) 'PPPI)
           (= (length op) 3))
      (let ((name
-            (porc:process-phys-op (cadr op) #t #f #t))
+            (porc:process-phys-op (cadr op) #t #f #t debug-mode?))
            (value
             ; Constructors inside PIs have to be copied
             ; due to fn:string-value implicitly invoked
-            (porc:process-phys-op (caddr op) #t #f #t)))
+            (porc:process-phys-op (caddr op) #t #f #t debug-mode?)))
       (list
        (list (car op)  ; = 'PPPI
              (car name)
@@ -244,7 +283,7 @@
      )
     ((eq? (car op) 'PPComment)
      (let ((content
-            (porc:process-phys-op (cadr op) #t #f #t)))
+            (porc:process-phys-op (cadr op) #t #f #t debug-mode?)))
       (list
        (list (car op)  ; = 'PPComment
              (car content)
@@ -257,7 +296,7 @@
      (let ((content
             (porc:process-phys-op (cadr op)
                                   #f  ; don't copy inside document node
-                                  #f #f)))
+                                  #f #f debug-mode?)))
       (list
        (list (car op)  ; = 'PPDocument
              (car content))
@@ -266,7 +305,7 @@
        )))
     ((eq? (car op) 'PPText)
      (let ((content
-            (porc:process-phys-op (cadr op) #t #f #t)))
+            (porc:process-phys-op (cadr op) #t #f #t debug-mode?)))
       (list
        (list (car op)  ; = 'PPText
              (car content)
@@ -287,7 +326,7 @@
            (var-value (caddr op))
            (expr (cadddr op)))
        (let* ((new-expr
-               (porc:process-phys-op expr copy? #f in-attr?))
+               (porc:process-phys-op expr copy? #f in-attr? debug-mode?))
               (new-value
                (porc:process-phys-op
                 var-value
@@ -296,7 +335,7 @@
                    => cdr)
                   (else #t))
                 #f
-                in-attr?)))
+                in-attr? debug-mode?)))
          (list
           (list (car op)  ; = 'PPLet
                 (cadr op)  ; var num
@@ -311,10 +350,10 @@
     ((eq? (car op) 'PPSpaceSequence)
      ; The analogue of porc:propagate body
      (let ((new (porc:map porc:process-phys-op
-                          (cdr op) copy? ns-prefix in-attr?)))
+                          (cdr op) copy? ns-prefix in-attr? debug-mode?)))
        (cons
         (cons (car op) ; == PPSpaceSequence
               (append (car new) (list in-attr?)))
         (cdr new))))
     (else  ; any other operation
-     (porc:propagate porc:process-phys-op op #t #f in-attr?))))
+     (porc:propagate porc:process-phys-op op #t #f in-attr? debug-mode?))))
