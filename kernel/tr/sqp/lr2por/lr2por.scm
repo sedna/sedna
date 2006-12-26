@@ -2102,19 +2102,19 @@
 ; Order-by
 
 (define (l2p:list-partition lst pred?)
-  (let loop ((src lst)
+  (let loop ((lst lst)
              (satisfies '())
              (fails '()))
     (cond
-      ((null? src)
+      ((null? lst)
        (values (reverse satisfies)
                (reverse fails)))
       ((pred? (car lst))
-       (loop (cdr src)
+       (loop (cdr lst)
              (cons (car lst) satisfies)
              fails))
       (else
-       (loop (cdr src)
+       (loop (cdr lst)
              satisfies
              (cons (car lst) fails))))))
 
@@ -2161,8 +2161,8 @@
                            (var-name (cadr var-wrapped)))
                       (if
                        (eq? (car expr) 'let@)
-                       (values for-variables (cons var-name let-variables))
-                       (values (cons var-name for-variables) let-variables))))
+                       (values for-variables (cons var-wrapped let-variables))
+                       (values (cons var-wrapped for-variables) let-variables))))
                   (lambda (new-for-variables new-let-variables)
                     (call-with-values
                      (lambda ()
@@ -2225,9 +2225,9 @@
                (null? var-lst)
                last-body
                `(slet@
-                 (var ,(car var-lst))
+                 ,(car var-lst)
                  (fun-def
-                  ((xs:anyType (var ,(car var-lst))))
+                  ((xs:anyType ,(car var-lst)))
                   ,(form-slets (cdr var-lst) last-body)))))))
     (if
      (not (and (pair? arg-lst)
@@ -2245,11 +2245,31 @@
           (l2p:replace-unio2tmp-tuple subexpr (map caddr spec-lst)))
         (lambda (subexpr-with-tmp-tuple for-variables let-variables)
           (let ((second-fun (cadr arg-lst)))
-            (list
-             subexpr-with-tmp-tuple
-             (list (car second-fun)
-                   (cadr second-fun)
-                   (form-slets let-variables (caddr second-fun)))))))))))
+            ((lambda (x)
+               ;(pp (list arg-lst x))
+               x)
+             (list
+              (list (car order-expr)  ; == 'order-by
+                    subexpr-with-tmp-tuple
+                    (call-with-values
+                     (lambda ()
+                       (l2p:list-partition
+                        (cadr fun-def)
+                        (lambda (x) (member (cadr x) let-variables))))
+                     (lambda (let-vars for-vars)
+                       (list (car fun-def)  ; == 'fun-def
+                             (append for-vars let-vars)
+                             (caddr fun-def)  ; function body
+                             ))))
+              (list (car second-fun)
+                    (call-with-values
+                     (lambda ()
+                       (l2p:list-partition
+                        (cadr second-fun)
+                        (lambda (x) (member (cadr x) let-variables))))
+                     (lambda (let-vars for-vars)
+                       (append for-vars let-vars)))
+                    (form-slets let-variables (caddr second-fun))))))))))))
 
 (define (l2p:order-by2por arg-lst)
   (let* ((subexpr (car arg-lst))
