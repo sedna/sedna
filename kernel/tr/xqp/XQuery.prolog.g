@@ -167,13 +167,16 @@ inheritMode!:
 ;
 
 import!:
-	  importModule
-	| importSchema
+	(  im:importModule  <<#0=#im;>>
+ 	 | is:importSchema  <<#0=#is;>>
+	)
 ;
 
 importModule!:
-	IMPORT {MODULE NAMESPACE nc:ncname EQUAL}   s1:STRINGLITERAL {AT_ s2:STRINGLITERAL 
-	<<#0=#(#[AST_IMPORT_MODULE], #nc, #[$s1->getText(), AST_STRING_CONST], #[$s2->getText(), AST_STRING_CONST]);>>
+	IMPORT MODULE <<#0=#[AST_IMPORT_MODULE];>> {NAMESPACE nc:ncname EQUAL <<#0->addChild(#nc);>>}   s1:STRINGLITERAL
+	<<#0->addChild(#[$s1->getText(), AST_STRING_CONST]);>>
+	 {AT_ s2:STRINGLITERAL 
+	<<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>
 	(COMMA  s3:STRINGLITERAL <<#0->addChild(#[$s3->getText(), AST_STRING_CONST]);>>)*}
 
 //	<<throw USER_EXCEPTION(XQST0016);>>

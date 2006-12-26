@@ -502,6 +502,9 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(HL_PHYS_LOG_P)				\
                                $(HL_LOGICAL_LOG_P)			\
                                $(MO_P)						\
+                               $(PQ_P)						\
+                               $(SQP_P)						\
+                               $(XQP_P)						\
                                $(NID_P)						\
                                $(PSTR_P)					\
                                $(STRUCTURES_P)				\
@@ -527,6 +530,9 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(HL_PHYS_LOG_S)				\
                                $(HL_LOGICAL_LOG_S)			\
                                $(MO_S)						\
+                               $(PQ_S)						\
+                               $(SQP_S)						\
+                               $(XQP_S)						\
                                $(NID_S)						\
                                $(PSTR_S)					\
                                $(STRUCTURES_S)				\
