@@ -58,6 +58,7 @@ void str_buf_base::move_to_mem_buf()
 //pre: text is not in estr buf
 void str_buf_base::move_to_estr()
 {
+	U_ASSERT(!mem_only());
 	if (m_flags & f_text_in_buf)
 	{
 		m_ptr = m_estr.append_mstr(m_buf);
@@ -129,12 +130,20 @@ void str_buf_base::append(const tuple_cell &tc)
 			const int add_len = tc.get_strlen_vmm();
 			const int new_len = m_len + add_len;
 
-			if (new_len < T_STR_MEMBUF_SIZE)
+			if (new_len < T_STR_MEMBUF_SIZE || mem_only())
 			{
 				if (m_buf_size == 0)
 				{
 					m_buf_size = T_STR_MEMBUF_SIZE;
+					while (m_buf_size <= new_len)
+						m_buf_size *= 2;
 					m_buf = (char *)malloc(m_buf_size);
+				}
+				else if (m_buf_size <= new_len)
+				{
+					while (m_buf_size <= new_len)
+						m_buf_size *= 2;
+					m_buf = (char*)realloc(m_buf, m_buf_size);
 				}
 				move_to_mem_buf();
 				if (m_flags & f_text_in_estr_buf)
@@ -161,13 +170,21 @@ void str_buf_base::append(const tuple_cell &tc)
 void str_buf_base::append(const char *str, int add_len)
 {
 	const int new_len = m_len + add_len;
-	if (new_len < T_STR_MEMBUF_SIZE)
+	if (new_len < T_STR_MEMBUF_SIZE || mem_only())
 	{
 		if (m_buf_size == 0)
 		{
 			m_buf_size = T_STR_MEMBUF_SIZE;
-			ASSERT(m_buf == NULL);
+			while (m_buf_size <= new_len)
+				m_buf_size *= 2;
+			U_ASSERT(m_buf == NULL);
 			m_buf = (char *)malloc(m_buf_size);
+		}
+		else if (m_buf_size <= new_len)
+		{
+			while (m_buf_size <= new_len)
+				m_buf_size *= 2;
+			m_buf = (char*)realloc(m_buf, m_buf_size);
 		}
 		if (m_len > 0)
 		{
@@ -179,6 +196,7 @@ void str_buf_base::append(const char *str, int add_len)
 		m_ttype = text_mem;
 		strncpy(m_buf + m_len, str, add_len);
 		m_len = new_len;
+		U_ASSERT(m_len < m_buf_size);
 		m_buf[m_len] = 0;
 	}
 	else
@@ -206,6 +224,22 @@ char * str_buf_base::c_str()
 		return m_str_ptr.get();
 	move_to_mem_buf();
 	return m_buf;
+}
+char * str_buf_base::get_str()
+{
+	U_ASSERT(mem_only());
+	move_to_mem_buf();
+	char *res = m_buf;
+
+	m_buf = NULL;
+	m_buf_size = 0;
+	U_ASSERT(!(m_flags & f_text_in_estr_buf));
+	m_flags = 0;
+	m_ptr = XNULL;
+	m_len = 0;
+	m_ttype = text_mem;
+
+	return res;
 }
 
 str_buf_base::~str_buf_base()
