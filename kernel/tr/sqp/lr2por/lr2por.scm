@@ -1264,9 +1264,20 @@
                                   (cadr (caddr (car node)))
                                   ", arity == "
                                   (number->string (length (cdr node)))))
-                  `(1 (PPFunCall
-                       ,func-index
-                       ,@(map l2p:any-lr-node2por (cdr node)))))))
+                  (let ((tuple-size 1)
+                        (name-pair (caddr (car node))))
+                    `(,tuple-size
+                      (PPDebug
+                       ("PPFunCall"
+                        ,(if
+                          (string=? (car name-pair) "")
+                          (cadr name-pair)
+                          (string-append
+                           (car name-pair) ":" (cadr name-pair))))
+                       (,tuple-size
+                        (PPFunCall
+                         ,func-index
+                         ,@(map l2p:any-lr-node2por (cdr node))))))))))
              
              ; *** ext-fun-call ***
              ((eq? op-name 'ext-fun-call)
