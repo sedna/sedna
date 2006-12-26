@@ -214,13 +214,16 @@ emptyOrderDecl!:
 ;
 
 importModule!:
-	#(AST_IMPORT_MODULE l:AST_LOCAL_NAME s1:AST_STRING_CONST s2:AST_STRING_CONST
-	<<#importModule=#(#["import-module"],
-	                  #(#["const"], #(#["type"], #["!xs!NCName"]), #[std::string("\"")+std::string(l->getText())+ std::string("\"")]),
-	                  #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s1->getText())+ std::string("\"")]),
-	                  #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s2->getText())+ std::string("\"")]));>>
+	#(AST_IMPORT_MODULE 
+	<<#importModule=#["import-module"];>>
+	 {l:AST_LOCAL_NAME <<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!NCName"]), #[std::string(l->getText())]));>>} 
+	s1:AST_STRING_CONST 
+	<<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[std::string(s1->getText())]));>>
+	{s2:AST_STRING_CONST
+	<<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[std::string(s2->getText())]));>>
+
 	 (s3:AST_STRING_CONST 
-	<<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"")+std::string(s3->getText())+ std::string("\"")]));>>)*)
+	<<#importModule->addChild(#(#["const"], #(#["type"], #["!xs!string"]), #[std::string(s3->getText())]));>>)* })
 ;
 
 
