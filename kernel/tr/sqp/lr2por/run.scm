@@ -423,3 +423,66 @@
      (fun-call
       (const (type !xs!QName) ("http://www.w3.org/2005/xquery-local-functions" "fn1"))
       (const (type !xs!integer) "4"))))))
+
+(go
+ '(query
+ (module (declare-namespace foo (const (type !xs!string) "http://xy.com")) (declare-function
+    (const (type !xs!QName) ("http://xy.com" "fact"))
+    (((one !xs!integer) (var ("" "n"))))
+    (result-type (zero-or-more (item-test)))
+    (body (fun-call (const (type !xs!QName) ("http://xy.c" "fact")) (var ("" "n")))))
+   (declare-global-var
+    (var ("http://xy.com" "pi"))
+    (var ("http://xy.c" "pi"))
+    (zero-or-more (item-test))))
+ (module (declare-namespace foo (const (type !xs!string) "http://xy.c")) (declare-function
+    (const (type !xs!QName) ("http://xy.c" "fact"))
+    (((one !xs!integer) (var ("" "n"))))
+    (result-type (zero-or-more (item-test)))
+    (body (fun-call (const (type !xs!QName) ("http://xy" "fact")) (var ("" "n")))))
+   (declare-global-var
+    (var ("http://xy.c" "pi"))
+    (var ("http://xy" "pi"))
+    (zero-or-more (item-test))))
+ (module (declare-namespace foo (const (type !xs!string) "http://xy")) (declare-function
+    (const (type !xs!QName) ("http://xy" "fact"))
+    (((one !xs!integer) (var ("" "n"))))
+    (result-type (zero-or-more (item-test)))
+    (body (fun-call (const (type !xs!QName) ("http://" "fact")) (var ("" "n")))))
+   (declare-global-var
+    (var ("http://xy" "pi"))
+    (var ("http://" "pi"))
+    (zero-or-more (item-test))))
+ (module (declare-namespace foo (const (type !xs!string) "http://")) (declare-function
+    (const (type !xs!QName) ("http://" "fact"))
+    (((one !xs!integer) (var ("" "n"))))
+    (result-type (zero-or-more (item-test)))
+    (body (fun-call (const (type !xs!QName) ("http:" "fact")) (var ("" "n")))))
+   (declare-global-var
+    (var ("http://" "pi"))
+    (var ("http:" "pi"))
+    (zero-or-more (item-test))))
+ (module (declare-namespace foo (const (type !xs!string) "http:")) (declare-function
+    (const (type !xs!QName) ("http:" "fact"))
+    (((one !xs!integer) (var ("" "n"))))
+    (result-type (zero-or-more (item-test)))
+    (body
+     (if@
+      (eq@ (var ("" "n")) (const (type !xs!integer) "0"))
+      (const (type !xs!integer) "1")
+      (*@
+       (var ("" "n"))
+       (fun-call
+         (const (type !xs!QName) ("http:" "fact"))
+         (-@ (var ("" "n")) (const (type !xs!integer) "1")))))))
+   (declare-global-var
+    (var ("http:" "pi"))
+    (const (type !xs!decimal) "3.14")
+    (zero-or-more (item-test))))
+ (prolog)
+ (query-body
+   (*@
+    (var ("http://xy.com" "pi"))
+    (fun-call
+      (const (type !xs!QName) ("http://xy.com" "fact"))
+      (const (type !xs!integer) "5"))))))

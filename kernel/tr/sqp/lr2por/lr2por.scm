@@ -6,22 +6,54 @@
 
 ;-------------------------------------------------------------------------------
 ; lp2por
+
 (define (l2p:lr2por query-in-lr)
-  (call-with-values
-   (lambda ()
-     (l2p:lr-query-prolog2por (cadr query-in-lr)))
-   (lambda (PPquery-prolog var-binding)
-     (let ((PPquery-expr
-            (l2p:lr-query-expr2por
-             ((lambda (query-expr)
-                (if (null? var-binding)
-                    query-expr
-                    (l2p:rename-vars var-binding query-expr)))
-              (if (eq? (car query-in-lr) 'query)
-                  (caddr query-in-lr) query-in-lr)))))
-       (set! var-count 0)  ; DL: ad-hoc cleanup
-       (set! funcs-map '())  ; DL: ad-hoc cleanup
-       `(query ,PPquery-prolog ,PPquery-expr)))))
+  (let ((modules+prolog (filter
+                         (lambda (x)
+                           (and (pair? x)
+                                (memq (car x) '(module prolog))))
+                         query-in-lr)))
+    (begin
+      ; add all function names to the global func-list
+      ; DL: moved here from l2p:lr-query-prolog2por
+      (for-each
+       ; DL: Every declare-function has a single arity value
+       (lambda (y)
+         (l2p:add-func-name!
+          (list
+           (caddr (cadr y))  ; function name
+           (length (caddr y))  ; function arity
+           ; DL: was: (caddr (cadr y))
+           )))
+       (filter
+        (lambda (x) (eq? (car x) 'declare-function))
+        (apply append (map cdr modules+prolog))))
+      (let loop ((modules+prolog modules+prolog)
+                 (PPquery-prolog '())  ; modules and prolog in PP
+                 (var-binding '())
+                 (next-var-num 0))
+        (if
+         (null? modules+prolog)
+         (let ((PPquery-expr
+                (l2p:lr-query-expr2por
+                 ((lambda (query-expr)
+                    (if (null? var-binding)
+                        query-expr
+                        (l2p:rename-vars var-binding query-expr)))
+                  (if (eq? (car query-in-lr) 'query)
+                      (assq 'query-body (cdr query-in-lr))
+                      query-in-lr)))))
+           (set! var-count 0)  ; DL: ad-hoc cleanup
+           (set! funcs-map '())  ; DL: ad-hoc cleanup
+           `(query ,@(reverse PPquery-prolog) ,PPquery-expr))
+         (call-with-values
+          (lambda ()
+            (l2p:lr-query-prolog2por (car modules+prolog) next-var-num))
+          (lambda (in-pp vars next-var-num)
+            (loop (cdr modules+prolog)
+                  (cons in-pp PPquery-prolog)
+                  (append vars var-binding)
+                  next-var-num))))))))
 
 ; DL: was  
 ;  (if (eq? (car query-in-lr) 'query)
@@ -37,24 +69,11 @@
 ;-------------------------------------------------------------------------------
 
 ; lr-query-prolog2por
-; DL: returns (values por-prolog var-binding)
-(define (l2p:lr-query-prolog2por query-prolog-in-lr)
+; DL: returns (values por-prolog var-binding next-var-num)
+(define (l2p:lr-query-prolog2por query-prolog-in-lr next-var-num)
   (if
-   (eq? 'prolog (car query-prolog-in-lr)) 
+   (memq (car query-prolog-in-lr) '(prolog module))
    (begin
-     ; add all function names to the global func-list
-     (for-each
-      ; DL: Every declare-function has a single arity value
-      (lambda (y)
-        (l2p:add-func-name!
-         (list
-          (caddr (cadr y))  ; function name
-          (length (caddr y))  ; function arity
-         ; DL: was: (caddr (cadr y))
-         )))
-      (filter
-       (lambda (x) (eq? (car x) 'declare-function))
-       (cdr query-prolog-in-lr)))
      (call-with-values
       (lambda ()
         (l2p:fold-prolog-decls 
@@ -62,10 +81,12 @@
           (lambda (x)
             (not
              (eq? (car x) 'declare-external-function)))
-          (cdr query-prolog-in-lr))))
-      (lambda (lr-prolog var-binding)
+          (cdr query-prolog-in-lr))
+         next-var-num))
+      (lambda (lr-prolog var-binding next-var-num)
         (values
-         (cons 'query-prolog
+         (cons (if (eq? (car query-prolog-in-lr) 'module)
+                   'module 'query-prolog)
                (if
                 (not (null?  ; there are option declarations
                       (filter
@@ -85,18 +106,19 @@
                        (not (and (pair? x) (eq? 'PPOptionDecl (car x)))))
                      lr-prolog))
                 lr-prolog))
-         var-binding))))
+         var-binding
+         next-var-num))))
    (cl:signal-input-error SE4008 "argument is not query-prolog")))
 
-; Returns (values por-prolog var-binding)
-(define (l2p:fold-prolog-decls prolog)
+; Returns (values por-prolog var-binding next-var-num)
+(define (l2p:fold-prolog-decls prolog next-var-num)
   (let loop ((src prolog)
              (res '())
              (var-binding '())
-             (next-var-num 0))
+             (next-var-num next-var-num))
     (cond
       ((null? src)
-       (values (reverse res) var-binding))
+       (values (reverse res) var-binding next-var-num))
       ((and (pair? (car src))
             (eq? (caar src) 'declare-global-var))
        (let ((expr (car src)))
