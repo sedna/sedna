@@ -516,6 +516,10 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(AUTH_P)					\
                                $(RCV_P)						\
                                $(EXECUTOR_P)					\
+                               $(PQ_P)						\
+                               $(SQP_P)						\
+                               $(XQP_P)						\
+                               $(AUTH_P)					\
                                $(MO_P)						\
                                $(CRMUTILS_P)					\
                     $(LDOUT)$@ $(TRN_RCV_OBJS)				\
@@ -544,6 +548,10 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(AUTH_S)					\
                                $(RCV_S)						\
                                $(EXECUTOR_S)				\
+                               $(PQ_S)						\
+                               $(SQP_S)						\
+                               $(XQP_S)						\
+                               $(AUTH_S)					\
                                $(CRMUTILS_S)					\
                                $(STRUCTURES_S)					\
                                $(MO_S)						\
