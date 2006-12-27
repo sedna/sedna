@@ -359,6 +359,8 @@ static_context **dynamic_context::st_cxts = NULL;
 int dynamic_context::st_cxts_num = 0;
 int dynamic_context::st_cxts_pos = 0;
 
+static_context *dynamic_context::unmanaged_st_cxt = NULL;
+
 CollationManager dynamic_context::collation_manager;
 se_output_method dynamic_context::output_method = se_output_method_xml;
 

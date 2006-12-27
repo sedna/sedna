@@ -15,7 +15,7 @@ const char *get_module(const char *module_uri)
     bool mem_alloced = false;
 
 
-    std::string module_query_in_por = "(query (query-prolog) (PPQueryRoot 0 (1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
+    std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
     module_query_in_por += module_uri;
     module_query_in_por += "\" !xs!string))))))))))";
 
@@ -31,7 +31,7 @@ const char *get_module(const char *module_uri)
 
         // execute
         tree->tree.op->next(t);
-        if (!t.cells[0].is_light_atomic() || t.cells[0].get_atomic_type() != xs_string)
+        if (!t.cells[0].is_atomic() || t.cells[0].get_atomic_type() != xs_string)
             throw USER_EXCEPTION2(SE1003, "Error in get_module function");
 
         size = t.cells[0].get_strlen();

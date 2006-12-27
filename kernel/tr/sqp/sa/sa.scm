@@ -9,6 +9,9 @@
 ; Prefix for this module is "sa:"
 (declare (unit sa) (uses common-lib scm-error-codes))
 
+(declare (foreign-declare "const char* c_get_module(const char*);"))
+(define get-module (foreign-callback-lambda c-string* "c_get_module" c-string))
+
 ;==========================================================================
 ; Trivial datatypes, accessors and predicates
 
@@ -4945,56 +4948,56 @@
 
 ; Interface function
 ; Stub:
-(define (get-module uri)
-  (let ((string-port (open-output-string)))
-    (begin
-      (write       
-       (if
-        (< (string-length uri) 7)
-        `(lib-module
-          (module-decl (const (type !xs!NCName) foo)
-                       (const (type !xs!string) ,uri))
-          (prolog
-           (declare-function
-            (const (type !xs!QName) (,uri "fact"))
-            (((one !xs!integer) (var ("" "n"))))
-            (result-type (zero-or-more (item-test)))
-            (body
-             (if@
-              (eq@ (var ("" "n")) (const (type !xs!integer) "0"))
-              (const (type !xs!integer) "1")
-              (*@
-               (var ("" "n"))
-               (fun-call
-                (const (type !xs!QName) (,uri "fact"))
-                (-@ (var ("" "n")) (const (type !xs!integer) "1")))))))
-           (declare-global-var
-            (var (,uri "pi"))
-            (const (type !xs!decimal) "3.14")
-            (zero-or-more (item-test)))))
-        (let ((depend-on (substring uri 0 (- (string-length uri) 2))))
-        `(lib-module
-          (module-decl
-           (const (type !xs!NCName) foo)
-           (const (type !xs!string) ,uri))
-          (prolog
-           (import-module
-            (const (type !xs!NCName) math)
-            (const (type !xs!string) ,depend-on))
-           (declare-function
-            (const (type !xs!QName) (,uri "fact"))
-            (((one !xs!integer) (var ("" "n"))))
-            (result-type (zero-or-more (item-test)))
-            (body
-             (fun-call
-              (const (type !xs!QName) (,depend-on "fact"))
-              (var ("" "n")))))
-           (declare-global-var
-            (var (,uri "pi"))
-            (var (,depend-on "pi"))
-            (zero-or-more (item-test)))))))
-       string-port)
-      (get-output-string string-port))))
+;(define (get-module uri)
+;  (let ((string-port (open-output-string)))
+;    (begin
+;      (write       
+;       (if
+;        (< (string-length uri) 7)
+;        `(lib-module
+;          (module-decl (const (type !xs!NCName) foo)
+;                       (const (type !xs!string) ,uri))
+;          (prolog
+;           (declare-function
+;            (const (type !xs!QName) (,uri "fact"))
+;            (((one !xs!integer) (var ("" "n"))))
+;            (result-type (zero-or-more (item-test)))
+;            (body
+;             (if@
+;              (eq@ (var ("" "n")) (const (type !xs!integer) "0"))
+;              (const (type !xs!integer) "1")
+;              (*@
+;               (var ("" "n"))
+;               (fun-call
+;                (const (type !xs!QName) (,uri "fact"))
+;                (-@ (var ("" "n")) (const (type !xs!integer) "1")))))))
+;           (declare-global-var
+;            (var (,uri "pi"))
+;            (const (type !xs!decimal) "3.14")
+;            (zero-or-more (item-test)))))
+;        (let ((depend-on (substring uri 0 (- (string-length uri) 2))))
+;        `(lib-module
+;          (module-decl
+;           (const (type !xs!NCName) foo)
+;           (const (type !xs!string) ,uri))
+;          (prolog
+;           (import-module
+;            (const (type !xs!NCName) math)
+;            (const (type !xs!string) ,depend-on))
+;           (declare-function
+;            (const (type !xs!QName) (,uri "fact"))
+;            (((one !xs!integer) (var ("" "n"))))
+;            (result-type (zero-or-more (item-test)))
+;            (body
+;             (fun-call
+;              (const (type !xs!QName) (,depend-on "fact"))
+;              (var ("" "n")))))
+;           (declare-global-var
+;            (var (,uri "pi"))
+;            (var (,depend-on "pi"))
+;            (zero-or-more (item-test)))))))
+;       string-port)
+;      (get-output-string string-port))))
 
 ; Returns (list uri module vars funcs)
 ; ATTENTION: open-input-string is a non-R5RS function. However, it is

@@ -300,6 +300,8 @@ public:
     static static_context **st_cxts;
     static int st_cxts_num;
     static int st_cxts_pos;
+    // FIXME: hack
+    static static_context *unmanaged_st_cxt;
 
 	static CollationManager collation_manager;
     /// Output method (set up in API, so it is one for all modules)
@@ -331,12 +333,14 @@ public:
 
     static dynamic_context *create_unmanaged(int _var_cxt_size_)
     {
-        return new dynamic_context(new static_context, _var_cxt_size_);
+        unmanaged_st_cxt = new static_context;
+        return new dynamic_context(unmanaged_st_cxt, _var_cxt_size_);
     }
 
     static void destroy_unmanaged(dynamic_context *cxt)
     {
-        delete cxt->st_cxt;
+        delete unmanaged_st_cxt;
+        unmanaged_st_cxt = NULL;
         delete cxt;
     }
 
@@ -358,7 +362,7 @@ public:
 
     static void set_datetime();
 
-    static static_context *__static_cxt() { return st_cxts[st_cxts_num - 1]; }
+    static static_context *__static_cxt() { return unmanaged_st_cxt ? unmanaged_st_cxt : st_cxts[st_cxts_num - 1]; }
 };
 
 

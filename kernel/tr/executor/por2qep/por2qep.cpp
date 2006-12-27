@@ -3494,10 +3494,10 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
             throw USER_EXCEPTION2(SE1004, "310.5");
 
         int var_cxt_size1 = atoi(qe->at(1).internal.num);
-        dynamic_context *cxt1 = new dynamic_context(info, var_cxt_size1);
+        dynamic_context *cxt1 = new dynamic_context(st_cxt, var_cxt_size1);
 
         int var_cxt_size2 = atoi(qe->at(3).internal.num);
-        dynamic_context *cxt2 = new dynamic_context(info, var_cxt_size2);
+        dynamic_context *cxt2 = new dynamic_context(st_cxt, var_cxt_size2);
 
         return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
 								make_pp_op(cxt2, qe->at(4).internal.list),
@@ -3572,7 +3572,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
             throw USER_EXCEPTION2(SE1004, "315.5");
 
         int var_cxt_size = atoi(qe->at(1).internal.num);
-        dynamic_context *cxt = new dynamic_context(info, var_cxt_size);
+        dynamic_context *cxt = new dynamic_context(st_cxt, var_cxt_size);
 
         return new PPDropModule(make_pp_op(cxt, qe->at(2).internal.list));
     }
