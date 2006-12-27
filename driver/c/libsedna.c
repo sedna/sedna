@@ -267,6 +267,36 @@ static int resultQueryHandler(struct SednaConnection *conn)
         connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
     }
+    while (conn->msg.instruction == se_DebugInfo)
+    {
+        if (conn->debug_handler)
+        {
+            int length;
+            int debug_type;
+            char debug_info[SE_SOCKET_MSG_BUF_SIZE];
+            if (conn->msg.length <= 0) 
+            {
+		        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                return SEDNA_ERROR;
+            }
+            net_int2int(&debug_type, conn->msg.body);
+            net_int2int(&length, conn->msg.body + 5);
+            if (length <= 0)
+            {
+		        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                return SEDNA_ERROR;
+            }
+            memcpy(debug_info, conn->msg.body + 9, length);
+            debug_info[length] = '\0';
+            conn->debug_handler(debug_type, debug_info);
+        }
+        
+        if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+   		{
+        	connectionFailure(conn, SE3007, NULL, NULL);
+	        return SEDNA_ERROR;
+    	}
+    }
     if (conn->msg.instruction == se_ErrorResponse)
     {
         setServerErrorMsg(conn, conn->msg);
@@ -336,11 +366,42 @@ static void release(struct SednaConnection *conn)
 static int execute(struct SednaConnection *conn)
 {
     /* read 320 - QuerySucceeded, 330 - QueryFailed, 340 - UpdateSucceeded or 350 - UpdateFailed*/
-    /* or 430 - BulkLoadFileName, 431 - BulkLoadFromStream, 100 - ErrorResponse.*/
+    /* or 430 - BulkLoadFileName, 431 - BulkLoadFromStream, 100 - ErrorResponse, */
+    /* or 325 - DebugInfo (retrieve all DebugInfo messages if there are) */
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
         connectionFailure(conn, SE3007, NULL, NULL);
         return SEDNA_ERROR;
+    }
+    while (conn->msg.instruction == se_DebugInfo)
+    {
+        if (conn->debug_handler)
+        {
+            int length;
+            int debug_type;
+            char debug_info[SE_SOCKET_MSG_BUF_SIZE];
+            if (conn->msg.length <= 0) 
+            {
+		        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                return SEDNA_ERROR;
+            }
+            net_int2int(&debug_type, conn->msg.body);
+            net_int2int(&length, conn->msg.body + 5);
+            if (length <= 0)
+            {
+		        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                return SEDNA_ERROR;
+            }
+            memcpy(debug_info, conn->msg.body + 9, length);
+            debug_info[length] = '\0';
+            conn->debug_handler(debug_type, debug_info);
+        }
+        
+        if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+   		{
+        	connectionFailure(conn, SE3007, NULL, NULL);
+	        return SEDNA_ERROR;
+    	}
     }
     if (conn->msg.instruction == se_ErrorResponse)
     {
@@ -658,8 +719,8 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         /*dbname string                  */
         conn->msg.length = 2 + 5 + login_len + 5 + db_name_len;
 
-        /* writing protocol version 1.0*/
-        conn->msg.body[0] = 1;
+        /* writing protocol version 2.0*/
+        conn->msg.body[0] = 2;
         conn->msg.body[1] = 0;
 
         /* writing login */
@@ -1591,4 +1652,9 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
     }
     
     return SEDNA_ERROR;
+}
+
+void SEsetDebugHandler(struct SednaConnection *conn, debug_handler_t _debug_handler_)
+{
+    conn->debug_handler = _debug_handler_;
 }

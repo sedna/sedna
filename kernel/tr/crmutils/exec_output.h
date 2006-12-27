@@ -42,7 +42,8 @@ public:
     virtual se_ostream& operator<<(long double n)                  = 0;
     virtual se_ostream& operator<<(void * n)                       = 0;
     virtual se_ostream& put(char c)                                = 0;
-    virtual se_ostream& write(const char *s, int n)                      = 0;
+    virtual se_ostream& write(const char *s, int n)                = 0;
+    virtual se_ostream& write_debug(int debug_type, const char *s, int n) = 0;
     virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
@@ -76,7 +77,8 @@ public:
     virtual se_ostream& operator<<(long double n)                                { o_str << n; return *this; }
     virtual se_ostream& operator<<(void * n)                                     { o_str << n; return *this; }
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
-    virtual se_ostream& write(const char *s, int n)                                    { o_str.write(s, n); return *this; }
+    virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
+    virtual se_ostream& write_debug(int debug_type, const char *s, int n)        { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
     virtual void end_of_data(bool res)                                           { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
@@ -106,6 +108,7 @@ public:
     virtual se_ostream& operator<<(void * n)                               { return *this; }
     virtual se_ostream& put(char c)                                        { return *this; }
     virtual se_ostream& write(const char *s, int n)                              { return *this; }
+    virtual se_ostream& write_debug(int debug_type, const char *s, int n)        { return *this; }
 	virtual se_ostream& flush()                                            { return *this; }
     virtual void end_of_data(bool res)                                     { ; }
     virtual void endline()                                                 { ; }
@@ -117,11 +120,13 @@ class se_socketostream : public se_ostream
 {
 private:
     USOCKET out_socket;
-
+	protocol_version p_ver;
     msg_struct res_msg;
+    
 
 public:
-    se_socketostream(USOCKET _out_socket_) : out_socket(_out_socket_) 
+    se_socketostream(USOCKET _out_socket_, protocol_version _p_ver_) : out_socket(_out_socket_),
+                                                                       p_ver (_p_ver_) 
     {  
         res_msg.body[0] = 0;           // in this version string format is always 0
         res_msg.length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
@@ -264,6 +269,46 @@ public:
          }
    	     return *this; 
 	}
+    virtual se_ostream& write_debug(int debug_type, const char *s, int n)		
+	{
+        if ((p_ver.major_version != 2) && (p_ver.minor_version != 0)) return *this;
+        
+    	res_msg.instruction = se_DebugInfo; //DebugInfo message
+		res_msg.length = 9; 
+        
+		if((res_msg.length + n) > (SE_SOCKET_MSG_BUF_SIZE-9))
+	    {
+	    	flush();	
+	    	int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-9);
+	    	int ost;
+	    	if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-9);
+			for (int i=0;i<celoe;i++)
+			{
+				res_msg.length = SE_SOCKET_MSG_BUF_SIZE;
+				// the body contains debug type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
+				// construct the buf for body.
+                int2net_int(debug_type, res_msg.body);
+                res_msg.body[4] = 0;
+				int2net_int(SE_SOCKET_MSG_BUF_SIZE-9, res_msg.body+5);
+				memcpy(res_msg.body+9, s+(SE_SOCKET_MSG_BUF_SIZE-9)*i, SE_SOCKET_MSG_BUF_SIZE-9);
+				
+				if(sp_send_msg(out_socket, &res_msg)!=0) throw USER_EXCEPTION(SE3006);
+			} //end for
+
+         	res_msg.length = ost+9;
+         	int2net_int(ost, res_msg.body+1);
+         	memcpy(res_msg.body+9, s+(SE_SOCKET_MSG_BUF_SIZE-9)*celoe, ost);
+         
+         }
+         else
+         {
+ 	         memcpy(res_msg.body+res_msg.length, s, n);
+         	 res_msg.length += n;
+             int2net_int(res_msg.length-5, res_msg.body+1);
+         }
+   	     return *this; 
+	}
+    
     virtual se_ostream& flush()				
     {
        if(res_msg.length > 5)

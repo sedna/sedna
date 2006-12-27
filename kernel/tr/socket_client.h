@@ -17,10 +17,6 @@
 #include "tr_globals.h"
 #include "tr_utils.h"
 
-struct protocol_version{
-	char major_version;
-	char minor_version;
-};
 enum client_states {NO_TRANSACTION, IN_TRANSACTION};
 enum read_msg_states {se_BeginAuthenticatingTransaction = 3,
                       se_Authentication = 2,
