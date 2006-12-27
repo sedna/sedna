@@ -136,18 +136,25 @@
     ))
 
 ; Clone of process-query-in-scheme for module processing
+; ATTENTION: The following functions
+;  (open-output-string)
+;  (get-output-string PORT)
+; are not R5RS-ones; however, they are implemented in Chicken and
+; in PLT, see
+; http://www.ugcs.caltech.edu/manuals/lang/chicken-1.63/chicken_32.html
+; http://gd.tuwien.ac.at/languages/scheme/tutorial-dsitaram/t-y-scheme-Z-H-11.html
 (define (process-module-in-scheme . step-id-dummy)
   (let* ((lr-query (get-scm-input-string))
          (query    `(#t ,(cl:string->scheme-list lr-query)))         
          (query    (if
                     (car query)
-;(begin
-; (write (cadr query))
+                    ;(begin
+                    ; (write (cadr query))
                     (handle-exceptions
                      ex
                      `(#f ,(cl:get-exception-message ex))
                      `(#t ,(sa:analyze-module (cadr query))))
-;)
+                    ;)
                     query))
          (query     (if
                      (car query)
@@ -157,7 +164,28 @@
                       `(#t ,@(map 
                               (lambda (q) (mlr:rewrite-module q))
                               (cdr query))))
-                     query)))
+                     query))
+         (module-name
+          (if
+           (car query)
+           (caddr
+            (caddr  ; (const (type !xs!string) "uri")
+             (cadr  ; (module-decl ...)
+              (cadr query)  ; (lib-module ...)
+              )))
+           ""))
+         
+         (query (if
+                 (car query)
+                 ; Converting S-expression into a string
+                 (let ((string-port (open-output-string)))
+                   (begin
+                     (write (cadr query) string-port)
+                     ; String ports need not be explicitly closed
+                     `(#t ,(get-output-string string-port) ,module-name)))
+                 query))
+         )
+    ; (write query)
     (set-scm-output-string (cl:scheme-list->string query))
     '()))
 
