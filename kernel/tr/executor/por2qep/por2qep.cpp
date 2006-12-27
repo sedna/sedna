@@ -338,8 +338,8 @@ sequence_type make_sequence_type(scheme_list *lst)
             st.type.type = st_pi;
             if (it_lst->size() == 2)
             {
-                if (it_lst->at(2).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "141.5");
-                st.type.info.ncname = xs_NCName_create(it_lst->at(2).internal.str, PathExpr_malloc_func(false));
+                if (it_lst->at(1).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "141.5");
+                st.type.info.ncname = xs_NCName_create(it_lst->at(1).internal.str, PathExpr_malloc_func(false));
             }
             else st.type.info.ncname = NULL;
         }
@@ -650,6 +650,30 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
                              make_pp_op(cxt, lst->at(2).internal.list),
                              make_pp_op(cxt, lst->at(3).internal.list));
         }
+    }
+    else if (op == "PPSLet")
+    {
+        if (   lst->size() != 4
+            || lst->at(1).type != SCM_LIST
+            || lst->at(2).type != SCM_LIST
+            || lst->at(3).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "06.2");
+
+        arr_of_var_dsc vars;
+        scheme_list *_vars_ = lst->at(1).internal.list;
+        for (int i = 0; i != _vars_->size(); i++)
+        {
+            if (_vars_->at(i).type != SCM_NUMBER)
+                throw USER_EXCEPTION2(SE1004, "06.3");
+
+            int var = atoi(_vars_->at(i).internal.num);
+            vars.push_back(var);
+        }
+        
+        opit = new PPSLet(cxt,
+                          vars,
+                          make_pp_op(cxt, lst->at(2).internal.list),
+                          make_pp_op(cxt, lst->at(3).internal.list));
     }
     else if (op == "PPConst")
     {
@@ -2122,7 +2146,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
                               make_pp_op(cxt, lst->at(1).internal.list),
                               make_pp_op(cxt, lst->at(2).internal.list));
     }
-    else if (op == "PPTuple")
+    else if (op == "PPTuple" || op == "PPSTuple")   /// PPSTuple is used only with PPOrderBy
     {
         if (   lst->size() == 1
            ) throw USER_EXCEPTION2(SE1004, "82");
@@ -2141,9 +2165,10 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
             arr.push_back(make_pp_op(cxt, lst->at(i).internal.list));
         }
 
-        opit = new PPTuple(cxt, arr);
+        if(op == "PPTuple") opit = new PPTuple(cxt, arr);
+        else opit = new PPSTuple(cxt, arr);
     }
-    else if (op == "PPPred1" || op == "PPPred2")	//PPPred1 and PPPred2 have much in common; hence, they are joined in one "if"
+    else if (op == "PPPred1" || op == "PPPred2")	/// PPPred1 and PPPred2 have much in common, hence they are joined in one "if"
     {
         if(op == "PPPred1")
         {

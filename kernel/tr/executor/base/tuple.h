@@ -482,8 +482,8 @@ struct tuple
     }
     void copy(const tuple_cell &tc)
     {
-        eos = false;
         if (cells_number != 1) throw USER_EXCEPTION2(SE1003, "Cannot construct tuple from tuple cell (size mismatch)");
+        eos = (tc.get_type() == tc_eos);
         cells[0] = tc;
     }
     void copy(const tuple_cell &tc1, const tuple_cell &tc2)
