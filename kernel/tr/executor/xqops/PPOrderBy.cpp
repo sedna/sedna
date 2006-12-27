@@ -84,6 +84,7 @@ void PPOrderBy::open  ()
     udata.modifiers = &modifiers;
     udata.size      = sizeof(__int64);            
     udata.buffer    = NULL;
+    udata.cxt       = cxt;
 
     ss = new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
@@ -431,7 +432,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         ud->sort->get(t, position1);
                         tuple_cell tc = t.cells[i];
                         ud->sort->get(t, position2);
-                        result = fn_compare(t.cells[i], tc)*order;
+                        result = fn_compare(t.cells[i], tc, ud->cxt->st_cxt->get_default_collation())*order;
                     }
                     break;
                 }

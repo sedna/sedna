@@ -9,13 +9,6 @@
 #include "sedna.h"
 #include "op_map.h"
 
-#define value_comp_eq     op_eq
-#define value_comp_ne     op_ne
-#define value_comp_lt     op_lt
-#define value_comp_le     op_le
-#define value_comp_gt     op_gt
-#define value_comp_ge     op_ge
-
 tuple_cell node_comp_is(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell node_comp_isnot(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell order_comp_lt(const tuple_cell &a1, const tuple_cell &a2);

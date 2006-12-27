@@ -21,7 +21,8 @@ PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,
                                                     key_path(_key_path_),
                                                     key_type(_key_type_),
                                                     db_ent(_db_ent_),
-                                                    index_name(_index_name_)
+                                                    index_name(_index_name_),
+                                                    cxt(_cxt_)
 {
     root = NULL;
 }

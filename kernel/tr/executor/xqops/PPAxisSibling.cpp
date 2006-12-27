@@ -8,8 +8,6 @@
 #include "PPAxisSibling.h"
 #include "node_utils.h"
 #include "PPUtils.h"
-using namespace tr_globals;
-//#include "PPStaticContext.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -157,7 +155,7 @@ void PPAxisSibling::next_string(tuple &t)
 
 void PPAxisSibling::next_qname(tuple &t)
 {
-	char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
+	char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element) ;
 	next_qname_and_text(t,uri,nt_data.ncname_local,element,comp_qname_type);
 }
 
@@ -248,7 +246,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
 
 void PPAxisSibling::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
+    char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element) ;
 	next_qname_and_text(t,uri,NULL,element,comp_uri_type);
 }
 

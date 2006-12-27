@@ -71,9 +71,15 @@ CalcOp *check_consistence_and_build_binary_calc_op(arr_of_PPOpIn *arr, scheme_li
     }
     else throw USER_EXCEPTION2(SE1004, "105");
 
-    return new BinaryOp(make_calc_op(arr, lst->at(1).internal.list),
-                        make_calc_op(arr, lst->at(2).internal.list),
-                        get_binary_op(t, t1, t2));
+    get_binary_op_res r = get_binary_op(t, t1, t2);
+    if (r.collation)
+        return new BinaryOpCollation(make_calc_op(arr, lst->at(1).internal.list),
+                                     make_calc_op(arr, lst->at(2).internal.list),
+                                     r.f.bf_c);
+    else
+        return new BinaryOp(make_calc_op(arr, lst->at(1).internal.list),
+                            make_calc_op(arr, lst->at(2).internal.list),
+                            r.f.bf);
 }
 
 CalcOp *make_calc_op(arr_of_PPOpIn *arr, scheme_list *lst)
@@ -500,7 +506,7 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
     return xtype;
 }
 
-orb_modifier make_order_by_modifier(scheme_list *lst)
+orb_modifier make_order_by_modifier(scheme_list *lst, dynamic_context *cxt)
 {
     if (   lst->size() != 2
         || lst->at(0).type != SCM_SYMBOL
@@ -514,7 +520,7 @@ orb_modifier make_order_by_modifier(scheme_list *lst)
     if(status == "greatest") m.status = ORB_EMPTY_GREATEST;
     else if(status == "least") m.status = ORB_EMPTY_LEAST;
     else if(status == "default")
-    	m.status = tr_globals::st_ct.empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;	
+    	m.status = cxt->st_cxt->empty_order == xq_empty_order_least ? ORB_EMPTY_LEAST : ORB_EMPTY_GREATEST;
     else throw USER_EXCEPTION2(SE1004, "157");
 
     string order = string(lst->at(1).internal.symb);
@@ -2808,7 +2814,7 @@ fn_dt_funcs_correct_type:
             if (modifiers_list->at(i).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "105");
             scheme_list *modifier = modifiers_list->at(i).internal.list;
-            orb_modifier om = make_order_by_modifier(modifier);
+            orb_modifier om = make_order_by_modifier(modifier, cxt);
             _modifiers_.push_back(om);
 		}	        
 
@@ -3262,7 +3268,7 @@ fn_dt_funcs_correct_type:
     return PPOpIn(opit, ts);
 }
 
-void make_pp_fun(scheme_list *lst, dynamic_context *cxt, function_declaration &fd)
+void make_pp_fun(scheme_list *lst, static_context *cxt, function_declaration &fd)
 {
     if (   lst->size() != 5
         || lst->at(0).type != SCM_SYMBOL
@@ -3283,9 +3289,11 @@ void make_pp_fun(scheme_list *lst, dynamic_context *cxt, function_declaration &f
     fd.num = args_list->size();
     fd.args = new sequence_type[fd.num];
     fd.cxt_size = atoi(lst->at(1).internal.num);
+    fd.st_cxt = cxt;
     for (i = 0; i < fd.num; i++) 
         fd.args[i] = make_sequence_type(args_list->at(i).internal.list);
-    fd.op = make_pp_op(cxt, lst->at(4).internal.list).op;
+    dynamic_context dc(cxt, 0);
+    fd.op = make_pp_op(&dc, lst->at(4).internal.list).op;
 }
 
 PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &s, t_print print_mode)
@@ -3974,7 +3982,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
         }
         else if (prolog_decl == "PPDefNSDeclFun")  
         {
-            // FIXME: Not Implemented
+            // Nothing to do because all function calls are resolved in sqp (static query processing) part
         }
         else if (prolog_decl == "PPVarDecl") 
         { 
@@ -4014,7 +4022,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
         }
         else if (prolog_decl == "PPFunDecl") 
         { 
-            make_pp_fun(qp->at(i).internal.list, NULL, dynamic_context::funct_cxt.fun_decls[function_counter]);
+            make_pp_fun(qp->at(i).internal.list, st_cxt, dynamic_context::funct_cxt.fun_decls[function_counter]);
             function_counter++; 
         }
         else if (prolog_decl == "PPOptionDecl")  
@@ -4082,7 +4090,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
                     {
                         // Call add_char_mapping in string matcher. We should substitute 'name' with 
                         // 'value'. Addition check could be needed for name and value
-                        st_cxt->add_char_mapping(name, value);
+                        dynamic_context::add_char_mapping(name, value);
                     }
                     else throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
                 }

@@ -83,7 +83,7 @@ void PPCreateFtIndex::close()
 //FIXME: import it in some other way (this function is in PPConstructors.cpp)
 //void separateLocalAndPrefix(NCName*& prefix,const char*& qname);
 void separateLocalAndPrefix(char*& prefix,const char*& qname);
-std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules)
+std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
 	tuple t(1);
 	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > * res = new std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >();
@@ -105,7 +105,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 		xml_ns* ns=NULL;
 		if (prefix!=NULL)
 		{
-			ns=tr_globals::st_ct.get_xmlns_by_prefix(prefix);
+			ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 			delete prefix;			
 		}
 		char* name = new char[strlen(qname)+1];
@@ -164,7 +164,7 @@ void PPCreateFtIndex::execute()
 	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *cust_rules_vec = NULL;
 
 	if (cust_rules.op)
-		cust_rules_vec = make_cust_rules_vector(&cust_rules);
+		cust_rules_vec = make_cust_rules_vector(&cust_rules, cxt);
 
 	ft_index_cell* ftic = ft_index_cell::create_index (object_path,
 				index_type,

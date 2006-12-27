@@ -288,7 +288,7 @@ void PPFnResolveUri::next  (tuple &t)
         
         if(is_base_static)
         {
-            base_uri = tr_globals::st_ct.base_uri;
+            base_uri = cxt->st_cxt->base_uri;
             if (base_uri == NULL) throw USER_EXCEPTION(FONS0005); //base uri property is not defined in static context.
         }
         else

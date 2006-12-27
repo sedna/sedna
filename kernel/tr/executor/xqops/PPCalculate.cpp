@@ -58,7 +58,7 @@ void PPCalculate::next(tuple &t)
     if (first_time)
     {
         first_time = false;
-        tuple_cell tc = tree->next();
+        tuple_cell tc = tree->next(cxt);
         if (tc.is_eos())
 		{
 			t.set_eos();
@@ -95,6 +95,7 @@ PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
 
 bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
+/*
     arr_of_PPOpIn *ch_arr = new arr_of_PPOpIn;
     ((PPCalculate*)cur)->children(ch_arr);
 
@@ -139,8 +140,9 @@ bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     //sequence *s1 = (sequence*)ch_r[0];
     //sequence *s2 = (sequence*)ch_r[1];
 
-    tuple_cell tc = ((PPCalculate*)cur)->tree->result(/**/ch_r/**/);
+    tuple_cell tc = ((PPCalculate*)cur)->tree->result(ch_r);
     if (tc.is_eos()) r = new sequence(1);
     else r = new sequence(tc);
+*/
     return true;
 }

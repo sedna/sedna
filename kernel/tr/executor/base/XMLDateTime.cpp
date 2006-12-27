@@ -750,16 +750,16 @@ XMLDateTime subtractDateTimes(const XMLDateTime& d1, const XMLDateTime& d2 )
 
     if (lTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
     {	
-	if (!tr_globals::st_ct.datetime_initialized)
-		tr_globals::st_ct.set_datetime();
-	lTemp = adjustToTimezone(lTemp, tr_globals::st_ct.implicit_timezone);
+	if (!dynamic_context::datetime_initialized)
+		dynamic_context::set_datetime();
+	lTemp = adjustToTimezone(lTemp, dynamic_context::implicit_timezone);
     }	
 
     if (rTemp.getValue(XMLDateTime::utc) == XMLDateTime::UTC_UNKNOWN)
     {	
-	if (!tr_globals::st_ct.datetime_initialized)
-		tr_globals::st_ct.set_datetime();
-	rTemp = adjustToTimezone(rTemp, tr_globals::st_ct.implicit_timezone);
+	if (!dynamic_context::datetime_initialized)
+		dynamic_context::set_datetime();
+	rTemp = adjustToTimezone(rTemp, dynamic_context::implicit_timezone);
     }	
 
     lTemp.normalize();

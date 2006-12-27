@@ -24,6 +24,7 @@
 class PPIterator;
 class PPVarIterator;
 class sequence;
+class static_context;
 
 
 /*******************************************************************************
@@ -174,6 +175,7 @@ struct function_declaration
     sequence_type *args;
     PPIterator *op;
     int cxt_size;
+    static_context *st_cxt;
 
     function_declaration() : num(0), args(NULL) {}
     ~function_declaration() { delete [] args; }
@@ -234,8 +236,6 @@ public:
     CollationHandler *default_collation_handler;
 
 
-    /// string matcher (symbol substitution in result output)
-    StrMatcher stm; 
     std::vector<xml_ns*> def_ns;
     std::vector<xptr> temp_docs;
     inscmap insc_ns;
@@ -258,11 +258,6 @@ public:
     inline void    remove_from_context(xml_ns* ns)
     { 
         remove_from_context(ns->prefix);
-    }
-
-    inline void add_char_mapping(const char* str, const char* rep_str, int pc =-1)
-    {
-	    stm.add_str(str, rep_str, pc);
     }
 
 
@@ -294,12 +289,7 @@ public:
     {
     }
 
-    dynamic_context(dynamic_context *_cxt_, int _var_cxt_size_) 
-        : st_cxt(_cxt_->st_cxt), var_cxt(_var_cxt_size_)
-    { 
-    }
-
-    ~dynamic_context() {}
+    ~dynamic_context() { /* we do not delete st_cxt here because we manage it some other way */ }
 
 
 
@@ -321,6 +311,9 @@ public:
     static XMLDateTime current_time;
     static XMLDateTime implicit_timezone;
     static bool datetime_initialized;
+
+    /// string matcher (symbol substitution in result output)
+    static StrMatcher stm;
 
 
     static void static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_);
@@ -357,7 +350,15 @@ public:
         glb_var_cxt.close();
     }
 
+    static void add_char_mapping(const char* str, const char* rep_str, int pc =-1)
+    {
+	    stm.add_str(str, rep_str, pc);
+    }
+
+
     static void set_datetime();
+
+    static static_context *__static_cxt() { return st_cxts[st_cxts_num - 1]; }
 };
 
 

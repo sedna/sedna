@@ -71,13 +71,13 @@ void index_on_session_end()
 t_scmnodes index_cell::fits_to_index_as_key(schema_node* snode)
 {
 	t_scmnodes res;
-	t_scmnodes objs=execute_abs_path_expr(snode->root,object);
+	t_scmnodes objs=execute_abs_path_expr(snode->root, object);
 	t_scmnodes::iterator it=objs.begin();
 	while (it!=objs.end())
 	{
 		if ((*it)->is_ancestor_or_self(snode))
 		{
-			t_scmnodes keys=execute_abs_path_expr(*it,key);
+			t_scmnodes keys=execute_abs_path_expr(*it, key);
 			t_scmnodes::iterator it2=keys.begin();
 			while (it2!=keys.end())
 			{

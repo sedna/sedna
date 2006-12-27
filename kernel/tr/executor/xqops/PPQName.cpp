@@ -94,7 +94,8 @@ void PPFnResolveQName::next(tuple &t)
 
         char *qname = xs_QName_create(qname_tc.get_str_mem(),
                                       node, 
-                                      malloc);
+                                      malloc,
+                                      cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
     }
@@ -197,7 +198,8 @@ void PPFnQName::next(tuple &t)
 
         char *qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
                                       qname_tc.get_str_mem(), 
-                                      malloc);
+                                      malloc,
+                                      cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
     }
@@ -553,7 +555,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
 
 
         std::vector<xml_ns*> xmlns;
-        get_in_scope_namespaces(node, xmlns);
+        get_in_scope_namespaces(node, xmlns, cxt);
 
         int i = 0;
         for (i = 0; i < xmlns.size(); ++i)
@@ -647,7 +649,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
             throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
 
-        get_in_scope_namespaces(node, xmlns);
+        get_in_scope_namespaces(node, xmlns, cxt);
         pos = 0;
     }
 

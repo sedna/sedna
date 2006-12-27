@@ -10,7 +10,6 @@
 #include "PPUtils.h"
 
 using namespace std;
-using namespace tr_globals;
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisDescendant
@@ -184,7 +183,7 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 }
 void PPAxisDescendant::next_qname(tuple &t)
 {
-	char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
+	char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element) ;
 	next_qname_and_text(t,uri,nt_data.ncname_local,element,comp_qname_type);
 }
 void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* name,t_item type,comp_schema cfun)
@@ -259,7 +258,7 @@ void PPAxisDescendant::next_text(tuple &t)
 }
 void PPAxisDescendant::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element) ;
+    char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element) ;
 	next_qname_and_text(t,uri,NULL,element,comp_uri_type);
 }
 
@@ -356,12 +355,12 @@ void PPAxisDescendantAttr::next_node(tuple &t)
 }
 void PPAxisDescendantAttr::next_qname(tuple &t)
 {
-	char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,attribute);
+	char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,attribute);
 	next_qname_and_text(t,uri,nt_data.ncname_local,attribute,comp_qname_type);
 }
 void PPAxisDescendantAttr::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,attribute) ;
+    char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,attribute) ;
 	next_qname_and_text(t,uri,NULL,attribute,comp_uri_type);
 }
 

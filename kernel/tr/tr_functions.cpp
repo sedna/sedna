@@ -45,7 +45,7 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
     {
        delete_qep(qep_tree);
 
-       tr_globals::st_ct.clear_context();
+       //tr_globals::st_ct.clear_context();
 
 	   tr_globals::estr_global.clear();
 

@@ -28,6 +28,7 @@ protected:
     bool first_time;
     bool eos_reached1;
 	bool eos_reached2;
+    CollationHandler *handler;
     void children(PPOpIn &_seq1_,PPOpIn &_seq2_) { _seq1_ = seq1; _seq2_ = seq2;}
 
 public:

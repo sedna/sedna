@@ -80,7 +80,13 @@ void inline free_indexdata_cell(pers_sset<index_cell,unsigned short>::pers_sset_
 	scm_free(idc->doc_name,true);
 	scm_free(idc,true);
 }
-index_cell* create_index (PathExpr *object_path, PathExpr *key_path, xmlscm_type keytype, doc_schema_node* schemaroot,const char * index_title, const char* doc_name,bool is_doc)
+index_cell* create_index (PathExpr *object_path, 
+                          PathExpr *key_path, 
+                          xmlscm_type keytype, 
+                          doc_schema_node* schemaroot,
+                          const char * index_title, 
+                          const char* doc_name,
+                          bool is_doc)
 {
     // I. Create and fill new index cell
 	index_sem_down();

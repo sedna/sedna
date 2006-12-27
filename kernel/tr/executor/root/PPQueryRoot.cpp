@@ -42,11 +42,11 @@ void PPQueryRoot::open()
     child.op->open();
 	if (print_mode==sxml)
 	{
-		tr_globals::st_ct.add_char_mapping("<","<",-1);
-		tr_globals::st_ct.add_char_mapping(">",">",-1);
-		tr_globals::st_ct.add_char_mapping("&","&",-1);
-		tr_globals::st_ct.add_char_mapping("\"","\\\"",-1);		
-		tr_globals::st_ct.add_char_mapping("\\","\\\\",-1);
+		dynamic_context::add_char_mapping("<","<",-1);
+		dynamic_context::add_char_mapping(">",">",-1);
+		dynamic_context::add_char_mapping("&","&",-1);
+		dynamic_context::add_char_mapping("\"","\\\"",-1);		
+		dynamic_context::add_char_mapping("\\","\\\\",-1);
 	}
 //    d_printf1("PPQueryRoot::open() end\n");
 }
@@ -63,10 +63,10 @@ bool PPQueryRoot::next()
 
     if (data.is_eos()) return false;
 
-    switch (tr_globals::st_ct.output_indent)
+    switch (cxt->st_cxt->output_indent)
     {
-        case se_output_indent_yes: print_tuple_indent(data, s, print_mode, first); break;
-        case se_output_indent_no : print_tuple(data, s, print_mode); break;
+        case se_output_indent_yes: print_tuple_indent(data, s, print_mode, first, cxt); break;
+        case se_output_indent_no : print_tuple(data, s, print_mode, cxt); break;
         default                  : throw USER_EXCEPTION2(SE1003, "Unexpected se_output_indent");
     }
 	

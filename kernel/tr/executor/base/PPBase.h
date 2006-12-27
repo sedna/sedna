@@ -15,7 +15,6 @@
 
 #include "dynamic_context.h"
 #include "sequence.h"
-#include "PPStaticContext.h"
 
 
 /*******************************************************************************
@@ -166,7 +165,7 @@ struct db_entity
 namespace tr_globals 
 {
 
-extern pp_static_context st_ct;
+//extern pp_static_context st_ct;
 
 
 /// BUFFERS ///////////////////////////////////////////////////////////////////

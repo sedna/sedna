@@ -71,10 +71,10 @@ struct debug_info
 
 /* initialization of standard output*/
 void init_output();
-void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype);
-void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first);
-void print_node(xptr node, se_ostream& crmout,t_print ptype);
-void print_node_indent(xptr node, se_ostream& crmout,t_print ptype);
+void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype,dynamic_context *cxt);
+void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first,dynamic_context *cxt);
+void print_node(xptr node, se_ostream& crmout,t_print ptype,dynamic_context *cxt);
+void print_node_indent(xptr node, se_ostream& crmout,t_print ptype,dynamic_context *cxt);
 void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent);
 
 /* prints information in block header */
