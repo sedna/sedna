@@ -6,7 +6,7 @@
 #include <set>
 //using namespace std;
 typedef std::map<std::string,xml_ns*> nms_map;
-void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result)
+void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result,dynamic_context *cxt)
 {	
 	nms_map mp;
 	CHECKP(node);
@@ -63,7 +63,7 @@ void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result)
 		{
 			if (it->second!=*sit)
 			{
-				xml_ns* new_ns=generate_pref(ctr++,(*sit)->uri);
+				xml_ns* new_ns=generate_pref(ctr++,(*sit)->uri,cxt);
 				mp[new_ns->prefix]=new_ns;
 			}
 		}
@@ -87,10 +87,10 @@ void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result)
 void get_namespaces_for_inherit(xptr node,std::vector<xml_ns*> &result)
 {
 }
-xml_ns* generate_pref(int ctr,const char* uri)
+xml_ns* generate_pref(int ctr,const char* uri,dynamic_context *cxt)
 {
 	char x[12] = "XXX";
 	if (ctr!=0)
 		sprintf(x+3, "%d",ctr );
-	return tr_globals::st_ct.get_ns_pair(x,uri);
+	return cxt->st_cxt->get_ns_pair(x,uri);
 }

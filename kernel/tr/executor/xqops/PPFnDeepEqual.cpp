@@ -103,7 +103,7 @@ bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
 	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
 	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
-	if (value_comp_eq(n1,n2,handler).get_xs_boolean())	
+	if (op_eq(n1,n2,handler).get_xs_boolean())	
 		return true;
 	else
 		return false;
@@ -185,7 +185,7 @@ void PPFnDeepEqual::next  (tuple &t)
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument " );
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+            handler = cxt->st_cxt->get_collation(col.get_str_mem());
         }
 
 		if (!eos_reached1) child1.op->reopen();
@@ -218,7 +218,7 @@ void PPFnDeepEqual::next  (tuple &t)
 				{
 					try
 					{
-						if (!value_comp_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
+						if (!op_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
 						{
 							t.copy(tuple_cell::atomic(false));
 							return;

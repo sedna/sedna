@@ -509,7 +509,7 @@ void PPFnBaseURI::next  (tuple &t)
 
         if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
-        tuple_cell tc = dm_base_uri(child.get(t).get_node());
+        tuple_cell tc = dm_base_uri(child.get(t).get_node(), cxt);
 
         child.op->next(t);
         if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
@@ -651,13 +651,13 @@ void PPFnStaticBaseUri::next  (tuple &t)
     {
         first_time = false;    
 
-        if ( tr_globals::st_ct.base_uri == NULL ) 
+        if ( cxt->st_cxt->base_uri == NULL ) 
         {
             t.copy( EMPTY_STRING_TC );
             (&t.cells[0]) -> set_xtype(xs_anyURI);
         }
         else 
-            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri) );
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->base_uri) );
     }
     else 
     {
@@ -702,10 +702,10 @@ void PPFnDefaultCollation::next  (tuple &t)
     {
         first_time = false;    
 
-        if ( tr_globals::st_ct.default_collation_uri == NULL ) 
+        if ( cxt->st_cxt->default_collation_uri == NULL ) 
             throw USER_EXCEPTION2(SE1003, "Default collation property could not be undefined in PPFnDefaultCollation.");
         else 
-            t.copy( tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.default_collation_uri) );
+            t.copy( tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->default_collation_uri) );
     }
     else 
     {

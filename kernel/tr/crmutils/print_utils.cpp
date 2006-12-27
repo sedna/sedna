@@ -372,7 +372,7 @@ void print_attribute_prefix(se_ostream& crmout,schema_node* scm, int indent)
  }
 
 }
-void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_print ptype)
+void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_print ptype, dynamic_context *cxt)
 {
 	switch(GETTYPE(GETSCHEMENODEX(node)))
 	{
@@ -393,7 +393,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				do
 				{	
 					
-					print_node_with_indent(child,crmout,wi,0,ptype);
+					print_node_with_indent(child,crmout,wi,0,ptype,cxt);
 					child=((n_dsc*)XADDR(child))->rdsc;
 					if (child==XNULL) break;
 					CHECKP(child);
@@ -406,7 +406,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			while (child!=XNULL)
 			{
 				CHECKP(child);
-				print_node_with_indent(child,crmout,wi,0,ptype);
+				print_node_with_indent(child,crmout,wi,0,ptype,cxt);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 			}
@@ -473,7 +473,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 
 					}
 				}
-				print_node_with_indent(child,crmout,wi,0,ptype);
+				print_node_with_indent(child,crmout,wi,0,ptype,cxt);
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
 				if (child==XNULL)  break;
@@ -542,7 +542,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						}
 						else
 						{
-							xmn=generate_pref(ctr++,sch->xmlns->uri);
+							xmn=generate_pref(ctr++,sch->xmlns->uri,cxt);
 						}						
 						xm_nsp[str]=xmn;
 						if (!att_ns) 
@@ -569,7 +569,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				if (ptype==sxml )  crmout << "(@";
 				do
 				{	
-					print_node_with_indent(child,crmout,wi,indent+1,ptype);
+					print_node_with_indent(child,crmout,wi,indent+1,ptype,cxt);
 					CHECKP(child);
 					child=((n_dsc*)XADDR(child))->rdsc;
 					if (child==XNULL)  break;
@@ -597,7 +597,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				{
 					if (!lit) curwi=wi;
 				}
-				print_node_with_indent(child,crmout,curwi,indent+1,ptype);
+				print_node_with_indent(child,crmout,curwi,indent+1,ptype,cxt);
 
 				CHECKP(child);
 				child=((n_dsc*)XADDR(child))->rdsc;
@@ -798,16 +798,16 @@ void print_node_with_prefixes(xptr node, se_ostream& crmout, int indent)
 		}
 	}
 }
-void print_node(xptr node, se_ostream& crmout,t_print ptype)
+void print_node(xptr node, se_ostream& crmout, t_print ptype, dynamic_context *cxt)
 { 
 	CHECKP(node);
-	print_node_with_indent(node,crmout,false,0,ptype);
+	print_node_with_indent(node,crmout,false,0,ptype,cxt);
 }
 
-void print_node_indent(xptr node, se_ostream& crmout,t_print ptype)
+void print_node_indent(xptr node, se_ostream& crmout, t_print ptype, dynamic_context *cxt)
 { 
 	CHECKP(node);
-	print_node_with_indent(node,crmout,true,0,ptype);
+	print_node_with_indent(node,crmout,true,0,ptype,cxt);
 	//print_node_with_prefixes(node, crmout, 0);
 }
 
@@ -850,17 +850,17 @@ void print_text(xptr txt, se_ostream& crmout,t_print ptype, t_item xq_type)
 		 crmout<<"\"";
 		//crmout.writextext(data,size);
 	}
-	st_ct.stm.flush(write_func,&crmout);
+	dynamic_context::stm.flush(write_func,&crmout);
 		
 }
-void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,bool is_first)
+void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,bool is_first,dynamic_context *cxt)
 {
 	if (tup.is_eos()) return;
 	if (ind && !is_first) crmout<<"\n";
 	for (int i=0;i<tup.cells_number;i++)
 	{
 		if (tup.cells[i].is_node())	
-			(ind)? print_node_indent(tup.cells[i].get_node(),crmout,ptype):print_node(tup.cells[i].get_node(),crmout,ptype);
+			(ind)? print_node_indent(tup.cells[i].get_node(),crmout,ptype,cxt):print_node(tup.cells[i].get_node(),crmout,ptype,cxt);
 		else
 		{
 			if (tup.cells[i].is_light_atomic())
@@ -891,16 +891,16 @@ void print_tuple(const tuple &tup, se_ostream& crmout,bool ind,t_print ptype,boo
 			{
 				print_tuple_cell(crmout,tup.cells[i]);				
 			}
-			st_ct.stm.flush(write_func,&crmout);
+			dynamic_context::stm.flush(write_func,&crmout);
 		}
 		if (ind && i<(tup.cells_number-1)) crmout<<" ,";
 	}
 }
-void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype)
-{print_tuple(tup,crmout,false,ptype,false);}
+void print_tuple(const tuple &tup, se_ostream& crmout,t_print ptype,dynamic_context *cxt)
+{print_tuple(tup,crmout,false,ptype,false,cxt);}
 
-void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first)
-{print_tuple(tup,crmout,true,ptype,is_first);}
+void print_tuple_indent(const tuple &tup, se_ostream& crmout,t_print ptype,bool is_first,dynamic_context *cxt)
+{print_tuple(tup,crmout,true,ptype,is_first,cxt);}
 /* prints the list of metadata features*/
 void print_metadata(se_ostream& crmout)
 {

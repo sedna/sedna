@@ -106,6 +106,8 @@ struct orb_user_data
     arr_of_common_type* header;                     //Array of common types structures.
     arr_of_orb_modifier* modifiers;                 //Array of standart order by modifiers - [empty (greatest | least)] and [ascending | descending].
     temp_buffer* buffer;                            //Buffer for memory copy operations (when ALIGNMENT_REQUIRED or two blocks are used).
+
+    dynamic_context *cxt;
 };
 
 

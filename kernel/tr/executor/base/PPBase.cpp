@@ -9,10 +9,6 @@
 #include "PPSLStub.h"
 #include "PPFunCall.h"
 
-
-
-
-
 bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, void*& r)
 {
     if (res_seq->size() > STRICT_FUNS_BOUND)
@@ -34,7 +30,7 @@ bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, 
 namespace tr_globals
 {
 
-pp_static_context st_ct;
+//pp_static_context st_ct;
 
 char mem_str_buf[MAX_MEM_STR_SIZE + 1];
 char mem_str_buf2[MAX_MEM_STR_SIZE + 1];

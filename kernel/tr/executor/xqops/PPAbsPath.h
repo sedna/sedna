@@ -29,8 +29,8 @@ protected:
     friend int compare_merged_seq_elem(const void *e1, const void *e2);
 
     bool determine_root();
-    static void create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
-                                  schema_node *root, PathExpr *path_expr);
+    void create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
+                           schema_node *root, PathExpr *path_expr);
 
 public:
     virtual void open   ();

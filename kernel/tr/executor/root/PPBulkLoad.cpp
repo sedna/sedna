@@ -118,7 +118,7 @@ void PPBulkLoad::execute()
     else
           write_to_logical_log = false;
     
-    bool boundary_space_strip = (cxt1->st_cxt->boundary_space/*tr_globals::st_ct.boundary_space*/ == xq_boundary_space_strip);
+    bool boundary_space_strip = (cxt1->st_cxt->boundary_space == xq_boundary_space_strip);
 
     try {
    	    if (collection.op == NULL) 

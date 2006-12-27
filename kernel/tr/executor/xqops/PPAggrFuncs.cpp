@@ -97,7 +97,7 @@ void PPFnMaxMin::next(tuple &t)
                 throw USER_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the second argument in ") + PPFnMaxMin_fun_name[i] + ". Argument contains more than one item").c_str());
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+            handler = cxt->st_cxt->get_collation(col.get_str_mem());
         }
 
         tuple_cell res;

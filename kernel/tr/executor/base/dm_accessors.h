@@ -9,6 +9,7 @@
 
 #include "sedna.h"
 #include "tuple.h"
+#include "dynamic_context.h"
 
 
 /// internal function for getting parent of a node
@@ -31,7 +32,7 @@ enum dm_node_kind_type {
 /**
  * Data Model Accessors according to XQuery Data Model
  */
-tuple_cell        dm_base_uri    (xptr node);
+tuple_cell        dm_base_uri    (xptr node, dynamic_context *cxt);
 tuple_cell        dm_document_uri(xptr node);
 tuple_cell        dm_nilled      (xptr node);
 dm_node_kind_type dm_node_kind   (xptr node);

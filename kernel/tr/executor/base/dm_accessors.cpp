@@ -12,7 +12,7 @@
 #include "d_printf.h"
 #include "node_utils.h"
 
-tuple_cell dm_base_uri(xptr node)
+tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 {
     CHECKP(node);
 
@@ -43,8 +43,8 @@ tuple_cell dm_base_uri(xptr node)
     }
 
     // xml_base_node == NULL
-    if (IS_TMP_BLOCK(node) && tr_globals::st_ct.base_uri)
-        return tuple_cell::atomic_deep(xs_anyURI, tr_globals::st_ct.base_uri);
+    if (IS_TMP_BLOCK(node) && cxt->st_cxt->base_uri)
+        return tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->base_uri);
 
     return tuple_cell::eos();
 }

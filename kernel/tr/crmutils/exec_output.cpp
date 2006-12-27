@@ -31,7 +31,7 @@ se_ostream& se_ostream::operator<<(__int64 n)
 
 se_ostream& se_ostream::writextext(char *s, int n)
 {
-	st_ct.stm.parse(s,n,write_func,this,(int)pat_element);
+	dynamic_context::stm.parse(s,n,write_func,this,(int)pat_element);
    /* int j = 0, i = 0;
     for (i = 0; i < n; i++)
     {
@@ -76,7 +76,7 @@ se_ostream& se_ostream::writextext(char *s, int n)
 
 se_ostream& se_ostream::writeattribute(char *s, int n)
 { 
-	st_ct.stm.parse(s,n,write_func,this,(int)pat_attribute);
+	dynamic_context::stm.parse(s,n,write_func,this,(int)pat_attribute);
 	/*int j = 0, i = 0;
 	for (i = 0; i < n; i++)
 	{

@@ -410,7 +410,7 @@ void PPFnDistinctValues::next(tuple &t)
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+            handler = cxt->st_cxt->get_collation(col.get_str_mem());
         }
     }
 
@@ -444,7 +444,7 @@ void PPFnDistinctValues::next(tuple &t)
         {
             s->get(t, pos);
             try {
-                tuple_cell comp_res = value_comp_eq(tc, t.cells[0], handler);
+                tuple_cell comp_res = op_eq(tc, t.cells[0], handler);
                 if (comp_res.get_xs_boolean()) break;
             } catch (SednaUserException &e) {
                 // continue cycle
@@ -563,7 +563,7 @@ void PPFnIndexOf::next(tuple &t)
                 throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:index-of(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
-            handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+            handler = cxt->st_cxt->get_collation(col.get_str_mem());
         }
 
         srch_child.op->next(t);
@@ -593,7 +593,7 @@ void PPFnIndexOf::next(tuple &t)
 
         try 
         {
-            tc = value_comp_eq(tc, search_param, handler);
+            tc = op_eq(tc, search_param, handler);
             if (tc.get_xs_boolean())  break; 
         } 
         catch (SednaUserException &e) { /* continue cycle */ }

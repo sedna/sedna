@@ -98,7 +98,7 @@ char *xs_QName_create(const char* prefix_and_local,
     if (pos)
     {
         // find xmlns by calling get_xmlns_by_prefix
-        xml_ns* xmlns = tr_globals::st_ct.get_xmlns_by_prefix(prefix_and_local, pos);
+        xml_ns* xmlns = dynamic_context::__static_cxt()->get_xmlns_by_prefix(prefix_and_local, pos);
         return xs_QName_create(xmlns, prefix_and_local + pos + 1, alloc_func);
     }
     else
@@ -109,7 +109,8 @@ char *xs_QName_create(const char* prefix_and_local,
 
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
-                      void* (*alloc_func)(size_t))
+                      void* (*alloc_func)(size_t),
+                      dynamic_context *cxt)
 {
     U_ASSERT(prefix_and_local);
 
@@ -136,7 +137,7 @@ char *xs_QName_create(const char* uri,
 			if (!chech_constraints_for_xs_NCName(prefix_and_local, pos))
 				throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
-        xmlns = tr_globals::st_ct.get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
+        xmlns = cxt->st_cxt->get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
     }
     else
     { // uri is empty...
@@ -150,7 +151,8 @@ char *xs_QName_create(const char* uri,
 
 char *xs_QName_create(const char* prefix_and_local,
                       const xptr& elem_node,
-                      void* (*alloc_func)(size_t))
+                      void* (*alloc_func)(size_t),
+                      dynamic_context *cxt)
 {
     U_ASSERT(prefix_and_local);
 
@@ -178,7 +180,7 @@ char *xs_QName_create(const char* prefix_and_local,
         throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
 
     std::vector<xml_ns*> xmlns;
-    get_in_scope_namespaces(elem_node, xmlns);
+    get_in_scope_namespaces(elem_node, xmlns, cxt);
     const char *tgt_prefix = NULL;
 
     for (int i = 0; i < xmlns.size(); i++)
@@ -261,7 +263,7 @@ bool _xs_QName_not_equal(const char *prefix, const char *local, const xptr &node
 	xml_ns* node_ns = GETSCHEMENODE(XADDR(node))->xmlns;
 	char* node_uri = node_ns ? node_ns->uri : NULL;
     const char *node_local = GETSCHEMENODE(XADDR(node))->name;
-    char* uri = prefix ? (tr_globals::st_ct.get_xmlns_by_prefix(prefix)->uri) : NULL;
+    char* uri = prefix ? (dynamic_context::__static_cxt()->get_xmlns_by_prefix(prefix)->uri) : NULL;
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
 }

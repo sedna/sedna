@@ -194,7 +194,7 @@ void PPFnTrace::next(tuple &t)
     if (t.is_eos()) 
         first_time = true;
     else 
-        print_tuple_indent(t, crm_out, xml, is_first);
+        print_tuple_indent(t, crm_out, xml, is_first, cxt);
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)

@@ -17,6 +17,8 @@
 #include "vmm.h"
 #include "schema.h"
 
+class dynamic_context;
+
 typedef bool (*comp_schema)(const schema_node* scm,const char* uri,const char* name, t_item type);
 
 
@@ -264,11 +266,11 @@ bool inline is_next_node_attribute (xptr node)
 //checks if the node is the descendant of one of the nodes in the vector
 bool is_scmnode_has_ancestor_or_self(schema_node * scm_node, std::set<schema_node*>* scm_nodes_set );
 
-#define get_in_scope_namespaces(n, r)  get_in_scope_namespaces_local(n, r)
+#define get_in_scope_namespaces(n, r, cxt)  get_in_scope_namespaces_local(n, r, cxt)
 //Namespaces
-void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result);
-void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result);
+void get_in_scope_namespaces_local(xptr node,std::vector<xml_ns*> &result,dynamic_context *cxt);
+void get_in_scope_namespaces_broad(xptr node,std::vector<xml_ns*> &result,dynamic_context *cxt);
 void get_namespaces_for_inherit(xptr node,std::vector<xml_ns*> &result);
-xml_ns* generate_pref(int ctr,const char* uri);
+xml_ns* generate_pref(int ctr,const char* uri,dynamic_context *cxt);
 #endif
 

@@ -42,15 +42,15 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
     {
 	first_time = false;
 
-	if (!tr_globals::st_ct.datetime_initialized)
-		tr_globals::st_ct.set_datetime();
+	if (!dynamic_context::datetime_initialized)
+		dynamic_context::set_datetime();
 
 	switch (dateTimeFunc)
 	{
-		case currentDateTime:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_datetime.getPackedDateTime(), xs_dateTime)); break;
-		case currentDate:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_date.getPackedDateTime(), xs_date)); break;
-		case currentTime:	t.copy(tuple_cell::atomic(tr_globals::st_ct.current_time.getPackedDateTime(), xs_time)); break;
-		case implicitTimezone:	t.copy(tuple_cell::atomic(tr_globals::st_ct.implicit_timezone.getPackedDuration(), xs_dayTimeDuration)); break;
+		case currentDateTime:	t.copy(tuple_cell::atomic(dynamic_context::current_datetime.getPackedDateTime(), xs_dateTime)); break;
+		case currentDate:	t.copy(tuple_cell::atomic(dynamic_context::current_date.getPackedDateTime(), xs_date)); break;
+		case currentTime:	t.copy(tuple_cell::atomic(dynamic_context::current_time.getPackedDateTime(), xs_time)); break;
+		case implicitTimezone:	t.copy(tuple_cell::atomic(dynamic_context::implicit_timezone.getPackedDuration(), xs_dayTimeDuration)); break;
 	}
     }
     else 
@@ -257,8 +257,8 @@ void PPFnDateTimeFunc::next  (tuple &t)
 		case adjustDateToTimezone:
 		case adjustTimeToTimezone:
 					// extract implicit timezone from static context and use it to adjust the datetime
-					if (!tr_globals::st_ct.datetime_initialized)
-						tr_globals::st_ct.set_datetime();
+					if (!dynamic_context::datetime_initialized)
+						dynamic_context::set_datetime();
 
 					if (tc_type != xs_date &&
 						tc_type != xs_dateTime &&
@@ -266,7 +266,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 					throw USER_EXCEPTION2(XPTY0004, "Invalid type passed to fn:dateTime function");
 					
 					t.copy(tuple_cell::atomic(adjustToTimezone(XMLDateTime(tc.get_xs_dateTime(), tc_type),
-										  tr_globals::st_ct.implicit_timezone).getPackedDateTime(), tc_type));
+										  dynamic_context::implicit_timezone).getPackedDateTime(), tc_type));
 					break;
 		default:		throw USER_EXCEPTION2(XPTY0004, "Invalid date/time function");
 		}

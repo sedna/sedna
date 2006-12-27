@@ -17,7 +17,6 @@
 #include "xs_names.h"
 
 using namespace std;
-using namespace tr_globals;
 bool PPConstructor::firstCons = true;
 schema_node* PPConstructor::root_schema=NULL;
 xptr PPConstructor::virt_root=XNULL;
@@ -322,7 +321,7 @@ void PPElementConstructor::next  (tuple &t)
 			separateLocalAndPrefix(prefix,name);
 			if (prefix!=NULL)
 			{
-				ns=st_ct.get_xmlns_by_prefix(prefix);
+				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 				delete prefix;
 			}
 		}
@@ -339,9 +338,9 @@ void PPElementConstructor::next  (tuple &t)
 		else
 		{
 			if (leftind!=XNULL)
-				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(st_ct.preserve_type)?xs_anyType:xs_untyped,ns);
+				new_element= insert_element(removeIndirection(leftind),XNULL,XNULL,name,(cxt->st_cxt->preserve_type)?xs_anyType:xs_untyped,ns);
 			else
-				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(st_ct.preserve_type)?xs_anyType:xs_untyped,ns);
+				new_element= insert_element(XNULL,XNULL,removeIndirection(parind),name,(cxt->st_cxt->preserve_type)?xs_anyType:xs_untyped,ns);
 			conscnt++;
 		}
 		int cnt=conscnt;
@@ -455,7 +454,7 @@ void PPElementConstructor::next  (tuple &t)
 				{
 					if (typ==document)
 					{
-						xptr res = copy_content(removeIndirection(indir),node,left,st_ct.preserve_type);
+						xptr res = copy_content(removeIndirection(indir),node,left,cxt->st_cxt->preserve_type);
 						if (res!=XNULL)					
 						{
 							left=res;
@@ -464,7 +463,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 					else
 					{
-						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,st_ct.preserve_type);
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
 						cont_leftind=((n_dsc*)XADDR(left))->indir;
 					}
 						
@@ -520,7 +519,7 @@ void PPElementConstructor::next  (tuple &t)
 		vector<xml_ns*>::iterator it=ns_list.begin();
 		while (it!=ns_list.end())
 		{
-			st_ct.remove_from_context(*it);
+			cxt->st_cxt->remove_from_context(*it);
 			it++;
 		}
 		//context return;
@@ -684,7 +683,7 @@ void PPAttributeConstructor::next  (tuple &t)
 				throw USER_EXCEPTION(XQDY0044);
 			if (prefix!=NULL)
 			{
-				ns=st_ct.get_xmlns_by_prefix(prefix);
+				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 				delete prefix;			
 			}
 		}
@@ -842,7 +841,7 @@ void PPNamespaceConstructor::next  (tuple &t)
 			getStringParameter(content);
 			uri=(char*)str_val.c_str();
 		}
-		xml_ns* ns=st_ct.add_to_context(prefix,uri);
+		xml_ns* ns=cxt->st_cxt->add_to_context(prefix,uri);
 		
 		//Element insertion
 		xptr new_namespace= insert_namespace(XNULL,XNULL,virt_root,ns);
@@ -1378,7 +1377,7 @@ void PPDocumentConstructor::next  (tuple &t)
 		int cnt=conscnt;
 		int oldcnt=conscnt;
 		xptr new_doc=insert_document("tmp",false);
-		st_ct.temp_docs.push_back(new_doc);
+		cxt->st_cxt->temp_docs.push_back(new_doc);
 		xptr indir=((n_dsc*)XADDR(new_doc))->indir;
 		cont_parind=indir;
 		cont_leftind=XNULL;
@@ -1448,7 +1447,7 @@ void PPDocumentConstructor::next  (tuple &t)
 				{
 					if (typ==document)
 					{
-						xptr res = copy_content(removeIndirection(indir),node,left,st_ct.preserve_type);
+						xptr res = copy_content(removeIndirection(indir),node,left,cxt->st_cxt->preserve_type);
 						if (res!=XNULL)					
 							left=res;
 						else 
@@ -1459,7 +1458,7 @@ void PPDocumentConstructor::next  (tuple &t)
 						
 					}
 					else
-						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,st_ct.preserve_type);
+						left=deep_pers_copy(left,XNULL,removeIndirection(indir),node,cxt->st_cxt->preserve_type);
 						
 				}
 				cont_leftind=((n_dsc*)XADDR(left))->indir;

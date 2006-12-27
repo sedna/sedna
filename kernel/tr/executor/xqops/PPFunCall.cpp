@@ -274,7 +274,7 @@ void PPFunCall::next(tuple &t)
 #ifdef STRICT_FUNS
         if (new_cxt == NULL)
 #endif
-            new_cxt = new dynamic_context(cxt, fd.cxt_size);
+            new_cxt = new dynamic_context(fd.st_cxt, fd.cxt_size);
 
 #ifdef STRICT_FUNS
         if (strict_mode)

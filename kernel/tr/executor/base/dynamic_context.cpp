@@ -62,11 +62,6 @@ static_context::static_context()
     strcpy(default_collation_uri, codepoint_collation_uri);
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(codepoint_collation_uri);
     /////////////////////////////////////////////////////////////////////////
-
-	stm.add_str(">","&gt;");
-	stm.add_str("<","&lt;");
-	stm.add_str("&","&amp;");
-	stm.add_str("\"","&quot;", pat_attribute);
 }
 
 static_context::~static_context() 
@@ -373,6 +368,8 @@ XMLDateTime dynamic_context::current_time;
 XMLDateTime dynamic_context::implicit_timezone;
 bool dynamic_context::datetime_initialized = false;
 
+StrMatcher dynamic_context::stm;
+
 
 
 void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_cxts_num_)
@@ -384,6 +381,12 @@ void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_c
     st_cxts_num = _st_cxts_num_;
     st_cxts_pos = 0;
     st_cxts = new static_context*[st_cxts_num];
+
+	stm.reset();//REDO!!!!
+	stm.add_str(">","&gt;");
+	stm.add_str("<","&lt;");
+	stm.add_str("&","&amp;");
+	stm.add_str("\"","&quot;", pat_attribute);
 }
 
 void dynamic_context::static_clear()

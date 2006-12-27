@@ -360,10 +360,10 @@ void PPFnStartsEndsWith::next(tuple &t)
         if(!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item ");
         
         col = tuple_cell::make_sure_light_atomic(col);
-        handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+        handler = cxt->st_cxt->get_collation(col.get_str_mem());
     }
     else
-        handler = tr_globals::st_ct.get_collation(NULL);
+        handler = cxt->st_cxt->get_default_collation();
     
     if(type == PPFnStartsEndsWith::FN_STARTS_WITH)
         t.copy(tuple_cell::atomic(handler->starts_with(&src, &prf)));
@@ -813,7 +813,7 @@ void PPFnSubsBeforeAfter::next(tuple &t)
         if (!t.is_eos()) error("Invalid arity of the third argument. Argument contains more than one item");
             
         col = tuple_cell::make_sure_light_atomic(col);
-        handler = tr_globals::st_ct.get_collation(col.get_str_mem());
+        handler = cxt->st_cxt->get_collation(col.get_str_mem());
     }
 
     src_child.op->next(t);

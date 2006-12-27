@@ -111,6 +111,7 @@ void PPGeneralComparison::open  ()
     first_time = true;
     eos_reached1 = true;
 	eos_reached2 = true;
+    handler = cxt->st_cxt->get_default_collation();
 }
 
 void PPGeneralComparison::reopen()
@@ -170,7 +171,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 	{
 		if (min_str)
 		{
-			if (value_comp_lt(value,min_str_cell).get_xs_boolean()) 
+			if (op_lt(value,min_str_cell,handler).get_xs_boolean()) 
 			{
 				min_str_cell=value;
 				ret_type=xs_string;
@@ -187,7 +188,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 			tuple_cell num_val=cast(value, xs_double);
 			if (min_ut_num)
 			{
-				if (value_comp_lt(num_val,min_ut_num_cell).get_xs_boolean()) 
+				if (op_lt(num_val,min_ut_num_cell,handler).get_xs_boolean()) 
 				{
 					min_ut_num_cell=num_val;
 					ret_type=xs_string;				
@@ -211,7 +212,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 			tuple_cell num_val=cast(value,xs_date);
 			if (min_ut_dat)
 			{
-				if (value_comp_lt(num_val,min_ut_dat_cell).get_xs_boolean()) 
+				if (op_lt(num_val,min_ut_dat_cell,handler).get_xs_boolean()) 
 				{
 					min_ut_dat_cell=num_val;
 					ret_type=xs_string;
@@ -236,7 +237,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 	{
 		if (min_num)
 		{
-			if (value_comp_lt(value,min_num_cell).get_xs_boolean()) 
+			if (op_lt(value,min_num_cell,handler).get_xs_boolean()) 
 			{
 				min_num_cell=value;
 				ret_type=xs_double;
@@ -254,7 +255,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 	{
 		if (min_dat)
 		{
-			if (value_comp_lt(value,min_dat_cell).get_xs_boolean()) 
+			if (op_lt(value,min_dat_cell,handler).get_xs_boolean()) 
 			{
 				min_dat_cell=value;
 				ret_type=xs_date;
@@ -277,7 +278,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 	{
 		if (max_str)
 		{
-			if (value_comp_gt(value,max_str_cell).get_xs_boolean()) 
+			if (op_gt(value,max_str_cell,handler).get_xs_boolean()) 
 			{
 				max_str_cell=value;
 				ret_type=xs_string;
@@ -294,7 +295,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 			tuple_cell num_val=cast(value, xs_double);
 			if (max_ut_num)
 			{
-				if (value_comp_gt(num_val,max_ut_num_cell).get_xs_boolean()) 
+				if (op_gt(num_val,max_ut_num_cell,handler).get_xs_boolean()) 
 				{
 					max_ut_num_cell=num_val;
 					ret_type=xs_string;				
@@ -318,7 +319,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 			tuple_cell num_val=cast(value,xs_date);
 			if (max_ut_dat)
 			{
-				if (value_comp_gt(num_val,max_ut_dat_cell).get_xs_boolean()) 
+				if (op_gt(num_val,max_ut_dat_cell,handler).get_xs_boolean()) 
 				{
 					max_ut_dat_cell=num_val;
 					ret_type=xs_string;
@@ -343,7 +344,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 	{
 		if (max_num)
 		{
-			if (value_comp_gt(value,max_num_cell).get_xs_boolean()) 
+			if (op_gt(value,max_num_cell,handler).get_xs_boolean()) 
 			{
 				max_num_cell=value;
 				ret_type=xs_double;
@@ -361,7 +362,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 	{
 		if (max_dat)
 		{
-			if (value_comp_gt(value,max_dat_cell).get_xs_boolean()) 
+			if (op_gt(value,max_dat_cell,handler).get_xs_boolean()) 
 			{
 				max_dat_cell=value;
 				ret_type=xs_date;
@@ -385,17 +386,17 @@ bool PPLMGeneralComparison::compare_minmax(xmlscm_type type_info, bool min_chang
 		switch (type_info)
 		{
 		case xs_string:
-			if (min_str && max_str && value_comp_lt(min_str_cell,max_str_cell).get_xs_boolean()) return true;
-			if (min_ut_num && max_num && value_comp_lt(min_ut_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_ut_dat && max_dat && value_comp_lt(min_ut_dat_cell,max_dat_cell).get_xs_boolean()) return true;
+			if (min_str && max_str && op_lt(min_str_cell,max_str_cell,handler).get_xs_boolean()) return true;
+			if (min_ut_num && max_num && op_lt(min_ut_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_ut_dat && max_dat && op_lt(min_ut_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
             break;
 		case xs_double:
-			if (min_num && max_num && value_comp_lt(min_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_num && max_ut_num && value_comp_lt(min_num_cell,max_ut_num_cell).get_xs_boolean()) return true;
+			if (min_num && max_num && op_lt(min_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_ut_num && op_lt(min_num_cell,max_ut_num_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_date:
-			if (min_dat && max_dat && value_comp_lt(min_dat_cell,max_dat_cell).get_xs_boolean()) return true;
-			if (min_dat && max_ut_dat && value_comp_lt(min_dat_cell,max_ut_dat_cell).get_xs_boolean()) return true;
+			if (min_dat && max_dat && op_lt(min_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
+			if (min_dat && max_ut_dat && op_lt(min_dat_cell,max_ut_dat_cell,handler).get_xs_boolean()) return true;
 			break;
 		}
 	}
@@ -404,17 +405,17 @@ bool PPLMGeneralComparison::compare_minmax(xmlscm_type type_info, bool min_chang
 		switch (type_info)
 		{
 		case xs_string:
-			if (min_str && max_str && value_comp_lt(min_str_cell,max_str_cell).get_xs_boolean()) return true;
-			if (min_num && max_ut_num && value_comp_lt(min_num_cell,max_ut_num_cell).get_xs_boolean()) return true;
-			if (min_dat && max_ut_dat && value_comp_lt(min_dat_cell,max_ut_dat_cell).get_xs_boolean()) return true;
+			if (min_str && max_str && op_lt(min_str_cell,max_str_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_ut_num && op_lt(min_num_cell,max_ut_num_cell,handler).get_xs_boolean()) return true;
+			if (min_dat && max_ut_dat && op_lt(min_dat_cell,max_ut_dat_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_double:
-			if (min_ut_num && max_num && value_comp_lt(min_ut_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_num && max_num && value_comp_lt(min_num_cell,max_num_cell).get_xs_boolean()) return true;
+			if (min_ut_num && max_num && op_lt(min_ut_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_num && op_lt(min_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_date:
-			if (min_ut_dat && max_dat && value_comp_lt(min_ut_dat_cell,max_dat_cell).get_xs_boolean()) return true;
-           	if (min_dat && max_dat && value_comp_lt(min_dat_cell,max_dat_cell).get_xs_boolean()) return true;
+			if (min_ut_dat && max_dat && op_lt(min_ut_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
+           	if (min_dat && max_dat && op_lt(min_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
 				break;
 		}
 	}
@@ -428,17 +429,17 @@ bool PPLMGeneralComparison::compare_minmax_le(xmlscm_type type_info, bool min_ch
 		switch (type_info)
 		{
 		case xs_string:
-			if (min_str && max_str && value_comp_le(min_str_cell,max_str_cell).get_xs_boolean()) return true;
-			if (min_ut_num && max_num && value_comp_le(min_ut_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_ut_dat && max_dat && value_comp_le(min_ut_dat_cell,max_dat_cell).get_xs_boolean()) return true;
+			if (min_str && max_str && op_le(min_str_cell,max_str_cell,handler).get_xs_boolean()) return true;
+			if (min_ut_num && max_num && op_le(min_ut_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_ut_dat && max_dat && op_le(min_ut_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
             break;
 		case xs_double:
-			if (min_num && max_num && value_comp_le(min_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_num && max_ut_num && value_comp_le(min_num_cell,max_ut_num_cell).get_xs_boolean()) return true;
+			if (min_num && max_num && op_le(min_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_ut_num && op_le(min_num_cell,max_ut_num_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_date:
-			if (min_dat && max_dat && value_comp_le(min_dat_cell,max_dat_cell).get_xs_boolean()) return true;
-			if (min_dat && max_ut_dat && value_comp_le(min_dat_cell,max_ut_dat_cell).get_xs_boolean()) return true;
+			if (min_dat && max_dat && op_le(min_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
+			if (min_dat && max_ut_dat && op_le(min_dat_cell,max_ut_dat_cell,handler).get_xs_boolean()) return true;
 			break;
 		}
 	}
@@ -447,17 +448,17 @@ bool PPLMGeneralComparison::compare_minmax_le(xmlscm_type type_info, bool min_ch
 		switch (type_info)
 		{
 		case xs_string:
-			if (min_str && max_str && value_comp_le(min_str_cell,max_str_cell).get_xs_boolean()) return true;
-			if (min_num && max_ut_num && value_comp_le(min_num_cell,max_ut_num_cell).get_xs_boolean()) return true;
-			if (min_dat && max_ut_dat && value_comp_le(min_dat_cell,max_ut_dat_cell).get_xs_boolean()) return true;
+			if (min_str && max_str && op_le(min_str_cell,max_str_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_ut_num && op_le(min_num_cell,max_ut_num_cell,handler).get_xs_boolean()) return true;
+			if (min_dat && max_ut_dat && op_le(min_dat_cell,max_ut_dat_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_double:
-			if (min_ut_num && max_num && value_comp_le(min_ut_num_cell,max_num_cell).get_xs_boolean()) return true;
-			if (min_num && max_num && value_comp_le(min_num_cell,max_num_cell).get_xs_boolean()) return true;
+			if (min_ut_num && max_num && op_le(min_ut_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
+			if (min_num && max_num && op_le(min_num_cell,max_num_cell,handler).get_xs_boolean()) return true;
 			break;
 		case xs_date:
-			if (min_ut_dat && max_dat && value_comp_le(min_ut_dat_cell,max_dat_cell).get_xs_boolean()) return true;
-           	if (min_dat && max_dat && value_comp_le(min_dat_cell,max_dat_cell).get_xs_boolean()) return true;
+			if (min_ut_dat && max_dat && op_le(min_ut_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
+           	if (min_dat && max_dat && op_le(min_dat_cell,max_dat_cell,handler).get_xs_boolean()) return true;
 				break;
 		}
 	}
@@ -642,7 +643,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 			uv_exist[1]=true;
 		}
 		generalNodePrepare(res[0],res[1]);
-		if (value_comp_ne(res[0],res[1]).get_xs_boolean())
+		if (op_ne(res[0],res[1],handler).get_xs_boolean())
 		{
 			t.copy(tuple_cell::atomic(true));
 			return;
@@ -677,7 +678,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						else
 						{
-							if (value_comp_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string)).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string),handler).get_xs_boolean())
 								two_diffs_exist[pr]=true;
 						}
 						if (
@@ -690,7 +691,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						if (uv_exist[1-pr])
 						{
-							if (value_comp_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string)).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string),handler).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
 								return;
@@ -698,7 +699,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 					}
 					generalNodePrepare(res[0],res[1]);
-					if (value_comp_ne(res[0],res[1]).get_xs_boolean())
+					if (op_ne(res[0],res[1],handler).get_xs_boolean())
 					{
 						t.copy(tuple_cell::atomic(true));
 						return;
@@ -741,7 +742,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 			tuple_cell res=getAtomizedCell(cont1);
 			at_tup.cells[0]=res;
 			generalNodePrepare(res,res1);
-			if (value_comp_eq(res,res1).get_xs_boolean())
+			if (op_eq(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
 				return;
@@ -764,7 +765,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 			{
 				tuple_cell res2=(*it).cells[0];
 				generalNodePrepare(res1,res2);
-				if (value_comp_eq(res1,res2).get_xs_boolean())
+				if (op_eq(res1,res2,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
 					return;
@@ -790,20 +791,20 @@ void PPLMGeneralComparison::next   (tuple &t)
  	if (first_time)
     {
 		first_time = false;
-		tuple_cell (*comp_op) (const tuple_cell&,const tuple_cell&);
+		tuple_cell (*comp_op) (const tuple_cell&,const tuple_cell&,CollationHandler*);
 		if (strict)
 		{
 			if (more)
-				comp_op=value_comp_gt;
+				comp_op=op_gt;
 			else
-				comp_op=value_comp_lt;
+				comp_op=op_lt;
 		}
 		else
 		{
 			if (more)
-				comp_op=value_comp_ge;
+				comp_op=op_ge;
 			else
-				comp_op=value_comp_le;
+				comp_op=op_le;
 		}
 		//INSERT CODE HERE
 		if (!eos_reached1) seq1.op->reopen();
@@ -828,7 +829,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 			tuple_cell res=getAtomizedCell(cont1);
 			at_tup.cells[0]=res;
 			generalNodePrepare(res,res1);
-			if (comp_op(res,res1).get_xs_boolean())
+			if (comp_op(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
 				return;
@@ -851,7 +852,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 			{
 				tuple_cell res2=(*it).cells[0];
 				generalNodePrepare(res1,res2);
-				if (comp_op(res2,res1).get_xs_boolean())
+				if (comp_op(res2,res1,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
 					return;

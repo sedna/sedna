@@ -42,12 +42,6 @@ tuple_cell op_mul  (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_div  (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_idiv (const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_mod  (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_eq   (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_ne   (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_gt   (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_lt   (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_ge   (const tuple_cell &a1, const tuple_cell &a2);
-tuple_cell op_le   (const tuple_cell &a1, const tuple_cell &a2);
 
 tuple_cell op_eq   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
 tuple_cell op_ne   (const tuple_cell &a1, const tuple_cell &a2, CollationHandler* handler);
@@ -75,7 +69,16 @@ tuple_cell op_minus(const tuple_cell &a1);
 tuple_cell op_numeric_unary_plus (const tuple_cell &a1);
 tuple_cell op_numeric_unary_minus(const tuple_cell &a1);
 
-bin_op_tuple_cell_tuple_cell get_binary_op(xq_binary_op_type t, xmlscm_type t1, xmlscm_type t2);
+struct get_binary_op_res
+{
+    union {
+        bin_op_tuple_cell_tuple_cell_collation bf_c;
+        bin_op_tuple_cell_tuple_cell bf;
+    } f;
+    bool collation;
+};
+
+get_binary_op_res get_binary_op(xq_binary_op_type t, xmlscm_type t1, xmlscm_type t2);
 un_op_tuple_cell get_unary_op(xq_unary_op_type t, xmlscm_type t1);
 
 #endif

@@ -22,7 +22,6 @@ EXECUTOR_OBJECTS   =   tuple$(OBJ_EXT)					\
                        xs_helper$(OBJ_EXT)				\
                        xs_fp_converter$(OBJ_EXT)		\
                        xptrChanneledMerge$(OBJ_EXT)		\
-                       PPStaticContext$(OBJ_EXT)		\
                        dynamic_context$(OBJ_EXT)		\
                        PPBase$(OBJ_EXT)					\
                        PPUtils$(OBJ_EXT)				\
@@ -208,7 +207,6 @@ numeric_operations$(OBJ_EXT): numeric_operations.cpp \
   ../../kernel/common/u/uthread.h ../../kernel/common/u/ushm.h \
   ../../kernel/common/persistent_db_data.h \
   ../../kernel/common/u/uthread.h \
-  ../../kernel/tr/executor/base/PPStaticContext.h \
   ../../kernel/tr/structures/schema.h ../../kernel/tr/structures/nodes.h \
   ../../kernel/tr/structures/pers_map.h \
   ../../kernel/common/ph/pers_heap.h ../../kernel/common/u/u.h \

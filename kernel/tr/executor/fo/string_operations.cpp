@@ -63,8 +63,7 @@ int fn_compare(const tuple_cell &a1, const tuple_cell &a2, CollationHandler* han
 {
     U_ASSERT(a1.is_atomic() && !is_fixed_size_type(a1.get_atomic_type()));
     U_ASSERT(a2.is_atomic() && !is_fixed_size_type(a2.get_atomic_type()));
-
-    if (!handler) handler = tr_globals::st_ct.get_default_collation();
+    U_ASSERT(handler);
 
     if (a1.get_atomic_type() == xs_base64Binary || a1.get_atomic_type() == xs_hexBinary)
         handler = charset_handler->get_unicode_codepoint_collation();

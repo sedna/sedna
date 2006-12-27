@@ -9,8 +9,6 @@
 #include "node_utils.h"
 #include "PPUtils.h"
 
-using namespace tr_globals;
-
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisSelf
@@ -167,7 +165,7 @@ void PPAxisSelf::next   (tuple &t)
 					if (nt_type==node_test_qname) 
 					{
 						fun=comp_qname_type;
-						uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element);
+						uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element);
 						local=nt_data.ncname_local;
 					}
 					else
@@ -179,7 +177,7 @@ void PPAxisSelf::next   (tuple &t)
 					else if (nt_type==node_test_wildcard_ncname_star) 
 					{
 						fun=comp_uri_type;
-						uri=st_ct.get_uri_by_prefix(nt_data.ncname_prefix,element);
+						uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element);
 					}
 					if (fun(scm,uri,local,element)) return;
 				}

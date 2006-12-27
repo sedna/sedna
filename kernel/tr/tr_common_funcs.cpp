@@ -213,7 +213,7 @@ void on_kernel_recovery_statement_begin()
 
 void on_kernel_recovery_statement_end()
 {
-    tr_globals::st_ct.clear_context();
+    //tr_globals::st_ct.clear_context();
 
     tr_globals::estr_global.clear();
 

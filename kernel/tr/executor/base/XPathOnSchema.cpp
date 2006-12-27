@@ -28,7 +28,7 @@ inline bool comp_type(schema_node* scm_node, t_item type)
 inline bool comp_qname_type_m(const schema_node *scm_node, const char *ncname_prefix, const char* ncname_local, t_item type)
 {
     return comp_qname_type(scm_node, 
-                           tr_globals::st_ct.get_uri_by_prefix(ncname_prefix, type), 
+                           dynamic_context::__static_cxt()->get_uri_by_prefix(ncname_prefix, type), 
                            ncname_local, 
                            type);
 }
@@ -36,7 +36,7 @@ inline bool comp_qname_type_m(const schema_node *scm_node, const char *ncname_pr
 inline bool comp_uri_type(const schema_node *scm_node, const char *ncn, t_item type)
 {
     return comp_uri_type(scm_node, 
-                         tr_globals::st_ct.get_uri_by_prefix(ncn, type), 
+                         dynamic_context::__static_cxt()->get_uri_by_prefix(ncn, type), 
                          NULL, 
                          type);
 }
