@@ -210,7 +210,40 @@
     (const (type !xs!string) "http://example.org/math-functions"))
   (prolog
     (declare-function
-      (const (type !xs!QName) ("local" "f"))
+      (const (type !xs!QName) ("math" "f"))
       ()
       (result-type (zero-or-more (item-test)))
       (body (const (type !xs!string) "petya"))))))
+
+(sa:analyze-module
+ '(lib-module
+   (module-decl
+    (const (type !xs!NCName) foo)
+    (const (type !xs!string) "http://foo.org"))
+   (prolog
+    (import-module
+     (const (type !xs!NCName) math)
+     (const (type !xs!string) "http://example.org/math-functions"))
+    (declare-function
+     (const (type !xs!QName) ("foo" "fact"))
+     (((one !xs!integer) (var ("" "n"))))
+     (result-type (zero-or-more (item-test)))
+     (body (fun-call (const (type !xs!QName) ("math" "fact")) (var ("" "n")))))
+    (declare-global-var (var ("foo" "pi")) (var ("math" "pi"))))))
+
+;(define l (sa:obtain-single-module "http://aa.com"))
+;(apply sa:all-identifiers-declared? (cdr l))
+;(sa:obtain-module-recursive "http://bb.com" '() '())
+
+(go
+ '(query
+   (prolog
+    (import-module
+     (const (type !xs!NCName) foo)
+     (const (type !xs!string) "http://xy.com")))
+   (query-body
+    (*@
+     (var ("foo" "pi"))
+     (fun-call (const (type !xs!QName) ("foo" "fact"))
+               (const (type !xs!integer) "5"))))))
+

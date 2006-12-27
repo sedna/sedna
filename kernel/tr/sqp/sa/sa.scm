@@ -194,24 +194,32 @@
    (cl:signal-input-error SE5003 query)
    (and
     (sa:assert-num-args query 2)
-    (let ((prolog-res (sa:analyze-prolog (sa:get-query-prolog query) '())))
+    (let ((prolog-res (sa:analyze-prolog
+                       (sa:get-query-prolog query) '() #f)))
       (and
        prolog-res  ; processed correctly
        (let* ((new-prolog (car prolog-res))
               (funcs      (cadr prolog-res))
               (ns-binding (caddr prolog-res))
               (default-ns (cadddr prolog-res))
-              (vars       (list-ref prolog-res 4)))
+              (vars       (list-ref prolog-res 4))
+              (modules    (list-ref prolog-res 5)))
          (cond           
            ((eq? (sa:op-name query) 'query)
             (let ((pair   ; = (new-query . type)
                    (sa:analyze-expr
                     (sa:get-query-body query)
-                    vars funcs ns-binding default-ns)))
+                    vars funcs ns-binding default-ns #f modules)))
               (and
                pair
-               `(query ,(cons 'prolog new-prolog)
-                       (query-body ,(car pair))))))
+               `(query
+                 ,@(map
+                    (lambda (quad)
+                      (cons 'module
+                            (sa:module->prolog (cadr quad))))
+                    modules)
+                 (prolog ,@new-prolog)
+                 (query-body ,(car pair))))))
            ((assq (sa:op-name query)
                   `((update . ,sa:analyze-update)
                     (manage . ,sa:analyze-manage)
@@ -219,11 +227,18 @@
             => (lambda (pair)
                  (let ((new ((cdr pair)
                              (cadr (sa:op-args query))
-                             vars funcs ns-binding default-ns)))
+                             vars funcs ns-binding default-ns #f modules)))
                    (and new
-                        (list (sa:op-name query)
-                              (cons 'prolog new-prolog)
-                              new)))))
+                        (cons (sa:op-name query)
+                              (append
+                               (map
+                                (lambda (quad)
+                                  (cons 'module
+                                        (sa:module->prolog (cadr quad))))
+                                modules)
+                               (list
+                                (cons 'prolog new-prolog)
+                                new)))))))
            (else
             (cl:signal-input-error SE5004 query)))))))))
 
@@ -249,19 +264,29 @@
 ;   denotes an external function. Otherwise is a symbol that denotes the
 ;   name of the standard function call, e.g. '!fn!document
 ;
+;  uri ::= string | #f
+;   For a main module, `uri' == #f.
+;   For a library module, `uri' contains the URI of this module.
+;
+;  modules ::= (listof (list uri module vars funcs))
+;              | (listof (list uri))
+;   For a main module, `modules' contain the detailed information for each
+;   imported module, including module body, declared vars and funcs.
+;   For a library module, `modules' contain just imported modules' URIs.
+;
 ; Returns
 ;  either (cons new-query var-type)
 ;  or #f - semantic error detected - the message is displayed as a side effect
-(define (sa:analyze-expr expr vars funcs ns-binding default-ns)
+(define (sa:analyze-expr expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (pair? expr))
    (cl:signal-input-error SE5005 expr)
    ;(sa:var? expr)
-   ; (sa:analyze-variable expr vars funcs ns-binding default-ns)
+   ; (sa:analyze-variable expr vars funcs ns-binding default-ns uri modules)
    (case (sa:op-name expr)  ; operation name
      ; new representation for variables     
      ((var)
-      (sa:variable-wrapped expr vars funcs ns-binding default-ns))
+      (sa:variable-wrapped expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.2 Constants
      ((const)
@@ -272,119 +297,120 @@
                 following following-sibling parent preceding
                 preceding-sibling self)
       ; ATTENTION: namespace axis
-      (sa:analyze-axis expr vars funcs ns-binding default-ns))
+      (sa:analyze-axis expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.4 Sequence
      ((sequence space-sequence unio)
-      (sa:analyze-sequence expr vars funcs ns-binding default-ns))
+      (sa:analyze-sequence expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.5 Arithmetic operations
      ((+@ -@ *@ div@ idiv@ mod@ /@ to@)
-      (sa:binary-arithmetic expr vars funcs ns-binding default-ns))
+      (sa:binary-arithmetic expr vars funcs ns-binding default-ns uri modules))
      ((unary+@ unary-@)
-      (sa:unary-arithmetic expr vars funcs ns-binding default-ns))
+      (sa:unary-arithmetic expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.6 Comparison operations
      ((eq@ ne@ lt@ le@ gt@ ge@ =@ !=@ <@ <=@ >@ >=@)
-      (sa:analyze-comparison expr vars funcs ns-binding default-ns))
+      (sa:analyze-comparison expr vars funcs ns-binding default-ns uri modules))
      ((is@ <<@ >>@)
-      (sa:analyze-node-comparison expr vars funcs ns-binding default-ns))
+      (sa:analyze-node-comparison expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.7 Conditional operation
      ((if if@)
-      (sa:analyze-if expr vars funcs ns-binding default-ns))
+      (sa:analyze-if expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.8 Logical operations
      ;((not@)
-     ; (sa:analyze-not@ expr vars funcs ns-binding default-ns))
+     ; (sa:analyze-not@ expr vars funcs ns-binding default-ns uri modules))
      ((and@ or@)
-      (sa:analyze-and@-or@ expr vars funcs ns-binding default-ns))
+      (sa:analyze-and@-or@ expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.9 Constructors
      ((element)
-      (sa:analyze-element-constructor expr vars funcs ns-binding default-ns))
+      (sa:analyze-element-constructor expr vars funcs ns-binding default-ns uri modules))
      ((attribute namespace)
-      (sa:attribute-namespace expr vars funcs ns-binding default-ns))
+      (sa:attribute-namespace expr vars funcs ns-binding default-ns uri modules))
      ((pi)
-      (sa:pi-constructor expr vars funcs ns-binding default-ns))
+      (sa:pi-constructor expr vars funcs ns-binding default-ns uri modules))
      ((document text comment)
-      (sa:document-text-comment expr vars funcs ns-binding default-ns))
+      (sa:document-text-comment expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.10 FLWOR Operations
      ((let@)
-      (sa:analyze-let@ expr vars funcs ns-binding default-ns))
+      (sa:analyze-let@ expr vars funcs ns-binding default-ns uri modules))
      ((return)
-      (sa:analyze-return expr vars funcs ns-binding default-ns))
+      (sa:analyze-return expr vars funcs ns-binding default-ns uri modules))
      ((predicate)
-      (sa:analyze-predicate expr vars funcs ns-binding default-ns))
+      (sa:analyze-predicate expr vars funcs ns-binding default-ns uri modules))
      ((order-by)
-      (sa:analyze-order-by expr vars funcs ns-binding default-ns))
+      (sa:analyze-order-by expr vars funcs ns-binding default-ns uri modules))
      ((orderspecs)
-      (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns))
+      (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.11 Expressions on Sequence Types
      ((ts)
-      (sa:analyze-typeswitch expr vars funcs ns-binding default-ns))
+      (sa:analyze-typeswitch expr vars funcs ns-binding default-ns uri modules))
      ((treat instance-of)
-      (sa:analyze-treat expr vars funcs ns-binding default-ns))
+      (sa:analyze-treat expr vars funcs ns-binding default-ns uri modules))
      ((cast)
-      (sa:analyze-cast expr vars funcs ns-binding default-ns))
+      (sa:analyze-cast expr vars funcs ns-binding default-ns uri modules))
      ((castable)
-      (sa:analyze-castable expr vars funcs ns-binding default-ns))
+      (sa:analyze-castable expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; XQuery 3.14 Extension Expressions
      ((extension-expr)
-      (sa:analyze-extension-expression expr vars funcs ns-binding default-ns))
+      (sa:analyze-extension-expression expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
-      (sa:analyze-ddo expr vars funcs ns-binding default-ns))
+      (sa:analyze-ddo expr vars funcs ns-binding default-ns uri modules))
      ((ordered unordered)
-      (sa:ordered-unordered expr vars funcs ns-binding default-ns))
+      (sa:ordered-unordered expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 3.3. XPath
      ((congen1)
-      (sa:analyze-congen1 expr vars funcs ns-binding default-ns))
+      (sa:analyze-congen1 expr vars funcs ns-binding default-ns uri modules))
      ((congen2)
-      (sa:analyze-congen2 expr vars funcs ns-binding default-ns))
+      (sa:analyze-congen2 expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 3.6. Quantified expressions
      ((some every)
-      (sa:some-every expr vars funcs ns-binding default-ns))
+      (sa:some-every expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 3.7 XQuery 1.0 Functions
      ((!fn!document !fn!collection)
-      (sa:document-collection expr vars funcs ns-binding default-ns))
+      (sa:document-collection expr vars funcs ns-binding default-ns uri modules))
      ((!fn!position !fn!last !fn!true !fn!false)
-      (sa:position-last-true-false expr vars funcs ns-binding default-ns))
+      (sa:position-last-true-false expr vars funcs ns-binding default-ns uri modules))
      ((!fn!node-name !fn!node-kind !fn!name !fn!not !fn!empty !fn!count
                      !fn!error !fn!document-uri)
-      (sa:basic-singlearg-atomic expr vars funcs ns-binding default-ns))
+      (sa:basic-singlearg-atomic expr vars funcs ns-binding default-ns uri modules))
      ((!fn!sum !fn!avg !fn!max !fn!min !fn!contains !fn!translate
                !fn!distinct-values !fn!concat !fn!string-value !fn!typed-value)
-      (sa:basic-multiarg-atomic expr vars funcs ns-binding default-ns))
+      (sa:basic-multiarg-atomic expr vars funcs ns-binding default-ns uri modules))
      ((!fn!replace)
-      (sa:basic-replace expr vars funcs ns-binding default-ns))
+      (sa:basic-replace expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; Union operations
      ((union@ intersect@ except@)
-      (sa:analyze-union-intersect expr vars funcs ns-binding default-ns))
+      (sa:analyze-union-intersect expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; Not expressed in the new logical representation
      ((fun-call)
-      (sa:analyze-fun-call expr vars funcs ns-binding default-ns))
+      (sa:analyze-fun-call expr vars funcs ns-binding default-ns uri modules))
      ((spaceseq)
-      (sa:propagate expr vars funcs ns-binding default-ns 'sa:atomic))
+      (sa:propagate expr vars funcs ns-binding default-ns uri modules 'sa:atomic))
      ;-------------------     
      (else  ; unknown operations
       (cl:signal-input-error SE5006 expr)))))
 
 ; Propagates semantic analysis to subexpressions
 ;  return - what type the operation should return if arguments are ok
-(define (sa:propagate expr vars funcs ns-binding default-ns return)
+(define (sa:propagate expr vars funcs ns-binding default-ns uri modules return)
   (let ((lst
          (map
-          (lambda (subexpr) (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+          (lambda (subexpr)
+            (sa:analyze-expr subexpr vars funcs ns-binding default-ns uri modules))
           (sa:op-args expr))))
     (if (memq #f lst)  ; error detected        
         #f
@@ -1013,20 +1039,23 @@
         (string-append (car pair) ":" (cadr pair)))))
 
 ; Returns #f if semantic error was detected in the prolog-part
-; Otherwise, returns: (list new-prolog funcs ns-binding default-ns)
+; Otherwise, returns: (list new-prolog funcs ns-binding default-ns modules)
 ;  new-prolog - modified logical representation for prolog
 ;  ns-binding ::= (listof (cons prefix ns-URI))
 ;  default-ns ::= (list default-element-ns default-function-ns)
-(define (sa:analyze-prolog prolog ns-binding)
+(define (sa:analyze-prolog prolog ns-binding uri)
   ; new-prlg contains #f members at the places of function declarationss
   ;; triples ::= (listof (fun-body formal-args return-type))
   ; triples ::= (listof (declare-function formal-args return-type))
+  ; Stub
   (let loop ((new-prlg '())
              (funcs sa:xquery-functions)
              (triples '())
              (ns-binding (append ns-binding sa:predefined-ns-prefixes))
              (default-elem-ns #f)
              (default-func-ns #f)
+             (modules '())
+             (vars '())
              (prolog prolog))
     (if
      (null? prolog)  ; prolog viewed
@@ -1037,7 +1066,7 @@
        (let rpt ((new-prlg (reverse new-prlg))
                  (triples (reverse triples))
                  (prolog-res '())
-                 (variables '()))
+                 (variables vars))
          (cond
            ((null? new-prlg)  ; all function bodies checked
             (and
@@ -1046,7 +1075,7 @@
               )
              (list (reverse prolog-res)
                    funcs
-                   ns-binding default-ns variables)))
+                   ns-binding default-ns variables modules)))
            ((and (pair? (car new-prlg))
                  (eq? (sa:op-name (car new-prlg))
                       'declare-global-var))
@@ -1054,7 +1083,8 @@
               (let ((var-wrapped (car (sa:op-args expr)))
                     (initial-expr-pair
                      (sa:analyze-expr (cadr (sa:op-args expr))
-                                      variables funcs ns-binding default-ns))
+                                      variables funcs ns-binding default-ns
+                                      uri modules))
                     (type-pair (caddr (sa:op-args expr))))
               (and
                initial-expr-pair
@@ -1081,7 +1111,7 @@
                    (vars (append (cadar triples) variables))
                    (return-type (caddar triples))
                    (res (sa:analyze-expr
-                         body vars funcs ns-binding default-ns)))
+                         body vars funcs ns-binding default-ns uri modules)))
               (cond
                 ((not res) #f)  ; error in body
                 ((sa:can-be-cast? (cdr res) return-type)
@@ -1145,7 +1175,7 @@
               "XQuery version declaration is not the first declaration in "
               "XQuery main module")))
            (loop new-prlg funcs triples
-                 ns-binding default-elem-ns default-func-ns
+                 ns-binding default-elem-ns default-func-ns modules vars
                  (cdr prolog))))
          ((boundary-space-decl)  ; Boundary space
           (and
@@ -1173,7 +1203,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-default-collation)  ; Default collation
           (and
@@ -1207,7 +1237,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-base-uri)
           (and
@@ -1230,7 +1260,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-construction)
           ; Almost identical clone of boundary space declaration
@@ -1259,7 +1289,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-order)  ; Ordering mode
           (and
@@ -1287,7 +1317,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-default-order)  ; Default order for empty sequences
           ; Clone of boundary-space-decl
@@ -1318,7 +1348,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-copy-namespaces)
           (and
@@ -1355,7 +1385,7 @@
              (else
               (loop (cons expr new-prlg)
                     funcs triples
-                    ns-binding default-elem-ns default-func-ns
+                    ns-binding default-elem-ns default-func-ns modules vars
                     (cdr prolog))))))
          ((declare-option)
           (let ((new-prlg
@@ -1363,8 +1393,23 @@
                  (sa:prolog-declare-option expr new-prlg ns-binding)))
             (and new-prlg  ; no error detected
                  (loop new-prlg funcs triples
-                       ns-binding default-elem-ns default-func-ns
+                       ns-binding default-elem-ns default-func-ns modules vars
                        (cdr prolog)))))
+         ((import-module)
+          (let ((lst (sa:prolog-module-import expr ns-binding uri modules)))
+            (and
+             lst
+             (let ((import-decl (car lst))
+                   (ns-binding (cadr lst))
+                   (modules   (caddr lst))
+                   (vars      (append (list-ref lst 3) vars))
+                   (funcs     (append (list-ref lst 4) funcs)))
+               (loop (if uri
+                         (cons import-decl new-prlg)
+                         new-prlg)
+                     funcs triples ns-binding
+                     default-elem-ns default-func-ns modules vars
+                     (cdr prolog))))))
          ((declare-namespace)
           (and
            (sa:assert-num-args expr 2)
@@ -1392,7 +1437,7 @@
                  (loop (cons expr new-prlg)
                        funcs triples
                        (cons (cons prefix ns-uri) ns-binding)
-                       default-elem-ns default-func-ns
+                       default-elem-ns default-func-ns modules vars
                        (cdr prolog))))))))
          ((declare-default-element-namespace)
           (and
@@ -1405,7 +1450,7 @@
                   funcs triples
                   ns-binding
                   (cadr (sa:op-args (car (sa:op-args expr))))
-                  default-func-ns
+                  default-func-ns modules vars
                   (cdr prolog)))))
          ((declare-default-function-namespace)
           (and
@@ -1419,6 +1464,7 @@
                   ns-binding
                   default-elem-ns
                   (cadr (sa:op-args (car (sa:op-args expr))))
+                  modules vars
                   (cdr prolog)))))
          ((declare-global-var)
           (and
@@ -1450,7 +1496,16 @@
              ; XQuery function declarations are generally processed
              (and
               var-name type-pair
-              (or
+              (or  ; for a library module, is variable declared in module namespace
+               (not uri)  ; main module
+               (string=? (car var-name) uri)  ; variable declared in this namespace
+               (cl:signal-user-error
+                XQST0048 
+                (if
+                 (string=? (car var-name) "")  ; no namespace URI
+                 (cadr var-name)
+                 (string-append (car var-name) ":" (cadr var-name)))))
+              (or  ; no two equal variable names declared?
                (not
                 (member
                  var-name
@@ -1483,7 +1538,7 @@
                       )
                 new-prlg)
                funcs triples
-               ns-binding default-elem-ns default-func-ns
+               ns-binding default-elem-ns default-func-ns modules vars
                (cdr prolog))))))
          ((declare-external-function)
           (and
@@ -1523,7 +1578,7 @@
                    )
                   funcs))
                triples
-               ns-binding default-elem-ns default-func-ns
+               ns-binding default-elem-ns default-func-ns modules vars
                (cdr prolog))))))
          ((declare-function)
           (and
@@ -1587,6 +1642,11 @@
                       XQST0034
                       (string-append ns-uri ":" local
                                      ", arity = " (number->string arity))))
+                    ((and uri
+                          (not (string=? ns-uri uri)))
+                     (cl:signal-user-error
+                      XQST0048 
+                      (string-append ns-uri ":" local)))
                     (else
                      (loop
                       (cons #f new-prlg)  ; new prolog
@@ -1625,10 +1685,81 @@
                               (cadddr (sa:op-args expr)))
                         formal-args return-type)
                        triples)
-                      ns-binding default-elem-ns default-func-ns
+                      ns-binding default-elem-ns default-func-ns modules vars
                       (cdr prolog))))))))))
          (else
           (cl:signal-input-error SE5012 expr)))))))
+
+; Processes module import declaration
+; expr is a module import declaration:
+;   (import-module
+;     (const (type !xs!NCName) math)
+;     (const (type !xs!string) "http://example.org/math-functions"))
+; Returns (list import-decl new-ns-binding new-modules vars funcs) or #f
+(define (sa:prolog-module-import expr ns-binding uri modules)
+  ; expr analysis is largely borrowed from `sa:module-decl' 
+  (and
+   (or
+    (= (length (sa:op-args expr)) 1)
+    (sa:assert-num-args expr 2))
+   (call-with-values
+    (lambda ()
+      (if
+       (null? (cdr (sa:op-args expr)))  ; a single argument
+       (values #f
+               #t  ; dummy non-false value
+               (sa:analyze-string-const
+                (car (sa:op-args expr)) '() '() '() ""))
+       (values #t
+               (sa:analyze-const (car (sa:op-args expr)) '() '() '() "")
+               (sa:analyze-string-const
+                (cadr (sa:op-args expr)) '() '() '() ""))))
+    (lambda (prefix-given? module-prefix module-uri)
+      (and
+       module-prefix module-uri
+       (or        
+        (not prefix-given?)
+        (symbol? (caddr (car module-prefix)))  ; prefix
+        (cl:signal-input-error SE5008 (caddr (car module-prefix))))
+       (let ((prefix (if
+                      prefix-given?
+                      (symbol->string (caddr (car module-prefix)))
+                      ""))
+             (ns-uri (caddr (car module-uri))))
+         (cond
+           ((equal? ns-uri "")
+            ; Sect. 4.11, 2nd paragraph
+            (cl:signal-user-error XQST0088))
+           ((or (member prefix '("xml" "xmlns"))
+                (member ns-uri
+                        '("http://www.w3.org/XML/1998/namespace")))
+            => (lambda (reason)
+                 ; Sect. 4.11, 1st paragraph
+                (cl:signal-user-error XQST0070 (car reason))))
+           ((assoc ns-uri modules)
+            (cl:signal-user-error XQST0047 ns-uri))
+           (else
+            (let ((import-decl
+                   (cons (sa:op-name expr)  ; == 'import-module
+                         (if prefix-given?
+                             (list (car module-prefix)
+                                   (car module-uri))
+                             (list (car module-uri)))))
+                  (ns-binding (if prefix-given?
+                                  (cons (cons prefix ns-uri) ns-binding)
+                                  ns-binding)))
+              (if
+               uri  ; this is a library module
+               (list import-decl ns-binding
+                     (cons (list ns-uri) modules) '() '())
+               ; Main module
+               (let ((quad
+                      ; Returns (list new-modules module vars funcs) or #f
+                      (sa:obtain-module-recursive ns-uri modules '())))
+                 (and
+                  quad
+                  (list import-decl ns-binding
+                        (car quad) (caddr quad) (cadddr quad))))))))))))))
 
 ; If the alist contains a pair of equal keys, returns that key
 ; Otherwise, returns #f
@@ -1707,7 +1838,6 @@
                       (not (null? unknown-keys))
                       unknown-keys))
                    => (lambda (unknown-keys)
-                        ;(pp unknown-keys)
                         (cl:signal-user-error
                          SE5068
                          (apply
@@ -2328,6 +2458,18 @@
                  (car (sa:op-args expr))  ; arguments
                  )
                 bound-vars)))
+             ((declare-function)
+              (tree-walk
+               (cadddr (sa:op-args expr))  ; function body
+               (append
+                (map
+                 (lambda (arg)
+                   (car (sa:op-args
+                         (cadr arg)  ; addresses '(var ...)
+                         )))
+                 (cadr (sa:op-args expr))  ; arguments
+                 )
+                bound-vars)))
              (else  ; Recursive propagation
               (let ((kid-results
                      (map
@@ -2497,7 +2639,7 @@
 ; Analysis for different operations
 
 ;; Variable reference
-;(define (sa:analyze-variable expr vars funcs ns-binding default-ns)
+;(define (sa:analyze-variable expr vars funcs ns-binding default-ns uri modules)
 ;  (cond
 ;    ((assoc expr vars)   ; now have to use equal?
 ;     => (lambda (pair)   ; exactly the required return value
@@ -2511,12 +2653,12 @@
 ;
 ;; Variable reference wrapped into (list var ...)
 ;; TODO: resolve Qname
-;(define (sa:variable-wrapped expr vars funcs ns-binding default-ns)
+;(define (sa:variable-wrapped expr vars funcs ns-binding default-ns uri modules)
 ;  (cond
 ;    ((and (sa:assert-num-args expr 1)
 ;          (sa:analyze-variable
 ;           (sa:op-args expr)    ; was: (car (sa:op-args expr))
-;           vars funcs ns-binding default-ns))
+;           vars funcs ns-binding default-ns uri modules))
 ;     => (lambda (pair)
 ;          (cons expr (cdr pair))))
 ;    (else #f)))
@@ -2542,7 +2684,7 @@
 
 ; expr ::= `(var ...)
 ; Returns (cons `(var ...) var-type)
-(define (sa:variable-wrapped expr vars funcs ns-binding default-ns)
+(define (sa:variable-wrapped expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((var-name
@@ -2564,6 +2706,12 @@
         ((equal? var-name (cadr sa:context-item))
          (cl:signal-user-error XPDY0002  ; was: SE5053
                                ))
+        ((and uri  ; this is library module
+              (assoc (car var-name) modules))
+         ; Variable is probably declared in the imported module
+         (cons (list (sa:op-name expr)  ; = 'var
+                     var-name)
+               sa:type-any))
         (else
          (cl:signal-user-error
           XPST0008  ; was: SE5025
@@ -2639,7 +2787,7 @@
 ; 2.3 Axes
 
 ; Axis
-(define (sa:analyze-axis expr vars funcs ns-binding default-ns)
+(define (sa:analyze-axis expr vars funcs ns-binding default-ns uri modules)
   ;(pp (list expr vars default-ns))
   (and
    (sa:assert-num-args expr 2)
@@ -2652,7 +2800,7 @@
                    (cadr (sa:op-args expr))
                    vars funcs ns-binding default-ns))
         (a (sa:analyze-expr (car (sa:op-args expr))
-                            vars funcs ns-binding default-ns)))
+                            vars funcs ns-binding default-ns uri modules)))
      (and
       a new-type
       (if
@@ -2704,11 +2852,11 @@
 ; Processing sequences, space-sequences and unios
 ; Important note: the sequence may contain namespace declarations that
 ; affect the following parsing
-(define (sa:analyze-sequence expr vars funcs ns-binding default-ns)
+(define (sa:analyze-sequence expr vars funcs ns-binding default-ns uri modules)
   (let ((args-res
          (map
           (lambda (subexpr)
-            (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+            (sa:analyze-expr subexpr vars funcs ns-binding default-ns uri modules))
           (sa:op-args expr))))
     (if
      (memv #f args-res)  ; error detected    
@@ -2720,24 +2868,24 @@
 ;-------------------------------------------------
 ; 2.5 Arithmetic operations
 
-(define (sa:binary-arithmetic expr vars funcs ns-binding default-ns)
+(define (sa:binary-arithmetic expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 2)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic)
    #f))
 
-(define (sa:unary-arithmetic expr vars funcs ns-binding default-ns)
+(define (sa:unary-arithmetic expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 1)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic)
    #f))
 
-(define (sa:analyze-union-intersect expr vars funcs ns-binding default-ns)
+(define (sa:analyze-union-intersect expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((args-res (map
                     (lambda (arg)
-                      (sa:analyze-expr arg vars funcs ns-binding default-ns))
+                      (sa:analyze-expr arg vars funcs ns-binding default-ns uri modules))
                     (sa:op-args expr))))
      (cond
        ((memv #f args-res)  ; error detected for args-res
@@ -2753,21 +2901,21 @@
 ; 2.6 Comparison operations
 
 ; Value comparison
-(define (sa:analyze-comparison expr vars funcs ns-binding default-ns)
+(define (sa:analyze-comparison expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 2)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic)
    #f))
 
 ; Node comparison
-(define (sa:analyze-node-comparison expr vars funcs ns-binding default-ns)
+(define (sa:analyze-node-comparison expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (sa:assert-num-args expr 2))
    #f
    (let ((args-res
           (map
            (lambda (subexpr)
-             (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+             (sa:analyze-expr subexpr vars funcs ns-binding default-ns uri modules))
            (sa:op-args expr))))
      (cond
        ((member #f args-res)  ; error detected
@@ -2783,13 +2931,13 @@
 ;-------------------------------------------------
 ; 2.7 Conditional operation
 
-(define (sa:analyze-if expr vars funcs ns-binding default-ns)
+(define (sa:analyze-if expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (sa:assert-num-args expr 3))
    #f
    (let ((args-res
          (map
-          (lambda (subexpr) (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+          (lambda (subexpr) (sa:analyze-expr subexpr vars funcs ns-binding default-ns uri modules))
           (sa:op-args expr))))
      (if
       (memv #f args-res)  ; error detected      
@@ -2803,16 +2951,16 @@
 ; 2.8 Logical operations
 
 ; QUESTION: is this operation called 'not or 'not@ ?
-(define (sa:analyze-not@ expr vars funcs ns-binding default-ns)
+(define (sa:analyze-not@ expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 1)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic)
    #f))
 
-(define (sa:analyze-and@-or@ expr vars funcs ns-binding default-ns)
+(define (sa:analyze-and@-or@ expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 2)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic)
    #f))
 
 ;-------------------------------------------------
@@ -2832,7 +2980,7 @@
 ;         (const (type !xs!string) "http://modis.com"))
 ;       ...))
 ; TODO: should raise error on default prefix declaration
-(define (sa:xmlns-declarations-in-element expr ns-binding default-ns)
+(define (sa:xmlns-declarations-in-element expr ns-binding default-ns uri modules)
   (let ((sequence (and (= (length (sa:op-args expr)) 2)
                        (list? (cadr (sa:op-args expr)))
                        (eq? (caadr (sa:op-args expr)) 'sequence)
@@ -2996,11 +3144,11 @@
                 prefixes attr-names)))))))
 
 ; Element constructor
-(define (sa:analyze-element-constructor expr vars funcs ns-binding default-ns)
+(define (sa:analyze-element-constructor expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let* ((new-xmlns
-           (sa:xmlns-declarations-in-element expr ns-binding default-ns))
+           (sa:xmlns-declarations-in-element expr ns-binding default-ns uri modules))
           (ns-binding (car new-xmlns))
           (default-ns (cdr new-xmlns)))
      (and
@@ -3010,7 +3158,7 @@
        (sa:resolve-qname
         (car (sa:op-args expr)) ns-binding (cadr default-ns)))
       (sa:post-element
-       (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)
+       (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes)
        ns-binding
        default-ns)))))
      
@@ -3018,7 +3166,7 @@
 ; TODO: more sophisticated treatment for pi and namespace names is desirable
 ; QUESTION: how many arguments constructors must have?
 (define (sa:attribute-namespace
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (and (eq? (sa:op-name expr) 'pi)  ; PI constructor
@@ -3030,10 +3178,10 @@
     (and
      (sa:resolve-qname
       (car (sa:op-args expr)) ns-binding (cadr default-ns))
-     (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))
-    (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes))))
+     (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))
+    (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes))))
 
-(define (sa:pi-constructor expr vars funcs ns-binding default-ns)
+(define (sa:pi-constructor expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (= (length (sa:op-args expr)) 1)  ; no PI body
@@ -3076,27 +3224,27 @@
      )
     (sa:resolve-qname
      (car (sa:op-args expr)) ns-binding (cadr default-ns)))
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)))
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes)))
 
 ; Constructors for document node, text node, comment node
-(define (sa:document-text-comment expr vars funcs ns-binding default-ns)
+(define (sa:document-text-comment expr vars funcs ns-binding default-ns uri modules)
   (if
    (sa:assert-num-args expr 1)
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes)
    #f))
 
 ;-------------------------------------------------
 ; 2.10 FLWOR Operations
 ; TODO: order-by
 
-(define (sa:analyze-let@ expr vars funcs ns-binding default-ns)
+(define (sa:analyze-let@ expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (sa:assert-num-args expr 2))
    #f
    (let ((new-value
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (new-fun
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       new-value new-fun
       (cons (list (sa:op-name expr)  ; ='let@
@@ -3105,14 +3253,14 @@
             (cdr new-fun))))))
 
 ; Return
-(define (sa:analyze-return expr vars funcs ns-binding default-ns)
+(define (sa:analyze-return expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((new-value
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (new-fun
           (sa:analyze-fun-def (cadr (sa:op-args expr))
-                              vars funcs ns-binding default-ns)))
+                              vars funcs ns-binding default-ns uri modules)))
      (and
       new-value new-fun
       (cons (list (sa:op-name expr)  ; ='return
@@ -3121,13 +3269,13 @@
             (cdr new-fun))))))
 
 ; Clone of Return except for return value
-(define (sa:analyze-predicate expr vars funcs ns-binding default-ns)
+(define (sa:analyze-predicate expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((new-value
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (new-fun
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       new-value new-fun
       (cons (list (sa:op-name expr)  ; ='predicate
@@ -3138,7 +3286,7 @@
 ; A call to fun-def.
 ; It's argument always has the type 'sa:nodes
 ; Returns the return type or #f
-(define (sa:analyze-fun-def expr vars funcs ns-binding default-ns)
+(define (sa:analyze-fun-def expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (and (pair? expr) (eq? (sa:op-name expr) 'fun-def)))
    (cl:signal-input-error SE5032 expr)
@@ -3155,7 +3303,7 @@
          (let ((expr-pair
                 (sa:analyze-expr (cadr (sa:op-args expr))
                                  (append formal-args vars)
-                                 funcs ns-binding default-ns)))
+                                 funcs ns-binding default-ns uri modules)))
            (and
             expr-pair
             (cons
@@ -3184,13 +3332,13 @@
 ; return-type-lambda ::= (lambda (args) ...)
 ; args - rewritten arguments of the operation
 (define (sa:cast-helper return-type-lambda)
-  (lambda (expr vars funcs ns-binding default-ns)
+  (lambda (expr vars funcs ns-binding default-ns uri modules)
     (and
      (sa:assert-num-args expr 2)
      (let ((args
             (list
              (sa:analyze-expr (car (sa:op-args expr))
-                              vars funcs ns-binding default-ns)
+                              vars funcs ns-binding default-ns uri modules)
              (sa:analyze-wrapped-single-type
               (cadr (sa:op-args expr))
               vars funcs ns-binding default-ns))))
@@ -3264,13 +3412,13 @@
 ; Castable
 ; A lot of common code with sa:cast-helper
 ; TODO: analyze single type instead of item type
-(define (sa:analyze-castable expr vars funcs ns-binding default-ns)
+(define (sa:analyze-castable expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((args
           (list
            (sa:analyze-expr (car (sa:op-args expr))
-                            vars funcs ns-binding default-ns)
+                            vars funcs ns-binding default-ns uri modules)
            (sa:analyze-wrapped-single-type
             (cadr (sa:op-args expr))
             vars funcs ns-binding default-ns))))
@@ -3346,12 +3494,12 @@
                  sa:type-atomic))))))))
 
 ; Treat
-(define (sa:analyze-treat expr vars funcs ns-binding default-ns)
+(define (sa:analyze-treat expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((args (list
                 (sa:analyze-expr
-                 (car (sa:op-args expr)) vars funcs ns-binding default-ns)
+                 (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)
                 (sa:analyse-wrapped-sequence-type
                  (cadr (sa:op-args expr)) vars funcs ns-binding default-ns))))
      (if (memv #f args)
@@ -3365,16 +3513,17 @@
 ;                         ))
 
 ; Typeswitch
-(define (sa:analyze-typeswitch expr vars funcs ns-binding default-ns)
+(define (sa:analyze-typeswitch expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((source-expr
           (sa:analyze-expr (car (sa:op-args expr))
-                           vars funcs ns-binding default-ns)))
+                           vars funcs ns-binding default-ns uri modules)))
      (and
       source-expr
       (let ((cases (sa:ts-all-cases (cadr (sa:op-args expr))
                                     vars funcs ns-binding default-ns
+                                    uri modules
                                     (cdr source-expr)  ; source expression type
                                     )))
         (and
@@ -3385,7 +3534,8 @@
                (cdr cases)  ; return type
                )))))))
 
-(define (sa:ts-all-cases expr vars funcs ns-binding default-ns src-type)
+(define (sa:ts-all-cases
+         expr vars funcs ns-binding default-ns uri modules src-type)
   (cond
     ((not (and (pair? expr) (eq? (car expr) 'cases)))
      (cl:signal-input-error SE5056 expr))
@@ -3405,13 +3555,13 @@
         (let ((case ((if (null? (cdr args))  ; this is the last case
                          sa:ts-default sa:ts-case)
                      (car args)
-                     vars funcs ns-binding default-ns src-type)))
+                     vars funcs ns-binding default-ns uri modules src-type)))
           (and
            case
            (loop (cdr args)
                  (cons case res)))))))))
 
-(define (sa:ts-case expr vars funcs ns-binding default-ns src-type)
+(define (sa:ts-case expr vars funcs ns-binding default-ns uri modules src-type)
   (cond
     ((not (and (pair? expr) (eq? (car expr) 'case)))
      (cl:signal-input-error SE5058 expr))
@@ -3422,7 +3572,7 @@
                         (car (sa:op-args expr))
                         vars funcs ns-binding default-ns))
             (func-pair (sa:analyze-fun-def (cadr (sa:op-args expr))
-                                           vars funcs ns-binding default-ns)))
+                                           vars funcs ns-binding default-ns uri modules)))
         (and
          type-pair func-pair
          (cons (list (sa:op-name expr)  ; = 'case
@@ -3430,7 +3580,7 @@
                      (car func-pair))
                (cdr func-pair))))))))       
 
-(define (sa:ts-default expr vars funcs ns-binding default-ns src-type)
+(define (sa:ts-default expr vars funcs ns-binding default-ns uri modules src-type)
   (cond
     ((not (and (pair? expr) (eq? (car expr) 'default)))
      (cl:signal-input-error SE5059 expr))
@@ -3438,7 +3588,7 @@
      (and
       (sa:assert-num-args expr 1)
       (let ((new-fun (sa:analyze-fun-def (car (sa:op-args expr))
-                                         vars funcs ns-binding default-ns)))
+                                         vars funcs ns-binding default-ns uri modules)))
         (and
          new-fun
          (cons (list (sa:op-name expr)  ; = 'default
@@ -3449,7 +3599,7 @@
 ; XQuery 3.14 Extension Expressions
 
 (define (sa:analyze-extension-expression
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (not (null? (sa:op-args expr)))  ; at least 1 argument
@@ -3464,15 +3614,15 @@
                           ))
    ; Fallback
    (sa:analyze-expr (cadr (sa:op-args expr))
-                    vars funcs ns-binding default-ns)))
+                    vars funcs ns-binding default-ns uri modules)))
     
 ;-------------------------------------------------
 ; 2.14 Distinct doc order
 
-(define (sa:analyze-ddo expr vars funcs ns-binding default-ns)
+(define (sa:analyze-ddo expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
-   (let ((seq-res (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns)))
+   (let ((seq-res (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       seq-res
       (if
@@ -3483,12 +3633,12 @@
              (cdr seq-res)))))))
 
 ; Ordered and unordered expressions
-(define (sa:ordered-unordered expr vars funcs ns-binding default-ns)
+(define (sa:ordered-unordered expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((seq-res
           (sa:analyze-expr (car (sa:op-args expr))
-                           vars funcs ns-binding default-ns)))
+                           vars funcs ns-binding default-ns uri modules)))
      (and
       seq-res
       (cons (list (sa:op-name expr)             
@@ -3498,11 +3648,11 @@
 ;-------------------------------------------------
 ; 3.3 XPath
 
-(define (sa:analyze-congen1 expr vars funcs ns-binding default-ns)
+(define (sa:analyze-congen1 expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((seq-res (sa:analyze-expr
-                   (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+                   (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (secnd (cadr (sa:op-args expr))))
      (if
       (not (and (list? secnd)
@@ -3522,12 +3672,12 @@
                    secnd)
              (cdr seq-res)))))))
 
-(define (sa:analyze-congen2 expr vars funcs ns-binding default-ns)
+(define (sa:analyze-congen2 expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((pair
           (sa:analyze-expr
-           (car (sa:op-args expr)) vars funcs ns-binding default-ns)))
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       pair
       (cons (list (sa:op-name expr)
@@ -3538,13 +3688,13 @@
 ; 3.6. Quantified expressions
 
 ; Some, every
-(define (sa:some-every expr vars funcs ns-binding default-ns)
+(define (sa:some-every expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((seq-res
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (fun-res
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       seq-res fun-res
       (cons (list (sa:op-name expr)
@@ -3555,25 +3705,25 @@
 ; 3.7 XQuery 1.0 Functions
 
 ; fn:doc and fn:collection
-(define (sa:document-collection expr vars funcs ns-binding default-ns)
+(define (sa:document-collection expr vars funcs ns-binding default-ns uri modules)
   (if
    (< (length (sa:op-args expr)) 3)  ; enough arguments
-   (sa:propagate expr vars funcs ns-binding default-ns sa:type-nodes)
+   (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-nodes)
    (sa:assert-num-args expr 1)  ; this would cause an error message
    ))
 
 ; fn:position, fn:last, fn:true, fn:false
-(define (sa:position-last-true-false expr vars funcs ns-binding default-ns)
+(define (sa:position-last-true-false expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 0)
    (cons expr sa:type-atomic)))
 
 ; Functions with a single argument, return atomic value
-(define (sa:basic-singlearg-atomic expr vars funcs ns-binding default-ns)
+(define (sa:basic-singlearg-atomic expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((pair
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       pair
       (cons (list (sa:op-name expr)
@@ -3582,11 +3732,11 @@
 
 ; Functions with zero or more arguments, return atomic values
 ; fn:count, fn:sum, fn:avg, fn:min, fn:max, fn:distinct-values, fn:concat
-(define (sa:basic-multiarg-atomic expr vars funcs ns-binding default-ns)
+(define (sa:basic-multiarg-atomic expr vars funcs ns-binding default-ns uri modules)
   (let ((args-res
          (map
           (lambda (subexpr)
-            (sa:analyze-expr subexpr vars funcs ns-binding default-ns))
+            (sa:analyze-expr subexpr vars funcs ns-binding default-ns uri modules))
           (sa:op-args expr))))
     (if
      (memv #f args-res)  ; error detected
@@ -3595,7 +3745,7 @@
                  (map car args-res))           
            sa:type-atomic))))
 
-(define (sa:basic-replace expr vars funcs ns-binding default-ns)
+(define (sa:basic-replace expr vars funcs ns-binding default-ns uri modules)
   (cond
     ((> (length (sa:op-args expr)) 4)  ; too many arguments
      (sa:assert-num-args expr 4)  ; will raise an error
@@ -3604,7 +3754,7 @@
      (sa:assert-num-args expr 3)  ; will raise an error
      )
     (else
-     (sa:propagate expr vars funcs ns-binding default-ns sa:type-atomic))))
+     (sa:propagate expr vars funcs ns-binding default-ns uri modules sa:type-atomic))))
 
 ;-------------------------------------------------
 ; Function call
@@ -3642,7 +3792,7 @@
 ; The function can raise the exception if the function name cannot be
 ; properly expanded
 (define (sa:find-declaration-for-function-call
-         fun-call funcs ns-binding default-ns)
+         fun-call funcs ns-binding default-ns uri modules)
   (let ((fun-name (sa:resolve-qname (car (sa:op-args fun-call))
                                     ns-binding (cadr default-ns))))
     (and
@@ -3656,7 +3806,7 @@
         funcs)))))
 
 ; Function call
-(define (sa:analyze-fun-call expr vars funcs ns-binding default-ns)
+(define (sa:analyze-fun-call expr vars funcs ns-binding default-ns uri modules)
   (let ((args (sa:op-args expr)))
     (if
      (null? args)  ; no arguments
@@ -3683,7 +3833,7 @@
                          (map
                           (lambda (subexpr)
                             (sa:analyze-expr
-                             subexpr vars funcs ns-binding default-ns))
+                             subexpr vars funcs ns-binding default-ns uri modules))
                           (cdr args))))
                     (and
                      (not (memv #f actual-args))  ; error detected in arguments
@@ -3714,24 +3864,39 @@
                                          (map car actual-args))))
                             ; function return type
                             (list-ref fun-declaration 5))
-                           vars
-                           funcs
-                           ns-binding
-                           default-ns))
+                           vars funcs
+                           ns-binding default-ns
+                           uri modules))
                          ((and (eq? (car form) sa:type-nodes)
                                (eq? (cdar act) sa:type-atomic))
                           (cl:signal-user-error XPTY0004 expr)  ; was: SE5039
                           )
                          (else
                           (rpt (cdr form) (cdr act)))))))))
-              (else  ; Function declaration not found
-               (cl:signal-user-error
-                XPST0017  ; was: SE5037
-                (string-append (car name-parts) ":" (cadr name-parts))
-;                (cadr (caddr  ; extract function name
-;                       (car (sa:op-args expr))))
-                ; expr
-                )))))))))
+            ((and uri  ; this is a library module
+                  (assoc (car name-parts) modules))
+             ; Function probably declared in another module
+             (let ((actual-args
+                    (map
+                     (lambda (subexpr)
+                       (sa:analyze-expr
+                        subexpr vars funcs ns-binding default-ns uri modules))
+                     (cdr args))))
+               (and
+                (not (memv #f actual-args))  ; no errors in arguments
+                (cons
+                 (cons (sa:op-name expr) ; ='fun-call
+                       (cons fun-name
+                             (map car actual-args)))
+                 sa:type-any))))
+            (else  ; Function declaration not found
+             (cl:signal-user-error
+              XPST0017  ; was: SE5037
+              (string-append (car name-parts) ":" (cadr name-parts))
+              ;                (cadr (caddr  ; extract function name
+              ;                       (car (sa:op-args expr))))
+              ; expr
+              )))))))))
 
 
 ;==========================================================================
@@ -3742,31 +3907,31 @@
 ; Update operations
 ; This is section 3.8 in the XQuery logical representation
 
-(define (sa:analyze-update expr vars funcs ns-binding default-ns)
+(define (sa:analyze-update expr vars funcs ns-binding default-ns uri modules)
   (if
    (or (not (pair? expr)) (null? expr))
    (cl:signal-input-error SE5040 expr)
    (case (sa:op-name expr)  ; operation name       
      ((insert-into insert-preceding insert-following)
-      (sa:analyze-insert expr vars funcs ns-binding default-ns))
+      (sa:analyze-insert expr vars funcs ns-binding default-ns uri modules))
      ((rename)
-      (sa:analyze-rename expr vars funcs ns-binding default-ns))
+      (sa:analyze-rename expr vars funcs ns-binding default-ns uri modules))
      ((delete delete_undeep)
-      (sa:analyze-delete expr vars funcs ns-binding default-ns))
+      (sa:analyze-delete expr vars funcs ns-binding default-ns uri modules))
      ((replace move-into move-preceding move-following)
-      (sa:analyze-replace-move expr vars funcs ns-binding default-ns))
+      (sa:analyze-replace-move expr vars funcs ns-binding default-ns uri modules))
      (else
       (cl:signal-input-error SE5041 expr)))))
 
-(define (sa:analyze-insert expr vars funcs ns-binding default-ns)
+(define (sa:analyze-insert expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((frst-res
           (sa:analyze-expr
-           (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (secnd-res
           (sa:analyze-expr
-           (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+           (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       frst-res secnd-res
       (if
@@ -3775,12 +3940,12 @@
        (list (sa:op-name expr)
              (car frst-res) (car secnd-res)))))))
 
-(define (sa:analyze-rename expr vars funcs ns-binding default-ns)
+(define (sa:analyze-rename expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((frst-res
           (sa:analyze-expr
-           (car (sa:op-args expr)) vars funcs ns-binding default-ns)))
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       frst-res 
       (if
@@ -3791,12 +3956,12 @@
              (cadr (sa:op-args expr))   ; attention!!!
              ))))))
 
-(define (sa:analyze-delete expr vars funcs ns-binding default-ns)
+(define (sa:analyze-delete expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((arg-res
           (sa:analyze-expr
-           (car (sa:op-args expr)) vars funcs ns-binding default-ns)))
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (if
       (eq? (cdr arg-res) sa:type-atomic)
       (cl:signal-user-error SE5044 expr)
@@ -3804,15 +3969,15 @@
             (car arg-res))))))
 
 ; TODO: probably, the first argument should always be a node()*
-(define (sa:analyze-replace-move expr vars funcs ns-binding default-ns)
+(define (sa:analyze-replace-move expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((ex-pair
           (sa:analyze-expr
-           (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (fun-pair 
           (sa:analyze-fun-def
-           (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+           (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       ex-pair fun-pair
       (list (sa:op-name expr)
@@ -3821,20 +3986,20 @@
 ;-------------------------------------------------
 ; Manage operations
 
-(define (sa:analyze-manage expr vars funcs ns-binding default-ns)
+(define (sa:analyze-manage expr vars funcs ns-binding default-ns uri modules)
   (cond
     ((or (not (pair? expr)) (null? expr))
      (cl:signal-input-error SE5045 expr))
     ((case (sa:op-name expr)  ; operation name
        ((create-collection drop-collection)
         (sa:analyze-manage-collection
-         expr vars funcs ns-binding default-ns))
+         expr vars funcs ns-binding default-ns uri modules))
        ((create-document drop-document)
         (sa:analyze-manage-document
-         expr vars funcs ns-binding default-ns))
+         expr vars funcs ns-binding default-ns uri modules))
        ((load)
         (sa:analyze-manage-load
-         expr vars funcs ns-binding default-ns))
+         expr vars funcs ns-binding default-ns uri modules))
        ;-------------------
        ; Security operations
        ((create-role drop-role drop-user)
@@ -3849,21 +4014,21 @@
        ;-------------------
        ; Index operations
        ((create-index)
-        (sa:analyze-index-create expr vars funcs ns-binding default-ns))
+        (sa:analyze-index-create expr vars funcs ns-binding default-ns uri modules))
        ((drop-index)
-        (sa:analyze-index-drop expr vars funcs ns-binding default-ns))
+        (sa:analyze-index-drop expr vars funcs ns-binding default-ns uri modules))
        ;-------------------
        ; Full-text
        ((create-fulltext-index)
-        (sa:analyze-full-text-create expr vars funcs ns-binding default-ns))
+        (sa:analyze-full-text-create expr vars funcs ns-binding default-ns uri modules))
        ((drop-fulltext-index)
-        (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns))
+        (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns uri modules))
        ;-------------------
        ; Trigger operations
        ((create-trigger)
-        (sa:analyze-trigger-create expr vars funcs ns-binding default-ns))
+        (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules))
        ((drop-trigger)
-        (sa:analyze-trigger-drop expr vars funcs ns-binding default-ns))
+        (sa:analyze-trigger-drop expr vars funcs ns-binding default-ns uri modules))
        ;-------------------
        ; Module operations
        ((load-module load-or-replace-module)
@@ -3878,36 +4043,36 @@
      #f)))
 
 (define (sa:analyze-manage-collection
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
 
 (define (sa:analyze-manage-document
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (let ((lng (length (sa:op-args expr))))
       (and (> lng 0) (< lng 3)))
     (sa:assert-num-args expr 2))
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
 
-(define (sa:analyze-manage-load expr vars funcs ns-binding default-ns)
+(define (sa:analyze-manage-load expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (let ((lng (length (sa:op-args expr))))
       (and (>= lng 2) (<= lng 3)))
     (sa:assert-num-args expr 3))
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
@@ -3979,36 +4144,36 @@
 ;-------------------------------------------------
 ; Retrieve metadata operations
 
-(define (sa:analyze-retrieve-metadata expr vars funcs ns-binding default-ns)
+(define (sa:analyze-retrieve-metadata expr vars funcs ns-binding default-ns uri modules)
   (if
    (or (not (pair? expr)) (null? expr))
    (cl:signal-input-error SE5047 expr)
    (case (sa:op-name expr)  ; operation name
      ((retrieve-metadata-documents)
       (sa:analyze-metadata-documents
-       expr vars funcs ns-binding default-ns))
+       expr vars funcs ns-binding default-ns uri modules))
      ((retrieve-metadata-collections)
       (sa:analyze-metadata-collections
-       expr vars funcs ns-binding default-ns))
+       expr vars funcs ns-binding default-ns uri modules))
      ((retrieve-descr-scheme)
       (sa:analyze-descr-scheme
-       expr vars funcs ns-binding default-ns))
+       expr vars funcs ns-binding default-ns uri modules))
      (else
       (cl:signal-input-error SE5048 expr)))))
 
 (define (sa:analyze-metadata-documents
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (if
    (> (length (sa:op-args expr)) 2)
    (sa:assert-num-args expr 2)  ; this will raise the error message
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
 
 (define (sa:analyze-metadata-collections
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (or
    (and 
     (null? (sa:op-args expr))  ; no arguments
@@ -4016,19 +4181,19 @@
    (and
     (sa:assert-num-args expr 1)
     (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
       (and new (car new))))))
 
-(define (sa:analyze-descr-scheme expr vars funcs ns-binding default-ns)
+(define (sa:analyze-descr-scheme expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (let ((lng (length (sa:op-args expr))))
       (and (> lng 0) (< lng 3)))
     (sa:assert-num-args expr 2))
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
@@ -4062,19 +4227,19 @@
     (else
      (cl:signal-user-error SE5049 (sa:op-name expr)))))
 
-(define (sa:analyze-index-create expr vars funcs ns-binding default-ns)
+(define (sa:analyze-index-create expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 4)
    (let ((arg1 (sa:analyze-expr (car (sa:op-args expr))
-                                vars funcs ns-binding default-ns))
+                                vars funcs ns-binding default-ns uri modules))
          (arg2 (sa:analyze-expr (cadr (sa:op-args expr))
-                                vars funcs ns-binding default-ns))
+                                vars funcs ns-binding default-ns uri modules))
          (arg3 (sa:analyze-expr (caddr (sa:op-args expr))
                                 (cons
                                  (cons (cadr sa:context-item)
                                        sa:type-nodes)
                                  vars)
-                                funcs ns-binding default-ns))
+                                funcs ns-binding default-ns uri modules))
          (arg4 (sa:analyze-seq-type (cadddr (sa:op-args expr))
                                     ns-binding default-ns)))
      (and
@@ -4088,17 +4253,17 @@
         (sa:structural-absolute-xpath? (car arg2)))
        (car arg4))))))
 
-(define (sa:analyze-index-drop expr vars funcs ns-binding default-ns)
+(define (sa:analyze-index-drop expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
       (and new (car new)))))
 
 ; Post processing of the function call
-(define (sa:fun-call-post-proc pair vars funcs ns-binding default-ns)
+(define (sa:fun-call-post-proc pair vars funcs ns-binding default-ns uri modules)
   (let ((expr (car pair)))
     (case (sa:op-name expr)
       ((!fn!index-scan)
@@ -4128,7 +4293,7 @@
         (let ((context-pair
                (sa:analyze-expr
                 sa:context-item  ; adding context item as argument
-                vars funcs ns-binding default-ns)))
+                vars funcs ns-binding default-ns uri modules)))
           (and
            context-pair
            (cons (list
@@ -4145,7 +4310,7 @@
        (and
         (sa:analyze-expr  ; context item defined
          sa:context-item
-         vars funcs ns-binding default-ns)
+         vars funcs ns-binding default-ns uri modules)
         pair))
       ((!fn!contains)
        (if  ; collation supplied?
@@ -4175,7 +4340,7 @@
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
-                       vars funcs ns-binding default-ns)))
+                       vars funcs ns-binding default-ns uri modules)))
                  (and
                   context-pair
                   (car context-pair)))
@@ -4270,7 +4435,7 @@
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
-                       vars funcs ns-binding default-ns)))
+                       vars funcs ns-binding default-ns uri modules)))
                  (and
                   context-pair
                   (car context-pair)))
@@ -4391,7 +4556,7 @@
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
-                       vars funcs ns-binding default-ns)))
+                       vars funcs ns-binding default-ns uri modules)))
                  (and
                   context-pair
                   (car context-pair)))
@@ -4508,7 +4673,7 @@
 ;-------------------------------------------------
 ; Managing full-text index
 
-(define (sa:analyze-full-text-create expr vars funcs ns-binding default-ns)
+(define (sa:analyze-full-text-create expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (let ((lng (length (sa:op-args expr))))
@@ -4518,16 +4683,16 @@
    (sa:analyze-string-const (caddr (sa:op-args expr))
                             vars funcs ns-binding default-ns)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
 
-(define (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns)
+(define (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
       (and new (car new)))))
@@ -4535,7 +4700,7 @@
 ;-------------------------------------------------
 ; Trigger manage operations
 
-(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns)
+(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 6)
    (if
@@ -4550,7 +4715,7 @@
           (third  (sa:analyze-string-const (caddr (sa:op-args expr))
                                            vars funcs ns-binding default-ns))
           (fourth (sa:analyze-expr (cadddr (sa:op-args expr))
-                                   vars funcs ns-binding default-ns))
+                                   vars funcs ns-binding default-ns uri modules))
           (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
                                            vars funcs ns-binding default-ns))
           (sixth  (map
@@ -4566,7 +4731,7 @@
                           (apply sa:analyze-update x)
                           sa:type-nodes))
                        sa:analyze-expr)
-                      statement vars funcs ns-binding default-ns))
+                      statement vars funcs ns-binding default-ns uri modules))
                    (list-ref (sa:op-args expr) 5))))
       (and
        first second third fourth fifth
@@ -4603,11 +4768,11 @@
 
 ; Clone from sa:analyze-manage-document
 (define (sa:analyze-trigger-drop
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
@@ -4641,7 +4806,7 @@
 ;(ordermodifier 
 ; (const (type !xs!string) "asc")
 ; (const (type !xs!string) "empty-greatest"))
-(define (sa:analyze-ordermodifier expr vars funcs ns-binding default-ns)
+(define (sa:analyze-ordermodifier expr vars funcs ns-binding default-ns uri modules)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'ordermodifier)))
      (cl:signal-input-error SE5064 expr))
@@ -4702,7 +4867,7 @@
 ;(orderspec
 ; (ordermodifier ...)
 ; (*@ (var $x1) (var $x2) (var $x3) (var $x4)))
-(define (sa:analyze-orderspec expr vars funcs ns-binding default-ns)
+(define (sa:analyze-orderspec expr vars funcs ns-binding default-ns uri modules)
   (if
    (not (and (pair? expr) (eq? (sa:op-name expr) 'orderspec)))
    (cl:signal-input-error SE5065 expr)
@@ -4710,10 +4875,10 @@
     (sa:assert-num-args expr 2)
     (let ((new-modifier
            (sa:analyze-ordermodifier
-            (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+            (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
           (new-subexpr
            (sa:analyze-expr
-            (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+            (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
       (and
        new-modifier new-subexpr
        (cons (list (sa:op-name expr)  ; ='orderspec
@@ -4725,7 +4890,7 @@
 ; (const (type !xs!string) "non-stable")
 ; (orderspec ...)
 ; (orderspec ...))
-(define (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns)
+(define (sa:analyze-multiple-orderspecs expr vars funcs ns-binding default-ns uri modules)
   (cond
     ((not (and (pair? expr) (eq? (sa:op-name expr) 'orderspecs)))
      (cl:signal-input-error SE5066 expr))
@@ -4741,7 +4906,7 @@
      (let ((new-orderspec-lst
             (map
              (lambda (sub)
-               (sa:analyze-orderspec sub vars funcs ns-binding default-ns))
+               (sa:analyze-orderspec sub vars funcs ns-binding default-ns uri modules))
              (cdr (sa:op-args expr)))))
        (and
         (not (memv #f new-orderspec-lst))
@@ -4752,13 +4917,13 @@
          sa:type-any  ; we don't care about the type
          ))))))
 
-(define (sa:analyze-order-by expr vars funcs ns-binding default-ns)
+(define (sa:analyze-order-by expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 2)
    (let ((new-value
-          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns))
+          (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules))
          (new-fun
-          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns)))
+          (sa:analyze-fun-def (cadr (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       new-value new-fun
       (let ((fun-body (caddr (car new-fun))))
@@ -4774,6 +4939,263 @@
 
 ;==========================================================================
 ; XQuery module analysis 
+
+;-------------------------------------------------
+; Obtaining a single module
+
+; Interface function
+; Stub:
+(define (get-module uri)
+  (let ((string-port (open-output-string)))
+    (begin
+      (write       
+       (if
+        (< (string-length uri) 7)
+        `(lib-module
+          (module-decl (const (type !xs!NCName) foo)
+                       (const (type !xs!string) ,uri))
+          (prolog
+           (declare-function
+            (const (type !xs!QName) (,uri "fact"))
+            (((one !xs!integer) (var ("" "n"))))
+            (result-type (zero-or-more (item-test)))
+            (body
+             (if@
+              (eq@ (var ("" "n")) (const (type !xs!integer) "0"))
+              (const (type !xs!integer) "1")
+              (*@
+               (var ("" "n"))
+               (fun-call
+                (const (type !xs!QName) (,uri "fact"))
+                (-@ (var ("" "n")) (const (type !xs!integer) "1")))))))
+           (declare-global-var
+            (var (,uri "pi"))
+            (const (type !xs!decimal) "3.14")
+            (zero-or-more (item-test)))))
+        (let ((depend-on (substring uri 0 (- (string-length uri) 2))))
+        `(lib-module
+          (module-decl
+           (const (type !xs!NCName) foo)
+           (const (type !xs!string) ,uri))
+          (prolog
+           (import-module
+            (const (type !xs!NCName) math)
+            (const (type !xs!string) ,depend-on))
+           (declare-function
+            (const (type !xs!QName) (,uri "fact"))
+            (((one !xs!integer) (var ("" "n"))))
+            (result-type (zero-or-more (item-test)))
+            (body
+             (fun-call
+              (const (type !xs!QName) (,depend-on "fact"))
+              (var ("" "n")))))
+           (declare-global-var
+            (var (,uri "pi"))
+            (var (,depend-on "pi"))
+            (zero-or-more (item-test)))))))
+       string-port)
+      (get-output-string string-port))))
+
+; Returns (list uri module vars funcs)
+; ATTENTION: open-input-string is a non-R5RS function. However, it is
+; supported in Chichen and in PLT, see
+; http://www.ugcs.caltech.edu/manuals/lang/chicken-1.63/chicken_32.html
+(define (sa:obtain-single-module uri)
+  (let ((module-str (get-module uri)))
+    (and
+     module-str
+     (let* ((module (read (open-input-string module-str)))
+            (prolog (sa:op-args
+                     (cadr (sa:op-args module))  ; yields `(prolog ...)
+                     )))
+       (list
+        uri
+        module
+        (map
+         (lambda (expr)
+           (let ((var-wrapped (car (sa:op-args expr)))
+                 ;(type (caddr (sa:op-args expr)))
+                 )
+             (cons (car (sa:op-args var-wrapped))
+                   ; TODO: more accurate typing
+                   sa:type-any)))
+         (filter
+          (lambda (x)
+            (and (pair? x) (eq? (sa:op-name x) 'declare-global-var)))
+          prolog))
+        (map
+         (lambda (expr)
+           (let ((fun-qname (car (sa:op-args expr)))
+                 (formal-args (cadr (sa:op-args expr)))
+                 ; TODO: more accurate typing
+                 (return-type sa:type-any))
+             (let ((qname-parts (sa:proper-qname fun-qname))
+                   (arity (length formal-args)))
+               (let ((ns-uri (car qname-parts))
+                     (local (cadr qname-parts)))
+                  (list                   
+                   ns-uri local  ; name
+                   arity arity ; min and max args
+                   (let ((arg-types (map
+                                     (lambda (x) sa:type-any)
+                                     formal-args)))
+                     (lambda (num-args) arg-types))
+                   return-type)))))
+         (filter
+          (lambda (x)
+            (and (pair? x) (eq? (sa:op-name x) 'declare-function)))
+          prolog)))))))
+    
+;-------------------------------------------------
+; Working with multiple modules
+
+(define (sa:all-identifiers-declared? expr vars funcs)
+  (let ((dual
+         ; Returns: (list (listof var-name)
+         ;                (listof (list function-name arity)))
+         (sa:free-variables-and-function-calls expr (map car vars))))
+    (and
+     (null?
+      (map
+       (lambda (var-name)
+         (cl:signal-user-error
+          XPST0008
+          (if
+           (string=? (car var-name) "")
+           (cadr var-name)
+           (string-append (car var-name) ":" (cadr var-name)))))
+       (car dual)  ; undeclared variable names
+       ))
+      (null?
+       (map
+        (lambda (func-id)
+          (let ((name-parts (car func-id))
+                (arity (cadr func-id)))
+            (cl:signal-user-error
+             XPST0017
+             (string-append
+              "Function name == " (car name-parts) ":" (cadr name-parts)
+              ", arity == " (number->string arity)))))
+        (filter
+         (lambda (func-id)
+           (let ((func-name (car func-id))
+                 (arity (cadr func-id)))
+             (not
+              (sa:find-function-declaration-by-name-and-arity
+               (car func-name) (cadr func-name) arity funcs))))
+         (cadr dual)  ; function names
+         ))))))
+
+; Returns (list new-modules module vars funcs) or #f
+; new-modules contains the latter parameters
+; NOTE: XQuery spec., 4.11, 4th paragraph:
+; "Module imports are not transitive—that is, importing a module provides
+; access only to function and variable declarations contained directly in
+; the imported module."
+(define (sa:obtain-module-recursive uri modules import-chain)
+  (cond
+    ((member uri import-chain)
+     => (lambda (cycle)
+          ; Recursive module dependency discovered
+          (cl:signal-user-error
+           XQST0093
+           (string-append
+            "Cycle in module import: " uri
+            (apply string-append
+                   (reverse (map
+                             (lambda (str) (string-append ", " str))
+                             cycle)))))))
+    ((assoc uri modules)
+     => (lambda (quad)
+          ; Requested module already analyzed
+          (cons modules (cdr quad))))
+    (else
+     (let ((requested (sa:obtain-single-module uri)))
+       (and
+        requested
+        (let loop ((modules modules)
+                   (to-import
+                    (map
+                     (lambda (import-decl)
+                       (cadr (sa:op-args
+                              ; Last argument is const with uri
+                              (car (reverse (sa:op-args import-decl))))))
+                     (filter
+                      (lambda (x)
+                        (and (pair? x)
+                             (eq? (sa:op-name x) 'import-module)))
+                      (sa:get-query-prolog (cadr requested)))))
+                   (vars (caddr requested))
+                   (funcs (cadddr requested)))
+          (cond
+            ((null? to-import)
+             ; All recursive module imports processed
+             (and
+              (sa:all-identifiers-declared? (cadr requested) vars funcs)
+              (cons
+               (cons requested modules)
+               (cdr requested))))
+            ((sa:obtain-module-recursive
+              (car to-import) modules (cons uri import-chain))
+             => (lambda (nested)
+                  (loop (append (car nested) modules)
+                        (cdr to-import)
+                        (append (caddr nested) vars)
+                        (append (cadddr nested) funcs))))
+            (else  ; error already displayed
+             #f))))))))
+
+; Extracts (listof prolog-declarations) from library module
+; NOTE: module-decl implies a namespace prefix declaration
+(define (sa:module->prolog lib-module)
+  (let* ((module-decl (car (sa:op-args lib-module)))
+         (prefix (cadr (sa:op-args
+                        (car (sa:op-args module-decl))))))
+    (cons
+     `(declare-namespace ,prefix
+                         ,(cadr (sa:op-args module-decl)))
+     (filter
+      (lambda (x)
+        (not (and (pair? x)
+                  (eq? (sa:op-name x) 'import-module))))
+      (sa:get-query-prolog lib-module)))))
+
+;-------------------------------------------------
+; High-level library module analysis
+
+; Returns: (list module-decl module-prefix module-uri) or #f
+(define (sa:module-decl expr)
+  (and
+   (or (and (pair? expr)
+            (eq? (sa:op-name expr) 'module-decl))
+       (cl:signal-input-error SE5079 (sa:op-name expr)))
+   (sa:assert-num-args expr 2)
+   (let ((module-prefix
+          (sa:analyze-const (car (sa:op-args expr))
+                            '() '() '() ""))
+         (module-uri
+          (sa:analyze-string-const (cadr (sa:op-args expr))
+                                   '() '() '() "")))
+     (and
+      module-prefix module-uri
+      (or
+       (symbol? (caddr (car module-prefix)))  ; prefix
+       (cl:signal-input-error SE5008 (caddr (car module-prefix))))
+      (let ((prefix (symbol->string (caddr (car module-prefix))))
+            (ns-uri (caddr (car module-uri))))
+        (cond
+          ((equal? ns-uri "")
+           (cl:signal-user-error XQST0088))
+          ((or (member prefix '("xml" "xmlns"))
+               (member ns-uri
+                       '("http://www.w3.org/XML/1998/namespace")))
+           => (lambda (reason)
+                (cl:signal-user-error XQST0070 (car reason))))
+          (else
+           (list (list (sa:op-name expr)  ; == 'module-decl
+                       (car module-prefix)
+                       (car module-uri))
+                 prefix ns-uri))))))))
 
 ; Example:
 ;(lib-module
@@ -4793,41 +5215,18 @@
    (or (eq? (sa:op-name query) 'lib-module)
        (cl:signal-input-error SE5078 (sa:op-name query)))
    (sa:assert-num-args query 2)
-   (let ((module-decl (car (sa:op-args query))))
+   (let ((decl-pair (sa:module-decl (car (sa:op-args query)))))
      (and
-      (or (and (pair? module-decl)
-               (eq? (sa:op-name module-decl) 'module-decl))
-          (cl:signal-input-error SE5079 (sa:op-name module-decl)))
-      (sa:assert-num-args module-decl 2)
-      (let ((module-prefix
-             (sa:analyze-const (car (sa:op-args module-decl))
-                               '() '() '() ""))
-            (module-uri
-             (sa:analyze-string-const (cadr (sa:op-args module-decl))
-                                      '() '() '() "")))
-        (and
-         module-prefix module-uri
-         (or
-          (symbol? (caddr (car module-prefix)))  ; prefix
-          (cl:signal-input-error SE5008 (cadr expr)))
-         (let ((prefix (symbol->string (caddr (car module-prefix))))
-               (ns-uri (caddr (car module-uri))))
-           (cond
-             ((equal? ns-uri "")
-              (cl:signal-user-error XQST0088))
-             ((or (member prefix '("xml" "xmlns"))
-                  (member ns-uri
-                          '("http://www.w3.org/XML/1998/namespace")))
-              => (lambda (reason)
-                   (cl:signal-user-error XQST0070 (car reason))))
-             (else
-              (let ((prolog-res (sa:analyze-prolog
-                                 (sa:get-query-prolog query)
-                                 (list (cons prefix ns-uri)))))
-                prolog-res  ; processed correctly
-                (let* ((new-prolog (car prolog-res)))
-                  (list (sa:op-name query)  ; == 'lib-module
-                        (list (sa:op-name module-decl)  ; == 'module-decl
-                              (car module-prefix)
-                              (car module-uri))
-                        (cons 'prolog new-prolog)))))))))))))
+      decl-pair
+      (let ((prefix (cadr decl-pair))
+            (ns-uri (caddr decl-pair)))
+        (let ((prolog-res (sa:analyze-prolog
+                           (sa:get-query-prolog query)
+                           (list (cons prefix ns-uri))
+                           ns-uri)))
+          (and
+           prolog-res  ; processed correctly
+           (let ((new-prolog (car prolog-res)))
+             (list (sa:op-name query)  ; == 'lib-module
+                   (car decl-pair)
+                   (cons 'prolog new-prolog))))))))))

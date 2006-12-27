@@ -1771,6 +1771,16 @@
 ; 2. Secondly, query body is processed
 ; 3. Finally, user-defined XQuery functions are rewritten
 
+; Returns the list of all declarations, both in query prolog and in modules
+(define (lropt:get-all-decls query)
+  (apply
+   append
+   (map cdr
+        (filter
+         (lambda (x)
+           (and (pair? x) (memq (xlr:op-name x) '(module prolog))))
+         (xlr:op-args query)))))
+
 ; Returns: (values new-prolog var-types processed-funcs
 (define (lropt:declare-vars-from-prolog prolog)
   (let loop ((src prolog)
@@ -2013,7 +2023,8 @@
           (memq (xlr:op-name query) '(query retrieve-metadata))
           (let ((identity (lambda (x) x)))
             (lropt:propagate
-             (cadr (xlr:op-args query))
+             ;(assq 'query-body (xlr:op-args query))
+             (car (reverse (xlr:op-args query)))
              #t  ; called once
              (let  ; ordered/unordered depending on prolog
                  ; TODO: think of duplicate elimination
@@ -2037,10 +2048,17 @@
            var-types prolog processed-funcs)))
        (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
                      processed-funcs dummy-order-for-variables)
-         (list (xlr:op-name query)
-               (cons 'prolog
-                     (lropt:rewrite-prolog prolog processed-funcs var-types))
-               body)))))))
+         (cons
+          (xlr:op-name query)
+          (append
+           (filter
+            (lambda (x)
+              (and (pair? x) (eq? (xlr:op-name x) 'module)))
+            (xlr:op-args query))
+           (list
+            (cons 'prolog
+                  (lropt:rewrite-prolog prolog processed-funcs var-types))
+            body)))))))))
 
 ; Alias for backward compatibility
 (define mlr:rewrite-query lropt:rewrite-query)

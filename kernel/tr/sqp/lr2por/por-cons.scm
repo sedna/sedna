@@ -51,19 +51,26 @@
          (and (not (null? debug-mode?))
               (car debug-mode?))))
     (if
-     (not (and (list? query) (= (length query) 3)
-               (eq? (car query) 'query)
+     (not (and (list? query) (>= (length query) 3)
+;               (eq? (car query) 'query)
                (pair? (cadr query))
-               (eq? (caadr query) 'query-prolog)
-               (pair? (caddr query))))             
+;               (eq? (caadr query) 'query-prolog)
+               (pair? (caddr query))
+               ))
      query  ; an error occured, query is kept as is
-     (let ((query-prolog (cadr query))
-           (query-essense (caddr query)))
-       (list
+     (let ((rev-args (reverse (cdr query))))
+       (let ((query-prologs (reverse (cdr rev-args)))
+             (query-essense (car rev-args)))
+       (cons
         (car query)   ; = 'query
-        (cons (car query-prolog)
-              (porc:process-prolog (cdr query-prolog) debug-mode?))
-        (porc:process-essense query-essense debug-mode?))))))
+        (append
+         (map
+          (lambda (prolog)
+            (cons (car prolog)
+                  (porc:process-prolog (cdr prolog) debug-mode?)))
+          query-prologs)
+         (list
+          (porc:process-essense query-essense debug-mode?)))))))))
 
 ; Process the query prolog
 ; Query bodies may contain constructors
