@@ -115,35 +115,35 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 	{ \
 	case tc_light_atomic_var_size: \
 	case tc_light_atomic_fix_size: {\
-		char *str = tcell_ptr->get_str_mem(); \
-		int len = tcell_ptr->get_strlen_mem(); \
-		char_iterator start1(str, len, 0); \
-		char_iterator end1(str, len, len); \
+		char *__str = tcell_ptr->get_str_mem(); \
+		int __len = tcell_ptr->get_strlen_mem(); \
+		char_iterator __start1(__str, __len, 0); \
+		char_iterator __end1(__str, __len, __len); \
 		func params; \
 		break; }\
 	case tc_heavy_atomic_estr: \
 	case tc_heavy_atomic_pstr_short: {\
-		int len = tcell_ptr->get_strlen_vmm(); \
-		xptr data = tcell_ptr->get_str_vmm(); \
+		int __len = tcell_ptr->get_strlen_vmm(); \
+		xptr __data = tcell_ptr->get_str_vmm(); \
 \
-		estr_iterator start1(len, data); \
-		estr_iterator end1(0, data); \
+		estr_iterator __start1(__len, __data); \
+		estr_iterator __end1(0, __data); \
 		func params; \
 		break; }\
 	case tc_heavy_atomic_pstr_long: {\
-		int len = tcell_ptr->get_strlen_vmm(); \
-		xptr data = tcell_ptr->get_str_vmm(); \
+		int __len = tcell_ptr->get_strlen_vmm(); \
+		xptr __data = tcell_ptr->get_str_vmm(); \
 \
-		pstr_long_iterator start1(data); \
-		pstr_long_iterator end1(data, len); \
+		pstr_long_iterator __start1(__data); \
+		pstr_long_iterator __end1(__data, __len); \
 		func params; \
 		break; }\
 	}
 
-#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(func, tcell_ptr, p1)             STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1))
-#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(func, tcell_ptr, p1, p2)         STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1, p2))
-#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(func, tcell_ptr, p1, p2, p3)     STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1, p2, p3))
-#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(func, tcell_ptr, p1, p2, p3, p4) STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (start1, end1, p1, p2, p3, p4))
+#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_1p(func, tcell_ptr, p1)             STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1))
+#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(func, tcell_ptr, p1, p2)         STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2))
+#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(func, tcell_ptr, p1, p2, p3)     STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3))
+#define STRING_ITERATOR_CALL_TEMPLATE_1tcptr_4p(func, tcell_ptr, p1, p2, p3, p4) STRING_ITERATOR_CALL_TEMPLATE_1tcptr(func, (tcell_ptr), (__start1, __end1, p1, p2, p3, p4))
 
 class str_buf_base
 {
