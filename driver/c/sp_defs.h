@@ -43,6 +43,7 @@ enum se_sp_instructions
     se_LongQueryEnd = 302,
     se_GetNextItem = 310,
     se_QuerySucceeded = 320,
+    se_DebugInfo = 325,
     se_QueryFailed = 330,
     se_UpdateSucceeded = 340,
     se_UpdateFailed = 350,
@@ -70,6 +71,11 @@ struct msg_struct
     sp_int32 instruction;
     sp_int32 length;
     char body[SE_SOCKET_MSG_BUF_SIZE];
+};
+
+struct protocol_version{
+	char major_version;
+	char minor_version;
 };
 
 #endif

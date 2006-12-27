@@ -122,9 +122,7 @@ void command_line_client::init()
 
       plain_batch_text = string("LOAD ") +
                          string("\"") + path_to_security_file + string("\" ") +
-                         string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"") +
-                         string("\n\\\n") +
-                         string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
+                         string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
 #else
       plain_batch_text = "0";
 #endif

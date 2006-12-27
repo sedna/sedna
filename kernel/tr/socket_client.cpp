@@ -58,7 +58,6 @@ void socket_client::init()
         throw USER_EXCEPTION(SE3001); 
       }
       
-      stream = new se_socketostream(Sock);
 }
 
 void socket_client::release()
@@ -405,6 +404,8 @@ void socket_client::get_session_parameters()
   d_printf2("In authorization password = %s\n", password);
 
   query_type = TL_XQuery;
+  
+  stream = new se_socketostream(Sock, p_ver);
 }
 
 

@@ -72,8 +72,12 @@ extern "C"
 
 #define SEDNA_SET_ATTRIBUTE_SUCCEEDED              32
 #define SEDNA_GET_ATTRIBUTE_SUCCEEDED              33
+
     
     enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY};
+    
+    enum SEdebugType {SEDNA_QUERY_DEBUG_INFO};
+    typedef void (*debug_handler_t)(enum SEdebugType, const char *msg_body);
     
     struct conn_bulk_load
     {
@@ -114,9 +118,11 @@ extern "C"
         char local_data_buf[SE_SOCKET_MSG_BUF_SIZE];
 
         struct msg_struct msg;
+        
+        debug_handler_t debug_handler;
     };
 
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL}
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
 
@@ -162,6 +168,7 @@ extern "C"
 
     int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* attrValue, int* attrValueLength);
 
+	void SEsetDebugHandler(struct SednaConnection *conn, debug_handler_t _debug_handler_);
 
 #ifdef __cplusplus
 }
