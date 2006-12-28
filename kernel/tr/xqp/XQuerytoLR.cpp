@@ -38,6 +38,8 @@ SORAST* XQuerytoIR(const char* xquery){
 
   int sig;
 
+  is_preserve_boundary_space = false;
+
   DLGStringInput in(xquery);
   
   XQueryDLGLexer scan(&in);

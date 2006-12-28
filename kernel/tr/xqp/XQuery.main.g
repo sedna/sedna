@@ -55,20 +55,23 @@ exception
 
 
 module!:
-	(lm:libraryModule <<#0=#(#[AST_MODULE], #lm);>> | mm:mainModule <<#0=#(#[AST_MODULE], #mm);>>)
+	{vd:versionDecl} (lm:libraryModule[#vd] <<#0=#(#[AST_MODULE], #lm);>> | mm:mainModule[#vd] <<#0=#(#[AST_MODULE], #mm);>>)
 	
 ;
 
 versionDecl!:
 	XQUERY VERSION s1:STRINGLITERAL 
 	<<#0=#(#[AST_VERSION_DECL], #[$s1->getText(), AST_STRING_CONST]);>>
-	{ENCODING s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>}
+	{ENCODING s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>} SEMICOLON
 ;
 
-libraryModule!:
-	 md:moduleDecl p:queryProlog
+libraryModule![ASTBase* vd]:
+	md:moduleDecl p:queryProlog
 	<<
-	  #0=#(#[AST_LIB_MODULE], #md, #(#[AST_PROLOG], #p));
+	  if (vd!=NULL)
+	     #0=#(#[AST_LIB_MODULE], #md, #(#[AST_PROLOG], vd, #p));
+	  else
+	     #0=#(#[AST_LIB_MODULE], #md, #(#[AST_PROLOG], #p));
 	>>
 ;
 
@@ -77,18 +80,18 @@ moduleDecl!:
 	<<#0=#(#[AST_MODULE_DECL], #nc, #[$s->getText(), AST_STRING_CONST]);>>
 ;
 
-mainModule!:
-	q:query <<#0=#(#[AST_MAIN_MODULE], #q);>>
+mainModule![ASTBase* vd]:
+	q:query[vd] <<#0=#(#[AST_MAIN_MODULE], #q);>>
 ;
 
 
 
-query!:
+query![ASTBase* vd]:
 	<<ASTBase* prol=NULL;>>
-	  {vd:versionDecl}  qp:queryProlog
+	  qp:queryProlog
 
-	  <<if (#vd==NULL) prol = #qp;
-	    else {prol=#vd; prol->append(#qp);}
+	  <<if (vd==NULL) prol = #qp;
+	    else {prol=vd; if (#qp!=NULL) prol->append(#qp);}
 	  >>
 	 
 	 (
