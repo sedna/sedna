@@ -169,12 +169,12 @@ elementContent!:
 	         if (cnt == NULL)
 	         {
 	            cnt = #[val, AST_CHAR_SEQ];
-	            cnt->append(#ee);
+	            cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	         }
 	         else
 	         {
 	            cnt->append(#[val, AST_CHAR_SEQ]);
-	            cnt->append(#ee);
+	            cnt->append(#(#[AST_SPACE_SEQUENCE], #ee));
 	         }
 	     }
 
