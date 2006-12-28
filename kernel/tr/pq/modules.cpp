@@ -57,8 +57,9 @@ const char *get_module(const char *module_uri)
         if (mem_alloced) free(res);
         if (tree_opened) tree->tree.op->close();
         if (tree_built)  delete_qep(tree);
-        
-        throw;
+
+        res = (char*)malloc(sizeof(char) * 3);
+        strcpy(res, "#f");
     }
 
     return res;

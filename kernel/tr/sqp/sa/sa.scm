@@ -5007,8 +5007,10 @@
   (let ((module-str (get-module uri)))
     (and
      module-str
-     (let* ((module (read (open-input-string module-str)))
-            (prolog (sa:op-args
+     (let ((module (read (open-input-string module-str))))
+       (and
+        module
+        (let ((prolog (sa:op-args
                      (cadr (sa:op-args module))  ; yields `(prolog ...)
                      )))
        (list
@@ -5047,7 +5049,7 @@
          (filter
           (lambda (x)
             (and (pair? x) (eq? (sa:op-name x) 'declare-function)))
-          prolog)))))))
+          prolog)))))))))
     
 ;-------------------------------------------------
 ; Working with multiple modules
