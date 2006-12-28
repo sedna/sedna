@@ -21,7 +21,7 @@
        (lambda (y)
          (l2p:add-func-name!
           (list
-           (caddr (cadr y))  ; function name
+           (l2p:qname->uri+local (cadr y))  ; function name
            (length (caddr y))  ; function arity
            ; DL: was: (caddr (cadr y))
            )))
@@ -64,7 +64,12 @@
 ;      `(query (query-prolog) ,(l2p:lr-query-expr2por query-in-lr))
 ;  )
 
-
+; qname-const:
+; '(const (type !xs!QName) ("http://example.org/math-functions" "fact" "math"))
+(define (l2p:qname->uri+local qname-const)
+  (let ((name-triple
+         (cadr (xlr:op-args qname-const))))
+    (list (car name-triple) (cadr name-triple))))
 
 ;-------------------------------------------------------------------------------
 
@@ -1273,7 +1278,7 @@
                (let ((func-index
                       (l2p:find-func-index
                        (list
-                        (caddr (car node))  ; function name
+                        (l2p:qname->uri+local (car node))  ; function name
                         (length (cdr node))  ; number of arguments
                         )
                        ; DL: was: (caddr (car node))
@@ -1722,16 +1727,17 @@
               (if
                (memq name-pair '(unspecified *))
                (values 'wildcard '())
-               (let ((parts
-                      (map
-                       (lambda (part)
-                         (if (eq? part '*)
-                             (cons "wildcard" "")
-                             (cons "name" part)))
-                       name-pair)))
-                 (values (string->symbol
-                          (string-append (caar parts) "-" (caadr parts)))
-                         (map cdr parts)))))
+;               (let ((parts
+;                      (map
+;                       (lambda (part)
+;                         (if (eq? part '*)
+;                             (cons "wildcard" "")
+;                             (cons "name" part)))
+;                       name-pair)))
+;                 (values (string->symbol
+;                          (string-append (caar parts) "-" (caadr parts)))
+;                         (map cdr parts)))
+               (values 'name name-pair)))
             (lambda (node-name-enum str-str)
               (call-with-values
                (lambda ()
