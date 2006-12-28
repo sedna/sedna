@@ -599,6 +599,7 @@
 (define (lropt:var expr called-once? order-required?
                    var-types prolog processed-funcs)
   (let* ((var-name (car (xlr:op-args expr)))
+         ;(var-name (list (car var-name) (cadr var-name)))
          (type-entry
           (cond
             ((assoc var-name var-types)
@@ -606,6 +607,9 @@
             (else
              ; Variable type declaration not found -
              ; this should not happen!
+;             (display "Var type declaration not found: ")
+;             (display var-name)
+;             (newline)
              (list var-name #f))))
          (zero-or-one?
           (lropt:var-type-zero-or-one? (cadr type-entry))))
@@ -1621,8 +1625,17 @@
           processed-funcs
           body-order-for-vars))))))
 
+; qname-const:
+; '(const (type !xs!QName) ("http://example.org/math-functions" "fact" "math"))
+(define (lropt:qname->uri+local qname-const)
+  (let ((name-triple
+         (cadr (xlr:op-args qname-const))))
+    (list (car name-triple) (cadr name-triple))))
+
 ; Getting `processed-func' by function name, adding it to `processed-funcs'
 ; if it is not there yet
+;  func-name is `(const ...) in function argument and is
+;               (list uri local-part) in `processed-funcs'
 ;  processed-func ::= (list  func-name
 ;                            order-required-for-result?
 ;                            (listof  order-required-for-argument?)
@@ -1632,6 +1645,7 @@
 (define (lropt:get+add-processed-func func-name called-once? order-required?
                                       var-types prolog processed-funcs
                                       arity)
+  (let ((func-name (lropt:qname->uri+local func-name)))
   (cond
     ((let ((entry
             (assoc
@@ -1656,8 +1670,9 @@
     ((assoc func-name
             (map
              (lambda (part)
-               (cons (car (xlr:op-args part))  ; function name
-                     part))
+               (cons   ; function name as a key
+                (lropt:qname->uri+local (car (xlr:op-args part)))
+                part))
              (filter  ; all function declarations with a given arity
               (lambda (part)
                 (and (pair? part)
@@ -1730,10 +1745,10 @@
     ; TODO: search among 'declare-external function
     (else  ; function not declared in the prolog
      ; This should not happen!!
-     ;(display "Function name not found: ")
-     ;(write func-name)
-     ;(newline)
-     (values #f processed-funcs))))
+;     (display "Function name not found: ")
+;     (write func-name)
+;     (newline)
+     (values #f processed-funcs)))))
 
 (define (lropt:fun-call expr called-once? order-required?
                         var-types prolog processed-funcs)

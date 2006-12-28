@@ -486,3 +486,19 @@
     (fun-call
       (const (type !xs!QName) ("http://xy.com" "fact"))
       (const (type !xs!integer) "5"))))))
+
+(go
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (element (const (type !xs!QName) ("" "a")) (sequence))
+     (fun-def
+      (((one-or-more
+         (elem-test
+          (ename
+           (const (type !xs!QName) ("" "customer" ""))
+           (type !xs!anyAtomicType)
+           (const (type !xs!string) "qmark"))))
+        (var ("" "x"))))
+      (var ("" "x")))))))

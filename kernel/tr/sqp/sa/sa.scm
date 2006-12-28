@@ -1821,7 +1821,8 @@
               ; See Sect. 4.16 in XQuery specification and
               ; XQTS test "K-OptionDeclarationProlog-1"
               (cl:signal-user-error XPST0081 (cadr qname-pair)))
-             ((equal? qname-pair `(,sa:se-ns "output"))
+             ((and (string=? (car qname-part) sa:se-ns)
+                   (string=? (cadr qname-part) "output"))
               (let ((keys+values
                      (option-string->key+value-pairs value #\;)))
                 (cond
@@ -1883,7 +1884,8 @@
                                 (const (type !xs!string) ,(cdr pair))))
                             keys+values)))
                     reversed-prolog)))))
-             ((equal? qname-pair `(,sa:se-ns "character-map"))
+             ((and (string=? (car qname-part) sa:se-ns)
+                   (string=? (cadr qname-part) "character-map"))
               (let ((delim-char #\!))
                 (cons
                  (cons (car expr)  ; declare-option
@@ -1916,7 +1918,9 @@
     (and
      name-parts
      (if
-      (memq name-parts '(* unspecified))  ; wildcard
+      (or (memq name-parts '(* unspecified))  ; wildcard
+          ; Already resolved
+          (= (length name-parts) 3))
       qname-const
       (let* ((prefix (car name-parts))
              (ns-uri
@@ -1944,7 +1948,7 @@
          ns-uri   ; namespace URI found successfully
          (list (sa:op-name qname-const)  ; ='const
                (car (sa:op-args qname-const))   ; type of constant
-               (list ns-uri (cadr name-parts)))))))))
+               (list ns-uri (cadr name-parts) prefix))))))))
 
 ;-------------------------------------------------
 ; Helpers for function declaration analysis
@@ -1958,17 +1962,20 @@
    (cl:signal-input-error SE5014 qname-const)
    (let ((type (car (sa:op-args qname-const)))
          (value (cadr (sa:op-args qname-const))))
-     (if
-      (not (and (pair? type) (eq? (sa:op-name type) 'type)
-                (memq (cadr type) '(!xs!QName !xs!qname))
-                (or
-                 (memq value '(* unspecified))
-                 (and
-                  (list? value) (= (length value) 2)  ; 2 members
-                  (or (string? (car value)) (eq? (car value) '*))
-                  (or (string? (cadr value)) (eq? (cadr value) '*)))
-                )))
-      (cl:signal-input-error SE5015 qname-const)
+     (and
+      (or
+       (and (pair? type) (eq? (sa:op-name type) 'type)
+            (memq (cadr type) '(!xs!QName !xs!qname))
+            (or
+             (memq value '(* unspecified))
+             (and
+              (list? value) (memv (length value) '(2 3))
+              (null?
+               (filter
+                (lambda (x)
+                  (not (or (string? x) (eq? x '*))))
+                value)))))
+       (cl:signal-input-error SE5015 qname-const))
       value))))
 
 ; Whether we can cast from from-type to to-type
@@ -2259,7 +2266,8 @@
                                 ; DL: should be?: (car default-ns)
                                 )
               ; Do not actually expand it until dynamic evaluation phase
-              (car (sa:op-args expr))))
+              ;(car (sa:op-args expr))
+              ))
             (new-type
              (let ((type-node (cadr (sa:op-args expr))))
                (and
@@ -3066,21 +3074,23 @@
              )))
          ((and (pair? (car src))
                (eq? (sa:op-name (car src)) 'attribute))
-          (let ((name (car (sa:op-args (car src)))))
+          (let* ((name (car (sa:op-args (car src))))
+                 (url+local (let ((name-triple (cadr (sa:op-args name))))
+                              (car name-triple) (cadr name-triple))))
             (if
              (sa:qname-const? name)
              ; Constant attribute name
              (let ((name
                     (sa:resolve-qname name ns-binding (cadr default-ns))))
                (if
-                (member (cadr (sa:op-args name)) attr-names)
+                (member url+local attr-names)
                 ; Duplicate attribute declared
                 (cl:signal-user-error XQST0040 (sa:qname->string name))
                 (loop (cdr src)
                       namespaces
                       (cons (car src) others)
                       prefixes
-                      (cons (cadr (sa:op-args name)) attr-names))))
+                      (cons url+local attr-names))))
              (loop (cdr src)
                    namespaces (cons (car src) others)
                    prefixes attr-names))))
