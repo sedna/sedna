@@ -455,6 +455,7 @@ $(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) libraries
                                $(AUTH_S)					\
                                $(RCV_S)						\
                                $(EXECUTOR_S)				\
+                               $(PQ_S)						\
                                $(COMMON_FILES_S) --end-group\
                                $(LSLIBS)
 endif
@@ -556,6 +557,7 @@ $(PP)/bin/se_rcv$(EXE_EXT): $(TRN_RCV_OBJS) libraries
                                $(STRUCTURES_S)					\
                                $(MO_S)						\
                                $(UPDATES_S)					\
+                               $(PQ_S)						\
                                $(COMMON_FILES_S) --end-group\
                                $(LSLIBS)
 endif
