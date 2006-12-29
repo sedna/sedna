@@ -138,7 +138,7 @@ void PPFtScan::next(tuple &t)
 		{
 		ptr = pers_sset<ft_custom_cell,unsigned short>::init(false);
 
-		std::vector<std::pair<std::pair<xml_ns*,char*>,ft_index_type> > * templ = make_cust_rules_vector(&cust_rules);
+		std::vector<std::pair<std::pair<xml_ns*,char*>,ft_index_type> > * templ = make_cust_rules_vector(&cust_rules, cxt);
 		std::vector<std::pair<std::pair<xml_ns*,char*>,ft_index_type> >::iterator tmp=templ->begin();
 		while (tmp!=templ->end())
 		{
