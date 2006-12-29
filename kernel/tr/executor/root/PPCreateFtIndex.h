@@ -13,7 +13,7 @@
 #include "ft_index_data.h"
 
 ft_index_type str2index_type(const char *str);
-std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules);
+std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);
 void delete_cust_rules_vector(std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* &v);
 
 class PPCreateFtIndex : public PPUpdate
