@@ -94,18 +94,7 @@ struct producer
                  cvc(NULL), 
                  tuple_pos(0), 
                  t(NULL) {}
-    ~producer()
-    {
-        switch (type)
-        {
-            case pt_not_defined	: break;
-            case pt_tuple		: delete t; break;
-            case pt_seq			: delete s; break;
-            case pt_lazy_simple	: delete svc; break;
-            case pt_lazy_complex: delete cvc; break;
-            default				: throw USER_EXCEPTION2(SE1003, "Unexpected case in producer::~producer");
-        }
-    }
+    ~producer();
 };
 
 // variable context
