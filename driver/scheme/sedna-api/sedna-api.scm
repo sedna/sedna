@@ -385,6 +385,7 @@
      (lambda () (sedna:read-package-after-item-parts in))
      (lambda (code body-chars)
        (sedna:close-tcp-connection out)  ; Close the connection
+       (sedna:close-tcp-connection in)  ; ZNV: it might be wrong
        (cond
          ((or (= code sedna:CloseConnectionOk)
               (= code sedna:TransactionRollbackBeforeClose))        
