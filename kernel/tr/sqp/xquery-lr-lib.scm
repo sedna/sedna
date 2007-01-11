@@ -70,9 +70,11 @@
 ;Functios for QName - (const (type !xs!QName) ("namespace-uri-name" "local-name"))  
 (define (xlr:namespace-name expr)
   (car (xlr:const-value expr)))
-
 (define (xlr:local-name expr)
   (cadr (xlr:const-value expr)))
+; Returns either (list string) or '()
+(define (xlr:ns-prefix expr)
+  (cddr (xlr:const-value expr)))
 
 ;Functions for fun-def
 (define (xlr:fun-def? x) 

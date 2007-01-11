@@ -502,3 +502,30 @@
            (const (type !xs!string) "qmark"))))
         (var ("" "x"))))
       (var ("" "x")))))))
+
+(go
+   '(query
+     (prolog)
+     (query-body
+      (child
+       (child
+        (child
+         (!fn!document (const (type !xs!string) "db_security_data"))
+         (type
+          (elem-test
+           (ename
+            (const (type !xs!QName) ("" "db_security_data" ""))
+            (type *)
+            (const (type !xs!string) "non-nil")))))
+        (type
+         (elem-test
+          (ename
+           (const (type !xs!QName) ("" "users" ""))
+           (type *)
+           (const (type !xs!string) "non-nil")))))
+       (type
+        (elem-test
+         (ename
+          (const (type !xs!QName) ("" "user" ""))
+          (type *)
+          (const (type !xs!string) "non-nil"))))))))
