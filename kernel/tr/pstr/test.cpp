@@ -17,8 +17,8 @@
 #include "persistent_db_data.h"
 
 #include "pstr.h"
-#include "stdlib.h"
-#include "time.h"
+#include <stdlib.h>
+#include <time.h>
 #include "pstrblk.h"
 
 using namespace std;

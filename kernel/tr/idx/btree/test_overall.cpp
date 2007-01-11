@@ -17,8 +17,8 @@
 #include "persistent_db_data.h"
 #include "nodes.h"
 
-#include "stdlib.h"
-#include "time.h"
+#include <stdlib.h>
+#include <time.h>
 #include "btintern.h"
 #include "btree.h"
 #include "test.h"
