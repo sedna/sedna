@@ -190,7 +190,7 @@
                               `(qname 
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,(caddr (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
@@ -233,7 +233,7 @@
                               `(qname 
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,(caddr (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
@@ -264,7 +264,7 @@
                               `(qname 
                                 (,(xlr:namespace-name (cadr (cadr what)))
                                  ,(xlr:local-name (cadr (cadr what)))
-                                 ,(caddr (cadr (cadr what))))))) 
+                                 ,@(xlr:ns-prefix (cadr (cadr what))))))) 
                            (cl:signal-error
                             "l2p:findPPAbsPath: instruction is not supported - "
                             (car (cadr what)))))
