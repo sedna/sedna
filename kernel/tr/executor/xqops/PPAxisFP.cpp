@@ -159,8 +159,7 @@ void PPAxisFP::next_string(tuple &t)
 
 void PPAxisFP::next_qname(tuple &t)
 {
-	char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element);
-	next_qname_and_text(t,uri,nt_data.ncname_local,element,comp_qname_type);
+	next_qname_and_text(t,nt_data.uri,nt_data.ncname_local,element,comp_qname_type);
 }
 
 void PPAxisFP::next_wildcard_star(tuple &t)
@@ -224,8 +223,7 @@ void PPAxisFP::next_wildcard_star(tuple &t)
 
 void PPAxisFP::next_wildcard_ncname_star(tuple &t)
 {
-    char * uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element) ;
-	next_qname_and_text(t,uri,NULL,element,comp_uri_type);
+	next_qname_and_text(t,nt_data.uri,NULL,element,comp_uri_type);
 }
 
 void PPAxisFP::next_wildcard_star_ncname(tuple &t)

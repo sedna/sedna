@@ -15,7 +15,7 @@ const char *get_module(const char *module_uri)
     bool mem_alloced = false;
 
 
-    std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
+    std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\" \"\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
     module_query_in_por += module_uri;
     module_query_in_por += "\" !xs!string))))))))))";
 

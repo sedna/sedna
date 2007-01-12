@@ -46,6 +46,7 @@ class PPOpIn;
 
 struct NodeTestData
 {
+    char* uri;
     char* ncname_prefix;
     char* ncname_local;
     PPOpIn *ppnode;
@@ -117,6 +118,11 @@ void PathExpr_pers_free();
 // reset structures that stores allocated persistent heap memory (call it on transaction commit)
 void PathExpr_reset_pers();
 
+
+void set_node_test_type_and_data(scheme_list *lst, 
+                                 NodeTestType &nt_type, //out parameter
+                                 NodeTestData &nt_data, //out parameter
+                                 bool persistent);
 
 
 #endif

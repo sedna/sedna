@@ -28,14 +28,31 @@ void xs_NCName_release(char *ncname, void (*free_func)(void*))
 
 void xs_NCName_print(const char *ncname, std::ostream& str)
 {
-    str << ncname;
+    if (ncname && *ncname)
+        str << ncname;
 }
 
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str)
 {
-    str << "\"" << ncname << "\"";
+    if (ncname && *ncname)
+        str << "\"" << ncname << "\"";
 }
 
+
+///
+/// XML Schema Part 2 anyURI Functions
+///
+char *xs_anyURI_create(const char* value, void* (*alloc_func)(size_t))
+{
+    char *uri = (char*)alloc_func(strlen(value) + 1);
+    strcpy(uri, value);
+    return uri;
+}
+
+void xs_anyURI_release(char *uri, void (*free_func)(void*))
+{
+    free_func(uri);
+}
 
 
 ///
@@ -242,7 +259,7 @@ xml_ns *xs_QName_get_xmlns(const char* qname)
 void xs_QName_print(const char* qname, std::ostream& str)
 {
     const char *prefix = xs_QName_get_prefix(qname);
-    if (prefix && strlen(prefix) != 0)
+    if (prefix && *prefix)
         str << prefix << ":";
     str << xs_QName_get_local_name(qname);
 }
@@ -251,19 +268,18 @@ void xs_QName_print_to_lr(const char* qname, std::ostream& str)
 {
     const char *prefix = xs_QName_get_prefix(qname);
     str << "(\"";
-    if (prefix && strlen(prefix) != 0)
+    if (prefix && *prefix)
         str << prefix;
     str << "\" \"";
     str << xs_QName_get_local_name(qname);
     str << "\")";
 }
 
-bool _xs_QName_not_equal(const char *prefix, const char *local, const xptr &node)
+bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node)
 {
 	xml_ns* node_ns = GETSCHEMENODE(XADDR(node))->xmlns;
 	char* node_uri = node_ns ? node_ns->uri : NULL;
     const char *node_local = GETSCHEMENODE(XADDR(node))->name;
-    char* uri = prefix ? (dynamic_context::__static_cxt()->get_xmlns_by_prefix(prefix)->uri) : NULL;
 
     return _xs_QName_not_equal(node_uri, node_local, uri, local);
 }
