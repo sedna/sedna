@@ -30,7 +30,10 @@
        (tcp-connect host port-number)))
      (cons input-port output-port)))
   (define sedna:flush-output-port flush-output)
-  (define sedna:close-tcp-connection close-output-port)
+  ; used for both closing input and output ports 
+  ; PLT does not allow to close input port with a call to close-output-port
+  (define (sedna:close-tcp-connection port)   
+    (or(and(output-port? port)(close-output-port port))(close-input-port port)))
   (define sedna:port-position file-position))
  
  ; Chicken implementation has much the same with a PLT one, since Chicken
@@ -42,6 +45,8 @@
        (tcp-connect host port-number)))
      (cons input-port output-port)))
   (define sedna:flush-output-port flush-output)
+  ; used for both closing input and output ports 
+  ; however chicken allows to close input port with close-output-port (and vice-versa)
   (define sedna:close-tcp-connection close-output-port)
   (define (sedna:port-position input-port)
     (receive (row col) (port-position input-port)
