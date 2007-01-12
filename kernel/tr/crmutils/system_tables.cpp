@@ -99,6 +99,20 @@ void get_document_full (xptr node,const char* title)
 	if (scn!=NULL) getDebugInfo(scn, parent);
 
 }
+void get_collection_full (xptr node,const char* title)
+{
+	char* docn=new char[11+strlen(title)];
+	docn[0]='\0';
+	strcat(docn,"$DOCUMENT_");
+	strcat(docn,title);
+	addTextValue(node,docn,strlen(docn));
+	delete [] docn;
+	xptr parent=insert_element(XNULL,XNULL,node,"COLLECTION",xs_untyped,NULL,NULL);
+	insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL);
+	schema_node* scn=find_collection(title);	
+	if (scn!=NULL) getDebugInfo(scn, parent);
+
+}
 bool is_document_system(const char* title)
 {
 	return (title[0]=='$');
@@ -378,6 +392,11 @@ schema_node* get_system_doc(const char* title)
 	{
 		func=get_document_full;
 		param=title+10;
+	}
+	if (strstr(title,"$collection_")==title)
+	{
+		func=get_collection_full;
+		param=title+12;
 	}
 	if (strstr(title,"$schema_")==title)
 	{
