@@ -176,8 +176,8 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		//Check of the following is right
 		xptr tmp=removeIndirection(node_par);
 		xptr right=tmp;
-		mark= is_node_persistent(node_child); 
-		if (mark) node_child=removeIndirection(node_child);
+		//mark= is_node_persistent(node_child); 
+		node_child=removeIndirection(node_child);
 		CHECKP(tmp);
 		tmp=GETLEFTPOINTER(tmp);
 		xptr child=tmp;
@@ -422,8 +422,8 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		//Check of the following is right
 		xptr tmp=removeIndirection(node_par);
 		xptr child=tmp;
-		mark= is_node_persistent(node_child); 
-		if (mark) node_child=removeIndirection(node_child);
+	//	mark= is_node_persistent(node_child); 
+		 node_child=removeIndirection(node_child);
 		CHECKP(tmp);
 		mark=!is_node_attribute(tmp);
 		CHECKP(node_child);
