@@ -15,6 +15,8 @@
 #include "vmm.h"
 #include <vector>
 
+// FIXME: Possibley, we have memory leaks with sequence_type (for node_name_uri, node_name_local and possibly ncname)
+
 class sequence;
 class PPOpIn;
 
@@ -45,7 +47,7 @@ struct st_elem_attr_data
 {
     st_node_name_enum nne;
     st_type_name_enum tne;
-    char *node_name_prefix;
+    char *node_name_uri;
     char *node_name_local;
     xmlscm_type type_name;
 };

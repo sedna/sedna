@@ -138,88 +138,12 @@ void set_axis_parameters(scheme_list *lst,
                          NodeTestData &nt_data,
                          bool persistent)
 {
-    if (   lst->at(1).type != SCM_SYMBOL
-        || lst->at(3).type != SCM_LIST)
-    throw USER_EXCEPTION2(SE1004, "108");
+    if (lst->at(3).type != SCM_LIST)
+       throw USER_EXCEPTION2(SE1004, "108");
 
     child = make_pp_op(cxt, lst->at(3).internal.list);
 
-    string type = string(lst->at(1).internal.symb);
-    if (type == "processing_instruction") nt_type = node_test_processing_instruction;
-    else if (type == "comment") nt_type = node_test_comment;
-    else if (type == "text") nt_type = node_test_text;
-    else if (type == "node") nt_type = node_test_node;
-    else if (type == "string") nt_type = node_test_string;
-    else if (type == "qname") nt_type = node_test_qname;
-    else if (type == "wildcard_star") nt_type = node_test_wildcard_star;
-    else if (type == "wildcard_ncname_star") nt_type = node_test_wildcard_ncname_star;
-    else if (type == "wildcard_star_ncname") nt_type = node_test_wildcard_star_ncname;
-    else if (type == "function_call") nt_type = node_test_function_call;
-    else if (type == "var_name") nt_type = node_test_var_name;
-    else throw USER_EXCEPTION2(SE1004, "109");
-
-    nt_data.ncname_prefix = NULL;
-    nt_data.ncname_local  = NULL;
-
-    if (nt_type == node_test_wildcard_ncname_star)
-    {
-        if (lst->at(2).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "110");
-
-        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (nt_type == node_test_wildcard_star_ncname)
-    {
-        if (lst->at(2).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "110");
-
-        nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (nt_type == node_test_qname)
-    {
-        if (   lst->at(2).type != SCM_LIST
-            || lst->at(2).internal.list->size() != 2
-            || lst->at(2).internal.list->at(0).type != SCM_STRING
-            || lst->at(2).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "111");
-
-        nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
-        nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (nt_type == node_test_processing_instruction)
-    {
-        if (   lst->at(2).type == SCM_LIST
-            && lst->at(2).internal.list->size() == 0)
-        {
-            nt_data.ncname_local  = NULL;
-        }
-        else if (lst->at(2).type == SCM_STRING)
-        {
-            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
-        }
-        else throw USER_EXCEPTION2(SE1004, "110");
-
-        return;
-    }
-
-    if (   nt_type == node_test_string
-        || nt_type == node_test_function_call
-        || nt_type == node_test_var_name)
-    {
-        if (lst->at(2).type != SCM_LIST)
-            throw USER_EXCEPTION2(SE1004, "112");
-
-         nt_data.ppnode = NULL;//make_pp_op(cxt, lst->at(2).internal.list);
-         return;
-    }
-
-    //throw USER_EXCEPTION2(SE1004, "113");
+    set_node_test_type_and_data(lst, nt_type, nt_data, persistent);
 }
 
 void make_elem_attr_data(scheme_list *lst, sequence_type &st)
@@ -253,17 +177,18 @@ void make_elem_attr_data(scheme_list *lst, sequence_type &st)
     if (st.type.info.ea.nne == st_nne_name)
     {
         name = lst->at(2).internal.list;
-        if (   name->size() != 2
+        if (   name->size() != 3
             || name->at(0).type != SCM_STRING
-            || name->at(1).type != SCM_STRING)
+            || name->at(1).type != SCM_STRING
+            || name->at(2).type != SCM_STRING)
             throw USER_EXCEPTION2(SE1004, "123");
 
-        if (strlen(name->at(0).internal.str) > 0)
-            st.type.info.ea.node_name_prefix = xs_NCName_create(name->at(0).internal.str, PathExpr_malloc_func(false));
+        if (*(name->at(0).internal.str))
+            st.type.info.ea.node_name_uri = xs_NCName_create(name->at(0).internal.str, PathExpr_malloc_func(false));
         else 
-            st.type.info.ea.node_name_prefix = NULL;
+            st.type.info.ea.node_name_uri = NULL;
 
-        st.type.info.ea.node_name_local  = xs_NCName_create(name->at(1).internal.str, PathExpr_malloc_func(false));
+        st.type.info.ea.node_name_local = xs_NCName_create(name->at(1).internal.str, PathExpr_malloc_func(false));
     }
 
     if (st.type.info.ea.tne == st_tne_optional || st.type.info.ea.tne == st_tne_present)

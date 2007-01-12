@@ -167,10 +167,10 @@ void PPAxisAncestor::next_qname(tuple &t)
 		{
 			CHECKP(cur);
 			if (comp_qname_type(GETSCHEMENODEX(cur),
-                              cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix, element),
-                              nt_data.ncname_local, 
-                              element))
-							  break;
+                                nt_data.uri,
+                                nt_data.ncname_local, 
+                                element))
+                break;
 			cur = get_parent_node(cur);
 		}
     }
@@ -180,7 +180,7 @@ void PPAxisAncestor::next_qname(tuple &t)
 	{
 		CHECKP(cur);		
 		if (comp_qname_type(GETSCHEMENODEX(cur),
-                              cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix, element),
+                              nt_data.uri,
                               nt_data.ncname_local, 
                               element))
 							  return;
@@ -238,12 +238,11 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
 		
-		char* uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element);
         while (cur!=XNULL)
 		{
 			CHECKP(cur);
 			if (comp_type(GETSCHEMENODEX(cur), 
-                        uri,
+                        nt_data.uri,
                         NULL, 
                         element))
 							  break;
@@ -252,13 +251,12 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
     }
 
     t.copy(tuple_cell::node(cur));
-	char* uri=cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix,element);
 	cur = get_parent_node(cur);
     while (cur!=XNULL)
 	{
 		CHECKP(cur);		
 		if (comp_type(GETSCHEMENODEX(cur), 
-                        uri,
+                        nt_data.uri,
                         NULL, 
                         element))
 							  return;

@@ -140,7 +140,7 @@ void PPAxisParent::next_qname(tuple &t)
 		if (cur==XNULL) continue;
         CHECKP(cur);
         if (!comp_qname_type(GETSCHEMENODEX(cur),
-                              cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix, element),
+                              nt_data.uri,
                               nt_data.ncname_local, 
                               element))
             cur = XNULL;
@@ -188,7 +188,7 @@ void PPAxisParent::next_wildcard_ncname_star(tuple &t)
         CHECKP(cur);
         if (!
               comp_uri_type(GETSCHEMENODEX(cur),
-                            cxt->st_cxt->get_uri_by_prefix(nt_data.ncname_prefix, element),
+                            nt_data.uri,
                             NULL, 
                             element))
             cur = XNULL;

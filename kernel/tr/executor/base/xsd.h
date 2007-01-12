@@ -72,17 +72,20 @@ void  xs_NCName_release(char *ncname, void (*free_func)(void*));
 void  xs_NCName_print(const char *ncname, std::ostream& str);
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str);
 
-/*
-inline bool operator ==(const NCName &n1, const NCName &n2)
-{
-    return strcmp(n1.n, n2.n) == 0;
-}
 
-inline bool operator <(const NCName &n1, const NCName &n2)
-{
-    return strcmp(n1.n, n2.n) < 0;
-}
-*/
+
+///
+/// XML Schema Part 2 anyURI Functions
+///
+/// xs_anyURI is a string, that could be created in main memory or persistent heap (PH).
+/// So we have to provide facilities for doing this. Moreover, we could not just add
+/// 'bool persistent' parameter to functions because while constructing XPath expressions
+/// we should aware of memory being allocated. For this purpose we provide addition 
+/// functions like 'PathExpr_pers_malloc' and 'PathExpr_malloc' that we could pass as 
+//// paramters to xs_anyURI_create.
+char *xs_anyURI_create(const char* value, void* (*alloc_func)(size_t));
+void  xs_anyURI_release(char *uri, void (*free_func)(void*));
+
 
 
 
@@ -153,8 +156,8 @@ inline bool _xs_QName_not_equal(const char* uri1, const char *local1, const char
 // This function is used for Sequence Type implementation and intended to be faster
 // than creating xs:QNames from prefix and local part and calling dm:node-name (bla-bla-bla)
 // Parameters:
-// prefix could be NULL
+// uri could be NULL
 // node must be element or attribute and CHECKP should be called on node already
-bool _xs_QName_not_equal(const char *prefix, const char *local, const xptr &node);
+bool _xs_QName_not_equal(const char *uri, const char *local, const xptr &node);
 
 #endif

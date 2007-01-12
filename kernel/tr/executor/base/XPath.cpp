@@ -109,6 +109,8 @@ void delete_PathExpr(PathExpr *path)
                         {
                             xs_NCName_release(nt.data.ncname_prefix, pers_free);
                             nt.data.ncname_prefix = NULL;
+                            xs_anyURI_release(nt.data.uri, pers_free);
+                            nt.data.uri = NULL;
                             break;
                         }
                     case node_test_wildcard_star_ncname:
@@ -121,6 +123,8 @@ void delete_PathExpr(PathExpr *path)
                         {
                             xs_NCName_release(nt.data.ncname_prefix, pers_free);
                             nt.data.ncname_prefix = NULL;
+                            xs_anyURI_release(nt.data.uri, pers_free);
+                            nt.data.uri = NULL;
                             xs_NCName_release(nt.data.ncname_local, pers_free);
                             nt.data.ncname_local = NULL;
                             break;
@@ -289,14 +293,103 @@ void PathExpr2lr(PathExpr *path, std::ostream& str)
     path->print_to_lr(str);
 }
 
-void set_node_test_parameters(dynamic_context *cxt,
-                              scheme_list *lst, 
+void set_node_test_type_and_data(scheme_list *lst, 
+                                 NodeTestType &nt_type, //out parameter
+                                 NodeTestData &nt_data, //out parameter
+                                 bool persistent)
+{
+    if (lst->at(1).type != SCM_SYMBOL)
+        throw USER_EXCEPTION2(SE1004, "Path expression");
+
+    string type = string(lst->at(1).internal.symb);
+    if (type == "processing_instruction") nt_type = node_test_processing_instruction;
+    else if (type == "comment") nt_type = node_test_comment;
+    else if (type == "text") nt_type = node_test_text;
+    else if (type == "node") nt_type = node_test_node;
+    else if (type == "string") nt_type = node_test_string;
+    else if (type == "qname") nt_type = node_test_qname;
+    else if (type == "wildcard_star") nt_type = node_test_wildcard_star;
+    else if (type == "wildcard_ncname_star") nt_type = node_test_wildcard_ncname_star;
+    else if (type == "wildcard_star_ncname") nt_type = node_test_wildcard_star_ncname;
+    else if (type == "function_call") nt_type = node_test_function_call;
+    else if (type == "var_name") nt_type = node_test_var_name;
+    else throw USER_EXCEPTION2(SE1004, "Path expression");
+
+    nt_data.uri           = NULL;
+    nt_data.ncname_prefix = NULL;
+    nt_data.ncname_local  = NULL;
+
+    if (nt_type == node_test_wildcard_ncname_star)
+    {
+        if (lst->at(2).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "Path expression");
+
+        if (strcmp(lst->at(2).internal.str, "http://www.w3.org/XML/1998/namespace") !=0)
+            nt_data.uri = xs_anyURI_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        return;
+    }
+
+    if (nt_type == node_test_wildcard_star_ncname)
+    {
+        if (lst->at(2).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "Path expression");
+
+        nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        return;
+    }
+
+    if (nt_type == node_test_qname)
+    {
+        if (   lst->at(2).type != SCM_LIST
+            || lst->at(2).internal.list->size() != 3
+            || lst->at(2).internal.list->at(0).type != SCM_STRING
+            || lst->at(2).internal.list->at(1).type != SCM_STRING
+            || lst->at(2).internal.list->at(2).type != SCM_STRING)
+            throw USER_EXCEPTION2(SE1004, "Path expression");
+
+        if (*(lst->at(2).internal.list->at(0).internal.str))
+            if (strcmp(lst->at(2).internal.list->at(0).internal.str, "http://www.w3.org/XML/1998/namespace") != 0)
+                nt_data.uri = xs_anyURI_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
+
+        nt_data.ncname_local  = xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
+        if (*(lst->at(2).internal.list->at(2).internal.str))
+            nt_data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(2).internal.str, PathExpr_malloc_func(persistent));
+    }
+
+    if (nt_type == node_test_processing_instruction)
+    {
+        if (   lst->at(2).type == SCM_LIST
+            && lst->at(2).internal.list->size() == 0)
+        {
+            nt_data.ncname_local  = NULL;
+        }
+        else if (lst->at(2).type == SCM_STRING)
+        {
+            nt_data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
+        }
+        else throw USER_EXCEPTION2(SE1004, "110");
+
+        return;
+    }
+
+    if (   nt_type == node_test_string
+        || nt_type == node_test_function_call
+        || nt_type == node_test_var_name)
+    {
+        if (lst->at(2).type != SCM_LIST)
+            throw USER_EXCEPTION2(SE1004, "112");
+
+         nt_data.ppnode = NULL;
+         return;
+    }
+}
+
+void set_node_test_parameters(scheme_list *lst, 
                               NodeTest &nt, //out parameter
                               bool persistent)
 {
     if (   lst->size() != 3
-        || lst->at(0).type != SCM_SYMBOL
-        || lst->at(1).type != SCM_SYMBOL)
+        || lst->at(0).type != SCM_SYMBOL)
     throw USER_EXCEPTION2(SE1004, "Path expression");
 
     string axis = string(lst->at(0).internal.symb);
@@ -309,62 +402,7 @@ void set_node_test_parameters(dynamic_context *cxt,
     else if (axis == "PPAxisDescendantAttr") nt.axis = axis_descendant_attr;
     else throw USER_EXCEPTION2(SE1004, "Path expression");    
 
-    string type = string(lst->at(1).internal.symb);
-    if (type == "processing_instruction") nt.type = node_test_processing_instruction;
-    else if (type == "comment") nt.type = node_test_comment;
-    else if (type == "text") nt.type = node_test_text;
-    else if (type == "node") nt.type = node_test_node;
-    else if (type == "string") nt.type = node_test_string;
-    else if (type == "qname") nt.type = node_test_qname;
-    else if (type == "wildcard_star") nt.type = node_test_wildcard_star;
-    else if (type == "wildcard_ncname_star") nt.type = node_test_wildcard_ncname_star;
-    else if (type == "wildcard_star_ncname") nt.type = node_test_wildcard_star_ncname;
-    else if (type == "function_call") nt.type = node_test_function_call;
-    else if (type == "var_name") nt.type = node_test_var_name;
-    else throw USER_EXCEPTION2(SE1004, "Path expression");
-
-
-    if (nt.type == node_test_wildcard_ncname_star)
-    {
-        if (lst->at(2).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "Path expression");
-
-        nt.data.ncname_prefix = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (nt.type == node_test_wildcard_star_ncname)
-    {
-        if (lst->at(2).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "Path expression");
-
-        nt.data.ncname_local = xs_NCName_create(lst->at(2).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (nt.type == node_test_qname)
-    {
-        if (   lst->at(2).type != SCM_LIST
-            || lst->at(2).internal.list->size() != 2
-            || lst->at(2).internal.list->at(0).type != SCM_STRING
-            || lst->at(2).internal.list->at(1).type != SCM_STRING)
-            throw USER_EXCEPTION2(SE1004, "Path expression");
-
-        nt.data.ncname_prefix = xs_NCName_create(lst->at(2).internal.list->at(0).internal.str, PathExpr_malloc_func(persistent));
-        nt.data.ncname_local =  xs_NCName_create(lst->at(2).internal.list->at(1).internal.str, PathExpr_malloc_func(persistent));
-        return;
-    }
-
-    if (   nt.type == node_test_string
-        || nt.type == node_test_function_call
-        || nt.type == node_test_var_name)
-    {
-        if (lst->at(2).type != SCM_LIST)
-            throw USER_EXCEPTION2(SE1004, "Path expression");
-
-         nt.data.ppnode = NULL;//make_pp_op(cxt, lst->at(2).internal.list);
-         return;
-    }
+    set_node_test_type_and_data(lst, nt.type, nt.data, persistent);
 }
 
 PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persistent)
@@ -395,7 +433,7 @@ PathExpr *lr2PathExpr(dynamic_context *cxt, scheme_list *path_lst, bool persiste
             if (node_test_or_lst->at(j).type != SCM_LIST)
                 throw USER_EXCEPTION2(SE1004, "Path expression");
 
-            set_node_test_parameters(cxt, node_test_or_lst->at(j).internal.list, path_expr->nto[i].nt[j], persistent);
+            set_node_test_parameters(node_test_or_lst->at(j).internal.list, path_expr->nto[i].nt[j], persistent);
         }
     }
 
@@ -443,6 +481,7 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
         {
             case element      : {
                                     path_expr->nto[i].nt->type = node_test_qname;
+                                    // FIXME:
                                     path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
                                     path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
                                     break;
@@ -453,6 +492,7 @@ PathExpr *build_PathExpr(schema_node *from, schema_node *to)
                                 }
             case attribute    : {
                                     path_expr->nto[i].nt->type = node_test_qname;
+                                    // FIXME:
                                     path_expr->nto[i].nt->data.ncname_prefix = xs_NCName_create(cur->name, PathExpr_malloc_func(false));
                                     path_expr->nto[i].nt->data.ncname_local =  xs_NCName_create(cur->xmlns->uri, PathExpr_malloc_func(false));
                                     break;
