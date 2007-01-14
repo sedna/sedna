@@ -12,7 +12,7 @@ using namespace std;
 /// Returns the least common type that has a gt operator.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
-xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
+static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
     xmlscm_type t = evaluate_common_type(t1, t2);    
     
@@ -32,7 +32,7 @@ xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
         case xs_double                : 
         case xs_decimal               : 
         case xs_boolean               : return t;
-        default                       : throw USER_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator (PPOrderBy).");
+        default                       : throw USER_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator.");
     }    
 }
 
@@ -55,7 +55,7 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
                                         data_size(_data_size_)
 {
     if(modifiers.size() != child.ts - data_size) 
-        throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number (PPOrderBy).");
+        throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");
     
     sort_size = child.ts - data_size;
     types.resize(sort_size);
@@ -150,7 +150,12 @@ void PPOrderBy::next  (tuple &t)
                         sort_tuple.cells[i - data_size].set_eos();
                     else
                     {
-                        tuple_cell tc = atomize(source.cells[i]);
+                        tuple_cell tc = source.cells[i];
+                        
+                        if(tc.is_atomic() && tc.get_atomic_type() == se_sequence)
+                            throw USER_EXCEPTION2(XPTY0004, "A sequence of more than one item is not allowed in order by specification.");
+                        
+                        tc = atomize(tc);
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
                                                           cast_primitive_to_xs_string(tc) : tc ;
                         
@@ -188,7 +193,7 @@ void PPOrderBy::next  (tuple &t)
             if(sort_size % 8 != 0) udata.size++;
 
             if(udata.size > DATA_BLK_SIZE) 
-                throw USER_EXCEPTION2(SE1003, "Too long order by specification (PPOrderBy).");
+                throw USER_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
 
             if(udata.buffer != NULL) delete udata.buffer;
             udata.buffer = new temp_buffer(udata.size);
@@ -210,7 +215,7 @@ void PPOrderBy::next  (tuple &t)
         if(need_to_sort) {
             ss->get(t,pos++);
             if(t.cells[0].get_atomic_type() != xs_integer) 
-                throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization (PPOrderBy).");
+                throw USER_EXCEPTION2(SE1003, "Incorrect serialization/deserialization.");
         }
         data_cells -> get(t, need_to_sort ? t.cells[0].get_xs_integer() : pos++);
     }
@@ -288,7 +293,7 @@ void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
             case xs_decimal                : *((xs_decimal_t*)value) = *((xs_decimal_t*)addr); break;
             case xs_integer                : *((__int64*)value) = *((__int64*)addr); break;
             case xs_boolean                : *((bool*)value) = *((bool*)addr); break;
-            default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented (PPOrderBy).");
+            default                        : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or deserialization is not implemented.");
         }    
     #endif
 }
@@ -463,7 +468,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     break;
                 }
-                default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
+                default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
             }
         }
         if(result != 0) break;
@@ -549,7 +554,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_dateTime             :
                     case xs_yearMonthDuration    : 
                     case xs_dayTimeDuration      : memcpy((char*)p+offset, &(t.cells[i].get_xs_duration()), type_size); break;
-                    default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
+                    default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
                 }
             }
             offset += type_size;
@@ -633,7 +638,7 @@ temp_buffer::temp_buffer (int _size_): size(_size_),
                                        pos(0)
 {
     if(size <= 0) 
-        throw USER_EXCEPTION2(SE1003, "Buffer size must be positive (PPOrderBy::temp_buffer).");            
+        throw USER_EXCEPTION2(SE1003, "Buffer size must be positive.");            
     buffer = new char[size]; 
 }
     
@@ -669,7 +674,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_dateTime             :
         case xs_yearMonthDuration    : 
         case xs_dayTimeDuration      : {memcpy(buffer + pos, &(tc.get_xs_duration()), type_size); break;}
-        default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type or serialization is not implemented (PPOrderBy).");
+        default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
     }
 
     pos += type_size;
