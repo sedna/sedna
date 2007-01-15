@@ -104,9 +104,12 @@ struct xml_ns;
 char *xs_QName_create(xml_ns* xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t));
-// backs up xs:QName() function (prefix_and_local constains prefix and local part separated by ':')
-char *xs_QName_create(const char* prefix_and_local, 
-                      void* (*alloc_func)(size_t));
+// backs up xs:QName() function
+char *xs_QName_create(const char *uri,
+                      const char *prefix,
+                      const char *local,
+                      void* (*alloc_func)(size_t),
+                      dynamic_context *cxt);
 // backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 

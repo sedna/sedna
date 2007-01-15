@@ -343,15 +343,12 @@ public:
         glb_var_cxt.close();
     }
 
-    static void add_char_mapping(const char* str, const char* rep_str, int pc =-1)
+    static void add_char_mapping(const char* str, const char* rep_str, int pc = -1)
     {
 	    stm.add_str(str, rep_str, pc);
     }
 
-
     static void set_datetime();
-
-    static static_context *__static_cxt() { return unmanaged_st_cxt ? unmanaged_st_cxt : st_cxts[st_cxts_num - 1]; }
 };
 
 
