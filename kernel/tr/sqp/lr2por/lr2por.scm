@@ -677,11 +677,16 @@
              
              ; *** const ***
              ((eq? op-name 'const) 
-                  (cond ((eq? (cadr node) 'true#) `(1 (PPFnTrue)))
-                        ((eq? (cadr node) 'false#) `(1 (PPFnFalse)))
-                        (else `(1 (PPConst ,(cadr node) ,(l2p:lr-atomic-type2por-atomic-type (cadar node)))))
-                  )
-             )
+              (cond
+                ((eq? (cadr node) 'true#) `(1 (PPFnTrue)))
+                ((eq? (cadr node) 'false#) `(1 (PPFnFalse)))
+                ((equal? (car node) '(type !xs!QName))
+                 `(1 (PPxsQName ,@(cadr node))))
+                (else
+                 `(1
+                   (PPConst
+                    ,(cadr node)
+                    ,(l2p:lr-atomic-type2por-atomic-type (cadar node)))))))
              ; *** if@ ***
              ((eq? op-name 'if@)
               (let* ((then-expr (l2p:any-lr-node2por (cadr node)))
