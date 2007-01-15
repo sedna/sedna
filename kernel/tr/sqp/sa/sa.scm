@@ -3342,6 +3342,59 @@
 ;-------------------------------------------------
 ; 2.11 Expressions on Sequence Types
 
+; Splits an SXML `name' into namespace id/uri and local part
+; Returns: (cons  namespace-id  local-part)
+; local-part - string
+; namespace-id - string or #f if the `name' does not have a prefix
+; Borrowed from SXML Serializer "serializer.scm"
+(define (sa:split-name name)
+  (let* ((name-str name)
+         (lng (string-length name-str)))
+  (let iter ((i (- lng 1)))
+    (cond
+      ((< i 0)  ; name scanned, #\: not found
+       (cons #f name-str))
+      ((char=? (string-ref name-str i) #\:)
+       (cons (substring name-str 0 i)
+             (substring name-str (+ i 1) lng)))
+      (else
+       (iter (- i 1)))))))
+
+; Returns pair or raises an expression
+; default-ns is to be a string here
+(define (sa:cast-as-qname expr ns-binding default-ns)
+  (cond
+    ((and
+      (pair? (car (sa:op-args expr)))
+      (not (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
+     (cl:signal-user-error
+      XPTY0004
+      "xs:QName constructor function for non-constant argument"))
+    ((equal? (car (sa:op-args expr))
+             '(const (type !xs!string) ""))
+     (cl:signal-user-error
+      FORG0001
+      "Attempting to cast empty string as xs:QName"))
+    (else
+     (let* ((name-pair (sa:split-name
+                        (cadr (sa:op-args  ; const value
+                               (car (sa:op-args expr))  ; lr for constant
+                               ))))
+            (triple
+             (if
+              (not (car name-pair))
+              (list default-ns (cdr name-pair) "")
+              (let ((qname
+                     (sa:resolve-qname
+                      `(const (type !xs!QName)
+                              ,(list (car name-pair) (cdr name-pair)))
+                      ns-binding default-ns)))
+                (and qname (caddr qname))))))
+       (and
+        triple
+        (cons `(const (type !xs!QName) ,triple)
+              sa:type-atomic))))))
+
 ; return-type-lambda ::= (lambda (args) ...)
 ; args - rewritten arguments of the operation
 (define (sa:cast-helper return-type-lambda)
@@ -3388,12 +3441,11 @@
                     (symbol->string (sa:op-name expr))
                     " as "
                     (cdr pair)))))
-            (else
+            ((eq? item-type '!xs!QName)
              (and
               (or
                (not
                 (and
-                 (eq? item-type '!xs!QName)
                  (pair? (car (sa:op-args expr)))
                  (not
                   (or
@@ -3414,9 +3466,13 @@
                   (string-append
                    (symbol->string (sa:op-name expr))
                    " as xs:QName for non-constant expression"))))
+              (sa:cast-as-qname expr ns-binding
+                                (car default-ns)
+                                )))
+            (else
               (cons (cons (sa:op-name expr)
                           (map car args))
-                    (return-type-lambda args)))))))))))
+                    (return-type-lambda args))))))))))
 
 (define sa:analyze-cast (sa:cast-helper
                          cdar  ; type of the subexpr
@@ -3910,7 +3966,6 @@
               ;                       (car (sa:op-args expr))))
               ; expr
               )))))))))
-
 
 ;==========================================================================
 ; Different kinds of queries
@@ -4665,20 +4720,9 @@
        (if
         (equal? (cadr (sa:op-args expr))
                  '(type (one !xs!QName)))
-        (cond
-          ((and
-            (pair? (car (sa:op-args expr)))
-            (not (eq? (sa:op-name (car (sa:op-args expr))) 'const)))
-           (cl:signal-user-error
-            XPTY0004
-            "xs:QName constructor function for non-constant argument"))
-          ((equal? (car (sa:op-args expr))
-                   '(const (type !xs!string) ""))
-           (cl:signal-user-error
-            FORG0001
-            "Attempting to cast empty string as xs:QName"))
-          (else
-           pair))
+        (sa:cast-as-qname expr ns-binding 
+                          (car default-ns)  ; default element namespace
+                          )
         pair))
       (else  ; any other function call
        pair))))
