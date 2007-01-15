@@ -95,6 +95,8 @@ char *xs_QName_create(xml_ns* xmlns,
                       const char *local_part, 
                       void* (*alloc_func)(size_t))
 {
+    U_ASSERT(local_part);
+
     int lp_size = strlen(local_part);
     char *qname = (char*)alloc_func(lp_size + 2 * sizeof(void*) + 1);
     strcpy(qname + 2 * sizeof(void*), local_part);
@@ -104,24 +106,15 @@ char *xs_QName_create(xml_ns* xmlns,
     return qname;
 }
 
-char *xs_QName_create(const char* prefix_and_local, 
-                      void* (*alloc_func)(size_t))
+char *xs_QName_create(const char *uri,
+                      const char *prefix,
+                      const char *local,
+                      void* (*alloc_func)(size_t),
+                      dynamic_context *cxt)
 {
-    U_ASSERT(prefix_and_local);
-
-    // separate prefix and local name 
-    int pos = _xs_QName_separator_position(prefix_and_local);
-
-    if (pos)
-    {
-        // find xmlns by calling get_xmlns_by_prefix
-        xml_ns* xmlns = dynamic_context::__static_cxt()->get_xmlns_by_prefix(prefix_and_local, pos);
-        return xs_QName_create(xmlns, prefix_and_local + pos + 1, alloc_func);
-    }
-    else
-    {
-        return xs_QName_create((xml_ns*)NULL, prefix_and_local, alloc_func);
-    }
+    // FIXME: check lexical representation
+    xml_ns* ns = cxt->st_cxt->get_ns_pair(prefix, uri);
+    return xs_QName_create(ns, local, alloc_func);
 }
 
 char *xs_QName_create(const char* uri,

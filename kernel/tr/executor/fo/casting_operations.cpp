@@ -87,10 +87,13 @@ inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
 
 inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
 {
+    throw USER_EXCEPTION2(SE1003, "Casting to xs:QName should be performed at compile time");
+/*
     // !!! FIXME: check lexical representation
     tuple_cell tmp = tuple_cell::make_sure_light_atomic(c);
     char *qname = xs_QName_create(tmp.get_str_mem(), malloc);
     return tuple_cell::atomic(xs_QName, qname);
+*/
 }
 
 

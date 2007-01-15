@@ -2788,6 +2788,25 @@ fn_dt_funcs_correct_type:
                              make_pp_op(cxt, lst->at(1).internal.list),
                              make_pp_op(cxt, lst->at(2).internal.list));
     }
+	else if (op == "PPxsQName")
+    {
+        if (   lst->size() != 4
+            || lst->at(1).type != SCM_STRING
+            || lst->at(2).type != SCM_STRING
+            || lst->at(3).type != SCM_STRING
+           ) throw USER_EXCEPTION2(SE1004, "108");
+
+        char *uri = lst->at(1).internal.str;
+        char *local = lst->at(2).internal.str;
+        char *prefix = lst->at(3).internal.str;
+        char *qname = xs_QName_create(uri,
+                                      prefix,
+                                      local,
+                                      malloc,
+                                      cxt);
+
+        opit = new PPConst(cxt, tuple_cell::atomic(xs_QName, qname));
+    }
 	else if (op == "PPFnPrefixFromQName")
     {
         if (   lst->size() != 2
