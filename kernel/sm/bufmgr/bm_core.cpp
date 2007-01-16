@@ -216,6 +216,27 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
 /// Buffer functions
 ////////////////////////////////////////////////////////////////////////////////
 
+bool unmap_block_in_trs(session_id sid, const xptr &p)
+{
+    // approve of xptr 
+    tr_info_map::iterator it;
+    for (it = trs.begin(); it != trs.end(); it++)
+    {
+        if (it->first != sid)
+        {
+            *(xptr*)p_sm_callback_data = p;
+
+            USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error);
+            USemaphoreDown(it->second->sm_to_vmm_callback_sem2, __sys_call_error);
+
+            if (!(*(bool*)p_sm_callback_data))
+                return false;
+        }
+    }
+
+    return true;
+}
+
 xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
 {
     int res = 0;
@@ -242,7 +263,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
 #endif
 
         cur_p = ((vmm_sm_blk_hdr*)OFFS2ADDR(*offs))->p;
-
+        /*
         // approve of offs 
         tr_info_map::iterator it;
         for (it = trs.begin(); it != trs.end(); it++)
@@ -261,8 +282,11 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
                 }
             }
         }
-
-        if (it == trs.end()) break; // successfully approved
+        */
+        bool approved = unmap_block_in_trs(sid, cur_p);
+        if (approved) break;
+        else used_mem.push(*offs);
+        //if (it == trs.end()) break; // successfully approved
     }
 
     buffer_table.remove(cur_p);

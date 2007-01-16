@@ -173,7 +173,7 @@ void flush_master_block(bool is_write_plog = true);
 ////////////////////////////////////////////////////////////////////////////////
 /// Buffer functions
 ////////////////////////////////////////////////////////////////////////////////
-xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs);
+bool unmap_block_in_trs(session_id sid, const xptr &p);
 xptr put_block_to_buffer(session_id sid, 
                          const xptr &p, 
                          ramoffs /*out*/ *offs,
