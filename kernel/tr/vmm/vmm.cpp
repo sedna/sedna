@@ -870,6 +870,7 @@ void vmm_on_session_end() throw (SednaException)
 
 void vmm_on_transaction_end() throw (SednaException)
 {
+    // NOTE: vmm_cur_ptr and vmm_cur_xptr are becoming NULLs early while calling on_kernel_statement_end
     if (!vmm_transaction_initialized) return;
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);

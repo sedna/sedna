@@ -434,6 +434,9 @@ void bm_delete_block(session_id sid,
 
     if (IS_DATA_BLOCK(p))
     {
+        bool approved = unmap_block_in_trs(sid, p);
+        if (!approved) 
+           throw SYSTEM_EXCEPTION("Trying to delete data block which is used in another transaction");
         if (is_recovery_mode)
         {
             push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), p);
