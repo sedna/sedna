@@ -2188,7 +2188,6 @@
       (and
        (sa:assert-num-args type-spec 1)
        (let ((new-ename (sa:analyze-item-type
-                         ;sa:analyze-ename
                          (car (sa:op-args type-spec))
                          ns-binding default-ns)))
          (and new-ename
@@ -2200,7 +2199,8 @@
      (and
       (sa:assert-num-args type-spec 1)
       (let ((new-ename (sa:analyze-ename
-                        (car (sa:op-args type-spec)) ns-binding default-ns)))
+                        (car (sa:op-args type-spec)) ns-binding default-ns
+                        (eq? (car type-spec) 'elem-test))))
         (and new-ename
              (cons (list (car type-spec)
                          (car new-ename))
@@ -2242,7 +2242,11 @@
     (else
      (cl:signal-input-error SE5016 type-spec))))
 
-(define (sa:analyze-ename expr ns-binding default-ns)
+; node-kind-element? - a boolean
+; If a node kind is not element, the default namespace is not to be used 
+; for unprefixed names
+(define (sa:analyze-ename expr ns-binding default-ns
+                          node-kind-element?)
   (if
    (not (and (pair? expr) (not (null? expr))
              (eq? (sa:op-name expr) 'ename)))
@@ -2262,9 +2266,11 @@
               (sa:proper-qname (car (sa:op-args expr)))
               ; Ensure that the qname can be correctly expanded
               ; Was: commented out
-              (sa:resolve-qname (car (sa:op-args expr)) ns-binding default-ns
-                                ; DL: should be?: (car default-ns)
-                                )
+              (sa:resolve-qname
+               (car (sa:op-args expr))
+               ns-binding
+               ; DL: should be?: (car default-ns)
+               (if node-kind-element? default-ns ""))
               ; Do not actually expand it until dynamic evaluation phase
               ;(car (sa:op-args expr))
               ))
@@ -4467,7 +4473,9 @@
                                 (type
                                  (attr-test
                                   (ename
-                                   (const (type !xs!QName) ("xml" "lang"))
+                                   (const
+                                    (type !xs!QName)
+                                    ("http://www.w3.org/XML/1998/namespace" "lang" "xml"))
                                    (type *)
                                    (const (type !xs!string) "non-nil"))))))))
                             (fun-def
@@ -4476,7 +4484,9 @@
                         (type
                          (attr-test
                           (ename
-                           (const (type !xs!QName) ("xml" "lang"))
+                           (const
+                            (type !xs!QName)
+                            ("http://www.w3.org/XML/1998/namespace" "lang" "xml"))
                            (type *)
                            (const (type !xs!string) "non-nil"))))))
                     (fun-def
@@ -4593,7 +4603,11 @@
                                    (type
                                     (elem-test
                                      (ename
-                                      (const (type !xs!QName) ("xml" "id"))
+                                      (const
+                                       (type !xs!QName)
+                                       ("http://www.w3.org/XML/1998/namespace"
+                                        "id"
+                                        "xml"))
                                       (type *)
                                       (const (type !xs!string) "non-nil"))))))
                                  (!fn!ends-with
