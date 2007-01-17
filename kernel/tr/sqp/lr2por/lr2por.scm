@@ -202,7 +202,9 @@
     ; *** 4.16 Option Declaration
     ((eq? (car prolog-decl) 'declare-option)
      `(PPOptionDecl
-       (,(caddr (cadr prolog-decl))  ; option QName
+       (,(let ((qname-triple
+                (caddr (cadr prolog-decl))))
+           (list (car qname-triple) (cadr qname-triple)))
         ,@(map
            (lambda (pair)
              (list (caddr (car pair)) (caddr (cadr pair))))
