@@ -1812,7 +1812,7 @@
                                 ; Sedna namespace is not the default namespace
                                 ))
              (value (caddr (caddr expr))))
-         (let ((qname-pair
+         (let ((qname-pair  ; DL: actually a triple now
                 (cadr (sa:op-args name))))
            ; Cannot use `case' here, since case relies on a `eqv?' comparison
            (cond
@@ -1821,8 +1821,8 @@
               ; See Sect. 4.16 in XQuery specification and
               ; XQTS test "K-OptionDeclarationProlog-1"
               (cl:signal-user-error XPST0081 (cadr qname-pair)))
-             ((and (string=? (car qname-part) sa:se-ns)
-                   (string=? (cadr qname-part) "output"))
+             ((and (string=? (car qname-pair) sa:se-ns)
+                   (string=? (cadr qname-pair) "output"))
               (let ((keys+values
                      (option-string->key+value-pairs value #\;)))
                 (cond
@@ -1884,7 +1884,7 @@
                                 (const (type !xs!string) ,(cdr pair))))
                             keys+values)))
                     reversed-prolog)))))
-             ((and (string=? (car qname-part) sa:se-ns)
+             ((and (string=? (car qname-pair) sa:se-ns)
                    (string=? (cadr qname-part) "character-map"))
               (let ((delim-char #\!))
                 (cons
