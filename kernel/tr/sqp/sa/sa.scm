@@ -1885,7 +1885,7 @@
                             keys+values)))
                     reversed-prolog)))))
              ((and (string=? (car qname-pair) sa:se-ns)
-                   (string=? (cadr qname-part) "character-map"))
+                   (string=? (cadr qname-pair) "character-map"))
               (let ((delim-char #\!))
                 (cons
                  (cons (car expr)  ; declare-option
