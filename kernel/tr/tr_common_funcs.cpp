@@ -182,8 +182,9 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
    hl_logical_log_on_transaction_end(is_commit, rcv_active);
    d_printf1("OK\n");
 
+   d_printf1("Syncing indirection table...");
    sync_indirection_table();
-   release_locks();
+   d_printf1("OK\n");
  
    d_printf1("Releasing indirection table...");
    indirection_table_on_transaction_end();
@@ -193,9 +194,12 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
    vmm_on_transaction_end();
    d_printf1("OK\n");
 
-
    d_printf1("Releasing high level physical log...");
    hl_phys_log_on_transaction_end();
+   d_printf1("OK\n");
+
+   d_printf1("Releasing locks...");
+   release_locks();
    d_printf1("OK\n");
 
    d_printf1("Releasing transaction_id...");

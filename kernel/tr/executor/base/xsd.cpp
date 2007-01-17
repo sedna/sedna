@@ -113,7 +113,9 @@ char *xs_QName_create(const char *uri,
                       dynamic_context *cxt)
 {
     // FIXME: check lexical representation
-    xml_ns* ns = cxt->st_cxt->get_ns_pair(prefix, uri);
+	xml_ns* ns = NULL;
+	if (uri && *uri && prefix && *prefix)
+		ns = cxt->st_cxt->get_ns_pair(prefix, uri);
     return xs_QName_create(ns, local, alloc_func);
 }
 
