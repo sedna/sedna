@@ -80,18 +80,30 @@
    prolog-decl-lst
    (let ((curr-decl (car prolog-decl-lst)))
      (cons
-      (if
-       (and (pair? curr-decl) (not (null? curr-decl))
-            (eq? (car curr-decl) 'PPFunDecl)  ; function declaration
-            (= (length curr-decl) 5))
-       (list (car curr-decl)  ; = 'PPFunDecl
-             (cadr curr-decl)  ; int
-             (caddr curr-decl)  ; args types
-             (cadddr curr-decl)  ; result type
-             (car
-              (porc:process-phys-op
-               (list-ref curr-decl 4) #t #f #f debug-mode?)))
-       curr-decl)
+      (cond
+        ((and (pair? curr-decl) (not (null? curr-decl))
+              (eq? (car curr-decl) 'PPFunDecl)  ; function declaration
+              (= (length curr-decl) 5))
+         (list (car curr-decl)  ; = 'PPFunDecl
+               (cadr curr-decl)  ; int
+               (caddr curr-decl)  ; args types
+               (cadddr curr-decl)  ; result type
+               (car
+                (porc:process-phys-op
+                 (list-ref curr-decl 4) #t #f #f debug-mode?))))
+        ((and (pair? curr-decl) (not (null? curr-decl))
+              (eq? (car curr-decl) 'PPVarDecl)  ; variable declaration
+              (= (length curr-decl) 5))
+         (list (car curr-decl)  ; = 'PPVarDecl
+               (cadr curr-decl)  ; int
+               (caddr curr-decl)  ; int
+               (car
+                (porc:process-phys-op
+                 (list-ref curr-decl 3) #t #f #f debug-mode?))
+               (list-ref curr-decl 4)  ; variable type
+               ))
+        (else
+         curr-decl))
       (porc:process-prolog (cdr prolog-decl-lst) debug-mode?)))))
 
 ; Processes query essense

@@ -1,7 +1,10 @@
 (require (lib "defmacro.ss"))
 (require (rename (lib "pretty.ss") pp pretty-print))
 (define-macro (declare . x) #t)
-(define-macro (foreign-callback-lambda . x) (lambda x #f))
+(define-macro (foreign-callback-lambda . x)
+  (lambda x
+    (display "Import module stub")
+    #f))
 (define-macro (cl:signal-input-error code . msg)
   `(begin
      (display "Input error ")
@@ -261,3 +264,4 @@
    (prolog
     (declare-default-element-namespace (const (type !xs!string) "http://a.foo")))
    (query-body (cast (const (type !xs!string) "name") (type (one !xs!QName))))))
+

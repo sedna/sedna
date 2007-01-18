@@ -529,3 +529,112 @@
           (const (type !xs!QName) ("" "user" ""))
           (type *)
           (const (type !xs!string) "non-nil"))))))))
+
+(go
+ '(query
+   (module
+    (declare-namespace math (const (type !xs!string) "http://modis.ispras.ru/sedna/math"))
+    (declare-global-var
+     (var ("http://modis.ispras.ru/sedna/math" "pi"))
+     (const (type !xs!decimal) "3.1415926")
+     (one !xs!double))
+    (declare-global-var
+     (var ("http://modis.ispras.ru/sedna/math" "num_items_in_sum"))
+     (const (type !xs!integer) "10")
+     (one !xs!integer))
+    (declare-function
+     (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "factorial" "math"))
+     (((one !xs!integer) (var ("" "n"))))
+     (result-type (one !xs!integer))
+     (body
+      (if@
+       (var ("" "n"))
+       (*@
+        (var ("" "n"))
+        (fun-call
+         (const
+          (type !xs!QName)
+          ("http://modis.ispras.ru/sedna/math" "factorial" "math"))
+         (-@ (var ("" "n")) (const (type !xs!integer) "1"))))
+       (const (type !xs!integer) "1"))))
+    (declare-function
+     (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "power" "math"))
+     (((one !xs!double) (var ("" "x"))) ((one !xs!integer) (var ("" "n"))))
+     (result-type (one !xs!double))
+     (body
+      (if@
+       (var ("" "n"))
+       (*@
+        (var ("" "x"))
+        (fun-call
+         (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "power" "math"))
+         (var ("" "x"))
+         (-@ (var ("" "n")) (const (type !xs!integer) "1"))))
+       (const (type !xs!integer) "1"))))
+    (declare-function
+     (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "sin" "math"))
+     (((one !xs!double) (var ("" "x"))))
+     (result-type (one !xs!double))
+     (body
+      (fun-call
+       (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "sin" "math"))
+       (var ("" "x"))
+       (var ("http://modis.ispras.ru/sedna/math" "num_items_in_sum")))))
+    (declare-function
+     (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "sin" "math"))
+     (((one !xs!double) (var ("" "x"))) ((one !xs!integer) (var ("" "n"))))
+     (result-type (one !xs!double))
+     (body
+      (if@
+       (ge@ (var ("" "n")) (const (type !xs!integer) "0"))
+       (+@
+        (/@
+         (*@
+          (fun-call
+           (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "power" "math"))
+           (unary-@ (const (type !xs!integer) "1"))
+           (var ("" "n")))
+          (fun-call
+           (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "power" "math"))
+           (var ("" "x"))
+           (+@
+            (*@ (const (type !xs!integer) "2") (var ("" "n")))
+            (const (type !xs!integer) "1"))))
+         (fun-call
+          (const
+           (type !xs!QName)
+           ("http://modis.ispras.ru/sedna/math" "factorial" "math"))
+          (+@
+           (*@ (const (type !xs!integer) "2") (var ("" "n")))
+           (const (type !xs!integer) "1"))))
+        (fun-call
+         (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "sin" "math"))
+         (var ("" "x"))
+         (-@ (var ("" "n")) (const (type !xs!integer) "1"))))
+       (const (type !xs!integer) "0")))))
+   (prolog
+    (declare-global-var
+     (var ("" "sqrt3"))
+     (*@
+      (fun-call
+       (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "sin" "math"))
+       (/@
+        (var ("http://modis.ispras.ru/sedna/math" "pi"))
+        (const (type !xs!integer) "6")))
+      (const (type !xs!integer) "2"))
+     (one !xs!double))
+    (declare-global-var
+     (var ("" "num_digits"))
+     (const (type !xs!integer) "3")
+     (one !xs!integer)))
+   (query-body
+    (let@
+        (fun-call
+         (const (type !xs!QName) ("http://modis.ispras.ru/sedna/math" "power" "math"))
+         (const (type !xs!integer) "10")
+         (var ("" "num_digits")))
+      (fun-def
+       (((one !xs!double) (var ("" "multiplier"))))
+       (/@
+        (cast (*@ (var ("" "sqrt3")) (var ("" "multiplier"))) (type (one !xs!integer)))
+        (var ("" "multiplier"))))))))

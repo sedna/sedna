@@ -48,11 +48,14 @@
            `(query ,@(reverse PPquery-prolog) ,PPquery-expr))
          (call-with-values
           (lambda ()
-            (l2p:lr-query-prolog2por (car modules+prolog) next-var-num))
-          (lambda (in-pp vars next-var-num)
+            (l2p:lr-query-prolog2por
+             (car modules+prolog)
+             next-var-num
+             var-binding))
+          (lambda (in-pp var-binding next-var-num)
             (loop (cdr modules+prolog)
                   (cons in-pp PPquery-prolog)
-                  (append vars var-binding)
+                  var-binding
                   next-var-num))))))))
 
 ; DL: was  
@@ -75,7 +78,7 @@
 
 ; lr-query-prolog2por
 ; DL: returns (values por-prolog var-binding next-var-num)
-(define (l2p:lr-query-prolog2por query-prolog-in-lr next-var-num)
+(define (l2p:lr-query-prolog2por query-prolog-in-lr next-var-num var-binding)
   (if
    (memq (car query-prolog-in-lr) '(prolog module))
    (begin
@@ -87,7 +90,8 @@
             (not
              (eq? (car x) 'declare-external-function)))
           (cdr query-prolog-in-lr))
-         next-var-num))
+         next-var-num
+         var-binding))
       (lambda (lr-prolog var-binding next-var-num)
         (values
          (cons (if (eq? (car query-prolog-in-lr) 'module)
@@ -116,10 +120,10 @@
    (cl:signal-input-error SE4008 "argument is not query-prolog")))
 
 ; Returns (values por-prolog var-binding next-var-num)
-(define (l2p:fold-prolog-decls prolog next-var-num)
+(define (l2p:fold-prolog-decls prolog next-var-num var-binding)
   (let loop ((src prolog)
              (res '())
-             (var-binding '())
+             (var-binding var-binding)
              (next-var-num next-var-num))
     (cond
       ((null? src)
