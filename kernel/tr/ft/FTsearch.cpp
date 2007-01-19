@@ -413,6 +413,11 @@ void SednaSearchJob::set_request(tuple_cell& request)
 }
 void SednaSearchJob::stop_thread(bool ignore_errors)
 {
+	//FIXME!!!
+	if (UUnnamedSemaphoreRelease(&sem1, __sys_call_error) != 0 && !ignore_errors)
+		throw USER_EXCEPTION(SE4013);
+	if (UUnnamedSemaphoreRelease(&sem2, __sys_call_error) != 0 && !ignore_errors)
+		;//throw USER_EXCEPTION(SE4013);
 	if (dtth != NULL)
 	{
 		if (uTerminateThread(dtth, __sys_call_error) != 0 && !ignore_errors)
@@ -421,11 +426,6 @@ void SednaSearchJob::stop_thread(bool ignore_errors)
 			throw USER_EXCEPTION(SE4063);
 		dtth = NULL;
 	}
-	//FIXME!!!
-	if (UUnnamedSemaphoreRelease(&sem1, __sys_call_error) != 0 && !ignore_errors)
-		throw USER_EXCEPTION(SE4013);
-	if (UUnnamedSemaphoreRelease(&sem2, __sys_call_error) != 0 && !ignore_errors)
-		throw USER_EXCEPTION(SE4013);
 	
 }
 void SednaSearchJob::get_next_result(tuple &t)
