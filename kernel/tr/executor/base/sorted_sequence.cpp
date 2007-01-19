@@ -17,6 +17,8 @@ sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_
 	blk_cnt=0;
 	temp_buffer=new char[sizeof(xptr)];
 	buf_length=sizeof(xptr);
+	merge_tree=NULL;
+	top=NULL;
 }
 sorted_sequence::~sorted_sequence()
 {
@@ -28,7 +30,13 @@ sorted_sequence::~sorted_sequence()
 		vmm_delete_block(*it);
 		it++;
 	}
-    empty_blk_arr.clear();	
+    empty_blk_arr.clear();
+	if (merge_tree!=NULL)
+	{
+		 pers_sset<merge_cell,unsigned short>::free(merge_tree);
+		 merge_tree=NULL;
+		 top=NULL;
+	}
 }
 void sorted_sequence::sort()
 {
@@ -46,6 +54,97 @@ void sorted_sequence::sort()
 	unlock_memory();
 	seq_size=get_size_in_mem();
 	finalized=true;
+}
+void sorted_sequence::lazy_sort()
+{
+	if (finalized)
+		return;
+	if (bblk_in_chain!=XNULL)
+	{
+		in_mem_sort();
+		//5. order
+		in_mem_order_data();
+		//6. place to stack
+	}
+	//merge_stack(true);
+	//1.init merge_tree
+	merge_tree=pers_sset<merge_cell,unsigned short>::init(false);
+	//in_mem_block channel
+	if (bblk_in_chain!=XNULL)			
+	merge_tree->put(merge_cell::init(ptr_blk_arr[0]+sizeof(seq_blk_hdr),compareFN,Udata));
+	//sorted sequences
+	sorted_sequence::t_sorted_seqs_arr::iterator it= sorted_seqs_arr.begin();
+	while (it!=sorted_seqs_arr.end())
+	{
+		merge_tree->put(merge_cell::init((*it).first+sizeof(seq_blk_hdr),compareFN,Udata));
+	}	
+	
+	//7. fix memory	
+	unlock_memory();
+	//seq_size=get_size_in_mem();
+	finalized=true;
+}
+void sorted_sequence::next(tuple& t)
+{
+	//t.set_eos();
+	if (!top)
+	{
+		top=merge_tree->rb_minimum(merge_tree->root);		
+		if(!top) 
+		{
+			t.set_eos();
+			return;
+		}
+	}
+	xptr res=top->obj->in_node;
+	int sz=get_size(top->obj->node);
+	if (GET_FREE_SPACE(res)<sz)
+	 {
+		 CHECKP(res);
+		 xptr v2=((seq_blk_hdr*)XADDR(BLOCKXPTR(res)))->nblk;
+		 deserialize2FN(t,res,GET_FREE_SPACE(res),v2,Udata);
+	 }
+	 else
+		 deserializeFN(t,res,Udata);
+
+	xptr tmp=top->obj->node;
+	set_next_ptr_with_free(tmp,false);
+	
+	if (tmp!=XNULL)
+	{
+		xptr tmp_in;
+		get_val(tmp,tmp_in);
+		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		if (nxt)
+		{
+			
+			if (compareFN(tmp_in,nxt->obj->in_node,Udata))
+			{
+				top->obj->node=tmp;	
+				top->obj->in_node=tmp_in;	
+			}
+			else
+			{
+				merge_cell* nc=top->obj;
+				nc->node=tmp;			
+				nc->in_node=tmp_in;	
+				merge_tree->rb_delete(top);
+				merge_tree->put(nc);
+				top=nxt;//(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);				
+			}
+		}
+		else
+		{			
+			top->obj->node=tmp;							
+			top->obj->in_node=tmp_in;		
+		}			
+	}
+	else
+	{			
+		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		merge_tree->rb_delete(top);
+		top=nxt;		
+	}	
 }
 void sorted_sequence::add(tuple& p)
 {
@@ -482,7 +581,7 @@ void sorted_sequence::merge_stack(bool final)
 			sorted_seqs_arr.push_back(t_seq_pair(ptr_blk_arr[0],0));
 	}
 }
-void sorted_sequence::set_next_ptr_with_free(xptr& ptr)
+void sorted_sequence::set_next_ptr_with_free(xptr& ptr, bool free)
 {
 	int pos=((__uint32)ptr.addr-((__uint32)ptr.addr & PAGE_BIT_MASK)-sizeof(seq_blk_hdr))/sizeof(data_ptr);
 	if (pos+1<PTR_BLK_SIZE)
@@ -492,14 +591,14 @@ void sorted_sequence::set_next_ptr_with_free(xptr& ptr)
 			ptr+=sizeof(data_ptr);
 		else
 		{
-			empty_blk_arr.push_back(BLOCKXPTR(ptr));
+			if (free) empty_blk_arr.push_back(BLOCKXPTR(ptr));
 			ptr=XNULL;
 		}
 	}
 	else
 	{
 		CHECKP(ptr);
-		empty_blk_arr.push_back(BLOCKXPTR(ptr));
+		if (free) empty_blk_arr.push_back(BLOCKXPTR(ptr));
 		ptr=((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->nblk;
 		if (ptr!=XNULL)ptr+=sizeof(seq_blk_hdr);		
 	}
@@ -585,6 +684,13 @@ xptr sorted_sequence::get_data(int pos)
 	 sorted_seqs_arr.clear();
 	 ptr_blk_arr.clear();
 	 finalized=false;
+	 if (merge_tree!=NULL)
+	 {
+		 pers_sset<merge_cell,unsigned short>::free(merge_tree);
+		 merge_tree=NULL;
+		 top=NULL;
+	 }
+
  }
 
  void sorted_sequence::get(tuple& t, int pos)

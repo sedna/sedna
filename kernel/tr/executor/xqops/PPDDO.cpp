@@ -93,11 +93,32 @@ void PPDDO::next  (tuple &t)
    /*     d_printf1("Before sorting: \n");
         u_ftime(&t_sort1);*/
         //s->sort();
-        s->sort();
+        //s->sort();
+		s->lazy_sort();
         /*u_ftime(&t_sort2);
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
+		pos=1;
     }
+
 while (true)
+{
+	s->next(t);
+	if (t.is_eos())
+	{
+		pos = 0;
+        s->clear();
+		return;
+	}
+	else
+	{
+		if (t.cells[0].get_node()!=ret_val)
+		{
+			ret_val=t.cells[0].get_node();
+			return;
+		}
+	}
+}
+/*while (true)
 {
     if (pos < s->size()) 
 	{
@@ -116,6 +137,7 @@ while (true)
 		return;
     }
 }
+*/
 #else
     child.op->next(t);
 #endif
