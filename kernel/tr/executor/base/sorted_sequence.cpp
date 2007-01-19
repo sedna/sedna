@@ -77,6 +77,7 @@ void sorted_sequence::lazy_sort()
 	while (it!=sorted_seqs_arr.end())
 	{
 		merge_tree->put(merge_cell::init((*it).first+sizeof(seq_blk_hdr),compareFN,Udata));
+		++it;
 	}	
 	
 	//7. fix memory	
