@@ -12,7 +12,7 @@
 #include "vmm.h"
 #include "seq_common.h"
 
-#define MAX_BLOCKS_IN_CHAIN 5 //should be changed after meeting with Andrey
+#define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
 #define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - (__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
