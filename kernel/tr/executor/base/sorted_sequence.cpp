@@ -119,7 +119,7 @@ void sorted_sequence::next(tuple& t)
 		if (nxt)
 		{
 			
-			if (compareFN(tmp_in,nxt->obj->in_node,Udata))
+			if (compareFN(tmp_in,nxt->obj->in_node,Udata)<=0)
 			{
 				top->obj->node=tmp;	
 				top->obj->in_node=tmp_in;	
