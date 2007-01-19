@@ -7,12 +7,12 @@
 #define _SORTED_SEQUENCE_H
 
 #include "sedna.h"
-
+#include "pers_map.h"
 #include "tuple.h"
 #include "vmm.h"
 #include "seq_common.h"
 
-#define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
+#define MAX_BLOCKS_IN_CHAIN 5 //should be changed after meeting with Andrey
 #define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - (__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))
@@ -29,6 +29,45 @@ struct data_ptr
 	xptr value;
 	shft size;
 }; 
+static inline void  get_val(xptr ptr,xptr& val)
+{
+	CHECKP(ptr);
+	val=((data_ptr*)XADDR(ptr))->value;
+}
+struct merge_cell
+{
+	xptr node;
+	compare_fn compareFN;
+	const void * Udata;
+	xptr in_node;
+	static inline merge_cell* init(xptr node,compare_fn fn,const void * Udata )
+	{
+		merge_cell* nc=(merge_cell*)scm_malloc(sizeof(merge_cell),false);
+		nc->node=node;
+		nc->Udata=Udata;
+		nc->compareFN=fn;
+		get_val(node,nc->in_node);
+		return nc;
+	}
+	inline bool less( merge_cell *p1) 
+	{
+		return compareFN(in_node,p1->in_node,Udata)<0;
+	}
+	inline bool equals( merge_cell *p1) 
+	{
+		return compareFN(in_node,p1->in_node,Udata)==0;
+	}
+	inline bool less(const void* p1,const void* p2) 
+	{
+		
+		return true;		
+	}
+	inline bool equals(const void* p1,const void* p2) 
+	{
+		return true;
+	}
+};
+
 #define PTR_BLK_SIZE ((PAGE_SIZE-sizeof(seq_blk_hdr))/sizeof(data_ptr))
 #define DATA_BLK_SIZE (PAGE_SIZE-sizeof(seq_blk_hdr))
 class sorted_sequence
@@ -90,7 +129,8 @@ private:
 	xptr val_place;
 	xptr bblk_in_chain;
 	int blk_cnt;
-
+	pers_sset<merge_cell,unsigned short>* merge_tree;
+	pers_sset<merge_cell,unsigned short>::pers_sset_entry* top;
    
 
   //  void init_blks();
@@ -104,14 +144,10 @@ private:
 	void in_mem_order_data();
 	void merge_stack(bool final);
 	void unlock_memory();
-	void set_next_ptr_with_free(xptr& ptr);
+	void set_next_ptr_with_free(xptr& ptr, bool free=true);
 	xptr merge_sequences(xptr s1,xptr s2, bool final);
 	xptr get_ptr(int pos);
-	inline void  get_val(xptr ptr,xptr& val)
-	{
-		CHECKP(ptr);
-		val=((data_ptr*)XADDR(ptr))->value;
-	}
+	
     xptr get_data(int pos);
 	int get_size_in_mem();
 	void copy_data_to_new_place(xptr ptr,xptr& place);
@@ -154,6 +190,18 @@ public:
         return get(i);
     }
     void sort();
+	void lazy_sort();
+	void next(tuple& t);
+	inline static void  get_val(xptr ptr,xptr& val)
+	{
+		CHECKP(ptr);
+		val=((data_ptr*)XADDR(ptr))->value;
+	}
+	inline static int  get_size(xptr ptr)
+	{
+		CHECKP(ptr);
+		return ((data_ptr*)XADDR(ptr))->size;
+	}
     
 };
 
