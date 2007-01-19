@@ -1510,19 +1510,24 @@
                  (string-append (car var-name) ":" (cadr var-name)))))
               (or  ; no two equal variable names declared?
                (not
-                (member
-                 var-name
-                 (map  ; extract variable names only
-                  (lambda (entry)
-                    (car (sa:op-args
-                          (car (sa:op-args entry)))))
-                  (filter 
+                (or
+                 ; Collides with one of the variables specified in one of
+                 ; the imported modules
+                 (assoc var-name vars)
+                 ; ..or the one specified in prolog
+                 (member
+                  var-name
+                  (map  ; extract variable names only
                    (lambda (entry)
-                     (and (pair? entry)
-                          (eq? (sa:op-name entry)
-                               (sa:op-name expr)  ; == 'declare-global-var
-                               )))
-                   new-prlg))))
+                     (car (sa:op-args
+                           (car (sa:op-args entry)))))
+                   (filter 
+                    (lambda (entry)
+                      (and (pair? entry)
+                           (eq? (sa:op-name entry)
+                                (sa:op-name expr)  ; == 'declare-global-var
+                                )))
+                    new-prlg)))))
                (cl:signal-user-error
                 XQST0049 
                 (if
@@ -1703,12 +1708,19 @@
   ; expr analysis is largely borrowed from `sa:module-decl' 
   (and
    (or
-    (= (length (sa:op-args expr)) 1)
+    (>= (length (sa:op-args expr)) 1)
     (sa:assert-num-args expr 2))
    (call-with-values
     (lambda ()
       (if
-       (null? (cdr (sa:op-args expr)))  ; a single argument
+       (or
+        (null? (cdr (sa:op-args expr)))  ; a single argument
+        (not
+         (and (pair? (car (sa:op-args expr)))
+              (eq? (sa:op-name (car (sa:op-args expr))) 'const)
+              (equal? (car (sa:op-args  ; constant type specification
+                            (car (sa:op-args expr))))
+                      '(type !xs!NCName)))))
        (values #f
                #t  ; dummy non-false value
                (sa:analyze-string-const
@@ -5073,51 +5085,52 @@
 ; http://www.ugcs.caltech.edu/manuals/lang/chicken-1.63/chicken_32.html
 (define (sa:obtain-single-module uri)
   (let ((module-str (get-module uri)))
-    (and
-     module-str
-     (let ((module (read (open-input-string module-str))))
-       (and
-        module
-        (let ((prolog (sa:op-args
-                     (cadr (sa:op-args module))  ; yields `(prolog ...)
-                     )))
-       (list
-        uri
-        module
-        (map
-         (lambda (expr)
-           (let ((var-wrapped (car (sa:op-args expr)))
-                 ;(type (caddr (sa:op-args expr)))
-                 )
-             (cons (car (sa:op-args var-wrapped))
-                   ; TODO: more accurate typing
-                   sa:type-any)))
-         (filter
-          (lambda (x)
-            (and (pair? x) (eq? (sa:op-name x) 'declare-global-var)))
-          prolog))
-        (map
-         (lambda (expr)
-           (let ((fun-qname (car (sa:op-args expr)))
-                 (formal-args (cadr (sa:op-args expr)))
-                 ; TODO: more accurate typing
-                 (return-type sa:type-any))
-             (let ((qname-parts (sa:proper-qname fun-qname))
-                   (arity (length formal-args)))
-               (let ((ns-uri (car qname-parts))
-                     (local (cadr qname-parts)))
-                  (list                   
-                   ns-uri local  ; name
-                   arity arity ; min and max args
-                   (let ((arg-types (map
-                                     (lambda (x) sa:type-any)
-                                     formal-args)))
-                     (lambda (num-args) arg-types))
-                   return-type)))))
-         (filter
-          (lambda (x)
-            (and (pair? x) (eq? (sa:op-name x) 'declare-function)))
-          prolog)))))))))
+    (cond
+      ((and module-str
+            (read (open-input-string module-str)))
+       => (lambda (module)
+            (let ((prolog (sa:op-args
+                           (cadr (sa:op-args module))  ; yields `(prolog ...)
+                           )))
+              (list
+               uri
+               module
+               (map
+                (lambda (expr)
+                  (let ((var-wrapped (car (sa:op-args expr)))
+                        ;(type (caddr (sa:op-args expr)))
+                        )
+                    (cons (car (sa:op-args var-wrapped))
+                          ; TODO: more accurate typing
+                          sa:type-any)))
+                (filter
+                 (lambda (x)
+                   (and (pair? x) (eq? (sa:op-name x) 'declare-global-var)))
+                 prolog))
+               (map
+                (lambda (expr)
+                  (let ((fun-qname (car (sa:op-args expr)))
+                        (formal-args (cadr (sa:op-args expr)))
+                        ; TODO: more accurate typing
+                        (return-type sa:type-any))
+                    (let ((qname-parts (sa:proper-qname fun-qname))
+                          (arity (length formal-args)))
+                      (let ((ns-uri (car qname-parts))
+                            (local (cadr qname-parts)))
+                        (list                   
+                         ns-uri local  ; name
+                         arity arity ; min and max args
+                         (let ((arg-types (map
+                                           (lambda (x) sa:type-any)
+                                           formal-args)))
+                           (lambda (num-args) arg-types))
+                         return-type)))))
+                (filter
+                 (lambda (x)
+                   (and (pair? x) (eq? (sa:op-name x) 'declare-function)))
+                 prolog))))))
+      (else
+       (cl:signal-user-error XQST0059 uri)))))
     
 ;-------------------------------------------------
 ; Working with multiple modules
@@ -5206,7 +5219,9 @@
              (and
               (sa:all-identifiers-declared? (cadr requested) vars funcs)
               (cons
-               (cons requested modules)
+               ;DL: was
+               ;(cons requested modules)
+               (append modules (list requested))
                (cdr requested))))
             ((sa:obtain-module-recursive
               (car to-import) modules (cons uri import-chain))
@@ -5258,7 +5273,8 @@
             (ns-uri (caddr (car module-uri))))
         (cond
           ((equal? ns-uri "")
-           (cl:signal-user-error XQST0088))
+           (cl:signal-user-error XQST0088
+                                 "Null namespace URI in library module"))
           ((or (member prefix '("xml" "xmlns"))
                (member ns-uri
                        '("http://www.w3.org/XML/1998/namespace")))

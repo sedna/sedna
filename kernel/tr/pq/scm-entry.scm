@@ -183,7 +183,7 @@
                      (write (cadr query) string-port)
                      ; String ports need not be explicitly closed
                      `(#t ,(get-output-string string-port) ,module-name)))
-                 query))
+                 (append query (list module-name))))
          )
     ; (write query)
     (set-scm-output-string (cl:scheme-list->string query))
