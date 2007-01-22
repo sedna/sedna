@@ -23,7 +23,7 @@
                        ("http://www.w3.org/TestModules/test1" "ok" "test1"))
                 ()
                 (result-type (zero-or-more (item-test)))
-                (body (const (type !xs!string) "ok")))))            
+                (body (const (type !xs!string) "ok")))))
 ;            '(lib-module
 ;              (module-decl
 ;               (const (type !xs!NCName) test1)
