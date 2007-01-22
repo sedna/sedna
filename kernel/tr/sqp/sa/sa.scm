@@ -5213,7 +5213,7 @@
      => (lambda (cycle)
           ; Recursive module dependency discovered
           (cl:signal-user-error
-           XQST0093
+           XQST0073
            (string-append
             "Cycle in module import: " uri
             (apply string-append
