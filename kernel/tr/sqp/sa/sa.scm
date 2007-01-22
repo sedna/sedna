@@ -1051,6 +1051,7 @@
   ;; triples ::= (listof (fun-body formal-args return-type))
   ; triples ::= (listof (declare-function formal-args return-type))
   ; Stub
+  (let ((original-prolog prolog))
   (let loop ((new-prlg '())
              (funcs sa:xquery-functions)
              (triples '())
@@ -1399,7 +1400,9 @@
                        ns-binding default-elem-ns default-func-ns modules vars
                        (cdr prolog)))))
          ((import-module)
-          (let ((lst (sa:prolog-module-import expr ns-binding uri modules)))
+          (let ((lst
+                 (sa:prolog-module-import
+                  expr ns-binding uri modules original-prolog)))
             (and
              lst
              (let ((import-decl (car lst))
@@ -1696,7 +1699,7 @@
                       ns-binding default-elem-ns default-func-ns modules vars
                       (cdr prolog))))))))))
          (else
-          (cl:signal-input-error SE5012 expr)))))))
+          (cl:signal-input-error SE5012 expr))))))))
 
 ; Processes module import declaration
 ; expr is a module import declaration:
@@ -1704,7 +1707,7 @@
 ;     (const (type !xs!NCName) math)
 ;     (const (type !xs!string) "http://example.org/math-functions"))
 ; Returns (list import-decl new-ns-binding new-modules vars funcs) or #f
-(define (sa:prolog-module-import expr ns-binding uri modules)
+(define (sa:prolog-module-import expr ns-binding uri modules original-prolog)
   ; expr analysis is largely borrowed from `sa:module-decl' 
   (and
    (or
@@ -1751,7 +1754,33 @@
             => (lambda (reason)
                  ; Sect. 4.11, 1st paragraph
                 (cl:signal-user-error XQST0070 (car reason))))
-           ((assoc ns-uri modules)
+           ((cond
+              ((memq expr (reverse original-prolog))
+               => (lambda (before)
+                    (member
+                     ns-uri
+                     (map
+                      (lambda (x)
+                        (let ((lst
+                               (filter
+                                (lambda (y)
+                                  (and (pair? y)
+                                       (eq? (sa:op-name y) 'const)
+                                       (equal? (car (sa:op-args y))
+                                               '(type !xs!string))))
+                                (cdr x))))
+                          (if
+                           (null? lst) ""
+                           (cadr (sa:op-args (car lst))))))
+                      (filter
+                       (lambda (x)
+                         (and (pair? x)
+                              (eq? (sa:op-name x) 'import-module)))
+                       (cdr before)  ; skip self
+                       )))))
+              (else #f))
+            ; DL: was
+            ;(assoc ns-uri modules)
             (cl:signal-user-error XQST0047 ns-uri))
            (else
             (let ((import-decl
