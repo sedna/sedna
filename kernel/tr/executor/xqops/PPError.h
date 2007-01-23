@@ -7,6 +7,7 @@
 #define _PPERROR_H
 
 #include "sedna.h"
+#include "exec_output.h"
 #include "PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,6 +56,7 @@ protected:
     // obtained parameters and local data
     PPOpIn value_child, label_child;
     bool first_time;
+    se_ostream *debug_ostream;
 
     void children(PPOpIn &_value_child_, PPOpIn &_label_child_) 
     { 

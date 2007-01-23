@@ -128,7 +128,7 @@ The server analyzes the query text to identify the type of the query and runs th
 
 The client sends a query in the Execute message, or in the ExecuteLong messages plus the LongQueryEnd message. The first byte of the query text is a format of the result to obtain - SXML \cite{paper:sxml} or XML. Use \verb!0! if you want to get the result of the query in XML, \verb!1! - to get the result in SXML.
 
-The server processes the query. If the query succeeds the server sends the QuerySucceeded message to the client and then sends a number of messages that contain the first item of the result sequence to the client in the way described below.
+The server processes the query. If the query succeeds the server sends the QuerySucceeded message to the client and then sends a number of messages that contain the first item of the result sequence and query debug information (if any) to the client in the way described below.
 
 When the client needs to get the next item of the result sequence it sends the GetNextItem message. The server then sends the next item of the result sequence.
 
@@ -136,8 +136,10 @@ Server may send every item in parts. Every part of the item is enveloped in the 
 
 When the result sequence has ended, server on recieving GetNextItem from client sends the ResultEnd message without prior sending the ItemPart message.
 
+While sending result data server may also send any number of messages DebugInfo containing debug information if there is any.
+
 Client is not required to get all the items of the result sequence. It can send next query for execution before all the items of the result sequence are recieved from the server.
- 
+
 If the query failed, the server sends message QueryFailed to the client.
 
 The possible instructions from the client in this phase are:
@@ -152,6 +154,7 @@ The possible instructions from the server in this phase are:
 \begin{itemize} 
 \item QuerySucceeded. Does not contain a body.
 \item QueryFailed. The body contains the error code and error info.
+\item DebugInfo. The body contains the debug type and debug info.
 \item ItemPart. The body contains the part of the item.
 \item ItemEnd. Does not contain a body.
 \end{itemize}
@@ -159,6 +162,8 @@ The possible instructions from the server in this phase are:
 \subsubsection{Updating Data}
 
 The client sends the Execute message (or the ExecuteLong messages plus the LongQueryEnd message) that contains an update statement. The server processes the update. If the update succeeded the server sends the UpdateSucceeded message to the client. If the update failed, the server sends the UpdateFailed message.
+
+Before sending UpdateSucceeded or UpdateFailed message sever may send any number of DebugInfo messages if there is any debug information.
 
 The possible instructions from the client in this phase are:
 \begin{itemize}
@@ -171,6 +176,7 @@ The possible instructions from the server in this phase are:
 \begin{itemize}
 \item UpdateSucceeded. Does not contain a body.
 \item UpdateFailed. The body contains the error code and error info.
+\item DebugInfo. The body contains the debug type and debug info.
 \end{itemize}
 
 \subsubsection{Bulk Load}

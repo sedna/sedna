@@ -43,13 +43,13 @@ public:
     virtual se_ostream& operator<<(void * n)                       = 0;
     virtual se_ostream& put(char c)                                = 0;
     virtual se_ostream& write(const char *s, int n)                = 0;
-    virtual se_ostream& write_debug(int debug_type, const char *s, int n) = 0;
     virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
     virtual void end_of_data(bool res)                             = 0;
     virtual void endline()                                         = 0;
     virtual void error(const char*)                                = 0;
+    virtual se_ostream* get_debug_ostream()                        = 0;
 	virtual se_ostream& operator<<(__int64 n);
 };
 
@@ -78,11 +78,11 @@ public:
     virtual se_ostream& operator<<(void * n)                                     { o_str << n; return *this; }
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
-    virtual se_ostream& write_debug(int debug_type, const char *s, int n)        { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
     virtual void end_of_data(bool res)                                           { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
+    virtual se_ostream* get_debug_ostream()                                      { return new se_stdlib_ostream(std::cerr); }
 };
 
 class se_nullostream : public se_ostream
@@ -113,34 +113,27 @@ public:
     virtual void end_of_data(bool res)                                     { ; }
     virtual void endline()                                                 { ; }
     virtual void error(const char* str)                                    { ; }
+    virtual se_ostream* get_debug_ostream()                                { return this; }
 };
 
 
-class se_socketostream : public se_ostream
+class se_socketostream_base : public se_ostream
 {
-private:
-    USOCKET out_socket;
-	protocol_version p_ver;
-    msg_struct res_msg;
+    protected:
+        USOCKET _out_socket;
+    	protocol_version _p_ver;
+        msg_struct* _res_msg;
+        int _instruction;
     
+    public:
 
-public:
-    se_socketostream(USOCKET _out_socket_, protocol_version _p_ver_) : out_socket(_out_socket_),
-                                                                       p_ver (_p_ver_) 
-    {  
-        res_msg.body[0] = 0;           // in this version string format is always 0
-        res_msg.length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
-    }
-    virtual ~se_socketostream() {}
-
-    virtual se_ostream& operator<<(se_socketostream& (*pf)(se_socketostream&))	{ (*pf)(*this); return *this; }
+    virtual se_ostream& operator<<(se_socketostream_base& (*pf)(se_socketostream_base&))	{ (*pf)(*this); return *this; }
     virtual se_ostream& operator<<(se_ostream& (*pf)(se_ostream&))	{ (*pf)(*this); return *this; }
     virtual se_ostream& operator<<(const char *s)	
 	{ 
-    	res_msg.instruction = se_ItemPart; //ItemPart message
 		int len = strlen(s);
         
-		if((res_msg.length + len) > (SE_SOCKET_MSG_BUF_SIZE-5))
+		if((_res_msg->length + len) > (SE_SOCKET_MSG_BUF_SIZE-5))
 	    {
 	    	flush();	
 	    	int celoe = len/(SE_SOCKET_MSG_BUF_SIZE-5);
@@ -149,97 +142,95 @@ public:
 	    	
 	    	for (int i=0;i<celoe;i++)
 	    	{
-	    		res_msg.length = SE_SOCKET_MSG_BUF_SIZE;
+	    		_res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
 	            // the body contains string format - 1 byte, string length - 4 bytes and a string
                 // construct the buf for body.	   
-                int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, res_msg.body+1);
-                memcpy(res_msg.body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
+                int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, _res_msg->body+1);
+                memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
 
-         		if(sp_send_msg(out_socket, &res_msg) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3006);
+                flush();
         	} //end for
 
-         	res_msg.length = ost+5;
-         	int2net_int(ost, res_msg.body+1);
-         	memcpy(res_msg.body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
+         	_res_msg->length = ost+5;
+         	int2net_int(ost, _res_msg->body+1);
+         	memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
          }
          else
          {
- 	         memcpy(res_msg.body+res_msg.length, s, strlen(s));
-         	 res_msg.length += strlen(s);
-             int2net_int(res_msg.length-5, res_msg.body+1);
+ 	         memcpy(_res_msg->body+_res_msg->length, s, strlen(s));
+         	 _res_msg->length += strlen(s);
+             int2net_int(_res_msg->length-5, _res_msg->body+1);
          }
    	     return *this; 
 	}
     virtual se_ostream& operator<<(char c){	flush();
-    										res_msg.body[res_msg.length]=c;
-                                        	res_msg.length += 1;  // 5+1
+    										_res_msg->body[_res_msg->length]=c;
+                                        	_res_msg->length += 1;  // 5+1
                                     		return *this; }
                                     		
     virtual se_ostream& operator<<(bool n)	{ flush();
-    										  (n)? res_msg.body[res_msg.length]='1':res_msg.body[res_msg.length]='0';
-                                              res_msg.length += 1;  // 5+1
+    										  (n)? _res_msg->body[_res_msg->length]='1':_res_msg->body[_res_msg->length]='0';
+                                              _res_msg->length += 1;  // 5+1
                                               return *this; }
                                               
     virtual se_ostream& operator<<(short n)	{ flush();
-    										  u_ltoa((long)n,res_msg.body+res_msg.length,10); 
-                                              res_msg.length += strlen(res_msg.body+5);
+    										  u_ltoa((long)n,_res_msg->body+_res_msg->length,10); 
+                                              _res_msg->length += strlen(_res_msg->body+5);
                                               return *this; }
                                               
     virtual se_ostream& operator<<(unsigned short n){flush();
-    												u_ultoa((unsigned long)n,res_msg.body+res_msg.length,10);
-                                                    res_msg.length += strlen(res_msg.body+5);
+    												u_ultoa((unsigned long)n,_res_msg->body+_res_msg->length,10);
+                                                    _res_msg->length += strlen(_res_msg->body+5);
                                                     return *this; }
                                                     
     virtual se_ostream& operator<<(int n)		{ flush();	
-    											  u_ltoa((long)n,res_msg.body+res_msg.length,10);
-                                                  res_msg.length += strlen(res_msg.body+5);
+    											  u_ltoa((long)n,_res_msg->body+_res_msg->length,10);
+                                                  _res_msg->length += strlen(_res_msg->body+5);
                                                   return *this; }
                                                    
     virtual se_ostream& operator<<(unsigned int n)	{ flush();
-                                                      u_ultoa((long)n,res_msg.body+res_msg.length,10); 
-                                                      res_msg.length += strlen(res_msg.body+5);
+                                                      u_ultoa((long)n,_res_msg->body+_res_msg->length,10); 
+                                                      _res_msg->length += strlen(_res_msg->body+5);
                                                       return *this; }
                                                       
     virtual se_ostream& operator<<(long n)		{ flush();
-                                                  u_ltoa((long)n,res_msg.body+res_msg.length,10); 
-                                                  res_msg.length += strlen(res_msg.body+5);
+                                                  u_ltoa((long)n,_res_msg->body+_res_msg->length,10); 
+                                                  _res_msg->length += strlen(_res_msg->body+5);
                                                   return *this; }
                                                     
     virtual se_ostream& operator<<(unsigned long n)	{flush();
-    												 u_ultoa((long)n,res_msg.body+res_msg.length,10);
-                                                     res_msg.length += strlen(res_msg.body+5);
+    												 u_ultoa((long)n,_res_msg->body+_res_msg->length,10);
+                                                     _res_msg->length += strlen(_res_msg->body+5);
                                                      return *this; }
                                                      
     virtual se_ostream& operator<<(float n)		{ flush();
-    											  u_gcvt((double)n,10,res_msg.body+res_msg.length);
-                                                  res_msg.length += strlen(res_msg.body+5);
+    											  u_gcvt((double)n,10,_res_msg->body+_res_msg->length);
+                                                  _res_msg->length += strlen(_res_msg->body+5);
                                                   return *this;  }
                                                   
     virtual se_ostream& operator<<(double n)		{ flush();
-    												  u_gcvt(n,10,res_msg.body+res_msg.length);
-                                                      res_msg.length += strlen(res_msg.body+5);
+    												  u_gcvt(n,10,_res_msg->body+_res_msg->length);
+                                                      _res_msg->length += strlen(_res_msg->body+5);
                                                       return *this;}
                                                       
 	virtual se_ostream& operator<<(long double n)	{ flush();
-													  u_gcvt((long double)n,10,res_msg.body+res_msg.length);
-                                                      res_msg.length += strlen(res_msg.body+5);
+													  u_gcvt((long double)n,10,_res_msg->body+_res_msg->length);
+                                                      _res_msg->length += strlen(_res_msg->body+5);
 	                                                  return *this; }
 	                                                  
     virtual se_ostream& operator<<(void * n)		{ flush();
-    												  sprintf(res_msg.body+res_msg.length,"%08X" ,*((int *)n)); 
-                                                      res_msg.length += 4;
+    												  sprintf(_res_msg->body+_res_msg->length,"%08X" ,*((int *)n)); 
+                                                      _res_msg->length += 4;
                                                       return *this; }
                                                       
     virtual se_ostream& put(char c)		        	{ flush();
-                                                      res_msg.body[res_msg.length]=c;
-                                                   	  res_msg.length += 1;
+                                                      _res_msg->body[_res_msg->length]=c;
+                                                   	  _res_msg->length += 1;
                                                 	  return *this; }
                                     		
     virtual se_ostream& write(const char *s, int n)		
 	{
-    	res_msg.instruction = se_ItemPart; //ItemPart message
-
-		if((res_msg.length + n) > (SE_SOCKET_MSG_BUF_SIZE-5))
+		if((_res_msg->length + n) > (SE_SOCKET_MSG_BUF_SIZE-5))
 	    {
 	    	flush();	
 	    	int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-5);
@@ -247,105 +238,133 @@ public:
 	    	if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-5);
 			for (int i=0;i<celoe;i++)
 			{
-				res_msg.length = SE_SOCKET_MSG_BUF_SIZE;
+				_res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
 				// the body contains string format - 1 byte, string length - 4 bytes and a string
 				// construct the buf for body.
-				int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, res_msg.body+1);
-				memcpy(res_msg.body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
+				int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, _res_msg->body+1);
+				memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
 				
-				if(sp_send_msg(out_socket, &res_msg)!=0) throw USER_EXCEPTION(SE3006);
+                flush();   //if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
 			} //end for
 
-         	res_msg.length = ost+5;
-         	int2net_int(ost, res_msg.body+1);
-         	memcpy(res_msg.body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
+         	_res_msg->length = ost+5;
+         	int2net_int(ost, _res_msg->body+1);
+         	memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
          
          }
          else
          {
- 	         memcpy(res_msg.body+res_msg.length, s, n);
-         	 res_msg.length += n;
-             int2net_int(res_msg.length-5, res_msg.body+1);
-         }
-   	     return *this; 
-	}
-    virtual se_ostream& write_debug(int debug_type, const char *s, int n)		
-	{
-        if ((p_ver.major_version != 2) && (p_ver.minor_version != 0)) return *this;
-        
-    	res_msg.instruction = se_DebugInfo; //DebugInfo message
-		res_msg.length = 9; 
-        
-		if((res_msg.length + n) > (SE_SOCKET_MSG_BUF_SIZE-9))
-	    {
-	    	flush();	
-	    	int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-9);
-	    	int ost;
-	    	if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-9);
-			for (int i=0;i<celoe;i++)
-			{
-				res_msg.length = SE_SOCKET_MSG_BUF_SIZE;
-				// the body contains debug type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
-				// construct the buf for body.
-                int2net_int(debug_type, res_msg.body);
-                res_msg.body[4] = 0;
-				int2net_int(SE_SOCKET_MSG_BUF_SIZE-9, res_msg.body+5);
-				memcpy(res_msg.body+9, s+(SE_SOCKET_MSG_BUF_SIZE-9)*i, SE_SOCKET_MSG_BUF_SIZE-9);
-				
-				if(sp_send_msg(out_socket, &res_msg)!=0) throw USER_EXCEPTION(SE3006);
-			} //end for
-
-         	res_msg.length = ost+9;
-         	int2net_int(ost, res_msg.body+1);
-         	memcpy(res_msg.body+9, s+(SE_SOCKET_MSG_BUF_SIZE-9)*celoe, ost);
-         
-         }
-         else
-         {
- 	         memcpy(res_msg.body+res_msg.length, s, n);
-         	 res_msg.length += n;
-             int2net_int(res_msg.length-5, res_msg.body+1);
+ 	         memcpy(_res_msg->body+_res_msg->length, s, n);
+         	 _res_msg->length += n;
+             int2net_int(_res_msg->length-5, _res_msg->body+1);
          }
    	     return *this; 
 	}
     
     virtual se_ostream& flush()				
     {
-       if(res_msg.length > 5)
-       {
- 	   res_msg.instruction = se_ItemPart; //ItemPart message
-       int2net_int(res_msg.length-5, res_msg.body+1);
-       
-       if(sp_send_msg(out_socket, &res_msg)!=0) throw USER_EXCEPTION(SE3006);
-       
-       res_msg.length = 5;
-       }
+        if(_res_msg->length > 5)
+        {
+            _res_msg->instruction = _instruction; 
+            int2net_int(_res_msg->length-5, _res_msg->body+1);
+            
+            if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
+            
+            _res_msg->length = 5;
+        }
        return *this; 
     }
     
-    virtual void end_of_data(bool res)	{ flush(); 
-                                          if (res) res_msg.instruction = se_ItemEnd; //ItemEnd
-                                          else res_msg.instruction = se_ResultEnd;     //ResultEnd
-                                          res_msg.length = 0; 
-                                          if(sp_send_msg(out_socket, &res_msg)!=0)
-                                          throw USER_EXCEPTION(SE3006);
-                                          
-                                          res_msg.length = 5;
-                                        }
-    virtual void endline()				{ res_msg.body[res_msg.length]='\n'; res_msg.length +=1;}
-    virtual void error(const char* str)	{ flush();
-                                          res_msg.instruction = se_ErrorResponse; //ErrorResponse
-                                          strcpy(res_msg.body+5, str);
-                                          int2net_int(strlen(str), res_msg.body+1);      
-                                  	      res_msg.length = strlen(str)+5;
-                                          if(sp_send_msg(out_socket, &res_msg)!=0)
-                                          throw USER_EXCEPTION(SE3006);
+    virtual void endline()
+    {
+        _res_msg->body[_res_msg->length]='\n'; 
+        _res_msg->length +=1;
+    }
+
+    virtual void error(const char* str)
+    {
+        flush();
+        _res_msg->instruction = se_ErrorResponse; //ErrorResponse
+        strcpy(_res_msg->body+5, str);
+        int2net_int(strlen(str), _res_msg->body+1);      
+        _res_msg->length = strlen(str)+5;
+        if(sp_send_msg(_out_socket, _res_msg)!=0)
+            throw USER_EXCEPTION(SE3006);
+        
+        _res_msg->length = 5;
+    }
+    virtual void end_of_data(bool res) = 0;
     
-                                          res_msg.length = 5;
-                                        }
+};
+
+class se_socketostream : public se_socketostream_base
+{
+friend class se_debug_socketostream;
+
+protected:
+    msg_struct res_msg;
+    
+public:
+  	se_socketostream(USOCKET out_socket, protocol_version p_ver) 
+   	{  
+       _out_socket = out_socket;
+       _p_ver = p_ver;
+       _res_msg = &res_msg;
+       _instruction = se_ItemPart;
+            
+    	_res_msg->body[0] = 0;           // in this version string format is always 0
+       	_res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
+   	}
+ 	virtual ~se_socketostream() {}
+    virtual void end_of_data(bool res)	
+    {
+        flush(); 
+        if (res) _res_msg->instruction = se_ItemEnd; //ItemEnd
+        else _res_msg->instruction = se_ResultEnd;     //ResultEnd
+        _res_msg->length = 0;
+        if(sp_send_msg(_out_socket, _res_msg)!=0)
+            throw USER_EXCEPTION(SE3006);
+        _res_msg->length = 5;
+    }
+    virtual se_ostream* get_debug_ostream();
+};
+
+class se_debug_socketostream : public se_socketostream_base
+{
+    friend class se_socketostream;
+    
+    protected:
+   	se_debug_socketostream(se_socketostream& sostream) 
+   	{  
+        _out_socket = sostream._out_socket;
+        _p_ver = sostream._p_ver;
+        _res_msg = sostream._res_msg;
+        _instruction = se_DebugInfo;
+            
+      	_res_msg->body[0] = 0;           // in this version string format is always 0
+       	_res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
+  	}
+  	virtual ~se_debug_socketostream() {}
+    virtual void end_of_data(bool res)	
+    {
+        flush(); 
+        _res_msg->length = 5;
+    }
+        
+    virtual se_ostream* get_debug_ostream()
+    { 
+        return NULL;
+    }
 
 };
 
+inline se_ostream* se_socketostream::get_debug_ostream()
+{ 
+    if (_p_ver.major_version < 2)
+        return new se_nullostream();
+    else
+        return new se_debug_socketostream(*this);
+}
 
 se_ostream& endl(se_ostream& s);
 

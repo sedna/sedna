@@ -153,6 +153,7 @@ void PPFnTrace::open  ()
     value_child.op->open();
     label_child.op->open();
     first_time = true;
+//    debug_ostream = s->get_debug_ostream();
 }
 
 void PPFnTrace::reopen()
@@ -166,6 +167,7 @@ void PPFnTrace::close ()
 {
     value_child.op->close();
     label_child.op->close();
+//    delete debug_ostream;
 }
 
 void PPFnTrace::next(tuple &t)
@@ -194,7 +196,7 @@ void PPFnTrace::next(tuple &t)
     if (t.is_eos()) 
         first_time = true;
     else 
-        print_tuple_indent(t, crm_out, xml, is_first, cxt);
+        print_tuple_indent(t, crm_out /* *debug_ostream */, xml, is_first, cxt);
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)

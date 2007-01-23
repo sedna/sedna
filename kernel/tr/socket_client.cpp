@@ -332,7 +332,7 @@ void socket_client::get_session_parameters()
       
   if (!(((p_ver.major_version==1)||(p_ver.major_version==2))&&(p_ver.minor_version==0))) //version checking (version 1.0 and 2.0 are supported)
   {
-      error(0, string("Error: Unknown protocol version.")); 
+      error(0, string("Error: Unknown Sedna Client-Server protocol version.")); 
       throw USER_EXCEPTION(SE3014);
   }
      
