@@ -798,34 +798,6 @@ negative values:
 
 \verb!SEDNA_ERROR! - some error occurred.
 
-Since version 1.5 Sedna supports reporting tracing information (fn:trace XQuery function). To handle tracing information while retrieving result data use debug handler \verb!debug_handler_t! and \verb!SEsetDebugHandler! function:
-
-\begin{verbatim}void SEsetDebugHandler(struct SednaConnection *conn, 
-                                       debug_handler_t _debug_handler_);\end{verbatim}
-                                       
-parameters:
-
-\verb!conn! - a pointer to an instance of the SednaConnection type.
-
-\verb!_debug_handler_! - a pointer to your own defined function of the following form: 
-
-\verb!void (*debug_handler_t)(int subtype, const char *msg)! where \verb!subtype! is a type of debug information (currently only \verb!SEDNA_QUERY_TRACE_INFO! is supported), \verb!msg! is a buffer with debug information.
-
-For example the following debug handler put the debug information to stdout.
-
-\begin{verbatim}
-void my_debug_handler(enum SEdebugType subtype, const char *msg)
-{
-   	printf("TRACE: ");
-    printf("subtype(%d), msg: %s\n", subtype, msg);
-}
-
-...
-
-SEsetDebugHandler(&conn, my_debug_handler);
-\end{verbatim}
-
-If the debug handler is not defined by the application, trace information is ignored.
 %---------------------------------------------------------------------------
 
 \subsubsection{Loading Data}
