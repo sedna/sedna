@@ -74,6 +74,32 @@
          (cadr (xlr:op-args qname-const))))
     (list (car name-triple) (cadr name-triple))))
 
+; Helper for PPReturn for defining variable types
+(define (l2p:make-por-arg-types arg-lst)
+  (if
+   (> (length arg-lst) 1)
+   ; More than one variable - this case corresponds to the outermost
+   ; generated PPReturn in order-by => types should not be specified
+   '()
+   (let ((por-arg-types
+          (map
+           (lambda (arg)
+             (l2p:lr-sequenceType2por-sequenceType
+              (if (symbol? (car arg))
+                  `(one  ; occurrence indicator
+                    ,(car arg))
+                  (car arg))))
+           arg-lst)))
+     (if
+      (null?  ; unknown types only
+       (filter
+        (lambda (arg)
+          (not (memq (cadr arg)
+                     '(xs:anyType !xs!anyType))))
+        por-arg-types))
+      '()
+      por-arg-types))))
+
 ;-------------------------------------------------------------------------------
 
 ; lr-query-prolog2por
@@ -357,28 +383,7 @@
                      ; (substitute-var-value-in-fun-body context var-name value expr))
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
-                     (reverse-new-arg-lst (reverse (cadr new-fun-def)))
-                     (make-por-arg-types
-                      (lambda (arg-lst)
-                        (let ((por-arg-types
-                               (map
-                                (lambda (arg)
-                                  (l2p:lr-sequenceType2por-sequenceType
-                                   (if (symbol? (car arg))
-                                       `(one  ; occurrence indicator
-                                         ,(car arg))
-                                       (car arg))))
-                                arg-lst)))
-                          (if
-                           (null?  ; unknown types only
-                            (filter
-                             (lambda (arg)
-                               (not (memq (cadr arg)
-                                          '(xs:anyType !xs!anyType))))
-                             por-arg-types))
-                           '()
-                           por-arg-types))))
-                    )
+                     (reverse-new-arg-lst (reverse (cadr new-fun-def))))
                 (list
                  (l2p:tuple-size right-PhysOp)
                  (if
@@ -397,13 +402,14 @@
                     ,left-PhysOp
                     ,right-PhysOp
                     -1
-                    ,@(make-por-arg-types (cadr new-fun-def)))
+                    ,@(l2p:make-por-arg-types (cadr new-fun-def)))
                   `(PPReturn
                     ,(map cadr (reverse (cdr reverse-new-arg-lst)))
                     ,left-PhysOp
                     ,right-PhysOp
                     ,(cadar reverse-new-arg-lst)  ; var-dsc for positional var argument
-                    ,@(make-por-arg-types (reverse (cdr reverse-new-arg-lst))))))
+                    ,@(l2p:make-por-arg-types
+                       (reverse (cdr reverse-new-arg-lst))))))
                 )))
                                                   
              ; *** predicate ***
@@ -427,28 +433,7 @@
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
                      (tsr (l2p:tuple-size right-PhysOp))
                      (tsl (l2p:tuple-size left-PhysOp))
-                     (reverse-new-arg-lst (reverse (cadr new-fun-def)))
-                     (make-por-arg-types
-                      (lambda (arg-lst)
-                        (let ((por-arg-types
-                               (map
-                                (lambda (arg)
-                                  (l2p:lr-sequenceType2por-sequenceType
-                                   (if (symbol? (car arg))
-                                       `(one  ; occurrence indicator
-                                         ,(car arg))
-                                       (car arg))))
-                                arg-lst)))
-                          (if
-                           (null?  ; unknown types only
-                            (filter
-                             (lambda (arg)
-                               (not (memq (cadr arg)
-                                          '(xs:anyType !xs!anyType))))
-                             por-arg-types))
-                           '()
-                           por-arg-types))))
-                    )
+                     (reverse-new-arg-lst (reverse (cadr new-fun-def))))
                 (list
                  tsr
                  (if
@@ -462,13 +447,13 @@
                     (,tsl (PPStore ,left-PhysOp))
                     ,right-PhysOp
                     -1
-                    ,@(make-por-arg-types (cadr new-fun-def)))
+                    ,@(l2p:make-por-arg-types (cadr new-fun-def)))
                   `(PPReturn
                     ,(map cadr (reverse (cdr reverse-new-arg-lst)))
                     (,tsl (PPStore ,left-PhysOp))
                     ,right-PhysOp
                     ,(cadar reverse-new-arg-lst)
-                    ,@(make-por-arg-types
+                    ,@(l2p:make-por-arg-types
                        (reverse (cdr reverse-new-arg-lst)))))))))
              
              ((memq op-name '(let@ slet@))
@@ -2339,7 +2324,7 @@
               (if
                (null? (cdr modif))  ; no arguments at all
                '(default default)
-               (list
+               (cons
                 (cond
                   ((null? (cddr modif))  ; no empty status
                    'default)
@@ -2349,9 +2334,20 @@
                    => cdr)
                   (else
                    'default))
-                (cdr (assoc (caddr (cadr modif))  ; value of the 1st const
-                            '(("asc" . ascending)
-                              ("desc" . descending)))))))
+                (cons
+                 (cdr (assoc (caddr (cadr modif))  ; value of the 1st const
+                             '(("asc" . ascending)
+                               ("desc" . descending))))
+                 (if
+                  (and (> (length (cdr modif)) 2)
+                       (pair? (cadddr modif))
+                       (eq? (car (cadddr modif)) 'collation))
+                  (list 
+                   (caddr  ; constant value
+                    (cadr  ; (const (type !xs!string) ...)
+                     (cadddr modif))))
+                  '()  ; no collation specification
+                  )))))
             (map cadr spec-lst)  ; list of ordermodifier
             )))))
 

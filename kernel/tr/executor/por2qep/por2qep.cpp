@@ -433,7 +433,8 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 
 orb_modifier make_order_by_modifier(scheme_list *lst, dynamic_context *cxt)
 {
-    if (   lst->size() != 2
+    // DL: collation URI (a string) as an optional third parameter 
+    if (   (lst->size() != 2 && lst->size() != 3)
         || lst->at(0).type != SCM_SYMBOL
         || lst->at(1).type != SCM_SYMBOL)
         throw USER_EXCEPTION2(SE1004, "156");

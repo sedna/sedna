@@ -68,7 +68,7 @@
      (display ,(symbol->string code))
      (display ": ")
      (for-each display (list ,@msg))
-     ;(/ 1 0)
+     (/ 1 0)
      #f))
 (define-macro (cl:signal-user-error code . msg)
   `(begin
@@ -86,6 +86,60 @@
 (define go sa:analyze-query)
 
 ;------------------------
+
+(go
+ '(query
+ (prolog)
+ (query-body
+   (return
+     (order-by
+       (return
+         (sequence
+           (const (type !xs!integer) "1")
+           (const (type !xs!integer) "2")
+           (const (type !xs!integer) "3"))
+         (fun-def
+           (((one !xs!integer) (var ("" "i"))))
+           (let@
+            (element (const (type !xs!QName) ("" "a")) (space-sequence (var ("" "i"))))
+            (fun-def
+              (((one
+                 (elem-test
+                   (ename
+                    (const (type !xs!QName) unspecified)
+                    (type unspecified)
+                    (const (type !xs!string) "non-nil"))))
+                (var ("" "d"))))
+              (unio (var ("" "i")) (var ("" "d")))))))
+       (fun-def
+         (((one !xs!integer) (var ("" "i")))
+          ((one
+            (elem-test
+              (ename
+               (const (type !xs!QName) unspecified)
+               (type unspecified)
+               (const (type !xs!string) "non-nil"))))
+           (var ("" "d"))))
+         (orderspecs
+           (const (type !xs!string) "non-stable")
+           (orderspec
+             (ordermodifier
+               (const (type !xs!string) "desc")
+               (collation
+                 (const
+                  (type !xs!string)
+                  "http://www.w3.org/2005/xpath-functions/collation/codepoint")))
+             (ddo (child (var ("" "d")) (type (text-test))))))))
+     (fun-def
+       (((one !xs!integer) (var ("" "i")))
+        ((one
+          (elem-test
+            (ename
+             (const (type !xs!QName) unspecified)
+             (type unspecified)
+             (const (type !xs!string) "non-nil"))))
+         (var ("" "d"))))
+       (element (const (type !xs!QName) ("" "res")) (space-sequence (var ("" "d")))))))))
 
 (sa:analyze-query
  '(manage (prolog) (drop-index (const (type !xs!QName )("" "pet" )))))
