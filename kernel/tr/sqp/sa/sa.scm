@@ -4929,32 +4929,50 @@
       (or (= (length (sa:op-args expr)) 1)
           (sa:assert-num-args expr 2))
       (let ((c1 (car (sa:op-args expr)))  ; first constant
-            (c2 (if (null? (cdr (sa:op-args expr)))  ; a single argument
-                    '(const (type !xs!string) "default")
-                    (cadr (sa:op-args expr)))))
+            (c2 (if
+                 (or
+                  (null? (cdr (sa:op-args expr)))  ; a single argument
+                  (not  ; not a const declaration, probably a collation decl
+                   (and
+                    (pair? (cadr (sa:op-args expr)))
+                    (eq?
+                     (sa:op-name (cadr (sa:op-args expr)))
+                     'const))))
+                  '(const (type !xs!string) "default")
+                  (cadr (sa:op-args expr))))
+            (collations
+             (filter
+              (lambda (x)
+                (and (pair? x)
+                     (eq? (sa:op-name x) 'collation)))
+              (sa:op-args expr))))
         (and
          ; Temporary solution for collations in ordermodifier
-         (let ((collations
-                (filter
-                 (lambda (x)
-                   (and (pair? x)
-                        (eq? (sa:op-name x) 'collation)))
-                 (list c1 c2))))
-           (or
-            (null? collations)
-            (letrec ((sa:flatten
-                      (lambda (lst)
-                        (if
-                         (pair? lst)
-                         (append (sa:flatten (car lst))
-                                 (sa:flatten (cdr lst)))
-                         (list lst)))))
-              (cl:signal-user-error
-               XQST0076
-               (apply string-append
-                      (cons "" 
-                            (filter string?
-                                    (sa:flatten (car collations)))))))))
+;           (or
+;            (null? collations)
+;            (letrec ((sa:flatten
+;                      (lambda (lst)
+;                        (if
+;                         (pair? lst)
+;                         (append (sa:flatten (car lst))
+;                                 (sa:flatten (cdr lst)))
+;                         (list lst)))))
+;              (cl:signal-user-error
+;               XQST0076
+;               (apply string-append
+;                      (cons "" 
+;                            (filter string?
+;                                    (sa:flatten (car collations))))))))
+         (let ((lst
+                (map
+                 (lambda (c)
+                   (and
+                    (sa:assert-num-args c 1)
+                    (sa:analyze-string-const
+                     (car (sa:op-args c))
+                     vars funcs ns-binding default-ns)))
+                 collations)))
+           (not (memv #f lst)))
          (sa:analyze-string-const c1 '() '() '() sa:default-ns)
          (sa:analyze-string-const c2 '() '() '() sa:default-ns)
          (let ((v1 (caddr c1))  ; value of the first constant
@@ -4974,7 +4992,10 @@
              ((not (member v2 '("empty-greatest" "empty-least" "default")))
               (cl:signal-input-error SE5062 v1))
              (else
-              (cons expr sa:type-any))))))))))
+              (cons
+               (cons (sa:op-name expr)  ; == 'ordermodifier
+                     (cons c1 (cons c2 collations)))
+               sa:type-any))))))))))
 
 ;(orderspec
 ; (ordermodifier ...)
