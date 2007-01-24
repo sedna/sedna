@@ -433,8 +433,8 @@ xmlscm_type lr_atomic_type2xmlscm_type(const char *type)
 
 orb_modifier make_order_by_modifier(scheme_list *lst, dynamic_context *cxt)
 {
-    // DL: collation URI (a string) as an optional third parameter 
-    if (   (lst->size() != 2 && lst->size() != 3)
+    if (   lst->size() < 2 
+        || lst->size() > 3
         || lst->at(0).type != SCM_SYMBOL
         || lst->at(1).type != SCM_SYMBOL)
         throw USER_EXCEPTION2(SE1004, "156");
@@ -454,6 +454,19 @@ orb_modifier make_order_by_modifier(scheme_list *lst, dynamic_context *cxt)
     if(order == "ascending" || order == "default") m.order = ORB_ASCENDING;
     else if(order == "descending") m.order = ORB_DESCENDING;
     else throw USER_EXCEPTION2(SE1004, "158");
+    
+    if(lst->size() ==2)
+        m.collation = cxt->st_cxt->get_default_collation();
+    else
+    {
+        try{
+            m.collation = cxt->st_cxt->get_collation(lst->at(1).internal.str);
+        }
+        catch(SednaUserException &e){
+            if(e.get_code() == FOCH0002) throw USER_EXCEPTION2(XQST0076, string(lst->at(1).internal.str).c_str());
+            throw;
+        }
+    } 
     
     return m;
 }

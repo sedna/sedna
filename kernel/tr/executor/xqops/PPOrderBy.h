@@ -83,6 +83,7 @@ enum orb_sort_order {
 struct orb_modifier {
     orb_sort_order   order;                         
     orb_empty_status status;
+    CollationHandler* collation; 
 };
 
 struct common_type
@@ -106,8 +107,8 @@ struct orb_user_data
     arr_of_common_type* header;                     //Array of common types structures.
     arr_of_orb_modifier* modifiers;                 //Array of standart order by modifiers - [empty (greatest | least)] and [ascending | descending].
     temp_buffer* buffer;                            //Buffer for memory copy operations (when ALIGNMENT_REQUIRED or two blocks are used).
-
-    dynamic_context *cxt;
+    bool stable;                                    //'true' if 'stable order by' version used.
+    char* temps[2];                                 //Buffer memory used in comparator.
 };
 
 

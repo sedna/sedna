@@ -9,6 +9,16 @@
 
 using namespace std;
 
+
+#define CHECK_PTR_AND_CLEAR(ptr) if(ptr != NULL) { delete ptr; ptr = NULL; }
+
+#define GET_DESERIALIZED_VALUES(pValue1, pValue2, type, offset) \
+    if(temp1 == NULL) CHECKP(v1); \
+    get_deserialized_value((pValue1), (char*)addr1+(offset), (type)); \
+    if(temp2 == NULL) CHECKP(v2); \
+    get_deserialized_value((pValue2), (char*)addr2+(offset), (type));
+
+
 /// Returns the least common type that has a gt operator.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
@@ -84,7 +94,9 @@ void PPOrderBy::open  ()
     udata.modifiers = &modifiers;
     udata.size      = sizeof(__int64);            
     udata.buffer    = NULL;
-    udata.cxt       = cxt;
+    udata.stable    = stable;
+    udata.temps[0]  = NULL;
+    udata.temps[1]  = NULL;
 
     ss = new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
@@ -106,11 +118,9 @@ void PPOrderBy::close ()
     udata.sort = NULL;
     delete ss;
     ss = NULL;
-    if(udata.buffer != NULL) 
-    {
-        delete udata.buffer;
-        udata.buffer = NULL;
-    }
+    CHECK_PTR_AND_CLEAR(udata.buffer);
+    CHECK_PTR_AND_CLEAR(udata.temps[0]);
+    CHECK_PTR_AND_CLEAR(udata.temps[1]);
 }
 
 void PPOrderBy::next  (tuple &t)
@@ -195,9 +205,11 @@ void PPOrderBy::next  (tuple &t)
             if(udata.size > DATA_BLK_SIZE) 
                 throw USER_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
 
-            if(udata.buffer != NULL) delete udata.buffer;
+            CHECK_PTR_AND_CLEAR(udata.buffer);
+            CHECK_PTR_AND_CLEAR(udata.temps[0]);
+            CHECK_PTR_AND_CLEAR(udata.temps[1]);
             udata.buffer = new temp_buffer(udata.size);
-
+            
             for(i = 0; i < sort_cells->size(); i++)
             {
                 sort_cells -> get(sort_tuple, i);
@@ -254,7 +266,7 @@ bool PPOrderBy::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void serialize_string(const tuple_cell& tc, void* dest)
+static inline void serialize_string(const tuple_cell& tc, void* dest)
 {
     __int64 length_all = tc.get_strlen();
     int length_ser = length_all < ORB_STRING_PREFIX_SIZE ? length_all : ORB_STRING_PREFIX_SIZE;
@@ -264,14 +276,14 @@ void serialize_string(const tuple_cell& tc, void* dest)
     *((char*)dest + sizeof(bool) + length_ser) = '\0';
 }
 
-void* get_ptr_to_complete_serialized_data(xptr v, char** temp,  const void * Udata)
+static inline void* get_ptr_to_complete_serialized_data(xptr v, char** temp, int n, orb_user_data * ud)
 {
-    orb_user_data* ud = (orb_user_data*)Udata;
     CHECKP(v);
     int sz = GET_FREE_SPACE(v);
     if(sz < ud->size)
     {
-        *temp = new char[ud->size];
+        if(ud->temps[n-1] == NULL) ud->temps[n-1] = new char[ud->size];
+        *temp = ud->temps[n-1];
         memcpy(*temp, XADDR(v), sz);
         xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v)))->nblk+sizeof(seq_blk_hdr);
         CHECKP(nblk);
@@ -281,7 +293,7 @@ void* get_ptr_to_complete_serialized_data(xptr v, char** temp,  const void * Uda
     else return XADDR(v);    
 }
 
-void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
+static inline void get_deserialized_value(void* value, const void* addr, xmlscm_type type)
 {
     #ifdef ALIGNMENT_REQUIRED
         memcpy(value, addr, ORB_SERIALIZED_SIZE(type));
@@ -313,13 +325,6 @@ static inline int compare_doubles(double value1, double value2, orb_empty_status
 } 
 
 
-#define GET_DESERIALIZED_VALUES(pValue1, pValue2, type, offset) \
-    if(temp1 == NULL) CHECKP(v1); \
-    get_deserialized_value((pValue1), (char*)addr1+(offset), (type)); \
-    if(temp2 == NULL) CHECKP(v2); \
-    get_deserialized_value((pValue2), (char*)addr2+(offset), (type));
-
-
 //////////////////////////////////////////////////////////////
 /// v2 points to (j-1)-th element
 /// v1 points to (j)-th element
@@ -335,8 +340,8 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
     void* addr1;
     void* addr2;
     
-    addr1 = get_ptr_to_complete_serialized_data(v1, &temp1, Udata);
-    addr2 = get_ptr_to_complete_serialized_data(v2, &temp2, Udata);
+    addr1 = get_ptr_to_complete_serialized_data(v1, &temp1, 1, ud);
+    addr2 = get_ptr_to_complete_serialized_data(v2, &temp2, 2, ud);
     
     if(temp1 == NULL) CHECKP(v1);
     bit_set bs1((char *)addr1+ud->bit_set_offset, length);
@@ -437,7 +442,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         ud->sort->get(t, position1);
                         tuple_cell tc = t.cells[i];
                         ud->sort->get(t, position2);
-                        result = fn_compare(t.cells[i], tc, ud->cxt->st_cxt->get_default_collation())*order;
+                        result = fn_compare(t.cells[i], tc, m.collation)*order;
                     }
                     break;
                 }
@@ -474,9 +479,14 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
         if(result != 0) break;
         offset += type_size;
     }
-    if(temp1 != NULL) {    delete temp1; temp1 = NULL;    }
-    if(temp2 != NULL) {    delete temp2; temp2 = NULL;    }
-	
+    
+    if(result == 0 && ud->stable)
+    {
+        __int64 position1, position2;
+        GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
+        result = position1 > position2 ? 1 : -1;
+    }
+    
 	return result;
 }
 
