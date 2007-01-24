@@ -4956,18 +4956,31 @@
      (and
       (or (= (length (sa:op-args expr)) 1)
           (sa:assert-num-args expr 2))
-      (let ((c1 (car (sa:op-args expr)))  ; first constant
-            (c2 (if
-                 (or
-                  (null? (cdr (sa:op-args expr)))  ; a single argument
-                  (not  ; not a const declaration, probably a collation decl
-                   (and
-                    (pair? (cadr (sa:op-args expr)))
-                    (eq?
-                     (sa:op-name (cadr (sa:op-args expr)))
-                     'const))))
-                  '(const (type !xs!string) "default")
-                  (cadr (sa:op-args expr))))
+      (let ((c1  ; first constant
+             (if
+              (or
+               (null? (sa:op-args expr))  ; no arguments
+               (not  ; not a const declaration, probably a collation decl
+                (and
+                 (pair? (car (sa:op-args expr)))
+                 (eq?
+                  (sa:op-name (car (sa:op-args expr)))
+                  'const))))
+              '(const (type !xs!string) "asc")
+              (car (sa:op-args expr))))
+            (c2
+             (if
+              (or
+               (null? (sa:op-args expr))
+               (null? (cdr (sa:op-args expr)))  ; a single argument
+               (not  ; not a const declaration, probably a collation decl
+                (and
+                 (pair? (cadr (sa:op-args expr)))
+                 (eq?
+                  (sa:op-name (cadr (sa:op-args expr)))
+                  'const))))
+              '(const (type !xs!string) "default")
+              (cadr (sa:op-args expr))))
             (collations
              (filter
               (lambda (x)
@@ -5006,15 +5019,15 @@
          (let ((v1 (caddr c1))  ; value of the first constant
                (v2 (caddr c2)))
            (cond
-             ((and 
-               (= (length (sa:op-args expr)) 1)
-               (member v1 '("empty-greatest" "empty-least" "default")))
-              ; The first argument omitted
-              (cons
-               (list (sa:op-name expr)  ; == 'ordermodifier
-                     '(const (type !xs!string) "asc")
-                     c1)
-               sa:type-any))
+;             ((and 
+;               (= (length (sa:op-args expr)) 1)
+;               (member v1 '("empty-greatest" "empty-least" "default")))
+;              ; The first argument omitted
+;              (cons
+;               (list (sa:op-name expr)  ; == 'ordermodifier
+;                     '(const (type !xs!string) "asc")
+;                     c1)
+;               sa:type-any))
              ((not (member v1 '("asc" "desc")))
               (cl:signal-input-error SE5061 v1))
              ((not (member v2 '("empty-greatest" "empty-least" "default")))
