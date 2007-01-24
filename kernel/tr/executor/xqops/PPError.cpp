@@ -165,6 +165,7 @@ void PPFnTrace::close ()
 {
     value_child.op->close();
     label_child.op->close();
+//    delete debug_ostream;
 }
 
 void PPFnTrace::next(tuple &t)
@@ -193,11 +194,7 @@ void PPFnTrace::next(tuple &t)
     if (t.is_eos()) 
         first_time = true;
     else 
-    {
-        dostr << "TRACE: item begin\n";
-        print_tuple_indent(t, dostr, xml, is_first, cxt);
-        dostr << "\nTRACE: item end\n";
-    }
+        print_tuple_indent(t, crm_out, xml, is_first, cxt);
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
