@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
             auth = 0;
         }
 #endif
-
+//Sleep(100000);
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;
         bool expect_another_transaction = true;

@@ -153,6 +153,7 @@ void PPFnTrace::open  ()
     value_child.op->open();
     label_child.op->open();
     first_time = true;
+//    debug_ostream = s->get_debug_ostream();
 }
 
 void PPFnTrace::reopen()

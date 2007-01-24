@@ -116,6 +116,14 @@ se_ostream& se_ostream::writeattribute(char *s, int n)
 	return *this; 
 }
 
+se_ostream* se_socketostream::get_debug_ostream()
+{ 
+    if (_p_ver.major_version < 2)
+        return new se_nullostream();
+    else
+        return new se_debug_socketostream(*this);
+}
+
 se_ostream& endl(se_ostream& s)
 {
     s.endline();
