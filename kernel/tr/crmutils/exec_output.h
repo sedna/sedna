@@ -107,13 +107,13 @@ public:
     virtual se_ostream& operator<<(long double n)                          { return *this; }
     virtual se_ostream& operator<<(void * n)                               { return *this; }
     virtual se_ostream& put(char c)                                        { return *this; }
-    virtual se_ostream& write(const char *s, int n)                              { return *this; }
-    virtual se_ostream& write_debug(int debug_type, const char *s, int n)        { return *this; }
+    virtual se_ostream& write(const char *s, int n)                        { return *this; }
+    virtual se_ostream& write_debug(int debug_type, const char *s, int n)  { return *this; }
 	virtual se_ostream& flush()                                            { return *this; }
     virtual void end_of_data(bool res)                                     { ; }
     virtual void endline()                                                 { ; }
     virtual void error(const char* str)                                    { ; }
-    virtual se_ostream* get_debug_ostream()                                { return this; }
+    virtual se_ostream* get_debug_ostream()                                { return new se_nullostream(); }
 };
 
 

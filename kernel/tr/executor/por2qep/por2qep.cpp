@@ -4117,7 +4117,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
     }
 
     // set static structures of dynamic_context
-    dynamic_context::static_set(funcs_num, var_decls_num, lst->size() - 2);
+    dynamic_context::static_set(funcs_num, var_decls_num, lst->size() - 2, s);
 
     // process all modules and query prolog
     int function_counter = 0;
