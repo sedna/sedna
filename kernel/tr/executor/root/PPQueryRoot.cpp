@@ -13,11 +13,9 @@
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,
                          PPOpIn _child_,
-                         se_ostream& _s_,
                          t_print _print_mode_) : PPQueryEssence(),
                                                  cxt(_cxt_),
                                                  child(_child_),
-                                                 s(_s_),
                                                  print_mode(_print_mode_),
                                                  data(_child_.ts)
 {

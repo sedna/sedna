@@ -19,7 +19,6 @@ class PPQueryRoot : public PPQueryEssence
 private:
     PPOpIn child;
     tuple data;
-    se_ostream& s;
     dynamic_context *cxt;
     t_print print_mode;
 	bool first;
@@ -28,7 +27,6 @@ private:
 public:
     PPQueryRoot(dynamic_context *_cxt_,
                 PPOpIn _child_,
-                se_ostream& _s_,
                 t_print _print_mode_);
     virtual ~PPQueryRoot();
 	
