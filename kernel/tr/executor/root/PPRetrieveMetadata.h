@@ -17,7 +17,6 @@ class PPRetrieveMetadata : public PPQueryEssence
     PPOpIn collection;
     dynamic_context *cxt;
     bool output_statistics;
-    se_ostream& s;
 
 public:
     void open();
@@ -30,8 +29,7 @@ public:
     PPRetrieveMetadata(db_entity_type _type_,
                        PPOpIn _collection_,
                        dynamic_context *_cxt_,
-                       bool _output_statistics_,
-                       se_ostream& _s_);
+                       bool _output_statistics_);
 
     ~PPRetrieveMetadata();
 };

@@ -14,12 +14,10 @@
 PPRetrieveMetadata::PPRetrieveMetadata(db_entity_type _type_,
                                        PPOpIn _collection_,
                                        dynamic_context *_cxt_,
-                                       bool _output_statistics_,
-                                       se_ostream& _s_) : type(_type_),
-                                                          collection(_collection_),
-                                                          cxt(_cxt_),
-                                                          output_statistics(_output_statistics_),
-                                                          s(_s_)
+                                       bool _output_statistics_) : type(_type_),
+                                                                   collection(_collection_),
+                                                                   cxt(_cxt_),
+                                                                   output_statistics(_output_statistics_)
 {
 }
 
@@ -54,14 +52,14 @@ void PPRetrieveMetadata::execute()
     if (type == dbe_collection)
     {
         local_lock_mrg->put_lock_on_db();
-        print_collections(s, output_statistics);
+        print_collections(dynamic_context::ostr(), output_statistics);
     }
     else if (type == dbe_document)
     {
         if (collection.op == 0)
         {
             local_lock_mrg->put_lock_on_db();
-            print_documents(s, output_statistics);
+            print_documents(dynamic_context::ostr(), output_statistics);
         }
         else 
         {
@@ -80,7 +78,7 @@ void PPRetrieveMetadata::execute()
             tc = tuple_cell::make_sure_light_atomic(tc);
 
             local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
-            print_documents_in_collection(s, tc.get_str_mem());
+            print_documents_in_collection(dynamic_context::ostr(), tc.get_str_mem());
         }
     }
     else throw USER_EXCEPTION2(SE1003, "Wrong combination of arguments in PPRetrieveMetadata");

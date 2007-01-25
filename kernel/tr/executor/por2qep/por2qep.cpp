@@ -3254,7 +3254,7 @@ void make_pp_fun(scheme_list *lst, static_context *cxt, function_declaration &fd
     fd.op = make_pp_op(&dc, lst->at(4).internal.list).op;
 }
 
-PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &s, t_print print_mode)
+PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print print_mode)
 {
     if (   qe->size() < 1 
         || qe->at(0).type != SCM_SYMBOL)
@@ -3275,7 +3275,6 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
 
         return new PPQueryRoot(cxt,
                                make_pp_op(cxt, qe->at(2).internal.list),
-                               s,
                                print_mode);
     }
     else if (op == "PPInsertTo")
@@ -3438,8 +3437,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
                               make_pp_op(cxt2, qe->at(4).internal.list),
                               cxt2,
                               collection,
-                              cxt3,
-                              s);
+                              cxt3);
     }
 	else if (op == "PPLoadModule")
     {
@@ -3459,9 +3457,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
 
         return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
 								make_pp_op(cxt2, qe->at(4).internal.list),
-								qe->at(5).internal.b,
-								s  // is passed to this function
-								);
+								qe->at(5).internal.b);
     }
     else if (op == "PPCreateDocument")
     {
@@ -3579,8 +3575,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
 
         return new PPRetrieveDS(make_pp_op(cxt, qe->at(2).internal.list),
                                 cxt,
-                                dbe_document,
-                                s);
+                                dbe_document);
     }
     else if (op == "PPRetrieveDSForCollection")
     {
@@ -3594,8 +3589,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
 
         return new PPRetrieveDS(make_pp_op(cxt, qe->at(2).internal.list),
                                 cxt,
-                                dbe_collection,
-                                s);
+                                dbe_collection);
     }
     else if (op == "PPRetrieveMetadata")
     {
@@ -3632,8 +3626,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, se_ostream &
         return new PPRetrieveMetadata(type,
                                       collection,
                                       cxt,
-                                      b,
-                                      s);
+                                      b);
     }
     else if (op == "PPCreateIndex")
     {
@@ -4131,7 +4124,7 @@ PPQueryEssence *scheme_list2qep(scheme_list *lst, se_ostream &s, t_print print_m
         make_pp_qp(lst->at(i).internal.list, st_cxt, function_counter, var_decl_counter);
     }
 
-    return make_pp_qe(qe, st_cxt, s, print_mode);
+    return make_pp_qe(qe, st_cxt, print_mode);
 }
 
 PPQueryEssence *build_qep(const char* por, se_ostream& s, t_print print_mode)

@@ -12,7 +12,6 @@
 
 class PPLoadModule : public PPUpdate
 {
-    se_ostream& s;
     PPOpIn filename, modulename;
     bool is_load_replace;
 
@@ -23,8 +22,7 @@ public:
 
     PPLoadModule(PPOpIn _filename_,
                  PPOpIn _modulename_,
-                 bool _is_load_replace,
-                 se_ostream& _s_);
+                 bool _is_load_replace);
     ~PPLoadModule();
 };
 

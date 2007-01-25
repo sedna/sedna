@@ -16,7 +16,6 @@ class PPRetrieveDS : public PPQueryEssence
     PPOpIn name;
     dynamic_context *cxt;
     db_entity_type type;
-    se_ostream& s;
 
 public:
     void open();
@@ -28,8 +27,7 @@ public:
 
     PPRetrieveDS(PPOpIn _name_,
                  dynamic_context *_cxt_,
-                 db_entity_type _type_,
-                 se_ostream& _s_);
+                 db_entity_type _type_);
     ~PPRetrieveDS();
 };
 

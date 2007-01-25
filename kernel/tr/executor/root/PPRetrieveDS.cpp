@@ -13,11 +13,9 @@
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,
                            dynamic_context *_cxt_,
-                           db_entity_type _type_,
-                           se_ostream& _s_) : name(_name_),
-                                              cxt(_cxt_),
-                                              type(_type_),
-                                              s(_s_)
+                           db_entity_type _type_) : name(_name_),
+                                                    cxt(_cxt_),
+                                                    type(_type_)
 {
 }
 
@@ -70,7 +68,7 @@ void PPRetrieveDS::execute()
     	db_ent->type = dbe_document;
         auth_for_query(db_ent);
         local_lock_mrg->put_lock_on_document(tc.get_str_mem());
-        print_descriptive_schema(tc.get_str_mem(), s);
+        print_descriptive_schema(tc.get_str_mem(), dynamic_context::ostr());
     }
     else
     { /// dbe_collection
@@ -79,7 +77,7 @@ void PPRetrieveDS::execute()
     	db_ent->type = dbe_collection;
         auth_for_query(db_ent);
         local_lock_mrg->put_lock_on_collection(tc.get_str_mem());
-        print_descriptive_schema_col(tc.get_str_mem(), s);
+        print_descriptive_schema_col(tc.get_str_mem(), dynamic_context::ostr());
     }
 }
 

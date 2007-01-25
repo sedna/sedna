@@ -20,14 +20,12 @@ PPBulkLoad::PPBulkLoad(PPOpIn _filename_,
                        PPOpIn _document_,
                        dynamic_context *_cxt2_,
                        PPOpIn _collection_,
-                       dynamic_context *_cxt3_,
-                       se_ostream& _s_) : filename(_filename_),
-                                          document(_document_),
-                                          collection(_collection_),
-                                          cxt1(_cxt1_),
-                                          cxt2(_cxt2_),
-                                          cxt3(_cxt3_),
-                                          s(_s_)
+                       dynamic_context *_cxt3_) : filename(_filename_),
+                                                  document(_document_),
+                                                  collection(_collection_),
+                                                  cxt1(_cxt1_),
+                                                  cxt2(_cxt2_),
+                                                  cxt3(_cxt3_)
 {
 }
 
@@ -125,7 +123,7 @@ void PPBulkLoad::execute()
         { 
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+            doc_root = loadfile(cf.f, dynamic_context::ostr(), tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
@@ -145,7 +143,7 @@ void PPBulkLoad::execute()
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf.f, s, tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+            doc_root = loadfile(cf.f, dynamic_context::ostr(), tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }
