@@ -6,11 +6,14 @@
 #include "sedna.h"
 #include "exec_output.h"
 #include "PPBase.h"
+
 using namespace tr_globals;
- void write_func(void *param, const char *str, int len)
- {
-	 ((se_ostream*)param)->write(str,len);
- }
+
+void write_func(void *param, const char *str, int len)
+{
+    ((se_ostream*)param)->write(str,len);
+}
+
 se_ostream& se_ostream::operator<<(__int64 n)
 {
 	char z[20];
