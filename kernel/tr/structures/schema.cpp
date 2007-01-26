@@ -396,7 +396,7 @@ col_schema_node* col_schema_node::init( bool persistent)
 /* inserts new node to the schema as the child of the existing one*/
 schema_node* schema_node::add_child( xml_ns* _xmlns,const char* name, t_item type)
 {
-	if (this->index_object!=NULL &&(type==text || type==element) &&  this->persistent)
+	if (this->index_object!=NULL &&(type==element) &&  this->persistent)
 	{
 		throw USER_EXCEPTION(SE2032);
 	}
