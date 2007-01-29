@@ -15,93 +15,141 @@
 #include "micro.h"
 #include "metadata.h"
 #include "d_printf.h"
+#include <functional>
+#include <algorithm>
 
 extern client_core *client;
 
 PPLoadModule::PPLoadModule(PPOpIn _filename_,
                          PPOpIn _modulename_,
-                         bool _is_load_replace_) : filename(_filename_),
-                                                   modulename(_modulename_),
-                                                   is_load_replace(_is_load_replace_)
+                         bool _is_load_replace_, 
+                         se_ostream& _s_) : filename(_filename_),
+                                            modulename(_modulename_),
+                                            is_load_replace(_is_load_replace_),
+                                            s(_s_)
 {
 }
 
+struct Op_deletor:
+    public std::unary_function<PPOpIn, void>
+{
+    void operator()(PPOpIn &filename)
+    {
+        delete filename.op;
+        filename.op = NULL;
+    }
+};
+
+struct Op_opener:
+    public std::unary_function<PPOpIn, void>
+{
+    void operator()(PPOpIn &filename)
+    {
+        filename.op->open();
+    }
+};
+
+struct Op_closer:
+    public std::unary_function<PPOpIn, void>
+{
+    void operator()(PPOpIn &filename)
+    {
+        filename.op->close();
+    }
+};
+
 PPLoadModule::~PPLoadModule()
 {
-    delete filename.op;
-    filename.op = NULL;
-
-    delete modulename.op;
-    modulename.op = NULL;
+    std::for_each(
+        filenames.begin(), filenames.end(),
+        Op_deletor()
+        );
 }
 
 void PPLoadModule::open()
 {
-    filename.op->open();
-    modulename.op->open();
+    std::for_each(
+        filenames.begin(), filenames.end(),
+        Op_opener()
+        );
 }
 
 void PPLoadModule::close()
 {
-    filename.op->close();
-    modulename.op->close();
+    std::for_each(
+        filenames.begin(), filenames.end(),
+        Op_closer()
+        );
 }
+
+class Tc_filename_obtainer:
+    public std::unary_function<PPOpIn, tuple_cell>
+{
+public:
+    Tc_filename_obtainer()
+        : t(1)
+    {}
+    tuple_cell operator()(const PPOpIn &filename)
+    {
+        filename.op->next(t);
+        if (t.is_eos()) throw USER_EXCEPTION(SE1071);
+
+        tc = filename.get(t);
+        if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
+            throw USER_EXCEPTION(SE1071);
+
+        filename.op->next(t);
+        if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
+        return tuple_cell::make_sure_light_atomic(tc);
+    }
+private:
+    tuple_cell  tc;
+    tuple       t;
+};
 
 void PPLoadModule::execute()
 {
-
-    tuple_cell tc, tc_filename, tc_modulename;
-    tuple t(1);
-
-    filename.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = filename.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
-
-    filename.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
-    tc_filename = tuple_cell::make_sure_light_atomic(tc);
-
-
-    modulename.op->next(t);
-    if (t.is_eos()) throw USER_EXCEPTION(SE1071);
-
-    tc = modulename.get(t);
-    if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-        throw USER_EXCEPTION(SE1071);
-
-    modulename.op->next(t);
-    if (!t.is_eos()) throw USER_EXCEPTION(SE1071);        
-    tc_modulename = tuple_cell::make_sure_light_atomic(tc);
+    std::vector<tuple_cell> tc_filenames(filenames.size());
+    std::transform(
+        filenames.begin(), filenames.end(),
+        tc_filenames.begin(),
+        Tc_filename_obtainer()
+        );
 
     client_file cf;
 
     try {
-         cf = client->get_file_from_client(tc_filename.get_str_mem());
-         //precompile input module
-		 std::string module_name;
-         std::string module_pc_text = prepare_module(cf.f, module_name/*out*/);
+        std::string module_name1, module_name2, module_pc_text ;
+        const int fnames_size = tc_filenames.size();
+        for (int i = 0; i < fnames_size; ++i)
+        {
+            cf = client->get_file_from_client(tc_filenames[i].get_str_mem());
+            //precompile input module
 
+            module_pc_text += prepare_module(cf.f, module_name1/*out*/);
+            if (i && (module_name1 != module_name2))
+                throw USER_EXCEPTION2(SE1072, (module_name1 + " and " + module_name2).c_str());
 
-         local_lock_mrg->lock(lm_x);
-         local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
+            module_name2=module_name1;
+        }
 
-         xptr doc_root, elem_ptr;
-         if (is_load_replace)
-         {
+        local_lock_mrg->lock(lm_x);
+        local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
+
+        xptr doc_root, elem_ptr;
+        if (is_load_replace)
+        {
             try{
-               delete_document(MODULES_COLLECTION_NAME, module_name.c_str());
-	    } catch(SednaUserException& e) {}
-         }
+               delete_document(MODULES_COLLECTION_NAME, module_name1.c_str());
+            } catch(SednaUserException& e) {}
+        }
 
-         doc_root = insert_document_in_collection(MODULES_COLLECTION_NAME, module_name.c_str());
+        doc_root = insert_document_in_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
 
-         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL, NULL);
+        elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL, NULL);
 
 //d_printf2("inserting module: %s\n", module_pc_text.c_str());
-         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
+        insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
 
     } catch (...) {
         client->close_file_from_client(cf);

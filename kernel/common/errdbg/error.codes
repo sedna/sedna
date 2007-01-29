@@ -547,6 +547,9 @@ sedna-err:SE1061
 sedna-err:SE1071
 
     Expecting arguments of type xs:string.
+sedna-err:SE1072
+
+    Modules to be loaded belong to different namespaces.
 
 
 
