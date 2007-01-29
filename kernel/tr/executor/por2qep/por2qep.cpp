@@ -3441,24 +3441,64 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
     }
 	else if (op == "PPLoadModule")
     {
-        if ( qe->size() != 6
-            || qe->at(1).type != SCM_NUMBER
-            || qe->at(2).type != SCM_LIST
-            || qe->at(3).type != SCM_NUMBER
-            || qe->at(4).type != SCM_LIST
-	    || qe->at(5).type != SCM_BOOL)
-            throw USER_EXCEPTION2(SE1004, "310.5");
+        if((qe->size() <= 2) || (qe->size() % 2)
+            || qe->at(1).type != SCM_BOOL)
+        {
+           throw USER_EXCEPTION2(SE1004, "310.5");
+        }
+        int i;
+        for (i = 2; i < qe->size(); i += 2)
+        {
+            if(qe->at(i).type != SCM_NUMBER)
+            {
+                throw USER_EXCEPTION2(SE1004, "310.6");
+            }
+            if(qe->at(i + 1).type != SCM_LIST)
+            {
+                throw USER_EXCEPTION2(SE1004, "310.7");
+            }
+        }
 
-        int var_cxt_size1 = atoi(qe->at(1).internal.num);
-        dynamic_context *cxt1 = new dynamic_context(st_cxt, var_cxt_size1);
+        int             var_cxt_size;
+        dynamic_context *cxt;
+        arr_of_PPOpIn   arr;
+        for (i = 2; i < qe->size(); i += 2)
+        {
+            var_cxt_size    = atoi(qe->at(i).internal.num);
+            cxt             = new dynamic_context(st_cxt, var_cxt_size);
+            arr.push_back(make_pp_op(cxt, qe->at(i + 1).internal.list));
+        }
 
         int var_cxt_size2 = atoi(qe->at(3).internal.num);
         dynamic_context *cxt2 = new dynamic_context(st_cxt, var_cxt_size2);
 
         return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
 								make_pp_op(cxt2, qe->at(4).internal.list),
-								qe->at(5).internal.b);
+								qe->at(5).internal.b,
+								s  // is passed to this function
+								);
     }
+    //{
+    //    if ( qe->size() != 6
+    //        || qe->at(1).type != SCM_NUMBER
+    //        || qe->at(2).type != SCM_LIST
+    //        || qe->at(3).type != SCM_NUMBER
+    //        || qe->at(4).type != SCM_LIST
+	   // || qe->at(5).type != SCM_BOOL)
+    //        throw USER_EXCEPTION2(SE1004, "310.5");
+
+    //    int var_cxt_size1 = atoi(qe->at(1).internal.num);
+    //    dynamic_context *cxt1 = new dynamic_context(st_cxt, var_cxt_size1);
+
+    //    int var_cxt_size2 = atoi(qe->at(3).internal.num);
+    //    dynamic_context *cxt2 = new dynamic_context(st_cxt, var_cxt_size2);
+
+    //    return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
+				//				make_pp_op(cxt2, qe->at(4).internal.list),
+				//				qe->at(5).internal.b,
+				//				s  // is passed to this function
+				//				);
+    //}
     else if (op == "PPCreateDocument")
     {
         if (   qe->size() != 3

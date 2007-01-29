@@ -325,7 +325,7 @@ client_file command_line_client::get_file_from_client(const char* client_filenam
 
 void command_line_client::close_file_from_client(client_file cf)
 {
-    if (fclose(cf.f) != 0) throw USER_EXCEPTION(SE3020);
+    if (cf.f && (fclose(cf.f) != 0)) throw USER_EXCEPTION(SE3020);
 }
 
 void command_line_client::respond_to_client(int instruction)

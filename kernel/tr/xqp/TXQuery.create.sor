@@ -203,31 +203,40 @@ create!:
 	        #create=#(#["load"], e9, e10);
 	  >>
 
-	| #(AST_LOAD_MODULE lm_st1:AST_STRING_CONST lm_st2:AST_STRING_CONST)
+	| #(AST_LOAD_MODULE lm_st1:AST_STRING_CONST 
 	  <<
 	    #create=#(#["load-module"],
 	                 #(#["const"],
 	                   #(#["type"], #["!xs!string"]),
-	                   #[lm_st1->getText()]),
-
-	                 #(#["const"],
-	                   #(#["type"], #["!xs!string"]),
-	                   #[lm_st2->getText()])
-	              );
+	                   #[lm_st1->getText()]));
 	  >>
 
-	| #(AST_LOAD_OR_REPL_MODULE lmr_st1:AST_STRING_CONST lmr_st2:AST_STRING_CONST)
+	  (lm_st2:AST_STRING_CONST
+	  <<
+	   #create->addChild(#(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                        #[lm_st2->getText()]));
+	  >>
+	
+	   )+)
+
+	| #(AST_LOAD_OR_REPL_MODULE lr_st1:AST_STRING_CONST 
 	  <<
 	    #create=#(#["load-or-replace-module"],
 	                 #(#["const"],
 	                   #(#["type"], #["!xs!string"]),
-	                   #[lmr_st1->getText()]),
+	                   #[lr_st1->getText()]));
+	  >>
 
-	                 #(#["const"],
-	                   #(#["type"], #["!xs!string"]),
-	                   #[lmr_st2->getText()])
-	              );
-	  >>                   
+	  (lr_st2:AST_STRING_CONST
+	  <<
+	    #create->addChild(#(#["const"],
+	                       #(#["type"], #["!xs!string"]),
+	                        #[lr_st2->getText()]));
+	  >>
+	
+	   )+)
+
 
 	| #(AST_GRANT_PRIV_ON_DOC p14:privList s15:AST_STRING_CONST u16:userList)
 	  <<

@@ -4892,11 +4892,10 @@
 ;-------------------------------------------------
 ; XQuery module management
 
-; args-inverter - a function that may invert argument list
-(define (sa:module-helper num-args args-inverter)
+(define sa:module-drop
   (lambda (expr)
     (and
-     (sa:assert-num-args expr num-args)
+     (sa:assert-num-args expr 1)
      (let ((args
             (map
              (lambda (arg)
@@ -4906,10 +4905,27 @@
         (not (memv #f args))
         (cons
          (sa:op-name expr)
-         (args-inverter (map car args))))))))
-        
-(define sa:module-drop (sa:module-helper 1 (lambda (x) x)))
-(define sa:module-load (sa:module-helper 2 reverse))
+         (map car args)))))))
+
+; args-inverter - a function that may invert argument list
+(define sa:module-load
+  (lambda (expr)
+    (and
+     (or
+      (> (length (sa:op-args expr)) 2)
+      (sa:assert-num-args expr 2))
+     (let ((args
+            (map
+             (lambda (arg)
+               (sa:analyze-string-const arg '() '() '() ""))
+             (sa:op-args expr))))
+       (and
+        (not (memv #f args))
+        (cons
+         (sa:op-name expr)
+         (cdr  ; removing dummy module name
+          ; Was: reverse
+          (map car args))))))))
 
 
 ;==========================================================================

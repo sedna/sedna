@@ -120,9 +120,9 @@ createExpr!:
 
 	     >>
 	    )
-	   | (CMODULE lm_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lm_st2->getText(), AST_STRING_CONST]);>>)
+	   | (CMODULE lm_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lm_st2->getText(), AST_STRING_CONST]);>> (COMMA lm_st3:STRINGLITERAL <<#0->addChild(#[$lm_st3->getText(), AST_STRING_CONST]);>>)* )
 
-	   | (COR CREPLACE CMODULE lr_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_OR_REPL_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lr_st2->getText(), AST_STRING_CONST]);>>)
+	   | (COR CREPLACE CMODULE lr_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_OR_REPL_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lr_st2->getText(), AST_STRING_CONST]);>> (COMMA lr_st3:STRINGLITERAL <<#0->addChild(#[$lr_st3->getText(), AST_STRING_CONST]);>>)*)
 	
 	   )
 	| LOADFILE e5_1:exprSingle CAS e6_1:exprSingle {CIN_ e7_1:exprSingle}

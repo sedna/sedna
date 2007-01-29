@@ -1398,22 +1398,32 @@
              ((assq op-name '((load-module . #f)
                               (load-or-replace-module . #t)))
               => (lambda (pair)
-                   (let*  ; order of evaluation is significant due to set!
-                       ((filename (l2p:any-lr-node2por (car node)))
-                        (file-context
-                         (if (eq? var-count 0) 0 (+ var-count 1)))
-                        (module-name-in-db
-                         (begin
-                           (set! var-count 0)
-                           (l2p:any-lr-node2por (cadr node))))
-                        (name-context
-                         (if (eq? var-count 0) 0 (+ var-count 1))))
-                     (list 'PPLoadModule
-                           file-context
-                           filename
-                           name-context
-                           module-name-in-db
-                           (cdr pair)))))
+;                   (let*  ; order of evaluation is significant due to set!
+;                       ((filename (l2p:any-lr-node2por (car node)))
+;                        (file-context
+;                         (if (eq? var-count 0) 0 (+ var-count 1)))
+;                        (module-name-in-db
+;                         (begin
+;                           (set! var-count 0)
+;                           (l2p:any-lr-node2por (cadr node))))
+;                        (name-context
+;                         (if (eq? var-count 0) 0 (+ var-count 1))))
+                     `(PPLoadModule
+                       ,(cdr pair)
+                       ,@(apply
+                          append
+                          (map
+                           (lambda (str-const)
+                             (list
+                              (if (eq? var-count 0) 0 (+ var-count 1))
+                              (l2p:any-lr-node2por str-const)))
+                           node))
+;                           file-context
+;                           filename
+;                           name-context
+;                           module-name-in-db
+;                           (cdr pair)
+                           )))
 
              ((eq? op-name 'drop-module)
               (let ((context (if (eq? var-count 0) 0 (+ var-count 1))))
