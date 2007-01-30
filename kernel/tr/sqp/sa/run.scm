@@ -5,25 +5,26 @@
   (lambda (uri)
     (let ((string-port (open-output-string)))
       (begin
-        (write
          (cond
            ((equal? uri "http://www.w3.org/TestModules/test1")
             ; test1-lib in XQTS entry
-            '(lib-module
-              (module-decl
-               (const (type !xs!NCName) test1)
-               (const (type !xs!string) "http://www.w3.org/TestModules/test1"))
-              (prolog
-               (declare-global-var
-                (var ("http://www.w3.org/TestModules/test1" "flag"))
-                (const (type !xs!integer) "1")
-                (zero-or-more (item-test)))
-               (declare-function
-                (const (type !xs!QName)
-                       ("http://www.w3.org/TestModules/test1" "ok" "test1"))
-                ()
-                (result-type (zero-or-more (item-test)))
-                (body (const (type !xs!string) "ok")))))
+            (write
+             '(lib-module
+               (module-decl
+                (const (type !xs!NCName) test1)
+                (const (type !xs!string) "http://www.w3.org/TestModules/test1"))
+               (prolog
+                (declare-global-var
+                 (var ("http://www.w3.org/TestModules/test1" "flag"))
+                 (const (type !xs!integer) "1")
+                 (zero-or-more (item-test)))
+                (declare-function
+                 (const (type !xs!QName)
+                        ("http://www.w3.org/TestModules/test1" "ok" "test1"))
+                 ()
+                 (result-type (zero-or-more (item-test)))
+                 (body (const (type !xs!string) "ok")))))
+             string-port))
 ;            '(lib-module
 ;              (module-decl
 ;               (const (type !xs!NCName) test1)
@@ -39,29 +40,58 @@
 ;                ()
 ;                (result-type (zero-or-more (item-test)))
 ;                (body (const (type !xs!string) "ok")))))
-            )
            ((equal? uri "http://www.w3.org/TestModules/test2")
-            '(lib-module
-              (module-decl
-               (const (type !xs!NCName) test2)
-               (const (type !xs!string) "http://www.w3.org/TestModules/test2"))
-              (prolog
-               (import-module
-                (const (type !xs!NCName) test1)
-                (const (type !xs!string) "http://www.w3.org/TestModules/test1"))
-               (declare-function
-                (const
-                 (type !xs!QName)
-                 ("http://www.w3.org/TestModules/test2" "ok" "test2"))
-                ()
-                (result-type (zero-or-more (item-test)))
-                (body (const (type !xs!string) "ok"))))))
+            (write
+             '(lib-module
+               (module-decl
+                (const (type !xs!NCName) test2)
+                (const (type !xs!string) "http://www.w3.org/TestModules/test2"))
+               (prolog
+                (import-module
+                 (const (type !xs!NCName) test1)
+                 (const (type !xs!string) "http://www.w3.org/TestModules/test1"))
+                (declare-function
+                 (const
+                  (type !xs!QName)
+                  ("http://www.w3.org/TestModules/test2" "ok" "test2"))
+                 ()
+                 (result-type (zero-or-more (item-test)))
+                 (body (const (type !xs!string) "ok")))))
+             string-port))
+           ((equal? uri "http://modis.ispras.ru/sedna/math")
+            (write
+             '(lib-module
+               (module-decl
+                (const (type !xs!NCName) test2)
+                (const (type !xs!string) "http://modis.ispras.ru/sedna/math"))
+               (prolog
+                (declare-function
+                 (const
+                  (type !xs!QName)
+                  ("http://www.w3.org/TestModules/test2" "ok" "test2"))
+                 ()
+                 (result-type (zero-or-more (item-test)))
+                 (body (const (type !xs!string) "ok")))))
+             string-port)
+            (write
+             '(lib-module
+               (module-decl
+                (const (type !xs!NCName) test2)
+                (const (type !xs!string) "http://modis.ispras.ru/sedna/math"))
+               (prolog
+                (declare-function
+                 (const
+                  (type !xs!QName)
+                  ("http://www.w3.org/TestModules/test2" "ok2" "test2"))
+                 ()
+                 (result-type (zero-or-more (item-test)))
+                 (body (const (type !xs!string) "ok")))))
+             string-port))
            (else
             (display "get-module stub")
             (newline)
             #f))
-         string-port)
-        (get-output-string string-port)))))
+         (get-output-string string-port)))))
 (define-macro (cl:signal-input-error code . msg)
   `(begin
      (display "Input error ")

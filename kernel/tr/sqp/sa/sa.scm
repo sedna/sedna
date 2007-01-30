@@ -5181,22 +5181,35 @@
 ;       string-port)
 ;      (get-output-string string-port))))
 
-; Returns (list uri module vars funcs)
-; ATTENTION: open-input-string is a non-R5RS function. However, it is
-; supported in Chichen and in PLT, see
-; http://www.ugcs.caltech.edu/manuals/lang/chicken-1.63/chicken_32.html
-(define (sa:obtain-single-module uri)
-  (let ((module-str (get-module uri)))
-    (cond
-      ((and module-str
-            (read (open-input-string module-str)))
-       => (lambda (module)
-            (let ((prolog (sa:op-args
-                           (cadr (sa:op-args module))  ; yields `(prolog ...)
-                           )))
-              (list
-               uri
-               module
+; If two lists contain a duplicate member, returns that duplicate member
+; Otherwise, returns #f
+(define (sa:equal-duplicates? lhs rhs)
+  (cond
+    ((null? lhs) #f)
+    ((member (car lhs) rhs) (car lhs))
+    (else
+     (sa:equal-duplicates? (cdr lhs) rhs))))
+
+; Returns: (list uri module vars funcs)
+; or #f in case of an error
+(define (sa:unite-single-namespace-modules uri module-lst)
+  (if
+   (null? module-lst)
+   ; Dummy result
+   (list ""
+         '(lib-module (module-decl) (prolog))
+         '() '())
+   (let ((module (car module-lst))
+         (quad (sa:unite-single-namespace-modules uri (cdr module-lst))))
+     (and
+      quad
+      (let ((tail-module (cadr quad))
+            (tail-vars (caddr quad))
+            (tail-funcs (cadddr quad))
+            (prolog (sa:op-args
+                     (cadr (sa:op-args module))  ; yields `(prolog ...)
+                     )))
+        (let ((vars
                (map
                 (lambda (expr)
                   (let ((var-wrapped (car (sa:op-args expr)))
@@ -5208,7 +5221,8 @@
                 (filter
                  (lambda (x)
                    (and (pair? x) (eq? (sa:op-name x) 'declare-global-var)))
-                 prolog))
+                 prolog)))
+              (funcs
                (map
                 (lambda (expr)
                   (let ((fun-qname (car (sa:op-args expr)))
@@ -5230,9 +5244,60 @@
                 (filter
                  (lambda (x)
                    (and (pair? x) (eq? (sa:op-name x) 'declare-function)))
-                 prolog))))))
-      (else
-       (cl:signal-user-error XQST0059 uri)))))
+                 prolog))))
+          (cond
+            ((sa:equal-duplicates? (map car vars) (map car tail-vars))
+             => (lambda (var-name)
+                  (cl:signal-user-error
+                   XQST0049 
+                   (string-append (car var-name) ":" (cadr var-name)))))
+            ((sa:equal-duplicates?
+              (map  ; function namespace URI, local name and arity
+               (lambda (x) (list (car x) (cadr x) (caddr x)))
+               funcs)
+              (map
+               (lambda (x) (list (car x) (cadr x) (caddr x)))
+               tail-funcs))
+             => (lambda (triple)
+                  (cl:signal-user-error
+                   XQST0034
+                   (string-append
+                    (car triple) ":" (cadr triple)
+                    ", arity = " (number->string (caddr triple))))))
+            (else
+             (list
+              uri
+              (list
+               (sa:op-name module)  ; == 'lib-module
+               (car (sa:op-args module))  ; '(module-decl ...)
+               (cons
+                (sa:op-name  ; == 'prolog
+                 (cadr (sa:op-args module)))
+                (append prolog
+                        (sa:op-args
+                         (cadr (sa:op-args tail-module))))))
+              (append vars tail-vars)
+              (append funcs tail-funcs))))))))))
+
+; Returns (list uri module vars funcs)
+; ATTENTION: open-input-string is a non-R5RS function. However, it is
+; supported in Chichen and in PLT, see
+; http://www.ugcs.caltech.edu/manuals/lang/chicken-1.63/chicken_32.html
+(define (sa:obtain-single-module uri)
+  (let ((module-str (get-module uri)))
+    (and
+     (or module-str
+         (cl:signal-user-error XQST0059 uri))
+     (let ((in (open-input-string module-str)))
+       (let loop ((s-lst '()))
+         (let ((module (read in)))
+           (cond
+             ((eof-object? module)
+              (sa:unite-single-namespace-modules uri (reverse s-lst)))
+             (module
+              (loop (cons module s-lst)))
+             (else
+              (cl:signal-user-error XQST0059 uri)))))))))
     
 ;-------------------------------------------------
 ; Working with multiple modules
