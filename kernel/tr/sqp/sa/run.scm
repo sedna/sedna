@@ -376,3 +376,16 @@
     (declare-default-element-namespace (const (type !xs!string) "http://a.foo")))
    (query-body (cast (const (type !xs!string) "name") (type (one !xs!QName))))))
 
+(go
+ '(query
+   (prolog)
+   (query-body
+    (eq@
+     (cast
+      (fun-call
+       (const (type !xs!QName) ("xs" "QName"))
+       (const (type !xs!string) "local-name"))
+      (type (one !xs!QName)))
+     (fun-call
+      (const (type !xs!QName) ("xs" "QName"))
+      (const (type !xs!string) "local-name"))))))

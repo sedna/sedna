@@ -3423,24 +3423,33 @@
       FORG0001
       "Attempting to cast empty string as xs:QName"))
     (else
-     (let* ((name-pair (sa:split-name
-                        (cadr (sa:op-args  ; const value
-                               (car (sa:op-args expr))  ; lr for constant
-                               ))))
-            (triple
-             (if
-              (not (car name-pair))
-              (list default-ns (cdr name-pair) "")
-              (let ((qname
-                     (sa:resolve-qname
-                      `(const (type !xs!QName)
-                              ,(list (car name-pair) (cdr name-pair)))
-                      ns-binding default-ns)))
-                (and qname (caddr qname))))))
-       (and
-        triple
-        (cons `(const (type !xs!QName) ,triple)
-              sa:type-atomic))))))
+     (let ((const-type
+            (car (sa:op-args (car (sa:op-args expr)))))
+           (const-value
+            (cadr (sa:op-args (car (sa:op-args expr))))))
+       (let ((triple
+              (if
+               (and
+                (equal? const-type '(type !xs!QName))
+                (pair? const-value)
+                (= (length const-value) 3))
+               const-value
+               (let ((name-pair (if (pair? const-value)
+                                    const-value
+                                    (sa:split-name const-value))))
+                 (if
+                  (not (car name-pair))
+                  (list default-ns (cdr name-pair) "")
+                  (let ((qname
+                         (sa:resolve-qname
+                          `(const (type !xs!QName)
+                                  ,(list (car name-pair) (cdr name-pair)))
+                          ns-binding default-ns)))
+                    (and qname (caddr qname))))))))
+         (and
+          triple
+          (cons `(const (type !xs!QName) ,triple)
+                sa:type-atomic)))))))
 
 ; return-type-lambda ::= (lambda (args) ...)
 ; args - rewritten arguments of the operation
@@ -3492,12 +3501,12 @@
              (and
               (or
                (not
-                (and
-                 (pair? (car (sa:op-args expr)))
-                 (not
-                  (or
-                   (eq? (sa:op-name (car (sa:op-args expr))) 'const)
-                   (let ((after-analysis (caar args)))
+                (let ((after-analysis (caar args)))
+                  (and
+                   (pair? after-analysis)
+                   (not
+                    (or
+                     (eq? (sa:op-name after-analysis) 'const)
                      (and
                       (eq? (sa:op-name after-analysis) 'cast)
                       (equal?
@@ -3513,9 +3522,12 @@
                   (string-append
                    (symbol->string (sa:op-name expr))
                    " as xs:QName for non-constant expression"))))
-              (sa:cast-as-qname expr ns-binding
-                                (car default-ns)
-                                )))
+              (sa:cast-as-qname
+               (cons (sa:op-name expr) (map car args))
+               ; Was: expr
+               ns-binding
+               (car default-ns)
+               )))
             (else
               (cons (cons (sa:op-name expr)
                           (map car args))
