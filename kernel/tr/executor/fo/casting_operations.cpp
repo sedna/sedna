@@ -666,12 +666,12 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
             case xs_normalizedString  : 
        	    case xs_token             : sat = true; break;
             case xs_language          : sat = check_constraints_for_xs_language(&SV); break;
-       	    case xs_NMTOKEN           : sat = chech_constraints_for_xs_NMTOKEN(&SV);  break;
-       	    case xs_Name              : sat = chech_constraints_for_xs_Name(&SV);     break;
+       	    case xs_NMTOKEN           : sat = check_constraints_for_xs_NMTOKEN(&SV);  break;
+       	    case xs_Name              : sat = check_constraints_for_xs_Name(&SV);     break;
        	    case xs_NCName            : ///
        	    case xs_ID                : /// NCName, ID, IDREF, ENTITY have just the same lexical values space.
        	    case xs_IDREF             : ///
-       	    case xs_ENTITY            : sat = chech_constraints_for_xs_NCName(&SV);   break;
+       	    case xs_ENTITY            : sat = check_constraints_for_xs_NCName(&SV);   break;
             default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_within_a_branch");
 	    }
     }

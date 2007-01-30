@@ -15,7 +15,7 @@
 #include "tr/vmm/vmm.h"
 #include <vector>
 
-// FIXME: Possibley, we have memory leaks with sequence_type (for node_name_uri, node_name_local and possibly ncname)
+// FIXME: Possibly, we have memory leaks with sequence_type (for node_name_uri, node_name_local and possibly ncname)
 
 class sequence;
 class PPOpIn;

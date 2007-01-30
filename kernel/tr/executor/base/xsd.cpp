@@ -112,10 +112,18 @@ char *xs_QName_create(const char *uri,
                       void* (*alloc_func)(size_t),
                       dynamic_context *cxt)
 {
-    // FIXME: check lexical representation
 	xml_ns* ns = NULL;
 	if (uri && *uri && prefix && *prefix)
+    {
+        if (!check_constraints_for_xs_NCName(prefix))
+            throw USER_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+
 		ns = cxt->st_cxt->get_ns_pair(prefix, uri);
+    }
+
+    if (!check_constraints_for_xs_NCName(local))
+        throw USER_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+
     return xs_QName_create(ns, local, alloc_func);
 }
 
@@ -140,13 +148,13 @@ char *xs_QName_create(const char* uri,
     else 
         local = prefix_and_local;
 
-    if (!chech_constraints_for_xs_NCName(local))
+    if (!check_constraints_for_xs_NCName(local))
         throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
     if (*uri) // uri is present
     {
 		if (pos)
-			if (!chech_constraints_for_xs_NCName(prefix_and_local, pos))
+			if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
 				throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
         xmlns = cxt->st_cxt->get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
@@ -184,11 +192,11 @@ char *xs_QName_create(const char* prefix_and_local,
         src_prefix = prefix_and_local;
         src_local  = prefix_and_local + pos + 1;
 
-        if (!chech_constraints_for_xs_NCName(src_prefix, pos))
+        if (!check_constraints_for_xs_NCName(src_prefix, pos))
             throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
     }
 
-    if (!chech_constraints_for_xs_NCName(src_local))
+    if (!check_constraints_for_xs_NCName(src_local))
         throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
 
     std::vector<xml_ns*> xmlns;
