@@ -141,7 +141,7 @@
                        ( (eq? (caaddr expr) 'load-module)
                                                 (list
                                                  (sc:q2 user "LOAD-MODULE" "User doesn't have privilege LOAD-MODULE.")
-                                                 (sc:q17 user (cadr(cdaddr expr)) `module)
+                                   ;              (sc:q17 user (car(cdaddr expr)) `module)
                                                  expr)
                                                 )
                        ( (eq? (caaddr expr) 'load-or-replace-module) 

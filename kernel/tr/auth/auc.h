@@ -33,6 +33,8 @@ void getSednaAuthMetadataPath(char* path);
 
 void auth_for_query(counted_ptr<db_entity> dbe);
 
+void auth_for_load_module(const char* module_name);
+
 void clear_authmap();
 
 void clear_current_statement_authmap();
