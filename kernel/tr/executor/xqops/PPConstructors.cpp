@@ -325,8 +325,8 @@ void PPElementConstructor::next  (tuple &t)
 				delete prefix;
 			}
 		}
-		if (!chech_constraints_for_xs_NCName(name)||
-			(ns!=NULL && ns->prefix!=NULL &&!chech_constraints_for_xs_NCName(ns->prefix)))
+		if (!check_constraints_for_xs_NCName(name)||
+			(ns!=NULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
 			throw USER_EXCEPTION(XQDY0074);
 		//Element insertion
 		xptr new_element;
@@ -687,8 +687,8 @@ void PPAttributeConstructor::next  (tuple &t)
 				delete prefix;			
 			}
 		}
-		if (!chech_constraints_for_xs_NCName(name)||
-			(ns!=NULL &&  ns->prefix!=NULL && !chech_constraints_for_xs_NCName(ns->prefix)))
+		if (!check_constraints_for_xs_NCName(name)||
+			(ns!=NULL &&  ns->prefix!=NULL && !check_constraints_for_xs_NCName(ns->prefix)))
 			throw USER_EXCEPTION(XQDY0074);
 		const char* value=at_value;
 		tuple_cell res;
@@ -1120,7 +1120,7 @@ void PPPIConstructor::next  (tuple &t)
 				throw USER_EXCEPTION(XQDY0041);
 			}
 		}
-		if (!chech_constraints_for_xs_NCName(name))
+		if (!check_constraints_for_xs_NCName(name))
 			throw USER_EXCEPTION(XQDY0041);
 		if(charset_handler->matches(name, "^(?i:xml)$"))
 			throw USER_EXCEPTION(XQDY0064);
@@ -1144,7 +1144,7 @@ void PPPIConstructor::next  (tuple &t)
 		while (wp_k<wp_s)
 		{
 			char s=value[0];
-			if (s!=32 && s!=9 && s!=10 && s!=13 )break;
+			if (s!=32 && s!=9 && s!=10 && s!=13) break;
 			++value;--size;
 
 		}

@@ -31,21 +31,21 @@
 ////////////////////////////////////////////////////////////////
 /// Check constraints on tuple_cell
 ////////////////////////////////////////////////////////////////
-bool chech_constraints_for_xs_NMTOKEN (const tuple_cell *tc);
-bool chech_constraints_for_xs_Name    (const tuple_cell *tc);
-bool chech_constraints_for_xs_NCName  (const tuple_cell *tc);
+bool check_constraints_for_xs_NMTOKEN (const tuple_cell *tc);
+bool check_constraints_for_xs_Name    (const tuple_cell *tc);
+bool check_constraints_for_xs_NCName  (const tuple_cell *tc);
 
 ////////////////////////////////////////////////////////////////
 /// Check constraints on char*
 /// -- char* must point to zero ended C-string contained
 ///    possibly non-normalized value.
 ////////////////////////////////////////////////////////////////
-bool        chech_constraints_for_xs_NMTOKEN (const char* s);
-bool        chech_constraints_for_xs_Name    (const char* s);
-bool        chech_constraints_for_xs_NCName  (const char* s, int n);
-inline bool chech_constraints_for_xs_NCName  (const char* s)
+bool        check_constraints_for_xs_NMTOKEN (const char* s);
+bool        check_constraints_for_xs_Name    (const char* s);
+bool        check_constraints_for_xs_NCName  (const char* s, int n);
+inline bool check_constraints_for_xs_NCName  (const char* s)
 {
-    return chech_constraints_for_xs_NCName(s, strlen(s));
+    return check_constraints_for_xs_NCName(s, strlen(s));
 }
 
 

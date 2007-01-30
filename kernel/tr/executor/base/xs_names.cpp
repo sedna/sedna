@@ -325,21 +325,21 @@ static inline void check_constraints_for_name_type(Iterator &start, const Iterat
 ////////////////////////////////////////////////////////////////
 
 
-bool chech_constraints_for_xs_NMTOKEN(const tuple_cell *tc)
+bool check_constraints_for_xs_NMTOKEN(const tuple_cell *tc)
 {
     bool res = false;
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(check_constraints_for_name_type, tc, &res, false, true);
     return res;
 }
 
-bool chech_constraints_for_xs_Name(const tuple_cell *tc)
+bool check_constraints_for_xs_Name(const tuple_cell *tc)
 {
     bool res = false;
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(check_constraints_for_name_type, tc, &res, true, true);
     return res;
 }
 
-bool chech_constraints_for_xs_NCName(const tuple_cell *tc)
+bool check_constraints_for_xs_NCName(const tuple_cell *tc)
 {
     bool res = false;
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_3p(check_constraints_for_name_type, tc, &res, true, false);
@@ -353,21 +353,21 @@ bool chech_constraints_for_xs_NCName(const tuple_cell *tc)
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
 
-bool chech_constraints_for_xs_NMTOKEN(const char* s)
+bool check_constraints_for_xs_NMTOKEN(const char* s)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + strlen(s), &res, false, true);
     return res;
 }
 
-bool chech_constraints_for_xs_Name(const char* s)
+bool check_constraints_for_xs_Name(const char* s)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + strlen(s), &res, true, true);
     return res;
 }
 
-bool chech_constraints_for_xs_NCName(const char* s, int n)
+bool check_constraints_for_xs_NCName(const char* s, int n)
 {
     bool res = false;
     check_constraints_for_name_type<const char*> (s, s + n, &res, true, false);
