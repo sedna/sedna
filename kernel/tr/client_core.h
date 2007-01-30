@@ -34,7 +34,7 @@ public:
     virtual se_ostream* get_se_ostream() = 0;
     virtual void get_session_parameters() = 0;
     virtual client_file get_file_from_client(const char* filename) = 0;
-    virtual void close_file_from_client(client_file cf) = 0;
+    virtual void close_file_from_client(client_file &inout_cf) = 0;
     virtual void respond_to_client(int instruction) = 0;
     virtual void begin_item() = 0;
     virtual void end_of_item(bool exist_next) = 0;

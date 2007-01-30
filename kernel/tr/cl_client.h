@@ -42,7 +42,7 @@ public:
   virtual QueryType get_query_type();
   virtual se_ostream* get_se_ostream();
   virtual client_file get_file_from_client(const char* filename);
-  virtual void close_file_from_client(client_file fs);
+  virtual void close_file_from_client(client_file &inout_fs);
   virtual void respond_to_client(int instruction);
   virtual void begin_item();
   virtual void end_of_item(bool exist_next);

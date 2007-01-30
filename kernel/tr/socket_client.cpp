@@ -267,10 +267,16 @@ client_file socket_client::get_file_from_client(const char* filename)
      return cf;
 }
 
-void socket_client::close_file_from_client(client_file cf)
+void socket_client::close_file_from_client(client_file &cf)
 {
-	if(fclose(cf.f) != 0) throw USER_EXCEPTION(SE3020);
-	if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
+    if (cf.f && (fclose(cf.f) != 0))
+    {
+        cf.f = NULL;
+        throw USER_EXCEPTION(SE3020);
+    }
+    cf.f = NULL;	
+    if(uIsFileExist(cf.name, __sys_call_error))
+        if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
 }
 
 void socket_client::respond_to_client(int instruction)
