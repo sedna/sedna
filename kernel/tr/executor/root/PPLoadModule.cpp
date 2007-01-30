@@ -15,6 +15,7 @@
 #include "micro.h"
 #include "metadata.h"
 #include "d_printf.h"
+#include "auc.h"
 #include <functional>
 #include <algorithm>
 
@@ -149,7 +150,8 @@ void PPLoadModule::execute()
 
 //d_printf2("inserting module: %s\n", module_pc_text.c_str());
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
-
+        
+        auth_for_load_module(module_name1.c_str());
     } catch (...) {
         client->close_file_from_client(cf);
         throw;
