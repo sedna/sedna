@@ -50,7 +50,7 @@ public:
 	// if write_cb == NULL, returs 1 if something matched
 	// if write_cb != NULL, parses and returns number of replaces
 	int parse(const char *str, int len, write_func_t write_cb, void *p, int pc = -1);
-	int StrMatcher::parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc);
+	int parse_tc(const tuple_cell *tc, write_func_t write_cb, void *p, int pc);
 	void flush(write_func_t write_cb, void *p);
 	
 	StrMatcher();
