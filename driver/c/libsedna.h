@@ -76,8 +76,7 @@ extern "C"
     
     enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY};
     
-    enum SEdebugType {SEDNA_QUERY_TRACE_INFO};
-    typedef void (*debug_handler_t)(enum SEdebugType, const char *msg_body);
+    typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);
     
     struct conn_bulk_load
     {

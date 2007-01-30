@@ -49,7 +49,8 @@ public:
     virtual void end_of_data(bool res)                             = 0;
     virtual void endline()                                         = 0;
     virtual void error(const char*)                                = 0;
-    virtual se_ostream* get_debug_ostream()                        = 0;
+    virtual se_ostream* get_debug_ostream() = 0;
+    virtual void set_debug_info_type(se_debug_info_type type)      = 0;
 	virtual se_ostream& operator<<(__int64 n);
 };
 
@@ -82,7 +83,8 @@ public:
     virtual void end_of_data(bool res)                                           { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
-    virtual se_ostream* get_debug_ostream()                                      { return new se_stdlib_ostream(std::cerr); }
+    virtual se_ostream* get_debug_ostream()               { return new se_stdlib_ostream(std::cerr); }
+    virtual void set_debug_info_type(se_debug_info_type type)      {};
 };
 
 class se_nullostream : public se_ostream
@@ -113,7 +115,8 @@ public:
     virtual void end_of_data(bool res)                                     { ; }
     virtual void endline()                                                 { ; }
     virtual void error(const char* str)                                    { ; }
-    virtual se_ostream* get_debug_ostream()                                { return new se_nullostream(); }
+    virtual se_ostream* get_debug_ostream()         { return new se_nullostream(); }
+    virtual void set_debug_info_type(se_debug_info_type type)      {};
 };
 
 
@@ -124,6 +127,7 @@ class se_socketostream_base : public se_ostream
     	protocol_version _p_ver;
         msg_struct* _res_msg;
         int _instruction;
+        int _type_offset;
     
     public:
 
@@ -133,33 +137,33 @@ class se_socketostream_base : public se_ostream
 	{ 
 		int len = strlen(s);
         
-		if((_res_msg->length + len) > (SE_SOCKET_MSG_BUF_SIZE-5))
+		if((_res_msg->length + len) > (SE_SOCKET_MSG_BUF_SIZE-5-_type_offset))
 	    {
 	    	flush();	
-	    	int celoe = len/(SE_SOCKET_MSG_BUF_SIZE-5);
+	    	int celoe = len/(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 	    	int ost;
-	    	if(celoe==0) ost = len; else ost = len%(SE_SOCKET_MSG_BUF_SIZE-5);
+	    	if(celoe==0) ost = len; else ost = len%(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 	    	
 	    	for (int i=0;i<celoe;i++)
 	    	{
 	    		_res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
 	            // the body contains string format - 1 byte, string length - 4 bytes and a string
                 // construct the buf for body.	   
-                int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, _res_msg->body+1);
-                memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
+                int2net_int(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset, _res_msg->body+1+_type_offset);
+                memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*i, SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 
                 flush();
         	} //end for
 
-         	_res_msg->length = ost+5;
-         	int2net_int(ost, _res_msg->body+1);
-         	memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
+         	_res_msg->length = ost+5+_type_offset;
+         	int2net_int(ost, _res_msg->body+1+_type_offset);
+         	memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*celoe, ost);
          }
          else
          {
  	         memcpy(_res_msg->body+_res_msg->length, s, strlen(s));
          	 _res_msg->length += strlen(s);
-             int2net_int(_res_msg->length-5, _res_msg->body+1);
+             int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
          }
    	     return *this; 
 	}
@@ -175,47 +179,47 @@ class se_socketostream_base : public se_ostream
                                               
     virtual se_ostream& operator<<(short n)	{ flush();
     										  u_ltoa((long)n,_res_msg->body+_res_msg->length,10); 
-                                              _res_msg->length += strlen(_res_msg->body+5);
+                                              _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                               return *this; }
                                               
     virtual se_ostream& operator<<(unsigned short n){flush();
     												u_ultoa((unsigned long)n,_res_msg->body+_res_msg->length,10);
-                                                    _res_msg->length += strlen(_res_msg->body+5);
+                                                    _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                     return *this; }
                                                     
     virtual se_ostream& operator<<(int n)		{ flush();	
     											  u_ltoa((long)n,_res_msg->body+_res_msg->length,10);
-                                                  _res_msg->length += strlen(_res_msg->body+5);
+                                                  _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                   return *this; }
                                                    
     virtual se_ostream& operator<<(unsigned int n)	{ flush();
                                                       u_ultoa((long)n,_res_msg->body+_res_msg->length,10); 
-                                                      _res_msg->length += strlen(_res_msg->body+5);
+                                                      _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                       return *this; }
                                                       
     virtual se_ostream& operator<<(long n)		{ flush();
                                                   u_ltoa((long)n,_res_msg->body+_res_msg->length,10); 
-                                                  _res_msg->length += strlen(_res_msg->body+5);
+                                                  _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                   return *this; }
                                                     
     virtual se_ostream& operator<<(unsigned long n)	{flush();
     												 u_ultoa((long)n,_res_msg->body+_res_msg->length,10);
-                                                     _res_msg->length += strlen(_res_msg->body+5);
+                                                     _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                      return *this; }
                                                      
     virtual se_ostream& operator<<(float n)		{ flush();
     											  u_gcvt((double)n,10,_res_msg->body+_res_msg->length);
-                                                  _res_msg->length += strlen(_res_msg->body+5);
+                                                  _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                   return *this;  }
                                                   
     virtual se_ostream& operator<<(double n)		{ flush();
     												  u_gcvt(n,10,_res_msg->body+_res_msg->length);
-                                                      _res_msg->length += strlen(_res_msg->body+5);
+                                                      _res_msg->length += strlen(_res_msg->body+5+_type_offset);
                                                       return *this;}
                                                       
 	virtual se_ostream& operator<<(long double n)	{ flush();
 													  u_gcvt((long double)n,10,_res_msg->body+_res_msg->length);
-                                                      _res_msg->length += strlen(_res_msg->body+5);
+                                                      _res_msg->length += strlen(_res_msg->body+5+_type_offset);
 	                                                  return *this; }
 	                                                  
     virtual se_ostream& operator<<(void * n)		{ flush();
@@ -230,47 +234,47 @@ class se_socketostream_base : public se_ostream
                                     		
     virtual se_ostream& write(const char *s, int n)		
 	{
-		if((_res_msg->length + n) > (SE_SOCKET_MSG_BUF_SIZE-5))
+		if((_res_msg->length + n) > (SE_SOCKET_MSG_BUF_SIZE-5-_type_offset))
 	    {
 	    	flush();	
-	    	int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-5);
+	    	int celoe = n/(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 	    	int ost;
-	    	if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-5);
+	    	if(celoe==0) ost = n; else ost = n%(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 			for (int i=0;i<celoe;i++)
 			{
 				_res_msg->length = SE_SOCKET_MSG_BUF_SIZE;
 				// the body contains string format - 1 byte, string length - 4 bytes and a string
 				// construct the buf for body.
-				int2net_int(SE_SOCKET_MSG_BUF_SIZE-5, _res_msg->body+1);
-				memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*i, SE_SOCKET_MSG_BUF_SIZE-5);
+				int2net_int(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset, _res_msg->body+1+_type_offset);
+				memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*i, SE_SOCKET_MSG_BUF_SIZE-5-_type_offset);
 				
-                flush();   //if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
+                flush();
 			} //end for
 
-         	_res_msg->length = ost+5;
+         	_res_msg->length = ost+5+_type_offset;
          	int2net_int(ost, _res_msg->body+1);
-         	memcpy(_res_msg->body+5, s+(SE_SOCKET_MSG_BUF_SIZE-5)*celoe, ost);
+         	memcpy(_res_msg->body+5+_type_offset, s+(SE_SOCKET_MSG_BUF_SIZE-5-_type_offset)*celoe, ost);
          
          }
          else
          {
  	         memcpy(_res_msg->body+_res_msg->length, s, n);
          	 _res_msg->length += n;
-             int2net_int(_res_msg->length-5, _res_msg->body+1);
+             int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
          }
    	     return *this; 
 	}
     
     virtual se_ostream& flush()				
     {
-        if(_res_msg->length > 5)
+        if(_res_msg->length > 5+_type_offset)
         {
             _res_msg->instruction = _instruction; 
-            int2net_int(_res_msg->length-5, _res_msg->body+1);
+            int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
             
             if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
             
-            _res_msg->length = 5;
+            _res_msg->length = 5+_type_offset;
         }
        return *this; 
     }
@@ -285,9 +289,9 @@ class se_socketostream_base : public se_ostream
     {
         flush();
         _res_msg->instruction = se_ErrorResponse; //ErrorResponse
-        strcpy(_res_msg->body+5, str);
-        int2net_int(strlen(str), _res_msg->body+1);      
-        _res_msg->length = strlen(str)+5;
+        memcpy(_res_msg->body+5+_type_offset, str, strlen(str));
+        int2net_int(strlen(str), _res_msg->body+1+_type_offset);      
+        _res_msg->length = strlen(str)+5+_type_offset;
         if(sp_send_msg(_out_socket, _res_msg)!=0)
             throw USER_EXCEPTION(SE3006);
         
@@ -295,7 +299,7 @@ class se_socketostream_base : public se_ostream
     }
     virtual void end_of_data(bool res) = 0;
     virtual se_ostream* get_debug_ostream() = 0;
-    
+    virtual void set_debug_info_type(se_debug_info_type type) = 0;
 };
 
 class se_socketostream : public se_socketostream_base
@@ -312,6 +316,7 @@ public:
        _p_ver = p_ver;
        _res_msg = &res_msg;
        _instruction = se_ItemPart;
+       _type_offset = 0;
             
     	_res_msg->body[0] = 0;           // in this version string format is always 0
        	_res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
@@ -325,9 +330,10 @@ public:
         _res_msg->length = 0;
         if(sp_send_msg(_out_socket, _res_msg)!=0)
             throw USER_EXCEPTION(SE3006);
-        _res_msg->length = 5;
+        _res_msg->length = 5+_type_offset; ;
     }
     virtual se_ostream* get_debug_ostream();
+    virtual void set_debug_info_type(se_debug_info_type type) {};
 };
 
 class se_debug_socketostream : public se_socketostream_base
@@ -335,26 +341,37 @@ class se_debug_socketostream : public se_socketostream_base
     friend class se_socketostream;
     
     protected:
+    msg_struct debug_msg;
+        
    	se_debug_socketostream(se_socketostream& sostream) 
    	{  
         _out_socket = sostream._out_socket;
         _p_ver = sostream._p_ver;
-        _res_msg = sostream._res_msg;
+        _res_msg = &debug_msg;
         _instruction = se_DebugInfo;
-            
-      	_res_msg->body[0] = 0;           // in this version string format is always 0
-       	_res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
+        _type_offset = 4;
+        
+        se_debug_info_type type = se_QueryTrace; //if debug_info_type is not set, it is se_QueryTrace by default
+        
+        int2net_int(type, _res_msg->body);
+      	_res_msg->body[_type_offset] = 0;    // in this version string format is always 0
+       	_res_msg->length = 5+_type_offset;   // the body contains type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
   	}
   	virtual ~se_debug_socketostream() {}
     virtual void end_of_data(bool res)	
     {
         flush(); 
-        _res_msg->length = 5;
+        _res_msg->length = 5+_type_offset;
     }
         
     virtual se_ostream* get_debug_ostream()
     { 
         return NULL;
+    }
+    
+    virtual void set_debug_info_type(se_debug_info_type type)
+    {
+        int2net_int(type, _res_msg->body);
     }
 
 };

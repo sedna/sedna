@@ -700,6 +700,7 @@ There are following kinds of Sedna database objects:
 \item standalone document
 \item collection
 \item index
+\item module
 \end{itemize}
 
 There are two types of Sedna database users:
@@ -758,12 +759,13 @@ In order to bootstrap the database, a freshly created database always contains o
 
 When a database object is created, it is assigned an owner. The owner is the user that executed the creation statement. By default, only an owner and DBA user can do anything with the database object. In order to allow other users to use it, \emph{privileges} must be granted.
 
-There are several different privileges: 
+There are several possible privileges: 
 \begin{itemize}
 \item CREATE-USER
 \item CREATE-DOCUMENT
 \item CREATE-COLLECTION
 \item CREATE-INDEX
+\item LOAD-MODULE
 \item LOAD
 \item DROP
 \item QUERY
@@ -789,11 +791,13 @@ CREATE-COLLECTION    & DATABASE                       \\
 \hline
 CREATE-INDEX         & DOCUMENT,COLLECTION            \\
 \hline
+LOAD-MODULE          & DATABASE                       \\
+\hline
 RETRIEVE-METADATA    & DATABASE                       \\
 \hline
 LOAD                 & DATABASE, COLLECTION           \\
 \hline
-DROP                 & DOCUMENT, COLLECTION, INDEX    \\
+DROP                 & DOCUMENT, COLLECTION, INDEX, MODULE    \\
 \hline
 QUERY                & DOCUMENT, COLLECTION           \\
 \hline

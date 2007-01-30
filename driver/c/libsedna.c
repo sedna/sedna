@@ -273,7 +273,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
         {
             int length;
             int debug_type;
-            char debug_info[SE_SOCKET_MSG_BUF_SIZE];
+            char debug_info[SE_SOCKET_MSG_BUF_SIZE+1];
             if (conn->msg.length <= 0) 
             {
 		        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
@@ -720,8 +720,8 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         conn->msg.length = 2 + 5 + login_len + 5 + db_name_len;
 
         /* writing protocol version 2.0*/
-        conn->msg.body[0] = 2;
-        conn->msg.body[1] = 0;
+        conn->msg.body[0] = SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR;
+        conn->msg.body[1] = SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR;
 
         /* writing login */
         conn->msg.body[2] = 0;  /* format code*/

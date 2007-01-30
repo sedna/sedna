@@ -187,14 +187,22 @@ void PPFnTrace::next(tuple &t)
         if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
             
         tc = tuple_cell::make_sure_light_atomic(tc);
-        dostr << "\nTRACE: " << tc.get_str_mem() << "\n";
+        dostr.set_debug_info_type(se_QueryTrace);
+ //       dostr << "\nTRACE: " << tc.get_str_mem() << "\n";
+        dostr.flush();
     }
 
     value_child.op->next(t);
     if (t.is_eos()) 
         first_time = true;
     else 
-        print_tuple_indent(t, crm_out, xml, is_first, cxt);
+    {
+        dostr.set_debug_info_type(se_QueryTrace);
+//        dostr << "TRACE: item begin\n";
+        print_tuple_indent(t, dostr, xml, is_first, cxt);
+//        dostr << "\nTRACE: item end\n";
+        dostr.flush();
+    }
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)

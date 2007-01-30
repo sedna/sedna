@@ -18,7 +18,12 @@
 
 #define SE_SOCKET_MSG_BUF_SIZE                             10240
 
+#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           2
+#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR           0
+
 typedef int sp_int32;
+
+enum se_debug_info_type {se_QueryTrace};
 
 enum se_sp_instructions
 { se_ErrorResponse = 100,

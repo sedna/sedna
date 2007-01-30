@@ -4,6 +4,7 @@
  */
 
 #include "por2qep.h"
+#include "auc.h"
 
 const char *get_module(const char *module_uri)
 {
@@ -14,6 +15,13 @@ const char *get_module(const char *module_uri)
     bool tree_opened = false;
     bool mem_alloced = false;
 
+    db_entity *me = new db_entity;
+    me->name = new char[strlen(module_uri) + 1];
+    strcpy(me->name, module_uri);
+    me->type = dbe_module;
+
+// authorization check
+    auth_for_query(counted_ptr<db_entity>(me));
 
     std::string module_query_in_por = "(1 (PPFnString (1 (PPAxisChild text () (1 (PPAxisChild qname (\"\" \"module\" \"\") (1 (PPDocInCol (1 (PPConst \"$modules\" !xs!string)) (1 (PPConst \"";
     module_query_in_por += module_uri;
