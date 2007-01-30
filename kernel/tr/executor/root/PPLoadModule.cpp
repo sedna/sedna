@@ -20,13 +20,11 @@
 
 extern client_core *client;
 
-PPLoadModule::PPLoadModule(PPOpIn _filename_,
-                         PPOpIn _modulename_,
-                         bool _is_load_replace_, 
-                         se_ostream& _s_) : filename(_filename_),
-                                            modulename(_modulename_),
-                                            is_load_replace(_is_load_replace_),
-                                            s(_s_)
+PPLoadModule::PPLoadModule(
+    arr_of_PPOpIn   _filenames_,
+    bool            _is_load_replace_)
+    : filenames         (_filenames_)
+    , is_load_replace   (_is_load_replace_)
 {
 }
 
