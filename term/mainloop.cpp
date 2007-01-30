@@ -9,6 +9,7 @@
 #include "d_printf.h"
 #include "uhdd.h"
 #include "uutils.h"
+#include "sp_defs.h"
 
 #include "mainloop.h"
 #include "term_globals.h"
@@ -65,7 +66,7 @@ void TermCtrlHandler(int signo)
 }
 #endif
 
-void se_term_debug_handler(enum SEdebugType subtype, const char *msg)
+void se_term_debug_handler(se_debug_info_type subtype, const char *msg)
 {
     strcpy(debug_buf, msg);
 }
