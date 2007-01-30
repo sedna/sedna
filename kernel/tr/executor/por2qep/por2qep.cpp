@@ -3439,7 +3439,7 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
                               collection,
                               cxt3);
     }
-	else if (op == "PPLoadModule")
+    else if (op == "PPLoadModule")
     {
         if((qe->size() <= 2) || (qe->size() % 2)
             || qe->at(1).type != SCM_BOOL)
@@ -3468,15 +3468,10 @@ PPQueryEssence *make_pp_qe(scheme_list *qe, static_context *st_cxt, t_print prin
             cxt             = new dynamic_context(st_cxt, var_cxt_size);
             arr.push_back(make_pp_op(cxt, qe->at(i + 1).internal.list));
         }
-
-        int var_cxt_size2 = atoi(qe->at(3).internal.num);
-        dynamic_context *cxt2 = new dynamic_context(st_cxt, var_cxt_size2);
-
-        return new PPLoadModule(make_pp_op(cxt1, qe->at(2).internal.list),
-								make_pp_op(cxt2, qe->at(4).internal.list),
-								qe->at(5).internal.b,
-								s  // is passed to this function
-								);
+        return new PPLoadModule(
+            arr,
+            qe->at(1).internal.b
+            );
     }
     //{
     //    if ( qe->size() != 6
