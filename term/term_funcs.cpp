@@ -34,6 +34,20 @@ void term_output3(const char *buf, const void* arg1, const void* arg2)
     }
 }
 
+void term_debug_info_output()
+{
+    if (debug_output && (strlen(debug_buf)!=0))
+    {
+        fprintf(res_os, "\nTRACE: item begin ");
+        
+        fprintf(res_os, "%s", debug_buf);
+
+        fprintf(res_os, "\nTRACE: item end ");
+        
+        debug_buf[0]='\0';
+    }
+}
+
 int process_commandline_query()
 {
     SednaConnection conn;
@@ -93,7 +107,15 @@ int process_commandline_query()
     {
     	//iterate over the result sequece and retrieve the result data
     	int bytes_read;
+        
+        term_debug_info_output(); // output debug info if there was any
+
     	res = SEnext(&conn);
+        if((res == SEDNA_NEXT_ITEM_FAILED) || (res == SEDNA_ERROR))
+        {
+            fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+            return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        }
 
     	while((res != SEDNA_RESULT_END)&&(res != SEDNA_ERROR))
     	{
@@ -116,16 +138,27 @@ int process_commandline_query()
     	           return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
+            term_debug_info_output(); // output debug info if there was any
+
     		res = SEnext(&conn);
+            if((res == SEDNA_NEXT_ITEM_FAILED) || (res == SEDNA_ERROR))
+            {
+                fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
     	}
 		fprintf(res_os, "\n");
     }
     if(res == SEDNA_UPDATE_SUCCEEDED) 
     {
+        term_debug_info_output(); // output debug info if there was any
+
     	fprintf(res_os, "UPDATE is executed successfully\n");
     }
 	if(res == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
+        term_debug_info_output(); // output debug info if there was any
+
     	fprintf(res_os, "Bulk load succeeded\n");
     }
     

@@ -149,7 +149,8 @@ public:
 
 /// type of the entity that is stored in database
 enum db_entity_type { dbe_document,		// document
-                      dbe_collection	// collection
+                      dbe_collection,	// collection
+                      dbe_module        // module
                     };
 
 /// database entity

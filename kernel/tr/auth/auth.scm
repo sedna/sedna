@@ -42,7 +42,7 @@
                                                          "LOAD"
                                                          (caddr (cdaddr expr)) 
                                                          `collection 
-                                                         "User doesn't have privilege LOAD on the collection, or collection does not exist")                                                        
+                                                         "User doesn't have privilege LOAD on the collection, or collection does not exist.")                                                        
                                                    expr) )                               
                                )
                               ( (eq? (length (caddr expr)) 3)                   ;load doc                              
@@ -50,7 +50,7 @@
 ;                                                 (write 'loaddoc)
 ;                                                 (write (sc:q17 user (cadr(cdaddr expr)) `document))
                                                  (list
-                                                 (sc:q2 user "LOAD" "User doesn't have privilege LOAD")
+                                                 (sc:q2 user "LOAD" "User doesn't have privilege LOAD.")
                                                  
                                                  (sc:q17 user (cadr(cdaddr expr)) `document)
                                                  expr)
@@ -63,7 +63,7 @@
                                                  (begin
 ;                                                 (write 'create-doc-in-col)
                                                  (list
-                                                  (sc:q4 user "CREATE-DOCUMENT" (cadr(cdaddr expr)) `collection "User doesn't have privilege to create documents in the collection, or collection does not exists")                                                        
+                                                  (sc:q4 user "CREATE-DOCUMENT" (cadr(cdaddr expr)) `collection "User doesn't have privilege to create documents in the collection, or collection does not exists.")                                                        
                                                    expr) )                               
                                )
                            ( (eq? (length (caddr expr)) 2)
@@ -71,7 +71,7 @@
 ;                                                 (write 'create-document)
 ;                                                 (write (caddar(cdadr expr)))
                                                  (list
-                                                  (sc:q2 user "CREATE-DOCUMENT" "User doesn't have privilege CREATE-DOCUMENT")
+                                                  (sc:q2 user "CREATE-DOCUMENT" "User doesn't have privilege CREATE-DOCUMENT.")
                                                   (sc:q17 user (car(cdaddr expr)) `document)
                                                   expr
                                                   ))
@@ -80,7 +80,7 @@
                        ( (eq? (caaddr expr) 'create-collection) (begin
  ;                                                (write 'create-collection)
                                                  (list
-                                                  (sc:q2 user "CREATE-COLLECTION" "User doesn't have privilege CREATE-COLLECTION")
+                                                  (sc:q2 user "CREATE-COLLECTION" "User doesn't have privilege CREATE-COLLECTION.")
                                                   (sc:q17 user (car(cdaddr expr)) `collection)
                                                   expr
                                                   ) ))
@@ -90,13 +90,13 @@
                                                          "CREATE-INDEX" 
                                                          (cadr (find_doc_col_name (cadr (cdaddr expr)))) 
                                                          (car (find_doc_col_name (cadr (cdaddr expr)))) 
-                                                         "User doesn't have privilege CREATE-INDEX")
+                                                         "User doesn't have privilege CREATE-INDEX.")
                                                   (sc:q17 user (car(cdaddr expr)) `index)
                                                   expr
                                                   ) ))
                        ( (eq? (caaddr expr) 'create-trigger) (begin
                                                  (list
-                                                  (sc:q2 user "CREATE-TRIGGER" "User doesn't have privilege CREATE-TRIGGER")
+                                                  (sc:q2 user "CREATE-TRIGGER" "User doesn't have privilege CREATE-TRIGGER.")
                                                   (sc:q17 user (car(cdaddr expr)) `trigger)
                                                   expr
                                                   )))
@@ -111,7 +111,7 @@
                          (cond
                            ( (eq? (length (caddr expr)) 3)                           
                                                  (list
-                                                  (sc:q4 user "DROP" (cadr(cdaddr expr)) `collection "User doesn't have privilege to drop documents in the collection, or collection does not exist")                                                        
+                                                  (sc:q4 user "DROP" (cadr(cdaddr expr)) `collection "User doesn't have privilege to drop documents in the collection, or collection does not exist.")                                                        
                                                    expr)                               
                                )
                            ( (eq? (length (caddr expr)) 2)
@@ -132,17 +132,37 @@
                                                   expr
                                                   ) )) 
                        ( (eq? (caaddr expr) 'drop-index) (begin
- ;                                                (write 'drop-index)  
                                                  (list
                                                   (sc:q4 user "DROP" (car(cdaddr expr)) `index 
                                                          "User doesn't have privilege DROP on the index or the index does not exist.")              
                                                   (sc:q5 (car(cdaddr expr)) `index)
                                                   expr
                                                   ) ))
+                       ( (eq? (caaddr expr) 'load-module)
+                                                (list
+                                                 (sc:q2 user "LOAD-MODULE" "User doesn't have privilege LOAD-MODULE.")
+                                                 (sc:q17 user (cadr(cdaddr expr)) `module)
+                                                 expr)
+                                                )
+                       ( (eq? (caaddr expr) 'load-or-replace-module) 
+                                                (list
+                                                 (sc:q2 user "LOAD-MODULE" "User doesn't have privilege LOAD-MODULE")
+                                                 (sc:q4_1 user "DROP" (cadr(cdaddr expr)) `module
+                                                          "User doesn't have privilege DROP on the module.")
+                                                 (sc:q5 (cadr(cdaddr expr)) `module)
+                                                 expr)
+                                                  )
+                       ( (eq? (caaddr expr) 'drop-module) 
+                                                (list
+                                                 (sc:q4 user "DROP" (car(cdaddr expr)) `module 
+                                                         "User doesn't have privilege DROP on the module or the index does not exist.")
+                                                 (sc:q5 (car(cdaddr expr)) `module)
+                                                 expr)
+                                                  )
                        ( (eq? (caaddr expr) 'create-user) (begin
  ;                                                (write 'create-user)
                                                  (list
-                                                  (sc:q2 user "CREATE-USER" "User doesn't have privilege CREATE-USER")
+                                                  (sc:q2 user "CREATE-USER" "User doesn't have privilege CREATE-USER.")
                                                   (sc:q27 (caddar(cdaddr expr)))  ; newuser
                                                   (sc:q18 user                   ; user
                                                           (caddar(cdaddr expr))   ; newuser

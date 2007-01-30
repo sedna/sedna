@@ -307,6 +307,7 @@ db_entity_type make_db_entity_type(const char *str)
     string entity = string(str);
     if (entity == "collection") type = dbe_collection;
     else if (entity == "document") type = dbe_document;
+    else if (entity == "module") type = dbe_module;
     else throw USER_EXCEPTION2(SE1004, "150");
 
     return type;

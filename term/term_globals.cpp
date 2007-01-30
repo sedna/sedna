@@ -16,6 +16,7 @@ int term_version = 0;
 int show_time = 0;
 int socket_port = 0;
 int echo = 1;
+int debug_output = 1;
 
 char host[TERM_ARGSTRLEN+1];
 char db_name[TERM_ARGSTRLEN+1];
@@ -25,6 +26,7 @@ char login[TERM_ARGSTRLEN+1];
 char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
+char debug_buf[SE_SOCKET_MSG_BUF_SIZE+1];
 
 const size_t narg = 13;
 

@@ -21,6 +21,7 @@ extern int term_version;
 extern int show_time;
 extern int socket_port;
 extern int echo;
+extern int debug_output;
 
 extern char host[];
 extern char db_name[];
@@ -30,6 +31,8 @@ extern char login[];
 extern char password[];
 extern char output_file[];
 extern char echo_str[];
+extern char debug_buf[];
+
 extern FILE* res_os; //output stream of term results (result of the user's queres)
 
 extern const size_t narg;
