@@ -4,8 +4,8 @@
  */
 
 
-#include "sedna.h"
-#include "bit_set.h"
+#include "common/sedna.h"
+#include "tr/executor/base/bit_set.h"
 
 
 bit_set::bit_set (int _size_): size(_size_),

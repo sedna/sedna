@@ -11,8 +11,9 @@ PACKAGE_PATH= ru/ispras/sedna/driver
 JAVAC = javac -classpath $(CLASSPATH) -d output
 PACKAGE =ru.ispras.sedna.driver
 
-include $(PP)/Makefile.include
+VPATH = $(PP)/kernel/common/errdbg
 
+include $(PP)/Makefile.include
 
 ifeq ($(PLATFORM),WIN32)
 CLASSPATH= ".;output"

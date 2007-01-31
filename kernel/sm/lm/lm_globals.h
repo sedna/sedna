@@ -6,10 +6,10 @@
 #ifndef _LM_GLOBALS_H_
 #define _LM_GLOBALS_H_
 
-#include "sedna.h"
-#include "lock_table.h"
-#include "trans_table.h"
-#include "lm_base.h"
+#include "common/sedna.h"
+#include "sm/lm/lock_table.h"
+#include "sm/lm/trans_table.h"
+#include "common/lm_base.h"
 
 
 extern lock_table lm_table;

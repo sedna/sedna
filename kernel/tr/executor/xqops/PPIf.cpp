@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPIf.h"
-#include "PPUtils.h"
+#include "tr/executor/xqops/PPIf.h"
+#include "tr/executor/base/PPUtils.h"
 
 
 PPIf::PPIf(dynamic_context *_cxt_,

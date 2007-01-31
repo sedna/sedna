@@ -4,8 +4,8 @@
  */
 
 
-#include "d_printf.h"
-#include "uthread.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uthread.h"
 
 
 uResVal uCreateThread(

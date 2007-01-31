@@ -3,20 +3,20 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "base.h"
-#include "d_printf.h"
-#include "argtable.h"
-#include "version.h"
-#include "pping.h"
-#include "usecurity.h"
-#include "ipc_ops.h"
-#include "sp.h"
-#include "cdb_globals.h"
-#include "sm_functions.h"
-#include "ugc.h"
-#include "db_utils.h"
+#include "common/base.h"
+#include "common/errdbg/d_printf.h"
+#include "common/argtable.h"
+#include "common/version.h"
+#include "common/pping.h"
+#include "common/u/usecurity.h"
+#include "common/ipc_ops.h"
+#include "common/sp.h"
+#include "sm/cdb_globals.h"
+#include "sm/sm_functions.h"
+#include "common/ugc.h"
+#include "sm/db_utils.h"
 
 
 
@@ -29,7 +29,12 @@ int ddb_help2 = 0;
 int ddb_version;
 char db_name[1000];
 
-
+/// Should be removed
+char db_files_path[U_MAX_PATH + 1];
+int bufs_num = 0;
+int max_trs_num = 0;
+int phys_log_size = 0;
+int phys_log_ext_portion = 0;
 
 arg_rec ddb_argtable[] =
 {

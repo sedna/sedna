@@ -3,12 +3,12 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xsd.h"
-#include "schema.h"
-#include "PPBase.h"
-#include "xs_names.h"
+#include "tr/executor/base/xsd.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/xs_names.h"
 
 
 ///

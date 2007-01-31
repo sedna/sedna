@@ -4,9 +4,9 @@
  */
 
 
-#include "uprocess.h"
-#include "d_printf.h"
-#include "uutils.h"
+#include "common/u/uprocess.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uutils.h"
 
 #ifdef _WIN32
 #else

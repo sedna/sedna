@@ -4,17 +4,17 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPAbsPath.h"
-#include "PPUtils.h"
-#include "vmm.h"
-#include "utils.h"
-#include "node_utils.h"
-#include "locks.h"
-#include "crmutils.h"
-#include "merge.h"
-#include "metadata.h"
+#include "tr/executor/xqops/PPAbsPath.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/vmm/vmm.h"
+#include "common/utils.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/locks/locks.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/executor/base/merge.h"
+#include "tr/structures/metadata.h"
 
 /**
  * The goal of this operation is to provide efficient execution for absolute

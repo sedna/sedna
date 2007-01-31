@@ -2,28 +2,28 @@
  * File:  rcv_funcs.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-#include "sedna.h" 
+#include "common/sedna.h"
 #include <string>
 #include <set>
 
-#include "base.h"
-#include "xptr.h"
-#include "micro.h"
-#include "metadata.h"
-#include "indirection.h"
-#include "llmgr_core.h"
-#include "rcv_funcs.h"
-#include "tr_globals.h"
-#include "log.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "common/xptr.h"
+#include "tr/mo/micro.h"
+#include "tr/structures/metadata.h"
+#include "tr/structures/indirection.h"
+#include "sm/llmgr/llmgr_core.h"
+#include "tr/rcv/rcv_funcs.h"
+#include "tr/tr_globals.h"
+#include "tr/log/log.h"
+#include "common/errdbg/d_printf.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "FTindex.h"
-#include "ft_index_data.h"
+#include "tr/ft/FTindex.h"
+#include "tr/ft/ft_index_data.h"
 #endif
-#include "d_printf.h"
-#include "tr_debug.h"
-#include "XPath.h"
-#include "indexes.h"
+#include "common/errdbg/d_printf.h"
+#include "common/tr_debug.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/idx/indexes.h"
 
 using namespace std;
 

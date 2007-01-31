@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <list>
 #include <fstream>
 #include <stdio.h>
 
-#include "cl_client.h"
-#include "base.h"
-#include "ipc_ops.h"
-#include "tr_globals.h"
-#include "tr_functions.h"
-#include "uhdd.h"
-#include "version.h"
+#include "tr/cl_client.h"
+#include "common/base.h"
+#include "common/ipc_ops.h"
+#include "tr/tr_globals.h"
+#include "tr/tr_functions.h"
+#include "common/u/uhdd.h"
+#include "common/version.h"
 
 #define BATCH_DELIMITER "\\"
 

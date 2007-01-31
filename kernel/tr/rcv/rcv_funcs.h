@@ -6,10 +6,10 @@
 #ifndef _RCV_FUNCS
 #define _RCV_FUNCS
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <vector>
-#include "base.h"
-#include "xptr.h"
+#include "common/base.h"
+#include "common/xptr.h"
 
 void rollback_tr_by_logical_log(transaction_id _trid);
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn);

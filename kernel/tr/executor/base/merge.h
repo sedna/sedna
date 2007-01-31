@@ -7,10 +7,10 @@
 #ifndef _MERGE_H
 #define _MERGE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "node_utils.h"
+#include "common/xptr.h"
+#include "tr/crmutils/node_utils.h"
 
 int doc_order_merge_cmp(const void *e1, const void *e2);
 

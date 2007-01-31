@@ -7,11 +7,11 @@
 #ifndef _PPQUERYROOT_H
 #define _PPQUERYROOT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "exec_output.h"
-#include "crmutils.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/crmutils/crmutils.h"
 
 
 class PPQueryRoot : public PPQueryEssence

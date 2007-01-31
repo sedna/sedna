@@ -6,9 +6,9 @@
 #ifndef _SM_PLMGR_H
 #define _SM_PLMGR_H
 
-#include "sedna.h"
-#include "plmgr_core.h"
-#include "bm_core.h"
+#include "common/sedna.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "sm/bufmgr/bm_core.h"
 
 inline xptr sm_addr2xptr(const void *addr) 
 { 

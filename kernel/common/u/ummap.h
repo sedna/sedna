@@ -7,8 +7,8 @@
 #ifndef _UMMAP_H
 #define _UMMAP_H
 
-#include "uhdd.h"
-#include "usecurity.h"
+#include "common/u/uhdd.h"
+#include "common/u/usecurity.h"
 
 #ifdef _WIN32
 

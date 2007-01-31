@@ -7,11 +7,11 @@
 #ifndef _INDIRECTION_H
 #define _INDIRECTION_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "schema.h"
-#include "sm_vmm_data.h"
+#include "common/xptr.h"
+#include "tr/structures/schema.h"
+#include "common/sm_vmm_data.h"
 #define MIN_CLUSTER_SIZE 1
 #define MODE_NORMAL 0
 #define MODE_REDO 1

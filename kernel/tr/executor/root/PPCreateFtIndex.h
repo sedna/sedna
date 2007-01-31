@@ -6,11 +6,11 @@
 #ifndef _PPCREATEFTINDEX_H
 #define _PPCREATEFTINDEX_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPathOnSchema.h"
-#include "ft_index_data.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/ft/ft_index_data.h"
 
 ft_index_type str2index_type(const char *str);
 std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt);

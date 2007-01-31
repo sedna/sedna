@@ -4,8 +4,8 @@
  */
 
 
-#include "ummap.h"
-#include "d_printf.h"
+#include "common/u/ummap.h"
+#include "common/errdbg/d_printf.h"
 
 //#define RIGHTS		00660
 

@@ -51,7 +51,7 @@
 
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 char *get_xs_double_lexical_representation_Saxon(char* s, double value);
 char *get_xs_float_lexical_representation_Saxon(char* s, float value);

@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "btintern.h"
+#include "common/sedna.h"
+#include "tr/idx/btree/btintern.h"
 
 /* Search the object table inside single page for the given object via bisection algorithm, supposing the 
    objects are value-ordered. Returns true setting the obj_idx 

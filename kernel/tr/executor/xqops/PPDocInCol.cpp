@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDocInCol.h"
-#include "casting_operations.h"
-#include "metadata.h"
-#include "PPUtils.h"
+#include "tr/executor/xqops/PPDocInCol.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/structures/metadata.h"
+#include "tr/executor/base/PPUtils.h"
 
 PPDocInCol::PPDocInCol(dynamic_context *_cxt_, 
                        PPOpIn _col_name_op_,

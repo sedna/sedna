@@ -4,12 +4,12 @@
  */
 
 #include "libsedna.h"
-#include "error_codes.h"
-#include "usocket.h"
-#include "uhdd.h"
-#include "sp.h"
-#include "uutils.h"
-#include "d_printf.h"
+#include "common/errdbg/error_codes.h"
+#include "common/u/usocket.h"
+#include "common/u/uhdd.h"
+#include "common/sp.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
 
 /**********************************************************************************************************
 

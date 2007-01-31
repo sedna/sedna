@@ -3,11 +3,11 @@
  * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "u.h"
-#include "d_printf.h"
+#include "common/u/u.h"
+#include "common/errdbg/d_printf.h"
 
 #if !(defined(SE_NO_EVENT_LOG))
-#include "event_log.h"
+#include "common/errdbg/event_log.h"
 #endif
 
 

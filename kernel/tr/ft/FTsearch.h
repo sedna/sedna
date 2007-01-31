@@ -6,20 +6,20 @@
 #ifndef _FT_SEARCH_H
 #define _FT_SEARCH_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "dm_accessors.h"
-#include "strings.h"
-#include "e_string.h"
-#include "e_string_iterator.h"
-#include "ft_index_data.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/strings/strings.h"
+#include "tr/strings/e_string.h"
+#include "tr/strings/e_string_iterator.h"
+#include "tr/ft/ft_index_data.h"
 
 
 #include <ios>
 #include <sstream>
 #define USE_DTSEARCH_NAMESPACE
-#include <dtsfc.h>
-#include "crmutils.h" 
+#include "dtsearch/include/dtsfc.h"
+#include "tr/crmutils/crmutils.h"
 
 
 //TODO: remove this and do not include dtsearch files here 

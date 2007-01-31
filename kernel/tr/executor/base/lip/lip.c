@@ -31,7 +31,7 @@ granted for free re-distribution for non-commercial uses only.
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include "lip.h"
+#include "tr/executor/base/lip/lip.h"
 
 
 #ifndef KAR_DEPTH

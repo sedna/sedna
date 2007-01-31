@@ -6,8 +6,8 @@
 #ifndef __PPDEBUG_H
 #define __PPDEBUG_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPDebug : public PPIterator
 {

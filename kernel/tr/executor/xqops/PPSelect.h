@@ -6,8 +6,8 @@
 #ifndef __PPSELECT_H
 #define __PPSELECT_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 class PPSelect : public PPVarIterator

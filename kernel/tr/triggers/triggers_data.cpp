@@ -4,16 +4,16 @@
  */
 
 #include <string.h>
-#include "triggers_data.h"
-#include "triggers_utils.h"
-#include "exceptions.h"
-#include "node_utils.h"
-#include "vmm.h"
-#include "tuple.h"
-#include "log.h"
-#include "schema.h"
-#include "por2qep.h"
-#include "dm_accessors.h"
+#include "tr/triggers/triggers_data.h"
+#include "tr/triggers/triggers_utils.h"
+#include "common/errdbg/exceptions.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/log/log.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "tr/executor/base/dm_accessors.h"
 
 
 //using namespace std;

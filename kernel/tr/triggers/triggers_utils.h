@@ -7,11 +7,11 @@
 #ifndef __TRIGGER_UTILS_H
 #define __TRIGGER_UTILS_H
 
-#include "triggers_data.h"
-#include "por2qep.h"
-#include "lm_base.h"
-#include "PPBase.h"
-#include "PPXptr.h"
+#include "tr/triggers/triggers_data.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "common/lm_base.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPXptr.h"
 
 struct built_trigger_action{
     PPQueryEssence* action_qep_tree;

@@ -58,8 +58,8 @@
  *
  */
 
-#include "sedna.h"
-#include "memutils.h"
+#include "common/sedna.h"
+#include "common/mmgr/memutils.h"
 
 /* Define this to detail debug alloc information */
 /* #define HAVE_ALLOCINFO */

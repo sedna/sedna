@@ -3,7 +3,7 @@
 #include "se_exp_export.h"
 #include "se_exp_cl.h"
 #include "sprompt.h"
-#include "uutils.h"
+#include "common/u/uutils.h"
 
 
 void print_usage() {

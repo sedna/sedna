@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPFtIndexScan.h"
-#include "FTsearch.h"
+#include "tr/executor/xqops/PPFtIndexScan.h"
+#include "tr/ft/FTsearch.h"
 
 PPFtIndexScan::PPFtIndexScan(dynamic_context *_cxt_,
                 PPOpIn _idx_name_,

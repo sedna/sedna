@@ -3,7 +3,7 @@
  * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "d_printf.h"
+#include "common/errdbg/d_printf.h"
 
 
 int el_debug_printf(const char *s, ...)

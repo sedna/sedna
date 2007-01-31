@@ -7,8 +7,8 @@
 #ifndef _INTLIST_H
 #define _INTLIST_H
 
-#include "sedna.h"
-#include "IntHash.h"
+#include "common/sedna.h"
+#include "common/IntHash.h"
 
 
 // middle_significan_bits, right_zero_bits - parameters of HashTable

@@ -4,14 +4,14 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPFnDeepEqual.h"
-#include "comparison_operations.h"
-#include "casting_operations.h"
-#include "dm_accessors.h"
-#include "node_utils.h"
-#include "PPUtils.h"
+#include "tr/executor/xqops/PPFnDeepEqual.h"
+#include "tr/executor/fo/comparison_operations.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/PPUtils.h"
 
 PPFnDeepEqual::PPFnDeepEqual(dynamic_context *_cxt_,
                    PPOpIn _child1_,

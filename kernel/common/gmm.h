@@ -8,7 +8,7 @@
 #define _GMM_H
 
 
-#include "ummap.h"
+#include "common/u/ummap.h"
 
 
 void create_global_memory_mapping();

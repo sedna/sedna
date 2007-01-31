@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "usecurity.h"
+#include "common/u/usecurity.h"
 
 #ifdef _WIN32
 #include <Accctrl.h>
 #include <aclapi.h>
 #endif
 
-#include "d_printf.h"
-#include "uhdd.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uhdd.h"
 
 int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle, sys_call_error_fun fun)
 {

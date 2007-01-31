@@ -6,10 +6,10 @@
 #ifndef _NUMB_SCHEME_H
 #define _NUMB_SCHEME_H
 
-#include "sedna.h"
-#include "xptr.h"
-#include "exec_output.h"
-#include "nid.h"
+#include "common/sedna.h"
+#include "common/xptr.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/nid/nid.h"
 
 #define MAXINTERNALPREFIX 11
 extern int nid_block_count;

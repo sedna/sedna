@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "base.h"
-#include "TransCB.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "sm/lm/TransCB.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 /*****************************************************************************

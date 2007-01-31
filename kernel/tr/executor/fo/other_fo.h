@@ -6,8 +6,8 @@
 #ifndef _OTHER_FO_H
 #define _OTHER_FO_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 /*******************************************************************************

@@ -7,12 +7,12 @@
 #ifndef _PPCALCULATE_H
 #define _PPCALCULATE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "PPUtils.h"
-#include "boolean_operations.h"
-#include "op_map.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/boolean_operations.h"
+#include "tr/executor/fo/op_map.h"
 
 
 

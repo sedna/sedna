@@ -6,13 +6,13 @@
 #ifndef _CLIENT_CORE_H
 #define _CLIENT_CORE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "ipc_ops.h"
-#include "crmutils.h"
-#include "exec_output.h"
-#include "uhdd.h"
-#include "base.h"
+#include "common/ipc_ops.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/crmutils/exec_output.h"
+#include "common/u/uhdd.h"
+#include "common/base.h"
 
 struct client_file{
 	FILE* f;

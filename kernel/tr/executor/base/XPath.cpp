@@ -5,14 +5,14 @@
 
 #include <list>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "XPath.h"
-#include "pers_heap.h"
-#include "d_printf.h"
-#include "schema.h"
-#include "PPBase.h"
+#include "common/base.h"
+#include "tr/executor/base/XPath.h"
+#include "common/ph/pers_heap.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/base/PPBase.h"
 
 
 

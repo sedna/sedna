@@ -7,9 +7,9 @@
  */
 
 
-#include "sedna.h"
-#include "event_log.h"
-#include "uhdd.h"
+#include "common/sedna.h"
+#include "common/errdbg/event_log.h"
+#include "common/u/uhdd.h"
 
 
 /*

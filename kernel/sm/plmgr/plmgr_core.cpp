@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "xptr.h"
-#include "sm_vmm_data.h"
-#include "bm_rcv.h"
-#include "plmgr_core.h"
-#include "sm_globals.h"
-#include "usem.h"
-#include "d_printf.h"
-#include "tr_debug.h"
-#include "memutils.h"
-#include "trmgr.h"
+#include "common/xptr.h"
+#include "common/sm_vmm_data.h"
+#include "sm/bufmgr/bm_rcv.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "sm/sm_globals.h"
+#include "common/u/usem.h"
+#include "common/errdbg/d_printf.h"
+#include "common/tr_debug.h"
+#include "common/mmgr/memutils.h"
+#include "sm/trmgr.h"
 
 using namespace std;
 

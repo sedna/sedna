@@ -2768,7 +2768,7 @@ still hard...) then for `randomly` chosen p. Generating them,
 however, takes much more time. Notice that such p can easily be
 recognized using zroot and ztosymbas.
 
-#include "lip.h"
+#include "tr/executor/base/lip/lip.h"
 
 #define BOUND    (2)
 

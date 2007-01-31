@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "btstruct.h"
-#include "btpage.h"
-#include "btintern.h"
-#include "vmm.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btpage.h"
+#include "tr/idx/btree/btintern.h"
+#include "tr/vmm/vmm.h"
 
 /* All of the following search functions return boolean value indicating success or failure
    to find specified item. The updateable key_idx/obj_idx parameter in all functions is set

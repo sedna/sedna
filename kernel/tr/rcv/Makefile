@@ -1,34 +1,27 @@
 #
-# Makefile for rcv (GNU make)
+# Makefile for rcv
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: librcv$(LIB_EXT)
+all: rcv$(LIB_EXT)
 	@echo ===================================================================
-	@echo Rcv Library Has Been Done
+	@echo rcv DONE
 	@echo ===================================================================
 
+OBJS = rcv_funcs$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-RCV_LIB = librcv$(LIB_EXT)
-
 ################################################################################
-# LOCKS                                                                          #
+# rcv.lib                                                                      #
 ################################################################################
-$(RCV_LIB):    rcv_funcs$(OBJ_EXT)
+rcv$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
 
 ################################################################################
 # Clean                                                                        #
@@ -36,7 +29,3 @@ $(RCV_LIB):    rcv_funcs$(OBJ_EXT)
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

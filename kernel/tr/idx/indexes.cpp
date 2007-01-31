@@ -6,16 +6,16 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "indexes.h"
-#include "schema.h"
-#include "vmm.h"
-#include "node_utils.h"
-#include "XPathOnSchema.h"
-#include "casting_operations.h"
-#include "dm_accessors.h"
-#include "log.h"
+#include "tr/idx/indexes.h"
+#include "tr/structures/schema.h"
+#include "tr/vmm/vmm.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/log/log.h"
 
 using namespace std;
 

@@ -4,15 +4,15 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "sm_vmm_data.h"
-#include "pers_heap.h"
-#include "bm_functions.h"
-#include "bm_core.h"
-#include "blk_mngmt.h"
-#include "sm_globals.h"
-#include "d_printf.h"
+#include "common/sm_vmm_data.h"
+#include "common/ph/pers_heap.h"
+#include "sm/bufmgr/bm_functions.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/blk_mngmt.h"
+#include "sm/sm_globals.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

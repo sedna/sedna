@@ -7,10 +7,10 @@
 #define _TRIGGERS_DATA_H
 
 #include <vector>
-#include "usem.h"
-#include "xptr.h"
-#include "XPathOnSchema.h"
-#include "PPBase.h"
+#include "common/u/usem.h"
+#include "common/xptr.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/executor/base/PPBase.h"
 
 #define TRIGGER_MAX_CASCADE_LEVEL 5
 

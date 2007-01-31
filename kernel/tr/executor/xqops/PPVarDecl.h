@@ -7,8 +7,8 @@
 #ifndef __PPVARDECL_H
 #define __PPVARDECL_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 class PPVarDecl : public PPVarIterator

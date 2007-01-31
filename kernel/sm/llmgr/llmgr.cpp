@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 
-#include "llmgr_core.h"
-#include "sm_globals.h"
-#include "d_printf.h"
-#include "tr_debug.h"
-#include "base.h"
-#include "plmgr.h"
+#include "sm/llmgr/llmgr_core.h"
+#include "sm/sm_globals.h"
+#include "common/errdbg/d_printf.h"
+#include "common/tr_debug.h"
+#include "common/base.h"
+#include "sm/plmgr/plmgr.h"
 
 using namespace std;
 

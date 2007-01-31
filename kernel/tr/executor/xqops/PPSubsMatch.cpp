@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPSubsMatch.h"
-#include "e_string.h"
-#include "d_printf.h"
-#include "e_string_iterator.h"
+#include "tr/executor/xqops/PPSubsMatch.h"
+#include "tr/strings/e_string.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/strings/e_string_iterator.h"
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 /// PPSubstringMatch

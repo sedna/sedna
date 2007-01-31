@@ -4,8 +4,8 @@
  */
 
 #include <iostream>
-#include "sedna.h"
-#include "btintern.h"
+#include "common/sedna.h"
+#include "tr/idx/btree/btintern.h"
 #include <time.h>
 
 using namespace std;

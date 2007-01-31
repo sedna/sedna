@@ -6,10 +6,10 @@
 #ifndef _XPTRCHANELLEDMERGE_H
 #define _XPTRCHANELLEDMERGE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "numb_scheme.h"
-#include "pers_map.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/structures/pers_map.h"
 
 struct node_cell
 {

@@ -5,11 +5,11 @@
 
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "uhdd.h"
-#include "base.h"
-#include "usem.h"
+#include "common/u/uhdd.h"
+#include "common/base.h"
+#include "common/u/usem.h"
 
 using namespace std;
 

@@ -4,12 +4,12 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "e_string.h"
-#include "PPBase.h"
-#include "vmm.h"
-#include "pstr_long.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/vmm/vmm.h"
+#include "tr/pstr/pstr_long.h"
 
 
 

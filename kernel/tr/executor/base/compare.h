@@ -7,8 +7,8 @@
 #define _COMPARE_H
 
 #include <list>
-#include "sedna.h"
-#include "tuple.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
 
 
 typedef int (*tuple_cell_compare_fun)(const tuple_cell&, const tuple_cell&);

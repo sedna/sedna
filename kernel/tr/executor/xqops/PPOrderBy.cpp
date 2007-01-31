@@ -4,8 +4,8 @@
  */
 
 #include <iostream>
-#include "sedna.h"
-#include "PPOrderBy.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPOrderBy.h"
 
 using namespace std;
 

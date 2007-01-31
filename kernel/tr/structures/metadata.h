@@ -9,12 +9,12 @@
 
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "schema.h"
-#include "usem.h"
-#include "pers_map.h"
+#include "common/xptr.h"
+#include "tr/structures/schema.h"
+#include "common/u/usem.h"
+#include "tr/structures/pers_map.h"
 
 #define METADATA_NAME_SIZE			256
 //#define NOSEM 

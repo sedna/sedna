@@ -7,8 +7,8 @@
 #ifndef _SM_VMM_DATA_H
 #define _SM_VMM_DATA_H
 
-#include "sedna.h"
-#include "xptr.h"
+#include "common/sedna.h"
+#include "common/xptr.h"
 
 #define BLOCK_PARTS           16
 #define BLOCK_PART_SIZE (PAGE_SIZE/BLOCK_PARTS)

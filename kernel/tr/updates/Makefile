@@ -1,38 +1,28 @@
 #
-# Makefile for updates (GNU make)
+# Makefile for updates
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: libupdates$(LIB_EXT) 
+all: updates$(LIB_EXT)
 	@echo ===================================================================
-	@echo UPDATES DONE
+	@echo updates DONE
 	@echo ===================================================================
 
+OBJS = deletions$(OBJ_EXT) insertions$(OBJ_EXT) updates$(OBJ_EXT) \
+       replace$(OBJ_EXT) other_updates$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-UPDATES_LIB = libupdates$(LIB_EXT)
-
 ################################################################################
-# UPDATES                                                                          #
+# updates.lib                                                                  #
 ################################################################################
-$(UPDATES_LIB): updates$(OBJ_EXT)		\
-                insertions$(OBJ_EXT)	\
-                deletions$(OBJ_EXT)		\
-                replace$(OBJ_EXT)		\
-                other_updates$(OBJ_EXT)
+updates$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
 
 ################################################################################
 # Clean                                                                        #
@@ -40,7 +30,3 @@ $(UPDATES_LIB): updates$(OBJ_EXT)		\
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(UPDATES_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

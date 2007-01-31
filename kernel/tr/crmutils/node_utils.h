@@ -10,12 +10,12 @@
 #include <vector>
 #include <set>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "nodes.h"
-#include "vmm.h"
-#include "schema.h"
+#include "common/xptr.h"
+#include "tr/structures/nodes.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/schema.h"
 
 class dynamic_context;
 
@@ -185,20 +185,8 @@ inline xptr getAncestorIndirectionByScheme_XPTR (xptr node, schema_node * scm_no
 
 }
 /* returns the size of the descriptor structure in the curent node*/
-shft inline  size_of_node(node_blk_hdr* block)
-{
-	t_item type=GETTYPE(block->snode);
-	switch(type)
-	{
-	case element:return (shft)sizeof(e_dsc);
-	case document: case virtual_root: return (shft)sizeof(d_dsc);
-	case attribute:return (shft)sizeof(a_dsc);
-	case text: case comment:return (shft)sizeof(t_dsc);
-	case xml_namespace:return (shft)sizeof(ns_dsc);
-	case pr_ins:return (shft)sizeof(pi_dsc);
-	}
-	return (shft)sizeof(n_dsc);
-}
+shft  size_of_node(node_blk_hdr* block);
+
 inline xptr removeIndirection(xptr indir)
 {
 	if (indir!=XNULL)

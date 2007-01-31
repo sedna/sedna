@@ -7,13 +7,13 @@
 #include <algorithm>
 #include <functional>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPPred.h"
-#include "PPUtils.h"
-#include "PPSLStub.h"
-#include "PPSResLStub.h"
-#include "casting_operations.h"
+#include "tr/executor/xqops/PPPred.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/xqops/PPSResLStub.h"
+#include "tr/executor/fo/casting_operations.h"
 
 using namespace std;
 

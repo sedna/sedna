@@ -3,25 +3,25 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "micro.h"
-#include "node_utils.h"
-#include "vmm.h"
-#include "locks.h"
-#include "schema.h"
-#include "log.h"
-#include "pstr.h"
-#include "updates.h"
-#include "pstr_long.h"
-#include "indirection.h"
+#include "common/sedna.h"
+#include "tr/mo/micro.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/locks/locks.h"
+#include "tr/structures/schema.h"
+#include "tr/log/log.h"
+#include "tr/pstr/pstr.h"
+#include "tr/updates/updates.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/structures/indirection.h"
 #include <string.h>
 //#include <iostream.h>
-#include "d_printf.h"
+#include "common/errdbg/d_printf.h"
 #ifdef _MYDEBUG
-#include "crmutils.h"
+#include "tr/crmutils/crmutils.h"
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers.h"
+#include "tr/triggers/triggers.h"
 #endif
 
 /*void fillLogOfTextNodeChanged(xptr node, const bool inserted=false)

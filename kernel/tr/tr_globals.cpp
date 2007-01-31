@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "tr_globals.h"
-#include "tr_functions.h"
-#include "base.h"
-#include "client_core.h"
-#include "SSMMsg.h"
+#include "common/sedna.h"
+#include "tr/tr_globals.h"
+#include "tr/tr_functions.h"
+#include "common/base.h"
+#include "tr/client_core.h"
+#include "common/SSMMsg.h"
 
 // variables for parsing command line 
 

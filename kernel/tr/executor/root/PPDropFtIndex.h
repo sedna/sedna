@@ -6,11 +6,11 @@
 #ifndef _PPDROPFTINDEX_H
 #define _PPDROPFTINDEX_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPathOnSchema.h"
-#include "ft_index_data.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/ft/ft_index_data.h"
 
 class PPDropFtIndex : public PPUpdate
 {

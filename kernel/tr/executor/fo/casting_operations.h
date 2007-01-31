@@ -7,8 +7,8 @@
 #ifndef _CASTING_OPERATIONS_H
 #define _CASTING_OPERATIONS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 tuple_cell cast (const tuple_cell &SV, xmlscm_type TT);

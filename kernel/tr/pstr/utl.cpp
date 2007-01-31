@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "utl.h"
-#include "pstrblk.h"
-#include "d_printf.h"
+#include "tr/pstr/utl.h"
+#include "tr/pstr/pstrblk.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

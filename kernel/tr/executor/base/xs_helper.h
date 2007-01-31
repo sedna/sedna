@@ -7,10 +7,10 @@
 #ifndef _XS_HELPER_H
 #define _XS_HELPER_H
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "crmutils.h"
-#include "xs_decimal_t.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/executor/base/xs_decimal_t.h"
 
 #define IS_WHITESPACE(byte) \
     (byte == ' ' || byte == '\t' || byte == '\n' || byte == '\r')

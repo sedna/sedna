@@ -6,8 +6,8 @@
 #ifndef __PPCHECKPOINT_H
 #define __PPCHECKPOINT_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPCheckpoint : public PPIterator
 {

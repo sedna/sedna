@@ -2,12 +2,12 @@
  * File:  AST.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <stdlib.h>
-#include "AST.h"
-#include "types.h"
-#include "d_printf.h"
+#include "tr/xqp/AST.h"
+#include "tr/xqp/types.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

@@ -6,13 +6,13 @@
 #ifndef _PPCONSTRUCTORS_H
 #define _PPCONSTRUCTORS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "schema.h"
-#include "strings.h"
-#include "indirection.h"
-#include "micro.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/structures/schema.h"
+#include "tr/strings/strings.h"
+#include "tr/structures/indirection.h"
+#include "tr/mo/micro.h"
 ///////////////////////////////////////////////////////////////////////////////
 /// PPConstructor
 ///////////////////////////////////////////////////////////////////////////////

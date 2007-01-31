@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "other_fo.h"
+#include "common/sedna.h"
+#include "tr/executor/fo/other_fo.h"
 
 
 /*******************************************************************************

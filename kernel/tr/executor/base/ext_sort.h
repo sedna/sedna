@@ -7,7 +7,7 @@
 #define _EXT_SORT_H
 
 
-#include "sequence.h"
+#include "tr/executor/base/sequence.h"
 
 void ext_sort(sequence *s, const order_spec_list& osl, bool stable);
 

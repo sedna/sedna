@@ -6,7 +6,7 @@
 #ifndef _TR_COMMON_FUNCTIONS
 #define _TR_COMMON_FUNCTIONS
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 extern bool is_sm_server_inited;
 extern bool is_ph_inited;

@@ -3,24 +3,24 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "sm_globals.h"
-#include "sm_functions.h"
-#include "bm_functions.h"
-#include "bm_core.h"
-#include "plmgr.h"
-#include "llmgr.h"
-#include "usem.h"
-#include "SSMMsg.h"
-#include "d_printf.h"
-#include "trmgr.h"
-#include "pping.h"
-#include "version.h"
-#include "lm_base.h"
-#include "lm_globals.h"
-#include "gmm.h"
-#include "memutils.h"
+#include "sm/sm_globals.h"
+#include "sm/sm_functions.h"
+#include "sm/bufmgr/bm_functions.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/plmgr/plmgr.h"
+#include "sm/llmgr/llmgr.h"
+#include "common/u/usem.h"
+#include "common/SSMMsg.h"
+#include "common/errdbg/d_printf.h"
+#include "sm/trmgr.h"
+#include "common/pping.h"
+#include "common/version.h"
+#include "common/lm_base.h"
+#include "sm/lm/lm_globals.h"
+#include "common/gmm.h"
+#include "common/mmgr/memutils.h"
 
 using namespace std;
 

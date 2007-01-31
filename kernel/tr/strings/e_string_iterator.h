@@ -9,12 +9,12 @@
 #include <iterator>
 #include <list>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "vmm.h"
-#include "xptr.h"		
-#include "base.h"
-#include "e_string.h"
+#include "tr/vmm/vmm.h"
+#include "common/xptr.h"		
+#include "common/base.h"
+#include "tr/strings/e_string.h"
 
 class estr_iterator : public std::iterator<std::bidirectional_iterator_tag,char> 
 {

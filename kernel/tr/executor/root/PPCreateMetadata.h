@@ -7,8 +7,8 @@
 #ifndef _PPCREATEMETADATA_H
 #define _PPCREATEMETADATA_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPCreateDocument : public PPUpdate
 {

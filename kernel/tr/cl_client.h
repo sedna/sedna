@@ -6,12 +6,12 @@
 #ifndef _CL_CLIENT_H
 #define _CL_CLIENT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <vector>
 #include <string>
-#include "exec_output.h"
-#include "client_core.h"
-#include "XQuerytoLR.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/client_core.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 class cl_command
 {

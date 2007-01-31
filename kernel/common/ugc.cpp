@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "ugc.h"
-#include "base.h"
-#include "ushm.h"
-#include "usem.h"
-#include "ummap.h"
-#include "d_printf.h"
+#include "common/ugc.h"
+#include "common/base.h"
+#include "common/u/ushm.h"
+#include "common/u/usem.h"
+#include "common/u/ummap.h"
+#include "common/errdbg/d_printf.h"
 
 
 

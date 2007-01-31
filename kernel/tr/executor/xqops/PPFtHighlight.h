@@ -6,10 +6,10 @@
 #ifndef _PPFTHIGHLIGHT_H
 #define _PPFTHIGHLIGHT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "FTsearch.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/ft/FTsearch.h"
 
 class PPFtHighlight : public PPIterator
 {

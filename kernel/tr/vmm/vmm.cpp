@@ -13,19 +13,19 @@
 
 #include <set>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usem.h"
-#include "ushm.h"
-#include "ummap.h"
-#include "utils.h"
-#include "sm_vmm_data.h"
-#include "vmm.h"
-#include "tr_globals.h"
-#include "pers_map.h"
-#include "schema.h"
-#include "gmm.h"
-#include "d_printf.h"
+#include "common/u/usem.h"
+#include "common/u/ushm.h"
+#include "common/u/ummap.h"
+#include "common/utils.h"
+#include "common/sm_vmm_data.h"
+#include "tr/vmm/vmm.h"
+#include "tr/tr_globals.h"
+#include "tr/structures/pers_map.h"
+#include "tr/structures/schema.h"
+#include "common/gmm.h"
+#include "common/errdbg/d_printf.h"
 
 
 using namespace std;

@@ -3,15 +3,15 @@
  * Copyright (C) 2005 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "vmm.h"
-#include "log.h"
-#include "strings.h"
-#include "e_string.h"
-#include "pstr_long.h"
-#include "nodes.h"
-#include "pstr.h"
-#include "d_printf.h"
+#include "common/sedna.h"
+#include "tr/vmm/vmm.h"
+#include "tr/log/log.h"
+#include "tr/strings/strings.h"
+#include "tr/strings/e_string.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/structures/nodes.h"
+#include "tr/pstr/pstr.h"
+#include "common/errdbg/d_printf.h"
 
 
 #if 1

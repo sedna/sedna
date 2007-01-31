@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "FTindex.h"
-#include "tr_globals.h"
-#include "dtsearch.h"
-#include "uhdd.h"
-#include "log.h"
+#include "tr/ft/FTindex.h"
+#include "tr/tr_globals.h"
+#include "dtsearch/include/dtsearch.h"
+#include "common/u/uhdd.h"
+#include "tr/log/log.h"
 //using namespace dtSearch;
 
 #ifndef _WIN32

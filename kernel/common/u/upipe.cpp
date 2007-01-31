@@ -4,8 +4,8 @@
  */
 
 
-#include "d_printf.h"
-#include "upipe.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/upipe.h"
 
 int uPipe(UPIPE* rpipe, /*read pipe*/
           UPIPE* wpipe, /*write pipe*/

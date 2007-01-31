@@ -7,8 +7,8 @@
 #ifndef _PPBOOLEANOPS_H
 #define _PPBOOLEANOPS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnTrue

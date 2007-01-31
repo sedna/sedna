@@ -6,11 +6,11 @@
 #ifndef _SORTED_SEQUENCE_H
 #define _SORTED_SEQUENCE_H
 
-#include "sedna.h"
-#include "pers_map.h"
-#include "tuple.h"
-#include "vmm.h"
-#include "seq_common.h"
+#include "common/sedna.h"
+#include "tr/structures/pers_map.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/seq_common.h"
 
 #define MAX_BLOCKS_IN_CHAIN 500 //should be changed after meeting with Andrey
 #define GET_FREE_SPACE(p) (shft)((__uint32)PAGE_SIZE - (__uint32)((p).addr) & PAGE_REVERSE_BIT_MASK)

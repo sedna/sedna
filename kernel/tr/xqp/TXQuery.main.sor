@@ -1,13 +1,13 @@
 /**/
 #header <<
 
-#include "sedna.h"
-#include "AST.h"
-#include "ASTNodeTypes.h"
-#include "SORAST.h"
-#include "context.h"
-#include "exceptions.h"
-#include "uutils.h"
+#include "common/sedna.h"
+#include "tr/xqp/AST.h"
+#include "tr/xqp/ASTNodeTypes.h"
+#include "tr/xqp/SORAST.h"
+#include "tr/xqp/context.h"
+#include "common/errdbg/exceptions.h"
+#include "common/u/uutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>

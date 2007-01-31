@@ -6,13 +6,13 @@
 #include <iostream>
 #include <ostream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include "libsedna.h"
-#include "base.h"
-#include "argtable.h"
-#include "d_printf.h"
-#include "version.h"
+#include "common/base.h"
+#include "common/argtable.h"
+#include "common/errdbg/d_printf.h"
+#include "common/version.h"
 #include "term_globals.h"
 #include "term_funcs.h"
 #include "mainloop.h"

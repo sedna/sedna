@@ -7,10 +7,10 @@
 #ifndef _PPAGGRFUNCS_H
 #define _PPAGGRFUNCS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "PPUtils.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/PPUtils.h"
 
 tuple_cell op_numeric_add(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell op_numeric_divide(const tuple_cell &a1, const tuple_cell &a2);

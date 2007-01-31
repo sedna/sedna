@@ -6,9 +6,9 @@
 #ifndef _LEX_H
 #define _LEX_H
 
-#include "sedna.h"
-#include "crmutils.h"
-#include "nid.h"
+#include "common/sedna.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/nid/nid.h"
 
 /**********************************************************************
 	Functions for lexicographic arithmetics

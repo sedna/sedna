@@ -6,9 +6,9 @@
 #ifndef _PPTEST_H
 #define _PPTEST_H
 
-#include "sedna.h"
-#include "tuple.h"
-#include "PPUtils.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/executor/base/PPUtils.h"
 #define DESC_CONSIST
 #define PSTR_CONSIST
 ///////////////////////////////////////////////////////////////////////////////

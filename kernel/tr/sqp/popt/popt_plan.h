@@ -6,9 +6,9 @@
 #ifndef _POPT_PLAN_H
 #define _POPT_PLAN_H
 
-#include "sedna.h"
-#include "att.h"
-#include "XPathOnSchema.h"
+#include "common/sedna.h"
+#include "tr/sqp/popt/att.h"
+#include "tr/executor/base/XPathOnSchema.h"
 
 
 #define POPT_EOS					throw POPTEndOfSequence()

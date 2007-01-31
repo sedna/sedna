@@ -6,8 +6,8 @@
 #ifndef __LIP_CLASS_H
 #define __LIP_CLASS_H
 
-#include "sedna.h"
-#include "lip.h"
+#include "common/sedna.h"
+#include "tr/executor/base/lip/lip.h"
 
 // LIP - Long Integer Package
 // it's a wrapper for lip C library (arbitrary long integers)

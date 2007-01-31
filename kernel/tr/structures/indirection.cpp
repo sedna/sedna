@@ -7,14 +7,14 @@
 #include <string>
 #include <set>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "indirection.h"
-#include "usem.h"
-#include "vmm.h"
-#include "log.h"
-#include "sm_vmm_data.h"
-#include "xptr_sequence.h"
+#include "tr/structures/indirection.h"
+#include "common/u/usem.h"
+#include "tr/vmm/vmm.h"
+#include "tr/log/log.h"
+#include "common/sm_vmm_data.h"
+#include "tr/executor/base/xptr_sequence.h"
 
 #define OTK_XPTR
 using namespace std;

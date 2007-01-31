@@ -6,7 +6,7 @@
 #ifndef _SP_H
 #define _SP_H
 
-#include "usocket.h"
+#include "common/u/usocket.h"
 #include "sp_defs.h"
 
 

@@ -3,10 +3,10 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "d_printf.h"
-#include "usecurity.h"
-#include "uhdd.h"
+#include "common/sedna.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/usecurity.h"
+#include "common/u/uhdd.h"
 
 char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
 

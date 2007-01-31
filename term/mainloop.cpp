@@ -3,14 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "d_printf.h"
-#include "uhdd.h"
-#include "uutils.h"
+#include "common/base.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uhdd.h"
+#include "common/u/uutils.h"
 #include "sp_defs.h"
-
 #include "mainloop.h"
 #include "term_globals.h"
 #include "term_funcs.h"

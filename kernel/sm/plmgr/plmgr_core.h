@@ -6,14 +6,14 @@
 #ifndef _PLMGR_CORE_H
 #define _PLMGR_CORE_H
 
-#include "sedna.h"
-#include "base.h"
-#include "xptr.h"
-#include "usem.h"
-#include "ushm.h"
-#include "uhdd.h"
+#include "common/sedna.h"
+#include "common/base.h"
+#include "common/xptr.h"
+#include "common/u/usem.h"
+#include "common/u/ushm.h"
+#include "common/u/uhdd.h"
 //#include "trmgr.h"
-#include "sm_vmm_data.h"
+#include "common/sm_vmm_data.h"
 #include <string>
 
 enum  {PL_CHANGE, PL_CHANGE_MASTER, PL_DECREASE, PL_CREATE_NODE_BLK};

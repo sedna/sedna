@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "locks.h"
-#include "auc.h"
+#include "common/sedna.h"
+#include "tr/locks/locks.h"
+#include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers_data.h"
+#include "tr/triggers/triggers_data.h"
 #endif
-#include "base.h"
-#include "tr_functions.h"
-#include "pq.h"
-#include "log.h"
-#include "XPath.h"
-#include "metadata.h"
-#include "rcv_funcs.h"
+#include "common/base.h"
+#include "tr/tr_functions.h"
+#include "tr/pq/pq.h"
+#include "tr/log/log.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/structures/metadata.h"
+#include "tr/rcv/rcv_funcs.h"
 
 using namespace std;
 

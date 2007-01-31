@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "por2qep.h"
-#include "auc.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "tr/auth/auc.h"
 
 const char *get_module(const char *module_uri)
 {

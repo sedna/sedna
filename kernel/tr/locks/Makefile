@@ -1,32 +1,26 @@
 #
-# Makefile for locks (GNU make)
+# Makefile for locks
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: liblocks$(LIB_EXT)
+all: locks$(LIB_EXT)
 	@echo ===================================================================
-	@echo LOCKS DONE
+	@echo locks DONE
 	@echo ===================================================================
 
+OBJS = locks$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-LOCKS_LIB = liblocks$(LIB_EXT)
-
 ################################################################################
-# LOCKS                                                                          #
+# locks.lib                                                                    #
 ################################################################################
-$(LOCKS_LIB):    locks$(OBJ_EXT)
+locks$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 
@@ -36,7 +30,3 @@ $(LOCKS_LIB):    locks$(OBJ_EXT)
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(LOCKS_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

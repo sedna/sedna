@@ -6,10 +6,10 @@
 #ifndef _TRANS_CB_H_
 #define _TRANS_CB_H_
 
-#include "sedna.h"
-#include "base.h"
-#include "lock_table.h"
-#include "lm_base.h"
+#include "common/sedna.h"
+#include "common/base.h"
+#include "sm/lm/lock_table.h"
+#include "common/lm_base.h"
 
 class lock_request;
 

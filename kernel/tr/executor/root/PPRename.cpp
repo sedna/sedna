@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPRename.h"
-#include "updates.h"
-#include "locks.h"
+#include "tr/executor/root/PPRename.h"
+#include "tr/updates/updates.h"
+#include "tr/locks/locks.h"
 
 PPRename::PPRename(PPOpIn _child_, 
                    dynamic_context *_cxt_,

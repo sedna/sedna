@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDropMetadata.h"
-#include "metadata.h"
-#include "locks.h"
+#include "tr/executor/root/PPDropMetadata.h"
+#include "tr/structures/metadata.h"
+#include "tr/locks/locks.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPDropDocument

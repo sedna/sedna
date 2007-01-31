@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "node_utils.h"
-#include "locks.h"
-#include "pstr.h"
-#include "schema.h"
-#include "crmutils.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/locks/locks.h"
+#include "tr/pstr/pstr.h"
+#include "tr/structures/schema.h"
+#include "tr/crmutils/crmutils.h"
 using namespace std;
 
 /*returns the next attribute sibling by document order*/
@@ -1297,5 +1297,20 @@ xptr getRoot(xptr node)
             return cur;
         cur = p;
     }
+}
+
+shft size_of_node(node_blk_hdr* block)
+{
+	t_item type=GETTYPE(block->snode);
+	switch(type)
+	{
+	case element:return (shft)sizeof(e_dsc);
+	case document: case virtual_root: return (shft)sizeof(d_dsc);
+	case attribute:return (shft)sizeof(a_dsc);
+	case text: case comment:return (shft)sizeof(t_dsc);
+	case xml_namespace:return (shft)sizeof(ns_dsc);
+	case pr_ins:return (shft)sizeof(pi_dsc);
+	}
+	return (shft)sizeof(n_dsc);
 }
 

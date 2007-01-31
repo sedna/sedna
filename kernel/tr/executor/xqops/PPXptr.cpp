@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "PPXptr.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPXptr.h"
 
 PPXptr::PPXptr(dynamic_context *_cxt_, trigger_parameter_type _var_type_) : PPIterator(_cxt_), var_type(_var_type_)
 {

@@ -6,11 +6,11 @@
 #ifndef _PPEXTFUNCALL_H
 #define _PPEXTFUNCALL_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "sedna_ef.h"
-#include "ext.h"
+#include "tr/executor/base/PPBase.h"
+#include "common/sedna_ef.h"
+#include "tr/executor/por2qep/ext.h"
 
 
 class PPExtFunCall : public PPIterator

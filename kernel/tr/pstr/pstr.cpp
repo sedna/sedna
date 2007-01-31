@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "sm_vmm_data.h"
-#include "pstrblk.h"
-#include "pstr.h"
-#include "utl.h"
-#include "hh.h"
-#include "vmm.h"
-#include "node_utils.h"
-#include "locks.h"
-#include "log.h"
-#include "d_printf.h"
+#include "common/sm_vmm_data.h"
+#include "tr/pstr/pstrblk.h"
+#include "tr/pstr/pstr.h"
+#include "tr/pstr/utl.h"
+#include "tr/pstr/hh.h"
+#include "tr/vmm/vmm.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/locks/locks.h"
+#include "tr/log/log.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

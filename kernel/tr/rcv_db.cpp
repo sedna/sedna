@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "base.h"
-#include "SSMMsg.h"
-#include "d_printf.h"
-#include "rcv_funcs.h"
-#include "usem.h"
-#include "pping.h"
-#include "tr_functions.h"
-#include "tr_utils.h"
+#include "common/base.h"
+#include "common/SSMMsg.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/rcv/rcv_funcs.h"
+#include "common/u/usem.h"
+#include "common/pping.h"
+#include "tr/tr_functions.h"
+#include "tr/tr_utils.h"
 
 #ifndef _WIN32
 #define _atoi64 atoll

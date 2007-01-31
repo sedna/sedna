@@ -10,12 +10,12 @@
 #include <iostream>
 #include <strstream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usocket.h"
-#include "sp.h"
-#include "uutils.h"
-#include "base.h"
+#include "common/u/usocket.h"
+#include "common/sp.h"
+#include "common/u/uutils.h"
+#include "common/base.h"
 
 void write_func(void *param, const char *str, int len);
 enum executor_ostream_t {eot_std, eot_sock, eot_str, eot_null};

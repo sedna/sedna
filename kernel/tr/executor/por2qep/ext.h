@@ -6,11 +6,11 @@
 #ifndef _EXT_H
 #define _EXT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "sedna_ef.h"
-#include "udl.h"
+#include "tr/executor/base/PPBase.h"
+#include "common/sedna_ef.h"
+#include "common/u/udl.h"
 
 //supported atomic types are defined in sedna_ef.h
 //adding new types requires modification of:

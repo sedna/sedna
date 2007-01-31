@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPConst.h"
-#include "PPUtils.h"
-#include "utils.h"
+#include "tr/executor/xqops/PPConst.h"
+#include "tr/executor/base/PPUtils.h"
+#include "common/utils.h"
 
 
 

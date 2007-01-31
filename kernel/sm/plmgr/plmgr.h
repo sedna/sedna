@@ -7,10 +7,10 @@
 #ifndef _PLMGR_H
 #define _PLMGR_H
 
-#include "sedna.h"
-#include "base.h"
-#include "plmgr_core.h"
-#include "sm_plmgr.h"
+#include "common/sedna.h"
+#include "common/base.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "sm/plmgr/sm_plmgr.h"
 
 extern bool is_write_to_phys_log;
 extern sm_plmgr* phys_log_mgr;

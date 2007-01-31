@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "btstruct.h"
-#include "btpage.h"
-#include "vmm.h"
-#include "nodes.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btpage.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/nodes.h"
 
 void bt_page_markup(char* pg, xmlscm_type t) {
 	char dummy[10];

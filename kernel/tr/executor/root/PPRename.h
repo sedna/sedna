@@ -7,10 +7,10 @@
 #ifndef _PPRENAME_H
 #define _PPRENAME_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPath.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPath.h"
 
 class PPRename : public PPUpdate
 {

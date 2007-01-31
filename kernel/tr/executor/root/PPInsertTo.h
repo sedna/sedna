@@ -7,8 +7,8 @@
 #ifndef _PPINSERTTO_H
 #define _PPINSERTTO_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPInsertTo : public PPUpdate
 {

@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPFtHighlight.h"
-#include "FTsearch.h"
+#include "tr/executor/xqops/PPFtHighlight.h"
+#include "tr/ft/FTsearch.h"
 
 PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
                 PPOpIn _seq_,

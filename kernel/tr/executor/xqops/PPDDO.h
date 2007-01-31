@@ -7,10 +7,10 @@
 #ifndef _PPDDO_H
 #define _PPDDO_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "sorted_sequence.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/sorted_sequence.h"
 
 //#define TURN_ON_DDO
 

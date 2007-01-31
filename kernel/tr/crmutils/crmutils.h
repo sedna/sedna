@@ -8,16 +8,16 @@
 
 #include <map>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "exec_output.h"
-#include "nodes.h"
-#include "tuple.h"
-#include "strings.h"
+#include "common/xptr.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/structures/nodes.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/strings.h"
 
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
+#include "tr/ft/ft_index_data.h"
 #endif
 
 

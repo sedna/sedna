@@ -6,9 +6,9 @@
 #ifndef _OP_MAP_H
 #define _OP_MAP_H
 
-#include "sedna.h"
-#include "tuple.h"
-#include "strings.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/strings.h"
 
 typedef tuple_cell (*bin_op_tuple_cell_tuple_cell)(const tuple_cell&, const tuple_cell&);
 typedef tuple_cell (*bin_op_tuple_cell_tuple_cell_collation)(const tuple_cell&, const tuple_cell&, CollationHandler* handler);

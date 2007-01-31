@@ -5,16 +5,16 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPConstructors.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
-#include "updates.h"
-#include "crmutils.h"
-#include "metadata.h"
-#include "e_string.h"
-#include "xs_names.h"
+#include "tr/executor/xqops/PPConstructors.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/updates/updates.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/structures/metadata.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/base/xs_names.h"
 
 using namespace std;
 bool PPConstructor::firstCons = true;

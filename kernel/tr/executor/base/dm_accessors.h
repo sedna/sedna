@@ -7,9 +7,9 @@
 #ifndef _DM_ACCESSORS_H
 #define _DM_ACCESSORS_H
 
-#include "sedna.h"
-#include "tuple.h"
-#include "dynamic_context.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/executor/base/dynamic_context.h"
 
 
 /// internal function for getting parent of a node

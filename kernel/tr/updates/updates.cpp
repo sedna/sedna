@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "updates.h"
-#include "micro.h"
-#include "node_utils.h"
-#include "xptr_sequence.h"
+#include "tr/updates/updates.h"
+#include "tr/mo/micro.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/xptr_sequence.h"
 //#include "crmutils.h"
-#include "numb_scheme.h"
-#include "indirection.h"
-#include "PPConstructors.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/structures/indirection.h"
+#include "tr/executor/xqops/PPConstructors.h"
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers.h"
+#include "tr/triggers/triggers.h"
 #endif
 #define IGNORE_UPDATE_ERRORS
 #ifdef SE_ENABLE_FTSEARCH

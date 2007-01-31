@@ -6,19 +6,19 @@
 #ifndef _LLMGR_CORE_H
 #define _LLMGR_CORE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <list>
 
-#include "base.h"
-#include "xptr.h"
-#include "uhdd.h"
-#include "usem.h"
-#include "ushm.h"
-#include "plmgr_core.h"
-#include "memutils.h"
+#include "common/base.h"
+#include "common/xptr.h"
+#include "common/u/uhdd.h"
+#include "common/u/usem.h"
+#include "common/u/ushm.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "common/mmgr/memutils.h"
 
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST

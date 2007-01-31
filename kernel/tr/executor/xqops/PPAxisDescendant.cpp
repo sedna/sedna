@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPAxisDescendant.h"
-#include "node_utils.h"
-#include "PPUtils.h"
+#include "tr/executor/xqops/PPAxisDescendant.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/PPUtils.h"
 
 using namespace std;
 ///////////////////////////////////////////////////////////////////////////////

@@ -8,14 +8,14 @@
 
 #define DEBUG_ODBC	1
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <sql.h>
 #include <sqltypes.h>
 #include <sqlext.h>
 
-#include "PPSQL.h"
-#include "PPConstructors.h"
+#include "tr/executor/xqops/PPSQL.h"
+#include "tr/executor/xqops/PPConstructors.h"
 
 //FIXME??
 #ifndef SQL_API

@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPStringFuncs.h"
-#include "casting_operations.h"
-#include "PPUtils.h"
-#include "e_string.h"
-#include "strings.h"
-#include "utf8.h"
-#include "xs_helper.h"
-#include "dm_accessors.h"
+#include "tr/executor/xqops/PPStringFuncs.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/strings/e_string.h"
+#include "tr/strings/strings.h"
+#include "tr/strings/utf8.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/dm_accessors.h"
 #include <math.h>
 
 

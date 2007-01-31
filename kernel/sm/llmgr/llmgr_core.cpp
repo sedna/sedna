@@ -3,21 +3,21 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "base.h"
-#include "ushm.h"
-#include "xptr.h"
-#include "llmgr_core.h"
-#include "sm_globals.h"
-#include "utils.h"
-#include "tr_debug.h"
-#include "plmgr_core.h"
-#include "uutils.h"
-#include "d_printf.h"
-#include "trmgr.h"
-#include "vmm.h"
-#include "indirection.h"
+#include "common/base.h"
+#include "common/u/ushm.h"
+#include "common/xptr.h"
+#include "sm/llmgr/llmgr_core.h"
+#include "sm/sm_globals.h"
+#include "common/utils.h"
+#include "common/tr_debug.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
+#include "sm/trmgr.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/indirection.h"
 
 using namespace std;
 

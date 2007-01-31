@@ -5,9 +5,9 @@
 
 
 
-#include "SSMMsg.h"
-#include "utils.h"
-#include "d_printf.h"
+#include "common/SSMMsg.h"
+#include "common/utils.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

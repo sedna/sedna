@@ -3,21 +3,21 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "utf8.h"
+#include "common/sedna.h"
+#include "tr/strings/utf8.h"
 
 //neeeded for pcre includes
 #define PCRE_STATIC
 #define SUPPORT_UTF8
 #define SUPPORT_UCP
 
-#include "pcre.h"
-#include "char_iterator.h"
-#include "e_string.h"
-#include "e_string_iterator.h"
+#include "pcre/pcre.h"
+#include "tr/strings/char_iterator.h"
+#include "tr/strings/e_string.h"
+#include "tr/strings/e_string_iterator.h"
 #include <sstream>
-#include "PPBase.h"
-#include "PPSubsMatch.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPSubsMatch.h"
 
 
 //////////////////////////////////////////////////////////////////////////

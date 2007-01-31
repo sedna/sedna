@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "compare.h"
+#include "common/sedna.h"
+#include "tr/executor/base/compare.h"
 
 int tuple_compare(const order_spec_list& osl, int cells_number, tuple_cell *cells1, tuple_cell *cells2)
 {

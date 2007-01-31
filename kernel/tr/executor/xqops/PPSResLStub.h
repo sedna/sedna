@@ -6,8 +6,8 @@
 #ifndef _PPSRESLSTUB_H
 #define _PPSRESLSTUB_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPSResLStub : public PPIterator
 {

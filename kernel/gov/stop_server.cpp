@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "d_printf.h"
-#include "argtable.h"
-#include "version.h"
-#include "pping.h"
-#include "ipc_ops.h"
-#include "uprocess.h"
+#include "common/base.h"
+#include "common/errdbg/d_printf.h"
+#include "common/argtable.h"
+#include "common/version.h"
+#include "common/pping.h"
+#include "common/ipc_ops.h"
+#include "common/u/uprocess.h"
 
 using namespace std;
 

@@ -4,12 +4,12 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "ipc_ops.h"
-#include "base.h"
-#include "usocket.h"
-#include "d_printf.h"
+#include "common/ipc_ops.h"
+#include "common/base.h"
+#include "common/u/usocket.h"
+#include "common/errdbg/d_printf.h"
 
 
 int WriteHead(UPIPE p, int *cmd, int *len)

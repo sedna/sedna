@@ -6,16 +6,16 @@
 #ifndef _SOCKET_CLIENT_H
 #define _SOCKET_CLIENT_H
 
-#include "sedna.h"	
+#include "common/sedna.h"
 #include <list>
 #include <string>
-#include "exec_output.h"
-#include "client_core.h"
-#include "sp.h"
-#include "base.h"
-#include "usocket.h"
-#include "tr_globals.h"
-#include "tr_utils.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/client_core.h"
+#include "common/sp.h"
+#include "common/base.h"
+#include "common/u/usocket.h"
+#include "tr/tr_globals.h"
+#include "tr/tr_utils.h"
 
 enum client_states {NO_TRANSACTION, IN_TRANSACTION};
 enum read_msg_states {se_BeginAuthenticatingTransaction = 3,

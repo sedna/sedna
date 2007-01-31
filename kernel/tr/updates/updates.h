@@ -8,15 +8,15 @@
 
 #include <map>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "vmm.h"
-#include "nodes.h"
-#include "schema.h"
-#include "PPBase.h"
+#include "common/xptr.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/nodes.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/base/PPBase.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
+#include "tr/ft/ft_index_data.h"
 #endif
 
 typedef  std::map< xml_ns*, xml_ns*> upd_ns_map;

@@ -5,10 +5,10 @@
 
 #include <iostream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDDO.h"
-#include "numb_scheme.h"
+#include "tr/executor/xqops/PPDDO.h"
+#include "tr/nid/numb_scheme.h"
 
 using namespace std;
 

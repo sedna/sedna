@@ -6,10 +6,10 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPSLStub.h"
-#include "PPSequence.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/xqops/PPSequence.h"
 
 using namespace std;
 

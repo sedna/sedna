@@ -1,7 +1,7 @@
 #ifndef _STR_MATCHER_H
 #define _STR_MATCHER_H
 
-#include "tuple.h"
+#include "tr/executor/base/tuple.h"
 
 enum pat_class
 {

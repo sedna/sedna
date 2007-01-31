@@ -5,12 +5,12 @@
 
 #include <algorithm>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr_sequence.h"
-#include "seq_common.h"
-#include "PPUtils.h"
-#include "merge.h"
+#include "tr/executor/base/xptr_sequence.h"
+#include "tr/executor/base/seq_common.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/merge.h"
 
 
 xptr_sequence::xptr_sequence() : seq_size(0), blks_num(0)

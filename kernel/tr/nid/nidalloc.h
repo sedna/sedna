@@ -6,8 +6,8 @@
 #ifndef _NIDALLOC_H
 #define _NIDALLOC_H
 
-#include "sedna.h"
-#include "base.h"
+#include "common/sedna.h"
+#include "common/base.h"
 
 struct	nid_slot {
 	unsigned char			buf[PAGE_SIZE];

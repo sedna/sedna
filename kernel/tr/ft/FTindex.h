@@ -6,11 +6,11 @@
 #ifndef _FT_INDEX_H
 #define _FT_INDEX_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "FTsearch.h"
-#include "xptr_sequence.h"
-#include "llmgr_core.h"
+#include "tr/ft/FTsearch.h"
+#include "tr/executor/base/xptr_sequence.h"
+#include "sm/llmgr/llmgr_core.h"
 
 #define FTLOG_HEADER		0x010
 #define FTLOG_CREATE_BEGIN	0x0001

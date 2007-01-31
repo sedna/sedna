@@ -7,8 +7,8 @@
 #ifndef _PPFNDEEPEQUAL_H
 #define _PPFNDEEPEQUAL_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPFnDeepEqual : public PPIterator
 {

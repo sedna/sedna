@@ -6,9 +6,9 @@
 #ifndef __PPRETURN_H
 #define __PPRETURN_H
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "SequenceType.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/SequenceType.h"
 
 
 class PPReturn : public PPVarIterator

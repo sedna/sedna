@@ -8,7 +8,7 @@
 #define _UPIPE_H
 
 #include <string>
-#include "u.h"
+#include "common/u/u.h"
 
 
 #ifdef _WIN32

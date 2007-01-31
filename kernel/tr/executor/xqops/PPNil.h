@@ -6,8 +6,8 @@
 #ifndef __PPNIL_H
 #define __PPNIL_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPNil : public PPIterator
 {

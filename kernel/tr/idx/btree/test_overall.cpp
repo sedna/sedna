@@ -7,21 +7,21 @@
 #include <exception>
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "SSMMsg.h"
-#include "vmm.h"
-#include "indirection.h"
-#include "pers_heap.h"
-#include "persistent_db_data.h"
-#include "nodes.h"
+#include "common/base.h"
+#include "common/SSMMsg.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/indirection.h"
+#include "common/ph/pers_heap.h"
+#include "common/persistent_db_data.h"
+#include "tr/structures/nodes.h"
 
 #include <stdlib.h>
 #include <time.h>
-#include "btintern.h"
-#include "btree.h"
-#include "test.h"
+#include "tr/idx/btree/btintern.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/idx/btree/test.h"
 
 using namespace std;
 

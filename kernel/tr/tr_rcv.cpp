@@ -3,17 +3,17 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "persistent_db_data.h"
-#include "base.h"
-#include "SSMMsg.h"
-#include "pers_heap.h"
-#include "vmm.h"
-#include "indirection.h"
-#include "metadata.h"
-#include "log.h"
-#include "d_printf.h"
+#include "common/persistent_db_data.h"
+#include "common/base.h"
+#include "common/SSMMsg.h"
+#include "common/ph/pers_heap.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/indirection.h"
+#include "tr/structures/metadata.h"
+#include "tr/log/log.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

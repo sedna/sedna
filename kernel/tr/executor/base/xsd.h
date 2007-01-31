@@ -7,10 +7,10 @@
 #ifndef __XS_H
 #define __XS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <iostream>
-#include "xptr.h"
+#include "common/xptr.h"
 
 class dynamic_context;
 

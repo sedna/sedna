@@ -3,10 +3,10 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "triggers.h"
-#include "node_utils.h"
-#include "tr_globals.h"
-#include "auc.h"
+#include "tr/triggers/triggers.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/tr_globals.h"
+#include "tr/auth/auc.h"
 
 static t_triggers_set after_statement_triggers;
 

@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "PPSLStub.h"
-#include "PPFunCall.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/xqops/PPFunCall.h"
 
 bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, void*& r)
 {

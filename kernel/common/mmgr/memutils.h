@@ -13,7 +13,7 @@
 #ifndef MEMUTILS_H
 #define MEMUTILS_H
 
-#include "memnodes.h"
+#include "common/mmgr/memnodes.h"
 
 
 /*

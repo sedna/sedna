@@ -4,12 +4,12 @@
  */
 
 #include <math.h>
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xs_helper.h"
-#include "e_string.h"
-#include "utils.h"
-#include "xs_fp_converter.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/strings/e_string.h"
+#include "common/utils.h"
+#include "tr/executor/base/xs_fp_converter.h"
 
 
 /*******************************************************************************

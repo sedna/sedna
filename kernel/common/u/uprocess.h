@@ -8,9 +8,9 @@
 #define _UPROCESS_H
 
 
-#include "u.h"
-#include "uthread.h"
-#include "usecurity.h"
+#include "common/u/u.h"
+#include "common/u/uthread.h"
+#include "common/u/usecurity.h"
 
 
 #ifdef _WIN32

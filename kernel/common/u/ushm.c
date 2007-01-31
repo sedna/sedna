@@ -4,8 +4,8 @@
  */
 
 
-#include "ushm.h"
-#include "d_printf.h"
+#include "common/u/ushm.h"
+#include "common/errdbg/d_printf.h"
 
 //#define RIGHTS		0666
 

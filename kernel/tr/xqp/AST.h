@@ -6,14 +6,14 @@
 #ifndef AST_h
 #define AST_h
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "XQuerytokens.h"
+#include "tr/xqp/XQuerytokens.h"
 #include "ATokPtr.h"
 #include "AToken.h"
-#include "ANTLRToken.h"
+#include "tr/xqp/ANTLRToken.h"
 #include "ASTBase.h"
-#include "ASTNodeTypes.h"
+#include "tr/xqp/ASTNodeTypes.h"
 
 /*
 

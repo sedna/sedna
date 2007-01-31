@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "vmm.h"
-#include "string_operations.h"
-#include "e_string.h"
-#include "pstr_long.h"
-#include "PPBase.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/fo/string_operations.h"
+#include "tr/strings/e_string.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/executor/base/PPBase.h"
 
 
 /*******************************************************************************

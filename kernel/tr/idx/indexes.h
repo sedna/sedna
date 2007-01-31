@@ -7,13 +7,13 @@
 #ifndef __INDEXES_H
 #define __INDEXES_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "index_data.h"
-#include "XPath.h"
-#include "tuple.h"
-#include "btree.h"
-#include "PPBase.h"
+#include "tr/idx/index_data.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/executor/base/PPBase.h"
 
 /* creates bt_key (fills key argument) from tuple_cell */
 void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key);

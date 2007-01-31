@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "att.h"
-#include "por2qep.h"
-#include "d_printf.h"
+#include "common/sedna.h"
+#include "tr/sqp/popt/att.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

@@ -3,22 +3,22 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "crmutils.h"
-#include "metadata.h"
-#include "nodes.h"
-#include "schema.h"
-#include "strings.h"
-#include "micro.h"
-#include "node_utils.h"
-#include "vmm.h"
-#include "pstr.h"
-#include "pstr_long.h"
-#include "e_string.h"
-#include "casting_operations.h"
-#include "xs_helper.h"
-#include "PPBase.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/structures/metadata.h"
+#include "tr/structures/nodes.h"
+#include "tr/structures/schema.h"
+#include "tr/strings/strings.h"
+#include "tr/mo/micro.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/pstr/pstr.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPBase.h"
 using namespace tr_globals;
 se_stdlib_ostream crm_out(std::cerr);
 typedef std::pair<std::string,std::string> ns_pair;

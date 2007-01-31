@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "expat.h"
-#include "base.h"
-#include "usocket.h"
-#include "ipc_ops.h"
-#include "sp.h"
-#include "uprocess.h"
-#include "sm_functions.h"
-#include "sm_globals.h"
-#include "SSMMsg.h"
-#include "d_printf.h"
+#include "expat/expat.h"
+#include "common/base.h"
+#include "common/u/usocket.h"
+#include "common/ipc_ops.h"
+#include "common/sp.h"
+#include "common/u/uprocess.h"
+#include "sm/sm_functions.h"
+#include "sm/sm_globals.h"
+#include "common/SSMMsg.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

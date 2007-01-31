@@ -6,9 +6,9 @@
 #ifndef _IPC_H
 #define _IPC_H
 
-#include "ushm.h"
-#include "uutils.h"
-#include "upipe.h"
+#include "common/u/ushm.h"
+#include "common/u/uutils.h"
+#include "common/u/upipe.h"
 
 
 // return 0 indicates success

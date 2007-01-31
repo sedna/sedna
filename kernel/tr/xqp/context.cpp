@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "context.h"
+#include "common/sedna.h"
+#include "tr/xqp/context.h"
 
 in_context::in_context()
 {

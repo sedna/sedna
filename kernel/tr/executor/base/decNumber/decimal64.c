@@ -27,9 +27,9 @@
 #include <stdio.h>            // [for printf]
 
 #define  DECNUMDIGITS 16      // make decNumbers with space for 16
-#include "decNumber.h"        // base number library
-#include "decNumberLocal.h"   // decNumber local types, etc.
-#include "decimal64.h"        // our primary include
+#include "tr/executor/base/decNumber/decNumber.h"        // base number library
+#include "tr/executor/base/decNumber/decNumberLocal.h"   // decNumber local types, etc.
+#include "tr/executor/base/decNumber/decimal64.h"        // our primary include
 
 /* Utility routines and tables [in decimal64.c] */
 extern const uInt COMBEXP[32], COMBMSD[32];
@@ -387,7 +387,7 @@ void decimal64Show(const decimal64 *d64) {
 #else
   #define DEC_DPD2BCD 1
 #endif
-#include "decDPD.h"           // lookup tables
+#include "tr/executor/base/decNumber/decDPD.h"           // lookup tables
 
 // The maximum number of decNumberUnits needed for a working copy of
 // the units array is the ceiling of digits/DECDPUN, where digits is

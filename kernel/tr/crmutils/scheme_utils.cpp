@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "scheme_utils.h"
-#include "vmm.h"
-#include "node_utils.h"
+#include "tr/crmutils/scheme_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/crmutils/node_utils.h"
 
 xptr sch_right_sibling(xptr& node)
 {

@@ -3,20 +3,20 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <vector>
-#include "log.h"
-#include "indirection.h"
-#include "llmgr_core.h"
-#include "tr_globals.h"
-#include "d_printf.h"
-#include "tr_debug.h"
-#include "trmgr.h"
-#include "pstr_long.h"
-#include "rcv_funcs.h"
+#include "tr/log/log.h"
+#include "tr/structures/indirection.h"
+#include "sm/llmgr/llmgr_core.h"
+#include "tr/tr_globals.h"
+#include "common/errdbg/d_printf.h"
+#include "common/tr_debug.h"
+#include "sm/trmgr.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/rcv/rcv_funcs.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "FTindex.h"
+#include "tr/ft/FTindex.h"
 #endif
 
 #include <sstream>

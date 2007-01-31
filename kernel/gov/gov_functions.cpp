@@ -14,15 +14,15 @@
 #include <langinfo.h>
 #endif
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "gov_globals.h"
-#include "gov_table.h"
-#include "d_printf.h"
-#include "uhdd.h"
-#include "uutils.h"
-#include "ugc.h"
-#include "pping.h"
+#include "gov/gov_globals.h"
+#include "gov/gov_table.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uhdd.h"
+#include "common/u/uutils.h"
+#include "common/ugc.h"
+#include "common/pping.h"
 
 using namespace std;
 

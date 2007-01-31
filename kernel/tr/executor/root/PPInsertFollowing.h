@@ -7,8 +7,8 @@
 #ifndef _PPINSERTFOLLOWING_H
 #define _PPINSERTFOLLOWING_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPInsertFollowing : public PPUpdate
 {

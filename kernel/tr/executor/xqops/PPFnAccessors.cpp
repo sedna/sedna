@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPFnAccessors.h"
-#include "dm_accessors.h"
-#include "casting_operations.h"
+#include "tr/executor/xqops/PPFnAccessors.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/fo/casting_operations.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

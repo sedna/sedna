@@ -5,18 +5,18 @@
 
 #include <string.h>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "index_data.h"
-#include "xptr.h"
-#include "node_utils.h"
-#include "vmm.h"
-#include "tuple.h"
-#include "btree.h"
-#include "schema.h"
-#include "casting_operations.h"
-#include "indexes.h"
-#include "dm_accessors.h"
+#include "tr/idx/index_data.h"
+#include "common/xptr.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/idx/indexes.h"
+#include "tr/executor/base/dm_accessors.h"
 
 
 using namespace std;

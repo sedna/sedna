@@ -7,14 +7,14 @@
 #ifndef _PPBASE_H
 #define _PPBASE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <vector>
 #include <list>
 #include <map>
 
-#include "dynamic_context.h"
-#include "sequence.h"
+#include "tr/executor/base/dynamic_context.h"
+#include "tr/executor/base/sequence.h"
 
 
 /*******************************************************************************

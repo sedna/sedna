@@ -3,23 +3,23 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string.h>
 #include <iostream>
-#include "schema.h"
-#include "lex.h"
-#include "numb_scheme.h"
-#include "nodes.h"
-#include "xptr.h"
-#include "vmm.h"
-#include "crmutils.h"
-#include "pstr.h"
-#include "nid.h"
-#include "log.h"
-#include "nidalloc.h"
-#include "persistent_db_data.h"
-#include "pers_heap.h"
-#include "d_printf.h"
+#include "tr/structures/schema.h"
+#include "tr/nid/lex.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/structures/nodes.h"
+#include "common/xptr.h"
+#include "tr/vmm/vmm.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/pstr/pstr.h"
+#include "tr/nid/nid.h"
+#include "tr/log/log.h"
+#include "tr/nid/nidalloc.h"
+#include "common/persistent_db_data.h"
+#include "common/ph/pers_heap.h"
+#include "common/errdbg/d_printf.h"
 
 #ifndef min
 #define min(x,y) ((x) < (y) ? (x) : (y))

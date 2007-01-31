@@ -6,20 +6,20 @@
 #include <float.h>
 #include <math.h>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPUtils.h"
-#include "e_string.h"
-#include "casting_operations.h"
-#include "pstr.h"
-#include "d_printf.h"
-#include "comparison_operations.h"
-#include "locks.h"
-#include "metadata.h"
-#include "auc.h"
-#include "xs_uri.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/pstr/pstr.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/executor/fo/comparison_operations.h"
+#include "tr/locks/locks.h"
+#include "tr/structures/metadata.h"
+#include "tr/auth/auc.h"
+#include "tr/executor/base/xs_uri.h"
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers_utils.h"
+#include "tr/triggers/triggers_utils.h"
 #endif
 
 

@@ -9,9 +9,9 @@
 #endif
 
 
-#include "uhdd.h"
-#include "d_printf.h"
-#include "uutils.h"
+#include "common/u/uhdd.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uutils.h"
 
 #ifdef _WIN32
 #include <direct.h>

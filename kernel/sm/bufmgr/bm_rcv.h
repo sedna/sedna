@@ -7,8 +7,8 @@
 #ifndef _BM_RCV_H
 #define _BM_RCV_H
 
-#include "sedna.h"
-#include "xptr.h"
+#include "common/sedna.h"
+#include "common/xptr.h"
 
 void bm_rcv_init();
 

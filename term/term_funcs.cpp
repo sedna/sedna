@@ -1,10 +1,10 @@
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include "libsedna.h"
-#include "base.h"
-#include "uutils.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
 #include "term_funcs.h"
 #include "term_globals.h"
 #include "mainloop.h"

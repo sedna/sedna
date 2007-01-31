@@ -6,7 +6,7 @@
 #ifndef _STRINGS_BASE_H
 #define _STRINGS_BASE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 typedef void (*string_consumer_fn)(const char *str, int len, void *p);
 extern void writextext_cb(const char *str, int len, void *p);

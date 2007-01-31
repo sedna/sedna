@@ -6,9 +6,9 @@
 
 #include <iostream>
 
-#include "sedna.h"
-#include "scheme_tree.h"
-#include "d_printf.h"
+#include "common/sedna.h"
+#include "tr/executor/por2qep/scheme_tree.h"
+#include "common/errdbg/d_printf.h"
 
 #define LEX_EOF			0
 #define LEX_LBR			1

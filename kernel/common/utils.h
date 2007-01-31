@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 
 std::string int2string(int value);

@@ -4,8 +4,8 @@
  */
 
 
-#include "sedna.h"
-#include "PPSResLStub.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPSResLStub.h"
 
 
 PPSResLStub::PPSResLStub(dynamic_context *_cxt_, 

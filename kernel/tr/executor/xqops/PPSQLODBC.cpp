@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "micro.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
-#include "d_printf.h"
-#include "e_string.h"
-#include "PPSQLODBC.h"
+#include "tr/mo/micro.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/xqops/PPSQLODBC.h"
 
 #ifndef WIN32
 #include <dlfcn.h>

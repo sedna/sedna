@@ -5,10 +5,10 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPSLStub.h"
-#include "PPSpaceSequence.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/xqops/PPSpaceSequence.h"
 
 using namespace std;
 tuple_cell PPSpaceSequence::space_tup = tuple_cell::atomic_deep(xs_string, " ");

@@ -19,11 +19,11 @@
  *
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xs_fp_converter.h"
-#include "lip_class.h"
-#include "xs_helper.h"
+#include "tr/executor/base/xs_fp_converter.h"
+#include "tr/executor/base/lip/lip_class.h"
+#include "tr/executor/base/xs_helper.h"
 
 
 

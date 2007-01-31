@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "utf8.h"
-#include "pstr.h"
-#include "pstr_long.h"
-#include "casting_operations.h"
-#include "d_printf.h"
+#include "tr/strings/utf8.h"
+#include "tr/pstr/pstr.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "common/errdbg/d_printf.h"
 
 
 CharsetHandler *charset_handler = NULL;

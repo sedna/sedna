@@ -6,10 +6,10 @@
 #ifndef PERSMAP_H
 #define PERSMAP_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "pers_heap.h"
-#include "base.h"
+#include "common/ph/pers_heap.h"
+#include "common/base.h"
 
 inline void *scm_malloc(size_t size,bool persistent)
 {

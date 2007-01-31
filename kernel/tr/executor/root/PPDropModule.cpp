@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDropModule.h"
-#include "PPUtils.h"
-#include "locks.h"
-#include "micro.h"
-#include "metadata.h"
+#include "tr/executor/root/PPDropModule.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/locks/locks.h"
+#include "tr/mo/micro.h"
+#include "tr/structures/metadata.h"
 
 
 PPDropModule::PPDropModule(PPOpIn _module_name_) : module_name(_module_name_)

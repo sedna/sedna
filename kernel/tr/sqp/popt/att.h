@@ -7,10 +7,10 @@
 #ifndef _ATT_H
 #define _ATT_H
 
-#include "sedna.h"
-#include "XPath.h"
-#include "PPBase.h"
-#include "scheme_tree.h"
+#include "common/sedna.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/por2qep/scheme_tree.h"
 
 /// Prints lots of debugging information if defined
 #define POPT_DEBUG

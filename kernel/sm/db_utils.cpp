@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "base.h"
-#include "uhdd.h"
-#include "cdb_globals.h"
-#include "db_utils.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "common/u/uhdd.h"
+#include "sm/cdb_globals.h"
+#include "sm/db_utils.h"
+#include "common/errdbg/d_printf.h"
 #ifdef _WIN32
 #include <io.h>
 #else

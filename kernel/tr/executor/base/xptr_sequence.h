@@ -7,10 +7,10 @@
 #ifndef _XPTR_SEQUENCE_H
 #define _XPTR_SEQUENCE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "tuple.h"
-#include "vmm.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/vmm/vmm.h"
 
 
 

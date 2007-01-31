@@ -4,28 +4,28 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <iostream>
 #include <string>
 #include <string.h>
 
-#include "base.h"
-#include "utils.h"
-#include "SSMMsg.h"
-#include "tr_globals.h"
-#include "tr_functions.h"
-#include "pq.h"
-#include "exec_output.h"
-#include "por2qep.h"
-#include "d_printf.h"
-#include "pping.h"
-#include "cl_client.h"
-#include "socket_client.h"
-#include "tr_utils.h"
-#include "auc.h"
-#include "memutils.h"
-#include "tr_common_funcs.h"
+#include "common/base.h"
+#include "common/utils.h"
+#include "common/SSMMsg.h"
+#include "tr/tr_globals.h"
+#include "tr/tr_functions.h"
+#include "tr/pq/pq.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "common/errdbg/d_printf.h"
+#include "common/pping.h"
+#include "tr/cl_client.h"
+#include "tr/socket_client.h"
+#include "tr/tr_utils.h"
+#include "tr/auth/auc.h"
+#include "common/mmgr/memutils.h"
+#include "tr/tr_common_funcs.h"
 
 // only for MSDEV 6.0
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
@@ -39,6 +39,8 @@ extern "C" long _ftol2(double dblSource)
 
 using namespace std;
 
+// should be removed later !!!
+char db_files_path[U_MAX_PATH + 1];
 
 DECLARE_TIME_VARS
 // variables for time measurement

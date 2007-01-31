@@ -5,10 +5,10 @@
 
 
 #include <fstream>
-#include "base.h"
-#include "uhdd.h"
-#include "uprocess.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "common/u/uhdd.h"
+#include "common/u/uprocess.h"
+#include "common/errdbg/d_printf.h"
 
 
 using namespace std;

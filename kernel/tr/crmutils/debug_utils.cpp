@@ -3,17 +3,17 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <math.h>
-#include "crmutils.h"
-#include "schema.h"
-#include "vmm.h"
-#include "pstrblk.h"
-#include "indirection.h"
-#include "node_utils.h"
-#include "metadata.h"
-#include "micro.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/structures/schema.h"
+#include "tr/vmm/vmm.h"
+#include "tr/pstr/pstrblk.h"
+#include "tr/structures/indirection.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/structures/metadata.h"
+#include "tr/mo/micro.h"
 
 
 void printMFO (schema_node* node, std::map<schema_node*, std::pair<int,int> > &mfo,int par_pref,int indent)

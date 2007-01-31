@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
-#include "PPSequenceTypes.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPSequenceTypes.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

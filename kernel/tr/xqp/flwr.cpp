@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include "PCCTSAST.h"
-#include "AST.h"
+#include "tr/xqp/AST.h"
 #include "ASTBase.h"
-#include "ASTNodeTypes.h"
+#include "tr/xqp/ASTNodeTypes.h"
 
 
 PCCTS_AST*

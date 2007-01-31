@@ -4,8 +4,8 @@
  */
 
 
-#include "sp.h"
-#include "d_printf.h"
+#include "common/sp.h"
+#include "common/errdbg/d_printf.h"
 
 
 /* returns zero - if succeeded;                        

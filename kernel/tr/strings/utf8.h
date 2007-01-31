@@ -6,8 +6,8 @@
 #ifndef _UTF8_H
 #define _UTF8_H
 
-#include "sedna.h"
-#include "strings.h"
+#include "common/sedna.h"
+#include "tr/strings/strings.h"
 
 class CollationHandler_utf8 : public CollationHandler
 {

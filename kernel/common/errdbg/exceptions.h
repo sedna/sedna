@@ -128,8 +128,8 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #define __EXCEPTIONS_H
 
 #include <string>
-#include "utils.h"
-#include "error_codes.h"
+#include "common/utils.h"
+#include "common/errdbg/error_codes.h"
 
 
 #define SYSTEM_EXCEPTION(msg) \

@@ -6,11 +6,11 @@
 #ifndef _BTPAGE_H
 #define _BTPAGE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "nodes.h"
-#include "xptr.h"
-#include "sm_vmm_data.h"
+#include "tr/structures/nodes.h"
+#include "common/xptr.h"
+#include "common/sm_vmm_data.h"
 
 struct btree_blk_hdr
 {

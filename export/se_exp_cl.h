@@ -1,4 +1,4 @@
-#include "argtable.h"
+#include "common/argtable.h"
 
 #define ARG_SIZE 1000
 #define SOCKET_PORT_DIGITS_NUM 20

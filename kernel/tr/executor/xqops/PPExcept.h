@@ -7,8 +7,8 @@
 #ifndef _PPEXCEPT_H
 #define _PPEXCEPT_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPExcept : public PPIterator
 {

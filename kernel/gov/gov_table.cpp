@@ -8,11 +8,11 @@
 #include <vector>
 #include <iostream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "gov_table.h"
-#include "d_printf.h"
-#include "SSMMsg.h"
+#include "gov/gov_table.h"
+#include "common/errdbg/d_printf.h"
+#include "common/SSMMsg.h"
 
 
 

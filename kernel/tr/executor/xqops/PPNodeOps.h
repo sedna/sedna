@@ -7,8 +7,8 @@
 #ifndef __NODEOPS_H
 #define __NODEOPS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnName

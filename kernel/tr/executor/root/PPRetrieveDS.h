@@ -7,8 +7,8 @@
 #ifndef _PPRETRIEVEDS_H
 #define _PPRETRIEVEDS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPRetrieveDS : public PPQueryEssence
 {

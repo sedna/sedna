@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "nodes.h"
-#include "xptr.h"
-#include "crmutils.h"
+#include "tr/structures/nodes.h"
+#include "common/xptr.h"
+#include "tr/crmutils/crmutils.h"
 
 void node_blk_hdr::init(void *p, shft dsc_size)
 {

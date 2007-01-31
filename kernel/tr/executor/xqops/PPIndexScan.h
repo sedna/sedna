@@ -9,12 +9,12 @@
 
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "index_data.h"
-#include "btree.h"
-#include "XPathOnSchema.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/idx/index_data.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/executor/base/XPathOnSchema.h"
 
 enum index_scan_condition
 {

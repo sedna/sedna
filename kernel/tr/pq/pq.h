@@ -7,10 +7,10 @@
 #ifndef __PQ_H
 #define __PQ_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "base.h"
-#include "XQuerytoLR.h"
+#include "common/base.h"
+#include "tr/xqp/XQuerytoLR.h"
 
 int process_query_in_scheme (char *str, int step_id);
 std::string prepare_module(FILE* f, std::string& out_module_name);

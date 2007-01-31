@@ -4,12 +4,12 @@
  */
 
 
-#include "PPFnDateTimeFuncs.h"
-#include "casting_operations.h"
-#include "PPUtils.h"
-#include "PPBase.h"
-#include "e_string.h"
-#include "strings.h"
+#include "tr/executor/xqops/PPFnDateTimeFuncs.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/strings/e_string.h"
+#include "tr/strings/strings.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPFnDateTimeFuncNoParam

@@ -11,8 +11,8 @@
 #include <arpa/inet.h>
 #endif
 
-#include "usocket.h"
-#include "d_printf.h"
+#include "common/u/usocket.h"
+#include "common/errdbg/d_printf.h"
 
 
 /* returns zero if succeeded

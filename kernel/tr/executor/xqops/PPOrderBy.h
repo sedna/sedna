@@ -6,15 +6,15 @@
 #ifndef _PPORDERBY_H
 #define _PPORDERBY_H
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "PPUtils.h"
-#include "bit_set.h"
-#include "sorted_sequence.h"
-#include "e_string.h"
-#include "op_map.h"
-#include "string_operations.h"
-#include "casting_operations.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/bit_set.h"
+#include "tr/executor/base/sorted_sequence.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/fo/op_map.h"
+#include "tr/executor/fo/string_operations.h"
+#include "tr/executor/fo/casting_operations.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
