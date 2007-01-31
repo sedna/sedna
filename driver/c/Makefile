@@ -32,8 +32,9 @@ endif
 
 ifeq ("$(PLATFORM)", "WIN32")
 # WIN32
+MT_OBJS =     $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
 ST_OBJS =     $(OBJS:$(OBJ_EXT)=.st$(OBJ_EXT))
-DLL_OBJS =    $(OBJS:$(OBJ_EXT)=.dl$(OBJ_EXT))
+DLL_MT_OBJS = $(OBJS:$(OBJ_EXT)=.dl.mt$(OBJ_EXT))
 DLL_ST_OBJS = $(OBJS:$(OBJ_EXT)=.dl.st$(OBJ_EXT))
 
 
@@ -43,8 +44,13 @@ CFLAGS_ST += /DSE_NO_EVENT_LOG
 
 
 # multi-threaded static library
-libsednamt$(LIB_EXT): $(OBJS)
+libsednamt$(LIB_EXT): $(MT_OBJS)
 	  $(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
+%.mt$(OBJ_EXT): %.d
+
+%.mt$(OBJ_EXT): %.c
+	$(CC) $(CFLAGS) $(OBJ_NAME)$@ $<
 
 # single-threaded static library
 libsedna$(LIB_EXT): $(ST_OBJS)
