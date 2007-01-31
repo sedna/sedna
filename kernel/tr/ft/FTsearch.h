@@ -110,6 +110,13 @@ template <typename Iterator>
 class SednaStringHighlighter
 {
 private:
+	//dirty hack!!!!
+#define HL_BUF_SIZE 256
+	char buf[HL_BUF_SIZE];
+	int buf_s;
+	inline void flush_buf() {if (buf_s > 0) {result->append_mstr(buf, buf_s);buf_s = 0;} }
+	inline void append_result(const char * str) { flush_buf(); result->append_mstr(str); } //FIXME: that's bad even for a dirty hack
+
 	friend bool is_tag_char(int ch);
 	int last_ch_len;
 	int getch(Iterator &str_it, Iterator &str_end);

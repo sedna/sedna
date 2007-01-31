@@ -598,6 +598,7 @@ SednaStringHighlighter<Iterator>::SednaStringHighlighter(const Iterator &_str_it
 
 {
 	result->reinit();
+	buf_s = 0;
 	qsort(ht, ht_cnt, sizeof(long), cmp_long);
 }
 
@@ -644,16 +645,17 @@ void SednaStringHighlighter<Iterator>::run()
 		current_word_tok = fragment_start_word_tok_num;
 		current_ht_idx = 0; //FIXME?
 		if (fragment_start_split)
-			result->append_mstr("...");
+			append_result("...");
 		copy_doc(fragment_start, fragment_end);
 		if (fragment_end_split)
-			result->append_mstr("...");
+			append_result("...");
 	}
 	else
 	{
 		cur_ch = getch(str_it, str_end);
 		copy_doc(str_it, str_end);
 	}
+	flush_buf();
 }
 
 SednaConvertJob::SednaConvertJob(ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_, bool _hl_fragment_) :
@@ -724,24 +726,24 @@ int SednaStringHighlighter<Iterator>::getch(Iterator &str_it, Iterator &str_end)
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::putch(const int ch)
 {
-	char x;
+	if (buf_s > HL_BUF_SIZE-10)
+		flush_buf();
 	if (ch < (1 << 7)) {
-		x = ch; result->append_mstr(&x, 1);
+		buf[buf_s++] = ch;
     } else if (ch < (1 << 11)) {
-		x = ((ch >> 6) | 0xc0); result->append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		buf[buf_s++] = ((ch >> 6) | 0xc0);
+		buf[buf_s++] = ((ch & 0x3f) | 0x80);
     } else if (ch < (1 << 16)) {
-		x = ((ch >> 12) | 0xe0); result->append_mstr(&x, 1);
-		x = (((ch >> 6) & 0x3f) | 0x80); result->append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		buf[buf_s++] = ((ch >> 12) | 0xe0);
+		buf[buf_s++] = (((ch >> 6) & 0x3f) | 0x80);
+		buf[buf_s++] = ((ch & 0x3f) | 0x80);
     } else if (ch < (1 << 21)) {
-		x = ((ch >> 18) | 0xf0); result->append_mstr(&x, 1);
-		x = (((ch >> 12) & 0x3f) | 0x80); result->append_mstr(&x, 1);
-		x = (((ch >> 6) & 0x3f) | 0x80); result->append_mstr(&x, 1);
-		x = ((ch & 0x3f) | 0x80); result->append_mstr(&x, 1);
+		buf[buf_s++] = ((ch >> 18) | 0xf0);
+		buf[buf_s++] = (((ch >> 12) & 0x3f) | 0x80);
+		buf[buf_s++] = (((ch >> 6) & 0x3f) | 0x80);
+		buf[buf_s++] = ((ch & 0x3f) | 0x80);
     }
 }
-
 
 
 static inline bool is_tag_char(int ch)
@@ -878,7 +880,7 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 			if (hl_word)
 			{
 				putch(SednaConvertJob::opentag_code);
-				result->append_mstr("hit");
+				append_result("hit");
 				putch(SednaConvertJob::closetag_code);
 			}
 			while (iswordchar(cur_ch) && cur_ch != SednaConvertJob::opentag_code && cur_ch != EOF_ch)
@@ -889,165 +891,16 @@ void SednaStringHighlighter<Iterator>::copy_doc(Iterator &str_it, Iterator &str_
 			if (hl_word)
 			{
 				putch(SednaConvertJob::opentag_code);
-				result->append_mstr("/hit");
+				append_result("/hit");
 				putch(SednaConvertJob::closetag_code);
 			}
 		}
 	}
 }
 
-inline static bool iswordchar(int ch)
-{
-	//TODO: use some sort of a table here
-	return (!(
-		ch <= 33
-		|| ch == SednaConvertJob::closetag_code || ch == SednaConvertJob::opentag_code 
-		|| ch == ';' || ch == '-' || ch == '"' || ch == '\''
-		|| (ch >= 35 && ch <= 38)
-		|| (ch >= 40 && ch <= 44)
-		|| (ch >= 46 && ch <= 47)
-		|| ch == 58
-		|| (ch >= 60 && ch <= 63)
-		|| (ch >= 91 && ch <= 94)
-		|| ch == 96
-		|| ch == 124
-		|| (ch >= 126 && ch <= 169)
-		|| (ch >= 171 && ch <= 177)
-		|| ch == 180
-		|| (ch >= 182 && ch <= 184)
-		|| ch == 187
-		|| ch == 191
-		|| ch == 215
-		|| ch == 247
-		|| (ch >= 697 && ch <= 698)
-		|| (ch >= 706 && ch <= 719)
-		|| (ch >= 722 && ch <= 735)
-		|| (ch >= 741 && ch <= 749)
-		|| (ch >= 884 && ch <= 885)
-		|| ch == 894
-		|| (ch >= 900 && ch <= 901)
-		|| ch == 903
-		|| ch == 1154
-		|| (ch >= 1160 && ch <= 1161)
-		|| (ch >= 1370 && ch <= 1375)
-		|| (ch >= 1417 && ch <= 1418)
-		|| ch == 1470
-		|| ch == 1472
-		|| ch == 1475
-		|| (ch >= 1523 && ch <= 1524)
-		|| ch == 1548
-		|| ch == 1563
-		|| ch == 1567
-		|| (ch >= 1642 && ch <= 1645)
-		|| ch == 1748
-		|| (ch >= 1757 && ch <= 1758)
-		|| ch == 1769
-		|| (ch >= 1789 && ch <= 1790)
-		|| (ch >= 1792 && ch <= 1805)
-		|| ch == 1807
-		|| (ch >= 2404 && ch <= 2405)
-		|| ch == 2416
-		|| (ch >= 2546 && ch <= 2547)
-		|| ch == 2554
-		|| ch == 2928
-		|| ch == 3572
-		|| ch == 3647
-		|| ch == 3663
-		|| (ch >= 3674 && ch <= 3675)
-		|| (ch >= 3841 && ch <= 3863)
-		|| (ch >= 3866 && ch <= 3871)
-		|| ch == 3892
-		|| ch == 3894
-		|| ch == 3896
-		|| (ch >= 3898 && ch <= 3901)
-		|| ch == 3973
-		|| (ch >= 4030 && ch <= 4037)
-		|| (ch >= 4039 && ch <= 4044)
-		|| ch == 4047
-		|| (ch >= 4170 && ch <= 4175)
-		|| ch == 4347
-		|| (ch >= 4961 && ch <= 4968)
-		|| (ch >= 5741 && ch <= 5742)
-		|| ch == 5760
-		|| (ch >= 5787 && ch <= 5788)
-		|| (ch >= 5867 && ch <= 5869)
-		|| (ch >= 6100 && ch <= 6108)
-		|| (ch >= 6144 && ch <= 6158)
-		|| ch == 8125
-		|| (ch >= 8127 && ch <= 8129)
-		|| (ch >= 8141 && ch <= 8143)
-		|| (ch >= 8157 && ch <= 8159)
-		|| (ch >= 8173 && ch <= 8175)
-		|| (ch >= 8189 && ch <= 8190)
-		|| (ch >= 8192 && ch <= 8262)
-		|| (ch >= 8264 && ch <= 8269)
-		|| (ch >= 8298 && ch <= 8303)
-		|| (ch >= 8314 && ch <= 8318)
-		|| (ch >= 8330 && ch <= 8334)
-		|| (ch >= 8352 && ch <= 8367)
-		|| (ch >= 8413 && ch <= 8416)
-		|| (ch >= 8418 && ch <= 8419)
-		|| (ch >= 8448 && ch <= 8449)
-		|| (ch >= 8451 && ch <= 8454)
-		|| (ch >= 8456 && ch <= 8457)
-		|| ch == 8468
-		|| (ch >= 8470 && ch <= 8472)
-		|| (ch >= 8478 && ch <= 8483)
-		|| ch == 8485
-		|| ch == 8487
-		|| ch == 8489
-		|| ch == 8494
-		|| ch == 8498
-		|| ch == 8506
-		|| (ch >= 8592 && ch <= 8691)
-		|| (ch >= 8704 && ch <= 8945)
-		|| (ch >= 8960 && ch <= 9083)
-		|| (ch >= 9085 && ch <= 9114)
-		|| (ch >= 9216 && ch <= 9254)
-		|| (ch >= 9280 && ch <= 9290)
-		|| (ch >= 9372 && ch <= 9449)
-		|| (ch >= 9472 && ch <= 9621)
-		|| (ch >= 9632 && ch <= 9719)
-		|| (ch >= 9728 && ch <= 9747)
-		|| (ch >= 9753 && ch <= 9841)
-		|| (ch >= 9985 && ch <= 9988)
-		|| (ch >= 9990 && ch <= 9993)
-		|| (ch >= 9996 && ch <= 10023)
-		|| (ch >= 10025 && ch <= 10059)
-		|| ch == 10061
-		|| (ch >= 10063 && ch <= 10066)
-		|| ch == 10070
-		|| (ch >= 10072 && ch <= 10078)
-		|| (ch >= 10081 && ch <= 10087)
-		|| ch == 10132
-		|| (ch >= 10136 && ch <= 10159)
-		|| (ch >= 10161 && ch <= 10174)
-		|| (ch >= 10240 && ch <= 10495)
-		|| (ch >= 11904 && ch <= 11929)
-		|| (ch >= 11931 && ch <= 12019)
-		|| (ch >= 12032 && ch <= 12245)
-		|| (ch >= 12272 && ch <= 12283)
-		|| (ch >= 12288 && ch <= 12292)
-		|| (ch >= 12296 && ch <= 12320)
-		|| ch == 12336
-		|| (ch >= 12342 && ch <= 12343)
-		|| (ch >= 12350 && ch <= 12351)
-		|| (ch >= 12443 && ch <= 12444)
-		|| ch == 12539
-		|| (ch >= 12688 && ch <= 12689)
-		|| (ch >= 12694 && ch <= 12703)
-		|| (ch >= 12800 && ch <= 12828)
-		|| (ch >= 12842 && ch <= 12867)
-		|| (ch >= 12896 && ch <= 12923)
-		|| ch == 12927
-		|| (ch >= 12938 && ch <= 12976)
-		|| (ch >= 12992 && ch <= 13003)
-		|| (ch >= 13008 && ch <= 13054)
-		|| (ch >= 13056 && ch <= 13174)
-		|| (ch >= 13179 && ch <= 13277)
-		|| (ch >= 13280 && ch <= 13310)
-		));
-}
+
+
+#include "iswordchar.inc"
 
 template <class Iterator>
 void SednaStringHighlighter<Iterator>::parse_doc()
