@@ -456,15 +456,15 @@ orb_modifier make_order_by_modifier(scheme_list *lst, dynamic_context *cxt)
     else if(order == "descending") m.order = ORB_DESCENDING;
     else throw USER_EXCEPTION2(SE1004, "158");
     
-    if(lst->size() ==2)
+    if(lst->size() == 2)
         m.collation = cxt->st_cxt->get_default_collation();
     else
     {
         try{
-            m.collation = cxt->st_cxt->get_collation(lst->at(1).internal.str);
+            m.collation = cxt->st_cxt->get_collation(lst->at(2).internal.str);
         }
         catch(SednaUserException &e){
-            if(e.get_code() == FOCH0002) throw USER_EXCEPTION2(XQST0076, string(lst->at(1).internal.str).c_str());
+            if(e.get_code() == FOCH0002) throw USER_EXCEPTION2(XQST0076, string(lst->at(2).internal.str).c_str());
             throw;
         }
     } 
