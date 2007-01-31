@@ -78,31 +78,34 @@ SEDNA_VERSION := $(shell cat $(PP)/ver)
 #          shared libodbc - 0
 LIBODBC_STATIC = 0
 
-SEDNA_DIRS = $(PP)/kernel/common $(PP)/kernel/common/errdbg \
-             $(PP)/kernel/common/mmgr $(PP)/kernel/common/ph \
-             $(PP)/kernel/common/u $(PP)/kernel/gov \
-             $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr \
-             $(PP)/kernel/sm/llmgr $(PP)/kernel/sm/lm \
-             $(PP)/kernel/sm/plmgr \
-             $(PP)/kernel/tr $(PP)/kernel/tr/auth \
-             $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/executor \
-             $(PP)/kernel/tr/executor/base \
-             $(PP)/kernel/tr/executor/base/decNumber \
-             $(PP)/kernel/tr/executor/base/lip \
-             $(PP)/kernel/tr/executor/fo \
-             $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/executor/root \
-             $(PP)/kernel/tr/executor/xqops $(PP)/kernel/tr/ft \
-             $(PP)/kernel/tr/idx $(PP)/kernel/tr/idx/btree \
-             $(PP)/kernel/tr/locks $(PP)/kernel/tr/log $(PP)/kernel/tr/mo \
-             $(PP)/kernel/tr/nid $(PP)/kernel/tr/pq \
-             $(PP)/kernel/tr/pstr $(PP)/kernel/tr/rcv \
-             $(PP)/kernel/tr/sqp/popt $(PP)/kernel/tr/strings \
-             $(PP)/kernel/tr/structures $(PP)/kernel/tr/updates \
-             $(PP)/kernel/tr/vmm $(PP)/kernel/tr/xqp $(PP)/kernel/tr/triggers\
-             $(PP)/driver/c $(PP)/export $(PP)/term \
-             $(PP)/driver/c $(PP)/export $(PP)/term \
-             $(PP)/libs/chicken $(PP)/libs/dtsearch/include $(PP)/libs/expat \
-             $(PP)/libs/pcre $(PP)/libs/pg $(PP)/libs/pg/h
+#SEDNA_DIRS = $(PP)/kernel/common $(PP)/kernel/common/errdbg \
+#             $(PP)/kernel/common/mmgr $(PP)/kernel/common/ph \
+#             $(PP)/kernel/common/u $(PP)/kernel/gov \
+#             $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr \
+#             $(PP)/kernel/sm/llmgr $(PP)/kernel/sm/lm \
+#             $(PP)/kernel/sm/plmgr \
+#             $(PP)/kernel/tr $(PP)/kernel/tr/auth \
+#             $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/executor \
+#             $(PP)/kernel/tr/executor/base \
+#             $(PP)/kernel/tr/executor/base/decNumber \
+#             $(PP)/kernel/tr/executor/base/lip \
+#             $(PP)/kernel/tr/executor/fo \
+#             $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/executor/root \
+#             $(PP)/kernel/tr/executor/xqops $(PP)/kernel/tr/ft \
+#             $(PP)/kernel/tr/idx $(PP)/kernel/tr/idx/btree \
+#             $(PP)/kernel/tr/locks $(PP)/kernel/tr/log $(PP)/kernel/tr/mo \
+#             $(PP)/kernel/tr/nid $(PP)/kernel/tr/pq \
+#             $(PP)/kernel/tr/pstr $(PP)/kernel/tr/rcv \
+#             $(PP)/kernel/tr/sqp/popt $(PP)/kernel/tr/strings \
+#             $(PP)/kernel/tr/structures $(PP)/kernel/tr/updates \
+#             $(PP)/kernel/tr/vmm $(PP)/kernel/tr/xqp $(PP)/kernel/tr/triggers\
+#             $(PP)/driver/c $(PP)/export $(PP)/term \
+#             $(PP)/libs/chicken $(PP)/libs/dtsearch/include $(PP)/libs/expat \
+#             $(PP)/libs/pcre $(PP)/libs/pg $(PP)/libs/pg/h
+
+SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
+             $(PP)/driver/c $(PP)/export $(PP)/term $(PP)/libs/dtsearch/include \
+             $(PP)/libs/pg/h
 
 
 ifndef INCLUDE_DIRS
@@ -110,9 +113,9 @@ INCLUDE_DIRS = $(SEDNA_DIRS)
 endif
 
 
-ifndef VPATH
-VPATH = $(SEDNA_DIRS)
-endif
+#ifndef VPATH
+#VPATH = $(SEDNA_DIRS)
+#endif
 
 
 # INCLUDE_DIRS should be defined
@@ -143,6 +146,9 @@ LIBOUT = /OUT:
 OBJ_EXT = .obj
 LIB_EXT = .lib
 EXE_EXT = .exe
+DL_EXT  = .dll
+PLD = link /LIB /NOLOGO
+PLDOUT = /OUT:
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
            /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
@@ -217,6 +223,9 @@ LIBOUT =
 OBJ_EXT = .o
 LIB_EXT = .a
 EXE_EXT =
+DL_EXT  = .so
+PLD = ld -Ur
+PLDOUT = -o 
 ifeq ("$(STATIC_SYS_LIBS)","1")
 STATIC_FLAG = -static
 else
@@ -300,9 +309,44 @@ CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
 	$(PDFLATEX) $<
 
 
+ifeq ("$(OS)", "CYGWIN_NT")
+# Win32
+%.d: %.c
+	@echo "  generating dependencies for $<"
+	@set -e; rm -f $@; \
+	gcc $(INCLUDE_DIRECTIVES_GCC) -D_WIN32 -MM $< | sed -f $(PP)/depend.sed > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1$(OBJ_EXT) $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+%.d: %.cpp
+	@echo "  generating dependencies for $<"
+	@set -e; rm -f $@; \
+	gcc $(INCLUDE_DIRECTIVES_GCC) -D_WIN32 -MM $< | sed -f $(PP)/depend.sed > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1$(OBJ_EXT) $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+else
+# UNIX
+%.d: %.c
+	@echo "  generating dependencies for $<"
+	@set -e; rm -f $@; \
+	gcc $(INCLUDE_DIRECTIVES_GCC) -MM $< | sed -f $(PP)/depend.sed > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1$(OBJ_EXT) $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+%.d: %.cpp
+	@echo "  generating dependencies for $<"
+	@set -e; rm -f $@; \
+	gcc $(INCLUDE_DIRECTIVES_GCC) -MM $< | sed -f $(PP)/depend.sed > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1$(OBJ_EXT) $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+endif
+
+
 ifeq ($(MAKECMDGOALS),clean)
 
 generic_clean: 
+	-$(REMOVE) *$(OBJ_EXT)
+	-$(REMOVE) *$(LIB_EXT)
 	-$(REMOVE) *.bb
 	-$(REMOVE) *.bbg
 	-$(REMOVE) *.da
@@ -310,6 +354,9 @@ generic_clean:
 	-$(REMOVE) *.pdb
 	-$(REMOVE) vc*.idb
 	-$(REMOVE) *.SUP
-
+	-$(REMOVE) *.d
+	-$(REMOVE) *.d.*
+	-$(REMOVE) generated
 
 endif
+

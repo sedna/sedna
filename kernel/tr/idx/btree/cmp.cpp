@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "btstruct.h"
-#include "counted_ptr.h"
-#include "XMLDateTime.h"
+#include "common/sedna.h"
+#include "tr/idx/btree/btstruct.h"
+#include "common/counted_ptr.h"
+#include "tr/executor/base/XMLDateTime.h"
 
 
 /* returns 1 if k1>k2; -1 if k1<k2; 0 if k1=k2 */

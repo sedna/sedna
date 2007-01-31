@@ -7,8 +7,8 @@
 #ifndef _XPTRHASH_H
 #define _XPTRHASH_H
 
-#include "sedna.h"
-#include "xptr.h"
+#include "common/sedna.h"
+#include "common/xptr.h"
 
 // T - value type
 // 32-bit part of xptr is hashed by the following template:

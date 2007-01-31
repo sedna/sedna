@@ -47,7 +47,7 @@
     #define DECNUMDIGITS DECIMAL64_Pmax // size if not already defined
   #endif
   #ifndef DECNUMBER
-    #include "decNumber.h"              // context and number library
+    #include "tr/executor/base/decNumber/decNumber.h"              // context and number library
   #endif
 
   /* Decimal 64-bit type, accessible by bytes */

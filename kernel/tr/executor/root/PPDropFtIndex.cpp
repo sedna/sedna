@@ -3,10 +3,10 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDropFtIndex.h"
-#include "PPUtils.h"
+#include "tr/executor/root/PPDropFtIndex.h"
+#include "tr/executor/base/PPUtils.h"
 
 PPDropFtIndex::PPDropFtIndex(PPOpIn _index_name_, dynamic_context *_cxt_) : index_name(_index_name_), cxt(_cxt_)
 {

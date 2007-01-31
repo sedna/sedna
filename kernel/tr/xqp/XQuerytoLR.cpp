@@ -3,20 +3,20 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "XQuerytokens.h"
-#include "XQueryDLGLexer.h"
-#include "ANTLRToken.h"
-#include "XQueryParser.h"
-#include "XQueryTreeParser.h"
+#include "tr/xqp/XQuerytokens.h"
+#include "tr/xqp/XQueryDLGLexer.h"
+#include "tr/xqp/ANTLRToken.h"
+#include "tr/xqp/XQueryParser.h"
+#include "tr/xqp/XQueryTreeParser.h"
 #include "ATokPtr.h"
 #include "ASTBase.h"
-#include "AST.h"
-#include "XQuerytoLR.h"
-#include "base.h"
-#include "d_printf.h"
-#include "tr_utils.h"
+#include "tr/xqp/AST.h"
+#include "tr/xqp/XQuerytoLR.h"
+#include "common/base.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/tr_utils.h"
 #include <iostream>
 #include <string>
 #include <vector>

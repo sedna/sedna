@@ -6,12 +6,12 @@
 #ifndef _TRANS_TABLE_H_
 #define _TRANS_TABLE_H_
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <map>
-#include "base.h"
-#include "usem.h"
-#include "TransCB.h"
-#include "lm_base.h"
+#include "common/base.h"
+#include "common/u/usem.h"
+#include "sm/lm/TransCB.h"
+#include "common/lm_base.h"
 
 
 class tr_lock_head

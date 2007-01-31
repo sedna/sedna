@@ -3,14 +3,14 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "op_map.h"
-#include "boolean_operations.h"
-#include "comparison_operations.h"
-#include "dateTime_operations.h"
-#include "numeric_operations.h"
-#include "string_operations.h"
-#include "other_fo.h"
+#include "common/sedna.h"
+#include "tr/executor/fo/op_map.h"
+#include "tr/executor/fo/boolean_operations.h"
+#include "tr/executor/fo/comparison_operations.h"
+#include "tr/executor/fo/dateTime_operations.h"
+#include "tr/executor/fo/numeric_operations.h"
+#include "tr/executor/fo/string_operations.h"
+#include "tr/executor/fo/other_fo.h"
 
 
 

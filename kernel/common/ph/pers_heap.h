@@ -18,8 +18,8 @@
 #ifndef _PERS_MALLOC_H
 #define _PERS_MALLOC_H
 
-#include "u.h"
-#include "usecurity.h"
+#include "common/u/u.h"
+#include "common/u/usecurity.h"
 
 int pers_init(const char *file_name, const char *fm_name, global_name sph_name, const void *addr, int mem_release = 0);
 int pers_release();

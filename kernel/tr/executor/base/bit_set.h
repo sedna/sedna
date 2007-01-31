@@ -6,7 +6,7 @@
 #ifndef _BIT_SET_H
 #define _BIT_SET_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 class bit_set {
 

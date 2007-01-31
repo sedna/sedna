@@ -5,11 +5,11 @@
 
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "gmm.h"
-#include "base.h"
-#include "xptr.h"
+#include "common/gmm.h"
+#include "common/base.h"
+#include "common/xptr.h"
 
 
 static UMMap global_memory_mapping;

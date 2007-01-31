@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "listener.h"
-#include "d_printf.h"
-#include "gov_globals.h"
-#include "sp.h"
-#include "usem.h"
-#include "uutils.h"
+#include "gov/listener.h"
+#include "common/errdbg/d_printf.h"
+#include "gov/gov_globals.h"
+#include "common/sp.h"
+#include "common/u/usem.h"
+#include "common/u/uutils.h"
 
 
 using namespace std;

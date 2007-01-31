@@ -1,61 +1,43 @@
 #
-# Makefile for IDX
+# Makefile for idx
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-
-
-all: libidx$(LIB_EXT)
+all: idx$(LIB_EXT)
 	@echo ===================================================================
-	@echo IDX DONE
+	@echo idx DONE
 	@echo ===================================================================
 
+OBJS      = index_data$(OBJ_EXT) indexes$(OBJ_EXT)
+SUBDIRS   = btree
+SUBDIROBJS= $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-.PHONY: clean libraries
-
-
-BTREE_LIB = btree/libbtree$(LIB_EXT)
-ifeq ($(PLATFORM), WIN32)
-BTREE_S = $(BTREE_LIB)
-else
-BTREE_S = -Lbtree -lbtree
-endif
-
-IDX_LIB = libidx$(LIB_EXT)
-
-$(BTREE_LIB): libraries
-	
-
 ################################################################################
-# idx.lib                                                                      #
+# idx                                                                 #
 ################################################################################
-$(IDX_LIB): indexes$(OBJ_EXT) index_data$(OBJ_EXT) $(BTREE_LIB)
-	$(LB) $(LIBFLAGS) $(LIBOUT)$@ indexes$(OBJ_EXT) index_data$(OBJ_EXT)
+idx$(LIB_EXT): $(OBJS) $(SUBDIROBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
-libraries:
-	$(MAKE) -C btree
+
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
+
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@)
 
 
 ################################################################################
 # Clean                                                                        #
 ################################################################################
+.PHONY: clean
+
 clean: generic_clean
-	$(MAKE) -C btree clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors
-	-$(REMOVE) log
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 

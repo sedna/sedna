@@ -8,11 +8,11 @@
 #define __TRIGGERS_H
 
 #include <set>
-#include "triggers_data.h"
-#include "triggers_utils.h"
-#include "xptr.h"
-#include "xptr_sequence.h"
-#include "schema.h"
+#include "tr/triggers/triggers_data.h"
+#include "tr/triggers/triggers_utils.h"
+#include "common/xptr.h"
+#include "tr/executor/base/xptr_sequence.h"
+#include "tr/structures/schema.h"
 
 
 xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event, const char* new_name = NULL, t_item new_type = element);

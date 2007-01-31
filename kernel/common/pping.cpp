@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "pping.h"
-#include "d_printf.h"
+#include "common/pping.h"
+#include "common/errdbg/d_printf.h"
 
 
 #ifdef _WIN32

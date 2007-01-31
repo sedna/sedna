@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "_pers_malloc.h"
+#include "common/ph/_pers_malloc.h"
 
 /* How to really get more memory. */
 /* void *(*_morecore)(long) = _default_morecore; */

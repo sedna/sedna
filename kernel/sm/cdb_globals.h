@@ -6,10 +6,10 @@
 #ifndef _CDB_GLOBALS_H
 #define _CDB_GLOBALS_H
 
-#include "sedna.h"
-#include "u.h"
-#include "argtable.h"
-#include "base.h"
+#include "common/sedna.h"
+#include "common/u/u.h"
+#include "common/argtable.h"
+#include "common/base.h"
 
 #define MAX_ARGS_LENGTH 1000
 

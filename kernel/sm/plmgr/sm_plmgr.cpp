@@ -5,12 +5,12 @@
 
 #include <iostream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "plmgr_core.h"
-#include "sm_plmgr.h"
-#include "bm_rcv.h"
-#include "d_printf.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "sm/plmgr/sm_plmgr.h"
+#include "sm/bufmgr/bm_rcv.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 /*****************************************************************************

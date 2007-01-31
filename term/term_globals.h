@@ -6,9 +6,9 @@
 #ifndef _TERM_GLOBALS_H
 #define _TERM_GLOBALS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include "libsedna.h"
-#include "argtable.h"
+#include "common/argtable.h"
 	
 	
 #define TERM_ARGSTRLEN 511

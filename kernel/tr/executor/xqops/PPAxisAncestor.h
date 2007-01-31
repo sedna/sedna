@@ -9,11 +9,11 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPath.h"
-#include "node_utils.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/crmutils/node_utils.h"
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisAncestor
 ///////////////////////////////////////////////////////////////////////////////

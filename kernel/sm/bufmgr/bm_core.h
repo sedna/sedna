@@ -7,15 +7,15 @@
 #ifndef _BM_CORE_H
 #define _BM_CORE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <map>
-#include "XptrHash.h"
-#include "IntList.h"
-#include "usem.h"
-#include "uhdd.h"
-#include "ushm.h"
-#include "ummap.h"
-#include "persistent_db_data.h"
+#include "common/XptrHash.h"
+#include "common/IntList.h"
+#include "common/u/usem.h"
+#include "common/u/uhdd.h"
+#include "common/u/ushm.h"
+#include "common/u/ummap.h"
+#include "common/persistent_db_data.h"
 
 
 /*******************************************************************************

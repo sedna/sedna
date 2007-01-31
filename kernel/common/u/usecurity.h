@@ -12,7 +12,7 @@
 #endif
 
 
-#include "u.h"
+#include "common/u/u.h"
 
 #define REQUIRE_ROOT
 

@@ -3,14 +3,23 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "dynamic_context.h"
-#include "PPBase.h"
-#include "xs_uri.h"
-#include "xs_helper.h"
+#include "tr/executor/base/dynamic_context.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/xs_uri.h"
+#include "tr/executor/base/xs_helper.h"
 
 
+producer::producer() : type(pt_not_defined), 
+                 s(NULL), 
+                 op(NULL), 
+                 svc(NULL), 
+                 cvc(NULL), 
+                 tuple_pos(0), 
+                 t(NULL) 
+{
+}
 producer::~producer()
 {
     switch (type)

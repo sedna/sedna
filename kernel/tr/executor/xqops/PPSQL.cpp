@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPSQL.h"
-#include "PPSQLODBC.h"
+#include "tr/executor/xqops/PPSQL.h"
+#include "tr/executor/xqops/PPSQLODBC.h"
 
-#include "schema.h"
-#include "PPUtils.h"
-#include "node_utils.h"
-#include "casting_operations.h"
-#include "dm_accessors.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/dm_accessors.h"
 
 const char *sqlns_uri = "http://modis.ispras.ru/Sedna/SQL";
 

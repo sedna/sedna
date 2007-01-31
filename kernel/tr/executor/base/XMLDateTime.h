@@ -17,11 +17,11 @@
 #ifndef XML_DATETIME_H
 #define XML_DATETIME_H
 
-#include "sedna.h"
-#include "counted_ptr.h"
-#include "base.h"
-#include "nodes.h"
-#include "utime.h"
+#include "common/sedna.h"
+#include "common/counted_ptr.h"
+#include "common/base.h"
+#include "tr/structures/nodes.h"
+#include "common/u/utime.h"
 
 typedef __int64 bigint;
 

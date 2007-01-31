@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPIndexScan.h"
-#include "locks.h"
-#include "indexes.h"
-#include "vmm.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
+#include "tr/executor/xqops/PPIndexScan.h"
+#include "tr/locks/locks.h"
+#include "tr/idx/indexes.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
 
 
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_, 

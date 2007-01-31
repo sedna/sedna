@@ -1,37 +1,28 @@
 #
-# Makefile for structures (GNU make)
+# Makefile for structures
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: libstructures$(LIB_EXT)
+all: structures$(LIB_EXT)
 	@echo ===================================================================
-	@echo STRUCTURES DONE
+	@echo structures DONE
 	@echo ===================================================================
+
+OBJS = indirection$(OBJ_EXT) metadata$(OBJ_EXT) nodes$(OBJ_EXT) schema$(OBJ_EXT)
 
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-STRUCTURES_LIB = libstructures$(LIB_EXT)
-
 ################################################################################
-# STRUCTURES                                                                   #
+# structures.lib                                                               #
 ################################################################################
-$(STRUCTURES_LIB): indirection$(OBJ_EXT) 	\
-                   metadata$(OBJ_EXT)		\
-                   nodes$(OBJ_EXT)			\
-                   schema$(OBJ_EXT)
+structures$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
 
 ################################################################################
 # Clean                                                                        #
@@ -39,7 +30,3 @@ $(STRUCTURES_LIB): indirection$(OBJ_EXT) 	\
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(STRUCTURES_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "FTsearch.h"
-#include "PPBase.h"
-#include "tr_globals.h"
+#include "tr/ft/FTsearch.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/tr_globals.h"
 
 using namespace dtSearch;
 

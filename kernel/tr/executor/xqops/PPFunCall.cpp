@@ -6,12 +6,12 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPFunCall.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
-#include "PPSLStub.h"
+#include "tr/executor/xqops/PPFunCall.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/xqops/PPSLStub.h"
 
 using namespace std;
 

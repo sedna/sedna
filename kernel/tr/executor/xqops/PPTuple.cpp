@@ -5,8 +5,8 @@
 
 
 #include <vector>
-#include "sedna.h"
-#include "PPTuple.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPTuple.h"
 
 using namespace std;
 

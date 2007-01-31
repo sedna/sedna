@@ -4,7 +4,7 @@
  */
 
 
-#include "umutex.h"
+#include "common/u/umutex.h"
 
 
 int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)

@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "exceptions.h"
-#include "uprocess.h"
-#include "event_log.h"
+#include "common/sedna.h"
+#include "common/errdbg/exceptions.h"
+#include "common/u/uprocess.h"
+#include "common/errdbg/event_log.h"
 
 
 void sedna_soft_fault(const SednaException &e,  int component)

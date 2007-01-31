@@ -7,13 +7,13 @@
 #ifndef _VMM_H
 #define _VMM_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "os_exceptions.h"
-#include "SSMMsg.h"
-#include "persistent_db_data.h"
-#include "uthread.h"
+#include "common/xptr.h"
+#include "tr/vmm/os_exceptions.h"
+#include "common/SSMMsg.h"
+#include "common/persistent_db_data.h"
+#include "common/u/uthread.h"
 
 
 //#define VMM_GATHER_STATISTICS

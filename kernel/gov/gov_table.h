@@ -9,10 +9,10 @@
 #include <string>
 #include <map>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "ushm.h"
+#include "common/base.h"
+#include "common/u/ushm.h"
 
 #define GOV_SHM (gov_shared_mem)
 #define GOV_SHM_HEADER_OFFS ((char*)gov_shared_mem + sizeof(gov_header_struct))

@@ -3,10 +3,10 @@
  * Copyright (C) 2004-2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "comparison_operations.h"
-#include "numb_scheme.h"
+#include "tr/executor/fo/comparison_operations.h"
+#include "tr/nid/numb_scheme.h"
 
 tuple_cell node_comp_is(const tuple_cell &a1, const tuple_cell &a2)
 {

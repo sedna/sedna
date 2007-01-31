@@ -5,14 +5,14 @@
 PP = ..
 
 include $(PP)/Makefile.include
-
 	
 all: 
 ifeq ($(JAVA_DRIVER),1)
 	$(MAKE) -C java
 endif
-	$(MAKE) -C c depend
 	$(MAKE) -C c
+
+.PHONY: clean
 
 clean:
 ifeq ($(JAVA_DRIVER),1)

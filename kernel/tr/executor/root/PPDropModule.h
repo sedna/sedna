@@ -7,8 +7,8 @@
 #ifndef _PPDROPMODULE_H
 #define _PPDROPMODULE_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPDropModule : public PPUpdate
 {

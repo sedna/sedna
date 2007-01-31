@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "updates.h"
-#include "xptr_sequence.h"
-#include "micro.h"
-#include "auc.h"
+#include "tr/updates/updates.h"
+#include "tr/executor/base/xptr_sequence.h"
+#include "tr/mo/micro.h"
+#include "tr/auth/auc.h"
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers.h"
+#include "tr/triggers/triggers.h"
 #endif
 
 void replace(PPOpIn arg)

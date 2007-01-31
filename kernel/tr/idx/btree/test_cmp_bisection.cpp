@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "btintern.h"
+#include "common/sedna.h"
+#include "tr/idx/btree/btintern.h"
 
 /* 
 ->bool bt_locate_obj_bisection(object* ar, shft ar_size, object obj, shft &obj_idx)

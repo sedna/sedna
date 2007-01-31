@@ -14,9 +14,9 @@
 
 */
 
-#include "sedna.h"
-#include "ext_sort.h"
-#include "vmm.h"
+#include "common/sedna.h"
+#include "tr/executor/base/ext_sort.h"
+#include "tr/vmm/vmm.h"
 
 struct merged_seq_top
 {
@@ -51,6 +51,7 @@ int merged_seq_top_cmp(const void *e1, const void *e2)
 
 void ext_sort(sequence *s, const order_spec_list& osl, bool stable)
 {
+/*
     int number_of_potentially_allocated_blocks;
     vmm_enter_exclusive_mode(&number_of_potentially_allocated_blocks);
     number_of_potentially_allocated_blocks -= 10; //!!!
@@ -125,5 +126,6 @@ void ext_sort(sequence *s, const order_spec_list& osl, bool stable)
         vmm_exit_exclusive_mode();
         throw;
     }
+*/
 }
 

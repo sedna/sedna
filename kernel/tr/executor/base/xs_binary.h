@@ -6,8 +6,8 @@
 #ifndef _XS_BIMARY_H
 #define _XS_BINARY_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 /////////////////////////////////////////////////////////////////////
 /// This file defines interface fot casting to or from binary types.

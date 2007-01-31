@@ -6,13 +6,13 @@
 #ifndef _LOCKS_H
 #define _LOCKS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <list>
 
-#include "nodes.h"
-#include "lm_base.h"
-#include "usem.h"
-#include "SSMMsg.h"
+#include "tr/structures/nodes.h"
+#include "common/lm_base.h"
+#include "common/u/usem.h"
+#include "common/SSMMsg.h"
 
 
 void lockWrite(node_blk_hdr* block);

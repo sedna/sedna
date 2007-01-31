@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 enum scheme_type { SCM_BOOL, 
                    SCM_SYMBOL, 

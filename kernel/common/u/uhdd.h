@@ -6,8 +6,8 @@
 #ifndef _UHDD_H
 #define _UHDD_H
 
-#include "u.h"
-#include "usecurity.h"
+#include "common/u/u.h"
+#include "common/u/usecurity.h"
 
 
 

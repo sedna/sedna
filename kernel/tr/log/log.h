@@ -7,17 +7,17 @@
 #ifndef _LOG_H
 #define _LOG_H
 
-#include "sedna.h"
-#include "xptr.h"
-#include "nodes.h"
-#include "micro.h"
-#include "llmgr_core.h"
+#include "common/sedna.h"
+#include "common/xptr.h"
+#include "tr/structures/nodes.h"
+#include "tr/mo/micro.h"
+#include "sm/llmgr/llmgr_core.h"
 #include <string>
-#include "PPBase.h"
-#include "tr_plmgr.h"
+#include "tr/executor/base/PPBase.h"
+#include "sm/plmgr/tr_plmgr.h"
 
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
+#include "tr/ft/ft_index_data.h"
 #endif
 
 void hl_phys_log_on_session_begin(std::string phys_log_path);

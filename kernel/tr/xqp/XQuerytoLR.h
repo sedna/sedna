@@ -8,9 +8,9 @@
 
 #include <string>
 #include <vector>
-#include "base.h"
-#include "scheme_tree.h"
-#include "SORAST.h"
+#include "common/base.h"
+#include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/xqp/SORAST.h"
 
 
 struct script_struct

@@ -7,11 +7,11 @@
 #ifndef _TR_GLOBALS_H
 #define _TR_GLOBALS_H
 
-#include "sedna.h"
-#include "base.h"
-#include "client_core.h"
-#include "argtable.h"
-#include "persistent_db_data.h"
+#include "common/sedna.h"
+#include "common/base.h"
+#include "tr/client_core.h"
+#include "common/argtable.h"
+#include "common/persistent_db_data.h"
 
 #define TR_ARG_MAX_LENGTH       511
 

@@ -7,8 +7,8 @@
 #ifndef _DATETIME_OPERATIONS_H
 #define _DATETIME_OPERATIONS_H
 
-#include "sedna.h"
-#include "tuple.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
 
 /*******************************************************************************
  * OPERATORS ON DATETIME VALUES: BEGIN

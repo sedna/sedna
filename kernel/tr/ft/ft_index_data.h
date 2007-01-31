@@ -7,12 +7,12 @@
 #define _FT_INDEX_DATA_H
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usem.h"
-#include "nodes.h"
-#include "xptr_sequence.h"
-#include "XPathOnSchema.h"
+#include "common/u/usem.h"
+#include "tr/structures/nodes.h"
+#include "tr/executor/base/xptr_sequence.h"
+#include "tr/executor/base/XPathOnSchema.h"
 
 class PathExpr;
 enum ft_index_type

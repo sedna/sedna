@@ -3,12 +3,12 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "PPUriFuncs.h"
-#include "PPUtils.h"
-#include "strings.h"
-#include "xs_uri.h"
-#include "xs_helper.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPUriFuncs.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/strings/strings.h"
+#include "tr/executor/base/xs_uri.h"
+#include "tr/executor/base/xs_helper.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

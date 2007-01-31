@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPUtils.h"
-#include "casting_operations.h"
-#include "ext.h"
-#include "sedna_ef.h"
-#include "PPExtFunCall.h"
-#include "tr_globals.h"
-#include "e_string.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/por2qep/ext.h"
+#include "common/sedna_ef.h"
+#include "tr/executor/xqops/PPExtFunCall.h"
+#include "tr/tr_globals.h"
+#include "tr/strings/e_string.h"
 
 #ifdef _WIN32
 #else

@@ -1,38 +1,28 @@
 #
-# Makefile for strings (GNU make)
+# Makefile for strings
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: libstrings$(LIB_EXT)
+all: strings$(LIB_EXT)
 	@echo ===================================================================
-	@echo STRINGS DONE
+	@echo strings DONE
 	@echo ===================================================================
 
+OBJS = e_string$(OBJ_EXT) e_string_iterator$(OBJ_EXT) strings_base$(OBJ_EXT) \
+       strings$(OBJ_EXT) utf8$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-STRINGS_LIB = libstrings$(LIB_EXT)
-
 ################################################################################
-# STRUCTURES                                                                   #
+# strings.lib                                                                  #
 ################################################################################
-$(STRINGS_LIB): strings$(OBJ_EXT) 	\
-                e_string_iterator$(OBJ_EXT) \
-                strings_base$(OBJ_EXT) \
-                e_string$(OBJ_EXT) \
-                utf8$(OBJ_EXT)
+strings$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
 
 ################################################################################
 # Clean                                                                        #
@@ -40,7 +30,3 @@ $(STRINGS_LIB): strings$(OBJ_EXT) 	\
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(STRINGS_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

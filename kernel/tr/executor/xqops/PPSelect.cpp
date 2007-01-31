@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPSelect.h"
-#include "PPUtils.h"
-#include "PPSLStub.h"
-#include "PPSResLStub.h"
+#include "tr/executor/xqops/PPSelect.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/xqops/PPSResLStub.h"
 
 
 PPSelect::PPSelect(dynamic_context *_cxt_,

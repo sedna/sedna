@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "metadata.h"
-#include "xptr.h"
-#include "micro.h"
-#include "log.h"
-#include "indirection.h"
-#include "crmutils.h"
-#include "locks.h"
-#include "indexes.h"
+#include "tr/structures/metadata.h"
+#include "common/xptr.h"
+#include "tr/mo/micro.h"
+#include "tr/log/log.h"
+#include "tr/structures/indirection.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/locks/locks.h"
+#include "tr/idx/indexes.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
-#include "updates.h"
+#include "tr/ft/ft_index_data.h"
+#include "tr/updates/updates.h"
 #endif
 using namespace std;
 pers_sset<sn_metadata_cell,unsigned short> *metadata;

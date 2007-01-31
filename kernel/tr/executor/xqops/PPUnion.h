@@ -7,8 +7,8 @@
 #ifndef _PPUNION_H
 #define _PPUNION_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPUnion : public PPIterator
 {

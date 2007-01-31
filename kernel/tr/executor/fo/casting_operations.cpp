@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <math.h>
-#include "casting_operations.h"
-#include "xs_helper.h"
-#include "dm_accessors.h"
-#include "xs_binary.h"
-#include "xs_names.h"
-#include "xs_uri.h"
-#include "xsd.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/base/xs_binary.h"
+#include "tr/executor/base/xs_names.h"
+#include "tr/executor/base/xs_uri.h"
+#include "tr/executor/base/xsd.h"
 
 
 /******************************************************************************/

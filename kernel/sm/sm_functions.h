@@ -7,8 +7,8 @@
 #ifndef _SM_FUNCTIONS_H
 #define _SM_FUNCTIONS_H
 
-#include "sedna.h"
-#include "expat.h"
+#include "common/sedna.h"
+#include "expat/expat.h"
 
 /******************************************************************************/
 //HANDLERS FOR PARSING CONFIG FILES

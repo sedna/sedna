@@ -11,7 +11,7 @@
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include "sprompt.h"
 
 #ifdef _WIN32

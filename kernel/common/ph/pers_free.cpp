@@ -21,7 +21,7 @@
 #include <limits.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "_pers_malloc.h"
+#include "common/ph/_pers_malloc.h"
 
 /* Return memory to the heap. */
 void

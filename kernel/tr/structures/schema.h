@@ -7,10 +7,10 @@
 #ifndef _SCHEMA_H
 #define _SCHEMA_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "nodes.h"
-#include "pers_map.h"
+#include "tr/structures/nodes.h"
+#include "tr/structures/pers_map.h"
 
 #define ISINDEXSUPPORTED(schema) schema->index_object!=NULL
 

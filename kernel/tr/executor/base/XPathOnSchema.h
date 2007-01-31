@@ -10,10 +10,10 @@
 #include <vector>
 #include <set>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "schema.h"
-#include "XPath.h"
+#include "tr/structures/schema.h"
+#include "tr/executor/base/XPath.h"
 
 
 typedef std::vector<const schema_node*> t_scmnodes_const;

@@ -21,8 +21,8 @@
 /* ------------------------------------------------------------------ */
 
 #include <string.h>           // for strcmp
-#include "decContext.h"       // context and base types
-#include "decNumberLocal.h"   // decNumber local types, etc.
+#include "tr/executor/base/decNumber/decContext.h"       // context and base types
+#include "tr/executor/base/decNumber/decNumberLocal.h"   // decNumber local types, etc.
 
 /* ------------------------------------------------------------------ */
 /* decContextDefault -- initialize a context structure                */

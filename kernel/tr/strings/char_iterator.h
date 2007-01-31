@@ -9,7 +9,7 @@
 #include <iterator>
 #include <list>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 //#define ITERATOR_CHECK_BOUNDS
 

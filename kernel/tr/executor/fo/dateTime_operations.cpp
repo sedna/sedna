@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <math.h>
-#include "dateTime_operations.h"
-#include "casting_operations.h"
-#include "XMLDateTime.h"
+#include "tr/executor/fo/dateTime_operations.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/XMLDateTime.h"
 
 tuple_cell op_add_yearMonthDuration_to_date(const tuple_cell &a1, const tuple_cell &a2)
 {

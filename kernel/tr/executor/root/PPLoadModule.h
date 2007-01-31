@@ -7,8 +7,8 @@
 #ifndef _PPLOADMODULE_H
 #define _PPLOADMODULE_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPLoadModule : public PPUpdate
 {

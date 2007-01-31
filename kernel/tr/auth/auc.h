@@ -6,13 +6,13 @@
 #ifndef _AUC
 #define _AUC
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <map>
 #include <set>
 #include <iostream>
 
-#include "PPBase.h"
-#include "xptr_sequence.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/xptr_sequence.h"
 
 
 #define INSERT_STATEMENT                      1

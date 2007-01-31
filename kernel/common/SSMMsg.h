@@ -11,11 +11,11 @@
 
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usem.h"
-#include "uthread.h"
-#include "ushm.h"
+#include "common/u/usem.h"
+#include "common/u/uthread.h"
+#include "common/u/ushm.h"
 
 #define SSMMSG_DEFAULT_TIMEOUT		10000
 

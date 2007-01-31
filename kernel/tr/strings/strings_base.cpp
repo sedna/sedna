@@ -3,10 +3,10 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "strings_base.h"
-#include "exec_output.h"
+#include "tr/strings/strings_base.h"
+#include "tr/crmutils/exec_output.h"
 
 
 void writextext_cb(const char *str, int len, void *p)

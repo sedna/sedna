@@ -11,11 +11,11 @@
  structures describing internal representation of XML data 
 */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "sm_vmm_data.h"
-#include "numb_scheme.h"
+#include "common/base.h"
+#include "common/sm_vmm_data.h"
+#include "tr/nid/numb_scheme.h"
 
 struct schema_node;
 struct xml_ns;

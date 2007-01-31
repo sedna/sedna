@@ -1,34 +1,27 @@
 #
-# Makefile for mo (GNU make)
+# Makefile for mo
 #
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: libmo$(LIB_EXT)
+all: mo$(LIB_EXT)
 	@echo ===================================================================
-	@echo MO DONE
+	@echo mo DONE
 	@echo ===================================================================
 
+OBJS = micro$(OBJ_EXT) mo_write_utils$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-MO_LIB = libmo$(LIB_EXT)
-
 ################################################################################
-# MO                                                                          #
+# mo.lib                                                                       #
 ################################################################################
-$(MO_LIB):    micro$(OBJ_EXT) mo_write_utils$(OBJ_EXT)
+mo$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
 
 ################################################################################
 # Clean                                                                        #
@@ -36,7 +29,3 @@ $(MO_LIB):    micro$(OBJ_EXT) mo_write_utils$(OBJ_EXT)
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(MO_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

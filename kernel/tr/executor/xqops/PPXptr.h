@@ -6,9 +6,9 @@
 #ifndef __PPXPTR_H
 #define __PPXPTR_H
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "triggers_data.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/triggers/triggers_data.h"
 
 class PPXptr : public PPIterator
 {

@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPCreateFtIndex.h"
-#include "PPUtils.h"
-#include "PPBase.h"
+#include "tr/executor/root/PPCreateFtIndex.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPBase.h"
 
 
 ft_index_type str2index_type(const char *str)

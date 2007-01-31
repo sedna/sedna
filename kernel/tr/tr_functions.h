@@ -6,21 +6,21 @@
 #ifndef _TR_FUNCTIONS
 #define _TR_FUNCTIONS
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "upipe.h"
-#include "exec_output.h"
-#include "SSMMsg.h"
-#include "base.h"
-#include "crmutils.h"
-#include "PPBase.h"
-#include "d_printf.h"
-#include "ipc_ops.h"
-#include "por2qep.h"
-#include "indirection.h"
-#include "tr_globals.h"
-#include "XQuerytoLR.h"
-#include "tr_common_funcs.h"
+#include "common/u/upipe.h"
+#include "tr/crmutils/exec_output.h"
+#include "common/SSMMsg.h"
+#include "common/base.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/executor/base/PPBase.h"
+#include "common/errdbg/d_printf.h"
+#include "common/ipc_ops.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "tr/structures/indirection.h"
+#include "tr/tr_globals.h"
+#include "tr/xqp/XQuerytoLR.h"
+#include "tr/tr_common_funcs.h"
 
 #define ENV_BUF_SIZE 1000
 

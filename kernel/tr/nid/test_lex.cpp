@@ -5,9 +5,9 @@
 
 #include <iostream>
 #include <string.h>
-#include "lex.h"
-#include "nidalloc.h"
-#include "persistent_db_data.h"
+#include "tr/nid/lex.h"
+#include "tr/nid/nidalloc.h"
+#include "common/persistent_db_data.h"
 
 extern char DC;
 

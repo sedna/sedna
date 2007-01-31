@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "os_exceptions.h"
-#include "vmm.h"
+#include "tr/vmm/os_exceptions.h"
+#include "tr/vmm/vmm.h"
 
 
 //#define PRINT_STACK_TRACE
@@ -94,7 +94,7 @@ void OS_exceptions_handler::leave_stack_overflow_critical_section()
 #ifdef PRINT_STACK_TRACE
 #include <ucontext.h>
 #include <dlfcn.h>
-#include "d_printf.h"
+#include "common/errdbg/d_printf.h"
 #endif
 
 jmp_buf stack_overflow_env;

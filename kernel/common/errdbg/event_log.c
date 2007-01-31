@@ -3,12 +3,12 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "event_log.h"
-#include "uutils.h"
-#include "uthread.h"
-#include "ushm.h"
-#include "usem.h"
-#include "uhdd.h"
+#include "common/errdbg/event_log.h"
+#include "common/u/uutils.h"
+#include "common/u/uthread.h"
+#include "common/u/ushm.h"
+#include "common/u/usem.h"
+#include "common/u/uhdd.h"
 
 
 

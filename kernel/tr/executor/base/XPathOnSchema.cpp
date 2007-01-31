@@ -4,12 +4,12 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "XPathOnSchema.h"
-#include "PPBase.h"
-#include "node_utils.h"
-#include "d_printf.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/crmutils/node_utils.h"
+#include "common/errdbg/d_printf.h"
 
 #define PNK_ELEMENT				element
 #define PNK_ATTRIBUTE			attribute

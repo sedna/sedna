@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "auc.h"
-#include "d_printf.h"
-#include "por2qep.h"
-#include "locks.h"
-#include "tr_globals.h"
-#include "metadata.h"
-#include "uprocess.h"
+#include "common/sedna.h"
+#include "tr/auth/auc.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "tr/locks/locks.h"
+#include "tr/tr_globals.h"
+#include "tr/structures/metadata.h"
+#include "common/u/uprocess.h"
 
 
 using namespace std;

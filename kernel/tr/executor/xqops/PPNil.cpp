@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "PPNil.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPNil.h"
 
 PPNil::PPNil(dynamic_context *_cxt_) : PPIterator(_cxt_)
 {

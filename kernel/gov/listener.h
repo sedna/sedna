@@ -6,7 +6,7 @@
 #ifndef _LST_H
 #define _LST_H
 
-#include "usocket.h"
+#include "common/u/usocket.h"
 
 int sess_registering(USOCKET s, char* msg_buf);
 int sm_registering(USOCKET s, char* msg_buf);

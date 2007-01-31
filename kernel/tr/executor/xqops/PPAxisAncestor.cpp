@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPAxisAncestor.h"
-#include "node_utils.h"
-#include "PPUtils.h"
-#include "dm_accessors.h"
+#include "tr/executor/xqops/PPAxisAncestor.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/dm_accessors.h"
 
 void PPAxisAncestor::init_function()
 {

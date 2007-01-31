@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "vmm.h"
-#include "sequence.h"
-#include "seq_common.h"
-#include "e_string.h"
-#include "node_utils.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/sequence.h"
+#include "tr/executor/base/seq_common.h"
+#include "tr/strings/e_string.h"
+#include "tr/crmutils/node_utils.h"
 
 
 //////////////////////////////////////////////////////////////////////////////

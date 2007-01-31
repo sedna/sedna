@@ -6,9 +6,9 @@
 #ifndef _PPERROR_H
 #define _PPERROR_H
 
-#include "sedna.h"
-#include "exec_output.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/executor/base/PPBase.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error

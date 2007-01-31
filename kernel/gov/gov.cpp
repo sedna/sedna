@@ -7,23 +7,23 @@
 #include <iostream>
 #include <string>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "SSMMsg.h"
-#include "usem.h"
-#include "base.h"
-#include "gov_globals.h"
-#include "gov_functions.h"
-#include "d_printf.h"
-#include "pping.h"
-#include "version.h"
-#include "ugc.h"
-#include "gov_table.h"
-#include "listener.h"
-#include "uprocess.h"
-#include "gmm.h"
-#include "ipc_ops.h"
-#include "memutils.h"
+#include "common/SSMMsg.h"
+#include "common/u/usem.h"
+#include "common/base.h"
+#include "gov/gov_globals.h"
+#include "gov/gov_functions.h"
+#include "common/errdbg/d_printf.h"
+#include "common/pping.h"
+#include "common/version.h"
+#include "common/ugc.h"
+#include "gov/gov_table.h"
+#include "gov/listener.h"
+#include "common/u/uprocess.h"
+#include "common/gmm.h"
+#include "common/ipc_ops.h"
+#include "common/mmgr/memutils.h"
 
 
 #define GOV_BACKGROUND_MODE_TIMEOUT					15000

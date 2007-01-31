@@ -3,13 +3,13 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "btree.h"
-#include "btintern.h"
-#include "btpage.h"
-#include "btstruct.h"
-#include "vmm.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/idx/btree/btintern.h"
+#include "tr/idx/btree/btpage.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/vmm/vmm.h"
 
 /* variables for debug */
 //shft	BTREE_HEIGHT=1;

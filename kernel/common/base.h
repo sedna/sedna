@@ -10,10 +10,10 @@
 #include <string>
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "utils.h"
-#include "uprocess.h"
+#include "common/utils.h"
+#include "common/u/uprocess.h"
 
 #define SEDNA_DATA_STRUCTURES_VER 2
 

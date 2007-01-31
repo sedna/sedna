@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPPatMatch.h"
-#include "e_string.h"
-#include "strings.h"
+#include "tr/executor/xqops/PPPatMatch.h"
+#include "tr/strings/e_string.h"
+#include "tr/strings/strings.h"
 
 
 void PPPatMatch::cf_choice(void)

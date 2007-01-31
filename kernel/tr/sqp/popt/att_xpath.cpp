@@ -15,15 +15,15 @@
 //    are actually unsupported, but can appear...
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <strstream>
 #include <list>
 #include <math.h>
-#include "att_xpath.h"
-#include "XPathOnSchema.h"
-#include "PPUtils.h"
-#include "pstrblk.h"
-#include "d_printf.h"
+#include "tr/sqp/popt/att_xpath.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/pstr/pstrblk.h"
+#include "common/errdbg/d_printf.h"
 
 
 /// CPU Factor

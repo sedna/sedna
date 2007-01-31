@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <math.h>
-#include "PPNumericFuncs.h"
-#include "xs_helper.h"
+#include "tr/executor/xqops/PPNumericFuncs.h"
+#include "tr/executor/base/xs_helper.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

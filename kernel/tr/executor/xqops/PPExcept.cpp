@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPExcept.h"
-#include "merge.h"
+#include "tr/executor/xqops/PPExcept.h"
+#include "tr/executor/base/merge.h"
 
 
 PPExcept::PPExcept(dynamic_context *_cxt_,

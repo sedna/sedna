@@ -7,8 +7,8 @@
 #define _LM_BASE_H
 
 #include <string>
-#include "sedna.h"
-#include "base.h"
+#include "common/sedna.h"
+#include "common/base.h"
 
 /*
 #ifdef _WIN32

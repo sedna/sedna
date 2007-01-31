@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xptr.h"
-#include "d_printf.h"
+#include "common/xptr.h"
+#include "common/errdbg/d_printf.h"
 
 xptr XNULL;
 

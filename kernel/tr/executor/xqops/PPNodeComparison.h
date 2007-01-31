@@ -6,8 +6,8 @@
 #ifndef _PPNODECOMP_H
 #define _PPNODECOMP_H
 
-#include "sedna.h"
-#include "PPUtils.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPUtils.h"
 
 class PPNodeComparison : public PPIterator
 {

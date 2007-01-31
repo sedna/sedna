@@ -6,7 +6,7 @@
 #ifndef Parser_utils_h
 #define Parser_utils_h
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 
 std::string erase_doublequot(char* lex_text);

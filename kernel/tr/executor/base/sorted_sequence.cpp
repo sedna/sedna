@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "sorted_sequence.h"
+#include "common/sedna.h"
+#include "tr/executor/base/sorted_sequence.h"
 
 sorted_sequence::sorted_sequence(compare_fn _compareFN_, get_size_fn _getSizeFN_, serialize_fn _serializeFN_,
 								 serialize_2_blks_fn _serialize2FN_,	deserialize_fn _deserializeFN_,

@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPRange.h"
-#include "casting_operations.h"
-#include "PPUtils.h"
+#include "tr/executor/xqops/PPRange.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/PPUtils.h"
 
 inline tuple_cell getAtomizedCell(tuple& tup)
 {

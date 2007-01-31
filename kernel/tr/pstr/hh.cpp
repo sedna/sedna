@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "pstrblk.h"
-#include "hh.h"
+#include "common/sedna.h"
+#include "tr/pstr/pstrblk.h"
+#include "tr/pstr/hh.h"
 /* for debug */
-#include "pstr.h"
-#include "log.h"
+#include "tr/pstr/pstr.h"
+#include "tr/log/log.h"
 #include <iostream>
 
 /* note: numeration of holes starts from index 1 in "hh_" functions */

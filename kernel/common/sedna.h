@@ -8,13 +8,13 @@
 #define _SEDNA_H
 
 
-#include "u.h"
+#include "common/u/u.h"
 #include "sp_defs.h"
-#include "se_alloc.h"
-#include "event_log.h"
+#include "common/mmgr/se_alloc.h"
+#include "common/errdbg/event_log.h"
 
 #ifdef __cplusplus
-#include "exceptions.h"
+#include "common/errdbg/exceptions.h"
 #endif
 
 

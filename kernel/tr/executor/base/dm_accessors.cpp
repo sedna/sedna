@@ -4,13 +4,13 @@
  */
 
 
-#include "dm_accessors.h"
-#include "casting_operations.h"
-#include "e_string.h"
-#include "PPUtils.h"
-#include "pstr.h"
-#include "d_printf.h"
-#include "node_utils.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/pstr/pstr.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/crmutils/node_utils.h"
 
 tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 {

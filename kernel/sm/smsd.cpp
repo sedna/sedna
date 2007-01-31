@@ -4,16 +4,16 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
 #include <string.h>
-#include "base.h"
-#include "d_printf.h"
-#include "argtable.h"
-#include "version.h"
-#include "pping.h"
-#include "usecurity.h"
-#include "ipc_ops.h"
+#include "common/base.h"
+#include "common/errdbg/d_printf.h"
+#include "common/argtable.h"
+#include "common/version.h"
+#include "common/pping.h"
+#include "common/u/usecurity.h"
+#include "common/ipc_ops.h"
 
 using namespace std;
 

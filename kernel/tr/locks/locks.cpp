@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <string.h>
 
-#include "vmm.h"
-#include "locks.h"
-#include "lm_base.h"
-#include "usem.h"
-#include "utils.h"
-#include "SSMMsg.h"
-#include "tr_globals.h"
-#include "d_printf.h"
+#include "tr/vmm/vmm.h"
+#include "tr/locks/locks.h"
+#include "common/lm_base.h"
+#include "common/u/usem.h"
+#include "common/utils.h"
+#include "common/SSMMsg.h"
+#include "tr/tr_globals.h"
+#include "common/errdbg/d_printf.h"
 
 
 using namespace std;

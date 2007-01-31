@@ -3,27 +3,27 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <vector>
 #include <iostream>
-#include "usem.h"
-#include "uthread.h"
-#include "uprocess.h"
-#include "bm_core.h"
-#include "plmgr.h"
-#include "llmgr.h"
-#include "uprocess.h"
-#include "base.h"
-#include "trmgr.h"
-#include "sm_globals.h"
-#include "d_printf.h"
-#include "tr_debug.h"
-#include "plmgr_core.h"
-#include "uutils.h"
-#include "bm_functions.h"
-#include "SSMMsg.h"
-#include "trmgr.h"
+#include "common/u/usem.h"
+#include "common/u/uthread.h"
+#include "common/u/uprocess.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/plmgr/plmgr.h"
+#include "sm/llmgr/llmgr.h"
+#include "common/u/uprocess.h"
+#include "common/base.h"
+#include "sm/trmgr.h"
+#include "sm/sm_globals.h"
+#include "common/errdbg/d_printf.h"
+#include "common/tr_debug.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "common/u/uutils.h"
+#include "sm/bufmgr/bm_functions.h"
+#include "common/SSMMsg.h"
+#include "sm/trmgr.h"
 
 using namespace std;
 

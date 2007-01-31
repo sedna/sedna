@@ -6,8 +6,8 @@
 #ifndef __SCHEME_UTILS_H
 #define __SCHEME_UTILS_H
 
-#include "xptr.h"
-#include "nodes.h"
+#include "common/xptr.h"
+#include "tr/structures/nodes.h"
 
 xptr sch_right_sibling(xptr& node);
 xptr sch_left_sibling(xptr& node);

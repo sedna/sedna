@@ -6,7 +6,7 @@
 #ifndef _CONTEXT_H
 #define _CONTEXT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 /* in_context class is responsible for context, which is passed to the grammar
    rules. A in_context class consists of the status field, which indicates

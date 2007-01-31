@@ -6,11 +6,11 @@
 #ifndef _INDEX_DATA_H
 #define _INDEX_DATA_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usem.h"
-#include "nodes.h"
-#include "XPathOnSchema.h"
+#include "common/u/usem.h"
+#include "tr/structures/nodes.h"
+#include "tr/executor/base/XPathOnSchema.h"
 
 class PathExpr;
 

@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPCreateIndex.h"
-#include "PPUtils.h"
-#include "indexes.h"
-#include "locks.h"
+#include "tr/executor/root/PPCreateIndex.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/idx/indexes.h"
+#include "tr/locks/locks.h"
 
 
 PPCreateIndex::PPCreateIndex(PathExpr *_object_path_,

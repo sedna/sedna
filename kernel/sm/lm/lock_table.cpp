@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
 #include <string>
-#include "usem.h"
-#include "lm_base.h"
-#include "lm_globals.h"
-#include "lock_table.h"
-#include "trans_table.h"
-#include "d_printf.h"
-#include "sm_globals.h"
+#include "common/u/usem.h"
+#include "common/lm_base.h"
+#include "sm/lm/lm_globals.h"
+#include "sm/lm/lock_table.h"
+#include "sm/lm/trans_table.h"
+#include "common/errdbg/d_printf.h"
+#include "sm/sm_globals.h"
 
 using namespace std;
 

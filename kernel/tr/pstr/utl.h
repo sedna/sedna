@@ -6,8 +6,8 @@
 #ifndef _UTL_H
 #define _UTL_H
 
-#include "sedna.h"
-#include "nodes.h"
+#include "common/sedna.h"
+#include "tr/structures/nodes.h"
 
 /* types of items */
 #define	ITEM_BAD	0

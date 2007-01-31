@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "base.h"
+#include "common/sedna.h"
+#include "common/base.h"
 
 #ifdef _WIN32
 #define CHEKPOINT_THREAD_STACK_SIZE		10024

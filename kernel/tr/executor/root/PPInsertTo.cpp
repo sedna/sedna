@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPInsertTo.h"
-#include "updates.h"
-#include "locks.h"
+#include "tr/executor/root/PPInsertTo.h"
+#include "tr/updates/updates.h"
+#include "tr/locks/locks.h"
 
 PPInsertTo::PPInsertTo(PPOpIn _child1_, 
                        dynamic_context *_cxt1_,

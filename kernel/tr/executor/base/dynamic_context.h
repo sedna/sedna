@@ -7,15 +7,15 @@
 #ifndef _DYNAMIC_CONTEXT_H
 #define _DYNAMIC_CONTEXT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <vector>
 #include <list>
 #include <map>
 
-#include "SequenceType.h"
-#include "str_matcher.h"
-#include "utf8.h"
+#include "tr/executor/base/SequenceType.h"
+#include "tr/crmutils/str_matcher.h"
+#include "tr/strings/utf8.h"
 
 
 /*******************************************************************************
@@ -87,13 +87,7 @@ struct producer
     int tuple_pos;
     tuple *t;
 
-    producer() : type(pt_not_defined), 
-                 s(NULL), 
-                 op(NULL), 
-                 svc(NULL), 
-                 cvc(NULL), 
-                 tuple_pos(0), 
-                 t(NULL) {}
+    producer(); 
     ~producer();
 };
 

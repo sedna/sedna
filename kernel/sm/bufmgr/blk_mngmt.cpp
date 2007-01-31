@@ -2,11 +2,11 @@
  * File:  blk_mngmt.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-#include "sedna.h"
-#include "sm_vmm_data.h"
-#include "bm_core.h"
-#include "blk_mngmt.h"
-#include "plmgr.h"
+#include "common/sedna.h"
+#include "common/sm_vmm_data.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/bufmgr/blk_mngmt.h"
+#include "sm/plmgr/plmgr.h"
 
 
 

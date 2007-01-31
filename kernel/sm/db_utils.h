@@ -6,7 +6,7 @@
 #ifndef _DB_UTILS_H
 #define _DB_UTILS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 int cleanup_db(const char* db_name);
 

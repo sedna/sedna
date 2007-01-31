@@ -7,34 +7,22 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-VPATH = $(PP)/kernel/tr
-
-
-all: libauth$(LIB_EXT)
+all: auth$(LIB_EXT)
 	@echo ===================================================================
 	@echo Authorization Library has been done
 	@echo ===================================================================
 
+OBJS = auth$(OBJ_EXT) auc$(OBJ_EXT) prec-qs$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-AUTH_LIB = libauth$(LIB_EXT)
-
 ################################################################################
-# auth                                                    #
+# auth                                                                         #
 ################################################################################
-AUTH_LIB_OBJS = auth$(OBJ_EXT)                      \
-                auc$(OBJ_EXT)                      \
-                prec-qs$(OBJ_EXT)		
-
-
-$(AUTH_LIB): $(AUTH_LIB_OBJS)
+auth$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
-
 
 ################################################################################
 # Clean                                                                        #
@@ -42,7 +30,5 @@ $(AUTH_LIB): $(AUTH_LIB_OBJS)
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors
+	-$(REMOVE) auth.c
+	-$(REMOVE) prec-qs.c

@@ -3,11 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "merge.h"
-#include "node_utils.h"
-#include "utils.h"
+#include "tr/executor/base/merge.h"
+#include "tr/crmutils/node_utils.h"
+#include "common/utils.h"
 
 int doc_order_merge_cmp(const void *e1, const void *e2)
 {

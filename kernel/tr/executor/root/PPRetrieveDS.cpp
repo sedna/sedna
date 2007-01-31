@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPRetrieveDS.h"
-#include "crmutils.h"
-#include "locks.h"
-#include "auc.h"
+#include "tr/executor/root/PPRetrieveDS.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/locks/locks.h"
+#include "tr/auth/auc.h"
 
 
 PPRetrieveDS::PPRetrieveDS(PPOpIn _name_,

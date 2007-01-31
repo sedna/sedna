@@ -4,37 +4,25 @@
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/tr
-
-
 include $(PP)/Makefile.include
 
-all: libcrmutils$(LIB_EXT)
+all: crmutils$(LIB_EXT)
 	@echo ===================================================================
 	@echo CRMUTILS DONE
 	@echo ===================================================================
 
+OBJS = file_utils$(OBJ_EXT) print_utils$(OBJ_EXT) debug_utils$(OBJ_EXT) \
+       scheme_utils$(OBJ_EXT) system_tables$(OBJ_EXT) str_matcher$(OBJ_EXT) \
+       node_utils$(OBJ_EXT) namespace_utils$(OBJ_EXT) exec_output$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/tr/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-CRMUTILS_LIB = libcrmutils$(LIB_EXT)
-
 ################################################################################
-# CRMUTILS                                                                          #
+# CRMUTILS                                                                     #
 ################################################################################
-$(CRMUTILS_LIB): file_utils$(OBJ_EXT)		\
-                 print_utils$(OBJ_EXT) 		\
-                 debug_utils$(OBJ_EXT)		\
-                 scheme_utils$(OBJ_EXT)		\
-                 system_tables$(OBJ_EXT)	\
-                 str_matcher$(OBJ_EXT)	\
-                 node_utils$(OBJ_EXT)		\
-                 namespace_utils$(OBJ_EXT)		\
-                 exec_output$(OBJ_EXT)
+crmutils$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 
@@ -44,7 +32,3 @@ $(CRMUTILS_LIB): file_utils$(OBJ_EXT)		\
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) $(CRMUTILS_LIB)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

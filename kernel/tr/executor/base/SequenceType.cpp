@@ -3,12 +3,12 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "SequenceType.h"
-#include "casting_operations.h"
-#include "sequence.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/SequenceType.h"
+#include "tr/executor/fo/casting_operations.h"
+#include "tr/executor/base/sequence.h"
 
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)

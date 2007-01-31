@@ -4,8 +4,8 @@
  */
 
 
-#include "usem.h"
-#include "d_printf.h"
+#include "common/u/usem.h"
+#include "common/errdbg/d_printf.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Semaphore implementation

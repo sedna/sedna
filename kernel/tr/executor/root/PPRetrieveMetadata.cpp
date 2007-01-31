@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPRetrieveMetadata.h"
-#include "crmutils.h"
-#include "locks.h"
+#include "tr/executor/root/PPRetrieveMetadata.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/locks/locks.h"
 
 
 PPRetrieveMetadata::PPRetrieveMetadata(db_entity_type _type_,

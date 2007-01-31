@@ -1,92 +1,42 @@
 #
-# Makefile for COMMON_FILES
+# Makefile for common_files
 #
 
 PP = ../..
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-ifeq ($(words $(wildcard depend)), 0)
-ifneq ($(findstring depend, $(MAKECMDGOALS)), depend)
-$(error Type "make depend" first)
-endif
-endif
-endif
-
-
-VPATH = . u ph mmgr errdbg
-
-
 include $(PP)/Makefile.include
 
-all: libcommon_files$(LIB_EXT)
+all: common_files$(LIB_EXT)
 	@echo ===================================================================
 	@echo COMMON_FILES DONE
 	@echo ===================================================================
 
-include $(PP)/Makefile.depend
+OBJS = argtable$(OBJ_EXT) base$(OBJ_EXT) gmm$(OBJ_EXT) ipc_ops$(OBJ_EXT) \
+       pping$(OBJ_EXT) sedna$(OBJ_EXT) sp$(OBJ_EXT) SSMMsg$(OBJ_EXT) \
+       tr_debug$(OBJ_EXT) ugc$(OBJ_EXT) utils$(OBJ_EXT) version$(OBJ_EXT) \
+       xptr$(OBJ_EXT)
+SUBDIRS = errdbg mmgr ph u
+SUBDIROBJS = $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 
-depend:
-	$(DEPACT)
 
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+include $(OBJS:$(OBJ_EXT)=.d)
 
-ifneq ($(words $(wildcard depend)), 0)
-include depend
+$(OBJS:$(OBJ_EXT)=.d): errdbg/errdbg$(LIB_EXT)
 endif
 
 
 ################################################################################
 # common_files                                                                 #
 ################################################################################
-libcommon_files$(LIB_EXT): sedna$(OBJ_EXT)              \
-                           base$(OBJ_EXT)				\
-                           xptr$(OBJ_EXT)				\
-                           argtable$(OBJ_EXT)			\
-                           SSMMsg$(OBJ_EXT)				\
-                           umutex$(OBJ_EXT)				\
-                           u$(OBJ_EXT)					\
-                           usocket$(OBJ_EXT)			\
-                           uthread$(OBJ_EXT)			\
-                           uprocess$(OBJ_EXT)			\
-                           upipe$(OBJ_EXT)				\
-                           usem$(OBJ_EXT)				\
-                           utime$(OBJ_EXT)				\
-                           ushm$(OBJ_EXT)				\
-                           uhdd$(OBJ_EXT)				\
-                           ummap$(OBJ_EXT)				\
-                           usecurity$(OBJ_EXT)			\
-                           uutils$(OBJ_EXT)				\
-                           utils$(OBJ_EXT)				\
-                           exceptions$(OBJ_EXT)			\
-                           ipc_ops$(OBJ_EXT)			\
-                           sp$(OBJ_EXT)                 \
-                           pers_free$(OBJ_EXT)			\
-                           pers_heap$(OBJ_EXT)			\
-                           pers_malloc$(OBJ_EXT)		\
-                           pers_realloc$(OBJ_EXT)		\
-                           pping$(OBJ_EXT)				\
-                           version$(OBJ_EXT)			\
-                           ugc$(OBJ_EXT)				\
-                           error_codes$(OBJ_EXT)		\
-                           error_codes_scm$(OBJ_EXT)	\
-                           tr_debug$(OBJ_EXT)			\
-                           gmm$(OBJ_EXT)				\
-                           d_printf$(OBJ_EXT)           \
-                           assert$(OBJ_EXT)             \
-                           aset$(OBJ_EXT)               \
-                           mcxt$(OBJ_EXT)               \
-                           event_log$(OBJ_EXT)
+common_files$(LIB_EXT): $(OBJS) $(SUBDIROBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
 
-gen_error_codes$(OBJ_EXT): gen_error_codes.c
-	$(CC) $(CFLAGS_CHICKEN_EXE) $<
-
-gen_error_codes$(EXE_EXT): gen_error_codes$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
-
-error_codes.h error_codes.c error_codes_scm.scm: gen_error_codes$(EXE_EXT) error.codes
-	./gen_error_codes$(EXE_EXT)
-
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@)
 
 
 ################################################################################
@@ -95,14 +45,4 @@ error_codes.h error_codes.c error_codes_scm.scm: gen_error_codes$(EXE_EXT) error
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors
-	-$(REMOVE) libcommon_files$(LIB_EXT)
-	-$(REMOVE) error_codes.h
-	-$(REMOVE) error_codes.c
-	-$(REMOVE) gen_error_codes.c
-	-$(REMOVE) gen_error_codes$(EXE_EXT)
-	-$(REMOVE) error_codes_scm.scm
-	-$(REMOVE) ErrorCodes.java
-
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done

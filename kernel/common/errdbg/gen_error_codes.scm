@@ -32,7 +32,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 
 (define (nl) (newline port))
 
-(define input-port (open-input-file "errdbg/error.codes"))
+(define input-port (open-input-file "error.codes"))
 
 (define (pick-out-code code)
   (define (f lst)
@@ -145,7 +145,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 ;;## C files
 ;;########################################################################################
 
-(define input-port (open-input-file "errdbg/error.codes"))
+(define input-port (open-input-file "error.codes"))
 
 (define (rollback? p) #t)
 
@@ -176,7 +176,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (out "// This file was generated. Don't edit it!!!")
 (nl)
 (nl)
-(out "#include \"error_codes.h\"")
+(out "#include \"common/errdbg/error_codes.h\"")
 (nl)
 (nl)
 (out "struct user_error_code_entry user_error_code_entries[] = {")
@@ -196,7 +196,7 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 ;;## Schema file
 ;;########################################################################################
 
-(define input-port (open-input-file "errdbg/error.codes"))
+(define input-port (open-input-file "error.codes"))
 
 (define (process-scm group-id)
   (let ((record (read-record)))
@@ -283,13 +283,13 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
 (nl)
 (out "class ErrorCodes {")
 (nl)
-(define input-port (open-input-file "errdbg/error.codes"))
+(define input-port (open-input-file "error.codes"))
 (process-java-constants 0)
 (close-input-port input-port)
 (nl)
 (out "    static String [][] user_error_code_entry = {")
 (nl)
-(define input-port (open-input-file "errdbg/error.codes"))
+(define input-port (open-input-file "error.codes"))
 (process-java-array 0)
 (close-input-port input-port)
 (out "    };")

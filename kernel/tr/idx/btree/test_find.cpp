@@ -4,9 +4,9 @@
  */
 
 #include <iostream>
-#include "sedna.h"
-#include "btintern.h"
-#include "test.h"
+#include "common/sedna.h"
+#include "tr/idx/btree/btintern.h"
+#include "tr/idx/btree/test.h"
 
 using namespace std;
 

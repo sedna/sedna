@@ -7,8 +7,8 @@
 #ifndef _BOOLEAN_OPERATIONS_H
 #define _BOOLEAN_OPERATIONS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 /*******************************************************************************
  * BOOLEAN CONSTRUCTOR FUNCTIONS: BEGIN

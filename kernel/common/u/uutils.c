@@ -5,8 +5,8 @@
 
 
 #include <stdlib.h>
-#include "uutils.h"
-#include "d_printf.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
 
 
 #ifndef _WIN32

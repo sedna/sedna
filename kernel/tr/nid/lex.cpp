@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
 #include <string.h>
-#include "numb_scheme.h"
-#include "lex.h"
-#include "nid.h"
-#include "crmutils.h"
-#include "nidalloc.h"
-#include "d_printf.h"
+#include "tr/nid/numb_scheme.h"
+#include "tr/nid/lex.h"
+#include "tr/nid/nid.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/nid/nidalloc.h"
+#include "common/errdbg/d_printf.h"
 
 t_prefix NULLPREFIX = t_prefix(NULL,0);
 

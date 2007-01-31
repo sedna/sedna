@@ -8,14 +8,14 @@
 #include <iostream>
 #include <fstream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "XQuerytoLR.h"
+#include "tr/xqp/XQuerytoLR.h"
 
-#include "XQueryTreeParser.h"
-#include "SORAST.h"
-#include "AST.h"
-#include "flwr.h"
+#include "tr/xqp/XQueryTreeParser.h"
+#include "tr/xqp/SORAST.h"
+#include "tr/xqp/AST.h"
+#include "tr/xqp/flwr.h"
 
 using namespace std;
 

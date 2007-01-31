@@ -7,11 +7,11 @@
 #ifndef _PPING_H
 #define _PPING_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "usocket.h"
-#include "uthread.h"
-#include "usem.h"
+#include "common/u/usocket.h"
+#include "common/u/uthread.h"
+#include "common/u/usem.h"
 
 
 #define PPING_ON

@@ -6,8 +6,8 @@
 #ifndef __PPSPACESEQUENCE_H
 #define __PPSPACESEQUENCE_H
 
-#include "sedna.h"
-#include "PPSequence.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPSequence.h"
 
 class PPSpaceSequence : public PPSequence
 {

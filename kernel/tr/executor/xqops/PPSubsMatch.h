@@ -6,10 +6,10 @@
 #ifndef _PPSUBSMATCH_H
 #define _PPSUBSMATCH_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "tuple.h"
-#include "PPUtils.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/executor/base/PPUtils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPSubsMatch

@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "por2qep.h"
-#include "ext.h"
-#include "e_string.h"
-#include "op_map.h"
+#include "tr/executor/por2qep/por2qep.h"
+#include "tr/executor/por2qep/ext.h"
+#include "tr/strings/e_string.h"
+#include "tr/executor/fo/op_map.h"
     
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers_data.h"
+#include "tr/triggers/triggers_data.h"
 #endif
 
 #define SE_NAMESPACE		"http://www.modis.ispras.ru/sedna"

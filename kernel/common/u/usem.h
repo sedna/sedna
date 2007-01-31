@@ -7,8 +7,8 @@
 #ifndef _USEM_H
 #define _USEM_H
 
-#include "u.h"
-#include "usecurity.h"
+#include "common/u/u.h"
+#include "common/u/usecurity.h"
 
 #ifdef _WIN32
 

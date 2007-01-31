@@ -4,22 +4,22 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
 #include <exception>
 #include <string>
 
-#include "base.h"
-#include "SSMMsg.h"
-#include "vmm.h"
-#include "indirection.h"
-#include "pers_heap.h"
-#include "persistent_db_data.h"
+#include "common/base.h"
+#include "common/SSMMsg.h"
+#include "tr/vmm/vmm.h"
+#include "tr/structures/indirection.h"
+#include "common/ph/pers_heap.h"
+#include "common/persistent_db_data.h"
 
-#include "pstr.h"
+#include "tr/pstr/pstr.h"
 #include <stdlib.h>
 #include <time.h>
-#include "pstrblk.h"
+#include "tr/pstr/pstrblk.h"
 
 using namespace std;
 #define NO_PERSISTENCY

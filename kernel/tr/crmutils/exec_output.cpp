@@ -3,9 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "exec_output.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/crmutils/exec_output.h"
+#include "tr/executor/base/PPBase.h"
 
 using namespace tr_globals;
 

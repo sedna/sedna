@@ -8,10 +8,10 @@
 
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "PPConstructors.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/xqops/PPConstructors.h"
 
 
 enum sql_handle_type {

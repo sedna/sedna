@@ -3,8 +3,8 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "PPDebug.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPDebug.h"
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,

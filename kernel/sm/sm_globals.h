@@ -7,12 +7,12 @@
 #ifndef _SM_GLOBALS_H
 #define _SM_GLOBALS_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "argtable.h"
-#include "usem.h"
-#include "uthread.h"
-#include "SSMMsg.h"
+#include "common/argtable.h"
+#include "common/u/usem.h"
+#include "common/u/uthread.h"
+#include "common/SSMMsg.h"
 
 
 #define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"

@@ -3,17 +3,17 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "schema.h"
-#include "nodes.h"
-#include "XPathOnSchema.h"
-#include "index_data.h"
+#include "tr/structures/schema.h"
+#include "tr/structures/nodes.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/idx/index_data.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
+#include "tr/ft/ft_index_data.h"
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers_data.h"
+#include "tr/triggers/triggers_data.h"
 #endif
 
 

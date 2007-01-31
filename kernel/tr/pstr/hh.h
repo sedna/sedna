@@ -6,7 +6,7 @@
 #ifndef _HH_H
 #define _HH_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 shft hh_maxhole_size(xptr blk);
 void hh_insert(xptr blk, hh_slot s);

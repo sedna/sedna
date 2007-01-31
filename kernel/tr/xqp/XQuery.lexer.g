@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <iostream>
 
-#include "exceptions.h"
-#include "types.h"
+#include "common/errdbg/exceptions.h"
+#include "tr/xqp/types.h"
 
 using namespace std;
 
@@ -21,7 +21,7 @@ bool s_after_pi_target = false;
 #lexprefix
 <<
 #include <stdio.h>
-#include "exceptions.h"
+#include "common/errdbg/exceptions.h"
 >>
 
 #lexmember

@@ -6,10 +6,10 @@
 #ifndef _PSTR_LONG_H
 #define _PSTR_LONG_H
 
-#include "sedna.h"
-#include "sm_vmm_data.h"
-#include "micro.h"
-#include "strings_base.h"
+#include "common/sedna.h"
+#include "common/sm_vmm_data.h"
+#include "tr/mo/micro.h"
+#include "tr/strings/strings_base.h"
 
 //typedef int pstr_long_off_t;
 typedef __int64 pstr_long_off_t;

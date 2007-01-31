@@ -3,9 +3,9 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "PPCheckpoint.h"
-#include "log.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPCheckpoint.h"
+#include "tr/log/log.h"
 
 PPCheckpoint::PPCheckpoint(dynamic_context *_cxt_) : PPIterator(_cxt_)
 {

@@ -3,21 +3,21 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <math.h>
-#include "crmutils.h"
-#include "metadata.h"
-#include "expat.h"
-#include "nodes.h"
-#include "xptr.h"
-#include "micro.h"
-#include "node_utils.h"
-#include "persistent_db_data.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/structures/metadata.h"
+#include "expat/expat.h"
+#include "tr/structures/nodes.h"
+#include "common/xptr.h"
+#include "tr/mo/micro.h"
+#include "tr/crmutils/node_utils.h"
+#include "common/persistent_db_data.h"
 
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
-#include "updates.h"
+#include "tr/ft/ft_index_data.h"
+#include "tr/updates/updates.h"
 #endif
 
 

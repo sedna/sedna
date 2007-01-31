@@ -4,10 +4,10 @@
  */
 
 
-#include "sedna.h"
-#include "xs_binary.h"
-#include "xs_helper.h"
-#include "strings.h"
+#include "common/sedna.h"
+#include "tr/executor/base/xs_binary.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/strings/strings.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

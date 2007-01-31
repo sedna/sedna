@@ -4,11 +4,11 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPQueryRoot.h"
-#include "crmutils.h"
-#include "locks.h"
+#include "tr/executor/root/PPQueryRoot.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/locks/locks.h"
 
 
 PPQueryRoot::PPQueryRoot(dynamic_context *_cxt_,

@@ -4,13 +4,13 @@
  */
 
 
-#include "sedna.h"
-#include "base.h"
-#include "llmgr_core.h"
-#include "uhdd.h"
-#include "cdb_globals.h"
-#include "uutils.h"
-#include "d_printf.h"
+#include "common/sedna.h"
+#include "common/base.h"
+#include "sm/llmgr/llmgr_core.h"
+#include "common/u/uhdd.h"
+#include "sm/cdb_globals.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
 
 #include <string>
 #include <map>

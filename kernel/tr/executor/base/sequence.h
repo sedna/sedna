@@ -7,9 +7,9 @@
 #ifndef _SEQUENCE_H
 #define _SEQUENCE_H
 
-#include "sedna.h"
-#include "compare.h"
-#include "e_string.h"
+#include "common/sedna.h"
+#include "tr/executor/base/compare.h"
+#include "tr/strings/e_string.h"
 
 
 #define SEQ_NUMBER_OF_TUPLES_IN_MEMORY		100

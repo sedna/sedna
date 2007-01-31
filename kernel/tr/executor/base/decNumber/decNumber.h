@@ -25,7 +25,7 @@
   #define DECAUTHOR   "Mike Cowlishaw"                /* Who to blame */
 
   #if !defined(DECCONTEXT)
-    #include "decContext.h"
+    #include "tr/executor/base/decNumber/decContext.h"
   #endif
 
   // Bit settings for decNumber.bits

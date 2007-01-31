@@ -5,12 +5,12 @@
 
 #include <math.h>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "utils.h"
-#include "uutils.h"
-#include "d_printf.h"
-#include "uhdd.h"
+#include "common/utils.h"
+#include "common/u/uutils.h"
+#include "common/errdbg/d_printf.h"
+#include "common/u/uhdd.h"
 
 #ifndef _WIN32
 #include <strings.h>

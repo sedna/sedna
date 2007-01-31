@@ -7,9 +7,9 @@
 #ifndef _PPSEQUENCETYPES_H
 #define _PPSEQUENCETYPES_H
 
-#include "sedna.h"
-#include "PPBase.h"
-#include "SequenceType.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/SequenceType.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

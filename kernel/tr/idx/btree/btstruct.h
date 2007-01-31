@@ -6,11 +6,11 @@
 #ifndef _BTSTRUCT_H
 #define _BTSTRUCT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "nodes.h"
-#include "btpage.h"
-#include "XMLDateTime.h"
+#include "tr/structures/nodes.h"
+#include "tr/idx/btree/btpage.h"
+#include "tr/executor/base/XMLDateTime.h"
 
 typedef xptr object;
 

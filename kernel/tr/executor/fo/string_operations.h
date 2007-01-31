@@ -7,9 +7,9 @@
 #ifndef _STRING_OPERATIONS_H
 #define _STRING_OPERATIONS_H
 
-#include "sedna.h"
-#include "tuple.h"
-#include "strings.h"
+#include "common/sedna.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/strings.h"
 
 
 // do_not_check_type should be set to true only for XQuery B.2 Operator Mapping implementation

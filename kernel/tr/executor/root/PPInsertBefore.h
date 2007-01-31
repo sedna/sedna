@@ -7,8 +7,8 @@
 #ifndef _PPINSERTBEFORE_H
 #define _PPINSERTBEFORE_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPInsertBefore : public PPUpdate
 {

@@ -3,20 +3,20 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "micro.h"
-#include "vmm.h"
-#include "locks.h"
-#include "schema.h"
-#include "metadata.h"
-#include "indirection.h"
+#include "common/sedna.h"
+#include "tr/mo/micro.h"
+#include "tr/vmm/vmm.h"
+#include "tr/locks/locks.h"
+#include "tr/structures/schema.h"
+#include "tr/structures/metadata.h"
+#include "tr/structures/indirection.h"
 //#include "crmutils.h"
-#include "pstr.h"
-#include "pstr_long.h"
-#include "node_utils.h"
-#include "log.h"
-#include "index_data.h"
-#include "e_string.h"
+#include "tr/pstr/pstr.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/crmutils/node_utils.h"
+#include "tr/log/log.h"
+#include "tr/idx/index_data.h"
+#include "tr/strings/e_string.h"
 void makeNewBlockConsistentAfterFilling(xptr block, xptr node,shft shift_size)
 {
 	shft counter=1;

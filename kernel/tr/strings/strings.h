@@ -94,17 +94,17 @@ by this class has begun (i.e. until op_str_buf::clear() is called)
 **/
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 
-#include "strings_base.h"
-#include "tuple.h"
-#include "e_string.h"
-#include "micro.h"
+#include "tr/strings/strings_base.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/e_string.h"
+#include "tr/mo/micro.h"
 
-#include "pstr_long.h"
-#include "e_string_iterator.h"
-#include "char_iterator.h"
+#include "tr/pstr/pstr_long.h"
+#include "tr/strings/e_string_iterator.h"
+#include "tr/strings/char_iterator.h"
 ///FIXME!!!!!!!!!!!!!!!!
 // move text_type here, text_doc => text_pstr
 

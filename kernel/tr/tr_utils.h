@@ -1,8 +1,8 @@
 #ifndef _TR_UTILS_H_
 #define _TR_UTILS_H_
 
-#include "sedna.h"
-#include "utils.h"
+#include "common/sedna.h"
+#include "common/utils.h"
 
 
 //#define TIME_DEBUG_INFO_ON

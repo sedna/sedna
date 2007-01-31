@@ -4,47 +4,24 @@
 
 PP = ../../..
 
-
-VPATH = $(PP)/kernel/sm
-
-
 include $(PP)/Makefile.include
 
-all: liblogical_log_mgr$(LIB_EXT) 
+all: llmgr$(LIB_EXT) 
 	@echo ===================================================================
 	@echo Logical Log has been Done
 	@echo ===================================================================
 
-test: test.exe
-	@echo ===================================================================
-	@echo Logical Log Test has been Done
-	@echo ===================================================================
-
+OBJS = llmgr$(OBJ_EXT) llmgr_core$(OBJ_EXT) llmgr_helpers$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(PP)/kernel/sm/depend
+include $(OBJS:$(OBJ_EXT)=.d)
 endif
 
-
-COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
-
-
 ################################################################################
-# LL_MGR_LIB                                                                          #
+# LLMGR_LIB                                                                    #
 ################################################################################
-liblogical_log_mgr$(LIB_EXT): llmgr_core$(OBJ_EXT) 	\
-                              llmgr$(OBJ_EXT) 		\
-                           llmgr_helpers$(OBJ_EXT)
+llmgr$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
-################################################################################
-# TEST                                                                          #
-################################################################################
-
-test.exe: liblogical_log_mgr$(LIB_EXT) \
-          $(COMMON_FILES_LIB) \
-          test$(OBJ_EXT)
-	$(LD) $(LFLAGS) $(LDOUT)$@ liblogical_log_mgr$(LIB_EXT) $(COMMON_FILES_LIB) test$(OBJ_EXT)
 
 ################################################################################
 # Clean                                                                        #
@@ -52,7 +29,3 @@ test.exe: liblogical_log_mgr$(LIB_EXT) \
 .PHONY: clean
 
 clean: generic_clean
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) depend
-	-$(REMOVE) depend.errors

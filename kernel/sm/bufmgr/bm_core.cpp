@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
-#include "sm_vmm_data.h"
-#include "pers_heap.h"
-#include "bm_core.h"
-#include "plmgr.h"
-#include "sm_globals.h"
-#include "d_printf.h"
+#include "common/sm_vmm_data.h"
+#include "common/ph/pers_heap.h"
+#include "sm/bufmgr/bm_core.h"
+#include "sm/plmgr/plmgr.h"
+#include "sm/sm_globals.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

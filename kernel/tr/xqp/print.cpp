@@ -3,9 +3,9 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <stdio.h>
-#include "d_printf.h"
+#include "common/errdbg/d_printf.h"
 
 void print_ast_type(int type)
 { 

@@ -4,13 +4,13 @@
  */
 
 
-#include "sedna.h"
-#include "PPNodeOps.h"
-#include "dm_accessors.h"
-#include "PPSLStub.h"
-#include "xs_helper.h"
-#include "PPUtils.h"
-#include "casting_operations.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPNodeOps.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/executor/xqops/PPSLStub.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/fo/casting_operations.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

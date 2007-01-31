@@ -1,9 +1,9 @@
-#include "str_matcher.h"
+#include "tr/crmutils/str_matcher.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "strings.h"
-#include "utf8.h"
+#include "tr/strings/strings.h"
+#include "tr/strings/utf8.h"
 
 
 trie_node_t *StrMatcher::make_node(trie_node_t *parent, char ch)

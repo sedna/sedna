@@ -4,9 +4,9 @@
  */
 
 
-#include "sedna.h"
-#include "PPError.h"
-#include "crmutils.h"
+#include "common/sedna.h"
+#include "tr/executor/xqops/PPError.h"
+#include "tr/crmutils/crmutils.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// fn:error

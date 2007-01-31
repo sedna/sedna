@@ -3,16 +3,16 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 
-#include "base.h"
-#include "cdb_globals.h"
-#include "sm_globals.h"
-#include "utils.h"
-#include "uprocess.h"
-#include "uhdd.h"
-#include "version.h"
+#include "common/base.h"
+#include "sm/cdb_globals.h"
+#include "sm/sm_globals.h"
+#include "common/utils.h"
+#include "common/u/uprocess.h"
+#include "common/u/uhdd.h"
+#include "common/version.h"
 
 
 using namespace std;

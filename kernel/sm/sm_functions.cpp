@@ -3,15 +3,15 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
-#include "sm_functions.h"
-#include "sm_globals.h"
-#include "llmgr.h"
-#include "plmgr.h"
-#include "bm_core.h"
-#include "usem.h"
-#include "ipc_ops.h"
+#include "sm/sm_functions.h"
+#include "sm/sm_globals.h"
+#include "sm/llmgr/llmgr.h"
+#include "sm/plmgr/plmgr.h"
+#include "sm/bufmgr/bm_core.h"
+#include "common/u/usem.h"
+#include "common/ipc_ops.h"
 
 using namespace std;
 

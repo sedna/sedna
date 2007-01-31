@@ -28,7 +28,7 @@ USA.
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "argtable.h"
+#include "common/argtable.h"
 
 #define ARGSTRLEN 200
 #define NAMESTRING(A) ((A.argname)?(A.argname):(arg_typestr[A.argtype]))

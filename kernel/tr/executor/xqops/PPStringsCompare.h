@@ -6,8 +6,8 @@
 #ifndef _PPSTRINGSCOMPARE_H
 #define _PPSTRINGSCOMPARE_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

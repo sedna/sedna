@@ -14,7 +14,7 @@
 #ifndef _EVENT_LOG_H
 #define _EVENT_LOG_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 /* Error level codes */
 #define EL_DBG      8    /* debugging messages */

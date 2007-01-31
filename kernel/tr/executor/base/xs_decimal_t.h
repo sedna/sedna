@@ -7,7 +7,7 @@
 #ifndef _XS_DECIMAL_T_H
 #define _XS_DECIMAL_T_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #define XS_DECIMAL_MAX_VALUE_DOUBLE (9999999999999999.0)
 #define XS_DECIMAL_MIN_VALUE_DOUBLE (0.0000000000000001)

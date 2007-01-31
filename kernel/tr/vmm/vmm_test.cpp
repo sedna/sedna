@@ -9,12 +9,12 @@
 #include <string>
 #include <vector>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "base.h"
-#include "SSMMsg.h"
-#include "vmm.h"
-#include "tr_globals.h"
+#include "common/base.h"
+#include "common/SSMMsg.h"
+#include "tr/vmm/vmm.h"
+#include "tr/tr_globals.h"
 
 
 using namespace std;

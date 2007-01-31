@@ -7,8 +7,8 @@
 #ifndef __PPSCAN_H
 #define __PPSCAN_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPScan : public PPIterator
 {

@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "nidalloc.h"
+#include "common/sedna.h"
+#include "tr/nid/nidalloc.h"
 
 nid_slot*	nid_head=NULL;
 int			nid_size=1;

@@ -7,7 +7,7 @@
 #ifndef UMUTEX_H
 #define UMUTEX_H
 
-#include "u.h"
+#include "common/u/u.h"
 
 #ifdef __cplusplus
 extern "C" {

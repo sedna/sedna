@@ -19,10 +19,10 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ummap.h"
-#include "usem.h"
-#include "pers_heap.h"
-#include "_pers_malloc.h"
+#include "common/u/ummap.h"
+#include "common/u/usem.h"
+#include "common/ph/pers_heap.h"
+#include "common/ph/_pers_malloc.h"
 
 
 static UFile 		ph_file;

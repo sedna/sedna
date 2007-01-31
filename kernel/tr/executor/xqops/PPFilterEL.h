@@ -7,10 +7,10 @@
 #ifndef _PPFEL_H
 #define _PPFEL_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "sorted_sequence.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/sorted_sequence.h"
 
 class PPFilterEL : public PPIterator
 {

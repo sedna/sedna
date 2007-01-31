@@ -7,12 +7,12 @@
 #ifndef _E_STRING_H
 #define _E_STRING_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "sm_vmm_data.h"
-#include "strings_base.h"
-#include "vmm.h"
-#include "tuple.h"
+#include "common/sm_vmm_data.h"
+#include "tr/strings/strings_base.h"
+#include "tr/vmm/vmm.h"
+#include "tr/executor/base/tuple.h"
 
 
 #define BLK_BEGIN_INT(p)			((int)(p) & PAGE_BIT_MASK)

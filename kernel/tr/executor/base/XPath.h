@@ -11,10 +11,10 @@
 #include <vector>
 #include <iostream>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xsd.h"
-#include "scheme_tree.h"
+#include "tr/executor/base/xsd.h"
+#include "tr/executor/por2qep/scheme_tree.h"
 
 enum Axis     
 { 

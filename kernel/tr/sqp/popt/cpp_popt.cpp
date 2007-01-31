@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "att_xpath.h"
-#include "serialize2lr.h"
-#include "d_printf.h"
+#include "common/sedna.h"
+#include "tr/sqp/popt/att_xpath.h"
+#include "tr/sqp/popt/serialize2lr.h"
+#include "common/errdbg/d_printf.h"
 
 const char *cpp_popt(const char * str)
 {

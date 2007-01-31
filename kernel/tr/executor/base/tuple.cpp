@@ -4,13 +4,13 @@
  */
 
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "tuple.h"
-#include "e_string.h"
-#include "pstr.h"
-#include "pstr_long.h"
-#include "d_printf.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/strings/e_string.h"
+#include "tr/pstr/pstr.h"
+#include "tr/pstr/pstr_long.h"
+#include "common/errdbg/d_printf.h"
 
 
 tuple_cell EMPTY_STRING_TC(tuple_cell::atomic_deep(xs_string, ""));

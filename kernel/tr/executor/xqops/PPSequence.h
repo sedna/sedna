@@ -6,8 +6,8 @@
 #ifndef __PPSEQUENCE_H
 #define __PPSEQUENCE_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 class PPSequence : public PPIterator
 {

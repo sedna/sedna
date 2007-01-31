@@ -7,12 +7,12 @@
 #ifndef _SEQUENCETYPE_H
 #define _SEQUENCETYPE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "XPath.h"
-#include "nodes.h"
-#include "tuple.h"
-#include "vmm.h"
+#include "tr/executor/base/XPath.h"
+#include "tr/structures/nodes.h"
+#include "tr/executor/base/tuple.h"
+#include "tr/vmm/vmm.h"
 #include <vector>
 
 // FIXME: Possibley, we have memory leaks with sequence_type (for node_name_uri, node_name_local and possibly ncname)

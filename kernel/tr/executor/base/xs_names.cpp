@@ -4,9 +4,9 @@
  */
 
 
-#include "sedna.h"
-#include "xs_names.h"
-#include "strings.h"
+#include "common/sedna.h"
+#include "tr/executor/base/xs_names.h"
+#include "tr/strings/strings.h"
 
 
 /////////////////////////////////////////////////////////////////////////////

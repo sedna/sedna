@@ -6,11 +6,11 @@
 #ifndef _PPFTINDEXSCAN_H
 #define _PPFTINDEXSCAN_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "ft_index_data.h"
-#include "FTsearch.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/ft/ft_index_data.h"
+#include "tr/ft/FTsearch.h"
 
 class PPFtIndexScan : public PPIterator
 {

@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPLoadModule.h"
-#include "crmutils.h"
-#include "client_core.h"
-#include "tr_globals.h"
-#include "locks.h"
-#include "log.h"
-#include "pq.h"
-#include "micro.h"
-#include "metadata.h"
-#include "d_printf.h"
-#include "auc.h"
+#include "tr/executor/root/PPLoadModule.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/client_core.h"
+#include "tr/tr_globals.h"
+#include "tr/locks/locks.h"
+#include "tr/log/log.h"
+#include "tr/pq/pq.h"
+#include "tr/mo/micro.h"
+#include "tr/structures/metadata.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/auth/auc.h"
 #include <functional>
 #include <algorithm>
 

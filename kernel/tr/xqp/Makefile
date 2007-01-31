@@ -6,7 +6,7 @@ VPATH = . .. ../strings
 
 include $(PP)/Makefile.include
 
-all: libxqp$(LIB_EXT) 
+all: xqp$(LIB_EXT) 
 	@echo ==============================================================
 	@echo                 XQuery Parser  has been Done
 	@echo ==============================================================
@@ -18,9 +18,9 @@ test: xqp_test$(EXE_EXT) p$(EXE_EXT)
 
 
 
-XQUERYPARSER_LIB = libxqp$(LIB_EXT)
+XQUERYPARSER_LIB = xqp$(LIB_EXT)
 
-COMMON_FILES_LIB = $(PP)/kernel/common/libcommon_files$(LIB_EXT)
+COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 
 
 

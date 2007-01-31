@@ -3,21 +3,21 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <list>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
 
-#include "base.h"
-#include "uhdd.h"
-#include "utils.h"
-#include "d_printf.h"
-#include "socket_client.h"
-#include "tr_functions.h"
-#include "auc.h"
-#include "tr_utils.h"
+#include "common/base.h"
+#include "common/u/uhdd.h"
+#include "common/utils.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/socket_client.h"
+#include "tr/tr_functions.h"
+#include "tr/auth/auc.h"
+#include "tr/tr_utils.h"
 
 
 using namespace std;

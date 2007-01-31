@@ -7,8 +7,8 @@
 #ifndef __PPFUNCALL_H
 #define __PPFUNCALL_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 //#define STRICT_FUNS

@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <iostream>
 #include <string>
-#include "pq.h"
-#include "d_printf.h"
-#include "XQuerytoLR.h"
-#include "tr_globals.h"
-#include "scheme_tree.h"
+#include "tr/pq/pq.h"
+#include "common/errdbg/d_printf.h"
+#include "tr/xqp/XQuerytoLR.h"
+#include "tr/tr_globals.h"
+#include "tr/executor/por2qep/scheme_tree.h"
 #include "chicken.h"
-#include "schema.h"
-#include "metadata.h"
-#include "utils.h"
-#include "tr_utils.h"
+#include "tr/structures/schema.h"
+#include "tr/structures/metadata.h"
+#include "common/utils.h"
+#include "tr/tr_utils.h"
 
 using namespace std;
 

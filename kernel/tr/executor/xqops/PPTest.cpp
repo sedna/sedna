@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPTest.h"
-#include "dm_accessors.h"
-#include "strings.h"
+#include "tr/executor/xqops/PPTest.h"
+#include "tr/executor/base/dm_accessors.h"
+#include "tr/strings/strings.h"
 #include <ios>
 #include <sstream>
-#include "pstr.h"
+#include "tr/pstr/pstr.h"
 using namespace std;
 //#include <atlstr.h>
 //#define USE_DTSEARCH_NAMESPACE

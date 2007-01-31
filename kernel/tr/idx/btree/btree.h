@@ -6,11 +6,11 @@
 #ifndef _BTREE_H
 #define _BTREE_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "nodes.h"
-#include "btstruct.h"
-#include "btpage.h"
+#include "tr/structures/nodes.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btpage.h"
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
    Btree interface functions. In all functions 'root' parameter is btree actual root page.

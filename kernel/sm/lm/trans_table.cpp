@@ -3,14 +3,14 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <map>
 #include <iostream>
-#include "base.h"
-#include "trans_table.h"
-#include "TransCB.h"
-#include "usem.h"
-#include "d_printf.h"
+#include "common/base.h"
+#include "sm/lm/trans_table.h"
+#include "sm/lm/TransCB.h"
+#include "common/u/usem.h"
+#include "common/errdbg/d_printf.h"
 
 using namespace std;
 

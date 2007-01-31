@@ -7,10 +7,10 @@
 #ifndef _POR2QEP_H
 #define _POR2QEP_H
 
-#include "sedna.h"
-#include "PPOperations.h"
-#include "scheme_tree.h"
-#include "exec_output.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPOperations.h"
+#include "tr/executor/por2qep/scheme_tree.h"
+#include "tr/crmutils/exec_output.h"
 
 struct qep_subtree
 {

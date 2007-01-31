@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "plmgr_core.h"
-#include "xptr.h"
-#include "base.h"
+#include "common/sedna.h"
+#include "sm/plmgr/plmgr_core.h"
+#include "common/xptr.h"
+#include "common/base.h"
 
 
 void plmgr_core::writeSector(void *p, int size, int file_pos, LSN& drbl_lsn)

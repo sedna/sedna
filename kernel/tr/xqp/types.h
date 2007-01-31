@@ -6,7 +6,7 @@
 #ifndef types_h
 #define types_h
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <stack>
 
 typedef  std::stack<int>  STACK_INT;

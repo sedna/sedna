@@ -6,7 +6,7 @@
 #ifndef _PSTR_H
 #define _PSTR_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 extern const shft	PSTRMAXSIZE;
 

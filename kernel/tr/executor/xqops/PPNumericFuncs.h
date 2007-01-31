@@ -7,8 +7,8 @@
 #ifndef __PPNUMERICFUNCS_H
 #define __PPNUMERICFUNCS_H
 
-#include "sedna.h"
-#include "PPBase.h"
+#include "common/sedna.h"
+#include "tr/executor/base/PPBase.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////

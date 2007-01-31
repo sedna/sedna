@@ -6,7 +6,7 @@
 #ifndef _NID_H
 #define _NID_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 /*	number of symbols encodable in the cell of the alphabet;
 	no more than 255

@@ -3,10 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDAFilter.h"
-#include "merge.h"
+#include "tr/executor/xqops/PPDAFilter.h"
+#include "tr/executor/base/merge.h"
 
 
 PPDAFilter::PPDAFilter(dynamic_context *_cxt_,

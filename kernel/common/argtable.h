@@ -756,7 +756,7 @@ together with an appropriate error message and terminates
 with error code 1.
 
 \code
-#include "argtable.h"
+#include "common/argtable.h"
 
 int main(int argc, char **argv)
    {

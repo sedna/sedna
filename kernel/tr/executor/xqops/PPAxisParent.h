@@ -7,10 +7,10 @@
 #ifndef _PPAXISPARENT_H
 #define _PPAXISPARENT_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPath.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPath.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// PPAxisParent

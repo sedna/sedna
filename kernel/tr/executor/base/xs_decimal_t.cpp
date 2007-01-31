@@ -6,14 +6,14 @@
 
 #include <math.h>
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "xs_decimal_t.h"
-#include "xs_helper.h"
-#include "PPBase.h"
+#include "tr/executor/base/xs_decimal_t.h"
+#include "tr/executor/base/xs_helper.h"
+#include "tr/executor/base/PPBase.h"
 
 extern "C" {
-#include "decimal128.h"
+#include "tr/executor/base/decNumber/decimal128.h"
 }
 
 

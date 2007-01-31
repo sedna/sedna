@@ -3,18 +3,18 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 #include <string>
 #include <iostream>
-#include "log.h"
-#include "d_printf.h"
-#include "tr_plmgr.h"
-#include "base.h"
-#include "XptrHash.h"
-#include "tr_globals.h"
-#include "tr_debug.h"
-#include "sm_vmm_data.h"
-#include "trmgr.h"
+#include "tr/log/log.h"
+#include "common/errdbg/d_printf.h"
+#include "sm/plmgr/tr_plmgr.h"
+#include "common/base.h"
+#include "common/XptrHash.h"
+#include "tr/tr_globals.h"
+#include "common/tr_debug.h"
+#include "common/sm_vmm_data.h"
+#include "sm/trmgr.h"
 
 using namespace std;
 

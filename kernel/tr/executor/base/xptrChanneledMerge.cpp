@@ -3,8 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
-#include "xptrChanneledMerge.h"
+#include "common/sedna.h"
+#include "tr/executor/base/xptrChanneledMerge.h"
 
 node_cell* node_cell::init(xptr node)
 {

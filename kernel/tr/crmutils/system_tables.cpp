@@ -3,19 +3,19 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
 #include <sstream>
 
-#include "crmutils.h"
-#include "schema.h"
-#include "metadata.h"
-#include "micro.h"
-#include "locks.h"
-#include "vmm.h"
-#include "index_data.h"
-#include "indirection.h"
-#include "dm_accessors.h"
+#include "tr/crmutils/crmutils.h"
+#include "tr/structures/schema.h"
+#include "tr/structures/metadata.h"
+#include "tr/mo/micro.h"
+#include "tr/locks/locks.h"
+#include "tr/vmm/vmm.h"
+#include "tr/idx/index_data.h"
+#include "tr/structures/indirection.h"
+#include "tr/executor/base/dm_accessors.h"
 
 
 typedef void (*system_fun)(xptr root, const char* title);

@@ -27,9 +27,9 @@
 #include <stdio.h>            // [for printf]
 
 #define  DECNUMDIGITS 34      // make decNumbers with space for 34
-#include "decNumber.h"        // base number library
-#include "decNumberLocal.h"   // decNumber local types, etc.
-#include "decimal128.h"       // our primary include
+#include "tr/executor/base/decNumber/decNumber.h"        // base number library
+#include "tr/executor/base/decNumber/decNumberLocal.h"   // decNumber local types, etc.
+#include "tr/executor/base/decNumber/decimal128.h"       // our primary include
 
 /* Utility routines and tables [in decimal64.c] */
 extern const uInt COMBEXP[32], COMBMSD[32];

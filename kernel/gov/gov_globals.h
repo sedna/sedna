@@ -6,8 +6,8 @@
 #ifndef _GOV_GLOBALS_H_
 #define _GOV_GLOBALS_H_
 
-#include "argtable.h"
-#include "gov_table.h"
+#include "common/argtable.h"
+#include "gov/gov_table.h"
 
 
 extern info_table *gov_table;
