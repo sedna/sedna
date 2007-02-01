@@ -6,11 +6,6 @@ PP = ../../../..
 
 include $(PP)/Makefile.include
 
-all: xqops$(LIB_EXT)
-	@echo ===================================================================
-	@echo xqops DONE
-	@echo ===================================================================
-
 OBJS =  PPAbsPath$(OBJ_EXT) \
         PPAccessors$(OBJ_EXT) \
         PPADFilter$(OBJ_EXT) \
@@ -92,21 +87,4 @@ OBJS += PPCreateTrigger$(OBJ_EXT) \
 endif
 
 
-
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(OBJS:$(OBJ_EXT)=.d)
-endif
-
-################################################################################
-# xqops                                                                        #
-################################################################################
-xqops$(LIB_EXT): $(OBJS)
-	$(PLD) $(PLDOUT)$@ $^
-
-
-################################################################################
-# Clean                                                                        #
-################################################################################
-.PHONY: clean
-
-clean: generic_clean
+include $(PP)/Makefile.pseudolib

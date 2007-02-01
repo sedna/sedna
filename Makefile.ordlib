@@ -1,0 +1,60 @@
+#
+# Common part for all ordinary libs
+#
+
+FOLDER = $(shell basename `pwd`)
+ifndef LIB_NAME
+LIB_NAME = $(FOLDER)
+endif
+SUBDIROBJS= $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIST_EXT))
+
+all: $(LIB_NAME)$(LIB_EXT)
+	@echo ===================================================================
+	@echo $(LIB_NAME) DONE
+	@echo ===================================================================
+
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+
+ifdef GENERATED
+include generated
+endif
+
+include $(OBJS:$(OBJ_EXT)=.d)
+
+ifdef GENERATED
+$(OBJS:$(OBJ_EXT)=.d): generated
+endif
+
+endif
+
+
+################################################################################
+# $(LIB_NAME)                                                                  #
+################################################################################
+$(LIB_NAME)$(LIB_EXT): $(OBJS) $(OBJS_NODEP) $(SUBDIROBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $(OBJS) $(OBJS_NODEP) $(foreach dirobj,$(SUBDIROBJS),$(shell cat $(dirobj)))
+
+
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
+
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@)
+
+
+ifdef GENERATED
+$(GENERATED): generated
+endif
+
+
+################################################################################
+# Clean                                                                        #
+################################################################################
+.PHONY: clean $(CUSTOM_CLEAN)
+
+clean: generic_clean $(CUSTOM_CLEAN)
+ifdef SUBDIRS
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
+endif
+
+
