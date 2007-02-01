@@ -6,27 +6,11 @@ PP = ../../../..
 
 include $(PP)/Makefile.include
 
-all: sa$(LIB_EXT)
-	@echo ===================================================================
-	@echo sa DONE
-	@echo ===================================================================
-
 OBJS = sa$(OBJ_EXT)
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(OBJS:$(OBJ_EXT)=.d)
-endif
+CUSTOM_CLEAN = clean_generated
 
-################################################################################
-# sa.lib                                                                       #
-################################################################################
-sa$(LIB_EXT): $(OBJS)
-	$(PLD) $(PLDOUT)$@ $^
+include $(PP)/Makefile.pseudolib
 
-################################################################################
-# Clean                                                                        #
-################################################################################
-.PHONY: clean
-
-clean: generic_clean
+clean_generated:
 	-$(REMOVE) sa.c

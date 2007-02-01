@@ -6,11 +6,6 @@ PP = ../../../..
 
 include $(PP)/Makefile.include
 
-all: root$(LIB_EXT)
-	@echo ===================================================================
-	@echo root DONE
-	@echo ===================================================================
-
 OBJS = PPBulkLoad$(OBJ_EXT) PPCreateIndex$(OBJ_EXT) \
        PPCreateMetadata$(OBJ_EXT) PPDeleteDeep$(OBJ_EXT) \
        PPDeleteUndeep$(OBJ_EXT) PPDropIndex$(OBJ_EXT) \
@@ -24,21 +19,4 @@ ifeq ($(ENABLE_DTSEARCH),1)
 OBJS  +=   PPDropFtIndex$(OBJ_EXT) PPCreateFtIndex$(OBJ_EXT)
 endif
 
-
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(OBJS:$(OBJ_EXT)=.d)
-endif
-
-################################################################################
-# root                                                                         #
-################################################################################
-root$(LIB_EXT): $(OBJS)
-	$(PLD) $(PLDOUT)$@ $^
-
-
-################################################################################
-# Clean                                                                        #
-################################################################################
-.PHONY: clean
-
-clean: generic_clean
+include $(PP)/Makefile.pseudolib

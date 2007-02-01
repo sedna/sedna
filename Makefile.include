@@ -130,6 +130,7 @@ REMOVE = rm -f
 REMOVE_DIR = rm -f -r
 COPY = cp -r
 PDFLATEX = pdflatex
+LIST_EXT = .lst
 
 include $(PP)/Makefile.platform
 
@@ -345,18 +346,7 @@ endif
 ifeq ($(MAKECMDGOALS),clean)
 
 generic_clean: 
-	-$(REMOVE) *$(OBJ_EXT)
-	-$(REMOVE) *$(LIB_EXT)
-	-$(REMOVE) *.bb
-	-$(REMOVE) *.bbg
-	-$(REMOVE) *.da
-	-$(REMOVE) *.map
-	-$(REMOVE) *.pdb
-	-$(REMOVE) vc*.idb
-	-$(REMOVE) *.SUP
-	-$(REMOVE) *.d
-	-$(REMOVE) *.d.*
-	-$(REMOVE) generated
+	-$(REMOVE) *$(OBJ_EXT) *$(LIB_EXT) *.bb *.bbg *.da *.map *.pdb vc*.idb *.SUP *.d *.d.* generated
 
 endif
 

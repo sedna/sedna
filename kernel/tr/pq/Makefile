@@ -6,23 +6,11 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-all: pq$(LIB_EXT)
-	@echo ===================================================================
-	@echo pq DONE
-	@echo ===================================================================
-
 OBJS = pq$(OBJ_EXT) modules$(OBJ_EXT) scm-entry$(OBJ_EXT) scm-debug$(OBJ_EXT)
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(OBJS:$(OBJ_EXT)=.d)
-endif
+CUSTOM_CLEAN = clean_generated
 
-################################################################################
-# pq.lib                                                                      #
-################################################################################
-pq$(LIB_EXT): $(OBJS)
-	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
-
+include $(PP)/Makefile.ordlib
 
 scm-debug.scm: scm-debug.scm.m4
 	$(M4) -D EL_DEBUG=$(EL_DEBUG) < $< > $@
@@ -30,9 +18,7 @@ scm-debug.scm: scm-debug.scm.m4
 ################################################################################
 # Clean                                                                        #
 ################################################################################
-.PHONY: clean
-
-clean: generic_clean
+clean_generated: 
 	-$(REMOVE) scm-debug.scm
 	-$(REMOVE) scm-debug.c
 	-$(REMOVE) scm-entry.c

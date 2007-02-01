@@ -6,27 +6,11 @@ PP = ../../../..
 
 include $(PP)/Makefile.include
 
-all: tools$(LIB_EXT)
-	@echo ===================================================================
-	@echo tools DONE
-	@echo ===================================================================
-
 OBJS = impl-differences$(OBJ_EXT)
 
-ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
-include $(OBJS:$(OBJ_EXT)=.d)
-endif
+CUSTOM_CLEAN = clean_generated
 
-################################################################################
-# tools.lib                                                                   #
-################################################################################
-tools$(LIB_EXT): $(OBJS)
-	$(PLD) $(PLDOUT)$@ $^
+include $(PP)/Makefile.pseudolib
 
-################################################################################
-# Clean                                                                        #
-################################################################################
-.PHONY: clean
-
-clean: generic_clean
+clean_generated:
 	-$(REMOVE) impl-differences.c

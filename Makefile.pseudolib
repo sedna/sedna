@@ -1,0 +1,57 @@
+#
+# Common part for all pseudo libs
+#
+
+
+FOLDER = $(shell basename `pwd`)
+SUBDIROBJS= $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIST_EXT))
+
+all: $(FOLDER)$(LIST_EXT)
+	@echo ===================================================================
+	@echo $(FOLDER) DONE
+	@echo ===================================================================
+
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+
+ifdef GENERATED
+include generated
+endif
+
+include $(OBJS:$(OBJ_EXT)=.d)
+
+ifdef GENERATED
+$(OBJS:$(OBJ_EXT)=.d): generated
+endif
+
+endif
+
+
+################################################################################
+# $(FOLDER)                                                                    #
+################################################################################
+$(FOLDER)$(LIST_EXT): $(OBJS) $(SUBDIROBJS)
+	echo $(foreach obj,$(foreach dirobj,$(SUBDIROBJS),$(shell cat $(dirobj))) $(OBJS),$(FOLDER)/$(obj)) >$@
+
+
+$(SUBDIROBJS): $(SUBDIRS:%=%-recursive) ;
+
+.PHONY: $(SUBDIRS:%=%-recursive)
+$(SUBDIRS:%=%-recursive):
+	$(MAKE) -C $(subst -recursive,,$@)
+
+
+ifdef GENERATED
+$(GENERATED): generated
+endif
+
+
+################################################################################
+# Clean                                                                        #
+################################################################################
+.PHONY: clean $(CUSTOM_CLEAN)
+
+clean: generic_clean $(CUSTOM_CLEAN)
+ifdef SUBDIRS
+	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
+endif
+
