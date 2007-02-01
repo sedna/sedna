@@ -34,17 +34,32 @@ void term_output3(const char *buf, const void* arg1, const void* arg2)
     }
 }
 
-void term_debug_info_output()
+void term_debug_info_output(const char *msg)
 {
-    if (debug_output && (strlen(debug_buf)!=0))
+    if (debug_output)
     {
-        fprintf(res_os, "\nTRACE: item begin ");
-        
-        fprintf(res_os, "%s", debug_buf);
+        int i = 0;
+        int msg_length = strlen(msg);
+        if (strncmp(msg, "\nSEDNA TRACE", 12) == 0)
+        {
+            i = 13;
+            while((i<523) && (i<msg_length) && (msg[i]!='\n'))
+            {
+                i++;
+            }
+            memcpy(debug_indent, msg+13, i);
+            debug_indent[i-13]='\0';
+			i++;
+        }
 
-        fprintf(res_os, "\nTRACE: item end ");
-        
-        debug_buf[0]='\0';
+        fprintf(res_os, "\n%s", debug_indent);
+
+        while(i<msg_length)
+        {
+            fprintf(res_os, "%c", msg[i]);
+            if (msg[i]=='\n') fprintf(res_os, "%s", debug_indent);
+            i++;
+        }
     }
 }
 
@@ -108,7 +123,7 @@ int process_commandline_query()
     	//iterate over the result sequece and retrieve the result data
     	int bytes_read;
         
-        term_debug_info_output(); // output debug info if there was any
+//        term_debug_info_output(); // output debug info if there was any
 
     	res = SEnext(&conn);
         if((res == SEDNA_NEXT_ITEM_FAILED) || (res == SEDNA_ERROR))
@@ -138,7 +153,7 @@ int process_commandline_query()
     	           return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
-            term_debug_info_output(); // output debug info if there was any
+//            term_debug_info_output(); // output debug info if there was any
 
     		res = SEnext(&conn);
             if((res == SEDNA_NEXT_ITEM_FAILED) || (res == SEDNA_ERROR))
@@ -151,13 +166,13 @@ int process_commandline_query()
     }
     if(res == SEDNA_UPDATE_SUCCEEDED) 
     {
-        term_debug_info_output(); // output debug info if there was any
+//        term_debug_info_output(); // output debug info if there was any
 
     	fprintf(res_os, "UPDATE is executed successfully\n");
     }
 	if(res == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
-        term_debug_info_output(); // output debug info if there was any
+//        term_debug_info_output(); // output debug info if there was any
 
     	fprintf(res_os, "Bulk load succeeded\n");
     }

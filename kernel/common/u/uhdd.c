@@ -560,12 +560,12 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
 {
 #ifdef _WIN32
     WIN32_FIND_DATA find_data;
-    char buf[20];
+    char buf[U_MAX_PATH+1];
     UFile tmphandle;
     USECURITY_ATTRIBUTES *sa;
 
-    strcpy(fs->name, directoryName);
-    strcat(fs->name, "/tmp.*");
+    strcpy(buf, directoryName);
+    strcat(buf, "/tmp.*");
 
     tmphandle = FindFirstFile(buf, &find_data);
     if (tmphandle == U_INVALID_FD)

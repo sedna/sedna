@@ -67,7 +67,7 @@ void TermCtrlHandler(int signo)
 
 void se_term_debug_handler(se_debug_info_type subtype, const char *msg)
 {
-    strcpy(debug_buf, msg);
+    term_debug_info_output(msg);
 }
 
 int slash_commands_help()
@@ -388,6 +388,9 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             else return EXIT_STATEMENT_OR_COMMAND_FAILED;
 		}
 	}
+    
+    term_output1("result: ");
+
     // execute XQuery query	or update
     if(is_query_from_file)
     {
@@ -454,7 +457,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	//iterate over the result sequece and retrieve the result data
     	int bytes_read, res_next;
 
-    	term_output1("result:\n");
+        term_output1("\n");
 
  //       term_debug_info_output(); // output debug info if there was any
 
@@ -492,8 +495,8 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                     else return EXIT_STATEMENT_OR_COMMAND_FAILED;
                 }
     		}
-            term_debug_info_output(); // output debug info if there was any
-            
+ //           term_debug_info_output(); // output debug info if there was any
+
     		res_next = SEnext(&conn);
             if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
             {
@@ -505,13 +508,13 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
-        term_debug_info_output(); // output debug info if there was any
+ //       term_debug_info_output(); // output debug info if there was any
         
     	fprintf(res_os, "UPDATE is executed successfully\n");
     }
     else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
-        term_debug_info_output(); // output debug info if there was any
+//        term_debug_info_output(); // output debug info if there was any
         
     	fprintf(res_os, "Bulk load succeeded\n");
     }

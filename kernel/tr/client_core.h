@@ -33,7 +33,7 @@ public:
     virtual QueryType get_query_type() = 0;
     virtual se_ostream* get_se_ostream() = 0;
     virtual void get_session_parameters() = 0;
-    virtual client_file get_file_from_client(const char* filename) = 0;
+    virtual void get_file_from_client(std::vector<std::string>* filenames, std::vector<client_file>* cf_vec) = 0;
     virtual void close_file_from_client(client_file &inout_cf) = 0;
     virtual void respond_to_client(int instruction) = 0;
     virtual void begin_item() = 0;

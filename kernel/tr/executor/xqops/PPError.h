@@ -56,6 +56,7 @@ protected:
     // obtained parameters and local data
     PPOpIn value_child, label_child;
     se_ostream &dostr;
+    tuple_cell tc;
     bool first_time;
     se_ostream *debug_ostream;
 

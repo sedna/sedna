@@ -196,75 +196,88 @@ se_ostream* socket_client::get_se_ostream()
 }
 
 
-client_file socket_client::get_file_from_client(const char* filename)
+void socket_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
 {
-  string tmp_file_path_str;
+    string tmp_file_path_str;
+    
+    int i, got, written = 0, cmd_bl, len_int, res;
+    __int64 res_pos;
+    
+    if ((filenames->size() > 1) && (p_ver.major_version < 2))
+        throw USER_EXCEPTION2(SE2999, "Loading module from multiple files is not supported by current Sedna Client-server protocol.");
+    
 
-  file_struct fs;
-  client_file cf;
+    try
+    {
+        for(i=0; i<filenames->size(); i++)
+        {
+            file_struct fs;
+            client_file &cf = cf_vec->at(i);
+            const char* client_filename = filenames->at(i).c_str();
+            
+            if (strcmp(client_filename, "/STDIN/") == 0)
+            {
+                sp_msg.instruction = 431;// BulkLoadFromStream 431 message
+                sp_msg.length = 0;
+                if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+            }
+            else
+            {
+                int filename_len = strlen(client_filename);
+                sp_msg.instruction = 430;// BulkLoadFileName 430 message
+                sp_msg.length = filename_len + 5;
+                
+                int2net_int(filename_len, sp_msg.body+1);
+                sp_msg.body[0] = 0;
+                memcpy(sp_msg.body+5, client_filename, filename_len);
+                if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+            }
+            
+            // create tmpfile for bulkload
+            tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
+            res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
+            if(res == 0) throw USER_EXCEPTION(SE4052);
+            
+            res = sp_recv_msg(Sock, &sp_msg);
+            if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
+            if(res == 1) throw USER_EXCEPTION(SE3012);
+            
+            while(sp_msg.instruction != se_BulkLoadEnd)    // while not BulkLoadEnd message
+            {
+                if (sp_msg.instruction == se_BulkLoadError)     // BulkLoadError
+                {
+                    throw USER_EXCEPTION(SE3013);
+                }
+                else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
+                {
+                    got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
+                    if ((got == 0)||(written!=sp_msg.length-5)) throw USER_EXCEPTION(SE4045); 
+                }
+                else throw USER_EXCEPTION(SE3009);
+                
+                res = sp_recv_msg(Sock, &sp_msg);
+                if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+                if (res == 1) throw USER_EXCEPTION(SE3012);
+             } //end of while
+                 
+             got = uCloseFile(fs.f, __sys_call_error);
 
-  int i, got, written = 0, cmd_bl, len_int, res;
-  __int64 res_pos;
-
-     try
-     { 
-        	if (strcmp(filename, "/STDIN/") == 0)
-        	{
-        		sp_msg.instruction = 431;// BulkLoadFromStream 431 message
-        		sp_msg.length = 0;
-        		if(sp_send_msg(Sock, &sp_msg)!=0) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
-        	}
-        	else
-        	{
-        		sp_msg.instruction = 430;// BulkLoadFileName 430 message
-        		sp_msg.length = strlen(filename) +5;
-        		
-        		int2net_int(strlen(filename), sp_msg.body+1);
-        		sp_msg.body[0] = 0;
-        		memcpy(sp_msg.body+5, filename, strlen(filename));
-        		if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
-        	}
-			// create tmpfile for bulkload
-			
-			tmp_file_path_str = string(SEDNA_DATA) + string("/data/") + string(db_name) + string("_files");
-		    res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
-	    	if(res == 0) throw USER_EXCEPTION(SE4052);
-
-    	    res = sp_recv_msg(Sock, &sp_msg);
-			if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
-			if(res == 1) throw USER_EXCEPTION(SE3012);
-
-        	while(sp_msg.instruction != se_BulkLoadEnd)    // while not BulkLoadEnd message
-	        {
-	        	if (sp_msg.instruction == se_BulkLoadError)     // BulkLoadError
-	        	{
-	           		throw USER_EXCEPTION(SE3013);
-	        	}
-	        	else if (sp_msg.instruction == se_BulkLoadPortion)// BulkLoadPortion message
-	        	{
-	        		got = uWriteFile(fs.f, sp_msg.body+5, sp_msg.length-5, &written, __sys_call_error);
-	        		if ((got == 0)||(written!=sp_msg.length-5)) throw USER_EXCEPTION(SE4045); 
-	        	}
-	        	else throw USER_EXCEPTION(SE3009);
-	        	res = sp_recv_msg(Sock, &sp_msg);
-		   		if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-		   		if (res == 1) throw USER_EXCEPTION(SE3012);
-	        } //end of while
-
-         	got = uCloseFile(fs.f, __sys_call_error);
-         	cf.f = fopen(string(fs.name).c_str(), "r");
-
-            if (uGetFileSizeByName(fs.name, &(cf.file_size), __sys_call_error) == 0)
-               throw USER_EXCEPTION2(SE4050, fs.name);
-
-         	strcpy(cf.name, fs.name);
+             cf.f = fopen(string(fs.name).c_str(), "r");
+             if (uGetFileSizeByName(fs.name, &(cf.file_size), __sys_call_error) == 0)
+                 throw USER_EXCEPTION2(SE4050, fs.name);
+             strcpy(cf.name, fs.name);
+        }//for
+        
      } catch (...) {
-      	  if(uCloseFile(fs.f, __sys_call_error) == 0) d_printf1("tmp file close error %d\n");
-          if(uDeleteFile(string(fs.name).c_str(), __sys_call_error) == 0) d_printf1("tmp file delete error");
-          throw;
+         // close and delete all files from cf_vec
+         for (int j=0; j<i; j++)
+         {
+             if(uCloseFile(cf_vec->at(i).f, __sys_call_error) == 0) d_printf1("tmp file close error %d\n");
+             if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
+         }
+         throw;
      }
-     
-     return cf;
+
 }
 
 void socket_client::close_file_from_client(client_file &cf)

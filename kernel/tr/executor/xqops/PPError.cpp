@@ -165,7 +165,6 @@ void PPFnTrace::close ()
 {
     value_child.op->close();
     label_child.op->close();
-//    delete debug_ostream;
 }
 
 void PPFnTrace::next(tuple &t)
@@ -179,7 +178,7 @@ void PPFnTrace::next(tuple &t)
         label_child.op->next(t);    
         if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
     
-        tuple_cell tc = label_child.get(t);
+        tc = label_child.get(t);
         if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
             throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
     
@@ -187,9 +186,6 @@ void PPFnTrace::next(tuple &t)
         if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
             
         tc = tuple_cell::make_sure_light_atomic(tc);
-        dostr.set_debug_info_type(se_QueryTrace);
- //       dostr << "\nTRACE: " << tc.get_str_mem() << "\n";
-        dostr.flush();
     }
 
     value_child.op->next(t);
@@ -198,9 +194,8 @@ void PPFnTrace::next(tuple &t)
     else 
     {
         dostr.set_debug_info_type(se_QueryTrace);
-//        dostr << "TRACE: item begin\n";
+        dostr << "\nSEDNA TRACE " << tc.get_str_mem() << "\n";
         print_tuple_indent(t, dostr, xml, is_first, cxt);
-//        dostr << "\nTRACE: item end\n";
         dostr.flush();
     }
 }

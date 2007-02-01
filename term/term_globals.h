@@ -31,7 +31,7 @@ extern char login[];
 extern char password[];
 extern char output_file[];
 extern char echo_str[];
-extern char debug_buf[];
+extern char debug_indent[];
 
 extern FILE* res_os; //output stream of term results (result of the user's queres)
 

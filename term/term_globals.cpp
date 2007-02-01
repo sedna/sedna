@@ -26,7 +26,7 @@ char login[TERM_ARGSTRLEN+1];
 char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
-char debug_buf[SE_SOCKET_MSG_BUF_SIZE+1];
+char debug_indent[TERM_ARGSTRLEN+1];
 
 const size_t narg = 13;
 
