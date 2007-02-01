@@ -443,6 +443,9 @@ static int execute(struct SednaConnection *conn)
     }
     else if (conn->msg.instruction == se_BulkLoadFileName)      /*BulkLoadFileName*/
     {
+        while(conn->msg.instruction == se_BulkLoadFileName)
+        {
+            
         /* open file. Read from file and send 410 - BulkLoadPortion. 420 - BulkLoadEnd.*/
         /*     cout << "bulk load from file " << string(msg.body+5).c_str() << " ...";*/
         UFile file_handle;
@@ -557,6 +560,8 @@ static int execute(struct SednaConnection *conn)
             connectionFailure(conn, SE3007, NULL, NULL);
             return SEDNA_ERROR;
         }
+        }// while conn->msg.instruction == BulkLoadFileName
+        
         if (conn->msg.instruction == se_ErrorResponse)
         {
             setServerErrorMsg(conn, conn->msg);
@@ -580,6 +585,11 @@ static int execute(struct SednaConnection *conn)
             conn->in_query = 0;
             conn->isInTransaction = SEDNA_NO_TRANSACTION;
             return SEDNA_BULK_LOAD_FAILED;
+        }
+        else
+        {
+            setDriverErrorMsg(conn, SE3008, NULL);        /* "Unknown message from server."*/
+            return SEDNA_ERROR;
         }
 
     }                           /* Bulk Load from File*/

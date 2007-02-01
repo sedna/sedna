@@ -30,7 +30,6 @@ bool operator < (counted_ptr<db_entity> de1, counted_ptr<db_entity> de2)
 void getSednaAuthMetadataPath(char* path)
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
     char path_buf[U_MAX_PATH + 32];
 #ifdef _WIN32
 	string pstring = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
@@ -52,12 +51,10 @@ void getSednaAuthMetadataPath(char* path)
 	}
 #endif
 #endif
-#endif
 }
 void auth_for_query(counted_ptr<db_entity> dbe)
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
     bool is_qep_opened = false, is_qep_built = false;
 	typedef pair <counted_ptr<db_entity>, struct dbe_properties> authPair;
 	auth_map::iterator mapIter;
@@ -123,11 +120,11 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 		}	
     }
 #endif    
-#endif    
 }
 
 void auth_for_load_module(const char* module_name)
 {
+#ifdef AUTH_SWITCH
     PPQueryEssence* qep_tree = NULL;
     se_nullostream null_os;
     bool is_qep_opened = false, is_qep_built = false;
@@ -153,14 +150,12 @@ void auth_for_load_module(const char* module_name)
         if(is_qep_built)
             delete_qep(qep_tree);
         throw e;}
-
-
+#endif    
 }
 
 void clear_current_statement_authmap()
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
 	auth_map::iterator Iter;
     Iter = amap.begin();
 	while ( Iter != amap.end() )
@@ -168,7 +163,6 @@ void clear_current_statement_authmap()
 		Iter -> second.current_statement = false;
 		Iter++;
 	}
-#endif   
 #endif 
 }
 
@@ -176,30 +170,25 @@ void clear_current_statement_authmap()
 void clear_authmap()
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
 	amap.clear();
-#endif
 #endif
 }
 
 void security_metadata_upd_controll()
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
 	if( security_metadata_updating )
 	{
 		clear_authmap();
 		security_metadata_updating = false;
 	}
 #endif
-#endif
 }
 
 bool is_auth_check_needed(int update_privilege)
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
-	if(amap.empty()) return false;//throw USER_EXCEPTION(SE3066); 
+	if(amap.empty()) return false;
     
 	bool all_true = true;
 	bool all_false = true;
@@ -241,16 +230,12 @@ bool is_auth_check_needed(int update_privilege)
 #else
 	return false;
 #endif 
-#else
-	return false;
-#endif
 }
 
 
 void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
 {
 #ifdef AUTH_SWITCH
-# if (AUTH_SWITCH == 1)
 	auth_map::iterator mIter;
 	xptr_sequence::iterator it=(*seq).begin();
 	xptr node;
@@ -318,7 +303,5 @@ void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
 	
 	security_metadata_upd_controll();
 	return;
-
-#endif 
 #endif   
 }

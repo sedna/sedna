@@ -40,7 +40,7 @@
 
 Sedna uses a message-based protocol for communication between clients and the Sedna server through the TCP/IP sockets. Higher level application programming interfaces are built over this protocol (see for example the Java API and Scheme API in the Sedna programmer's guide).
 
-This document describes version 1.0 of the protocol. 
+This document describes version 1.0 and 2.0 of the protocol. 
 
 By default the server listens clients to connect to port number 5050. Port number can be changed from the default (for more detail see the Sedna administration guide).
 
@@ -138,6 +138,10 @@ When the result sequence has ended, server on recieving GetNextItem from client 
 
 While sending result data server may also send any number of messages DebugInfo containing debug information if there is any.
 
+\begin{note}
+Client debug information is supported in Sedna Client/Server Protocol since version 2.0.
+\end{note}
+
 Client is not required to get all the items of the result sequence. It can send next query for execution before all the items of the result sequence are recieved from the server.
 
 If the query failed, the server sends message QueryFailed to the client.
@@ -154,7 +158,7 @@ The possible instructions from the server in this phase are:
 \begin{itemize} 
 \item QuerySucceeded. Does not contain a body.
 \item QueryFailed. The body contains the error code and error info.
-\item DebugInfo. The body contains the debug type and debug info.
+\item DebugInfo. The body contains the debug type and debug info. (Since version 2.0)
 \item ItemPart. The body contains the part of the item.
 \item ItemEnd. Does not contain a body.
 \end{itemize}

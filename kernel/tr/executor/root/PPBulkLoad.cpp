@@ -100,12 +100,14 @@ void PPBulkLoad::execute()
 
     int need_cp;
     xptr doc_root;
-    client_file cf = client->get_file_from_client(tc_filename.get_str_mem());
+    std::vector<std::string> filenames(1, tc_filename.get_str_mem());
+    std::vector<client_file> cf_vec(1);
+    client->get_file_from_client(&filenames, &cf_vec);
     bool write_to_logical_log;
 
     if (!is_need_checkpoint_on_transaction_commit)
     {
-       if (cf.file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
+       if (cf_vec[0].file_size >= MAX_FILE_SIZE_WITHOUT_CHECKPOINT)
        {
           write_to_logical_log = false;
           is_need_checkpoint_on_transaction_commit = true;
@@ -123,7 +125,7 @@ void PPBulkLoad::execute()
         { 
             local_lock_mrg->put_lock_on_document(tc_document.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf.f, dynamic_context::ostr(), tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+            doc_root = loadfile(cf_vec[0].f, dynamic_context::ostr(), tc_document.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), NULL, true);
         }
@@ -143,16 +145,18 @@ void PPBulkLoad::execute()
 
             local_lock_mrg->put_lock_on_collection(tc_collection.get_str_mem());
             if (!write_to_logical_log) hl_disable_log();
-            doc_root = loadfile(cf.f, dynamic_context::ostr(), tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
+            doc_root = loadfile(cf_vec[0].f, dynamic_context::ostr(), tc_document.get_str_mem(), tc_collection.get_str_mem(), boundary_space_strip, need_cp, client->is_print_progress());
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }
     } catch (...) {
-        client->close_file_from_client(cf);
+        client->close_file_from_client(cf_vec[0]);
         
         throw;
     }
 
-    client->close_file_from_client(cf);
+    client->close_file_from_client(cf_vec[0]);
 }
+
+
 

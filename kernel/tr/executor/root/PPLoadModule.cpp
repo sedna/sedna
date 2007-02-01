@@ -82,13 +82,13 @@ void PPLoadModule::close()
 }
 
 class Tc_filename_obtainer:
-    public std::unary_function<PPOpIn, tuple_cell>
+    public std::unary_function<PPOpIn, std::string>
 {
 public:
     Tc_filename_obtainer()
         : t(1)
     {}
-    tuple_cell operator()(const PPOpIn &filename)
+    std::string operator()(const PPOpIn &filename)
     {
         filename.op->next(t);
         if (t.is_eos()) throw USER_EXCEPTION(SE1071);
@@ -99,38 +99,60 @@ public:
 
         filename.op->next(t);
         if (!t.is_eos()) throw USER_EXCEPTION(SE1071);
-        return tuple_cell::make_sure_light_atomic(tc);
+        return std::string(
+            tuple_cell::make_sure_light_atomic(tc).get_str_mem()
+            );
     }
 private:
     tuple_cell  tc;
     tuple       t;
 };
 
+struct Client_file_closer:
+    public std::unary_function<client_file, void>
+{
+    void operator()(client_file &cf)
+    {
+        client->close_file_from_client(cf);
+    }
+};
+
+void close_all_client_files(std::vector<client_file> &cf_vec)
+{
+    std::for_each(
+        cf_vec.begin(), cf_vec.end(),
+        Client_file_closer()
+        );
+
+}
+
 void PPLoadModule::execute()
 {
-    std::vector<tuple_cell> tc_filenames(filenames.size());
+    const int                   fnames_size = filenames.size();
+    std::vector<std::string>    tc_filenames(fnames_size);
     std::transform(
         filenames.begin(), filenames.end(),
         tc_filenames.begin(),
         Tc_filename_obtainer()
         );
 
-    client_file cf;
+    //client_file cf;
+    std::vector<client_file> cf_vec(fnames_size);
 
     try {
-        std::string module_name1, module_name2, module_pc_text ;
-        const int fnames_size = tc_filenames.size();
+        std::string module_name1, module_name2, module_pc_text;
+
+        client->get_file_from_client(&tc_filenames, &cf_vec);
         for (int i = 0; i < fnames_size; ++i)
         {
-            cf = client->get_file_from_client(tc_filenames[i].get_str_mem());
             //precompile input module
-            module_pc_text += prepare_module(cf.f, module_name1/*out*/);
-            client->close_file_from_client(cf);
+            module_pc_text += prepare_module(cf_vec[i].f/*cf.f*/, module_name1/*out*/);
+            client->close_file_from_client(cf_vec[i]);
 
             if (i && (module_name1 != module_name2))
                 throw USER_EXCEPTION2(SE1072, (module_name1 + " and " + module_name2).c_str());
 
-            module_name2=module_name1;
+            module_name2 = module_name1;
         }
 
         local_lock_mrg->lock(lm_x);
@@ -148,15 +170,17 @@ void PPLoadModule::execute()
 
         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL, NULL);
 
-//d_printf2("inserting module: %s\n", module_pc_text.c_str());
+        //d_printf2("inserting module: %s\n", module_pc_text.c_str());
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
         
         auth_for_load_module(module_name1.c_str());
     } catch (...) {
-        client->close_file_from_client(cf);
+        close_all_client_files(cf_vec);
+        /*client->close_file_from_client(cf);*/
         throw;
     }
 
-    client->close_file_from_client(cf);
+    close_all_client_files(cf_vec);
+    /*client->close_file_from_client(cf);*/
 }
 

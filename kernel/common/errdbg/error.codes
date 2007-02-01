@@ -726,6 +726,10 @@ sedna-err:SE2203
   External function load error
 
 ########### concerning sockets ####################
+sedna-err:SE2999
+
+    Sedna Client-Server Protocol used in your application does not support this feature. Use protocol of recent version.
+
 sedna-err:SE3000
 
     Failed to clean up socket library.

@@ -245,82 +245,80 @@ se_ostream* command_line_client::get_se_ostream()
   return s;
 }
 
-client_file command_line_client::get_file_from_client(const char* client_filename)
+void command_line_client::get_file_from_client(std::vector<string>* filenames, std::vector<client_file>* cf_vec)
 {
-  client_file cf;
-  char buf[1024];
-  
+    int i;
 
-  if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
-  {//load metadata case (client_filename must be absolute path)
-     if ((cf.f = fopen (client_filename, "r")) == NULL)
-        throw USER_EXCEPTION2(SE4042, client_filename);
-     if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4050, client_filename);
-     strcpy(cf.name, client_filename);
-     return cf;
-  }
-
-
-  char cur_dir_abspath[U_MAX_PATH];
-  char qfile_abspath[U_MAX_PATH];
-  char cfile_abspath[U_MAX_PATH];
-  char dir[U_MAX_PATH];
-  char *res = NULL;
-
-  res = uGetCurrentWorkingDirectory(cur_dir_abspath, U_MAX_PATH, __sys_call_error);
-  if (res == NULL)
-     throw USER_EXCEPTION(SE4602);
-
-  res = uGetAbsoluteFilePath(filename, qfile_abspath, U_MAX_PATH, __sys_call_error);
-  if (res == NULL)
-     throw USER_EXCEPTION2(SE4603, filename);
-
-  char* new_dir;
-  new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, U_MAX_PATH, __sys_call_error);
-  
-  if (uChangeWorkingDirectory(new_dir, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4604, new_dir);
-
-  
-  res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+    try {
+        for(i=0; i<filenames->size(); i++)
+        {
+            char buf[1024];
+            const char* client_filename = filenames->at(i).c_str();
+            client_file &cf = cf_vec->at(i);
+            
+            if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) == 0)
+            {//load metadata case (client_filename must be absolute path)
+                if ((cf.f = fopen (client_filename, "r")) == NULL)
+                    throw USER_EXCEPTION2(SE4042, client_filename);
+                if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
+                    throw USER_EXCEPTION2(SE4050, client_filename);
+                strcpy(cf.name, client_filename);
+            }
+            
+            char cur_dir_abspath[U_MAX_PATH];
+            char qfile_abspath[U_MAX_PATH];
+            char cfile_abspath[U_MAX_PATH];
+            char dir[U_MAX_PATH];
+            char *res = NULL;
+            
+            res = uGetCurrentWorkingDirectory(cur_dir_abspath, U_MAX_PATH, __sys_call_error);
+            if (res == NULL)
+                throw USER_EXCEPTION(SE4602);
+            
+            res = uGetAbsoluteFilePath(filename, qfile_abspath, U_MAX_PATH, __sys_call_error);
+            if (res == NULL)
+                throw USER_EXCEPTION2(SE4603, filename);
+            
+            char* new_dir;
+            new_dir = uGetDirectoryFromFilePath(qfile_abspath, dir, U_MAX_PATH, __sys_call_error);
+            
+            if (uChangeWorkingDirectory(new_dir, __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4604, new_dir);
+            
+            res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
 /*if (res == NULL)
      throw USER_EXCEPTION2(SE4603, client_filename);
 */
-
-  if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
-  
-  if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
-  {
-     res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
+            if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
+                throw USER_EXCEPTION2(SE4604, cur_dir_abspath);
+            if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
+            {
+                res = uGetAbsoluteFilePath(client_filename, cfile_abspath, U_MAX_PATH, __sys_call_error);
 /*     if (res == NULL)
         throw USER_EXCEPTION2(SE4603, client_filename);
 */
+                if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
+                    throw USER_EXCEPTION2(SE4042, client_filename);
+                if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
+                    throw USER_EXCEPTION2(SE4050, client_filename);
+            }
+            else
+            {
+                if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
+                    throw USER_EXCEPTION2(SE4050, client_filename);
+            }
+            strcpy(cf.name, client_filename);
+        } //for
+           
+  } catch (...) {
+    // close all files from cf_vec
+    for (int j=0; j<i; j++)
+    {
+        if(uCloseFile(cf_vec->at(i).f, __sys_call_error) == 0) d_printf1("file close error %d\n");
+    }
+    throw;
+  } //try       
 
-     if ((cf.f = fopen(cfile_abspath, "r")) == NULL)
-        throw USER_EXCEPTION2(SE4042, client_filename);
-
-     if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4050, client_filename);
-  }
-  else
-  {
-     if (uGetFileSizeByName(cfile_abspath, &(cf.file_size), __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4050, client_filename);
-  }
-  
-/*
-  cf.f = fopen(cfile_abspath, "r");
-
-  cf.f = fopen(client_filename, "r");
-
-  if (cf.f == NULL)
-	  throw CharismaException("#????: Can't open file to be loaded");
-*/
-  strcpy(cf.name, client_filename);
-
-  return cf;
 }
 
 void command_line_client::close_file_from_client(client_file &cf)
