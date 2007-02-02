@@ -87,6 +87,7 @@
 #include "tr/executor/xqops/PPExcept.h"
 #include "tr/executor/xqops/PPADFilter.h"
 #include "tr/executor/xqops/PPFnDateTimeFuncs.h"
+#include "tr/executor/xqops/PPFnDocAvailable.h"
 #include "tr/executor/xqops/PPDAFilter.h"
 #include "tr/executor/xqops/PPUp.h"
 #include "tr/executor/xqops/PPUriFuncs.h"
