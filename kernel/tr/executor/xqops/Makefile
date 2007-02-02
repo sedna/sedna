@@ -34,6 +34,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPFnAccessors$(OBJ_EXT) \
         PPFnDateTimeFuncs$(OBJ_EXT) \
         PPFnDeepEqual$(OBJ_EXT) \
+        PPFnDocAvailable$(OBJ_EXT) \
         PPFunCall$(OBJ_EXT) \
         PPGeneralComparison$(OBJ_EXT) \
         PPIf$(OBJ_EXT) \
