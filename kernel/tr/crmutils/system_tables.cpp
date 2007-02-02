@@ -359,6 +359,24 @@ void get_collections(xptr node,const char* title)
 	metadata_sem_up();
 	  
 }
+void get_modules(xptr node,const char* title)
+{
+	addTextValue(node,"$MODULES.XML",12);
+	xptr parent=insert_element(XNULL,XNULL,node,"MODULES",xs_untyped,NULL);	
+	//metadata_sem_down();
+	col_schema_node* coll=(col_schema_node*)find_collection("$modules");
+	//metadata_sem_up();
+	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
+	xptr d_left=XNULL;
+	while (dc!=NULL)
+	{
+		d_left=insert_element(d_left,XNULL,parent,"MODULE",xs_untyped,NULL,NULL);
+		insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,dc->obj->document_name,
+		strlen(dc->obj->document_name),NULL);
+		dc=coll->metadata->rb_successor(dc); 
+	}	  
+}
+
 schema_node* get_system_doc(const char* title)
 {
 	system_fun func=NULL;
@@ -388,16 +406,22 @@ schema_node* get_system_doc(const char* title)
 	else
 	if (!my_strcmp(title,"$version.xml"))
 		func=get_version;
+	else
+	if (!my_strcmp(title,"$modules.xml"))
+		func=get_modules;
+	else
 	if (strstr(title,"$document_")==title)
 	{
 		func=get_document_full;
 		param=title+10;
 	}
+	else
 	if (strstr(title,"$collection_")==title)
 	{
 		func=get_collection_full;
 		param=title+12;
 	}
+	else
 	if (strstr(title,"$schema_")==title)
 	{
 		func=get_schema;
