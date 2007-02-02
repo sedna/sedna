@@ -4965,8 +4965,10 @@
      (cons expr sa:type-any))
     (else
      (and
-      (or (= (length (sa:op-args expr)) 1)
-          (sa:assert-num-args expr 2))
+      (or 
+       (and (>= (length (sa:op-args expr)) 1)
+            (<= (length (sa:op-args expr)) 3))
+       (sa:assert-num-args expr 2))
       (let ((c1  ; first constant
              (if
               (or

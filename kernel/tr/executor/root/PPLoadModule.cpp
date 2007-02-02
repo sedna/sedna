@@ -145,6 +145,7 @@ void PPLoadModule::execute()
         client->get_file_from_client(&tc_filenames, &cf_vec);
         for (int i = 0; i < fnames_size; ++i)
         {
+            cf = client->get_file_from_client(tc_filenames[i].get_str_mem());
             //precompile input module
             module_pc_text += prepare_module(cf_vec[i].f/*cf.f*/, module_name1/*out*/);
             client->close_file_from_client(cf_vec[i]);
@@ -166,7 +167,21 @@ void PPLoadModule::execute()
             } catch(SednaUserException& e) {}
         }
 
-        doc_root = insert_document_in_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
+        try
+        {
+            doc_root = insert_document_in_collection(MODULES_COLLECTION_NAME, module_name1.c_str());
+        }
+        catch(SednaUserException& e)
+        {
+            if(e.get_code() == SE2004)
+            {
+                throw USER_EXCEPTION2(SE1073, module_name1.c_str());
+            }
+            else
+            {
+                throw;
+            }
+        }
 
         elem_ptr = insert_element(XNULL, XNULL, doc_root, "module", xs_untyped, NULL, NULL);
 

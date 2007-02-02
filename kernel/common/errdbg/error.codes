@@ -550,7 +550,12 @@ sedna-err:SE1071
 sedna-err:SE1072
 
     Modules to be loaded belong to different namespaces.
+sedna-err:SE1073
 
+    Module with the given URI already loaded to the database.
+sedna-err:SE1074
+
+    Unable to drop a module - no module with the given URI.
 
 
 
