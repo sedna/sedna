@@ -50,6 +50,20 @@ void PPDropModule::execute()
     tc = tuple_cell::make_sure_light_atomic(tc);
 
     local_lock_mrg->put_lock_on_collection(MODULES_COLLECTION_NAME);
-    delete_document(MODULES_COLLECTION_NAME, tc.get_str_mem());
+    try
+    {
+        delete_document(MODULES_COLLECTION_NAME, tc.get_str_mem());
+    }
+    catch(SednaUserException& e)
+    {
+        if(e.get_code() == SE2006)
+        {
+            throw USER_EXCEPTION2(SE1074, tc.get_str_mem());
+        }
+        else
+        {
+            throw;
+        }
+    }
 }
 
