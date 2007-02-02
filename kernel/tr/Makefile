@@ -44,6 +44,11 @@ PHYS_LOG_LIB = $(PP)/kernel/sm/plmgr/plmgr_tr$(LIB_EXT)
 LOGICAL_LOG_LIB = $(PP)/kernel/sm/llmgr/llmgr$(LIB_EXT)
 
 
+ifeq ($(PLATFORM), WIN32)
+LFLAGS += /STACK:104857600
+LFLAGS_DTS += /STACK:104857600
+endif
+
 ifeq ($(ENABLE_DTSEARCH), 1)
 ifeq ($(PLATFORM), WIN32)
 FT_ADD_LIB = dten600.lib Nafxcw.lib LIBCMT.LIB
