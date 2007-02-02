@@ -46,7 +46,6 @@ ifndef STATIC_SYS_LIBS
 STATIC_SYS_LIBS = 0
 endif
 
-
 # options: Enable gcov coverage tests  - 1
 #          Disable gcov coverage tests - 0
 ifndef SE_ENABLE_GCOV
@@ -65,6 +64,11 @@ ifndef ENABLE_TRIGGERS
 ENABLE_TRIGGERS = 0
 endif
 
+# options: static libodbc - 1
+#          shared libodbc - 0
+ifndef LIBODBC_STATIC
+LIBODBC_STATIC = 0
+endif
 
 # SEDNA_BUILD is defined outside when release version is made
 ifndef SEDNA_BUILD
@@ -74,34 +78,7 @@ endif
 
 SEDNA_VERSION := $(shell cat $(PP)/ver)
 
-# options: static libodbc - 1
-#          shared libodbc - 0
-LIBODBC_STATIC = 0
 
-#SEDNA_DIRS = $(PP)/kernel/common $(PP)/kernel/common/errdbg \
-#             $(PP)/kernel/common/mmgr $(PP)/kernel/common/ph \
-#             $(PP)/kernel/common/u $(PP)/kernel/gov \
-#             $(PP)/kernel/sm $(PP)/kernel/sm/bufmgr \
-#             $(PP)/kernel/sm/llmgr $(PP)/kernel/sm/lm \
-#             $(PP)/kernel/sm/plmgr \
-#             $(PP)/kernel/tr $(PP)/kernel/tr/auth \
-#             $(PP)/kernel/tr/crmutils $(PP)/kernel/tr/executor \
-#             $(PP)/kernel/tr/executor/base \
-#             $(PP)/kernel/tr/executor/base/decNumber \
-#             $(PP)/kernel/tr/executor/base/lip \
-#             $(PP)/kernel/tr/executor/fo \
-#             $(PP)/kernel/tr/executor/por2qep $(PP)/kernel/tr/executor/root \
-#             $(PP)/kernel/tr/executor/xqops $(PP)/kernel/tr/ft \
-#             $(PP)/kernel/tr/idx $(PP)/kernel/tr/idx/btree \
-#             $(PP)/kernel/tr/locks $(PP)/kernel/tr/log $(PP)/kernel/tr/mo \
-#             $(PP)/kernel/tr/nid $(PP)/kernel/tr/pq \
-#             $(PP)/kernel/tr/pstr $(PP)/kernel/tr/rcv \
-#             $(PP)/kernel/tr/sqp/popt $(PP)/kernel/tr/strings \
-#             $(PP)/kernel/tr/structures $(PP)/kernel/tr/updates \
-#             $(PP)/kernel/tr/vmm $(PP)/kernel/tr/xqp $(PP)/kernel/tr/triggers\
-#             $(PP)/driver/c $(PP)/export $(PP)/term \
-#             $(PP)/libs/chicken $(PP)/libs/dtsearch/include $(PP)/libs/expat \
-#             $(PP)/libs/pcre $(PP)/libs/pg $(PP)/libs/pg/h
 
 SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
              $(PP)/driver/c $(PP)/export $(PP)/term $(PP)/libs/dtsearch/include \
@@ -111,11 +88,6 @@ SEDNA_DIRS = $(PP)/kernel $(PP)/libs $(PP)/libs/chicken \
 ifndef INCLUDE_DIRS
 INCLUDE_DIRS = $(SEDNA_DIRS)
 endif
-
-
-#ifndef VPATH
-#VPATH = $(SEDNA_DIRS)
-#endif
 
 
 # INCLUDE_DIRS should be defined
@@ -151,42 +123,50 @@ DL_EXT  = .dll
 PLD = link /LIB /NOLOGO
 PLDOUT = /OUT:
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-CFLAGS_ST   = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
-CPPFLAGS_ST = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE 					\
-           /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) 								\
-           /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"									\
-           /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
-CFLAGS = $(CFLAGS_ST) /MT
-CPPFLAGS = $(CPPFLAGS_ST) /MT
-LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
-           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
-           libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
-           /STACK:104857600 /debug /profile
+CFLAGS_ST   = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /D_CRT_SECURE_NO_DEPRECATE
+CPPFLAGS_ST = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
+              /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
+              /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
+              /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
+CFLAGS      = $(CFLAGS_ST) /MT
+CPPFLAGS    = $(CPPFLAGS_ST) /MT
+LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat \
+              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
+              libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib \
+              pccts_release.lib libpcre.lib /debug /profile
 ifeq ($(ENABLE_DTSEARCH),1)
-LFLAGS_DTS = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB	 /NODEFAULTLIB:Nafxcw.lib \
-           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
-           libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
-           /STACK:104857600 /debug /profile /NOD:LIBCMT.LIB
+LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
+              /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
+              /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg libchicken-static.lib \
+              wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
+              /debug /profile /NOD:LIBCMT.LIB
 endif
 else
-CFLAGS_ST   = /nologo /O2 /Ob2 /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG)	\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
-CPPFLAGS_ST = /nologo /O2 /Ob2 /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE				\
-           /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG)								\
-           /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\"				\
-           /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE	
-CFLAGS = $(CFLAGS_ST) /MT
-CPPFLAGS = $(CPPFLAGS_ST) /MT
-LFLAGS   = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB		\
-           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
-           libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
-           /STACK:104857600
+CFLAGS_ST   = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /D_CRT_SECURE_NO_DEPRECATE
+CPPFLAGS_ST = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
+              /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
+              /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /D_CRT_SECURE_NO_DEPRECATE	
+CFLAGS      = $(CFLAGS_ST) /MT
+CPPFLAGS    = $(CPPFLAGS_ST) /MT
+LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat \
+              /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
+              libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib \
+              pccts_release.lib libpcre.lib
 ifeq ($(ENABLE_DTSEARCH),1)
-LFLAGS_DTS = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB /NODEFAULTLIB:LIBCD.LIB	/NODEFAULTLIB:Nafxcw.lib	\
-           /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg		\
-           libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
-           /STACK:104857600 /NOD:LIBCMT.LIB
+LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
+              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
+              /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre \
+              /LIBPATH:$(PP)/libs/pg libchicken-static.lib wsock32.lib Advapi32.lib \
+              libexpatmt.lib pccts_release.lib libpcre.lib /NOD:LIBCMT.LIB
 endif
 endif
 LSLIBS   = 
@@ -201,7 +181,7 @@ CPPFLAGS+= /DSE_ENABLE_TRIGGERS
 endif
 
 
-CFLAGS_CHICKEN_EXE = /nologo /ZI /Od /D 'WIN32' /D '_WIN32' $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
+CFLAGS_CHICKEN_EXE = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
                      /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
 LFLAGS_CHICKEN_EXE = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB 					\
                      /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) LIBCMT.LIB libchicken-static.lib				
@@ -233,21 +213,27 @@ else
 STATIC_FLAG =
 endif
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
-           -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized	\
-           -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
-CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
-           -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH)						\
+CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer \
+           -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
+           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
+           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
+           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
-LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+           -L$(PP)/libs/pcre
 else
-CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) -DEL_DEBUG=$(EL_DEBUG)				\
-           -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer -fno-strict-aliasing -Wno-unused -Wno-uninitialized	\
-           -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
-CPPFLAGS = -O0 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) -DSEDNA_VERSION=\"$(SEDNA_VERSION)\"				\
-           -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH)			\
+CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer \
+           -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
+           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+CPPFLAGS = -O0 -w -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
+           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
+           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
-LFLAGS   = -O0 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken -L$(PP)/libs/pcre
+LFLAGS   = -O0 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+           -L$(PP)/libs/pcre
 endif
 LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl
 
@@ -277,8 +263,9 @@ CPPFLAGS+= -DSE_ENABLE_FTSEARCH -D__UNIX__ -DUnicodeText
 LFLAGS += -L$(PP)/libs/dtsearch/lib -ldtsearch -lz
 endif
 
-CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer -fno-strict-aliasing -Wall	\
-                     -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS 
+CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer \
+                     -fno-strict-aliasing -Wall	-Wno-unused -Wno-uninitialized \
+                     -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS 
 LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken
 LSLIBS_CHICKEN_EXE = -lchicken
 ANTLR = $(PP)/libs/pg/antlr -CC -gt -k 4 -w2 -nopurify
