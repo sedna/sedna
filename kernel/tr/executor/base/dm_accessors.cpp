@@ -3,7 +3,6 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/strings/e_string.h"
@@ -140,10 +139,14 @@ tuple_cell se_node_namespace_uri(xptr node)
 		case element		: 
         case attribute		: {
                                   xml_ns *xmlns = GETSCHEMENODE(XADDR(node))->xmlns;
-                                  if (xmlns && xmlns->uri)
-                                      return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
-                                  else 
-                                      return tuple_cell::eos();
+                                  if (xmlns)
+                                  {
+                                      if(xmlns->uri) 
+                                          return tuple_cell::atomic_deep(xs_anyURI, xmlns->uri);
+                                      else if(xmlns->prefix && strcmp("xml", xmlns->prefix) == 0)
+                                          return tuple_cell::atomic_deep(xs_anyURI, "http://www.w3.org/XML/1998/namespace");
+                                  }
+                                  return tuple_cell::eos();
 							  }
         case xml_namespace	: 
         case pr_ins			: 
