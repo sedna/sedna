@@ -14,6 +14,8 @@ class PPDebug : public PPIterator
 protected:
     PPOpIn child;
     
+    se_ostream &dostr;
+    
     /// information about child operation
     str_counted_ptr child_name;  
     str_counted_ptr child_info;  
