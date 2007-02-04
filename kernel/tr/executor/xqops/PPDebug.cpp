@@ -11,6 +11,7 @@ PPDebug::PPDebug(dynamic_context *_cxt_,
                  const PPOpIn &_child_,
                  const str_counted_ptr &_child_name_) : PPIterator(_cxt_),
                                                         child(_child_),
+                                                        dostr(dynamic_context::dostr()),
                                                         child_name(_child_name_)
 {
 }
@@ -21,6 +22,7 @@ PPDebug::PPDebug(dynamic_context *_cxt_,
                  const str_counted_ptr &_child_info_) : PPIterator(_cxt_),
                                                         child(_child_),
                                                         child_name(_child_name_),
+                                                        dostr(dynamic_context::dostr()),
                                                         child_info(_child_info_)
 {
 }
@@ -58,12 +60,23 @@ void PPDebug::next(tuple &t)
     }
     catch(...)
     {
+        dostr.set_debug_info_type(se_QueryDebug);
+
+        dostr << child_name.get() << " : " << cc;
+
+        if(child_info.get() != NULL) dostr << " : " << child_info.get();
+        
+        dostr << "\n";
+        dostr.flush();
+
+        /* 
         fprintf(stderr, "%15s", child_name.get());
         fprintf(stderr, " : %5d", &cc);
         
         child_info.get() != NULL ? 
             fprintf(stderr, " : %15s\n", child_info.get()) :
-            fprintf(stderr, "\n");
+            fprintf(stderr, "\n"); 
+        */
         
         throw;
     }

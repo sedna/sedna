@@ -23,7 +23,11 @@
 
 typedef int sp_int32;
 
-enum se_debug_info_type {se_QueryTrace};
+enum se_debug_info_type 
+{
+    se_QueryTrace,
+    se_QueryDebug
+};
 
 enum se_sp_instructions
 { se_ErrorResponse = 100,
