@@ -13,10 +13,14 @@
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)
 {
-    if (t2 == xs_anyAtomicType) return true;
+    if (t2 == xs_anyType) return true;
+    if (t2 == xs_anySimpleType) return (t1 != xs_anyType && t1 != xs_untyped);
+    if (t2 == xs_anyAtomicType) return (t1 != xs_anyType && t1 != xs_anySimpleType && t1 != xs_untyped);
 
     switch (t1)
     {
+        case xs_anySimpleType       : return false;
+        case xs_anyType             : return false;
         case xs_anyAtomicType       : return false;
         case xs_untypedAtomic		: return false;
         case xs_dateTime			: return false;
