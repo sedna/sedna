@@ -12,7 +12,7 @@
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/sorted_sequence.h"
 
-//#define TURN_ON_DDO
+#define TURN_ON_DDO
 
 class PPDDO : public PPIterator
 {
