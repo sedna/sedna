@@ -444,7 +444,8 @@
      ;-------------------
      ; Union operations
      ((union@ intersect@ except@)       
-      (lropt:propagate expr called-once? #f
+      (lropt:propagate expr called-once?
+                       #t  ; order required for union operations to work properly
                        var-types prolog processed-funcs
                        #t  ; union operations perform ordering themselves
                        #f #f))
