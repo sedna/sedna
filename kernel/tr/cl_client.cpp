@@ -263,6 +263,7 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
                 if (uGetFileSizeByName(client_filename, &(cf.file_size), __sys_call_error) == 0)
                     throw USER_EXCEPTION2(SE4050, client_filename);
                 strcpy(cf.name, client_filename);
+                return;
             }
             
             char cur_dir_abspath[U_MAX_PATH];
