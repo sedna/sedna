@@ -277,6 +277,7 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
                  cf_vec->at(i).f = NULL;
                  throw USER_EXCEPTION(SE3020);
              }
+             cf_vec->at(i).f = NULL;
              if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
          }
          throw;

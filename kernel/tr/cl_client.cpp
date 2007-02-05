@@ -314,7 +314,12 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
     // close all files from cf_vec
     for (int j=0; j<i; j++)
     {
-        if(uCloseFile(cf_vec->at(i).f, __sys_call_error) == 0) d_printf1("file close error %d\n");
+        if (cf_vec->at(i).f && (fclose(cf_vec->at(i).f) != 0))
+        {
+        cf_vec->at(i).f = NULL;
+        throw USER_EXCEPTION(SE3020);
+        }  
+        cf_vec->at(i).f = NULL;  
     }
     throw;
   } //try       
