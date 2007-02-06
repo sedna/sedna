@@ -217,14 +217,14 @@ int main(int argc, char *argv[])
 //d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
         elog(EL_LOG, ("Session is ready"));
 
-#if (AUTH_SWITCH == 1)          //if security is on
+#ifdef AUTH_SWITCH          //if security is on
         if (entry_point->is_first_transaction())
         {
             entry_point->clear_first_transaction_flag();
-            auth = 0;
+            auth = BLOCK_AUTH_CHECK;
         }
 #endif
-//Sleep(100000);
+//Sleep(50000);
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;
         bool expect_another_transaction = true;
