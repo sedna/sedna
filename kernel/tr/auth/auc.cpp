@@ -96,7 +96,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 			delete_qep(aqtree);
             is_qep_built = false;
 			
-			auth = 1;
+			auth = DEPLOY_AUTH_CHECK;
 // 		    release_resource(SECURITY_METADATA_DOCUMENT, LM_DOCUMENT);
 
 
@@ -142,7 +142,7 @@ void auth_for_load_module(const char* module_name)
         is_qep_opened = false;
         delete_qep(qep_tree);
         is_qep_built = false;
-        auth = 1;
+        auth = DEPLOY_AUTH_CHECK;
     }
     catch(SednaUserException &e) {
         if(is_qep_opened)

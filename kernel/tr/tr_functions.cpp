@@ -72,7 +72,7 @@ void on_user_statement_begin(QueryType query_type,
     is_stmt_built = true;
     se_nullostream auth_s;
 
-    if (AUTH_SWITCH && auth) auth = BLOCK_AUTH_CHECK; //turn off security checkings
+//    if (AUTH_SWITCH && auth) auth = BLOCK_AUTH_CHECK; //turn off security checkings
 
     for (int i = 0; i < st->stmnts.size() - 1; i++)
     {
@@ -84,7 +84,7 @@ void on_user_statement_begin(QueryType query_type,
     }
 
     if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
-    if (AUTH_SWITCH && auth) auth = 1;                   // turn on security checkings
+//    if (AUTH_SWITCH && auth) auth = 1;                   // turn on security checkings
 
 #ifdef SE_ENABLE_TRIGGERS
     triggers_on_statement_begin();
@@ -179,6 +179,7 @@ void print_tr_usage()
 
 void authentication()
 {
+#ifdef AUTH_SWITCH
    string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);	
    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 1 (1 (PPIf (1 (PPFnNot (1 (PPFnEmpty (1 (PPDDO (1 (PPReturn (0)  (1 (PPAbsPath (document \""+ security_metadata_document +"\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\"))) ((PPAxisChild qname (\"\" \"user\" \"\")))))) (1 (PPIf (1 (PPCalculate (BinaryOpAnd (LeafEffectBoolOp 0) (LeafEffectBoolOp 1)) (1 (PPGeneralCompEQ (1 (PPDDO (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 0)))))) (1 (PPConst \"" +string(login) + "\" !xs!string)))) (1 (PPGeneralCompEQ (1 (PPDDO (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPVariable 0)))))) (1 (PPConst \"" + string(password) +  "\" !xs!string)))))) (1 (PPVariable 0)) (1 (PPNil)))) -1)))))))) (1 (PPNil)) (1 (PPFnError (1 (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
    scheme_list *auth_query_in_scheme_lst = NULL;
@@ -196,7 +197,7 @@ void authentication()
    	   	   execute(qep_tree);
            on_kernel_statement_end(qep_tree);
 
-   	   	   auth = 1;
+   	   	   auth = DEPLOY_AUTH_CHECK;
        }
    }
    catch (SednaUserException &e) {
@@ -207,6 +208,7 @@ void authentication()
    }
 
    delete_scheme_list(auth_query_in_scheme_lst);
+#endif   
 }
 
 void register_session_on_gov()
@@ -214,7 +216,6 @@ void register_session_on_gov()
 	USOCKET s;
 	int sock_error, res;
 	UPID s_pid;
-//	msg_struct msg;
 
 	s_pid = uGetCurrentProcessId(__sys_call_error);
 	
