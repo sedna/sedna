@@ -66,6 +66,8 @@ CHICKEN_VERSION=2.2
 
 chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
 	gzip -dc chicken-$(CHICKEN_VERSION).tar.gz | tar xvf -
+	touch chicken-$(CHICKEN_VERSION)/chicken.h
+	rm -rf chicken
 	mv chicken-$(CHICKEN_VERSION) chicken
 
 ifeq ("$(PLATFORM)", "WIN32")
