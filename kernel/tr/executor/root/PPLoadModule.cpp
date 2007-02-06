@@ -145,7 +145,6 @@ void PPLoadModule::execute()
         client->get_file_from_client(&tc_filenames, &cf_vec);
         for (int i = 0; i < fnames_size; ++i)
         {
-            cf = client->get_file_from_client(tc_filenames[i].get_str_mem());
             //precompile input module
             module_pc_text += prepare_module(cf_vec[i].f/*cf.f*/, module_name1/*out*/);
             client->close_file_from_client(cf_vec[i]);
