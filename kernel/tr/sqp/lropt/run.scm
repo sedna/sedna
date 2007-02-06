@@ -895,3 +895,41 @@
       (fun-call
         (const (type !xs!QName) ("http://xy.com" "fact"))
         (const (type !xs!integer) "5"))))))
+
+(go
+   '(query
+ (prolog)
+ (query-body
+   (return
+     (ddo
+      (child
+       (element
+         (const (type !xs!QName) ("" "a"))
+         (sequence
+           (element (const (type !xs!QName) ("" "b")) (const (type !xs!string) "1"))
+           (element (const (type !xs!QName) ("" "b")) (const (type !xs!string) "2"))))
+       (type
+        (elem-test
+          (ename
+           (const (type !xs!QName) ("" "b" ""))
+           (type *)
+           (const (type !xs!string) "non-nil"))))))
+     (fun-def
+       ((xs:anyType (var ("" "x"))))
+       (ddo
+        (child
+         (ddo
+          (parent
+            (var ("" "x"))
+            (type
+             (elem-test
+               (ename
+                (const (type !xs!QName) ("" "a" ""))
+                (type *)
+                (const (type !xs!string) "non-nil"))))))
+         (type
+          (elem-test
+            (ename
+             (const (type !xs!QName) ("" "b" ""))
+             (type *)
+             (const (type !xs!string) "non-nil")))))))))))
