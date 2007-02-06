@@ -8,7 +8,10 @@
 #include "tr/structures/schema.h"
 #include "tr/structures/nodes.h"
 #include "tr/executor/base/XPathOnSchema.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btree.h"
 #include "tr/idx/index_data.h"
+#include "tr/vmm/vmm.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #endif
@@ -184,7 +187,7 @@ void col_schema_node::init(void* p)
 	scr->eblk=XNULL;
 	scr->metadata=NULL;
 }
-dn_metadata_cell * col_schema_node::find_metadata_of_document_in_col(xptr node)
+/*dn_metadata_cell * col_schema_node::find_metadata_of_document_in_col(xptr node)
 {
 	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* mdc=this->metadata->rb_minimum(this->metadata->root);
 	while (mdc!=NULL)
@@ -193,12 +196,55 @@ dn_metadata_cell * col_schema_node::find_metadata_of_document_in_col(xptr node)
 		mdc=this->metadata->rb_successor(mdc);
 	}
 	return NULL;
+}*/
+xptr col_schema_node::search_metadata_cell(const char *document_name)
+{
+	bt_key key;
+	key.setnew(document_name);
+	return bt_find(metadata->btree_root, key).bt_next_obj();
 }
-
-pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* col_schema_node::search_metadata_cell(const char *document_name)
+void col_schema_node::delete_doc_from_coll(const char* doc_name)
+{
+	bt_key key;	
+	key.setnew(doc_name);
+	bt_delete(metadata->btree_root, key);
+}
+void col_schema_node::put_doc_in_coll(const char* doc_name, xptr node)
+{
+	bt_key key;
+	key.setnew(doc_name);
+	bt_insert(metadata->btree_root,key,node);
+}
+void col_schema_node::free_map()
+{
+	bt_drop(metadata->btree_root);
+	scm_free(metadata,true);
+}
+void col_schema_node::replace_document_pointer(xptr old_xptr, xptr new_xptr)
+{
+	//1. find doc name
+	CHECKP(old_xptr);
+	xptr datap=((d_dsc*)XADDR(old_xptr))->data;
+	int size=((d_dsc*)XADDR(old_xptr))->size;
+	CHECKP(datap);
+	shft shift= *((shft*)XADDR(datap));
+	char* data=(char*)XADDR(BLOCKXPTR(datap))+shift;
+	char *z=new char[size+1];
+	memcpy(z,data,size);
+	data[size]='\0';	
+	//2. find doc and replace
+	bt_key key;
+	key.setnew(z);
+	delete [] z;
+	bt_find(metadata->btree_root, key).bt_set_next_obj(new_xptr);
+	//3. clean
+	
+}
+/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* col_schema_node::search_metadata_cell(const char *document_name)
 {
 	return metadata->get(document_name,NULL);	
 }
+*/
 /* Destructor frees memory occupied by name field */
 void schema_node::destroy(schema_node* scm)
 {
@@ -385,7 +431,7 @@ doc_schema_node* doc_schema_node::init( bool persistent)
 
 col_schema_node* col_schema_node::init( bool persistent)
 {
-	col_schema_node* sc=(col_schema_node*)scm_malloc(sizeof(col_schema_node),persistent);
+	col_schema_node* sc=(col_schema_node*)scm_malloc(sizeof(col_schema_node),persistent);	
 	col_schema_node::init(sc);
 	sc->persistent=persistent;
 	sc->type=document;

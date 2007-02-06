@@ -80,6 +80,16 @@ void inline free_indexdata_cell(pers_sset<index_cell,unsigned short>::pers_sset_
 	scm_free(idc->doc_name,true);
 	scm_free(idc,true);
 }
+index_cell* create_inner_index ( 
+                          xmlscm_type key_type 
+                          )
+{
+	index_cell* idc=(index_cell*)scm_malloc(sizeof(index_cell),true);
+	idc->keytype = key_type;
+	idc->err_cntr = 0;
+	idc->btree_root = bt_create(key_type);
+	return idc;
+}
 index_cell* create_index (PathExpr *object_path, 
                           PathExpr *key_path, 
                           xmlscm_type keytype, 

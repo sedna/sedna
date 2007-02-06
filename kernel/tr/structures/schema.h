@@ -258,30 +258,35 @@ struct col_schema_node: public doc_schema_node
 {
 	
 	xptr				eblk;		/* pointer to the last block of block chain */
-	pers_sset<dn_metadata_cell, unsigned int> * metadata;
+	index_cell* metadata;
 	/*initialisation of schema node*/
 	static void init(void* p);
 	static col_schema_node* init( bool persistent);
-	dn_metadata_cell *find_metadata_of_document_in_col(xptr node);
-	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* search_metadata_cell(const char *document_name);
-	void inline free_metadata_cell(pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* entry)
+	//dn_metadata_cell *find_metadata_of_document_in_col(xptr node);
+	//pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* search_metadata_cell(const char *document_name);
+	xptr search_metadata_cell(const char *document_name);
+	void replace_document_pointer(xptr old_xptr, xptr new_xptr);
+	/*void inline free_metadata_cell(pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* entry)
 	{
 		dn_metadata_cell* mdc=entry->obj;
 		this->metadata->rb_delete(entry);
 		scm_free(mdc->document_name,true);
 		scm_free(mdc,true);
-	}
-	void inline free_metadata(pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* entry)
+	}*/
+	void delete_doc_from_coll(const char* doc_name);
+	void put_doc_in_coll(const char* doc_name, xptr node);
+	/*void inline free_metadata(pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* entry)
 	{
 		dn_metadata_cell* mdc=entry->obj;
 		scm_free(mdc->document_name,true);
 		scm_free(mdc,true);
 		entry->obj=NULL;
-	}
-	void inline free_map()
+	}*/
+	void free_map();
+	/*void inline free_map()
 	{
 		pers_sset<dn_metadata_cell,unsigned int>::sset_free(this->metadata);
-	}
+	}*/
 };
 struct temp_schema_node
 {

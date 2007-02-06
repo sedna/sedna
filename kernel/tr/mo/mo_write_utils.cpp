@@ -1399,8 +1399,9 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			else
 			{
 				metadata_sem_down();
-				dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(parent);
-				mdc->root=new_pos;
+				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(parent);
+				mdc->root=new_pos;*/
+				((col_schema_node*)parent_block->snode)->replace_document_pointer(parent,new_pos);
 				metadata_sem_up();							
 			}
 			CHECKP(parent);
@@ -1466,8 +1467,9 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 						{
 							metadata_sem_down();
 							CHECKP(parent);
-							dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;
+							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
+							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+							mdc->root=answ;*/
 							metadata_sem_up();
 							CHECKP(answ);
 						}
@@ -1486,8 +1488,9 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 						{
 							metadata_sem_down();
 							CHECKP(parent);
-							dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;
+							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
+							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+							mdc->root=answ;*/
 							metadata_sem_up();
 							CHECKP(answ);
 						}
@@ -1509,8 +1512,9 @@ l_second:
 			if(mark)
 			{
 				metadata_sem_down();
-				dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-				mdc->root=new_pointer;
+				((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
+				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+				mdc->root=new_pointer;*/
 				metadata_sem_up();
 			}
 			shiftNodeToTheNewBlockExpanded (tmp,new_pointer,shift_size,size,parent_block);
@@ -1534,8 +1538,9 @@ l_second:
 				if(mark)
 				{
 					metadata_sem_down();
-					dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-					mdc->root=new_pointer;
+					((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
+					/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+					mdc->root=new_pointer;*/
 					metadata_sem_up();
 				}
 				shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
@@ -1575,8 +1580,9 @@ l_second:
 						{
 							metadata_sem_down();
 							CHECKP(parent);
-							dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;
+							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
+							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+							mdc->root=answ;*/
 							metadata_sem_up();
 							CHECKP(answ);
 						}
@@ -1595,8 +1601,9 @@ l_second:
 						{
 							metadata_sem_down();
 							CHECKP(parent);
-							dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-							mdc->root=answ;
+							((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),answ);
+							/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+							mdc->root=answ;*/
 							metadata_sem_up();
 							CHECKP(answ);
 						}
@@ -1621,8 +1628,9 @@ second:
 				if(mark)
 				{
 					metadata_sem_down();
-					dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-					mdc->root=new_pointer;
+					((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
+					/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+					mdc->root=new_pointer;*/
 					metadata_sem_up();
 				}
 				shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);
@@ -1643,8 +1651,9 @@ second:
 			if(mark)
 			{
 				metadata_sem_down();
-				dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
-				mdc->root=new_pointer;
+				((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
+				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
+				mdc->root=new_pointer;*/
 				metadata_sem_up();
 			}
 			shiftNodeToTheNewBlockExpanded (tmp, new_pointer,shift_size,size,parent_block);

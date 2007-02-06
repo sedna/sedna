@@ -113,7 +113,8 @@ private:
 public:
     bt_cursor();
     bt_cursor(char* pg, shft key_idx);
-    object  bt_next_obj();	/* obtain next object - begining from 0-th */
+    object  bt_next_obj();/* obtain next object - begining from 0-th */
+	void  bt_set_next_obj(object obj);	
     bool    bt_next_key();	/* focus on next key; note that initially cursor is already focused
 							   at the 0-th key. Returns the key that was previously in the focus */
     bool    is_null() const;/* if there are keys belonging to this cursor */

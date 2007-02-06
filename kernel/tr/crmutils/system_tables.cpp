@@ -16,8 +16,9 @@
 #include "tr/idx/index_data.h"
 #include "tr/structures/indirection.h"
 #include "tr/executor/base/dm_accessors.h"
-
-
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btree.h"
+#include "tr/idx/index_data.h"
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node*>* sys_schema=NULL;
 
@@ -295,15 +296,18 @@ void get_documents (xptr node,const char* title)
 		if (mdc->obj->document_name==NULL)
 		{
 			col_schema_node* coll=(col_schema_node*)mdc->obj->snode;
-			pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
+			bt_key key;
+			key.setnew("");
 			xptr d_left=XNULL;
-			while (dc!=NULL)
+			bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
+			while(cursor.bt_next_key())
 			{
+				key=cursor.get_key();
 				d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
-				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,dc->obj->document_name,
-						strlen(dc->obj->document_name),NULL);
-				dc=coll->metadata->rb_successor(dc); 
+				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
+					key.get_size(),NULL);
 			}
+			
 		}
 		mdc=metadata->rb_successor(mdc);
 	}
@@ -366,14 +370,16 @@ void get_modules(xptr node,const char* title)
 	//metadata_sem_down();
 	col_schema_node* coll=(col_schema_node*)find_collection("$modules");
 	//metadata_sem_up();
-	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
+	bt_key key;
+	key.setnew("");
 	xptr d_left=XNULL;
-	while (dc!=NULL)
+	bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
+	while(cursor.bt_next_key())
 	{
+		key=cursor.get_key();
 		d_left=insert_element(d_left,XNULL,parent,"MODULE",xs_untyped,NULL,NULL);
-		insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,dc->obj->document_name,
-		strlen(dc->obj->document_name),NULL);
-		dc=coll->metadata->rb_successor(dc); 
+		insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
+		key.get_size(),NULL);
 	}	  
 }
 
