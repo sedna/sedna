@@ -97,6 +97,15 @@ long _ftol2( double dblSource ) { return _ftol(dblSource ); }
              (out ", ")
              (generate-arg word type2 gct "a2")
              (out "));")))
+          ((and (string=? word "equal") (string=? (symbol->string type1) "xs_double"))  ;This temp hack for doubles is needed because
+           (begin                                                                       ;you couldn't use '==' in C/C++ to compare them -
+             (out "    return tuple_cell::atomic(")                                     ; '==' should be changed to 'a-b < epsilon'.
+             (generate-arg word type2 gct "a2")                                         ;But operands transposing gives good effect here too ...
+             (out " ")
+             (out symb)
+             (out " ")
+             (generate-arg word type1 gct "a1")
+             (out ");")))
           (else 
            (begin
              (out "    return tuple_cell::atomic(")
