@@ -29,7 +29,9 @@ index_cell* create_index (PathExpr *object_path,
                           const char * index_title, 
                           const char* doc_name,
                           bool is_doc);
-
+index_cell* create_inner_index ( 
+                          xmlscm_type key_type 
+                          );
 void delete_index (const char *index_title);
 
 /* sets the binding between the input schema_node and indexes */

@@ -235,7 +235,7 @@ void bt_delete(xptr &root, const bt_key& key, const object &obj)
 }
 
 /* delete key and all associated objects */
-void bt_delete(xptr &root, bt_key* key) 
+void bt_delete(xptr &root, const bt_key &key) 
 {
     bool    rc;
     shft    key_idx;

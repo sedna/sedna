@@ -9,6 +9,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/structures/nodes.h"
 #include "tr/structures/schema.h"
+#include "tr/idx/index_data.h"
 #include "tr/strings/strings.h"
 #include "tr/mo/micro.h"
 #include "tr/crmutils/node_utils.h"
@@ -19,6 +20,8 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/xs_helper.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/btree.h"
 using namespace tr_globals;
 se_stdlib_ostream crm_out(std::cerr);
 typedef std::pair<std::string,std::string> ns_pair;
@@ -963,13 +966,21 @@ void print_documents_in_collection(se_ostream& crmout,const char* collection)
 	if (mdc!=NULL)
 	{
 		col_schema_node* coll=(col_schema_node*)mdc->snode;
-		pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
+		bt_key key;
+		key.setnew("");
+		bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
+		while(cursor.bt_next_key())
+		{
+			crmout<<"\n<Document name=\""<<(char*)cursor.get_key().data()<<"\"";
+			crmout<<"/>";		
+		}
+		/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
 		while (dc!=NULL)
 		{
 			crmout<<"\n<Document name=\""<<dc->obj->document_name<<"\"";
 			crmout<<"/>";		
 			dc=coll->metadata->rb_successor(dc); 
-		}
+		}*/
 		
 	}	
 	metadata_sem_up();

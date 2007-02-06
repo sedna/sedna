@@ -195,7 +195,56 @@ bt_cursor::bt_cursor(char* pg, shft the_key_idx)
 	key.setnew(pg, the_key_idx);
 }
 
+void  bt_cursor::bt_set_next_obj(object obj)
+{
+	//object  result;
+    char*   pg;
+    char*   chnk;
 
+    if (cur_page == XNULL)
+        /* XNULL current page - we must be out of the list of keys in our btree;
+           this is the case when we moved through the sequence of keys using bt_next_key()
+           behind the right-most key */
+        throw USER_EXCEPTION2(SE1008, "XPTR not found");
+
+    CHECKP(cur_page);
+
+    if (obj_idx == chnk_size)
+    {
+#ifdef PERMIT_CLUSTERS
+        char* cpage = (char*)XADDR(cur_page);
+
+        if (BT_IS_CLUS(cpage) && !BT_IS_CLUS_TAIL(cpage))
+        {
+            /* note: key_idx must be 0, and it should not be changed */
+            if (key_idx != 0)
+                throw USER_EXCEPTION2(SE1008, "More than one key in non-tail cluster page");
+
+            cur_page = BT_NEXT(cpage);
+            if (cur_page == XNULL)
+                throw USER_EXCEPTION2(SE1008, "Cluster has no tail page");
+
+            CHECKP(cur_page);
+
+            /* re-initialize cursor fields */
+            obj_idx = 0;
+            chnk_size = *((shft*)BT_CHNK_TAB_AT((char*)XADDR(cur_page), 0) + 1);
+        }
+        else throw USER_EXCEPTION2(SE1008, "NYI");
+#else
+        throw USER_EXCEPTION2(SE1008, "NYI");
+#endif
+	}
+
+    /* construct result object; note the target page is already in memory */
+    pg = (char*)XADDR(cur_page);
+    chnk = (pg + *(shft*)BT_CHNK_TAB_AT(pg, key_idx));
+    *(object*)(chnk + sizeof(object) * obj_idx)=obj;
+	VMM_SIGNAL_MODIFICATION(cur_page);
+    obj_idx++;
+    obj_count++;
+   // return result;
+}
 object bt_cursor::bt_next_obj()
 {
     object  result;

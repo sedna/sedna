@@ -122,12 +122,15 @@ void delete_document(const char *collection_name,const char *document_name)
 		return;
 	}
 	col_schema_node* coll=(col_schema_node*)cdc->obj->snode;
-	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* mdc=coll->search_metadata_cell(document_name);
-	if (mdc!=NULL) 
+	
+	xptr node=coll->search_metadata_cell(document_name);
+	/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* mdc=coll->search_metadata_cell(document_name);*/
+	if (node!=XNULL) 
 	{
 		//down_concurrent_micro_ops_number();
-		xptr node=(mdc->obj)->root;
-		coll->free_metadata_cell(mdc);
+		//xptr node=(mdc->obj)->root;
+		//coll->free_metadata_cell(mdc);
+		coll->delete_doc_from_coll(document_name);
 		metadata_sem_up();
 		if (node!=XNULL)
 		{
@@ -184,7 +187,22 @@ void delete_collection(const char *collection_name)
 		}
 #endif
 	//1. deleting documents from collection
-	pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* tmp=coll->metadata->rb_minimum(coll->metadata->root);
+	bt_key key;
+	key.setnew("");
+	
+	bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
+	while(cursor.bt_next_key())
+	{
+		xptr node=cursor.bt_next_obj();
+		key=cursor.get_key();
+		if (node!=XNULL)
+		{
+			CHECKP(node);
+			hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
+			delete_doc_node(node);
+		}		
+	}
+	/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* tmp=coll->metadata->rb_minimum(coll->metadata->root);
 	while (tmp!=NULL)
 	{
 		//down_concurrent_micro_ops_number();
@@ -199,13 +217,14 @@ void delete_collection(const char *collection_name)
 		up_concurrent_micro_ops_number();
 		tmp=coll->metadata->rb_successor(tmp);
 	}
+	
 	//2. deleting cells
 	tmp=coll->metadata->rb_minimum(coll->metadata->root);
 	while (tmp!=NULL)
 	{
 		coll->free_metadata(tmp);
 		tmp=coll->metadata->rb_successor(tmp);
-	}
+	}*/
 	coll->free_map();
 	down_concurrent_micro_ops_number();
 	
@@ -287,7 +306,8 @@ schema_node *insert_collection(const char *collection_name)
 	strcpy(mdc->collection_name,collection_name);
 	mdc->document_name=NULL;
 	col_schema_node* scm=col_schema_node::init(true);
-	scm->metadata=pers_sset<dn_metadata_cell,unsigned int>::init();
+	scm->metadata=create_inner_index(xs_string);
+		//pers_sset<dn_metadata_cell,unsigned int>::init();
 	mdc->snode=scm;
 	metadata->put(mdc);
 	hl_logical_log_collection(collection_name,true);
@@ -313,9 +333,9 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 	}	
     coll=ptr->obj;
     down_concurrent_micro_ops_number();
-	dn_metadata_cell* mdc=(dn_metadata_cell*)scm_malloc(sizeof(dn_metadata_cell),true);
+	/*dn_metadata_cell* mdc=(dn_metadata_cell*)scm_malloc(sizeof(dn_metadata_cell),true);
 	mdc->document_name=(char*)scm_malloc(name.size()+1,true);
-	strcpy(mdc->document_name,name.c_str());
+	strcpy(mdc->document_name,name.c_str());*/
 	col_schema_node* scm=(col_schema_node*)coll->snode;
 	xptr block=XNULL;
 	n_dsc* node=NULL;
@@ -373,7 +393,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		node->desc_prev=block_hdr->desc_last;
 		block_hdr->desc_last=CALCSHIFT(node,block_hdr);
 		block_hdr->count++;
-		addTextValue(nodex,mdc->document_name,name.length());
+		addTextValue(nodex,name.c_str(),name.length());
 	}
 	else
 	{
@@ -394,11 +414,12 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		hl_logical_log_document(node->indir,uri,collection_name,true);
 		nid_create_root(nodex,true);
 		CHECKP(nodex);
-		addTextValue(nodex,mdc->document_name,name.length());
+		addTextValue(nodex,name.c_str(),name.length());
 		CHECKP(block);
 	}
-	mdc->root=nodex;
-	scm->metadata->put(mdc);
+	scm->put_doc_in_coll(name.c_str(),nodex);
+	/*mdc->root=nodex;
+	scm->metadata->put(mdc);*/
 	metadata_sem_up();
 	up_concurrent_micro_ops_number();
 	return nodex;
@@ -428,8 +449,10 @@ xptr find_document(const char *collection_name,const char *document_name)
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=search_metadata_cell(collection_name,NULL);
 	if 	(mdc!=NULL)
 	{
-		pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=((col_schema_node*)mdc->obj->snode)->search_metadata_cell(document_name);
+		xptr res=((col_schema_node*)mdc->obj->snode)->search_metadata_cell(document_name);
+		/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=((col_schema_node*)mdc->obj->snode)->search_metadata_cell(document_name);
 		xptr res=(dc!=NULL)?dc->obj->root:XNULL;
+		*/
 		metadata_sem_up();
 		return res;
 	}
