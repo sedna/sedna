@@ -42,7 +42,7 @@ void PPVarDecl::open ()
     s = new sequence_tmp(child.ts);
     child.op->open();
     seq_filled = false;
-    first_time = false;
+    first_time = true;
     cxt->glb_var_cxt.producers[v_dsc].op = this;
 }
 
