@@ -444,11 +444,12 @@
      ;-------------------
      ; Union operations
      ((union@ intersect@ except@)       
-      (lropt:propagate expr called-once?
-                       #t  ; order required for union operations to work properly
-                       var-types prolog processed-funcs
-                       #t  ; union operations perform ordering themselves
-                       #f #f))
+      (lropt:propagate
+       (lropt:wrap-union-intersect-except expr)
+       called-once?
+       #t  ; order required for union operations to work properly
+       var-types prolog processed-funcs
+       #t #f #f))
      ;-------------------
      ; Function call
      ((fun-call)
@@ -719,7 +720,12 @@
 (define lropt:parent
   (lropt:axis-helper
    #f  ; can-sustain-order?
-   (lambda (ddo-auto? zero-or-one? single-level?) #f)
+   (lambda (ddo-auto? zero-or-one? single-level?)
+     ; DDO is achieved iff the argument sequence consists of 
+     ; zero-or-one nodes
+     zero-or-one?
+     ; DL: was: #f
+     )
    (lambda (zero-or-one? single-level?) zero-or-one?)
    (lambda (zero-or-one? single-level?) single-level?)))
 
@@ -1750,6 +1756,16 @@
 ;     (write func-name)
 ;     (newline)
      (values #f processed-funcs)))))
+
+(define (lropt:wrap-union-intersect-except expr)
+ (cons (xlr:op-name expr)
+       (map  ; wrapping each nested expr $kid with $kid/self::node()
+        (lambda (kid)
+          (if  ; an axis there?
+           (and (pair? kid) (eq? (xlr:op-name kid) 'ddo))
+           kid
+           `(ddo (self ,kid (type (node-test))))))
+        (xlr:op-args expr))))
 
 (define (lropt:fun-call expr called-once? order-required?
                         var-types prolog processed-funcs)
