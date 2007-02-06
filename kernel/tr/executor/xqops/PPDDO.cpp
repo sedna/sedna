@@ -98,6 +98,7 @@ void PPDDO::next  (tuple &t)
         /*u_ftime(&t_sort2);
         d_printf3("After sorting: time = %s size= %d\n", to_string(t_sort2 - t_sort1).c_str(),s->size());*/
 		pos=1;
+        ret_val=XNULL;
     }
 
 while (true)
