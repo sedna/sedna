@@ -115,12 +115,13 @@
                                                    expr)                               
                                )
                            ( (eq? (length (caddr expr)) 2)
-                                                 (list
+                             (begin
+                                                   (list
                                                   (sc:q4 user "DROP" (car(cdaddr expr)) `document
                                                          (string-append "User doesn't have privilege DROP on this document or the document does not exist. Document: " (caddr(car(cdaddr expr)))) )              
                                                   (sc:q5 (car(cdaddr expr)) `document)
                                                   expr
-                                                  )
+                                                  ) )
                               )
                          ))
                        ( (eq? (caaddr expr) 'drop-collection) (begin

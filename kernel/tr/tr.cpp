@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
         if (entry_point->is_first_transaction())
         {
             entry_point->clear_first_transaction_flag();
-            auth = BLOCK_AUTH_CHECK;
+            auth = 0;
         }
 #endif
 //Sleep(50000);

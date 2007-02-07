@@ -72,7 +72,7 @@ void on_user_statement_begin(QueryType query_type,
     is_stmt_built = true;
     se_nullostream auth_s;
 
-//    if (AUTH_SWITCH && auth) auth = BLOCK_AUTH_CHECK; //turn off security checkings
+    if (AUTH_SWITCH && auth) auth = BLOCK_AUTH_CHECK; //turn off security checkings
 
     for (int i = 0; i < st->stmnts.size() - 1; i++)
     {
@@ -84,7 +84,8 @@ void on_user_statement_begin(QueryType query_type,
     }
 
     if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
-//    if (AUTH_SWITCH && auth) auth = 1;                   // turn on security checkings
+
+    if (AUTH_SWITCH && auth) auth = DEPLOY_AUTH_CHECK;                   // turn on security checkings
 
 #ifdef SE_ENABLE_TRIGGERS
     triggers_on_statement_begin();
