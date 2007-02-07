@@ -169,7 +169,10 @@
                           (if
                            (eq? (car (cadr what)) 'ename)
                            (cond
-                             ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
+                             ((member
+                               (cadr (cadr what))
+                               '((const (type !xs!QName) *)
+                                 (const (type !xs!QName) unspecified)))
                               `(wildcard_star ()))
                              ((and
                                (eq? (car (cadr (cadr what))) 'const)
@@ -211,7 +214,10 @@
                           (if
                            (eq? (car (cadr what)) 'ename)
                            (cond
-                             ((equal? (cadr (cadr what)) '(const (type !xs!QName) *))
+                             ((member
+                               (cadr (cadr what))
+                               '((const (type !xs!QName) *)
+                                 (const (type !xs!QName) unspecified)))
                               `(wildcard_star ()))
                              ((and
                                (eq? (car (cadr (cadr what))) 'const)
@@ -241,8 +247,10 @@
                           (if
                            (eq? (car (cadr what)) 'ename)
                            (cond
-                             ((equal? (cadr (cadr what))
-                                      '(const (type !xs!QName) *))
+                             ((member
+                               (cadr (cadr what))
+                               '((const (type !xs!QName) *)
+                                 (const (type !xs!QName) unspecified)))
                               `(wildcard_star ()))
                              ((and
                                (eq? (car (cadr (cadr what))) 'const)
