@@ -141,7 +141,9 @@
   (display
    (list->string body)
    output-port)
-  (sedna:flush-output-port output-port))
+  (sedna:flush-output-port output-port)
+  ;(pp (list "Sent:" header-code))
+  )
   
 ;-------------------------------------------------
 ; Reading a package
@@ -174,6 +176,7 @@
        (body-size
         (sedna:chars->integer
          (sedna:read-n-chars 4 input-port))))
+    ;(pp (list "Received:" header-code))
     (values header-code
             (sedna:read-n-chars body-size input-port))))
 
@@ -585,27 +588,30 @@
                   (((part dummy)
                     (sedna:extract-string body-chars)))
                   (list part)))
-                #f))                
-         ((= code sedna:ItemEnd)
-          (if frst  ; the result sequence is over
-              '()
-              (let ((curr-position (sedna:port-position in)))
-                (cons
-                 (sedna:apply-string-append res)
-                 (delay
-                   (cond
-                     ((not (= (sedna:port-position in) curr-position))
-                      (sedna:raise-exn
-                       "sedna:get-next-xml-item: "
-                       "Result invalid since the next query was executed")
-                      '())
-                     (else
-                      (sedna:write-package-as-bytes sedna:GetNextItem '() out)
-                      (sedna:get-next-xml-item connection))))))))
+                #f))
          ((= code sedna:ResultEnd)
           (if frst  ; nothing yet in the res
               '()
               (list (sedna:apply-string-append res))))
+         ((= code sedna:ItemEnd)
+          (if
+           frst  ; this item is empty (why?)
+           (begin
+             (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+             (sedna:get-next-xml-item connection))
+           (let ((curr-position (sedna:port-position in)))
+             (cons
+              (sedna:apply-string-append res)
+              (delay
+                (cond
+                  ((not (= (sedna:port-position in) curr-position))
+                   (sedna:raise-exn
+                    "sedna:get-next-xml-item: "
+                    "Result invalid since the next query was executed")
+                   '())
+                  (else
+                   (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+                   (sedna:get-next-xml-item connection))))))))
          ((= code sedna:ErrorResponse)
           (sedna:raise-server-error body-chars))
          (else
@@ -631,32 +637,35 @@
                   (((part dummy)
                     (sedna:extract-string body-chars)))
                   (list part)))
-                #f))                
-         ((= code sedna:ItemEnd)
-          (if frst  ; the result sequence is over
-              '()
-              (let ((curr-position (sedna:port-position in)))
-                (cons
-                 ; DL: Uncomment this to get the result in SXML
-                 (call-with-input-string
-                  (sedna:apply-string-append res)
-                  read)
-                 (delay
-                   (cond
-                     ((not (= (sedna:port-position in) curr-position))
-                      (sedna:raise-exn
-                       "sedna:get-next-item: "
-                       "Result invalid since the next query was executed")
-                      '())
-                     (else
-                      (sedna:write-package-as-bytes sedna:GetNextItem '() out)
-                      (sedna:get-next-item connection))))))))
+                #f))
          ((= code sedna:ResultEnd)
           (if frst  ; nothing yet in the res
               '()
               (list (call-with-input-string
                      (sedna:apply-string-append res)
                      read))))
+         ((= code sedna:ItemEnd)
+          (if
+           frst  ; this item is empty (why?)
+           (begin
+             (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+             (sedna:get-next-xml-item connection))
+           (let ((curr-position (sedna:port-position in)))
+             (cons
+              ; DL: Uncomment this to get the result in SXML
+              (call-with-input-string
+               (sedna:apply-string-append res)
+               read)
+              (delay
+                (cond
+                  ((not (= (sedna:port-position in) curr-position))
+                   (sedna:raise-exn
+                    "sedna:get-next-item: "
+                    "Result invalid since the next query was executed")
+                   '())
+                  (else
+                   (sedna:write-package-as-bytes sedna:GetNextItem '() out)
+                   (sedna:get-next-item connection))))))))
          ((= code sedna:ErrorResponse)
           (sedna:raise-server-error body-chars))
          (else
