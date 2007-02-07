@@ -74,10 +74,10 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 
     return 0;
 #else
-    char *res = NULL;
+    int res = 0;
     memset(buf, '\0', n);
     res = strerror_r(errnum, buf, n);
-    strncpy(buf, res, n - 1); 
+    if (res) strncpy(buf, "Failed to obtain error message", n - 1); 
     return 0;
 #endif
 }
