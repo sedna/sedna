@@ -2867,9 +2867,20 @@
            (cl:signal-user-error  ; was: SE5029
             XPTY0020 expr)
            (cl:signal-user-error XPTY0019 expr))
-       (cons (list (sa:op-name expr)
-                   (car a)
-                   (car new-type))
+       (cons (list
+              (if
+               (and
+                (eq? (sa:op-name expr) 'child)
+                (let ((type-content
+                       (car (sa:op-args
+                             (cadr (sa:op-args expr))  ; yields '(type ...)
+                             ))))
+                  (and (pair? type-content)
+                       (eq? (sa:op-name type-content) 'attr-test))))
+               'attr-axis
+               (sa:op-name expr))
+              (car a)
+              (car new-type))
              sa:type-nodes))))))
 
 ; Analysing `(type ,something)

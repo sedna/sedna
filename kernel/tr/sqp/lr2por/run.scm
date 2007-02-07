@@ -17,7 +17,7 @@
 (load "../xquery-lr-lib.scm")
 
 (load "../common-lib.scm")
-(load "../../../common/error_codes_scm.scm")
+;(load "../../../common/error_codes_scm.scm")
 (require (lib "defmacro.ss"))
 
 (define-macro (declare . x) #t)

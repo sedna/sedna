@@ -6,8 +6,10 @@
 (load "../common-lib.scm")
 (load "../xquery-lr-lib.scm")
 (load "lreturn.scm")
+(load "online.scm")
 
 (define go lropt:rewrite-query)
+(define go2 on:rewrite-expr)
 
 ;------------------------
 
