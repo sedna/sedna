@@ -390,6 +390,7 @@ options:
   -echo on/off		  display se_term output  (default: on for interactive mode,
                                                         off for batch mode)
   -show-time on/off	  show time of the latest query execution (default off)
+  -debug  on/off      execute statements in debug mode (default off)
   -host host		  hostname of the machine with Sedna running (default localhost)
 		
   -port-number port	  socket listening port  (default 5050)
@@ -412,6 +413,7 @@ options:
 
 \verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
 
+\verb!-debug! option specifies session debug mode. If \verb!-debug! option is on, statements of this session are exectued in a debug mode. If \verb!-debug! option is off, statement of this session are executed in normal (not debug) mode. For details see "Debug Features" section of the Sedna Programmer's Guide.
 \verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
 
 \verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
@@ -443,6 +445,8 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 \verb!AUTOCOMMIT! - when set, autocommit mode is on. When unset manual-commit mode is on. \verb!AUTOCOMMIT! is set by default.
 
 \verb!ON_ERROR_STOP! - when set, \verb!se_term! returns with the code 3 when statement or meta-command fails. When unset \verb!se_term! processing continues, unless it is the connection failure.
+
+\verb!DEBUG! - when set, session debug mode is on. When unset, session debug mode is off. See "Debug Features" section of the Sedna Programmer's Guide for details.
 
 
 \subsection{Backup and Restore}

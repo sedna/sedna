@@ -528,11 +528,16 @@ $Attribute$&$Attribute Value$&$Attribute Value Length$\\
 \hline
 \verb!SEDNA_ATTR_SESSION_DIRECTORY! & \emph{path to directory}	 & \emph{length of path}\\
 \hline
+\verb!SEDNA_ATTR_DEBUG! & \verb!SEDNA_DEBUG_ON!,	 & sizeof(int)\\
+                        & \verb!SEDNA_DEBUG_OFF!      & \\
+\hline
 \end{tabular}}
 \end{center}
 \end{figure}
 
 The \verb!SEDNA_ATTR_SESSION_DIRECTORY! connection attribute defines the \verb!session directory!. If this attribute is set, paths in the \verb!LOAD! statement \ref{bulk-load} are evaluated relative to the session directory.
+
+The \verb!SEDNA_ATTR_DEBUG! connection attribute turns on/off query debug mode. Query debug mode is off by default. Note, that \verb!SEDNA_ATTR_DEBUG! connection attribute must be set only after SEconnect has been called on the \verb!conn!.
 
 An application can get connection attributes using \verb!SEgetConnectionAttr!:
 
@@ -558,6 +563,26 @@ parameters:
 positive value:
 
 \verb!SEDNA_GET_ATTRIBUTE_SUCCEEDED! - the attribute was retrieved successfully.
+
+negative value:
+
+\verb!SEDNA_ERROR! - some error occurred.
+
+To reset all connection attributes to their default values use:
+
+\begin{verbatim}
+int SEresetAllConnectionAttr(struct SednaConnection *conn);
+\end{verbatim}
+
+parameters:
+
+\verb!conn! - a pointer to an instance of the SednaConnection type, associated with a session to be closed.
+
+\verb!SEresetAllConnectionAttr! returns:
+
+positive value:
+
+\verb!SEDNA_RESET_ATTRIBUTES_SUCCEEDED! - attributes has been reset successfully.
 
 negative value:
 
@@ -2474,6 +2499,13 @@ The statistical information in the document \verb!$document_<name>! contains the
 \item \verb!STRINGS! - the histogram of the xml data by its size
 \item \verb!NID! - the histogram of the labeling numbers its length
 \end{itemize}
+
+\subsection{Debug Features}
+\subsubsection{Trace}
+\subsubsection{Session Debug Mode}
+
+
+
 
 \begin{thebibliography}{9}
 \bibitem{doc:admin} ``Sedna Administration Guide''
