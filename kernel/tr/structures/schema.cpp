@@ -231,7 +231,7 @@ void col_schema_node::replace_document_pointer(xptr old_xptr, xptr new_xptr)
 	char* data=(char*)XADDR(BLOCKXPTR(datap))+shift;
 	char *z=new char[size+1];
 	memcpy(z,data,size);
-	data[size]='\0';	
+	z[size]='\0';	
 	//2. find doc and replace
 	bt_key key;
 	key.setnew(z);
