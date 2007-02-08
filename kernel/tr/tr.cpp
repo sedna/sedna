@@ -224,7 +224,7 @@ int main(int argc, char *argv[])
             auth = 0;
         }
 #endif
-//Sleep(50000);
+
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;
         bool expect_another_transaction = true;
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 
                     qep_tree = NULL;    //qep of current stmnt
                     st = NULL;
-                    bool has_next_item = true;
+                    bool has_next_item = false;
 
                     d_printf1("============== Trn execution started ======================\n");
 
@@ -336,21 +336,25 @@ int main(int argc, char *argv[])
                         case se_GetNextItem:   //next portion command
                             {
                                 u_ftime(&t_qep1);
-                                if (has_next_item)
+                                if (qep_tree) // if statement execution is in progress
                                 {
-                                    GET_TIME(&t1_exec);
-                                    has_next_item = next(qep_tree);
-
-                                    GET_TIME(&t2_exec);
-                                }
-                                client->end_of_item(has_next_item);
-                                u_ftime(&t_qep2);
-
-                                t_qep = (t_qep2 - (t_qep1 - t_qep));
-                                qep_time = to_string(t_qep);
-                                if (!has_next_item)
-                                {
-                                    on_user_statement_end(qep_tree, st);
+                                    if (has_next_item)
+                                    {
+                                        GET_TIME(&t1_exec);
+                                        has_next_item = next(qep_tree);
+                                        
+                                        GET_TIME(&t2_exec);
+                                    }
+                                    client->end_of_item(has_next_item);
+                                    u_ftime(&t_qep2);
+                                    
+                                    t_qep = (t_qep2 - (t_qep1 - t_qep));
+                                    
+                                    qep_time = to_string(t_qep);
+                                    if (!has_next_item)
+                                    {
+                                        on_user_statement_end(qep_tree, st);
+                                    }
                                 }
 
                                 ADD_TIME(t_total_exec, t1_exec, t2_exec);
@@ -393,6 +397,14 @@ int main(int argc, char *argv[])
                                 client->respond_to_client(se_TransactionRollbackBeforeClose);
                                 d_printf1("============== Trn execution finished ======================\n");
                                 break;
+                            }
+                        case se_SetSessionOptions:
+                            {
+                                client->set_session_options(&client_msg);
+                            }
+                        case se_ResetSessionOptions:
+                            {
+                                client->reset_session_options();
                             }
                         default:
                             {
@@ -445,6 +457,14 @@ int main(int argc, char *argv[])
             else if (client_msg.instruction == se_ShowTime)     //ShowTime
             {
                 client->show_time(qep_time);
+            }
+            else if (client_msg.instruction == se_SetSessionOptions) // Set session options
+            {
+                client->set_session_options(&client_msg);
+            }
+            else if (client_msg.instruction == se_ResetSessionOptions) // Reset all session options to their default values
+            {
+                client->reset_session_options();
             }
             else
             {

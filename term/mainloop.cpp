@@ -147,6 +147,14 @@ MainLoop(FILE *source)
     }
 
     SEsetDebugHandler(&conn, (debug_handler_t)se_term_debug_handler);
+
+    int debug_option = debug_mode ? SEDNA_DEBUG_ON : SEDNA_DEBUG_OFF;
+    if (SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&debug_option, sizeof(int)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+    {
+        fprintf(stderr, "failed to set the Sedna debug mode attribute \n%s\n", SEgetLastErrorMsg(&conn));
+		quit_term();
+        return 1;
+    }
     
 	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n\n");
 	term_output1("Type:\n");
@@ -321,11 +329,6 @@ int process_command(char* buffer)
 	}
 	else if(strncmp(buffer,"set",3) == 0)
 	{
-        if((strcmp(buffer+4, "AUTOCOMMIT") != 0) && (strcmp(buffer+4, "ON_ERROR_STOP") != 0))
-        {
-	    	fprintf(stderr, "Unknown variable.\n");
-		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
-        }
         if(strcmp(buffer+4, "AUTOCOMMIT") == 0)
         {
             int value = SEDNA_AUTOCOMMIT_ON;
@@ -339,14 +342,26 @@ int process_command(char* buffer)
             term_output1("Variable is set.");
             return EXIT_SUCCESS;
         }
+        else if(strcmp(buffer+4, "DEBUG") == 0)
+        {
+            int value = SEDNA_DEBUG_ON;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            term_output1("Debug mode is on.");
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+   	    	fprintf(stderr, "Unknown variable.\n");
+		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
+        }
 	}
 	else if(strncmp(buffer,"unset",5) == 0)
 	{
-        if((strcmp(buffer+6, "AUTOCOMMIT") != 0) && (strcmp(buffer+6, "ON_ERROR_STOP") != 0))
-        {
-	    	fprintf(stderr, "Unknown variable.\n");
-		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
-        }
         if(strcmp(buffer+6, "AUTOCOMMIT") == 0)
         {
             int value = SEDNA_AUTOCOMMIT_OFF;
@@ -354,11 +369,22 @@ int process_command(char* buffer)
             term_output1("Autocommit mode is off.");
             return EXIT_SUCCESS;
         }
-        if(strcmp(buffer+6, "ON_ERROR_STOP") == 0)
+        else if(strcmp(buffer+6, "ON_ERROR_STOP") == 0)
         {
             on_error_stop = false;
             term_output1("Variable is unset.");
             return EXIT_SUCCESS;
+        }
+        else if(strcmp(buffer+6, "DEBUG") == 0)
+        {
+            on_error_stop = false;
+            term_output1("Debug mode is off.");
+            return EXIT_SUCCESS;
+        }
+        else
+        {
+	    	fprintf(stderr, "Unknown variable.\n");
+		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
     }
 	else 

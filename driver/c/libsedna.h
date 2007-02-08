@@ -73,8 +73,11 @@ extern "C"
 #define SEDNA_SET_ATTRIBUTE_SUCCEEDED              32
 #define SEDNA_GET_ATTRIBUTE_SUCCEEDED              33
 
+#define SEDNA_RESET_ATTRIBUTES_SUCCEEDED           34
+
+
     
-    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY};
+    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY, SEDNA_ATTR_DEBUG};
     
     typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);
     
@@ -166,6 +169,8 @@ extern "C"
     int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const void* attrValue, int attrValueLength);
 
     int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* attrValue, int* attrValueLength);
+    
+    int SEresetAllConnectionAttr(struct SednaConnection *conn);
 
 	void SEsetDebugHandler(struct SednaConnection *conn, debug_handler_t _debug_handler_);
 

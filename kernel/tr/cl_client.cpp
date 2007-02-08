@@ -56,6 +56,9 @@ command_line_client::command_line_client(int argc, char** argv)
            throw USER_EXCEPTION2(SE4601, errmsg);
      }
      s = NULL;
+     // call session options object method: 
+     // int option = debug_mode ? SEDNA_DEBUG_ON : SEDNA_DEBUG_OFF;
+     // obj.set_option(debug_mode, "", 0);
   }
 }
 
@@ -398,6 +401,16 @@ void command_line_client::authentication_result(bool res, const string& body)
 
 void command_line_client::get_session_parameters()
 {
+}
+
+void command_line_client::set_session_options(msg_struct *msg)
+{
+    // call static some object method to set session options
+}
+
+void command_line_client::reset_session_options()
+{
+    //obj.reset_options();
 }
 
 void command_line_client::process_unknown_instruction(int instruction, bool in_transaction)
