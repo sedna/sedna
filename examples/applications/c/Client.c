@@ -26,6 +26,7 @@ int main()
     
     value = SEDNA_AUTOCOMMIT_OFF;
     res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+
     
     //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
@@ -34,6 +35,25 @@ int main()
     {
         printf("Session starting failed \n%s\n", SEgetLastErrorMsg(&conn));
 		return -1;
+    }
+	
+    value = SEDNA_DEBUG_OFF;
+    res = SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&value, sizeof(int));
+    if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+    {
+        printf("set attr failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
+    }
+
+    res = SEresetAllConnectionAttr(&conn);
+    if (res != SEDNA_RESET_ATTRIBUTES_SUCCEEDED)
+    {
+        printf("set attr failed \n%s\n", SEgetLastErrorMsg(&conn));
+        //closing session
+        SEclose(&conn);
+        return -1;
     }
 	
     //begin transaction
@@ -45,6 +65,9 @@ int main()
         SEclose(&conn);
         return -1;
     }
+    
+    res = SEnext(&conn);
+    printf("res=%d\n", res);
    
     // load data from file "region.xml" into the document "regions"
     res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 

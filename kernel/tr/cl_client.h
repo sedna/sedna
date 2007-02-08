@@ -58,6 +58,8 @@ public:
 */
   virtual void authentication_result(bool res, const std::string& body);
   virtual void get_session_parameters();
+  virtual void set_session_options(msg_struct *msg);
+  virtual void reset_session_options();
   virtual void process_unknown_instruction(int instruction, bool in_transaction);
   virtual void error(int code, const std::string& body);
   

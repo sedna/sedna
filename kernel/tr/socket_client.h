@@ -55,6 +55,8 @@ public:
     virtual void get_file_from_client(std::vector<std::string>* filenames, std::vector<client_file>* cf_vec);
     virtual void close_file_from_client(client_file &inout_cf);
     virtual void get_session_parameters();
+    virtual void set_session_options(msg_struct *msg);
+    virtual void reset_session_options();
     virtual void respond_to_client(int instruction);
     virtual void begin_item();
     virtual void end_of_item(bool res);

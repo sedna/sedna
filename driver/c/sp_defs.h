@@ -18,8 +18,11 @@
 
 #define SE_SOCKET_MSG_BUF_SIZE                             10240
 
-#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           2
+#define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           3
 #define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR           0
+
+#define SEDNA_DEBUG_OFF                                    0
+#define SEDNA_DEBUG_ON                                     1
 
 typedef int sp_int32;
 
@@ -72,7 +75,11 @@ enum se_sp_instructions
     se_CloseConnectionOk = 510,
     se_TransactionRollbackBeforeClose = 520,
     se_Authenticate = 90,
-    se_ExecuteSchemeProgram = 95
+    se_ExecuteSchemeProgram = 95,
+    se_SetSessionOptions = 530,
+    se_SetSessionOptionsOk = 540,
+    se_ResetSessionOptions = 550,
+    se_ResetSessionOptionsOk = 560
 };
 
 struct msg_struct

@@ -25,6 +25,7 @@ extern int show_time;
 extern int socket_port;
 extern int print_intermed;
 extern int server_mode;
+extern int debug_mode;
 extern int write_phys_log;
 extern int user_id;
 extern int auth;

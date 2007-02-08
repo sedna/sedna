@@ -354,9 +354,9 @@ void socket_client::get_session_parameters()
   p_ver.major_version = sp_msg.body[buf_position];
   p_ver.minor_version = sp_msg.body[buf_position+1];
       
-  if (!(((p_ver.major_version==1)||(p_ver.major_version==2))&&(p_ver.minor_version==0))) //version checking (version 1.0 and 2.0 are supported)
+  if (!(((p_ver.major_version==1)||(p_ver.major_version==2)||(p_ver.major_version==3))&&(p_ver.minor_version==0))) //version checking (version 1.0 and 2.0 are supported)
   {
-      error(0, string("Error: Unknown Sedna Client-Server protocol version.")); 
+      error(SE3014, string("major version: ")+int2string(p_ver.major_version)+string(" minor version: ")+int2string(p_ver.minor_version)); 
       throw USER_EXCEPTION(SE3014);
   }
      
@@ -432,11 +432,43 @@ void socket_client::get_session_parameters()
   stream = new se_socketostream(Sock, p_ver);
 }
 
+void socket_client::set_session_options(msg_struct *msg)
+{
+    int pos = 0;
+    int option_len;
+    int option_type;
+    
+    if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
+    
+    while (pos < msg->length)
+    {
+        net_int2int(&option_type, msg->body+pos);
+        pos = pos + 5;
+        net_int2int(&option_len, msg->body+pos);
+        pos = pos + 4;
+        // call some static object method to set session options
+        // obj.set_option(option_type, msg->body[pos], option_len);
+        // if ("failed") throw USER_EXCEPTION2(SE4617, obj.get_option_description(option_type));
+        pos = pos + option_len;
+    }
+d_printf1("\nSetting session option\n");    
+    sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok
+    sp_msg.length = 0; 
+    if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+}
+
+void socket_client::reset_session_options()
+{
+    //obj.reset_options();
+    // if ("failed") throw USER_EXCEPTION(SE4618);
+    sp_msg.instruction = se_ResetSessionOptionsOk; // Session options have been reset ok
+    sp_msg.length = 0; 
+    if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
+}
+
 
 void socket_client::authentication_result(bool res, const string& body)
 {
-//   msg_struct auth_result_msg;
-   
    if(res)
    {
    	   sp_msg.instruction = se_AuthenticationOK;// AuthenticationOk message

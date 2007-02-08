@@ -22,6 +22,7 @@ extern int show_time;
 extern int socket_port;
 extern int echo;
 extern int debug_output;
+extern int debug_mode;
 
 extern char host[];
 extern char db_name[];

@@ -729,7 +729,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         /*dbname string                  */
         conn->msg.length = 2 + 5 + login_len + 5 + db_name_len;
 
-        /* writing protocol version 2.0*/
+        /* writing protocol version 3.0*/
         conn->msg.body[0] = SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR;
         conn->msg.body[1] = SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR;
 
@@ -1623,6 +1623,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                     return SEDNA_ERROR;
             }
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            
         case SEDNA_ATTR_SESSION_DIRECTORY:
             if (attrValueLength > SE_MAX_DIR_LENGTH)
             {
@@ -1632,6 +1633,39 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             strncpy(conn->session_directory, attrValue, attrValueLength);
             conn->session_directory[attrValueLength] = '\0';
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            
+         case SEDNA_ATTR_DEBUG:
+            conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
+            conn->msg.length = 9;
+            value = (int*) attrValue;
+			int2net_int(*value, conn->msg.body);
+            conn->msg.body[4] = 0;
+            int2net_int(0, conn->msg.body+5); //length of the option value string = 0
+            if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3006, NULL, NULL);
+                return SEDNA_ERROR;
+            }
+            if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3007, NULL, NULL);
+                return SEDNA_ERROR;
+            }
+            if (conn->msg.instruction == se_SetSessionOptionsOk)
+                return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            else if (conn->msg.instruction == se_ErrorResponse)
+            {
+                setServerErrorMsg(conn, conn->msg);
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+            else
+            {
+                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+              
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
@@ -1656,13 +1690,55 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             memcpy(attrValue, conn->session_directory, strlen(conn->session_directory));
             *attrValueLength = strlen(conn->session_directory);
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
-         default: 
+        default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
     }
     
     return SEDNA_ERROR;
 }
+
+int SEresetAllConnectionAttr(struct SednaConnection *conn)
+{
+    conn->autocommit = 1;
+    
+    if (uGetCurrentWorkingDirectory(conn->session_directory, SE_MAX_DIR_LENGTH, NULL) == NULL)
+    {
+        connectionFailure(conn, SE4602, NULL, NULL);
+        release(conn);
+        return SEDNA_ERROR;
+    }
+    
+    conn->msg.instruction = se_ResetSessionOptions;    /* Reset all options to their default values */
+    conn->msg.length = 0;
+    if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3006, NULL, NULL);
+        return SEDNA_ERROR;
+    }
+    if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+    {
+        connectionFailure(conn, SE3007, NULL, NULL);
+        return SEDNA_ERROR;
+    }
+    if (conn->msg.instruction == se_ResetSessionOptionsOk)
+        return SEDNA_RESET_ATTRIBUTES_SUCCEEDED;
+    else if (conn->msg.instruction == se_ErrorResponse)
+    {
+        setServerErrorMsg(conn, conn->msg);
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
+        return SEDNA_ERROR;
+    }
+    else
+    {
+        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        conn->isInTransaction = SEDNA_NO_TRANSACTION;
+        return SEDNA_ERROR;
+    }
+
+    return SEDNA_ERROR;
+}
+
 
 void SEsetDebugHandler(struct SednaConnection *conn, debug_handler_t _debug_handler_)
 {
