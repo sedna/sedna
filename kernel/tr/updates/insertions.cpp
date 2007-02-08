@@ -208,7 +208,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 					if (!mark)
 					{
 #ifndef IGNORE_UPDATE_ERRORS
-						throw USER_EXCEPTION(SE2016);
+						throw USER_EXCEPTION(SE2038);
 #endif		
 						goto cycle1;
 					}
