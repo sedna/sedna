@@ -672,6 +672,9 @@ sedna-err:SE2036
 sedna-err:SE2037
 
 The size of string is limited by 4 GB
+sedna-err:SE2038
+
+   An attempt to insert attribute node after element
 ########### sql ####################
 sedna-err:SE2100
 
