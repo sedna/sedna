@@ -356,15 +356,15 @@ void printFullNIDVariation(xptr broot, se_ostream& crmout)
 }
 void printFullNIDVariation(xptr broot, xptr node)
 {
-	std::map<int,int> nidsz;
-	std::map<int,int> strsz;
+	std::map<unsigned int,unsigned int> nidsz;
+	std::map<unsigned int,unsigned int> strsz;
 	std::map<schema_node*,int> xsfo;
 	std::map<schema_node*,int> ncnt;
 	std::vector<int> fo;
 	int maxfo=0;
 	__int64 midfo=0;
-	int cnt=0;
-	int strcnt=0;
+	unsigned int cnt=0;
+	unsigned int strcnt=0;
 	xptr root=broot;
 	while (root!=XNULL)
 	{
@@ -394,7 +394,7 @@ void printFullNIDVariation(xptr broot, xptr node)
 			if (sc->type!=element &&sc->type!=xml_namespace)
 			{
 				strcnt++;
-				int strz=((t_dsc*)XADDR(node))->size;
+				unsigned int strz=((t_dsc*)XADDR(node))->size;
 				if (strsz.find(strz)==strsz.end())
 					strsz[strz]=1;
 				else
@@ -456,8 +456,8 @@ void printFullNIDVariation(xptr broot, xptr node)
 	//counting total Nid
 	__int64 cnt_sz=0;
 	__int64 cnt_out=0;
-	int max=0;
-	std::map<int,int>::const_iterator it=nidsz.begin();
+	unsigned int max=0;
+	std::map<unsigned int,unsigned int>::const_iterator it=nidsz.begin();
 	while (it!=nidsz.end())
 	{
 		cnt_sz+=it->second*it->first;
@@ -490,11 +490,13 @@ void printFullNIDVariation(xptr broot, xptr node)
 }
 		else
 		{
+			/*
 			lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL);
 			u_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL);
 			att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,"0",1,NULL);
 			insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,"0",1,NULL);
+			*/
 		}
 	}
 	nidsz.clear();
@@ -532,11 +534,11 @@ void printFullNIDVariation(xptr broot, xptr node)
 		}
 		else
 		{
-			lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL);
+			/*lf=insert_element(lf,XNULL,left,"bucket",xs_untyped,NULL);
 			u_itoa(i,buf,10);
 			xptr att=insert_attribute(XNULL,XNULL,lf,"size",xs_untypedAtomic,buf,strlen(buf),NULL);
 			att=insert_attribute(att,XNULL,XNULL,"total",xs_untypedAtomic,"0",1,NULL);
-			insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,"0",1,NULL);
+			insert_attribute(att,XNULL,XNULL,"percentage",xs_untypedAtomic,"0",1,NULL);*/
 		}
 	}
 	strsz.clear();
