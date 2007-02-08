@@ -202,7 +202,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 					CHECKP(tmp);
 					mark= is_node_attribute(tmp);
 					xptr last=*(arg2seq.end()-1);
-					if (is_node_persistent(last))last=removeIndirection(last); 
+					last=removeIndirection(last); 
 					CHECKP(last);
 					mark=mark && is_node_attribute(last);
 					if (!mark)
@@ -443,13 +443,13 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 				CHECKP(tmp);
 				mark= is_node_attribute(tmp);
 				xptr last=*(arg2seq.end()-1);
-				if (is_node_persistent(last))last=removeIndirection(last); 
+				last=removeIndirection(last); 
 				CHECKP(last);
 				mark=mark && is_node_attribute(last);
 				if (!mark)
 				{
 #ifndef IGNORE_UPDATE_ERRORS
-					throw USER_EXCEPTION(SE2013);
+					throw USER_EXCEPTION(SE2038);
 #endif		
 					goto cycle1;
 				}
