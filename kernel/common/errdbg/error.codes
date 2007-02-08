@@ -599,7 +599,7 @@ sedna-err:SE2012
    Invalid result of the delete argument: sequence contains temporary nodes 
 sedna-err:SE2013
 
-   Invalid result of the second insert argument: sequence contains atomic values or atomic values
+   Invalid result of the second insert argument: sequence contains atomic values or temporary nodes
 sedna-err:SE2014
 
    Invalid result of the first insert argument: bad sequence of nodes
