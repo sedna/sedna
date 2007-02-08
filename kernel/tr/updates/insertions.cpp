@@ -285,14 +285,14 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				USER_EXCEPTION(SE2013);
+				throw USER_EXCEPTION(SE2013);
 			}
 #endif
 		}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				USER_EXCEPTION(SE2013);
+				throw USER_EXCEPTION(SE2013);
 			}
 #endif
 	  arg1.op->next(t);
@@ -326,14 +326,14 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				USER_EXCEPTION(SE2014);
+				throw USER_EXCEPTION(SE2014);
 			}
 #endif
 		}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				USER_EXCEPTION(SE2013);
+				throw USER_EXCEPTION(SE2013);
 			}
 #endif
 	arg2.op->next(t2);
@@ -449,7 +449,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 				if (!mark)
 				{
 #ifndef IGNORE_UPDATE_ERRORS
-					USER_EXCEPTION(SE2013);
+					throw USER_EXCEPTION(SE2013);
 #endif		
 					goto cycle1;
 				}
