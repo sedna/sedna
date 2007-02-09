@@ -35,7 +35,9 @@ SUBDIROBJS = $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 

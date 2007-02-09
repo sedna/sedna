@@ -15,7 +15,9 @@ TR_OBJS = plmgr_helpers$(OBJ_EXT) plmgr_core$(OBJ_EXT)
 OBJS = $(TR_OBJS) plmgr$(OBJ_EXT) sm_plmgr$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 

@@ -28,7 +28,9 @@ SUBDIROBJS= $(foreach dir,$(SUBDIRS),$(dir)/$(dir)$(LIB_EXT))
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 ################################################################################

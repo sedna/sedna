@@ -27,7 +27,9 @@ endif
 
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 

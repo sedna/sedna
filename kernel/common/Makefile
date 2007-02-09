@@ -23,4 +23,4 @@ ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
 $(OBJS:$(OBJ_EXT)=.d): errdbg/errdbg$(LIST_EXT)
 endif
 
-mmgr-recursive ph-recursive u-recursive: errdbg-recursive
+mmgr-recursive ph-recursive u-recursive $(OBJS): errdbg-recursive
