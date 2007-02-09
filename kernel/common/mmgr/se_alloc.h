@@ -73,15 +73,10 @@ extern void *MemoryContextAllocZeroAligned(MemoryContext context, usize_t size);
 		MemoryContextAllocZero(CurrentMemoryContext, sz) )
 #endif
 
-#ifdef SE_MEMORY_MNG
+
 extern void se_free(void *pointer);
 
 extern void *se_realloc(void *pointer, usize_t size);
-#else
-#define se_free         free
-
-#define se_realloc      realloc
-#endif
 
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
