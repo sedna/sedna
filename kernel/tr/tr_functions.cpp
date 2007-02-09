@@ -48,6 +48,7 @@ void on_kernel_statement_end(PPQueryEssence *qep_tree)
        //tr_globals::st_ct.clear_context();
 
 	   tr_globals::estr_global.clear();
+	   stmt_str_buf::reset();
 
        PathExpr_local_free();
        PathExpr_reset_pers();

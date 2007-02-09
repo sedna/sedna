@@ -270,6 +270,8 @@ private:
 	static bool used;
 	stmt_str_buf_impl *m_impl;
 public:
+	static void reset() { U_ASSERT(!used); buf_impl.reset(); }
+
 	stmt_str_buf() { if (used) throw USER_EXCEPTION(SE1003); m_impl = &buf_impl; used = true; U_ASSERT(!m_impl->mem_only()); }
 	stmt_str_buf(int mem_only) { m_impl = new stmt_str_buf_impl(mem_only); U_ASSERT(m_impl->mem_only()); }
 	~stmt_str_buf() { m_impl->clear(); if (m_impl->mem_only()) delete m_impl; else used = false; }
