@@ -12,6 +12,7 @@ all: $(FOLDER)$(LIST_EXT)
 	@echo ===================================================================
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 
 ifdef GENERATED
 include generated
@@ -23,6 +24,17 @@ ifdef GENERATED
 $(OBJS:$(OBJ_EXT)=.d): generated
 endif
 
+else
+
+ifdef GENERATED
+include generated
+endif
+
+ifdef GENERATED
+$(OBJS): generated
+endif
+
+endif
 endif
 
 

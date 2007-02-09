@@ -18,13 +18,12 @@ RC_OBJS   = rc$(OBJ_EXT)
 OBJS      = $(GOV_OBJS) $(STOP_OBJS) $(RC_OBJS)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
-#                   $(PP)/kernel/common/errdbg/errdbg$(LIB_EXT) \
-#                   $(PP)/kernel/common/u/u$(LIB_EXT) \
-#                   $(PP)/kernel/common/mmgr/mmgr$(LIB_EXT)
 
 ################################################################################
 # GOV                                                                          #

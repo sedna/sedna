@@ -26,7 +26,9 @@ OBJS = libsedna$(OBJ_EXT) usocket$(OBJ_EXT) uhdd$(OBJ_EXT) sp$(OBJ_EXT) \
        error_codes$(OBJ_EXT) u$(OBJ_EXT)
 
 ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
 include $(OBJS:$(OBJ_EXT)=.d)
+endif
 endif
 
 MT_OBJS =     $(OBJS:$(OBJ_EXT)=.mt$(OBJ_EXT))
