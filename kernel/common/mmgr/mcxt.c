@@ -16,6 +16,7 @@
 #include "common/sedna.h"
 #include "common/mmgr/memutils.h"
 
+
 int SafeMemoryContextInit(void)
 {
     static int initialized = 0;
@@ -572,6 +573,7 @@ MemoryContextAllocZeroAligned(MemoryContext context, usize_t size)
 void
 se_free(void *pointer)
 {
+#ifdef SE_MEMORY_MNG
 	StandardChunkHeader *header;
 
 	/*
@@ -591,6 +593,9 @@ se_free(void *pointer)
 	U_ASSERT(MemoryContextIsValid(header->context));
 
 	(*header->context->methods->free_p) (header->context, pointer);
+#else
+    free(pointer);
+#endif
 }
 
 /*
@@ -600,6 +605,7 @@ se_free(void *pointer)
 void *
 se_realloc(void *pointer, usize_t size)
 {
+#ifdef SE_MEMORY_MNG
 	StandardChunkHeader *header;
 
 	/*
@@ -625,7 +631,11 @@ se_realloc(void *pointer, usize_t size)
 
 	return (*header->context->methods->realloc) (header->context,
 												 pointer, size);
+#else
+    return realloc(pointer, size);
+#endif
 }
+
 
 /*
  * MemoryContextSwitchTo
