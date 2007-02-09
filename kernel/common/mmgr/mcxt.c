@@ -32,18 +32,6 @@ int SafeMemoryContextInit(void)
     }
     return 0;
 }
-/*
-void *operator_new_context(usize_t size, MemoryContext context)
-{
-    if (SafeMemoryContextInit()) context = TopMemoryContext;
-    return MemoryContextAlloc(context, size);
-}
-*/
-void *operator_new_global(usize_t size)
-{
-    SafeMemoryContextInit();
-    return MemoryContextAlloc(TopMemoryContext, size);
-}
 
 
 /*****************************************************************************

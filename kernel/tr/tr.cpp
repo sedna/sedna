@@ -118,18 +118,14 @@ int main(int argc, char *argv[])
             OS_exceptions_handler::install_handler();
         }
 
+#ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 
-        TransactionContext = TopMemoryContext;
-        UserStatementContext = TopMemoryContext;
-        KernelStatementContext = TopMemoryContext;
-        XQParserContext = TopMemoryContext;
-
-
-//        TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-//        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+        TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
 //        KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-//        XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+        XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+#endif
 
 
 
@@ -146,20 +142,21 @@ int main(int argc, char *argv[])
 
 
         if (server_mode == 1)
-            client = new socket_client();
+            client = se_new socket_client();
         else                    //server mode  = 0 (run from command line)
         {
         if (strcmp(ACTIVE_CONFIGURATION, "Release") == 0 &&
 		    uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
            throw USER_EXCEPTION(SE4613);
 
-            client = new command_line_client(argc, argv);
+            client = se_new command_line_client(argc, argv);
             if (!sedna_server_is_running) throw USER_EXCEPTION(SE4400);
         }
 
         if (uSocketInit(__sys_call_error) != 0)
             throw USER_EXCEPTION(SE3001);
 
+        // FIXME: I think, it's possible to combine init and get_session_parameters into one functions (AF)
 //  u_ftime(&ttt1);
         client->init();
 
@@ -234,7 +231,9 @@ int main(int argc, char *argv[])
         /////////////////////////////////////////////////////////////////////////////////
         while (expect_another_transaction) //cycle by transactions
         {
-            //MemoryContextSwitchTo(TransactionContext);
+#ifdef SE_MEMORY_MNG
+            MemoryContextSwitchTo(TransactionContext);
+#endif
 
             client->read_msg(&client_msg);
             if (client_msg.instruction == se_BeginTransaction)  //BeginTransaction
@@ -261,11 +260,17 @@ int main(int argc, char *argv[])
                         {
                         case se_Authenticate:  //authentication
                             {
-                                //MemoryContextSwitchTo(UserStatementContext);
+#ifdef SE_MEMORY_MNG
+                                MemoryContextSwitchTo(UserStatementContext);
+#endif
                                 authentication();
-                                //MemoryContextResetChildren(UserStatementContext);
-                                //MemoryContextReset(UserStatementContext);
-                                //MemoryContextSwitchTo(TransactionContext);
+#ifdef SE_MEMORY_MNG
+                                // FIXME:
+                                MemoryContextStats(UserStatementContext);
+
+                                MemoryContextReset(UserStatementContext);
+                                MemoryContextSwitchTo(TransactionContext);
+#endif
                                 client->authentication_result(true, "");
                                 break;
                             }
@@ -280,6 +285,10 @@ int main(int argc, char *argv[])
                         case se_Execute:       //execute query command
                             {
                                 u_ftime(&t_qep1);
+//#ifdef SE_MEMORY_MNG
+//                                MemoryContextSwitchTo(UserStatementContext);
+//#endif
+
 
                                 //print for test system
                                 d_printf1("\n============== statement =================\n");
@@ -519,6 +528,10 @@ int main(int argc, char *argv[])
 
         d_printf1("Transaction has been closed\n\n");
 
+#ifdef SE_MEMORY_MNG
+        // FIXME:
+        MemoryContextStats(TopMemoryContext);
+#endif
     }
     catch(SednaUserException & e)
     {
