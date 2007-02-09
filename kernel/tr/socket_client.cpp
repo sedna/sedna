@@ -71,7 +71,7 @@ void socket_client::release()
    	 }
    	 if(long_query_stream != NULL)
    	 {
-   	 	 free( long_query_stream );
+   	 	 se_free( long_query_stream );
    	 	 long_query_stream = NULL;
    	 }
 }
@@ -137,22 +137,22 @@ char* socket_client::get_query_string(msg_struct *msg)
 
     if(long_query_stream != NULL)
    	{
-   	    free( long_query_stream );
+   	    se_free( long_query_stream );
    	    long_query_stream = NULL;
    	}
 	
 	if((*msg).instruction == se_ExecuteLong) //get long query
 	{
-		if ((long_query_stream = (char*)malloc(malloced_size+1)) == NULL) throw USER_EXCEPTION(SE4080);
+		if ((long_query_stream = (char*)se_alloc(malloced_size+1)) == NULL) throw USER_EXCEPTION(SE4080);
 
 		while((*msg).instruction != se_LongQueryEnd) //while not the end of long query 
 		{
 	   		net_int2int(&query_portion_length, (*msg).body+2);
 			if ( (query_size + query_portion_length) > malloced_size )
 			{
-				if ( ( long_query_stream = (char*)realloc( long_query_stream,  malloced_size + SE_SOCKET_MSG_BUF_SIZE*2 + 1 )) == NULL)
+				if ( ( long_query_stream = (char*)se_realloc( long_query_stream,  malloced_size + SE_SOCKET_MSG_BUF_SIZE*2 + 1 )) == NULL)
 				{
-					free( long_query_stream );
+					se_free( long_query_stream );
 					long_query_stream = NULL;
 					throw USER_EXCEPTION(SE4080);
 				}

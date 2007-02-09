@@ -23,6 +23,8 @@
 #ifndef SE_ALLOC_H
 #define SE_ALLOC_H
 
+//#define SE_MEMORY_MNG
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,9 +50,13 @@ extern void *MemoryContextAlloc(MemoryContext context, usize_t size);
 extern void *MemoryContextAllocZero(MemoryContext context, usize_t size);
 extern void *MemoryContextAllocZeroAligned(MemoryContext context, usize_t size);
 
+#ifdef SE_MEMORY_MNG
 #define se_alloc(sz)    MemoryContextAlloc(CurrentMemoryContext, (sz))
 
 #define se_alloc0(sz)   MemoryContextAllocZero(CurrentMemoryContext, (sz))
+#else
+#define se_alloc        malloc
+#endif
 
 /*
  * The result of se_alloc() is always word-aligned, so we can skip testing
@@ -60,21 +66,28 @@ extern void *MemoryContextAllocZeroAligned(MemoryContext context, usize_t size);
  * issue that it evaluates the argument multiple times isn't a problem in
  * practice.
  */
+#ifdef SE_MEMORY_MNG
 #define se_alloc0fast(sz) \
 	( MemSetTest(0, sz) ? \
 		MemoryContextAllocZeroAligned(CurrentMemoryContext, sz) : \
 		MemoryContextAllocZero(CurrentMemoryContext, sz) )
+#endif
 
+#ifdef SE_MEMORY_MNG
 extern void se_free(void *pointer);
 
 extern void *se_realloc(void *pointer, usize_t size);
+#else
+#define se_free         free
+
+#define se_realloc      realloc
+#endif
 
 /*
  * MemoryContextSwitchTo can't be a macro in standard C compilers.
  * But we can make it an inline function when using GCC.
  */
 #ifdef __GNUC__
-
 static __inline__ MemoryContext
 MemoryContextSwitchTo(MemoryContext context)
 {
@@ -84,7 +97,6 @@ MemoryContextSwitchTo(MemoryContext context)
 	return old;
 }
 #else
-
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
 #endif   /* __GNUC__ */
 
@@ -94,9 +106,11 @@ extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
  */
 extern char *MemoryContextStrdup(MemoryContext context, const char *string);
 
+#ifdef SE_MEMORY_MNG
 #define se_strdup(str)  MemoryContextStrdup(CurrentMemoryContext, (str))
-
-void *operator_new_context(usize_t size, MemoryContext context);
+#else
+#define se_strdup       strdup
+#endif
 
 #ifdef __cplusplus
 }
@@ -162,30 +176,51 @@ inline void operator delete[](void* p)
 }
 */
 
+/*
+ * Inline new and delete operators rely on these definitions.
+ * 
+ */
+extern "C" int SafeMemoryContextInit(void);
+extern "C" MemoryContext TopMemoryContext;
+
 
 
 inline void *operator new(usize_t size, MemoryContext context)
 {
+#ifdef SE_MEMORY_MNG
+    if (SafeMemoryContextInit()) context = TopMemoryContext;
+    return MemoryContextAlloc(context, size);
+#else
     return malloc(size);
-    //return MemoryContextAlloc(context, size);
+#endif
 }
 
 inline void operator delete(void* p, MemoryContext context)
 {
+#ifdef SE_MEMORY_MNG
+    if (p) se_free(p);
+#else
     if (p) free(p);
-    //if (p) se_free(p);
+#endif
 }
 
 inline void *operator new[](usize_t size, MemoryContext context)
 {
+#ifdef SE_MEMORY_MNG
+    if (SafeMemoryContextInit()) context = TopMemoryContext;
+    return MemoryContextAlloc(context, size);
+#else
     return malloc(size);
-    //return MemoryContextAlloc(context, size);
+#endif
 }
 
 inline void operator delete[](void* p, MemoryContext context)
 {
+#ifdef SE_MEMORY_MNG
+    if (p) se_free(p);
+#else
     if (p) free(p);
-    //if (p) se_free(p);
+#endif
 }
 
 template<class T> void __se_delete(T* p, MemoryContext context)
@@ -193,10 +228,23 @@ template<class T> void __se_delete(T* p, MemoryContext context)
     if (p) 
     {
         p->~T();
-        //se_free(p);
+#ifdef SE_MEMORY_MNG
+        se_free(p);
+#else
         free(p);
+#endif
     }
 }
+
+// FIXME: remove this when Sedna memory manager will be ready (AF)
+#ifdef SE_MEMORY_MNG
+inline void operator delete(void* p)
+{
+}
+inline void operator delete[](void* p)
+{
+}
+#endif
 
 
 #define se_new                  new(CurrentMemoryContext)
