@@ -451,7 +451,7 @@ void socket_client::set_session_options(msg_struct *msg)
         // if ("failed") throw USER_EXCEPTION2(SE4617, obj.get_option_description(option_type));
         pos = pos + option_len;
     }
-d_printf1("\nSetting session option\n");    
+d_printf1("\nSetting session option\n");
     sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok
     sp_msg.length = 0; 
     if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
