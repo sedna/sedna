@@ -170,12 +170,13 @@
       (lropt:propagate expr called-once?
                        ; Only a single item in name => order not important,
                        ; minus duplicates [*]
-                       (list #f #t)
+                       (list #f order-required?)  ; Was: (list #f #t)
                        var-types prolog processed-funcs
                        #t #t #t))
      ((document text comment)
       (lropt:propagate expr called-once?
-                       #t  ; spaceseq implicitly taken => order is important
+                       order-required?
+                       ; Was: #t  ; spaceseq implicitly taken => order is important
                        var-types prolog processed-funcs
                        #t #t #t))
      ;-------------------
