@@ -4,6 +4,10 @@
 
 (declare (unit por-cons))
 
+(declare (foreign-declare "int is_stack_trace_debug();"))
+(define is-xquery-debug-mode?
+  (foreign-callback-lambda int "is_stack_trace_debug"))
+
 ;; Optimization criteria for constructors
 ; For every constructor, adds either 1 or 0 as the additional argument.
 ; #t denotes that the constuctor is to be evaluated as the deep copy
@@ -46,10 +50,10 @@
 ; Higher-level functions
 
 ; Returns the new query
-(define (porc:process-query query . debug-mode?)
+(define (porc:process-query query)
   (let ((debug-mode?
-         (and (not (null? debug-mode?))
-              (car debug-mode?))))
+         (not (zero? (is-xquery-debug-mode?)))))
+    ;(pp (list "debug-mode == " debug-mode?))
     (if
      (not (and (list? query) (>= (length query) 3)
 ;               (eq? (car query) 'query)
