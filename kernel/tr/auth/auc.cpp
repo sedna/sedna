@@ -88,7 +88,6 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 			if ( !t.cells[0].is_light_atomic() ) throw USER_EXCEPTION2(SE1003, "Failed while authorization checking");
 			if ( t.cells[0].get_atomic_type() != xs_integer ) throw USER_EXCEPTION2(SE1003, "Failed while authorization checking"); 
 			int update_privileges = t.cells[0].get_xs_integer();
-			//d_printf2("Update_privileges = %d\n", update_privileges);
 			aqtree->tree.op->next(t);
 			if(!t.is_eos()) throw USER_EXCEPTION2(SE1003, "Failed while authorization checking"); 
 			aqtree->tree.op->close();
