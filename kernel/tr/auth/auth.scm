@@ -148,16 +148,16 @@
                        ( (eq? (caaddr expr) 'load-or-replace-module) 
                                                 (list
                                                  (sc:q2 user "LOAD-MODULE" "User doesn't have privilege LOAD-MODULE")
-                                                 (sc:q4_1 user "DROP" (cadr(cdaddr expr)) `module
+                                                 (sc:q4_1 user "DROP" (cadr(caddr expr)) `module
                                                           "User doesn't have privilege DROP on the module.")
-                                                 (sc:q5 (cadr(cdaddr expr)) `module)
+                                                 (sc:q5 (cadr(caddr expr)) `module)
                                                  expr)
                                                   )
                        ( (eq? (caaddr expr) 'drop-module) 
                                                 (list
-                                                 (sc:q4 user "DROP" (car(cdaddr expr)) `module 
+                                                 (sc:q4 user "DROP" (cadr(caddr expr)) `module 
                                                          "User doesn't have privilege DROP on the module or the index does not exist.")
-                                                 (sc:q5 (car(cdaddr expr)) `module)
+                                                 (sc:q5 (cadr(caddr expr)) `module)
                                                  expr)
                                                   )
                        ( (eq? (caaddr expr) 'create-user) (begin
