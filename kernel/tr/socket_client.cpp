@@ -447,7 +447,7 @@ void socket_client::set_session_options(msg_struct *msg)
         net_int2int(&option_len, msg->body+pos);
         pos = pos + 4;
         // call some static object method to set session options
-        // obj.set_option(option_type, msg->body[pos], option_len);
+        // obj.set_option(option_type, msg->body + pos, option_len);
         // if ("failed") throw USER_EXCEPTION2(SE4617, obj.get_option_description(option_type));
         pos = pos + option_len;
     }
