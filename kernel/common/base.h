@@ -305,9 +305,10 @@ struct sm_msg_struct
 
     // additional parameters
     union {
-        int num; // number of potentially allocated blocks in call to bm_enter_exclusive_mode
-
-        void *mptr; // pointer for persistent_db_data
+        struct {
+            int num; // number of potentially allocated blocks in call to bm_enter_exclusive_mode
+            void *mptr; // pointer for persistent_db_data
+        } reg;
 
         __int64 ptr; // xptr for deletion, locking and unlocking
 

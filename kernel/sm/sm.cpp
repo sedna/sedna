@@ -201,9 +201,9 @@ int sm_server_handler(void *arg)
             case 21: {
                          //d_printf1("query 21: bm_register_session\n");
                          persistent_db_data* pdb;
-                         bm_register_session(msg->sid, &pdb, msg->data.num);
-                         msg->data.num = bufs_num;
-                         msg->data.mptr = pdb;
+                         bm_register_session(msg->sid, &pdb, msg->data.reg.num);
+                         msg->data.reg.num = bufs_num;
+                         msg->data.reg.mptr = pdb;
                          msg->cmd = 0;
                          break;
                      }
@@ -248,7 +248,7 @@ int sm_server_handler(void *arg)
                      }
             case 27: {
                          //d_printf1("query 27: bm_enter_exclusive_mode\n");
-                         bm_enter_exclusive_mode(msg->sid, &(msg->data.num));
+                         bm_enter_exclusive_mode(msg->sid, &(msg->data.reg.num));
                          msg->cmd = 0;
                          break;
                      }

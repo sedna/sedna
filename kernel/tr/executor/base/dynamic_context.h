@@ -351,6 +351,13 @@ public:
 
     static se_ostream& ostr() { return *m_ostr; }
     static se_ostream& dostr();
+
+    /// Session parameters (they are temporally placed in the dynamic context)
+    /// print call stack in case of error
+    static int stack_trace_debug;
+
+    static void set_session_option(se_debug_info_type type, char *s, int n);
+    static void reset_session_options();
 };
 
 

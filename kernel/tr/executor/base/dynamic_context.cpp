@@ -468,3 +468,40 @@ se_ostream& dynamic_context::dostr()
 
     return *m_dostr;
 }
+
+int dynamic_context::stack_trace_debug;
+
+void dynamic_context::set_session_option(se_debug_info_type type, char *s, int n)
+{
+    switch (type)
+    {
+        case se_QueryTrace: 
+            break; // nothing to do
+        case se_QueryDebug:
+            stack_trace_debug = *(int*)s;
+            break;
+        default:
+            throw USER_EXCEPTION2(SE4617, "Unknown option");
+    }
+}
+
+void dynamic_context::reset_session_options()
+{
+    stack_trace_debug = 0;
+}
+
+int __cpp_is_stack_trace_debug()
+{
+    return dynamic_context::stack_trace_debug;
+}
+
+// session options Scheme part
+extern "C" {
+
+int is_stack_trace_debug()
+{
+    return __cpp_is_stack_trace_debug();
+}
+
+} // end of extern "C"
+

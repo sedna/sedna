@@ -686,15 +686,15 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
         msg.cmd = 21; // bm_register_session
         msg.trid = 0; // trid is not defined in this point
         msg.sid = sid;
-        msg.data.num = vmm_is_recovery_mode ? 1 : 0;
+        msg.data.reg.num = vmm_is_recovery_mode ? 1 : 0;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        db_data_ptr = (persistent_db_data *)(msg.data.mptr);
-        int bufs_num = msg.data.num;
+        db_data_ptr = (persistent_db_data *)(msg.data.reg.mptr);
+        int bufs_num = msg.data.reg.num;
 
         /// persistent_db_data initialization /////////////////////////////////
         if (!(db_data_ptr->nslist))
@@ -1045,14 +1045,14 @@ void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw
         msg.cmd = 27; // bm_enter_exclusive_mode
         msg.trid = trid;
         msg.sid = sid;
-        msg.data.num = 0;
+        msg.data.reg.num = 0;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-        *number_of_potentially_allocated_blocks = msg.data.num;
+        *number_of_potentially_allocated_blocks = msg.data.reg.num;
 
         is_exclusive_mode = true;
 
