@@ -50,6 +50,7 @@ typedef std::pair<std::string,std::string> str_pair;
 typedef std::map< str_pair, xml_ns*> ns_map;
 typedef std::map<std::string,std::vector<xml_ns*> > inscmap;
 
+enum se_session_option {se_debug_mode};
 
 /// query prolog enumerations
 enum se_output_method {se_output_method_xml};
@@ -356,7 +357,7 @@ public:
     /// print call stack in case of error
     static int stack_trace_debug;
 
-    static void set_session_option(se_debug_info_type type, char *s, int n);
+    static void set_session_option(se_session_option type, const void* s, int n);
     static void reset_session_options();
 };
 

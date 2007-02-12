@@ -471,13 +471,11 @@ se_ostream& dynamic_context::dostr()
 
 int dynamic_context::stack_trace_debug;
 
-void dynamic_context::set_session_option(se_debug_info_type type, char *s, int n)
+void dynamic_context::set_session_option(se_session_option type, const void* s, int n)
 {
     switch (type)
     {
-        case se_QueryTrace: 
-            break; // nothing to do
-        case se_QueryDebug:
+        case se_debug_mode: 
             stack_trace_debug = *(int*)s;
             break;
         default:
@@ -487,7 +485,7 @@ void dynamic_context::set_session_option(se_debug_info_type type, char *s, int n
 
 void dynamic_context::reset_session_options()
 {
-    stack_trace_debug = 0;
+    stack_trace_debug = SEDNA_DEBUG_OFF;
 }
 
 int __cpp_is_stack_trace_debug()

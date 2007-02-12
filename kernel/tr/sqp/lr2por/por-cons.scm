@@ -181,13 +181,15 @@
             debug-mode?
             ; Avoid inserting a nested PPDebug
             (list (car expr)
-                  (list (caadr expr)  ; == 'PPDebug
-                        (cadadr expr)  ; original PPDebug arguments            
-                        (caddr
-                         (cadr  ; inner (PPDebug ...)
-                          (caddr  ; `(tuple-size inner-PPDebug)
-                           (car new)  ; outer (PPDebug ...)
-                           )))))
+                  (cons (caadr expr)  ; == 'PPDebug
+                        (append
+                         (cadadr expr)  ; original PPDebug arguments
+                         (list
+                          (caddr
+                           (cadr  ; inner (PPDebug ...)
+                            (caddr  ; `(tuple-size inner-PPDebug)
+                             (car new)  ; outer (PPDebug ...)
+                             )))))))
             ; Removing this PPDebug
             (caddr (car new)))
            (cdr new)))
@@ -198,8 +200,7 @@
           (cons
            `(,(car expr)  ; tuple size
              (PPDebug
-              (,(symbol->string (caar new))  ; physical operation name
-               "")
+              ,(symbol->string (caar new))  ; physical operation name
               (,(car expr) ,(car new))))
            (cdr new)))
          (else  

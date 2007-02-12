@@ -57,8 +57,8 @@ command_line_client::command_line_client(int argc, char** argv)
      }
      s = NULL;
      // call session options object method: 
-     // int option = debug_mode ? SEDNA_DEBUG_ON : SEDNA_DEBUG_OFF;
-     // obj.set_option(debug_mode, "", 0);
+     int option = debug_mode ? SEDNA_DEBUG_ON : SEDNA_DEBUG_OFF;
+     dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
   }
 }
 
