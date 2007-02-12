@@ -436,19 +436,26 @@ void socket_client::set_session_options(msg_struct *msg)
 {
     int pos = 0;
     int option_len;
-    int option_type;
+    int option;
     
     if (p_ver.major_version < 3) throw USER_EXCEPTION(SE3009);
     
     while (pos < msg->length)
     {
-        net_int2int(&option_type, msg->body+pos);
+        net_int2int(&option, msg->body+pos);
         pos = pos + 5;
         net_int2int(&option_len, msg->body+pos);
         pos = pos + 4;
-        // call some static object method to set session options
-        // obj.set_option(option_type, msg->body + pos, option_len);
-        // if ("failed") throw USER_EXCEPTION2(SE4617, obj.get_option_description(option_type));
+        switch (option)
+        {
+            case SEDNA_DEBUG_ON:
+                dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+                break;
+            case SEDNA_DEBUG_OFF:
+                dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
+                break;
+
+        }
         pos = pos + option_len;
     }
 d_printf1("\nSetting session option\n");
@@ -459,7 +466,7 @@ d_printf1("\nSetting session option\n");
 
 void socket_client::reset_session_options()
 {
-    //obj.reset_options();
+    dynamic_context::reset_session_options();
     // if ("failed") throw USER_EXCEPTION(SE4618);
     sp_msg.instruction = se_ResetSessionOptionsOk; // Session options have been reset ok
     sp_msg.length = 0; 

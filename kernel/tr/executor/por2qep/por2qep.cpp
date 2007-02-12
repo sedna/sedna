@@ -2880,8 +2880,8 @@ fn_dt_funcs_correct_type:
     }
     else if (op == "PPDebug")
     {
-        if (   lst->size() < 2
-            || lst->size() > 3
+        if (   lst->size() < 3
+            || lst->size() > 4
             || lst->at(1).type != SCM_STRING
            ) throw USER_EXCEPTION2(SE1004, "114");
 
@@ -2889,7 +2889,7 @@ fn_dt_funcs_correct_type:
         strcpy(op_name, lst->at(1).internal.str);
         str_counted_ptr child_name(op_name);
         
-        if (lst->size() == 3)
+        if (lst->size() == 4)
         {
             if(lst->at(2).type != SCM_STRING) throw USER_EXCEPTION2(SE1004, "115");
             
@@ -2898,14 +2898,14 @@ fn_dt_funcs_correct_type:
             str_counted_ptr child_info(op_info);
   		    
   		    opit = se_new PPDebug(cxt,
-                               make_pp_op(cxt, lst->at(1).internal.list),
+                               make_pp_op(cxt, lst->at(3).internal.list),
                                child_name,
                                child_info);
 
         }
         else
 		    opit = se_new PPDebug(cxt,
-                               make_pp_op(cxt, lst->at(1).internal.list),
+                               make_pp_op(cxt, lst->at(2).internal.list),
                                child_name);
     }
 
