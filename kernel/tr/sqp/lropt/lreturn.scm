@@ -405,9 +405,8 @@
                        #f #f #f))
      ; Index scan functions and full-text search functions
      ((!fn!index-scan !fn!index-scan-between !fn!ftindex-scan)
-      (lropt:propagate expr called-once? #f  ; [*]
-                       var-types prolog processed-funcs
-                       #f #f #f))
+      (lropt:sedna-index-fun-calls expr called-once? order-required?
+                                   var-types prolog processed-funcs))
      ((!fn!ftscan)
       (let ((return-first  ; can be supplied with either 2 or 3 arguments
              (lambda x (car x))))
@@ -1536,6 +1535,30 @@
             (lropt:remove-vars-from-alist var-names
                                           body-order-for-vars)
             child-order-for-vars))))))))
+
+;-------------------
+; 3.7 XQuery 1.0 Functions
+
+; !fn!index-scan and the like
+; Additional ddo is to be inserted iff the order-required
+(define (lropt:sedna-index-fun-calls expr called-once? order-required?
+                                     var-types prolog processed-funcs)
+  (if
+   order-required?
+   (call-with-values
+    (lambda () (lropt:propagate expr called-once? #f  ; [*]
+                                var-types prolog processed-funcs
+                                #f #f #f))
+    (lambda (rewritten ddo-auto-dummy? zero-or-one? single-level?
+                       processed-funcs order-for-variables)
+      (values
+       (list 'ddo rewritten)
+       #t  ; ordering fulfilled
+       zero-or-one? single-level?
+       processed-funcs order-for-variables)))
+   (lropt:propagate expr called-once? #f  ; [*]
+                   var-types prolog processed-funcs
+                   #f #f #f)))
 
 ;-------------------
 ; Function call
