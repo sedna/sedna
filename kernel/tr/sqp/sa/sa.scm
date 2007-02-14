@@ -949,10 +949,10 @@
     (,sa:fn-ns "ftscan" 3 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftscan)
-    (,sa:fn-ns "fthighlight" 2 2
+    (,sa:fn-ns "fthighlight" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight)
-    (,sa:fn-ns "fthighlight-blocks" 2 2
+    (,sa:fn-ns "fthighlight-blocks" 2 3
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!fthighlight2)
     ;----------------------------------------

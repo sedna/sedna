@@ -15,6 +15,8 @@ ft_index_type str2index_type(const char *str)
 {
 	if (!strcmp(str, "xml"))
 		return  ft_xml;
+	else if (!strcmp(str, "xml-hl"))
+		return  ft_xml_hl;
 	else if (!strcmp(str, "string-value"))
 		return ft_string_value;
 	else if (!strcmp(str, "delimited-value"))

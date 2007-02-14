@@ -15,7 +15,7 @@ class PPFtHighlight : public PPIterator
 {
 protected:
     // given parameters
-    PPOpIn query, seq;
+    PPOpIn query, seq, index;
 
     // obtained parameters and local data
 	bool first_time;
@@ -35,6 +35,11 @@ public:
     PPFtHighlight(dynamic_context *_cxt_,
                 PPOpIn _seq_,
                 PPOpIn _query_,
+				bool _hl_fragment_);
+    PPFtHighlight(dynamic_context *_cxt_,
+                PPOpIn _seq_,
+                PPOpIn _query_,
+				PPOpIn _index_,
 				bool _hl_fragment_);
 
     virtual ~PPFtHighlight();

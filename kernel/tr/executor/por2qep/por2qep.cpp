@@ -3085,15 +3085,28 @@ fn_dt_funcs_correct_type:
     }
 	else if (op == "PPFtHighlight")
     {
-        if (   lst->size() != 3
+        if (   lst->size() < 3 || lst->size() > 4
 			|| lst->at(1).type != SCM_LIST
 			|| lst->at(2).type != SCM_LIST
            ) throw USER_EXCEPTION(SE1004);
 
-		opit = se_new PPFtHighlight(cxt,
-			make_pp_op(cxt, lst->at(1).internal.list), 
-			make_pp_op(cxt, lst->at(2).internal.list),
-			false);
+	    if (lst->size() == 3)
+		{
+		    opit = se_new PPFtHighlight(cxt,
+		    	make_pp_op(cxt, lst->at(1).internal.list), 
+		    	make_pp_op(cxt, lst->at(2).internal.list),
+		    	false);
+		}
+		else
+		{
+            if (lst->at(3).type != SCM_LIST)
+                throw USER_EXCEPTION(SE1004);
+		    opit = se_new PPFtHighlight(cxt,
+		    	make_pp_op(cxt, lst->at(1).internal.list), 
+		    	make_pp_op(cxt, lst->at(2).internal.list),
+		    	make_pp_op(cxt, lst->at(3).internal.list),
+		    	false);
+		}
     }
 	else if (op == "PPFtHighlight2")
     {
