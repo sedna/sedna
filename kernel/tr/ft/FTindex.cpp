@@ -94,7 +94,10 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 	dtsOptions opts;
 	short result;
 	dtssGetOptions(opts, result);
-	opts.fieldFlags = dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+	if (ft_idx->ftype == ft_xml_hl)
+		opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+	else
+		opts.fieldFlags = dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
 	std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
 	                + std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
 					

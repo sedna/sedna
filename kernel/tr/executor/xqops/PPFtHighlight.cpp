@@ -19,6 +19,20 @@ PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
 						sj(NULL), ptr(NULL)
 {
 }
+
+PPFtHighlight::PPFtHighlight(dynamic_context *_cxt_,
+                PPOpIn _seq_,
+				PPOpIn _query_,
+				PPOpIn _index_,
+				bool _hl_fragment_) :
+						PPIterator(_cxt_),
+						seq(_seq_),
+						query(_query_),
+						index(_index_),
+						hl_fragment(_hl_fragment_),
+						sj(NULL), ptr(NULL)
+{
+}
 PPFtHighlight::~PPFtHighlight()
 {
 	if (seq.op)
@@ -31,6 +45,11 @@ PPFtHighlight::~PPFtHighlight()
         delete query.op;
         query.op = NULL;
     }
+	if (index.op)
+    {
+        delete index.op;
+        index.op = NULL;
+    }
 	if (sj)
 	{
 		delete sj;
@@ -42,6 +61,8 @@ void PPFtHighlight::open()
 {
 	seq.op->open();
     query.op->open();
+	if (index.op)
+		index.op->open();
 
     first_time = true;
 }
@@ -50,6 +71,8 @@ void PPFtHighlight::reopen()
 {
 	seq.op->reopen();
     query.op->reopen();
+	if (index.op)
+		index.op->reopen();
 
 	if (sj)
 	{
@@ -69,6 +92,8 @@ void PPFtHighlight::close()
 {
 	seq.op->close();
     query.op->close();
+	if (index.op)
+		index.op->close();
 	if (sj != NULL)
 	{
 		delete sj;
@@ -88,7 +113,24 @@ void PPFtHighlight::next(tuple &t)
 	{
 		tuple_cell tc;
 
-		sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
+		if (index.op)
+		{
+			sj=new SednaSearchJob(true, hl_fragment);
+			index.op->next(t);
+			if (t.is_eos())
+				throw USER_EXCEPTION(SE1071);
+			tc = t.cells[0];
+			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+				throw USER_EXCEPTION(SE1071);
+	
+			sj->set_index(tc);
+			index.op->next(t);
+			if (!t.is_eos())
+				throw USER_EXCEPTION(SE1071);
+
+		}
+		else
+			sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
 
 		query.op->next(t);
 		if (t.is_eos())
@@ -105,7 +147,34 @@ void PPFtHighlight::next(tuple &t)
 		first_time = false;
 	}
 
-	sj->get_next_result(t);
+	if (index.op)
+	{
+		while (true)
+		{
+			seq.op->next(t);
+			if (t.is_eos())
+				break;
+			tuple_cell tc = t.cells[0];
+			sj->set_file_cond_for_node(tc);
+
+			sj->get_next_result(t);
+			if (!t.is_eos())
+			{
+				tuple tmp(1);
+				sj->get_next_result(tmp);
+				if (!tmp.is_eos())
+				{
+					delete sj;
+					sj = NULL;
+					throw USER_EXCEPTION2(SE1071, "problem with dtsearch"); //FIXME: change exception code
+				}
+				break;
+			}
+		}
+	}
+	else
+		sj->get_next_result(t);
+
 	if (t.is_eos())
 	{
 		delete sj;
@@ -117,9 +186,19 @@ void PPFtHighlight::next(tuple &t)
 PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
 {
 	PPFtHighlight *res;
-	res = new PPFtHighlight(_cxt_, seq, query, hl_fragment);
-    res->seq.op = seq.op->copy(_cxt_);
-    res->query.op = query.op->copy(_cxt_);
+	if (index.op)
+	{
+		res = new PPFtHighlight(_cxt_, seq, query, index, hl_fragment);
+	    res->seq.op = seq.op->copy(_cxt_);
+	    res->query.op = query.op->copy(_cxt_);
+		res->index.op = index.op->copy(_cxt_);
+	}
+	else
+	{
+		res = new PPFtHighlight(_cxt_, seq, query, hl_fragment);
+	    res->seq.op = seq.op->copy(_cxt_);
+	    res->query.op = query.op->copy(_cxt_);
+	}
 
 	return res;
 }

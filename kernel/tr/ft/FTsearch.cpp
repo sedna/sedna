@@ -20,6 +20,7 @@ using namespace dtSearch;
 
 
 
+
 class GenericDataSource {
     public:
         GenericDataSource();
@@ -406,11 +407,28 @@ SednaSearchJob::SednaSearchJob(bool _hilight_, bool _hl_fragment_):seq(NULL),hil
 {
 	dtth=NULL;
 	this->SuppressMessagePump();
+	if (hilight)
+	{
+		//FIMXE: check cm?
+		hl=new SednaConvertJob(ft_xml_ne,NULL, hl_fragment);
+	}
 }
 void SednaSearchJob::set_request(tuple_cell& request)
 {
 	this->Request.setU8(op_str_buf(request).c_str());
 }
+void SednaSearchJob::set_file_cond_for_node(tuple_cell& node)
+{
+	char buf[64];
+
+	//SednaDataSource::recordToFilename(buf, node.get_node());
+	CHECKP(node.get_node());
+	SednaDataSource::recordToFilename(buf,((n_dsc*)XADDR(node.get_node()))->indir);
+	std::string fc = std::string("xfilter(name \"") + buf + "\")";
+	
+	this->FileConditions.setU8(fc.c_str());
+}
+
 void SednaSearchJob::stop_thread(bool ignore_errors)
 {
 	//FIXME!!!
@@ -512,8 +530,9 @@ void SednaSearchJob::set_index(tuple_cell& name)
 #endif
 	std::string index_path = index_path1 + std::string(ft_idx->index_title);
 	this->AddIndexToSearch(index_path.c_str());
-	if (hilight)
-		hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
+	//FIXME: choose where it's better to do this - nere or in constructor
+	//if (hilight)
+	//	hl=new SednaConvertJob(ft_idx->ftype,ft_idx->custom_tree, hl_fragment);
 	
 }
 

@@ -192,6 +192,7 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		   SednaSearchJob(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);		   
 		   SednaSearchJob(bool _hilight_=false, bool _hl_fragment_=false);
 		   void set_request(tuple_cell& request);
+		   void set_file_cond_for_node(tuple_cell& node);
 		   void get_next_result(tuple &t);
 		   void set_index(tuple_cell& name);
 		   void reopen();
