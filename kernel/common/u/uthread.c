@@ -178,7 +178,10 @@ int uCloseThreadHandle(UTHANDLE id, sys_call_error_fun fun)
 int uThreadJoin(UTHANDLE id, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    DWORD res = WaitForSingleObject(id, INFINITE);
+    DWORD res = 0;
+    do {
+        res = WaitForSingleObjectEx(id, INFINITE, TRUE);
+    } while (res == WAIT_IO_COMPLETION);
     if (res == WAIT_FAILED) sys_call_error("WaitForSingleObject");
 
     if (res != WAIT_OBJECT_0) return 1;
