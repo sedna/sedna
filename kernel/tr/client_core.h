@@ -41,15 +41,6 @@ public:
     virtual void begin_item() = 0;
     virtual void end_of_item(bool exist_next) = 0;
     virtual bool is_print_progress() = 0;
-/*    
-    virtual void update_result(bool res) = 0;
-    virtual void bulk_load_result(bool res, const std::string& body) = 0;
-    virtual void begin_tr_result(bool res, const std::string& body) = 0;
-    virtual void commit_tr_result(bool res, const std::string& body) = 0;
-    virtual void rollback_tr_result(bool res, const std::string& body) = 0;
-    virtual void rollback_tr_before_close(bool res, const std::string& body) = 0;
-    virtual void close_session_result(bool res, const std::string& body) = 0;
-*/    
     virtual void authentication_result(bool res, const std::string& body) = 0;
     virtual void process_unknown_instruction(int instruction, bool in_transaction) = 0;
     virtual void error(int code, const std::string& body) = 0;
