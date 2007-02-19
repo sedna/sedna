@@ -1,1 +1,1 @@
-cl /MLd /I ..\..\..\driver\c Client.c ..\..\..\driver\c\libsedna.lib wsock32.lib Advapi32.lib
+cl /I ..\..\..\driver\c Client.c ..\..\..\driver\c\libsedna.lib wsock32.lib Advapi32.lib
