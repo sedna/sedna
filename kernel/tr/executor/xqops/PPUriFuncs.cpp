@@ -145,6 +145,9 @@ void PPFnUriEncoding::next  (tuple &t)
             tuple_cell tc = atomize(child.get(t));
         
             if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, error());
+
+            child.op->next(t);
+            if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
         
             stmt_str_buf res;
         
@@ -159,9 +162,6 @@ void PPFnUriEncoding::next  (tuple &t)
                 default: 
                     throw USER_EXCEPTION2(SE1003, "Impossible function type in PPFnUriEncoding::next");
             }
-        
-            child.op->next(t);
-            if(!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, error());
         
             t.copy(res.get_tuple_cell());
         }

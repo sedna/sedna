@@ -55,8 +55,8 @@ void PPDebug::next(tuple &t)
 {
     try
     {
-        child.op->next(t);
         cc++;
+        child.op->next(t);
     }
     catch(...)
     {
@@ -69,20 +69,11 @@ void PPDebug::next(tuple &t)
         dostr << "\n";
         dostr.flush();
 
-        /* 
-        fprintf(stderr, "%15s", child_name.get());
-        fprintf(stderr, " : %5d", &cc);
-        
-        child_info.get() != NULL ? 
-            fprintf(stderr, " : %15s\n", child_info.get()) :
-            fprintf(stderr, "\n"); 
-        */
-        
         throw;
     }
 }
 
-/// ??? Is there any specific behaviour in copy ???
+/// FIXME!!! Is there any specific behaviour in copy (IS)
 PPIterator* PPDebug::copy(dynamic_context *_cxt_)
 {
     PPDebug *res = child_info.get() != NULL ? 
