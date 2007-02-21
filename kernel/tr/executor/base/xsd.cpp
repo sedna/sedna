@@ -34,8 +34,10 @@ void xs_NCName_print(const char *ncname, std::ostream& str)
 
 void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str)
 {
+    str << "\"";
     if (ncname && *ncname)
-        str << "\"" << ncname << "\"";
+        str << ncname;
+    str << "\"";
 }
 
 
@@ -53,6 +55,21 @@ void xs_anyURI_release(char *uri, void (*free_func)(void*))
 {
     free_func(uri);
 }
+
+void xs_anyURI_print(const char *uri, std::ostream& str)
+{
+    if (uri && *uri)
+        str << uri;
+}
+
+void xs_anyURI_print_to_lr(const char *uri, std::ostream& str)
+{
+    str << "\"";
+    if (uri && *uri)
+        str << uri;
+    str << "\"";
+}
+
 
 
 ///
