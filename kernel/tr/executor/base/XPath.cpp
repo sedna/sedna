@@ -206,14 +206,16 @@ void NodeTest::print_to_lr(std::ostream& str)
         case node_test_string                : str << "string ()"; break;
         case node_test_qname                 : str << "qname "; 
                                                str << "(";
-                                               xs_NCName_print_to_lr(data.ncname_prefix, str); 
+                                               xs_anyURI_print_to_lr(data.uri, str);
                                                str << " ";
                                                xs_NCName_print_to_lr(data.ncname_local, str); 
+                                               str << " ";
+                                               xs_NCName_print_to_lr(data.ncname_prefix, str); 
                                                str << ")";
                                                break;
         case node_test_wildcard_star         : str << "wildcard_star ()"; break;
         case node_test_wildcard_ncname_star  : str << "wildcard_ncname_star "; 
-                                               xs_NCName_print_to_lr(data.ncname_prefix, str); 
+                                               xs_anyURI_print_to_lr(data.uri, str); 
                                                break;
         case node_test_wildcard_star_ncname  : str << "wildcard_star_ncname "; 
                                                xs_NCName_print_to_lr(data.ncname_local, str); 

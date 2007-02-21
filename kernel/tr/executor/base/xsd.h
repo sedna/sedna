@@ -85,6 +85,8 @@ void  xs_NCName_print_to_lr(const char *ncname, std::ostream& str);
 //// paramters to xs_anyURI_create.
 char *xs_anyURI_create(const char* value, void* (*alloc_func)(size_t));
 void  xs_anyURI_release(char *uri, void (*free_func)(void*));
+void  xs_anyURI_print(const char *uri, std::ostream& str);
+void  xs_anyURI_print_to_lr(const char *uri, std::ostream& str);
 
 
 
