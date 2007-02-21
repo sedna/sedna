@@ -2503,7 +2503,46 @@ The statistical information in the document \verb!$document_<name>! contains the
 \subsection{Debug Features}
 \subsubsection{Trace}
 \subsubsection{Session Debug Mode}
+In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. For details on turning debug mode on see "Sedna Terminal" section of the Sedna's Administration Guide. 
 
+Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of physical operations (operations names list) after dynamic error was raised. It serves two objectives:
+
+\begin{itemize}
+\item localize error in the query's source code;
+\item obtain information of the query execution process.
+\end{itemize}
+
+Let us consider the following query to illustrate execution in the debug mode:
+\newline
+\newline
+\textbf{Query:}
+
+\begin{verbatim}
+(: In this query dynamic error will be raised   :)
+(: due to "aaaa" is not castable to xs:integer. :)
+declare function local:f()
+{
+    "aaaa" cast as xs:integer
+};
+local:f()
+\end{verbatim}
+\textbf{Output:}
+
+\begin{verbatim}
+PPCast : 1
+PPFunCall : 1 : http://www.w3.org/2005/xquery-local-functions:f
+SEDNA Message: ERROR FORG0001
+        Invalid value for cast/constructor.
+Details: Cannot convert to xs:integer type
+\end{verbatim}
+
+As you can see in the output above each item of the operations stack list consists of the following parts:
+
+\begin{itemize}
+\item operation name (PPCast and PPFunCall in the example);
+\item calls counter - number of calls of the operation;
+\item optional additional information (qualified name of the function in the example).
+\end{itemize}
 
 
 
