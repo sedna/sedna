@@ -192,7 +192,7 @@ const char* PPFnUriEncoding::error()
 
 PPIterator* PPFnUriEncoding::copy(dynamic_context *_cxt_)
 {
-    PPFnUriEncoding *res = new PPFnUriEncoding(_cxt_, child, type);
+    PPFnUriEncoding *res = se_new PPFnUriEncoding(_cxt_, child, type);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -333,8 +333,8 @@ void PPFnResolveUri::next  (tuple &t)
 
 PPIterator* PPFnResolveUri::copy(dynamic_context *_cxt_)
 {
-    PPFnResolveUri *res = is_base_static ? new PPFnResolveUri(_cxt_, relative) 
-                                         : new PPFnResolveUri(_cxt_, relative, base);
+    PPFnResolveUri *res = is_base_static ? se_new PPFnResolveUri(_cxt_, relative) 
+                                         : se_new PPFnResolveUri(_cxt_, relative, base);
     res->relative.op = relative.op->copy(_cxt_);
     if(!is_base_static) res->base.op = base.op->copy(_cxt_);
     return res;

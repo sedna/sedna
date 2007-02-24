@@ -33,12 +33,12 @@ void PPNil::next(tuple &t)
 
 PPIterator* PPNil::copy(dynamic_context *_cxt_)
 {
-    PPNil *res = new PPNil(_cxt_);
+    PPNil *res = se_new PPNil(_cxt_);
     return res;
 }
 
 bool PPNil::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
-    r = new sequence(1);
+    r = se_new sequence(1);
     return true;
 }

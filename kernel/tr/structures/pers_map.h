@@ -73,7 +73,7 @@ template<class T, class X> struct pers_sset
 	/*initialization of persisten map*/
 	//static pers_sset* init();
 	static pers_sset* init(bool persistent=true);
-	static void free(pers_sset<T,X>* set);
+	static void sset_free(pers_sset<T,X>* set);
 	bool add(T* o);
 	T* find (void const* p1,void const* p2);
 	pers_sset_entry* get (void const* p1,void const* p2);
@@ -435,7 +435,7 @@ template<class T, class X> pers_sset<T,X>* pers_sset<T,X>::init(bool persistent)
 	return ps;
 }
 
-template<class T, class X> void pers_sset<T,X>::free(pers_sset<T,X>* set)
+template<class T, class X> void pers_sset<T,X>::sset_free(pers_sset<T,X>* set)
 {
 	scm_free(set->mem_pool,IS_PH_PTR(set));
 	scm_free(set,IS_PH_PTR(set));	

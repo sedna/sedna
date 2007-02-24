@@ -89,7 +89,7 @@ void PPAxisDescendant::close ()
 }
 PPIterator* PPAxisDescendant::copy(dynamic_context *_cxt_)
 {
-    PPAxisDescendant *res = new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
+    PPAxisDescendant *res = se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -211,7 +211,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 			else
 				curvect=&desc_sch[scm];
 			std::vector<schema_node*>::iterator it=curvect->begin();
-			if (merge_tree==NULL) merge_tree=new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
+			if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge(getNextDescriptorOfSameSortXptr,true);
 			while (it!=curvect->end())
 			{
 				//xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);

@@ -29,7 +29,7 @@ PPSpaceSequence::~PPSpaceSequence()
 }
 PPIterator* PPSpaceSequence::copy(dynamic_context *_cxt_)
 {
-	PPSpaceSequence *res = new PPSpaceSequence(_cxt_, ch_arr,isAtomized);
+	PPSpaceSequence *res = se_new PPSpaceSequence(_cxt_, ch_arr,isAtomized);
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);

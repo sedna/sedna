@@ -369,17 +369,17 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name, char* b
 
 
 #define WIN_GN_INIT1(c)		tmp = string(_##c) + db_name;									\
-                     		c = new char[tmp.length() + 1];									\
+                     		c = se_new char[tmp.length() + 1];									\
                      		strcpy((char*)c, tmp.c_str());
 
 #define WIN_GN_INIT2(c)		tmp = string(_##c);												\
-                     		c = new char[tmp.length() + 1];									\
+                     		c = se_new char[tmp.length() + 1];									\
                      		strcpy((char*)c, tmp.c_str());
 
 #define WIN_GN_INIT3(c)		if (_##c)														\
                             {																\
                                 tmp = string(_##c) + db_name;								\
-                     		    c = new char[tmp.length() + 1];								\
+                     		    c = se_new char[tmp.length() + 1];								\
                      		    strcpy((char*)c, tmp.c_str());								\
                             }																\
                             else c = NULL;
@@ -400,7 +400,7 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name, char* b
 #define UNIX_GN_INIT3(c)	if (_##c)														\
                             {																\
                                 tmp = string(_##c) + db_name;								\
-                     		    c = new char[tmp.length() + 1];								\
+                     		    c = se_new char[tmp.length() + 1];								\
                      		    strcpy((char*)c, tmp.c_str());								\
                             }																\
                             else c = NULL;

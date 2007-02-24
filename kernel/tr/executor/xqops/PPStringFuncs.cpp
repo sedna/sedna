@@ -100,7 +100,7 @@ void PPFnConcat::next(tuple &t)
     }
     else
     {
-        char *str = new char[res_str_len + 1];
+        char *str = se_new char[res_str_len + 1];
         int offs = 0;
         for (i = 0; i < ch_arr.size(); i++)
         {
@@ -117,7 +117,7 @@ void PPFnConcat::next(tuple &t)
 
 PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
 {
-    PPFnConcat *res = new PPFnConcat(_cxt_, ch_arr);
+    PPFnConcat *res = se_new PPFnConcat(_cxt_, ch_arr);
 
     int i;
     for (i = 0; i < ch_arr.size(); i++)
@@ -222,7 +222,7 @@ void PPFnStringJoin::next(tuple &t)
 
 PPIterator* PPFnStringJoin::copy(dynamic_context *_cxt_)
 {
-    PPFnStringJoin *res = new PPFnStringJoin(_cxt_, members, separator);
+    PPFnStringJoin *res = se_new PPFnStringJoin(_cxt_, members, separator);
     res->members.op   = members.op->copy(_cxt_);
     res->separator.op = separator.op->copy(_cxt_);
     return res;
@@ -387,8 +387,8 @@ void PPFnStartsEndsWith::error(const char* msg)
 PPIterator* PPFnStartsEndsWith::copy(dynamic_context *_cxt_)
 {
     PPFnStartsEndsWith *res = is_collation ?
-                              new PPFnStartsEndsWith(_cxt_, source, prefix, collation, type) :
-                              new PPFnStartsEndsWith(_cxt_, source, prefix, type);
+                              se_new PPFnStartsEndsWith(_cxt_, source, prefix, collation, type) :
+                              se_new PPFnStartsEndsWith(_cxt_, source, prefix, type);
     res->source.op = source.op->copy(_cxt_);
     res->prefix.op = prefix.op->copy(_cxt_);
     if(is_collation) res->collation.op = collation.op->copy(_cxt_);
@@ -477,7 +477,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 
 PPIterator* PPFnString2CodePoints::copy(dynamic_context *_cxt_)
 {
-    PPFnString2CodePoints *res = new PPFnString2CodePoints(_cxt_, child);
+    PPFnString2CodePoints *res = se_new PPFnString2CodePoints(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -569,7 +569,7 @@ void PPFnCodePoints2String::next  (tuple &t)
 
 PPIterator* PPFnCodePoints2String::copy(dynamic_context *_cxt_)
 {
-    PPFnCodePoints2String *res = new PPFnCodePoints2String(_cxt_, child);
+    PPFnCodePoints2String *res = se_new PPFnCodePoints2String(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -684,7 +684,7 @@ void PPFnTranslate::next  (tuple &t)
 
 PPIterator* PPFnTranslate::copy(dynamic_context *_cxt_)
 {
-	PPFnTranslate *res = new PPFnTranslate(_cxt_, str, map_str, trans_str);
+	PPFnTranslate *res = se_new PPFnTranslate(_cxt_, str, map_str, trans_str);
 	res->str.op = str.op->copy(_cxt_);
 	res->map_str.op = map_str.op->copy(_cxt_);
 	res->trans_str.op = trans_str.op->copy(_cxt_);
@@ -881,7 +881,7 @@ void PPFnSubsBeforeAfter::error(const char* msg)
 
 PPIterator* PPFnSubsBeforeAfter::copy(dynamic_context *_cxt_)
 {
-    PPFnSubsBeforeAfter *res = new PPFnSubsBeforeAfter(_cxt_, src_child, srch_child, collation_child, type);
+    PPFnSubsBeforeAfter *res = se_new PPFnSubsBeforeAfter(_cxt_, src_child, srch_child, collation_child, type);
     res->src_child.op = src_child.op->copy(_cxt_);
     res->srch_child.op = srch_child.op->copy(_cxt_);
 
@@ -960,7 +960,7 @@ void PPFnChangeCase::next  (tuple &t)
 
 PPIterator* PPFnChangeCase::copy(dynamic_context *_cxt_)
 {
-	PPFnChangeCase *res = new PPFnChangeCase(_cxt_, str, to_upper);
+	PPFnChangeCase *res = se_new PPFnChangeCase(_cxt_, str, to_upper);
 	res->str.op = str.op->copy(_cxt_);
 
 	return res;
@@ -1033,7 +1033,7 @@ void PPFnStringLength::next  (tuple &t)
 
 PPIterator* PPFnStringLength::copy(dynamic_context *_cxt_)
 {
-    PPFnStringLength *res = new PPFnStringLength(_cxt_, child);
+    PPFnStringLength *res = se_new PPFnStringLength(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -1108,7 +1108,7 @@ void PPFnNormalizeSpace::next  (tuple &t)
 
 PPIterator* PPFnNormalizeSpace::copy(dynamic_context *_cxt_)
 {
-    PPFnNormalizeSpace *res = new PPFnNormalizeSpace(_cxt_, child);
+    PPFnNormalizeSpace *res = se_new PPFnNormalizeSpace(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -1259,8 +1259,8 @@ void PPFnSubstring::next(tuple &t)
 
 PPIterator* PPFnSubstring::copy(dynamic_context *_cxt_)
 {
-    PPFnSubstring *res = is_length ? new PPFnSubstring(_cxt_, str_child, start_child, length_child) :
-                                     new PPFnSubstring(_cxt_, str_child, start_child);
+    PPFnSubstring *res = is_length ? se_new PPFnSubstring(_cxt_, str_child, start_child, length_child) :
+                                     se_new PPFnSubstring(_cxt_, str_child, start_child);
                                 
     res->str_child.op = str_child.op->copy(_cxt_);
     res->start_child.op = start_child.op->copy(_cxt_);

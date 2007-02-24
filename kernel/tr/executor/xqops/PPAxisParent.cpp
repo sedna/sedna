@@ -236,24 +236,24 @@ void PPAxisParent::next_var_name(tuple &t)
 sequence *PPAxisParent::next_processing_instruction_s(sequence *data_seq, PPAxisParent* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisParent::next_comment_s(sequence *data_seq, PPAxisParent* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisParent::next_text_s(sequence *data_seq, PPAxisParent* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisParent::next_node_s(sequence *data_seq, PPAxisParent* cur_op)
 {
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     tuple t(1);
     xptr cur;
     for (int i = 0; i < data_seq->size(); i++)
@@ -284,7 +284,7 @@ sequence *PPAxisParent::next_string_s(sequence *data_seq, PPAxisParent* cur_op)
 
 sequence *PPAxisParent::next_qname_s(sequence *data_seq, PPAxisParent* cur_op)
 {
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     tuple t(1);
     xptr cur;
     for (int i = 0; i < data_seq->size(); i++)
@@ -313,7 +313,7 @@ sequence *PPAxisParent::next_qname_s(sequence *data_seq, PPAxisParent* cur_op)
 
 sequence *PPAxisParent::next_wildcard_star_s(sequence *data_seq, PPAxisParent* cur_op)
 {
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     tuple t(1);
     xptr cur;
     for (int i = 0; i < data_seq->size(); i++)
@@ -361,7 +361,7 @@ sequence *PPAxisParent::next_var_name_s(sequence *data_seq, PPAxisParent* cur_op
 
 PPIterator* PPAxisParent::copy(dynamic_context *_cxt_)
 {
-    PPAxisParent *res = new PPAxisParent(_cxt_, child, nt_type, nt_data);
+    PPAxisParent *res = se_new PPAxisParent(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -378,7 +378,7 @@ bool PPAxisParent::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!ac_s) // if expression is not strict
     { // create PPAxisParent and transmit state
         child.op = (PPIterator*)ac_r;
-        r = new PPAxisParent(cxt, child, ((PPAxisParent*)cur)->nt_type, ((PPAxisParent*)cur)->nt_data);
+        r = se_new PPAxisParent(cxt, child, ((PPAxisParent*)cur)->nt_type, ((PPAxisParent*)cur)->nt_data);
         return false;
     }
 

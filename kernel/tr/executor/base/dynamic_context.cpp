@@ -81,7 +81,7 @@ static_context::static_context()
     /// DO NOT call static_context::set_default_collation() here - 
     /// it is too complex to be called from constructor.
     const char* codepoint_collation_uri = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-    default_collation_uri = new char[strlen(codepoint_collation_uri) + 1];
+    default_collation_uri = se_new char[strlen(codepoint_collation_uri) + 1];
     strcpy(default_collation_uri, codepoint_collation_uri);
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(codepoint_collation_uri);
     /////////////////////////////////////////////////////////////////////////
@@ -240,12 +240,12 @@ void static_context::set_base_uri(const char* _base_uri_)
         collapse_string_normalization(_base_uri_, result);
         tuple_cell tc = result.get_tuple_cell();
         tc = tuple_cell::make_sure_light_atomic(tc);
-        base_uri = new char[tc.get_strlen() + 1];
+        base_uri = se_new char[tc.get_strlen() + 1];
         strcpy(base_uri, tc.get_str_mem());
     }
     else
     {
-        base_uri = new char[strlen(_base_uri_) + 1];
+        base_uri = se_new char[strlen(_base_uri_) + 1];
         strcpy(base_uri, _base_uri_);
     }
     ///////////////////////////////////////////////////////////////////////
@@ -303,7 +303,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     if(default_collation_handler == NULL) throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");            
 
     if (default_collation_uri != NULL) delete default_collation_uri;
-    default_collation_uri = new char[strlen(normalized_value) + 1];
+    default_collation_uri = se_new char[strlen(normalized_value) + 1];
     strcpy(default_collation_uri, normalized_value);
 }
 
@@ -409,7 +409,7 @@ void dynamic_context::static_set(int _funcs_num_, int _var_decls_num_, int _st_c
     U_ASSERT(_st_cxts_num_ > 0);
     st_cxts_num = _st_cxts_num_;
     st_cxts_pos = 0;
-    st_cxts = new static_context*[st_cxts_num];
+    st_cxts = se_new static_context*[st_cxts_num];
 
 	stm.reset();//REDO!!!!
 	stm.add_str(">","&gt;");

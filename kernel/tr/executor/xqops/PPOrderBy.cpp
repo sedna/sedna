@@ -85,8 +85,8 @@ void PPOrderBy::open  ()
     need_to_sort= false;
     pos = 0;
     
-    data_cells  = new sequence_tmp(data_size);
-    sort_cells  = new sequence_tmp(sort_size); 
+    data_cells  = se_new sequence_tmp(data_size);
+    sort_cells  = se_new sequence_tmp(sort_size); 
 
     udata.sort      = sort_cells;
     udata.pos       = 0;
@@ -98,7 +98,7 @@ void PPOrderBy::open  ()
     udata.temps[0]  = NULL;
     udata.temps[1]  = NULL;
 
-    ss = new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
+    ss = se_new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
 
 void PPOrderBy::reopen()
@@ -208,7 +208,7 @@ void PPOrderBy::next  (tuple &t)
             CHECK_PTR_AND_CLEAR(udata.buffer);
             CHECK_PTR_AND_CLEAR(udata.temps[0]);
             CHECK_PTR_AND_CLEAR(udata.temps[1]);
-            udata.buffer = new temp_buffer(udata.size);
+            udata.buffer = se_new temp_buffer(udata.size);
             
             for(i = 0; i < sort_cells->size(); i++)
             {
@@ -241,7 +241,7 @@ void PPOrderBy::next  (tuple &t)
 
 PPIterator* PPOrderBy::copy(dynamic_context *_cxt_)
 {
-    PPOrderBy *res = new PPOrderBy(_cxt_, 
+    PPOrderBy *res = se_new PPOrderBy(_cxt_, 
                                    stable, 
                                    child, 
                                    modifiers, 
@@ -282,7 +282,7 @@ static inline void* get_ptr_to_complete_serialized_data(xptr v, char** temp, int
     int sz = GET_FREE_SPACE(v);
     if(sz < ud->size)
     {
-        if(ud->temps[n-1] == NULL) ud->temps[n-1] = new char[ud->size];
+        if(ud->temps[n-1] == NULL) ud->temps[n-1] = se_new char[ud->size];
         *temp = ud->temps[n-1];
         memcpy(*temp, XADDR(v), sz);
         xptr nblk=((seq_blk_hdr*)XADDR(BLOCKXPTR(v)))->nblk+sizeof(seq_blk_hdr);
@@ -425,7 +425,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     else 
                     {
-                        char* prefix = new char[ORB_STRING_PREFIX_SIZE + 1]; 
+                        char* prefix = se_new char[ORB_STRING_PREFIX_SIZE + 1]; 
                         CHECKP(v1);
                         get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
                         strcpy(prefix, (char*)addr1+offset+sizeof(bool));
@@ -462,7 +462,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     else
                     {
-                        char* buffer = new char[type_size];    
+                        char* buffer = se_new char[type_size];    
                         CHECKP(v1);
                         memcpy(buffer, (char*)addr1+offset, type_size);
                         XMLDateTime value1(*(xs_packed_duration*)buffer, type);
@@ -649,7 +649,7 @@ temp_buffer::temp_buffer (int _size_): size(_size_),
 {
     if(size <= 0) 
         throw USER_EXCEPTION2(SE1003, "Buffer size must be positive.");            
-    buffer = new char[size]; 
+    buffer = se_new char[size]; 
 }
     
 temp_buffer::~temp_buffer ()
@@ -817,7 +817,7 @@ void PPSTuple::next(tuple &t)
                 ch_arr[i].op->next(lt);
                 if(!lt.is_eos())
                 {
-                    sequence_tmp* st = new sequence_tmp(1);
+                    sequence_tmp* st = se_new sequence_tmp(1);
                     tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);
                     st -> add(prev_lt);
@@ -840,7 +840,7 @@ void PPSTuple::next(tuple &t)
 
 PPIterator* PPSTuple::copy(dynamic_context *_cxt_)
 {
-    PPSTuple *res = new PPSTuple(_cxt_, ch_arr);
+    PPSTuple *res = se_new PPSTuple(_cxt_, ch_arr);
 
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
@@ -892,7 +892,7 @@ void PPSLet::open ()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
         p.op = this;
-        p.cvc = new complex_var_consumption;
+        p.cvc = se_new complex_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -933,7 +933,7 @@ void PPSLet::next(tuple &t)
 
 PPIterator* PPSLet::copy(dynamic_context *_cxt_)
 {
-    PPSLet *res = new PPSLet(_cxt_, var_dscs, source_child, data_child);
+    PPSLet *res = se_new PPSLet(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;

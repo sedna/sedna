@@ -14,7 +14,7 @@ bool strict_op_result(PPIterator* cur, sequence *res_seq, dynamic_context *cxt, 
     if (res_seq->size() > STRICT_FUNS_BOUND)
     {
         PPIterator *new_tree = cur->copy(cxt);
-        PPSLStub *new_node = new PPSLStub(cxt, new_tree, res_seq);
+        PPSLStub *new_node = se_new PPSLStub(cxt, new_tree, res_seq);
         new_node->open();
         r = new_node;
         return false;

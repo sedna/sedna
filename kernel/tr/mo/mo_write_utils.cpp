@@ -462,7 +462,7 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
 {
     xptr old_blk=ADDR2XPTR(block);
-	node_blk_hdr* tmp= new node_blk_hdr;
+	node_blk_hdr* tmp= se_new node_blk_hdr;
 	*tmp=*block;
 	xptr new_block;
 	bool persistent= IS_DATA_BLOCK(old_blk);
@@ -1238,7 +1238,7 @@ xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr par
 xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 {
 	xptr old_blk=ADDR2XPTR(block);
-	node_blk_hdr* tmp= new node_blk_hdr;
+	node_blk_hdr* tmp= se_new node_blk_hdr;
 	*tmp=*block;
 	tmp->dsc_size=tmp->snode->get_child_count()*sizeof(xptr)+size_of_node(tmp);
 	xptr new_block;
@@ -1287,7 +1287,7 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 {
 	xptr old_blk=ADDR2XPTR(block);
-	node_blk_hdr* tmp= new node_blk_hdr;
+	node_blk_hdr* tmp= se_new node_blk_hdr;
 	*tmp=*block;
 	tmp->dsc_size=tmp->snode->get_child_count()*sizeof(xptr)+size_of_node(tmp);
 	xptr new_block;
@@ -1892,7 +1892,7 @@ void addTextValue(xptr node,const void* text, unsigned int size,text_type ttype)
 			pstr_allocate(blk,node,(const char*) text, size);
 		else
 		{
-			char* buf=new char[size];
+			char* buf=se_new char[size];
 			copy_to_buffer(buf,text,size,ttype);
 			pstr_allocate(blk,node,buf, size);
 			delete [] buf;
@@ -1935,7 +1935,7 @@ void appendTextValue(xptr node,const void* text, unsigned int size,text_type tty
 		char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 		if (cur_size+size>PSTRMAXSIZE)
 		{
-			char* z=new char[cur_size];
+			char* z=se_new char[cur_size];
 			memcpy(z,data,cur_size);
             pstr_deallocate(node);
 			pstr_long_create_str(node, z,  cur_size,text_mem);
@@ -1944,7 +1944,7 @@ void appendTextValue(xptr node,const void* text, unsigned int size,text_type tty
 		}
 		else
 		{
-			char* z=new char[size+cur_size];
+			char* z=se_new char[size+cur_size];
 			memcpy(z,data,cur_size);
 			copy_to_buffer(z+cur_size,text,size,ttype);
 			//d_printf1("bm");fflush(stdout);
@@ -1986,7 +1986,7 @@ void insertTextValue(xptr node,const void* text, unsigned int size,text_type tty
 		if ((cur_size+size)>PSTRMAXSIZE)
 		{
 			
-			char* z=new char[cur_size];
+			char* z=se_new char[cur_size];
 			memcpy(z,data,cur_size);
             pstr_deallocate(node);
 			pstr_long_create_str(node, text,  size,ttype);
@@ -1995,7 +1995,7 @@ void insertTextValue(xptr node,const void* text, unsigned int size,text_type tty
 		}
 		else
 		{			
-			char* z=new char[size+cur_size];
+			char* z=se_new char[size+cur_size];
 			copy_to_buffer(z,text,size,ttype);
 			memcpy(z+size,data,cur_size);
 			pstr_modify(node, z, size+cur_size);
@@ -2028,7 +2028,7 @@ void delete_text_head(xptr node, int size)
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
 			char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-		    char* z=new char[cur_size-size];
+		    char* z=se_new char[cur_size-size];
 			memcpy(z,data+size,cur_size-size);
 			pstr_modify(node, z, cur_size-size);
 			delete []z;
@@ -2038,7 +2038,7 @@ void delete_text_head(xptr node, int size)
 		pstr_long_delete_head(node,size);
 		if (cur_size-size<=PSTRMAXSIZE)
 		{
-			char* z= new char[cur_size-size];
+			char* z= se_new char[cur_size-size];
 			pstr_long_copy_to_buffer(z, node);
 			pstr_long_delete_str(node);
 			addTextValue(node,z, cur_size-size);
@@ -2073,7 +2073,7 @@ void delete_text_tail(xptr node, int size)
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
 			char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-		    char* z=new char[cur_size-size];
+		    char* z=se_new char[cur_size-size];
 			memcpy(z,data,cur_size-size);
 			pstr_modify(node, z, cur_size-size);
 			delete []z;
@@ -2083,7 +2083,7 @@ void delete_text_tail(xptr node, int size)
 		pstr_long_truncate(node,size);
 		if (cur_size-size<=PSTRMAXSIZE)
 		{
-			char* z= new char[cur_size-size];
+			char* z= se_new char[cur_size-size];
 			pstr_long_copy_to_buffer(z, node);
 			pstr_long_delete_str(node);
 			addTextValue(node,z, cur_size-size);
@@ -2223,7 +2223,7 @@ void update_idx_delete_text (schema_node* scm,xptr node,const char* value, int s
 {
 	schema_index* ind=scm->index_object;
 	if (ind==NULL&&scm->parent->index_object==NULL) return;
-	char* z=new char[size];
+	char* z=se_new char[size];
 	memcpy(z,value,size);
 	while (ind!=NULL)
 	{

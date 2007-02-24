@@ -47,7 +47,7 @@ xptr_sequence *ftlog_file::read_xptr_sequence()
 	if (res == 0)
 		return NULL;
 
-	seq = new xptr_sequence();
+	seq = se_new xptr_sequence();
 	while (count-- > 0)
 	{
 		xptr ptr;
@@ -112,7 +112,7 @@ void SednaIndexJob::create_index(std::vector<xptr> *first_nodes)
 {
 	this->SetActionAdd();
 	this->SetActionCreate();
-	AttachDataSource(new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes), true);
+	AttachDataSource(se_new CreationSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, first_nodes), true);
 	log_file->start_new_record(FTLOG_CREATE_BEGIN);
 	log_file->flush();
 	this->Execute();
@@ -147,7 +147,7 @@ void SednaIndexJob::update_index(xptr_sequence* upserted)
 {
 	this->SetActionAdd();
 	this->SetIndexingFlags(dtsAlwaysAdd);
-	AttachDataSource(new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
+	AttachDataSource(se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
 	log_file->start_new_record(FTLOG_UPDATE_START);
 	log_file->write_xptr_sequence(upserted);
 	log_file->flush();
@@ -159,7 +159,7 @@ void SednaIndexJob::insert_into_index(xptr_sequence* upserted)
 {
 	this->SetActionAdd();
 	this->SetIndexingFlags(dtsAlwaysAdd);
-	AttachDataSource(new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
+	AttachDataSource(se_new UpdateSednaDataSource(ft_idx->ftype, ft_idx->custom_tree, upserted), true);
 	log_file->start_new_record(FTLOG_INSERT_START);
 	log_file->write_xptr_sequence(upserted);
 	log_file->flush();
@@ -225,7 +225,7 @@ ftlog_file *SednaIndexJob::get_log_file(const char *index_name)
 	std::map<std::string, ftlog_file*>::const_iterator it = log_files_map.find(index_name_str);
 	if (it == log_files_map.end())
 	{
-		ftlog_file *lf = new ftlog_file();
+		ftlog_file *lf = se_new ftlog_file();
 		lf->file = create_log(index_name);
 		lf->last_lsn = 0;
 		log_files_map[index_name_str] = lf;
@@ -394,7 +394,7 @@ void SednaIndexJob::rollback()
 }
 void SednaIndexJob::recover_db_file(const char *fname, const trns_undo_analysis_list& undo_list, const trns_redo_analysis_list& redo_list, const LONG_LSN& checkpoint_lsn)
 {
-	char *index_name = new char[strlen(fname)];
+	char *index_name = se_new char[strlen(fname)];
 	transaction_id trid;
 	if (sscanf(fname, "trn%d_%s", &trid, index_name) != 2)
 		throw SYSTEM_EXCEPTION("strange file in data/dtsearch folder");

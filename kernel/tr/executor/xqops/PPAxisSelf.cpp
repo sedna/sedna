@@ -57,7 +57,7 @@ bool PPAxisSelf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
 PPIterator* PPAxisSelf::copy(dynamic_context *_cxt_)
 {
-    PPAxisSelf *res = new PPAxisSelf(_cxt_, child, nt_type, nt_data);
+    PPAxisSelf *res = se_new PPAxisSelf(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

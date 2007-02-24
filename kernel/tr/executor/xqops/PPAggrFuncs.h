@@ -272,7 +272,7 @@ void PPAggrFuncContainer<Essence>::next(tuple &t)
 template<class Essence>
 PPIterator* PPAggrFuncContainer<Essence>::copy(dynamic_context *_cxt_)
 {
-    PPAggrFuncContainer<Essence> *res = new PPAggrFuncContainer<Essence>(_cxt_, child);
+    PPAggrFuncContainer<Essence> *res = se_new PPAggrFuncContainer<Essence>(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -289,11 +289,11 @@ bool PPAggrFuncContainer<Essence>::result(PPIterator* cur, dynamic_context *cxt,
     if (!af_s) // if expression is not strict
     {
         child.op = (PPIterator*)af_r;
-        r = new PPAggrFuncContainer<Essence>(cxt, child);
+        r = se_new PPAggrFuncContainer<Essence>(cxt, child);
         return false;
     }
 
-    r = new sequence(Essence::result((sequence*)af_r));
+    r = se_new sequence(Essence::result((sequence*)af_r));
     return true;
 }
 

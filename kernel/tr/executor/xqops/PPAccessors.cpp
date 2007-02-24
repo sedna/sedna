@@ -73,7 +73,7 @@ void PPDmStringValue::next  (tuple &t)
 
 PPIterator* PPDmStringValue::copy(dynamic_context *_cxt_)
 {
-    PPDmStringValue *res = new PPDmStringValue(_cxt_, child);
+    PPDmStringValue *res = se_new PPDmStringValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -90,7 +90,7 @@ bool PPDmStringValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!sv_s) // if expression is not strict
     { // create PPDmStringValue and transmit state
         child.op = (PPIterator*)sv_r;
-        r = new PPDmStringValue(cxt, child);
+        r = se_new PPDmStringValue(cxt, child);
         return false;
     }
 
@@ -99,7 +99,7 @@ bool PPDmStringValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     const tuple_cell &tc = d_seq->get_00();
     if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
-    r = new sequence(dm_string_value(tc.get_node()));
+    r = se_new sequence(dm_string_value(tc.get_node()));
     return true;
 }
 
@@ -166,7 +166,7 @@ void PPDmTypedValue::next  (tuple &t)
 
 PPIterator* PPDmTypedValue::copy(dynamic_context *_cxt_)
 {
-    PPDmTypedValue *res = new PPDmTypedValue(_cxt_, child);
+    PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -183,7 +183,7 @@ bool PPDmTypedValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!tv_s) // if expression is not strict
     { // create PPDmTypedValue and transmit state
         child.op = (PPIterator*)tv_r;
-        r = new PPDmTypedValue(cxt, child);
+        r = se_new PPDmTypedValue(cxt, child);
         return false;
     }
 
@@ -192,7 +192,7 @@ bool PPDmTypedValue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     const tuple_cell &tc = d_seq->get_00();
     if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
-    r = new sequence(dm_typed_value(tc.get_node()));
+    r = se_new sequence(dm_typed_value(tc.get_node()));
     return true;
 }
 
@@ -261,7 +261,7 @@ void PPDmDocumentURI::next  (tuple &t)
 
 PPIterator* PPDmDocumentURI::copy(dynamic_context *_cxt_)
 {
-    PPDmDocumentURI *res = new PPDmDocumentURI(_cxt_, child);
+    PPDmDocumentURI *res = se_new PPDmDocumentURI(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -278,7 +278,7 @@ bool PPDmDocumentURI::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!nn_s) // if expression is not strict
     { // create PPDmDocumentURI and transmit state
         child.op = (PPIterator*)nn_r;
-        r = new PPDmDocumentURI(cxt, child);
+        r = se_new PPDmDocumentURI(cxt, child);
         return false;
     }
 
@@ -287,6 +287,6 @@ bool PPDmDocumentURI::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     const tuple_cell &tc = d_seq->get_00();
     if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:node-name is not a node");
 
-    r = new sequence(dm_node_name(tc.get_node()));
+    r = se_new sequence(dm_node_name(tc.get_node()));
     return true;
 }

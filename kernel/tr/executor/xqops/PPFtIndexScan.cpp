@@ -83,7 +83,7 @@ void PPFtIndexScan::next(tuple &t)
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
 			throw USER_EXCEPTION(SE1071);
-		sj=new SednaSearchJob();
+		sj=se_new SednaSearchJob();
 		sj->set_request(tc);
 		query.op->next(t);
 		if (!t.is_eos())
@@ -114,7 +114,7 @@ void PPFtIndexScan::next(tuple &t)
 
 PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
 {
-	PPFtIndexScan *res = new PPFtIndexScan(_cxt_, idx_name, query);
+	PPFtIndexScan *res = se_new PPFtIndexScan(_cxt_, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
 

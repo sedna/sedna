@@ -115,7 +115,7 @@ void PPFtHighlight::next(tuple &t)
 
 		if (index.op)
 		{
-			sj=new SednaSearchJob(true, hl_fragment);
+			sj=se_new SednaSearchJob(true, hl_fragment);
 			index.op->next(t);
 			if (t.is_eos())
 				throw USER_EXCEPTION(SE1071);
@@ -130,7 +130,7 @@ void PPFtHighlight::next(tuple &t)
 
 		}
 		else
-			sj=new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
+			sj=se_new SednaSearchJob(&seq, ft_xml_hl, NULL, true, hl_fragment);
 
 		query.op->next(t);
 		if (t.is_eos())
@@ -188,14 +188,14 @@ PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
 	PPFtHighlight *res;
 	if (index.op)
 	{
-		res = new PPFtHighlight(_cxt_, seq, query, index, hl_fragment);
+		res = se_new PPFtHighlight(_cxt_, seq, query, index, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 		res->index.op = index.op->copy(_cxt_);
 	}
 	else
 	{
-		res = new PPFtHighlight(_cxt_, seq, query, hl_fragment);
+		res = se_new PPFtHighlight(_cxt_, seq, query, hl_fragment);
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 	}

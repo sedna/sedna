@@ -170,7 +170,7 @@ void OS_exceptions_handler::install_handler()
     // alternative stack doesn't work properly with linux threads
 
     stack_t ss;
-    ss.ss_sp = new char[1024 * 1024 * 2]; // SIGSTKSZ
+    ss.ss_sp = se_new char[1024 * 1024 * 2]; // SIGSTKSZ
     ss.ss_size = 1024 * 1024 * 2; // SIGSTKSZ
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) == -1)

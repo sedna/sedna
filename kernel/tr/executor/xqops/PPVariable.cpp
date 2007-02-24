@@ -46,7 +46,7 @@ void PPVariable::next (tuple &t)
 
 PPIterator* PPVariable::copy(dynamic_context *_cxt_)
 {
-    PPVariable *res = new PPVariable(_cxt_, dsc);
+    PPVariable *res = se_new PPVariable(_cxt_, dsc);
     return res;
 }
 
@@ -55,7 +55,7 @@ bool PPVariable::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 /*
     producer &p = cxt->producers[((PPVariable*)cur)->dsc];
 
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     switch (p.type)
     {
     case pt_tuple	: res_seq->add(*(p.t)); break;
@@ -106,7 +106,7 @@ void PPGlobalVariable::next (tuple &t)
 
 PPIterator* PPGlobalVariable::copy(dynamic_context *_cxt_)
 {
-    PPGlobalVariable *res = new PPGlobalVariable(_cxt_, dsc);
+    PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, dsc);
     return res;
 }
 

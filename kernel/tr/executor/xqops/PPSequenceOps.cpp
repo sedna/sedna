@@ -72,7 +72,7 @@ void PPFnEmpty::next  (tuple &t)
 
 PPIterator* PPFnEmpty::copy(dynamic_context *_cxt_)
 {
-    PPFnEmpty *res = new PPFnEmpty(_cxt_, child);
+    PPFnEmpty *res = se_new PPFnEmpty(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -89,14 +89,14 @@ bool PPFnEmpty::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!em_s) // if expression is not strict
     { // create PPFnEmpty and transmit state
         child.op = (PPIterator*)em_r;
-        r = new PPFnEmpty(cxt, child);
+        r = se_new PPFnEmpty(cxt, child);
         return false;
     }
 
     if (((sequence*)em_r)->size() == 0)
-        r = new sequence(fn_true());
+        r = se_new sequence(fn_true());
     else
-        r = new sequence(fn_false());
+        r = se_new sequence(fn_false());
 
     return true;
 }
@@ -162,7 +162,7 @@ void PPFnExists::next  (tuple &t)
 
 PPIterator* PPFnExists::copy(dynamic_context *_cxt_)
 {
-    PPFnExists *res = new PPFnExists(_cxt_, child);
+    PPFnExists *res = se_new PPFnExists(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -179,14 +179,14 @@ bool PPFnExists::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!ex_s) // if expression is not strict
     { // create PPFnExists and transmit state
         child.op = (PPIterator*)ex_r;
-        r = new PPFnExists(cxt, child);
+        r = se_new PPFnExists(cxt, child);
         return false;
     }
 
     if (((sequence*)ex_r)->size() == 0)
-        r = new sequence(fn_false());
+        r = se_new sequence(fn_false());
     else
-        r = new sequence(fn_true());
+        r = se_new sequence(fn_true());
 
     return true;
 }
@@ -274,7 +274,7 @@ void PPFnItemAt::next(tuple &t)
 
 PPIterator* PPFnItemAt::copy(dynamic_context *_cxt_)
 {
-    PPFnItemAt *res = new PPFnItemAt(_cxt_, seq_child, pos_child);
+    PPFnItemAt *res = se_new PPFnItemAt(_cxt_, seq_child, pos_child);
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
 
@@ -293,7 +293,7 @@ bool PPFnItemAt::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     { // create PPFnItemAt and transmit state
         seq_child.op = seq_child.op->copy(cxt);
         pos_child.op = (PPIterator*)pos_r;
-        r = new PPFnItemAt(cxt, seq_child, pos_child);
+        r = se_new PPFnItemAt(cxt, seq_child, pos_child);
         return false;
     }
 
@@ -303,8 +303,8 @@ bool PPFnItemAt::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!seq_s) // if expression is not strict
     { // create PPFnItemAt and transmit state
         seq_child.op = (PPIterator*)seq_r;
-        pos_child.op = new PPSLStub(cxt, pos_child.op->copy(cxt), (sequence*)pos_r);
-        r = new PPFnItemAt(cxt, seq_child, pos_child);
+        pos_child.op = se_new PPSLStub(cxt, pos_child.op->copy(cxt), (sequence*)pos_r);
+        r = se_new PPFnItemAt(cxt, seq_child, pos_child);
         return false;
     }
 
@@ -316,7 +316,7 @@ bool PPFnItemAt::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (pos < 1) throw USER_EXCEPTION(SE1007);
 
     sequence* seq_seq = (sequence*)seq_r;
-    r = new sequence(seq_child.ts);
+    r = se_new sequence(seq_child.ts);
     if (seq_seq->size() == 0) return true;
     if (seq_seq->size() < pos) throw USER_EXCEPTION(SE1007);
 
@@ -362,7 +362,7 @@ void PPFnDistinctValues::open  ()
     if (collation_child.op)
         collation_child.op->open();
 
-    s = new sequence(1);
+    s = se_new sequence(1);
     handler = NULL;
     has_NaN = false;
 }
@@ -462,7 +462,7 @@ void PPFnDistinctValues::next(tuple &t)
 
 PPIterator* PPFnDistinctValues::copy(dynamic_context *_cxt_)
 {
-    PPFnDistinctValues *res = new PPFnDistinctValues(_cxt_, child, collation_child);
+    PPFnDistinctValues *res = se_new PPFnDistinctValues(_cxt_, child, collation_child);
     res->child.op = child.op->copy(_cxt_);
     if (collation_child.op)
         res->collation_child.op = collation_child.op->copy(_cxt_);
@@ -604,7 +604,7 @@ void PPFnIndexOf::next(tuple &t)
 
 PPIterator* PPFnIndexOf::copy(dynamic_context *_cxt_)
 {
-    PPFnIndexOf *res = new PPFnIndexOf(_cxt_, seq_child, srch_child, collation_child);
+    PPFnIndexOf *res = se_new PPFnIndexOf(_cxt_, seq_child, srch_child, collation_child);
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->srch_child.op = srch_child.op->copy(_cxt_);
 
@@ -642,7 +642,7 @@ PPFnReverse::~PPFnReverse()
 void PPFnReverse::open ()
 {
     child.op->open();
-    s = new sequence_tmp(child.ts);
+    s = se_new sequence_tmp(child.ts);
     first_time = true;
 }
 
@@ -686,7 +686,7 @@ void PPFnReverse::next (tuple &t)
 
 PPIterator* PPFnReverse::copy(dynamic_context *_cxt_)
 {
-    PPFnReverse *res = new PPFnReverse(_cxt_, child);
+    PPFnReverse *res = se_new PPFnReverse(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -819,8 +819,8 @@ void PPFnSubsequence::next(tuple &t)
 
 PPIterator* PPFnSubsequence::copy(dynamic_context *_cxt_)
 {
-    PPFnSubsequence *res = is_length ? new PPFnSubsequence(_cxt_, seq_child, start_child, length_child) :
-                                       new PPFnSubsequence(_cxt_, seq_child, start_child);
+    PPFnSubsequence *res = is_length ? se_new PPFnSubsequence(_cxt_, seq_child, start_child, length_child) :
+                                       se_new PPFnSubsequence(_cxt_, seq_child, start_child);
                                 
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->start_child.op = start_child.op->copy(_cxt_);
@@ -918,7 +918,7 @@ void PPFnRemove::next(tuple &t)
 
 PPIterator* PPFnRemove::copy(dynamic_context *_cxt_)
 {
-    PPFnRemove *res =  new PPFnRemove(_cxt_, seq_child, pos_child);
+    PPFnRemove *res =  se_new PPFnRemove(_cxt_, seq_child, pos_child);
                                 
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
@@ -1037,7 +1037,7 @@ void PPFnInsertBefore::next(tuple &t)
 
 PPIterator* PPFnInsertBefore::copy(dynamic_context *_cxt_)
 {
-    PPFnInsertBefore *res =  new PPFnInsertBefore(_cxt_, seq_child, pos_child, ins_child);
+    PPFnInsertBefore *res =  se_new PPFnInsertBefore(_cxt_, seq_child, pos_child, ins_child);
                                 
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
@@ -1110,7 +1110,7 @@ void PPFnZeroOrOne::next  (tuple &t)
 
 PPIterator* PPFnZeroOrOne::copy(dynamic_context *_cxt_)
 {
-    PPFnZeroOrOne *res = new PPFnZeroOrOne(_cxt_, child);
+    PPFnZeroOrOne *res = se_new PPFnZeroOrOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -1170,7 +1170,7 @@ void PPFnOneOrMore::next  (tuple &t)
 
 PPIterator* PPFnOneOrMore::copy(dynamic_context *_cxt_)
 {
-    PPFnOneOrMore *res = new PPFnOneOrMore(_cxt_, child);
+    PPFnOneOrMore *res = se_new PPFnOneOrMore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -1238,7 +1238,7 @@ void PPFnExactlyOne::next  (tuple &t)
 
 PPIterator* PPFnExactlyOne::copy(dynamic_context *_cxt_)
 {
-    PPFnExactlyOne *res = new PPFnExactlyOne(_cxt_, child);
+    PPFnExactlyOne *res = se_new PPFnExactlyOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

@@ -207,7 +207,7 @@ bool PPAbsPath::determine_root()
         
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
-        db_ent->name = new char[tc.get_strlen_mem() + 1];
+        db_ent->name = se_new char[tc.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc.get_str_mem());
     }
 
@@ -225,12 +225,12 @@ PPIterator* PPAbsPath::copy(dynamic_context *_cxt_)
 
     if (name.op)
     {
-        res = new PPAbsPath(_cxt_, path_expr, db_ent, name);
+        res = se_new PPAbsPath(_cxt_, path_expr, db_ent, name);
         res->name.op = name.op->copy(_cxt_);
     }
     else
     {
-        res = new PPAbsPath(_cxt_, path_expr, db_ent, name, root);
+        res = se_new PPAbsPath(_cxt_, path_expr, db_ent, name, root);
     }
 
     return res;
@@ -244,7 +244,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
     scmnodes_num = nodes.size();
 
     // create and fill merged_seq_arr
-    merged_seq_arr = new xptr[scmnodes_num];
+    merged_seq_arr = se_new xptr[scmnodes_num];
     for (int i = 0; i < scmnodes_num; i++) 
     {
         xptr first_blk = nodes[i]->bblk;
@@ -281,7 +281,7 @@ bool PPAbsPath::result(PPIterator* cur, dynamic_context *cxt, void*& r)
                       root, 
                       _cur_->path_expr.get());
 
-    res_seq = new sequence(1);
+    res_seq = se_new sequence(1);
     xptr res;
     tuple t(1);
 

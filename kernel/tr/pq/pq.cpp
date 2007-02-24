@@ -55,7 +55,7 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     int status = 0;
 
         // prepare query for sending to scheme part
-    StmntsArray *st_array = new StmntsArray();
+    StmntsArray *st_array = se_new StmntsArray();
     script_struct st;
 
     scm_input_string = (char*)malloc(query_in_LR.size() + 1); // I call malloc here because this memory

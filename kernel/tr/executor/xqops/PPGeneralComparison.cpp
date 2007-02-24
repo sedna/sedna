@@ -22,32 +22,32 @@
 PPGeneralComparison* PPGeneralComparison::PPGTGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true);
+	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true);
 }
 PPGeneralComparison* PPGeneralComparison::PPLTGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false);
+	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false);
 }
 PPGeneralComparison* PPGeneralComparison::PPGEGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true,false);
+	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,true,false);
 }
 PPGeneralComparison* PPGeneralComparison::PPLEGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false,false);
+	return se_new PPLMGeneralComparison(_cxt_,_seq1_,_seq2_,false,false);
 }
 PPGeneralComparison* PPGeneralComparison::PPEQGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPEQLGeneralComparison(_cxt_,_seq1_,_seq2_);
+	return se_new PPEQLGeneralComparison(_cxt_,_seq1_,_seq2_);
 }
 PPGeneralComparison* PPGeneralComparison::PPNEGeneralComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPNEQGeneralComparison(_cxt_,_seq1_,_seq2_);
+	return se_new PPNEQGeneralComparison(_cxt_,_seq1_,_seq2_);
 }
 PPGeneralComparison::PPGeneralComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_): PPIterator(_cxt_),
                                     seq1(_seq1_),seq2(_seq2_)
@@ -149,7 +149,7 @@ void PPGeneralComparison::next  (tuple &t)
 PPIterator* PPGeneralComparison::copy(dynamic_context *_cxt_)
 {
 	PPGeneralComparison *res ;
-	res = new PPGeneralComparison(_cxt_, seq1,seq2);
+	res = se_new PPGeneralComparison(_cxt_, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
@@ -479,7 +479,7 @@ PPLMGeneralComparison::PPLMGeneralComparison(dynamic_context *_cxt_,
 PPIterator* PPLMGeneralComparison::copy(dynamic_context *_cxt_)
 {
 	PPLMGeneralComparison *res ;
-	res = new PPLMGeneralComparison(_cxt_, seq1,seq2,more);
+	res = se_new PPLMGeneralComparison(_cxt_, seq1,seq2,more);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
@@ -876,7 +876,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)
 {
 	PPEQLGeneralComparison *res ;
-	res = new PPEQLGeneralComparison(_cxt_, seq1,seq2);
+	res = se_new PPEQLGeneralComparison(_cxt_, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;

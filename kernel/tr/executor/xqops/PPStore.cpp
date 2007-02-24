@@ -27,7 +27,7 @@ void PPStore::open ()
 {
     child.op->open();
 
-    s = new sequence_tmp(child.ts);
+    s = se_new sequence_tmp(child.ts);
 
     pos = 0;
     eos_pos = 0;
@@ -78,7 +78,7 @@ void PPStore::next (tuple &t)
 
 PPIterator* PPStore::copy(dynamic_context *_cxt_)
 {
-    PPStore *res = new PPStore(_cxt_, child);
+    PPStore *res = se_new PPStore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -95,7 +95,7 @@ bool PPStore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!s_s) // if expression is not strict
     { // create PPStore and transmit state
         child.op = (PPIterator*)s_r;
-        r = new PPStore(cxt, child);
+        r = se_new PPStore(cxt, child);
         return false;
     }
 
@@ -107,7 +107,7 @@ bool PPStore::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     }
 
     sequence *data = it->second;
-    sequence *res_seq = new sequence(child.ts);
+    sequence *res_seq = se_new sequence(child.ts);
     tuple t(child.ts);
     for (int i = 0; i < data->size(); i++)
     {

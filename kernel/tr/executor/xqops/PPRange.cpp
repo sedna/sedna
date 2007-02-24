@@ -99,7 +99,7 @@ void PPRange::next(tuple &t)
 
 PPIterator* PPRange::copy(dynamic_context *_cxt_)
 {
-    PPRange *res = new PPRange(_cxt_, start_op,end_op);
+    PPRange *res = se_new PPRange(_cxt_, start_op,end_op);
 	res->start_op.op=start_op.op->copy(_cxt_);
 	res->end_op.op=end_op.op->copy(_cxt_);
     return res;

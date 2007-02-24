@@ -66,12 +66,12 @@ void PPConst::next(tuple &t)
 
 PPIterator* PPConst::copy(dynamic_context *_cxt_)
 {
-    PPConst *res = new PPConst(_cxt_, c);
+    PPConst *res = se_new PPConst(_cxt_, c);
     return res;
 }
 
 bool PPConst::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
-    r = new sequence(((PPConst*)cur)->c);
+    r = se_new sequence(((PPConst*)cur)->c);
     return true;
 }

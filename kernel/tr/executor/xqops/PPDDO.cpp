@@ -12,7 +12,7 @@
 
 using namespace std;
 
-char* PPDDO::temp_buffer=NULL;//new char[MAXINTERNALPREFIX];
+char* PPDDO::temp_buffer=NULL;//se_new char[MAXINTERNALPREFIX];
 int PPDDO::buf_lgth=0;//MAXINTERNALPREFIX;
 
 
@@ -40,7 +40,7 @@ void PPDDO::open  ()
 #ifdef TURN_ON_DDO
     child.op->open();
     pos = 0;
-    s = new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
+    s = se_new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
 	ret_val=XNULL;
 #else
     child.op->open();
@@ -146,7 +146,7 @@ while (true)
 
 PPIterator* PPDDO::copy(dynamic_context *_cxt_)
 {
-    PPDDO *res = new PPDDO(_cxt_, child);
+    PPDDO *res = se_new PPDDO(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -166,7 +166,7 @@ bool PPDDO::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!child_s) // if expression is not strict
     { // create PPDDO and transmit state
         child.op = (PPIterator*)child_r;
-        PPDDO *res_op = new PPDDO(cxt, child);
+        PPDDO *res_op = se_new PPDDO(cxt, child);
 
         r = res_op;
         return false;
@@ -415,7 +415,7 @@ void PPDDO::copy_to_buffer(const void* addr, shft size)
 		{
 			delete [] temp_buffer;
 		}
-		temp_buffer=new char[size];
+		temp_buffer=se_new char[size];
 		buf_lgth=size;
 	}	
 	memcpy(temp_buffer,addr,size);
@@ -432,13 +432,13 @@ void PPDDO::copy_to_buffer(const void* addr, shft shift,shft size)
 	{
 		if (buf_lgth)
 		{
-			char* buf=new char[size+shift];
+			char* buf=se_new char[size+shift];
 			memcpy(buf,temp_buffer,shift);
 			delete [] temp_buffer;
 			temp_buffer=buf;
 		}		
 		else
-			temp_buffer=new char[size+shift];
+			temp_buffer=se_new char[size+shift];
 		buf_lgth=size+shift;
 	}
 	memcpy(temp_buffer+shift,addr,size);

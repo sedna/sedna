@@ -143,7 +143,7 @@ inline xptr removeIndirection(xptr indir)
 
 inline void copyDescriptor(n_dsc* source,xptr dest,  shft size)
 {
-	char *z = new char[size];
+	char *z = se_new char[size];
 	memcpy(z,source,size);
 	CHECKP(dest);
 	VMM_SIGNAL_MODIFICATION(dest);

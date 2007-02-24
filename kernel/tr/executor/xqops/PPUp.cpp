@@ -72,7 +72,7 @@ void PPUp::next  (tuple &t)
 
 PPIterator* PPUp::copy(dynamic_context *_cxt_)
 {
-    PPUp *res = new PPUp(_cxt_, child, scm_node);
+    PPUp *res = se_new PPUp(_cxt_, child, scm_node);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

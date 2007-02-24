@@ -108,7 +108,7 @@ void PPFnResolveQName::next(tuple &t)
 
 PPIterator* PPFnResolveQName::copy(dynamic_context *_cxt_)
 {
-    PPFnResolveQName *res = new PPFnResolveQName(_cxt_, child_qname, child_elem);
+    PPFnResolveQName *res = se_new PPFnResolveQName(_cxt_, child_qname, child_elem);
     res->child_qname.op = child_qname.op->copy(_cxt_);
     res->child_elem.op = child_elem.op->copy(_cxt_);
 
@@ -212,7 +212,7 @@ void PPFnQName::next(tuple &t)
 
 PPIterator* PPFnQName::copy(dynamic_context *_cxt_)
 {
-    PPFnQName *res = new PPFnQName(_cxt_, child_uri, child_qname);
+    PPFnQName *res = se_new PPFnQName(_cxt_, child_uri, child_qname);
     res->child_uri.op = child_uri.op->copy(_cxt_);
     res->child_qname.op = child_qname.op->copy(_cxt_);
 
@@ -300,7 +300,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
 
 PPIterator* PPFnPrefixFromQName::copy(dynamic_context *_cxt_)
 {
-    PPFnPrefixFromQName *res = new PPFnPrefixFromQName(_cxt_, child);
+    PPFnPrefixFromQName *res = se_new PPFnPrefixFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -380,7 +380,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
 
 PPIterator* PPFnLocalNameFromQName::copy(dynamic_context *_cxt_)
 {
-    PPFnLocalNameFromQName *res = new PPFnLocalNameFromQName(_cxt_, child);
+    PPFnLocalNameFromQName *res = se_new PPFnLocalNameFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -462,7 +462,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
 
 PPIterator* PPFnNamespaceUriFromQName::copy(dynamic_context *_cxt_)
 {
-    PPFnNamespaceUriFromQName *res = new PPFnNamespaceUriFromQName(_cxt_, child);
+    PPFnNamespaceUriFromQName *res = se_new PPFnNamespaceUriFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -576,7 +576,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
 
 PPIterator* PPFnNamespaceUriForPrefix::copy(dynamic_context *_cxt_)
 {
-    PPFnNamespaceUriForPrefix *res = new PPFnNamespaceUriForPrefix(_cxt_, child_prefix, child_element);
+    PPFnNamespaceUriForPrefix *res = se_new PPFnNamespaceUriForPrefix(_cxt_, child_prefix, child_element);
     res->child_prefix.op = child_prefix.op->copy(_cxt_);
     res->child_element.op = child_element.op->copy(_cxt_);
 
@@ -671,7 +671,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
 
 PPIterator* PPFnInScopePrefixes::copy(dynamic_context *_cxt_)
 {
-    PPFnInScopePrefixes *res = new PPFnInScopePrefixes(_cxt_, child);
+    PPFnInScopePrefixes *res = se_new PPFnInScopePrefixes(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

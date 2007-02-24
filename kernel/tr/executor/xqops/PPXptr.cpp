@@ -51,7 +51,7 @@ void PPXptr::next (tuple &t)
 
 PPIterator* PPXptr::copy(dynamic_context *_cxt_)
 {
-    PPXptr *res = new PPXptr(_cxt_, var_type, p);
+    PPXptr *res = se_new PPXptr(_cxt_, var_type, p);
     return res;
 }
 

@@ -28,7 +28,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    char buf[1024];
    sm_msg_struct msg;
 
-   sm_server = new SSMMsg(SSMMsg::Client, 
+   sm_server = se_new SSMMsg(SSMMsg::Client, 
                           sizeof (sm_msg_struct), 
                           CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
                           SM_NUMBER_OF_SERVER_THREADS, 

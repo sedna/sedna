@@ -73,7 +73,7 @@ void PPScan::next(tuple &t)
 
 PPIterator* PPScan::copy(dynamic_context *_cxt_)
 {
-    PPScan *res = new PPScan(_cxt_, scm_node, db_ent);
+    PPScan *res = se_new PPScan(_cxt_, scm_node, db_ent);
     return res;
 }
 

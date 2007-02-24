@@ -76,11 +76,11 @@ void PPCalculate::next(tuple &t)
 PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
 {
 	int i = 0;
-    arr_of_PPOpIn *new_ch_arr = new arr_of_PPOpIn(ch_arr->size());
+    arr_of_PPOpIn *new_ch_arr = se_new arr_of_PPOpIn(ch_arr->size());
 	for (i = 0; i < ch_arr->size(); i++)
         new_ch_arr->at(i).ts = ch_arr->at(i).ts;
 
-    PPCalculate *res = new PPCalculate(_cxt_,
+    PPCalculate *res = se_new PPCalculate(_cxt_,
                                        new_ch_arr,
                                        tree);
 
@@ -96,7 +96,7 @@ PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
 bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
 /*
-    arr_of_PPOpIn *ch_arr = new arr_of_PPOpIn;
+    arr_of_PPOpIn *ch_arr = se_new arr_of_PPOpIn;
     ((PPCalculate*)cur)->children(ch_arr);
 
     //int a = ch_arr->size(); // !!! debug
@@ -121,7 +121,7 @@ bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         {
             if (ch_s[i])
             { // result is strict
-                ch_arr->at(i).op = new PPSLStub(cxt, 
+                ch_arr->at(i).op = se_new PPSLStub(cxt, 
                                                 ch_arr->at(i).op->copy(cxt), 
                                                 (sequence*)(ch_r[i]));
                 
@@ -133,7 +133,7 @@ bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         }
 
         CalcOp *tree = ((PPCalculate*)cur)->tree->copy(ch_arr);
-        r = new PPCalculate(cxt, ch_arr, tree);
+        r = se_new PPCalculate(cxt, ch_arr, tree);
         return false;
     }
 
@@ -141,8 +141,8 @@ bool PPCalculate::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     //sequence *s2 = (sequence*)ch_r[1];
 
     tuple_cell tc = ((PPCalculate*)cur)->tree->result(ch_r);
-    if (tc.is_eos()) r = new sequence(1);
-    else r = new sequence(tc);
+    if (tc.is_eos()) r = se_new sequence(1);
+    else r = se_new sequence(tc);
 */
     return true;
 }

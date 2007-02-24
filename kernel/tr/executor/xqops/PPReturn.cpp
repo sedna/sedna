@@ -86,7 +86,7 @@ void PPReturn::open ()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = new simple_var_consumption;
+        p.svc = se_new simple_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -95,7 +95,7 @@ void PPReturn::open ()
         producer &p = cxt->var_cxt.producers[pos_dsc];
         p.type = pt_lazy_simple;
         p.op = this;
-        p.svc = new simple_var_consumption;
+        p.svc = se_new simple_var_consumption;
         p.tuple_pos = 0;
     }
 
@@ -157,8 +157,8 @@ void PPReturn::next(tuple &t)
 
 PPIterator* PPReturn::copy(dynamic_context *_cxt_)
 {
-    PPReturn *res = need_to_check_type ? new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc, st) 
-                                       : new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc); 
+    PPReturn *res = need_to_check_type ? se_new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc, st) 
+                                       : se_new PPReturn(_cxt_, var_dscs, source_child, data_child, pos_dsc); 
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
@@ -228,7 +228,7 @@ bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     { // create PPReturn and transmit state
         source_child.op = (PPIterator*)source_r;
         data_child.op = data_child.op->copy(cxt);
-        PPReturn *res_op = new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child);
+        PPReturn *res_op = se_new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child);
 
         r = res_op;
         return false;
@@ -243,10 +243,10 @@ bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         producer &p = cxt->producers[var_dscs[i]];
         p.type = pt_tuple;
         p.tuple_pos = i;
-        p.t = new tuple(1);
+        p.t = se_new tuple(1);
     }
 
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     tuple source_t(var_dscs.size());
     tuple data_t(1);
     sequence::iterator source_it; 
@@ -265,12 +265,12 @@ bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
         if (!data_s) // if data is not strict
         { // create PPReturn and transmit state
-            // create new lazy source child
+            // create se_new lazy source child
             PPIterator *new_source_child = source_child.op->copy(cxt);
 
-            // create new source sequence - the rest of the source sequence
+            // create se_new source sequence - the rest of the source sequence
             sequence::iterator ssit = source_it;
-            sequence *new_source_seq = new sequence(var_dscs.size());
+            sequence *new_source_seq = se_new sequence(var_dscs.size());
 
             for (++ssit; ssit != source_seq->end(); ++ssit)
             {
@@ -280,15 +280,15 @@ bool PPReturn::result(PPIterator* cur, dynamic_context *cxt, void*& r)
             delete source_seq;
 
             // create stub for source
-            PPSLStub *lower_stub = new PPSLStub(cxt, new_source_child, new_source_seq);
+            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
 
 
             source_child.op = lower_stub;
             data_child.op = (PPIterator*)data_r;
-            PPReturn *ret_op = new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child, source_t);
+            PPReturn *ret_op = se_new PPReturn(cxt, ((PPReturn*)cur)->var_dscs, source_child, data_child, source_t);
 
             // create stub for PPReturn
-            PPSResLStub *upper_stub = new PPSResLStub(cxt, ret_op, res_seq);
+            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
 
             r = upper_stub;
             return false;

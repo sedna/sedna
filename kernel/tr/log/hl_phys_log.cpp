@@ -41,7 +41,7 @@ double total_create_node_blk_time = 0;
 void hl_phys_log_on_session_begin(std::string phys_log_path)
 {
 #ifdef PHYS_LOG
-     phys_log_mgr = new tr_plmgr();
+     phys_log_mgr = se_new tr_plmgr();
      phys_log_mgr->open_phys_log(phys_log_path);
      phys_log_mgr->open_shared_mem();
      is_initialized_on_session = true;

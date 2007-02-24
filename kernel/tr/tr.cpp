@@ -84,6 +84,11 @@ void TrnCtrlHandler(int signo)
 int main(int argc, char *argv[])
 {
     int ret_code = 0;
+
+#ifdef SE_MEMORY_TRACK
+    {
+#endif
+
     program_name_argv_0 = argv[0];
     pping_client ppc(5151, EL_TRN);
     char buf[1024];
@@ -572,6 +577,11 @@ int main(int argc, char *argv[])
     {
         sedna_soft_fault(EL_TRN);
     }
+
+#ifdef SE_MEMORY_TRACK
+    {
+    DumpUnfreed();
+#endif
 
     return ret_code;
 }

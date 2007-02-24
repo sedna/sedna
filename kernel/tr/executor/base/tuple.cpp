@@ -121,7 +121,7 @@ tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)
             throw USER_EXCEPTION2(SE1003, "Heave atomic is too large in call to tuple_cell::make_sure_light_atomic");
 		 */
 		 int sizep = tc.get_strlen_vmm();
-		 char *tmp = new char[sizep + 1];
+		 char *tmp = se_new char[sizep + 1];
          tc.copy_string(tmp);
 		 return atomic(tc.get_atomic_type(), tmp);
     }
@@ -187,7 +187,7 @@ tuple::tuple(const tuple& t)
     if (t.cells == NULL) cells = NULL;
     else
     {
-        cells = new tuple_cell[cells_number]; 
+        cells = se_new tuple_cell[cells_number]; 
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 
@@ -205,7 +205,7 @@ tuple& tuple::operator=(const tuple& t)
     if (t.cells == NULL) cells = NULL;
     else
     {
-        cells = new tuple_cell[cells_number]; 
+        cells = se_new tuple_cell[cells_number]; 
         for (int i = 0; i < cells_number; i++) cells[i] = t.cells[i];
     }
 

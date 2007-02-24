@@ -15,6 +15,7 @@
 
 #include "common/mmgr/memnodes.h"
 
+#ifndef SE_MEMORY_TRACK
 
 /*
  * MaxAllocSize
@@ -138,5 +139,7 @@ extern MemoryContext AllocSetContextCreate(MemoryContext parent,
 #define ALLOCSET_SMALL_MINSIZE	 0
 #define ALLOCSET_SMALL_INITSIZE  (1 * 1024)
 #define ALLOCSET_SMALL_MAXSIZE	 (8 * 1024)
+
+#endif   /* SE_MEMORY_TRACK */
 
 #endif   /* MEMUTILS_H */

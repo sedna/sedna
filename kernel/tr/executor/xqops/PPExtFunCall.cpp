@@ -48,7 +48,7 @@ void PPExtFunCall::next(tuple &t)
 
 PPIterator* PPExtFunCall::copy(dynamic_context *_cxt_)
 {
-	PPExtFunCall *res = new PPExtFunCall(_cxt_, arr, func->copy());
+	PPExtFunCall *res = se_new PPExtFunCall(_cxt_, arr, func->copy());
 
 	for (int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);

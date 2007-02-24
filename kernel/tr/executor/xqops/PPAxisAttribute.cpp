@@ -206,25 +206,25 @@ void PPAxisAttribute::next_var_name(tuple &t)
 sequence *PPAxisAttribute::next_processing_instruction_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisAttribute::next_comment_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisAttribute::next_text_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisAttribute::next_node_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
     delete data_seq;
-    return new sequence(1);
+    return se_new sequence(1);
 }
 
 sequence *PPAxisAttribute::next_string_s(sequence *data_seq, PPAxisAttribute* cur_op)
@@ -234,7 +234,7 @@ sequence *PPAxisAttribute::next_string_s(sequence *data_seq, PPAxisAttribute* cu
 
 sequence *PPAxisAttribute::next_qname_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
 /*
     tuple t(1);
     xptr cur;
@@ -261,7 +261,7 @@ sequence *PPAxisAttribute::next_qname_s(sequence *data_seq, PPAxisAttribute* cur
 
 sequence *PPAxisAttribute::next_wildcard_star_s(sequence *data_seq, PPAxisAttribute* cur_op)
 {
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
 /*
     tuple t(1);
     xptr cur;
@@ -307,7 +307,7 @@ sequence *PPAxisAttribute::next_var_name_s(sequence *data_seq, PPAxisAttribute* 
 
 PPIterator* PPAxisAttribute::copy(dynamic_context *_cxt_)
 {
-    PPAxisAttribute *res = new PPAxisAttribute(_cxt_, child, nt_type, nt_data);
+    PPAxisAttribute *res = se_new PPAxisAttribute(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -324,7 +324,7 @@ bool PPAxisAttribute::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!ac_s) // if expression is not strict
     { // create PPAxisAttribute and transmit state
         child.op = (PPIterator*)ac_r;
-        r = new PPAxisAttribute(cxt, child, ((PPAxisAttribute*)cur)->nt_type, ((PPAxisAttribute*)cur)->nt_data);
+        r = se_new PPAxisAttribute(cxt, child, ((PPAxisAttribute*)cur)->nt_type, ((PPAxisAttribute*)cur)->nt_data);
         return false;
     }
 

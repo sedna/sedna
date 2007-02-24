@@ -124,7 +124,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 		}
 	}
 	//redo.1 initializing blks
-	std::vector<xptr>* blks=(blocks==NULL)?new vector<xptr>:blocks;
+	std::vector<xptr>* blks=(blocks==NULL)?se_new vector<xptr>:blocks;
 	//2.counting total pages needed
 	int xinp=(PAGE_SIZE-sizeof(indir_blk_hdr))/sizeof(xptr);
 	int tot_pages=cnt/xinp;
@@ -292,10 +292,10 @@ void del_record_from_data_indirection_table(xptr p)
 		{
 			
 #ifndef OTK_XPTR
-			xptr_sequence* xs=new xptr_sequence();
+			xptr_sequence* xs=se_new xptr_sequence();
 			xs->add(p);
 #else
-			std::vector<xptr>* xs=new std::vector<xptr>();
+			std::vector<xptr>* xs=se_new std::vector<xptr>();
 			xs->push_back(p);
 #endif
 			(*deleted_cells)[id_pair(sch,sch->root->first_ind_blk)]=xs;
@@ -415,12 +415,12 @@ void indirection_table_on_session_begin()
     if (USemaphoreOpen(&indirection_table_sem, INDIRECTION_TABLE_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "INDIRECTION_TABLE_SEMAPHORE_STR");
 #ifndef OTK_XPTR
-	 deleted_cells = new std::map<id_pair,xptr_sequence *>;
+	 deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
 #else
-	deleted_cells = new std::map<id_pair,std::vector<xptr> *>;
+	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
     
-	deleted_docs = new std::set<xptr>;
+	deleted_docs = se_new std::set<xptr>;
 
     indirection_session_initialized = true;
 }
@@ -428,11 +428,11 @@ void indirection_table_on_session_begin()
 void indirection_table_on_transaction_begin()
 {
 #ifndef OTK_XPTR
-	deleted_cells = new std::map<id_pair,xptr_sequence *>;
+	deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
 #else
-	deleted_cells = new std::map<id_pair,std::vector<xptr> *>;
+	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
-	deleted_docs = new std::set<xptr>;
+	deleted_docs = se_new std::set<xptr>;
 
     indirection_transaction_initialized = true;
 }
@@ -496,11 +496,11 @@ void switch_to_rollback_mode(int type)
     deleted_cells = NULL;
 	deleted_docs=NULL;
 #ifndef OTK_XPTR
-	deleted_cells = new std::map<id_pair,xptr_sequence *>;
+	deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
 #else
-	deleted_cells = new std::map<id_pair,std::vector<xptr> *>;
+	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
-	deleted_docs = new std::set<xptr>;
+	deleted_docs = se_new std::set<xptr>;
 
     rollback_mode = type;
 }

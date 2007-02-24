@@ -771,7 +771,7 @@ int getChildrenXptr(const xptr& parent,const char* uri,const char* name, t_item 
 			{
 				if (ctr==1)
 				{
-					res=new xptr[chcnt];
+					res=se_new xptr[chcnt];
 					res[0]=first;
 				}
 				res[ctr++]=*ptr;

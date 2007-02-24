@@ -235,7 +235,7 @@ void xptr_sequence::vecswap(int a, int b, int n)
 /*
 void xptr_sequence::merge_sort(int prefixes_gen_size)
 {
-    xptr *array = new xptr[seq_size];
+    xptr *array = se_new xptr[seq_size];
     int i = 0;
 
     for (i = 0; i < seq_size; i++) array[i] = get(i);
@@ -261,7 +261,7 @@ void xptr_sequence::merge_sort(int prefixes_gen_size)
     int str_len = 0;
     xptr p;
     n_dsc* dsc;
-    xptr *array = new xptr[merge_sort_elem];
+    xptr *array = se_new xptr[merge_sort_elem];
     bool got_prefixes_gen_size = (prefixes_gen_size < 0);
     if (got_prefixes_gen_size) 
     {

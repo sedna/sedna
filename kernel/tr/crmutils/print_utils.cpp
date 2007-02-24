@@ -135,7 +135,7 @@ void print_desc_block(xptr block, se_ostream& crmout)
 	node_blk_hdr* header= (node_blk_hdr*)XADDR(block);
 	shft size=((shft)(PAGE_SIZE-sizeof(node_blk_hdr)))/header->dsc_size;
 	t_item type=GETTYPE(header->snode);
-	bool *mark=new bool[size];
+	bool *mark=se_new bool[size];
     shft i = 0;
 	for (i=0;i<size;i++) mark[i]=true;
 	shft shift=header->free_first;
@@ -456,13 +456,13 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 					xml_ns* sns=((ns_dsc*)XADDR(child))->ns;
 					xm_nsp[str]=sns;
 					if (!att_ns) 
-						att_ns= new std::vector<ns_pair> ;
+						att_ns= se_new std::vector<ns_pair> ;
 					att_ns->push_back(str);
 					
 					if (nspt_pref.find(str.first)==
 					nspt_pref.end())
 					{
-						if (!pref_ns) pref_ns= new std::vector<std::string> ;
+						if (!pref_ns) pref_ns= se_new std::vector<std::string> ;
 						pref_ns->push_back(str.first);
 						nspt_pref.insert(str.first);
 					}
@@ -486,14 +486,14 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				ns_pair str=pref_to_str(scn->xmlns);
 				xm_nsp[str]=scn->xmlns;
 				if (!att_ns) 
-						att_ns= new std::vector<ns_pair> ;
+						att_ns= se_new std::vector<ns_pair> ;
 				att_ns->push_back(str);
 				printNameSpace(scn->xmlns,crmout,ptype);
 				std::string prf=prefix_to_str(scn->xmlns->prefix);
 				if (nspt_pref.find(prf)==
 					nspt_pref.end())
 				{
-					if (!pref_ns) pref_ns= new std::vector<std::string> ;
+					if (!pref_ns) pref_ns= se_new std::vector<std::string> ;
 					pref_ns->push_back(prf);
 					nspt_pref.insert(prf);
 
@@ -536,7 +536,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						if (nspt_pref.find(str.first)==nspt_pref.end())
 						{
 							xmn=sch->xmlns;							
-							if (!pref_ns)pref_ns= new std::vector<std::string>;
+							if (!pref_ns)pref_ns= se_new std::vector<std::string>;
 							pref_ns->push_back(str.first);
 							nspt_pref.insert(str.first);
 						}
@@ -546,7 +546,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						}						
 						xm_nsp[str]=xmn;
 						if (!att_ns) 
-							att_ns= new std::vector<ns_pair> ;
+							att_ns= se_new std::vector<ns_pair> ;
 						att_ns->push_back(str);
 						printNameSpace(xmn,crmout,ptype);					
 					}
@@ -1100,7 +1100,7 @@ static StrMatcher *escape_sm = NULL;
 static void make_escape_sm()
 {
 	//TODO: assert escape_sm == NULL
-	escape_sm = new StrMatcher();
+	escape_sm = se_new StrMatcher();
 	escape_sm->add_str("&", "&amp;", ~pat_attribute);
 	escape_sm->add_str("<", "&lt;", ~pat_attribute);
 	escape_sm->add_str(">", "&gt;", ~pat_attribute);

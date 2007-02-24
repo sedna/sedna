@@ -98,7 +98,7 @@ struct variable_context
     int size;				// size of context (number of producers in array)
     producer *producers;	// array of producers
 
-	variable_context(int _size_) : size(_size_) { size > 0 ? producers = new producer[size] : producers = NULL; }
+	variable_context(int _size_) : size(_size_) { size > 0 ? producers = se_new producer[size] : producers = NULL; }
     ~variable_context() { delete [] producers; }
 };
 
@@ -128,7 +128,7 @@ struct global_variable_context
     void set(int _size_) 
     { 
         size = _size_; 
-        producers = size > 0 ? new global_producer[size] : NULL; 
+        producers = size > 0 ? se_new global_producer[size] : NULL; 
     }
     void clear()
     {
@@ -175,7 +175,7 @@ struct function_context
     void set(int _size_) 
     { 
         size = _size_; 
-        fun_decls = size > 0 ? new function_declaration[size] : NULL; 
+        fun_decls = size > 0 ? se_new function_declaration[size] : NULL; 
     }
     void clear()
     {
@@ -315,15 +315,15 @@ public:
     {
         U_ASSERT(st_cxts_pos < st_cxts_num);
 
-        static_context *st_cxt = new static_context;
+        static_context *st_cxt = se_new static_context;
         st_cxts[st_cxts_pos++] = st_cxt;
         return st_cxt;
     }
 
     static dynamic_context *create_unmanaged(int _var_cxt_size_)
     {
-        unmanaged_st_cxt = new static_context;
-        return new dynamic_context(unmanaged_st_cxt, _var_cxt_size_);
+        unmanaged_st_cxt = se_new static_context;
+        return se_new dynamic_context(unmanaged_st_cxt, _var_cxt_size_);
     }
 
     static void destroy_unmanaged(dynamic_context *cxt)

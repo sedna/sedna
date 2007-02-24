@@ -32,7 +32,7 @@ PPTest::PPTest(dynamic_context *_cxt_,
 			PPIterator(_cxt_), seq(_seq_) 
 {
 	this->test_fun=&PPTest::checkTreeConsistency;
-	//sj=new SednaSearchJob(&seq);
+	//sj=se_new SednaSearchJob(&seq);
 	
 }
 PPTest::~PPTest()
@@ -141,13 +141,13 @@ void PPTest::next  (tuple &t)
 			if (command==1)
 			{
 				req_buf.set(tc);
-				sj=new SednaSearchJob(&seq);
+				sj=se_new SednaSearchJob(&seq);
 				sj->set_request(tc);
 			}
 			else if (command==2)
 			{
 				req_buf.set(tc);
-				sj=new SednaSearchJob();
+				sj=se_new SednaSearchJob();
 				sj->set_request(tc);
 				seq.op->next(t);
 				tc= t.cells[0];
@@ -182,7 +182,7 @@ bool PPTest::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 PPIterator* PPTest::copy(dynamic_context *_cxt_)
 {
 	PPTest *res ;
-	res = new PPTest(_cxt_, seq);
+	res = se_new PPTest(_cxt_, seq);
 	res->seq.op = seq.op->copy(_cxt_);
 	return res;
 }
@@ -203,8 +203,8 @@ bool is_same_root(xptr x, xptr y)
 /*
 bool PPTest::checkFT(xptr node)
 {
-	dtsSearchJob *searchJob = new dtsSearchJob;
-	dtsSearchResults *results = new dtsSearchResults();
+	dtsSearchJob *searchJob = se_new dtsSearchJob;
+	dtsSearchResults *results = se_new dtsSearchResults();
     searchJob->resultsHandle = results->getHandle();
 	//searchJob->pReportCallBack = SearchingCallback;
 	SampleDataSource sample(node) ;
@@ -222,8 +222,8 @@ bool PPTest::checkFT(xptr node)
 }
 int PPTest::checkFT(PPOpIn _seq_)
 {
-	dtsSearchJob *searchJob = new dtsSearchJob;
-	dtsSearchResults *results = new dtsSearchResults();
+	dtsSearchJob *searchJob = se_new dtsSearchJob;
+	dtsSearchResults *results = se_new dtsSearchResults();
     searchJob->resultsHandle = results->getHandle();
 	//searchJob->pReportCallBack = SearchingCallback;
 	SampleDataSource2 sample(_seq_) ;

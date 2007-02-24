@@ -75,7 +75,7 @@ void PPFnDocAvailable::next(tuple &t)
 
 PPIterator* PPFnDocAvailable::copy(dynamic_context *_cxt_)
 {
-    PPFnDocAvailable *res = new PPFnDocAvailable(_cxt_, doc_name_op);
+    PPFnDocAvailable *res = se_new PPFnDocAvailable(_cxt_, doc_name_op);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
     return res;
 }

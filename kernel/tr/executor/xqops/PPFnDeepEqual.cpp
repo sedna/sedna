@@ -264,7 +264,7 @@ void PPFnDeepEqual::next  (tuple &t)
 
 PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
 {
-    PPFnDeepEqual *res = new PPFnDeepEqual(_cxt_, child1, child2);
+    PPFnDeepEqual *res = se_new PPFnDeepEqual(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
 

@@ -114,7 +114,7 @@ void PPUnion::next  (tuple &t)
 
 PPIterator* PPUnion::copy(dynamic_context *_cxt_)
 {
-    PPUnion *res = new PPUnion(_cxt_, child1, child2);
+    PPUnion *res = se_new PPUnion(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
 

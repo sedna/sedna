@@ -75,8 +75,8 @@ void PPDocInCol::next(tuple &t)
         first_time = false;
 
         // Put lock on collection and check security
-		counted_ptr<db_entity> db_ent(new db_entity);
-        db_ent->name = new char[tc_col.get_strlen_mem() + 1];
+		counted_ptr<db_entity> db_ent(se_new db_entity);
+        db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
 		db_ent->type = dbe_collection;
         schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
@@ -101,7 +101,7 @@ void PPDocInCol::next(tuple &t)
 
 PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)
 {
-    PPDocInCol *res = new PPDocInCol(_cxt_, col_name_op, doc_name_op);
+    PPDocInCol *res = se_new PPDocInCol(_cxt_, col_name_op, doc_name_op);
     res->col_name_op.op = col_name_op.op->copy(_cxt_);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
     return res;
