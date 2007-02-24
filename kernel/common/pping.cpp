@@ -188,7 +188,7 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
 
     while (true)
     {
-        pping_serv_arg *pps_arg = new pping_serv_arg;
+        pping_serv_arg *pps_arg = se_new pping_serv_arg;
            
         //accept a call from a client
         pps_arg->pps = pps;

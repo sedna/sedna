@@ -33,7 +33,7 @@ void PPFilterEL::open  ()
 
     child.op->open();
     pos = 0;
-	s = new sorted_sequence(PPDDO::compare_less,PPDDO::get_size,PPDDO::serialize,PPDDO::serialize_2_blks,PPDDO::deserialize,PPDDO::deserialize_2_blks,NULL);
+	s = se_new sorted_sequence(PPDDO::compare_less,PPDDO::get_size,PPDDO::serialize,PPDDO::serialize_2_blks,PPDDO::deserialize,PPDDO::deserialize_2_blks,NULL);
 
 }
 
@@ -124,7 +124,7 @@ void PPFilterEL::next  (tuple &t)
 
 PPIterator* PPFilterEL::copy(dynamic_context *_cxt_)
 {
-    PPFilterEL *res = new PPFilterEL(_cxt_, child);
+    PPFilterEL *res = se_new PPFilterEL(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

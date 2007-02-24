@@ -23,7 +23,66 @@
 #ifndef SE_ALLOC_H
 #define SE_ALLOC_H
 
-//#define SE_MEMORY_MNG
+/// #define SE_MEMORY_MNG
+/// #define SE_MEMORY_TRACK
+
+#ifdef SE_MEMORY_TRACK
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void *track_malloc(usize_t size, const char* file, int line);
+extern void track_free(void *pointer);
+extern void *track_realloc(void *pointer, usize_t size, const char* file, int line);
+extern void DumpUnfreed();
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+
+inline void *operator new(usize_t size, const char *file, int line)
+{
+    return track_malloc(size, file, line);
+}
+inline void operator delete(void* p, const char *file, int line)
+{
+    track_free(p);
+}
+inline void operator delete(void* p)
+{
+    track_free(p);
+}
+inline void *operator new[](usize_t size, const char *file, int line)
+{
+    return track_malloc(size, file, line);
+}
+inline void operator delete[](void* p, const char *file, int line)
+{
+    track_free(p);
+}
+inline void operator delete[](void* p)
+{
+    track_free(p);
+}
+
+#define se_new                     new(__FILE__, __LINE__)
+#define se_new_cxt(cxt)            new(__FILE__, __LINE__)
+
+#endif
+
+#define se_delete(p)               delete(p)
+#define se_free(p)                 track_free(p)
+#define se_alloc(size)             track_malloc(size, __FILE__, __LINE__)
+#define se_realloc(pointer, size)  track_realloc(pointer, size, __FILE__, __LINE__)
+
+#define malloc(size)               track_malloc(size, __FILE__, __LINE__)
+#define free(pointer)              track_free(pointer)
+#define realloc(pointer, size)     track_realloc(pointer, size, __FILE__, __LINE__)
+
+#else
 
 #ifdef __cplusplus
 extern "C" {
@@ -246,7 +305,6 @@ inline void operator delete[](void* p)
 #define se_new_cxt(cxt)         new(cxt)
 #define se_delete(p)            __se_delete(p, NULL)
 
-#endif /* __cplusplus__ */
-
-
-#endif   /* SE_ALLOC_H */
+#endif   /* __cplusplus__   */
+#endif   /* SE_MEMORY_TRACK */
+#endif   /* SE_ALLOC_H      */

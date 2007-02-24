@@ -52,7 +52,7 @@ public:
     void next(tuple /*out*/ &t, var_c_id /*out*/ &id);
 
     fun_arg(const sequence_type *_st_, PPIterator *_child_) :
-            fcr(_st_, _child_), seq_filled(false) { s = new sequence(1); }
+            fcr(_st_, _child_), seq_filled(false) { s = se_new sequence(1); }
     ~fun_arg() { delete s; }
 };
 

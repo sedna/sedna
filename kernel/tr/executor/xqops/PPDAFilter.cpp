@@ -133,7 +133,7 @@ void PPDAFilter::next  (tuple &t)
 
 PPIterator* PPDAFilter::copy(dynamic_context *_cxt_)
 {
-    PPDAFilter *res = new PPDAFilter(_cxt_, child1, child2);
+    PPDAFilter *res = se_new PPDAFilter(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
 

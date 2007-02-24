@@ -53,7 +53,7 @@ void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 #endif
 
 #ifdef LOGICAL_LOG
-  tr_llmgr = new llmgr_core();
+  tr_llmgr = se_new llmgr_core();
   tr_llmgr->ll_log_open(logical_log_path, string(db_name), phys_log_mgr, rcv_active);
   tr_llmgr->ll_log_open_shared_mem();
   is_ll_on_session_initialized = true; 

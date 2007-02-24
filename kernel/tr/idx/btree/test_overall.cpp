@@ -76,7 +76,7 @@ void test_populate_btree_string(xptr &root) {
 	srand((unsigned)time( NULL ));
 
 	key.type=xs_string;
-	key.head=new char[max_key_size+1];
+	key.head=se_new char[max_key_size+1];
 	for (int i=0; i<key_num; i++) {
 		/* gen key */
 		generate_random_string(key_seed, buf, max_key_size);
@@ -126,7 +126,7 @@ void test_populate_btree_dictionary(xptr & root) {
 	int		tmp;
 	FILE*	f;
 	char	ch;
-	key.head = new char[1024];
+	key.head = se_new char[1024];
 	int		i=1;
 	int		exceptions_num=0;
 	char	tmpc[10];
@@ -194,7 +194,7 @@ void test_find_btree_key(xptr root) {
 	char		buf[1024];
 	key.type=xs_string;
 	key.size=7;
-	key.head = new char[7];
+	key.head = se_new char[7];
 	memcpy(key.head, "abdomen", 7);
 	bt_cursor	c=bt_find(root, &key);
 	if (c.bt_next_key()) {
@@ -215,7 +215,7 @@ void test_print_key_objects(xptr root) {
 
 	key.type=xs_string;
 	key.size=7;
-	key.head=new char[7];
+	key.head=se_new char[7];
 	memcpy(key.head, "abdomen", 7);
 	bt_cursor	c=bt_find(root, &key);
 	if (!c.is_null()) {
@@ -231,7 +231,7 @@ void test_delete_key(xptr root) {
 
 	key.type=xs_string;
 	key.size=7;
-	key.head=new char[7];
+	key.head=se_new char[7];
 	memcpy(key.head, "abdomen", 7);
 	
 	bt_delete(root, &key);
@@ -245,7 +245,7 @@ void test_delete_obj(xptr root) {
 
 	key.type=xs_string;
 	key.size=7;
-	key.head=new char[7];
+	key.head=se_new char[7];
 	memcpy(key.head, "abdomen", 7);
 	
 	bt_delete(root, &key, obj);
@@ -318,7 +318,7 @@ void main() {
 
         d_printf1("Initializing metadata...");
 #ifdef NO_PERSISTENCY
-		//metainfo_ptr= new metadata_cell*;
+		//metainfo_ptr= se_new metadata_cell*;
 		//*metainfo_ptr=NULL;
 #endif 
         init_metadata(&(entry_point->metadata), db_name);

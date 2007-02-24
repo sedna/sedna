@@ -327,7 +327,10 @@ int main(int argc, char **argv)
 
     try {
 
+#ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
+#endif
+
         if (! set_sedna_data(NULL))
             throw USER_EXCEPTION(SE4411);
 

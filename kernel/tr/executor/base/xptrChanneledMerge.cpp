@@ -66,7 +66,7 @@ xptrChanneledMerge::xptrChanneledMerge(next_node_fn _nodeFN_, bool _forward_):no
 xptrChanneledMerge::~xptrChanneledMerge()
 {
 	clear_merge ();
-	pers_sset<node_cell,unsigned short>::free(merge_tree);
+	pers_sset<node_cell,unsigned short>::sset_free(merge_tree);
 	scm_free(tmp_cell,false);
 }
 void xptrChanneledMerge::clear_merge  ()

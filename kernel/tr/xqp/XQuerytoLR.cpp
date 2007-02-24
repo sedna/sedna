@@ -46,7 +46,7 @@ SORAST* XQuerytoIR(const char* xquery){
 
   ANTLRTokenBuffer pipe(&scan);
 
-  ANTLRTokenPtr aToken = new ANTLRToken;
+  ANTLRTokenPtr aToken = se_new ANTLRToken;
 
   scan.setToken(mytoken(aToken));
 
@@ -151,14 +151,14 @@ StmntsArray* transform_stmnt2pr (string text_stmnt,
     {
         pr =  XQuerytoIR(text_stmnt.c_str());    
  
-        stmnt = new StmntsArray();
+        stmnt = se_new StmntsArray();
         stmnt = transformer(((SORAST*)(pr->down()))->getText(), type); 
         
         break;
     }
     case TL_POR:
     {
-        stmnt = new StmntsArray();
+        stmnt = se_new StmntsArray();
         stmnt = transformer(text_stmnt, type);
         break;
     }

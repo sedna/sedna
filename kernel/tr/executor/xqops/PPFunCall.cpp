@@ -250,10 +250,10 @@ void PPFunCall::next(tuple &t)
         if (args == NULL)
         {
 #endif
-            args = new fun_arg*[args_num];
+            args = se_new fun_arg*[args_num];
 
             for (i = 0; i < args_num; i++)
-                args[i] = new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
+                args[i] = se_new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
                                       ch_arr[i].op);
 #ifdef STRICT_FUNS
         }
@@ -274,7 +274,7 @@ void PPFunCall::next(tuple &t)
 #ifdef STRICT_FUNS
         if (new_cxt == NULL)
 #endif
-            new_cxt = new dynamic_context(fd.st_cxt, fd.cxt_size);
+            new_cxt = se_new dynamic_context(fd.st_cxt, fd.cxt_size);
 
 #ifdef STRICT_FUNS
         if (strict_mode)
@@ -316,7 +316,7 @@ void PPFunCall::next(tuple &t)
             {
                 new_cxt->var_cxt.producers[i].type = pt_lazy_complex;
                 new_cxt->var_cxt.producers[i].op = this;
-                new_cxt->var_cxt.producers[i].cvc = new complex_var_consumption;
+                new_cxt->var_cxt.producers[i].cvc = se_new complex_var_consumption;
                 new_cxt->var_cxt.producers[i].tuple_pos = 0;
             }
 
@@ -327,7 +327,7 @@ void PPFunCall::next(tuple &t)
         }
 #endif
 
-        body_fcr = new fun_conv_rules(&(fd.ret_st), body);
+        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body);
     }
 
 
@@ -345,7 +345,7 @@ void PPFunCall::next(tuple &t)
 
 PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
 {
-    PPFunCall *res = new PPFunCall(_cxt_, ch_arr, fn_id);
+    PPFunCall *res = se_new PPFunCall(_cxt_, ch_arr, fn_id);
 
     for (int i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
@@ -408,7 +408,7 @@ bool PPFunCall::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         {
             if (ch_s[i])
             { // result is strict
-                ch_arr[i].op = new PPSLStub(cxt, 
+                ch_arr[i].op = se_new PPSLStub(cxt, 
                                             ch_arr[i].op->copy(cxt), 
                                             (sequence*)(ch_r[i]));
             }
@@ -418,12 +418,12 @@ bool PPFunCall::result(PPIterator* cur, dynamic_context *cxt, void*& r)
             }
         }
 
-        r = new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
+        r = se_new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
         return false;
     }
 
 
-    variable_context *new_cxt = new variable_context(fd.cxt_size);
+    variable_context *new_cxt = se_new variable_context(fd.cxt_size);
 
     for (i = 0; i < fd.num; i++)
     {
@@ -438,12 +438,12 @@ bool PPFunCall::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     {
         for (i = 0; i < fd.num; i++)
         {
-            ch_arr[i].op = new PPSLStub(cxt, ch_arr[i].op->copy(cxt), (sequence*)(ch_r[i]));
+            ch_arr[i].op = se_new PPSLStub(cxt, ch_arr[i].op->copy(cxt), (sequence*)(ch_r[i]));
         }
 
         // !!! надо еще как-то передавать контекст и рюхать как он должен сохраняться
 
-        r = new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
+        r = se_new PPFunCall(cxt, ch_arr, ((PPFunCall*)cur)->fn_id);
         return false;
     }
 

@@ -41,7 +41,7 @@ void lockRead(node_blk_hdr* block)
 
 void init_local_lock_mgr(SSMMsg* _sm_server_)
 {
-  local_lock_mrg = new LocalLockMgr();
+  local_lock_mrg = se_new LocalLockMgr();
   local_lock_mrg->Init_LocalLockMgr(_sm_server_);
   is_init_lock_mgr = true;
 }

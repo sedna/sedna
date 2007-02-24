@@ -153,7 +153,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val
     cell &start = tbl[((__uint32)(XADDR(key)) & templ) >> right_zero_bits];
     if (start.is_present)
     {
-        add_cell * new_cell = new add_cell;
+        add_cell * new_cell = se_new add_cell;
         new_cell->key = key;
         new_cell->val = val;
         new_cell->next = start.next;

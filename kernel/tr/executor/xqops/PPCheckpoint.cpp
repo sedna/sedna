@@ -40,7 +40,7 @@ void PPCheckpoint::next (tuple &t)
 
 PPIterator* PPCheckpoint::copy(dynamic_context *_cxt_)
 {
-    PPCheckpoint *res = new PPCheckpoint(_cxt_);
+    PPCheckpoint *res = se_new PPCheckpoint(_cxt_);
     return res;
 }
 

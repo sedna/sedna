@@ -97,7 +97,7 @@ void PPDmNodeKind::next  (tuple &t)
 
 PPIterator* PPDmNodeKind::copy(dynamic_context *_cxt_)
 {
-    PPDmNodeKind *res = new PPDmNodeKind(_cxt_, child);
+    PPDmNodeKind *res = se_new PPDmNodeKind(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -114,7 +114,7 @@ bool PPDmNodeKind::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!nk_s) // if expression is not strict
     { // create PPDmNodeKind and transmit state
         child.op = (PPIterator*)nk_r;
-        r = new PPDmNodeKind(cxt, child);
+        r = se_new PPDmNodeKind(cxt, child);
         return false;
     }
 
@@ -128,25 +128,25 @@ bool PPDmNodeKind::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     switch (res)
     {
         case nk_document				: 
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "document"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "document"));
              return true;
         case nk_element					: 
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "element"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "element"));
              return true;
         case nk_attribute				: 
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "attribute"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "attribute"));
              return true;
         case nk_text					:
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "text"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "text"));
              return true;
         case nk_namespace				:
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "namespace"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "namespace"));
              return true;
         case nk_processing_instruction	:
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "processing-instruction"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "processing-instruction"));
              return true;
         case nk_comment					:
-             r = new sequence(tuple_cell::atomic_deep(xs_string, "comment"));
+             r = se_new sequence(tuple_cell::atomic_deep(xs_string, "comment"));
              return true;
         default							: 
              throw USER_EXCEPTION2(SE1003, "Unexpected value in fn:node-kind");
@@ -220,7 +220,7 @@ void PPFnNodeName::next  (tuple &t)
 
 PPIterator* PPFnNodeName::copy(dynamic_context *_cxt_)
 {
-    PPFnNodeName *res = new PPFnNodeName(_cxt_, child);
+    PPFnNodeName *res = se_new PPFnNodeName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -237,7 +237,7 @@ bool PPFnNodeName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!nn_s) // if expression is not strict
     { // create PPFnNodeName and transmit state
         child.op = (PPIterator*)nn_r;
-        r = new PPFnNodeName(cxt, child);
+        r = se_new PPFnNodeName(cxt, child);
         return false;
     }
 
@@ -246,7 +246,7 @@ bool PPFnNodeName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     const tuple_cell &tc = d_seq->get_00();
     if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
-    r = new sequence(dm_node_name(tc.get_node()));
+    r = se_new sequence(dm_node_name(tc.get_node()));
     return true;
 }
 
@@ -315,7 +315,7 @@ void PPFnNilled::next  (tuple &t)
 
 PPIterator* PPFnNilled::copy(dynamic_context *_cxt_)
 {
-    PPFnNilled *res = new PPFnNilled(_cxt_, child);
+    PPFnNilled *res = se_new PPFnNilled(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -396,7 +396,7 @@ void PPFnString::next  (tuple &t)
 
 PPIterator* PPFnString::copy(dynamic_context *_cxt_)
 {
-    PPFnString *res = new PPFnString(_cxt_, child);
+    PPFnString *res = se_new PPFnString(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -454,7 +454,7 @@ void PPFnData::next  (tuple &t)
 
 PPIterator* PPFnData::copy(dynamic_context *_cxt_)
 {
-    PPFnData *res = new PPFnData(_cxt_, child);
+    PPFnData *res = se_new PPFnData(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -530,7 +530,7 @@ void PPFnBaseURI::next  (tuple &t)
 
 PPIterator* PPFnBaseURI::copy(dynamic_context *_cxt_)
 {
-    PPFnBaseURI *res = new PPFnBaseURI(_cxt_, child);
+    PPFnBaseURI *res = se_new PPFnBaseURI(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -616,7 +616,7 @@ void PPFnDocumentURI::next  (tuple &t)
 
 PPIterator* PPFnDocumentURI::copy(dynamic_context *_cxt_)
 {
-    PPFnDocumentURI *res = new PPFnDocumentURI(_cxt_, child);
+    PPFnDocumentURI *res = se_new PPFnDocumentURI(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -669,7 +669,7 @@ void PPFnStaticBaseUri::next  (tuple &t)
 
 PPIterator* PPFnStaticBaseUri::copy(dynamic_context *_cxt_)
 {
-    PPFnStaticBaseUri *res = new PPFnStaticBaseUri(_cxt_);
+    PPFnStaticBaseUri *res = se_new PPFnStaticBaseUri(_cxt_);
     return res;
 }
 
@@ -717,7 +717,7 @@ void PPFnDefaultCollation::next  (tuple &t)
 
 PPIterator* PPFnDefaultCollation::copy(dynamic_context *_cxt_)
 {
-    PPFnDefaultCollation *res = new PPFnDefaultCollation(_cxt_);
+    PPFnDefaultCollation *res = se_new PPFnDefaultCollation(_cxt_);
     return res;
 }
 

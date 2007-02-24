@@ -126,18 +126,18 @@ PPIterator* PPPatMatch::copy(dynamic_context *_cxt_)
 	switch (ch_cnt)
 	{
 	case 2:
-		res = new PPPatMatch(_cxt_, seq1,seq2,pmt);
+		res = se_new PPPatMatch(_cxt_, seq1,seq2,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		break;
 	case 3:
-		res = new PPPatMatch(_cxt_, seq1,seq2,seq3,pmt);
+		res = se_new PPPatMatch(_cxt_, seq1,seq2,seq3,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		res->seq3.op = seq3.op->copy(_cxt_);
 		break;
 	case 4:
-		res = new PPPatMatch(_cxt_, seq1,seq2,seq3,seq4,pmt);
+		res = se_new PPPatMatch(_cxt_, seq1,seq2,seq3,seq4,pmt);
 		res->seq1.op = seq1.op->copy(_cxt_);
 		res->seq2.op = seq2.op->copy(_cxt_);
 		res->seq3.op = seq3.op->copy(_cxt_);

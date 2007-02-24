@@ -56,7 +56,7 @@ int SQLOptionGetBool(const char *value)
 static char *copy_attr_value(xptr attr)
 {
     tuple_cell tc = dm_string_value(attr);
-	char *value = new char[tc.get_strlen()+1];
+	char *value = se_new char[tc.get_strlen()+1];
     return tc.copy_string(value);
 }
 
@@ -119,7 +119,7 @@ bool SQLOptionParse(const tuple_cell &opt, char *&opt_name, char *&opt_value)
 
 SQLHandleManager::SQLHandleManager()
 {
-	sql_odbc_driver = new SQLODBCDriver();
+	sql_odbc_driver = se_new SQLODBCDriver();
 }
 
 SQLHandleManager::~SQLHandleManager()
@@ -195,7 +195,7 @@ bool PPFnSQLBase::checkBaseInitial()
 	if (firstBaseCons)
 	{
 		firstBaseCons = false;
-		sql_handle_manager = new SQLHandleManager();
+		sql_handle_manager = se_new SQLHandleManager();
 		return true;
 	}
 	else
@@ -317,7 +317,7 @@ void PPFnSQLConnect::next(tuple &t)
 		tmp = getStringParameter(arr[0]);
 		//connect_str		= tmp.get_str_mem();
 		connect_str_len	= strlen(tmp);
-		connect_str = new char[connect_str_len+1];
+		connect_str = se_new char[connect_str_len+1];
 		strncpy(connect_str, tmp, connect_str_len);
 		connect_str[connect_str_len] = 0;
 		
@@ -327,7 +327,7 @@ void PPFnSQLConnect::next(tuple &t)
 			tmp = getStringParameter(arr[1]);
 			//uid		= tmp.get_str_mem();
 			uid_len = strlen(tmp);
-			uid = new char[uid_len+1];
+			uid = se_new char[uid_len+1];
 			strncpy(uid, tmp, uid_len);
 			uid[uid_len] = 0;
 			
@@ -358,7 +358,7 @@ void PPFnSQLConnect::next(tuple &t)
 
 PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
 {
-    PPFnSQLConnect *res = new PPFnSQLConnect(_cxt_, arr);
+    PPFnSQLConnect *res = se_new PPFnSQLConnect(_cxt_, arr);
 
 	for (int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
@@ -521,7 +521,7 @@ void PPFnSQLExecute::next(tuple &t)
 
 PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
 {
-	PPFnSQLExecute *res = new PPFnSQLExecute(_cxt_, arr, exec_update);
+	PPFnSQLExecute *res = se_new PPFnSQLExecute(_cxt_, arr, exec_update);
 
 	for (int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
@@ -635,9 +635,9 @@ PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLPrepare *res;
 	if (has_options)
-		res = new PPFnSQLPrepare(_cxt_, connection, statement, options);
+		res = se_new PPFnSQLPrepare(_cxt_, connection, statement, options);
 	else
-		res = new PPFnSQLPrepare(_cxt_, connection, statement);
+		res = se_new PPFnSQLPrepare(_cxt_, connection, statement);
 
 	res->connection.op = connection.op->copy(_cxt_);
 	res->statement.op = statement.op->copy(_cxt_);
@@ -710,7 +710,7 @@ void PPFnSQLClose::next(tuple &t)
 PPIterator * PPFnSQLClose::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLClose *res;
-	res = new PPFnSQLClose(_cxt_, connection);
+	res = se_new PPFnSQLClose(_cxt_, connection);
 
 	res->connection.op = connection.op->copy(_cxt_);
 
@@ -776,7 +776,7 @@ void PPFnSQLCommit::next(tuple &t)
 PPIterator * PPFnSQLCommit::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLCommit *res;
-	res = new PPFnSQLCommit(_cxt_, connection);
+	res = se_new PPFnSQLCommit(_cxt_, connection);
 
 	res->connection.op = connection.op->copy(_cxt_);
 
@@ -842,7 +842,7 @@ void PPFnSQLRollback::next(tuple &t)
 PPIterator * PPFnSQLRollback::copy(dynamic_context *_cxt_)
 {
 	PPFnSQLRollback *res;
-	res = new PPFnSQLRollback(_cxt_, connection);
+	res = se_new PPFnSQLRollback(_cxt_, connection);
 
 	res->connection.op = connection.op->copy(_cxt_);
 

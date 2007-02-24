@@ -645,7 +645,7 @@ void specify_xp_tree_strategy_line(std::ostream &s,
     counted_ptr<xp_tree_strategy> cur = strategy;
     while (cur->left.get()) cur = cur->left;
 
-    counted_ptr<xp_tree_strategy> *candidates = new counted_ptr<xp_tree_strategy>[levels];
+    counted_ptr<xp_tree_strategy> *candidates = se_new counted_ptr<xp_tree_strategy>[levels];
 
     while (true)
     {
@@ -677,7 +677,7 @@ void specify_xp_tree_strategy_line(std::ostream &s,
                     }
                     else
                     {
-                        cur->var.idxs.idxs = new int[n];
+                        cur->var.idxs.idxs = se_new int[n];
 
                         for (i = to_level, n = 0; i > from_level; --i, ++n)
                         {

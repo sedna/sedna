@@ -199,7 +199,7 @@ void command_line_client::init()
    cmd.length = 0;
    cl_cmds.push_front(cmd);
    
-   s = new se_stdlib_ostream(std::cout);
+   s = se_new se_stdlib_ostream(std::cout);
 //  u_ftime(&ttt2);
 //  cerr << "init!!!!!!!!!!!!: " << to_string(ttt2 - ttt1).c_str() << endl;
 }

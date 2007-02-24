@@ -53,7 +53,7 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 //        case xs_double			: tc = tuple_cell::atomic(*(double*)(key.head));
 //                                  break;
 //        case xs_string			: {
-//                                      char *tmp = new char[key.size + 1];
+//                                      char *tmp = se_new char[key.size + 1];
 //                                      memcpy(tmp, key.head, key.size);
 //                                      tmp[key.size] = '\0';
 //                                      tc = tuple_cell::atomic(xs_string, tmp);
@@ -184,8 +184,8 @@ counted_ptr<db_entity> find_entity(const char* title)
 	pers_sset<index_cell,unsigned short>::pers_sset_entry* idc=search_indexdata_cell(title);
     if (idc!=NULL)
 	{
-		db_entity *res = new db_entity;
-        res->name = new char[strlen(idc->obj->doc_name) + 1];
+		db_entity *res = se_new db_entity;
+        res->name = se_new char[strlen(idc->obj->doc_name) + 1];
         strcpy(res->name, idc->obj->doc_name);
 		res->type = (idc->obj->is_doc) ? dbe_document : dbe_collection;
 		index_sem_up();

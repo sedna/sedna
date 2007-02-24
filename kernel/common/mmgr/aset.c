@@ -61,6 +61,8 @@
 #include "common/sedna.h"
 #include "common/mmgr/memutils.h"
 
+#ifndef SE_MEMORY_TRACK
+
 /* Define this to detail debug alloc information */
 /* #define HAVE_ALLOCINFO */
 
@@ -1180,3 +1182,4 @@ AllocSetCheck(MemoryContext context)
 }
 
 #endif   /* MEMORY_CONTEXT_CHECKING */
+#endif   /* SE_MEMORY_TRACK */

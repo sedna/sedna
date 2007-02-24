@@ -54,12 +54,12 @@ void PPFnTrue::next  (tuple &t)
 
 PPIterator* PPFnTrue::copy(dynamic_context *_cxt_)
 {
-    return new PPFnTrue(_cxt_);
+    return se_new PPFnTrue(_cxt_);
 }
 
 bool PPFnTrue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
-    r = new sequence(fn_true());
+    r = se_new sequence(fn_true());
     return true;
 }
 
@@ -108,12 +108,12 @@ void PPFnFalse::next  (tuple &t)
 
 PPIterator* PPFnFalse::copy(dynamic_context *_cxt_)
 {
-    return new PPFnFalse(_cxt_);
+    return se_new PPFnFalse(_cxt_);
 }
 
 bool PPFnFalse::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
-    r = new sequence(fn_false());
+    r = se_new sequence(fn_false());
     return true;
 }
 
@@ -175,7 +175,7 @@ void PPFnNot::next  (tuple &t)
 
 PPIterator* PPFnNot::copy(dynamic_context *_cxt_)
 {
-    PPFnNot *res = new PPFnNot(_cxt_, child);
+    PPFnNot *res = se_new PPFnNot(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -192,11 +192,11 @@ bool PPFnNot::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!not_s) // if expression is not strict
     { // create PPFnNot and transmit state
         child.op = (PPIterator*)not_r;
-        r = new PPFnNot(cxt, child);
+        r = se_new PPFnNot(cxt, child);
         return false;
     }
 
-    r = new sequence(my_boolean_not_e(effective_boolean_value((sequence*)not_r)));
+    r = se_new sequence(my_boolean_not_e(effective_boolean_value((sequence*)not_r)));
     delete ((sequence*)not_r);
     return true;
 }
@@ -260,7 +260,7 @@ void PPFnBoolean::next  (tuple &t)
 
 PPIterator* PPFnBoolean::copy(dynamic_context *_cxt_)
 {
-    PPFnBoolean *res = new PPFnBoolean(_cxt_, child);
+    PPFnBoolean *res = se_new PPFnBoolean(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

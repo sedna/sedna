@@ -143,11 +143,11 @@ PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)
     PPFnCompare *res = NULL;
     if (collation_child.op)
     {
-        res = new PPFnCompare(_cxt_, str1_child, str2_child, is_codepoint_equal);
+        res = se_new PPFnCompare(_cxt_, str1_child, str2_child, is_codepoint_equal);
     }
     else
     {
-        res = new PPFnCompare(_cxt_, str1_child, str2_child, collation_child);
+        res = se_new PPFnCompare(_cxt_, str1_child, str2_child, collation_child);
     }                                
     res->str1_child.op = str1_child.op->copy(_cxt_);
     res->str2_child.op = str2_child.op->copy(_cxt_);

@@ -20,7 +20,7 @@ xp_op *make_xp_op(scheme_list *lst)
 
     string op_name = string(lst->at(0).internal.symb);
 
-    xp_op *op = new xp_op();
+    xp_op *op = se_new xp_op();
 
     if (op_name == "path")
     {
@@ -66,7 +66,7 @@ xp_op *make_xp_op(scheme_list *lst)
 
         op->type = (op_name == "and@" ? xp_op_and : xp_op_or);
         op->ops_size = lst->size() - 1;
-        op->ops = new xp_op* [op->ops_size];
+        op->ops = se_new xp_op* [op->ops_size];
 
         for (i = 1; i < lst->size(); i++)
         {
@@ -79,7 +79,7 @@ xp_op *make_xp_op(scheme_list *lst)
            ) throw USER_EXCEPTION2(SE1004, "506");
 
         op->type = xp_op_const;
-        op->tc = new tuple_cell(make_const(lst->at(1), lst->at(2)));
+        op->tc = se_new tuple_cell(make_const(lst->at(1), lst->at(2)));
     }
     else if (   op_name == "=@"
              || op_name == "!=@"
@@ -130,7 +130,7 @@ xpath_attr *make_xpath_attr(scheme_list *lst)
         || lst->at(3).type != SCM_LIST
        )    throw USER_EXCEPTION2(SE1004, "Wrong top level representation");
 
-    xpath_attr *xpath = new xpath_attr();
+    xpath_attr *xpath = se_new xpath_attr();
     xpath->db_ent = counted_ptr<db_entity>(make_db_entity(lst->at(1).internal.list));
     xpath->xp_preds_num = atoi(lst->at(2).internal.num);
     xpath->op = make_xp_op(lst->at(3).internal.list);
@@ -148,7 +148,7 @@ att_attr *make_att_attr(scheme_list *lst)
 
     if (strcmp(attr_type, "xpath") == 0)
     {
-        att_attr *res = new att_attr();
+        att_attr *res = se_new att_attr();
         res->type = att_xpath;
         res->xpath = make_xpath_attr(lst);
         return res;

@@ -59,11 +59,11 @@ void PPRetrieveDS::execute()
     tc = tuple_cell::make_sure_light_atomic(tc);
 
 
-    counted_ptr<db_entity> db_ent(new db_entity);
+    counted_ptr<db_entity> db_ent(se_new db_entity);
 
     if (type == dbe_document)
     { /// dbe_document
-    	db_ent->name = new char[tc.get_strlen_mem() + 1];
+    	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
     	strcpy(db_ent->name, tc.get_str_mem());
     	db_ent->type = dbe_document;
         auth_for_query(db_ent);
@@ -72,7 +72,7 @@ void PPRetrieveDS::execute()
     }
     else
     { /// dbe_collection
-    	db_ent->name = new char[tc.get_strlen_mem() + 1];
+    	db_ent->name = se_new char[tc.get_strlen_mem() + 1];
     	strcpy(db_ent->name, tc.get_str_mem());
     	db_ent->type = dbe_collection;
         auth_for_query(db_ent);

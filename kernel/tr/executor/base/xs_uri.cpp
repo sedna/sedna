@@ -313,7 +313,7 @@ char* remove_dot_segments(const char* path)
 {
     stack_of_int positions;
     int source_length = strlen(path);
-    char* output_buffer = new char[source_length + 1];
+    char* output_buffer = se_new char[source_length + 1];
     int output_position = 0;
 
     remover_state state = BEGIN;
@@ -422,7 +422,7 @@ char* remove_dot_segments(const char* path)
     char* result;
     if(output_position)
     {
-        result = new char[output_position + 1];
+        result = se_new char[output_position + 1];
         strcpy(result, output_buffer);
     }
     else result = NULL;
@@ -512,7 +512,7 @@ bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
              char* base_path = B.get_path();
              if(B.authority_defined && base_path == NULL)
              {
-                 temp_path = new char[strlen(R.get_path()) + 2];
+                 temp_path = se_new char[strlen(R.get_path()) + 2];
                  temp_path[0] = '/';
                  strcpy(temp_path + 1, R.get_path());
              }
@@ -532,7 +532,7 @@ bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
 
                  int base_path_fragment_length = last_slash_pos + 1;
 
-                 temp_path = new char[base_path_fragment_length + strlen(R.get_path()) + 1];
+                 temp_path = se_new char[base_path_fragment_length + strlen(R.get_path()) + 1];
                  if(base_path_fragment_length) 
                      memcpy(temp_path, base_path, base_path_fragment_length);
                  strcpy(temp_path + base_path_fragment_length, R.get_path());
@@ -628,7 +628,7 @@ Uri Uri::parse(const char* uri)
                 case 8 : res.fragment_defined  = true; continue;
             }
 
-            char* component = new char[group_len + 1];
+            char* component = se_new char[group_len + 1];
             memcpy(component, s, group_len);
             component[group_len] = '\0';
 

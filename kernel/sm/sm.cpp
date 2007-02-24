@@ -368,7 +368,9 @@ int main(int argc, char **argv)
 
     try {
 
+#ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
+#endif
 
         if (argc == 1)
         {

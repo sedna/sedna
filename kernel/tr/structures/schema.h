@@ -280,7 +280,7 @@ struct col_schema_node: public doc_schema_node
 	}
 	void inline free_map()
 	{
-		pers_sset<dn_metadata_cell,unsigned int>::free(this->metadata);
+		pers_sset<dn_metadata_cell,unsigned int>::sset_free(this->metadata);
 	}
 };
 struct temp_schema_node

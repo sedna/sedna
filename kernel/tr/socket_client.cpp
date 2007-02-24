@@ -429,7 +429,7 @@ void socket_client::get_session_parameters()
 
   query_type = TL_XQuery;
   
-  stream = new se_socketostream(Sock, p_ver);
+  stream = se_new se_socketostream(Sock, p_ver);
 }
 
 void socket_client::set_session_options(msg_struct *msg)

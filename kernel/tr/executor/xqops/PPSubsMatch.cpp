@@ -40,7 +40,7 @@ inline void*  create_iterator(tuple_cell& t, int&l)
 		else
 		{
 			l=t.get_strlen_vmm();
-			return new estr_iterator (l,t.get_str_vmm());
+			return se_new estr_iterator (l,t.get_str_vmm());
 		}
 	
 }
@@ -135,7 +135,7 @@ void PPSubsMatch::next  (tuple &t)
 			if (E_STR_NOT_IN_ONE_BLOCK(t1c))
 			{
 				//REALLY BIG STRING TO HEAP MEMORY
-				char* tmp=new char[t1c.get_strlen_vmm()+1];
+				char* tmp=se_new char[t1c.get_strlen_vmm()+1];
 				tmp[t1c.get_strlen_vmm()]='\0';
 				copy_text(tmp, t1c.get_str_vmm(), t1c.get_strlen_vmm());
 				t1c=tuple_cell::atomic(xs_string,tmp);
@@ -151,7 +151,7 @@ void PPSubsMatch::next  (tuple &t)
 			if (mark)
 			{
 				// memory copiing in case when both arguments in xptr address space
-				char* tmp=new char[t2c.get_strlen_vmm()+1];
+				char* tmp=se_new char[t2c.get_strlen_vmm()+1];
 				tmp[t2c.get_strlen_vmm()]='\0';
 				copy_text(tmp, t2c.get_str_vmm(), t2c.get_strlen_vmm());
 				t2c=tuple_cell::atomic(xs_string,tmp);
@@ -162,7 +162,7 @@ void PPSubsMatch::next  (tuple &t)
 				if (E_STR_NOT_IN_ONE_BLOCK(t2c))
 				{
 					//REALLY BIG STRING TO HEAP MEMORY
-					char* tmp=new char[t2c.get_strlen_vmm()+1];
+					char* tmp=se_new char[t2c.get_strlen_vmm()+1];
 					tmp[t2c.get_strlen_vmm()]='\0';
 					copy_text(tmp, t2c.get_str_vmm(), t2c.get_strlen_vmm());
 					t2c=tuple_cell::atomic(xs_string,tmp);
@@ -226,7 +226,7 @@ bool PPSubsMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 PPIterator* PPSubsMatch::copy(dynamic_context *_cxt_)
 {
 	PPSubsMatch *res ;
-	res = new PPSubsMatch(_cxt_, seq1,seq2,smt);
+	res = se_new PPSubsMatch(_cxt_, seq1,seq2,smt);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;

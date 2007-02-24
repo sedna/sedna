@@ -108,7 +108,7 @@ IntList<middle_significan_bits, right_zero_bits>::~IntList()
 template <int middle_significan_bits, int right_zero_bits>
 int IntList<middle_significan_bits, right_zero_bits>::push(int /*in*/ val)
 {
-    elem * tmp = new elem;
+    elem * tmp = se_new elem;
     tmp->val = val;
     tmp->pred = NULL;
     num++;

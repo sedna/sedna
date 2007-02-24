@@ -21,7 +21,7 @@ using namespace std;
    4) find given key/object pair in the page
 */
 void test_bt_leaf_find_obj() {
-	char*	pg  = new char[PAGE_SIZE];
+	char*	pg  = se_new char[PAGE_SIZE];
 	xptr	xpg;
 	xpg.layer=0;
 	xpg.addr=pg;
@@ -42,7 +42,7 @@ void test_bt_leaf_find_obj() {
 ->CASE: leaf, variable-size keys;
  */
 void test_bt_leaf_find_key() {
-	char*	pg  = new char[PAGE_SIZE];
+	char*	pg  = se_new char[PAGE_SIZE];
 	xptr	xpg;
 	xpg.layer=0;
 	xpg.addr=pg;
@@ -63,7 +63,7 @@ void test_bt_leaf_find_key() {
 ->CASE: non-leaf, variable-size keys;
  */
 void test_bt_nleaf_find_key() {
-	char*	pg  = new char[PAGE_SIZE];
+	char*	pg  = se_new char[PAGE_SIZE];
 	shft	key_idx;
 	bool	rc;
 	bt_key	key;

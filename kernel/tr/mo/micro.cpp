@@ -1119,7 +1119,7 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, in
 	}
 	if (result==XNULL) result= thirdElementAndTextInsertProcedure( left_sib, right_sib,  parent, NULL, 0,pr_ins,NULL);
 	//text value
-	char* z=new char[tsize+dsize+1];
+	char* z=se_new char[tsize+dsize+1];
 	memcpy(z,target,tsize);
 	z[tsize]=' ';
 	memcpy(z+tsize+1,data,dsize);
@@ -1475,7 +1475,7 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 				int size=text_node->size;
 				if (size<=PSTRMAXSIZE)
 				{
-					char* z=new char[size];
+					char* z=se_new char[size];
 					xptr ind_ptr=text_node->data;
 					if (ind_ptr!=XNULL)
 					{
@@ -1526,7 +1526,7 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 						}
 						else
 						{
-							char* z=new char[l_size];
+							char* z=se_new char[l_size];
 							xptr ind_ptr=text_node->data;
 							if (ind_ptr!=XNULL)
 							{
@@ -1905,7 +1905,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 			{
 				t_dsc* text_node=(t_dsc*)XADDR(right_sib);
 				int size=text_node->size;
-				char* z=new char[size];
+				char* z=se_new char[size];
 				xptr ind_ptr=text_node->data;
 				if (ind_ptr!=XNULL)
 				{

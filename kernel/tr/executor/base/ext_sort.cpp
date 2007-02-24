@@ -62,7 +62,7 @@ void ext_sort(sequence *s, const order_spec_list& osl, bool stable)
         // separate sequence s into parts, which can be sorted in main memory and sort them
         std::vector<sequence*> _seqs;
         int tuple_size = s->get_tuple_size();
-        sequence* cur = new sequence(tuple_size, 0, number_of_potentially_allocated_blocks, true);
+        sequence* cur = se_new sequence(tuple_size, 0, number_of_potentially_allocated_blocks, true);
         tuple t(s->get_tuple_size());
 
         int i = 0;
@@ -78,7 +78,7 @@ void ext_sort(sequence *s, const order_spec_list& osl, bool stable)
 
                 _seqs.push_back(cur);
 
-                cur = new sequence(tuple_size, 0, number_of_potentially_allocated_blocks, true);
+                cur = se_new sequence(tuple_size, 0, number_of_potentially_allocated_blocks, true);
                 if (cur->add(t) != 0)
                     throw USER_EXCEPTION2(SE1003, "Not enough memory to perform external sort");
             }
@@ -90,7 +90,7 @@ void ext_sort(sequence *s, const order_spec_list& osl, bool stable)
         s->clear();
         
         int seqs_number = _seqs.size();
-        merged_seq_top *seqs = new merged_seq_top[seqs_number];
+        merged_seq_top *seqs = se_new merged_seq_top[seqs_number];
         for (i = 0; i < seqs_number; ++i)
         {
             seqs[i].s = _seqs[i];

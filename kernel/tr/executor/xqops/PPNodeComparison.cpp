@@ -9,22 +9,22 @@
 PPNodeComparison* PPNodeComparison::PPGTNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,1);
+	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,1);
 }
 PPNodeComparison* PPNodeComparison::PPLTNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,-1);
+	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,-1);
 }
 PPNodeComparison* PPNodeComparison::PPEQNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,0);
+	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,0);
 }
 PPNodeComparison* PPNodeComparison::PPANNodeComparison(dynamic_context *_cxt_, 
 																PPOpIn _seq1_, PPOpIn _seq2_)
 { 
-	return new PPNodeComparison(_cxt_,_seq1_,_seq2_,2);
+	return se_new PPNodeComparison(_cxt_,_seq1_,_seq2_,2);
 }
 PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn _seq2_,int _type_): PPIterator(_cxt_),
                                     seq1(_seq1_),seq2(_seq2_),type(_type_)
@@ -33,7 +33,7 @@ PPNodeComparison::PPNodeComparison(dynamic_context *_cxt_,PPOpIn _seq1_, PPOpIn 
 PPIterator* PPNodeComparison::copy(dynamic_context *_cxt_)
 {
 	PPNodeComparison *res ;
-	res = new PPNodeComparison(_cxt_, seq1,seq2,type);
+	res = se_new PPNodeComparison(_cxt_, seq1,seq2,type);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;

@@ -121,7 +121,7 @@ void elim_disturb(void *base, size_t num, size_t width, compare_fun compare)
 
     if (pos == -1) return;
 
-    char * tmp = new char[width];
+    char * tmp = se_new char[width];
 
     if (growing)
     {
@@ -190,7 +190,7 @@ void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare)
     if (pos == 1) return;
 
     /* swap*/
-    char * tmp = new char[width];
+    char * tmp = se_new char[width];
 
     memcpy(tmp, base, width);
     memmove(base, (char*)base + width, width * (pos - 1));

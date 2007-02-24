@@ -26,7 +26,7 @@ public:
     typedef X element_type;
 
     explicit counted_ptr(X* p = 0) // allocate a new counter
-        : itsCounter(0) {if (p) itsCounter = new counter(p);}
+        : itsCounter(0) {if (p) itsCounter = se_new counter(p);}
     ~counted_ptr()
         {release();}
     counted_ptr(const counted_ptr& r) throw()

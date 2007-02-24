@@ -62,7 +62,7 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
 
 PPIterator* PPFnDateTimeFuncNoParam::copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFuncNoParam *res = new PPFnDateTimeFuncNoParam(_cxt_,dateTimeFunc);
+    PPFnDateTimeFuncNoParam *res = se_new PPFnDateTimeFuncNoParam(_cxt_,dateTimeFunc);
     return res;
 }
 
@@ -281,7 +281,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
 
 PPIterator* PPFnDateTimeFunc::copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc *res = new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc, expected_type);
+    PPFnDateTimeFunc *res = se_new PPFnDateTimeFunc(_cxt_, child,dateTimeFunc, expected_type);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -413,7 +413,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
 
 PPIterator* PPFnDateTimeFunc2Params::copy(dynamic_context *_cxt_)
 {
-    PPFnDateTimeFunc2Params *res = new PPFnDateTimeFunc2Params(_cxt_, child1, child2,dateTimeFunc);
+    PPFnDateTimeFunc2Params *res = se_new PPFnDateTimeFunc2Params(_cxt_, child1, child2,dateTimeFunc);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
 

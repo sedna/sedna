@@ -11,7 +11,7 @@
 #ifndef MEMNODES_H
 #define MEMNODES_H
 
-
+#ifndef SE_MEMORY_TRACK
 /*
  * MemoryContext
  *		A logical context in which memory allocations occur.
@@ -66,4 +66,5 @@ typedef struct MemoryContextData
 #define MemoryContextIsValid(context) \
 	((context) != NULL)
 
+#endif   /* SE_MEMORY_TRACK */
 #endif   /* MEMNODES_H */

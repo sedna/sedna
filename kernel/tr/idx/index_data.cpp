@@ -128,7 +128,7 @@ void index_cell::delete_from_index(xptr node, schema_node* accessor)
 void index_cell::delete_from_index(xptr node,const char* value, int size, schema_node* accessor)
 {
 	xptr acc=getNodeAncestorIndirectionByScheme(node,accessor);
-	char* z =new char[size+1];
+	char* z =se_new char[size+1];
 	memcpy(z,value,size);
 	z[size]='\0';
 	try
@@ -147,7 +147,7 @@ void index_cell::delete_from_index(xptr node,const char* value, int size, schema
 void index_cell::put_to_index(xptr node,const char* value, int size, schema_node* accessor)
 {
 	xptr acc=getNodeAncestorIndirectionByScheme(node,accessor);
-	char* z =new char[size+1];
+	char* z =se_new char[size+1];
 	memcpy(z,value,size);
 	z[size]='\0';
 	try

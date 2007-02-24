@@ -466,7 +466,7 @@ t_scmnodes_const execute_abs_path_expr(const schema_node *root, const PathExpr *
 
     // Eliminate duplicates
     int ar_size = scmnodes.size();
-    const schema_node** ar_scmnodes = new const schema_node*[ar_size];
+    const schema_node** ar_scmnodes = se_new const schema_node*[ar_size];
 
     int i = 0;
     t_scmnodes_const::iterator snit;
@@ -988,7 +988,7 @@ t_scmnodes_const execute_abs_path_expr(const schema_node *root, const PathExpr *
 
     // Eliminate duplicates
     int ar_size = scmnodes.size();
-    const schema_node** ar_scmnodes = new const schema_node*[ar_size];
+    const schema_node** ar_scmnodes = se_new const schema_node*[ar_size];
 
     int i = 0;
     t_scmnodes_const::iterator snit;

@@ -577,7 +577,7 @@ uncovered_xp_list popt_uncover_query_trees(counted_ptr<db_entity> db_ent, xp_op 
 
             for (int i = 0; i < nodes.size(); i++)
             {
-                counted_ptr<uncovered_xp> tmp(new uncovered_xp);
+                counted_ptr<uncovered_xp> tmp(se_new uncovered_xp);
                 tmp->scm = nodes[i];
                 tmp->op = op;
                 tmp->lower = *it;
@@ -592,7 +592,7 @@ uncovered_xp_list popt_uncover_query_trees(counted_ptr<db_entity> db_ent, xp_op 
         t_scmnodes nodes = execute_abs_path_expr(root, op->op1->path_expr); /// !!! optimize
         for (int i = 0; i < nodes.size(); i++)
         {
-            counted_ptr<uncovered_xp> tmp(new uncovered_xp);
+            counted_ptr<uncovered_xp> tmp(se_new uncovered_xp);
             tmp->scm = nodes[i];
             tmp->op = op;
             tmp->root = root;
@@ -621,7 +621,7 @@ int popt_build_preds(counted_ptr<uncovered_xp> uncovered_tree, xp_tree *tree, in
     }
 
     tree->levels[level].n = n;
-    tree->levels[level].preds = counted_ptr<xp_pred>(new xp_pred[n]);
+    tree->levels[level].preds = counted_ptr<xp_pred>(se_new xp_pred[n]);
     tree->levels[level].ncname_prefix = uncovered_tree->op->ncname_prefix;
     tree->levels[level].ncname_local = uncovered_tree->op->ncname_local;
 
@@ -702,7 +702,7 @@ tcost popt_optimize_level(xp_tree *tree, int level, tsel initial_sel, int pl, in
         tcost bottom_up_cost_revised = bottom_up_cost + top_down_cost;
 
 #ifdef POPT_DEBUG
-        counted_ptr<xp_pred_strategy> group1(new xp_pred_strategy[pr - pl]), group2(new xp_pred_strategy[pr - pl]);
+        counted_ptr<xp_pred_strategy> group1(se_new xp_pred_strategy[pr - pl]), group2(se_new xp_pred_strategy[pr - pl]);
         /// group1
         for (k = pl; k < j; k++)
         {
@@ -780,7 +780,7 @@ void popt_optimize_tree(xp_tree *tree)
     {
         if (strategy.get())
         {
-            counted_ptr<xp_tree_strategy> tmp_strategy(new xp_tree_strategy);
+            counted_ptr<xp_tree_strategy> tmp_strategy(se_new xp_tree_strategy);
             tmp_strategy->ts = xpts_down_filter;
             tmp_strategy->n = 0;
             tmp_strategy->left = strategy;
@@ -788,11 +788,11 @@ void popt_optimize_tree(xp_tree *tree)
             strategy = tmp_strategy;
         }
 
-        counted_ptr<xp_tree_strategy> tmp_strategy(new xp_tree_strategy);
+        counted_ptr<xp_tree_strategy> tmp_strategy(se_new xp_tree_strategy);
         tmp_strategy->ts = xpts_group;
         tmp_strategy->n = tree->levels[i].n;
         tmp_strategy->left = strategy;
-        tmp_strategy->group = counted_ptr<xp_pred_strategy>(new xp_pred_strategy[tmp_strategy->n]);
+        tmp_strategy->group = counted_ptr<xp_pred_strategy>(se_new xp_pred_strategy[tmp_strategy->n]);
         if (strategy.get()) strategy->up = tmp_strategy;
         strategy = tmp_strategy;
 
@@ -810,7 +810,7 @@ xpath_popt_plan popt_optimize_att_xpath_pred(counted_ptr<db_entity> db_ent, xp_o
     int n = uncovered_trees.size();
     if (n == 0) POPT_EOS;
 
-    counted_ptr<xp_tree> trees(new xp_tree[n]);
+    counted_ptr<xp_tree> trees(se_new xp_tree[n]);
 
     int i = 0;
     for (uncovered_xp_list::iterator it = uncovered_trees.begin(); 
@@ -819,7 +819,7 @@ xpath_popt_plan popt_optimize_att_xpath_pred(counted_ptr<db_entity> db_ent, xp_o
     {
         trees[i].cost = 0.0;
         trees[i].n = levels;
-        trees[i].levels = counted_ptr<xp_level>(new xp_level[levels]);
+        trees[i].levels = counted_ptr<xp_level>(se_new xp_level[levels]);
         trees[i].pn = popt_build_preds(*it, &(trees[i]), levels - 1);
 
         popt_optimize_tree(&(trees[i]));

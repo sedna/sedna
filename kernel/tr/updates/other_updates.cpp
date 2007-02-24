@@ -92,7 +92,7 @@ void rename(PPOpIn arg,const char* name)
 				int size=((a_dsc*)desc)->size;
 				if (size>0)
 				{
-					char *z=new char[size];
+					char *z=se_new char[size];
 					xptr ind_ptr=((a_dsc*)desc)->data;
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));

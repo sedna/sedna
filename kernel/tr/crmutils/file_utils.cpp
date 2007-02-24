@@ -98,7 +98,7 @@ void separateName( const char* triplet,const char*& uri, const char*& local,cons
 					{
 						if (maxnm!=0)delete [] nodenames;
 						maxnm=tripsize;
-						nodenames= new char[tripsize];
+						nodenames= se_new char[tripsize];
 					}
 		memcpy(nodenames,triplet,tripsize);	
 		uri=nodenames;
@@ -176,7 +176,7 @@ void processWP(const char** s, int& len)
 	{
 		if (wptailsize+len>maxwpsize)
 		{
-			char* z=new char[wptailsize+len];
+			char* z=se_new char[wptailsize+len];
 			if (wptailsize>0) memcpy(z,wptail,wptailsize);
 			memcpy(z+wptailsize,*s,len);
 			wptailsize+=len;
@@ -222,7 +222,7 @@ void processWP(const char** s, int& len)
 					{
 						if (maxwpsize!=0)delete [] wptail;
 						maxwpsize=wptailsize;
-						wptail= new char[maxwpsize];
+						wptail= se_new char[maxwpsize];
 					}
 					memcpy(wptail,d+size,wptailsize);					
 				}
@@ -231,7 +231,7 @@ void processWP(const char** s, int& len)
 			{
 				if (wptailsize+len>maxwpsize)
 				{
-					char* z=new char[wptailsize+len];
+					char* z=se_new char[wptailsize+len];
 					if (wptailsize>0) memcpy(z,wptail,wptailsize);
 					memcpy(z+wptailsize,*s,len);
 					wptailsize+=len;
@@ -260,7 +260,7 @@ void processWP(const char** s, int& len)
 				{
 					if (maxwpsize!=0)delete [] wptail;
 					maxwpsize=len;
-					wptail= new char[len];
+					wptail= se_new char[len];
 				}
 				memcpy(wptail,*s,len);	
 				wptailsize=len;
@@ -400,7 +400,7 @@ void data(void *userData, const char *s, int len)
 	{
 		if (wptailsize+len>maxwpsize)
 		{
-			char* z=new char[wptailsize+len];
+			char* z=se_new char[wptailsize+len];
 			if (wptailsize>0) memcpy(z,wptail,wptailsize);
 			memcpy(z+wptailsize,s,len);
 			wptailsize+=len;

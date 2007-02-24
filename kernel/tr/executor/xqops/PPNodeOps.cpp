@@ -86,7 +86,7 @@ void PPFnName::next  (tuple &t)
 
 PPIterator* PPFnName::copy(dynamic_context *_cxt_)
 {
-    PPFnName *res = new PPFnName(_cxt_, child);
+    PPFnName *res = se_new PPFnName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -103,14 +103,14 @@ bool PPFnName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!nn_s) // if expression is not strict
     { // create PPFnName and transmit state
         child.op = (PPIterator*)nn_r;
-        r = new PPFnName(cxt, child);
+        r = se_new PPFnName(cxt, child);
         return false;
     }
 
     sequence *d_seq = (sequence*)nn_r;
     if (d_seq->size() == 0)
     {
-        r = new sequence(EMPTY_STRING_TC);
+        r = se_new sequence(EMPTY_STRING_TC);
         return true;
     }
 
@@ -119,7 +119,7 @@ bool PPFnName::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!(tc.is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
 
     tc.set_xtype(xs_string); // !!! dangerous
-    r = new sequence(dm_node_name(tc.get_node()));
+    r = se_new sequence(dm_node_name(tc.get_node()));
     return true;
 }
 
@@ -199,7 +199,7 @@ void PPFnLocalName::next  (tuple &t)
 
 PPIterator* PPFnLocalName::copy(dynamic_context *_cxt_)
 {
-    PPFnLocalName *res = new PPFnLocalName(_cxt_, child);
+    PPFnLocalName *res = se_new PPFnLocalName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -285,7 +285,7 @@ void PPFnNamespaceUri::next  (tuple &t)
 
 PPIterator* PPFnNamespaceUri::copy(dynamic_context *_cxt_)
 {
-    PPFnNamespaceUri *res = new PPFnNamespaceUri(_cxt_, child);
+    PPFnNamespaceUri *res = se_new PPFnNamespaceUri(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -377,7 +377,7 @@ void PPFnNumber::next(tuple &t)
 
 PPIterator* PPFnNumber::copy(dynamic_context *_cxt_)
 {
-    PPFnNumber *res = new PPFnNumber(_cxt_, child);
+    PPFnNumber *res = se_new PPFnNumber(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -451,7 +451,7 @@ void PPFnRoot::next  (tuple &t)
 
 PPIterator* PPFnRoot::copy(dynamic_context *_cxt_)
 {
-    PPFnRoot *res = new PPFnRoot(_cxt_, child);
+    PPFnRoot *res = se_new PPFnRoot(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
 
     return res;

@@ -99,8 +99,9 @@ int main(int argc, char** argv)
     bool is_pps_close = true;
 
     try {
+#ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
-
+#endif
         RenameLastSoftFaultDir();
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors

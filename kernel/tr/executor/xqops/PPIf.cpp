@@ -100,7 +100,7 @@ void PPIf::next(tuple &t)
 
 PPIterator* PPIf::copy(dynamic_context *_cxt_)
 {
-    PPIf *res = new PPIf(_cxt_, if_child, then_child, else_child);
+    PPIf *res = se_new PPIf(_cxt_, if_child, then_child, else_child);
     res->if_child.op   = if_child.op->copy(_cxt_);
     res->then_child.op = then_child.op->copy(_cxt_);
     res->else_child.op = else_child.op->copy(_cxt_);
@@ -121,7 +121,7 @@ bool PPIf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         if_child.op = (PPIterator*)if_r;
         then_child.op = then_child.op->copy(cxt);
         else_child.op = else_child.op->copy(cxt);
-        PPIf *res_op = new PPIf(cxt, if_child, then_child, else_child);
+        PPIf *res_op = se_new PPIf(cxt, if_child, then_child, else_child);
 
         r = res_op;
         return false;
@@ -152,7 +152,7 @@ bool PPIf::result(PPIterator* cur, dynamic_context *cxt, void*& r)
             else_child.op = (PPIterator*)data_r;
             data_child = else_child.op;
         }
-        PPIf *res_op = new PPIf(cxt, if_child, then_child, else_child, data_child);
+        PPIf *res_op = se_new PPIf(cxt, if_child, then_child, else_child, data_child);
 
         r = res_op;
         return false;

@@ -77,8 +77,8 @@ void PPDebug::next(tuple &t)
 PPIterator* PPDebug::copy(dynamic_context *_cxt_)
 {
     PPDebug *res = child_info.get() != NULL ? 
-                   new PPDebug(_cxt_, child, child_name, child_info) : 
-                   new PPDebug(_cxt_, child, child_name);
+                   se_new PPDebug(_cxt_, child, child_name, child_info) : 
+                   se_new PPDebug(_cxt_, child, child_name);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }

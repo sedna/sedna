@@ -87,7 +87,7 @@ void get_schema(xptr node,const char* title)
 }
 void get_document_full (xptr node,const char* title)
 {
-	char* docn=new char[11+strlen(title)];
+	char* docn=se_new char[11+strlen(title)];
 	docn[0]='\0';
 	strcat(docn,"$DOCUMENT_");
 	strcat(docn,title);
@@ -101,7 +101,7 @@ void get_document_full (xptr node,const char* title)
 }
 void get_collection_full (xptr node,const char* title)
 {
-	char* docn=new char[11+strlen(title)];
+	char* docn=se_new char[11+strlen(title)];
 	docn[0]='\0';
 	strcat(docn,"$DOCUMENT_");
 	strcat(docn,title);
@@ -451,7 +451,7 @@ schema_node* get_system_doc(const char* title)
 	nid_create_root(nodex,false);
 	CHECKP(nodex);
 	(*func)(nodex,param);
-	if (sys_schema==NULL) sys_schema=new std::vector<schema_node*>;
+	if (sys_schema==NULL) sys_schema=se_new std::vector<schema_node*>;
 	sys_schema->push_back(scm);
 	return scm;
 }

@@ -61,7 +61,7 @@ PPLet::~PPLet()
 
 void PPLet::open ()
 {
-    s = new sequence_tmp(source_child.ts);
+    s = se_new sequence_tmp(source_child.ts);
 
     source_child.op->open();
     seq_filled = false;
@@ -73,7 +73,7 @@ void PPLet::open ()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_complex;
         p.op = this;
-        p.cvc = new complex_var_consumption;
+        p.cvc = se_new complex_var_consumption;
         p.tuple_pos = i;
     }
 
@@ -127,8 +127,8 @@ void PPLet::next(tuple &t)
 
 PPIterator* PPLet::copy(dynamic_context *_cxt_)
 {
-    PPLet *res = need_to_check_type ? new PPLet(_cxt_, var_dscs, source_child, data_child, st)
-                                    : new PPLet(_cxt_, var_dscs, source_child, data_child);
+    PPLet *res = need_to_check_type ? se_new PPLet(_cxt_, var_dscs, source_child, data_child, st)
+                                    : se_new PPLet(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
     return res;
@@ -209,7 +209,7 @@ bool PPLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     { // create PPLet and transmit state
         source_child.op = (PPIterator*)source_r;
         data_child.op = data_child.op->copy(cxt);
-        PPLet *res_op = new PPLet(cxt, ((PPLet*)cur)->var_dscs, source_child, data_child);
+        PPLet *res_op = se_new PPLet(cxt, ((PPLet*)cur)->var_dscs, source_child, data_child);
 
         r = res_op;
         return false;
@@ -224,10 +224,10 @@ bool PPLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         producer &p = cxt->producers[var_dscs[i]];
         p.type = pt_tuple;
         p.tuple_pos = i;
-        p.t = new tuple(1);
+        p.t = se_new tuple(1);
     }
 
-    sequence *res_seq = new sequence(1);
+    sequence *res_seq = se_new sequence(1);
     tuple source_t(var_dscs.size());
     tuple data_t(1);
     sequence::iterator source_it; 
@@ -246,12 +246,12 @@ bool PPLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 
         if (!data_s) // if data is not strict
         { // create PPLet and transmit state
-            // create new lazy source child
+            // create se_new lazy source child
             PPIterator *new_source_child = source_child.op->copy(cxt);
 
-            // create new source sequence - the rest of the source sequence
+            // create se_new source sequence - the rest of the source sequence
             sequence::iterator ssit = source_it;
-            sequence *new_source_seq = new sequence(var_dscs.size());
+            sequence *new_source_seq = se_new sequence(var_dscs.size());
 
             for (++ssit; ssit != source_seq->end(); ++ssit)
             {
@@ -261,15 +261,15 @@ bool PPLet::result(PPIterator* cur, dynamic_context *cxt, void*& r)
             delete source_seq;
 
             // create stub for source
-            PPSLStub *lower_stub = new PPSLStub(cxt, new_source_child, new_source_seq);
+            PPSLStub *lower_stub = se_new PPSLStub(cxt, new_source_child, new_source_seq);
 
 
             source_child.op = lower_stub;
             data_child.op = (PPIterator*)data_r;
-            PPLet *ret_op = new PPLet(cxt, ((PPLet*)cur)->var_dscs, source_child, data_child, source_t);
+            PPLet *ret_op = se_new PPLet(cxt, ((PPLet*)cur)->var_dscs, source_child, data_child, source_t);
 
             // create stub for PPLet
-            PPSResLStub *upper_stub = new PPSResLStub(cxt, ret_op, res_seq);
+            PPSResLStub *upper_stub = se_new PPSResLStub(cxt, ret_op, res_seq);
 
             r = upper_stub;
             return false;

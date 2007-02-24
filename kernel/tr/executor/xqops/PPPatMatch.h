@@ -67,7 +67,7 @@ public:
 	static PPPatMatch* PPFnMatch(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_)
 	{
-		return new PPPatMatch(_cxt_,_seq1_,_seq2_,pm_match);
+		return se_new PPPatMatch(_cxt_,_seq1_,_seq2_,pm_match);
 	}
 };
 

@@ -40,7 +40,7 @@ public:
     tuple_cell next(dynamic_context *cxt) { return uf(child->next(cxt)); }
     //tuple_cell result(/**/std::vector<void*>& v/**/) { return uf(child->result(/**/v/**/)); }
     void reopen() { child->reopen(); }
-    CalcOp* copy(arr_of_PPOpIn *children) { return new UnaryOp(child->copy(children), uf); }
+    CalcOp* copy(arr_of_PPOpIn *children) { return se_new UnaryOp(child->copy(children), uf); }
 };
 
 class BinaryOp : public CalcOp
@@ -75,7 +75,7 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOp *res = new BinaryOp(child1, child2, bf); 
+        BinaryOp *res = se_new BinaryOp(child1, child2, bf); 
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
@@ -114,7 +114,7 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOpCollation *res = new BinaryOpCollation(child1, child2, bf); 
+        BinaryOpCollation *res = se_new BinaryOpCollation(child1, child2, bf); 
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
@@ -163,7 +163,7 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOpAnd *res = new BinaryOpAnd(child1, child2); 
+        BinaryOpAnd *res = se_new BinaryOpAnd(child1, child2); 
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
@@ -213,7 +213,7 @@ public:
     void reopen() { child1->reopen(); child2->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *children) 
     { 
-        BinaryOpOr *res = new BinaryOpOr(child1, child2); 
+        BinaryOpOr *res = se_new BinaryOpOr(child1, child2); 
         res->child1 = child1->copy(children);
         res->child2 = child2->copy(children);
         return res;
@@ -258,7 +258,7 @@ public:
     void reopen() { children->at(i).op->reopen(); }
     CalcOp* copy(arr_of_PPOpIn *_children_) 
     { 
-        LeafAtomOp *res = new LeafAtomOp(_children_, i); 
+        LeafAtomOp *res = se_new LeafAtomOp(_children_, i); 
         return res;
     }
 };
@@ -292,7 +292,7 @@ public:
     void reopen() { children->at(i).op->reopen(); eos_reached = true; }
     CalcOp* copy(arr_of_PPOpIn *_children_) 
     { 
-        LeafEffectBoolOp *res = new LeafEffectBoolOp(_children_, i);
+        LeafEffectBoolOp *res = se_new LeafEffectBoolOp(_children_, i);
         return res;
     }
 };

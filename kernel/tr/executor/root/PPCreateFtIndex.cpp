@@ -88,7 +88,7 @@ void separateLocalAndPrefix(char*& prefix,const char*& qname);
 std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rules_vector(PPOpIn *cust_rules, dynamic_context *cxt)
 {
 	tuple t(1);
-	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > * res = new std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >();
+	std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > * res = se_new std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >();
 	while (1)
 	{
 		tuple_cell tc;
@@ -110,7 +110,7 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> > *make_cust_rul
 			ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 			delete prefix;			
 		}
-		char* name = new char[strlen(qname)+1];
+		char* name = se_new char[strlen(qname)+1];
 		strcpy(name, qname);
 		std::pair<xml_ns*,char*> tag(ns, name);
 	

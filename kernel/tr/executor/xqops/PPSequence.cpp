@@ -74,7 +74,7 @@ void PPSequence::next(tuple &t)
 
 PPIterator* PPSequence::copy(dynamic_context *_cxt_)
 {
-    PPSequence *res = new PPSequence(_cxt_, ch_arr);
+    PPSequence *res = se_new PPSequence(_cxt_, ch_arr);
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);
@@ -104,7 +104,7 @@ bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
         {
             if (ch_s[i])
             { // result is strict
-                ch_arr[i].op = new PPSLStub(cxt, 
+                ch_arr[i].op = se_new PPSLStub(cxt, 
                                             ch_arr[i].op->copy(cxt), 
                                             (sequence*)(ch_r[i]));
                 
@@ -115,11 +115,11 @@ bool PPSequence::result(PPIterator* cur, dynamic_context *cxt, void*& r)
             }
         }
 
-        r = new PPSequence(cxt, ch_arr);
+        r = se_new PPSequence(cxt, ch_arr);
         return false;
     }
 
-    sequence* res_seq = new sequence(ch_arr[0].ts);
+    sequence* res_seq = se_new sequence(ch_arr[0].ts);
     tuple t(ch_arr[0].ts);
 
     for (i = 0; i < ch_arr.size(); i++)

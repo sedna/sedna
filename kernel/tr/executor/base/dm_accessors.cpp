@@ -78,7 +78,7 @@ tuple_cell dm_node_name(xptr node)
                                   xptr data = pi->data;
 							      CHECKP(data);
 							      data = PSTRDEREF(data);
-                                  char *t = new char[target + 1];
+                                  char *t = se_new char[target + 1];
 							      t[target] = '\0';
                                   estr_copy_to_buffer(t, data, target);
                                   char *qname = xs_QName_create((xml_ns*)NULL, t, malloc);
@@ -118,7 +118,7 @@ tuple_cell se_node_local_name(xptr node)
                                   xptr data = pi->data;
 							      CHECKP(data);
 							      data = PSTRDEREF(data);
-                                  char *t = new char[target + 1];
+                                  char *t = se_new char[target + 1];
 							      t[target] = '\0';
                                   estr_copy_to_buffer(t, data, target);
                                   return tuple_cell::atomic(xs_NCName, t);
@@ -506,7 +506,7 @@ tuple_cell dm_document_uri(xptr node)
 								  if (size == 0) return tuple_cell::eos();
 							      CHECKP(data);
 							      data = PSTRDEREF(data);
-                                  char *t = new char[size + 1];
+                                  char *t = se_new char[size + 1];
 							      t[size] = '\0';
                                   estr_copy_to_buffer(t, data, size);
                                   return tuple_cell::atomic(xs_anyURI, t);

@@ -112,7 +112,7 @@ void PPFnError::next  (tuple &t)
 
 PPIterator* PPFnError::copy(dynamic_context *_cxt_)
 {
-    PPFnError *res = new PPFnError(_cxt_, child_err, child_descr, child_obj);
+    PPFnError *res = se_new PPFnError(_cxt_, child_err, child_descr, child_obj);
     if (child_err.op)   res->child_err.op   = child_err.op->copy(_cxt_);
     if (child_descr.op) res->child_descr.op = child_descr.op->copy(_cxt_);
     if (child_obj.op)   res->child_obj.op   = child_obj.op->copy(_cxt_);
@@ -202,7 +202,7 @@ void PPFnTrace::next(tuple &t)
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
 {
-    PPFnTrace *res = new PPFnTrace(_cxt_, value_child, label_child);
+    PPFnTrace *res = se_new PPFnTrace(_cxt_, value_child, label_child);
     res->value_child.op = value_child.op->copy(_cxt_);
     res->label_child.op = label_child.op->copy(_cxt_);
 

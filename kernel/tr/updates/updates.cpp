@@ -75,7 +75,7 @@ void update_insert_sequence(xptr node,ft_index_cell* icell)
 	std::map<ft_index_cell*,xptr_sequence*>::iterator it=inserted_nodes.find(icell);
 	if (it==inserted_nodes.end())
 	{
-		xptr_sequence* seq=new xptr_sequence();
+		xptr_sequence* seq=se_new xptr_sequence();
 		seq->add(node);
 		inserted_nodes[icell]=seq;
 	}
@@ -88,7 +88,7 @@ void update_update_sequence(xptr node,ft_index_cell* icell)
 	std::map<ft_index_cell*,xptr_sequence*>::iterator it=updated_nodes.find(icell);
 	if (it==updated_nodes.end())
 	{
-		xptr_sequence* seq=new xptr_sequence();
+		xptr_sequence* seq=se_new xptr_sequence();
 		seq->add(node);
 		updated_nodes[icell]=seq;
 	}
@@ -101,7 +101,7 @@ void update_delete_sequence(xptr node,ft_index_cell* icell)
 	std::map<ft_index_cell*,xptr_sequence*>::iterator it=deleted_nodes.find(icell);
 	if (it==deleted_nodes.end())
 	{
-		xptr_sequence* seq=new xptr_sequence();
+		xptr_sequence* seq=se_new xptr_sequence();
 		seq->add(node);
 		deleted_nodes[icell]=seq;
 	}
@@ -233,7 +233,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			//char *z=new char[size];
+			//char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -250,7 +250,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -267,7 +267,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -285,7 +285,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		 int tsize=((pi_dsc*)XADDR(node))->target;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -302,7 +302,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		int size=((t_dsc*)XADDR(node))->size;
 		if (size>0)
 		{
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			xmlscm_type typ=((a_dsc*)XADDR(node))->type;
 			char* nam= GETNAME(GETSCHEMENODEX(node));
@@ -366,7 +366,7 @@ xptr copy_content(xptr newnode,xptr node,xptr left,bool save_types)
 void swizzleNamespace (xml_ns*& ns,upd_ns_map*& updmap)
 {
 	if (updmap==NULL)
-		updmap= new upd_ns_map;
+		updmap= se_new upd_ns_map;
 	upd_ns_map::const_iterator it=updmap->find(ns);
 	if (it==updmap->end())
 	{
@@ -437,7 +437,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			//char *z=new char[size];
+			//char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -455,7 +455,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -472,7 +472,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -490,7 +490,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		 int tsize=((pi_dsc*)XADDR(node))->target;
 		 if (size>0)
 		 {
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			CHECKP(ind_ptr);
 			shft shift= *((shft*)XADDR(ind_ptr));
@@ -509,7 +509,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		int size=((t_dsc*)XADDR(node))->size;
 		if (size>0)
 		{
-			char *z=new char[size];
+			char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
 			xmlscm_type typ=((a_dsc*)XADDR(node))->type;
 			char* nam= GETNAME(GETSCHEMENODEX(node));

@@ -310,7 +310,7 @@ public:
     // for variable size light atomics (with deep copy)
     tuple_cell(xmlscm_type _xtype_, const char *_str_, bool)
     {
-        char *tmp = new char[strlen(_str_) + 1];
+        char *tmp = se_new char[strlen(_str_) + 1];
         strcpy(tmp, _str_);
         t = tc_light_atomic_var_size | _xtype_;
         data.x = data.y = (__int64)0;
@@ -471,7 +471,7 @@ struct tuple
     bool eos;			// is eos?
 
     tuple() : cells_number(0), cells(NULL), eos(true) {}
-    tuple(int _n_) : cells_number(_n_), eos(false) { cells = new tuple_cell[_n_]; }
+    tuple(int _n_) : cells_number(_n_), eos(false) { cells = se_new tuple_cell[_n_]; }
     tuple(const tuple &t);
     tuple &operator=(const tuple& t);
 

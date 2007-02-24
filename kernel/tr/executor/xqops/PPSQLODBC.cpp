@@ -56,7 +56,7 @@ typedef std::vector<bool> lock_mem_result_t;
 
 static lock_mem_result_t *lock_mem()
 {
-	lock_mem_result_t *r = new lock_mem_result_t(lock_mem_spots_count);
+	lock_mem_result_t *r = se_new lock_mem_result_t(lock_mem_spots_count);
 
 	if (r != NULL)
 	{
@@ -348,7 +348,7 @@ SQLODBCExecutor* SQLODBCExecutor::create(SQLHDBC hdbc)
 	if (!result_ok(rc))
 		return NULL;
 
-	return new SQLODBCExecutor(hdbc, hstmt);
+	return se_new SQLODBCExecutor(hdbc, hstmt);
 }
 
 inline void SQLODBCExecutor::set_param_type(int i, SQLSMALLINT vtype, SQLSMALLINT ptype, SQLUINTEGER colsize)
@@ -413,7 +413,7 @@ void SQLODBCExecutor::prepare_results()
 	}
 
 	results_count = num_cols;
-	results = new SQLODBCResult[results_count];
+	results = se_new SQLODBCResult[results_count];
 
 	for (SQLSMALLINT i = 0; i < num_cols; i++)
 	{
@@ -430,7 +430,7 @@ void SQLODBCExecutor::prepare_results()
 	if (res_buf == NULL)
 	{
 		res_buf_size = 128;
-		res_buf = new char[res_buf_size];
+		res_buf = se_new char[res_buf_size];
 	}
 }
 
@@ -505,7 +505,7 @@ tuple_cell getStringOrNullParameter(PPOpIn content)
 		content.op->next(value);
 	}
 	charsize--;
-	char* tmp=new char[charsize];
+	char* tmp=se_new char[charsize];
 	int shift=0;
 	for (int i=0;i<at_vals.size();i++)
 	{
@@ -681,7 +681,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 			if (new_buf_size > MAX_ATTR_LENGTH)
 				new_buf_size = MAX_ATTR_LENGTH;
 			//realloc buffer
-			char *new_buf = new char[new_buf_size];
+			char *new_buf = se_new char[new_buf_size];
 			//XXX - use stl??
 			for (int tmp = 0; tmp < res_buf_size; tmp++)
 				new_buf[tmp] = res_buf[tmp];
@@ -766,7 +766,7 @@ SQLHandle* SQLODBCConnection::prepare_stmt(char *query, int query_len, PPOpIn *o
 
 	executor->prepare(query, query_len, options);
 
-	SQLODBCPreparedStmt *stmt = new SQLODBCPreparedStmt(this, executor);
+	SQLODBCPreparedStmt *stmt = se_new SQLODBCPreparedStmt(this, executor);
 	prepared_stmts.push_back(stmt);
 
 	return stmt;
@@ -1027,7 +1027,7 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 		}
 	}
 
-	return new SQLODBCConnection(hdbc);
+	return se_new SQLODBCConnection(hdbc);
 }
 
 

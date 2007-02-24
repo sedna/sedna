@@ -279,23 +279,23 @@ PPIterator* PPIndexScan::copy(dynamic_context *_cxt_)
 
     if (child.op && child2.op)
     {
-        res = new PPIndexScan(_cxt_, index_name, child, child2, isc);
+        res = se_new PPIndexScan(_cxt_, index_name, child, child2, isc);
         res->child.op = child.op->copy(_cxt_);
         res->child2.op = child2.op->copy(_cxt_);
     }
     else if (child.op)
     {
-        res = new PPIndexScan(_cxt_, index_name, child, tc2, isc);
+        res = se_new PPIndexScan(_cxt_, index_name, child, tc2, isc);
         res->child.op = child.op->copy(_cxt_);
     }
     else if (child2.op)
     {
-        res = new PPIndexScan(_cxt_, index_name, tc, child2, isc);
+        res = se_new PPIndexScan(_cxt_, index_name, tc, child2, isc);
         res->child2.op = child2.op->copy(_cxt_);
     }
     else
     {
-        res = new PPIndexScan(_cxt_, index_name, tc, tc2, isc);
+        res = se_new PPIndexScan(_cxt_, index_name, tc, tc2, isc);
     }
 
     return res;

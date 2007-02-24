@@ -16,7 +16,7 @@ bit_set::bit_set (int _size_): size(_size_),
 	
     capacity = (size >> 0x03);
     if ((size & 0x07) != 0) capacity++;
-    bits = new unsigned char[capacity];
+    bits = se_new unsigned char[capacity];
     initialize();
 }
 

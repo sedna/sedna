@@ -245,7 +245,7 @@ void PPAxisFP::next_var_name(tuple &t)
 
 PPIterator* PPAxisFP::copy(dynamic_context *_cxt_)
 {
-    PPAxisFP *res = new PPAxisFP(_cxt_, child, nt_type, nt_data,following);
+    PPAxisFP *res = se_new PPAxisFP(_cxt_, child, nt_type, nt_data,following);
     res->child.op = child.op->copy(_cxt_);
     return res;
 }
@@ -302,7 +302,7 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
 			}	
 			std::vector<schema_node*>* cv=&desc_sch[scm];
 			std::vector<schema_node*>::iterator it=cv->begin();
-			if (merge_tree==NULL) merge_tree=new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
+			if (merge_tree==NULL) merge_tree=se_new xptrChanneledMerge((following)?getNextDescriptorOfSameSortXptr:getPreviousDescriptorOfSameSortXptr,following);
 			while (it!=cv->end())
 			{
 				xptr tmp=(following)?getNextNDNode(base,*it):getPreviousNANode(base,*it);

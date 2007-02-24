@@ -80,7 +80,7 @@ void PPCast::next  (tuple &t)
 
 PPIterator* PPCast::copy(dynamic_context *_cxt_)
 {
-    PPCast *res = new PPCast(_cxt_, child, target_type, can_be_empty_seq);
+    PPCast *res = se_new PPCast(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -97,7 +97,7 @@ bool PPCast::result(PPIterator* cur, dynamic_context *cxt, void*& r)
     if (!child_s) // if expression is not strict
     { // create PPCast and transmit state
         child.op = (PPIterator*)child_r;
-        PPCast *res_op = new PPCast(cxt, child, 
+        PPCast *res_op = se_new PPCast(cxt, child, 
                                     ((PPCast*)cur)->target_type, 
                                     ((PPCast*)cur)->can_be_empty_seq);
 
@@ -207,7 +207,7 @@ void PPCastable::next  (tuple &t)
 
 PPIterator* PPCastable::copy(dynamic_context *_cxt_)
 {
-    PPCastable *res = new PPCastable(_cxt_, child, target_type, can_be_empty_seq);
+    PPCastable *res = se_new PPCastable(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -289,7 +289,7 @@ void PPInstanceOf::next  (tuple &t)
 
 PPIterator* PPInstanceOf::copy(dynamic_context *_cxt_)
 {
-    PPInstanceOf *res = new PPInstanceOf(_cxt_, child, st);
+    PPInstanceOf *res = se_new PPInstanceOf(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -335,7 +335,7 @@ void PPTreat::open  ()
     first_time = true;
     eos_reached = true;
     
-    s = new sequence_tmp(child.ts);
+    s = se_new sequence_tmp(child.ts);
     pos = 0;
 }                                     
 
@@ -383,7 +383,7 @@ void PPTreat::next(tuple &t)
 
 PPIterator* PPTreat::copy(dynamic_context *_cxt_)
 {
-    PPTreat *res = new PPTreat(_cxt_, child, st);
+    PPTreat *res = se_new PPTreat(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -444,7 +444,7 @@ PPTypeswitch::~PPTypeswitch()
 
 void PPTypeswitch::open ()
 {
-    s = new sequence_tmp(source_child.ts);
+    s = se_new sequence_tmp(source_child.ts);
 
     source_child.op->open();
     first_time = true;
@@ -457,7 +457,7 @@ void PPTypeswitch::open ()
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
         p.type = pt_lazy_simple;
         p.op = this;
-        p.cvc = new complex_var_consumption;
+        p.cvc = se_new complex_var_consumption;
         p.tuple_pos = i;
     }
     
@@ -532,7 +532,7 @@ void PPTypeswitch::next(tuple &t)
 
 PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
 {
-    PPTypeswitch *res = new PPTypeswitch(_cxt_, 
+    PPTypeswitch *res = se_new PPTypeswitch(_cxt_, 
                                          var_dscs, 
                                          source_child, 
                                          types, 

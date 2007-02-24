@@ -57,7 +57,7 @@ public:
                                      PPOpIn _seq1_, 
                                      PPOpIn _seq2_)
 	{
-        return new PPSubsMatch(_cxt_,_seq1_,_seq2_,sm_contains);
+        return se_new PPSubsMatch(_cxt_,_seq1_,_seq2_,sm_contains);
 	}
 };
 

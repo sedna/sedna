@@ -16,6 +16,52 @@
 #include "common/sedna.h"
 #include "common/mmgr/memutils.h"
 
+#ifdef SE_MEMORY_TRACK
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void AddTrack(void* addr, usize_t asize, const char *fname, int lnum);
+extern void RemoveTrack(void* addr);
+extern void DumpUnfreed();
+
+#ifdef __cplusplus
+}
+#endif
+
+#undef malloc(size)
+#undef free(pointer)
+#undef realloc(pointer, size)
+
+void *track_malloc(usize_t size, const char* file, int line)
+{
+    void *ptr = (void *)malloc(size);
+    AddTrack(ptr, size, file, line);
+    return ptr;
+}
+void track_free(void *pointer)
+{
+    if(pointer)
+    {
+        RemoveTrack(pointer);
+	    free(pointer);
+	}
+}
+void *track_realloc(void *pointer, usize_t size, const char* file, int line)
+{
+    if(pointer)
+    {
+        void *ptr;
+        RemoveTrack(pointer);
+	    ptr = (void *)realloc(pointer, size);
+        AddTrack(ptr, size, file, line);
+        return ptr;
+    }
+    return NULL;
+}
+
+#else
 
 int SafeMemoryContextInit(void)
 {
@@ -676,3 +722,5 @@ MemoryContextStrdup(MemoryContext context, const char *string)
 
 	return nstr;
 }
+
+#endif /* SE_MEMORY_TRACK */
