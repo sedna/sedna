@@ -128,8 +128,7 @@ void set_session_finished()
 
   try{
 
-      ((gov_sess_struct*)((char*)gov_shared_mem + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + sid*sizeof(gov_sess_struct)))->idfree = 2;
-
+      ((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].idfree = 2;
   } catch(...){}
 }
 
@@ -293,9 +292,6 @@ void register_session_on_gov()
 bool check_database_existence(const char* db_name)
 {
    bool res1 = false, res2 = false, res3 = false, res4 = false, res5 = false, res6 = false;
-
-   if (!set_sedna_data(NULL))
-      throw USER_EXCEPTION(SE4411);
 
    res1 = uIsFileExist((string(SEDNA_DATA) + "/cfg/" + string(db_name) + "_cfg.xml").c_str(), __sys_call_error);
 

@@ -8,8 +8,8 @@
 
 void gov_ugc(bool background_off_from_background_on);
 
-void sm_ugc(bool background_off_from_background_on, const char* db_name);
+void sm_ugc(bool background_off_from_background_on, int db_id);
 
-void cdb_ugc(const char *db_name);
+void cdb_ugc(int db_id);
 
 #endif

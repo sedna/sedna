@@ -13,7 +13,9 @@
 #include "gov/gov_table.h"
 #include "common/errdbg/d_printf.h"
 #include "common/SSMMsg.h"
-
+#include "common/config.h"
+#include "config_utils.h"
+#include "common/ipc_ops.h"
 
 
 
@@ -33,18 +35,16 @@ void Session::print_session()
 /********************* info_table class implementation **************************/
 /*****************************************************************************/
 
-void info_table::init(int lstnr_port_number)
+void info_table::init(gov_config_struct* cfg)
 {
    int i = 0;
   
    for (i=0; i< MAX_SESSIONS_NUMBER; i++)
        _ids_table_.push_back(i);
 
-
-
    if (0 != uCreateShMem(&gov_shm_service_dsc,
                          GOVERNOR_SHARED_MEMORY_NAME,
-                         GOV_SHM_SIZE,
+                         sizeof(gov_config_struct),
                          NULL,
                          __sys_call_error))
       throw USER_EXCEPTION2(SE4016, "GOVERNOR_SHARED_MEMORY_NAME");
@@ -52,33 +52,15 @@ void info_table::init(int lstnr_port_number)
 
    gov_shared_mem = uAttachShMem(gov_shm_service_dsc,
                                  NULL,
-                                 GOV_SHM_SIZE,
+                                 sizeof(gov_config_struct),
                                  __sys_call_error);
 
    if (gov_shared_mem == NULL)
       throw USER_EXCEPTION2(SE4023, "GOVERNOR_SHARED_MEMORY_NAME");
 
+   memcpy(gov_shared_mem, cfg, sizeof(gov_config_struct));
+
  //  if (uNotInheritDescriptor(UHANDLE(gov_shm_service_dsc)) != 0) throw USER_EXCEPTION(SE4080);
-
-   //init section
-   ((gov_header_struct*)GOV_SHM)->is_server_stop = 0;
-   ((gov_header_struct*)GOV_SHM)->lstnr_port_number = lstnr_port_number;
-   ((gov_header_struct*)GOV_SHM)->gov_pid = uGetCurrentProcessId(__sys_call_error);
-   
-
-   for (i = 0; i<MAX_DBS_NUMBER; i++)
-   {
-      (((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] = '\0';
-      ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop = 0;
-      ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->sm_pid = -1;
-
-   }
-
-   for (i = 0; i<MAX_SESSIONS_NUMBER; i++)
-   {
-      ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + i*sizeof(gov_sess_struct)))->idfree = 0;
-      ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + i*sizeof(gov_sess_struct)))->stop = 0;
-   }
 }
 
 void info_table::release()
@@ -172,8 +154,8 @@ void info_table::wait_erase_session(const session_id& s_id)
   this->give_id(s_id);
   uCloseProcess(proc_handle, __sys_call_error);
 
-  ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->stop = 0;
-  ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->idfree = 0;
+  ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 0;
+  ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].idfree = 0;
 }
 
 void info_table::stop_session(const session_id& s_id)
@@ -184,7 +166,7 @@ void info_table::stop_session(const session_id& s_id)
   int res;
   bool is_child_process = true;
   
-  ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->stop = 1;
+  ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 1;
 
   this->wait_erase_session(s_id);
 
@@ -234,8 +216,8 @@ int info_table::insert_session(UPID &pid/*in*/, UPHANDLE* h_p, std::string &db_n
      return -3;
   }
 
-  ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->idfree = 1;
-  ((gov_sess_struct*)(GOV_SHM_DBS_OFFS + s_id*sizeof(gov_sess_struct)))->stop = 0;
+  ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].idfree = 1;
+  ((gov_config_struct*)gov_shared_mem)->sess_vars[s_id].stop = 0;
 
   return 0;
 }
@@ -251,16 +233,10 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
 
   for (i=0; i< MAX_DBS_NUMBER; i++)
   {
-     if ((((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] == '\0')
+     if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_name.c_str()) == 0)
      {
-        //copy the whole string excepting first symbol
-        strcpy((((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name) + sizeof(char), (db_name.c_str()) + sizeof(char));
-        ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop = 0;
-        ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->sm_pid = pid;
-        //this indicates the end of coping
-        (((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] = (db_name.c_str())[0];
-
-        d_printf2("shm database name=%s\n", ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name);
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = pid;
         break;
      }   
   }
@@ -277,9 +253,9 @@ int info_table::insert_database(UPID &pid/*in*/, std::string &db_name)//return -
   if (!(it.second))
   {
      uCloseProcess(proc_handle, __sys_call_error);
-     (((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] = '\0';
-     ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop = 0;
-     ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->sm_pid = -1;
+     ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name[0] = '\0';
+     ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+     ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
 
      return -3;
   }
@@ -296,11 +272,10 @@ void info_table::erase_database(const database_id& db_id)
 
   for (i=0; i< MAX_DBS_NUMBER; i++)
   {
-     if (strcmp(((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name, db_id.c_str()) == 0)
+     if (strcmp(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name, db_id.c_str()) == 0)
      {
-        (((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] = '\0';
-        ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop = 0;
-        ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->sm_pid = -1;
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop = 0;
+        ((gov_config_struct*)gov_shared_mem)->db_vars[i].sm_pid = -1;
         break;
      }   
   }
@@ -316,7 +291,7 @@ void info_table::put_all_free_sids_in_ids_table()
   d_printf1("put free ids\n");
 
   for (i = 0; i< MAX_SESSIONS_NUMBER; i++)
-    if (((gov_sess_struct*)(GOV_SHM_DBS_OFFS + i*sizeof(gov_sess_struct)))->idfree == 2)
+    if (((gov_config_struct*)gov_shared_mem)->sess_vars[i].idfree == 2)
     {
        d_printf1("erase session\n");
        this->wait_erase_session(i);
@@ -390,7 +365,7 @@ void info_table::stop_database(const database_id& db_id)
 
   sm_server = new SSMMsg(SSMMsg::Client, 
                          sizeof (sm_msg_struct), 
-                         CHARISMA_SSMMSG_SM_ID(db_id.c_str(), buf, 1024), 
+                         CHARISMA_SSMMSG_SM_ID(get_db_id_by_name((gov_config_struct*)gov_shared_mem, db_id.c_str()), ((gov_config_struct*)gov_shared_mem)->gov_vars.os_primitives_id_min_bound, buf, 1024), 
                          SM_NUMBER_OF_SERVER_THREADS);
 
   if (sm_server->init() != 0) 
@@ -450,7 +425,7 @@ void info_table::stop_databases()
 
 int info_table::check_stop_gov()
 {
-  if (((gov_header_struct*)GOV_SHM)->is_server_stop == 1)
+  if (((gov_config_struct*)gov_shared_mem)->gov_vars.is_server_stop == 1)
   {
      stop_sessions();
      stop_databases();
@@ -465,12 +440,12 @@ int info_table::check_stop_databases()
   int ret_code =0;
   for (i=0; i< MAX_DBS_NUMBER; i++) 
   {
-     if ((((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name)[0] != '\0' &&
-         ((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->is_stop == 1)
+     if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
+         ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
      {
-        stop_sessions(string(((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name));
+        stop_sessions(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
 
-        stop_database(string(((gov_dbs_struct*)(GOV_SHM_HEADER_OFFS + i*sizeof(gov_dbs_struct)))->db_name));
+        stop_database(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
         ret_code = 1;
      }
   }
@@ -593,6 +568,11 @@ void info_table::wait_all_notregistered_sess()
 int info_table::get_total_session_procs_num()
 {
   return _pids_table_.size() + _session_table_.size();
+}
+
+gov_config_struct* info_table::get_config_struct()
+{
+  return (gov_config_struct*)gov_shared_mem;
 }
 
 void info_table::print_info_table()

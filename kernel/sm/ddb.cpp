@@ -22,6 +22,8 @@
 
 using namespace std;
 
+void* gov_shm_pointer = NULL;
+
 
 const size_t narg = 4;
 int ddb_help1 = 0;
@@ -65,6 +67,17 @@ bool start_ppc(pping_client& ppc, SednaUserException& e)
 
 }
 
+void* ddb_open_gov_shm(UShMem *gov_shm_service_dsc)
+{
+   try{
+  
+      return open_gov_shm(gov_shm_service_dsc);
+   } catch(SednaUserException &e) {
+      return NULL;
+   }
+   
+}
+
 
 int main(int argc, char** argv)
 {
@@ -73,13 +86,15 @@ int main(int argc, char** argv)
   pping_client ppc(5151, EL_DDB);
 
   bool sedna_work = false;
-            
+  UShMem gov_mem_dsc;
+
+  int db_id;
+  void* gov_shm_pointer = NULL;            
 
   try {
 
-        UShMem gov_mem_dsc;
+
         msg_struct msg;
-        void* gov_shm_pointer = NULL;
         int port_number;
 
         SednaUserException e = USER_EXCEPTION(SE4400);
@@ -99,28 +114,41 @@ int main(int argc, char** argv)
 
         if (string(db_name) == "???")
            throw USER_EXCEPTION2(SE4601, "The name of the database must be specified (type option '-help')");
+
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
      
-        set_global_names();
-	
+        set_global_names(cfg.os_primitives_id_min_bound);
+
+        gov_shm_pointer = ddb_open_gov_shm(&gov_mem_dsc);
+
+        if (gov_shm_pointer ==NULL)//gov is not started
+           SEDNA_DATA = cfg.SEDNA_DATA;
+        else
+           SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+
         if (!exist_db(db_name))
            throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
-
-
-        
-        set_global_names(db_name);
+   
 
         if (uSocketInit(__sys_call_error) != 0)
-            throw USER_EXCEPTION(SE3001);
+           throw USER_EXCEPTION(SE3001);
 
-
-        sedna_work = start_ppc(ppc, e);
 
         //case when sedna work and we must check whether database is running
-        if (sedna_work)
+        if (gov_shm_pointer)
         {//id needed database is running then throw exception
-            gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+            ppc.startup(e);
+
+            db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+
             port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
-            close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+
+            if (db_id == -1)//there is no such database
+               throw USER_EXCEPTION2(SE4308 , (string("There is no database: ") + db_name).c_str());
+
+            set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
             d_printf2("port number=%d\n", port_number);
 
@@ -145,12 +173,14 @@ int main(int argc, char** argv)
 
             }
 
+            cdb_ugc(db_id);
+            ppc.shutdown();
+  
             //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
         }
 
 	d_printf2("db_name=%s\n", db_name);
 	d_printf2("SEDNA_DATA=%s\n", SEDNA_DATA);
-        cdb_ugc(db_name);
 
         int res_clenup_db;
         res_clenup_db = cleanup_db(db_name);
@@ -159,20 +189,24 @@ int main(int argc, char** argv)
 
         fflush(stdout);
 
-       
         if (res_clenup_db == 1)
+        {
+           if (gov_shm_pointer)  memset(&(((gov_config_struct*)gov_shm_pointer)->db_vars[db_id]), '\0', sizeof(gov_db_struct));
+ 
            fprintf(res_os, "The database '%s' has been dropped\n", db_name);
+        }
         else
            throw USER_EXCEPTION2(SE4308, "Database files sharing violation");
 
-		if (sedna_work) ppc.shutdown();
+	close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
         uSocketCleanup(__sys_call_error);
 
   } catch (SednaUserException &e) { 
       fprintf(stderr, "%s\n", e.getMsg().c_str());
-      if (sedna_work) ppc.shutdown();
+      if (gov_shm_pointer) ppc.shutdown();
       uSocketCleanup(__sys_call_error);
+      close_gov_shm(gov_mem_dsc, gov_shm_pointer);
       return 1;
   } catch (SednaException &e) {
       sedna_soft_fault(e, EL_DDB);

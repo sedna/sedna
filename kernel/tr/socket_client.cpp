@@ -57,6 +57,11 @@ void socket_client::init()
 #endif
         throw USER_EXCEPTION(SE3001); 
       }
+
+      if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buffer, ENV_BUF_SIZE, __sys_call_error) != 0)
+          throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
+
+      os_primitives_id_min_bound = atoi(buffer);
       
 }
 

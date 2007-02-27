@@ -47,7 +47,7 @@ void endElement_sm_cfg(void *cnt, const char *name)
     phys_log_ext_portion = atoi(_content_.c_str()) * 0x100000;
   }
 
-  if ( _tag_name_ == "init_phys_log_size")
+  if ( _tag_name_ == "phys_log_size")
   {
     phys_log_size = atoi(_content_.c_str()) * 0x100000;
   }
@@ -75,29 +75,16 @@ void send_stop_sm_msg()
     int i=0;
     int port_number;
     int command = STOP;
+    int database_id;
     
     gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
     port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
+    database_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
-    char shm_dbname[SE_MAX_DB_NAME_LENGTH + 1];
-    int res;
-
-    for (i=0; i < MAX_DBS_NUMBER; i++)
-    {
-       strcpy(shm_dbname,
-             ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->db_name);
-
-       if (string(shm_dbname) == db_name)
-       {
-          ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->is_stop = 1;
-          send_command_to_gov(port_number, command);
-          break;
-       }
-    }
-
-
+    ((gov_config_struct*)gov_shm_pointer)->db_vars[database_id].is_stop = 1;
+    send_command_to_gov(port_number, command);
+    
     close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-
 }
 

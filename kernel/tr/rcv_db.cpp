@@ -13,6 +13,9 @@
 #include "common/pping.h"
 #include "tr/tr_functions.h"
 #include "tr/tr_utils.h"
+#include "tr/tr_globals.h"
+#include "common/u/ushm.h"
+#include "common/config.h"
 
 #ifndef _WIN32
 #define _atoi64 atoll
@@ -37,6 +40,7 @@ DECLARE_TIME_VARS
 int main (int argc, char** argv)
 {
 //  getchar();
+//  Sleep(100);
   if (argc != 3)
   {
      d_printf1("bad number of parameters\n");
@@ -56,9 +60,27 @@ int main (int argc, char** argv)
 
       SednaUserException e = USER_EXCEPTION(SE4400);
       ppc.startup(e);
-      
-      set_global_names();
-      set_global_names(db_name);
+
+      char buf[ENV_BUF_SIZE + 1];
+      memset(buf, 0, ENV_BUF_SIZE + 1);
+
+
+      if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, ENV_BUF_SIZE, __sys_call_error) != 0)
+          throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
+
+      set_global_names(atoi(buf));
+
+      UShMem gov_mem_dsc;
+      gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+   
+      db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+
+      if (db_id == -1)//there is no such database
+           throw USER_EXCEPTION2(SE4200, db_name);
+
+      SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
+
+      set_global_names(((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, db_id);
 
       // sid is known
       event_logger_init(EL_RCV, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);

@@ -28,7 +28,7 @@ void init_checkpoint_sems();
 void shutdown_chekpoint_thread();
 void release_checkpoint_sems();
 void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn);
-void recover_database_by_physical_and_logical_log();
+void recover_database_by_physical_and_logical_log(int db_id);
 
 void init_transaction_ids_table();
 void release_transaction_ids_table();

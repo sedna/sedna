@@ -10,7 +10,7 @@
    (if (eq? expr '())
          '()
          (begin
-;           (write expr)
+           (write expr)
          (if (eq? is-auth 0)
              (if (memq (caaddr expr) '(create-user drop-user alter-user create-role drop-role grant-role grant-priv-on-doc grant-priv-on-col grant-priv revoke-priv revoke-priv-from-doc revoke-priv-from-col revoke-role))
                  (cl:signal-input-error SE3068 "Compile Sedna with AUTH_SWITH=1 if you want to turn this feature on")
@@ -145,7 +145,7 @@
                                    ;              (sc:q17 user (car(cdaddr expr)) `module)
                                                  expr)
                                                 )
-                       ( (eq? (caaddr expr) 'load-or-replace-module) 
+                       ( (eq? (caaddr expr) 'load-or-replace-module)
                                                 (list
                                                  (sc:q2 user "LOAD-MODULE" "User doesn't have privilege LOAD-MODULE")
                                                  (sc:q4_1 user "DROP" (cadr(caddr expr)) `module

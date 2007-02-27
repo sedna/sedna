@@ -28,7 +28,7 @@ int client_listener(bool background_off_from_background_on)
 
    if (uNotInheritDescriptor(UHANDLE(sockfd), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
 
-   if (ubind_tcp(sockfd, socket_port, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
+   if (ubind_tcp(sockfd, lstnr_port, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't bind socket");
 
    if (ulisten(sockfd, 100, __sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Can't set socket to a listening mode");
 
@@ -78,7 +78,6 @@ int client_listener(bool background_off_from_background_on)
        gov_table->erase_all_closed_pids();
        gov_table->put_all_free_sids_in_ids_table();
        stop_serv = gov_table->check_stop_gov();
-       
        if (stop_serv == 0)
           stop_db = gov_table->check_stop_databases();
 
@@ -96,8 +95,6 @@ int client_listener(bool background_off_from_background_on)
              d_printf1("Too large msg recieved\n");
              continue;
            }
-
-
 
        if (stop_serv == 1 )
        {
@@ -143,7 +140,6 @@ int client_listener(bool background_off_from_background_on)
   
           case REGISTER_DB:
           {
-
               sm_registering(socknew, msg.body);
               break;
           }
@@ -174,8 +170,7 @@ int client_listener(bool background_off_from_background_on)
              break;
           }
         }
-          
-                
+               
    }//end of for
 
 
@@ -192,6 +187,7 @@ try{
     UFlag window_mode;
     UPID pid;
     UPHANDLE proc_h;
+
 
     //check number of sessions
     if (gov_table->get_total_session_procs_num() > 2*MAX_SESSIONS_NUMBER)
@@ -221,6 +217,9 @@ try{
 #endif
 
     uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
+
+    char buf2[1024];
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, _itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
 
     // create security attributes for the new process
     USECURITY_ATTRIBUTES *sa;	
@@ -299,13 +298,11 @@ int sess_registering(USOCKET s, char* msg_buf)
     int res, res2;
     UPHANDLE proc_h;
     bool is_child_process;
-   	
    	net_int2int(&length, msg_buf+1);
    	if( length > SE_MAX_DB_NAME_LENGTH ) throw USER_EXCEPTION(SE3015);
    	
     memcpy(db_name, msg_buf+5, length);
     db_name[length] = '\0';
-            	
   	d_printf2("Listener: register trn with db_name: %s\n",db_name);
   	char ptr[4];
   	memcpy(ptr, msg_buf+5+strlen(db_name), 4);
@@ -335,14 +332,13 @@ int sess_registering(USOCKET s, char* msg_buf)
 		reg_msg.length = 4;
 	    __int32 tmp = s_id;
 	    memcpy(reg_msg.body,(char*)&(tmp),4);
-
-	    if(sp_send_msg(s,&reg_msg)!=0) throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
-
+	    if(sp_send_msg(s,&reg_msg)!=0){
+               throw SYSTEM_EXCEPTION(string(usocket_error_translator()).c_str());
+	    }
         gov_table->remove_pid(sess_pid);
     }
     else if (res == -1)
     {
-        d_printf1("no db name case\n");
         reg_msg.instruction = 171;
 		reg_msg.length = 0;
 		res2 = sp_send_msg(s, &reg_msg);
@@ -370,10 +366,11 @@ int sess_registering(USOCKET s, char* msg_buf)
 	}
 
     if (res != 0)
+    {
        gov_table->wait_remove_pid(sess_pid, is_child_process);
+    }
     
     ushutdown_close_socket(s, __sys_call_error);
-
 	return 0;
 	
 }

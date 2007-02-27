@@ -142,8 +142,10 @@ extern char *CHARISMA_BUFFER_SHARED_MEMORY_NAME;
 extern global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME;
 extern global_name CHARISMA_ITFE_SHARED_MEMORY_NAME;
 
-global_name SM_TO_VMM_CALLBACK_SEM1_BASE_STR(transaction_id id, const char* db_name, char* buf, int size);
-global_name SM_TO_VMM_CALLBACK_SEM2_BASE_STR(transaction_id id, const char* db_name, char* buf, int size);
+global_name SM_TO_VMM_CALLBACK_SEM1_BASE_STR(session_id id, int os_primitives_id_min_bound, char* buf, int size);
+global_name SM_TO_VMM_CALLBACK_SEM2_BASE_STR(session_id id, int os_primitives_id_min_bound, char* buf, int size);
+global_name SEDNA_TRANSACTION_LOCK(session_id s_id, int os_primitives_id_min_bound, char* buf, int size);
+global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, char* buf, int size );
 
 extern global_name VMM_SM_SEMAPHORE_STR;
 extern global_name INDIRECTION_TABLE_SEMAPHORE_STR;
@@ -158,18 +160,7 @@ extern global_name FT_INDEX_SEMAPHORE_STR;
 extern global_name TRIGGER_SEMAPHORE_STR;
 #endif
 
-//sm's SSMMsg shared memory name
-global_name CHARISMA_SSMMSG_SM_ID(const char* db_name, char* buf, int size);
 #define SM_NUMBER_OF_SERVER_THREADS						1
-
-//notify gov that sm is closed completely
-global_name CHARISMA_SM_SMSD_ID(const char* db_name, char* buf, int size);
-
-
-//notify gov that session is closed completely
-global_name SESS_SHUTDOWN_SEMAPHORE_STR(UPID id, char* buf, int size);
-
-global_name CHARISMA_GOV_SESSION_STOP_ID(UPID s_id, char* buf, int size);
 
 
 //gov's SSMMsg shared memory name 
@@ -177,15 +168,6 @@ extern global_name CHARISMA_SSMMSG_GOV_ID;
 #define GOV_NUMBER_OF_SERVER_THREADS              1
 
 //notify stop_serv that server shutdown completely
-extern global_name CHARISMA_STOP_GOV;
-
-//gov's semaphore to block the main thread (it must be up to shut down gov)
-extern global_name CHARISMA_GOV_WAIT_FOR_SHUTDOWN;
-//extern global_name CHARISMA_GOV_SYNC_SES_TABLE;
-//extern global_name CHARISMA_GOV_SYNC_DB_TABLE;
-
-global_name CHARISMA_SM_IS_READY(const char* db_name, char* buf, int size);
-
 extern global_name CHARISMA_GOVERNOR_IS_READY;
 
 extern global_name PHYS_LOG_SHARED_MEM_NAME;
@@ -213,8 +195,9 @@ extern global_name SEDNA_LOCK_MANAGER_SEM;
 extern global_name SE_EVENT_LOG_SHARED_MEMORY_NAME;
 extern global_name SE_EVENT_LOG_SEMAPHORES_NAME;
 
+extern global_name CHARISMA_SM_SMSD_ID;
+extern global_name CHARISMA_SM_IS_READY;
 
-global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* buf, int size);
 
 #define SEDNA_DETERMINE_VMM_REGION						"SEDNA_DETERMINE_VMM_REGION"
 //#define CHARISMA_DB_NAME                                "CHARISMA_DB_NAME"
@@ -223,17 +206,21 @@ global_name SEDNA_TRANSACTION_LOCK(session_id s_id, const char* db_name,  char* 
 
 #define SEDNA_LOAD_METADATA_TRANSACTION					"SEDNA_LOAD_METADATA_TRANSACTION"
 
+#define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND		"SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
+
 #define SECURITY_METADATA_DOCUMENT						"db_security_data"
 #define INITIAL_SECURITY_METADATA_FILE_NAME				"sedna_auth_md.xml"
 
-#define CHARISMA_MAX_TRNS_NUMBER                        10
-#define MAX_SESSIONS_NUMBER								10
+#define CHARISMA_MAX_TRNS_NUMBER                        20
+#define MAX_SESSIONS_NUMBER								20
 #define MAX_DBS_NUMBER									10
 #define STRMAXSIZE   4000000000lu
 
 
-void set_global_names();
-void set_global_names(const char *db_name, bool must_exist = false);
+void set_global_names(int os_primitives_id_min_bound);
+void set_global_names(int os_primitives_id_min_bound, int db_id);
+#define UPPER_SESSIONS_NUM_BOUND			100
+
 extern FILE* res_os;
 
 /**
@@ -336,27 +323,5 @@ struct sm_msg_struct
 
 enum commands {CREATE_NEW_SESSION = 110, STOP = 501, REGISTER_NEW_SESSION = 121, REGISTER_DB = 122, RUNTIME_CONFIG = 600, IS_RUN_SM = 888 };
 
-struct gov_sess_struct
-{
-   int idfree; //0->not used 1->session in progress 2->session finished
-   int stop; //1->stop command; 0->not stop
-};
-
-
-struct gov_dbs_struct
-{
-   char db_name[SE_MAX_DB_NAME_LENGTH + 1];
-   int is_stop; //0->indicates that sm is working, 1->indicates that sm want to stop
-   UPID sm_pid;
-};
-
-struct gov_header_struct
-{
-   int is_server_stop;//0->indicates that sedna operates;//1->indicates that sedna want to stop
-   int lstnr_port_number;
-   UPID gov_pid;
-};
-
-#define GOV_SHM_SIZE (sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + MAX_SESSIONS_NUMBER*sizeof(gov_sess_struct))
 
 #endif

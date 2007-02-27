@@ -168,16 +168,23 @@ int main(int argc, char *argv[])
         //get session parameters (from socket or from cmd line)
         client->get_session_parameters();
 
+        //init global names
+        set_global_names(client->get_os_primitives_id_min_bound());
+        gov_shm_pointer = open_gov_shm(&gov_shm_dsc);
+        is_init_gov_shm = true;
+        socket_port = ((gov_config_struct *) gov_shm_pointer)->gov_vars.lstnr_port_number;
+        SEDNA_DATA = ((gov_config_struct *) gov_shm_pointer)->gov_vars.SEDNA_DATA;
+
         if (!check_database_existence(db_name)) //check database consistency (all files exists)
             throw USER_EXCEPTION2(SE4609, db_name);
 
-        //init global names
-        set_global_names();
-        set_global_names(db_name);
 
-        gov_shared_mem = open_gov_shm(&gov_shm_dsc);
-        is_init_gov_shm = true;
-        socket_port = ((gov_header_struct *) gov_shared_mem)->lstnr_port_number;
+        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+
+        if (db_id == -1)//there is no such database
+           throw USER_EXCEPTION2(SE4200, db_name);
+
+        set_global_names(client->get_os_primitives_id_min_bound(), db_id);
 
         //register session on governer
         register_session_on_gov();
@@ -524,7 +531,7 @@ int main(int argc, char *argv[])
         set_session_finished();
         event_logger_set_sid(-1);
 
-        close_gov_shm(gov_shm_dsc, gov_shared_mem);
+        close_gov_shm(gov_shm_dsc, gov_shm_pointer);
 
         uSocketCleanup(__sys_call_error);
 
@@ -558,7 +565,7 @@ int main(int argc, char *argv[])
         ppc.shutdown();
         set_session_finished();
         if (is_init_gov_shm)
-            close_gov_shm(gov_shm_dsc, gov_shared_mem);
+            close_gov_shm(gov_shm_dsc, gov_shm_pointer);
         uSocketCleanup(__sys_call_error);
         ret_code = 1;
     }

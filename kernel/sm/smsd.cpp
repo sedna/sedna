@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     int port_number;
     bool exist_db = false;
     int command = STOP;
+    int db_id;
 
 
     pping_client ppc(5151, EL_SMSD);
@@ -77,9 +78,27 @@ int main(int argc, char **argv)
            throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
      
         d_printf1("Shutdowning SM... ");
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+     
+        set_global_names(cfg.os_primitives_id_min_bound);
+
+        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+   
+        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+
+        port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
 
-        set_global_names();
+        if (db_id == -1)//there is no such database
+        {
+           close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+           goto end;
+        }
+
+        set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
@@ -88,46 +107,32 @@ int main(int argc, char **argv)
         event_logger_init(EL_SMSD, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for SM shutdown issued"));
 
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
         port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
-
-        char shm_dbname[SE_MAX_DB_NAME_LENGTH + 1];
         int res;
         UPHANDLE proc_handle;
 
-        for (i=0; i < MAX_DBS_NUMBER; i++)
-        {
-           strcpy(shm_dbname,
-                 ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->db_name);
+        sm_pid = ((gov_config_struct*)gov_shm_pointer)->db_vars[db_id].sm_pid;
 
-          if (string(shm_dbname) == db_name)
-          {
-             exist_db = true;
-             sm_pid = ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->sm_pid;
+        res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
+        if (res !=0) goto end;//sm already stopped
+
+        ((gov_config_struct*)gov_shm_pointer)->db_vars[db_id].is_stop = 1;
+
+        send_command_to_gov(port_number, command);
+        uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
+        uCloseProcess(proc_handle, __sys_call_error);
 
 
-             res = uOpenProcess(sm_pid, &proc_handle, __sys_call_error);
-             if (res !=0) goto end;//sm already stopped
-
-             ((gov_dbs_struct*)((char*)gov_shm_pointer+sizeof(gov_header_struct) + i*sizeof(gov_dbs_struct)))->is_stop = 1;
-
-             send_command_to_gov(port_number, command);
-             uWaitForProcess(sm_pid, proc_handle, __sys_call_error);
-             uCloseProcess(proc_handle, __sys_call_error);
-             break;
-          }
-        }
-
+        elog(EL_LOG, ("Request for SM shutdown satisfied"));
 
 end:
-        elog(EL_LOG, ("Request for SM shutdown satisfied"));
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         ppc.shutdown();
 
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
-        if (exist_db)
+        if (db_id != -1)
            fprintf(res_os, "The database '%s' has been successfully shut down\n", db_name);
         else
            fprintf(res_os, "There is no database with name '%s'\n", db_name);

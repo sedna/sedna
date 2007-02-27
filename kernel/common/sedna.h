@@ -26,9 +26,9 @@ extern "C" {
  * SEDNA_DATA contains path to Sedna data directory
  */
 #define SEDNA_DATA_VAR_SIZE								1024
-extern char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
+extern char* SEDNA_DATA;
 
-int set_sedna_data(sys_call_error_fun fun);
+int set_sedna_data(char*, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

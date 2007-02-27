@@ -10,7 +10,6 @@
 #include "common/u/usecurity.h"
 
 
-
 #ifdef _WIN32
 
 /* UShareMode */
@@ -31,11 +30,20 @@
 #define U_FILE_END				FILE_END
 #define U_FILE_CURRENT			FILE_CURRENT
 
+#define U_INVALID_DIR			INVALID_HANDLE_VALUE
 
 typedef HANDLE UFile;
 typedef DWORD UFlag;
 typedef DWORD UAccess;
 typedef DWORD UShareMode;
+//typedef WIN32_FIND_DATA UFindDataStruct;
+typedef HANDLE UDir;
+
+struct UFindDataStruct
+{
+   char fname[MAX_PATH];
+};
+
 
 #else
 
@@ -61,10 +69,21 @@ typedef DWORD UShareMode;
 #define U_FILE_END				SEEK_END
 #define U_FILE_CURRENT			SEEK_CUR
 
+#define U_INVALID_DIR			NULL
+
+
 typedef int UFile;
 typedef int UFlag;
 typedef int UAccess;
 typedef int UShareMode;
+//typedef struct dirent UFindDataStruct;
+typedef DIR* UDir;
+
+struct UFindDataStruct
+{
+   char fname[256];
+};
+
 
 #endif
 
@@ -167,6 +186,12 @@ extern "C"
     char *uGetDirectoryFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
 
     char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_call_error_fun fun);
+
+    UDir uFindFirstFile(const char* filename, struct UFindDataStruct* find_data, sys_call_error_fun fun);
+
+    int uFindNextFile(UDir dir, struct UFindDataStruct* find_data, sys_call_error_fun fun);
+
+    int uFindClose(UDir dir, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }

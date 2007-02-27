@@ -49,10 +49,8 @@ int sp_send_msg(USOCKET s, const struct msg_struct *msg)
 {
     char ptr[8];
     int rc = 0, sent = 0;
-
     *(sp_int32*)ptr = htonl(msg->instruction);
     *((sp_int32*)(ptr + 4)) = htonl(msg->length);
-    
     while (sent < 8)
     {
         rc = usend(s, ptr + sent, 8 - sent, __sys_call_error);

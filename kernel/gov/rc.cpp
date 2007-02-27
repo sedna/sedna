@@ -14,6 +14,7 @@
 #include "common/ipc_ops.h"
 #include "common/base.h"
 #include "common/u/uprocess.h"
+#include "common/config.h"
 
 using namespace std;
 
@@ -70,7 +71,15 @@ int main(int argc, char **argv)
         if (arg_scan_ret_val == 0)
            throw USER_EXCEPTION2(SE4601, errmsg);
 
-        set_global_names();
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+     
+        set_global_names(cfg.os_primitives_id_min_bound);
+
+        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
@@ -83,8 +92,7 @@ int main(int argc, char **argv)
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for runtime configuration issued"));
 
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-        port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
+        port_number = ((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number;
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
 
@@ -119,6 +127,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
         ppc.shutdown();
+        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         return 0;        
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.getMsg().c_str());

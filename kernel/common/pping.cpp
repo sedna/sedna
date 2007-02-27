@@ -11,7 +11,7 @@
 
 
 #ifdef _WIN32
-#define PPING_STACK_SIZE		10240
+#define PPING_STACK_SIZE		102400
 #else
 #define PPING_STACK_SIZE		102400
 #endif
@@ -129,7 +129,8 @@ void pping_client::shutdown()
 
     if (UUnnamedSemaphoreRelease(&sem, NULL) != 0)
         throw USER_ENV_EXCEPTION("Failed to release semaphore", false);
-    
+
+    initialized = false;
 #endif
 }
 
@@ -216,7 +217,8 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
 
                 return 0;
             }
-            else goto sys_failure;
+            else
+				goto sys_failure;
         }
 
         if (uNotInheritDescriptor(UHANDLE(pps_arg->sock), __sys_call_error) != 0) throw USER_EXCEPTION(SE4080);
@@ -248,7 +250,11 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
                                     PPING_STACK_SIZE,
                                     NULL,
                                     NULL);
-        if (res != 0) goto sys_failure;
+        if (res != 0)
+		{
+			d_printf2("Error=%d\n", GetLastError());
+			goto sys_failure;
+		}
     }
     return 0;
 

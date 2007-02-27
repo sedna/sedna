@@ -12,6 +12,7 @@
 #include "common/pping.h"
 #include "common/ipc_ops.h"
 #include "common/u/uprocess.h"
+#include "common/config.h"
 
 using namespace std;
 
@@ -55,7 +56,6 @@ int main(int argc, char** argv)
         SednaUserException e = USER_EXCEPTION(SE4400);
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION (SE3001);
 
-
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
         char errmsg[1000];
         arg_scan_ret_val = arg_scanargv(argc, argv, ss_argtable, narg, NULL, errmsg, NULL);
@@ -65,8 +65,16 @@ int main(int argc, char** argv)
         if (arg_scan_ret_val == 0)
            throw USER_EXCEPTION2(SE4601, errmsg);
 
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+     
+        set_global_names(cfg.os_primitives_id_min_bound);
 
-        set_global_names();
+        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+        SEDNA_DATA = ((gov_header_struct*)gov_shm_pointer)->SEDNA_DATA;
+   
+
 
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
@@ -79,11 +87,9 @@ int main(int argc, char** argv)
 
         ppc.shutdown();
 
-        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-
-        ((gov_header_struct*)gov_shm_pointer)->is_server_stop = 1;
-        gov_pid = ((gov_header_struct*)gov_shm_pointer)->gov_pid;
-        port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
+        ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
+        gov_pid = ((gov_config_struct*)gov_shm_pointer)->gov_vars.gov_pid;
+        port_number = ((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number;
 
         
         res = uOpenProcess(gov_pid, &proc_handle, __sys_call_error);
@@ -104,6 +110,7 @@ end:
 
       } catch(SednaUserException &e) {
           fprintf(stderr, "%s\n", e.getMsg().c_str());
+          close_gov_shm(gov_mem_dsc, gov_shm_pointer);
           return -1;
       } catch(SednaException &e) {
           sedna_soft_fault(e, EL_STOP);

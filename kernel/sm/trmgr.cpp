@@ -245,6 +245,7 @@ void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
   int res, res2;
   char buf[U_MAX_PATH + SE_MAX_DB_NAME_LENGTH + 16];
   char buf2[1024];
+  char buf3[1024];
   UPID pid;
   UPHANDLE h;
 
@@ -256,12 +257,14 @@ void execute_recovery_by_logical_log_process(LONG_LSN last_checkpoint_lsn)
                         u_i64toa(last_checkpoint_lsn, buf2, 10);
   strcpy(buf, command_line.c_str());
 
+  uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, _itoa(((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf3, 10), __sys_call_error);
+  
 #ifndef TEST_RECOVERY_ON
   res = uCreateProcess(
                   buf,
                   false,
                   NULL,
-                  U_DETACHED_PROCESS/*0*/,
+                  0,//U_DETACHED_PROCESS/*0*/,
                   &h,
                   NULL,
                   &pid,

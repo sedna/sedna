@@ -791,3 +791,85 @@ char *uGetFileNameFromFilePath(const char *path, char *buf, int buf_len, sys_cal
     return buf;
 #endif
 }
+
+UDir uFindFirstFile(const char* dir_name, struct UFindDataStruct* find_data, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+    HANDLE res;
+    WIN32_FIND_DATA  _find_data;
+    char buf[U_MAX_PATH];
+    strcpy(buf, dir_name);
+    strcat(buf, "\\*");
+    res = FindFirstFile(buf, &_find_data);
+    if (res == INVALID_HANDLE_VALUE)
+    {
+        sys_call_error("FindFirstFile");
+        return res;
+    }
+    else
+    {
+       strcpy(find_data->fname, _find_data.cFileName);
+       return res;
+    }
+#else
+    DIR* dir;
+    
+    if ((dir = opendir(dir_name)) != NULL)
+    {
+       struct dirent *dent;
+       dent = readdir(dir);
+       if (dent == NULL)
+       {
+          sys_call_error("readdir");
+          return NULL;
+       }
+       strcpy(find_data.fname, _find_data->d_name);
+    }
+
+    return dir;
+#endif   
+}
+
+// returns 0 if there is no more files in directory
+// returns 1 if find_data is fulfilled by next file information
+//returns -1 in case of errors
+int uFindNextFile(UDir dir, struct UFindDataStruct* find_data, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+    BOOL res;
+    WIN32_FIND_DATA _find_data;
+    res = FindNextFile(dir, &_find_data);
+    if (res != 0)
+    {
+       strcpy(find_data->fname, _find_data.cFileName);
+       return 1;
+    }
+    else
+    {
+       if (GetLastError() == ERROR_NO_MORE_FILES) return 0;
+       else return -1;
+    }
+#else
+    struct dirent *dent;
+    dent = readdir(dir);
+    if (dent == NULL) return 0;
+   
+    strcpy(find_data->fname, dent->d_name);
+    return 1;
+#endif
+} 
+
+//1 - success, 0 - fail
+int uFindClose(UDir dir, sys_call_error_fun fun)
+{
+#ifdef _WIN32
+    BOOL res;
+    res = FindClose(dir);
+    if (res != 0) return 1;
+    else return 0;
+#else
+    int res;
+    res = closedir(dir)
+    return (res == 0)? 1: 0;
+#endif
+}

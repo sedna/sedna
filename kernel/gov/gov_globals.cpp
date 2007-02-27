@@ -16,9 +16,10 @@ int background_mode = 0;
 int gov_help_s = 0;
 int gov_help_l = 0;
 int gov_version = 0;
-int socket_port = 0;
+int lstnr_port = 5050;
+int ping_port = 5151;
 
-const size_t narg = 5;
+const size_t narg = 6;
 
 
 arg_rec gov_argtable[] =
@@ -27,6 +28,7 @@ arg_rec gov_argtable[] =
 {"-help",             NULL,        arg_lit,  &gov_help_s,                  "0",   "\t\t           display this help and exit"},
 {"-version",          NULL,        arg_lit,  &gov_version,                 "0",   "\t\t   display product version and exit"},
 {"-background-mode", " on/off",   arg_bool, &background_mode,              "on",  "  start the server in the background mode (default on)"},
-{"-port-number",     " port",    arg_int,  &socket_port,                 "5050","\t\t   socket listening port (default 5050)"}
+{"-port-number",     " port",    arg_int,  &lstnr_port,                 "5050","\t\t   socket listening port (default 5050)"},
+{"-ping-port-number",  " port",    arg_int,  &ping_port,                 "5151","\t\t   ping listening port (default 5151)"}
 };
 

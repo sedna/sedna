@@ -30,7 +30,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
 
    sm_server = se_new SSMMsg(SSMMsg::Client, 
                           sizeof (sm_msg_struct), 
-                          CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
+                          CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
                           SM_NUMBER_OF_SERVER_THREADS, 
                           U_INFINITE);
 
@@ -268,5 +268,5 @@ bool is_stop_session()
 
   if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return true;
 
-  return  (((gov_sess_struct*)((char*)gov_shared_mem + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + sid*sizeof(gov_sess_struct)))->stop == 1) ? true : false;
+  return  (((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].stop == 1) ? true : false;
 }
