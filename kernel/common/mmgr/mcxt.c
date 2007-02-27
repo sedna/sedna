@@ -30,9 +30,9 @@ extern void DumpUnfreed();
 }
 #endif
 
-#undef malloc(size)
-#undef free(pointer)
-#undef realloc(pointer, size)
+#undef malloc
+#undef free
+#undef realloc
 
 void *track_malloc(usize_t size, const char* file, int line)
 {

@@ -27,7 +27,11 @@ void sedna_soft_fault(const SednaException &e,  int component)
 	sprintf(log_message+(log_message_len),"\nPosition: [%s:%s:%d]\n", e.getFile().c_str(), e.getFunction().c_str(), e.getLine());
 #endif
 	
-	sedna_soft_fault_log(log_message, component);
+    sedna_soft_fault_log(log_message, component);
+#ifdef SE_MEMORY_TRACK
+	DumpUnfreed(component);
+#endif
+
     SEDNA_SOFT_FAULT_FINALIZER;
 }
 
@@ -36,6 +40,10 @@ void sedna_soft_fault(const char* s, int  component)
     SEDNA_SOFT_FAULT_BASE_MSG;
     fprintf(stderr, "Details: %s\n", s);
 	sedna_soft_fault_log(s, component);
+
+#ifdef SE_MEMORY_TRACK
+	DumpUnfreed(component);
+#endif
 
     SEDNA_SOFT_FAULT_FINALIZER;
 }
