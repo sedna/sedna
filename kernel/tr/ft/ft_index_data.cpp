@@ -80,7 +80,7 @@ void ft_index_cell::delete_custom_tree (pers_sset<ft_custom_cell,unsigned short>
 		tmp->obj=NULL;
 		tmp=custom_tree->rb_successor(tmp);
 	}
-	pers_sset<ft_custom_cell,unsigned short>::free(custom_tree);
+	pers_sset<ft_custom_cell,unsigned short>::sset_free(custom_tree);
 }
 void inline free_ft_indexdata_cell(pers_sset<ft_index_cell,unsigned short>::pers_sset_entry* entry)
 {
