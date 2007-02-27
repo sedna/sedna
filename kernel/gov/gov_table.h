@@ -13,11 +13,7 @@
 
 #include "common/base.h"
 #include "common/u/ushm.h"
-
-#define GOV_SHM (gov_shared_mem)
-#define GOV_SHM_HEADER_OFFS ((char*)gov_shared_mem + sizeof(gov_header_struct))
-#define GOV_SHM_DBS_OFFS  ((char*)gov_shared_mem + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct))
-#define GOV_SHM_SESS_OFFS ((char*)gov_shared_mem + sizeof(gov_header_struct) + MAX_DBS_NUMBER*sizeof(gov_dbs_struct) + MAX_SESSIONS_NUMBER*sizeof(gov_sess_struct))
+#include "common/config.h"
 
 class Session
 {
@@ -72,7 +68,7 @@ private:
   std::map<UPID, Process> _pids_table_;//contains pid's of all child processes
   UShMem gov_shm_service_dsc;
   void* gov_shared_mem;
-
+  
   //functions
   session_id get_id();
   void give_id(const session_id&);
@@ -83,7 +79,7 @@ private:
   void erase_database(const database_id& db_id);
 
 public:  
-  void init(int lstnr_port_number);
+  void init(gov_config_struct* cfg);
   void release();
 
   int insert_session(UPID &pid, UPHANDLE *p, std::string &db_name, bool is_child, session_id& s_id/*out*/);//init s_id locks pid until end of session
@@ -106,6 +102,7 @@ public:
   void wait_all_notregistered_sess();
 
   int  get_total_session_procs_num();
+  gov_config_struct* get_config_struct();
   void print_info_table();
 };
 

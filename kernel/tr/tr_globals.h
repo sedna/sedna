@@ -15,6 +15,8 @@
 
 #define TR_ARG_MAX_LENGTH       511
 
+extern void *gov_shm_pointer;
+
 extern int tr_s_help;
 extern int tr_l_help;
 extern int tr_version;
@@ -54,5 +56,7 @@ extern persistent_db_data* entry_point;
 
 extern msg_struct sp_msg;
 extern bool is_need_checkpoint_on_transaction_commit;
+
+extern int db_id;
 
 #endif

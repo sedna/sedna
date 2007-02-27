@@ -26,6 +26,8 @@
 #include "common/ugc.h"
 #include "common/gmm.h"
 #include "common/pping.h"
+#include "common/ipc_ops.h"
+#include "common/config.h"
 
 using namespace std;
 
@@ -74,15 +76,8 @@ void create_db(__int64 data_file_max_size,
     if (uCloseFile(ph_bu_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
     
-    // set global names (exactly in this place after data/tmp file creation)
-    set_global_names();
-    set_global_names(db_name);
-
     event_logger_init(EL_CDB, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
     elog(EL_LOG, ("Request for database creation"));
-
-
-    cdb_ugc(db_name);
 
 
     if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
@@ -323,14 +318,14 @@ int main(int argc, char **argv)
 //    int phys_log_ext_portion = 0xA00000;                // = 10Mb
     pping_client ppc(5151, EL_SM);
     bool is_ppc_closed = true;
+    UShMem gov_mem_dsc;
+    int db_id;
 
 
     try {
 
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
-#endif
-
         if (! set_sedna_data(NULL))
             throw USER_EXCEPTION(SE4411);
 
@@ -361,6 +356,7 @@ int main(int argc, char **argv)
            return 0;
         }
 
+
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
@@ -384,7 +380,25 @@ int main(int argc, char **argv)
         fprintf(res_os, "Creating a data base (it can take a few minutes)...\n");
 
 
-        //!!! Now all parameters checked
+        //!!!TODO: concurrent creation of databases may fail because there is no syncjronization on gov shared memory
+        db_id = get_next_free_db_id((gov_config_struct*)gov_shm_pointer);
+
+        if (db_id == -1)//there is no such database
+           throw USER_EXCEPTION2(SE4211, "The maximum number of databases hosted by one server is exceeded");
+
+        cdb_ugc(db_id);
+
+        fill_database_cell_in_gov_shm((gov_config_struct*)gov_shm_pointer,
+                                      db_id,
+                                      db_name,
+                                      bufs_num,
+                                      max_trs_num,
+                                      phys_log_ext_portion,
+                                      phys_log_size,
+                                      LOG_FILE_PORTION_SIZE);
+
+        set_global_names(cfg.os_primitives_id_min_bound, db_id);
+
 
         try {
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
@@ -493,6 +507,7 @@ int main(int argc, char **argv)
              cleanup_db(db_name);
              fprintf(stderr, "%s\n", e.getMsg().c_str());
              uSocketCleanup(__sys_call_error);  
+             erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
              return 1;
         } catch (SednaException &e) {
              cleanup_db(db_name);
@@ -505,6 +520,7 @@ int main(int argc, char **argv)
 
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
+        erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_CDB);

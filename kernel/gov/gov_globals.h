@@ -19,8 +19,8 @@ extern int gov_help_l;
 extern int gov_help_s;
 extern int gov_version;
 extern const size_t narg;
-extern int socket_port;
-
+extern int lstnr_port;
+extern ping_port;
 
 #endif
 

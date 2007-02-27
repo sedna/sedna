@@ -292,7 +292,8 @@ int urecv(USOCKET s, char *buf, int len, sys_call_error_fun fun)
 int usend(USOCKET s, const char *buf, int len, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    int res_len = send(s, buf, len, 0);
+    int res_len;
+    res_len = send(s, buf, len, 0);
     if (res_len == U_SOCKET_ERROR)
     {
         sys_call_error("send");

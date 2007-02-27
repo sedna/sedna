@@ -21,6 +21,8 @@
 #include "sm/lm/lm_globals.h"
 #include "common/gmm.h"
 #include "common/mmgr/memutils.h"
+#include "common/config.h"
+#include "common/ipc_ops.h"
 
 using namespace std;
 
@@ -365,6 +367,8 @@ int main(int argc, char **argv)
     pping_client ppc(5151, EL_SM);
     bool is_ppc_closed = true;
     char buf[1024];
+    UShMem gov_mem_dsc;
+
 
     try {
 
@@ -390,8 +394,8 @@ int main(int argc, char **argv)
                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
         }
 
-        set_global_names();
-        set_global_names(db_name, true);
+
+        set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
 		/* event_logger_init must be after set_global_names */
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -430,15 +434,10 @@ int main(int argc, char **argv)
 #endif
         }
 
-        setup_sm_globals();//setup default values from config file
-        if ( __bufs_num__ > 0 )
-           bufs_num = __bufs_num__;
-
-        if ( __max_trs_num__ > 0)
-           max_trs_num = __max_trs_num__;
+        setup_sm_globals((gov_config_struct *)gov_shm_pointer);//setup default values from config file
 
 
-        recover_database_by_physical_and_logical_log();
+        recover_database_by_physical_and_logical_log(db_id);
 
 
         /////////////// BACKGROUND MODE ////////////////////////////////////////
@@ -460,7 +459,7 @@ int main(int argc, char **argv)
 
 
             USemaphore started_sem;
-            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY(db_name, buf, 1024), NULL, __sys_call_error))
+            if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_SM_IS_READY, NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4205);
            
             if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
@@ -479,7 +478,7 @@ int main(int argc, char **argv)
             ppc.shutdown();
             if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
            
-            fprintf(res_os, "SM has been started in the background mode\n"); 
+            fprintf(res_os, "SM has been started in the background mode\n");
             fflush(res_os);
             return 0;
 
@@ -573,7 +572,7 @@ int main(int argc, char **argv)
 
             ssmmsg = new SSMMsg(SSMMsg::Server, 
                                 sizeof (sm_msg_struct), 
-                                CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
+                                CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
                                 SM_NUMBER_OF_SERVER_THREADS,
                                 U_INFINITE);
             if (ssmmsg->init() != 0)
@@ -597,7 +596,7 @@ int main(int argc, char **argv)
 
             ///////// NOTIFY THAT SERVER IS READY //////////////////////////////////
             USemaphore started_sem;
-            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY(db_name, buf, 1024), __sys_call_error))
+            if (0 == USemaphoreOpen(&started_sem, CHARISMA_SM_IS_READY, __sys_call_error))
             {
                 USemaphoreUp(started_sem, __sys_call_error);
                 USemaphoreClose(started_sem, __sys_call_error);
@@ -658,12 +657,15 @@ int main(int argc, char **argv)
         ppc.shutdown();
         is_ppc_closed = true;
 
+        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+
         return 0;
  
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
         if (!is_ppc_closed) ppc.shutdown();
+        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SM);
@@ -675,7 +677,7 @@ int main(int argc, char **argv)
 }
 
 
-void recover_database_by_physical_and_logical_log()
+void recover_database_by_physical_and_logical_log(int db_id)
 {
   try{
     char buf[1024];
@@ -749,7 +751,7 @@ void recover_database_by_physical_and_logical_log()
 
        ssmmsg = new SSMMsg(SSMMsg::Server, 
                            sizeof (sm_msg_struct), 
-                           CHARISMA_SSMMSG_SM_ID(db_name, buf, 1024), 
+                           CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
                            SM_NUMBER_OF_SERVER_THREADS,
                            U_INFINITE);
        if (ssmmsg->init() != 0)

@@ -32,92 +32,17 @@ using namespace std;
                          UGC functions
 *****************************************************************************/
 
-void clean_resources(bool background_off_from_background_on)
+void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on)
 {
   gov_ugc(background_off_from_background_on);
 
   string cfg_files_dir;
 
-
-#ifdef _WIN32
-
-  char buf[4096];
-  char buf2[4096];
-  char *cur_dir;
-  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
-
-  cfg_files_dir = string(SEDNA_DATA) + string("\\cfg");
-  d_printf2("cfg_files_dir=%s\n", cfg_files_dir.c_str());
-
-  if (uChangeWorkingDirectory(cfg_files_dir.c_str(), __sys_call_error) != 0 )
+  for (int i=0; i<MAX_DBS_NUMBER; ++i)
   {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-        throw USER_EXCEPTION(SE4604); 
-
-     return;//there is no any sign about databases
+     if (cfg.db_vars[i].db_name[0] != '\0')
+        sm_ugc(background_off_from_background_on, i); 
   }
-  
-
-  struct _finddata_t cfg_file;
-  long dsc;
-
-  //find first cfg file
-
-  if ( (dsc = _findfirst("*_cfg.xml", &cfg_file)) == -1L)
-  {
-     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-        throw USER_EXCEPTION(SE4604); 
-
-     return;
-  }
-
-  string db_name(cfg_file.name);
-  db_name = db_name.substr(0, db_name.size() - 8);
-
-  d_printf2("db_name=%s\n", db_name.c_str());
-                                          
-  sm_ugc(background_off_from_background_on, db_name.c_str());
-
-  while( _findnext(dsc, &cfg_file) == 0)
-  {
-     db_name = string(cfg_file.name);
-     db_name = db_name.substr(0, db_name.size() - 8);
-     d_printf2("db_name=%s\n", db_name.c_str());
-     sm_ugc(background_off_from_background_on, db_name.c_str());
-  }
-     
-  _findclose(dsc);
-
-  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
-     throw USER_EXCEPTION(SE4604); 
-#else
-  DIR *dir;
-  struct dirent* dent;
-  string db_name;
-
-  cfg_files_dir = string(SEDNA_DATA) + string("/cfg");
-                                                                               
-  d_printf2("cfg_files_dir=%s\n", cfg_files_dir.c_str());
-
-  dir = opendir(cfg_files_dir.c_str());
-  if (dir == NULL) return;
-
-  string ext;
-  while ( NULL != (dent = readdir (dir)) )
-  {
-     db_name = string(dent->d_name);
-     if (db_name.size() < 8) continue;//not cfg file
-     //ext = db_name.substr(db_name.size()-3, 3);
-     //if (ext != "xml") continue;
-     db_name = db_name.substr(0, db_name.size() - 8);
-     d_printf2("db_name=%s\n", db_name.c_str());
-     set_global_names(db_name.c_str());
-     sm_ugc(background_off_from_background_on, db_name.c_str());
-  }
-
-  if (0 != closedir(dir))
-     throw USER_EXCEPTION2(SE4054, cfg_files_dir.c_str());
-#endif  
 }
 
 
@@ -138,15 +63,12 @@ bool is_first_start_of_gov()
   }
 }
 
-void RenameLastSoftFaultDir()
+void RenameLastSoftFaultDir(const char* SEDNA_DATA)
 {
 
   std::string buf;
   std::string last_sf_dir;
    
-  if (!set_sedna_data(NULL))
-     throw USER_EXCEPTION(SE4411);
-
   buf = SEDNA_DATA;
 
 #ifdef _WIN32

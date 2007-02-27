@@ -78,8 +78,10 @@ void command_line_client::init()
    else if (string(q_type) == "LR") query_type = TL_ForSemAnal;
    else throw USER_EXCEPTION(SE4002);
 
-           
+   gov_header_struct cfg;
+   get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
 
+   os_primitives_id_min_bound = cfg.os_primitives_id_min_bound;
 
    string plain_batch_text;
 

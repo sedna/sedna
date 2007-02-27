@@ -1172,6 +1172,9 @@ sedna-err:SE4081
 sedna-err:SE4082
 
     Bad query encoding
+sedna-err:SE4083
+
+    Can't read directory
 
 
 ###########################################################################
@@ -1319,6 +1322,9 @@ sedna-err:SE4410
 sedna-err:SE4411
 
     Can't set sedna data variable
+sedna-err:SE4412
+
+    The number of database config files exceeds the maximum freshold
 
 
 ############################################################################

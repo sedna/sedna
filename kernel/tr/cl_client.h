@@ -28,6 +28,7 @@ private:
   StringVector stmnts_array;    //vector of statements to be executed
   int statement_index;
   se_ostream *s;
+  int os_primitives_id_min_bound;
 
   void clear_stack_for_stop_signal();
 
@@ -47,6 +48,8 @@ public:
   virtual void begin_item();
   virtual void end_of_item(bool exist_next);
   virtual bool is_print_progress() { return true; }
+
+  virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }
 /*  
   virtual void update_result(bool res);
   virtual void bulk_load_result(bool res, const std::string& body);

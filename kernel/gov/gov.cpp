@@ -24,6 +24,8 @@
 #include "common/gmm.h"
 #include "common/ipc_ops.h"
 #include "common/mmgr/memutils.h"
+#include "common/config.h"
+#include "gov/config_utils.h"
 
 
 #define GOV_BACKGROUND_MODE_TIMEOUT					15000
@@ -55,10 +57,10 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
              void* gov_shm_pointer = NULL;
 
              gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-             ((gov_header_struct*)gov_shm_pointer)->is_server_stop = 1;
+             ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
              close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
-             send_command_to_gov(socket_port, STOP);
+             send_command_to_gov(lstnr_port, STOP);
 
              return TRUE; 
         }
@@ -83,7 +85,7 @@ void GOVCtrlHandler(int signo)
        ((gov_header_struct*)gov_shm_pointer)->is_server_stop = 1;
        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
-             send_command_to_gov(socket_port, STOP);
+             send_command_to_gov(lstnr_port, STOP);
 
    }
 
@@ -95,6 +97,7 @@ int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
     pping_server pps(5151, EL_GOV);
+    gov_config_struct cfg;
 
     bool is_pps_close = true;
 
@@ -102,7 +105,9 @@ int main(int argc, char** argv)
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
-        RenameLastSoftFaultDir();
+        fullfill_config_parameters(&cfg);
+
+        RenameLastSoftFaultDir(cfg.gov_vars.SEDNA_DATA);
 
         int arg_scan_ret_val = 0; // 1 - parsed successful, 0 - there was errors
         char buf[1024];
@@ -128,7 +133,7 @@ int main(int argc, char** argv)
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
-        set_global_names();
+        set_global_names(cfg.gov_vars.os_primitives_id_min_bound);
 
         if (!is_first_start_of_gov())
            throw USER_EXCEPTION(SE4408);
@@ -143,7 +148,7 @@ int main(int argc, char** argv)
             background_off_from_background_on = false;
 
 
-        clean_resources(background_off_from_background_on);
+        clean_resources(cfg, background_off_from_background_on);
 
         if (background_off_from_background_on)
         {
@@ -165,7 +170,7 @@ int main(int argc, char** argv)
         try {
             string command_line = argv[0];
             command_line += " -background-mode off";
-            command_line += " -port-number " + int2string(socket_port);
+            command_line += " -port-number " + int2string(lstnr_port);
 
             command_line_str = new char[command_line.length() + 1];
             strcpy(command_line_str, command_line.c_str());
@@ -213,12 +218,14 @@ int main(int argc, char** argv)
         if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
             throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
-        elog(EL_LOG, ("=============================================="));
-        elog(EL_LOG, ("SEDNA event log is ready"));
+//        elog(EL_LOG, ("=============================================="));
+//        elog(EL_LOG, ("SEDNA event log is ready"));
 
 
       gov_table = new info_table();
-      gov_table->init(socket_port);
+      gov_table->init(&cfg);
+
+      SEDNA_DATA = gov_table->get_config_struct()->gov_vars.SEDNA_DATA;
 
       create_global_memory_mapping();
 

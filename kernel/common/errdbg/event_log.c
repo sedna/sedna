@@ -754,12 +754,12 @@ void sedna_soft_fault_log(const char* log_message, int  component)
 	if(log_message == NULL) return;
 
     //
-    if (! set_sedna_data(NULL)) 
+    if (! set_sedna_data(buf, NULL)) 
     {
       fprintf(stderr, "Can't set sedna data");
       return;
     }
-    strcpy(buf, SEDNA_DATA);
+
 #ifdef _WIN32
     strcat(buf, "\\data\\");
 #else

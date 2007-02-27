@@ -40,6 +40,8 @@ private:
     char* long_query_stream;
 	
     struct timeval timeout;
+    int os_primitives_id_min_bound;
+
 public:
     socket_client();
  //   ~socket_client() {}
@@ -61,6 +63,8 @@ public:
     virtual void begin_item();
     virtual void end_of_item(bool res);
     virtual bool is_print_progress() { return false; }
+
+    virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }
 /*    
     virtual void update_result(bool res);
     virtual void bulk_load_result(bool res, const std::string& body);

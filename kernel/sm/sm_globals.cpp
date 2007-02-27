@@ -28,6 +28,9 @@ using namespace std;
 ********************************************************************************
 *******************************************************************************/
 
+
+void * gov_shm_pointer = NULL; // global gov shared memory pointer
+int db_id;
 int bufs_num;
 int max_trs_num;
 int phys_log_ext_portion;
@@ -44,63 +47,29 @@ SSMMsg* gov_server;
 
 
 
-void setup_sm_globals()
+void setup_sm_globals(gov_config_struct* cfg)
 {   
    char buf[1024];
 
-   if (strlen(SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
+   if (strlen(cfg->gov_vars.SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
       throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
-   strcpy(db_files_path, SEDNA_DATA);
+
+   strcpy(db_files_path, cfg->gov_vars.SEDNA_DATA);
    strcat(db_files_path, "/data/");
    strcat(db_files_path, db_name);
    strcat(db_files_path, "_files/");
 
 
+   bufs_num =  cfg->db_vars[db_id].bufs_num;
+   max_trs_num = cfg->db_vars[db_id].max_trs_num;
+   phys_log_ext_portion = cfg->db_vars[db_id].phys_log_ext_portion;
+   phys_log_size = cfg->db_vars[db_id].phys_log_size;
 
-   string cfg_file_name = string(SEDNA_DATA) + "/cfg/" + db_name + "_cfg.xml";
-   string cfg_file_content;
+   if ( __bufs_num__ > 0 )
+       bufs_num = __bufs_num__;
 
-
-   FILE *f = fopen(cfg_file_name.c_str(), "r");
-
-   if (f == NULL)
-       throw USER_EXCEPTION2(SE4200,  db_name);
-
-   while( !feof(f) )
-   {
-     size_t len = fread (buf, sizeof(char), 1024, f);
-
-     if ( ferror(f) )
-        throw USER_EXCEPTION2(SE4044,  cfg_file_name.c_str());
-
-     cfg_file_content.append(buf, len);
-  }
-
-  //init bufs_num and max_trs_num from config file
-
-  XML_Parser parser = XML_ParserCreate (NULL);
-
-  XML_SetElementHandler (parser, startElement_sm_cfg, endElement_sm_cfg);
-
-  XML_SetCharacterDataHandler (parser, characterData_sm_cfg);
-   
-  //string curr_tag_name = "";
-  CfgParserContext cnt;
-  cnt.tag_name = "";
-  cnt.content = "";
-
-  XML_SetUserData (parser, &cnt);
-
-  int parse_res;
-
-  parse_res = XML_Parse (parser, cfg_file_content.c_str(), cfg_file_content.length(), 1);
-
-  if( parse_res == XML_STATUS_ERROR )
-
-    throw USER_EXCEPTION2(SE4201,  cfg_file_name.c_str());
-
-  XML_ParserFree(parser);
-      
+   if ( __max_trs_num__ > 0 )
+       max_trs_num = __max_trs_num__;
 }
 
 /*****************************************************************************/

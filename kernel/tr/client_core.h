@@ -41,6 +41,7 @@ public:
     virtual void begin_item() = 0;
     virtual void end_of_item(bool exist_next) = 0;
     virtual bool is_print_progress() = 0;
+    virtual int get_os_primitives_id_min_bound() = 0;
     virtual void authentication_result(bool res, const std::string& body) = 0;
     virtual void process_unknown_instruction(int instruction, bool in_transaction) = 0;
     virtual void error(int code, const std::string& body) = 0;

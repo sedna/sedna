@@ -13,6 +13,7 @@
 #include "common/u/usem.h"
 #include "common/u/uthread.h"
 #include "common/SSMMsg.h"
+#include "common/config.h"
 
 
 #define SM_BACKGROUND_MODE				"SEDNA_SM_BACKGROUND_MODE"
@@ -22,6 +23,7 @@
   GLOBAL VARIABLES
 ********************************************************************************
 *******************************************************************************/
+extern void * gov_shm_pointer; // global gov shared memory pointer
 
 extern SSMMsg *ssmmsg;
 // number of memory buffers
@@ -39,14 +41,15 @@ extern int phys_log_size;
 // database name
 extern char db_name[];
 
+// database id
+extern int db_id;
+
 // path to db files
 extern char db_files_path[];
 
 extern int sedna_db_version;
 
-void setup_globals();
-
-void setup_sm_globals();
+void setup_sm_globals(gov_config_struct* cfg);
 
 void unregister_sm_on_gov();
 

@@ -287,10 +287,10 @@ void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mo
 
     d_printf2("Register session with sid = %d\n", sid);
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, db_name, buf, 100), NULL, __sys_call_error) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem1, 0, 1, SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 100), NULL, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
-    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, db_name, buf, 100), NULL, __sys_call_error) != 0)
+    if (USemaphoreCreate(&sm_to_vmm_callback_sem2, 0, 1, SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 100), NULL, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot create SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
     tr_info *ti = new tr_info;
