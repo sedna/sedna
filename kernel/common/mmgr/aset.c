@@ -1180,6 +1180,6 @@ AllocSetCheck(MemoryContext context)
 				 name, block)*/;
 	}
 }
-
 #endif   /* MEMORY_CONTEXT_CHECKING */
+
 #endif   /* SE_MEMORY_TRACK */

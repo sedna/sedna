@@ -866,5 +866,9 @@ void sedna_soft_fault(int  component)
 
 	sedna_soft_fault_log("Sedna soft fault without details", component);
 
+#ifdef SE_MEMORY_TRACK
+        DumpUnfreed(component);
+#endif
+
     SEDNA_SOFT_FAULT_FINALIZER;
 }

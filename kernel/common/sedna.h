@@ -39,15 +39,8 @@ int set_sedna_data(sys_call_error_fun fun);
     fprintf(stderr, "SEDNA Message: FATAL ERROR\n"); \
     fprintf(stderr, "System error. This error means system malfunction.\n")
 
-#ifdef SE_MEMORY_TRACK /// SE_MEMORY_TRACK can be defined in se_alloc.h
-#define SEDNA_SOFT_FAULT_FINALIZER \
-    fflush(stderr); \
-    DumpUnfreed(); \
-    uExitProcess(1, __sys_call_error)
-#else
 #define SEDNA_SOFT_FAULT_FINALIZER \
     fflush(stderr); \
     uExitProcess(1, __sys_call_error)
 
-#endif /* SE_MEMORY_TRACK */
 #endif /*_SEDNA_H */

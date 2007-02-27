@@ -579,8 +579,8 @@ int main(int argc, char *argv[])
     }
 
 #ifdef SE_MEMORY_TRACK
-    {
-    DumpUnfreed();
+    }
+    DumpUnfreed(EL_TRN);
 #endif
 
     return ret_code;
