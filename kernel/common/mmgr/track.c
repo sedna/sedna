@@ -95,25 +95,20 @@ void RemoveTrack(void* addr)
     allocList->remove(allocList, addr);
 }
 
-const char* __get_component_string_name(int component)
+static const char* __get_component_string_name(int component)
 {
-    const char* component_c_str = NULL;
     switch(component)
     {
-        switch (component)
-        {
-            case EL_CDB:  component_c_str = "CDB";  break; 
-            case EL_DDB:  component_c_str = "DDB";  break; 
-            case EL_GOV:  component_c_str = "GOV";  break; 
-            case EL_RC:   component_c_str = "RC";   break; 
-            case EL_SM:   component_c_str = "SM";   break; 
-            case EL_SMSD: component_c_str = "SMSD"; break;
-            case EL_STOP: component_c_str = "STOP"; break;
-            case EL_TRN:  component_c_str = "TRN";  break;
-            default:      component_c_str = "UNK";
-        }
+        case EL_CDB:  return "CDB";  
+        case EL_DDB:  return "DDB";
+        case EL_GOV:  return "GOV"; 
+        case EL_RC:   return "RC";
+        case EL_SM:   return "SM"; 
+        case EL_SMSD: return "SMSD";
+        case EL_STOP: return "STOP";
+        case EL_TRN:  return "TRN";
+        default:      return "UNK";
     }
-    return component_c_str;
 }
 
 
@@ -123,7 +118,7 @@ void DumpUnfreed(int component)
     ALLOC_INFO* itr = NULL;
 #ifdef SE_MEMORY_DUMP_TO_FILE
     FILE *du_ostr = NULL;
-    char buf[SEDNA_DATA_VAR_SIZE + 128];
+    char buf[SEDNA_DATA_VAR_SIZE + 128 + 32];
     char dt_buf[32];
     struct tm *newtime;
     time_t aclock;
@@ -168,7 +163,7 @@ void DumpUnfreed(int component)
     while(itr) {
 
 #ifndef SE_MEMORY_DUMP_TO_FILE
-        printf("%-50s:\t\tLINE %d,\t\tADDRESS %d\t%d unfreed\n", itr->file, itr->line, itr->address, itr->size);
+        d_printf4("%-50s:\t\tLINE %d,\t\tADDRESS %d\t%d unfreed\n", itr->file, itr->line, itr->address, itr->size);
 #else
         fprintf(du_ostr, "\t<block>\n");
         fprintf(du_ostr, "\t\t<file>%s</file>\n",       itr->file);
@@ -176,7 +171,6 @@ void DumpUnfreed(int component)
         fprintf(du_ostr, "\t\t<address>%d</address>\n", itr->address);
         fprintf(du_ostr, "\t\t<size>%d</size>\n",       itr->size);
         fprintf(du_ostr, "\t</block>\n");
-
 #endif
 
         totalSize += itr->size;
@@ -184,10 +178,10 @@ void DumpUnfreed(int component)
     }
 
 #ifndef SE_MEMORY_DUMP_TO_FILE        	
-	printf("-----------------------------------------------------------\n");
-    printf("Total Unfreed: %d bytes\n", totalSize);
+	d_printf1("-----------------------------------------------------------\n");
+    d_printf2("Total Unfreed: %d bytes\n", totalSize);
 #else
-    fprintf(du_ostr, "     <total>%d</total>\n</unfreed>", totalSize);
+    fprintf(du_ostr, "\t<total>%d</total>\n</unfreed>", totalSize);
 
     fflush(du_ostr);
     fclose(du_ostr);
