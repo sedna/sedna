@@ -33,6 +33,8 @@ extern void DumpUnfreed();
 #undef malloc
 #undef free
 #undef realloc
+#undef calloc
+#undef strdup
 
 void *track_malloc(usize_t size, const char* file, int line)
 {
@@ -60,6 +62,19 @@ void *track_realloc(void *pointer, usize_t size, const char* file, int line)
     }
     return NULL;
 }
+void *track_calloc(usize_t num, usize_t size, const char* file, int line)
+{
+    void *ptr = (void *)calloc(num, size);
+    AddTrack(ptr, num * size, file, line);
+    return ptr;
+}
+char *track_strdup(const char *source, const char* file, int line)
+{
+    char *ptr = strdup(source);
+    AddTrack(ptr, strlen(ptr) + 1, file, line);
+    return ptr;
+}
+
 
 #else
 

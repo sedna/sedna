@@ -35,6 +35,8 @@ extern "C" {
 extern void *track_malloc(usize_t size, const char* file, int line);
 extern void track_free(void *pointer);
 extern void *track_realloc(void *pointer, usize_t size, const char* file, int line);
+extern void *track_calloc(usize_t num, usize_t size, const char* file, int line);
+extern char *track_strdup(const char *source, const char* file, int line);
 extern void DumpUnfreed(int component);
 
 #ifdef __cplusplus
@@ -81,6 +83,8 @@ inline void operator delete[](void* p)
 #define malloc(size)               track_malloc(size, __FILE__, __LINE__)
 #define free(pointer)              track_free(pointer)
 #define realloc(pointer, size)     track_realloc(pointer, size, __FILE__, __LINE__)
+#define calloc(num, size)          track_calloc(num, size, __FILE__, __LINE__)
+#define strdup(source)             track_strdup(source, __FILE__, __LINE__)
 
 #else /* SE_MEMORY_TRACK */
 
