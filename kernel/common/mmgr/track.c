@@ -12,6 +12,8 @@
 
 #endif /* SE_MEMORY_TRACK */
 
+#define SE_MEMORY_TRACK_MAX_PATH 128
+
 /// Comment next string to get unfreed dump on screen.
 #define SE_MEMORY_DUMP_TO_FILE
 
@@ -25,7 +27,7 @@ typedef struct ALLOC_INFO {
 	void* address;
 	struct ALLOC_INFO* next;
     usize_t size;
-    char file[64];
+    char file[SE_MEMORY_TRACK_MAX_PATH + 1];
     int line;
 } ALLOC_INFO;
 
@@ -85,7 +87,8 @@ void AddTrack(void* addr, usize_t asize, const char *fname, int lnum)
     info = (ALLOC_INFO*)malloc(sizeof(ALLOC_INFO));
     info->next = NULL;
     info->address = addr;
-    strncpy(info->file, fname, 63);
+    strncpy(info->file, fname, SE_MEMORY_TRACK_MAX_PATH);
+    info->file[SE_MEMORY_TRACK_MAX_PATH] = '\0';
     info->line = lnum;
     info->size = asize;
     allocList->insert(allocList, info);
