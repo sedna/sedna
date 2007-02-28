@@ -7,10 +7,12 @@
 #undef malloc
 #undef free
 #undef realloc
+#undef calloc
+#undef strdup
 
 #endif /* SE_MEMORY_TRACK */
 
-/// Comment next string to get unfreed dump into screen.
+/// Comment next string to get unfreed dump on screen.
 #define SE_MEMORY_DUMP_TO_FILE
 
 #define SE_MEMORY_TRACK_FILENAME_BU_BASE  "MT-"
@@ -118,7 +120,7 @@ void DumpUnfreed(int component)
     ALLOC_INFO* itr = NULL;
 #ifdef SE_MEMORY_DUMP_TO_FILE
     FILE *du_ostr = NULL;
-    char buf[SEDNA_DATA_VAR_SIZE + 128 + 32];
+    char buf[SEDNA_DATA_VAR_SIZE + 128 + 32];  /* 32 bytes for date copy */
     char dt_buf[32];
     struct tm *newtime;
     time_t aclock;
