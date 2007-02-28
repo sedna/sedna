@@ -2189,7 +2189,7 @@
 ; Returns: (values rewritten-expr for-variables let-variables)
 (define (l2p:replace-unio2tmp-tuple expr expr-single-lst)
   (letrec ((tree-walk
-            (lambda (expr for-variables let-variables)
+            (lambda (expr for-variables let-variables capture-vars?)
               (cond
                 ((not (pair? expr))  ; leaf node
                  (values expr for-variables let-variables))
@@ -2216,19 +2216,24 @@
                            (var-wrapped (cadar args))
                            (var-name (cadr var-wrapped)))
                       (if
-                       (eq? (car expr) 'let@)
-                       (values for-variables (cons var-wrapped let-variables))
-                       (values (cons var-wrapped for-variables) let-variables))))
+                       capture-vars?
+                       (if
+                        (eq? (car expr) 'let@)
+                        (values for-variables (cons var-wrapped let-variables))
+                        (values (cons var-wrapped for-variables) let-variables))
+                       (values for-variables let-variables))))
                   (lambda (new-for-variables new-let-variables)
                     (call-with-values
                      (lambda ()
-                       (tree-walk (cadr expr) for-variables let-variables))
+                       (tree-walk
+                        (cadr expr) for-variables let-variables capture-vars?))
                      (lambda (sub1 for1 let1)
                        (call-with-values
                         (lambda ()
                           (tree-walk (caddr expr)
                                      new-for-variables
-                                     new-let-variables))
+                                     new-let-variables
+                                     #f))
                         (lambda (sub2 for2 let2)
                           (values
                            (list (car expr) sub1 sub2)
@@ -2245,13 +2250,13 @@
                             for-vars let-vars)
                     (call-with-values
                      (lambda ()
-                       (tree-walk (car kids) for-variables let-variables))
+                       (tree-walk (car kids) for-variables let-variables #f))
                      (lambda (new-kid for3 let3)
                        (loop (cdr kids)
                              (cons new-kid res)
                              (l2p:union-remove-equal for-vars for3)
                              (l2p:union-remove-equal let-vars let3)))))))))))
-    (tree-walk expr '() '())))
+    (tree-walk expr '() '() #t)))
 ; The older implementation that fails to avoid the
 ; SEDNA Message: ERROR SE1003
 ; Sedna XQuery processor error.
