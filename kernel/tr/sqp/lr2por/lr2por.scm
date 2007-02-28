@@ -342,7 +342,16 @@
               `(1
                 ,(if
                   (pair? (car node))
-                  `(PPGlobalVariable ,(caar node))
+                  (begin
+                    ;(pp node)
+                    (if
+                     (= (length (car node)) 2)
+                     (cl:signal-input-error
+                      SE4008
+                      (string-append
+                       "undeclared XQuery variable encountered: "
+                       (caar node) (cadar node)))
+                     `(PPGlobalVariable ,(caar node))))
                   `(PPVariable ,@node))))
              
              ; *** select ***
@@ -462,6 +471,7 @@
                      (left-PhysOp (l2p:any-lr-node2por (car node)))
                      (right-PhysOp (l2p:any-lr-node2por (caddr new-fun-def)))
                     )
+                ;(pp new-fun-def)
                 (let* ((lr-fun-arg-type
                         (car  ; argument type
                          (car  ; first argument
@@ -2265,6 +2275,9 @@
 ; accordingly. 
 ; Otherwise, returns arg-lst unchanged
 (define (l2p:return-order-by arg-lst)
+  ((lambda (x)
+     ;(pp x)
+     x)
   (letrec ((form-slets
             (lambda (var-lst last-body)
               (if
@@ -2315,7 +2328,7 @@
                         (lambda (x) (member (cadr x) let-variables))))
                      (lambda (let-vars for-vars)
                        (append for-vars let-vars)))
-                    (form-slets let-variables (caddr second-fun))))))))))))
+                    (form-slets let-variables (caddr second-fun)))))))))))))
 
 (define (l2p:order-by2por arg-lst)
   (let* ((subexpr (car arg-lst))
