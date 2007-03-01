@@ -124,12 +124,12 @@ PLD = link /LIB /NOLOGO
 PLDOUT = /OUT:
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
-              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE
 CPPFLAGS_ST = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-              /DC_EMBEDDED /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) /D_CRT_SECURE_NO_DEPRECATE
+              /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE
 CFLAGS      = $(CFLAGS_ST) /MT
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
 LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
@@ -147,12 +147,12 @@ LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLI
 endif
 else
 CFLAGS_ST   = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
-              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE
 CPPFLAGS_ST = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC /DAUTH_SWITCH=$(AUTH_SWITCH) \
+              /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
               /D_CRT_SECURE_NO_DEPRECATE	
 CFLAGS      = $(CFLAGS_ST) /MT
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
@@ -178,6 +178,9 @@ CPPFLAGS+= /DSE_ENABLE_FTSEARCH
 endif
 ifeq ($(ENABLE_TRIGGERS),1)
 CPPFLAGS+= /DSE_ENABLE_TRIGGERS
+endif
+ifeq ($(AUTH_SWITCH),1)
+CPPFLAGS+= /DSE_ENABLE_SECURITY
 endif
 
 
@@ -214,23 +217,23 @@ STATIC_FLAG =
 endif
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
-           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer \
+           -DEL_DEBUG=$(EL_DEBUG)  -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
 CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) \
+           -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
 LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
 CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
-           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) -fomit-frame-pointer \
+           -DEL_DEBUG=$(EL_DEBUG) -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
 CPPFLAGS = -O0 -w -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-           -DEL_DEBUG=$(EL_DEBUG) -DAUTH_SWITCH=$(AUTH_SWITCH) \
+           -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
 LFLAGS   = -O0 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
@@ -261,6 +264,12 @@ endif
 ifeq ($(ENABLE_DTSEARCH),1)
 CPPFLAGS+= -DSE_ENABLE_FTSEARCH -D__UNIX__ -DUnicodeText
 LFLAGS += -L$(PP)/libs/dtsearch/lib -ldtsearch -lz
+endif
+ifeq ($(ENABLE_TRIGGERS),1)
+CPPFLAGS+= -DSE_ENABLE_TRIGGERS -D__UNIX__ -DUnicodeText
+endif
+ifeq ($(AUTH_SWITCH),1)
+CPPFLAGS+= -DSE_ENABLE_SECURITY -D__UNIX__ -DUnicodeText
 endif
 
 CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer \

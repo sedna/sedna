@@ -145,7 +145,7 @@ bool exist_db(const char* db_name)
 
 int load_metadata_in_database(const char* db_name)
 {
-#if (AUTH_SWITCH == 1)
+#ifdef SE_ENABLE_SECURITY
   UPID pid;
   UPHANDLE proc_h;
 
