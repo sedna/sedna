@@ -390,7 +390,6 @@ int main(int argc, char **argv)
                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
         }
 
-
         set_global_names();
         set_global_names(db_name, true);
 
