@@ -394,6 +394,12 @@ int main(int argc, char **argv)
         set_global_names();
         set_global_names(db_name, true);
 
+		/* event_logger_init must be after set_global_names */
+        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+        elog(EL_LOG, ("SM event log is ready"));
+        
+        elog(EL_LOG, ("SM set global names done"));
+
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
@@ -404,11 +410,13 @@ int main(int argc, char **argv)
         ppc.startup(e);
         is_ppc_closed = false;
 
+        elog(EL_LOG, ("SM ping started"));
 
         open_global_memory_mapping(SE4400);
         get_vmm_region_values();
         close_global_memory_mapping();
 
+        elog(EL_LOG, ("SM vmm region values determined"));
 
         if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) == 0)
         {
@@ -419,6 +427,7 @@ int main(int argc, char **argv)
             setsid();
             chdir(SEDNA_DATA);
             //umask(0);
+            elog(EL_LOG, ("SM standard routines to run the process in the background mode (setsid, chdir) done"));
 #endif
         }
 
@@ -487,10 +496,8 @@ int main(int argc, char **argv)
     	}
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
-        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
-        elog(EL_LOG, ("SM event log is ready"));
-
-//        setup_sm_globals();//setup default values from config file
+//        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
+//        elog(EL_LOG, ("SM event log is ready"));
 
         if (USemaphoreCreate(&wait_for_shutdown, 0, 1, CHARISMA_SM_WAIT_FOR_SHUTDOWN, NULL, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE4206);
@@ -504,36 +511,46 @@ int main(int argc, char **argv)
 
         //init transacion ids table
         init_transaction_ids_table();
+        elog(EL_LOG, ("SM init_transaction_ids_table done"));
 
         //init checkpoint resources
         init_checkpoint_sems();
+        elog(EL_LOG, ("SM init_checkpoint_sems done"));
 
         //create checkpoint thread
         start_chekpoint_thread();
+        elog(EL_LOG, ("SM start_chekpoint_thread done"));
 
         //start phys log
         if (!ll_phys_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
         d_printf1("phys log startup call finished successfully\n");
+        elog(EL_LOG, ("SM phys log startup call finished successfully"));
 
         ll_phys_log_set_phys_log_flag(true);
+        elog(EL_LOG, ("SM ll_phys_log_set_phys_log_flag done"));
 
         //start up shared memory for phys log
         ll_phys_log_startup_shared_mem();
+        elog(EL_LOG, ("SM ll_phys_log_startup_shared_mem done"));
 
       
         //start up logical log
         ll_logical_log_startup();
+        elog(EL_LOG, ("SM ll_logical_log_startup done"));
 
         //enable checkpoints
         ll_phys_log_set_checkpoint_flag(true);
+        elog(EL_LOG, ("SM ll_logical_log_startup done"));
 
 
 #ifdef LOCK_MGR_ON
         lm_table.init_lock_table();
+        elog(EL_LOG, ("SM init_lock_table done"));
 #endif
 
         //start buffer manager
         bm_startup();
+        elog(EL_LOG, ("SM buffer manager started"));
 
 
 #ifdef _WIN32
