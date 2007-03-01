@@ -238,6 +238,8 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
             res = uGetUniqueFileStruct(tmp_file_path_str.c_str(), &fs, sid, __sys_call_error);
             if(res == 0) throw USER_EXCEPTION(SE4052);
             
+            elog(EL_LOG, (string(string("Temporary file has been created ")+string(fs.name)).c_str()));
+            
             res = sp_recv_msg(Sock, &sp_msg);
             if(res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007, usocket_error_translator()); }
             if(res == 1) throw USER_EXCEPTION(SE3012);
@@ -279,6 +281,7 @@ void socket_client::get_file_from_client(std::vector<string>* filenames, std::ve
              }
              cf_vec->at(i).f = NULL;
              if(uDeleteFile(cf_vec->at(i).name, __sys_call_error) == 0) d_printf1("tmp file delete error");
+             elog(EL_LOG, (string(string("Temporary file has been deleted ")+string(cf_vec->at(i).name)).c_str()));
          }
          throw;
      }
@@ -294,7 +297,11 @@ void socket_client::close_file_from_client(client_file &cf)
     }
     cf.f = NULL;	
     if(uIsFileExist(cf.name, __sys_call_error))
+    {
         if(!uDeleteFile(cf.name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
+        elog(EL_LOG, (string(string("Temporary file has been deleted ")+string(cf.name)).c_str()));
+    }
+
 }
 
 void socket_client::respond_to_client(int instruction)

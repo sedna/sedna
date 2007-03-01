@@ -640,8 +640,6 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	{
 		fwrite(buffer, sizeof( char ), strlen(buffer), f);
 		fclose(f);
-        if(uIsFileExist(tmp_file_name, __sys_call_error))
-        if(!uDeleteFile(tmp_file_name, __sys_call_error)) throw USER_EXCEPTION(SE3021);
 		successResult = EXIT_GOT_LONG_QUERY;
 	}	
 
