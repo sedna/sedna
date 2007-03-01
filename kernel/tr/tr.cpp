@@ -95,11 +95,9 @@ int main(int argc, char *argv[])
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
     bool sedna_server_is_running = false;
-//Sleep(10000);    
-//getchar();
+
     try
     {
-
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 
         if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, __sys_call_error) != 0)
@@ -127,8 +125,8 @@ int main(int argc, char *argv[])
         SafeMemoryContextInit();
 
         TransactionContext = AllocSetContextCreate(TopMemoryContext, "TransactionContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
-//        KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
+        UserStatementContext = AllocSetContextCreate(TransactionContext, "UserStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);   
+        // KernelStatementContext = AllocSetContextCreate(UserStatementContext, "KernelStatementContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
         XQParserContext = AllocSetContextCreate(UserStatementContext, "XQParserContext", ALLOCSET_DEFAULT_MINSIZE, ALLOCSET_DEFAULT_INITSIZE, ALLOCSET_DEFAULT_MAXSIZE);
 #endif
 
@@ -162,7 +160,7 @@ int main(int argc, char *argv[])
             throw USER_EXCEPTION(SE3001);
 
         // FIXME: I think, it's possible to combine init and get_session_parameters into one functions (AF)
-//  u_ftime(&ttt1);
+        //  u_ftime(&ttt1);
         client->init();
 
 //  u_ftime(&ttt2);
@@ -270,9 +268,6 @@ int main(int argc, char *argv[])
 #endif
                                 authentication();
 #ifdef SE_MEMORY_MNG
-                                // FIXME:
-                                MemoryContextStats(UserStatementContext);
-
                                 MemoryContextReset(UserStatementContext);
                                 MemoryContextSwitchTo(TransactionContext);
 #endif
@@ -293,7 +288,6 @@ int main(int argc, char *argv[])
 //#ifdef SE_MEMORY_MNG
 //                                MemoryContextSwitchTo(UserStatementContext);
 //#endif
-
 
                                 //print for test system
                                 d_printf1("\n============== statement =================\n");
@@ -533,10 +527,6 @@ int main(int argc, char *argv[])
 
         d_printf1("Transaction has been closed\n\n");
 
-#ifdef SE_MEMORY_MNG
-        // FIXME:
-        MemoryContextStats(TopMemoryContext);
-#endif
     }
     catch(SednaUserException & e)
     {

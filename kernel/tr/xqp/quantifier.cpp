@@ -22,7 +22,7 @@ make_nested_quantifier(PCCTS_AST* q, PCCTS_AST* v_decls, PCCTS_AST* bv){
      v_decls->setRight(NULL);
 
     
-     return ASTBase::tmake(se_new AST(*((AST *)q)), v_decls, make_nested_quantifier(q, r, bv), NULL);
+     return ASTBase::tmake(new AST(*((AST *)q)), v_decls, make_nested_quantifier(q, r, bv), NULL);
     
  }
 

@@ -15,14 +15,14 @@
 #include "ASTBase.h"
 #include "tr/xqp/ASTNodeTypes.h"
 
-/*
+
 
 void malloc_ast_vector();
 
 void free_ast_vector();
 
 void realloc_ast_vector();
-*/
+
 
 class AST : public ASTBase {
 
@@ -59,10 +59,10 @@ public:
  AST(const AST&);
 
  ~AST();
-/*
+
  void* operator new (size_t size);
  void operator delete (void *p);
-*/
+
 // shallow copy (used by sorcerer in transform mode)
  virtual PCCTS_AST *shallowCopy();
 

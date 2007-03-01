@@ -12,7 +12,7 @@
 using namespace std;
 
 //int count = 0;
-/*
+
 void* ast_massive;
 int ast_massive_pos = 0;
 int ast_massive_cells = 1024;
@@ -61,18 +61,18 @@ void free_ast_vector()
   ast_massive_cells = 1024;
 
 }
-*/
+
 
 // called when #[string, tokentype] is seen in an action
 AST::AST(char *s, ANTLRTokenType tok)
 {
   //d_printf1("constructor\n"); 
-  token = se_new ANTLRToken(tok,s); 
+  token = new ANTLRToken(tok,s); 
 }
 
 // called when #[string, ASTNodeType] is seen in an action
 AST::AST(char *s, ASTNodeType type) {
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setText(s);
   token->setType(ANTLRTokenType(type));
   //d_printf2("constructor text=%s\n\n", s);
@@ -80,7 +80,7 @@ AST::AST(char *s, ASTNodeType type) {
 
 // called when #[string, ASTNodeType] is seen in an action
 AST::AST(string str, ASTNodeType type){
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setText(str.c_str());
   token->setType(ANTLRTokenType(type));
 
@@ -92,21 +92,21 @@ AST::AST(string str, ASTNodeType type){
 
 // caled when #[char *] is seen in an action
 AST::AST(const char *s) {
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setText(s);
   //d_printf1("constructor for char*=%s\n",s);
 }
 
 //caled when #[string] is seen in an action
 AST::AST(string str){
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setText(str.c_str());
   //d_printf2("constructor string=%s\n", str.c_str());
 }
 
 // caled when #[ASTNodeType] is seen in an action
 AST::AST(ASTNodeType type) {
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setType((ANTLRTokenType)type);
   //d_printf1("constructor\n");
 }
@@ -114,7 +114,7 @@ AST::AST(ASTNodeType type) {
 
 // empty constructor
 AST::AST() {
-  token = se_new ANTLRToken();
+  token = new ANTLRToken();
   token->setType((ANTLRTokenType)-1);
 
   //d_printf1("constructor\n");
@@ -122,7 +122,7 @@ AST::AST() {
 
 // copy constructor
 AST::AST (const AST &t) {
-  token= se_new ANTLRToken();
+  token= new ANTLRToken();
   token->setText((t.token)->getText());
   token->setType((t.token)->getType());
 //  *token = *(t.token);
@@ -138,9 +138,9 @@ AST::~AST()
   //d_printf1("destructor finished\n");
 }
 
-/*
-void* AST::operator se_new (size_t  size) {
-  //d_printf2("caled begin AST::se_new size=%d\n", size);
+
+void* AST::operator new (size_t  size) {
+  //d_printf2("caled begin AST::new size=%d\n", size);
   void * p = malloc(size);
 
   if (ast_massive_pos < ast_massive_cells)
@@ -157,14 +157,14 @@ void* AST::operator se_new (size_t  size) {
 };
 
 void AST::operator delete (void *p){;};
-*/
+
 
 
 PCCTS_AST*
 AST::shallowCopy()
 {
   //d_printf1("shallow copy\n");
-  return se_new AST(*this);
+  return new AST(*this);
 }
 
 
