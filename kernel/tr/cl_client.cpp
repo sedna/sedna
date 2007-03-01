@@ -108,7 +108,7 @@ void command_line_client::init()
    }
    else 
    {
-#if (AUTH_SWITCH == 1)
+#ifdef SE_ENABLE_SECURITY
       string path_to_security_file; 
       char path_buf[U_MAX_PATH + 32];
       path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);

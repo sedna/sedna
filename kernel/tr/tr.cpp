@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 //d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
         elog(EL_LOG, ("Session is ready"));
 
-#ifdef AUTH_SWITCH          //if security is on
+#ifdef SE_ENABLE_SECURITY          //if security is on
         if (entry_point->is_first_transaction())
         {
             entry_point->clear_first_transaction_flag();

@@ -29,7 +29,7 @@ bool operator < (counted_ptr<db_entity> de1, counted_ptr<db_entity> de2)
 
 void getSednaAuthMetadataPath(char* path)
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
     char path_buf[U_MAX_PATH + 32];
 #ifdef _WIN32
 	string pstring = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
@@ -54,7 +54,7 @@ void getSednaAuthMetadataPath(char* path)
 }
 void auth_for_query(counted_ptr<db_entity> dbe)
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
     bool is_qep_opened = false, is_qep_built = false;
 	typedef pair <counted_ptr<db_entity>, struct dbe_properties> authPair;
 	auth_map::iterator mapIter;
@@ -124,7 +124,7 @@ void auth_for_query(counted_ptr<db_entity> dbe)
 
 void auth_for_load_module(const char* module_name)
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
     PPQueryEssence* qep_tree = NULL;
     se_nullostream null_os;
     bool is_qep_opened = false, is_qep_built = false;
@@ -155,7 +155,7 @@ void auth_for_load_module(const char* module_name)
 
 void clear_current_statement_authmap()
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
 	auth_map::iterator Iter;
     Iter = amap.begin();
 	while ( Iter != amap.end() )
@@ -169,14 +169,14 @@ void clear_current_statement_authmap()
 //erases all the elements of a auth_map
 void clear_authmap()
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
 	amap.clear();
 #endif
 }
 
 void security_metadata_upd_controll()
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
 	if( security_metadata_updating )
 	{
 		clear_authmap();
@@ -187,7 +187,7 @@ void security_metadata_upd_controll()
 
 bool is_auth_check_needed(int update_privilege)
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
 	if(amap.empty()) return false;
     
 	bool all_true = true;
@@ -235,7 +235,7 @@ bool is_auth_check_needed(int update_privilege)
 
 void auth_for_update(xptr_sequence* seq, int update_privilege, bool direct)
 {
-#ifdef AUTH_SWITCH
+#ifdef SE_ENABLE_SECURITY
 	auth_map::iterator mIter;
 	xptr_sequence::iterator it=(*seq).begin();
 	xptr node;
