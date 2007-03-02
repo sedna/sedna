@@ -486,6 +486,9 @@ t_scmnodes_const execute_abs_path_expr(const schema_node *root, const PathExpr *
         tmp = ar_scmnodes[i];
     }
 
+    delete ar_scmnodes;
+    ar_scmnodes = NULL;
+
     return scmnodes;
 }
 
