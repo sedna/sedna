@@ -351,6 +351,9 @@ void PPTreat::reopen()
 void PPTreat::close ()
 {
     child.op->close();
+
+    delete s;
+    s = NULL;
 }
 
 void PPTreat::next(tuple &t)

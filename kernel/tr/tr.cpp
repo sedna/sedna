@@ -285,9 +285,9 @@ int main(int argc, char *argv[])
                         case se_Execute:       //execute query command
                             {
                                 u_ftime(&t_qep1);
-//#ifdef SE_MEMORY_MNG
-//                                MemoryContextSwitchTo(UserStatementContext);
-//#endif
+#ifdef SE_MEMORY_MNG
+                                MemoryContextSwitchTo(UserStatementContext);
+#endif
 
                                 //print for test system
                                 d_printf1("\n============== statement =================\n");
@@ -479,8 +479,11 @@ int main(int argc, char *argv[])
                 client->process_unknown_instruction(client_msg.instruction, false);
             }
 
-            //MemoryContextResetChildren(TransactionContext);
-            //MemoryContextReset(TransactionContext);
+#ifdef SE_MEMORY_MNG
+            MemoryContextResetChildren(TransactionContext);
+            MemoryContextReset(TransactionContext);
+#endif
+
         } // end 'while' by transactions
         /////////////////////////////////////////////////////////////////////////////////
         /// END OF CYCLE BY TRANSACTIONS

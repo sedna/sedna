@@ -17,6 +17,11 @@
 #include "common/utils.h"
 #include "tr/tr_utils.h"
 
+#ifdef SE_MEMORY_TRACK
+#undef malloc
+#undef free
+#endif
+
 using namespace std;
 
 EXTERN_DECLARE_TIME_VARS
