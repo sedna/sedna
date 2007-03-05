@@ -6,10 +6,10 @@
 #ifndef _UGC_H
 #define _UGC_H
 
-void gov_ugc(bool background_off_from_background_on);
+void gov_ugc(bool background_off_from_background_on, int os_primitives_bound);
 
-void sm_ugc(bool background_off_from_background_on, int db_id);
+void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives_bound);
 
-void cdb_ugc(int db_id);
+void cdb_ugc(int db_id, int os_primitives_bound);
 
 #endif

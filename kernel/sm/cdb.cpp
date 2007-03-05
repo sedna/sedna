@@ -379,14 +379,17 @@ int main(int argc, char **argv)
 
         fprintf(res_os, "Creating a data base (it can take a few minutes)...\n");
 
-
         //!!!TODO: concurrent creation of databases may fail because there is no syncjronization on gov shared memory
         db_id = get_next_free_db_id((gov_config_struct*)gov_shm_pointer);
 
         if (db_id == -1)//there is no such database
            throw USER_EXCEPTION2(SE4211, "The maximum number of databases hosted by one server is exceeded");
 
-        cdb_ugc(db_id);
+//        d_printf3("!!!min bound=%d, db_id=%d\n", ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, db_id);
+
+//        cdb_ugc(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound);
+   
+//        d_printf1("!!!completed cleanup\n");
 
         fill_database_cell_in_gov_shm((gov_config_struct*)gov_shm_pointer,
                                       db_id,
@@ -399,8 +402,11 @@ int main(int argc, char **argv)
 
         set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
+        cdb_ugc(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound);
+
 
         try {
+d_printf1("1\n");
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
              SednaUserException e = USER_EXCEPTION(SE4400);
              ppc.startup(e);

@@ -9,6 +9,7 @@
 #include "common/ipc_ops.h"
 #include "common/base.h"
 #include "common/u/usocket.h"
+#include "common/u/uhdd.h"
 #include "common/errdbg/d_printf.h"
 #include "common/config.h"
 #include "../libs/expat/expat.h"
@@ -176,7 +177,7 @@ void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
         {
            size = fread(buf, sizeof(char), 1024, fs);
 
-           if (ferror(fs)) return 0;
+           if (ferror(fs)) throw USER_EXCEPTION2(SE4044, "sednaconf.xml");
 
            cfg_text.append(buf, size);
 
@@ -485,7 +486,7 @@ int set_sedna_data(char* SEDNA_DATA, sys_call_error_fun fun)
            if (ferror(fs)) return 0;
 
            if (cfg_text_free_size < size)
-              cfg_text = realloc(cfg_text, 2*1024 + strlen(cfg_text));
+              cfg_text = (char*)realloc(cfg_text, 2*1024 + strlen(cfg_text));
 
            ind = strlen(cfg_text) + size;
            memcpy(cfg_text + sizeof(char)*strlen(cfg_text), buf, size);

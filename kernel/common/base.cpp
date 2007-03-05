@@ -9,6 +9,7 @@
 #include "common/u/uhdd.h"
 #include "common/u/uprocess.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/uutils.h"
 
 
 using namespace std;
@@ -182,11 +183,11 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
 }
 
 
-#define WIN_GN_INIT1(c)		c = new char[30];/*enough memory for prefix and string representation of numeric id*/ 		\
+#define WIN_GN_INIT1(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
                      		strcpy((char*)c, "SEDNA_GN_PREFIX");								\
                                 strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c, buf, 10));
 
-#define WIN_GN_INIT2(c)		c = new char[30];/*enough memory for prefix and string representation of numeric id*/ 		\
+#define WIN_GN_INIT2(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
                      		strcpy((char*)c, "SEDNA_GN_PREFIX");								\
                                 strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c + id, buf, 10));
 
@@ -213,11 +214,11 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
 
 #define UNIX_GN_INIT2(c)	c = os_primitives_id_min_bound + _##c + id;
 
-#define UNIX_GN_INIT3(c)	if (_##c)														\
+#define UNIX_GN_INIT3(c)	if (_##c != NULL)														\
                                 {																\
-                     		    c = new char[30];													\
-                     		    strcpy((char*)c, "SEDNA_GN_PREFIX");											\
-                     		    strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c + id, buf, 10));											\
+                     		    c = new char[128+sizeof(_##c)];													\
+                                    strcpy((char*)c, _##c);\
+                     		    strcat((char*)c, u_itoa(os_primitives_id_min_bound +id, buf, 10));											\
                                 }																\
                                 else c = NULL;
 
@@ -249,9 +250,8 @@ void set_global_names(int os_primitives_id_min_bound)
 
 void set_global_names(int os_primitives_id_min_bound, int id)
 {
-#ifdef _WIN32
     char buf[256];
-
+#ifdef _WIN32
     WIN_GN_INIT2(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME);
     WIN_GN_INIT2(CHARISMA_ITFE_SHARED_MEMORY_NAME);
 

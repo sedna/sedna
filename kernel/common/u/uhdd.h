@@ -46,6 +46,8 @@ struct UFindDataStruct
 
 
 #else
+#include <dirent.h>
+#include <sys/types.h>
 
 /* UShareMode */
 #define U_SHARE_READ			0

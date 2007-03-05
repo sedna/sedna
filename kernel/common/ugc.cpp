@@ -11,6 +11,7 @@
 #include "common/u/usem.h"
 #include "common/u/ummap.h"
 #include "common/errdbg/d_printf.h"
+#include "common/config.h"
 
 
 
@@ -46,7 +47,7 @@
 
 
 
-void gov_ugc(bool background_off_from_background_on)
+void gov_ugc(bool background_off_from_background_on, int os_primitives_bound)
 {
 #ifdef _WIN32
 #else
@@ -58,8 +59,6 @@ void gov_ugc(bool background_off_from_background_on)
     if (background_off_from_background_on) return;
 
     d_printf1("Starting CLEANUP\n");
-    SEMAPHORE_CLEANUP(CHARISMA_GOV_WAIT_FOR_SHUTDOWN);
-    SEMAPHORE_CLEANUP(CHARISMA_STOP_GOV);
     SEMAPHORE_CLEANUP(CHARISMA_GOVERNOR_IS_READY);
 
     SEMAPHORE_CLEANUP(SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -71,16 +70,16 @@ void gov_ugc(bool background_off_from_background_on)
     /// releasing semaphores depending on sessions
     for (int i = 0; i < MAX_SESSIONS_NUMBER; i++)
     {
-        SEMAPHORE_CLEANUP2(SM_TO_VMM_CALLBACK_SEM1_BASE_STR(i, buf, 1024), SM_TO_VMM_CALLBACK_SEM1_BASE_STR);
-        SEMAPHORE_CLEANUP2(SM_TO_VMM_CALLBACK_SEM2_BASE_STR(i, buf, 1024), SM_TO_VMM_CALLBACK_SEM2_BASE_STR);
-        SEMAPHORE_CLEANUP2(SEDNA_TRANSACTION_LOCK(i, buf, 1024), SEDNA_TRANSACTION_LOCK);
+        SEMAPHORE_CLEANUP2(SM_TO_VMM_CALLBACK_SEM1_BASE_STR(i, os_primitives_bound, buf, 1024), SM_TO_VMM_CALLBACK_SEM1_BASE_STR);
+        SEMAPHORE_CLEANUP2(SM_TO_VMM_CALLBACK_SEM2_BASE_STR(i, os_primitives_bound, buf, 1024), SM_TO_VMM_CALLBACK_SEM2_BASE_STR);
+        SEMAPHORE_CLEANUP2(SEDNA_TRANSACTION_LOCK(i, os_primitives_bound, buf, 1024), SEDNA_TRANSACTION_LOCK);
     } 
  
     d_printf1("CLEANUP completed\n\n");
 #endif
 }
 
-void sm_ugc(bool background_off_from_background_on, int db_id)
+void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives_bound)
 {
 #ifdef _WIN32
 #else
@@ -116,25 +115,25 @@ void sm_ugc(bool background_off_from_background_on, int db_id)
     SEMAPHORE_CLEANUP(PERS_HEAP_SEMAPHORE_STR);
     SHAREDMEM_CLEANUP(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, 8);
     SEMAPHORE_CLEANUP(CHARISMA_SYNC_TRN_IDS_TABLE);
-    SEMAPHORE_CLEANUP2(CHARISMA_SM_SMSD_ID);
-    SEMAPHORE_CLEANUP2(CHARISMA_SM_IS_READY);
+    SEMAPHORE_CLEANUP(CHARISMA_SM_SMSD_ID);
+    SEMAPHORE_CLEANUP(CHARISMA_SM_IS_READY);
 
-    SEMAPHORE_CLEANUP2(CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024), CHARISMA_SSMMSG_SM_ID);
-    SHAREDMEM_CLEANUP2(CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024), CHARISMA_SSMMSG_SM_ID, 8192);
+    SEMAPHORE_CLEANUP2(CHARISMA_SSMMSG_SM_ID(db_id, os_primitives_bound, buf, 1024), CHARISMA_SSMMSG_SM_ID);
+    SHAREDMEM_CLEANUP2(CHARISMA_SSMMSG_SM_ID(db_id, os_primitives_bound,buf, 1024), CHARISMA_SSMMSG_SM_ID, 8192);
     FILE_MAPPING_CLEANUP(CHARISMA_BUFFER_SHARED_MEMORY_NAME);
 
 
     d_printf1("CLEANUP completed\n\n");
 
-    std::string buf_dir = SEDNA_DATA + std::string("/data/") + db_name + std::string("_files/buf");
+//    std::string buf_dir = SEDNA_DATA + std::string("/data/") + db_name + std::string("_files/buf");
 #endif
 }
 
-void cdb_ugc(int db_id)
+void cdb_ugc(int db_id, int os_primitives_bound)
 {
 #ifdef _WIN32
 #else
-    sm_ugc(false, db_id);
+    sm_ugc(false, db_id, os_primitives_bound);
 #endif
 }
 
