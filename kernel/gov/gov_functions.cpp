@@ -34,14 +34,18 @@ using namespace std;
 
 void clean_resources(gov_config_struct& cfg, bool background_off_from_background_on)
 {
-  gov_ugc(background_off_from_background_on);
+//gov global names already set
+  gov_ugc(background_off_from_background_on, cfg.gov_vars.os_primitives_id_min_bound);
 
   string cfg_files_dir;
 
   for (int i=0; i<MAX_DBS_NUMBER; ++i)
   {
      if (cfg.db_vars[i].db_name[0] != '\0')
-        sm_ugc(background_off_from_background_on, i); 
+     {
+        set_global_names(cfg.gov_vars.os_primitives_id_min_bound, i);
+        sm_ugc(background_off_from_background_on, i, cfg.gov_vars.os_primitives_id_min_bound); 
+     }
   }
 }
 

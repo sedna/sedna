@@ -159,6 +159,7 @@ int uconnect_tcp(USOCKET s, int port, const char *hostname, sys_call_error_fun f
     struct hostent *hp;
     struct sockaddr_in ownaddr;
 
+    
     if ((hp = gethostbyname(hostname)) == NULL)
     {
         sys_call_error("gethostbyname");

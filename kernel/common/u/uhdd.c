@@ -823,7 +823,7 @@ UDir uFindFirstFile(const char* dir_name, struct UFindDataStruct* find_data, sys
           sys_call_error("readdir");
           return NULL;
        }
-       strcpy(find_data.fname, _find_data->d_name);
+       strcpy(find_data->fname, dent->d_name);
     }
 
     return dir;
@@ -869,7 +869,7 @@ int uFindClose(UDir dir, sys_call_error_fun fun)
     else return 0;
 #else
     int res;
-    res = closedir(dir)
+    res = closedir(dir);
     return (res == 0)? 1: 0;
 #endif
 }

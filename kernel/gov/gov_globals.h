@@ -20,7 +20,7 @@ extern int gov_help_s;
 extern int gov_version;
 extern const size_t narg;
 extern int lstnr_port;
-extern ping_port;
+extern int ping_port;
 
 #endif
 

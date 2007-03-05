@@ -219,7 +219,7 @@ try{
     uSetEnvironmentVariable(SEDNA_SERVER_MODE, "1", __sys_call_error);
 
     char buf2[1024];
-    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, _itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
+    uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound, buf2, 10), __sys_call_error);    
 
     // create security attributes for the new process
     USECURITY_ATTRIBUTES *sa;	

@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 
             }
 
-            cdb_ugc(db_id);
+            cdb_ugc(db_id, cfg.os_primitives_id_min_bound);
             ppc.shutdown();
   
             //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
