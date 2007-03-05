@@ -11,6 +11,11 @@
 #include "common/ph/pers_heap.h"
 #include "common/base.h"
 
+#ifdef SE_MEMORY_TRACK
+#undef malloc
+#undef free
+#endif
+
 inline void *scm_malloc(size_t size,bool persistent)
 {
 	return (persistent)?pers_malloc(size):malloc(size);
