@@ -12,9 +12,24 @@
 #include "common/base.h"
 
 #ifdef SE_MEMORY_TRACK
-#undef malloc
-#undef free
+
+#ifdef scm_malloc
+#undef scm_malloc
 #endif
+
+inline void *scm_malloc(size_t size,bool persistent, const char* file, int line)
+{
+	return (persistent)?pers_malloc(size):track_malloc(size, file, line);
+}
+
+#define scm_malloc(size, persistent) scm_malloc(size, persistent, __FILE__, __LINE__)
+
+inline void scm_free(void *membloc,bool persistent)
+{
+	(persistent)? pers_free(membloc):track_free(membloc);
+}
+
+#else /* SE_MEMORY_TRACK */
 
 inline void *scm_malloc(size_t size,bool persistent)
 {
@@ -26,6 +41,7 @@ inline void scm_free(void *membloc,bool persistent)
 	(persistent)? pers_free(membloc):free(membloc);
 }
 
+#endif /* SE_MEMORY_TRACK */
 
 template<class T, class X> struct pers_sset
 {
