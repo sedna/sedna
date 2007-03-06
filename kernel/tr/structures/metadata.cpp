@@ -200,6 +200,7 @@ void delete_collection(const char *collection_name)
 			CHECKP(node);
 			hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
 			delete_doc_node(node);
+			up_concurrent_micro_ops_number();
 		}		
 	}
 	/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* tmp=coll->metadata->rb_minimum(coll->metadata->root);
