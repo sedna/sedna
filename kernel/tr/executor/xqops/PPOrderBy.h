@@ -6,6 +6,7 @@
 #ifndef _PPORDERBY_H
 #define _PPORDERBY_H
 
+#include <vector>
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/PPUtils.h"
@@ -180,6 +181,8 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+typedef std::vector<sequence_tmp*> arr_of_seq_ptr;
+
 class PPSTuple : public PPIterator
 {
 protected:
@@ -188,6 +191,7 @@ protected:
     tuple lt; // local tuple
 
     void children(arr_of_PPOpIn &_ch_arr_) { _ch_arr_ = ch_arr; }
+    arr_of_seq_ptr seq_ptrs;
 
 public:
     virtual void open   ();
