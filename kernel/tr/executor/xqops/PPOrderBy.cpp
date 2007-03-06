@@ -797,6 +797,16 @@ void PPSTuple::close ()
     for (i = 0; i < ch_arr.size(); i++)
         ch_arr[i].op->close();
     i = 0;
+    
+    /// We clear on close due to these pointers can be used higher on tree in PPSLet.
+    /// We can not perform clearing within PPSLet cause the situation when PPSLet.next() 
+    /// was not called is possible.
+    while(seq_ptrs.size())
+    {
+        sequence_tmp *st = seq_ptrs.back();
+        delete st;
+        seq_ptrs.pop_back();
+    }
 }
 
 void PPSTuple::next(tuple &t)
@@ -818,6 +828,7 @@ void PPSTuple::next(tuple &t)
                 if(!lt.is_eos())
                 {
                     sequence_tmp* st = se_new sequence_tmp(1);
+                    seq_ptrs.push_back(st); /// Save pointer. Memory will be freed in PPStuple.close().
                     tuple prev_lt(1);
                     prev_lt.copy(t.cells[i]);
                     st -> add(prev_lt);
@@ -904,7 +915,7 @@ void PPSLet::reopen ()
     source_child.op->reopen();
     data_child.op->reopen();
     first_time = true;
-    if(s != NULL) { delete s; s = NULL; }
+    if(s != NULL) s = NULL; 
     reinit_consumer_table();
 }
 
@@ -912,7 +923,7 @@ void PPSLet::close ()
 {
     source_child.op->close();
     data_child.op->close();
-    if(s != NULL) { delete s; s = NULL; }
+    if(s != NULL) s = NULL;
 }
 
 void PPSLet::next(tuple &t)
@@ -922,7 +933,7 @@ void PPSLet::next(tuple &t)
         source_child.op->reopen();
         need_reopen = false;
         first_time  = true;
-        if(s != NULL) { delete s; s = NULL; }
+        if(s != NULL) s = NULL;
         reinit_consumer_table();
     }
 

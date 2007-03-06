@@ -116,7 +116,12 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     {
        string  error = (qep_trees_in_scheme_lst->at(1).internal.list)->at(2).internal.str;
        // d_printf2("error str=%s\n", error.c_str());
-       throw USER_EXCEPTION2(atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num), error.c_str());
+       int error_num = atoi((qep_trees_in_scheme_lst->at(1).internal.list)->at(1).internal.num);
+ 
+       delete_scheme_list(qep_trees_in_scheme_lst);
+       delete st_array;
+       
+       throw USER_EXCEPTION2(error_num, error.c_str());
     }
 
     int size = qep_trees_in_scheme_lst->size();

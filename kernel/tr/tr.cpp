@@ -455,22 +455,22 @@ int main(int argc, char *argv[])
                 }
 
             }
-            else if (client_msg.instruction == se_CloseConnection)      //CloseConnection
+            else if (client_msg.instruction == se_CloseConnection)      // CloseConnection
             {
                 client->respond_to_client(se_CloseConnectionOk);
                 client->release();
                 delete client;
                 expect_another_transaction = false;
             }
-            else if (client_msg.instruction == se_ShowTime)     //ShowTime
+            else if (client_msg.instruction == se_ShowTime)             // ShowTime
             {
                 client->show_time(qep_time);
             }
-            else if (client_msg.instruction == se_SetSessionOptions) // Set session options
+            else if (client_msg.instruction == se_SetSessionOptions)    // Set session options
             {
                 client->set_session_options(&client_msg);
             }
-            else if (client_msg.instruction == se_ResetSessionOptions) // Reset all session options to their default values
+            else if (client_msg.instruction == se_ResetSessionOptions)  // Reset all session options to their default values
             {
                 client->reset_session_options();
             }
