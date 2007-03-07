@@ -161,8 +161,8 @@ struct function_declaration
     int cxt_size;
     static_context *st_cxt;
 
-    function_declaration() : num(0), args(NULL) {}
-    ~function_declaration() { delete [] args; }
+    function_declaration() : num(0), args(NULL), op(NULL) {}
+    ~function_declaration();
 };
 
 struct function_context

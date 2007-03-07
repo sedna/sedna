@@ -305,9 +305,15 @@ inline void operator delete[](void* p)
 #endif
 
 
+#ifdef SE_MEMORY_MNG
 #define se_new                  new(CurrentMemoryContext)
 #define se_new_cxt(cxt)         new(cxt)
 #define se_delete(p)            __se_delete(p, NULL)
+#else
+#define se_new                  new
+#define se_new_cxt(cxt)         new
+#define se_delete(p)            delete(p);
+#endif
 
 #endif   /* __cplusplus__   */
 #endif   /* SE_MEMORY_TRACK */

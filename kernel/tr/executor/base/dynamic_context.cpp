@@ -369,9 +369,16 @@ CollationHandler* static_context::get_collation(const char *uri)
 
 
 
+/*******************************************************************************
+ * Function declaration
+ ******************************************************************************/
 
-
-
+/// !!! Destructor must be here, not in 'h' file (I.S.)
+function_declaration::~function_declaration() 
+{ 
+    delete [] args; 
+    delete op; 
+}
 
 
 
