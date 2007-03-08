@@ -72,6 +72,7 @@ StringVector parse_batch(QueryType type, const char* batch1)
 
      char * batch = NULL;  
      u_ftime(&t1_parser);
+     bool is_vector_allocated = false;
 
  try{
      GET_TIME(&t1_parser);
@@ -84,6 +85,7 @@ StringVector parse_batch(QueryType type, const char* batch1)
 //  getchar();
 
      malloc_ast_vector();
+     is_vector_allocated = true;
 
      if (type == TL_XQuery)
      {
@@ -111,7 +113,9 @@ StringVector parse_batch(QueryType type, const char* batch1)
               
      return array;
  } catch(SednaUserException &e) {
-     free_ast_vector();
+     if(is_vector_allocated) 
+         free_ast_vector();
+
      GET_TIME(&t2_parser);
      ADD_TIME(t_total_parser, t1_parser, t2_parser);
 

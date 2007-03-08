@@ -13,7 +13,7 @@ using namespace std;
 
 //int count = 0;
 
-void* ast_massive;
+void* ast_massive = NULL;
 int ast_massive_pos = 0;
 int ast_massive_cells = 1024;
 
@@ -57,6 +57,7 @@ void free_ast_vector()
   }
       
   free(ast_massive);
+  ast_massive = NULL;
   ast_massive_pos = 0;
   ast_massive_cells = 1024;
 
