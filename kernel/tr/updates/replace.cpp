@@ -94,7 +94,8 @@ void replace(PPOpIn arg)
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
 				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
-				++it3;++it1;
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
+				++it3;//++it1;
 			}
 			break;
 		case 1:
@@ -171,11 +172,22 @@ void replace(PPOpIn arg)
 #ifdef SE_ENABLE_TRIGGERS
             if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
 #endif
+			CHECKP(node);
+			if (is_node_attribute(node))
+			{
+				xptr par=removeIndirection(GETPARENTPOINTER(node));
+				if (is_node_persistent(node_child)) 
+					node=deep_pers_copy(XNULL, XNULL, par, removeIndirection(node_child),true);
+				else
+					node=deep_temp_copy(XNULL, XNULL, par, removeIndirection(node_child),ins_swiz);
+			}
+			else
+			{
 			if (is_node_persistent(node_child)) 
 				node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
 			else
 				node=deep_temp_copy(node, XNULL, XNULL, removeIndirection(node_child),ins_swiz);
-			
+			}
 			sit++;
 		}
 

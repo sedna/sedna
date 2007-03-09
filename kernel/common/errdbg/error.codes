@@ -620,7 +620,7 @@ sedna-err:SE2019
    Invalid result of the second insert argument: sequence contains atomic values
 sedna-err:SE2020
 
-   Invalid result of the rename argument: sequence contains atomic values or one of these nodes: tempory, text, comment,PI,namespace,document
+   Invalid result of the update argument: sequence contains atomic values or one of these nodes: tempory, text, comment,PI,namespace,document
 sedna-err:SE2021
 
   Unknown node test
