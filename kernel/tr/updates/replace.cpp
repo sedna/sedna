@@ -173,7 +173,7 @@ void replace(PPOpIn arg)
             if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
 #endif
 			CHECKP(node);
-			if (is_node_attribute(node))
+			if (is_node_attribute(node)|| is_node_attribute(removeIndirection(node_child)))
 			{
 				xptr par=removeIndirection(GETPARENTPOINTER(node));
 				if (is_node_persistent(node_child)) 

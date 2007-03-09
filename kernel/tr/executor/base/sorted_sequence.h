@@ -49,6 +49,10 @@ struct merge_cell
 		get_val(node,nc->in_node);
 		return nc;
 	}
+	static inline void destroy(merge_cell* mc)
+	{
+		scm_free(mc,false);
+	}
 	inline bool less( merge_cell *p1) 
 	{
 		return compareFN(in_node,p1->in_node,Udata)<0;
