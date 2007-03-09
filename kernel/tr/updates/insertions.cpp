@@ -108,13 +108,14 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
 				++it3;
-				xptr nd=*it1;
-				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				//xptr nd=*it1;
+				//CHECKP(nd);
+				//arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
 
-				++it1;
+				//++it1;
 			}
 			break;
 		case 1:
@@ -354,13 +355,14 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
 				++it3;
-				xptr nd=*it1;
-				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				//xptr nd=*it1;
+				//CHECKP(nd);
+				//arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
 
-				++it1;
+				//++it1;
 			}
 			break;
 		case 1:
@@ -596,13 +598,14 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		case 0:
 			{
 				xptr node=copy_to_temp((*it3).cells[0].get_node());
-				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				//arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
+				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
 				++it3;
-				xptr nd=*it1;
-				CHECKP(nd);
-				arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
+				//xptr nd=*it1;
+				//CHECKP(nd);
+				//arg1seq.set(((n_dsc*)XADDR(nd))->indir,it1);
 
-				++it1;
+				//++it1;
 			}
 			break;
 		case 1:

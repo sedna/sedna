@@ -39,9 +39,9 @@ sorted_sequence::~sorted_sequence()
 			scm_free(tmp->obj,false);
 			tmp=merge_tree->rb_successor(tmp);
 		}
-		 pers_sset<merge_cell,unsigned short>::sset_free(merge_tree);
-		 merge_tree=NULL;
-		 top=NULL;
+		pers_sset<merge_cell,unsigned short>::sset_free(merge_tree);
+		merge_tree=NULL;
+		top=NULL;
 	}
 }
 void sorted_sequence::sort()
@@ -148,7 +148,7 @@ void sorted_sequence::next(tuple& t)
 	}
 	else
 	{			
-		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);		
 		merge_tree->rb_delete(top);
 		scm_free(top->obj,false);
 		top=nxt;		
@@ -694,11 +694,11 @@ xptr sorted_sequence::get_data(int pos)
 	 finalized=false;
 	 if (merge_tree!=NULL)
 	 {
-	     pers_sset<merge_cell,unsigned short>::pers_sset_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
+		 pers_sset<merge_cell,unsigned short>::pers_sset_entry* tmp=merge_tree->rb_minimum(merge_tree->root);
 		 while (tmp!=NULL)
 		 {
-			scm_free(tmp->obj,false);
-			tmp=merge_tree->rb_successor(tmp);
+			 scm_free(tmp->obj,false);
+			 tmp=merge_tree->rb_successor(tmp);
 		 }
 		 pers_sset<merge_cell,unsigned short>::sset_free(merge_tree);
 		 merge_tree=NULL;
