@@ -653,12 +653,14 @@ void schema_node::remove_ft_index(ft_index_cell* index)
 {
 	schema_ft_ind_cell* sci=this->ft_index_object;
 	while (sci!=NULL)
-	{		
+	{
+		schema_ft_ind_cell* sci1=sci->next;
 		if (sci->index==index) 
 		{
 			this->delete_ft_index(sci);
 			break;
-		}		
+		}
+		sci = sci1;
 	}	
 	sc_ref* sc=this->first_child;
 	while (sc!=NULL)
