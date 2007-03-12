@@ -177,13 +177,13 @@ void ft_index_cell::delete_index (const char *index_title, bool just_heap)
 	if (idc!=NULL)
 	{
 		
-		if (!just_heap)
+		down_concurrent_micro_ops_number();
+		hl_logical_log_ft_index((idc->obj)->object,(idc->obj)->ftype,(idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,(idc->obj)->custom_tree,false);
+		if (!just_heap) //FIXME: mb move out of down_concurrent_micro_ops_number() block
 		{
 			SednaIndexJob sij(idc->obj);
 			sij.clear_index();		
 		}
-		down_concurrent_micro_ops_number();
-		hl_logical_log_ft_index((idc->obj)->object,(idc->obj)->ftype,(idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,(idc->obj)->custom_tree,false);
 		ft_index_cell* ic=idc->obj;
 		doc_schema_node* sm=(idc->obj)->schemaroot;
 		free_ft_indexdata_cell(idc);
