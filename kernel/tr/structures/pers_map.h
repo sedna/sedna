@@ -17,12 +17,12 @@
 #undef scm_malloc
 #endif
 
-inline void *scm_malloc(size_t size,bool persistent, const char* file, int line)
+inline void *scm_malloc(size_t size,bool persistent, const char* file, int line, const char* flag)
 {
-	return (persistent)?pers_malloc(size):track_malloc(size, file, line);
+	return (persistent)?pers_malloc(size):track_malloc(size, file, line, flag);
 }
 
-#define scm_malloc(size, persistent) scm_malloc(size, persistent, __FILE__, __LINE__)
+#define scm_malloc(size, persistent) scm_malloc(size, persistent, __FILE__, __LINE__, "SCM_MALLOC")
 
 inline void scm_free(void *membloc,bool persistent)
 {

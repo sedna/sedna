@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-extern void AddTrack(void* addr, usize_t asize, const char *fname, int lnum);
+extern void AddTrack(void* addr, usize_t asize, const char *fname, int lnum, const char* flag);
 extern void RemoveTrack(void* addr);
 extern void DumpUnfreed();
 
@@ -36,10 +36,10 @@ extern void DumpUnfreed();
 #undef calloc
 #undef strdup
 
-void *track_malloc(usize_t size, const char* file, int line)
+void *track_malloc(usize_t size, const char* file, int line, const char* flag)
 {
     void *ptr = (void *)malloc(size);
-    AddTrack(ptr, size, file, line);
+    AddTrack(ptr, size, file, line, flag);
     return ptr;
 }
 void track_free(void *pointer)
@@ -50,28 +50,28 @@ void track_free(void *pointer)
 	    free(pointer);
 	}
 }
-void *track_realloc(void *pointer, usize_t size, const char* file, int line)
+void *track_realloc(void *pointer, usize_t size, const char* file, int line, const char* flag)
 {
     if(pointer)
     {
         void *ptr;
         RemoveTrack(pointer);
 	    ptr = (void *)realloc(pointer, size);
-        AddTrack(ptr, size, file, line);
+        AddTrack(ptr, size, file, line, flag);
         return ptr;
     }
     return NULL;
 }
-void *track_calloc(usize_t num, usize_t size, const char* file, int line)
+void *track_calloc(usize_t num, usize_t size, const char* file, int line, const char* flag)
 {
     void *ptr = (void *)calloc(num, size);
-    AddTrack(ptr, num * size, file, line);
+    AddTrack(ptr, num * size, file, line, flag);
     return ptr;
 }
-char *track_strdup(const char *source, const char* file, int line)
+char *track_strdup(const char *source, const char* file, int line, const char* flag)
 {
     char *ptr = strdup(source);
-    AddTrack(ptr, strlen(ptr) + 1, file, line);
+    AddTrack(ptr, strlen(ptr) + 1, file, line, flag);
     return ptr;
 }
 
