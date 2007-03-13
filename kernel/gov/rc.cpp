@@ -90,7 +90,6 @@ int main(int argc, char **argv)
 
         ppc = new  pping_client(cfg.ping_port_number, EL_RC);
         ppc->startup(ex);
-        ppc = NULL;
 
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for runtime configuration issued"));
