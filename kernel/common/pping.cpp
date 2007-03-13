@@ -252,7 +252,6 @@ U_THREAD_PROC(pping_server_lstn_thread_proc, arg)
                                     NULL);
         if (res != 0)
 		{
-			d_printf2("Error=%d\n", GetLastError());
 			goto sys_failure;
 		}
     }
