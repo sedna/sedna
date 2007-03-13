@@ -13,6 +13,7 @@
 #endif /* SE_MEMORY_TRACK */
 
 #define SE_MEMORY_TRACK_MAX_PATH 128
+#define SE_MEMORY_TRACK_MAX_FLAG 128
 
 /// Comment next string to get unfreed dump on screen.
 #define SE_MEMORY_DUMP_TO_FILE
@@ -28,6 +29,7 @@ typedef struct ALLOC_INFO {
 	struct ALLOC_INFO* next;
     usize_t size;
     char file[SE_MEMORY_TRACK_MAX_PATH + 1];
+    char flag[SE_MEMORY_TRACK_MAX_FLAG + 1];
     int line;
 } ALLOC_INFO;
 
@@ -75,11 +77,12 @@ void init_alloc_list(ALLOC_INFO_LIST* list)
     list->remove = &remove_alloc_list;
 }
 
-void AddTrack(void* addr, usize_t asize, const char *fname, int lnum)
+void AddTrack(void* addr, usize_t asize, const char *fname, int lnum, const char* flag)
 {
     ALLOC_INFO *info;
 
-    if(!allocList) {
+    if(!allocList) 
+    {
 	    allocList = (ALLOC_INFO_LIST*)malloc(sizeof(ALLOC_INFO_LIST));
 	    init_alloc_list(allocList);
 	}
@@ -89,6 +92,17 @@ void AddTrack(void* addr, usize_t asize, const char *fname, int lnum)
     info->address = addr;
     strncpy(info->file, fname, SE_MEMORY_TRACK_MAX_PATH);
     info->file[SE_MEMORY_TRACK_MAX_PATH] = '\0';
+    
+    if(flag != NULL)
+    {
+        strncpy(info->flag, flag, SE_MEMORY_TRACK_MAX_FLAG);
+        info->flag[SE_MEMORY_TRACK_MAX_FLAG] = '\0';
+    }
+    else
+    {
+        info->flag[0] = '\0';
+    }
+    
     info->line = lnum;
     info->size = asize;
     allocList->insert(allocList, info);
@@ -168,13 +182,14 @@ void DumpUnfreed(int component)
     while(itr) {
 
 #ifndef SE_MEMORY_DUMP_TO_FILE
-        d_printf4("%-50s:\t\tLINE %d,\t\tADDRESS %d\t%d unfreed\n", itr->file, itr->line, itr->address, itr->size);
+        d_printf4("%-50s:\t\tLINE %d,\t\tADDRESS %d\t%d unfreed (FLAG: %s)\n", itr->file, itr->line, itr->address, itr->size, itr->flag);
 #else
         fprintf(du_ostr, "\t<block>\n");
         fprintf(du_ostr, "\t\t<file>%s</file>\n",       itr->file);
         fprintf(du_ostr, "\t\t<line>%d</line>\n",       itr->line);
         fprintf(du_ostr, "\t\t<address>%d</address>\n", itr->address);
         fprintf(du_ostr, "\t\t<size>%d</size>\n",       itr->size);
+        fprintf(du_ostr, "\t\t<flag>%s</flag>\n",       itr->flag);
         fprintf(du_ostr, "\t</block>\n");
 #endif
 
