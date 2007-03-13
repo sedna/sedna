@@ -95,10 +95,15 @@ int main(int argc, char *argv[])
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
     bool sedna_server_is_running = false;
-//Sleep(10000);    
-//getchar();
+    int os_primitives_id_min_bound;
     try
     {
+        if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, 1024, NULL) != 0)
+           os_primitives_id_min_bound = 1500; //default value for command line only
+        else
+           os_primitives_id_min_bound = atoi(buf);
+
+        set_global_names(os_primitives_id_min_bound);
 
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 

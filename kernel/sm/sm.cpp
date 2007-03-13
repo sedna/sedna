@@ -394,6 +394,19 @@ int main(int argc, char **argv)
                throw USER_ENV_EXCEPTION("unexpected command line parameters: no dbname parameter", false);
         }
 
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+
+        set_global_names(cfg.os_primitives_id_min_bound);
+
+        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+   
+        db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
+
+        if (db_id == -1)//there is no such database
+           throw USER_EXCEPTION2(SE4200, db_name);
+
+        SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
 
         set_global_names(cfg.os_primitives_id_min_bound, db_id);
 

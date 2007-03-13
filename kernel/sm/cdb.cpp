@@ -326,8 +326,17 @@ int main(int argc, char **argv)
 
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
-        if (! set_sedna_data(NULL))
-            throw USER_EXCEPTION(SE4411);
+#endif
+        gov_header_struct cfg;
+        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
+
+        //!!! Now all parameters checked
+
+        set_global_names(cfg.os_primitives_id_min_bound);
+
+        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+        SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
 
         if (argc == 1)
            print_cdb_usage();
