@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 {
   program_name_argv_0 = argv[0];
             
-  pping_client ppc(5151, EL_DDB);
+  pping_client *ppc = NULL;
 
   bool sedna_work = false;
   UShMem gov_mem_dsc;
@@ -138,8 +138,8 @@ int main(int argc, char** argv)
         //case when sedna work and we must check whether database is running
         if (gov_shm_pointer)
         {//id needed database is running then throw exception
-
-            ppc.startup(e);
+            ppc = new pping_client(cfg.ping_port_number , EL_DDB);
+            ppc->startup(e);
 
             db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
             }
 
             cdb_ugc(db_id, cfg.os_primitives_id_min_bound);
-            ppc.shutdown();
+            ppc->shutdown();
   
             //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
         }
@@ -204,7 +204,7 @@ int main(int argc, char** argv)
 
   } catch (SednaUserException &e) { 
       fprintf(stderr, "%s\n", e.getMsg().c_str());
-      if (gov_shm_pointer) ppc.shutdown();
+      if (gov_shm_pointer) ppc->shutdown();
       uSocketCleanup(__sys_call_error);
       close_gov_shm(gov_mem_dsc, gov_shm_pointer);
       return 1;

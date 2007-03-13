@@ -92,10 +92,10 @@ struct vmm_region_values
 
 #ifdef _WIN32
 #define SESSION_EXE "se_trn.exe"
-#define SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
+//#define SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
 #else 
 #define SESSION_EXE "se_trn"
-#define SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
+//#define SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
 #endif
 
 
@@ -138,6 +138,7 @@ struct vmm_region_values
 
 extern char *CHARISMA_PH_SHARED_MEMORY_NAME;
 extern char *CHARISMA_BUFFER_SHARED_MEMORY_NAME;
+extern char *SEDNA_GLOBAL_MEMORY_MAPPING;
 
 extern global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME;
 extern global_name CHARISMA_ITFE_SHARED_MEMORY_NAME;

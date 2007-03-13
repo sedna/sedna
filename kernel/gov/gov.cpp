@@ -58,9 +58,8 @@ BOOL GOVCtrlHandler(DWORD fdwCtrlType)
 
              gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
              ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
+             send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, STOP);
              close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-
-             send_command_to_gov(lstnr_port, STOP);
 
              return TRUE; 
         }
@@ -83,10 +82,8 @@ void GOVCtrlHandler(int signo)
 
        gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
        ((gov_header_struct*)gov_shm_pointer)->is_server_stop = 1;
+       send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, STOP);
        close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-
-             send_command_to_gov(lstnr_port, STOP);
-
    }
 
 }
@@ -96,7 +93,7 @@ void GOVCtrlHandler(int signo)
 int main(int argc, char** argv)
 {
     program_name_argv_0 = argv[0];
-    pping_server pps(5151, EL_GOV);
+    pping_server *pps = NULL;
     gov_config_struct cfg;
 
     bool is_pps_close = true;
@@ -106,6 +103,7 @@ int main(int argc, char** argv)
         SafeMemoryContextInit();
 #endif
         fullfill_config_parameters(&cfg);
+        pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
 
         RenameLastSoftFaultDir(cfg.gov_vars.SEDNA_DATA);
 
@@ -135,7 +133,7 @@ int main(int argc, char** argv)
 
         set_global_names(cfg.gov_vars.os_primitives_id_min_bound);
 
-        if (!is_first_start_of_gov())
+        if (!is_first_start_of_gov(cfg.gov_vars.ping_port_number))
            throw USER_EXCEPTION(SE4408);
 
         bool background_off_from_background_on;
@@ -229,7 +227,7 @@ int main(int argc, char** argv)
 
       create_global_memory_mapping();
 
-      pps.startup();
+      pps->startup();
       is_pps_close = false;
       d_printf1("ping started\n");
 
@@ -250,12 +248,14 @@ int main(int argc, char** argv)
 #endif
 
 
-      client_listener(background_off_from_background_on);
+      client_listener(gov_table->get_config_struct(), background_off_from_background_on);
 
       gov_table->wait_all_notregistered_sess();
 
-      pps.shutdown();
+      pps->shutdown();
+      delete pps; 
       is_pps_close = true;
+      pps = NULL;
 
       if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
 
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        if (!is_pps_close) { pps.shutdown();}
+        if (!is_pps_close) { if (pps) pps->shutdown();}
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_GOV);

@@ -51,11 +51,11 @@ void clean_resources(gov_config_struct& cfg, bool background_off_from_background
 
 
 
-bool is_first_start_of_gov()
+bool is_first_start_of_gov(int ping_port)
 {
   try
   {
-    pping_client ppc(5151, EL_GOV);
+    pping_client ppc(ping_port, EL_GOV);
 
     SednaUserException e = USER_EXCEPTION(SE4400);
     ppc.startup(e);

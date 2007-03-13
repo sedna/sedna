@@ -86,12 +86,20 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _TRIGGER_SEMAPHORE_STR				 (_SE_EVENT_LOG_SEMAPHORES_NAME + 1 + MAX_DBS_NUMBER)
 #endif
 
+#ifdef _WIN32
+#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
+#else 
+#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
+#endif
+
+
 
 global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME;
 global_name CHARISMA_ITFE_SHARED_MEMORY_NAME;
 
 char *CHARISMA_PH_SHARED_MEMORY_NAME;
 char *CHARISMA_BUFFER_SHARED_MEMORY_NAME;
+char *SEDNA_GLOBAL_MEMORY_MAPPING;
 
 global_name VMM_SM_SEMAPHORE_STR;
 global_name INDIRECTION_TABLE_SEMAPHORE_STR;
@@ -191,6 +199,9 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
                      		strcpy((char*)c, "SEDNA_GN_PREFIX");								\
                                 strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c + id, buf, 10));
 
+#define WIN_GN_INIT4(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
+                     		strcpy((char*)c, _##c);								\
+                                strcat((char*)c, _itoa(os_primitives_id_min_bound, buf, 10));
 
 /*
 #define WIN_GN_INIT1(c)		tmp = string(_##c) + db_name;									\
@@ -222,6 +233,11 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
                                 }																\
                                 else c = NULL;
 
+#define UNIX_GN_INIT4(c)	c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
+                     		strcpy((char*)c, _##c);								\
+                                strcat((char*)c, u_itoa(os_primitives_id_min_bound, buf, 10));
+
+
 /*
 #define UNIX_GN_INIT3(c)	if (_##c)														\
                             {																\
@@ -240,11 +256,13 @@ void set_global_names(int os_primitives_id_min_bound)
     WIN_GN_INIT1(CHARISMA_GOVERNOR_IS_READY);
     WIN_GN_INIT1(SE_EVENT_LOG_SHARED_MEMORY_NAME);
     WIN_GN_INIT1(SE_EVENT_LOG_SEMAPHORES_NAME);
+    WIN_GN_INIT4(SEDNA_GLOBAL_MEMORY_MAPPING);
 #else
     UNIX_GN_INIT1(GOVERNOR_SHARED_MEMORY_NAME);
     UNIX_GN_INIT1(CHARISMA_GOVERNOR_IS_READY);
     UNIX_GN_INIT1(SE_EVENT_LOG_SHARED_MEMORY_NAME);
     UNIX_GN_INIT1(SE_EVENT_LOG_SEMAPHORES_NAME);
+    UNIX_GN_INIT4(SEDNA_GLOBAL_MEMORY_MAPPING);
 #endif
 }
 

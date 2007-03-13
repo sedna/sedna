@@ -316,7 +316,7 @@ int main(int argc, char **argv)
     int persistent_heap_size = 0xA00000;		// = 10Mb
 //    int phys_log_size = 0xA00000;                       // = 10Mb
 //    int phys_log_ext_portion = 0xA00000;                // = 10Mb
-    pping_client ppc(5151, EL_SM);
+    pping_client *ppc = NULL;
     bool is_ppc_closed = true;
     UShMem gov_mem_dsc;
     int db_id;
@@ -385,12 +385,6 @@ int main(int argc, char **argv)
         if (db_id == -1)//there is no such database
            throw USER_EXCEPTION2(SE4211, "The maximum number of databases hosted by one server is exceeded");
 
-//        d_printf3("!!!min bound=%d, db_id=%d\n", ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, db_id);
-
-//        cdb_ugc(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound);
-   
-//        d_printf1("!!!completed cleanup\n");
-
         fill_database_cell_in_gov_shm((gov_config_struct*)gov_shm_pointer,
                                       db_id,
                                       db_name,
@@ -406,10 +400,10 @@ int main(int argc, char **argv)
 
 
         try {
-d_printf1("1\n");
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
              SednaUserException e = USER_EXCEPTION(SE4400);
-             ppc.startup(e);
+             ppc = new pping_client(cfg.ping_port_number, EL_SM);               
+             ppc->startup(e);
              is_ppc_closed = false;
 
 
@@ -502,14 +496,16 @@ d_printf1("1\n");
              elog(EL_LOG, ("Request for database creation satisfied"));
              event_logger_release();
 
-             ppc.shutdown();
+             ppc->shutdown();
+             delete ppc;
+             ppc = NULL;
              is_ppc_closed = true;
              if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
 
         } catch (SednaUserException &e) {
              event_logger_release();
-             if (!is_ppc_closed) ppc.shutdown();
+             if (!is_ppc_closed) {if (ppc) ppc->shutdown();}
              cleanup_db(db_name);
              fprintf(stderr, "%s\n", e.getMsg().c_str());
              uSocketCleanup(__sys_call_error);  
