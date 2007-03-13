@@ -50,5 +50,7 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
 
 std::string erase_ws(std::string str);
 
+void get_default_sednaconf_values(gov_header_struct* cfg);
+
 #endif
 

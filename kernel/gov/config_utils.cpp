@@ -22,24 +22,10 @@ void fullfill_config_parameters(gov_config_struct* cfg)
 
   //init cfg from default values
   memset(cfg, '\0', sizeof(gov_config_struct));
-  cfg->gov_vars.is_server_stop = 0;
+
+  get_default_sednaconf_values(&(cfg->gov_vars));
+
   cfg->gov_vars.gov_pid = uGetCurrentProcessId(__sys_call_error);
-
-  uGetImageProcPath(proc_buf, __sys_call_error);
-  if (proc_buf[0] == '\0') 
-      throw USER_EXCEPTION2(SE4081, "Governor");
-
-#ifdef _WIN32
-  strcpy(cfg->gov_vars.SEDNA_DATA, proc_buf);
-  strcat(cfg->gov_vars.SEDNA_DATA, "\\..");
-#else
-  strcpy(cfg->gov_vars.SEDNA_DATA, "/var/lib/sedna");
-#endif
-
-  cfg->gov_vars.lstnr_port_number = 5050;
-  cfg->gov_vars.ping_port_number = 5151;
-  cfg->gov_vars.os_primitives_id_min_bound = 1500;
-
   int i;
   for (i = 0; i<MAX_DBS_NUMBER; i++)
   {

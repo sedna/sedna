@@ -89,7 +89,8 @@ int main(int argc, char** argv)
   UShMem gov_mem_dsc;
 
   int db_id;
-  void* gov_shm_pointer = NULL;            
+  void* gov_shm_pointer = NULL;  
+  bool pping_inited = false;          
 
   try {
 
@@ -116,6 +117,7 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION2(SE4601, "The name of the database must be specified (type option '-help')");
 
         gov_header_struct cfg;
+        get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
      
         set_global_names(cfg.os_primitives_id_min_bound);
@@ -140,6 +142,7 @@ int main(int argc, char** argv)
         {//id needed database is running then throw exception
             ppc = new pping_client(cfg.ping_port_number , EL_DDB);
             ppc->startup(e);
+            pping_inited = true;
 
             db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
@@ -175,6 +178,8 @@ int main(int argc, char** argv)
 
             cdb_ugc(db_id, cfg.os_primitives_id_min_bound);
             ppc->shutdown();
+            delete ppc;
+            pping_inited = false;
   
             //!!!Here gov already closed listening socket (=>all databases already stopped) or database stopped 
         }
@@ -204,7 +209,7 @@ int main(int argc, char** argv)
 
   } catch (SednaUserException &e) { 
       fprintf(stderr, "%s\n", e.getMsg().c_str());
-      if (gov_shm_pointer) ppc->shutdown();
+      if (pping_inited) ppc->shutdown();
       uSocketCleanup(__sys_call_error);
       close_gov_shm(gov_mem_dsc, gov_shm_pointer);
       return 1;
