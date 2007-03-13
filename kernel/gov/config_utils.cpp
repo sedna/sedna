@@ -38,7 +38,7 @@ void fullfill_config_parameters(gov_config_struct* cfg)
 
   cfg->gov_vars.lstnr_port_number = 5050;
   cfg->gov_vars.ping_port_number = 5151;
-  cfg->gov_vars.os_primitives_id_min_bound = 0;
+  cfg->gov_vars.os_primitives_id_min_bound = 1500;
 
   int i;
   for (i = 0; i<MAX_DBS_NUMBER; i++)

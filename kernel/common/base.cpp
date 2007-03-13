@@ -250,8 +250,8 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
 
 void set_global_names(int os_primitives_id_min_bound)
 {
-#ifdef _WIN32
     char buf[256];
+#ifdef _WIN32
     WIN_GN_INIT1(GOVERNOR_SHARED_MEMORY_NAME);
     WIN_GN_INIT1(CHARISMA_GOVERNOR_IS_READY);
     WIN_GN_INIT1(SE_EVENT_LOG_SHARED_MEMORY_NAME);
