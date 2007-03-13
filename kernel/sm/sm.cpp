@@ -364,7 +364,7 @@ void print_sm_usage()
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    pping_client ppc(5151, EL_SM);
+    pping_client *ppc = NULL;
     bool is_ppc_closed = true;
     char buf[1024];
     UShMem gov_mem_dsc;
@@ -410,7 +410,8 @@ int main(int argc, char **argv)
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
         
         SednaUserException e = USER_EXCEPTION(SE4400);
-        ppc.startup(e);
+        ppc = new pping_client(cfg.ping_port_number, EL_SM);
+        ppc->startup(e);
         is_ppc_closed = false;
 
         elog(EL_LOG, ("SM ping started"));
@@ -475,7 +476,10 @@ int main(int argc, char **argv)
             if (res != 0)
                 throw USER_EXCEPTION(SE4205);
 
-            ppc.shutdown();
+            ppc->shutdown();
+            delete ppc;
+            ppc = NULL;
+            is_ppc_closed = true;
             if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
            
             fprintf(res_os, "SM has been started in the background mode\n");
@@ -484,7 +488,7 @@ int main(int argc, char **argv)
 
         } catch (SednaUserException &e) {
             fprintf(stderr, "%s\n", e.getMsg().c_str());
-            ppc.shutdown();
+            if (!is_ppc_closed) { if (ppc) ppc->shutdown();}
             return 1;
         } catch (SednaException &e) {
             sedna_soft_fault(e, EL_SM);
@@ -654,8 +658,10 @@ int main(int argc, char **argv)
 
         event_logger_release();
    
-        ppc.shutdown();
+        ppc->shutdown();
+        delete ppc;
         is_ppc_closed = true;
+        ppc = NULL;
 
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 
@@ -664,7 +670,7 @@ int main(int argc, char **argv)
     } catch (SednaUserException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        if (!is_ppc_closed) ppc.shutdown();
+        if (!is_ppc_closed) { if (ppc) ppc->shutdown();}
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         return 1;
     } catch (SednaException &e) {

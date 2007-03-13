@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     char *db_name;
     program_name_argv_0 = argv[0];
-    pping_client ppc(5151, EL_RC);
+    pping_client *ppc = NULL;
     int port_number;
     USOCKET sock;
     int res;
@@ -87,7 +87,9 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to initialize socket library");
 
-        ppc.startup(ex);
+        ppc = new  pping_client(cfg.ping_port_number, EL_RC);
+        ppc->startup(ex);
+        ppc = NULL;
 
         event_logger_init(EL_RC, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for runtime configuration issued"));
@@ -119,20 +121,22 @@ int main(int argc, char **argv)
 
         event_logger_release();
 
-        ppc.shutdown();
+        ppc->shutdown();
+        delete ppc;
+        ppc = NULL;
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw SYSTEM_EXCEPTION("Failed to clean up socket library");
         
 
     } catch (SednaUserSoftException &e) {
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        ppc.shutdown();
+        if (ppc) ppc->shutdown();
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
         return 0;        
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        ppc.shutdown();
+        if (ppc) ppc->shutdown();
         return 1;
     } catch (SednaException &e) { 
         sedna_soft_fault(e, EL_RC);

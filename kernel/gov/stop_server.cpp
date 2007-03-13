@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     program_name_argv_0 = argv[0];
 
 
-    pping_client ppc(5151, EL_STOP);
+    pping_client* ppc = NULL;
 
 
     try {
@@ -79,13 +79,15 @@ int main(int argc, char** argv)
 #ifdef REQUIRE_ROOT
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
-        ppc.startup(e);
+        ppc = new pping_client(cfg.ping_port_number, EL_STOP);
+        ppc->startup(e);
 
         event_logger_init(EL_STOP, NULL, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for GOVERNOR shutdown issued"));
         event_logger_release();
 
-        ppc.shutdown();
+        ppc->shutdown();
+        delete ppc;
 
         ((gov_config_struct*)gov_shm_pointer)->gov_vars.is_server_stop = 1;
         gov_pid = ((gov_config_struct*)gov_shm_pointer)->gov_vars.gov_pid;

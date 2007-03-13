@@ -52,9 +52,7 @@ int main(int argc, char **argv)
     bool exist_db = false;
     int command = STOP;
     int db_id;
-
-
-    pping_client ppc(5151, EL_SMSD);
+    pping_client *ppc = NULL;
 
  
     try {
@@ -102,7 +100,8 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
 
-        ppc.startup(e);
+        ppc = new pping_client(cfg.ping_port_number, EL_SMSD);
+        ppc->startup(e);
 
         event_logger_init(EL_SMSD, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for SM shutdown issued"));
@@ -128,7 +127,8 @@ int main(int argc, char **argv)
 
 end:
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-        ppc.shutdown();
+        ppc->shutdown();
+        delete ppc;
 
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
@@ -143,7 +143,7 @@ end:
     } catch (SednaUserException &e) { 
         fprintf(stderr, "%s\n", e.getMsg().c_str());
         event_logger_release();
-        ppc.shutdown();
+        if (ppc) ppc->shutdown();
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SMSD);

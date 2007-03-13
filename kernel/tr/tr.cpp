@@ -90,17 +90,19 @@ int main(int argc, char *argv[])
 #endif
 
     program_name_argv_0 = argv[0];
-    pping_client ppc(5151, EL_TRN);
+    pping_client *ppc = NULL;
     char buf[1024];
     SSMMsg *sm_server = NULL;
     int determine_vmm_region = 0;
     bool sedna_server_is_running = false;
-
+//Sleep(10000);    
+//getchar();
     try
     {
+
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 
-        if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, __sys_call_error) != 0)
+        if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, NULL) != 0)
             determine_vmm_region = 0;
         else
             determine_vmm_region = atoi(buf);
@@ -190,7 +192,8 @@ int main(int argc, char *argv[])
         register_session_on_gov();
 
         SednaUserException e = USER_EXCEPTION(SE4400);
-        ppc.startup(e);
+        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN);
+        ppc->startup(e);
 
         // sid is known
         event_logger_init(EL_TRN, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -527,7 +530,9 @@ int main(int argc, char *argv[])
         PRINT_DEBUG_TIME_RESULTS}
 
         event_logger_release();
-        ppc.shutdown();
+        ppc->shutdown();
+        delete ppc;
+        ppc = NULL;
         set_session_finished();
         event_logger_set_sid(-1);
 
@@ -562,7 +567,7 @@ int main(int argc, char *argv[])
             d_printf1("Connection with client has been broken\n");
         }
         event_logger_release();
-        ppc.shutdown();
+        if (ppc) ppc->shutdown();
         set_session_finished();
         if (is_init_gov_shm)
             close_gov_shm(gov_shm_dsc, gov_shm_pointer);

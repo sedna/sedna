@@ -83,7 +83,7 @@ void send_stop_sm_msg()
     database_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
     ((gov_config_struct*)gov_shm_pointer)->db_vars[database_id].is_stop = 1;
-    send_command_to_gov(port_number, command);
+    send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, command);
     
     close_gov_shm(gov_mem_dsc, gov_shm_pointer);
 }
