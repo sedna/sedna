@@ -113,9 +113,29 @@ int close_gov_shm(UShMem gov_shm_service_dsc, void* gov_shared_mem)
 /*****************************************************************/
 /*****************************************************************/
 
+void get_default_sednaconf_values(gov_header_struct* cfg)
+{
+  char proc_buf[U_MAX_PATH + 1];
+  uGetImageProcPath(proc_buf, __sys_call_error);
+  if (proc_buf[0] == '\0') 
+      throw USER_EXCEPTION(SE4081);
+
+#ifdef _WIN32
+  strcpy(cfg->SEDNA_DATA, proc_buf);
+  strcat(cfg->SEDNA_DATA, "\\..");
+#else
+  strcpy(cfg->SEDNA_DATA, "/var/lib/sedna");
+#endif
+
+  cfg->is_server_stop = 0;
+  cfg->lstnr_port_number = 5050;
+  cfg->ping_port_number = 5151;
+  cfg->os_primitives_id_min_bound = 1500;
+}
 
 void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
 {
+
   //find and parse sednaconf.xml
   char sedna_cfg_file[U_MAX_PATH + 1];
   char proc_buf[U_MAX_PATH + 1];

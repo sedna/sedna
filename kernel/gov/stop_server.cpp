@@ -66,6 +66,7 @@ int main(int argc, char** argv)
            throw USER_EXCEPTION2(SE4601, errmsg);
 
         gov_header_struct cfg;
+        get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
      
         set_global_names(cfg.os_primitives_id_min_bound);

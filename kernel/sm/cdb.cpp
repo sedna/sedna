@@ -328,6 +328,7 @@ int main(int argc, char **argv)
         SafeMemoryContextInit();
 #endif
         gov_header_struct cfg;
+        get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
 
         //!!! Now all parameters checked
