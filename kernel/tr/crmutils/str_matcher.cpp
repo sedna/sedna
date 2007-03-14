@@ -225,6 +225,7 @@ int StrMatcher::parse(const char *str, int len, write_func_t write_cb, void *p, 
 					copypart(str_part, i + 1 - state->len, i, str, len, buf, buf_used);
 					str_part[state->len] = 0;
 					((replace_cb)state->res_ofs)(str_part, state->len, write_cb, p);
+					free(str_part);
 				}
 				else
 					write_cb(p, &strings_buf[state->res_ofs], state->res_len);
