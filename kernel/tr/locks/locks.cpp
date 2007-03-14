@@ -16,6 +16,7 @@
 #include "tr/tr_globals.h"
 #include "common/errdbg/d_printf.h"
 
+/// #define SE_LOCK_TRACK
 
 using namespace std;
 
@@ -58,6 +59,7 @@ void release_resource(const char* name, resource_kind kind)
 {
   if (is_init_lock_mgr)
   {
+     
      local_lock_mrg->release_resource(name, kind);//release one resource
   }
 }
@@ -176,7 +178,16 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
 
   d_printf1("OK\n");
  
-
+#ifdef SE_LOCK_TRACK
+  if (intention_mode == false)
+  {
+      elog(EL_LOG, ("[LTRK] Resource '%s' (%c) has been locked with mode = %c.", name, msg.data.data[1], ((mode == 1) ? 's': 'x')));
+  }
+  else
+  {
+      elog(EL_LOG, ("[LTRK] Resource '%s' (%c) has been locked with intention mode=%s.", name, msg.data.data[1], ((mode == 1) ? "is" : "ix")));
+  }
+#endif /* SE_LOCK_TRACK */
 
   switch(msg.data.data[0])
   {
@@ -232,6 +243,11 @@ void LocalLockMgr::release()
 
   if (sm_server->send_msg(&msg) != 0)
       throw USER_EXCEPTION(SE3034);
+
+#ifdef SE_LOCK_TRACK
+  elog(EL_LOG, ("[LTRK] All resources have been released."));
+#endif /* SE_LOCK_TRACK */
+
 #endif
 }
 
@@ -248,5 +264,10 @@ void LocalLockMgr::release_resource(const char* name, resource_kind kind)
 
   if (sm_server->send_msg(&msg) != 0)
       throw USER_EXCEPTION(SE3034);
+
+#ifdef SE_LOCK_TRACK
+  elog(EL_LOG, ("[LTRK] Resource '%s' (%c) has been released.", name, msg.data.data[1]));
+#endif /* SE_LOCK_TRACK */
+
 #endif
 }
