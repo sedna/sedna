@@ -47,31 +47,33 @@ int main (int argc, char** argv)
      return -1;
   }
 
+  pping_client *ppc = NULL;
+  bool is_inited_ppc = false;
+  char buf[ENV_BUF_SIZE + 1];
+  memset(buf, 0, ENV_BUF_SIZE + 1);
 
-  pping_client ppc(5151, EL_RCV);
+
 
   try{
-      vmm_preliminary_call();
- 	  OS_exceptions_handler::install_handler();
-
-      strcpy(db_name, argv[1]);
-
-      if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
-
-      SednaUserException e = USER_EXCEPTION(SE4400);
-      ppc.startup(e);
-
-      char buf[ENV_BUF_SIZE + 1];
-      memset(buf, 0, ENV_BUF_SIZE + 1);
-
-
       if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, ENV_BUF_SIZE, __sys_call_error) != 0)
           throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
 
       set_global_names(atoi(buf));
 
+      vmm_preliminary_call();
+      OS_exceptions_handler::install_handler();
+
+      strcpy(db_name, argv[1]);
+
+      if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+
       UShMem gov_mem_dsc;
       gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
+
+      ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_RCV);
+      SednaUserException e = USER_EXCEPTION(SE4400);
+      ppc->startup(e);
+      is_inited_ppc = true;
    
       db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
@@ -186,14 +188,16 @@ int main (int argc, char** argv)
       event_logger_release();
       event_logger_set_sid(-1);
 
-	  ppc.shutdown();
+      ppc->shutdown();
+      delete ppc;
+      is_inited_ppc = false;
 
       uSocketCleanup(__sys_call_error);
 
   } catch(SednaUserException &e) {
       event_logger_release();
       event_logger_set_sid(-1);
-	  ppc.shutdown();
+      if (is_inited_ppc) { ppc->shutdown(); delete ppc;}
       uSocketCleanup(NULL);
       fprintf(stderr, "%s\n", e.getMsg());
   } catch(SednaException & e) {
