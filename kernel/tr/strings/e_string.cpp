@@ -238,10 +238,11 @@ void estr::copy_text_pstr_long(xptr dest, xptr src)
         VMM_SIGNAL_MODIFICATION(dest);
     
 		if (copied_count == src_spc_blk)
+		{
 			src_spc_blk = src_cur.copy_blk(tr_globals::e_string_buf);
+			copied_count = 0;
+		}
 	}
-
-    throw USER_EXCEPTION2(SE1003, "Impossible case in copy_text");
 }
 
 int estr::blks_to_allocate(int str_len)

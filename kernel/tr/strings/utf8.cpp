@@ -40,6 +40,7 @@ int CharsetHandler_utf8::length (tuple_cell *tc)
 		unsigned char *end;
 		
 		xptr data = tc->get_str_vmm();
+		CHECKP(data);
 
 		cur_block_xptr = BLOCKXPTR(data);
 		p =(unsigned char*) XADDR(data);
