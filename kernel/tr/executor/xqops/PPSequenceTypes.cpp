@@ -458,7 +458,7 @@ void PPTypeswitch::open ()
     for (int i = 0; i < var_dscs.size(); i++)
     {
         producer &p = cxt->var_cxt.producers[var_dscs[i]];
-        p.type = pt_lazy_simple;
+        p.type = pt_lazy_complex;
         p.op = this;
         p.cvc = se_new complex_var_consumption;
         p.tuple_pos = i;
