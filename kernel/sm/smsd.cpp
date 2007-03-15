@@ -53,6 +53,7 @@ int main(int argc, char **argv)
     int command = STOP;
     int db_id;
     pping_client *ppc = NULL;
+    bool is_ppc_inited = false;
 
  
     try {
@@ -90,19 +91,19 @@ int main(int argc, char **argv)
 
         port_number = ((gov_header_struct*)gov_shm_pointer)->lstnr_port_number;
 
+        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+
 
         if (db_id == -1)//there is no such database
         {
-           close_gov_shm(gov_mem_dsc, gov_shm_pointer);
            goto end;
         }
 
         set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
-        if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
-
         ppc = new pping_client(cfg.ping_port_number, EL_SMSD);
         ppc->startup(e);
+        is_ppc_inited = true;
 
         event_logger_init(EL_SMSD, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
         elog(EL_LOG, ("Request for SM shutdown issued"));
@@ -128,8 +129,11 @@ int main(int argc, char **argv)
 
 end:
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
-        ppc->shutdown();
-        delete ppc;
+        if (is_ppc_inited)
+        {
+           ppc->shutdown();
+           delete ppc;
+        }
 
         if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
 
