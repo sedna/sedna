@@ -863,7 +863,8 @@ XML data can be loaded into a database using \verb!"LOAD"! statement of the Data
 int SEloadData(SednaConnection* conn, 
                      const char* buf, 
                    int bytes_to_load, 
-                const char* doc_name)\end{verbatim}
+                const char* doc_name,
+                const char* col_name)\end{verbatim}
 
 parameters:
 
@@ -874,6 +875,8 @@ parameters:
 \verb!bytes_to_load! - number of bytes to load.
 
 \verb!doc_name! - name of the document in database the data loads to.
+
+\verb!col_name! - name of the collection in the case if document is loaded into the collection, NULL if document is loaded as a standalone.
 
 returns:
 
