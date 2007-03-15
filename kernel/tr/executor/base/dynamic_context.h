@@ -109,10 +109,11 @@ struct variable_context
 struct global_producer
 {
     PPVarIterator *op;				// pointer to operation with next(i) method
+    dynamic_context *cxt;           // for each global producer we have dynamic_context created in por2qep::PPVarDecl
     complex_var_consumption cvc;
     free_entries_list fel;
 
-    global_producer() : op(NULL) {}
+    global_producer() : op(NULL), cxt(NULL) {}
     ~global_producer();
     void open();
     void close();
