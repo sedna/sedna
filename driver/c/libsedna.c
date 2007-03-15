@@ -101,14 +101,14 @@ static int begin_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while trying to begin transaction", NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 230 - BeginTransactionOk or 240 - BeginTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while trying to begin transaction", NULL);
         return SEDNA_ERROR;
     }
 
@@ -144,14 +144,14 @@ static int commit_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while trying to commit transaction", NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 250 - CommitTransactionOk or 260 - CommitTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while trying to commit transaction", NULL);
         return SEDNA_ERROR;
     }
 
@@ -185,14 +185,14 @@ static int rollback_handler(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while trying to rollback transaction", NULL);
         return SEDNA_ERROR;
     }
 
     /* read 100 or 255 - RollbackTransactionOk or 265 - RollbackTransactionFailed*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while trying to rollback transaction", NULL);
         return SEDNA_ERROR;
     }
 
@@ -228,7 +228,7 @@ static int cleanSocket(struct SednaConnection *conn)
         return 0;
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while application result retrival", NULL);
         return SEDNA_ERROR;
     }
 
@@ -241,7 +241,7 @@ static int cleanSocket(struct SednaConnection *conn)
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL, NULL);
+            connectionFailure(conn, SE3007, "Connection was broken while application result retrival", NULL);
             return SEDNA_ERROR;
         }
     }
@@ -264,7 +264,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
 {
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
         return SEDNA_ERROR;
     }
     while (conn->msg.instruction == se_DebugInfo)
@@ -293,7 +293,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
         
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
    		{
-        	connectionFailure(conn, SE3007, NULL, NULL);
+        	connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
 	        return SEDNA_ERROR;
     	}
     }
@@ -343,7 +343,7 @@ static int resultQueryHandler(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, "Unknown message recieved while executing statement", NULL);            /* "Unknown message from server" */
         conn->socket_keeps_data = 0;    /*set the flag - Socket keeps item data*/
         conn->local_data_offset = 0;
         conn->local_data_length = 0;
@@ -370,7 +370,7 @@ static int execute(struct SednaConnection *conn)
     /* or 325 - DebugInfo (retrieve all DebugInfo messages if there are) */
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
         return SEDNA_ERROR;
     }
     while (conn->msg.instruction == se_DebugInfo)
@@ -399,7 +399,7 @@ static int execute(struct SednaConnection *conn)
         
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
    		{
-        	connectionFailure(conn, SE3007, NULL, NULL);
+        	connectionFailure(conn, SE3007, "Connection was broken while executing statement", NULL);
 	        return SEDNA_ERROR;
     	}
     }
@@ -457,22 +457,22 @@ static int execute(struct SednaConnection *conn)
 
         if (uGetCurrentWorkingDirectory(cur_dir_abspath, SE_MAX_DIR_LENGTH, NULL) == NULL)
         {
-            setDriverErrorMsg(conn, SE4602, NULL);
+            setDriverErrorMsg(conn, SE4602, cur_dir_abspath);
             goto BulkLoadErr;
         }
         if (uChangeWorkingDirectory(conn->session_directory, NULL) != 0)
         {
-            setDriverErrorMsg(conn, SE4604, NULL);
+            setDriverErrorMsg(conn, SE4604, conn->session_directory);
             goto BulkLoadErr;
         }
         if (uGetAbsoluteFilePath(filename, cfile_abspath, SE_MAX_DIR_LENGTH, __sys_call_error) == NULL)
         {
-            setDriverErrorMsg(conn, SE4603, NULL);
+            setDriverErrorMsg(conn, SE4603, filename);
             goto BulkLoadErr;
         }
         if (uChangeWorkingDirectory(cur_dir_abspath, __sys_call_error) != 0)
         {
-            setDriverErrorMsg(conn, SE4604, NULL);
+            setDriverErrorMsg(conn, SE4604, cur_dir_abspath);
             goto BulkLoadErr;
         }
 
@@ -513,12 +513,12 @@ static int execute(struct SednaConnection *conn)
                 uCloseFile(file_handle, NULL);
                 if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
                 {
-                    connectionFailure(conn, SE3006, NULL, NULL);
+                    connectionFailure(conn, SE3006, "Connection was broken while application passed bulk load error to the server", NULL);
                     return SEDNA_ERROR;
                 }
                 if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
                 {
-                    connectionFailure(conn, SE3007, NULL, NULL);
+                    connectionFailure(conn, SE3007, "Connection was broken while application passed bulk load error to the server", NULL);
                     return SEDNA_ERROR;
                 }
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -535,7 +535,7 @@ static int execute(struct SednaConnection *conn)
 
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL, NULL);
+                connectionFailure(conn, SE3006, "Connection was broken while application passed bulk load portion to the server", NULL);
                 uCloseFile(file_handle, NULL);
                 return SEDNA_ERROR;
             }
@@ -551,13 +551,13 @@ static int execute(struct SednaConnection *conn)
         conn->msg.length = 0;
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while application passed bulk load ending message to the server", NULL);
             return SEDNA_ERROR;
         }
 
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL, NULL);
+            connectionFailure(conn, SE3007, "Connection was broken while obtaining bulk load result", NULL);
             return SEDNA_ERROR;
         }
         }// while conn->msg.instruction == BulkLoadFileName
@@ -701,7 +701,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while sending Start up mesage to server", NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -709,7 +709,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* send protocol version, login, dbname. SessionParameters - 120*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while recieve se_SendSessionParameters mesage from server", NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -747,7 +747,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending authorization data to the server", NULL);
             release(conn);
             return SEDNA_OPEN_SESSION_FAILED;
         }
@@ -758,7 +758,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* read - error or SendAuthenticationParameters - 150*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while recieving authorization request from the server", NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -782,7 +782,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending authorization data to the server", NULL);
             release(conn);
             return SEDNA_OPEN_SESSION_FAILED;
         }
@@ -793,7 +793,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     /* read AuthenticationOk - 160 or AuthenticationFailed - 170.*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while recieving authorization result from the server", NULL);
         release(conn);
         return SEDNA_OPEN_SESSION_FAILED;
     }
@@ -826,7 +826,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
         {
         	if (uGetCurrentWorkingDirectory(conn->session_directory, SE_MAX_DIR_LENGTH, NULL) == NULL)
         	{
-            	connectionFailure(conn, SE4602, NULL, NULL);
+            	connectionFailure(conn, SE4602, conn->session_directory, NULL);
             	release(conn);
             	return SEDNA_OPEN_SESSION_FAILED;
         	}
@@ -838,7 +838,7 @@ int SEconnect(struct SednaConnection *conn, const char *url, const char *db_name
     }
 
   UnknownMsg:
-    connectionFailure(conn, SE3008, NULL, NULL);      /* "Unknown message from server"*/
+    connectionFailure(conn, SE3008, "Unknown message from server got while trying ot open a session", NULL);      /* "Unknown message from server"*/
     release(conn);
     return SEDNA_OPEN_SESSION_FAILED;
 
@@ -879,7 +879,7 @@ int SEclose(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while trying to close session", NULL);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
         release(conn);
@@ -889,7 +889,7 @@ int SEclose(struct SednaConnection *conn)
     /* read 100 or 510 - CloseConnectionOk or 520 - TransactionRollbackBeforeClose*/
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while trying to close session", NULL);
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         conn->isConnectionOk = SEDNA_CONNECTION_CLOSED;
         release(conn);
@@ -915,7 +915,7 @@ int SEclose(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, "Unknown message got while trying to close session", NULL);            /* "Unknown message from server" */
         return SEDNA_CLOSE_SESSION_FAILED;
     }
 }
@@ -1038,7 +1038,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
         /* string*/
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending long query to the server", NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1057,7 +1057,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
             /* string*/
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL, NULL);
+                connectionFailure(conn, SE3006, "Connection was broken while sending long query to the server", NULL);
                 return SEDNA_ERROR;
             }
             if (feof(query_file))
@@ -1070,7 +1070,7 @@ int SEexecuteLong(struct SednaConnection *conn, FILE * query_file)
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending long query to the server", NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1124,7 +1124,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
             /* string*/
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL, NULL);
+                connectionFailure(conn, SE3006, "Connection was broken while sending query to the server", NULL);
                 return SEDNA_ERROR;
             }
 
@@ -1136,7 +1136,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending query to the server", NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1155,7 +1155,7 @@ int SEexecute(struct SednaConnection *conn, const char *query)
         memcpy(conn->msg.body + 6, query, query_length);
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while sending query to the server", NULL);
             return SEDNA_ERROR;
         }
     }
@@ -1203,7 +1203,7 @@ int SEnext(struct SednaConnection *conn)
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while sending Next command to the server", NULL);
         return SEDNA_ERROR;
     }
 
@@ -1265,7 +1265,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
 
             if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3007, NULL, NULL);
+                connectionFailure(conn, SE3007, "Connection was broken while getting result data from the server", NULL);
                 return SEDNA_ERROR;
             }
             if (conn->msg.instruction == se_ErrorResponse)
@@ -1313,7 +1313,7 @@ int SEgetData(struct SednaConnection *conn, char *buf, int bytes_to_read)
             }
             else
             {
-                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                connectionFailure(conn, SE3008, "Unknown message got while getting result data from the server", NULL);            /* "Unknown message from server" */
                 conn->result_end = 1;   /* tell result is finished*/
                 conn->socket_keeps_data = 0;    /* tell there is no data in socket*/
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
@@ -1391,12 +1391,12 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while loading data (bulk load) the server", NULL);
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL, NULL);
+            connectionFailure(conn, SE3007, "Connection was broken while loading data (bulk load) the server", NULL);
             return SEDNA_ERROR;
         }
         
@@ -1424,12 +1424,12 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
 
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while passing bulk load error to the server", NULL);
             return SEDNA_ERROR;
         }
         if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3007, NULL, NULL);
+            connectionFailure(conn, SE3007, "Connection was broken while passing bulk load error to the server", NULL);
             return SEDNA_ERROR;
         }
         setBulkLoadFinished(conn);
@@ -1453,7 +1453,7 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         /* string*/
         if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
         {
-            connectionFailure(conn, SE3006, NULL, NULL);
+            connectionFailure(conn, SE3006, "Connection was broken while passing a data chunk to the server", NULL);
             return SEDNA_ERROR;
         }
 
@@ -1483,7 +1483,7 @@ int SEendLoadData(struct SednaConnection *conn)
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while passing bulk load ending message to the server", NULL);
         return SEDNA_ERROR;
     }
     
@@ -1491,7 +1491,7 @@ int SEendLoadData(struct SednaConnection *conn)
 
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while passing bulk load ending message to the server", NULL);
         return SEDNA_ERROR;
     }
 
@@ -1521,7 +1521,7 @@ int SEendLoadData(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, "Unknown message got while passing bulk load ending message to the server", NULL);            /* "Unknown message from server" */
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_BULK_LOAD_FAILED;
     }
@@ -1573,7 +1573,7 @@ const char *SEshowTime(struct SednaConnection *conn)
 
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while obtaining execution time from the server", NULL);
         strcpy(conn->query_time, "not available");
         conn->query_time[13] = '\0';
         return conn->query_time;
@@ -1581,7 +1581,7 @@ const char *SEshowTime(struct SednaConnection *conn)
 
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while obtaining execution time from the server", NULL);
         strcpy(conn->query_time, "not available");
         conn->query_time[13] = '\0';
         return conn->query_time;
@@ -1643,12 +1643,12 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             int2net_int(0, conn->msg.body+5); //length of the option value string = 0
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3006, NULL, NULL);
+                connectionFailure(conn, SE3006, "Connection was broken while setting session option on the server", NULL);
                 return SEDNA_ERROR;
             }
             if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
             {
-                connectionFailure(conn, SE3007, NULL, NULL);
+                connectionFailure(conn, SE3007, "Connection was broken while setting session option on the server", NULL);
                 return SEDNA_ERROR;
             }
             if (conn->msg.instruction == se_SetSessionOptionsOk)
@@ -1661,7 +1661,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             else
             {
-                connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+                connectionFailure(conn, SE3008, "Unknown message got while setting session option on the server", NULL);            /* "Unknown message from server" */
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
                 return SEDNA_ERROR;
             }
@@ -1713,12 +1713,12 @@ int SEresetAllConnectionAttr(struct SednaConnection *conn)
     conn->msg.length = 0;
     if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3006, NULL, NULL);
+        connectionFailure(conn, SE3006, "Connection was broken while resetting session option on the server", NULL);
         return SEDNA_ERROR;
     }
     if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
     {
-        connectionFailure(conn, SE3007, NULL, NULL);
+        connectionFailure(conn, SE3007, "Connection was broken while resetting session option on the server", NULL);
         return SEDNA_ERROR;
     }
     if (conn->msg.instruction == se_ResetSessionOptionsOk)
@@ -1731,7 +1731,7 @@ int SEresetAllConnectionAttr(struct SednaConnection *conn)
     }
     else
     {
-        connectionFailure(conn, SE3008, NULL, NULL);            /* "Unknown message from server" */
+        connectionFailure(conn, SE3008, "Unknown message got while resetting session option on the server", NULL);            /* "Unknown message from server" */
         conn->isInTransaction = SEDNA_NO_TRANSACTION;
         return SEDNA_ERROR;
     }
