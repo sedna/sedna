@@ -229,7 +229,7 @@ void col_schema_node::replace_document_pointer(xptr old_xptr, xptr new_xptr)
 	CHECKP(datap);
 	shft shift= *((shft*)XADDR(datap));
 	char* data=(char*)XADDR(BLOCKXPTR(datap))+shift;
-	char *z=new char[size+1];
+	char *z=se_new char[size+1];
 	memcpy(z,data,size);
 	z[size]='\0';	
 	//2. find doc and replace

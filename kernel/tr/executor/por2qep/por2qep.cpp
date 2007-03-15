@@ -4018,9 +4018,9 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
             int v_dsc = atoi(qp->at(i).internal.list->at(1).internal.num);
             int var_cxt_size = atoi(qp->at(i).internal.list->at(2).internal.num);
 
-            dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);
-            
+            dynamic_context *cxt = se_new dynamic_context(st_cxt, var_cxt_size);   // it will be freed in global_producer::~global_producer()
             PPVarIterator *opit = NULL;
+
             if (qp->at(i).internal.list->size() == 5)
             {
                 if (qp->at(i).internal.list->at(4).type != SCM_LIST)
@@ -4040,6 +4040,7 @@ void make_pp_qp(scheme_list *qp, static_context *st_cxt, int &function_counter, 
             }
 
             dynamic_context::glb_var_cxt.producers[var_decl_counter].op = opit;
+            dynamic_context::glb_var_cxt.producers[var_decl_counter].cxt = cxt;
             var_decl_counter++;
         }
         else if (prolog_decl == "PPFunDecl") 
