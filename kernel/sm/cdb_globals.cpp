@@ -49,7 +49,7 @@ arg_rec cdb_argtable[] =
 {"-tmp-file-ext-portion",  " Mbs", arg_int, &_tmp_file_extending_portion_, "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
 {"-data-file-init-size",      " Mbs", arg_int, &_data_file_initial_size_,     "100",  "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
 {"-tmp-file-init-size",       " Mbs", arg_int, &_tmp_file_initial_size_,       "100",  "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
-{"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb),\n\t\t\t\tdefault 10Mb"},
+{"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tmaximum allowed < 100,\n\t\t\t\tdefault 10Mb"},
 {"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
