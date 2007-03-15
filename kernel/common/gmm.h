@@ -11,7 +11,7 @@
 #include "common/u/ummap.h"
 
 
-void create_global_memory_mapping();
+void create_global_memory_mapping(int os_primitives_id_min_bound);
 
 void release_global_memory_mapping();
 

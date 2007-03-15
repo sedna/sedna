@@ -225,7 +225,7 @@ int main(int argc, char** argv)
 
       SEDNA_DATA = gov_table->get_config_struct()->gov_vars.SEDNA_DATA;
 
-      create_global_memory_mapping();
+      create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
 
       pps->startup();
       is_pps_close = false;
