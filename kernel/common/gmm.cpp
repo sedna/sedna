@@ -10,13 +10,15 @@
 #include "common/gmm.h"
 #include "common/base.h"
 #include "common/xptr.h"
+#include "common/u/uutils.h"
+
 
 
 static UMMap global_memory_mapping;
 static void *global_memory;
 
 
-void create_global_memory_mapping()
+void create_global_memory_mapping(int os_primitives_id_min_bound)
 {
     char buf[1024];
     vmm_region_values v;
@@ -85,7 +87,9 @@ void create_global_memory_mapping()
     }
     else
     {
+        char buf2[128];
         uSetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, "1", __sys_call_error);
+        uSetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, u_itoa(os_primitives_id_min_bound, buf2, 10), __sys_call_error);
 
         char path_buf[U_MAX_PATH + 10];
         std::string path_str = uGetImageProcPath(path_buf, __sys_call_error) + std::string("/") + SESSION_EXE;
