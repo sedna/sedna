@@ -182,6 +182,10 @@ int main(int argc, char *argv[])
         socket_port = ((gov_config_struct *) gov_shm_pointer)->gov_vars.lstnr_port_number;
         SEDNA_DATA = ((gov_config_struct *) gov_shm_pointer)->gov_vars.SEDNA_DATA;
 
+#ifdef SE_MEMORY_TRACK
+        strcpy(MT_SEDNA_DATA, SEDNA_DATA);
+#endif
+
         if (!check_database_existence(db_name)) //check database consistency (all files exists)
             throw USER_EXCEPTION2(SE4609, db_name);
 
@@ -197,7 +201,7 @@ int main(int argc, char *argv[])
         register_session_on_gov();
 
         SednaUserException e = USER_EXCEPTION(SE4400);
-        ppc = new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN);
+        ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN);
         ppc->startup(e);
 
         // sid is known

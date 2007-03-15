@@ -31,7 +31,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+              
+extern char MT_SEDNA_DATA[];
 extern void *track_malloc(usize_t size, const char* file, int line, const char* flag);
 extern void track_free(void *pointer);
 extern void *track_realloc(void *pointer, usize_t size, const char* file, int line, const char* flag);

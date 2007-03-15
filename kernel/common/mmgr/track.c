@@ -21,6 +21,9 @@
 #define SE_MEMORY_TRACK_FILENAME_BU_BASE  "MT-"
 #define SE_MEMORY_TRACK_FILENAME_BU_SUFX  ".xml"
 
+char MT_SEDNA_DATA[U_MAX_PATH + 1];
+
+
 struct ALLOC_INFO;
 struct ALLOC_INFO_LIST;
 
@@ -137,8 +140,8 @@ void DumpUnfreed(int component)
     ALLOC_INFO* itr = NULL;
 #ifdef SE_MEMORY_DUMP_TO_FILE
     FILE *du_ostr = NULL;
-    char buf[SEDNA_DATA_VAR_SIZE + 128 + 32];  /* 32 bytes for date copy */
     char dt_buf[32];
+    char buf[U_MAX_PATH + 1 + 128 + 32];
     struct tm *newtime;
     time_t aclock;
 #endif
@@ -154,7 +157,7 @@ void DumpUnfreed(int component)
             newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
             newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
 
-    strcpy(buf, SEDNA_DATA);
+    strcpy(buf, MT_SEDNA_DATA);
 #ifdef _WIN32
     strcat(buf, "\\data\\");
 #else
