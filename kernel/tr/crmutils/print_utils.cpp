@@ -559,6 +559,9 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 						xml_ns* t=cxt->st_cxt->get_ns_pair("xml","");//xml_ns::init(NULL,"xml",false);
 						ns_pair str=pref_to_str(t);
 						xm_nsp[str]=t;
+						if (!att_ns) 
+							att_ns= se_new std::vector<ns_pair> ;
+						att_ns->push_back(str);
 					}
 
 				}				
