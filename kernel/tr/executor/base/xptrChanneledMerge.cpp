@@ -51,10 +51,12 @@ xptr xptrChanneledMerge::getNextNode()
 	else
 	{			
 		pers_sset<node_cell,unsigned short>::pers_sset_entry* nxt=(forward)?merge_tree->rb_successor(top):merge_tree->rb_predecessor(top);
-		merge_tree->rb_delete(top);
+		node_cell * tmp_obj=top->obj;
+        merge_tree->rb_delete(top);
 		top=nxt;
+		scm_free(tmp_obj,false);
 		//top=(following)?merge_tree->rb_minimum(merge_tree->root):merge_tree->rb_maximum(merge_tree->root);
-	}
+	}	
 	return res;
 }
 xptrChanneledMerge::xptrChanneledMerge(next_node_fn _nodeFN_, bool _forward_):nodeFN(_nodeFN_), forward(_forward_)
