@@ -149,9 +149,10 @@ void sorted_sequence::next(tuple& t)
 	}
 	else
 	{			
-		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);		
+		pers_sset<merge_cell,unsigned short>::pers_sset_entry* nxt=merge_tree->rb_successor(top);
+		merge_cell* tmp_obj=top->obj;
 		merge_tree->rb_delete(top);
-		merge_cell::destroy(top->obj);
+		merge_cell::destroy(tmp_obj);
 		//scm_free(top->obj,false);
 		top=nxt;		
 	}	
