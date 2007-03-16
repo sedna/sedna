@@ -4358,12 +4358,20 @@
     ((var)
      colldoc)
     ((ddo attr-axis child descendant descendant-or-self self)
-     (cons (sa:op-name expr)
-           (cons (sa:structural-relative-xpath? (car (sa:op-args expr))
-                                                colldoc)
-                 (cdr (sa:op-args expr)))))
-    (else
-     (cl:signal-user-error SE5049 (sa:op-name expr)))))
+     (let ((sub (sa:structural-relative-xpath? (car (sa:op-args expr))
+                                               colldoc)))
+       (and sub
+            (cons (sa:op-name expr)
+                  (cons sub (cdr (sa:op-args expr)))))))
+    (else  ; Erroneous cases
+     (if
+      (equal?  ; Corresponds to the starting "/" of the absolute location path
+       expr
+       '(treat (!fn!root (var ("" "$%v"))) (type (one (doc-test)))))
+      (cl:signal-user-error
+       SE5049
+       "Relative location path expected, absolute location path given")
+      (cl:signal-user-error SE5049 (sa:op-name expr))))))
 
 (define (sa:analyze-index-create expr vars funcs ns-binding default-ns uri modules)
   (and
@@ -4382,14 +4390,19 @@
                                     ns-binding default-ns)))
      (and
       arg1 arg2 arg3 arg4
-      (list
-       (sa:op-name expr)  ; operation name
-       (car arg1)  ; without result type
-       (car arg2)
-       (sa:structural-relative-xpath?
-        (car arg3)
-        (sa:structural-absolute-xpath? (car arg2)))
-       (car arg4))))))
+      (let ((absolut (sa:structural-absolute-xpath? (car arg2))))
+        (and
+         absolut
+         (let ((relativ
+                (sa:structural-relative-xpath? (car arg3) absolut)))
+           (and
+            relativ
+            (list
+             (sa:op-name expr)  ; operation name
+             (car arg1)  ; without result type
+             (car arg2)
+             relativ
+             (car arg4))))))))))
 
 (define (sa:analyze-index-drop expr vars funcs ns-binding default-ns uri modules)
   (and
