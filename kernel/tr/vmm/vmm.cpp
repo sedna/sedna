@@ -320,6 +320,7 @@ inline void _vmm_unmap_decent(void *addr)
 void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
 //    d_printf1("_vmm_signal_handler\n");
+/*
 #ifndef VMM_UNIX_LIGHT_CHECKP
     if (ALIGN_ADDR(vmm_cur_ptr) == XADDR(*(xptr*)p_sm_callback_data))
         *(bool*)p_sm_callback_data = false;
@@ -330,6 +331,23 @@ void _vmm_signal_handler(int signo, siginfo_t *info, void *cxt)
             //munmap(XADDR(*(xptr*)p_sm_callback_data), PAGE_SIZE);
             *(bool*)p_sm_callback_data = true;
         }
+*/
+
+#ifndef VMM_UNIX_LIGHT_CHECKP
+        if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*)p_sm_callback_data))
+#endif
+        {
+            _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
+            *(bool*)p_sm_callback_data = true;
+        }
+#ifndef VMM_UNIX_LIGHT_CHECKP
+        else
+        {
+            *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1)) // use_layer 
+                                          && 
+                                          !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
+        }
+#endif
 
     USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
 }
@@ -367,12 +385,25 @@ U_THREAD_PROC(_vmm_thread, arg)
 //        uSpinLock(vmm_spin_lock);
 //#endif
 
+/*
         if (ALIGN_ADDR(vmm_cur_ptr) == XADDR(*(xptr*)p_sm_callback_data))
             *(bool*)p_sm_callback_data = false;
         else
         {
             _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
             *(bool*)p_sm_callback_data = true;
+        }
+*/
+        if (ALIGN_ADDR(vmm_cur_ptr) != XADDR(*(xptr*)p_sm_callback_data))
+        {
+            _vmm_unmap_decent(XADDR(*(xptr*)p_sm_callback_data));
+            *(bool*)p_sm_callback_data = true;
+        }
+        else
+        {
+            *(bool*)p_sm_callback_data = ((*(int*)((xptr*)p_sm_callback_data + 1)) // use_layer 
+                                          && 
+                                          !LAYERS_EQUAL(vmm_cur_ptr, *(xptr*)p_sm_callback_data));
         }
 
 //#ifdef _WIN32
@@ -737,7 +768,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
                            SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound,  buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
-        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), __sys_call_error) != 0)
+        if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4021, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
         p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error);
