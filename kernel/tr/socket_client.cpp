@@ -138,6 +138,7 @@ char* socket_client::get_query_string(msg_struct *msg)
 {
 	__int32 query_portion_length;
 	int res, query_size = 0;
+    bool query_too_large = false;
 	int malloced_size = SE_SOCKET_MSG_BUF_SIZE*5;
 
     if(long_query_stream != NULL)
@@ -146,39 +147,51 @@ char* socket_client::get_query_string(msg_struct *msg)
    	    long_query_stream = NULL;
    	}
 	
-	if((*msg).instruction == se_ExecuteLong) //get long query
-	{
-		if ((long_query_stream = (char*)se_alloc(malloced_size+1)) == NULL) throw USER_EXCEPTION(SE4080);
-
-		while((*msg).instruction != se_LongQueryEnd) //while not the end of long query 
-		{
-	   		net_int2int(&query_portion_length, (*msg).body+2);
-			if ( (query_size + query_portion_length) > malloced_size )
-			{
-				if ( ( long_query_stream = (char*)se_realloc( long_query_stream,  malloced_size + SE_SOCKET_MSG_BUF_SIZE*2 + 1 )) == NULL)
-				{
-					se_free( long_query_stream );
-					long_query_stream = NULL;
-					throw USER_EXCEPTION(SE4080);
-				}
-				malloced_size += SE_SOCKET_MSG_BUF_SIZE*2;
-			}
-			memcpy(long_query_stream+query_size, (*msg).body+6, query_portion_length);
-			query_size += query_portion_length;
-	   		res = sp_recv_msg(Sock, msg);
-	   		if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
-	   		if (res == 1) throw USER_EXCEPTION(SE3012);
-		}
-		long_query_stream[query_size] = '\0';
-		return long_query_stream;
-		}
-	else						//get one-socket-msg-length query
-	{
-		net_int2int(&query_portion_length, (*msg).body+2);
-		memcpy(query_string, (*msg).body+6, query_portion_length);
-		query_string[query_portion_length] = '\0';
-		return query_string;
-	}
+	try{
+        if((*msg).instruction == se_ExecuteLong) // get long query
+        {
+            if ((long_query_stream = (char*)se_alloc(malloced_size+1)) == NULL) throw USER_EXCEPTION(SE4080);
+            
+            while((*msg).instruction != se_LongQueryEnd) // while not the end of long query 
+            {
+                if (!query_too_large)
+                {
+                    net_int2int(&query_portion_length, (*msg).body+2);
+                    if ( (query_size + query_portion_length) > malloced_size )
+                    {
+                        if ( ( long_query_stream = (char*)se_realloc( long_query_stream,  malloced_size + SE_SOCKET_MSG_BUF_SIZE*2 + 1 )) == NULL)
+                            throw USER_EXCEPTION(SE4080);
+                        malloced_size += SE_SOCKET_MSG_BUF_SIZE*2;
+                    }
+                    memcpy(long_query_stream+query_size, (*msg).body+6, query_portion_length);
+                    query_size += query_portion_length;
+                    
+                    if(query_size > SE_MAX_QUERY_SIZE) query_too_large = true;
+                }
+                res = sp_recv_msg(Sock, msg);
+                if (res == U_SOCKET_ERROR) { Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3007,usocket_error_translator());}
+                if (res == 1) throw USER_EXCEPTION(SE3012);
+            }
+            if (query_too_large) throw USER_EXCEPTION(SE6000); // statement is too large
+                
+            long_query_stream[query_size] = '\0';
+            return long_query_stream;
+        }
+        else						// get one-socket-msg-length query
+        {
+            net_int2int(&query_portion_length, (*msg).body+2);
+            memcpy(query_string, (*msg).body+6, query_portion_length);
+            query_string[query_portion_length] = '\0';
+            return query_string;
+        }
+    }catch(...){
+        if( long_query_stream != NULL)
+        {
+            se_free( long_query_stream );
+            long_query_stream = NULL;
+        }
+        throw;
+    }
 }
 
 

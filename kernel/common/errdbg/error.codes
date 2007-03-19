@@ -1642,6 +1642,9 @@ sedna-err:SE5502
 
 ########### Java API errors ####################
 
+sedna-err:SE6000
+
+    User statement is too large (maximum size allowed is 2 Mb).
 
 ######################################################################
 ### fn:error error (user defined)
