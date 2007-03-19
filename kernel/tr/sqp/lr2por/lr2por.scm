@@ -2233,7 +2233,7 @@
                           (tree-walk (caddr expr)
                                      new-for-variables
                                      new-let-variables
-                                     #f))
+                                     capture-vars?))
                         (lambda (sub2 for2 let2)
                           (values
                            (list (car expr) sub1 sub2)
@@ -2250,7 +2250,11 @@
                             for-vars let-vars)
                     (call-with-values
                      (lambda ()
-                       (tree-walk (car kids) for-variables let-variables #f))
+                       (tree-walk (car kids)
+                                  for-variables let-variables
+                                  (if (eq? (car expr) 'fun-def)
+                                      capture-vars?
+                                      #f)))
                      (lambda (new-kid for3 let3)
                        (loop (cdr kids)
                              (cons new-kid res)
