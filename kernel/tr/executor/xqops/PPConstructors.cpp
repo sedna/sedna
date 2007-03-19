@@ -680,7 +680,10 @@ void PPAttributeConstructor::next  (tuple &t)
 			if ((
 				        (prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
 				     || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
+			{
+				if (prefix != NULL) { delete prefix; prefix = NULL; }  /// Added by Ivan Shcheklein
 				throw USER_EXCEPTION(XQDY0044);
+			}
 			if (prefix!=NULL)
 			{
 				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
