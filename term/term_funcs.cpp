@@ -92,7 +92,7 @@ int process_commandline_query()
     res = SEexecute(&conn, query); 
     if(res == SEDNA_QUERY_FAILED) 
     {
-    	fprintf(stderr, "\n%s\n%s", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
     	//closing session
     	SEclose(&conn);
     	return EXIT_STATEMENT_OR_COMMAND_FAILED;
