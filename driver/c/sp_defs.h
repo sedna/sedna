@@ -17,6 +17,7 @@
 #define SE_HOSTNAMELENGTH                                  255
 
 #define SE_SOCKET_MSG_BUF_SIZE                             10240
+#define SE_MAX_QUERY_SIZE                                  2097152 // Maximum query size 2 Mb
 
 #define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MAJOR           3
 #define SE_CURRENT_SOCKET_PROTOCOL_VERSION_MINOR           0
