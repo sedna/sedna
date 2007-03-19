@@ -216,7 +216,18 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
 /// Buffer functions
 ////////////////////////////////////////////////////////////////////////////////
 
-bool unmap_block_in_trs(session_id sid, const xptr &p)
+bool unmap_block_in_tr(const xptr &p, tr_info *info, bool use_layer)
+{
+    *(xptr*)p_sm_callback_data = p;
+    *(int*)((xptr*)p_sm_callback_data + 1) = (int)use_layer;
+
+    USemaphoreUp(info->sm_to_vmm_callback_sem1, __sys_call_error);
+    USemaphoreDown(info->sm_to_vmm_callback_sem2, __sys_call_error);
+
+    return *(bool*)p_sm_callback_data;
+}
+
+bool unmap_block_in_trs(session_id sid, const xptr &p, bool use_layer)
 {
     // approve of xptr 
     tr_info_map::iterator it;
@@ -224,12 +235,7 @@ bool unmap_block_in_trs(session_id sid, const xptr &p)
     {
         if (it->first != sid)
         {
-            *(xptr*)p_sm_callback_data = p;
-
-            USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error);
-            USemaphoreDown(it->second->sm_to_vmm_callback_sem2, __sys_call_error);
-
-            if (!(*(bool*)p_sm_callback_data))
+            if (!(unmap_block_in_tr(p, it->second, use_layer)))
                 return false;
         }
     }
@@ -283,7 +289,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
             }
         }
         */
-        bool approved = unmap_block_in_trs(sid, cur_p);
+        bool approved = unmap_block_in_trs(sid, cur_p, false);
         if (approved) break;
         else used_mem.push(*offs);
         //if (it == trs.end()) break; // successfully approved

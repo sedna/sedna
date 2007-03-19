@@ -158,7 +158,7 @@ void bm_startup() throw (SednaException)
 #endif
 
     // Create shared memory
-    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr), NULL, __sys_call_error) != 0)
+    if (uCreateShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), NULL, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4016, "CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME");
 
     p_sm_callback_data = uAttachShMem(p_sm_callback_file_mapping, NULL, sizeof(xptr), __sys_call_error); 
@@ -434,7 +434,7 @@ void bm_delete_block(session_id sid,
 
     if (IS_DATA_BLOCK(p))
     {
-        bool approved = unmap_block_in_trs(sid, p);
+        bool approved = unmap_block_in_trs(sid, p, true);
         if (!approved) 
            throw SYSTEM_EXCEPTION("Trying to delete data block which is used in another transaction");
         if (is_recovery_mode)

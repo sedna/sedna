@@ -388,12 +388,7 @@ void delete_tmp_block(const xptr &p, tr_info *info)
 	{
         /// callback to trn to unmap block
         if (info)
-        {
-            *(xptr*)p_sm_callback_data = p;
-
-            USemaphoreUp(info->sm_to_vmm_callback_sem1, __sys_call_error);
-            USemaphoreDown(info->sm_to_vmm_callback_sem2, __sys_call_error);
-        }
+            unmap_block_in_tr(p, info, true);
         ////////////////////////////////////
 
 		used_mem.find_remove(offs);

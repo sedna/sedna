@@ -173,7 +173,8 @@ void flush_master_block(bool is_write_plog = true);
 ////////////////////////////////////////////////////////////////////////////////
 /// Buffer functions
 ////////////////////////////////////////////////////////////////////////////////
-bool unmap_block_in_trs(session_id sid, const xptr &p);
+bool unmap_block_in_tr(const xptr &p, tr_info *info, bool use_layer);
+bool unmap_block_in_trs(session_id sid, const xptr &p, bool use_layer);
 xptr put_block_to_buffer(session_id sid, 
                          const xptr &p, 
                          ramoffs /*out*/ *offs,

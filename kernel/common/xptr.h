@@ -44,6 +44,9 @@
 //#define ALIGN_XADDR(p)			((void*)((__uint32)((p).addr) & PAGE_BIT_MASK))
 //#define TEST_XPTR(p, a)			((*(t_layer*)a == (p).layer) && (((xptr*)a)->addr == a))
 
+#define LAYERS_EQUAL(a, p)      (*(t_layer*)((__uint32)(a) & PAGE_BIT_MASK) == ((p).layer))
+
+
 
 #define IS_TMP_BLOCK(p)			((p).layer >= TMP_LAYER_STARTS_WITH)
 #define IS_DATA_BLOCK(p)		((p).layer <  TMP_LAYER_STARTS_WITH)
