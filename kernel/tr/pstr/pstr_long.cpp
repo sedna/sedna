@@ -1096,17 +1096,23 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	if (intl_ftr.cursor < 0)
 	{
 		int cursor = -intl_ftr.cursor;
-		U_ASSERT(intl_ftr.block_list_size > 0);
+		//TODO: check & remove this line - U_ASSERT(intl_ftr.block_list_size > 0);
+		U_ASSERT((PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk != XNULL);
 		if (cursor - PSTR_LONG_BLK_HDR_SIZE >= size)
 		{
 			intl_ftr.cursor += size;
 			xptr pred_blk = (PSTR_LONG_BLK_HDR(intl_last_blk))->prev_blk;
 
-			if (PAGE_SIZE + size >= cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((intl_ftr.block_list_size-1)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE))
+			int bs = intl_ftr.block_list_size; //FIXME: these 2 vars suxx
+			int bs0 = intl_ftr.block_list_size;
+			if (bs > 0)
+				bs--;
+			if (PAGE_SIZE + size >= cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((bs)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE))
 			{
 				intl_copy_map_to_buf();
 
-				intl_ftr.block_list_size--; //delete last block list element
+				if (intl_ftr.block_list_size > 0)
+					intl_ftr.block_list_size--; //delete last block list element
 				const int bls = intl_ftr.block_list_size*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE;
 				const int mapsize = intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE;
 				intl_last_block_list_entry = (struct pstr_long_block_list_entry*)(intl_block_list_end_addr() - bls);
@@ -1114,8 +1120,13 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 					intl_last_blk_last_ble_addr(mapsize, bls),
 					bls);
 
-				intl_ftr.char_count = intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->char_count;
-				U_ASSERT(intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->str_blk == pred_blk);
+				if (bs0 > 0)
+				{
+					intl_ftr.char_count = intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->char_count;
+					U_ASSERT(intl_last_blk_last_ble(mapsize, bls+PSTR_LONG_BLOCK_LIST_ENTRY_SIZE)->str_blk == pred_blk);
+				}
+				else
+					intl_ftr.char_count = intl_ftr.first_blk_char_count;
 
 				if (intl_ftr.block_list_map_size == 0)
 				{
@@ -1178,7 +1189,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			}
 			else
 			{
-				//else just update charcount in last block
+				//else just update charcount in last block since we can't delete it
 				CHECKP(pred_blk);
 				const int cnt = intl_char_counter->count_chars((char*)XADDR(pred_blk) + cursor - size, size);
 
