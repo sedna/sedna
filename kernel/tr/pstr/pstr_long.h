@@ -34,7 +34,7 @@ struct pstr_long_last_blk_ftr
 	int				cursor;					//byte offset of the end of the string in this block,
 											//if negative, there is no string data is this block,
 											//  and absolute value is byte offset of the end of the string in prev block
-											//  cursor < 0  ==>  block_list_size > 0
+											//  cursor < 0  ==>  block_list_size > 0, TODO: remove this line (or change it by smth like adding block_list_map_size > 0 cond here)
 	short			first_blb_gap_size;		//size of the gap in the first 'block list' block (0, if block_list_map_size == 0)
 	short			pred_blb_size;			//size of block list in the last 'block list' block (PSTR_LONG_FULL_BLOCK_LIST_SIZE, if block_list_map_size == 0)
 };
