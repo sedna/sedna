@@ -1494,7 +1494,9 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 						up_concurrent_micro_ops_number();
 					delete []z;
 					CHECKP(right_sib);
+					xptr tmp=((n_dsc*)XADDR(right_sib))->rdsc;
 					delete_node_inner_2 (right_sib, text, XNULL);
+					right_sib=tmp;
 				}
 				else
 				{
@@ -1520,7 +1522,9 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 								update_idx_add_txt(left_sib);
 							}
 							CHECKP(right_sib);
+							xptr tmp=((n_dsc*)XADDR(right_sib))->rdsc;
 							delete_node_inner_2 (right_sib, text, XNULL);
+							right_sib=tmp;
 							
 
 						}
@@ -1544,7 +1548,9 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 								up_concurrent_micro_ops_number();
 							delete []z;
 							CHECKP(left_sib);
+							xptr tmp=((n_dsc*)XADDR(left_sib))->ldsc;
 							delete_node_inner_2 (left_sib, text, XNULL);
+							left_sib=tmp;
 						}
 				}				
 			}
