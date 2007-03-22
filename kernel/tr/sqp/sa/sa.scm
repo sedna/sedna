@@ -4982,31 +4982,40 @@
        (and (>= (length (sa:op-args expr)) 1)
             (<= (length (sa:op-args expr)) 3))
        (sa:assert-num-args expr 2))
-      (let ((c1  ; first constant
-             (if
-              (or
-               (null? (sa:op-args expr))  ; no arguments
-               (not  ; not a const declaration, probably a collation decl
-                (and
-                 (pair? (car (sa:op-args expr)))
-                 (eq?
-                  (sa:op-name (car (sa:op-args expr)))
-                  'const))))
-              '(const (type !xs!string) "asc")
-              (car (sa:op-args expr))))
-            (c2
-             (if
-              (or
-               (null? (sa:op-args expr))
-               (null? (cdr (sa:op-args expr)))  ; a single argument
-               (not  ; not a const declaration, probably a collation decl
-                (and
-                 (pair? (cadr (sa:op-args expr)))
-                 (eq?
-                  (sa:op-name (cadr (sa:op-args expr)))
-                  'const))))
-              '(const (type !xs!string) "default")
-              (cadr (sa:op-args expr))))
+      ; The code is dirty, rewrite it
+      (let* ((c1  ; first constant
+              (if
+               (or
+                (null? (sa:op-args expr))  ; no arguments
+                (not  ; not a const declaration, probably a collation decl
+                 (and
+                  (pair? (car (sa:op-args expr)))
+                  (eq?
+                   (sa:op-name (car (sa:op-args expr)))
+                   'const)))
+                (member
+                 (car (sa:op-args expr))
+                 '((const (type !xs!string) "empty-greatest")
+                   (const (type !xs!string) "empty-least"))))
+               '(const (type !xs!string) "asc")
+               (car (sa:op-args expr))))
+             (c2
+              (if
+               (or
+                (null? (sa:op-args expr))
+                (null? (cdr (sa:op-args expr)))  ; a single argument
+                (not  ; not a const declaration, probably a collation decl
+                 (and
+                  (pair? (cadr (sa:op-args expr)))
+                  (eq?
+                   (sa:op-name (cadr (sa:op-args expr)))
+                   'const))))
+               '(const (type !xs!string) "default")
+               ((if
+                 (and (not (null? (sa:op-args expr)))
+                      (eq? c1 (car (sa:op-args expr))))
+                 cadr car)
+                (sa:op-args expr))))
             (collations
              (filter
               (lambda (x)
