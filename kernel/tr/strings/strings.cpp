@@ -29,6 +29,11 @@ void str_buf_base::move_to_mem_buf()
 			m_buf_size = T_STR_MEMBUF_SIZE;
 		m_buf = (char*)malloc(m_buf_size);
 	}
+	if (m_len == 0)
+	{
+		m_buf[0] = 0;
+		return;
+	}
 	switch (m_ttype)
 	{
 	case text_mem:
