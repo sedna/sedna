@@ -115,7 +115,7 @@ void PPLet::next(tuple &t)
 
     if(first_time && need_to_check_type)
     {
-       if(!type_matches(source_child, s, t, seq_filled, st))
+       if(!type_matches(source_child, s, source, seq_filled, st))
           throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
        first_time = false;	
     }
