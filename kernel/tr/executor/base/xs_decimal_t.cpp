@@ -73,23 +73,47 @@ void xs_decimal_t::set(bool a)
         decimal128FromString((decimal128*)(v.v1), "0.0", &dec_cxt);
 }
 
+static const unsigned char decimal_allowed[16] = {0x00, 0x00, 0x00, 0x00,
+                                                  0x00, 0x16, 0xFF, 0xC0, 
+                                                  0x00, 0x00, 0x00, 0x00, 
+                                                  0x00, 0x00, 0x00, 0x00};
+#define IS_BYTE_DECIMAL_ALLOWED(byte) \
+    (byte & 0x80 ? 0 : (decimal_allowed[(byte >> 3)] & (0x80 >> (byte & 7))))
+
 void xs_decimal_t::set(const char *a, bool xs_compliant)
 {
-    if (strcmp(a, "NaN") == 0)
-        throw USER_EXCEPTION2(FORG0001, "Cannot convert string \"NaN\" to xs:decimal");
-
-    if (xs_compliant)
+    char* norm_a = NULL;
+    decNumber dv;
+    try
     {
-        for (const char *c = a; *c != '\0'; c++)
-            if (!(*c == '0' || *c == '1' || *c == '2' || *c == '3' || *c == '4' || 
-                  *c == '5' || *c == '6' || *c == '7' || *c == '8' || *c == '9' || 
-                  *c == '+' || *c == '-' || *c == '.'))
-                throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
+        stmt_str_buf res(1);
+        collapse_string_normalization(a, res);
+        norm_a = res.get_str();
+        if (strcmp(norm_a, "NaN") == 0)
+            throw USER_EXCEPTION2(FORG0001, "Cannot convert string \"NaN\" to xs:decimal");
+
+        if (xs_compliant)
+        {
+            for (unsigned char *c = (unsigned char*) norm_a; *c != '\0'; c++)
+               if (!IS_BYTE_DECIMAL_ALLOWED(*c))
+                    throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
+        }
+
+        dec_cxt.status = 0;
+        decNumberFromString(&dv, norm_a, &dec_cxt);
+        free(norm_a);
+        norm_a = NULL;
+    }
+    catch(SednaUserException &ex)
+    {
+        if (norm_a != NULL)
+        {
+            free(norm_a);
+            norm_a = NULL;
+        }
+        throw ex;
     }
 
-    decNumber dv;
-    dec_cxt.status = 0;
-    decNumberFromString(&dv, a, &dec_cxt);
 
     if (dec_cxt.status & DEC_Errors)
     {
