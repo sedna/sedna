@@ -366,6 +366,18 @@ XMLDateTime XMLDateTime::convertTo(xmlscm_type type)
 						break;
 	}
 
+	////////////////////////////////////////////////////////////////
+	/// if ST is xs:yearMonthDuration and TT is xs:dayTimeDuration, the cast is permitted and returns a xs:dayTimeDuration with value 0.0 seconds.
+	/// if ST is xs:dayTimeDuration and TT is xs:yearMonthDuration, the cast is permitted and returns a xs:yearMonthDuration with value 0 months.
+	/// Target value should have UTC_POS.
+	if((type == xs_yearMonthDuration && getValue(Type) == xs_dayTimeDuration) ||
+       (type == xs_dayTimeDuration && getValue(Type) == xs_yearMonthDuration))
+    {
+       newValue.setValue(utc, UTC_POS);
+       return newValue;
+    }
+    ////////////////////////////////////////////////////////////////
+
 	newValue.setValue(utc, getValue(utc));
 	newValue.setValue(tz_hh, getValue(tz_hh));
 	newValue.setValue(tz_mm, getValue(tz_mm));

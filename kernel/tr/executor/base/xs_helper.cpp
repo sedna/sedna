@@ -387,6 +387,9 @@ __int64 xs_double2xs_integer(double v)
     if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
         throw USER_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
 
+    if(v > _I64_MAX || v < _I64_MIN) 
+        throw USER_EXCEPTION2(FOCA0003, "Error casting xs:double value to xs:integer (too long value given)");
+
     double i = 0.0;
     modf(v, &i);
     return (__int64)i;
