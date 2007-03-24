@@ -22,6 +22,7 @@
 #include "common/base.h"
 #include "tr/structures/nodes.h"
 #include "common/u/utime.h"
+#include "xs_decimal_t.h"
 
 typedef __int64 bigint;
 
@@ -301,7 +302,7 @@ inline bool XMLDateTime::isNormalized() const
     XMLDateTime subtractDateTimes(const XMLDateTime& dt1, const XMLDateTime& dt2); 
     XMLDateTime multiplyDuration(const XMLDateTime& d1, double v); 
     XMLDateTime divideDuration(const XMLDateTime& d1, double v); 
-    double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2); 
+    xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2); 
     XMLDateTime adjustToTimeZone(const XMLDateTime& dt, const XMLDateTime tz);
 
 

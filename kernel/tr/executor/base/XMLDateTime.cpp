@@ -530,13 +530,13 @@ XMLDateTime multiplyDuration(const XMLDateTime& d, double v)
 	}
  }
 
-double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
+xs_decimal_t divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
 {
 	if (d1.getValue(XMLDateTime::Type) == xs_yearMonthDuration)
 	{
-		int m1 = d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month);
-		int m2 = d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month);
-		return ((double)m1/ (double)m2);
+		__int64 m1 = d1.getValue(XMLDateTime::CentYear)*12 + d1.getValue(XMLDateTime::Month);
+		__int64 m2 = d2.getValue(XMLDateTime::CentYear)*12 + d2.getValue(XMLDateTime::Month);
+		return (xs_decimal_t(m1)/ xs_decimal_t(m2));
 	}
 	else // must be xs_dayTimeDuration
 	{
@@ -548,7 +548,7 @@ double divideDurationByDuration(const XMLDateTime& d1, const XMLDateTime& d2)
 		 	d2.getValue(XMLDateTime::MiliSecond)/(double)DUR_MILISECOND_MAX_VALUE;
 		long seconds2 = d2.getValue(XMLDateTime::Second) + d2.getValue(XMLDateTime::Minute)*60 + d2.getValue(XMLDateTime::Hour)*60*60 +
 			d2.getValue(XMLDateTime::Day)*60*60*24;
-		return ( (seconds1 + milis1) / (seconds2 + milis2));
+		return ( xs_decimal_t(seconds1 + milis1) / xs_decimal_t(seconds2 + milis2));
 	}
 }
 
