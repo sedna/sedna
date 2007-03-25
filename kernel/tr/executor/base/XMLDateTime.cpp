@@ -1235,6 +1235,7 @@ void XMLDateTime::parseDuration(const char* fBuffer)
 {
     setValue(Type, xs_duration);
     int fStart=0, fEnd = strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
     // must start with '-' or 'P'
     //
     char c = fBuffer[fStart++];
@@ -1392,6 +1393,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
 {
     setValue(Type, xs_yearMonthDuration);
     int fStart=0, fEnd = strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
     // must start with '-' or 'P'
     //
     char c = fBuffer[fStart++];
@@ -1464,6 +1466,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 {
     setValue(Type, xs_dayTimeDuration);
     int fStart=0, fEnd = strlen(fBuffer);
+    handleWhitespace(fBuffer, fStart, fEnd);
     // must start with '-' or 'P'
     //
     char c = fBuffer[fStart++];
@@ -2024,7 +2027,7 @@ void XMLDateTime::validateDateTime() const
 	throw USER_EXCEPTION2(FORG0001, "0000 is an illegal value for year");
         //"The year \"0000\" is an illegal year value");
 
-    if ((getValue(Type)==xs_date || getValue(Type)==xs_dateTime || getValue(Type)==xs_gMonth || getValue(Type)==xs_gYearMonth)
+    if ((getValue(Type)==xs_date || getValue(Type)==xs_dateTime || getValue(Type)==xs_gMonth || getValue(Type)==xs_gYearMonth || getValue(Type) ==xs_gMonthDay)
 	&& ( getValue(Month) < 1  || getValue(Month) > 12  ))
 	throw USER_EXCEPTION2(FORG0001, "invalid month value, must be between 1 and 12");
 		//"The month must have values 1 to 12");
