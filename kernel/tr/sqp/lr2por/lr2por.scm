@@ -2330,13 +2330,23 @@
                              (caddr fun-def)  ; function body
                              ))))
               (list (car second-fun)
-                    (call-with-values
-                     (lambda ()
-                       (l2p:list-partition
-                        (cadr second-fun)
-                        (lambda (x) (member (cadr x) let-variables))))
-                     (lambda (let-vars for-vars)
-                       (append for-vars let-vars)))
+                    ((lambda (args)
+                       ;(pp (list "args: " args))
+                       args)
+                     (call-with-values
+                      (lambda ()
+                        (l2p:list-partition
+                         (cadr second-fun)
+                         (lambda (x) (member (cadr x) let-variables))))
+                      (lambda (let-vars for-vars)
+                        ;(pp let-vars)
+                        (append for-vars
+                                (map
+                                 (lambda (pair)
+                                   ; Removing type information for variables
+                                   ; bound with let-clause
+                                   (list '!xs!anyType (cadr pair)))
+                                 let-vars)))))
                     (form-slets let-variables (caddr second-fun)))))))))))))
 
 (define (l2p:order-by2por arg-lst)
