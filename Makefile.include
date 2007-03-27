@@ -260,6 +260,7 @@ endif
 ifeq ($(SE_ENABLE_GCOV),1)
 CFLAGS  += -fprofile-arcs -ftest-coverage
 CPPFLAGS+= -fprofile-arcs -ftest-coverage
+LSLIBS  += -fprofile-arcs -ftest-coverage
 endif
 
 ifeq ($(ENABLE_DTSEARCH),1)
