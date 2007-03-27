@@ -117,7 +117,7 @@ sub do_current_dir()
 
     system("rm -rf coverage");
 
-    open(FIND, "find . -name \"*.bb\" -maxdepth 1 | sort |");
+    open(FIND, "find . -name \"*.gcno\" -maxdepth 1 | sort |");
     
     @flist = ();
     while (<FIND>)
@@ -128,16 +128,16 @@ sub do_current_dir()
 	    system("mkdir coverage");
         }
     
-	/^(.*)\.bb$/ or die;
+	/^(.*)\.gcno$/ or die;
 
         $j = "$1";
-	print "Processing file '$j.bb'...\n";
-	system("gcov -f \"$j.bb\" > \"coverage/$j.bb.gcovout\"");
+	print "Processing file '$j.gcno'...\n";
+	system("gcov -f \"$j.gcno\" > \"coverage/$j.gcno.gcovout\"");
         for $ext qw(h cpp c)
 	{
 	    if ( -f "$j.$ext.gcov" )
 	    {
-		my $info = mk_html("coverage/$j.bb.gcovout", "$j.$ext.gcov", "coverage/$j.$ext.html");
+		my $info = mk_html("coverage/$j.gcno.gcovout", "$j.$ext.gcov", "coverage/$j.$ext.html");
 		$info->{'fn'} = "$j.$ext";
 		push @flist, $info;
 	    }
