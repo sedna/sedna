@@ -16,6 +16,7 @@
 #define SE_EVENT_LOG_FILENAME_BACKUP   "event-old.log"
 #define SE_EVENT_LOG_FILENAME_BU_BASE  "event-"
 #define SE_EVENT_LOG_FILENAME_BU_SUFX  ".log"
+#define SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH "\n---   "
 
 
 /* Until the configuration file is read and the value is obtained, 
@@ -60,7 +61,7 @@ static UShMem el_shmem;
 static USemaphoreArr el_sems;
 static UTHANDLE el_thread_handle;
 static FILE *el_ostr = NULL;
-static int el_cur_file_size = 0;
+static int el_cur_file_size = 0; /* currently this variable is not updated properly, log file size comes from fstat */ 
 static int el_component = EL_UNK;
 static const char *el_component_detail = NULL;
 static int el_sid = -1;
@@ -255,13 +256,14 @@ static int __event_log_write_hdr(int elevel,
 
 static void __event_log_check_output_stream()
 {
+    struct stat st;
+	int el_cur_file_size = 0;
+
 event_log_init_file:
     if (!el_ostr)
     {
         /* initialize output stream */
         char buf[SEDNA_DATA_VAR_SIZE + 128];
-        struct stat st;
-
         strcpy(buf, SEDNA_DATA);
 #ifdef _WIN32
         strcat(buf, "\\data\\");
@@ -269,15 +271,15 @@ event_log_init_file:
         strcat(buf, "/data/");
 #endif
         strcat(buf, SE_EVENT_LOG_FILENAME);
-
-        if (stat(buf, &st) == 0) 
-            el_cur_file_size = st.st_size;
-        else 
-            el_cur_file_size = 0;
         
         el_ostr = fopen(buf, "at");
         if (!el_ostr) return;
     }
+
+    if (fstat(fileno(el_ostr), &st) == 0) 
+		el_cur_file_size = st.st_size;
+    else 
+		el_cur_file_size = 0;
 
     if (el_cur_file_size >= event_log_recommended_size)
     {
@@ -346,6 +348,23 @@ event_log_init_file:
     }
 }
 
+
+static void __event_log_dump_str_replacing_newlines(const char * str, const char * replace)
+{
+	const char * i=NULL;
+	size_t replace_sz=strlen(replace);
+	while(1)
+	{
+		size_t sz;
+		i=strchr(str,'\n');
+		sz=i?i-str:strlen(str);
+		fwrite(str,1,sz,el_ostr);
+		if(!i)break;
+		fwrite(replace,1,replace_sz,el_ostr);
+		str+=sz+1;
+	}
+}
+
 static void __event_log_write_short_msg()
 {
     int res = 0;
@@ -362,10 +381,13 @@ static void __event_log_write_short_msg()
                                 el_msg->funcname);
     if (res == -1) return;
 
-    res = fprintf(el_ostr, ": %s\n", el_msg->content);
+	/*
+	res = fprintf(el_ostr, ": %s\n", el_msg->content);
     if (res == -1) return;
-    else el_cur_file_size += res;
-
+    else el_cur_file_size += res; */ 
+	fprintf(el_ostr,": ");
+	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
+	fprintf(el_ostr,"\n");
     fflush(el_ostr);
 }
 
@@ -385,9 +407,13 @@ static void __event_log_write_long_msg_start()
                                 el_msg->funcname);
     if (res == -1) return;
 
-    res = fprintf(el_ostr, ": %s", el_msg->content);
+	/*
+	res = fprintf(el_ostr, ": %s", el_msg->content);
     if (res == -1) return;
     else el_cur_file_size += res;
+	*/ 
+	fprintf(el_ostr, ": ");
+	__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
 }
 
 static bool __event_log_write_long_msg_next_end()
@@ -395,13 +421,23 @@ static bool __event_log_write_long_msg_next_end()
     int res = 0;
     if (el_ostr)
     {
+		__event_log_dump_str_replacing_newlines(el_msg->content, SE_EVENT_LOG_REPLACE_EMBEDED_NEWLINE_WITH);
+		res=0;
+		if(el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
+		{
+			fprintf(el_ostr,"\n");
+			fflush(el_ostr);
+		}
+
+		/*
         if (el_msg->type == SE_EVENT_LOG_LONG_MSG_END)
         {
-            res = fprintf(el_ostr, "%s\n", el_msg->content);
+			res = fprintf(el_ostr, "%s\n", el_msg->content);
             fflush(el_ostr);
         }
         else
             res = fprintf(el_ostr, "%s", el_msg->content);
+			*/ 
     
         if (res != -1) el_cur_file_size += res;
     }
