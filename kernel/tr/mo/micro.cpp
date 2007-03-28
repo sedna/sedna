@@ -1688,6 +1688,7 @@ void delete_node_inner_2 (xptr nodex, t_item type, xptr inserted_nodex)
 		
 	}
 	//update of parent  pointer to first child by sort 
+	CHECKP(nodex);
 	xptr par_indir=node->pdsc;
 	if (type!=document)
 	{	
