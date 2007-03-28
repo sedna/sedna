@@ -83,9 +83,10 @@ void delete_undeep(PPOpIn arg)
 			t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
 			switch(type)
 			{
-			case attribute: text:
+			case attribute: case text: case comment: case pr_ins:
 				{
 				 delete_node(node);
+				 break;
 				}
 			case element:
 				{
