@@ -1220,7 +1220,14 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns)
 	if (left!=NULL)
 	{ 
 		CHECKP(left_sib);
-		result = firstNodeInsertProcedure( left_sib,  parent,xml_namespace,0); 
+		if ( GETTYPE(left->snode)==xml_namespace) 
+			result = firstNodeInsertProcedure( left_sib,  parent,xml_namespace,0); 
+	}
+	if (right!=NULL && result==XNULL) 
+	{
+		CHECKP(right_sib);
+		if (GETTYPE(right->snode)==xml_namespace) 
+			result = secondElementInsertProcedure(right_sib,  parent,xml_namespace,0);
 	}
 	else
 		result=thirdElementAndTextInsertProcedure(left_sib,right_sib,parent,NULL,NULL,xml_namespace,NULL);
