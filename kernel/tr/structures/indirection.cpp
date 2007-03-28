@@ -387,6 +387,7 @@ void sync_indirection_table()
 			VMM_SIGNAL_MODIFICATION(p);
 		}
 			delete it->second;
+			it->second=NULL;
 		}
 		it++;
 	}
@@ -400,7 +401,26 @@ void sync_indirection_table()
 	}
    // USemaphoreUp(indirection_table_sem);    
 }
+void clear_dc()
+{
+#ifndef OTK_XPTR
+	 deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
+#else
+    if (deleted_cells!=NULL)
+    {
+		std::map<id_pair,std::vector<xptr> *>::iterator it= deleted_cells->begin();    	
+		while (it!=deleted_cells->end())
+		{
+			if (it->second!=NULL) delete it->second;
+			
+			++it;    	
+		}
+    	delete deleted_cells;
+    }
+	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
+#endif
 
+}
 void indirection_table_on_session_begin()
 {
     tmp_indirection_table_free_entry = XNULL;
@@ -414,12 +434,15 @@ void indirection_table_on_session_begin()
 
     if (USemaphoreOpen(&indirection_table_sem, INDIRECTION_TABLE_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "INDIRECTION_TABLE_SEMAPHORE_STR");
-#ifndef OTK_XPTR
+        clear_dc();
+/*#ifndef OTK_XPTR
 	 deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
 #else
+
 	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
-    
+*/
+	if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
 
     indirection_session_initialized = true;
@@ -427,11 +450,15 @@ void indirection_table_on_session_begin()
 
 void indirection_table_on_transaction_begin()
 {
+clear_dc();
+/*
 #ifndef OTK_XPTR
 	deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
 #else
 	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
+*/
+    if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
 
     indirection_transaction_initialized = true;
@@ -467,6 +494,7 @@ void indirection_table_on_transaction_end()
     {
         rollback_mode = MODE_NORMAL;
 		tmp_indirection_table_free_entry = XNULL;
+		clear_dc();
 		delete deleted_cells;
 		delete deleted_docs;
         deleted_cells = NULL;
@@ -491,7 +519,8 @@ void indirection_table_on_statement_end()
 
 void switch_to_rollback_mode(int type)
 {
-    delete deleted_cells;
+    clear_dc();
+/*    delete deleted_cells;
 	delete deleted_docs;
     deleted_cells = NULL;
 	deleted_docs=NULL;
@@ -500,6 +529,8 @@ void switch_to_rollback_mode(int type)
 #else
 	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
 #endif
+*/
+    if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
 
     rollback_mode = type;
