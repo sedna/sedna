@@ -291,8 +291,13 @@ void get_documents (xptr node,const char* title)
 		}
 		else
 			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
-        insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
+		xptr temp = insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
+		////////////////////////////////////////////////////////////////////////////
+		/// We must renew left pointer due to insert_attribute possibly has side effect - 
+		/// it can move parent of the new attribute to another block (Ivan Shcheklein).
+		left = removeIndirection(GETPARENTPOINTER(temp));
+        ////////////////////////////////////////////////////////////////////////////
 		if (mdc->obj->document_name==NULL)
 		{
 			col_schema_node* coll=(col_schema_node*)mdc->obj->snode;
@@ -300,12 +305,20 @@ void get_documents (xptr node,const char* title)
 			key.setnew("");
 			xptr d_left=XNULL;
 			bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
-			while(cursor.bt_next_key())
+			
+			if(!cursor.is_null())
 			{
-				key=cursor.get_key();
-				d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
-				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
-					key.get_size(),NULL);
+				do {
+					key=cursor.get_key();
+					d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
+					////////////////////////////////////////////////////////////////////////////
+					/// We must renew left pointer due to insert_element can have side effect - 
+					/// it can move parent of the new element to another block (Ivan Shcheklein).
+					left = removeIndirection(GETPARENTPOINTER(d_left));
+					////////////////////////////////////////////////////////////////////////////
+					insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
+						key.get_size(),NULL);
+				} while(cursor.bt_next_key());
 			}
 			
 		}
