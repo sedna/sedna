@@ -167,7 +167,7 @@ void NodeTest::print(std::ostream& str)
         case node_test_text                  : str << "text()"; break;
         case node_test_node                  : str << "node()"; break;
         case node_test_string                : str << "[string]"; break;
-        case node_test_qname                 : if(data.ncname_prefix != NULL && strlen(data.ncname_prefix) != 0) 
+        case node_test_qname                 : if(data.ncname_prefix && *data.ncname_prefix) 
                                                {   
                                                   xs_NCName_print(data.ncname_prefix, str); 
                                                   str << ":";
