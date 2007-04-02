@@ -408,10 +408,10 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 			if (pblk->desc_last!=0)
 			{
 				prev_desc=GETPOINTERTODESC(pblk,pblk->desc_last);
-				par_indir=prev_desc->pdsc;
-				CHECKP(old_xptr);
+				par_indir=prev_desc->pdsc;				
 			}
 			else par_indir=XNULL;
+			CHECKP(old_xptr);
 		}
 		else par_indir=XNULL;
 	}
@@ -1515,6 +1515,7 @@ l_second:
 				((col_schema_node*)parent_block->snode)->replace_document_pointer(ADDR2XPTR(tmp),new_pointer);
 				/*dn_metadata_cell * mdc=((col_schema_node*)parent_block->snode)->find_metadata_of_document_in_col(ADDR2XPTR(tmp));
 				mdc->root=new_pointer;*/
+				CHECKP(parent);
 				metadata_sem_up();
 			}
 			shiftNodeToTheNewBlockExpanded (tmp,new_pointer,shift_size,size,parent_block);

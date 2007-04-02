@@ -889,6 +889,7 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, b
 	parent=docnode;
 	left=XNULL;
 	mark=1;
+	CHECKP(docnode);
 	sc_parent=(GETBLOCKBYNODE(docnode))->snode;
 #ifdef SE_ENABLE_FTSEARCH
 clear_ft_sequences();
