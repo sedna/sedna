@@ -308,7 +308,6 @@ void get_documents (xptr node,const char* title)
 			
 			if(!cursor.is_null())
 			{
-v v v v v v v
 				do {
 					key=cursor.get_key();
 					d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
@@ -320,12 +319,7 @@ v v v v v v v
 					insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
 						key.get_size(),NULL);
 				} while(cursor.bt_next_key());
-*************
-				key=cursor.get_key();
-				d_left=insert_element(d_left,XNULL,left,"document",xs_untyped,NULL,NULL);
-				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
-					key.get_size(),NULL);
-^ ^ ^ ^ ^ ^ ^
+
 			}
 			
 		}
