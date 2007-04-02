@@ -310,6 +310,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 			shft shift= *((shft*)XADDR(ind_ptr));
 			char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 			memcpy(z,data,size);
+			CHECKP(node);
 			res =insert_attribute(left, right, parent,nam, (save_types)?typ:xs_untypedAtomic,z,size,(GETSCHEMENODEX(node))->xmlns);
 			delete [] z;
 		}
