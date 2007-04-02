@@ -278,7 +278,7 @@ void get_ftindexes (xptr node,const char* title)
 void get_documents (xptr node,const char* title)
 {
 	addTextValue(node,"$DOCUMENTS.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENTS",xs_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"documents",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	local_lock_mrg->put_lock_on_db();
@@ -287,10 +287,10 @@ void get_documents (xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION_DOCS":"SA_DOCUMENT",xs_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
 		xptr temp = insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		////////////////////////////////////////////////////////////////////////////
@@ -308,17 +308,10 @@ void get_documents (xptr node,const char* title)
 			
 			if(!cursor.is_null())
 			{
-				do {
-					key=cursor.get_key();
-					d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
-					////////////////////////////////////////////////////////////////////////////
-					/// We must renew left pointer due to insert_element can have side effect - 
-					/// it can move parent of the new element to another block (Ivan Shcheklein).
-					left = removeIndirection(GETPARENTPOINTER(d_left));
-					////////////////////////////////////////////////////////////////////////////
-					insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
-						key.get_size(),NULL);
-				} while(cursor.bt_next_key());
+				key=cursor.get_key();
+				d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
+				insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
+					key.get_size(),NULL);
 			}
 			
 		}
@@ -353,7 +346,7 @@ void get_catalog(xptr node,const char* title)
 void get_collections(xptr node,const char* title)
 {
 	addTextValue(node,"$COLLECTIONS.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"COLLECTION",xs_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"collections",xs_untyped,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -363,10 +356,10 @@ void get_collections(xptr node,const char* title)
 		{
 			if (left==XNULL)
 			{
-				left=insert_element(XNULL,XNULL,parent,"COLLECTION",xs_untyped,NULL);
+				left=insert_element(XNULL,XNULL,parent,"collection",xs_untyped,NULL);
 			}
 			else
-				left=insert_element(left,XNULL,XNULL,"COLLECTION",xs_untyped,NULL);
+				left=insert_element(left,XNULL,XNULL,"collection",xs_untyped,NULL);
 			insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,mdc->obj->collection_name,
 						strlen(mdc->obj->collection_name),NULL);
 		}
@@ -400,9 +393,9 @@ schema_node* get_system_doc(const char* title)
 {
 	system_fun func=NULL;
 	const char* param=NULL;
-	if (!my_strcmp(title,"$catalog.xml"))
+	/*if (!my_strcmp(title,"$catalog.xml"))
 		func=get_catalog;
-	else
+	else*/
 	if (!my_strcmp(title,"$documents.xml"))
 		func=get_documents;
 	else
