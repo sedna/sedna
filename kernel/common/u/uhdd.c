@@ -572,6 +572,8 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
     {
         strcpy(fs->name, directoryName);
         strcat(fs->name, "/tmp.1");
+        int2c_str(sid, buf);
+        strncat(fs->name, buf, strlen(buf));        
     }
     else
     {
