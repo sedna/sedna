@@ -69,11 +69,18 @@ chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
 	touch chicken-$(CHICKEN_VERSION)/chicken.h
 	rm -rf chicken
 	mv chicken-$(CHICKEN_VERSION) chicken
+	cd chicken
+	patch <../chicken_panic_hook.diff
+	cd ..
 
 ifeq ("$(PLATFORM)", "WIN32")
 
 build_chicken: chicken/chicken.h
 	cd chicken; \
+	cat tcp.c | sed -e 's/\bsocklen_t\b/int/g' > tcp.c.new; \
+        mv tcp.c.new tcp.c; \
+	cat utcp.c | sed -e 's/\bsocklen_t\b/int/g' > utcp.c.new; \
+        mv utcp.c.new utcp.c; \
 	MAKEFLAGS=; \
 	nmake /f ../chicken.mak
 

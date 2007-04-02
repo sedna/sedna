@@ -7,7 +7,11 @@
 ;-------------------------------------------------------------------------------
 ; lp2por
 
+;(define (fac n)
+;  (if (zero? n) 1 (* n (fac (- n 1)))))
+ 
 (define (l2p:lr2por query-in-lr)
+;  (fac 100000000 )
   (let ((modules+prolog (filter
                          (lambda (x)
                            (and (pair? x)

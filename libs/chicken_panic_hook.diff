@@ -1,0 +1,53 @@
+diff -rN -u old-chicken/chicken.h new-chicken/chicken.h
+--- old-chicken/chicken.h	2007-03-28 13:45:05.767849128 +0200
++++ new-chicken/chicken.h	2007-03-28 13:45:05.852836208 +0200
+@@ -1085,6 +1085,7 @@
+ 
+ C_varextern C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
+ C_varextern C_TLS void (*C_post_gc_hook)(int mode);
++C_varextern C_TLS void (*C_panic_hook)(C_char *msg);
+ 
+ C_varextern C_TLS int
+   C_abort_on_thread_exceptions,
+diff -rN -u old-chicken/runtime.c new-chicken/runtime.c
+--- old-chicken/runtime.c	2007-03-28 13:45:05.750851712 +0200
++++ new-chicken/runtime.c	2007-03-28 13:45:05.832839248 +0200
+@@ -301,6 +301,7 @@
+ 
+ C_TLS void (C_fcall *C_restart_trampoline)(void *proc) C_regparm C_noret;
+ C_TLS void (*C_post_gc_hook)(int mode);
++C_TLS void (*C_panic_hook)(C_char *msg);
+ 
+ C_TLS int
+   C_abort_on_thread_exceptions,
+@@ -417,6 +418,7 @@
+ static C_word arg_val(C_char *arg);
+ static void barf(int code, char *loc, ...) C_noret;
+ static void panic(C_char *msg) C_noret;
++static void usual_panic(C_char *msg) C_noret;
+ static void horror(C_char *msg) C_noret;
+ static void C_fcall initial_trampoline(void *proc) C_regparm C_noret;
+ static void termination_continuation(C_word c, C_word self, C_word result) C_noret;
+@@ -556,6 +558,7 @@
+ 
+   if(debug_mode) C_printf(C_text("[debug] application startup...\n"));
+ 
++  C_panic_hook = usual_panic;
+   symbol_table_list = NULL;
+ 
+   if((symbol_table = C_new_symbol_table(".", symbols ? symbols : DEFAULT_SYMBOL_TABLE_SIZE)) == NULL)
+@@ -1112,6 +1115,13 @@
+ 
+ void panic(C_char *msg)
+ {
++  C_panic_hook(msg);
++  usual_panic(msg);
++}
++
++
++void usual_panic(C_char *msg)
++{
+   C_char *dmp = C_dump_trace(0);
+ 
+ #ifdef C_MICROSOFT_WINDOWS
+

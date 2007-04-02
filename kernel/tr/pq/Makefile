@@ -6,7 +6,7 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-OBJS = pq$(OBJ_EXT) modules$(OBJ_EXT) scm-entry$(OBJ_EXT) scm-debug$(OBJ_EXT)
+OBJS = pq$(OBJ_EXT) modules$(OBJ_EXT) scm-entry$(OBJ_EXT) scm-debug$(OBJ_EXT) chicken_panic$(OBJ_EXT)
 
 CUSTOM_CLEAN = clean_generated
 

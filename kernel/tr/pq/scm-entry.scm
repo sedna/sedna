@@ -7,6 +7,16 @@
 
 (case-sensitive #t)
 
+#>
+#include "tr/pq/chicken_panic.h"
+<#
+
+(foreign-code #<<EOF
+C_panic_hook = chicken_panic_throw_exception;
+EOF
+) 
+
+
 ;---------------------------------------------------------------------
 ; stubs for globals parameters
 (declare (foreign-declare "extern int is_run_rewriter();"))
