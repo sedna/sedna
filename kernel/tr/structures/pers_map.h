@@ -19,7 +19,9 @@
 
 inline void *scm_malloc(size_t size,bool persistent, const char* file, int line, const char* flag)
 {
-	return (persistent)?pers_malloc(size):track_malloc(size, file, line, flag);
+    void* ptr = (persistent)?pers_malloc(size):track_malloc(size);
+    if(persistent && ptr == NULL) throw SYSTEM_EXCEPTION("Can not allocate memory from persistent heap");
+	return ptr;
 }
 
 #define scm_malloc(size, persistent) scm_malloc(size, persistent, __FILE__, __LINE__, "SCM_MALLOC")
@@ -33,7 +35,9 @@ inline void scm_free(void *membloc,bool persistent)
 
 inline void *scm_malloc(size_t size,bool persistent)
 {
-	return (persistent)?pers_malloc(size):malloc(size);
+	void* ptr = (persistent)?pers_malloc(size):malloc(size);
+    if(persistent && ptr == NULL) throw SYSTEM_EXCEPTION("Can not allocate memory from persistent heap");
+	return ptr;
 }
 
 inline void scm_free(void *membloc,bool persistent)

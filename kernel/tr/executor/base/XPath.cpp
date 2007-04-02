@@ -37,6 +37,7 @@ void *PathExpr_mem_alloc(size_t size)
 void *PathExpr_pers_alloc(size_t size)
 {
     void *p = pers_malloc(size);
+    if(p == NULL) throw SYSTEM_EXCEPTION("Can not allocate memory from persistent heap");
     pers_addrs.push_back(p);
     return p;
 }
