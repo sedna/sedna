@@ -94,7 +94,7 @@ void get_document_full (xptr node,const char* title)
 	strcat(docn,title);
 	addTextValue(node,docn,strlen(docn));
 	delete [] docn;
-	xptr parent=insert_element(XNULL,XNULL,node,"DOCUMENT",xs_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"document",xs_untyped,NULL,NULL);
 	insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL);
 	schema_node* scn=find_document(title);	
 	if (scn!=NULL) getDebugInfo(scn, parent);
@@ -102,13 +102,13 @@ void get_document_full (xptr node,const char* title)
 }
 void get_collection_full (xptr node,const char* title)
 {
-	char* docn=se_new char[11+strlen(title)];
+	char* docn=se_new char[13+strlen(title)];
 	docn[0]='\0';
-	strcat(docn,"$DOCUMENT_");
+	strcat(docn,"$COLLECTION_");
 	strcat(docn,title);
 	addTextValue(node,docn,strlen(docn));
 	delete [] docn;
-	xptr parent=insert_element(XNULL,XNULL,node,"COLLECTION",xs_untyped,NULL,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"collection",xs_untyped,NULL,NULL);
 	insert_attribute(XNULL,XNULL,parent,"name",xs_untypedAtomic,title,strlen(title),NULL);
 	schema_node* scn=find_collection(title);	
 	if (scn!=NULL) getDebugInfo(scn, parent);
@@ -187,8 +187,6 @@ void get_indexes (xptr node,const char* title)
 		ic->key->print(str2);
 		node=insert_attribute(node,XNULL,XNULL,"by_path",xs_untypedAtomic,str2.str().c_str(),
 		strlen(str2.str().c_str()),NULL);
-
-
 			
 		mdc=indexdata->rb_successor(mdc);
 	}
@@ -310,7 +308,7 @@ void get_documents (xptr node,const char* title)
 			{
 				do {
 					key=cursor.get_key();
-					d_left=insert_element(d_left,XNULL,left,"DOCUMENT",xs_untyped,NULL,NULL);
+					d_left=insert_element(d_left,XNULL,left,"document",xs_untyped,NULL,NULL);
 					////////////////////////////////////////////////////////////////////////////
 					/// We must renew left pointer due to insert_element can have side effect - 
 					/// it can move parent of the new element to another block (Ivan Shcheklein).
@@ -319,7 +317,6 @@ void get_documents (xptr node,const char* title)
 					insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
 						key.get_size(),NULL);
 				} while(cursor.bt_next_key());
-
 			}
 			
 		}
@@ -330,7 +327,7 @@ void get_documents (xptr node,const char* title)
 void get_catalog(xptr node,const char* title)
 {
 	addTextValue(node,"$CATALOG.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"CATALOG",xs_untyped,NULL);
+	xptr parent=insert_element(XNULL,XNULL,node,"catalog",xs_untyped,NULL);
 	xptr left=XNULL;
 	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -338,10 +335,10 @@ void get_catalog(xptr node,const char* title)
 	{
 		if (left==XNULL)
 		{
-			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
+			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
 		}
 		else
-			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"COLLECTION":"DOCUMENT",xs_untyped,NULL);
+			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
 
 		insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
@@ -380,7 +377,7 @@ void get_collections(xptr node,const char* title)
 void get_modules(xptr node,const char* title)
 {
 	addTextValue(node,"$MODULES.XML",12);
-	xptr parent=insert_element(XNULL,XNULL,node,"MODULES",xs_untyped,NULL);	
+	xptr parent=insert_element(XNULL,XNULL,node,"modules",xs_untyped,NULL);	
 	//metadata_sem_down();
 	col_schema_node* coll=(col_schema_node*)find_collection("$modules");
 	//metadata_sem_up();
@@ -388,13 +385,15 @@ void get_modules(xptr node,const char* title)
 	key.setnew("");
 	xptr d_left=XNULL;
 	bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
-	while(cursor.bt_next_key())
+	if(!cursor.is_null())
 	{
-		key=cursor.get_key();
-		d_left=insert_element(d_left,XNULL,parent,"MODULE",xs_untyped,NULL,NULL);
-		insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
-		key.get_size(),NULL);
-	}	  
+		do {
+			key=cursor.get_key();
+			d_left=insert_element(d_left,XNULL,parent,"module",xs_untyped,NULL,NULL);
+			insert_attribute(XNULL,XNULL,d_left,"name",xs_untypedAtomic,(char*)key.data(),
+			key.get_size(),NULL);
+	    } while(cursor.bt_next_key());
+	}
 }
 
 schema_node* get_system_doc(const char* title)
