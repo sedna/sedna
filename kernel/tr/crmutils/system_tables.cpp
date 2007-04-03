@@ -403,30 +403,30 @@ schema_node* get_system_doc(const char* title)
 	/*if (!my_strcmp(title,"$catalog.xml"))
 		func=get_catalog;
 	else*/
-	if (!my_strcmp(title,"$documents.xml"))
+	if (!my_strcmp(title,"$documents"))
 		func=get_documents;
 	else
-	if (!my_strcmp(title,"$indexes.xml"))
+	if (!my_strcmp(title,"$indexes"))
 		func=get_indexes;
 #ifdef SE_ENABLE_FTSEARCH
 	else
-	if (!my_strcmp(title,"$ftindexes.xml"))
+	if (!my_strcmp(title,"$ftindexes"))
 		func=get_ftindexes;
 #endif
 	else
-	if (!my_strcmp(title,"$schema.xml"))
+	if (!my_strcmp(title,"$schema"))
 		func=get_schema;
 	else
-	if (!my_strcmp(title,"$collections.xml"))
+	if (!my_strcmp(title,"$collections"))
 		func=get_collections;
 	else
-	if (!my_strcmp(title,"$errors.xml"))
+	if (!my_strcmp(title,"$errors"))
 		func=get_errors;
 	else
-	if (!my_strcmp(title,"$version.xml"))
+	if (!my_strcmp(title,"$version"))
 		func=get_version;
 	else
-	if (!my_strcmp(title,"$modules.xml"))
+	if (!my_strcmp(title,"$modules"))
 		func=get_modules;
 	else
 	if (strstr(title,"$document_")==title)
