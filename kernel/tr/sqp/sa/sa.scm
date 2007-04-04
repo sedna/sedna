@@ -425,7 +425,7 @@
 ;==========================================================================
 ; Analysis for XQuery prolog
 
-(define sa:fn-ns "http://www.w3.org/2004/07/xpath-functions")
+(define sa:fn-ns "http://www.w3.org/2005/xpath-functions")
 (define sa:sql-ns "http://modis.ispras.ru/Sedna/SQL")
 (define sa:xs-ns "http://www.w3.org/2001/XMLSchema")
 (define sa:se-ns "http://www.modis.ispras.ru/sedna")

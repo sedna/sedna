@@ -55,13 +55,13 @@ static_context::static_context()
 	tmp= xml_ns::init("http://www.w3.org/2001/XMLSchema-instance","xsi",false);
 	insc_ns["xsi"].push_back(tmp);
 	ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-	tmp=xml_ns::init("http://www.w3.org/2005/04/xpath-functions","fn",false);
+	tmp=xml_ns::init("http://www.w3.org/2005/xpath-functions","fn",false);
 	insc_ns["fn"].push_back(tmp);
 	ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-	tmp=xml_ns::init("http://www.w3.org/2005/04/xpath-datatypes","xdt",false);
-	insc_ns["xdt"].push_back(tmp);
-	ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
-	tmp=xml_ns::init("http://www.w3.org/2005/04/xquery-local-functions","local",false);
+	//tmp=xml_ns::init("http://www.w3.org/2005/04/xpath-datatypes","xdt",false);
+	//insc_ns["xdt"].push_back(tmp);
+	//ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
+	tmp=xml_ns::init("http://www.w3.org/2005/xquery-local-functions","local",false);
 	insc_ns["local"].push_back(tmp);
 	ns_lib[str_pair(tmp->uri,tmp->prefix)]=tmp;
 
