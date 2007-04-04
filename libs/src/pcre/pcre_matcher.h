@@ -67,11 +67,11 @@ private:
 				//only $0..$9 are allowed
 				++fmt_start;
 				if (fmt_start >= fmt_end)
-					throw PcreException("bad format string"); //TODO - throw more specific exception class/message
+					throw PcreBadFormatException();
 				int num = (int)*fmt_start - (int)'0';
 				++fmt_start;
 				if (num < 0 || num > 9)
-					throw PcreException("bad format string"); //TODO - throw more specific exception class/message
+					throw PcreBadFormatException();
 				if (num >= m_groups ||m_offsets[num<<1] == PcreMatcherBase<CharIterator>::InvalidOffset)
 					continue; //invalid substrings are substituted by zero-length strings
 
@@ -87,7 +87,7 @@ private:
 			{
 				fmt_start++;
 				if (fmt_start >= fmt_end)
-					throw PcreException("bad format string"); //TODO - throw more specific exception class/message
+					throw PcreBadFormatException();
 
 				const char ch = *fmt_start;
 				fmt_start++;
@@ -99,7 +99,7 @@ private:
 					++out;
 					break;
 				default:
-					throw PcreException("bad format string"); //TODO - throw more specific exception class/message
+					throw PcreBadFormatException();
 				}
 			}
 			else
