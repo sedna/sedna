@@ -26,58 +26,63 @@ int main()
     
     value = SEDNA_AUTOCOMMIT_OFF;
     res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
-    
+
     //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
-	
     if(res != SEDNA_SESSION_OPEN) 
     {
-        printf("Session starting failed \n%s\n", SEgetLastErrorMsg(&conn));
+        printf("Session starting failed: \n%s\n", SEgetLastErrorMsg(&conn));
 		return -1;
     }
-	
+
     //begin transaction
     res = SEbegin(&conn);
     if(res != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
     {
-        printf("Begin transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+        printf("Begin transaction failed: \n%s\n", SEgetLastErrorMsg(&conn));
         //closing session
         SEclose(&conn);
         return -1;
     }
-    
-    // load data from file "region.xml" into the document "regions"
+
+    // load data from file "region.xml" into the document "region"
     res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 
     if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
     {
-        printf("Bulk load failed \n%s\n", SEgetLastErrorMsg(&conn));
-        //closing session
+        printf("Bulk load failed: \n%s\n", SEgetLastErrorMsg(&conn));
+        // closing session
         SEclose(&conn);
         return -1;
     }
-	
+
     // execute XQuery query	
     res = SEexecute(&conn, "document(\"region\")/*/*"); 
     if(res != SEDNA_QUERY_SUCCEEDED) 
     {
-        printf("Query failed \n%s\n", SEgetLastErrorMsg(&conn));
+        printf("Query failed: \n%s\n", SEgetLastErrorMsg(&conn));
         //closing session
         SEclose(&conn);
         return -1;
     }
  
-    //iterate over the result sequence and retrieve the result data
-    res = SEnext(&conn);
-    
-    while((res != SEDNA_RESULT_END)&&(res != SEDNA_ERROR))
+    // iterate over the result sequence and retrieve the result data
+    while((res = SEnext(&conn)) != SEDNA_RESULT_END)
     {
-     printf("result item:\n");
+        if (res == SEDNA_ERROR)
+        {
+            printf("Failed to get next result item from server: \n%s\n", SEgetLastErrorMsg(&conn));
+            //closing session
+            SEclose(&conn);
+            return -1;
+        }
+
+        printf("\nresult item:\n");
         do
         {
             bytes_read = SEgetData(&conn, buf, 1024 - 1);
             if(bytes_read == SEDNA_ERROR)
             {
-                printf("Failed to get result from server\n%s\n", SEgetLastErrorMsg(&conn));
+                printf("Failed to get result data from server: \n%s\n", SEgetLastErrorMsg(&conn));
                 //closing session
                 SEclose(&conn);
                 return -1;
@@ -87,19 +92,23 @@ int main()
 
         }while(bytes_read > 0);
     	printf("\n");
-        res = SEnext(&conn);
     }
 
-    if(res == SEDNA_RESULT_END) 
+    // Drop document "region"
+    res = SEexecute(&conn, "DROP DOCUMENT \"region\""); 
+    if(res != SEDNA_UPDATE_SUCCEEDED) 
     {
-        printf("Result end \n");
+        printf("Drop document failed: \n%s\n", SEgetLastErrorMsg(&conn));
+        // closing session
+        SEclose(&conn);
+        return -1;
     }
 
-    //commiting the transaction
+    //commiting transaction
     res = SEcommit(&conn);
     if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
     {
-        printf("Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+        printf("Commit transaction failed: \n%s\n", SEgetLastErrorMsg(&conn));
         //closing session
         SEclose(&conn);
         return -1;
@@ -109,8 +118,9 @@ int main()
     res = SEclose(&conn);
     if(res != SEDNA_SESSION_CLOSED) 
     {
-        printf("Session was closed with errors \n%s\n", SEgetLastErrorMsg(&conn));
+        printf("An error occured while trying to close session: \n%s\n", SEgetLastErrorMsg(&conn));
         return -1;
     }
+    
     return 0;
-} 	
+} 
