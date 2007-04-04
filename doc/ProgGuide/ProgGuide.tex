@@ -412,6 +412,7 @@ if Sedna DBMS is running on the same computer you do not need to edit this param
 %
 %===========================================================================
 \subsection{C API}
+\label{c-api}
 libsedna is the C application programmer's interface to Sedna XML DBMS. libsedna is a set of library functions that allow client programs to access one or more databases of Sedna XML DBMS and manipulate database data using database language (XQuery and XUpdate) described in Section 2.
 
 libsedna library is supplied with two header files: \verb!"libsedna.h"!, \verb!"sp_defs.h"!. Client programs that use libsedna must include the header file libsedna.h, must link with the libsedna library and provide the compiler with the path to the directory where \verb!"libsedna.h"!, \verb!sp_defs.h! files are stored.   
@@ -487,6 +488,9 @@ negative values:
 \verb!SEDNA_CLOSE_SESSION_FAILED! - session was closed with errors.
 
 \verb!SEDNA_ERROR! - some error occurred.
+
+\subsubsection{Setting session options}
+\label{session-option-capi}
 
 An application can set attributes that govern aspects of a session using \verb!SEsetConnectionAttr!:
 
@@ -707,6 +711,7 @@ positive values:
 
 
 \subsubsection{Executing Queries and Updates and Retrieving Result Data}
+\label{exec-capi}
 
 There are two functions to execute a statement (query or update): \verb!SEexecute! function and \verb!SEexecuteLong! function.
 
@@ -2505,8 +2510,46 @@ The statistical information in the document \verb!$document_<name>! contains the
 
 \subsection{Debug Features}
 \subsubsection{Trace}
+Sedna supports standard XQuery function \verb!fn:trace! \cite{paper:query-fo} providing user helper facility to trace queries. While executing XQuery query using fn:trace function intermediate results are shown to the user.
+
+For example in Sedna Terminal the query with \verb!fn:trace! function will provide the following output. Trace information is marked with \verb!##! string:
+
+\begin{verbatim}
+x> let $r:= trace(doc("region")/regions/*, "## ")
+   return $r[id_region="afr"]&
+result:
+## <africa>
+##  <id_region>afr</id_region>
+## </africa>
+<africa>
+ <id_region>afr</id_region>
+</africa>
+##
+## <asia>
+##  <id_region>asi</id_region>
+## </asia>
+##
+## <australia>
+##  <id_region>aus</id_region>
+## </australia>
+##
+## <europe>
+##  <id_region>eur</id_region>
+## </europe>
+##
+## <namerica>
+##  <id_region>nam</id_region>
+## </namerica>
+##
+## <samerica>
+##  <id_region>sam</id_region>
+## </samerica>
+\end{verbatim}
+
+If you want to use trace facility in your application working through Sedna API you should set your own debug handler as it is shown in \ref{exec-capi}.
+
 \subsubsection{Session Debug Mode}
-In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. For details on turning debug mode on see "Sedna Terminal" section of the Sedna's Administration Guide. 
+In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. You can turn on session debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding Sedna API functions (see \ref{session-option-capi}). 
 
 Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of physical operations (operations names list) after dynamic error was raised. It serves two objectives:
 

@@ -377,7 +377,13 @@ int process_command(char* buffer)
         }
         else if(strcmp(buffer+6, "DEBUG") == 0)
         {
-            on_error_stop = false;
+            int value = SEDNA_DEBUG_OFF;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
             term_output1("Debug mode is off.");
             return EXIT_SUCCESS;
         }
