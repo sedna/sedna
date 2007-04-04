@@ -43,6 +43,13 @@ public:
 	PcreCompileException(const char *errorptr, int ofs) : PcreException(errorptr), error_offset(ofs) {}
 };
 
+class PcreBadFormatException : public PcreException
+{
+public:
+
+	PcreBadFormatException() : PcreException("Bad format string") {}
+};
+
 class PcreEmptyStringMatchedException : public PcreException
 {
 public:
