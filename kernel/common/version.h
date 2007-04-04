@@ -7,8 +7,15 @@
 #ifndef _VERSION_H
 #define _VERSION_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif 
+	
 void print_version_and_copyright(const char *prog_name);
 
+#ifdef __cplusplus
+}
+#endif 
 
 #endif
 

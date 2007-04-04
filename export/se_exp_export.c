@@ -1,5 +1,6 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
+#include "se_exp.h"
 
 
 
@@ -13,11 +14,11 @@ int export(const char * path,const char *url,const char *db_name,const char *log
   qbuf_t create_indexes = {NULL,0,0};
   qbuf_t create_ftindexes = {NULL,0,0};
   qbuf_t create_sec = {NULL,0,0};
-  int i,res,error_status=1;
-  int value;
+  int i,res,value;
   FILE *log,*f;
   char strbuf[PATH_SIZE];
-
+  //int error_status=1;
+  int export_status = SE_EXP_FATAL_ERROR; //the worst value in the beginning of the process
 
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
@@ -44,37 +45,37 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	FTRACE((log,"done\n"));
 			
 	FTRACE((log,"Constructing export documents script"));
-	if (fill_qbuf(&conn,&exp_docs, exp_docs_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&exp_docs, exp_docs_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", exp_docs.d_size));
 
 	FTRACE((log,"Constructing load documents script"));
-	if (fill_qbuf(&conn,&load_docs, load_docs_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&load_docs, load_docs_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", load_docs.d_size));
 
 	FTRACE((log,"Constructing create collections script"));
-	if (fill_qbuf(&conn,&create_colls, create_colls_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&create_colls, create_colls_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", create_colls.d_size));
 
 	FTRACE((log,"Constructing create indexes script"));
-	if (fill_qbuf(&conn,&create_indexes, create_indexes_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&create_indexes, create_indexes_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", create_indexes.d_size));
 
 	FTRACE((log,"Constructing create full-text search indexes script"));
-	if (fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", create_ftindexes.d_size));
 
 	FTRACE((log,"Constructing export security script"));
-	if (fill_qbuf(&conn,&create_sec, create_sec_query, log)!=0) {
+	if ((export_status = fill_qbuf(&conn,&create_sec, create_sec_query, log))!=SE_EXP_SUCCEED) {
 		goto exp_error;
 	}
 	FTRACE((log,"...done (%d statements)\n", create_sec.d_size));
@@ -91,9 +92,10 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		sprintf(strbuf,"%s%d.xml",path,(i+1));
 		if ((f=fopen(strbuf,"w"))==NULL) {
 			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
+			export_status = SE_EXP_FATAL_ERROR;
 			goto exp_error;
 		}
-		if (execute_query(&conn,exp_docs.buf[i],f,log)!=0) 
+		if ((export_status = execute_query(&conn,exp_docs.buf[i],f,log))!=SE_EXP_SUCCEED) 
 			goto exp_error;
 		fclose(f);
 		FTRACE((log,"done\n"));
@@ -103,10 +105,11 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
 	if ((f=fopen(strbuf,"w"))==NULL) {
 		ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
+		export_status = SE_EXP_FATAL_ERROR;
 		goto exp_error;
 	}
 	sprintf(strbuf,"doc('%s')",DB_SECURITY_DOC);
-	if (execute_query(&conn,strbuf,f,log)!=0) 
+	if ((export_status =execute_query(&conn,strbuf,f,log))!=SE_EXP_SUCCEED) 
 		goto exp_error;
 	fclose(f);
 	FTRACE((log,"done\n"));
@@ -128,11 +131,15 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	write_xquery_script(&create_sec,strbuf);
 	FTRACE((log,"done\n"));
 
+	// we doesn't need to analyze SEcommit status 
 	FTRACE((log,"Commiting the transaction..."));
 	SEcommit(&conn);
+	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
+    {
+		FTRACE((log,"WARNING: Commit transaction failed\n"));
+    }
 	FTRACE((log,"done\n"));
 
-	error_status=0;
 
 exp_error:
 
@@ -152,17 +159,14 @@ exp_error_no_conn:
 	if (load_docs.buf!=NULL) free(load_docs.buf);
 	if (create_colls.buf!=NULL) free(create_colls.buf);
 	if (create_sec.buf!=NULL) free(create_sec.buf);
-	if (error_status==1)
-		return -1;
-	else
-		return 0;
+	return export_status;
 }
 
 
 
 
 
-const char load_docs_query[] = "declare option output \"indent=no\"; \
+const char load_docs_query[] = "declare option se:output \"indent=no\"; \
                                 let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
 											    where $i/@name != \"db_security_data\" \
 												   return fn:concat(\"\"\"\",$i/@name,\"\"\"\"), \
@@ -173,17 +177,17 @@ const char load_docs_query[] = "declare option output \"indent=no\"; \
 
  
 
-const char exp_docs_query[] = "declare option output \"indent=no\"; \
+const char exp_docs_query[] = "declare option se:output \"indent=no\"; \
                                let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
 											   where $i/@name != \"db_security_data\" \
-                                                 return fn:concat(\"declare option output \"\"indent=no\"\"; \", \"document(\"\"\",$i/@name,\"\"\")\"), \
+                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"document(\"\"\",$i/@name,\"\"\")\"), \
                                    $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
                                                for $j in $i/DOCUMENT \
-                                                 return fn:concat(\"declare option output \"\"indent=no\"\"; \", \"document(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
+                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"document(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
                                return ($reg-docs,$col-docs)";
 
-const char create_colls_query[] = "declare option output \"indent=no\"; \
-                                   for $i in document(\"$collections.xml\")/*/COLLECTION \
+const char create_colls_query[] = "declare option se:output \"indent=no\"; \
+                                   for $i in document(\"$collections.xml\")/*/COLLECTION[@name != \"$modules\"] \
 								   return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
 const char create_sec_query[] = "for $i in document(\"$collections.xml\")/NODATA \

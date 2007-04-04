@@ -1,5 +1,6 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
+#include "se_exp.h"
 
 //function checks that the database db_name is empty
 // 1. document("$documents.xml") contains only db_security_data record
@@ -10,11 +11,11 @@
 
 int check_dbempty(struct SednaConnection *conn, FILE* log) {
   char *str_res=NULL;
-  int res;
+  int res, status;
 	
-	if ((str_res = execute_query_str(conn, check_db_empty_query,log))==NULL) {
+	if ((status = execute_retrieve_query(&str_res, conn, check_db_empty_query,log))!=SE_EXP_SUCCEED) {
 		ETRACE((log,"\nERROR: Can't check emptyness of the database\n"));
-		return -1;
+		return getSednaErrorStatus(SEgetLastErrorMsg(conn));
 	}
     if (!strcmp(str_res,"0")) 
 		res=0;
@@ -23,7 +24,7 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 		res=1;
 	else {
 		ETRACE((log,"\nUnexpected result while checking the database\n"));
-		res=-1;
+		res=SE_EXP_DEV_ERROR;
 	}
     
 	free(str_res);
@@ -37,18 +38,18 @@ int restore_security(struct SednaConnection *conn, const char *path, FILE* log) 
   char strbuf[PATH_SIZE];
 
    sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_TMP,log) != 0) {
+   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_NAME_TMP,log) != 0) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"));
 	   return -1;
    } 
   
-   sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc('%s')/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_TMP);
+   sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc(%s)/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to update document with initial security data\n"));
 	   return -1;
    }
 
-   sprintf(strbuf,"DROP DOCUMENT '%s'",DB_SECURITY_DOC_TMP);
+   sprintf(strbuf,"DROP DOCUMENT %s",DB_SECURITY_DOC_NAME_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to drop temporary document with security data\n"));
 	   return -1;
@@ -242,7 +243,7 @@ imp_error_no_conn:
 
 
 const char check_db_empty_query[] = "let $docs := document(\"$documents.xml\")/DOCUMENTS/SA_DOCUMENT[ @name != \"db_security_data\"] \
-                                     let $cols := document(\"$collections.xml\")/COLLECTION/* \
+                                     let $cols := document(\"$collections.xml\")/COLLECTION/COLLECTION[ @name != \"$modules\"] \
                                      let $ind  := document(\"$indexes.xml\")/INDEXES/* \
                                      let $sec-users  := document(\"db_security_data\")/db_security_data/users/user[@user_name != \"SYSTEM\"] \
                                      let $sec-roles  := document(\"db_security_data\")/db_security_data/roles/role[@role_name != \"DBA\" and @role_name != \"PUBLIC\"] \

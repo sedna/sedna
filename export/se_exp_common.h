@@ -20,15 +20,15 @@
 #define DELIMITER "\n\\"
 #define PATH_SIZE 1100 // depends on ARG_SIZE
 
-#define EXP_LOG_FILE_NAME        "export_log.txt"
-#define IMP_LOG_FILE_NAME        "import_log.txt"
-#define CR_COL_QUERY_FILE        "create_collections.xquery"
-#define LOAD_DOCS_QUERY_FILE     "load_docs.xquery"
-#define CR_SEC_QUERY_FILE        "create_security.xquery"
-#define CR_INDEXES_QUERY_FILE    "create_indexes.xquery"
+#define EXP_LOG_FILE_NAME          "export_log.txt"
+#define IMP_LOG_FILE_NAME          "import_log.txt"
+#define CR_COL_QUERY_FILE          "create_collections.xquery"
+#define LOAD_DOCS_QUERY_FILE       "load_docs.xquery"
+#define CR_SEC_QUERY_FILE          "create_security.xquery"
+#define CR_INDEXES_QUERY_FILE      "create_indexes.xquery"
 #define CR_FTINDEXES_QUERY_FILE    "create_ftindexes.xquery"
-#define DB_SECURITY_DOC          "db_security_data"
-#define DB_SECURITY_DOC_TMP      "db_security_data_exp"
+#define DB_SECURITY_DOC            "db_security_data"
+#define DB_SECURITY_DOC_NAME_TMP   "\"db_security_data_exp\""
 
 typedef struct str_buf_t {
 	char *buf;
@@ -54,8 +54,9 @@ int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *d
 //function executes XQuery expression in query and outputs the result to file f
 int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE* log);
 
-//function executes XQuery expression in query and returns allocated string with result
-char* execute_query_str(struct SednaConnection *conn, const char *query, FILE* log);
+// functions executes retireve query, allocates buffer and returns it via result reference
+// function returns error status
+int execute_retrieve_query(char** result, struct SednaConnection *conn, const char *query, FILE* log);
 
 // function executes the query with Sedna.
 // the result is pushed to qbuf array

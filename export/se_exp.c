@@ -1,10 +1,11 @@
+#include "se_exp.h"
 #include "se_exp_common.h"
 #include "se_exp_import.h"
 #include "se_exp_export.h"
 #include "se_exp_cl.h"
 #include "sprompt.h"
 #include "common/u/uutils.h"
-
+#include "common/version.h"
 
 void print_usage() {
     printf("Usage: se_exp [options] command dbname path\n\n");
@@ -32,8 +33,12 @@ int main(int argc, char* argv[]) {
 		exit(0); 
 	}
 	if (exp_version == 1) { 
-		printf("Sedna Export Version 0.6.5\nCopyright (C) 2004-2006 ISP RAS and others. All rights reserved.\nSee file COPYRIGHT provided with the distribution.\n"); 
+		print_version_and_copyright("Sedna Export Version");
 		exit(0); 
+	}
+	if (strcmp(command,"-") == 0) {
+		print_usage();
+		exit(-1);		
 	}
 	if (strcmp(command,"export") && strcmp(command,"import") && strcmp(command,"restore") != 0) {
 		printf("ERROR: unexpected command: %s\n",command);
@@ -73,19 +78,30 @@ int main(int argc, char* argv[]) {
 	}
 
 	if (!strcmp(command,"export")) {
-        printf("\nEXPORTING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
-		if (export(path,host,db_name,login,password)!=0) {
+        int export_status;
+
+		printf("\nEXPORTING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
+		// until the export transaction succed
+		while ((export_status=export(path,host,db_name,login,password))==SE_EXP_RB_ERROR) {
+			printf("\nEXPORT TRANSACTION WAS RALLED BACK\nTRYING AGAIN...\n");
+		}
+		//export_status=export(path,host,db_name,login,password);
+		if (export_status == SE_EXP_FATAL_ERROR) {			
 			printf("\nEXPORT FAILED\n");
 			exit(-1);
-		} else {
+		} else 
+		if (export_status == SE_EXP_SUCCEED) {
 			printf("EXPORT SUCCEDED\n");
+		} else {
+			printf("EXPORT FAILED WITH UNKNOWN ERROR: %d\n", export_status);
 		}
+
 	} else
 	if (!strcmp(command,"restore")) {
 		printf("\nRESTORING DATA (path=%s host=%s database=%s)\n",path,host,db_name);
 		// restore means to restore all data + security information
 		if (import(path,host,db_name,login,password,1)!=0) {
-			printf("\nIMPORT FAILED\n");
+			printf("\nRESTORING FAILED\n");
 			exit(-1);
 		} else {
 			printf("RESTORING SUCCEDED\n");
