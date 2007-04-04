@@ -209,7 +209,7 @@ extern global_name CHARISMA_SM_IS_READY;
 
 #define SEDNA_OS_PRIMITIVES_ID_MIN_BOUND		"SEDNA_OS_PRIMITIVES_ID_MIN_BOUND"
 
-#define SECURITY_METADATA_DOCUMENT						"db_security_data"
+#define SECURITY_METADATA_DOCUMENT						"$db_security_data"
 #define INITIAL_SECURITY_METADATA_FILE_NAME				"sedna_auth_md.xml"
 
 #define CHARISMA_MAX_TRNS_NUMBER                        20
