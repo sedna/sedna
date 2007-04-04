@@ -116,7 +116,20 @@ void get_collection_full (xptr node,const char* title)
 }
 bool is_document_system(const char* title)
 {
-	return (title[0]=='$');
+	return 
+       ((!my_strcmp(title,"$documents")) ||
+        (!my_strcmp(title,"$indexes")) ||
+        (!my_strcmp(title,"$schema")) ||
+#ifdef SE_ENABLE_FTSEARCH
+        (!my_strcmp(title,"$ftindexes")) ||
+#endif        
+        (!my_strcmp(title,"$collections")) ||
+        (!my_strcmp(title,"$errors")) ||
+        (!my_strcmp(title,"$version")) ||
+        (!my_strcmp(title,"$modules")) ||
+        (!my_strcmp(title,"$document_")) ||
+        (!my_strcmp(title,"$collection_")) ||
+        (!my_strcmp(title,"$schema_")));
 }
 void get_version(xptr node,const char* title)
 {
@@ -448,7 +461,7 @@ schema_node* get_system_doc(const char* title)
 	}
 
     if (func == NULL)
-        throw USER_EXCEPTION2(SE2006, (std::string("Document '") + title + "'").c_str());
+        throw USER_EXCEPTION2(SE5048, (std::string("Document '") + title + "'").c_str());
 
 	
 	local_lock_mrg->lock(lm_s);
