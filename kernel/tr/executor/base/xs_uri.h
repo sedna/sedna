@@ -94,6 +94,15 @@ public:
     /// Throws SE1003 if string contains invalid URI.
     ////////////////////////////////////////////////////////////////////
     static Uri parse(const char* u); 
+
+    ////////////////////////////////////////////////////////////////////
+    /// If it is 100% known that URI is valid the following helper 
+    /// represents fast solution to check is it relative or not.
+    /// It also fills Uri::Information struct as side effect.
+    ////////////////////////////////////////////////////////////////////
+    static bool is_relative(const char *s, Uri::Information *nfo);
+    static bool is_relative(const tuple_cell *in_tc, Uri::Information *nfo);
+
 };
 
 #endif

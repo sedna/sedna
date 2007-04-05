@@ -235,7 +235,7 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
 
     scheme_buf[counter] = '\0';
 
-    if(*start == ':') *res= true;
+    if(*start == ':') *res = true;
     
     if(*normalized)
     {
@@ -243,6 +243,38 @@ static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iter
         if(start < end) *normalized = false;
     }
 }
+
+template <class Iterator>
+static inline void is_URI_with_scheme_and_normalized(Iterator &start, const Iterator &end, bool* res, bool* normalized)
+{
+    *res = false;
+    unsigned char value;
+
+    if(start < end && IS_WHITESPACE(*start)) *normalized = false;
+    while(start < end && IS_WHITESPACE(*start)) { start++; }
+    
+    if(start == end) return;    
+    value = *start;
+    if(('A' > value || value > 'Z') && 
+       ('a' > value || value > 'z')) return;
+    ++start;
+    
+    while(start < end)
+    {
+        value = *start;
+        if(!IS_BYTE_SCHEME_ALLOWED(value)) break;
+        ++start;
+    }
+
+    if(*start == ':') *res = true;
+    
+    if(*normalized)
+    {
+        while(start < end && !IS_WHITESPACE(*start)) { start++; }
+        if(start < end) *normalized = false;
+    }
+}
+
 
 void Uri::check_constraints(const tuple_cell *in_tc, bool *valid, Uri::Information *nfo)
 {
@@ -308,6 +340,37 @@ void Uri::check_constraints(const char *s, bool *valid, Uri::Information *nfo)
         nfo -> normalized = normalized;
     }
 }
+
+bool Uri::is_relative(const char *s, Uri::Information *nfo)
+{
+    bool is_scheme  = false;
+    bool normalized = true;
+    
+    is_URI_with_scheme_and_normalized<const char*> (s, s + strlen(s), &is_scheme, &normalized);
+    
+    if(nfo != NULL)
+    {
+        nfo -> type = is_scheme ? Uri::UT_ABSOLUTE : Uri::UT_RELATIVE;
+        nfo -> normalized = normalized;
+    }
+    return !is_scheme;
+}
+
+bool Uri::is_relative(const tuple_cell *in_tc, Uri::Information *nfo)
+{
+    bool is_scheme  = false;
+    bool normalized = true;
+
+    STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(is_URI_with_scheme_and_normalized, in_tc, &is_scheme, &normalized); 
+    
+    if(nfo != NULL)
+    {
+        nfo -> type = is_scheme ? Uri::UT_ABSOLUTE : Uri::UT_RELATIVE;
+        nfo -> normalized = normalized;
+    }
+    return !is_scheme;
+}
+
 
 char* remove_dot_segments(const char* path)
 {
