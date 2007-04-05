@@ -211,10 +211,12 @@ bool PPAbsPath::determine_root()
         strcpy(db_ent->name, tc.get_str_mem());
     }
 
-	if (is_document_system(db_ent->name))
-		root = get_system_doc(db_ent->name);
+	document_type dt = get_document_type(db_ent);
+
+	if (dt == DT_NON_SYSTEM)
+		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
 	else
-	   	root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
+	   	root = get_system_doc(dt, db_ent->name);
 
 	return false;
 }

@@ -14,6 +14,7 @@
 #include "tr/crmutils/exec_output.h"
 #include "tr/structures/nodes.h"
 #include "tr/executor/base/tuple.h"
+#include "tr/executor/base/PPBase.h"
 #include "tr/strings/strings.h"
 
 #ifdef SE_ENABLE_FTSEARCH
@@ -150,9 +151,27 @@ void testSaDoc(const char* docname);
 /*
  * System tables utils
  */
-bool is_document_system(const char* title);
-schema_node* get_system_doc(const char* title);
+
+enum document_type {
+    DT_NON_SYSTEM,
+    DT_DOCUMENTS,
+    DT_INDEXES,
+    DT_FTINDEXES,
+    DT_SCHEMA,
+    DT_COLLECTIONS,
+    DT_ERRORS,
+    DT_VERSION,
+    DT_MODULES,
+    DT_DOCUMENT_,
+    DT_COLLECTION_,
+    DT_SCHEMA_
+};
+
+/// The following method returns DT_NON_SYSTEM if given name is not one of the reserved.
+document_type get_document_type(counted_ptr<db_entity> db_ent);
+schema_node* get_system_doc(document_type type, const char* title);
 void clear_temporary(void);
+
 //various output of xml document to string_buffer
 
 #ifdef SE_ENABLE_FTSEARCH
