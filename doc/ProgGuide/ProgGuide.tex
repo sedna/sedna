@@ -1479,35 +1479,45 @@ implementation in running the program.
 \subsection{XQuery Support}
 \label{sec:xquery-support}
 The Sedna query language is XQuery \cite{paper:query-language} developed by W3C. 
-Below is the list of the XQuery features, supported in the current release of Sedna.
+Sedna conforms to January 2007 specification of XQuery language except the following features:
 \begin{itemize}
-\item Data model \cite{paper:data-model} 
+\item Copy-namespaces declaration,
+\item fn:normalize-unicode function,
+\item External variables.
+\end{itemize}
+Sedna also has full support for two optional XQuery features:
 \begin{itemize}
-\item Nodes kind: Element, Document, Text, Namespace and Attribute Nodes.
-\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xs:dateTime, xs:date, xs:time, xs:gYearMonth, xs:gYear, xs:gMonthDay, xs:gMonth, xs:gDay, xs:duration, xdt:yearMonthDuration, xdt:dayTimeDuration, xdt:untypedAtomic and xdt:anyAtomicType.
+\item Full Axis,
+\item Modules.
 \end{itemize}
-\item	Language features \cite{paper:query-language} 
-\begin{itemize}
-\item Primary Expressions: literals, variable references, parenthesized expressions, context item expression, XQuery comments
-\item Path Expressions
-\begin{itemize}
-\item All axes
-\item Node Tests: NameTest, Wildcard , TextTest, AnyKindTest.
-\item Other Features: predicates, abbriviated syntax.
-\end{itemize}
-\item Sequences: comma operator
-\item Arithmetic Expressions
-\item Comparisons: value comparison, general comparison, node comparison.
-\item Logical Expressions
-\item Constructors: direct element constructor, computed element and attribute constructors.
-\item FLWOR: for and let clause, where clause, order by (there is a restriction that Let clause is prohibited in FLWOR-expressions which contain Order By clause), return clause.
-\item Conditional Expression
-\item Quantified Expression (without type declaration).
-\item Expressions on SequenceTypes: Instance Of, Typeswitch, Cast, Castable, Treat
-\item Function declaration (locally defined user functions are supported).
-\end{itemize}
-\item Functions and operators \cite{paper:query-fo}: see \ref{xquery-functions}
-\end{itemize}
+
+
+%\begin{itemize}
+%\item Nodes kind: Element, Document, Text, Namespace and Attribute Nodes.
+%\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xs:dateTime, xs:date, xs:time, xs:gYearMonth, xs:gYear, xs:gMonthDay, xs:gMonth, xs:gDay, xs:duration, xdt:yearMonthDuration, xdt:dayTimeDuration, xdt:untypedAtomic and xdt:anyAtomicType.
+%\end{itemize}
+%\item	Language features \cite{paper:query-language} 
+%\begin{itemize}
+%\item Primary Expressions: literals, variable references, parenthesized expressions, context item expression, XQuery comments
+%\item Path Expressions
+%\begin{itemize}
+%\item All axes
+%\item Node Tests: NameTest, Wildcard , TextTest, AnyKindTest.
+%\item Other Features: predicates, abbriviated syntax.
+%\end{itemize}
+%\item Sequences: comma operator
+%\item Arithmetic Expressions
+%\item Comparisons: value comparison, general comparison, node comparison.
+%\item Logical Expressions
+%\item Constructors: direct element constructor, computed element and attribute constructors.
+%\item FLWOR: for and let clause, where clause, order by (there is a restriction that Let clause is prohibited in FLWOR-expressions which contain Order By clause), return clause.
+%\item Conditional Expression
+%\item Quantified Expression (without type declaration).
+%\item Expressions on SequenceTypes: Instance Of, Typeswitch, Cast, Castable, Treat
+%\item Function declaration (locally defined user functions are supported).
+%\end{itemize}
+%\item Functions and operators \cite{paper:query-fo}: see \ref{xquery-functions}
+%\end{itemize}
 
 
 \subsubsection{Controlling Serialization}
@@ -1536,17 +1546,17 @@ As mentioned above, you may omit the Sedna namespace declaration:
 declare option output "indent=yes";
 \end{verbatim}
 
-\subsection{Standard XQuery Functions and Extensions}
-\label{functions}
-\subsubsection{Standard XQuery Functions}
-\label{xquery-functions}
-The following standard XQuery functions specified in \cite{paper:query-fo} are supported:
-\begin{itemize}
-\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, node-kind, node-name, true, false, not, empty, exists, string, string-value, string-length, translate, typed-value
-\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib};
-\item functions on durations, dates and times 
-see \cite{paper:query-fo}  for function signatures and \cite{lib:pcre-lib} for regular expression syntax) 
-\end{itemize}
+%\subsection{Standard XQuery Functions and Extensions}
+%\label{functions}
+%\subsubsection{Standard XQuery Functions}
+%\label{xquery-functions}
+%The following standard XQuery functions specified in \cite{paper:query-fo} are supported:
+%\begin{itemize}
+%\item avg, concat, count, contains, data, distinct-values, document-uri, sum, max, min, node-kind, node-name, true, false, not, empty, exists, string, string-value, string-length, translate, typed-value
+%\item matches, replace (regular expression support based on the PCRE library \cite{lib:pcre-lib};
+%\item functions on durations, dates and times 
+%see \cite{paper:query-fo}  for function signatures and \cite{lib:pcre-lib} for regular expression syntax) 
+%\end{itemize}
 
 %==========================================================================
 %                                      Value Index-scan functions
