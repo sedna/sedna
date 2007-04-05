@@ -137,6 +137,7 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
     {
 		FTRACE((log,"WARNING: Commit transaction failed\n"));
+		goto exp_error;
     }
 	FTRACE((log,"done\n"));
 
@@ -167,50 +168,50 @@ exp_error_no_conn:
 
 
 const char load_docs_query[] = "declare option se:output \"indent=no\"; \
-                                let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
-											    where $i/@name != \"db_security_data\" \
+                                let $reg-docs:= for $i in doc(\"$documents\")/documents/document \
+											    where $i/@name != \"$db_security_data\" \
 												   return fn:concat(\"\"\"\",$i/@name,\"\"\"\"), \
-                                    $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
-                                                for $j in $i/DOCUMENT \
+                                    $col-docs:= for $i in doc(\"$documents\")/documents/collection \
+                                                for $j in $i/document \
                                                    return fn:concat(\"\"\"\",$j/@name,\"\"\" \"\"\",$i/@name,\"\"\"\") \
                                 return ($reg-docs,$col-docs)";
 
  
 
 const char exp_docs_query[] = "declare option se:output \"indent=no\"; \
-                               let $reg-docs:= for $i in document(\"$documents.xml\")/*/SA_DOCUMENT \
-											   where $i/@name != \"db_security_data\" \
-                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"document(\"\"\",$i/@name,\"\"\")\"), \
-                                   $col-docs:= for $i in document(\"$documents.xml\")/*/COLLECTION_DOCS \
-                                               for $j in $i/DOCUMENT \
-                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"document(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
+                               let $reg-docs :=  for $i in doc(\"$documents\")/documents/document \
+											     where $i/@name != \"$db_security_data\" \
+                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"doc(\"\"\",$i/@name,\"\"\")\"), \
+                                   $col-docs :=  for $i in doc(\"$documents\")/documents/collection \
+                                                 for $j in $i/document \
+                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"doc(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
                                return ($reg-docs,$col-docs)";
 
 const char create_colls_query[] = "declare option se:output \"indent=no\"; \
-                                   for $i in document(\"$collections.xml\")/*/COLLECTION[@name != \"$modules\"] \
+                                   for $i in doc(\"$collections\")/collections/collection[@name != \"$modules\"] \
 								   return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
-const char create_sec_query[] = "for $i in document(\"$collections.xml\")/NODATA \
+const char create_sec_query[] = "for $i in doc(\"$collections\")/NODATA \
 								 return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
-const char create_indexes_query[] = "for $i in document(\"$indexes.xml\")/INDEXES/INDEX \
+const char create_indexes_query[] = "for $i in doc(\"$indexes\")/indexes/index \
                                      return \
-                                       fn:concat(\"CREATE INDEX \"\"\", $i/@title, \"\"\" ON \", \
-                                       fn:concat($i/@indexed_object,\"(\"\"\",$i/@object_title,\"\"\")\", \"/\", $i/@value_path), \
-                                       \" BY \", \
-									   $i/@key_path, \
-									   \" AS \",  $i/@key_type)";
+                                        fn:concat(\"CREATE INDEX \"\"\", $i/@name, \"\"\" ON \", \
+                                        fn:concat($i/@object_type,\"(\"\"\",$i/@object_name,\"\"\")\", \"/\", $i/@on_path), \
+                                        \" BY \", \
+									    $i/@by_path, \
+									    \" AS \",  $i/@as_type)";
 
 
-const char create_ftindexes_query[] = " for $i in document(\"$ftindexes.xml\")/FTINDEXES/FTINDEX \
-									    let $cust := <dummy>{(for $t in $i/TEMPLATE[position() < last()] \
-															  return fn:concat(\"(\"\"\",$t/@name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\",\",\"), \
-															  for $t in $i/TEMPLATE[position() = last()] \
-															  return fn:concat(\"(\"\"\",$t/@name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\"))}</dummy>/text() \
+const char create_ftindexes_query[] = " for $i in doc(\"$ftindexes\")/ftindexes/ftindex \
+									    let $cust := <dummy>{(for $t in $i/template[position() < last()] \
+															  return fn:concat(\"(\"\"\",$t/@element_name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\",\",\"), \
+															  for $t in $i/template[position() = last()] \
+															  return fn:concat(\"(\"\"\",$t/@element_name,\"\"\" , \"\"\",$t/@ft_type,\"\"\")\"))}</dummy>/text() \
 										return  \
 										  fn:concat(\"CREATE FULL-TEXT INDEX \"\"\", \
-													$i/@title, \
+													$i/@name, \
 													\"\"\" ON \", \
-													$i/@indexed_object, \"(\"\"\", $i/@object_title, \"\"\")\", \"/\", $i/@path, \
+													$i/@object_type, \"(\"\"\", $i/@object_name, \"\"\")\", \"/\", $i/@on_path, \
 													\" TYPE \"\"\", $i/@ft_type, \"\"\"\", \
 													if (empty($cust)) then \"\" else fn:concat(\" (\",$cust,\")\")) ";
