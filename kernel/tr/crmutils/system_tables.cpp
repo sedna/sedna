@@ -114,23 +114,33 @@ void get_collection_full (xptr node,const char* title)
 	if (scn!=NULL) getDebugInfo(scn, parent);
 
 }
-bool is_document_system(const char* title)
+
+document_type get_document_type(counted_ptr<db_entity> db_ent)
 {
-	return 
-       ((!my_strcmp(title,"$documents")) ||
-        (!my_strcmp(title,"$indexes")) ||
-        (!my_strcmp(title,"$schema")) ||
+    const char* title = db_ent->name;
+    
+    if(title == NULL || title[0] != '$') return DT_NON_SYSTEM;
+    
+    if(db_ent->type == dbe_document)
+    {
+        if(!my_strcmp(title, "$documents"))       return DT_DOCUMENTS;
+        if(!my_strcmp(title, "$collections"))     return DT_COLLECTIONS;
+        if(!my_strcmp(title, "$modules"))         return DT_MODULES;
+        if(!my_strcmp(title, "$schema"))          return DT_SCHEMA;
+        if(!my_strcmp(title, "$indexes"))         return DT_INDEXES;
+        if(!my_strcmp(title, "$version"))         return DT_VERSION;
 #ifdef SE_ENABLE_FTSEARCH
-        (!my_strcmp(title,"$ftindexes")) ||
-#endif        
-        (!my_strcmp(title,"$collections")) ||
-        (!my_strcmp(title,"$errors")) ||
-        (!my_strcmp(title,"$version")) ||
-        (!my_strcmp(title,"$modules")) ||
-        (!my_strcmp(title,"$document_")) ||
-        (!my_strcmp(title,"$collection_")) ||
-        (!my_strcmp(title,"$schema_")));
+        if(!my_strcmp(title, "$ftindexes"))       return DT_FTINDEXES;
+#endif
+        if(!my_strcmp(title, "$errors"))          return DT_ERRORS;
+        if(strstr(title, "$collection_")==title)  return DT_COLLECTION_;
+        if(strstr(title, "$document_")==title)    return DT_DOCUMENT_;
+        if(strstr(title, "$schema_")==title)      return DT_SCHEMA_;
+    }
+
+    return DT_NON_SYSTEM;
 }
+
 void get_version(xptr node,const char* title)
 {
 	addTextValue(node,"$VERSION.XML",12);
@@ -205,6 +215,7 @@ void get_indexes (xptr node,const char* title)
 	}
 	index_sem_up();
 }
+
 #ifdef SE_ENABLE_FTSEARCH
 void print_ft_type_name(ft_index_type ftype, char* buf)
 {	
@@ -286,22 +297,24 @@ void get_ftindexes (xptr node,const char* title)
 	index_sem_up();
 }
 #endif
+
+static inline xptr insert_generated_document(const char* name, xptr parent, xptr left)
+{
+    xptr temp = insert_element(left,XNULL,parent,"document",xs_untyped,NULL);
+    temp = insert_attribute(XNULL,XNULL,temp,"name",xs_untypedAtomic,name,strlen(name),NULL);
+    return removeIndirection(GETPARENTPOINTER(temp));
+}
+
 void get_documents (xptr node,const char* title)
 {
 	addTextValue(node,"$DOCUMENTS.XML",12);
 	xptr parent=insert_element(XNULL,XNULL,node,"documents",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	local_lock_mrg->put_lock_on_db();
-	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
 	while (mdc!=NULL)
 	{
-		if (left==XNULL)
-		{
-			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
-		}
-		else
-			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
+		left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
 		xptr temp = insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		////////////////////////////////////////////////////////////////////////////
@@ -337,6 +350,7 @@ void get_documents (xptr node,const char* title)
 	}
 	metadata_sem_up();
 }
+
 void get_catalog(xptr node,const char* title)
 {
 	addTextValue(node,"$CATALOG.XML",12);
@@ -359,8 +373,8 @@ void get_catalog(xptr node,const char* title)
 		mdc=metadata->rb_successor(mdc);
 	}
 	metadata_sem_up();
-	  
 }
+
 void get_collections(xptr node,const char* title)
 {
 	addTextValue(node,"$COLLECTIONS.XML",12);
@@ -409,60 +423,28 @@ void get_modules(xptr node,const char* title)
 	}
 }
 
-schema_node* get_system_doc(const char* title)
+schema_node* get_system_doc(document_type type, const char* title)
 {
-	system_fun func=NULL;
-	const char* param=NULL;
-	/*if (!my_strcmp(title,"$catalog.xml"))
-		func=get_catalog;
-	else*/
-	if (!my_strcmp(title,"$documents"))
-		func=get_documents;
-	else
-	if (!my_strcmp(title,"$indexes"))
-		func=get_indexes;
+	system_fun func   = NULL;
+	const char* param = NULL;
+	
+	switch(type)
+	{
+	    case DT_DOCUMENTS     : func = get_documents; break;
+	    case DT_INDEXES       : func = get_indexes; break;
 #ifdef SE_ENABLE_FTSEARCH
-	else
-	if (!my_strcmp(title,"$ftindexes"))
-		func=get_ftindexes;
+	    case DT_FTINDEXES     : func = get_ftindexes; break;
 #endif
-	else
-	if (!my_strcmp(title,"$schema"))
-		func=get_schema;
-	else
-	if (!my_strcmp(title,"$collections"))
-		func=get_collections;
-	else
-	if (!my_strcmp(title,"$errors"))
-		func=get_errors;
-	else
-	if (!my_strcmp(title,"$version"))
-		func=get_version;
-	else
-	if (!my_strcmp(title,"$modules"))
-		func=get_modules;
-	else
-	if (strstr(title,"$document_")==title)
-	{
-		func=get_document_full;
-		param=title+10;
+	    case DT_SCHEMA        : func = get_schema; break;
+	    case DT_COLLECTIONS   : func = get_collections; break;
+	    case DT_ERRORS        : func = get_errors; break;
+	    case DT_VERSION       : func = get_version; break;
+	    case DT_MODULES       : func = get_modules; break;
+	    case DT_DOCUMENT_     :	func = get_document_full; param = title + 10; break;
+	    case DT_COLLECTION_   :	func = get_collection_full; param = title + 12; break;
+	    case DT_SCHEMA_       : func = get_schema; param = title + 8; break;
+	    default               : throw USER_EXCEPTION2(SE1003, (std::string("Document '") + title + "' is not system.").c_str()); 
 	}
-	else
-	if (strstr(title,"$collection_")==title)
-	{
-		func=get_collection_full;
-		param=title+12;
-	}
-	else
-	if (strstr(title,"$schema_")==title)
-	{
-		func=get_schema;
-		param=title+8;
-	}
-
-    if (func == NULL)
-        throw USER_EXCEPTION2(SE5048, (std::string("Document '") + title + "'").c_str());
-
 	
 	local_lock_mrg->lock(lm_s);
 	doc_schema_node* scm=	doc_schema_node::init(false);
@@ -487,6 +469,7 @@ schema_node* get_system_doc(const char* title)
 	sys_schema->push_back(scm);
 	return scm;
 }
+
 void clear_temporary(void)
 {
 	if (sys_schema!=NULL)
@@ -499,3 +482,4 @@ void clear_temporary(void)
 		}
 	}
 }
+
