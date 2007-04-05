@@ -10,6 +10,7 @@
 #include "tr/pstr/pstr.h"
 #include "common/errdbg/d_printf.h"
 #include "tr/crmutils/node_utils.h"
+#include "tr/executor/base/xs_uri.h"
 
 tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 {
@@ -38,10 +39,26 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
     if (xml_base_node != NULL)
     {
         tuple_cell tc = dm_string_value(xml_base_node);
-        return cast_primitive_to_xs_anyURI(tc);
+        Uri::Information nfo;
+        bool is_relative = Uri::is_relative(&tc, &nfo);
+        
+        /// I suppose base usi must be stored in normalized form. (IS)
+        if(!nfo.normalized) throw USER_EXCEPTION2(SE1003, "Base URI is not properly normalized");
+        
+        /// If URI is relative and static base uri is defined we should perform resolving. (IS)
+        if(is_relative && cxt->st_cxt->base_uri)
+        {
+             stmt_str_buf result(1);
+             tc = tuple_cell::make_sure_light_atomic(tc);
+             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->base_uri, result))
+                 return cast_primitive_to_xs_anyURI(tc);
+             return tuple_cell::atomic(xs_anyURI, result.get_str());
+        }
+        else
+            return cast_primitive_to_xs_anyURI(tc);
     }
-
-    // xml_base_node == NULL
+    
+    /* xml_base_node == NULL here */
     if (IS_TMP_BLOCK(node) && cxt->st_cxt->base_uri)
         return tuple_cell::atomic_deep(xs_anyURI, cxt->st_cxt->base_uri);
 
