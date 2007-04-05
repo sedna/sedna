@@ -27,8 +27,8 @@
 #define CR_SEC_QUERY_FILE          "create_security.xquery"
 #define CR_INDEXES_QUERY_FILE      "create_indexes.xquery"
 #define CR_FTINDEXES_QUERY_FILE    "create_ftindexes.xquery"
-#define DB_SECURITY_DOC            "db_security_data"
-#define DB_SECURITY_DOC_NAME_TMP   "\"db_security_data_exp\""
+#define DB_SECURITY_DOC            "$db_security_data"
+#define DB_SECURITY_DOC_NAME_TMP   "\"$db_security_data_exp\""
 
 typedef struct str_buf_t {
 	char *buf;

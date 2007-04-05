@@ -3,10 +3,10 @@
 #include "se_exp.h"
 
 //function checks that the database db_name is empty
-// 1. document("$documents.xml") contains only db_security_data record
-// 2. document("$collections.xml") is empty
-// 3. document("indexes.xml") is empty
-// 4. document("db_security") has only default structures
+// 1. doc("$documents") contains only $db_security_data record
+// 2. doc("$collections") is empty
+// 3. doc("indexes") is empty
+// 4. doc("db_security") has only default structures
 // the result is: 1 - db is empty, 0 - db contains data, -1 - error
 
 int check_dbempty(struct SednaConnection *conn, FILE* log) {
@@ -242,10 +242,10 @@ imp_error_no_conn:
 
 
 
-const char check_db_empty_query[] = "let $docs := document(\"$documents.xml\")/DOCUMENTS/SA_DOCUMENT[ @name != \"db_security_data\"] \
-                                     let $cols := document(\"$collections.xml\")/COLLECTION/COLLECTION[ @name != \"$modules\"] \
-                                     let $ind  := document(\"$indexes.xml\")/INDEXES/* \
-                                     let $sec-users  := document(\"db_security_data\")/db_security_data/users/user[@user_name != \"SYSTEM\"] \
-                                     let $sec-roles  := document(\"db_security_data\")/db_security_data/roles/role[@role_name != \"DBA\" and @role_name != \"PUBLIC\"] \
+const char check_db_empty_query[] = "let $docs := doc(\"$documents\")/documents/document[ @name != \"$db_security_data\"] \
+                                     let $cols := doc(\"$collections\")/collections/collection[ @name != \"$modules\"] \
+                                     let $ind  := doc(\"$indexes\")/indexes/index \
+                                     let $sec-users  := doc(\"$db_security_data\")/db_security_data/users/user[@user_name != \"SYSTEM\"] \
+                                     let $sec-roles  := doc(\"$db_security_data\")/db_security_data/roles/role[@role_name != \"DBA\" and @role_name != \"PUBLIC\"] \
                                      let $all := ($docs, $cols, $ind, $sec-users, $sec-roles) \
                                      return if (empty($all)) then 1 else 0 ";
