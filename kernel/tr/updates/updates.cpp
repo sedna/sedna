@@ -233,14 +233,19 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		 int size=((t_dsc*)XADDR(node))->size;
 		 if (size>0)
 		 {
-			//char *z=se_new char[size];
 			xptr ind_ptr=((t_dsc*)XADDR(node))->data;
-			CHECKP(ind_ptr);
-			shft shift= *((shft*)XADDR(ind_ptr));
-			char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-			//memcpy(z,data,size);
-			res =insert_text(left, right, parent,&ADDR2XPTR(data),size,text_doc);
-			//delete [] z;
+			 if (size <=PSTRMAXSIZE)
+			 {
+				//char *z=se_new char[size];
+				CHECKP(ind_ptr);
+				shft shift= *((shft*)XADDR(ind_ptr));
+				char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
+				//memcpy(z,data,size);
+				res =insert_text(left, right, parent,&ADDR2XPTR(data),size,text_doc);
+				//delete [] z;
+			 }
+			 else
+				res =insert_text(left, right, parent,&ind_ptr,size,text_doc);
 		}
 		else throw SYSTEM_EXCEPTION("BAD DATA!!!");
 	 }
