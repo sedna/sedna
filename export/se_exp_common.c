@@ -173,14 +173,9 @@ int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE
 		 ETRACE((log,"\nERROR: failed to retrieve query results\nQuery was:\n\n%s\n\n",query));
 		 return getSednaErrorStatus(SEgetLastErrorMsg(conn));
       }
-   } else  {
-	  ETRACE((log,"ERROR: update query was not expected\n"));
-	  return SE_EXP_DEV_ERROR;
-   }
+   } 
    return SE_EXP_SUCCEED;
 }
-
-
 
 
 // function executes the query with Sedna.
@@ -228,7 +223,7 @@ int write_xquery_script(qbuf_t *qbuf,const char * filename) {
 		  return -1;
 	}
 	for (i=0;i<(qbuf->d_size-1);i++) 
-		  fprintf(file,"%s\n\\",qbuf->buf[i]);
+		  fprintf(file,"%s%s",qbuf->buf[i],DELIMITER);
 	if (qbuf->d_size > 0) fprintf(file,"%s",qbuf->buf[qbuf->d_size-1]);
 	fclose(file);
 	return 0;
@@ -250,7 +245,7 @@ int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log) {
 }
 
 
-
+/*
 int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, FILE* log) {
   str_buf_t bl_query = {NULL, 0 , 0};
   int res;
@@ -274,6 +269,7 @@ int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *d
   if (bl_query.buf!=NULL) free(bl_query.buf);    
   return 0;
 }
+*/
 
 /*
 int bulkload_xml(struct SednaConnection *conn,const char *filename,const char *docname, const char *colname, FILE* log) {

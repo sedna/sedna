@@ -13,7 +13,7 @@ all: $(PP)/bin/se_exp$(EXE_EXT)
 
 
 OBJS = se_exp$(OBJ_EXT) se_exp_common$(OBJ_EXT) se_exp_export$(OBJ_EXT) \
-       se_exp_import$(OBJ_EXT) sprompt$(OBJ_EXT)
+       se_exp_import$(OBJ_EXT)
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 
