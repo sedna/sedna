@@ -1,7 +1,6 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 #include "se_exp.h"
-#include "common/u/uhdd.h"
 
 //function checks that the database db_name is empty
 // 1. doc("$documents") contains only $db_security_data record
@@ -163,9 +162,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if (strlen(bl_docs_query)==0)
 		FTRACE((log,"(no documents in the database)..."));
 	else {
-		char path_buf[PATH_BUF_SIZE];
-		uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
-		uChangeWorkingDirectory(path, NULL);
+		SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path));
 		FTRACE((log,"\n"));
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
@@ -182,7 +179,6 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 				goto imp_error;
 			FTRACE((log,"done\n"));
 		}
-		uChangeWorkingDirectory(path_buf,NULL);
 	}
 	FTRACE((log,"done\n"));
 	
