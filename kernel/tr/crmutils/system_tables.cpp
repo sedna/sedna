@@ -312,6 +312,19 @@ void get_documents (xptr node,const char* title)
 	xptr parent=insert_element(XNULL,XNULL,node,"documents",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
 	local_lock_mrg->put_lock_on_db();
+	metadata_sem_down();
+/*	
+	left = insert_generated_document("$documents", parent, left);
+	left = insert_generated_document("$indexes", XNULL, left);
+#ifdef SE_ENABLE_FTSEARCH
+	left = insert_generated_document("$ftindexes", XNULL, left);
+#endif
+	left = insert_generated_document("$schema", XNULL, left);
+    left = insert_generated_document("$collections", XNULL, left);
+	left = insert_generated_document("$errors", XNULL, left);
+	left = insert_generated_document("$version", XNULL, left);
+	left = insert_generated_document("$modules", XNULL, left);
+*/	
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
 	while (mdc!=NULL)
 	{
