@@ -13,12 +13,13 @@
 
 
 #define STR_BUF_INIT_SIZE 500
+#define PATH_BUF_SIZE 1024
 #define Q_BUF_INIT_SIZE 1
 #define RESULT_PORTION_SIZE 1024 //TO HOLD BL QUERIES
 #define DOCS_FILENAME_SIZE 20
 #define RF_PORTION_SIZE 512
-#define DELIMITER "\n\\"
-#define PATH_SIZE 1100 // depends on ARG_SIZE
+#define DELIMITER "&\n"   //se_trn style "\n\\"
+#define PATH_SIZE 1100    // depends on ARG_SIZE
 
 #define EXP_LOG_FILE_NAME          "export_log.txt"
 #define IMP_LOG_FILE_NAME          "import_log.txt"
@@ -28,7 +29,7 @@
 #define CR_INDEXES_QUERY_FILE      "create_indexes.xquery"
 #define CR_FTINDEXES_QUERY_FILE    "create_ftindexes.xquery"
 #define DB_SECURITY_DOC            "$db_security_data"
-#define DB_SECURITY_DOC_NAME_TMP   "\"$db_security_data_exp\""
+#define DB_SECURITY_DOC_NAME_TMP   "$db_security_data_exp"
 
 typedef struct str_buf_t {
 	char *buf;

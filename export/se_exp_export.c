@@ -127,16 +127,14 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
 	write_xquery_script(&create_ftindexes,strbuf);
 
-	sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
-	write_xquery_script(&create_sec,strbuf);
+	/*sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
+	write_xquery_script(&create_sec,strbuf); */
 	FTRACE((log,"done\n"));
 
 	// we doesn't need to analyze SEcommit status 
 	FTRACE((log,"Commiting the transaction..."));
-	SEcommit(&conn);
-	if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
-    {
-		FTRACE((log,"WARNING: Commit transaction failed\n"));
+	if(SEcommit(&conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
+		FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(&conn)));
 		goto exp_error;
     }
 	FTRACE((log,"done\n"));
@@ -164,35 +162,27 @@ exp_error_no_conn:
 }
 
 
-
-
-
 const char load_docs_query[] = "declare option se:output \"indent=no\"; \
-                                let $reg-docs:= for $i in doc(\"$documents\")/documents/document \
-											    where $i/@name != \"$db_security_data\" \
-												   return fn:concat(\"\"\"\",$i/@name,\"\"\"\"), \
-                                    $col-docs:= for $i in doc(\"$documents\")/documents/collection \
-                                                for $j in $i/document \
-                                                   return fn:concat(\"\"\"\",$j/@name,\"\"\" \"\"\",$i/@name,\"\"\"\") \
-                                return ($reg-docs,$col-docs)";
+								for $i at $j in doc(\"$documents\")//document[@name!= \"$db_security_data\"] \
+								let $col := $i/parent::collection \
+								return \
+								   if (empty($col)) \
+									 then fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\"\") \
+									 else fn:concat(\"declare boundary-space preserve; LOAD \"\"\",$j,\".xml\"\" \"\"\",$i/@name,\"\"\" \"\"\",$col/@name,\"\"\"\")";
 
- 
-
-const char exp_docs_query[] = "declare option se:output \"indent=no\"; \
-                               let $reg-docs :=  for $i in doc(\"$documents\")/documents/document \
-											     where $i/@name != \"$db_security_data\" \
-                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"doc(\"\"\",$i/@name,\"\"\")\"), \
-                                   $col-docs :=  for $i in doc(\"$documents\")/documents/collection \
-                                                 for $j in $i/document \
-                                                 return fn:concat(\"declare option se:output \"\"indent=no\"\"; \", \"doc(\"\"\",$j/@name,\"\"\",\"\"\",$i/@name,\"\"\")\") \
-                               return ($reg-docs,$col-docs)";
+const char exp_docs_query[] =  "declare option se:output \"indent=no\"; \
+								for $i at $j in doc(\"$documents\")//document[@name!= \"$db_security_data\"] \
+								let $col := $i/parent::collection \
+								return \
+								  if (empty($col)) \
+									 then fn:concat(\"declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\")\") \
+									 else fn:concat(\"declare option se:output \"\"indent=no\"\"; doc(\"\"\",$i/@name,\"\"\",\"\"\",$col/@name,\"\"\")\")";
 
 const char create_colls_query[] = "declare option se:output \"indent=no\"; \
                                    for $i in doc(\"$collections\")/collections/collection[@name != \"$modules\"] \
 								   return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
 
-const char create_sec_query[] = "for $i in doc(\"$collections\")/NODATA \
-								 return fn:concat(\"CREATE COLLECTION \"\"\",$i/@name,\"\"\"\")";
+const char create_sec_query[] = "()";
 
 const char create_indexes_query[] = "for $i in doc(\"$indexes\")/indexes/index \
                                      return \

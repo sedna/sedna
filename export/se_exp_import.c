@@ -1,6 +1,7 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 #include "se_exp.h"
+#include "common/u/uhdd.h"
 
 //function checks that the database db_name is empty
 // 1. doc("$documents") contains only $db_security_data record
@@ -37,19 +38,20 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 int restore_security(struct SednaConnection *conn, const char *path, FILE* log) {
   char strbuf[PATH_SIZE];
 
-   sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-   if (bulkload_xml(conn,strbuf,DB_SECURITY_DOC_NAME_TMP,log) != 0) {
+   sprintf(strbuf,"declare boundary-space preserve; LOAD \"%s%s.xml\" \"%s\"",path,DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
+   
+   if (execute_query(conn, strbuf, NULL, log) != SE_EXP_SUCCEED) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"));
 	   return -1;
    } 
   
-   sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc(%s)/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
+   sprintf(strbuf,"UPDATE replace $p in doc('%s')/db_security_data with doc('%s')/db_security_data",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to update document with initial security data\n"));
 	   return -1;
    }
 
-   sprintf(strbuf,"DROP DOCUMENT %s",DB_SECURITY_DOC_NAME_TMP);
+   sprintf(strbuf,"DROP DOCUMENT '%s'",DB_SECURITY_DOC_NAME_TMP);
    if (SEexecute(conn,strbuf) != SEDNA_UPDATE_SUCCEEDED) {
 	   ETRACE((log,"\nERROR: failed to drop temporary document with security data\n"));
 	   return -1;
@@ -73,7 +75,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   char *upd_sec_query = NULL;
   qbuf_t blq = {NULL,0,0};
   FILE *log = NULL;  
-  int i,error_status=1;
+  int i,error_status=1,res;
   int value;
 
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
@@ -161,17 +163,26 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if (strlen(bl_docs_query)==0)
 		FTRACE((log,"(no documents in the database)..."));
 	else {
+		char path_buf[PATH_BUF_SIZE];
+		uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
+		uChangeWorkingDirectory(path, NULL);
 		FTRACE((log,"\n"));
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
         for (i=0;i<blq.d_size;i++) {
-			// blq.buf[i] = "docname" "colname"
+			/* workaround to display document_name */
+			char *doc_name = blq.buf[i];
+			while (*doc_name!=';' && *doc_name!='\0') doc_name++;
+			if (*doc_name==';') doc_name++;
+			while (*doc_name==' ') doc_name++;
+			/* end */
 			sprintf(strbuf,"%s%d.xml",path,i+1);
-			FTRACE((log," Bulkload document %s...",blq.buf[i]));
-			if (bulkload_xml(&conn,strbuf,blq.buf[i],log)!=0)
+			FTRACE((log," %s...",doc_name));
+			if (execute_query(&conn, blq.buf[i], NULL, log) != SE_EXP_SUCCEED)
 				goto imp_error;
 			FTRACE((log,"done\n"));
 		}
+		uChangeWorkingDirectory(path_buf,NULL);
 	}
 	FTRACE((log,"done\n"));
 	
@@ -214,7 +225,10 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	}
 
 	FTRACE((log,"Commiting the transaction..."));
-	SEcommit(&conn);
+	if(SEcommit(&conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
+		FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(&conn)));
+		goto imp_error;
+    }
 	FTRACE((log,"done\n"));
 
 	error_status=0;

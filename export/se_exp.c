@@ -3,7 +3,6 @@
 #include "se_exp_import.h"
 #include "se_exp_export.h"
 #include "se_exp_cl.h"
-#include "sprompt.h"
 #include "common/u/uutils.h"
 #include "common/version.h"
 
@@ -53,6 +52,8 @@ int main(int argc, char* argv[]) {
 	if (exp_log == 0) { 
 		printf("Logging is off.\n"); 
 	}
+
+	/* don't ask for user name and password: the default values are used instead
 	if (strcmp(login,"-") == 0) {           
        	input_login = simple_prompt("Login: ", SPROMT_LOGIN_SIZE, 1);
 		strcpy(login,input_login);
@@ -63,7 +64,7 @@ int main(int argc, char* argv[]) {
 		strcpy(password,input_password);
        	if (input_password!=NULL) free(input_password);
     }
-    
+    */
 
 	// Add the slash to the specified path 
 	tmp=strlen(path);
