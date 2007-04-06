@@ -235,7 +235,6 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
 {
     schema_node *root = NULL;
-    //doc_schema_node *root = NULL;
 
     bool valid;
     Uri::check_constraints(db_ent->name, &valid, NULL);
