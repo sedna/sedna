@@ -291,8 +291,8 @@ void get_documents (xptr node,const char* title)
 	addTextValue(node,"$DOCUMENTS.XML",12);
 	xptr parent=insert_element(XNULL,XNULL,node,"documents",xs_untyped,NULL,NULL);
 	xptr left=XNULL;
-	metadata_sem_down();
 	local_lock_mrg->put_lock_on_db();
+	metadata_sem_down();
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
 	while (mdc!=NULL)
 	{
