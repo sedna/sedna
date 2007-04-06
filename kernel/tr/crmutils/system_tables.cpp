@@ -298,12 +298,13 @@ void get_ftindexes (xptr node,const char* title)
 }
 #endif
 
-static inline xptr insert_generated_document(const char* name, xptr parent, xptr left)
+/*static inline xptr insert_generated_document(const char* name, xptr parent, xptr left)
 {
     xptr temp = insert_element(left,XNULL,parent,"document",xs_untyped,NULL);
     temp = insert_attribute(XNULL,XNULL,temp,"name",xs_untypedAtomic,name,strlen(name),NULL);
     return removeIndirection(GETPARENTPOINTER(temp));
 }
+*/
 
 void get_documents (xptr node,const char* title)
 {
@@ -314,7 +315,13 @@ void get_documents (xptr node,const char* title)
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
 	while (mdc!=NULL)
 	{
-		left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
+		if (left==XNULL)
+		{
+			left=insert_element(XNULL,XNULL,parent,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
+		}
+		else
+			left=insert_element(left,XNULL,XNULL,(mdc->obj->document_name==NULL)?"collection":"document",xs_untyped,NULL);
+
 		xptr temp = insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,(mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name,
 						strlen((mdc->obj->document_name==NULL)?mdc->obj->collection_name:mdc->obj->document_name),NULL);
 		////////////////////////////////////////////////////////////////////////////
