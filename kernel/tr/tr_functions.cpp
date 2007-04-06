@@ -19,18 +19,18 @@
 
 using namespace std;
 
-PPQueryEssence* on_kernel_statement_begin(scheme_list *por,
+void on_kernel_statement_begin(scheme_list *por,
                                           se_ostream* s, 
-                                          t_print output_type)
+                                          t_print output_type,
+										  PPQueryEssence* &qep_tree)
 {
     // !!! Additional code review is needed
     indirection_table_on_statement_begin();
     xs_decimal_t::init();
-    PPQueryEssence* qep_tree = build_qep(por, *s, output_type);
+    qep_tree = build_qep(por, *s, output_type);
     is_qep_built = true;
     qep_tree->open();
     is_qep_opened = true;
-    return qep_tree;
 }
 
 void on_kernel_statement_end(PPQueryEssence *qep_tree)
@@ -77,7 +77,7 @@ void on_user_statement_begin(QueryType query_type,
 
     for (int i = 0; i < st->stmnts.size() - 1; i++)
     {
-        qep_tree = on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml);
+        on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml, qep_tree);
      
         execute(qep_tree);
 
@@ -92,7 +92,7 @@ void on_user_statement_begin(QueryType query_type,
     triggers_on_statement_begin();
 #endif
 
-    qep_tree = on_kernel_statement_begin(st->stmnts.back().stmnt, s, output_type);
+    on_kernel_statement_begin(st->stmnts.back().stmnt, s, output_type, qep_tree);
 }
 
 void on_user_statement_end(PPQueryEssence* &qep_tree, StmntsArray* &st)
@@ -194,7 +194,7 @@ void authentication()
    	   {
    	   	   auth = BLOCK_AUTH_CHECK;
 
-           qep_tree = on_kernel_statement_begin(auth_query_in_scheme_lst, &s, xml);
+           on_kernel_statement_begin(auth_query_in_scheme_lst, &s, xml, qep_tree);
    	   	   execute(qep_tree);
            on_kernel_statement_end(qep_tree);
 
