@@ -1638,7 +1638,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
             conn->msg.length = 9;
             value = (int*) attrValue;
-			int2net_int(*value, conn->msg.body);
+			int2net_int(*value, conn->msg.body); //option type
             conn->msg.body[4] = 0;
             int2net_int(0, conn->msg.body+5); //length of the option value string = 0
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)

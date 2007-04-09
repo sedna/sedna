@@ -20,12 +20,17 @@ import java.util.*;
 
 class SednaConnectionImpl implements SednaConnection {
     private boolean       isClose       = false;
-    SednaSerializedResult currentResult = null;    // all statements that were created in this connection
-    BufferedInputStream bufInputStream;
-    private Integer     id;
-    OutputStream        outputStream;
-    private Socket      socket;
+    private boolean       isDebugMode   = false;
+    private boolean       doTraceOutput = false;
+    
+   
+    private Integer       id;
 
+    private Socket        socket;
+    SednaSerializedResult currentResult = null;    // all statements that were created in this connection
+    BufferedInputStream   bufInputStream;
+    OutputStream          outputStream;
+        
     //~--- methods ------------------------------------------------------------
 
     public void begin() throws DriverException {
@@ -138,6 +143,39 @@ class SednaConnectionImpl implements SednaConnection {
         }
     }
 
+    public void setTraceOutput(boolean trace) throws DriverException {
+    	this.doTraceOutput = trace;
+    }
+    
+    public void setDebugMode(boolean debug) throws DriverException {
+        if (this.isClose) {
+            throw new DriverException(ErrorCodes.SE3028, "");
+        }
+    	      NetOps.Message msg = new NetOps.Message();
+
+        msg.instruction = NetOps.se_SetSessionOptions;
+        msg.length      = 9;
+        
+        if(debug){
+        	NetOps.writeInt(NetOps.se_Session_Debug_On, msg.body, 0); // option type
+        } else {
+        	NetOps.writeInt(NetOps.se_Session_Debug_Off, msg.body, 0); //option type
+        }
+        msg.body[4] = 0; //option value string type
+        NetOps.writeInt(0, msg.body, 5); // option value length
+        
+        NetOps.writeMsg(msg, outputStream);
+        NetOps.readMsg(msg, bufInputStream);
+
+
+        if (msg.instruction == NetOps.se_ErrorResponse) {
+            throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+        } else if (msg.instruction != NetOps.se_SetSessionOptionsOk) {
+            throw new DriverException(ErrorCodes.SE3008, "");
+        }
+    	
+    }
+    
     //~--- get methods --------------------------------------------------------
 
     // gets session id (for driver-internal use)  

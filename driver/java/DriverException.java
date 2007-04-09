@@ -14,12 +14,14 @@ package ru.ispras.sedna.driver;
 public class DriverException extends Exception {
 	
 	private int error_code;
+	private String debugInfo;
     //~--- constructors -------------------------------------------------------
 
     public DriverException(String error_msg, int error_code) {
        
         super(error_msg);
-        this.error_code = error_code ;
+        this.error_code = error_code;
+        this.debugInfo = null;
     }
 
     public DriverException(int error_code, String details) {
@@ -39,5 +41,14 @@ public class DriverException extends Exception {
     public String getErrorMessage()
     {
     	return this.toString();
+    }
+    public String getDebugInfo()
+    {
+    	return this.debugInfo;
+    }
+
+    protected void setDebugInfo(StringBuffer debugInfo)
+    {
+    	this.debugInfo = debugInfo.toString();
     }
 }

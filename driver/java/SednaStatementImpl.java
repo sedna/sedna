@@ -60,9 +60,9 @@ class SednaStatementImpl implements SednaStatement {
     public boolean execute(InputStream in, ResultType resultType)
             throws DriverException, IOException {
 
-        // constructs the query string
-        StringBuffer   strBuf = new StringBuffer();
         NetOps.Message msg    = new NetOps.Message();
+        StringBuffer debugInfo = new StringBuffer();
+        boolean gotDebug = false;
 
         try {
             int call_res = 1;
@@ -93,6 +93,9 @@ class SednaStatementImpl implements SednaStatement {
             NetOps.writeMsg(msg, outputStream);
             NetOps.readMsg(msg, bufInputStream);
 
+            // read debug information if any
+            gotDebug = NetOps.readDebugInfo(msg, bufInputStream, debugInfo);
+
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
                     NetOps.readStringItem(bufInputStream);
@@ -105,30 +108,52 @@ class SednaStatementImpl implements SednaStatement {
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
-            } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
-                return false;
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+
             } else if (msg.instruction == NetOps.se_UpdateFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+
+            } else if (msg.instruction == NetOps.se_ErrorResponse) {
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+                
+            } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
+ 
+                return false;
+ 
             } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
+            	
                 String          file_name = new String(msg.body, 5,
                                                 msg.length - 5);
                 FileInputStream fis       = new FileInputStream(file_name);
                 boolean         res       = NetOps.bulkLoad(fis,
                                                 this.bufInputStream,
                                                 this.outputStream);
-
-                return res;    // bulk loading is update...
+                return res;
+ 
             } else if (msg.instruction == NetOps.se_BulkLoadFromStream) {
-                boolean res = NetOps.bulkLoad(System.in, this.bufInputStream,
-                                              this.outputStream);
-
-                return res;    // bulk loading is update...
-            } else if (msg.instruction == NetOps.se_ErrorResponse) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+ 
+                boolean res = NetOps.bulkLoad(System.in, this.bufInputStream, this.outputStream);
+                return res;
+ 
             }
-
-            throw new DriverException(ErrorCodes.SE3008, "");
+            else
+            {
+            	DriverException ex = new DriverException(ErrorCodes.SE3008, "");
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+            	throw ex;
+            }
         } catch (FileNotFoundException fnfe) {
             msg.instruction = NetOps.se_BulkLoadError;
             NetOps.writeMsg(msg, outputStream);
@@ -148,6 +173,8 @@ class SednaStatementImpl implements SednaStatement {
     public boolean execute(String queryText, ResultType resultType)
             throws DriverException {
         NetOps.Message msg = new NetOps.Message();
+        StringBuffer debugInfo = new StringBuffer();
+        boolean gotDebug = false;
 
         try {
             byte query_bytes[] = queryText.getBytes("utf8");
@@ -206,6 +233,9 @@ class SednaStatementImpl implements SednaStatement {
 
             NetOps.readMsg(msg, bufInputStream);
 
+            // read debug information if any
+            gotDebug = NetOps.readDebugInfo(msg, bufInputStream, debugInfo);
+
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
                     NetOps.readStringItem(bufInputStream);
@@ -218,30 +248,52 @@ class SednaStatementImpl implements SednaStatement {
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
-            } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
-                return false;
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+
             } else if (msg.instruction == NetOps.se_UpdateFailed) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+
+            } else if (msg.instruction == NetOps.se_ErrorResponse) {
+            	
+            	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
+            	                                         NetOps.getErrorCode(msg.body));
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
+                
+            } else if (msg.instruction == NetOps.se_UpdateSucceeded) {
+ 
+                return false;
+ 
             } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
+            	
                 String          file_name = new String(msg.body, 5,
                                                 msg.length - 5);
                 FileInputStream fis       = new FileInputStream(file_name);
                 boolean         res       = NetOps.bulkLoad(fis,
                                                 this.bufInputStream,
                                                 this.outputStream);
-
-                return res;    // bulk loading is update...
+                return res;
+ 
             } else if (msg.instruction == NetOps.se_BulkLoadFromStream) {
-                boolean res = NetOps.bulkLoad(System.in, this.bufInputStream,
-                                              this.outputStream);
-
-                return res;    // bulk loading is update...
-            } else if (msg.instruction == NetOps.se_ErrorResponse) {
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+ 
+                boolean res = NetOps.bulkLoad(System.in, this.bufInputStream, this.outputStream);
+                return res;
+ 
             }
-
-            throw new DriverException(ErrorCodes.SE3008, "");
+            else
+            {
+            	DriverException ex = new DriverException(ErrorCodes.SE3008, "");
+            	if (gotDebug) ex.setDebugInfo(debugInfo);
+            	throw ex;
+            }
         } catch (FileNotFoundException fnfe) {
             msg.instruction = NetOps.se_BulkLoadError;
             NetOps.writeMsg(msg, outputStream);

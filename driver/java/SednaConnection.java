@@ -18,6 +18,10 @@ public interface SednaConnection {
     public SednaStatement createStatement() throws DriverException;
 
     public void rollback() throws DriverException;
+    
+    public void setTraceOutput(boolean trace) throws DriverException;
+    
+    public void setDebugMode(boolean debug) throws DriverException;
 
     //~--- get methods --------------------------------------------------------
 
