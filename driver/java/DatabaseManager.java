@@ -79,10 +79,10 @@ public class DatabaseManager {
 
                 int body_position = 0;
 
-                // writing protocol version 1.0
-                msg.body[body_position]     = 1;
-                msg.body[body_position + 1] = 0;
-                body_position               += 2;
+                // writing protocol version 
+                msg.body[body_position]     = NetOps.majorProtocolVer;
+                msg.body[body_position + 1] = NetOps.minorProtocolVer;
+                body_position += 2;
 
                 // writing login
                 msg.body[body_position] = 0;    // format code

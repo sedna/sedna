@@ -428,10 +428,12 @@ int main(int argc, char *argv[])
                         case se_SetSessionOptions:
                             {
                                 client->set_session_options(&client_msg);
+                                break;
                             }
                         case se_ResetSessionOptions:
                             {
                                 client->reset_session_options();
+                                break;
                             }
                         default:
                             {

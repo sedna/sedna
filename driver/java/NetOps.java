@@ -25,16 +25,25 @@ import java.nio.charset.*;
 
 /**
  * Static functions to organize message exchange between
- * client application and kernel
+ * client application and Sedna server
  */
 class NetOps {
-    static Object    currentStatement          = null;
-    final static int SEDNA_SOCKET_MSG_BUF_SIZE = 10240;
-
-    /**
-     * Size of bulk load portion
-     */
+    static Object    currentStatement                  = null;
+    
+    // This driver support version 3.0 of the Sedna Client/Server protocol
+    final static int           majorProtocolVer        = 3;
+    final static int           minorProtocolVer        = 0;
+    
+    final static int           se_QueryTrace           = 0;
+    final static int           se_QueryDebug           = 1;
+    
+    
+    final static int SEDNA_SOCKET_MSG_BUF_SIZE         = 10240;
+    
+    // Size of bulk load portion
     final static int SEDNA_BULK_LOAD_PORTION           = 5120;
+    
+    // Protocol instructions
     final static int se_ErrorResponse                  = 100;
     final static int se_StartUp                        = 110;
     final static int se_SessionParameters              = 120;
@@ -49,6 +58,7 @@ class NetOps {
     final static int se_GetNextItem                    = 310;
     final static int se_ExecuteLong                    = 301;
     final static int se_Execute                        = 300;
+    final static int se_DebugInfo                      = 325;
     final static int se_CommitTransactionOk            = 250;
     final static int se_CommitTransactionFailed        = 260;
     final static int se_CommitTransaction              = 220;
@@ -77,7 +87,14 @@ class NetOps {
     final static int se_BulkLoadError                  = 400;
     final static int se_BulkLoadEnd                    = 420;
     final static int se_Authenticate                   = 90;
-//    static byte      int_array[]                       = new byte[4];
+    final static int se_SetSessionOptions              = 530;
+    final static int se_SetSessionOptionsOk            = 540;
+    final static int se_ResetSessionOptions            = 550;
+    final static int se_ResetSessionOptionsOk          = 560;
+    
+    final static int se_Session_Debug_Off              = 0;
+    final static int se_Session_Debug_On               = 1;
+    
 
     //~--- methods ------------------------------------------------------------
 
@@ -198,39 +215,129 @@ class NetOps {
         }
     }
 
-    /**
+	/*
+	 *  Reads query debug information. If there were any return true, otherwise returns false
+	 */ 
+	static boolean readDebugInfo(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
+	{
+		
+		ByteBuffer  byteBuf;
+		CharBuffer  charBuf =
+            CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+        CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
+        
+        boolean gotDebug;
+        
+        int debug_type = net_int2int(msg.body);
+                       
+        gotDebug = ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug)) ?  true : false;
+        // read debug information if any 
+        while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == se_QueryDebug))
+        {
+           byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
+           csd.decode(byteBuf, charBuf, false);
+
+           // strBuf.append(charBuf.flip());
+           item.ensureCapacity(charBuf.length());
+
+           try {
+                item.append(charBuf.flip());
+           } catch (OutOfMemoryError e) {}
+           
+           charBuf.clear();
+           
+
+           NetOps.readMsg(msg, is);
+           debug_type = net_int2int(msg.body);
+        }
+        
+        return gotDebug;
+	}
+
+	/*
+	 *  Reads query trace. If there were any return true, otherwise returns false
+	 */ 
+	static boolean readTrace(NetOps.Message msg, BufferedInputStream is, StringBuffer item) throws DriverException 
+	{
+		
+		ByteBuffer  byteBuf;
+		CharBuffer  charBuf =
+            CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
+        CharsetDecoder csd  = Charset.forName("utf8").newDecoder();
+        
+        boolean gotTrace;
+        
+        int debug_type = net_int2int(msg.body);
+                       
+        gotTrace = (msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace) ?  true : false;
+           
+        // read debug information if any 
+        while ((msg.instruction == NetOps.se_DebugInfo) && (debug_type == NetOps.se_QueryTrace))
+        {
+           byteBuf = ByteBuffer.wrap(msg.body, 9, msg.length - 9);
+           csd.decode(byteBuf, charBuf, false);
+
+           // strBuf.append(charBuf.flip());
+           item.ensureCapacity(charBuf.length());
+
+           try {
+                item.append(charBuf.flip());
+           } catch (OutOfMemoryError e) {}
+           
+           charBuf.clear();
+           
+
+           NetOps.readMsg(msg, is);
+           debug_type = net_int2int(msg.body);
+        }
+        
+        if (gotTrace) item.append("\n");
+        return gotTrace;
+	}
+		
+    /** 
      *  Reads a whole item from the socket
      */
-    static String_item readStringItem(BufferedInputStream is)
-            throws DriverException {
+    static String_item readStringItem(BufferedInputStream is) throws DriverException 
+    {
         NetOps.Message     msg   = new NetOps.Message();
         NetOps.String_item sitem = new NetOps.String_item();
-
         sitem.item = new StringBuffer();
+        StringBuffer debugInfo = new StringBuffer();
 
         ByteBuffer     byteBuf;
         CharBuffer     charBuf =
             CharBuffer.allocate(SEDNA_SOCKET_MSG_BUF_SIZE);
-        CharsetDecoder csd     = Charset.forName("utf8").newDecoder();
-
-        // StringBuffer strBuf = new StringBuffer();
+        CharsetDecoder csd = Charset.forName("utf8").newDecoder();
 
         NetOps.readMsg(msg, is);
 
-        if ((msg.instruction == 370) || (msg.instruction == 375))    // ItemEnd or ResultEnd
+        
+        boolean gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
+        
+        boolean gotTrace = NetOps.readTrace(msg, is, sitem.item);
+        
+        if (msg.instruction == NetOps.se_ItemEnd)     
         {
-            sitem.hasNextItem = false;
-            sitem.item        = null;
-
+            if (!gotTrace) sitem.item = null; 
+           	sitem.hasNextItem = true;
+            return sitem;
+        }
+        if (msg.instruction == NetOps.se_ResultEnd)
+        {
+            if (!gotTrace) sitem.item = null; 
+           	sitem.hasNextItem = false;
             return sitem;
         }
 
-        while ((msg.instruction != 370) && (msg.instruction != 375)) {
-            if (msg.instruction == 100) {    // ErrorResponse
-                throw new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+        while ((msg.instruction != NetOps.se_ItemEnd) && (msg.instruction != NetOps.se_ResultEnd)) {
+            
+            if (msg.instruction == NetOps.se_ErrorResponse) {   
+                DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), NetOps.getErrorCode(msg.body));
+                if (gotDebug) ex.setDebugInfo(debugInfo);
+                throw ex;
             }
-
-            if (msg.instruction == 360)    // ItemPart
+            if (msg.instruction == NetOps.se_ItemPart)    
             {
                 byteBuf = ByteBuffer.wrap(msg.body, 5, msg.length - 5);
                 csd.decode(byteBuf, charBuf, false);
@@ -244,21 +351,22 @@ class NetOps {
 
                 charBuf.clear();
             }
-
+  		    
             NetOps.readMsg(msg, is);
+   		    NetOps.readTrace(msg, is, sitem.item);
         }
 
-        if (msg.instruction == 375) {
+        if (msg.instruction == NetOps.se_ResultEnd) {
             sitem.hasNextItem = false;
         }
 
-        if (msg.instruction == 370) {
+        if (msg.instruction == NetOps.se_ItemEnd) {
             sitem.hasNextItem = true;
         }
-
         return sitem;
     }
 
+    
     static void writeInt(int i, BufferedOutputStream bufOutputStream)
             throws IOException {
         bufOutputStream.write(0xff & (i >> 24));
@@ -311,13 +419,16 @@ class NetOps {
      *  Gets error code
      */
     static int getErrorCode(byte[] body) {
-        
+        return net_int2int(body);
+    }
+    
+    static int net_int2int(byte[] body) {
         int integer = (((body[0] & 0xff) << 24)
                      | ((body[1] & 0xff) << 16)
                      | ((body[2] & 0xff) << 8) 
                      | (body[3] & 0xff));    	
         return integer;
-    }
+}    	
 
     //~--- inner classes ------------------------------------------------------
 

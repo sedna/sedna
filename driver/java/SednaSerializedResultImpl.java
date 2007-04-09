@@ -38,39 +38,34 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
     public String next() throws DriverException {
         String         tmpItem;
         NetOps.Message msg = new NetOps.Message();
+        
+        if (this.stringItem == null) 
+           tmpItem = null;
+        else 
+           tmpItem = this.stringItem.toString();
+        
+        try {
+        	if(this.hasNextItem) {
+        		msg.instruction = NetOps.se_GetNextItem;
+        		msg.length      = 0;
+        		NetOps.writeMsg(msg, outputStream);
+        		
+        		NetOps.String_item sitem = NetOps.readStringItem(bufInputStream);
+        		
+        		this.stringItem  = sitem.item;
+        		this.hasNextItem = sitem.hasNextItem;
+        	} else {
+        		this.stringItem = null;
+        	}
 
-        if (this.hasNextItem == true) {
-            try {
-                tmpItem         = this.stringItem.toString();
-                msg.instruction = NetOps.se_GetNextItem;
-                msg.length      = 0;
-                NetOps.writeMsg(msg, outputStream);
-
-                NetOps.String_item sitem =
-                    NetOps.readStringItem(bufInputStream);
-
-                if (sitem.item == null) {
-                    hasNextItem     = false;
-                    this.stringItem = null;
-
-                    return tmpItem;
-                } else {
-                    this.stringItem  = sitem.item;
-                    this.hasNextItem = sitem.hasNextItem;
-
-                    return tmpItem;
-                }
-            } catch (OutOfMemoryError e) {
-                throw new DriverException(
-                    ErrorCodes.SE5501, "");
-            } catch (DriverException e) {
-                NetOps.driverErrOut(e.toString() + "\n");
-
-                throw e;
-            }
-        } else {
-            return null;
+        } catch (OutOfMemoryError e) {
+        	throw new DriverException(ErrorCodes.SE5501, "");
+        } catch (DriverException e) {
+            NetOps.driverErrOut(e.toString() + "\n");
+            throw e;
         }
+
+        return tmpItem;
     }
 
     // returns 0 - if success,
@@ -78,40 +73,35 @@ class SednaSerializedResultImpl implements SednaSerializedResult {
     // throws exception if errors
     public int next(Writer writer) throws DriverException {
         NetOps.Message msg = new NetOps.Message();
+        
+        try {
+        	if (this.stringItem == null) 
+        	   return -1;
 
-        if (this.hasNextItem == true) {
-            try {
-                writer.write(this.stringItem.toString());
-                msg.instruction = NetOps.se_GetNextItem;
-                msg.length      = 0;
-                NetOps.writeMsg(msg, outputStream);
+       	    writer.write(this.stringItem.toString());
+        
+        	if(this.hasNextItem) {
+        		msg.instruction = NetOps.se_GetNextItem;
+        		msg.length      = 0;
+        		NetOps.writeMsg(msg, outputStream);
+        		
+        		NetOps.String_item sitem = NetOps.readStringItem(bufInputStream);
+        		
+        		this.stringItem  = sitem.item;
+        		this.hasNextItem = sitem.hasNextItem;
+        	} else {
+        		this.stringItem = null;
+        	}
 
-                NetOps.String_item sitem =
-                    NetOps.readStringItem(bufInputStream);
-
-                if (sitem.item == null) {
-                    hasNextItem     = false;
-                    this.stringItem = null;
-
-                    return 0;
-                } else {
-                    this.stringItem  = sitem.item;
-                    this.hasNextItem = sitem.hasNextItem;
-
-                    return 0;
-                }
-            } catch (IOException e) {
-                throw new DriverException(
-                    ErrorCodes.SE3007, "");
-            } catch (DriverException e) {
-                NetOps.driverErrOut(e.toString() + "\n");
-
-                throw e;
-            } catch (OutOfMemoryError e) {
-                throw new DriverException(ErrorCodes.SE5501, "");
-            }
-        } else {
-            return (-1);
+        } catch (OutOfMemoryError e) {
+        	throw new DriverException(ErrorCodes.SE5501, "");
+        } catch (IOException e) {
+            throw new DriverException(ErrorCodes.SE3007, "");
+        } catch (DriverException e) {
+            NetOps.driverErrOut(e.toString() + "\n");
+            throw e;
         }
+
+        return 0;
     }
 }
