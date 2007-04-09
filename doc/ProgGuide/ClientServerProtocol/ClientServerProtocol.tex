@@ -281,7 +281,7 @@ In all phases of client/server interaction an error can occur on the server. In 
 This section describes the detailed format of each message. Each is marked to indicate that it may be sent by a client (C), a server (S).
 
 \begin{verbatim}
-se\_Start-Up (C).
+se_Start-Up (C).
   head:
    110 (int)
    body length = 0(int)
@@ -290,7 +290,7 @@ se\_Start-Up (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_SessionParameters (C).
+se_SessionParameters (C).
    head:
     120 (int)
     body length (int)
@@ -302,7 +302,7 @@ se\_SessionParameters (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_AuthenticationParameters (C).
+se_AuthenticationParameters (C).
   head:
    130 (int)
    body length (int)
@@ -311,7 +311,7 @@ se\_AuthenticationParameters (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_SendSessionParameters (S).
+se_SendSessionParameters (S).
   head:
    140 (int)
    body length = 0 (int)
@@ -320,7 +320,7 @@ se\_SendSessionParameters (S).
 \end{verbatim}
    
 \begin{verbatim}
-se\_SendAuthParameters (S).
+se_SendAuthParameters (S).
   head:
    150 (int)
    body length = 0 (int)
@@ -329,7 +329,7 @@ se\_SendAuthParameters (S).
 \end{verbatim}   
   
 \begin{verbatim}  
-se\_AuthenticationOK (S).
+se_AuthenticationOK (S).
   head:
    160 (int)
    body length = 0 (int)
@@ -338,7 +338,7 @@ se\_AuthenticationOK (S).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_AuthenticationFailed (S).
+se_AuthenticationFailed (S).
   head:
    170 (int)
    body length (int)
@@ -348,7 +348,7 @@ se\_AuthenticationFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ErrorResponse (S).
+se_ErrorResponse (S).
   head:
    100 (int)
    body length (int)
@@ -358,7 +358,7 @@ se\_ErrorResponse (S).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_BeginTransaction (C).
+se_BeginTransaction (C).
   head:
    210 (int)
    body length = 0(int)
@@ -367,7 +367,7 @@ se\_BeginTransaction (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_CommitTransaction (C).
+se_CommitTransaction (C).
   head:
    220 (int)
    body length = 0(int)
@@ -376,7 +376,7 @@ se\_CommitTransaction (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_RollbackTransaction (C).
+se_RollbackTransaction (C).
   head:
    225 (int)
    body length = 0(int)
@@ -385,7 +385,7 @@ se\_RollbackTransaction (C).
 \end{verbatim}   
 
 \begin{verbatim}
-se\_BeginTransactionOk (S).
+se_BeginTransactionOk (S).
   head:
    230 (int)
    body length = 0(int)
@@ -394,7 +394,7 @@ se\_BeginTransactionOk (S).
 \end{verbatim}
    
 \begin{verbatim}
-se\_BeginTransactionFailed (S).
+se_BeginTransactionFailed (S).
   head:
    240 (int)
    body length (int)
@@ -404,7 +404,7 @@ se\_BeginTransactionFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_CommitTransactionOk (S).
+se_CommitTransactionOk (S).
   head:
    250 (int)
    body length = 0(int)
@@ -413,7 +413,7 @@ se\_CommitTransactionOk (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_CommitTransactionFailed (S).
+se_CommitTransactionFailed (S).
   head:
    260 (int)
    body length (int)
@@ -423,7 +423,7 @@ se\_CommitTransactionFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_RollbackTransactionOk (S).
+se_RollbackTransactionOk (S).
   head:
    255 (int)
    body length = 0(int)
@@ -432,7 +432,7 @@ se\_RollbackTransactionOk (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_RollbackTransactionFailed (S).
+se_RollbackTransactionFailed (S).
   head:
    265 (int)
    body length (int)
@@ -442,7 +442,7 @@ se\_RollbackTransactionFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_Execute (C).
+se_Execute (C).
   head:
    300 (int)
    body length (int)
@@ -451,7 +451,7 @@ se\_Execute (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ExecuteLong (C).
+se_ExecuteLong (C).
   head:
    301 (int)
    body length (int)
@@ -460,7 +460,7 @@ se\_ExecuteLong (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_LongQueryEnd (C).
+se_LongQueryEnd (C).
   head:
    302 (int)
    body length = 0 (int)
@@ -469,7 +469,7 @@ se\_LongQueryEnd (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_GetNextItem (C).
+se_GetNextItem (C).
   head:
    310 (int)
    body length = 0 (int)
@@ -478,7 +478,7 @@ se\_GetNextItem (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_QuerySucceeded (S).
+se_QuerySucceeded (S).
   head:
    320 (int)
    body length = 0(int)
@@ -487,7 +487,7 @@ se\_QuerySucceeded (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_DebugInfo (S).
+se_DebugInfo (S).
   head:
    325 (int)
    body length (int)
@@ -497,7 +497,7 @@ se\_DebugInfo (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_QueryFailed (S).
+se_QueryFailed (S).
   head:
    330 (int)
    body length (int)
@@ -507,7 +507,7 @@ se\_QueryFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_UpdateSucceeded (S).
+se_UpdateSucceeded (S).
   head:
    340 (int)
    body length = 0(int)
@@ -516,7 +516,7 @@ se\_UpdateSucceeded (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_UpdateFailed (S).
+se_UpdateFailed (S).
   head:
    350 (int)
    body length (int)
@@ -526,7 +526,7 @@ se\_UpdateFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ItemPart (S).
+se_ItemPart (S).
   head:
    360 (int)
    body length (int)
@@ -535,7 +535,7 @@ se\_ItemPart (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ItemEnd (S).
+se_ItemEnd (S).
   head:
    370 (int)
    body length = 0(int)
@@ -544,7 +544,7 @@ se\_ItemEnd (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ResultEnd (S).
+se_ResultEnd (S).
   head:
    375 (int)
    body length = 0(int)
@@ -553,7 +553,7 @@ se\_ResultEnd (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadError (C).
+se_BulkLoadError (C).
   head:
    400 (int)
    body length (int)
@@ -563,7 +563,7 @@ se\_BulkLoadError (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadPortion (C).
+se_BulkLoadPortion (C).
   head:
    410 (int)
    body length (int)
@@ -572,7 +572,7 @@ se\_BulkLoadPortion (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadEnd (C).
+se_BulkLoadEnd (C).
   head:
    420 (int)
    body length = 0 (int)
@@ -581,7 +581,7 @@ se\_BulkLoadEnd (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadFileName (S).
+se_BulkLoadFileName (S).
   head:
    430 (int)
    body length (int)
@@ -590,7 +590,7 @@ se\_BulkLoadFileName (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadFromStream (S).
+se_BulkLoadFromStream (S).
   head:
    431 (int)
    body length = 0(int)
@@ -599,7 +599,7 @@ se\_BulkLoadFromStream (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadSucceeded (S).
+se_BulkLoadSucceeded (S).
   head:
    440 (int)
    body length = 0(int)
@@ -608,7 +608,7 @@ se\_BulkLoadSucceeded (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_BulkLoadFailed (S).
+se_BulkLoadFailed (S).
   head:
    450 (int)
    body length(int)
@@ -618,7 +618,7 @@ se\_BulkLoadFailed (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ShowTime (C).
+se_ShowTime (C).
   head:
    451 (int)
    body length = 0(int)
@@ -627,7 +627,7 @@ se\_ShowTime (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_LastQueryTime (S).
+se_LastQueryTime (S).
   head:
    452 (int)
    body length(int)
@@ -636,7 +636,7 @@ se\_LastQueryTime (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_CloseConnection (C).
+se_CloseConnection (C).
   head:
    500 (int)
    body length = 0(int)
@@ -645,7 +645,7 @@ se\_CloseConnection (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_CloseConnectionOk (S).
+se_CloseConnectionOk (S).
   head:
    510 (int)
    body length = 0(int)
@@ -654,7 +654,7 @@ se\_CloseConnectionOk (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_TransactionRollbackBeforeClose (S).
+se_TransactionRollbackBeforeClose (S).
   head:
    520 (int)
    body length = 0(int)
@@ -663,7 +663,7 @@ se\_TransactionRollbackBeforeClose (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_SetSessionOptions (C).
+se_SetSessionOptions (C).
   head:
    530 (int)
    body length (int)
@@ -672,7 +672,7 @@ se\_SetSessionOptions (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_SetSessionOptionsOk (S).
+se_SetSessionOptionsOk (S).
   head:
    540 (int)
    body length = 0(int)
@@ -681,7 +681,7 @@ se\_SetSessionOptionsOk (S).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ResetSessionOptions (C).
+se_ResetSessionOptions (C).
   head:
    550 (int)
    body length = 0(int)
@@ -690,7 +690,7 @@ se\_ResetSessionOptions (C).
 \end{verbatim}
 
 \begin{verbatim}
-se\_ResetSessionOptionsOk (S).
+se_ResetSessionOptionsOk (S).
   head:
    560 (int)
    body length = 0(int)
