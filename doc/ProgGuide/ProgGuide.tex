@@ -1479,46 +1479,19 @@ implementation in running the program.
 \subsection{XQuery Support}
 \label{sec:xquery-support}
 The Sedna query language is XQuery \cite{paper:query-language} developed by W3C. 
-Sedna conforms to January 2007 specification of XQuery language except the following features:
+Sedna conforms to January 2007 specification of XQuery except the following features:
 \begin{itemize}
-\item Copy-namespaces declaration,
-\item fn:normalize-unicode function,
-\item External variables.
+\item copy-namespaces declaration
+\item fn:normalize-unicode function
+\item external variables
 \end{itemize}
 Sedna also has full support for two optional XQuery features:
 \begin{itemize}
-\item Full Axis,
-\item Modules.
+\item full axis
+\item modules
 \end{itemize}
 
-
-%\begin{itemize}
-%\item Nodes kind: Element, Document, Text, Namespace and Attribute Nodes.
-%\item Atomic types:  xs:string , xs:boolean , xs:decimal (\emph{restricted}), xs:float, xs:double, xs:QName, xs:dateTime, xs:date, xs:time, xs:gYearMonth, xs:gYear, xs:gMonthDay, xs:gMonth, xs:gDay, xs:duration, xdt:yearMonthDuration, xdt:dayTimeDuration, xdt:untypedAtomic and xdt:anyAtomicType.
-%\end{itemize}
-%\item	Language features \cite{paper:query-language} 
-%\begin{itemize}
-%\item Primary Expressions: literals, variable references, parenthesized expressions, context item expression, XQuery comments
-%\item Path Expressions
-%\begin{itemize}
-%\item All axes
-%\item Node Tests: NameTest, Wildcard , TextTest, AnyKindTest.
-%\item Other Features: predicates, abbriviated syntax.
-%\end{itemize}
-%\item Sequences: comma operator
-%\item Arithmetic Expressions
-%\item Comparisons: value comparison, general comparison, node comparison.
-%\item Logical Expressions
-%\item Constructors: direct element constructor, computed element and attribute constructors.
-%\item FLWOR: for and let clause, where clause, order by (there is a restriction that Let clause is prohibited in FLWOR-expressions which contain Order By clause), return clause.
-%\item Conditional Expression
-%\item Quantified Expression (without type declaration).
-%\item Expressions on SequenceTypes: Instance Of, Typeswitch, Cast, Castable, Treat
-%\item Function declaration (locally defined user functions are supported).
-%\end{itemize}
-%\item Functions and operators \cite{paper:query-fo}: see \ref{xquery-functions}
-%\end{itemize}
-
+You can find the result of running the XML Query Test Suite (i.e. W3C official test suite for XQuery) on Sedna at \verb!http://www.w3.org/XML/Query/test-suite/XQTSReport.html!
 
 \subsubsection{Controlling Serialization}
 \label{indents}
@@ -2256,16 +2229,16 @@ rename //job[.="bit banger"] on profession
 \label{bulk-load}
 To do bulk load use the following statements:
 \begin{verbatim}
-LOAD "file_name" "document_name" 
+LOAD "path_to_file" "document_name" 
 \end{verbatim}
 
-The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database.
+The first parameter is a path to the file which contains a document to be loaded. The second parameter is the name for this document in the database.
 
 \begin{verbatim}
-LOAD "file_name" "document_name" "collection_name"
+LOAD "path_to_file" "document_name" "collection_name"
 \end{verbatim}
 
-The first parameter is a file name, it can be an absolute path to the file or only file name if the file is in the local directory. The second parameter is the name for this document in the database. The third parameter is the collection name to load the document into.
+The first parameter is a path to the file which contains a document to be loaded. The second parameter is the name for this document in the database. The third parameter is the collection name to load the document into.
 
 For performing bulk load not from the source file but from an input stream,
 use the following statements:
@@ -2296,6 +2269,8 @@ Most of parameters of Sedna DDL are computable and specified as XQuery expressio
 The expected type of all the parameters is \verb!xs:string!. All parameters are evaluated and atomized.
 If the atomized value is not of \verb!xs:string!, a dynamic error is raised.
 
+Note that the following statements are case sensitive and must be put in upper case (e.g. \verb!CREATE! is valid but \verb!create! is not).
+
 \subsubsection{Managing Standalone Documents}
 \begin{verbatim}
 CREATE DOCUMENT doc-name-expr
@@ -2311,6 +2286,7 @@ DROP DOCUMENT doc-name-expr
 The \verb!DROP! \verb!DOCUMENT! statement drops the standalone document with the
 name that is the result of \verb!doc-name-expr!.
 
+For example, \verb!CREATE! \verb!DOCUMENT! \verb!"report"! creates a document named "report" and \verb!DROP! \verb!DOCUMENT! \verb!"report"! drops it.
 
 
 \subsubsection{Managing Collections}
@@ -2337,6 +2313,8 @@ collections.
 
 The \verb!CREATE COLLECTION! statement creates a new collection with the
 name that is the result of \verb!coll-name-expr!.
+
+For example, \verb!CREATE COLLECTION! \verb!"mails"! creates a collection named "mails".
 
 XML documents can be loaded into the collection, as previously described in
 Sect.\ref{bulk-load}.
@@ -2369,7 +2347,8 @@ CREATE DOCUMENT doc-name-expr IN COLLECTION coll-name-expr
 
 This statement creates a new document named \verb!doc-name-expr! in a collection named \verb!coll-name-expr!. 
 
-%To drop a document located in collection, the following statement is provided:
+For example, \verb!CREATE DOCUMENT! "mail1" \verb!IN COLLECTION! \verb!"mails"! creates a document named "mail1" in the collection named "mails".
+
 \begin{verbatim}DROP DOCUMENT doc-name-expr IN COLLECTION coll-name-expr\end{verbatim}
 
 The \verb!DROP DOCUMENT IN COLLECTION! statement drops the document named
@@ -2474,23 +2453,88 @@ The DROP INDEX statement removes the index named \verb!title-expr! from the data
 using the XQuery full-text search functions specified in Section \ref{sec:ft-fun}.
 \end{note}
 
+\subsubsection{Managing Modules}
+XQuery allows putting functions in library modules, so that they can be shared and imported by any query.
+A library module contains a module declaration followed by variable and/or function declarations. The module declaration specifies its target namespace URI which is used to identify the module in the database. For more information on modules see the XQuery specification \cite{paper:query-language}. 
+
+Before a library module could be imported from an query, it is to be loaded into the database. To load a module, use the following statement.
+
+\begin{verbatim}
+LOAD MODULE "path_to_file", ..., "path_to_file"
+\end{verbatim}
+
+Each \verb!path_to_file! specifies a path to the file. If only one parameter is supplied, it refers to the file which contains the module definition. The module definition can also be divided into several files. In this case all files must have a module declaration with the same target namespace URI (otherwise an error is raised).    
+
+For example, suppose that you have the following module stored in \verb!math.xqlib!.
+
+\begin{verbatim}
+module namespace math = "http://example.org/math";
+
+declare variable $math:pi as xs:decimal := 3.1415926;
+
+declare function math:increment($num as xs:decimal) as xs:decimal {
+    $num + 1
+};
+
+declare function math:square($num as xs:decimal) as xs:decimal {
+    $num * $num
+};
+\end{verbatim}
+
+You can load this module as follows.
+
+\begin{verbatim}
+LOAD MODULE "math.xqlib"
+\end{verbatim}
+
+Once an library module is loaded into the database, it can be imported into an query using conventional XQuery module import \cite{paper:query-language}. For example, you can import the above module as follows.
+
+\begin{verbatim}
+import module namespace math = "http://example.org/math";
+
+math:increment(math:square($math:pi))
+
+\end{verbatim}
+
+
+To replace an already loaded module with new one, use the following statement.
+
+\begin{verbatim}
+LOAD OR REPLACE MODULE "path_to_file", ..., "path_to_file" 
+\end{verbatim}
+
+To remove a library module from the database, use the following statement.
+
+\begin{verbatim}
+DROP MODULE "target_namespace_URI"
+\end{verbatim}
+
+It results in removing the library module with the given target namespace URI from the database.
+
+You can obtain information about modules loaded into the database by querying the system document named \verb!$modules! as follows \verb!doc("$modules")!.
+
+
 \subsubsection{Retrieving Metadata}
-You can retrieve various metadata about database objects (such as documents, collections, indices, etc.) as XML data by querying the following predefined documents:
+You can retrieve various metadata about database objects (such as documents, collections, indexes, etc.) by querying system documents and collections listed below. The documents marked with (*) are not persistent but generated on the fly. You can query these documents as usual but you cannot update them. Also these documents are not listed in \verb!$documents!.
+
 \begin{itemize}
-\item \verb!$catalog.xml! - list of all stand-alone documents and collections
-\item \verb!$documents.xml! - list of all stand-alone documents and in-collection documents
-\item \verb!$indexes.xml! - list of indecies with information about them 
-\item \verb!$ftindexes.xml! - list of full-text indecies with information about them (if compiled with \verb!SE_ENABLE_FTSEARCH!)
-\item \verb!$schema.xml! - descriptive schema of all documents and collections with some schema-related  information 
-\item \verb!$collections.xml! - list of all collections
-\item \verb!$errors.xml! - list of all user errors
-\item \verb!$version.xml! - version and build numbers
-\item \verb!$document_<name>! - statistical information about the document named <name>
-\item \verb!$schema_<name>! - the descriptive schema of the document named <name>
+\item (*) document \verb!$documents! - list of all stand-alone documents, collections and in-collection documents except those documents of this enumeration that are marked with (*).
+\item (*) document \verb!$collections! - list of all collections 
+\item (*) document \verb!$modules! - list of the names of all XQuery modules
+\item collection \verb!$modules! - contains documents with precompiled definitions of XQuery modules
+\item (*) document \verb!$indexes! - list of indexes with information about them 
+\item (*) document \verb!$ftindexes! - list of full-text indexes with information about them (if compiled with \verb!SE_ENABLE_FTSEARCH!)
+\item document \verb!$db_security_data! - list of users and privileges on database objects
+\item (*) document \verb!$schema! - descriptive schema of all documents and collections with some schema-related  information 
+\item (*) document \verb!$errors! - list of all user errors
+\item (*) document \verb!$version! - version and build numbers
+\item (*) document \verb!$schema_<name>! - the descriptive schema of the document or collection named \verb!<name>!
+\item (*) document \verb!$document_<name>! - statistical information about the document named \verb!<name>!
+\item (*) document \verb!$collection_<name>! - statistical information about the collection named \verb!<name>!
 \end{itemize}
 
 
-The statistical information in the document \verb!$document_<name>! contains the following elements:
+The statistical information in \verb!$document_<name>! and \verb!$collection_<name>! contains the following elements:
 
 \begin{itemize}
 \item \verb!total_schema_nodes! - the number of the nodes of the descriptive schema
@@ -2505,7 +2549,7 @@ The statistical information in the document \verb!$document_<name>! contains the
 \item \verb!innr_blk_saturation! - fill factor of the inner blocks (in percents)
 \item \verb!strings! - the share of  the string blocks (in percents)
 \item \verb!descriptors! - the share of  the descriptor blocks (in percents)
-\item \verb!nid! - the share of  the long labeling numbers' (>11) total size (in percents)
+\item \verb!nid! - the share of  the long labeling numbers' ($>11$) total size (in percents)
 \item \verb!indirection! - the share of  the indirection records' total size (in percents)
 \item \verb!total_size! - the total size of the document (or collection), in MGBs
 \item \verb!string_size! - the total size of the string blocks , in MGBs
@@ -2604,10 +2648,10 @@ As you can see in the output above each item of the operations stack list consis
 
 \begin{thebibliography}{9}
 \bibitem{doc:admin} ``Sedna Administration Guide''
-\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Candidate Recommendation, 3 November 2005
-\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Candidate Recommendation, 3 November 2005
-\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Candidate Recommendation, 3 November 2005
-\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Candidate Recommendation, 3 November 2005
+\bibitem{paper:data-model} ``XQuery 1.0 and XPath 2.0 Data Model'', W3C Recommendation
+\bibitem{paper:query-language} ``XQuery 1.0: An XML Query Language'', W3C Recommendation
+\bibitem{paper:query-fo} ``XQuery 1.0 and XPath 2.0 Functions and Operators'', W3C Recommendation
+\bibitem{paper:query-serialization} ``XSLT 2.0 and XQuery 1.0 Serialization'', W3C Recommendation
 \bibitem{paper:query-update} Patrick Lehti. ``Design and Implementation of a Data Manipulation Processor for a XML Query Language'', http://www.ipsi.fraunhofer.de/~lehti/
 \bibitem{lib:pcre-lib} http://www.pcre.org/
 \bibitem{paper:sedna-overview}  

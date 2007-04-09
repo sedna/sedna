@@ -502,8 +502,13 @@ of this command is:
 se_exp export dbname path
 \end{verbatim}
 
-The parameter \verb!dbname! specifies the database in Sedna to export data from. The \verb!path!
-parameter specifies the directory to store files with exported data. 
+The parameter \verb!dbname! specifies the database in Sedna to export data from. 
+
+The \verb!path! parameter specifies the directory to store files with exported data. 
+
+\begin{note}
+Note that if the directory to which \verb!path! refers contains files that have the same names as the files created by \verb!se_exp! they will be replaced. 
+\end{note}
 
 While export process \verb!se_exp! generates a set of XML files and a set of XQuery scripts to 
 recreate the state of database. For each XML document in the database including XML documents in

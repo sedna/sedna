@@ -1,0 +1,176 @@
+<html>
+<style type="text/css">
+.question {
+ color: #666;
+}
+
+pre {
+padding-left: 20px;
+}
+</style>
+
+<body>
+
+<h1>Frequently Asked Questions (FAQ) for Sedna</h1>
+
+<h2>General Questions</h2>
+<div class="question">
+<p>G1. How to drop a database?</p>
+</div>
+
+<p>In early versions of Sedna you had to drop a database by manually 
+removing database files. Now it is better to use <code>se_ddb</code> command. For 
+details see documentation provided with the distribution or just run 
+<code>se_dbb -help</code>.</p>     
+
+<div class="question">
+<p>G2. I got the following error trying to run <code>se_sm</code>:
+<pre>
+SE4212 
+Database files format is incompatible with SEDNA binaries
+Details: See file FAQ shipped with the distribution". 
+</pre>
+What's wrong?<p>
+</div>
+
+
+<p>Typically this error message means that you have upgraded Sedna to a 
+newer version and you are trying to run Sedna on a database created with 
+the previous version of Sedna. The solution to the problem is so called 
+migration procedure performed by se_exp utility. See Sedna Administration 
+Guide ('Migration between Releases' section) for details.</p>     
+
+
+<div class="question">
+<p>G3. I got one of the following errors trying to run se_cdb:
+<pre>     
+ERROR SE1015
+There is no enough memory to initialize buffers.
+Details: See file FAQ shipped with the distribution
+</pre>
+or
+<pre>
+ERROR SE1016
+Cannot lock buffer memory.
+Details: See file FAQ shipped with the distribution
+</pre>
+What's wrong?
+</p>   
+</div>  
+
+<p>Most likely, the reason of the problem is lack of memory. By default Sedna 
+requires 100Mb of memory for every running instance of database. You can 
+vary the required memory size by <code>-bufs-num</code> option of <code>se_cdb</code>. For details 
+see documentation provided with the distribution or just run 
+<code>se_cdb -help</code>.</p>
+
+
+
+
+<h2>Windows Specific Questions</h2>
+<div class="question">
+<p>W1.  When I run se_term utility it just hangs on. It seems that I do everything
+right because <code>se_gov</code>, <code>se_cdb</code> and <code>se_sm</code> work correctly. 
+Is it a bug in se_term?
+</p>
+</div>
+<p>No, it is not. More likely you have NOD32 Antivirus installed. It 
+conflicts with Sedna and some other programs. The bug is in NOD32, 
+actually. You can solve the problem by uninstalling NOD32 (turning it off
+will not help).</p>     
+
+
+
+<h2>Linux Specific Questions</h2>
+
+<div class="question">
+<p>L1.  I got the following error trying to run <code>se_gov</code>:
+<pre>
+SE1000
+Environment error. This error is caused by environment (operating system).
+Details: Failed to bind socket
+</pre>     
+Is it a bug?</p>
+</div>
+
+<p>Actually, not. Wait for several minutes and try again. 
+The problem is in sockets. The following is what socket FAQ says:</p>
+
+<p>When you issue the <code>close()</code> system call, you are closing your interface to 
+the socket, not the socket itself. It is up to the kernel to close the 
+socket. Sometimes, for really technical reasons, the socket is kept alive 
+for a few minutes after you close it. It is normal, for example for the 
+socket to go into a <code>TIME_WAIT</code> state, on the server side, for a few minutes. 
+People have reported ranges from 20 seconds to 4 minutes to me. The 
+official standard says that it should be 4 minutes. On my Linux system it 
+is about 2 minutes.</p>
+
+<div class="question">
+<p>L2.  I have downloaded a binary version and tried to use SQL Connection.
+I got the following error:
+<pre>     
+SE2113
+SQL Connection support disabled
+</pre>
+</p>
+</div>     
+
+<p>A binary Linux version does not have support for SQL Connection. This is 
+due to the problems of linking Sedna executables with static odbc library.
+But you can download Sedna sources and compile Sedna yourself
+with <code>SQL_CONNECTION</code> variable set to 1. See <code>INSTALL</code> file provided with
+Sedna sources for additional information.<p>
+
+<div class="question">
+<p>L3.  I got the following error trying to run se_gov:
+<pre>
+SE4074
+Can't create memory mapping
+Details: See file FAQ shipped with the distribution
+</pre>
+Am I able to run Sedna on my computer?</p>
+</div>     
+
+<p>Hopefully, you are. The desribed situation happens when your Linux 
+installation does not turn on support for shm fs. Without it, it is not
+POSIX compatible. The problem is known to happen on ALT Linux, some 
+Debian installations (possibly with kernel 2.4). The problem can be 
+fixed by mounting <code>/dev/shm</code>.</p>
+
+<ol>
+<li><p>One way is to issue the following command (valid until system 
+restarts). Note that you need root privileges.</p>
+<pre>mount -t tmpfs tmpfs /dev/shm</pre>
+<p>If you have no /dev/shm, just create it:</p>
+<pre>mkdir /dev/shm</pre></li>
+
+<li><p>Another way is to edit configuration files (also valid after system
+restart). Note that you need root privileges.</p>
+<ol  type="a">
+       <li> Add the following line to <code>/etc/fstab</code> (if it isn't there already):
+
+          <pre>tmpfs /dev/shm tmpfs defaults 0 0</pre> </li>
+
+       <li>Mount shared memory as follows:
+
+          <pre>mount /dev/shm</pre></li>
+
+       <li>Issue the following command to check that it mounted properly:
+
+          <pre>mount | grep "shm"</pre>
+
+          If the mount was successful, then the following output (or similar) 
+          should appear: 
+
+          <pre>tmpfs on /dev/shm type tmpfs (rw)</pre>
+
+          If the output from this command is blank, then the mount failed.
+          If <code>/dev/shm</code> fails to mount, then this feature may not be turned 
+          on in your Linux kernel. In this case we recommend upgrading to 
+          a more recent Linux kernel, or contacting your Linux Distribution 
+          vendor for more information on enabling POSIX Shared Memory.</li>
+</ul></li>
+</ol>          
+
+</body>
+</html>
