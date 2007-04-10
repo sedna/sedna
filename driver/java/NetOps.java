@@ -298,10 +298,11 @@ class NetOps {
     /** 
      *  Reads a whole item from the socket
      */
-    static String_item readStringItem(BufferedInputStream is) throws DriverException 
+    static String_item readStringItem(BufferedInputStream is, boolean doTraceOutput) throws DriverException 
     {
         NetOps.Message     msg   = new NetOps.Message();
         NetOps.String_item sitem = new NetOps.String_item();
+        boolean gotTrace, gotDebug;
         sitem.item = new StringBuffer();
         StringBuffer debugInfo = new StringBuffer();
 
@@ -312,10 +313,10 @@ class NetOps {
 
         NetOps.readMsg(msg, is);
 
+        gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
         
-        boolean gotDebug = NetOps.readDebugInfo(msg, is, debugInfo);
-        
-        boolean gotTrace = NetOps.readTrace(msg, is, sitem.item);
+        if (doTraceOutput) gotTrace = NetOps.readTrace(msg, is, sitem.item);
+        else gotTrace = false;
         
         if (msg.instruction == NetOps.se_ItemEnd)     
         {
@@ -353,7 +354,7 @@ class NetOps {
             }
   		    
             NetOps.readMsg(msg, is);
-   		    NetOps.readTrace(msg, is, sitem.item);
+   		    if (doTraceOutput) NetOps.readTrace(msg, is, sitem.item);
         }
 
         if (msg.instruction == NetOps.se_ResultEnd) {

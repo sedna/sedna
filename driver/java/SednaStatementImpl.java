@@ -23,15 +23,18 @@ class SednaStatementImpl implements SednaStatement {
     private SednaSerializedResult     currentResult    = null;
     private BufferedInputStream       bufInputStream;
     private OutputStream              outputStream;
+    private boolean                   doTraceOutput;
 
     //~--- constructors -------------------------------------------------------
 
     SednaStatementImpl(OutputStream outputStream,
                        BufferedInputStream bufInputStream,
-                       SednaSerializedResult currentResult) {
+                       SednaSerializedResult currentResult,
+                       boolean doTraceOutput) {
         this.outputStream   = outputStream;
         this.bufInputStream = bufInputStream;
         this.currentResult  = currentResult;
+        this.doTraceOutput = doTraceOutput;
     }
 
     //~--- methods ------------------------------------------------------------
@@ -98,13 +101,14 @@ class SednaStatementImpl implements SednaStatement {
 
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
-                    NetOps.readStringItem(bufInputStream);
+                    NetOps.readStringItem(bufInputStream, this.doTraceOutput);
 
                 this.serializedResult =
                     new SednaSerializedResultImpl(sitem.item,
                                                   sitem.hasNextItem,
                                                   this.bufInputStream,
-                                                  this.outputStream);
+                                                  this.outputStream,
+                                                  this.doTraceOutput);
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
@@ -238,13 +242,14 @@ class SednaStatementImpl implements SednaStatement {
 
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
-                    NetOps.readStringItem(bufInputStream);
+                    NetOps.readStringItem(bufInputStream, this.doTraceOutput);
 
                 this.serializedResult =
                     new SednaSerializedResultImpl(sitem.item,
                                                   sitem.hasNextItem,
                                                   this.bufInputStream,
-                                                  this.outputStream);
+                                                  this.outputStream,
+                                                  this.doTraceOutput);
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
