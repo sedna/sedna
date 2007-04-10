@@ -21,7 +21,7 @@ import java.util.*;
 class SednaConnectionImpl implements SednaConnection {
     private boolean       isClose       = false;
     private boolean       isDebugMode   = false;
-    private boolean       doTraceOutput = false;
+    private boolean       doTraceOutput = true;
     
    
     private Integer       id;
@@ -116,7 +116,9 @@ class SednaConnectionImpl implements SednaConnection {
         }
 
         SednaStatement st = new SednaStatementImpl(this.outputStream,
-                                this.bufInputStream, this.currentResult);
+                                                   this.bufInputStream, 
+                                                   this.currentResult,
+                                                   this.doTraceOutput);
 
         return st;
     }

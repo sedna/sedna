@@ -157,7 +157,6 @@ int load_metadata_in_database(const char* db_name)
 
   run_command = uGetImageProcPath(buf, __sys_call_error) + string("/se_sm ") + db_name; 
   strcpy(buf, run_command.c_str());
-
   if (0 != uCreateProcess(buf,
                           true, // inherit handles
                           NULL,
