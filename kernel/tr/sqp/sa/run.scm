@@ -419,3 +419,12 @@
      (fun-call
       (const (type !xs!QName) ("xs" "QName"))
       (const (type !xs!string) "local-name"))))))
+
+(go
+ '(manage
+   (prolog)
+   (create-fulltext-index
+    (const (type !xs!string) "ind-max1")
+    (fun-call (const (type !xs!QName) ("fn" "doc"))
+              (const (type !xs!string) "ind-max1"))
+    (const (type !xs!string) "xml"))))

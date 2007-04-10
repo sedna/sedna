@@ -1622,6 +1622,9 @@ sedna-err:SE5078
 sedna-err:SE5079
 
     Unexpected ModuleDecl supplied.
+sedna-err:SE5080
+
+    Unknown full-text index type supplied for a CREATE FULL-TEXT INDEX statement.
 sedna-err:SE5100
 
     Error in Scheme part.

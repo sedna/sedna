@@ -1485,18 +1485,26 @@
               ; ATTENTION: `node' is bound to the operation content, not the operation!
               (let ((ind-name (l2p:any-lr-node2por (car node)))
                     (AbsPath (l2p:findPPAbsPath (cadr node)))
-                    (ind-type-str (caddr (caddr node))))                
-                (let ((entity (cadr AbsPath))
-                      (abs-path (caddr AbsPath)))
-                  `(PPCreateFtIndex ,(if (eq? var-count 0) 0 (+ var-count 1))
-                                    ,entity
-                                    ,abs-path
-                                    ,ind-type-str
-                                    ,ind-name
-                                    ,@(if (= (length node) 4)  ; optional parameters presented
-                                          (list (l2p:any-lr-node2por (list-ref node 3)))
-                                          '()))
-              )))
+                    (ind-type-str (caddr (caddr node))))
+                (if
+                 (not AbsPath)  ; not a proper absolute XPath supplied
+                 (cl:signal-user-error
+                  SE4008
+                  (string-append
+                   "Improper absolute location path supplied "
+                   "for a CREATE FULL-TEXT INDEX statement"))
+                 (let ((entity (cadr AbsPath))
+                       (abs-path (caddr AbsPath)))
+                  `(PPCreateFtIndex
+                    ,(if (eq? var-count 0) 0 (+ var-count 1))
+                    ,entity
+                    ,abs-path
+                    ,ind-type-str
+                    ,ind-name
+                    ,@(if (= (length node) 4)  ; optional parameters presented
+                          (list (l2p:any-lr-node2por (list-ref node 3)))
+                          '()))
+                   ))))
              
              ((memv op-name '(drop-index drop-fulltext-index drop-collection))
               (let* ((ind-name (l2p:any-lr-node2por (car node))))

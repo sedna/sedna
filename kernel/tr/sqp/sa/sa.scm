@@ -4158,7 +4158,8 @@
        ;-------------------
        ; Full-text
        ((create-fulltext-index)
-        (sa:analyze-full-text-create expr vars funcs ns-binding default-ns uri modules))
+        (sa:analyze-full-text-create
+         expr vars funcs ns-binding default-ns uri modules))
        ((drop-fulltext-index)
         (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns uri modules))
        ;-------------------
@@ -4821,20 +4822,32 @@
 ;-------------------------------------------------
 ; Managing full-text index
 
-(define (sa:analyze-full-text-create expr vars funcs ns-binding default-ns uri modules)
+(define (sa:analyze-full-text-create
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (or
     (let ((lng (length (sa:op-args expr))))
       (and (>= lng 3) (<= lng 4)))
     (sa:assert-num-args expr 3))
-   ; Index type is a string constant
-   (sa:analyze-string-const (caddr (sa:op-args expr))
-                            vars funcs ns-binding default-ns)
+   (let ((index-type (caddr (sa:op-args expr))))
+     (and
+      ; Index type is a string constant
+      (sa:analyze-string-const index-type vars funcs ns-binding default-ns)
+      (or
+       (member (cadr (sa:op-args index-type))  ; const value
+               '("xml" "string-value" "delimited-value" "customized-value"))
+       (cl:signal-user-error
+        SE5080 (cadr (sa:op-args index-type))))))
    (let ((new
           (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
-     (and new (car new)))))
+     (and
+      new
+      (sa:structural-absolute-xpath? (cadr (sa:op-args
+                                            (car new)  ; removing type information
+                                            )))
+      (car new)))))
 
 (define (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns uri modules)
   (and
