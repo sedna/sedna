@@ -104,6 +104,29 @@ The \verb!isClosed! method retrieves whether this connection has been closed or 
  public boolean isClosed()
 \end{verbatim}
 
+Setting connection into debug mode allows getting debug information when XQuery query fails due to some reason (see \ref{session-debug-mode} for details). To set the connection into debug mode use \verb!setDebugMode! method of \verb!SednaConnection! interface:
+
+\begin{verbatim}
+ public void setDebugMode(boolean debug)
+\end{verbatim}
+
+Parameters:
+
+ \verb!debug! - set to \verb!true! to turn debug mode on; set to \verb!false! to turn debug mode off. Debug mode is off by default.
+ 
+Sedna supports fn:trace function for debugging purpose also (see \ref{trace} for details). By default trace output is included into XQuery query result. You can turn trace output on/off using \verb!setTraceOutput! method of the \verb!SednaConnection! interface:
+
+\begin{verbatim}
+ public void setTraceOutput(boolean doTrace)
+\end{verbatim}
+
+Parameters:
+
+ \verb!doTrace! - set to \verb!true! to turn trace output on; set to \verb!false! to turn trace output off. Trace output is on by default.
+
+
+
+
 
 
 \subsubsection{Transactions}
@@ -2564,6 +2587,7 @@ The statistical information in \verb!$document_<name>! and \verb!$collection_<na
 
 \subsection{Debug Features}
 \subsubsection{Trace}
+\ref{trace}
 Sedna supports standard XQuery function \verb!fn:trace! \cite{paper:query-fo} providing user helper facility to trace queries. While executing XQuery query using fn:trace function intermediate results are shown to the user.
 
 For example in Sedna Terminal the query with \verb!fn:trace! function will provide the following output. Trace information is marked with \verb!##! string:
@@ -2603,6 +2627,7 @@ result:
 If you want to use trace facility in your application working through Sedna API you should set your own debug handler as it is shown in \ref{exec-capi}.
 
 \subsubsection{Session Debug Mode}
+\label{session-debug-mode}
 In addition to trace facility provided by standard XQuery fn:trace function (see section above) you can turn on session debug mode. You can turn on session debug mode in Sedna Terminal (for details see "Sedna Terminal" section of the Sedna's Administration Guide) or in your application using corresponding Sedna API functions (see \ref{session-option-capi}). 
 
 Each query in Sedna is represented and executed internally as a tree of the physical operations. Debug mode is mechanism that allows to get stack of physical operations (operations names list) after dynamic error was raised. It serves two objectives:
