@@ -1625,6 +1625,9 @@ sedna-err:SE5079
 sedna-err:SE5080
 
     Unknown full-text index type supplied for a CREATE FULL-TEXT INDEX statement.
+sedna-err:SE5081
+
+    Ill-formed "customized-value" full-text index type provided.
 sedna-err:SE5100
 
     Error in Scheme part.

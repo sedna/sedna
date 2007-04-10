@@ -4825,10 +4825,14 @@
 (define (sa:analyze-full-text-create
          expr vars funcs ns-binding default-ns uri modules)
   (and
-   (or
-    (let ((lng (length (sa:op-args expr))))
-      (and (>= lng 3) (<= lng 4)))
-    (sa:assert-num-args expr 3))
+   (let ((lng (length (sa:op-args expr))))
+     (or
+      (= lng 3)
+      (and (= lng 4)
+           (equal?
+            (caddr (sa:op-args expr))
+            '(const (type !xs!string) "customized-value")))
+      (sa:assert-num-args expr 3)))
    (let ((index-type (caddr (sa:op-args expr))))
      (and
       ; Index type is a string constant
@@ -4847,8 +4851,56 @@
       (sa:structural-absolute-xpath? (cadr (sa:op-args
                                             (car new)  ; removing type information
                                             )))
+      (or (< (length (sa:op-args expr)) 4)
+          (sa:proper-customized-value-params?
+           (list-ref (sa:op-args expr) 3)
+           vars funcs ns-binding default-ns))
       (car new)))))
 
+; Whether a proper 4th argument supplied for a customized-value type
+; full-text index
+;  In XQuery:
+; CREATE FULL-TEXT INDEX "messages"  
+; ON document("foo")//message  
+; TYPE "customized-value" (("b", "string-value"), ("a", "delimited-value")) 
+;
+;  In logical representation:
+; (create-fulltext-index
+;  (const (type !xs!string) "messages")
+;  ...
+;  (const (type !xs!string) "customized-value")
+;  (sequence
+;   (sequence
+;     (const (type !xs!string) "b")
+;     (const (type !xs!string) "string-value"))
+;   (sequence
+;     (const (type !xs!string) "a")
+;     (const (type !xs!string) "delimited-value"))))
+(define (sa:proper-customized-value-params?
+         params vars funcs ns-binding default-ns)
+  (if
+   (not (eq? (sa:op-name params) 'sequence))
+   (cl:signal-input-error SE5081 (sa:op-name params))
+   (not
+    (memv
+     #f
+     (map
+      (lambda (sub)
+        (and
+         (or (eq? (sa:op-name sub) 'sequence)
+             (cl:signal-input-error SE5081 (sa:op-name sub)))
+         (sa:assert-num-args sub 2)
+         (let ((type (cadr (sa:op-args sub))))
+           (and                 
+            (sa:analyze-string-const
+             type vars funcs ns-binding default-ns)
+            (or
+             (member (cadr (sa:op-args type))  ; const value
+                     '("xml" "string-value" "delimited-value"))
+             (cl:signal-user-error
+              SE5080 (cadr (sa:op-args type))))))))
+      (sa:op-args params))))))
+         
 (define (sa:analyze-full-text-drop expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
