@@ -185,7 +185,7 @@ Note that \verb!se_stop! command causes a roll back of all active transactions i
 \subsubsection{Configuring Sedna}
 \label{sec:ConfigSedna}
 Sedna configuration parameters are stored in the configuration file \verb!sednaconf.xml! located in
-\verb![win:] PREFIX\etc! \verb![linux:] PREFIX/etc! or \verb![linux:]/etc!. On Linux, sednaconf.xml is searched in the following order: \verb!PREFIX/etc!, \verb!/etc!. The file is optional. If there is no such file, the default values are used.
+\verb![win:] PREFIX\etc!, \verb![linux:] PREFIX/etc! or \verb![linux:]/etc!. On Linux, \verb!sednaconf.xml! is searched in the following order: \verb!PREFIX/etc!, \verb!/etc!. The file is optional. If there is no such file, the default values are used.
 The file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
@@ -202,13 +202,13 @@ database configuration files (in the \verb!cfg! subdirectory) and
 databases (in the \verb!data! subdirectory) are stored. The path by default is
 \verb![win:] PREFIX! \verb![linux:] /var/lib/sedna!.
 
-The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should config this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires range of identifiers, which length is equal to 150.
+The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should config this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
 
 The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
 
-The \verb!ping_port! element defines the port number of Sedna ping server, that is internal kernel mechanism, which is used to stop all Sedna processes in case of crash. 
+The \verb!ping_port! element defines the port number of Sedna ping server that is an internal kernel mechanism. It is used to stop all Sedna processes in case of crash. 
  
-To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, that in order to use new configuration Administrator must restart Governor server.
+To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, in order for new configuration to take effect you must restart Governor.
 
 \subsection{Managing Databases}
 \subsubsection{Creating a Database}
@@ -298,9 +298,9 @@ The configuration file is an XML document, which satisfies the following DTD:
 <!ELEMENT phys_log_ext_portion (#PCDATA)>
 \end{verbatim}
 
-The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element describes the name of the database. The \verb!bufs_num! element describes the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!init_phys_log_size! and \verb!phys_log_ext_portion! elements define the initial size of physical log and physical log extendng portion size respectively.
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element defines the name of the database. The \verb!bufs_num! element defines the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!init_phys_log_size! and \verb!phys_log_ext_portion! elements define the initial size of physical log and the size of physical log extension portion respectively.
 
-To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file.
+To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file. Note, in order for new configuration to take effect you must restart Storage Manager.
 
 \subsubsection{Deleting a Database}
 
@@ -426,7 +426,7 @@ options:
 
 \verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
 
-\verb!-debug! option specifies session debug mode. If \verb!-debug! option is on, statements of this session are exectued in a debug mode. If \verb!-debug! option is off, statement of this session are executed in normal (not debug) mode. For details see "Debug Features" section of the Sedna Programmer's Guide.
+\verb!-debug! option specifies session debug mode. If \verb!-debug! option is on, statements of this session are exectued in a debug mode. If \verb!-debug! option is off, statement of this session are executed in normal (not debug) mode. For details see "Debug Facilities" section of the Sedna Programmer's Guide.
 \verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
 
 \verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
@@ -459,7 +459,7 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 
 \verb!ON_ERROR_STOP! - when set, \verb!se_term! returns with the code 3 when statement or meta-command fails. When unset \verb!se_term! processing continues, unless it is the connection failure.
 
-\verb!DEBUG! - when set, session debug mode is on. When unset, session debug mode is off. See "Debug Features" section of the Sedna Programmer's Guide for details.
+\verb!DEBUG! - when set, session debug mode is on. When unset, session debug mode is off. See "Debug Facilities" section of the Sedna Programmer's Guide for details.
 
 
 \subsection{Backup and Restore}

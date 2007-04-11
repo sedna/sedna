@@ -3,12 +3,33 @@
 
      _________________________________________________________________
 
-                             Release 1.1
+                             Release 2.0
 
-     Release date: 
+     Release date: as current of 2007-04-11
      _________________________________________________________________
 
 New:
+- XQuery support now conforms to the XQuery specification. Sedna passes 
+"XML Query Test Suite (XQTS)" by W3C and has official "almost passed" status. 
+The detailed report can be found at 
+http://www.w3.org/XML/Query/test-suite/XQTSReport.html
+- Optional XQuery features:
+	* Support for user-defined XQuery modules. Modules are stored at server side as 
+	precompiled functions 
+	* Full Axis (i.e. support for all XPath axes)
+- XQuery debug facilities:
+	* support for standard fn:trace function
+	* facility to obtain stack trace in case of dynamic error
+- Server configuration options are extended (e.g. you can configure several 
+instances of Sedna server to be running on a computer)
+
+New third-party contributions:
+- Sedna Admin GUI by GREaT team
+http://sednaadmin.sf.net/
+- Python API based on DBAPI 2.0 by Steve Howe
+http://sourceforge.net/projects/sednapy
+- PHP API by Nikolay Zavaritsky
+(avaliable from Sedna download page)
 
 
      _________________________________________________________________

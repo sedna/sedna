@@ -1514,7 +1514,10 @@ Sedna also has full support for two optional XQuery features:
 \item modules
 \end{itemize}
 
-You can find the result of running the XML Query Test Suite (i.e. W3C official test suite for XQuery) on Sedna at \verb!http://www.w3.org/XML/Query/test-suite/XQTSReport.html!
+Sedna passes "XML Query Test Suite (XQTS)" and has official "almost passed" status. The detailed report can be found at \verb!http://www.w3.org/XML/Query/test-suite/XQTSReport.html!
+
+\subsection{XQuery Options and Extensions}
+\label{sec:xquery-extensions}
 
 \subsubsection{Controlling Serialization}
 \label{indents}
@@ -2585,7 +2588,7 @@ The statistical information in \verb!$document_<name>! and \verb!$collection_<na
 \item \verb!NID! - the histogram of the labeling numbers its length
 \end{itemize}
 
-\subsection{Debug Features}
+\subsection{Debug Facilities}
 \subsubsection{Trace}
 \ref{trace}
 Sedna supports standard XQuery function \verb!fn:trace! \cite{paper:query-fo} providing user helper facility to trace queries. While executing XQuery query using fn:trace function intermediate results are shown to the user.
