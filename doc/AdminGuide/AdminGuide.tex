@@ -189,16 +189,26 @@ Sedna configuration parameters are stored in the configuration file \verb!sednac
 The file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
-<!ELEMENT sednaconf (sedna_data)>
+<!ELEMENT sednaconf (sedna_data, os_primitives_id_min_bound, listener_port,
+ ping_port)>
 <!ELEMENT sedna_data (#PCDATA)>
+<!ELEMENT os_primitives_id_min_bound (#PCDATA)>
+<!ELEMENT listener_port (#PCDATA)>
+<!ELEMENT ping_port (#PCDATA)>
 \end{verbatim}
 
 The \verb!sedna_data! element contains the path to the directory where 
 database configuration files (in the \verb!cfg! subdirectory) and 
 databases (in the \verb!data! subdirectory) are stored. The path by default is
 \verb![win:] PREFIX! \verb![linux:] /var/lib/sedna!.
+
+The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should config this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires range of identifiers, which length is equal to 150.
+
+The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
+
+The \verb!ping_port! element defines the port number of Sedna ping server, that is internal kernel mechanism, which is used to stop all Sedna processes in case of crash. 
  
-To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file.
+To tune the Sedna configuration, Administrator should edit the proper elements of the Sedna configuration file. Note, that in order to use new configuration Administrator must restart Governor server.
 
 \subsection{Managing Databases}
 \subsubsection{Creating a Database}
@@ -280,13 +290,15 @@ For each database there is a set of run-time configuration parameters, which sto
 The configuration file is an XML document, which satisfies the following DTD: 
 
 \begin{verbatim}
-<!ELEMENT db (name, bufs_num, max_trs_num)>
+<!ELEMENT db (name, bufs_num, max_trs_num, init_phys_log_size, phys_log_ext_portion)>
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT bufs_num (#PCDATA)>
 <!ELEMENT max_trs_num (#PCDATA)>
+<!ELEMENT init_phys_log_size (#PCDATA)>
+<!ELEMENT phys_log_ext_portion (#PCDATA)>
 \end{verbatim}
 
-The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element describes the name of the database. The \verb!bufs_num! element describes the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna.
+The root of the XML document is the \verb!db! element, which contains three elements: \verb!name!, \verb!bufs_num!, \verb!max_trs_num!. The \verb!name! element describes the name of the database. The \verb!bufs_num! element describes the number of buffers in main memory for Storage Manager component. The semantic of \verb!max_trs_num! element we will define in next version of Sedna. The \verb!init_phys_log_size! and \verb!phys_log_ext_portion! elements define the initial size of physical log and physical log extendng portion size respectively.
 
 To tune the database run-time configuration, Administrator should edit the proper elements of the database configuration file.
 
