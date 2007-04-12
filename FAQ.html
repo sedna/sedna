@@ -1,7 +1,8 @@
 <html>
 <style type="text/css">
 .question {
- color: #666;
+ font-weight: bold;
+ color: #555;
 }
 
 pre {
@@ -77,8 +78,37 @@ Is it a bug in se_term?
 <p>No, it is not. More likely you have NOD32 Antivirus installed. It 
 conflicts with Sedna and some other programs. The bug is in NOD32, 
 actually. You can solve the problem by uninstalling NOD32 (turning it off
-will not help).</p>     
+will not help).</p>
+<p>
+Sometimes the following NOD32 configuring helps: go to "IMON module->SETUP->Advanced"; here you can exclude 
+<code>se_gov</code> process.
+</p>     
 
+<div class="question">
+<p>W2. I got the following error trying to create database (using <code>se_cdb</code>):
+
+<pre>     
+  SE4211
+  Failed to create the database Details: test (may be because there is no enough RAM)
+</pre>
+</p>
+</div>
+
+<p>
+Possible solutions:
+</p>
+<p>
+1. Sedna servers are blocked by firewall (Windows XP SP2 built-in or third party installed).
+The solution is to appropriately adjust or turn firewall off.
+</p>
+<p>
+2. Windows XP SP2 limits half-open connections to a maximum of 10. 
+Some applications, like, for example, filesharing tools, can't unfold their capacity 
+when the maximum connection limit is too low.
+Look into the event viewer (start->run 'Eventvwr.msc'->system). 
+If you see entries with the event ID 4226 you can try <a href="http://www.xp-antispy.org">xp-AntiSpy</a> 
+to raise the connection limit.
+</p>
 
 
 <h2>Linux Specific Questions</h2>
