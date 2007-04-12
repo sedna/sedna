@@ -98,11 +98,17 @@ export ACTIVE_CONFIGURATION=Release
        Turns on the release mode. Otherwise (ACTIVE_CONFIGURATION=Debug) 
        executables will contain debug information.
 
-export AUTH_SWITCH=0
+export AUTH_SWITCH=1
 
-       Turns off support for security. Set AUTH_SWITCH to 1 if you would 
-       like to turn security on (note that security for Sedna is being 
-       developed now so we strongly recommend not to turn it on).
+       Turns on support for Database users access privileges. Set AUTH_SWITCH 
+       to 0 if you would like to turn this feature off (if you are not 
+       planning to use this feature we recommend to turn it off).
+
+export ENABLE_TRIGGERS=0
+
+       Turns off support for triggers. Set ENABLE_TRIGGERS to 1 if you would 
+       like to turn support for triggers on. Note, currently triggers are in 
+       developing phase, thus, we would strongly recommend to turn this feature off.
 
 export DOCUMENTATION=1
 
@@ -154,7 +160,7 @@ Make done
 
     3. Installing the Files
 
-       You have two ways of intalling Sedna (the latter is available
+       You have two ways of installing Sedna (the latter is available
        only in Unix):
 
 make install
@@ -245,7 +251,7 @@ Database Files
                                  What Now?
 
      * The Sedna distribution contains a documentation set, which should be
-       usefull. See documentation at "doc" subdirectory of the directory 
+       useful. See documentation at "doc" subdirectory of the directory 
        where Sedna is installed (or in $PREFIX/share/doc/sedna-x.x.x if you 
        have chosen "make dispersal_install").
      * For support, please, feel free to contact us with questions, 
