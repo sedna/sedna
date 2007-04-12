@@ -220,30 +220,28 @@ STATIC_FLAG =
 endif
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
-           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG)  -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
-CPPFLAGS = -g3 -Wall -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
+CPPFLAGS = -g3 -Wall -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
-LFLAGS   = -g3 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+LFLAGS   = -g3 -fexceptions $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
 CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
-           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
-CPPFLAGS = -O0 -w -Wno-deprecated  $(INCLUDE_DIRECTIVES_GCC) \
+CPPFLAGS = -O0 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
            -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
-LFLAGS   = -O0 $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
+LFLAGS   = -O0 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 endif
-LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl
+LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl -fexceptions
 
 ifeq ("$(SUB_PLATFORM)","Linux")
 LSLIBS  += -lnsl -lrt -pthread
@@ -281,9 +279,9 @@ CPPFLAGS+= -DAUTH_SWITCH=$(AUTH_SWITCH)
 
 CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer \
                      -fno-strict-aliasing -Wall	-Wno-unused -Wno-uninitialized \
-                     -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS 
-LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken
-LSLIBS_CHICKEN_EXE = -lchicken
+                     -DHAVE_ALLOCA_H -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -fexceptions
+LFLAGS_CHICKEN_EXE = -L$(PP)/libs/chicken -fexceptions
+LSLIBS_CHICKEN_EXE = -lchicken -fexceptions
 ANTLR = $(PP)/libs/pg/antlr -CC -gt -k 4 -w2 -nopurify
 DLG = $(PP)/libs/pg/dlg -CC
 SORCERER = $(PP)/libs/pg/sor -CPP -transform

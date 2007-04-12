@@ -69,9 +69,7 @@ chicken/chicken.h: chicken-$(CHICKEN_VERSION).tar.gz
 	touch chicken-$(CHICKEN_VERSION)/chicken.h
 	rm -rf chicken
 	mv chicken-$(CHICKEN_VERSION) chicken
-	cd chicken
-	patch <../chicken_panic_hook.diff
-	cd ..
+	patch --directory=chicken <chicken_panic_hook.diff
 
 ifeq ("$(PLATFORM)", "WIN32")
 
@@ -94,6 +92,10 @@ else
 chicken/configure: chicken/chicken.h
 
 chicken/Makefile: chicken/configure
+	export CFLAGS='$(CFLAGS) -fexceptions'; \
+	export LDFLAGS='$(LDFLAGS) -fexceptions'; \
+	export CPPFLAGS='$(CPPFLAGS) -fexceptions'; \
+	export CXXFLAGS='$(CXXFLAGS) -fexceptions'; \
 	cd chicken; \
 	./configure --disable-shared
 
