@@ -935,3 +935,27 @@
              (const (type !xs!QName) ("" "b" ""))
              (type *)
              (const (type !xs!string) "non-nil")))))))))))
+
+(go
+ '(query
+   (prolog)
+   (query-body
+    (let@
+        (ddo
+         (descendant
+          (ddo
+           (descendant
+            (!fn!document (const (type !xs!string) "a"))
+            (type
+             (elem-test
+              (ename
+               (const (type !xs!QName) ("" "b" ""))
+               (type *)
+               (const (type !xs!string) "non-nil"))))))
+          (type
+           (elem-test
+            (ename
+             (const (type !xs!QName) ("" "c" ""))
+             (type *)
+             (const (type !xs!string) "non-nil"))))))
+      (fun-def ((xs:anyType (var ("" "x")))) (var ("" "x")))))))
