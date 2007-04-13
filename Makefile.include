@@ -219,7 +219,8 @@ else
 STATIC_FLAG =
 endif
 ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
-CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -fexceptions -Wall -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG)  -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
@@ -230,7 +231,8 @@ CPPFLAGS = -g3 -Wall -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
 LFLAGS   = -g3 -fexceptions $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
-CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -fexceptions -Wno-deprecated $(INCLUDE_DIRECTIVES_GCC) \
+           -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
            -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
