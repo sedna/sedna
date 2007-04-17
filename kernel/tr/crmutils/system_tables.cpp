@@ -346,7 +346,7 @@ void get_documents (xptr node,const char* title)
 		{
 			col_schema_node* coll=(col_schema_node*)mdc->obj->snode;
 			bt_key key;
-			key.setnew("");
+			key.setnew(" ");
 			xptr d_left=XNULL;
 			bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
 			
@@ -429,7 +429,7 @@ void get_modules(xptr node,const char* title)
 	col_schema_node* coll=(col_schema_node*)find_collection("$modules");
 	//metadata_sem_up();
 	bt_key key;
-	key.setnew("");
+	key.setnew(" ");
 	xptr d_left=XNULL;
 	bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
 	if(!cursor.is_null())

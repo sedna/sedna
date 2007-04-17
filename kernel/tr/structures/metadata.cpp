@@ -188,21 +188,26 @@ void delete_collection(const char *collection_name)
 #endif
 	//1. deleting documents from collection
 	bt_key key;
-	key.setnew("");
+	key.setnew(" ");
 	
 	bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
-	while(cursor.bt_next_key())
+	if(!cursor.is_null())
 	{
-		xptr node=cursor.bt_next_obj();
-		key=cursor.get_key();
-		if (node!=XNULL)
+		do
 		{
-			CHECKP(node);
-			hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
-			delete_doc_node(node);
-			up_concurrent_micro_ops_number();
-		}		
+			xptr node=cursor.bt_next_obj();
+			key=cursor.get_key();
+			if (node!=XNULL)
+			{
+				CHECKP(node);
+				hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
+				delete_doc_node(node);
+				up_concurrent_micro_ops_number();
+			}
+		}
+		while (cursor.bt_next_key());
 	}
+
 	/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* tmp=coll->metadata->rb_minimum(coll->metadata->root);
 	while (tmp!=NULL)
 	{
