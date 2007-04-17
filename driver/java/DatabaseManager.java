@@ -17,10 +17,28 @@ import java.net.*;
 import java.util.*;
 
 //~--- classes ----------------------------------------------------------------
-
+/**
+ * To start working with Sedna application has to open a session via establishing
+ * an authenticated connection with the Sedna server. <code>DatabaseManager</code> provides <code>getConnection</code>
+ * method to open connections to one of the Sedna databases. 
+ */
 public class DatabaseManager {
+/**
+ * To open a session application uses static method <code>getConnection</code> of the
+ * DatabaseManager class.
+ *
+ * @param  url_string  the name of the computer where the Sedna DBMS is running. This parameter may contain a port number. If the port number is not specified, the default port number (5050) is used
+ * @param  db_name     the name of the database to connect to
+ * @param  login       user name
+ * @param  password    user password
+ * @return             If the connection is established and authentication succeeds the method returns an object that implements the <code>SednaConnection</code> interface. Otherwise, <code>DriverException</code> is thrown
+ * @see         SednaConnection
+ */
+	
     public static SednaConnection getConnection(String url_string,
-            String db_name, String login, String password)
+                                                String db_name, 
+                                                String login, 
+                                                String password)
             throws DriverException {
         InputStream         inputStream;
         BufferedInputStream bufInputStream;
@@ -172,5 +190,11 @@ public class DatabaseManager {
         }
 
         return con;
+    }
+    
+    /**
+     * @deprecated
+     */
+    protected DatabaseManager(){
     }
 }

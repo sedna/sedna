@@ -9,7 +9,7 @@
 package ru.ispras.sedna.driver;
 
 /**
- * Exception class for internal goals
+ * An exception thrown when some error occured while working with Sedna.
  */
 public class DriverException extends Exception {
 	
@@ -33,20 +33,35 @@ public class DriverException extends Exception {
     	                  details));
 		this.error_code = error_code;    	                  
     }
-    
+/**
+ *  Returns the error code.
+ */
     public int getErrorCode()
     {
     	return this.error_code;
     }
+
+/**
+ * Returns the error message.
+ */
     public String getErrorMessage()
     {
     	return this.toString();
     }
+
+/**
+ * When session debug mode is on (see Sedna Programmer’s Guide for details on Sedna's debug facilities) 
+ * <code>DriverException</code> provides debug information. 
+ * Method <code>getDebugInfo</code> returns debug inforamation.
+ */
     public String getDebugInfo()
     {
     	return this.debugInfo;
     }
-
+    
+/**
+ * Used for the internal needs.
+ */
     protected void setDebugInfo(StringBuffer debugInfo)
     {
     	this.debugInfo = debugInfo.toString();

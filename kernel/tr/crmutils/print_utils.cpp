@@ -970,12 +970,16 @@ void print_documents_in_collection(se_ostream& crmout,const char* collection)
 	{
 		col_schema_node* coll=(col_schema_node*)mdc->snode;
 		bt_key key;
-		key.setnew("");
+		key.setnew(" ");
 		bt_cursor cursor=bt_find_gt((coll->metadata)->btree_root, key);
-		while(cursor.bt_next_key())
+		if(!cursor.is_null())
 		{
-			crmout<<"\n<Document name=\""<<(char*)cursor.get_key().data()<<"\"";
-			crmout<<"/>";		
+			do
+			{
+				crmout<<"\n<Document name=\""<<(char*)cursor.get_key().data()<<"\"";
+				crmout<<"/>";						
+			}
+			while (cursor.bt_next_key());
 		}
 		/*pers_sset<dn_metadata_cell,unsigned int>::pers_sset_entry* dc=coll->metadata->rb_minimum(coll->metadata->root);
 		while (dc!=NULL)
