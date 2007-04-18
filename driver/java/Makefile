@@ -10,6 +10,7 @@ OUTPUT_PATH= output
 PACKAGE_PATH= ru/ispras/sedna/driver
 JAVAC = javac -classpath $(CLASSPATH) -d output
 PACKAGE =ru.ispras.sedna.driver
+JAVADOC = javadoc -d ./doc 
 
 VPATH = $(PP)/kernel/common/errdbg
 
@@ -21,7 +22,7 @@ else
 CLASSPATH= ".:output"
 endif
 	
-all: $(OUTPUT) sednadriver.jar
+all: $(OUTPUT) sednadriver.jar javadoc
 	@echo ===================================================================
 	@echo DRIVER HAS BEEN DONE
 	@echo ===================================================================
@@ -44,6 +45,20 @@ sednadriver.jar: ErrorCodes.java \
 	$(JAVAC) $^
 	jar cvf sednadriver.jar -C $(OUTPUT) ru
 
+javadoc: 	 ErrorCodes.java \
+                 DriverException.java \
+                 Debug.java \
+                 ResultType.java \
+                 NetOps.java \
+                 SednaSerializedResult.java \
+                 SednaSerializedResultImpl.java \
+                 SednaStatement.java \
+                 SednaStatementImpl.java \
+                 SednaConnection.java \
+                 SednaConnectionImpl.java \
+                 DatabaseManager.java
+	$(JAVADOC) $^
+
 
 Debug.java: Debug.java.m4
 	$(M4) -DEL_DEBUG=$(EL_DEBUG) $^ >$@
@@ -54,4 +69,5 @@ clean:
 	-$(REMOVE_DIR) $(OUTPUT)
 	-$(REMOVE) $(OUTPUT_PATH)/*.jar
 	-$(REMOVE) *.jar
+	-$(REMOVE) -fr ./doc
 

@@ -51,8 +51,38 @@ public class DriverException extends Exception {
 
 /**
  * When session debug mode is on (see Sedna Programmer’s Guide for details on Sedna's debug facilities) 
- * <code>DriverException</code> provides debug information. 
- * Method <code>getDebugInfo</code> returns debug inforamation.
+ * <code>DriverException</code> provides debug information when query fails. 
+ * For example:
+ *
+ * <code>
+ *    SednaConnection con = DatabaseManager.getConnection("localhost", "x", "SYSTEM", "MANAGER");
+ *      con.begin();
+ *      SednaStatement st1 = con.createStatement();
+ *      
+ *      // execute XQuery query.
+ *      boolean call_res = st1.execute("doc(\"region\")/regions/*");
+ *           
+ *      // if call_res is true the statement was not an update
+ *      // and we can use SednaSerializedResult object
+ *      if (call_res)    
+ *      {
+ *          System.out.println("Result:");
+ *          SednaSerializedResult pr1 = st1.getSerializedResult();
+ *
+ *          item  = pr1.next();
+ *
+ *          while (item != null) {
+ *              System.out.println(item);
+ *              System.out.println("=====================================\n");
+ *              item = pr1.next();
+ *          }
+ *      }
+ *    
+ *      con.close();
+ * </code>
+ *
+ * @return debug inforamation as a string.
+ * @see SednaConnection#setDebugMode
  */
     public String getDebugInfo()
     {
