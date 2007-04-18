@@ -292,6 +292,15 @@ endif
 endif
 
 
+.PHONY: build_libedit clean_libedit
+BUILD_DEPS+=build_libedit
+CLEAN_DEPS+=clean_libedit
+
+build_libedit: libedit
+
+libedit:
+	tar -zxf libedit-*.tar.gz
+	mv `find -name 'libedit-*' -type d | head -n 1` libedit
 
 build: $(BUILD_DEPS)
 
