@@ -258,7 +258,7 @@ try{
 #else           
        d_printf1("create process failed\n");
 #endif
-       throw SYSTEM_EXCEPTION("Can't create process");
+       throw USER_EXCEPTION2(SE4413, "Try to reconnect later");
     }
 
    // release security attributes
