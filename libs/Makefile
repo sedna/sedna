@@ -297,14 +297,16 @@ BUILD_DEPS+=build_libedit
 CLEAN_DEPS+=clean_libedit
 
 build_libedit: libedit libedit/Makefile
+	-$(MAKE) -C libedit
+	-$(MAKE) -C libedit install
 
-libedit: unpack-and-configure-libedit
-unpack-and-configure-libedit:
+libedit:
 	tar -zxf libedit-*.tar.gz
 	mv `find -name 'libedit-*' -type d | head -n 1` libedit
-	cd libedit ; ./configure --enable-static
 
-libedit/Makefile: unpack-and-configure-libedit
+libedit/Makefile:
+	cd libedit ; ./configure --enable-static --prefix=`pwd`
+
 
 build: $(BUILD_DEPS)
 
