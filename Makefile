@@ -116,6 +116,12 @@ ifeq ($(DOCUMENTATION), 1)
 endif
 ifeq ($(JAVA_DRIVER), 1)
 	$(INSTALL) -Dp $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/*.html $(SEDNA_INSTALL)/sedna/driver/java/doc/
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/package-list $(SEDNA_INSTALL)/sedna/driver/java/doc/package-list
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/stylesheet.css $(SEDNA_INSTALL)/sedna/driver/java/doc/stylesheet.css
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/*.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/resources/inherit.gif $(SEDNA_INSTALL)/sedna/driver/java/doc/resources/inherit.gif
+
 endif
 ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a

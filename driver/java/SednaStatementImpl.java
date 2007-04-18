@@ -239,7 +239,6 @@ class SednaStatementImpl implements SednaStatement {
 
             // read debug information if any
             gotDebug = NetOps.readDebugInfo(msg, bufInputStream, debugInfo);
-
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
                     NetOps.readStringItem(bufInputStream, this.doTraceOutput);

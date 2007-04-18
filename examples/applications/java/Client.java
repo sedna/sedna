@@ -73,7 +73,7 @@ class Client {
 
             if (call_res)    // if call_res is true the statement was not an update
 
-            // and we can use PlaneResult object
+            // and we can use SednaSerializedResult object
             {
                 System.out.println("Result:");
 
