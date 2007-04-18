@@ -296,11 +296,15 @@ endif
 BUILD_DEPS+=build_libedit
 CLEAN_DEPS+=clean_libedit
 
-build_libedit: libedit
+build_libedit: libedit libedit/Makefile
 
-libedit:
+libedit: unpack-and-configure-libedit
+unpack-and-configure-libedit:
 	tar -zxf libedit-*.tar.gz
 	mv `find -name 'libedit-*' -type d | head -n 1` libedit
+	cd libedit ; ./configure --enable-static
+
+libedit/Makefile: unpack-and-configure-libedit
 
 build: $(BUILD_DEPS)
 
