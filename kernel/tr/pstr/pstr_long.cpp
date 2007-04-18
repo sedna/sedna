@@ -649,6 +649,7 @@ static void pstr_long_append_tail_mem(const xptr desc,const char *data, pstr_lon
 	//at this place block list & map are loaded to intl bufs
 	U_ASSERT(intl_ftr.cursor > 0);
 	CHECKP(intl_last_blk);
+	VMM_SIGNAL_MODIFICATION(intl_last_blk);
 
 	bool plog = intl_append_str_pc(desc, data, size, true); //FIXME: is plog really always true?
 	intl_finalize_str(desc, plog);
@@ -912,6 +913,8 @@ void pstr_long_append_tail(const xptr dst_desc, const xptr src, pstr_long_off_t 
 				U_ASSERT(((struct t_dsc *)XADDR(dst_desc))->data == src);
 			}
 			data_buf_ofs = 0;
+			CHECKP(intl_last_blk);
+			VMM_SIGNAL_MODIFICATION(intl_last_blk);
 
 			if (data_buf_cnt > data_buf_ofs)
 				plog = intl_append_str_pc(dst_desc, data_buf + data_buf_ofs, data_buf_cnt - data_buf_ofs, plog);

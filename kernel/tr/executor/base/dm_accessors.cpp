@@ -251,7 +251,8 @@ void dm_string_value_traverse(xptr node)
                             int size = T_DSC(node)->size;
                             xptr data = T_DSC(node)->data;
                             CHECKP(data);
-                            data = PSTRDEREF(data);
+							if (size <= PSTRMAXSIZE)
+								data = PSTRDEREF(data);
 
                             switch (dsvr.type)
                             {
