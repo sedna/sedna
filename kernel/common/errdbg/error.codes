@@ -1325,6 +1325,9 @@ sedna-err:SE4411
 sedna-err:SE4412
 
     The number of database config files exceeds the maximum freshold
+sedna-err:SE4413
+
+    Can't create session process
 
 
 ############################################################################
