@@ -16,6 +16,7 @@
 #include "tr/structures/metadata.h"
 #include "common/utils.h"
 #include "tr/tr_utils.h"
+#include "chicken_panic.h"
 
 #ifdef SE_MEMORY_TRACK
 #undef malloc
@@ -74,6 +75,8 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     {
         status = CHICKEN_initialize(0, 0, 0, (void*)C_toplevel);
         //d_printf2("CHICKEN_initialize = %d\n", status);
+        // Overriding usual_panic: 
+        C_panic_hook = chicken_panic_throw_exception;
         status = CHICKEN_run(NULL);
         //d_printf2("CHICKEN_run = %d\n", status);
         Chicken_initialized = true;
