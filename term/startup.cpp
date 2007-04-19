@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         if (strcmp(output_file, "STDOUT") == 0)
             res_os = stdout;
         else
-            if((res_os = fopen(output_file, "w")) == NULL)
+            if((res_os = fopen(output_file, "wt")) == NULL)
             {
                 fprintf(stderr, "Can't open file %s\n", output_file);
                 return EXIT_TERM_FAILED;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 
             if (strcmp(echo_str, "???") == 0)
                 echo = 0;                          // echo is off when in batch mode
-            if((script_file = fopen(filename, "r")) == NULL)
+            if((script_file = fopen(filename, "rt")) == NULL) /* !!! \r\n !!! */ 
             {
                 fprintf(stderr, "Can't open file %s\n", filename);
                 return EXIT_TERM_FAILED;

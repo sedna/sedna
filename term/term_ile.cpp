@@ -2,7 +2,7 @@
 
 int ile_init() { return 0; }
 void ile_deinit() { ; }
-char * ile_gets(char * buf, size_t sz) { return 0; }
+const char * ile_gets(size_t * sz) { return 0; }
 
 #else
 
@@ -61,36 +61,22 @@ int ile_init()
 	return 1;
 }
 
-char * ile_gets(char * buf, size_t sz)
+const char * ile_gets(size_t * sz)
 {
 	const char * line;
 	int count;
 	HistEvent ev;
-	char dummy[4];
-	if (!el||!hist||!buf||!sz) return 0;
+	char dummy[4]={0,0,0,0};
+	if (!el||!hist) return 0;
 
-	while(1)
-	{
-		line = el_gets(el, &count);
+	line = el_gets(el, &count);
 
-		if (count > 0) 
-		{
-			if(1==sscanf(line,"%1s",dummy)) /* true if the line consists any non-WS character */ 
-			{	
-      				history(hist, &ev, H_ENTER, line);
-				break;
-			}
-		}
+	if (count > 0 && 1==sscanf(line,"%1s",dummy)) /* true if the line consists any non-WS character */ 
+	{	
+      		history(hist, &ev, H_ENTER, line);
 	}
-	if (count+1<(int)sz) sz=count+1;
-	memcpy(buf,line,sz);
-	buf[sz-1]='\0';
-	if (sz==count+1&&*dummy!='\\')
-	{
-		if(buf[sz-2]=='&') buf[sz-2]='\n';
-		if(buf[sz-2]=='\n' && sz>2 && buf[sz-3]=='&') strcpy(&buf[sz-3],"\n");
-	}
-	return buf;
+	if (sz) *sz=count;
+	return line;
 }
 
 char * se_prompt(EditLine * e)
