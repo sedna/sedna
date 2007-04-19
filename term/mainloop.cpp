@@ -99,11 +99,10 @@ int slash_commands_help()
 int
 MainLoop(FILE *source)
 {
-	char buffer[SE_SOCKET_MSG_BUF_SIZE];
-	int item_len, error_code;
-	char tmp_file_name[1024];
-
+	std::vector<char> buffer;
+	int res=0, error_code=0;
 	int successResult = EXIT_SUCCESS;
+
 	if(source == NULL) 
 	{
 		fprintf(stderr, "Failed to get input file\n");
@@ -125,13 +124,18 @@ MainLoop(FILE *source)
 
 	//open session
    
-    if (strpbrk(host, ":") == NULL) strcat(strcat(host,":"),std::string(u_itoa(socket_port, buffer, 10)).c_str());
-    int res = SEconnect(&conn, host, db_name, login, password);
+    if (strpbrk(host, ":") == NULL) 
+	{
+		sprintf(host+strlen(host),":%d",socket_port);
+	}
+		
+    res = SEconnect(&conn, host, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN)
     {
 	   fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
 	   return 1;
     }
+	/* if we read query from file, set session directory to the one file is located in */ 
     if (strcmp(filename,"???") != 0)
     {
         char file_abs_path[U_MAX_PATH+1];
@@ -174,13 +178,11 @@ MainLoop(FILE *source)
 
 	while(successResult == EXIT_SUCCESS)
 	{
-		term_output2("\n%s> ",db_name);
-
-		successResult = get_input_item(source, buffer, &item_len, tmp_file_name);
+		successResult = get_input_item(source, buffer);
 
 		switch (successResult) {
         case EXIT_GOT_COMMAND:
-			res = process_command(buffer);
+			res = process_command(&buffer[0]);
             if(res == EXIT_USER)                      // normal exit
 			{
 				quit_term();
@@ -201,7 +203,7 @@ MainLoop(FILE *source)
             
 		case EXIT_GOT_QUERY:
         case EXIT_GOT_LONG_QUERY:
-			res = (successResult == EXIT_GOT_QUERY) ? process_query(buffer, false, tmp_file_name) : process_query(buffer, true, tmp_file_name);
+			res = process_query(&buffer[0], false, "");
             if((res == EXIT_STATEMENT_OR_COMMAND_FAILED) && (on_error_stop))
             {
                 quit_term();
@@ -338,7 +340,7 @@ int process_command(char* buffer)
 		}
 		return EXIT_USER;
 	}
-	else if(strncmp(buffer,"set",3) == 0)
+	else if(strncmp(buffer,"set ",4) == 0)
 	{
         if(strcmp(buffer+4, "AUTOCOMMIT") == 0)
         {
@@ -371,7 +373,7 @@ int process_command(char* buffer)
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
 	}
-	else if(strncmp(buffer,"unset",5) == 0)
+	else if(strncmp(buffer,"unset ",6) == 0)
 	{
         if(strcmp(buffer+6, "AUTOCOMMIT") == 0)
         {
@@ -417,7 +419,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 	int result, error_code;
 	char buf[RESULT_MSG_SIZE+1];
 	FILE* long_query;
-	
+
     if((SEtransactionStatus(&conn) == SEDNA_NO_TRANSACTION) && (!conn.autocommit))
     {
 		//begin transaction
@@ -432,8 +434,6 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 		}
 	}
     
-    term_output1("result: ");
-
     // execute XQuery query	or update
     if(is_query_from_file)
     {
@@ -498,8 +498,10 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else if(result == SEDNA_QUERY_SUCCEEDED) 
     {
     	//iterate over the result sequece and retrieve the result data
-    	int bytes_read, res_next;
+    	const char * i;
+	int bytes_read, res_next;
 
+	if (buffer && (i=strchr(buffer,'\n')) && i[1])
         term_output1("\n");
 
  //       term_debug_info_output(); // output debug info if there was any
@@ -569,99 +571,97 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 	return EXIT_SUCCESS;
 }
 
-int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_name)
+static size_t append_line_to_buffer(FILE* source, std::vector<char> & buffer, size_t sz)
 {
-	int successResult = EXIT_SUCCESS;
-	int i = 0;     //position in the buffer
-	int number_of_msg_buf_size = 0;  //if a query is longer then socket_msg_buf_size
-	FILE* f;
-	//test if the read line is a command
-	bool isCommand = false;
-	printf("%s",ile_gets(buffer,1024));
-    buffer[i] = (char)getc(source); 
-    while((buffer[i] == '\n')||(buffer[i] == ' '))
-    {
-        buffer[i] = (char)getc(source);
-    } 
-    if(buffer[i] == '\\') {isCommand = true; i--;}
-    else 
-    {
-    	while((buffer[i] == '\n')||(buffer[i] == ' '))
-    	{
-    		buffer[i] = (char)getc(source);
-    	}
-    }
-    if(buffer[i] == EOF)  return EXIT_EOF;
-    
-    i++;
-
-	while(successResult==EXIT_SUCCESS)
+	const char * str=0;
+	while(1)
 	{
-		buffer[i] = (char)getc(source);
-
-		if((!isCommand)&&(buffer[i-1] == (char)'&')&&((buffer[i] == (char)'\n')||(buffer[i] == EOF)))
-		{
-			*item_len = i-1;
-			buffer[*item_len] = '\0';
-			fflush(stdin);
-			successResult = EXIT_GOT_QUERY; 
-		}
-		if((!isCommand)&&(buffer[i-2] == (char)'&')&&(buffer[i-1] == (char)'\r')&&((buffer[i] == (char)'\n')||(buffer[i] == EOF)))
-		{
-			*item_len = i-2;
-			buffer[*item_len] = '\0';
-			fflush(stdin);
-			successResult = EXIT_GOT_QUERY; 
-		}
-		else if((isCommand)&&(buffer[i] == (char)'\n'))
-		{
-			*item_len = i;
-			buffer[*item_len] = '\0';
-			fflush(stdin);
-			successResult = EXIT_GOT_COMMAND;
-		}
-		else if(i == SE_SOCKET_MSG_BUF_SIZE - 10)
-		{
-			if(!number_of_msg_buf_size)
-			{
-                char current_dir_buf[4096];
-                char* res  = uGetCurrentWorkingDirectory(current_dir_buf, 4096, __sys_call_error);
-                if (res == NULL)
-                    throw USER_EXCEPTION(SE4602);
-				if(!uGetUniqueFileName(current_dir_buf, tmp_file_name, NULL)) throw USER_EXCEPTION(SE4052);
-				f = fopen(tmp_file_name,"w+t");
-			}
-			number_of_msg_buf_size++;
-			fwrite(buffer, sizeof( char ), i+1, f);
-			i = 0;
-		}
-		else if((isCommand)&&(buffer[i] == EOF))
-		{
-			*item_len = i;
-			buffer[*item_len] = '\0';
-			successResult = EXIT_GOT_COMMAND;
-		}
-		else if((!isCommand)&&(buffer[i] == EOF))
-		{
-			*item_len = i;
-			buffer[*item_len] = '\0'; 
-			successResult = EXIT_GOT_QUERY;
-		}
-		else
-		{
-			i++;
-		}
-	}   // end of while
-	
-	*item_len = number_of_msg_buf_size*SE_SOCKET_MSG_BUF_SIZE + i;
-	if(number_of_msg_buf_size)
-	{
-		fwrite(buffer, sizeof( char ), strlen(buffer), f);
-		fclose(f);
-		successResult = EXIT_GOT_LONG_QUERY;
-	}	
-
-	return successResult;
+		buffer.resize(sz+1024);
+		str=fgets(&buffer[sz],buffer.size()-sz,source);
+		if (0==str) break;
+		sz+=strlen(str);
+		if(buffer[sz-1]=='\n') break;				
+	}
+	buffer[sz]='\0';
+	return sz;
 }
 
+size_t translate_amps_sequence(const char * str, size_t start, bool & is_terminator)
+{
+	is_terminator=true;
+	if(start>0 && str[start-1]=='&') return start-1;
+	if(start>0 && str[start-2]=='&' && str[start-1]=='\n') return start-2;
+	is_terminator=false;	
+	return start;
+}
 
+int get_input_item(FILE* source, std::vector<char> & buffer)
+{
+	const char * str=0, * estr = 0;
+	int pos=0, error=0, ret=0;
+	bool is_terminator=false;
+	size_t sz;
+
+	if (interactive_mode) 
+	{
+		while(1)
+		{
+			str=ile_gets(&sz);
+			if(!str) return EXIT_EOF;
+			error=sscanf(str,"%*1s%n",&pos);
+			if (error>=0 && error!=EOF) break;
+		}
+		estr=str+sz;
+		str+=pos-1;
+		sz=0;
+		if (*str=='\\') 
+		{
+			do str++; while(str!=estr&&isspace(*str));
+			ret=EXIT_GOT_COMMAND;
+		}
+		else 
+		{
+			ret=EXIT_GOT_QUERY;
+		}
+		sz=estr-str;
+		buffer.resize(sz+1);
+		memcpy(&buffer[0],str,sz);
+		str=estr=0;
+		if (ret==EXIT_GOT_QUERY) sz=translate_amps_sequence(&buffer[0],sz,is_terminator);		
+	}
+	else 
+	{
+		while(1)
+		{
+			term_output2("%s",prompt);
+			sz=append_line_to_buffer(source,buffer,0);
+			str=&buffer[0];
+			error=sscanf(str,"%*1s%n",&pos);
+			if (error>=0 && error!=EOF) break;
+			if (feof(source) || ferror(source)) return EXIT_EOF;
+		}
+		estr=str+sz;
+		str+=pos-1;
+		sz=0;
+		if (*str=='\\')
+		{
+			str++;
+			ret=EXIT_GOT_COMMAND;
+		}
+		else ret=EXIT_GOT_QUERY;
+		while(str!=estr&&isspace(*str))++str;
+		sz=estr-str;
+		memmove(&buffer[0],str,sz); /* data overlaps! */ 
+		str=estr=0;
+		if (ret==EXIT_GOT_QUERY) while(1)
+		{
+			sz=translate_amps_sequence(&buffer[0],sz,is_terminator);
+			if(is_terminator || feof(source) || ferror(source)) break;
+			sz=append_line_to_buffer(source,buffer,sz);
+		}
+	}
+	while(sz>0&&isspace(buffer[sz-1]))--sz;
+	buffer.resize(sz+1);
+	buffer[sz]='\0';
+	return ret;
+}

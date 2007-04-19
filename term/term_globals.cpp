@@ -29,8 +29,8 @@ char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
 char debug_indent[TERM_ARGSTRLEN+1];
-extern char prompt[16]="> ";
-extern char micro_prompt[16]="> ";
+char prompt[16]="> ";
+char micro_prompt[16]="> ";
 
 const size_t narg = 14;
 

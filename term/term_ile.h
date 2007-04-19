@@ -12,7 +12,7 @@
 
 int ile_init();
 void ile_deinit();
-char * ile_gets(char * buffer, size_t sz);
+const char * ile_gets(size_t * sz);
 
 #endif
 

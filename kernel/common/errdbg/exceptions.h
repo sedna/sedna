@@ -360,8 +360,8 @@ public:
                                                                 _line_,
                                                                 _err_msg_,
                                                                 0),
-                                             explanation(_explanation_),
-                                             rollback(_rollback_) {}
+                                             rollback(_rollback_),
+					     explanation(_explanation_){}
     virtual std::string getDescription() const 
     { 
         return err_msg + 
