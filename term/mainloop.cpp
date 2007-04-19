@@ -13,6 +13,7 @@
 #include "mainloop.h"
 #include "term_globals.h"
 #include "term_funcs.h"
+#include "term_ile.h"
 
 int quit_term()
 {
@@ -80,6 +81,14 @@ int slash_commands_help()
 	term_output1("    \\unset - to unset the terminal internal variable\n");
 	term_output1("    \\quit - to close session and quit the Sedna Terminal\n");
 	term_output1("    XQuery/Update statements ended with ampersand+line feed\n ");
+
+	if (interactive_mode)
+	{
+		term_output1("\n    This Sedna Terminal supports interactive line editing.\n");
+		term_output1("    Use Alt-Up and Alt-Down keystrokes to navigate through history.\n");
+		term_output1("    Hit Ctrl-Enter to submit input instantly.\n");
+	}
+
 	return 0;
 }
 
@@ -160,6 +169,8 @@ MainLoop(FILE *source)
 	term_output1("Type:\n");
 	
 	slash_commands_help();
+
+	sprintf(prompt,"%.13s> ",db_name);
 
 	while(successResult == EXIT_SUCCESS)
 	{
@@ -566,6 +577,7 @@ int get_input_item(FILE* source, char* buffer, int* item_len, char* tmp_file_nam
 	FILE* f;
 	//test if the read line is a command
 	bool isCommand = false;
+	printf("%s",ile_gets(buffer,1024));
     buffer[i] = (char)getc(source); 
     while((buffer[i] == '\n')||(buffer[i] == ' '))
     {

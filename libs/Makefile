@@ -296,7 +296,9 @@ endif
 BUILD_DEPS+=build_libedit
 CLEAN_DEPS+=clean_libedit
 
-build_libedit: libedit libedit/Makefile
+build_libedit: libedit libedit/Makefile libedit/lib/libedit.a
+
+libedit/lib/libedit.a: libedit/Makefile
 	-$(MAKE) -C libedit
 	-$(MAKE) -C libedit install
 
@@ -307,6 +309,10 @@ libedit:
 libedit/Makefile:
 	cd libedit ; ./configure --enable-static --prefix=`pwd`
 
+
+clean_libedit:
+	-$(MAKE) -C libedit uninstall
+	-$(MAKE) -C libedit clean
 
 build: $(BUILD_DEPS)
 

@@ -18,6 +18,7 @@ int socket_port = 0;
 int echo = 1;
 int debug_output = 1;
 int debug_mode = 0;
+int interactive_mode = 1;
 
 char host[TERM_ARGSTRLEN+1];
 char db_name[TERM_ARGSTRLEN+1];
@@ -28,6 +29,8 @@ char password[TERM_ARGSTRLEN+1];
 char output_file[TERM_ARGSTRLEN+1];
 char echo_str[TERM_ARGSTRLEN+1];
 char debug_indent[TERM_ARGSTRLEN+1];
+extern char prompt[16]="> ";
+extern char micro_prompt[16]="> ";
 
 const size_t narg = 14;
 
