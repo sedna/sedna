@@ -1432,7 +1432,7 @@ static void pstr_long_append_head(xptr desc,const char *data, pstr_long_off_t si
 	intl_alloc_blk(desc, new_first_blk);
 	VMM_SIGNAL_MODIFICATION(new_first_blk);
 	((pstr_long_blk_hdr*)XADDR(new_first_blk))->prev_blk = XNULL;
-	intl_ftr.start = new_first_blk + PAGE_SIZE - part1;
+	intl_ftr.start = new_first_blk + (PAGE_SIZE - part1);
 	memcpy(XADDR(intl_ftr.start), data, part1);
 	new_first_blk_char_count = intl_char_counter->count_chars(data, part1);
 	data += part1;
