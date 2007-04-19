@@ -17,6 +17,7 @@
 #include "term_funcs.h"
 #include "mainloop.h"
 #include "sprompt.h"
+#include "term_ile.h"
 
 using namespace std;
 
@@ -116,13 +117,16 @@ int main(int argc, char *argv[])
         if (strcmp(filename,"???") != 0)
         {
             FILE* script_file;
+			
+	interactive_mode=0;
+
             if (strcmp(echo_str, "???") == 0)
                 echo = 0;                          // echo is off when in batch mode
             if((script_file = fopen(filename, "r")) == NULL)
             {
                 fprintf(stderr, "Can't open file %s\n", filename);
                 return EXIT_TERM_FAILED;
-            }
+            }			
             ret_code = MainLoop(script_file);
             if(fclose(script_file) != 0)
             {
@@ -134,13 +138,26 @@ int main(int argc, char *argv[])
         {
             if (strcmp(echo_str, "???") == 0)
                 echo = 0;                          // echo is off when execute command line query
-            ret_code = process_commandline_query();
+            
+			interactive_mode=0;
+			ret_code = process_commandline_query();
         }
         else
         {
            if (strcmp(echo_str, "???") == 0)
                 echo = 1;                          // echo is on when in interactive mode
-            ret_code = MainLoop(stdin);
+		   if (interactive_mode) do
+		   {
+			   interactive_mode=0;
+			   if (!isatty(fileno(stdin))) break;
+			   if (!ile_init()) break;
+			   interactive_mode=1;
+		   }
+		   while (0);
+
+           ret_code = MainLoop(stdin);
+
+		   if (interactive_mode) ile_deinit();
         }
         
         if (strcmp(output_file, "STDOUT") != 0)

@@ -23,6 +23,7 @@ extern int socket_port;
 extern int echo;
 extern int debug_output;
 extern int debug_mode;
+extern int interactive_mode;
 
 extern char host[];
 extern char db_name[];
@@ -33,6 +34,8 @@ extern char password[];
 extern char output_file[];
 extern char echo_str[];
 extern char debug_indent[];
+extern char prompt[];
+extern char micro_prompt[];
 
 extern FILE* res_os; //output stream of term results (result of the user's queres)
 
