@@ -73,20 +73,20 @@ void se_term_debug_handler(se_debug_info_type subtype, const char *msg)
 
 int slash_commands_help()
 {
-	term_output1("    \\? - for help on internal slash commands\n");
-	term_output1("    \\commit - to commit transaction\n");
-	term_output1("    \\rollback - to rollback transaction\n");
-	term_output1("    \\showtime - to show the time of the latest query execution\n");
-	term_output1("    \\set - to set the terminal internal variable\n");
-	term_output1("    \\unset - to unset the terminal internal variable\n");
-	term_output1("    \\quit - to close session and quit the Sedna Terminal\n");
-	term_output1("    XQuery/Update statements ended with ampersand+line feed\n ");
+	term_output1("Terminate queries with ampersand+line feed.\n");
+	term_output1("\\?        - for help\n");
+	term_output1("\\commit   - to commit transaction\n");
+	term_output1("\\rollback - to rollback transaction\n");
+	term_output1("\\showtime - to show the time of the latest query execution\n");
+	term_output1("\\set      - to set the terminal internal variable\n");
+	term_output1("\\unset    - to unset the terminal internal variable\n");
+	term_output1("\\quit     - to close session and quit the Sedna Terminal\n");
 
 	if (interactive_mode)
 	{
-		term_output1("\n    This Sedna Terminal supports interactive line editing.\n");
-		term_output1("    Use Alt-Up and Alt-Down keystrokes to navigate through history.\n");
-		term_output1("    Hit Ctrl-Enter to submit input instantly.\n");
+		term_output1("\nInteractive line editing enabled.\n");
+		term_output1("Alt-Up and Alt-Down to browse the history.\n");
+		term_output1("Ctrl-Enter submits input instantly.\n");
 	}
 
 	return 0;
@@ -169,10 +169,10 @@ MainLoop(FILE *source)
         return 1;
     }
     
-	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n\n");
-	term_output1("Type:\n");
+	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n");
+	term_output1("Type \\? for help.\n");
 	
-	slash_commands_help();
+	//slash_commands_help();
 
 	sprintf(prompt,"%.13s> ",db_name);
 
@@ -461,7 +461,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     
     if(result == SEDNA_QUERY_FAILED) 
     {
-    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
         if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -470,7 +470,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_UPDATE_FAILED) 
     {
-    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -479,7 +479,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_BULK_LOAD_FAILED) 
     {
-    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -488,7 +488,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_ERROR) 
     {
-    	fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -509,7 +509,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	res_next = SEnext(&conn);
         if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
         {
-            fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+            fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
             return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
         
@@ -518,7 +518,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     		bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
             if (bytes_read == SEDNA_ERROR)
             {
-       	        fprintf(stderr, "\nNext item failed: \n%s\n", SEgetLastErrorMsg(&conn));
+       	        fprintf(stderr, "Next item failed: \n%s", SEgetLastErrorMsg(&conn));
             	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
@@ -532,7 +532,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
                 if (bytes_read == SEDNA_ERROR)
                 {
-       	            fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+       	            fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
                 	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
@@ -545,7 +545,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     		res_next = SEnext(&conn);
             if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
             {
-                fprintf(stderr, "\n%s\n", SEgetLastErrorMsg(&conn));
+                fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
                 break;
             }
     	}
