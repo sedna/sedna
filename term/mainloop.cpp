@@ -169,7 +169,7 @@ MainLoop(FILE *source)
         return 1;
     }
     
-	term_output1("Welcome to term, the SEDNA Interactive Terminal. \n");
+	term_output1("Welcome to term, the SEDNA Interactive Terminal. ");
 	term_output1("Type \\? for help.\n");
 	
 	//slash_commands_help();

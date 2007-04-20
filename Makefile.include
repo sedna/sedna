@@ -70,6 +70,10 @@ ifndef LIBODBC_STATIC
 LIBODBC_STATIC = 0
 endif
 
+ifndef ENABLE_LIBEDIT
+ENABLE_LIBEDIT = 1
+endif
+
 # SEDNA_BUILD is defined outside when release version is made
 ifndef SEDNA_BUILD
 SEDNA_BUILD = $(shell if test -e $(PP)/build; then cat $(PP)/build; else echo 0; fi)

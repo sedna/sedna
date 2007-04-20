@@ -1,7 +1,7 @@
 
 PP=..
 include $(PP)/Makefile.platform
-
+include $(PP)/Makefile.include
 
 ifeq ("$(OS)", "CYGWIN_NT")
 # Win32
@@ -35,6 +35,13 @@ build_chicken=yes
 build_pccts=yes
 build_expat=yes
 build_pcre=yes
+build_libedit=no
+
+ifneq ("$(PLATFORM)","WIN32")
+ifeq ("$(ENABLE_LIBEDIT)","1")
+build_libedit=yes
+endif
+endif
 
 .PHONY: default build clean
 
@@ -291,6 +298,7 @@ endif
 
 endif
 
+ifeq ("$(build_libedit)","yes")
 
 .PHONY: build_libedit clean_libedit
 BUILD_DEPS+=build_libedit
@@ -317,4 +325,6 @@ clean_libedit:
 build: $(BUILD_DEPS)
 
 clean: $(CLEAN_DEPS)
+
+endif
 
