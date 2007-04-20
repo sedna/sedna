@@ -322,9 +322,10 @@ clean_libedit:
 	-$(MAKE) -C libedit uninstall
 	-$(MAKE) -C libedit clean
 
+endif
+
 build: $(BUILD_DEPS)
 
 clean: $(CLEAN_DEPS)
 
-endif
 
