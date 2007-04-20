@@ -1,5 +1,5 @@
-#ifndef LIBEDIT_POWERED_SETERM
-
+#ifndef ENABLE_LIBEDIT
+#include <cctype>
 int ile_init() { return 0; }
 void ile_deinit() { ; }
 const char * ile_gets(size_t * sz) { return 0; }

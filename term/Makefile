@@ -11,7 +11,11 @@ all: $(PP)/bin/se_term$(EXE_EXT)
 	@echo Sedna Terminal has been done
 	@echo ===================================================================
 
-CPPFLAGS += -I../libs/libedit/include -DLIBEDIT_POWERED_SETERM
+ifeq ($(ENABLE_LIBEDIT),1)
+ifneq ($(PLATFORM),WIN32)
+CPPFLAGS += -I../libs/libedit/include -DENABLE_LIBEDIT
+endif
+endif
 
 OBJS = term_funcs$(OBJ_EXT) term_globals$(OBJ_EXT) sprompt$(OBJ_EXT) \
        startup$(OBJ_EXT) mainloop$(OBJ_EXT) term_ile$(OBJ_EXT)
@@ -23,7 +27,10 @@ DRIVER_LIB = $(PP)/driver/c/libsednamt$(LIB_EXT)
 DRIVER_LIB_S = $(DRIVER_LIB)
 else
 DRIVER_LIB = $(PP)/driver/c/libsedna$(LIB_EXT)
-DRIVER_LIB_S = -L$(PP)/driver/c -lsedna -L$(PP)/libs/libedit/lib -ledit -lcurses
+DRIVER_LIB_S = -L$(PP)/driver/c -lsedna 
+ifeq ($(ENABLE_LIBEDIT),1)
+DRIVER_LIB_S += -L$(PP)/libs/libedit/lib -ledit -lcurses
+endif
 endif
 
 
