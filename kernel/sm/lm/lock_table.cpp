@@ -458,8 +458,9 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
              lock->granted_mode = lock_max(request->mode, lock->granted_mode);
              
              d_printf2("wake up transaction with id=%d\n", request->tran->tr_id);
-             if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
-                throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
+             if (request->tran->status != ROLLING_BACK_AFTER_DEADLOCK)
+                if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
+                   throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
           }
           else //if request is incompatible then FIFO
           {
@@ -493,8 +494,9 @@ lock_reply lock_table::unlock(transaction_id tr_id, resource_id r_id, bool sync)
                 request->convert_mode = NULL_LOCK;
 
 			    d_printf2("wake up transaction with id=%d\n", request->tran->tr_id);
-                if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
-                    throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
+                if (request->tran->status != ROLLING_BACK_AFTER_DEADLOCK)
+                   if (0 != USemaphoreUp(request->process_xsem, __sys_call_error))
+                      throw USER_EXCEPTION2(SE4014, "SEDNA_TRANSACTION_LOCK");
              }
              else
              {

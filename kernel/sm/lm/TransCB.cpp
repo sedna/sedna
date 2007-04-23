@@ -22,6 +22,7 @@ TransCB::TransCB(transaction_id _tr_id_)
   wait = NULL;
   cycle = NULL;
   tr_id = _tr_id_;
+  status = NORMAL_PROCESSING;
 #endif
 }
 

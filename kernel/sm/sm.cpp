@@ -116,7 +116,13 @@ int sm_server_handler(void *arg)
 
                          if (r == LOCK_OK) msg->data.data[0] = '1';
                          else if (r == LOCK_NOT_LOCKED && !lm_table.deadlock(true)) msg->data.data[0] = '0';
-                         else msg->data.data[0] = '2';
+                         else
+                         {
+                             msg->data.data[0] = '2';
+                             tr_lock_head* tr_head = tr_table.find_tr_lock_head(msg->trid);
+                             if (tr_head == NULL) throw SYSTEM_EXCEPTION("Incorrect logic in SM's lock manager");
+                             tr_head->tran->status = ROLLING_BACK_AFTER_DEADLOCK;
+                         }
                           
 //                         d_printf1("lock table after lock operation\n");
 //                         lm_table.print();
