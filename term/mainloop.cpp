@@ -273,7 +273,7 @@ int process_command(char* buffer)
 	{
         if(conn.autocommit)
         {
-		    term_output1("This session is in the autocommit mode.\nTo commit transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
+		    term_output1("This session is in the autocommit mode.\nTo commit transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.\n");
             return EXIT_SUCCESS;
         }
         else
@@ -299,7 +299,7 @@ int process_command(char* buffer)
 	{
         if(conn.autocommit)
         {
-		    term_output1("This session is in the autocommit mode.\nTo rollback transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.");
+		    term_output1("This session is in the autocommit mode.\nTo rollback transactions manually turn AUTOCOMMIT off: \\unset AUTOCOMMIT.\n");
             return EXIT_SUCCESS;
         }
         else
@@ -346,13 +346,13 @@ int process_command(char* buffer)
         {
             int value = SEDNA_AUTOCOMMIT_ON;
             res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
-            term_output1("Autocommit mode is on.");
+            term_output1("Autocommit mode is on.\n");
             return EXIT_SUCCESS;
         }
         else if(strcmp(buffer+4, "ON_ERROR_STOP") == 0)
         {
             on_error_stop = true;
-            term_output1("Variable is set.");
+            term_output1("Variable is set.\n");
             return EXIT_SUCCESS;
         }
         else if(strcmp(buffer+4, "DEBUG") == 0)
@@ -364,7 +364,7 @@ int process_command(char* buffer)
                 fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
-            term_output1("Debug mode is on.");
+            term_output1("Debug mode is on.\n");
             return EXIT_SUCCESS;
         }
         else
@@ -379,13 +379,13 @@ int process_command(char* buffer)
         {
             int value = SEDNA_AUTOCOMMIT_OFF;
             res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
-            term_output1("Autocommit mode is off.");
+            term_output1("Autocommit mode is off.\n");
             return EXIT_SUCCESS;
         }
         else if(strcmp(buffer+6, "ON_ERROR_STOP") == 0)
         {
             on_error_stop = false;
-            term_output1("Variable is unset.");
+            term_output1("Variable is unset.\n");
             return EXIT_SUCCESS;
         }
         else if(strcmp(buffer+6, "DEBUG") == 0)
@@ -397,7 +397,7 @@ int process_command(char* buffer)
                 fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
-            term_output1("Debug mode is off.");
+            term_output1("Debug mode is off.\n");
             return EXIT_SUCCESS;
         }
         else
@@ -416,7 +416,7 @@ int process_command(char* buffer)
 
 int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 {
-	int result, error_code;
+	int result=0, error_code=0, have_results=0;
 	char buf[RESULT_MSG_SIZE+1];
 	FILE* long_query;
 
@@ -461,7 +461,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     
     if(result == SEDNA_QUERY_FAILED) 
     {
-    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
         if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -470,7 +470,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_UPDATE_FAILED) 
     {
-    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -479,7 +479,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_BULK_LOAD_FAILED) 
     {
-    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -488,7 +488,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     }
     else if(result == SEDNA_ERROR) 
     {
-    	fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+    	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -509,16 +509,17 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	res_next = SEnext(&conn);
         if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
         {
-            fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+            fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
             return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
         
     	while((res_next != SEDNA_RESULT_END)&&(res_next != SEDNA_ERROR))
     	{
+			have_results=1;
     		bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
             if (bytes_read == SEDNA_ERROR)
             {
-       	        fprintf(stderr, "Next item failed: \n%s", SEgetLastErrorMsg(&conn));
+       	        fprintf(stderr, "Next item failed: \n%s\n", SEgetLastErrorMsg(&conn));
             	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
@@ -532,7 +533,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
                 if (bytes_read == SEDNA_ERROR)
                 {
-       	            fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+       	            fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
                 	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
@@ -545,11 +546,11 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     		res_next = SEnext(&conn);
             if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
             {
-                fprintf(stderr, "%s", SEgetLastErrorMsg(&conn));
+                fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
                 break;
             }
     	}
-		term_output1("\n");
+	if (have_results) term_output1("\n");
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
@@ -588,9 +589,14 @@ static size_t append_line_to_buffer(FILE* source, std::vector<char> & buffer, si
 
 size_t translate_amps_sequence(const char * str, size_t start, bool & is_terminator)
 {
+	size_t sstart=0;
+	char test[3]={0,0,0};
+	if (sstart+3<start) sstart=start-3;
+	memcpy(test+3-(start-sstart),str+sstart,start-sstart);
 	is_terminator=true;
-	if(start>0 && str[start-1]=='&') return start-1;
-	if(start>0 && str[start-2]=='&' && str[start-1]=='\n') return start-2;
+	if(test[2]=='&') return start-1;
+	if(test[1]=='&' && test[2]=='\n') return start-2;
+	if(test[0]=='&' && test[1]=='\r' && test[2]=='\n') return start-3;
 	is_terminator=false;	
 	return start;
 }
