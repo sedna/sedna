@@ -550,7 +550,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                 break;
             }
     	}
-	if (have_results) term_output1("\n");
+	if (1 || have_results) term_output1("\n\n");
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
@@ -607,6 +607,8 @@ int get_input_item(FILE* source, std::vector<char> & buffer)
 	int pos=0, error=0, ret=0;
 	bool is_terminator=false;
 	size_t sz;
+
+	using namespace std; /* probably fix isspace() on Red Hat */ 
 
 	if (interactive_mode) 
 	{
