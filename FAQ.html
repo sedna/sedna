@@ -55,6 +55,13 @@ ERROR SE1016
 Cannot lock buffer memory.
 Details: See file FAQ shipped with the distribution
 </pre>
+or
+<pre>
+ERROR SE4211
+Failed to create the database.
+Details: test (may be because there is no enough RAM)
+</pre>
+
 What's wrong?
 </p>   
 </div>  
@@ -62,10 +69,36 @@ What's wrong?
 <p>Most likely, the reason of the problem is lack of memory. By default Sedna 
 requires 100Mb of memory for every running instance of database. You can 
 vary the required memory size by <code>-bufs-num</code> option of <code>se_cdb</code>. For details 
-see documentation provided with the distribution or just run 
+see "Managing Databases" section in "Sedna Administration Guide" provided with the distribution or just run 
 <code>se_cdb -help</code>.</p>
+<p>
+If this still does not help then possible reasons/solutions:
+</p>
+<p>
+1. Sedna servers are blocked by firewall (Windows XP SP2 built-in or third party installed).
+The solution is to appropriately adjust or turn firewall off.
+</p>
+<p>
+2. Windows XP SP2 limits half-open connections to a maximum of 10. 
+Some applications, like, for example, filesharing tools, can't unfold their capacity 
+when the maximum connection limit is too low.
+Look into the event viewer (start->run 'Eventvwr.msc'->system). 
+If you see entries with the event ID 4226 you can try <a href="http://www.xp-antispy.org">xp-AntiSpy</a> 
+to raise the connection limit.
+</p>
 
+<div class="question">
+<p>G4. I’ve inserted 5 documents into my database, each containing XML data of the same structure.  
+I want to run an XQuery query against all of those documents.
+How can I do that?<p>
+</div>
 
+<p>If you have a number of documents that have similar structure (the structure must not be exactly the same) 
+and you want to query through the documents, you should store them in a collection. 
+Collections are optimized for querying through documents.
+<br><br>
+How to create and use collection see "Managing Collections" section of the "Sedna Programmer’s Guide".
+</p>
 
 
 <h2>Windows Specific Questions</h2>
@@ -84,43 +117,12 @@ Sometimes the following NOD32 configuring helps: go to "IMON module->SETUP->Adva
 <code>se_gov</code> process.
 </p>     
 
-<div class="question">
-<p>W2. I got the following error trying to create database (using <code>se_cdb</code>):
-
-<pre>     
-  SE4211
-  Failed to create the database Details: test (may be because there is no enough RAM)
-</pre>
-</p>
-</div>
-
-<p>
-First, try to create your database using option -bufs-num to set up lesser number 
-of buffers in main memory (see "Managing Databases" section in "Sedna Administration Guide").
-</p>
-<p>
-If this still does not help then possible solutions:
-</p>
-<p>
-1. Sedna servers are blocked by firewall (Windows XP SP2 built-in or third party installed).
-The solution is to appropriately adjust or turn firewall off.
-</p>
-<p>
-2. Windows XP SP2 limits half-open connections to a maximum of 10. 
-Some applications, like, for example, filesharing tools, can't unfold their capacity 
-when the maximum connection limit is too low.
-Look into the event viewer (start->run 'Eventvwr.msc'->system). 
-If you see entries with the event ID 4226 you can try <a href="http://www.xp-antispy.org">xp-AntiSpy</a> 
-to raise the connection limit.
-</p>
-
-
 <h2>Linux Specific Questions</h2>
 
 <div class="question">
 <p>L1.  I got the following error trying to run <code>se_gov</code>:
 <pre>
-SE1000
+ERROR SE1000
 Environment error. This error is caused by environment (operating system).
 Details: Failed to bind socket
 </pre>     
