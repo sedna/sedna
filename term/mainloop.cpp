@@ -3,6 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include <cctype>
 #include "common/sedna.h"
 
 #include "common/base.h"
@@ -607,8 +608,6 @@ int get_input_item(FILE* source, std::vector<char> & buffer)
 	int pos=0, error=0, ret=0;
 	bool is_terminator=false;
 	size_t sz;
-
-	using namespace std; /* probably fix isspace() on Red Hat */ 
 
 	if (interactive_mode) 
 	{
