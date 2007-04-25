@@ -1110,7 +1110,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 			int bs0 = intl_ftr.block_list_size;
 			if (bs > 0)
 				bs--;
-			if (PAGE_SIZE + size >= cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((bs)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE))
+			if (PAGE_SIZE + size >= cursor + (intl_ftr.block_list_map_size*PSTR_LONG_BLOCK_LIST_MAP_ENTRY_SIZE) + ((bs)*PSTR_LONG_BLOCK_LIST_ENTRY_SIZE) + PSTR_LONG_LAST_BLK_FTR_SIZE)
 			{
 				intl_copy_map_to_buf();
 
