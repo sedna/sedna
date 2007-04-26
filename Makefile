@@ -116,12 +116,27 @@ ifeq ($(DOCUMENTATION), 1)
 endif
 ifeq ($(JAVA_DRIVER), 1)
 	$(INSTALL) -Dp $(PERM3) driver/java/sednadriver.jar $(SEDNA_INSTALL)/sedna/driver/java/sednadriver.jar
-	$(INSTALL) -Dp $(PERM3) driver/java/doc/*.html $(SEDNA_INSTALL)/sedna/driver/java/doc/
 	$(INSTALL) -Dp $(PERM3) driver/java/doc/package-list $(SEDNA_INSTALL)/sedna/driver/java/doc/package-list
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/allclasses-frame.html $(SEDNA_INSTALL)/sedna/driver/java/doc/allclasses-frame.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/allclasses-noframe.html $(SEDNA_INSTALL)/sedna/driver/java/doc/allclasses-noframe.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/constant-values.html $(SEDNA_INSTALL)/sedna/driver/java/doc/constant-values.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/deprecated-list.html $(SEDNA_INSTALL)/sedna/driver/java/doc/deprecated-list.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/help-doc.html $(SEDNA_INSTALL)/sedna/driver/java/doc/help-doc.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/index.html $(SEDNA_INSTALL)/sedna/driver/java/doc/index.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/index-all.html $(SEDNA_INSTALL)/sedna/driver/java/doc/index-all.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/overview-tree.html $(SEDNA_INSTALL)/sedna/driver/java/doc/overview-tree.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/serialized-form.html $(SEDNA_INSTALL)/sedna/driver/java/doc/serialized-form.html
 	$(INSTALL) -Dp $(PERM3) driver/java/doc/stylesheet.css $(SEDNA_INSTALL)/sedna/driver/java/doc/stylesheet.css
-	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/*.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/DatabaseManager.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/DatabaseManager.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/DriverException.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/DriverException.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-frame.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-frame.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-summary.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-summary.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/package-tree.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/package-tree.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/ResultType.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/ResultType.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaConnection.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaConnection.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaSerializedResult.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaSerializedResult.html
+	$(INSTALL) -Dp $(PERM3) driver/java/doc/ru/ispras/sedna/driver/SednaStatement.html $(SEDNA_INSTALL)/sedna/driver/java/doc/ru/ispras/sedna/driver/SednaStatement.html
 	$(INSTALL) -Dp $(PERM3) driver/java/doc/resources/inherit.gif $(SEDNA_INSTALL)/sedna/driver/java/doc/resources/inherit.gif
-
 endif
 ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
