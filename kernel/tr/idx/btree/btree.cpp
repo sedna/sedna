@@ -9,6 +9,7 @@
 #include "tr/idx/btree/btintern.h"
 #include "tr/idx/btree/btpage.h"
 #include "tr/idx/btree/btstruct.h"
+#include "tr/idx/btree/buff.h"
 #include "tr/vmm/vmm.h"
 
 /* variables for debug */
@@ -300,5 +301,28 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	bt_nleaf_delete_key((char*)par_hdr,key_idx);
 	//VMM_SIGNAL_MODIFICATION(parent);
 	//recursive walthrough
-	if (!BT_KEY_NUM(par_hdr))  bt_drop_page(par_hdr);	 
+	if (!BT_KEY_NUM(par_hdr))
+	{
+		if (par_hdr->lmp!=XNULL)
+		{
+			//the case whe only one pointer left in non-leaf page
+			xptr grandpa=par_hdr->parent;//save parent
+			xptr left_unc=par_hdr->prev;//save left
+			xptr right_unc=par_hdr->next;//save right
+			xptr lmp=par_hdr->lmp;
+			CHECKP(lmp);
+			char*   dst = bt_tune_buffering(true, 4);
+			memcpy(dst,(char*)XADDR(lmp)+sizeof(vmm_sm_blk_hdr),PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
+			CHECKP(parent);
+			memcpy((char*)XADDR(parent)+sizeof(vmm_sm_blk_hdr),dst,PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
+			par_hdr->parent=grandpa;//restore
+			par_hdr->prev=left_unc;
+			par_hdr->next=right_unc;
+			VMM_SIGNAL_MODIFICATION(parent);
+			vmm_delete_block(lmp);
+
+		}
+		else
+			bt_drop_page(par_hdr);	 
+	}
 }
