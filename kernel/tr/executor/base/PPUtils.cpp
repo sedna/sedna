@@ -259,7 +259,7 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
         if (db_ent->type == dbe_document)
             throw USER_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
         else 
-            throw USER_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
+            throw USER_EXCEPTION2(FODC0002, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
 #ifdef SE_ENABLE_TRIGGERS
 	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root);
