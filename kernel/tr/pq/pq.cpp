@@ -17,6 +17,7 @@
 #include "common/utils.h"
 #include "tr/tr_utils.h"
 #include "chicken_panic.h"
+#include <cassert>
 
 #ifdef SE_MEMORY_TRACK
 #undef malloc
@@ -48,8 +49,44 @@ StmntsArray *prepare_stmnt(QueryType type, const char *stmnt)
 
 }
 
+//----------------------------------------------- 
+// DL: safer input string for Scheme part 
 
-static char *scm_input_string = NULL;
+// The forward declaration is important here, since there is no way of 
+// specifying the extern "C" declaration within a friend declaration 
+extern "C" char* get_scm_input_string();
+
+class Part_scheme_input
+{
+    friend char* get_scm_input_string();
+private:
+    static char *scm_input_string;
+    static bool was_allocated;
+private:
+    Part_scheme_input();  // Prohibits object creation 
+public:
+    static void allocate_input(const std::string &in_prototype);
+};
+
+char*   Part_scheme_input::scm_input_string = 0;
+bool    Part_scheme_input::was_allocated    = false;
+
+void Part_scheme_input::allocate_input(const std::string &in_prototype)
+{
+    // I call malloc here because this memory 
+    // will be freed later by Chicken (Andrey) 
+    scm_input_string =
+        static_cast<char*>(malloc(sizeof(char) * (in_prototype.size() + 1)));
+    if(!scm_input_string)
+    {
+       throw USER_EXCEPTION(SE4009);
+    }
+    ::strcpy(scm_input_string, in_prototype.c_str());
+    was_allocated = true;
+}
+
+//----------------------------------------------- 
+
 static char *scm_output_string = NULL;
 
 
@@ -64,12 +101,7 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     StmntsArray *st_array = se_new StmntsArray();
     script_struct st;
 
-    scm_input_string = (char*)malloc(query_in_LR.size() + 1); // I call malloc here because this memory
-                                                              // will be freed later by Chicken (Andrey)
-    if (scm_input_string == NULL)
-       throw USER_EXCEPTION(SE4009);
-    strcpy(scm_input_string, query_in_LR.c_str());
-
+    Part_scheme_input::allocate_input(query_in_LR);
 
     if (!Chicken_initialized)
     {
@@ -99,12 +131,9 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     }
 
     //d_printf2("Scheme part evaluation result: %s\n", scm_output_string);
-    
+
     string por(scm_output_string);
-
     free(scm_output_string);
-
-    scm_input_string = NULL;
     scm_output_string = NULL;
 
     scheme_list *qep_trees_in_scheme_lst = NULL;
@@ -144,8 +173,6 @@ StmntsArray* prepare_phys_repr(const string &query_in_LR, QueryType type)
     GET_TIME(&t2_scm);
     ADD_TIME(t_total_scm, t1_scm, t2_scm);
 
-
-
     return st_array;
 }
 
@@ -169,13 +196,7 @@ std::string prepare_module(FILE* f, std::string& out_module_name)
 
    StringVector v = parse_batch(TL_XQuery, plain_batch_text.c_str());
 
-
-   scm_input_string = (char*)malloc(v[0].size() + 1); // I call malloc here because this memory
-                                                                  // will be freed later by Chicken (Andrey)
-   if (scm_input_string == NULL)
-      throw USER_EXCEPTION(SE4009);
-
-   strcpy(scm_input_string, v[0].c_str());
+   Part_scheme_input::allocate_input(v.at(0));
 
    char query_string[128];
    memset(query_string, '\0', 128);
@@ -193,12 +214,8 @@ std::string prepare_module(FILE* f, std::string& out_module_name)
        throw USER_EXCEPTION2(SE4004, buf);
    }
 
-
     string pc_module(scm_output_string);
-
     free(scm_output_string);
-
-    scm_input_string = NULL;
     scm_output_string = NULL;
 
     scheme_list *qep_trees_in_scheme_lst = NULL;
@@ -261,11 +278,25 @@ int is_server_mode()				{ return server_mode; }
 int is_auth()                       { return auth; }
 int is_run_popt()					{ return run_popt; }
 
-char* get_scm_input_string()	    { return scm_input_string; }	// c-string* (will free memory)
+//extern "C"
+char* get_scm_input_string()
+{
+    assert(
+        Part_scheme_input::scm_input_string &&
+        Part_scheme_input::was_allocated &&
+        "Attempting to pass a badly allocated scm_input_string to Chicken"
+        );
+    const char *const res = Part_scheme_input::scm_input_string;
+    Part_scheme_input::scm_input_string = 0;
+    Part_scheme_input::was_allocated    = false;
+    // c-string* (will free memory) 
+    return const_cast<char*>(res);
+}
+
 void  set_scm_output_string(char* s)/*{ scm_output_string = s; }*/		// c-string (will be copied)
 {
     int size = strlen(s);
-    scm_output_string = (char*)malloc(size + 1);
+    scm_output_string = (char*)malloc(sizeof(char) * (size + 1));
     strcpy(scm_output_string, s);
 }
 } // end of extern "C"
