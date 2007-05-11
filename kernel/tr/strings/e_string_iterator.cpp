@@ -24,13 +24,19 @@ estr_iterator& estr_iterator::operator ++()
 		throw USER_EXCEPTION2(SE1003, "e_string_iterator run out of the string end");
 	else if (cur_p+1 >= (char*) XADDR(cur_block_xptr) + PAGE_SIZE)
 	{//jump to next block
+		chars_left--;
+		if (chars_left > 0)
+		{
+		CHECKP(cur_block_xptr);
 		xptr nblk = E_STR_BLK_HDR(cur_block_xptr)->nblk;
 		cur_block_xptr = nblk;
 		CHECKP(cur_block_xptr);
 		cur_block_str_start_p = (char*)XADDR(nblk)+ sizeof(e_str_blk_hdr);
 
 		cur_p = cur_block_str_start_p;
-		chars_left--;
+		}
+		else
+			cur_p++;
 	}
 	else {cur_p++; chars_left--;}
 	return *this; 
