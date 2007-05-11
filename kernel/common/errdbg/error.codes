@@ -1115,6 +1115,9 @@ sedna-err:SE4053
 sedna-err:SE4054
 
     Can't close directory
+sedna-err:SE4055
+
+    Can't create directory
 sedna-err:SE4060
 
     Can't create thread

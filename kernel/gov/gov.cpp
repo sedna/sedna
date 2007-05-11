@@ -102,7 +102,15 @@ int main(int argc, char** argv)
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
+
         fullfill_config_parameters(&cfg);
+
+#ifdef _WIN32
+#else
+        if ( uMkDir("/var/lib/sedna", NULL, __sys_call_error) == 0)
+           throw USER_EXCEPTION2(SE4055, "/var/lib/sedna");
+#endif
+
         pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);
 
         RenameLastSoftFaultDir(cfg.gov_vars.SEDNA_DATA);
