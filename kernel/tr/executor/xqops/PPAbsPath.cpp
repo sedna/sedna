@@ -196,15 +196,13 @@ bool PPAbsPath::determine_root()
     {
         tuple t(1);
         name.op->next(t);
-        if (t.is_eos()) return true;
+        if (t.is_eos()) return true;                                 ///If $uri is the empty sequence, the result is an empty sequence
 
-        tc = name.get(t);
-        if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-            throw USER_EXCEPTION(FODC0005);
-
+        tc= atomize(name.get(t));
+        if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
         name.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION(FODC0005);
-        
+        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
+
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
         db_ent->name = se_new char[tc.get_strlen_mem() + 1];
