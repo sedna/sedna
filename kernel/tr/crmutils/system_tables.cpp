@@ -115,13 +115,12 @@ void get_collection_full (xptr node,const char* title)
 
 }
 
-document_type get_document_type(counted_ptr<db_entity> db_ent)
+
+document_type get_document_type(const char* title, db_entity_type type)
 {
-    const char* title = db_ent->name;
-    
     if(title == NULL || title[0] != '$') return DT_NON_SYSTEM;
     
-    if(db_ent->type == dbe_document)
+    if(type == dbe_document)
     {
         if(!my_strcmp(title, "$documents"))       return DT_DOCUMENTS;
         if(!my_strcmp(title, "$collections"))     return DT_COLLECTIONS;
@@ -139,6 +138,11 @@ document_type get_document_type(counted_ptr<db_entity> db_ent)
     }
 
     return DT_NON_SYSTEM;
+}
+
+document_type get_document_type(counted_ptr<db_entity> db_ent)
+{
+    return get_document_type(db_ent->name, db_ent->type);
 }
 
 void get_version(xptr node,const char* title)

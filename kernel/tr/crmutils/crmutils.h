@@ -167,8 +167,14 @@ enum document_type {
     DT_SCHEMA_
 };
 
-/// The following method returns DT_NON_SYSTEM if given name is not one of the reserved.
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+/// The following methods return DT_NON_SYSTEM if given name is not one of the reserved.
 document_type get_document_type(counted_ptr<db_entity> db_ent);
+document_type get_document_type(const char* title, db_entity_type type);
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 schema_node* get_system_doc(document_type type, const char* title);
 void clear_temporary(void);
 
