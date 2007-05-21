@@ -252,7 +252,7 @@ if (persistent)
 	{	
     metadata_sem_down();
 	
-	if (search_metadata_cell(NULL,name.c_str())!=NULL)
+	if (search_metadata_cell(NULL,name.c_str())!=NULL || get_document_type(name.c_str(), dbe_document) != DT_NON_SYSTEM)
 	{
 	  metadata_sem_up();
 	  throw USER_EXCEPTION(SE2001);
@@ -293,7 +293,8 @@ else
 		CHECKP(nodex);
 		addTextValue(nodex,name_ptr,name.length());
 		VMM_SIGNAL_MODIFICATION(nodex);
-		hl_logical_log_document(node->indir,uri,NULL,true);							up_concurrent_micro_ops_number();
+		hl_logical_log_document(node->indir,uri,NULL,true);							
+		up_concurrent_micro_ops_number();
 	}	
 	return nodex;
 }
@@ -301,7 +302,7 @@ else
 schema_node *insert_collection(const char *collection_name)
 {
 	metadata_sem_down();
-	if (search_metadata_cell(collection_name,NULL)!=NULL)
+	if (search_metadata_cell(collection_name,NULL)!=NULL || get_document_type(collection_name, dbe_collection) != DT_NON_SYSTEM)
 	{
 		metadata_sem_up();	
 		throw USER_EXCEPTION(SE2002);

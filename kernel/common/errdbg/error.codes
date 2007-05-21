@@ -587,7 +587,7 @@ sedna-err:SE2008
     Attribute with the same name exists in parent
 sedna-err:SE2009
 
-   Size of text should be grater then zero
+   Size of text should be greater then zero
 sedna-err:SE2010
 
    Invalid result of the delete undeep argument: sequence contains non-persistent or document nodes
