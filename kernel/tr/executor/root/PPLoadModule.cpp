@@ -176,6 +176,10 @@ void PPLoadModule::execute()
             {
                 throw USER_EXCEPTION2(SE1073, module_name1.c_str());
             }
+            if(e.get_code() == SE2008)
+            {
+                throw USER_EXCEPTION2(SE2008, (std::string("Invalid module URI '") + module_name1 + "'").c_str());
+            }
             else
             {
                 throw;

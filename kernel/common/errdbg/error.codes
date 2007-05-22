@@ -584,7 +584,7 @@ sedna-err:SE2007
     Left sibling is not an attribute
 sedna-err:SE2008
 
-    Attribute with the same name exists in parent
+    Valid URI expected.
 sedna-err:SE2009
 
    Size of text should be greater then zero

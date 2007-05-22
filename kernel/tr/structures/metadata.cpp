@@ -13,6 +13,7 @@
 #include "tr/crmutils/crmutils.h"
 #include "tr/locks/locks.h"
 #include "tr/idx/indexes.h"
+#include "tr/executor/base/xs_uri.h"
 #ifdef SE_ENABLE_FTSEARCH
 #include "tr/ft/ft_index_data.h"
 #include "tr/updates/updates.h"
@@ -250,6 +251,11 @@ xptr insert_document(const char *uri,bool persistent)
 	char* name_ptr=NULL;
 if (persistent)
 	{	
+    
+  	bool valid = true;
+    Uri::check_constraints(name.c_str(), &valid, NULL);
+    if(!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid document name '") + name + "'").c_str());
+
     metadata_sem_down();
 	
 	if (search_metadata_cell(NULL,name.c_str())!=NULL || get_document_type(name.c_str(), dbe_document) != DT_NON_SYSTEM)
@@ -257,7 +263,7 @@ if (persistent)
 	  metadata_sem_up();
 	  throw USER_EXCEPTION(SE2001);
 	}
-	
+
 	down_concurrent_micro_ops_number();
 	sn_metadata_cell* mdc=(sn_metadata_cell*)scm_malloc(sizeof(sn_metadata_cell),true);
 	mdc->collection_name=NULL;
@@ -301,12 +307,18 @@ else
 
 schema_node *insert_collection(const char *collection_name)
 {
+	
+	bool valid = true;
+    Uri::check_constraints(collection_name, &valid, NULL);
+    if(!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid collection name '") + collection_name + "'").c_str());
+
 	metadata_sem_down();
 	if (search_metadata_cell(collection_name,NULL)!=NULL || get_document_type(collection_name, dbe_collection) != DT_NON_SYSTEM)
 	{
 		metadata_sem_up();	
 		throw USER_EXCEPTION(SE2002);
 	}
+	
 	down_concurrent_micro_ops_number();
 	sn_metadata_cell* mdc=(sn_metadata_cell*)scm_malloc(sizeof(sn_metadata_cell),true);
 	mdc->collection_name=(char*)scm_malloc(strlen(collection_name)+1,true);
@@ -326,10 +338,16 @@ schema_node *insert_collection(const char *collection_name)
 xptr insert_document_in_collection(const char *collection_name, const char *uri)
 {
 	string name=get_name_from_uri(uri);
+	
+	bool valid = true;
+    Uri::check_constraints(name.c_str(), &valid, NULL);
+    if(!valid) throw USER_EXCEPTION2(SE2008, (std::string("Invalid document name '") + name + "'").c_str());
+
 	if (find_document(collection_name,name.c_str())!=NULL)
 	{
 		throw USER_EXCEPTION(SE2004);
 	}
+
 	metadata_sem_down();
 	sn_metadata_cell* coll=NULL;
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* ptr = search_metadata_cell(collection_name,NULL);
