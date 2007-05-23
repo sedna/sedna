@@ -128,11 +128,19 @@ public interface SednaStatement {
 
 /**
  * Loads XML document as a stand-alone document into the Sedna database.
- * @param in some input stream to rad XML document from
+ * @param in some input stream to read XML document from
  * @param doc_name the name of the document in database
  * @throws DriverException, IOException in case of error
  */
     public void loadDocument(InputStream in, String doc_name)
+            throws DriverException, IOException;
+/**
+ * Loads XML document as a stand-alone document into the Sedna database.
+ * @param xmldoc XML document as a string
+ * @param doc_name the name of the document in database
+ * @throws DriverException, IOException in case of error
+ */
+    public void loadDocument(String xmldoc, String doc_name)
             throws DriverException, IOException;
 
 /**
@@ -166,6 +174,16 @@ public interface SednaStatement {
     public void loadDocument(InputStream in, String doc_name, String col_name)
             throws DriverException, IOException;
 
+/**
+ * Loads XML document into the collection of documents in Sedna database.
+ * @param xmldoc XML document as a string
+ * @param doc_name the name of the document in collection
+ * @param col_name the name of the collection
+ * @throws DriverException, IOException in case of error
+ */
+    public void loadDocument(String xmldoc, String doc_name, String col_name)
+            throws DriverException, IOException;
+    
     //~--- get methods --------------------------------------------------------
 /**
  * This method is used to obtain result data from when the query 

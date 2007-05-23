@@ -329,10 +329,7 @@ class SednaStatementImpl implements SednaStatement {
 
         byte query_bytes[] = queryText.getBytes();
 
-        for (int i = 0; i < queryText.length(); i++) {
-            msg.body[6 + i] = query_bytes[i];
-        }
-
+		System.arraycopy((Object) query_bytes, 0, (Object) msg.body, 6, queryText.length());
         NetOps.writeMsg(msg, outputStream);
         NetOps.readMsg(msg, bufInputStream);
 
@@ -347,9 +344,20 @@ class SednaStatementImpl implements SednaStatement {
         }
     }
 
+    public void loadDocument(String xmldoc, String doc_name)
+            throws DriverException, IOException {
+            	
+        loadDocument(new ByteArrayInputStream(xmldoc.getBytes("utf8")), doc_name);
+    }
+
     public void loadDocument(InputStream in, String doc_name, String col_name)
             throws DriverException, IOException {
         loadDocument(in, doc_name + "\" \"" + col_name);
+    }
+    
+    public void loadDocument(String xmldoc, String doc_name, String col_name)
+            throws DriverException, IOException {
+        loadDocument(new ByteArrayInputStream(xmldoc.getBytes("utf8")), doc_name + "\" \"" + col_name);
     }
 
     //~--- get methods --------------------------------------------------------
