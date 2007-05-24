@@ -45,8 +45,13 @@ utm getLocalTime()
     retval.utm_wday = tm_ptr->tm_wday;
     retval.utm_yday = tm_ptr->tm_yday;
     retval.utm_isdst = tm_ptr->tm_isdst;
+#ifndef __cygwin__
     retval.utm_zone = tm_ptr->tm_zone;
     retval.utm_gmtoff = tm_ptr->tm_gmtoff;
+#else
+	retval.utm_zone = 0;
+	retval.utm_gmtoff = 0;
+#endif
 #endif
 
     return retval;

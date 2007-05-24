@@ -6,6 +6,7 @@
 #ifndef _WIN32
 #include <netdb.h>
 #include <string.h>
+#include <sys/types.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

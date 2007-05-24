@@ -74,10 +74,14 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 
     return 0;
 #else
-    int res = 0;
+	/*	There is actually 2 incompatible strerror_r functions -
+		cannot safely rely on return value which is either integer
+		(nonzero indicates failure) or char pointer (NULL indicates
+		failure).
+	*/ 
     memset(buf, '\0', n);
-    res = strerror_r(errnum, buf, n);
-    if (res) strncpy(buf, "Failed to obtain error message", n - 1); 
+	strncpy(buf, "Failed to obtain error message", n - 1);
+    strerror_r(errnum, buf, n); 
     return 0;
 #endif
 }
