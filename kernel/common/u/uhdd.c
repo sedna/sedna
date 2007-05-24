@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #endif
 
+#if (defined(__cygwin__))
+#define HAVE_DEFAULT_LARGEFILE_FUNCTIONS
+#endif
 
 #include "common/u/uhdd.h"
 #include "common/errdbg/d_printf.h"

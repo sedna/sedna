@@ -23,26 +23,26 @@
 #    define d_flush()							el_debug_flush()
 #    define ASSERT								U_ASSERT
 #  else
-#    define d_printf1(s1)
-#    define d_printf2(s1, s2)
-#    define d_printf3(s1, s2, s3)
-#    define d_printf4(s1, s2, s3, s4)
-#    define d_printf5(s1, s2, s3, s4, s5)
-#    define d_printf6(s1, s2, s3, s4, s5, s6)
-#    define d_perror(s)
-#    define d_flush()
-#    define ASSERT(x)
+#    define d_printf1(s1)						0
+#    define d_printf2(s1, s2)					0
+#    define d_printf3(s1, s2, s3)				0
+#    define d_printf4(s1, s2, s3, s4)			0
+#    define d_printf5(s1, s2, s3, s4, s5)		0
+#    define d_printf6(s1, s2, s3, s4, s5, s6)	0
+#    define d_perror(s)							0
+#    define d_flush()							0
+#    define ASSERT(x)							0
 #  endif
 #else
-#  define d_printf1(s1)
-#  define d_printf2(s1, s2)
-#  define d_printf3(s1, s2, s3)
-#  define d_printf4(s1, s2, s3, s4)
-#  define d_printf5(s1, s2, s3, s4, s5)
-#  define d_printf6(s1, s2, s3, s4, s5, s6)
-#  define d_perror(s)
-#  define d_flush()
-#  define ASSERT(x)
+#  define d_printf1(s1)							0
+#  define d_printf2(s1, s2)						0
+#  define d_printf3(s1, s2, s3)					0
+#  define d_printf4(s1, s2, s3, s4)				0
+#  define d_printf5(s1, s2, s3, s4, s5)			0
+#  define d_printf6(s1, s2, s3, s4, s5, s6)		0
+#  define d_perror(s)							0
+#  define d_flush()								0
+#  define ASSERT(x)								0
 #endif
 
 #ifdef DEBUG_TRACE

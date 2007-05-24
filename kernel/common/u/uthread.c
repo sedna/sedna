@@ -64,15 +64,16 @@ uResVal uCreateThread(
 
 #ifdef _WIN32
 #else
-static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt, sys_call_error_fun fun)
+static void _suspend_thread_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
+	sys_call_error_fun fun=NULL;
     d_printf1("suspend\n");
     int sig = 0;
     sigset_t signalSet;
     if (sigfillset(&signalSet) == -1) sys_call_error("sigfillset");
     if (sigwait(&signalSet, &sig) != 0) sys_call_error("sigwait");
 }
-static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt, sys_call_error_fun fun)
+static void _resume_thread_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
     d_printf1("resume\n");
 }

@@ -41,7 +41,7 @@
 #endif
 
 
-#if (defined(DARWIN) || defined(FreeBSD) || defined(LINUX))
+#if (defined(DARWIN) || defined(FreeBSD) || defined(LINUX) || defined(__cygwin__))
 /* don't have spinlocks */
 #else
 #define HAVE_SPINLOCKS
@@ -74,14 +74,14 @@
 #endif
 
 
-#if (defined(DARWIN) || defined(FreeBSD))
+#if (defined(DARWIN) || defined(FreeBSD) || defined(__cygwin__))
 /* don't have /proc */
 #else
 #define HAVE_PROC
 #endif
 
 
-#if (!defined(WIN32))
+#if (!defined(WIN32) && !defined(__cygwin__))
 #if (defined(DARWIN) || defined(FreeBSD))
 /* don't have /proc/?/exe */
 #else
@@ -144,7 +144,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
+#ifndef __cygwin__
+
 #include <ucontext.h>
+#endif
 #include <setjmp.h>
 #include <fcntl.h>
 #include <math.h>

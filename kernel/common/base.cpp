@@ -225,7 +225,8 @@ global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, cha
 
 #define UNIX_GN_INIT2(c)	c = os_primitives_id_min_bound + _##c + id;
 
-#define UNIX_GN_INIT3(c)	if (_##c != NULL)														\
+
+#define UNIX_GN_INIT3(c)	if ((char*)(_##c) != NULL)														\
                                 {																\
                      		    c = new char[128+sizeof(_##c)];													\
                                     strcpy((char*)c, _##c);\
