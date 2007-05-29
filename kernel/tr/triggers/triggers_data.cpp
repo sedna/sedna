@@ -269,7 +269,8 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
      //executing built actions
      try
      {
-         for(int i = 0; i < mapIter->second.size()-1; i++)
+         int i = 0;
+         for(i = 0; i < mapIter->second.size()-1; i++)
          {
           	qep_tree = mapIter->second.at(i).action_qep_tree;
             qep_parameters = &(mapIter->second.at(i).parameters);

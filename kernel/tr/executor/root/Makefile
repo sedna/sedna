@@ -19,4 +19,8 @@ ifeq ($(ENABLE_DTSEARCH),1)
 OBJS  +=   PPDropFtIndex$(OBJ_EXT) PPCreateFtIndex$(OBJ_EXT)
 endif
 
+ifeq ($(ENABLE_TRIGGERS),1)
+OBJS  +=   PPDropTrigger$(OBJ_EXT) PPCreateTrigger$(OBJ_EXT)
+endif
+
 include $(PP)/Makefile.pseudolib

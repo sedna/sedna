@@ -6,11 +6,11 @@
 #ifndef _PPCREATETRIGGER_H
 #define _PPCREATETRIGGER_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPathOnSchema.h"
-#include "triggers_data.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/triggers/triggers_data.h"
 
 trigger_event symb2trigger_event(const char* str);
 trigger_time symb2trigger_time(const char* str);
@@ -30,6 +30,7 @@ class PPCreateTrigger : public PPUpdate
     inserting_node innode;
     PathExpr *path_to_parent;
     PPOpIn trigger_name;
+    dynamic_context *cxt;
 
     // obtained parameters and local data
     schema_node *root;
@@ -44,7 +45,8 @@ public:
                     PathExpr *_trigger_path_,
                     char* _granularity_,
                     scheme_list* _action_,
-                    PPOpIn _trigger_name_);
+                    PPOpIn _trigger_name_,
+    				dynamic_context *_cxt_);
     PPCreateTrigger(char* _time_,
                     char* _event_,
                     counted_ptr<db_entity> _db_ent_,
@@ -54,7 +56,8 @@ public:
                     char* _inserting_name_,
         			int _inserting_type,
                     PathExpr *_path_to_parent_,
-                    PPOpIn _trigger_name_);
+                    PPOpIn _trigger_name_,
+    				dynamic_context *_cxt_);
     ~PPCreateTrigger();
 };
 

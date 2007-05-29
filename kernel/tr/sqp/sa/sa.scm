@@ -366,9 +366,9 @@
      ;-------------------
      ; 2.14 Distinct document order
      ((ddo)
-      (sa:analyze-ddo expr vars funcs ns-binding default-ns))
+      (sa:analyze-ddo expr vars funcs ns-binding default-ns uri modules))
      ((ordered unordered)
-      (sa:ordered-unordered expr vars funcs ns-binding default-ns))
+      (sa:ordered-unordered expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
      ; 3.3. XPath
      ((congen1)
@@ -1171,6 +1171,13 @@
               (sa:proper-EncName? (caddr (cadr (sa:op-args expr))))
               (cl:signal-user-error XQST0087
                                     (caddr (cadr (sa:op-args expr)))))))
+           (or
+            (null? new-prlg)  ; the first member
+            (cl:signal-user-error
+             XPST0003
+             (string-append
+              "XQuery version declaration is not the first declaration in "
+              "XQuery main module")))
            (loop new-prlg funcs triples
                  ns-binding default-elem-ns default-func-ns modules vars
                  (cdr prolog))))
@@ -1220,17 +1227,17 @@
                      " and "
                      (caddr 
                       (car (sa:op-args expr)))))))
-             ((not
-               (string=?
-                (caddr  ; collation value
-                 (car (sa:op-args expr)))                    
-                "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
-              ; DL: temporary stub
-              ; "the value specified by a default collation declaration
-              ; is not present in statically known collations"
-              (cl:signal-user-error XQST0038
-                                    (caddr
-                                     (car (sa:op-args expr)))))
+;             ((not
+;               (string=?
+;                (caddr  ; collation value
+;                 (car (sa:op-args expr)))                    
+;                "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
+;              ; DL: temporary stub
+;              ; "the value specified by a default collation declaration
+;              ; is not present in statically known collations"
+;              (cl:signal-user-error XQST0038
+;                                    (caddr
+;                                     (car (sa:op-args expr)))))
              (else
               (loop (cons expr new-prlg)
                     funcs triples
@@ -3505,13 +3512,12 @@
              (and
               (or
                (not
-                (and
-                 (eq? item-type '!xs!QName)
-                 (pair? (car (sa:op-args expr)))
-                 (not
-                  (or
-                   (eq? (sa:op-name (car (sa:op-args expr))) 'const)
-                   (let ((after-analysis (caar args)))
+                (let ((after-analysis (caar args)))
+                  (and
+                   (pair? after-analysis)
+                   (not
+                    (or
+                     (eq? (sa:op-name after-analysis) 'const)
                      (and
                       (eq? (sa:op-name after-analysis) 'cast)
                       (equal?
@@ -3527,15 +3533,23 @@
                   (string-append
                    (symbol->string (sa:op-name expr))
                    " as xs:QName for non-constant expression"))))
+              (sa:cast-as-qname
+               (cons (sa:op-name expr) (map car args))
+               ; Was: expr
+               ns-binding
+               (car default-ns)
+               )))
+            (else
               (cons (cons (sa:op-name expr)
                           (map car args))
-                    (return-type-lambda args)))))))))))
+                    (return-type-lambda args))))))))))
 
 (define sa:analyze-cast (sa:cast-helper
                          cdar  ; type of the subexpr
                          ))
 
 ; Castable
+; A lot of common code with sa:cast-helper
 ; TODO: analyze single type instead of item type
 (define (sa:analyze-castable expr vars funcs ns-binding default-ns uri modules)
   (and
@@ -3617,7 +3631,6 @@
            (cons (cons (sa:op-name expr)  ; == 'castable
                        (map car args))
                  sa:type-atomic))))))))
-
 
 ; Treat
 (define (sa:analyze-treat expr vars funcs ns-binding default-ns uri modules)
@@ -3759,12 +3772,12 @@
              (cdr seq-res)))))))
 
 ; Ordered and unordered expressions
-(define (sa:ordered-unordered expr vars funcs ns-binding default-ns)
+(define (sa:ordered-unordered expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((seq-res
           (sa:analyze-expr (car (sa:op-args expr))
-                           vars funcs ns-binding default-ns)))
+                           vars funcs ns-binding default-ns uri modules)))
      (and
       seq-res
       (cons (list (sa:op-name expr)             
@@ -5106,15 +5119,15 @@
          (let ((v1 (caddr c1))  ; value of the first constant
                (v2 (caddr c2)))
            (cond
-             ((and 
-               (= (length (sa:op-args expr)) 1)
-               (member v1 '("empty-greatest" "empty-least" "default")))
-              ; The first argument omitted
-              (cons
-               (list (sa:op-name expr)  ; == 'ordermodifier
-                     '(const (type !xs!string) "asc")
-                     c1)
-               sa:type-any))
+;             ((and 
+;               (= (length (sa:op-args expr)) 1)
+;               (member v1 '("empty-greatest" "empty-least" "default")))
+;              ; The first argument omitted
+;              (cons
+;               (list (sa:op-name expr)  ; == 'ordermodifier
+;                     '(const (type !xs!string) "asc")
+;                     c1)
+;               sa:type-any))
              ((not (member v1 '("asc" "desc")))
               (cl:signal-input-error SE5061 v1))
              ((not (member v2 '("empty-greatest" "empty-least" "default")))

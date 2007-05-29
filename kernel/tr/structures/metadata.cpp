@@ -15,11 +15,11 @@
 #include "tr/idx/indexes.h"
 #include "tr/executor/base/xs_uri.h"
 #ifdef SE_ENABLE_FTSEARCH
-#include "ft_index_data.h"
-#include "updates.h"
+#include "tr/ft/ft_index_data.h"
+#include "tr/updates/updates.h"
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-#include "triggers.h"
+#include "tr/triggers/triggers.h"
 #endif
 
 using namespace std;
