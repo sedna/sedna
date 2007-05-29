@@ -411,7 +411,7 @@ void apply_after_statement_triggers()
     // clear updates trackings - after statement triggers are evaluated out of the update operation!
     clear_nested_updates_track_map();
     
-    for(i=local_after_triggers.begin(); i!=local_after_triggers.end(); i++)
+    for(t_triggers_set::iterator i=local_after_triggers.begin(); i!=local_after_triggers.end(); i++)
     {
         ((trigger_cell*)(*i))->execute_trigger_action(XNULL, XNULL, XNULL);
     }

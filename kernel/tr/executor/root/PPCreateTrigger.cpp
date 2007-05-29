@@ -3,11 +3,11 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPCreateTrigger.h"
-#include "PPUtils.h"
-#include "PPBase.h"
+#include "tr/executor/root/PPCreateTrigger.h"
+#include "tr/executor/base/PPUtils.h"
+#include "tr/executor/base/PPBase.h"
 
 using namespace std;
 
@@ -62,10 +62,12 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
                                  PathExpr *_trigger_path_,
                                  char* _granularity_,
                                  scheme_list* _action_,
-                                 PPOpIn _trigger_name_) :	trigger_path(_trigger_path_),
+                                 PPOpIn _trigger_name_,
+    						 	 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
                                                             db_ent(_db_ent_),
                                                             trigger_name(_trigger_name_),
-    														action(_action_)
+    														action(_action_),
+    														cxt(_cxt_)
 {
 	time   = symb2trigger_time(_time_);
     event  = symb2trigger_event(_event_);
@@ -82,11 +84,13 @@ PPCreateTrigger::PPCreateTrigger(char* _time_,
 							     char* _inserting_name_,
  			   					 int _inserting_type_,
 			                     PathExpr *_path_to_parent_,
-                                 PPOpIn _trigger_name_) :	trigger_path(_trigger_path_),
+                                 PPOpIn _trigger_name_,
+    							 dynamic_context *_cxt_) :	trigger_path(_trigger_path_),
                                                             db_ent(_db_ent_),
                                                             trigger_name(_trigger_name_),
     														path_to_parent(_path_to_parent_),
-       														action(_action_)
+       														action(_action_),
+    														cxt(_cxt_)
 {
 	time   = symb2trigger_time(_time_);
     event  = symb2trigger_event(_event_);
@@ -99,18 +103,23 @@ PPCreateTrigger::~PPCreateTrigger()
 {
     delete trigger_name.op;
     trigger_name.op = NULL;
+    
+    delete cxt;
+    cxt = NULL;
 }
 
 void PPCreateTrigger::open()
 {
     root = get_schema_node(db_ent, "Unknown entity passed to PPCreateTrigger");
     trigger_name.op->open();
+    dynamic_context::global_variables_open();
 }
 
 void PPCreateTrigger::close()
 {
     trigger_name.op->close();
     root = NULL;
+    dynamic_context::global_variables_close();
 }
 
 

@@ -82,10 +82,7 @@ ifeq ($(SQL_CONNECTION),1)
 OBJS += PPSQL$(OBJ_EXT)  \
         PPSQLODBC$(OBJ_EXT)
 endif
-ifeq ($(ENABLE_TRIGGERS),1)
-OBJS += PPCreateTrigger$(OBJ_EXT) \
-        PPDropTrigger$(OBJ_EXT)	
-endif
+
 
 
 include $(PP)/Makefile.pseudolib

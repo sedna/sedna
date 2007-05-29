@@ -6,11 +6,11 @@
 #ifndef _PPDROPTRIGGER_H
 #define _PPDROPTRIGGER_H
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPBase.h"
-#include "XPathOnSchema.h"
-#include "triggers_data.h"
+#include "tr/executor/base/PPBase.h"
+#include "tr/executor/base/XPathOnSchema.h"
+#include "tr/triggers/triggers_data.h"
 
 class PPDropTrigger : public PPUpdate
 {
@@ -18,12 +18,14 @@ class PPDropTrigger : public PPUpdate
     PathExpr *trigger_path;
 //	ft_index_type index_type;
     PPOpIn trigger_name;
+    dynamic_context *cxt;
+    
 public:
     void open();
     void close();
     void execute();
 
-    PPDropTrigger(PPOpIn _trigger_name_);
+    PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_);
 
     ~PPDropTrigger();
 };

@@ -3,12 +3,12 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-#include "sedna.h"
+#include "common/sedna.h"
 
-#include "PPDropTrigger.h"
-#include "PPUtils.h"
+#include "tr/executor/root/PPDropTrigger.h"
+#include "tr/executor/base/PPUtils.h"
 
-PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_) :	trigger_name(_trigger_name_)
+PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_) :	trigger_name(_trigger_name_), cxt(_cxt_)
 {
 }
 
@@ -17,6 +17,9 @@ PPDropTrigger::~PPDropTrigger()
 {
     delete trigger_name.op;
     trigger_name.op = NULL;
+
+    delete cxt;
+    cxt = NULL;    
 }
 
 void PPDropTrigger::open()

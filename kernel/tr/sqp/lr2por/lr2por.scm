@@ -1476,8 +1476,6 @@
                               l2p:any-lr-node2por
                               (list-ref node 5)))
                      (name (l2p:any-lr-node2por (car node))))
-                ;(pp (cadddr node))
-                ;(pp AbsPath)
                 `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
                                   ,time
                                   ,event
