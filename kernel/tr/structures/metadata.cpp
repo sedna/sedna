@@ -200,7 +200,7 @@ void delete_collection(const char *collection_name)
 			ftsci=coll->sc_ft_idx;
 		}
 #endif
-#ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_TRIGGERS
 	    schema_trigger_cell* tcell=coll->sc_triggers;
 		while (tcell!=NULL)
 		{
