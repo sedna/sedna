@@ -4913,7 +4913,30 @@
 ;-------------------------------------------------
 ; Trigger manage operations
 
-(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
+(define (sa:trigger-before-insert-for-each-node? time event granularity)
+  (if (and (string=? (caddar granularity) "NODE") (and (string=? (caddar event) "INSERT") (string=? (caddar time) "BEFORE")))
+      #t
+      #f))  
+  
+(define (sa:prepare-trigger-path-to-parent expr)
+  `(parent
+    ,expr
+    (type (node-test)))
+  ;(list 'ddo (list 'parent expr '(type (node-test))))
+  )
+
+(define (sa:prepare-trigger-leaf-name expr)
+  (let ((leaf (caddr (cadr (cadr (cadr (cadr (cdadr expr))))))))
+    (if (list? leaf)
+        (cadr leaf)
+        (symbol->string leaf))))
+
+(define (sa:prepare-trigger-leaf-type expr)
+  (if (eq? (caadr (cadr (cdadr expr))) 'elem-test)
+      0
+      1))
+
+(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns)
   (and
    (sa:assert-num-args expr 6)
    (if
@@ -4928,7 +4951,7 @@
           (third  (sa:analyze-string-const (caddr (sa:op-args expr))
                                            vars funcs ns-binding default-ns))
           (fourth (sa:analyze-expr (cadddr (sa:op-args expr))
-                                   vars funcs ns-binding default-ns uri modules))
+                                   vars funcs ns-binding default-ns))
           (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
                                            vars funcs ns-binding default-ns))
           (sixth  (map
@@ -4944,7 +4967,7 @@
                           (apply sa:analyze-update x)
                           sa:type-nodes))
                        sa:analyze-expr)
-                      statement vars funcs ns-binding default-ns uri modules))
+                      statement vars funcs ns-binding default-ns))
                    (list-ref (sa:op-args expr) 5))))
       (and
        first second third fourth fifth
@@ -4969,23 +4992,42 @@
           (cl:signal-user-error SE5076
                                 (caddr (car fifth))))
          (else
-          (list
-           (sa:op-name expr)  ; operation name
-           (car first)  ; remove argument type
-           (car second)
-           (car third)
-           (sa:structural-absolute-xpath? (car fourth))
-           (car fifth)
-           (map car sixth)
-           ))))))))
+          (if (sa:trigger-before-insert-for-each-node? second third fifth)
+             (list
+               (sa:op-name expr)  ; operation name
+               (car first)  ; remove argument type
+               (car second)
+               (car third)
+               (and
+                (sa:structural-absolute-xpath? (car fourth))
+                (car fourth))
+               (car fifth)
+               (map car sixth)
+               (sa:prepare-trigger-leaf-name (car fourth))
+               (sa:prepare-trigger-leaf-type (car fourth))
+               (sa:prepare-trigger-path-to-parent (car fourth))
+               )
+              (begin
+                (display (car fourth))
+              (list
+               (sa:op-name expr)  ; operation name
+               (car first)  ; remove argument type
+               (car second)
+               (car third)
+               (and
+                (sa:structural-absolute-xpath? (car fourth))
+                (car fourth))
+               (car fifth)
+               (map car sixth)
+               ))))))))))
 
 ; Clone from sa:analyze-manage-document
 (define (sa:analyze-trigger-drop
-         expr vars funcs ns-binding default-ns uri modules)
+         expr vars funcs ns-binding default-ns)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns uri modules
+          (sa:propagate expr vars funcs ns-binding default-ns
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))

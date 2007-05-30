@@ -1483,16 +1483,7 @@
                                   ,abs-path
                                   ,granularity
                                   ,action
-                                  ,name
-                                  ,@(if (= (length node) 9)  ; optional parameters presented
-                                          (list (list-ref node 6)
-                                                (list-ref node 7)
-                                                (caddr
-                                                (l2p:findPPAbsPath
-                                                 ;l2p:any-lr-node2por
-                                                 (list-ref node 8))
-                                                                     ))
-                                          '()))))
+                                  ,name)))
              
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!

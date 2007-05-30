@@ -12,6 +12,17 @@ static t_triggers_set after_statement_triggers;
 
 typedef std::map< schema_node*, std::vector<trigger_cell*> > node_triggers_map;
 
+xptr triggers_test(xptr new_var, xptr where_var, const char* name, t_item node_type)
+{
+    if(name==NULL)
+    {
+        name=GETNAME(GETSCHEMENODEX(new_var));
+		CHECKP(where_var);
+        name=GETNAME(GETSCHEMENODEX(new_var));
+		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+    }
+	return new_var;
+}
 xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name, t_item node_type)
 {
    	if (auth == BLOCK_AUTH_CHECK) return new_var;
@@ -22,8 +33,10 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name
 	if (IS_TMP_BLOCK(where_var)) return new_var;
     
     if(name==NULL)
-    {
+    {   
+        CHECKP(new_var);
         name=GETNAME(GETSCHEMENODEX(new_var));
+		CHECKP(where_var);
 		node_type = GETTYPE(GETSCHEMENODEX(new_var));
     }
 
@@ -44,7 +57,7 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name
             trc = find_trigger_for_newly_inserted_node(scm_parent_node, name, node_type, &treated_triggers);
         else
             trc = find_trigger_for_node(scm_parent_node->get_child(NULL,name, node_type), TRIGGER_INSERT_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
-        if(trc == NULL)
+		if(trc == NULL)
            return new_var;
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
 		name=GETNAME(GETSCHEMENODEX(new_var));
@@ -424,6 +437,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger
          switch (event){
              case TRIGGER_INSERT_EVENT:
                   return apply_before_insert_triggers(new_var, where_var, new_name, new_type);
+//                  return triggers_test(new_var, where_var, new_name, new_type);
                   
              case TRIGGER_DELETE_EVENT:
                   return apply_before_delete_triggers(old_var);

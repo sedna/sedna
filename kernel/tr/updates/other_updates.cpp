@@ -78,10 +78,11 @@ void rename(PPOpIn arg,const char* name)
 		xptr parent=removeIndirection(desc->pdsc);
 		CHECKP(node);
 #ifdef SE_ENABLE_TRIGGERS
-        if (apply_per_node_triggers(XNULL, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT, name, type) == XNULL)
-    		return;
-        if (apply_per_node_triggers(XNULL, node, parent, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
-    		return;
+// add here triggers on RENAME !!!
+//        if (apply_per_node_triggers(XNULL, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT, name, type) == XNULL)
+//    		return;
+//        if (apply_per_node_triggers(XNULL, node, parent, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
+//    		return;
 #endif
         
 		switch(type)
