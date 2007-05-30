@@ -4936,7 +4936,7 @@
       0
       1))
 
-(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns)
+(define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 6)
    (if
@@ -5023,11 +5023,11 @@
 
 ; Clone from sa:analyze-manage-document
 (define (sa:analyze-trigger-drop
-         expr vars funcs ns-binding default-ns)
+         expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
    (let ((new
-          (sa:propagate expr vars funcs ns-binding default-ns
+          (sa:propagate expr vars funcs ns-binding default-ns uri modules
                         'sa:atomic  ; dummy
                         )))
      (and new (car new)))))
