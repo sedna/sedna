@@ -60,8 +60,8 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name
 		if(trc == NULL)
            return new_var;
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
-		name=GETNAME(GETSCHEMENODEX(new_var));
 		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+        name=GETNAME(GETSCHEMENODEX(new_var));
         treated_triggers.insert(trc);
     }
 }
