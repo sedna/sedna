@@ -43,22 +43,22 @@ void create_db(__int64 data_file_max_size,
     USECURITY_ATTRIBUTES *sa;	
     if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
     
-    string data_file_name = string(db_files_path) + string(db_name) + ".data";
+    string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
     data_file_handler = uCreateFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
+    string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
     tmp_file_handler = uCreateFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    string ph_file_name = string(db_files_path) + string(db_name) + ".ph";
+    string ph_file_name = string(db_files_path) + string(db_name) + ".seph";
     UFile ph_file_handler = uCreateFile(ph_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
+    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
     UFile ph_bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (ph_bu_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
@@ -186,7 +186,7 @@ void create_phys_log(int phys_log_size)
   UFile phys_log_handle;
   USECURITY_ATTRIBUTES *sa;
   
-  string phys_log_file_name = string(db_files_path) + string(db_name) + ".plog";
+  string phys_log_file_name = string(db_files_path) + string(db_name) + ".seplog";
 
   if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
   //create phys log file

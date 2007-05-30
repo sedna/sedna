@@ -36,7 +36,7 @@ int main (int argc, char** argv)
       d_printf1("OK\n");
 
       d_printf1("Initializing PH...");
-      string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".ph";
+      string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
       if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR))
           throw USER_EXCEPTION(SE4605);
       d_printf1("OK\n");

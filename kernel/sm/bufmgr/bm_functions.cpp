@@ -119,12 +119,12 @@ void _bm_release_buffer_pool()
 void bm_startup() throw (SednaException)
 {
     // open data and tmp files
-    string data_file_name = string(db_files_path) + string(db_name) + ".data";
+    string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
 
-    string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
+    string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
@@ -180,7 +180,7 @@ void bm_startup() throw (SednaException)
     if (indirection_table_free_entry == NULL) 
         throw USER_EXCEPTION2(SE4023, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
 
-    string ph_file_name = string(db_files_path) + string(db_name) + ".ph";
+    string ph_file_name = string(db_files_path) + string(db_name) + ".seph";
     if (pers_open(ph_file_name.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, 
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
@@ -256,10 +256,10 @@ void bm_shutdown() throw (SednaException)
 
 
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4043, ".data file");
+        throw USER_EXCEPTION2(SE4043, ".sedata file");
 
     if (uCloseFile(tmp_file_handler, __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4043, ".tmp file");
+        throw USER_EXCEPTION2(SE4043, ".setmp file");
     d_printf1("Close database files: complete\n");
 
     tr_info_map::iterator it;

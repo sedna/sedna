@@ -45,11 +45,11 @@ bool plmgr_core::create_phys_log(string DbFilesPath, int _phys_log_size_, int& s
  
   string log_file_name;
   #ifndef PHYS_LOG_TEST 
-  log_file_name = string(DbFilesPath) + string(db_name) + ".plog";
+  log_file_name = string(DbFilesPath) + string(db_name) + ".seplog";
   #endif
 
   #ifdef PHYS_LOG_TEST
-  log_file_name = "x.plog";
+  log_file_name = "x.seplog";
   #endif
 
   //init file handler 
