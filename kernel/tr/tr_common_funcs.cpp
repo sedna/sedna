@@ -41,7 +41,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("OK\n");
 
    d_printf1("Initializing PH...");
-   string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".ph";
+   string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
    if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
       throw USER_EXCEPTION(SE4605);
    is_ph_inited = true;
@@ -77,7 +77,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("OK\n");
 
    d_printf1("Initializing high level physical log...");
-   hl_phys_log_on_session_begin(log_files_path + string(db_name) + string(".plog"));
+   hl_phys_log_on_session_begin(log_files_path + string(db_name) + string(".seplog"));
    d_printf1("OK\n");
 
    d_printf1("Initializing logical log...");

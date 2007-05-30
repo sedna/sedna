@@ -399,8 +399,8 @@ void flush_ph()
 
 void backup_ph()
 {
-    string ph_file_name    = string(db_files_path) + string(db_name) + ".ph";
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
+    string ph_file_name    = string(db_files_path) + string(db_name) + ".seph";
+    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION2(SE4049, (ph_file_name + " to " + ph_bu_file_name).c_str());

@@ -104,7 +104,7 @@ int main (int argc, char** argv)
       d_printf1("OK\n");
 
       d_printf1("Initializing PH...");
-      string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".ph";
+      string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
       if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
           throw USER_EXCEPTION(SE4605);
       d_printf1("OK\n");
@@ -124,7 +124,7 @@ int main (int argc, char** argv)
       d_printf1("OK\n");
 
       d_printf1("Initializing high level physical log...");
-      string phys_log_file_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name + ".plog";
+      string phys_log_file_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name + ".seplog";
       hl_phys_log_init(phys_log_file_path);
       d_printf1("OK\n");
 

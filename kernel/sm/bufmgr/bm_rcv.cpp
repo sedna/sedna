@@ -18,7 +18,7 @@ using namespace std;
 void bm_rcv_init()
 {
     // open data file
-    string data_file_name = string(db_files_path) + string(db_name) + ".data";
+    string data_file_name = string(db_files_path) + string(db_name) + ".sedata";
     data_file_handler = uOpenFile(data_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (data_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, data_file_name.c_str());
@@ -28,7 +28,7 @@ void bm_rcv_release()
 {
     // close data file
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
-        throw USER_EXCEPTION2(SE4043, ".data file");
+        throw USER_EXCEPTION2(SE4043, ".sedata file");
 }
 
 void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_size)
@@ -82,7 +82,7 @@ void bm_rcv_tmp_file()
 {
     // truncate tmp file up to zero size
     // open tmp file
-    string tmp_file_name = string(db_files_path) + string(db_name) + ".tmp";
+    string tmp_file_name = string(db_files_path) + string(db_name) + ".setmp";
     tmp_file_handler = uOpenFile(tmp_file_name.c_str(), 0, U_WRITE, U_WRITE_THROUGH, __sys_call_error);
     if (tmp_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION2(SE4042, tmp_file_name.c_str());
@@ -110,8 +110,8 @@ void bm_rcv_tmp_file()
 
 void bm_rcv_ph(bool ph_bu_to_ph)
 {
-    string ph_file_name    = string(db_files_path) + string(db_name) + ".ph";
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.bu";
+    string ph_file_name    = string(db_files_path) + string(db_name) + ".seph";
+    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
 
     if (ph_bu_to_ph)
     {
