@@ -5,6 +5,7 @@
 
 
 #include "common/u/usem.h"
+#include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
 
 ///////////////////////////////////////////////////////////////////////////////
