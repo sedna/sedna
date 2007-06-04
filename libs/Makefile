@@ -99,10 +99,10 @@ else
 chicken/configure: chicken/chicken.h
 
 chicken/Makefile: chicken/configure
-	export CFLAGS='$(CFLAGS) -fexceptions'; \
-	export LDFLAGS='$(LDFLAGS) -fexceptions'; \
-	export CPPFLAGS='$(CPPFLAGS) -fexceptions'; \
-	export CXXFLAGS='$(CXXFLAGS) -fexceptions'; \
+	export CFLAGS='-fexceptions'; \
+	export LDFLAGS='-fexceptions'; \
+	export CPPFLAGS='-fexceptions'; \
+	export CXXFLAGS='-fexceptions'; \
 	cd chicken; \
 	./configure --disable-shared
 
