@@ -1,0 +1,5 @@
+include_directories (. ../driver/c) 
+add_subdirectory (common)
+add_subdirectory (gov)
+add_subdirectory (sm)
+add_subdirectory (tr)
