@@ -126,6 +126,7 @@ int main(int argc, char **argv)
 
 
         elog(EL_LOG, ("Request for SM shutdown satisfied"));
+        event_logger_release();
 
 end:
         close_gov_shm(gov_mem_dsc, gov_shm_pointer);
