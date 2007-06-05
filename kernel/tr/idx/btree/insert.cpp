@@ -48,6 +48,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     shft    heap_buf1, heap_buf2;
     char    *dst = NULL, *src = NULL;
     int     i;
+	xptr        next_for_rpg;
 
     /* prepare the left-hand page */
     dst = bt_tune_buffering(true, key_size);
@@ -88,9 +89,10 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
         for (i = split_idx; i < key_num; i++) bt_buffer_bigptr(pg, src, dst);
     }
     heap_buf2 = bt_buffer_heap_shft();
-
+	next_for_rpg = BT_NEXT(pg);
     /* copy buffers to the pages and actualize headers */
     memcpy(pg, buf1, PAGE_SIZE);
+	
     (*BT_NEXT_PTR(pg)) = rpg;
     (*BT_KEY_NUM_PTR(pg)) = split_idx;
     (*BT_HEAP_PTR(pg)) = heap_buf1;
@@ -104,7 +106,31 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     (*BT_LMP_PTR(rpg_addr)) = XNULL;
     (*BT_KEY_NUM_PTR(rpg_addr)) = key_num - split_idx;
     (*BT_HEAP_PTR(rpg_addr)) = heap_buf2;
-    VMM_SIGNAL_MODIFICATION(rpg);
+	(*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
+	if (BT_IS_CLUS_HEAD(rpg_addr))
+	{
+		VMM_SIGNAL_MODIFICATION(rpg);
+		CHECKP(pg_xptr);
+		(*BT_IS_CLUS_PTR(pg))=false;
+		(*BT_IS_CLUS_HEAD_PTR(pg))=false;
+		(*BT_IS_CLUS_TAIL_PTR(pg))=false;    
+		VMM_SIGNAL_MODIFICATION(pg_xptr);
+	}
+	else
+	{
+		(*BT_IS_CLUS_PTR(rpg_addr))=false;
+		(*BT_IS_CLUS_HEAD_PTR(rpg_addr))=false;
+		(*BT_IS_CLUS_TAIL_PTR(rpg_addr))=false;    
+		VMM_SIGNAL_MODIFICATION(rpg);
+	}
+	if (next_for_rpg!=XNULL)
+	{
+		CHECKP(next_for_rpg);
+		/* right <- */
+		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
+		VMM_SIGNAL_MODIFICATION(next_for_rpg);
+	}
+    
 
     /* clear out in which block pretender will reside and adjust new index of pretender in that page */
     if (pretender_goes_left)
@@ -190,6 +216,47 @@ shft bt_find_split_key(char* pg, shft pretender_idx, shft pretender_size, bool &
    page. In that case the corresponding key is promoted up to the parent page, causing possibly
    recursive splitting of non-leaf parent pages.
  */
+void get_clust_head (xptr & pg)
+{
+	
+	char* blk=(char*)XADDR(pg);
+	CHECKP(pg);
+	while (true)
+	{
+		if (BT_PREV(blk)==XNULL || !BT_IS_CLUS(blk)||BT_IS_CLUS_HEAD(blk))
+		{
+			return ;
+		}
+		pg=BT_PREV(blk);
+		CHECKP(pg);
+		blk=(char*)XADDR(pg);
+		if (!BT_IS_CLUS(blk))
+			throw USER_EXCEPTION2(SE1008, "Cluster error");
+
+	}  
+	return;
+}
+
+void propagate_parent_to_cluster(xptr& head, xptr& parent)
+{
+	xptr tmp=head;
+	char* blk=(char*)XADDR(head);
+	CHECKP(head);
+	while (true)
+	{
+		if (!BT_IS_CLUS(blk))
+			return;
+		
+        (*BT_PARENT_PTR(blk)) = parent;
+         VMM_SIGNAL_MODIFICATION(tmp);
+		tmp=BT_PREV(blk);
+		CHECKP(tmp);
+		blk=(char*)XADDR(tmp);
+		if (BT_IS_CLUS_HEAD(blk))
+			return;
+
+	}
+}
 xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &key, const object &obj, shft obj_idx)
 {
     char*       key_pg = pg;
@@ -268,18 +335,17 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
             vmm_alloc_data_block(&parent_pg);
             bt_page_markup((char*)XADDR(parent_pg), pg_type);
             /* make new root non-leaf and set the left-most pointer in new root page */
+			get_clust_head(pg_xptr);
             (*BT_IS_LEAF_PTR((char*)XADDR(parent_pg))) = false;
             (*BT_LMP_PTR((char*)XADDR(parent_pg))) = pg_xptr;
             root = parent_pg;
 
-            CHECKP(pg_xptr);
-            (*BT_PARENT_PTR(pg)) = parent_pg;
-            VMM_SIGNAL_MODIFICATION(pg_xptr);
+            propagate_parent_to_cluster(pg_xptr,parent_pg);
 
             CHECKP(rpg);
             (*BT_PARENT_PTR((char*)XADDR(rpg))) = parent_pg;
             VMM_SIGNAL_MODIFICATION(rpg);
-            //BTREE_HEIGHT++;
+           // BTREE_HEIGHT++;
         }
 
         bt_promote_key(root, rpg, parent_pg);
@@ -403,9 +469,10 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
         for (int i = 0; i < rpg_key_num; i++)
         {
             xptr big_ptr = *(xptr*)BT_BIGPTR_TAB_AT(rpg_addr, i);
-            CHECKP(big_ptr);
+            /*CHECKP(big_ptr);
             (*BT_PARENT_PTR((char*)XADDR(big_ptr))) = rpg;
-            VMM_SIGNAL_MODIFICATION(big_ptr);
+            VMM_SIGNAL_MODIFICATION(big_ptr);*/
+			propagate_parent_to_cluster(big_ptr, rpg);
             CHECKP(rpg);
         }
 
@@ -417,13 +484,14 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
             bt_page_markup((char*)XADDR(parent_pg), pg_type);
             /* make new root non-leaf and set the left-most pointer in new root page */
             (*BT_IS_LEAF_PTR((char*)XADDR(parent_pg))) = false;
+			get_clust_head(pg_xptr);
             (*BT_LMP_PTR((char*)XADDR(parent_pg))) = pg_xptr;
             root = parent_pg;
 
-            CHECKP(pg_xptr);
+            /*CHECKP(pg_xptr);
             (*BT_PARENT_PTR(pg)) = parent_pg;
-            VMM_SIGNAL_MODIFICATION(pg_xptr);
-
+            VMM_SIGNAL_MODIFICATION(pg_xptr);*/
+			propagate_parent_to_cluster(pg_xptr, parent_pg);
             CHECKP(rpg);
             (*BT_PARENT_PTR((char*)XADDR(rpg))) = parent_pg;
             VMM_SIGNAL_MODIFICATION(rpg);
