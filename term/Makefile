@@ -30,7 +30,7 @@ DRIVER_LIB = $(PP)/driver/c/libsedna$(LIB_EXT)
 DRIVER_LIB_S = -L$(PP)/driver/c -lsedna 
 ifeq ($(ENABLE_LIBEDIT),1)
 #libedit.so is picked if I try -ledit
-DRIVER_LIB_S += $(PP)/libs/libedit/lib/libedit.a -lcurses
+DRIVER_LIB_S += $(PP)/libs/libedit/lib/libedit.a -lncurses
 endif
 endif
 
