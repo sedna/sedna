@@ -169,12 +169,18 @@ it is null on other OS. For Virtual Pascal, these have to be different again.
 */
 
 #ifndef VPCOMPAT
+#ifdef __cplusplus
+extern "C" {
+#endif
 PCRE_DATA_SCOPE void *(*pcre_malloc)(size_t);
 PCRE_DATA_SCOPE void  (*pcre_free)(void *);
 PCRE_DATA_SCOPE void *(*pcre_stack_malloc)(size_t);
 PCRE_DATA_SCOPE void  (*pcre_stack_free)(void *);
 //pcre_callout moved to PcreMatcherBase
 //PCRE_DATA_SCOPE int   (*pcre_callout)(PcreMatcherBase<const char*>::pcre_callout_block *);
+#ifdef __cplusplus
+}
+#endif
 #else   /* VPCOMPAT */
 extern void *pcre_malloc(size_t);
 extern void  pcre_free(void *);
