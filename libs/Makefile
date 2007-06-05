@@ -279,7 +279,7 @@ pcre/Makefile: src/pcre
 ifeq ("$(PLATFORM)", "WIN32")
 
 build_pcre: pcre/Makefile
-	-$(MAKE) -C pcre
+	$(MAKE) -C pcre
 
 clean_pcre: pcre/Makefile
 	-$(MAKE) -C pcre clean
@@ -287,7 +287,7 @@ clean_pcre: pcre/Makefile
 else
 
 build_pcre: pcre/Makefile
-	-$(MAKE) -C pcre
+	$(MAKE) -C pcre
 
 clean_pcre: pcre/Makefile
 	-$(MAKE) -C pcre clean
