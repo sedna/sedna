@@ -31,6 +31,12 @@
 #define DB_SECURITY_DOC            "$db_security_data"
 #define DB_SECURITY_DOC_NAME_TMP   "$db_security_data_exp"
 
+#define CHECK_FULL_TEXT_SEARCH     "create_ftindexes.xquery"
+#define CHECK_SECURITY			   "$db_security_data.xml"
+
+#define SEDNA_FEATURE_ENABLED				1
+#define SEDNA_FEATURE_DISABLED				0
+
 typedef struct str_buf_t {
 	char *buf;
 	int size;
