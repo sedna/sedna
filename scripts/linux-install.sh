@@ -63,7 +63,7 @@ export _POSIX2_VERSION
 
 origpwd="`pwd`"
 
-if test ! "$EUID" "=" "0"; then
+if test ! `id -u` "=" "0"; then
   echo -n "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
   echo -n "To obtain best performance Sedna components use sophisticated memory management techniques and "
   echo -n "low-level disk access operations, which require additional privelegies."
