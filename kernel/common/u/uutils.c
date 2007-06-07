@@ -89,8 +89,8 @@ char *u_gcvt(double value, int digits, char *buf)
 #ifdef HAVE_GCVT
     return gcvt(value, digits, buf);
 #else
-    sprintf(buff, "%.*E", digits, value);
-    return buff;
+    sprintf(buf, "%.*E", digits, value);
+    return buf;
 #endif
 }
 
