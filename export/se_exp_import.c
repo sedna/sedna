@@ -1,6 +1,7 @@
 #include "se_exp_common.h"
 #include "se_exp_queries.h"
 #include "se_exp.h"
+#include "common/u/uhdd.h"
 
 //function checks that the database db_name is empty
 // 1. doc("$documents") contains only $db_security_data record
@@ -31,6 +32,21 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 	return res;
 }
 
+// returns SEDNA_FEATURE_ENABLED if the file with the given name exists in the import directory
+// else returns SEDNA_FEATURE_DISABLED
+int check_imported_feature(const char *path, const char* name, FILE* log) {
+	char strbuf[PATH_SIZE];
+	FILE *tmp;
+
+    sprintf(strbuf,"%s%s",path,name);
+
+	if ((tmp=fopen(strbuf,"r"))==NULL) {
+		return SEDNA_FEATURE_DISABLED;
+	} else {
+		fclose(tmp);
+		return SEDNA_FEATURE_ENABLED;
+	}
+}
 
 
 
@@ -132,9 +148,11 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if ((cr_indexes_query = read_query(strbuf))==NULL) 
 		goto imp_error; 
 
-	sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
-	if ((cr_ftindexes_query = read_query(strbuf))==NULL) 
-		goto imp_error; 
+	if (check_imported_feature(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
+		sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
+		if ((cr_ftindexes_query = read_query(strbuf))==NULL) 
+			goto imp_error; 
+	}
 
 	sprintf(strbuf,"%s%s",path,LOAD_DOCS_QUERY_FILE);
 	if ((bl_docs_query = read_query(strbuf))==NULL)
@@ -162,7 +180,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if (strlen(bl_docs_query)==0)
 		FTRACE((log,"(no documents in the database)..."));
 	else {
-		SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path));
+		char path_buf[PATH_BUF_SIZE];
+		uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
+		uChangeWorkingDirectory(path, NULL);
 		FTRACE((log,"\n"));
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
@@ -179,6 +199,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 				goto imp_error;
 			FTRACE((log,"done\n"));
 		}
+		uChangeWorkingDirectory(path_buf,NULL);
 	}
 	FTRACE((log,"done\n"));
 	
@@ -190,7 +211,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
-
+	if (check_imported_feature(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
 	FTRACE((log,"Creating full-text search indexes..."));
 	if (strlen(cr_ftindexes_query)==0)
 		FTRACE((log,"(no full-test search indexes in the database)...")); 
@@ -198,10 +219,10 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 		if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
 			goto imp_error;
 	FTRACE((log,"done\n"));
-
+	}
 
 	// processing security information
-	if (sec_import==1) {
+	if (sec_import==1 && (check_imported_feature(path, CHECK_SECURITY, log) == SEDNA_FEATURE_ENABLED)) {
 		// restoring security
 		FTRACE((log,"Restoring security information..."));
 		if (restore_security(&conn,path,log)!=0) 

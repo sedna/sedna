@@ -3,6 +3,25 @@
 #include "se_exp.h"
 
 
+int check_exported_feature(struct SednaConnection *conn, const char *query, FILE* log) {
+	int res;
+	char *result;
+    
+	if ((res = SEbegin(conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
+		ETRACE((log,"ERROR: failed to begin transaction\n"));
+	}
+    
+	if ((res = SEexecute(conn,query))!= SEDNA_QUERY_SUCCEEDED) 
+		return SEDNA_FEATURE_DISABLED;
+	else {
+		if(SEcommit(conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
+			FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(conn)));
+			return SEDNA_FEATURE_DISABLED; // TODO - need to review
+		}
+		return SEDNA_FEATURE_ENABLED;
+	}
+}
+
 
 
 // function exports data from database to the specified directory
@@ -19,6 +38,9 @@ int export(const char * path,const char *url,const char *db_name,const char *log
   char strbuf[PATH_SIZE];
   //int error_status=1;
   int export_status = SE_EXP_FATAL_ERROR; //the worst value in the beginning of the process
+  
+  int ft_search = SEDNA_FEATURE_DISABLED;
+  int security  = SEDNA_FEATURE_DISABLED;
 
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
@@ -36,6 +58,13 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	
 	value = SEDNA_AUTOCOMMIT_OFF;
     SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+
+	
+    FTRACE((log,"Determining features to export..."));
+	ft_search = check_exported_feature(&conn, check_ft_enabled_query, log);
+    security = check_exported_feature(&conn, check_sec_enabled_query, log);
+	FTRACE((log,"done\n"));
+
 	
     FTRACE((log,"Starting transaction..."));
 	if ((res = SEbegin(&conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
@@ -68,17 +97,21 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	}
 	FTRACE((log,"...done (%d statements)\n", create_indexes.d_size));
 
-	FTRACE((log,"Constructing create full-text search indexes script"));
-	if ((export_status = fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log))!=SE_EXP_SUCCEED) {
-		goto exp_error;
+	if (ft_search == SEDNA_FEATURE_ENABLED) {
+		FTRACE((log,"Constructing create full-text search indexes script"));
+		if ((export_status = fill_qbuf(&conn,&create_ftindexes, create_ftindexes_query, log))!=SE_EXP_SUCCEED) {
+			goto exp_error;
+		}
+		FTRACE((log,"...done (%d statements)\n", create_ftindexes.d_size));
 	}
-	FTRACE((log,"...done (%d statements)\n", create_ftindexes.d_size));
 
-	FTRACE((log,"Constructing export security script"));
-	if ((export_status = fill_qbuf(&conn,&create_sec, create_sec_query, log))!=SE_EXP_SUCCEED) {
-		goto exp_error;
+	if (security == SEDNA_FEATURE_ENABLED) {
+		FTRACE((log,"Constructing export security script"));
+		if ((export_status = fill_qbuf(&conn,&create_sec, create_sec_query, log))!=SE_EXP_SUCCEED) {
+			goto exp_error;
+		}
+		FTRACE((log,"...done (%d statements)\n", create_sec.d_size));
 	}
-	FTRACE((log,"...done (%d statements)\n", create_sec.d_size));
 
 
 	for (i=0;i<exp_docs.d_size;i++) {
@@ -101,18 +134,21 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 		FTRACE((log,"done\n"));
 	}
 
+	if (security == SEDNA_FEATURE_ENABLED) {
 	FTRACE((log,"Exporting security data..."));
-	sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
-	if ((f=fopen(strbuf,"w"))==NULL) {
-		ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
-		export_status = SE_EXP_FATAL_ERROR;
-		goto exp_error;
+		sprintf(strbuf,"%s%s.xml",path,DB_SECURITY_DOC);
+		if ((f=fopen(strbuf,"w"))==NULL) {
+			ETRACE((log,"ERROR: can't write to file %s\n",strbuf));
+			export_status = SE_EXP_FATAL_ERROR;
+			goto exp_error;
+		}
+
+		sprintf(strbuf,"doc('%s')",DB_SECURITY_DOC);
+		if ((export_status = execute_query(&conn,strbuf,f,log))!=SE_EXP_SUCCEED) 
+			goto exp_error;
+		fclose(f);
+		FTRACE((log,"done\n"));
 	}
-	sprintf(strbuf,"doc('%s')",DB_SECURITY_DOC);
-	if ((export_status =execute_query(&conn,strbuf,f,log))!=SE_EXP_SUCCEED) 
-		goto exp_error;
-	fclose(f);
-	FTRACE((log,"done\n"));
 
 	FTRACE((log,"Writing XQuery scripts..."));
 	sprintf(strbuf,"%s%s",path,CR_COL_QUERY_FILE);
@@ -124,8 +160,10 @@ int export(const char * path,const char *url,const char *db_name,const char *log
 	sprintf(strbuf,"%s%s",path,CR_INDEXES_QUERY_FILE);
 	write_xquery_script(&create_indexes,strbuf);
 
+	if (ft_search == SEDNA_FEATURE_ENABLED) {
 	sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
 	write_xquery_script(&create_ftindexes,strbuf);
+	}
 
 	/*sprintf(strbuf,"%s%s",path,CR_SEC_QUERY_FILE);
 	write_xquery_script(&create_sec,strbuf); */
@@ -160,6 +198,11 @@ exp_error_no_conn:
 	if (create_sec.buf!=NULL) free(create_sec.buf);
 	return export_status;
 }
+
+
+const char check_ft_enabled_query[] = "doc(\"$ftindexes\")";
+const char check_sec_enabled_query[] = "doc(\"$db_security_data\")";
+
 
 
 const char load_docs_query[] = "declare option se:output \"indent=no\"; \
