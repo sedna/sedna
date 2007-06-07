@@ -255,14 +255,18 @@ CPPFLAGS = -O0 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
 LFLAGS   = -O0 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 endif
-LSLIBS   = -lpccts -lexpat -lchicken -lpcre -ldl -fexceptions
+LSLIBS   = -lpccts -lexpat -lchicken -lpcre
 
 ifeq ("$(SUB_PLATFORM)","Linux")
-LSLIBS  += -lnsl -lrt -pthread
+LSLIBS  += -ldl -fexceptions -lnsl -lrt -pthread
 endif
 
 ifeq ("$(SUB_PLATFORM)","SunOS")
-LSLIBS  += -lnsl -lrt -lsocket
+LSLIBS  += -ldl -fexceptions -lnsl -lrt -lsocket
+endif
+
+ifeq ("$(SUB_PLATFORM)","FreeBSD")
+LSLIBS  +=  -fexceptions -lcompat -pthreads
 endif
 
 ifeq ($(SQL_CONNECTION),1)
