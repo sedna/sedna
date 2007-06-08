@@ -62,7 +62,10 @@ PPOrderBy::PPOrderBy(dynamic_context *_cxt_,
                                         stable(_stable_),
                                         child(_child_),
                                         modifiers(_modifiers_),
-                                        data_size(_data_size_)
+                                        data_size(_data_size_),
+                                        data_cells(NULL),
+                                        sort_cells(NULL),
+                                        ss(NULL)
 {
     if(modifiers.size() != child.ts - data_size) 
         throw USER_EXCEPTION2(SE1003, "Number of modifiers must be equal to the expressions number.");

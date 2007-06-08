@@ -319,7 +319,8 @@ PPTreat::PPTreat(dynamic_context *_cxt_,
                  PPOpIn _child_,
                  const sequence_type& _st_) : PPIterator(_cxt_),
                                               child(_child_),
-                                              st(_st_)
+                                              st(_st_),
+                                              s(NULL)
 {
 }
 
@@ -422,7 +423,8 @@ PPTypeswitch::PPTypeswitch(dynamic_context *_cxt_,
                                                     source_child(_source_child_),
                                                     types(_types_),
                                                     cases(_cases_),
-                                                    default_child(_default_child_)
+                                                    default_child(_default_child_),
+                                                    s(NULL)
 {
     if(cases.size() != types.size()) 
         throw USER_EXCEPTION2(SE1003, "PPTypeswitch: number of cases must be equal to number of types");

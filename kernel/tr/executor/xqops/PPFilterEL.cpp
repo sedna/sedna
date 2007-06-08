@@ -16,7 +16,8 @@ using namespace std;
 
 PPFilterEL::PPFilterEL(dynamic_context *_cxt_,
              PPOpIn _child_) : PPIterator(_cxt_),
-                               child(_child_)
+                               child(_child_),
+                               s(NULL)
 {
 
 }
@@ -34,7 +35,7 @@ void PPFilterEL::open  ()
     child.op->open();
     pos = 0;
 	s = se_new sorted_sequence(PPDDO::compare_less,PPDDO::get_size,PPDDO::serialize,PPDDO::serialize_2_blks,PPDDO::deserialize,PPDDO::deserialize_2_blks,NULL);
-
+	
 }
 
 void PPFilterEL::reopen()
@@ -52,7 +53,7 @@ void PPFilterEL::close ()
     child.op->close();
     pos = 0;
     delete s;
-
+    s = NULL;
 }
 
 void PPFilterEL::next  (tuple &t)

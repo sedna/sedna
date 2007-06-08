@@ -358,11 +358,11 @@ PPFnDistinctValues::~PPFnDistinctValues()
 
 void PPFnDistinctValues::open  ()
 {
+    s = se_new sequence(1);
     child.op->open();
     if (collation_child.op)
         collation_child.op->open();
 
-    s = se_new sequence(1);
     handler = NULL;
     has_NaN = false;
 }
