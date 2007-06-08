@@ -38,9 +38,9 @@ PPDDO::~PPDDO()
 void PPDDO::open  ()
 {
 #ifdef TURN_ON_DDO
+    s = se_new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
     child.op->open();
     pos = 0;
-    s = se_new sorted_sequence(compare_less,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,NULL);
 	ret_val=XNULL;
 #else
     child.op->open();
