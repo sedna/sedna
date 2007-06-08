@@ -650,13 +650,15 @@ int splitBlockIfFullAfterLeftInsert(xptr& nodex)
 			{
 				CHECKP(nodex);
 				createBlockNextToTheCurrentBlock(block_node);
-				shiftLastNodeToTheNextBlock(block_node);
+				nodex=shiftLastNodeToTheNextBlock(block_node);
+				//CHECKP(nodex);
 				return 2;
 			}
 		case 6:
 			{
 				CHECKP(nodex);
 				nodex=shiftLastNodeToTheNextBlock(block_node);
+				//CHECKP(nodex);
 				return 2;
 			}
 		}
@@ -813,12 +815,14 @@ int splitBlockIfFullAfterRightInsert(xptr& nodex)
 			{
 				CHECKP(nodex);
 				nodex=shiftFirstNodeToThePreviousBlock(block_node);
+				CHECKP(nodex);
 				return 1;
 			}
 		case 5:
 			{
 				CHECKP(nodex);
 				createBlockNextToTheCurrentBlock(block_node);
+				CHECKP(nodex);
 				return 2;
 			}
 		}
