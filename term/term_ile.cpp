@@ -1,3 +1,10 @@
+/*
+ * File:  term_ile.cpp
+ * Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+#include "common/sedna.h"
+
 #ifndef ENABLE_LIBEDIT
 #include <cctype>
 int ile_init() { return 0; }

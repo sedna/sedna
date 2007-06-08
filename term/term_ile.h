@@ -1,3 +1,9 @@
+/*
+ * File:  term_ile.h
+ * Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
 #ifndef ILE_H
 
 #ifndef _WIN32

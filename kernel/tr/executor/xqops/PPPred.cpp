@@ -943,7 +943,8 @@ PPPred2::PPPred2(dynamic_context *_cxt_,
                                       data(_data_child_.ts),
                                       once(_once_),
                                       pos_dsc(_pos_dsc_),
-                                      lst_dsc(_lst_dsc_)
+                                      lst_dsc(_lst_dsc_),
+                                      s(NULL)
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred2");
