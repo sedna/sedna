@@ -1372,7 +1372,14 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         conn->msg.body[1] = 0;  /* string format*/
 
         query_str = conn->msg.body + 6;
-        strcpy(query_str, "LOAD STDIN \"");
+        if(conn->boundary_space_preserve)
+        {
+          strcpy(query_str, "declare boundary-space preserve;\n");
+          strcat(query_str, "LOAD STDIN \"");
+        }
+        else
+          strcpy(query_str, "LOAD STDIN \"");
+
         strcat(query_str, doc_name);
         strcat(query_str, "\"");
         if (col_name != NULL)
@@ -1446,7 +1453,6 @@ int SEloadData(struct SednaConnection *conn, const char *buf, int bytes_to_load,
         int2net_int(bl_portion_size, conn->msg.body + 1);
 
         memcpy(conn->msg.body + 5, buf + i, bl_portion_size);
-
         conn->msg.length = bl_portion_size + 5; /* body containes: result format (sxml=1 or xml=0) - 1 byte)*/
         /* string format - 1 byte;*/
         /* string length - 4 bytes*/
@@ -1634,7 +1640,7 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             conn->session_directory[attrValueLength] = '\0';
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
             
-         case SEDNA_ATTR_DEBUG:
+        case SEDNA_ATTR_DEBUG:
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
             conn->msg.length = 9;
             value = (int*) attrValue;
@@ -1665,7 +1671,16 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                 conn->isInTransaction = SEDNA_NO_TRANSACTION;
                 return SEDNA_ERROR;
             }
-              
+        case SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD:
+            value = (int*) attrValue;
+            if ((*value != SEDNA_BOUNDARY_SPACE_PRESERVE_OFF) && (*value != SEDNA_BOUNDARY_SPACE_PRESERVE_ON))
+            {
+               setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
+               return SEDNA_ERROR;
+            }
+            conn->boundary_space_preserve = (*value == SEDNA_BOUNDARY_SPACE_PRESERVE_ON) ? 1: 0;
+            return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
@@ -1689,6 +1704,11 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
         case SEDNA_ATTR_SESSION_DIRECTORY:
             memcpy(attrValue, conn->session_directory, strlen(conn->session_directory));
             *attrValueLength = strlen(conn->session_directory);
+            return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
+        case SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD:
+            value = (conn->boundary_space_preserve) ? SEDNA_BOUNDARY_SPACE_PRESERVE_ON: SEDNA_BOUNDARY_SPACE_PRESERVE_OFF;
+            memcpy(attrValue, &value, 4);
+            *attrValueLength = 4;
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
         default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/

@@ -74,10 +74,13 @@ extern "C"
 #define SEDNA_GET_ATTRIBUTE_SUCCEEDED              33
 
 #define SEDNA_RESET_ATTRIBUTES_SUCCEEDED           34
+    
+#define SEDNA_BOUNDARY_SPACE_PRESERVE_OFF          35
+#define SEDNA_BOUNDARY_SPACE_PRESERVE_ON           36
 
 
     
-    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY, SEDNA_ATTR_DEBUG};
+    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY, SEDNA_ATTR_DEBUG, SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD};
     
     typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);
     
@@ -122,9 +125,11 @@ extern "C"
         struct msg_struct msg;
         
         debug_handler_t debug_handler;
+        
+        char boundary_space_preserve;
     };
 
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0}
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
 
