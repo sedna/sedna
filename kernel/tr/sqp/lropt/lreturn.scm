@@ -683,13 +683,21 @@
 (define lropt:ancestor-or-self lropt:ancestor)
 
 ; ATTENTION: lropt:child is implemented as an alias for this function
-(define lropt:attr-axis
-  (lropt:axis-helper
-   #t  ; can-sustain-order?
-   (lambda (ddo-auto? zero-or-one? single-level?) ddo-auto?)
-   (lambda (zero-or-one? single-level?) #f)  ; zero-or-one-handler
-   ; single-level-handler
-   (lambda (zero-or-one? single-level?) single-level?)))
+(define (lropt:attr-axis expr called-once? order-required?
+                         var-types prolog processed-funcs)
+  (if
+   (and
+    (eq? (xlr:op-name expr) 'attr-axis)
+    (equal? (cadr (xlr:op-args expr)) '(type (text-test))))
+   (values '(sequence) #t #t #t processed-funcs '())
+   ((lropt:axis-helper
+     #t  ; can-sustain-order?
+     (lambda (ddo-auto? zero-or-one? single-level?) ddo-auto?)
+     (lambda (zero-or-one? single-level?) #f)  ; zero-or-one-handler
+     ; single-level-handler
+     (lambda (zero-or-one? single-level?) single-level?))
+    expr called-once? order-required?
+    var-types prolog processed-funcs)))
 
 (define lropt:child lropt:attr-axis)
 
@@ -1388,122 +1396,127 @@
   (let ((arg0 (car (xlr:op-args expr))))
     (if
      (memq (xlr:op-name arg0) '(attr-axis child self))
-     (let ((arg1 (car (xlr:op-args arg0))))
-       (if  ; Another 'ddo inside
-        (and (pair? arg1)
-             (eq? (xlr:op-name arg1) 'ddo))
-        ; Can either rewrite these axes into descendant-attr, etc. or
-        ; eliminate the current 'ddo operation by pushing it down            
-        (let ((arg2 (car (xlr:op-args arg1))))
-          ; For rewriting, arg2 must be descendant-or-self::node()
-          (if
-           (and (pair? arg2)
-                (eq? (xlr:op-name arg2) 'descendant-or-self)
-                (equal? (cadr (xlr:op-args arg2))
-                        '(type (node-test))))
-           (call-with-values
-            (lambda () (lropt:expr (car (xlr:op-args arg2))
-                                   called-once?
-                                   #f  ; as if already ordered
+     (if
+      (and
+       (eq? (xlr:op-name arg0) 'attr-axis)
+       (equal? (cadr (xlr:op-args arg0)) '(type (text-test))))
+      (values '(sequence) #t #t #t processed-funcs '())
+      (let ((arg1 (car (xlr:op-args arg0))))
+        (if  ; Another 'ddo inside
+         (and (pair? arg1)
+              (eq? (xlr:op-name arg1) 'ddo))
+         ; Can either rewrite these axes into descendant-attr, etc. or
+         ; eliminate the current 'ddo operation by pushing it down            
+         (let ((arg2 (car (xlr:op-args arg1))))
+           ; For rewriting, arg2 must be descendant-or-self::node()
+           (if
+            (and (pair? arg2)
+                 (eq? (xlr:op-name arg2) 'descendant-or-self)
+                 (equal? (cadr (xlr:op-args arg2))
+                         '(type (node-test))))
+            (call-with-values
+             (lambda () (lropt:expr (car (xlr:op-args arg2))
+                                    called-once?
+                                    #f  ; as if already ordered
+                                    var-types prolog processed-funcs))
+             (lambda (new-arg2 ddo-auto? zero-or-one? single-level?
+                               processed-funcs order-for-variables)
+               (let ((new-arg0
+                      (list
+                       (cond
+                         ((assq (xlr:op-name arg0)
+                                '((child . descendant)                         
+                                  (attr-axis . descendant-attr)
+                                  (self . descendant-or-self)))
+                          => cdr)
+                         (else
+                          'lreturn-module-internal-error))
+                       new-arg2
+                       (cadr (xlr:op-args arg0))  ; node test
+                       )))
+                 (values
+                  (if (or
+                       (and
+                        ddo-auto?  ; order achieved automatically
+                        ; all nodes on single level => the result of applying
+                        ; descendant axis is ordered automatically
+                        single-level?)
+                       (not order-required?))
+                      new-arg0
+                      (list (xlr:op-name expr)  ; == 'ddo
+                            new-arg0))
+                  (or order-required?  ; if order required, it is achieved
+                      (and ddo-auto? single-level?)  ; or automatically
+                      )
+                  ; Was rewritten from:
+                  ;(and (not order-required?)  ; it was not required
+                  ;     ; no order automatically
+                  ;     (not (and ddo-auto? single-level?)))
+                  (and zero-or-one?
+                       ; zero-or-one if both new-arg2 produces zero-or-one
+                       ; item and the 'self axis is applied
+                       (eq? (xlr:op-name arg0) 'self))
+                  ; Never a single-level after applying descendant axis
+                  #f  ; DL: was: single-level?
+                  processed-funcs order-for-variables))))
+            ; Otherwise - process nested 'ddo recursively
+            (call-with-values
+             (lambda () (lropt:ddo arg1 called-once?
+                                   order-required?  ; was: #f
                                    var-types prolog processed-funcs))
-            (lambda (new-arg2 ddo-auto? zero-or-one? single-level?
-                              processed-funcs order-for-variables)
-              (let ((new-arg0
-                     (list
-                      (cond
-                        ((assq (xlr:op-name arg0)
-                               '((child . descendant)                         
-                                 (attr-axis . descendant-attr)
-                                 (self . descendant-or-self)))
-                         => cdr)
-                        (else
-                         'lreturn-module-internal-error))
-                      new-arg2
-                      (cadr (xlr:op-args arg0))  ; node test
-                      )))
-                (values
-                 (if (or
-                      (and
-                       ddo-auto?  ; order achieved automatically
-                       ; all nodes on single level => the result of applying
-                       ; descendant axis is ordered automatically
-                       single-level?)
-                      (not order-required?))
-                     new-arg0
-                     (list (xlr:op-name expr)  ; == 'ddo
-                           new-arg0))
-                 (or order-required?  ; if order required, it is achieved
-                     (and ddo-auto? single-level?)  ; or automatically
-                     )
-                 ; Was rewritten from:
-                 ;(and (not order-required?)  ; it was not required
-                 ;     ; no order automatically
-                 ;     (not (and ddo-auto? single-level?)))
-                 (and zero-or-one?
-                      ; zero-or-one if both new-arg2 produces zero-or-one
-                      ; item and the 'self axis is applied
-                      (eq? (xlr:op-name arg0) 'self))
-                 ; Never a single-level after applying descendant axis
-                 #f  ; DL: was: single-level?
-                 processed-funcs order-for-variables))))
-           ; Otherwise - process nested 'ddo recursively
-           (call-with-values
-            (lambda () (lropt:ddo arg1 called-once?
-                                  order-required?  ; was: #f
-                                  var-types prolog processed-funcs))
-            (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
-                              processed-funcs order-for-variables)
-              (values
-               (list (xlr:op-name arg0)  ; axis name
-                     new-arg1
-                     (cadr (xlr:op-args arg0)))
-               ; If order was required from arg1, it was achieved
-               ddo-auto?  ; was: order-required?
-               (and zero-or-one?
-                    ; zero-or-one if both new-arg2 produces zero-or-one
-                    ; item and the 'self axis is applied
-                    (eq? (xlr:op-name arg0) 'self))
-               single-level?  ; is preserved
-               processed-funcs order-for-variables)))))
-        ; Either attr-axis, child or self, but no 'ddo inside
-        (call-with-values
-         (lambda () (lropt:expr arg1 called-once?
-                                #f  ; as if order achieved
-                                var-types prolog processed-funcs))
-         (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
-                           processed-funcs order-for-variables)
-           (values
-            (cond
-              ((or ddo-auto? (not order-required?))
-               (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
-                     new-arg1
-                     (cadr (xlr:op-args arg0))))
-              ; order required
-              ((eq? (xlr:op-name arg0) 'self)
-               ; Self axis => order after filtering
-               (list
-                (xlr:op-name expr)  ; == 'ddo
+             (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
+                               processed-funcs order-for-variables)
+               (values
+                (list (xlr:op-name arg0)  ; axis name
+                      new-arg1
+                      (cadr (xlr:op-args arg0)))
+                ; If order was required from arg1, it was achieved
+                ddo-auto?  ; was: order-required?
+                (and zero-or-one?
+                     ; zero-or-one if both new-arg2 produces zero-or-one
+                     ; item and the 'self axis is applied
+                     (eq? (xlr:op-name arg0) 'self))
+                single-level?  ; is preserved
+                processed-funcs order-for-variables)))))
+         ; Either attr-axis, child or self, but no 'ddo inside
+         (call-with-values
+          (lambda () (lropt:expr arg1 called-once?
+                                 #f  ; as if order achieved
+                                 var-types prolog processed-funcs))
+          (lambda (new-arg1 ddo-auto? zero-or-one? single-level?
+                            processed-funcs order-for-variables)
+            (values
+             (cond
+               ((or ddo-auto? (not order-required?))
                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
                       new-arg1
+                      (cadr (xlr:op-args arg0))))
+               ; order required
+               ((eq? (xlr:op-name arg0) 'self)
+                ; Self axis => order after filtering
+                (list
+                 (xlr:op-name expr)  ; == 'ddo
+                 (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
+                       new-arg1
+                       (cadr (xlr:op-args arg0)))))
+               (else  ; order before applying the axis
+                (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
+                      (list (xlr:op-name expr)  ; == 'ddo
+                            new-arg1)
                       (cadr (xlr:op-args arg0)))))
-              (else  ; order before applying the axis
-               (list (xlr:op-name arg0)  ; 'child or 'attr-axis or 'self
-                     (list (xlr:op-name expr)  ; == 'ddo
-                           new-arg1)
-                     (cadr (xlr:op-args arg0)))))
-            ; Order _not_ achieved when
-            ; 1. It was not required, and
-            ; 2. It is not achieved automatically
-            (or order-required? ddo-auto?)  ; was: order-required?
-            ; Was rewritten from:
-            ; (not (and (not order-required?)
-            ;           (not ddo-auto?)))
-            (and zero-or-one?
-                 ; zero-or-one if both new-arg2 produces zero-or-one
-                 ; item and the 'self axis is applied
-                 (eq? (xlr:op-name arg0) 'self))
-            single-level?  ; is preserved
-            processed-funcs order-for-variables)))))
+             ; Order _not_ achieved when
+             ; 1. It was not required, and
+             ; 2. It is not achieved automatically
+             (or order-required? ddo-auto?)  ; was: order-required?
+             ; Was rewritten from:
+             ; (not (and (not order-required?)
+             ;           (not ddo-auto?)))
+             (and zero-or-one?
+                  ; zero-or-one if both new-arg2 produces zero-or-one
+                  ; item and the 'self axis is applied
+                  (eq? (xlr:op-name arg0) 'self))
+             single-level?  ; is preserved
+             processed-funcs order-for-variables))))))
        ; not attr-axis, child and self
        (call-with-values
         (lambda () (lropt:expr arg0 called-once?
