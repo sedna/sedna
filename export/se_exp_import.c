@@ -34,7 +34,7 @@ int check_dbempty(struct SednaConnection *conn, FILE* log) {
 
 // returns SEDNA_FEATURE_ENABLED if the file with the given name exists in the import directory
 // else returns SEDNA_FEATURE_DISABLED
-int check_imported_feature(const char *path, const char* name, FILE* log) {
+int check_feature_to_import(const char *path, const char* name, FILE* log) {
 	char strbuf[PATH_SIZE];
 	FILE *tmp;
 
@@ -50,10 +50,10 @@ int check_imported_feature(const char *path, const char* name, FILE* log) {
 
 
 
-int restore_security(struct SednaConnection *conn, const char *path, FILE* log) {
+int restore_security(struct SednaConnection *conn, FILE* log) {
   char strbuf[PATH_SIZE];
 
-   sprintf(strbuf,"declare boundary-space preserve; LOAD \"%s%s.xml\" \"%s\"",path,DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
+   sprintf(strbuf,"declare boundary-space preserve; LOAD \"%s.xml\" \"%s\"",DB_SECURITY_DOC,DB_SECURITY_DOC_NAME_TMP);
    
    if (execute_query(conn, strbuf, NULL, log) != SE_EXP_SUCCEED) {
 	   ETRACE((log,"\nERROR: failed to bulkload document with new security data\n"));
@@ -93,6 +93,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
   int i,error_status=1,res;
   int value;
 
+  int ft_search_feature = SEDNA_FEATURE_DISABLED;
+  int security_feature  = SEDNA_FEATURE_DISABLED;
+
     sprintf(strbuf,"%s%s",path,EXP_LOG_FILE_NAME);
 
 	if ((log=fopen(strbuf,"r"))==NULL) {
@@ -117,7 +120,13 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 
 	value = SEDNA_AUTOCOMMIT_OFF;
     SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
+	SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY,path,strlen(path)); 
 
+
+    FTRACE((log,"Determining features to export..."));
+	ft_search_feature = check_sedna_feature(&conn, check_ft_enabled_query, log);
+    security_feature  = check_sedna_feature(&conn, check_sec_enabled_query, log);
+	FTRACE((log,"done\n"));
 
 
     FTRACE((log,"Starting transaction..."));
@@ -148,7 +157,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if ((cr_indexes_query = read_query(strbuf))==NULL) 
 		goto imp_error; 
 
-	if (check_imported_feature(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
+	if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
 		sprintf(strbuf,"%s%s",path,CR_FTINDEXES_QUERY_FILE);
 		if ((cr_ftindexes_query = read_query(strbuf))==NULL) 
 			goto imp_error; 
@@ -180,9 +189,9 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 	if (strlen(bl_docs_query)==0)
 		FTRACE((log,"(no documents in the database)..."));
 	else {
-		char path_buf[PATH_BUF_SIZE];
-		uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
-		uChangeWorkingDirectory(path, NULL);
+		//char path_buf[PATH_BUF_SIZE];
+		//uGetCurrentWorkingDirectory(path_buf,PATH_BUF_SIZE-1,NULL);
+		//uChangeWorkingDirectory(path, NULL);
 		FTRACE((log,"\n"));
         if (split_query(bl_docs_query,&blq)!=0) 
 			goto imp_error;
@@ -199,7 +208,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 				goto imp_error;
 			FTRACE((log,"done\n"));
 		}
-		uChangeWorkingDirectory(path_buf,NULL);
+		//uChangeWorkingDirectory(path_buf,NULL);
 	}
 	FTRACE((log,"done\n"));
 	
@@ -211,23 +220,32 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			goto imp_error;
 	FTRACE((log,"done\n"));
 
-	if (check_imported_feature(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
-	FTRACE((log,"Creating full-text search indexes..."));
-	if (strlen(cr_ftindexes_query)==0)
-		FTRACE((log,"(no full-test search indexes in the database)...")); 
-	else
-		if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
-			goto imp_error;
-	FTRACE((log,"done\n"));
+	if (check_feature_to_import(path, CHECK_FULL_TEXT_SEARCH, log) == SEDNA_FEATURE_ENABLED) {
+		if (ft_search_feature != SEDNA_FEATURE_ENABLED) {
+			ETRACE((log,"WARNING: full-text search feature in target Sedna database is disabled.\n"));
+		} else {		
+			FTRACE((log,"Creating full-text search indexes..."));
+			if (strlen(cr_ftindexes_query)==0)
+				FTRACE((log,"(no full-test search indexes in the database)...")); 
+			else
+				if (execute_multiquery(&conn,cr_ftindexes_query,log)!=0) 
+					goto imp_error;
+			FTRACE((log,"done\n"));
+		}
 	}
 
 	// processing security information
-	if (sec_import==1 && (check_imported_feature(path, CHECK_SECURITY, log) == SEDNA_FEATURE_ENABLED)) {
-		// restoring security
-		FTRACE((log,"Restoring security information..."));
-		if (restore_security(&conn,path,log)!=0) 
-			goto imp_error;
-		FTRACE((log,"done\n"));
+	if (sec_import==1 &&
+		check_feature_to_import(path, CHECK_SECURITY, log) == SEDNA_FEATURE_ENABLED ) {
+			if (security_feature != SEDNA_FEATURE_ENABLED) {
+				ETRACE((log,"WARNING: security feature in target Sedna database is disabled.\n"));
+			} else {
+				// restoring security
+				FTRACE((log,"Restoring security information..."));
+				if (restore_security(&conn,path,log)!=0) 
+					goto imp_error;
+				FTRACE((log,"done\n"));
+			}
 	} else {
 		// importing data
 		// security information is not imported

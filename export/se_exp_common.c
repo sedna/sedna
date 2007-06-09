@@ -99,10 +99,29 @@ int getSednaErrorStatus(char *errorMessage) {
 
 
 
+int check_sedna_feature(struct SednaConnection *conn, const char *query, FILE* log) {
+	int res;
+	char *result;
+    
+	if ((res = SEbegin(conn))!= SEDNA_BEGIN_TRANSACTION_SUCCEEDED) {
+		ETRACE((log,"ERROR: failed to begin transaction\n"));
+	}
+    
+	if ((res = SEexecute(conn,query))!= SEDNA_QUERY_SUCCEEDED) 
+		return SEDNA_FEATURE_DISABLED;
+	else {
+		if(SEcommit(conn) != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) {
+			FTRACE((log, "WARNING: Commit transaction failed.Details:\n%s\n",SEgetLastErrorMsg(conn)));
+			return SEDNA_FEATURE_DISABLED; // TODO - need to review
+		}
+		return SEDNA_FEATURE_ENABLED;
+	}
+}
 
 
 
-// functions executes retireve query, allocates buffer and returns it via result reference
+
+// functions executes retrieve query, allocates buffer and returns it via result reference
 // function returns error status
 int execute_retrieve_query(char** result, struct SednaConnection *conn, const char *query, FILE* log) {
   str_buf_t res_buf = {NULL, 0 , 0};
@@ -141,7 +160,7 @@ int execute_retrieve_query(char** result, struct SednaConnection *conn, const ch
 
 
 // function executes query in sedna and outputs the result to file
-// if the file reference is NULL then the result is not retireved
+// if the file reference is NULL then the result is not retrieved
 // function returns error status
 int execute_query(struct SednaConnection *conn, const char *query, FILE* f, FILE* log) {
   int res, bytes_read;
