@@ -89,8 +89,8 @@ int write_xquery_script(qbuf_t *qbuf,const char * filename);
 // function executes '/'-separated script of XQuery expressions
 int execute_multiquery(struct SednaConnection *conn, char *query, FILE* log); 
 
-
-
+// function checks in a new transaction that sedna feature is enabled
+int check_sedna_feature(struct SednaConnection *conn, const char *query, FILE* log);
 
 
 
