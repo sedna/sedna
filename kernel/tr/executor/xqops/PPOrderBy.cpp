@@ -439,13 +439,18 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     }
                     if (result == 0 && (!flag1 || !flag2))
                     {
-                        __int64 position1, position2;
-                        GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
-                        tuple t(length);
-                        ud->sort->get(t, position1);
-                        tuple_cell tc = t.cells[i];
-                        ud->sort->get(t, position2);
-                        result = fn_compare(t.cells[i], tc, m.collation)*order;
+                        if      (!flag1 && flag2) result = -1*order;
+                        else if (!flag2 && flag1) result =  1*order;
+                        else /// both strings are not fully serialized ! 
+                        { 
+                            __int64 position1, position2;
+                            GET_DESERIALIZED_VALUES(&position1, &position2, xs_integer, 0);
+                            tuple t(length);
+                            ud->sort->get(t, position1);
+                            tuple_cell tc = t.cells[i];
+                            ud->sort->get(t, position2);
+                            result = fn_compare(t.cells[i], tc, m.collation)*order;
+                        }
                     }
                     break;
                 }
