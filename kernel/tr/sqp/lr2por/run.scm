@@ -641,3 +641,55 @@
 ;       (/@
 ;        (cast (*@ (var ("" "sqrt3")) (var ("" "multiplier"))) (type (one !xs!integer)))
 ;        (var ("" "multiplier"))))))))
+
+(go
+ '(query
+   (prolog)
+   (query-body
+    (return
+     (sequence)
+     (fun-def
+      ((!xs!anyType (var ("" "$%v"))))
+      (predicate
+       (child
+        (var ("" "$%v"))
+        (type
+         (elem-test
+          (ename
+           (const (type !xs!QName) ("" "a" ""))
+           (type *)
+           (const (type !xs!string) "non-nil")))))
+       (fun-def
+        ((!xs!anyType (var ("" "$%v"))))
+        (and@
+         (and@
+          (!=@
+           (child
+            (var ("" "$%v"))
+            (type
+             (elem-test
+              (ename
+               (const (type !xs!QName) ("" "t" ""))
+               (type *)
+               (const (type !xs!string) "non-nil")))))
+           (const (type !xs!string) "1"))
+          (!=@
+           (child
+            (var ("" "$%v"))
+            (type
+             (elem-test
+              (ename
+               (const (type !xs!QName) ("" "t" ""))
+               (type *)
+               (const (type !xs!string) "non-nil")))))
+           (const (type !xs!string) "2")))
+         (!=@
+          (child
+           (var ("" "$%v"))
+           (type
+            (elem-test
+             (ename
+              (const (type !xs!QName) ("" "t" ""))
+              (type *)
+              (const (type !xs!string) "non-nil")))))
+          (const (type !xs!string) "3"))))))))))

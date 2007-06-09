@@ -7,6 +7,10 @@
 ;-------------------------------------------------------------------------------
 ; lp2por
 
+(define (l2p:trace x)
+  (pp x)
+  x)
+
 ;(define (fac n)
 ;  (if (zero? n) 1 (* n (fac (- n 1)))))
  
@@ -2123,14 +2127,22 @@
               ,(cond
                  ((null? others)
                   '(1 (PPFnTrue)))
-                 ((null? (cdr others))  ; a single member
-                  (l2p:any-lr-node2por
-                   (l2p:replace-pos-last2numbers (car others)
-                                                 pos-num last-num)))
+;                 ((null? (cdr others))  ; a single member
+;                  (l2p:any-lr-node2por
+;                   (l2p:replace-pos-last2numbers (car others)
+;                                                 pos-num last-num)))
                  (else
                   (l2p:any-lr-node2por
                    (l2p:replace-pos-last2numbers
-                    (cons 'and@ (reverse others))
+                    ; Was:
+                    ;(cons 'and@ (reverse others))
+                    (let bin ((src (cdr others))
+                              (res (car others)))
+                      (if
+                       (null? src)
+                       res
+                       (bin (cdr src)
+                            (list 'and@ (car src) res))))
                     pos-num last-num))))
               ,@((lambda (lst)
                    (cons (if (car lst) 1 0)
