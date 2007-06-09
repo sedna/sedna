@@ -242,7 +242,7 @@ int import(const char *path,const char *url,const char *db_name,const char *logi
 			} else {
 				// restoring security
 				FTRACE((log,"Restoring security information..."));
-				if (restore_security(&conn,path,log)!=0) 
+				if (restore_security(&conn,log)!=0) 
 					goto imp_error;
 				FTRACE((log,"done\n"));
 			}
