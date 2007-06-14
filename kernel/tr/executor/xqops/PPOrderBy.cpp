@@ -464,19 +464,39 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                     {
                         if(temp1 != NULL) CHECKP(v1);
                         if(temp2 != NULL) CHECKP(v2);
-                        XMLDateTime value1(*(xs_packed_duration*)((char*)addr1+offset), type);
-                        XMLDateTime value2(*(xs_packed_duration*)((char*)addr2+offset), type);
-                        result = XMLDateTime::compare(value2, value1)*order;
+                        if(type == xs_yearMonthDuration || type == xs_dayTimeDuration)
+                        {
+                            XMLDateTime value1(*(xs_packed_duration*)((char*)addr1+offset), type);
+                            XMLDateTime value2(*(xs_packed_duration*)((char*)addr2+offset), type);
+                            result = XMLDateTime::compare(value2, value1)*order;
+                        }
+                        else
+                        {
+                            XMLDateTime value1(*(xs_packed_datetime*)((char*)addr1+offset), type);
+                            XMLDateTime value2(*(xs_packed_datetime*)((char*)addr2+offset), type);
+                            result = XMLDateTime::compare(value2, value1)*order;
+                        }
                     }
                     else
                     {
                         char* buffer = se_new char[type_size];    
                         CHECKP(v1);
                         memcpy(buffer, (char*)addr1+offset, type_size);
-                        XMLDateTime value1(*(xs_packed_duration*)buffer, type);
-                        CHECKP(v2);
-                        XMLDateTime value2(*(xs_packed_duration*)((char*)addr2+offset), type);
-                        result = XMLDateTime::compare(value2, value1)*order;
+                        if(type == xs_yearMonthDuration || type == xs_dayTimeDuration)
+                        {
+                            XMLDateTime value1(*(xs_packed_duration*)buffer, type);
+                            CHECKP(v2);
+                            XMLDateTime value2(*(xs_packed_duration*)((char*)addr2+offset), type);
+                            result = XMLDateTime::compare(value2, value1)*order;
+                        }
+                        else
+                        {
+                            XMLDateTime value1(*(xs_packed_datetime*)buffer, type);
+                            CHECKP(v2);
+                            XMLDateTime value2(*(xs_packed_datetime*)((char*)addr2+offset), type);
+                            result = XMLDateTime::compare(value2, value1)*order;
+                        }
+                        
                         delete buffer;
                     }
                     break;
@@ -569,9 +589,9 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     }
                     case xs_time                 :
                     case xs_date                 :
-                    case xs_dateTime             :
+                    case xs_dateTime             : {xs_packed_datetime xpdt = t.cells[i].get_xs_dateTime(); memcpy((char*)p+offset, &xpdt, type_size); break;}
                     case xs_yearMonthDuration    : 
-                    case xs_dayTimeDuration      : memcpy((char*)p+offset, &(t.cells[i].get_xs_duration()), type_size); break;
+                    case xs_dayTimeDuration      : {xs_packed_duration xpdu = t.cells[i].get_xs_duration(); memcpy((char*)p+offset, &xpdu, type_size); break;}
                     default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
                 }
             }
@@ -689,9 +709,9 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_string               : {serialize_string(tc, buffer+pos); break; }        
         case xs_time                 :
         case xs_date                 :
-        case xs_dateTime             :
+        case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_yearMonthDuration    : 
-        case xs_dayTimeDuration      : {memcpy(buffer + pos, &(tc.get_xs_duration()), type_size); break;}
+        case xs_dayTimeDuration      : {xs_packed_duration value = tc.get_xs_duration(); memcpy(buffer + pos, &value, type_size); break;}
         default                      : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type.");
     }
 
