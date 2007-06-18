@@ -192,6 +192,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var)
     
     if (old_var==XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
     CHECKP(old_var);
+    CHECKP(where_var);
 
     //if the node is not element or attribute - return
     t_item node_type = GETTYPE(GETSCHEMENODEX(old_var));
