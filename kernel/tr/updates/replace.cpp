@@ -192,10 +192,19 @@ void replace(PPOpIn arg)
 		}
 
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(XNULL, removeIndirection((*it3).cells[0].get_node()), XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
-#endif
+        xptr del_node = removeIndirection((*it3).cells[0].get_node());
+        xptr tmp_node = copy_to_temp(del_node);
+        xptr parent=removeIndirection(((n_dsc*)XADDR(del_node))->pdsc);
+        
+        if (apply_per_node_triggers(XNULL, del_node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
+        {
+            delete_node(node);
+            apply_per_node_triggers(XNULL, tmp_node, parent, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+        }
+#else
 		//delete node
-		delete_replaced_node(removeIndirection((*it3).cells[0].get_node()), node);
+		delete_node(removeIndirection((*it3).cells[0].get_node()));
+#endif        
 	}
 	while (it3!=arg4seq.begin());
 	//3.delete

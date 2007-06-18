@@ -180,6 +180,7 @@ void delete_deep(PPOpIn arg)
 	//  cycle on  sequence
 	xptr_sequence::iterator it=argseq.begin();
 	bool mark=false;
+    xptr tmp_node, parent;
 	do
 	{
 		xptr node=*it;
@@ -190,9 +191,17 @@ void delete_deep(PPOpIn arg)
 		}
 		while (nid_ancestor(node,*it));
 #ifdef SE_ENABLE_TRIGGERS
+        tmp_node = copy_to_temp(node);
+        parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
+        
         if (apply_per_node_triggers(XNULL, node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
+    	{
+        	delete_node(node);
+            apply_per_node_triggers(XNULL, tmp_node, parent, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+        }
+#else
+        delete_node(node);
 #endif
-    		delete_node(node);
 		if (mark) break;
 	}
 	while (true);
