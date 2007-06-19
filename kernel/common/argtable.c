@@ -30,7 +30,7 @@ USA.
 #include <errno.h>
 #include "common/argtable.h"
 
-#define ARGSTRLEN 200
+#define ARGSTRLEN 1024
 #define NAMESTRING(A) ((A.argname)?(A.argname):(arg_typestr[A.argtype]))
 #define NULLSAFE(S) ((S)?(S):(""))
 
