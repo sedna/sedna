@@ -1668,3 +1668,6 @@ sedna-err:SE6000
 sedna-err:SE9000
 
     User defined error
+sedna-err:SE2039
+
+   Invalid result of the second insert argument: sequence contains non-persistent or document nodes

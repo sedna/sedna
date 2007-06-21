@@ -31,15 +31,15 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		{
 			xptr node=t.cells[0].get_node();
 			CHECKP(node);
-			if (is_node_persistent(node) )
+			if (is_node_persistent(node) && !is_node_document(node))
 			{
-				xptr indir=((n_dsc*)XADDR(node))->indir;
+				//xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg1seq.add(node);	
 			}
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				throw USER_EXCEPTION(SE2013);
+				throw USER_EXCEPTION(SE2039);
 			}
 #endif
 		}
@@ -278,7 +278,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		{
 			xptr node=t.cells[0].get_node();
 			CHECKP(node);
-			if (is_node_persistent(node) )
+			if (is_node_persistent(node)&& !is_node_document(node) )
 			{
 				//xptr indir=((n_dsc*)XADDR(node))->indir;
 				arg1seq.add(node);	
@@ -286,7 +286,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 #ifndef IGNORE_UPDATE_ERRORS
 			else
 			{
-				throw USER_EXCEPTION(SE2013);
+				throw USER_EXCEPTION(SE2039);
 			}
 #endif
 		}
