@@ -136,8 +136,6 @@ void   idx_serialize          (tuple& t,xptr v1, const void * Udata);
 void   idx_serialize_2_blks   (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
 void   idx_deserialize        (tuple &t, xptr& v1, const void * Udata);
 void   idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * Udata);
-void   idx_get_size           (xptr& v1,xptr& v2,int& s1, int&s2, const void * Udata);
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
