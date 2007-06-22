@@ -239,6 +239,9 @@ void PPOrderBy::next  (tuple &t)
         t.set_eos();
         first_time  = true;
         need_reinit = true;
+        ss -> clear();
+        data_cells -> clear();
+        sort_cells -> clear();
     }
 }
 
