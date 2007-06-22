@@ -192,9 +192,20 @@ CHECKP(xpg);
 				key_idx--;
 		}
 		/* if the key is found, key_idx-th big_ptr points to next page */
+		
 		xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx);
 		/* follow next page */
 next_level_call:
+		
+		/* TEMP */
+		 CHECKP(xpg);
+		 pg=(char*)XADDR(xpg);
+		 if (BT_IS_LEAF(pg)&&BT_IS_CLUS(pg)&&!BT_IS_CLUS_HEAD(pg))
+		 {
+			 throw USER_EXCEPTION2(SE1008, "Cluster error");
+		 }
+		 /* END */
+
 		return bt_find_key(xpg, key, key_idx);
 	} else {
 		return bt_leaf_find_key(xpg, key, key_idx);

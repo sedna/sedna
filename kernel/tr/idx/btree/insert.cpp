@@ -39,6 +39,7 @@ char insert_buf[PAGE_SIZE];
 xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size)
 {
     xptr    pg_xptr = ADDR2XPTR(pg);
+	xptr    next_for_rpg = BT_NEXT(pg);
     bool    is_leaf_page = BT_IS_LEAF(pg);
     shft    key_size = BT_KEY_SIZE(pg);
     shft    key_num = BT_KEY_NUM(pg);
@@ -48,8 +49,12 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     shft    heap_buf1, heap_buf2;
     char    *dst = NULL, *src = NULL;
     int     i;
-	xptr        next_for_rpg;
-
+	
+    if (next_for_rpg == XNULL && split_idx < key_num - 1) 
+    {
+        split_idx = key_num - 1;
+    }
+    
     /* prepare the left-hand page */
     dst = bt_tune_buffering(true, key_size);
     buf1 = dst;
@@ -89,7 +94,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
         for (i = split_idx; i < key_num; i++) bt_buffer_bigptr(pg, src, dst);
     }
     heap_buf2 = bt_buffer_heap_shft();
-	next_for_rpg = BT_NEXT(pg);
+
     /* copy buffers to the pages and actualize headers */
     memcpy(pg, buf1, PAGE_SIZE);
 	
@@ -130,7 +135,6 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
 		VMM_SIGNAL_MODIFICATION(next_for_rpg);
 	}
-    
 
     /* clear out in which block pretender will reside and adjust new index of pretender in that page */
     if (pretender_goes_left)
@@ -244,19 +248,17 @@ void propagate_parent_to_cluster(xptr& head, xptr& parent)
 	CHECKP(head);
 	while (true)
 	{
-		if (!BT_IS_CLUS(blk))
-			return;
-		
-        (*BT_PARENT_PTR(blk)) = parent;
+		(*BT_PARENT_PTR(blk)) = parent;
          VMM_SIGNAL_MODIFICATION(tmp);
-		tmp=BT_PREV(blk);
+		tmp=BT_NEXT(blk);
+if (tmp==XNULL) return;
 		CHECKP(tmp);
 		blk=(char*)XADDR(tmp);
-		if (BT_IS_CLUS_HEAD(blk))
-			return;
-
+		if (!BT_IS_CLUS(blk))
+			return;		
 	}
 }
+
 xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &key, const object &obj, shft obj_idx)
 {
     char*       key_pg = pg;
@@ -337,10 +339,14 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
             /* make new root non-leaf and set the left-most pointer in new root page */
 			get_clust_head(pg_xptr);
             (*BT_IS_LEAF_PTR((char*)XADDR(parent_pg))) = false;
-            (*BT_LMP_PTR((char*)XADDR(parent_pg))) = pg_xptr;
+            (*BT_LMP_PTR((char*)XADDR(parent_pg))) = pg_xptr;            
+   			/* TEMP */
+            CHECKP(pg_xptr);
+            U_ASSERT(BT_PREV((char*)(XADDR(pg_xptr))) == XNULL);
+			/* END */
             root = parent_pg;
 
-            propagate_parent_to_cluster(pg_xptr,parent_pg);
+			propagate_parent_to_cluster(pg_xptr,parent_pg);
 
             CHECKP(rpg);
             (*BT_PARENT_PTR((char*)XADDR(rpg))) = parent_pg;
@@ -362,6 +368,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
 {
     xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
+	xptr        pg_parent;
     xmlscm_type pg_type = BT_KEY_TYPE(pg);
 
     if (!BT_IS_LEAF(pg)) throw USER_EXCEPTION2(SE1008, "Attempt to clusterize non-leaf page");
@@ -380,6 +387,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     }
 
     next_for_rpg = BT_NEXT(pg);
+	pg_parent = BT_PARENT(pg);
     /* left -> */
     (*BT_NEXT_PTR(pg)) = rpg;
     VMM_SIGNAL_MODIFICATION(pg_xptr);
@@ -399,6 +407,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     (*BT_PREV_PTR(rpg_addr)) = pg_xptr;
     /* right -> */
     (*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
+	(*BT_PARENT_PTR(rpg_addr)) = pg_parent;
     VMM_SIGNAL_MODIFICATION(rpg);
 	if (next_for_rpg!=XNULL)
 	{
@@ -486,6 +495,10 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
             (*BT_IS_LEAF_PTR((char*)XADDR(parent_pg))) = false;
 			get_clust_head(pg_xptr);
             (*BT_LMP_PTR((char*)XADDR(parent_pg))) = pg_xptr;
+            /* TEMP */
+            CHECKP(pg_xptr);
+            U_ASSERT(BT_PREV((char*)(XADDR(pg_xptr))) == XNULL);
+            /* END */
             root = parent_pg;
 
             /*CHECKP(pg_xptr);
