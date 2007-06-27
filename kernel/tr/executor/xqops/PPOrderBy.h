@@ -39,7 +39,7 @@
 
 
 #define ORB_SERIALIZED_SIZE(t)  (xmlscm_type_size(t) == 0 ? ORB_SERIALIZED_STRING_SIZE : xmlscm_type_size(t));
-                                                                                                                
+
 ///////////////////////////////////////////////////////////////////////////////
 /// NOTE!
 /// This buffer is internal class to use only within OrderBy operation!
@@ -144,7 +144,7 @@ private:
     
     arr_of_common_type types;
     orb_user_data udata;
-    
+
     static int  compare             (xptr v1,xptr v2, const void * Udata);
     static int  get_size            (tuple& t, const void * Udata);
     static void serialize           (tuple& t,xptr v1, const void * Udata);
