@@ -9,7 +9,6 @@
 
 using namespace std;
 
-
 #define CHECK_PTR_AND_CLEAR(ptr) if(ptr != NULL) { delete ptr; ptr = NULL; }
 
 #define GET_DESERIALIZED_VALUES(pValue1, pValue2, type, offset) \
@@ -272,6 +271,7 @@ bool PPOrderBy::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/// Works correctrly only if dest is pointer within dynamic memory!
 static inline void serialize_string(const tuple_cell& tc, void* dest)
 {
     __int64 length_all = tc.get_strlen();
@@ -532,9 +532,10 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
         
+    temp_buffer* buffer = ud -> buffer;
+
     #ifdef ALIGNMENT_REQUIRED
 
-        temp_buffer* buffer = ud -> buffer;
         buffer->clear();
         buffer->copy_to_buffer(&pos, sizeof(__int64));
         for(int i = 0; i < t.cells_number; i++)
@@ -582,11 +583,17 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
                     case xs_boolean              : *((bool*)((char*)p+offset)) = t.cells[i].get_xs_boolean(); break;
                     case xs_string               : 
                     {
-                        serialize_string(t.cells[i], (char*)p+offset); 
                         if(!t.cells[i].is_light_atomic())
                         {
+                            buffer->clear();
+                            buffer->serialize_to_buffer(t.cells[i]);
                             CHECKP(v1);
                             VMM_SIGNAL_MODIFICATION(v1);
+                            buffer->copy_from_buffer((char*)p+offset);
+                        }
+                        else
+                        {
+                            serialize_string(t.cells[i], (char*)p+offset); 
                         }
                         break;
                     }
@@ -709,7 +716,7 @@ void temp_buffer::serialize_to_buffer (const tuple_cell& tc)
         case xs_decimal              : {xs_decimal_t value = tc.get_xs_decimal(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy(buffer + pos, &value, type_size); break;}
         case xs_boolean              : {bool value = tc.get_xs_boolean(); memcpy(buffer + pos, &value, type_size); break;}
-        case xs_string               : {serialize_string(tc, buffer+pos); break; }        
+        case xs_string               : {serialize_string(tc, buffer+pos); break; }
         case xs_time                 :
         case xs_date                 :
         case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); memcpy(buffer + pos, &value, type_size); break;}

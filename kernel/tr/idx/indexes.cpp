@@ -599,7 +599,15 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
         case xs_float                : {float value = tc.get_xs_float();  memcpy((char*)p+offset, &value, sz); break;}
         case xs_double               : {double value = tc.get_xs_double(); memcpy((char*)p+offset, &value, sz); break;}
         case xs_integer              : {__int64 value = tc.get_xs_integer(); memcpy((char*)p+offset, &value, sz); break;}
-		case xs_string               : t.cells[0].copy_string((char*)p+offset, sz); break;
+		case xs_string               : 
+		{
+			tc = tuple_cell::make_sure_light_atomic(tc);
+			CHECKP(v1);
+			VMM_SIGNAL_MODIFICATION(v1);
+			char* str = tc.get_str_mem();
+			memcpy((char*)p+offset, str, sz); 
+			break;
+		}
         case xs_time                 :
         case xs_date                 :
         case xs_dateTime             : {xs_packed_datetime value = tc.get_xs_dateTime(); memcpy((char*)p+offset, &value, sz); break;}
@@ -631,7 +639,10 @@ void idx_serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void * U
 		case xs_string               : 
 		{
 			buffer->expand_to_size(offset+sz);
-			t.cells[0].copy_string(buffer->get_buffer_pointer()+offset, sz); break;
+			tc = tuple_cell::make_sure_light_atomic(tc);
+			char* str = tc.get_str_mem();
+			memcpy(buffer->get_buffer_pointer()+offset, str, sz); 
+			break;
 		}
         case xs_time                 :
         case xs_date                 :
@@ -664,7 +675,9 @@ void idx_deserialize (tuple &t, xptr& v1, const void * Udata)
 #else
     xptr v2=v1+sizeof(shft);
     xptr v3=v2+sizeof(xptr);
-    t.copy(get_tc( XADDR(v3),((idx_user_data*)Udata)->t,sz), tuple_cell::node(*((xptr*)XADDR(v2))));
+	
+	tuple_cell key = get_tc( XADDR(v3),((idx_user_data*)Udata)->t,sz);
+	t.copy(key, tuple_cell::node(*((xptr*)XADDR(v2))));
 #endif				
 }
 
