@@ -209,7 +209,8 @@ index_cell* create_index (PathExpr *object_path,
 		ss->next(tup);
 		if (tup.is_eos())
 		{
-			ss->clear();
+			delete ss;
+			ss = NULL;
 			break;
 		}
 		else
@@ -220,7 +221,7 @@ index_cell* create_index (PathExpr *object_path,
 				bt_key key;
 				tuple_cell2bt_key(tup.cells[0], key);
 				CHECKP(idc->btree_root);
-				bt_insert(idc->btree_root, key, tup.cells[1].get_node());
+				bt_insert(idc->btree_root, key, tup.cells[1].get_node(),false);
                 counter2++;
 			}
 			catch (SednaUserException &e) {
@@ -546,11 +547,9 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
 
     get_binary_op_res r = get_binary_op(xqbop_lt, type, type);
     
-    CollationManager manager;
-	
     bool result;
     if (r.collation) 
-        result = r.f.bf_c(tc1, tc2, manager.get_default_collation_handler()).get_xs_boolean();
+        result = r.f.bf_c(tc1, tc2, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
     else
         result = r.f.bf(tc1, tc2).get_xs_boolean();
 	
@@ -558,7 +557,7 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
     r = get_binary_op(xqbop_gt, type, type);
     
     if (r.collation) 
-        result = r.f.bf_c(tc1, tc2, manager.get_default_collation_handler()).get_xs_boolean();
+        result = r.f.bf_c(tc1, tc2, charset_handler->get_unicode_codepoint_collation()).get_xs_boolean();
     else
 	    result = r.f.bf(tc1, tc2).get_xs_boolean();
     if(result) return 1;
