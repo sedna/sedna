@@ -36,7 +36,7 @@
    in page different from initial page, the 'pg' pointer is set to the target page
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   */
-bool bt_leaf_find_key(xptr & xpg, bt_key* key, shft & key_idx) {
+bool bt_leaf_find_key(xptr & xpg, bt_key* key, shft & key_idx,bool with_bt) {
 CHECKP(xpg);
 	char*	pg=(char*)XADDR(xpg);
 	int		rc;
@@ -80,15 +80,15 @@ CHECKP(xpg);
 			}
 		}
 		/* pg is cluster tail page, in general this is not initial page */
-		bool rcbool = bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx);			
+		bool rcbool = bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);			
 		if (key_idx == BT_LEFTMOST)
 			/* search in the cluster tail page of the cluster can not result in BT_LEFTMOST */
             throw USER_EXCEPTION2(SE1008, "Search in cluster tail page resulted in BT_LEFTMOST key_idx");
 		return rcbool;
 	} else 
-		return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx);
+		return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
 #else
-	return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx);
+	return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
 #endif
 
 }
@@ -148,7 +148,7 @@ CHECKP(xpg);
 }
 
 /* Search key in given non-leaf page*/
-bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx) {
+bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx,bool with_bt) {
 	/* calculate size of key table element */
 	//bt_page_consistency(pg, key);
 	shft el_size;
@@ -156,7 +156,7 @@ bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx) {
 		el_size = 2*sizeof(shft);
 	else
 		el_size = BT_KEY_SIZE(pg);
-	return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx);
+	return bt_locate_key_bisection(pg, BT_KEY_TAB(pg), BT_KEY_NUM(pg), el_size, *key, key_idx,with_bt);
 }
 
 /* Search key in given non-leaf page, recursively descending through the tree to the leaf page level.
@@ -164,7 +164,7 @@ bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx) {
    page. When reached leaf level, whether the key was found or not, the 'pg' is set to the page where
    the searched key resides or must be allocated.
  */
-bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx) {
+bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx,bool with_bt) {
 CHECKP(xpg);
 	char*	pg=(char*)XADDR(xpg);
 	bool	rc;
@@ -173,7 +173,7 @@ CHECKP(xpg);
 
 	/* pg - currently processed page */
 	if (!BT_IS_LEAF(pg)) {	
-		rc = bt_nleaf_find_key(pg, key, key_idx);
+		rc = bt_nleaf_find_key(pg, key, key_idx,with_bt);
 		if (!rc) {
 			/* if the key not found, there are two cases:
 			   1) if rc == BT_LEFTMOST next page is in LMP field
@@ -208,7 +208,7 @@ next_level_call:
 
 		return bt_find_key(xpg, key, key_idx);
 	} else {
-		return bt_leaf_find_key(xpg, key, key_idx);
+		return bt_leaf_find_key(xpg, key, key_idx,with_bt);
 	}
 }
 

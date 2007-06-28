@@ -24,7 +24,7 @@ bt_cursor		bt_find_ge(const xptr &root, const bt_key& key);/* find key or neares
 bt_cursor		bt_find_gt(const xptr &root, const bt_key& key);/* find nearest greater key */
 bt_cursor		bt_lm     (const xptr &root);					/* get left-most key */
 
-void			bt_insert(xptr &root, const bt_key &key, const object &obj);
+void			bt_insert(xptr &root, const bt_key &key, const object &obj, bool with_bt=true);
 void			bt_modify(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj);
 void			bt_delete(xptr &root, const bt_key &key, const object &obj);	/* delete key/obj pair */
 void			bt_delete(xptr &root, const bt_key &key);						/* delete key with all it's objects */
