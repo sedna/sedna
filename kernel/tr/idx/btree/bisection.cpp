@@ -103,7 +103,7 @@ bool bt_locate_obj_bisection(const object* ar, shft ar_size, const object &obj, 
    to the index of nearest bigger element in key table otherwise. In case the searched key is bigger
    than all keys in the key table, key_idx is set to BT_RIGHTMOST, in case smaller than all keys -
    to BT_LEFTMOST */
-bool bt_locate_key_bisection(char* pg, const char* ar, shft ar_size, shft ar_el_size, const bt_key& key, shft &key_idx)
+bool bt_locate_key_bisection(char* pg, const char* ar, shft ar_size, shft ar_el_size, const bt_key& key, shft &key_idx,bool with_bt)
 {
     if (ar_size <= 0)
     {
@@ -111,9 +111,9 @@ bool bt_locate_key_bisection(char* pg, const char* ar, shft ar_size, shft ar_el_
         return false;
     }
 
-    int     rc;
-    shft    l_idx = 0;
+    int     rc;	
     shft    r_idx = ar_size - 1;
+	shft    l_idx = (with_bt)?0:r_idx;
     shft    m_idx = l_idx + (r_idx - l_idx) / 2;
 
     while (l_idx != m_idx) 

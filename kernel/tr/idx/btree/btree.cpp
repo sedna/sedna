@@ -160,7 +160,7 @@ bt_cursor bt_lm(const xptr& root)
     }
 }
 
-void bt_insert(xptr &root, const bt_key &key, const object &obj)
+void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
 {
     bool  rc;
     shft  key_idx = 0;
@@ -172,7 +172,7 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj)
     if (key.get_size() >= BT_PAGE_PAYLOAD / 2)
         throw USER_EXCEPTION2(SE1008, "The size of the index key exceeds max key limit");
 
-    rc = bt_find_key(insert_xpg, (bt_key*)&key, key_idx);
+    rc = bt_find_key(insert_xpg, (bt_key*)&key, key_idx,with_bt);
     /* page could change */
     insert_pg = (char*)XADDR(insert_xpg);
 
@@ -189,7 +189,7 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj)
             if (obj_idx == BT_RIGHTMOST)
                 obj_idx = *((shft*)BT_CHNK_TAB_AT(insert_pg, key_idx) + 1);
 
-            bt_leaf_insert(root, insert_pg, key_idx, false, key, obj, obj_idx);
+            bt_leaf_insert(root, insert_pg, key_idx, false, key, obj, obj_idx,with_bt);
         /*}*/
     } 
     else
@@ -198,7 +198,7 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj)
 
         if (key_idx == BT_RIGHTMOST)
             key_idx = BT_KEY_NUM(insert_pg);
-        bt_leaf_insert(root, insert_pg, key_idx, true, key, obj, obj_idx);
+        bt_leaf_insert(root, insert_pg, key_idx, true, key, obj, obj_idx,with_bt);
     }
 }
 

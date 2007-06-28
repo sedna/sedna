@@ -259,7 +259,7 @@ if (tmp==XNULL) return;
 	}
 }
 
-xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &key, const object &obj, shft obj_idx)
+xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &key, const object &obj, shft obj_idx,bool with_bt)
 {
     char*       key_pg = pg;
     xptr        key_pg_xptr = ADDR2XPTR(pg);
@@ -304,7 +304,7 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
             if (BT_KEY_NUM(pg) == 1)
             { /* cluster case - nothing is promoted, instantly return */
 #ifdef PERMIT_CLUSTERS
-                bt_page_clusterize(root, pg, rpg, obj);
+                bt_page_clusterize(root, pg, rpg, obj,with_bt);
                 return rpg;
 #else
                 throw USER_EXCEPTION2(SE1008, "Not enough space to insert new key/object into page (clusterization prohibited)");
@@ -354,7 +354,7 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
            // BTREE_HEIGHT++;
         }
 
-        bt_promote_key(root, rpg, parent_pg);
+        bt_promote_key(root, rpg, parent_pg,with_bt);
     }
     return key_pg_xptr;
 }
@@ -364,7 +364,7 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
    mark it as cluster, i.e. form the cluster. The new page is initially unformatted. Insert object
    into new page
  */
-void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj)
+void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj,bool with_bt)
 {
     xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
@@ -398,7 +398,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     char* rpg_addr = (char*)XADDR(rpg);
     bt_page_markup(rpg_addr, pg_type);
     /* insert cluster key and new object into rpg page */
-    bt_leaf_insert(root, rpg_addr, 0, true, key, obj, 0);
+    bt_leaf_insert(root, rpg_addr, 0, true, key, obj, 0,with_bt);
     CHECKP(rpg);
     /* mark page as the cluster tail and link to neighbours */
     (*BT_IS_CLUS_PTR(rpg_addr)) = true;
@@ -425,7 +425,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
    modifieable parameter 'root' gives xptr of the current btree root, which can be changed in case
    tree height is increased inside function;
 */
-void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_ptr)
+void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_ptr,bool with_bt)
 {
     char*       key_pg = pg;
     xptr        pg_xptr = ADDR2XPTR(pg);
@@ -437,7 +437,7 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
     xmlscm_type pg_type = BT_KEY_TYPE(pg);
 
     /* find where to insert the key */
-    rc = bt_nleaf_find_key(pg, (bt_key*)&key, key_idx);
+    rc = bt_nleaf_find_key(pg, (bt_key*)&key, key_idx,with_bt);
     if (rc)	throw USER_EXCEPTION2(SE1008, "The key to be inserted in non-leaf page is already there");
 
     if (key_idx == BT_RIGHTMOST) key_idx = BT_KEY_NUM(pg);
@@ -511,7 +511,7 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
             //BTREE_HEIGHT++;
         }
 
-        bt_promote_key(root, rpg, parent_pg);
+        bt_promote_key(root, rpg, parent_pg,with_bt);
     }
 }
 
@@ -521,13 +521,13 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
    note: the function may cause possible recursive splitting of parent pages in case there
    is no enough space in them to store promoted keys
  */
-void bt_promote_key(xptr &root, const xptr &pg, const xptr &parent_pg)
+void bt_promote_key(xptr &root, const xptr &pg, const xptr &parent_pg,bool with_bt)
 {
     CHECKP(pg);
     bt_key promote_key((char*)XADDR(pg), 0);
 
     CHECKP(parent_pg);
-    bt_nleaf_insert(root, (char*)XADDR(parent_pg), promote_key, pg);
+    bt_nleaf_insert(root, (char*)XADDR(parent_pg), promote_key, pg,with_bt);
 }
 
 /* make actual insertion of key and object sticking to that key into given place in key table
