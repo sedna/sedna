@@ -1671,3 +1671,7 @@ sedna-err:SE9000
 sedna-err:SE2039
 
    Invalid result of the second insert argument: sequence contains non-persistent or document nodes
+
+sedna-err:SE3207
+
+    XPath expression after the 'ON' keyword is invalid.
