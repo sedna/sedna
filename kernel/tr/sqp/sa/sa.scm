@@ -4919,22 +4919,39 @@
       #f))  
   
 (define (sa:prepare-trigger-path-to-parent expr)
-  `(parent
-    ,expr
-    (type (node-test)))
-  ;(list 'ddo (list 'parent expr '(type (node-test))))
+  (display "\n-------------\n")
+  (display expr)
+  (display "\n-------------\n")
+  (cond
+    ((eq? (car expr) '!fn!document) (cl:signal-input-error SE3207 expr))
+    ((or (eq? (car expr) 'child)
+         (eq? (car expr) 'attribute)
+         (cadr expr)))
+    ((or (eq? (car expr) 'descendant)
+         (eq? (car expr) 'descendant-or-self))
+         `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil"))))))
+    ((eq? (car expr) 'self) (sa:prepare-trigger-path-to-parent (cadr expr)))
+    ((eq? (car expr) 'ddo) (sa:prepare-trigger-path-to-parent (cadr expr)))
+    (else (cl:signal-user-error SE3207 "Unknown axis")))
+;  `(ddo (parent
+;         ,expr
+;         (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil"))))))
+;  (list 'ddo (list 'parent expr '(type (elem-test (ename (const (type !xs!QName) *) (type *) (const ;(type !xs!string) "non-nil"))))))
+ ; expr
   )
 
 (define (sa:prepare-trigger-leaf-name expr)
+  (if (eq? (car expr) '!fn!document) #f
   (let ((leaf (caddr (cadr (cadr (cadr (cadr (cdadr expr))))))))
     (if (list? leaf)
         (cadr leaf)
-        (symbol->string leaf))))
+        (symbol->string leaf)))))
 
 (define (sa:prepare-trigger-leaf-type expr)
+  (if (eq? (car expr) '!fn!document) #f
   (if (eq? (caadr (cadr (cdadr expr))) 'elem-test)
       0
-      1))
+      1)))
 
 (define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
   (and
@@ -4944,6 +4961,7 @@
      (list? (list-ref (sa:op-args expr) 5)))
     (cl:signal-input-error SE5075
                            (list-ref (sa:op-args expr) 5))
+    (begin (display "\nHere")
     (let ((first  (sa:analyze-string-const (car (sa:op-args expr))
                                            vars funcs ns-binding default-ns))
           (second (sa:analyze-string-const (cadr (sa:op-args expr))
@@ -4951,7 +4969,7 @@
           (third  (sa:analyze-string-const (caddr (sa:op-args expr))
                                            vars funcs ns-binding default-ns))
           (fourth (sa:analyze-expr (cadddr (sa:op-args expr))
-                                   vars funcs ns-binding default-ns))
+                                   vars funcs ns-binding default-ns uri modules))
           (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
                                            vars funcs ns-binding default-ns))
           (sixth  (map
@@ -4967,8 +4985,9 @@
                           (apply sa:analyze-update x)
                           sa:type-nodes))
                        sa:analyze-expr)
-                      statement vars funcs ns-binding default-ns))
-                   (list-ref (sa:op-args expr) 5))))
+                      statement vars funcs ns-binding default-ns uri modules))
+                   (list-ref (sa:op-args expr) 5))
+                  ))
       (and
        first second third fourth fifth
        (null? (filter 
@@ -4993,7 +5012,12 @@
                                 (caddr (car fifth))))
          (else
           (if (sa:trigger-before-insert-for-each-node? second third fifth)
-             (list
+              (begin 
+                (display "\n-------\n")
+                (if (eq? (car expr) '!fn!document) (display "true") (display "false"))
+                (display (car fourth))
+                (display "\n-------\n")
+              (list
                (sa:op-name expr)  ; operation name
                (car first)  ; remove argument type
                (car second)
@@ -5006,7 +5030,7 @@
                (sa:prepare-trigger-leaf-name (car fourth))
                (sa:prepare-trigger-leaf-type (car fourth))
                (sa:prepare-trigger-path-to-parent (car fourth))
-               )
+               ))
               (begin
                 (display (car fourth))
               (list
@@ -5019,7 +5043,7 @@
                 (car fourth))
                (car fifth)
                (map car sixth)
-               ))))))))))
+               )))))))))))
 
 ; Clone from sa:analyze-manage-document
 (define (sa:analyze-trigger-drop

@@ -1480,15 +1480,31 @@
                               l2p:any-lr-node2por
                               (list-ref node 5)))
                      (name (l2p:any-lr-node2por (car node))))
-                `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
+                (if (= (length node) 9)
+                     (let* ((insname (list-ref node 6))
+                            (instype (list-ref node 7))
+                            (ParentAbsPath (l2p:findPPAbsPath (list-ref node 8)))
+                            (parent-path (caddr ParentAbsPath)))
+                    `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
                                   ,time
                                   ,event
                                   ,entity
                                   ,abs-path
                                   ,granularity
                                   ,action
-                                  ,name)))
-             
+                                  ,name
+                                  ,insname
+                                  ,instype
+                                  ,parent-path))
+                    `(PPCreateTrigger ,(if (eq? var-count 0) 0 (+ var-count 1))
+                                  ,time
+                                  ,event
+                                  ,entity
+                                  ,abs-path
+                                  ,granularity
+                                  ,action
+                                  ,name))))
+                               
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!
               (let ((ind-name (l2p:any-lr-node2por (car node)))
