@@ -61,6 +61,7 @@ void schema_node::init(void* p)
 	scr->ind_entry=XNULL;
 	scr->root=NULL;
 	scr->textcnt=0;
+	scr->lastnode_ind=XNULL;
 }
 void temp_schema_node::init(void* p)
 {

@@ -68,7 +68,14 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 		#ifdef _MYDEBUG
 			crm_out<<" thirdElementAndTextInsertProcedure->4";
 		#endif
-		xptr namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,name,node_type,ns);
+		xptr namesake=XNULL;
+		if (scm->lastnode_ind!=XNULL)
+		{
+			namesake=removeIndirection(scm->lastnode_ind);
+			CHECKP(namesake);
+		}
+		else
+			namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,name,node_type,ns);
 		if (namesake!=XNULL)
 			tmp = addNewNodeOfSameSortAfter(namesake, left_sib,right_sib,parent, par_indir, type,node_type);
 		else 
@@ -473,7 +480,15 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
 		#ifdef _MYDEBUG
 			crm_out<<" textInsertProcedure->9";
 		#endif
-		xptr namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,NULL,text,NULL);
+		xptr namesake=XNULL;
+		schema_node* tms=block->snode->get_child(NULL,NULL,text);
+		if (tms->lastnode_ind!=XNULL)
+		{
+			namesake=removeIndirection(tms->lastnode_ind);
+			CHECKP(namesake);
+		}
+		else
+			namesake= findNodeWithSameNameToInsertAfter(left_sib,right_sib,parent,NULL,text,NULL);
 		if (namesake!=XNULL)
 			tmp = addNewNodeOfSameSortAfter(namesake,left_sib, right_sib, parent,   par_indir, 0,text);
 		else 

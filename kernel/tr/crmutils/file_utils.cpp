@@ -55,11 +55,13 @@ std::vector<xml_ns*> nss;
 
 std::vector<int> curr_fo;
 std::map<schema_node*,stat_pair> max_fo;
+
 std::vector<stat_pair*> curp;
 //pair
 void remove_hints(schema_node* nd)
 {
 	nd->cl_hint=0;
+	nd->lastnode_ind=XNULL;
 	sc_ref* sc=nd->first_child;
 	while (sc!=NULL)
 	{
@@ -158,6 +160,7 @@ void processWP(const char** s, int& len)
 			{
 				new_node=insert_text(left,XNULL,XNULL,wptail,wptailsize);
 			}
+			(GETBLOCKBYNODE(new_node))->snode->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
 			if (is_coll)
 				update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
@@ -308,6 +311,7 @@ static void start(void *s, const char *el, const char **attr)
 		new_node=insert_element(left,XNULL,XNULL,local,xs_untyped,ns);
 		mark=1;
 	}
+	(GETBLOCKBYNODE(new_node))->snode->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
 if (is_coll)
  update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 
@@ -428,6 +432,7 @@ void data(void *userData, const char *s, int len)
 	{
 		new_node=insert_text(left,XNULL,XNULL,s,len);
 	}
+	(GETBLOCKBYNODE(new_node))->snode->lastnode_ind=((n_dsc*)XADDR(new_node))->indir;
 #ifdef SE_ENABLE_FTSEARCH
 	if (is_coll)
 		update_insert_sequence(new_node,(GETBLOCKBYNODE(new_node))->snode->ft_index_object); 

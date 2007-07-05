@@ -141,6 +141,8 @@ struct schema_node
 	unsigned int extnids;
 	unsigned int indir_blk_cnt;
 	__int64 textcnt;
+	//TEMP
+	xptr lastnode_ind;
 	/*stat end*/
 	struct doc_schema_node* root;
 	
