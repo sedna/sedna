@@ -3,12 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #include <vector>
 
 #include "common/sedna.h"
 #include "common/errdbg/d_printf.h"
-
 #include "tr/idx/indexes.h"
 #include "tr/structures/schema.h"
 #include "tr/vmm/vmm.h"
@@ -24,6 +22,7 @@
 
 using namespace std;
 
+
 void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 {
     tuple_cell ltc = tuple_cell::make_sure_light_atomic(tc);
@@ -34,20 +33,19 @@ void tuple_cell2bt_key(const tuple_cell& /*in*/ tc, bt_key& /*out*/ key)
 
     switch (ltc.get_atomic_type())
     {
-        case xs_integer 		: key.setnew((__int64)(ltc.get_xs_integer()));	break; //!!! FIX THIS
-        case xs_float			: key.setnew(ltc.get_xs_float());	break;
-        case xs_double			: key.setnew(ltc.get_xs_double());	break;
-        case xs_string			: key.setnew(ltc.get_str_mem());	break;
-	case xs_date                    :
-	case xs_dateTime                :
-	case xs_time                    : key.setnew_dateTime(ltc.get_xs_dateTime(), ltc.get_atomic_type()); break;
-	case xs_yearMonthDuration      :
-	case xs_dayTimeDuration        : key.setnew_duration(ltc.get_xs_duration(), ltc.get_atomic_type()); break;
+        case xs_integer 		 : key.setnew((__int64)(ltc.get_xs_integer()));	break; //!!! FIX THIS
+        case xs_float			 : key.setnew(ltc.get_xs_float());	break;
+        case xs_double			 : key.setnew(ltc.get_xs_double());	break;
+        case xs_string			 : key.setnew(ltc.get_str_mem());	break;
+        case xs_date             :
+        case xs_dateTime         :
+        case xs_time             : key.setnew_dateTime(ltc.get_xs_dateTime(), ltc.get_atomic_type()); break;
+        case xs_yearMonthDuration:
+        case xs_dayTimeDuration  : key.setnew_duration(ltc.get_xs_duration(), ltc.get_atomic_type()); break;
 
-        default					: throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
+        default					 : throw USER_EXCEPTION2(SE1003, "Unsupported type of index");
     }
 }
-
 
 //void bt_key2tuple_cell(const bt_key& /*in*/ key, tuple_cell& /*out*/ tc)
 //{
