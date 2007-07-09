@@ -560,6 +560,7 @@ xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr pare
 {
 	n_dsc* tmp=((n_dsc*)XADDR(parent));
 	n_dsc* tmp2;
+	CHECKP(parent);
 	while ( getChildPointer(tmp,name,node_type,ns)==XNULL)
 	{
 		tmp= getNextDescriptorOfSameSort(tmp) ;
