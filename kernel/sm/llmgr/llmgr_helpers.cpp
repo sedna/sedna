@@ -607,7 +607,9 @@ bool llmgr_core::find_redo_trn_cell(transaction_id trid,
 }
 
 
-bool llmgr_core::find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/)
+
+//bool llmgr_core::find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/)
+/*
 {
   trns_undo_analysis_list_iterator it;
   for (it = undo_list.begin(); it != undo_list.end(); it++)
@@ -621,9 +623,10 @@ bool llmgr_core::find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list
 
   return false;
 }
+*/
 
-
-void llmgr_core::set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/)
+//void llmgr_core::set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/)
+/*
 {
   trns_undo_analysis_list_iterator it;
   for (it = undo_list.begin(); it != undo_list.end(); it++)
@@ -639,7 +642,7 @@ void llmgr_core::set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list&
   return;
 
 }
-
+*/
 
 bool llmgr_core::find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/)
 {
