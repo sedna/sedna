@@ -55,6 +55,22 @@ void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_siz
         throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
 }
 
+void bm_rcv_read_block(const xptr &p, void *buf)
+{
+    __int64 _dsk_offs;
+
+    _dsk_offs = ABS_DATA_OFFSET(p) + (__int64)PAGE_SIZE;
+
+    // read block
+    if (uSetFilePointer(data_file_handler, _dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
+        throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
+
+    int number_of_bytes_read = 0;
+    int res = uReadFile(data_file_handler, buf, PAGE_SIZE, &number_of_bytes_read, __sys_call_error);
+    if (res == 0 || number_of_bytes_read != PAGE_SIZE)
+        throw SYSTEM_ENV_EXCEPTION("Cannot read block");
+}
+
 void bm_rcv_decrease(__int64 old_size)
 {
     if (uSetEndOfFile(data_file_handler, old_size, U_FILE_BEGIN, __sys_call_error) == 0)

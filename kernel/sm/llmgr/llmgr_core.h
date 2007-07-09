@@ -81,11 +81,7 @@ enum {LL_INSERT_ELEM,
       LL_INSERT_DOC_FTS_INDEX,
       LL_DELETE_DOC_FTS_INDEX,
       LL_INSERT_COL_FTS_INDEX,
-      LL_DELETE_COL_FTS_INDEX,
-      LL_INSERT_DOC_TRG,
-      LL_DELETE_DOC_TRG,
-      LL_INSERT_COL_TRG,
-      LL_DELETE_COL_TRG,
+      LL_DELETE_COL_FTS_INDEX
      };
 
 enum transaction_mode {NORMAL_MODE, ROLLBACK_MODE};
@@ -141,7 +137,7 @@ struct trn_cell_analysis_redo
   trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(TRN_NOT_FINISHED) {};
   trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_, trn_analysis_enum _finish_status_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(_finish_status_) {};
 };
-
+/*
 struct trn_cell_analysis_undo
 {
   transaction_id trid;
@@ -151,7 +147,7 @@ struct trn_cell_analysis_undo
   xptr node;//!!!what is it ?
   trn_cell_analysis_undo(transaction_id _trid_, LONG_LSN _lsn_): trid(_trid_), trn_undo_rcv_lsn(_lsn_), first_lsn_after_cp(NULL_LSN),  finish_status(TRN_NOT_FINISHED) {};
 };
-
+*/
 //typedef std::map<transaction_id, trn_cell_analysis> trns_analysis_map;
 
 //typedef std::pair <transaction_id, trn_cell_analysis> trn_pair;
@@ -160,8 +156,8 @@ typedef std::list<trn_cell_analysis_redo> trns_redo_analysis_list;
 typedef std::list<trn_cell_analysis_redo>::iterator trns_redo_analysis_list_iterator;
 typedef std::list<trn_cell_analysis_redo>::reverse_iterator trns_redo_analysis_list_reverse_iterator;
 
-typedef std::list<trn_cell_analysis_undo> trns_undo_analysis_list;
-typedef std::list<trn_cell_analysis_undo>::iterator trns_undo_analysis_list_iterator;
+//typedef std::list<trn_cell_analysis_undo> trns_undo_analysis_list;
+//typedef std::list<trn_cell_analysis_undo>::iterator trns_undo_analysis_list_iterator;
 
 
 
@@ -261,6 +257,10 @@ public:
   LONG_LSN ll_log_checkpoint(bool sync);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
+  void ll_log_free_blocks(void *block, int len, bool sync);
+  void ll_log_ctrl_snapshot_add(transaction_id trid, const xptr &p, bool sync);
+  void ll_log_decrease(__int64 old_size, bool sync);
+  
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
   void set_prev_rollback_lsn(transaction_id &trid, bool sync);//this function must be called inside microop
 
@@ -272,7 +272,7 @@ public:
   void ll_truncate_log(bool sync);
 
   void commit_trn(transaction_id& trid, bool sync);
-  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
+//  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
 void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
                                void (*exec_micro_op) (const char*, int, bool),
@@ -288,6 +288,9 @@ void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&,
 void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_vmm_rcv_add_to_indir_block_set_)(xptr p), void (*_vmm_rcv_clear_indir_block_set_)(),void (*_sync_indirection_table_)(), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 
 #endif
+
+  void recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sync);
+  
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
 
@@ -312,17 +315,17 @@ private:
   const char* get_record_from_disk(LONG_LSN& lsn);
   int get_record_length(const void* rec);
   const char* get_record_from_shared_memory(int end_offs, int len);
-  void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
+//  void undo_trn(LONG_LSN& start_lsn, void (*exec_micro_op) (const char*, int, bool));
   void redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*exec_micro_op) (const char*, int, bool));
-  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, trns_undo_analysis_list& undo_list, /*out*/trns_redo_analysis_list& redo_list /*out*/, void (*_vmm_rcv_add_to_indir_block_set_)(xptr p));
+  void get_undo_redo_trns_list(LONG_LSN &start_lsn, LONG_LSN &end_lsn, /*trns_undo_analysis_list& undo_list,*/ /*out*/trns_redo_analysis_list& redo_list /*out*/, void (*_vmm_rcv_add_to_indir_block_set_)(xptr p));
 
   bool find_redo_trn_cell(transaction_id trid,
                           trns_redo_analysis_list& redo_list,
                           LONG_LSN lsn,
                           trn_cell_analysis_redo& redo_trn_cell/*out*/);
 
-  bool find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/);
-  void set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/);
+//  bool find_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*out*/);
+//  void set_undo_trn_cell(transaction_id trid, trns_undo_analysis_list& undo_list, trn_cell_analysis_undo& undo_trn_cell/*in*/);
 
   bool find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/);
   void set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/);

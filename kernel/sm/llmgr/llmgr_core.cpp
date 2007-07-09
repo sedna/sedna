@@ -19,6 +19,8 @@
 #include "tr/vmm/vmm.h"
 #include "tr/structures/indirection.h"
 
+#include "sm/bufmgr/bm_rcv.h"
+
 using namespace std;
 
 
@@ -1306,6 +1308,127 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
          inc_mem_copy(indir_rec, offs, &(blocks->at(i)), sizeof(xptr));
 }
 
+/*
+ free blocks log record format:
+ op (1 byte)
+ size (4 bytes?)
+ block (size bytes)
+*/
+
+void llmgr_core::ll_log_free_blocks(void *block, int size, bool sync)
+{
+  char *tmp_rec;  
+  int rec_len;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  ll_log_lock(sync);
+
+  rec_len = sizeof(char) + sizeof(int) + size;
+  tmp_rec = ll_log_malloc(rec_len);
+  char op = LL_FREE_BLOCKS;
+  int offs = 0;
+
+  //create record body
+  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+  inc_mem_copy(tmp_rec, offs, &size, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, block, size);
+
+  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
+	  (sizeof(logical_log_head) + rec_len))
+  {//current log must be flushed and new file created
+     ll_log_flush(false);
+     extend_logical_log(false);
+  }
+
+  //insert record in shared memory
+  logical_log_head log_head;
+  log_head.prev_trn_offs = NULL_OFFS;
+  log_head.body_len = rec_len;
+
+  //insert log record into shared memory
+  writeSharedMemory(&log_head, sizeof(logical_log_head));
+  writeSharedMemory(tmp_rec, rec_len);
+
+  mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
+
+  ll_log_unlock(sync);
+}
+
+/*
+ control snapshot add log record format:
+ op (1 byte)
+ trid (4 bytes)
+ phys-xptr (8 bytes)
+*/
+
+void llmgr_core::ll_log_ctrl_snapshot_add(transaction_id trid, const xptr &p, bool sync)
+{
+  char *tmp_rec;  
+  int rec_len;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  ll_log_lock(sync);
+
+  rec_len = sizeof(char) + sizeof(transaction_id) + sizeof(xptr);
+  tmp_rec = ll_log_malloc(rec_len);
+  char op = LL_CTRL_SNAPSHOT_ADD;
+  int offs = 0;
+
+  //create record body
+  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+  inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
+  inc_mem_copy(tmp_rec, offs, &p, sizeof(xptr));
+
+  //insert record in shared memory
+  ll_log_insert_record(tmp_rec, rec_len, trid, false);
+
+  ll_log_unlock(sync);
+}
+
+/*
+ decrease log record format:
+ op (1 byte)
+ old_size (8 bytes)
+*/
+
+void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
+{
+  char *tmp_rec;  
+  int rec_len;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  ll_log_lock(sync);
+
+  rec_len = sizeof(char) + sizeof(__int64);
+  tmp_rec = ll_log_malloc(rec_len);
+  char op = LL_DECREASE;
+  int offs = 0;
+
+  //create record body
+  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+  inc_mem_copy(tmp_rec, offs, &old_size, sizeof(__int64));
+
+  //insert record in shared memory
+  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
+	  (sizeof(logical_log_head) + rec_len))
+  {//current log must be flushed and new file created
+     ll_log_flush(false);
+     extend_logical_log(false);
+  }
+
+  //insert record in shared memory
+  logical_log_head log_head;
+  log_head.prev_trn_offs = NULL_OFFS;
+  log_head.body_len = rec_len;
+
+  //insert log record into shared memory
+  writeSharedMemory(&log_head, sizeof(logical_log_head));
+  writeSharedMemory(tmp_rec, rec_len);
+
+  mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
+
+  ll_log_unlock(sync);
+}
 
 /*****************************************************************************
                          Helpers (internal functions)
@@ -1817,7 +1940,7 @@ void llmgr_core::ll_log_flush(bool sync)
                     UNDO, REDO functions
 ******************************************************************************/
 //function is used for onlne rollback
-
+/*
 void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
 {//before this call all log records are completed
   ll_log_lock(sync);
@@ -1881,7 +2004,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
   rollback_active = false;
 //  ll_log_unlock(sync);
-}
+}*/
 
 /*
 //function is used for onlne rollback
@@ -1988,11 +2111,87 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 }
 */
 
+// this function restores control snapshot and free blocks information
+void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sync)
+{
+  const char *rec;
+  const char *body_beg;
+
+  
+  void *free_blk_info;
+  vmm_sm_blk_hdr *free_blk_info_hdr;
+  int free_blk_info_size;
+  
+  xptr ctrl_blk_pxptr, ctrl_blk_lxptr;
+  void *ctrl_blk = malloc(PAGE_SIZE);
+  vmm_sm_blk_hdr *ctrl_blk_hdr;
+
+  ll_log_lock(sync);
+  
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  logical_log_file_head file_head =
+                  read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  LONG_LSN last_checkpoint_lsn = last_cp_lsn;
+  LONG_LSN lsn = file_head.last_commit_lsn;
+
+  __int64 file_size, old_size;
+
+  while (lsn > last_checkpoint_lsn)
+  {
+    set_file_pointer(lsn);
+    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       throw SYSTEM_EXCEPTION("Can't get file size");
+
+    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+
+    rec = get_record_from_disk(lsn);
+    body_beg = rec + sizeof(logical_log_head);
+
+    if (body_beg[0] == LL_FREE_BLOCKS)
+    {
+    	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
+    	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int));
+    	free_blk_info_hdr = (vmm_sm_blk_hdr *)free_blk_info;
+    	bm_rcv_change(free_blk_info_hdr->p, free_blk_info, free_blk_info_size);
+    }
+    else
+    if (body_beg[0] == LL_CTRL_SNAPSHOT_ADD)
+    {
+    	ctrl_blk_pxptr = *((xptr *)(body_beg + sizeof(char) + sizeof(transaction_id)));
+        ctrl_blk = malloc(PAGE_SIZE);
+        bm_rcv_read_block(ctrl_blk_pxptr, ctrl_blk);
+    	
+    	ctrl_blk_hdr = (vmm_sm_blk_hdr *)ctrl_blk;
+ 
+ // !!!!!!! change to log xptr
+ //   	ctrl_blk_lxptr = ctrl_blk_hdr->; // read log xptr of block
+    	ctrl_blk_hdr->p = ctrl_blk_lxptr; // restore to: log_xptr == phys_xptr
+
+    	bm_rcv_change(ctrl_blk_lxptr, ctrl_blk, PAGE_SIZE);
+    }
+    else
+    if (body_beg[0] == LL_DECREASE)
+    {
+    	old_size = *((__int64 *)(body_beg + sizeof(char)));
+    	bm_rcv_decrease(old_size);
+    }
+
+    lsn -= get_record_length(rec);
+  }
+
+  free(ctrl_blk);
+
+  ll_log_unlock(sync);
+}
+
 //this function is run from the special recovery process
+// review needed on indirection table!!!
 #ifdef SE_ENABLE_FTSEARCH
-void llmgr_core::recover_db_by_logical_log(
-void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
-					   void (*exec_micro_op) (const char*, int, bool),
+void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
+					   					   void (*exec_micro_op) (const char*, int, bool),
                                            void(*switch_indirection)(int),
                                            void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
                                            void (*_vmm_rcv_clear_indir_block_set_)(),
@@ -2043,7 +2242,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 //  trns_analysis_map undo_redo_trns_map;
 
 
-  trns_undo_analysis_list undo_list;
+//  trns_undo_analysis_list undo_list;
   trns_redo_analysis_list redo_list;
  
 #ifdef EL_DEBUG
@@ -2055,13 +2254,13 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 //  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
   get_undo_redo_trns_list(last_checkpoint_lsn,
                           last_commit_lsn,
-                          undo_list, /*out*/
+//                          undo_list, /*out*/
                           redo_list, /*out*/
                           _vmm_rcv_add_to_indir_block_set_
                          );
 
 
-  trns_undo_analysis_list_iterator it;
+/*  trns_undo_analysis_list_iterator it;
 
 #ifdef EL_DEBUG
 #if (EL_DEBUG == 1)
@@ -2072,7 +2271,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   }
 #endif
 #endif
-
+*/
 
   trns_redo_analysis_list_iterator it2;
 
@@ -2085,15 +2284,14 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 #endif
 #endif
 
-
   switch_indirection(undo_indir_mode);
 
-  d_printf2("undo loseres num=%d\n", undo_list.size());
+/*  d_printf2("undo loseres num=%d\n", undo_list.size());
   //undo losers
   trns_undo_analysis_list_iterator it1;
   for(it1=undo_list.begin(); it1 != undo_list.end(); it1++)
      undo_trn(it1->trn_undo_rcv_lsn, exec_micro_op);
-
+*/
   _sync_indirection_table_();
 
   //redo committed transactions
@@ -2125,6 +2323,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   close_all_log_files();
   ll_log_unlock(sync);
 }
+/*
 void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (const char*, int, bool))
 {
   LONG_LSN lsn = start_undo_lsn;
@@ -2145,7 +2344,7 @@ void llmgr_core::undo_trn(LONG_LSN& start_undo_lsn, void (*_exec_micro_op_) (con
 
   } while(((logical_log_head*)rec)->prev_trn_offs != NULL_OFFS);
 
-}
+}*/
 
 void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &start_lsn, LONG_LSN &end_lsn, void (*_exec_micro_op_) (const char*, int, bool))
 {
@@ -2220,7 +2419,7 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
 void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
                                         LONG_LSN &end_lsn,
-                                        trns_undo_analysis_list& undo_list, /*out*/
+                                        /*trns_undo_analysis_list& undo_list, /*out*/
                                         trns_redo_analysis_list& redo_list, /*out*/
                                         void (*_vmm_rcv_add_to_indir_block_set_)(xptr p)
                                        )
@@ -2228,7 +2427,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
   LONG_LSN lsn;
   const char *rec;
   const char *body_beg;
-  trns_undo_analysis_list _undo_list_;
+//  trns_undo_analysis_list _undo_list_;
   trns_redo_analysis_list _redo_list_;
   LONG_LSN next_lsn_after_cp;
 
@@ -2240,7 +2439,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
   else
   {
     rec = get_record_from_disk(start_lsn);
-    body_beg = rec + sizeof(logical_log_head);
+/*    body_beg = rec + sizeof(logical_log_head);
     
     if (body_beg[0] != LL_CHECKPOINT)
        throw USER_EXCEPTION(SE4153);
@@ -2259,7 +2458,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 
 //       trns_map.insert(trn_pair(*trid, trn_cell_analysis(0, *last_lsn)));
     }
-
+*/
     lsn = start_lsn + get_record_length(rec);    
   }
 
@@ -2277,9 +2476,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
-	
-	if (rmndr == file_size)//here we must reinit lsn
+	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
     else if (rmndr == 0)
       lsn += sizeof(logical_log_file_head);
@@ -2291,8 +2488,10 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
        throw USER_EXCEPTION(SE4153);
 
     transaction_id *trid;
-    trid = (transaction_id*)(body_beg + sizeof(char));
-    trn_cell_analysis_undo undo_trn_cell(-1, NULL_LSN);
+
+    if (body_beg[0] != LL_FREE_BLOCKS)
+	    trid = (transaction_id*)(body_beg + sizeof(char));
+//    trn_cell_analysis_undo undo_trn_cell(-1, NULL_LSN);
     trn_cell_analysis_redo redo_trn_cell(-1, NULL_LSN, NULL_LSN);
     bool res1, res2;
 
@@ -2318,13 +2517,11 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
         body_beg[0] == LL_INSERT_DOC_INDEX  || body_beg[0] == LL_DELETE_DOC_INDEX ||
         body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX ||
         body_beg[0] == LL_INSERT_DOC_FTS_INDEX  || body_beg[0] == LL_DELETE_DOC_FTS_INDEX ||
-        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX ||
-        body_beg[0] == LL_INSERT_DOC_TRG  || body_beg[0] == LL_DELETE_DOC_TRG ||
-        body_beg[0] == LL_INSERT_COL_TRG  || body_beg[0] == LL_DELETE_COL_TRG)
+        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX)
 
     {
-      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
-      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
+//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
       {
          if (undo_trn_cell.first_lsn_after_cp == NULL_LSN)
          {
@@ -2333,8 +2530,8 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
          }
       }
       else
-      {//need to check in redo list 
-         
+      {//need to check in redo list
+*/               
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (!res2 || redo_trn_cell.finish_status != TRN_NOT_FINISHED)
          {//first record of transaction
@@ -2342,7 +2539,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
          
          }
          
-      }
+//      }
 
      
       if (
@@ -2376,9 +2573,9 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     else
     if (body_beg[0] == LL_COMMIT)//may be transaction with only one commit record in te log
     {
-      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
       
-      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
+/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
       {
 
          undo_trn_cell.finish_status = TRN_COMMIT_FINISHED;
@@ -2388,8 +2585,8 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
             _redo_list_.push_front(trn_cell_analysis_redo(*trid, next_lsn_after_cp, lsn, TRN_COMMIT_FINISHED));
 
       }
-      else
-      {
+      else*/
+//      {
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
          {
@@ -2397,20 +2594,20 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
              redo_trn_cell.trn_end_lsn = lsn;
              set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
          }
-      }
+//      }
     }
     else 
     if (body_beg[0] == LL_ROLLBACK)
     {
-      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
+//      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);
       
-      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
+/*      if (res1 && undo_trn_cell.finish_status == TRN_NOT_FINISHED)
       {
          undo_trn_cell.finish_status = TRN_ROLLBACK_FINISHED;
          set_undo_trn_cell(*trid, _undo_list_, undo_trn_cell); 
       }
-      else
-      {
+      else*/
+//      {
          res2 = find_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell/*out*/);
          if (res2 && redo_trn_cell.finish_status == TRN_NOT_FINISHED)
          {
@@ -2418,9 +2615,15 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
              redo_trn_cell.trn_end_lsn = lsn;
              set_last_redo_trn_cell(*trid, _redo_list_, redo_trn_cell);
          }
-      }
+//      }
 
     }
+    else 
+    if (body_beg[0] == LL_FREE_BLOCKS || body_beg[0] == LL_DECREASE)
+    {
+    	lsn += get_record_length(rec);
+    	continue;
+    }    
     else
       throw USER_EXCEPTION(SE4154);
 
@@ -2429,12 +2632,12 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 
 
   //init undo list (out paprameter)
-  trns_undo_analysis_list_iterator it1;
+/*  trns_undo_analysis_list_iterator it1;
   for (it1 = _undo_list_.begin(); it1 != _undo_list_.end(); it1++)
   {
     if (it1->finish_status != TRN_COMMIT_FINISHED) undo_list.push_back(*it1);
   }
-
+*/
   //init redo list (out paprameter)
   trns_redo_analysis_list_iterator it2;
   for (it2 = _redo_list_.begin(); it2 != _redo_list_.end(); it2++)
