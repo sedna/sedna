@@ -1,0 +1,14 @@
+#include <stdint.h>
+
+#ifdef _MSC_VER
+#pragma once
+#endif
+
+#ifndef WUTYPES_INCLUDED
+#define WUTYPES_INCLUDED
+
+typedef uint64_t XPTR, LXPTR;
+typedef uint64_t TIMESTAMP, LSN;
+typedef void *TICKET;
+
+#endif
