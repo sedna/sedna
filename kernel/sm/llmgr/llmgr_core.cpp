@@ -1355,13 +1355,13 @@ void llmgr_core::ll_log_free_blocks(void *block, int size, bool sync)
 }
 
 /*
- control snapshot add log record format:
+ persistent snapshot add log record format:
  op (1 byte)
  trid (4 bytes)
  phys-xptr (8 bytes)
 */
 
-void llmgr_core::ll_log_ctrl_snapshot_add(transaction_id trid, const xptr &p, bool sync)
+void llmgr_core::ll_log_pers_snapshot_add(transaction_id trid, const xptr &p, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
@@ -1371,7 +1371,7 @@ void llmgr_core::ll_log_ctrl_snapshot_add(transaction_id trid, const xptr &p, bo
 
   rec_len = sizeof(char) + sizeof(transaction_id) + sizeof(xptr);
   tmp_rec = ll_log_malloc(rec_len);
-  char op = LL_CTRL_SNAPSHOT_ADD;
+  char op = LL_PERS_SNAPSHOT_ADD;
   int offs = 0;
 
   //create record body
@@ -2111,7 +2111,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 }
 */
 
-// this function restores control snapshot and free blocks information
+// this function restores persistent snapshot and free blocks information
 void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sync)
 {
   const char *rec;
@@ -2158,7 +2158,7 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
     	bm_rcv_change(free_blk_info_hdr->p, free_blk_info, free_blk_info_size);
     }
     else
-    if (body_beg[0] == LL_CTRL_SNAPSHOT_ADD)
+    if (body_beg[0] == LL_PERS_SNAPSHOT_ADD)
     {
     	ctrl_blk_pxptr = *((xptr *)(body_beg + sizeof(char) + sizeof(transaction_id)));
         ctrl_blk = malloc(PAGE_SIZE);
@@ -2166,8 +2166,8 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
     	
     	ctrl_blk_hdr = (vmm_sm_blk_hdr *)ctrl_blk;
  
- // !!!!!!! change to log xptr
- //   	ctrl_blk_lxptr = ctrl_blk_hdr->; // read log xptr of block
+        // !!!!!!! change to log xptr
+    	ctrl_blk_lxptr = ctrl_blk_hdr->; // read log xptr of block
     	ctrl_blk_hdr->p = ctrl_blk_lxptr; // restore to: log_xptr == phys_xptr
 
     	bm_rcv_change(ctrl_blk_lxptr, ctrl_blk, PAGE_SIZE);
@@ -2382,7 +2382,10 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
     if ((rec + sizeof(logical_log_head))[0] != LL_COMMIT &&
         (rec + sizeof(logical_log_head))[0] != LL_ROLLBACK &&
-        (rec + sizeof(logical_log_head))[0] != LL_CHECKPOINT)
+        (rec + sizeof(logical_log_head))[0] != LL_CHECKPOINT
+        (rec + sizeof(logical_log_head))[0] != LL_PERS_SNAPSHOT_ADD &&
+        (rec + sizeof(logical_log_head))[0] != LL_FREE_BLOCKS &&
+        (rec + sizeof(logical_log_head))[0] != LL_DECREASE)
     {
 
       //this function tries to find transaction which start_lsn <=lsn <=end_lsn
