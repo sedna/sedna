@@ -41,6 +41,9 @@ struct SnapshotsOnCheckpointInfo
 	TIMESTAMP persistentSnapshotTs;
 	size_t persistentSnapshotBlocksCount;
 	size_t garbageBlocksCount;
+	int *activeClientIds;
+	size_t activeClientCount;
+	int state; /* 0-begin 2-inprocess 1-end */ 
 };
 
 int ShInitialise();
@@ -54,7 +57,7 @@ int ShOnRollback();
 int ShOnCommit();
 int ShAdvanceSnapshots();
 int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-				   int(*)(void *userData, SnapshotsVersionInfo *buf, size_t size), 
+				   int(*)(void *userData, SnapshotsVersionInfo *buf, size_t count), 
 				   void *userData);
 
 #endif
