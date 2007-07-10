@@ -41,8 +41,6 @@ struct SnapshotsOnCheckpointInfo
 	TIMESTAMP persistentSnapshotTs;
 	size_t persistentSnapshotBlocksCount;
 	size_t garbageBlocksCount;
-	int persistentSnapshotBlockIdx;
-	int garbageBlockIdx;
 };
 
 int ShInitialise();
