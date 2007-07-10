@@ -36,6 +36,14 @@ struct SnapshotsVersionInfo
 	int isGarbage;
 };
 
+struct SnapshotsOnCheckpointInfo
+{
+	TIMESTAMP persistentSnapshotTs;
+	size_t persistentSnapshotBlocksCount;
+	size_t garbageBlocksCount;
+	int persistentSnapshotBlockIdx;
+	int garbageBlockIdx;
+};
 
 int ShInitialise();
 int ShStartup(SnapshotsSetup *setup);
@@ -47,8 +55,8 @@ int ShOnCreateVersion(VersionsCreateVersionParams *);
 int ShOnRollback();
 int ShOnCommit();
 int ShAdvanceSnapshots();
-int ShOnCheckpoint(TIMESTAMP *persistentSnapshotTs,
-				   int(*)(void *userData, SnapshotsVersionInfo*, size_t size, size_t *sizeRemaining), 
+int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
+				   int(*)(void *userData, SnapshotsVersionInfo *buf, size_t size), 
 				   void *userData);
 
 #endif
