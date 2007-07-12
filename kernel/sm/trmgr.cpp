@@ -66,8 +66,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 
     //syn with all micro ops
-    if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)
-       throw SYSTEM_EXCEPTION("Can't down semaphore for beginning checkpoint");
+//    if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)
+ //      throw SYSTEM_EXCEPTION("Can't down semaphore for beginning checkpoint");
 
     //!!!init global variable isCheckpoint with interlocked func to true!!!
 

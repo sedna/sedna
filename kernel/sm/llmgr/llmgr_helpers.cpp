@@ -85,7 +85,6 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
 }
 
-
 /*
 void llmgr_core::flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn)
 {
