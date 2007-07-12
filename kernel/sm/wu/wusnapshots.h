@@ -57,7 +57,7 @@ int ShOnRollback();
 int ShOnCommit();
 int ShAdvanceSnapshots();
 int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-				   void(*)(void *userData, SnapshotsVersionInfo *buf, size_t count), 
+				   int(*)(void *userData, SnapshotsVersionInfo *buf, size_t count), 
 				   void *userData);
 
 int ShNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
