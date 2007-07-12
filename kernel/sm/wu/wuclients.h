@@ -10,23 +10,25 @@
 
 #include "wutypes.h"
 
-/*	Initialise Clients. */ 
-int ClInitialise();
-
-/* */ 
-int ClReserveStateBlocks(TICKET *ticket, size_t size);
-
 struct ClientsSetup
 {
 	int maxClientsNum;
 	int maxSizePerClient;
 };
 
+/*	Initialise Clients. */ 
+int ClInitialise();
+
+/* */ 
+int ClReserveStateBlocks(TICKET *ticket, size_t size);
+
 int ClStartup(ClientsSetup *clientsSetup);
 void ClDeinitialise();
 
-int ClRegisterClient(int *clientId);
-int ClUnregisterClient(clientId);
+void ClQueryMaxClients(int *maxClientsNum);
+int ClRegisterClient(int *clientId, int reserved);
+int ClMarkClientActive(int clientId);
+int ClUnregisterClient(int clientId);
 void ClGetCurrentClientId(int *clientId);
 void ClSetCurrentClientId(int clientId);
 int ClGetCurrentStateBlock(TICKET ticket, void **ptr);
