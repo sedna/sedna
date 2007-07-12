@@ -100,7 +100,7 @@ struct logical_log_file_head
   int prev_file_number;//-1 indicates NULL
   __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
   int valid_number;//identifier of log file from which the needed log records are begin. It is consistent with base addr
-
+  TIMESTAMP ts; // timestamp of the last persistent snapshot
   //new gield must be appended in the end of structure
 };
 
@@ -170,6 +170,10 @@ struct logical_log_sh_mem_head
   int size; //the size of shared memory (including header)
   LONG_LSN next_lsn;//lsn of next record
   LONG_LSN next_durable_lsn; //next lsn to be recorded in durable storage
+  LONG_LSN last_checkpoint_lsn; // lsn of the last checkpoint record
+  LONG_LSN min_rcv_lsn; // lsn of the start record of logical recovery
+  LONG_LSN last_chain_lsn; // lsn of the last record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
+  TIMESTAMP ts; // timestamp of the last persistent snapshot
   trn_tbl t_tbl;//transaction table
   int ll_files_arr[MAX_LL_LOG_FILES_NUMBER];//list of logical log files numbers (last element in the list is a tail of log)
   int ll_files_num;//indicates number of elements in ll_files_array
