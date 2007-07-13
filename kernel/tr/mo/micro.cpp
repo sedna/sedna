@@ -475,6 +475,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
 			
 		}
 	}
+	CHECKP(parent);
 	if (block->snode->is_node_in_scheme_and_in_data(NULL,NULL,text) )
 	{
 		#ifdef _MYDEBUG
@@ -776,6 +777,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 			#ifdef _MYDEBUG
 				crm_out<<" insert_attribute->9";
 			#endif
+			CHECKP(parent);
 			namesake= findAttributeWithSameNameToInsertBefore(parent,name,ns);
 			if (namesake!=XNULL)  
 			{
