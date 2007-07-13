@@ -465,14 +465,15 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
 		tmp=(n_dsc*)XADDR(indirect);
 		indirect= tmp->pdsc;
 		n_dsc* tmp2;   
+		xptr tmpx1 = ADDR2XPTR(tmp);
 		while (1==1)
 		{
 			tmp2=getNextDescriptorOfSameSort(tmp) ;
 			if (tmp2==NULL || tmp2->pdsc!=indirect) break;
-            else tmp=tmp2;
+			else {tmpx1=ADDR2XPTR(tmp2);tmp=tmp2;}
 		}
-		xptr ptr=ADDR2XPTR(tmp);
-		return ptr; 
+		CHECKP(tmpx1);
+		return tmpx1;
 	}
 	else
 	{
@@ -486,7 +487,11 @@ xptr findNodeWithSameNameToInsertAfter(xptr left_sib, xptr right_sib, xptr paren
 			{
 				tmp2=getNextDescriptorOfSameSort(curn);
 				if (tmp2==NULL) return ADDR2XPTR(curn);
-				if (tmp2->pdsc!=indir) return ADDR2XPTR(getPreviousDescriptorOfSameSort(tmp2));
+				if (tmp2->pdsc!=indir)
+				{
+					n_dsc *tt = getPreviousDescriptorOfSameSort(tmp2);
+					return ADDR2XPTR(tt);
+				}
 				curn=tmp2;
 			}
 		}
