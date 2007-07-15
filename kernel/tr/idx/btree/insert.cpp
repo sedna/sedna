@@ -39,42 +39,26 @@ char insert_buf[PAGE_SIZE];
 xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size)
 {
     xptr    pg_xptr = ADDR2XPTR(pg);
-	xptr    next_for_rpg = BT_NEXT(pg);
+    xptr    next_for_rpg = BT_NEXT(pg);
     bool    is_leaf_page = BT_IS_LEAF(pg);
     shft    key_size = BT_KEY_SIZE(pg);
     shft    key_num = BT_KEY_NUM(pg);
-    bool    pretender_goes_left=true;	/* flag showing where pretender will fall */
-    shft    split_idx = 0;              //bt_find_split_key(pg, pretender_idx, pretender_size, pretender_goes_left);
+    bool    pretender_goes_left = false; /* flag showing where pretender will fall */
+    shft    split_idx = 0;
     char    *buf1 = NULL, *buf2 = NULL;
     shft    heap_buf1, heap_buf2;
     char    *dst = NULL, *src = NULL;
-	int i;
-    	
-    if (next_for_rpg == XNULL ) 
+    int i;
+        
+    if (next_for_rpg == XNULL && pretender_idx == key_num)
     {
         split_idx = key_num - 1;
-	    shft    volume = 0;
-	    for (i = split_idx; i>-1; i--)
-		{
-			if (i==pretender_idx)
-				pretender_goes_left=false;
-			/* account key volume */
-		    if (key_size) /* fixed-size keys */
-        		volume += key_size;
-			else
-        	{
-				volume += 2*sizeof(shft);
-        		volume += *(((shft*)BT_KEY_TAB_AT(pg, i))+1);
-			}
-			if (volume>=pretender_size) break;
-			split_idx--;
-		}
     }
     else
     {
-	    split_idx = bt_find_split_key(pg, pretender_idx, pretender_size, pretender_goes_left);
+        split_idx = bt_find_split_key(pg, pretender_idx, pretender_size, pretender_goes_left);
     }
-    
+
     /* prepare the left-hand page */
     dst = bt_tune_buffering(true, key_size);
     buf1 = dst;

@@ -81,7 +81,18 @@ struct xptr
 
 		return *this; 
 	}
-    xptr &operator -=(int n) { addr = (char*)(addr) - n; return *this; }
+    xptr &operator -=(int n) 
+    { 
+        addr = (char*)(addr) - n; 
+        
+        if ((unsigned int)addr < LAYER_ADDRESS_SPACE_START_ADDR_INT)
+		{
+			layer--;
+			addr = (void*)((int)addr + LAYER_ADDRESS_SPACE_SIZE);
+		}
+        
+        return *this; 
+    }
 
     void print() const;
     void clear() { layer = 0; addr = NULL; }
@@ -105,6 +116,13 @@ inline xptr operator-(const xptr &p, int n)
 {
     xptr new_p(p);
     new_p.addr = (char*)(p.addr) - n;
+
+    if ((unsigned int)(new_p.addr) < LAYER_ADDRESS_SPACE_START_ADDR_INT)
+    {
+        new_p.layer--;
+        new_p.addr = (void*)((int)(new_p.addr) + LAYER_ADDRESS_SPACE_SIZE);
+    }
+
     return new_p;
 }
 

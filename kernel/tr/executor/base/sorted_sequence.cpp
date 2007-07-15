@@ -433,6 +433,7 @@ void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 	{
 		CHECKP(place);
 		memcpy(XADDR(place),temp_buffer,space);		
+		VMM_SIGNAL_MODIFICATION(place);
 		set_next_block_in_chain(place);
 		CHECKP(place);
 		memcpy(XADDR(place),temp_buffer+space,sz-space);
