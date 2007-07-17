@@ -400,9 +400,10 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 			if (pblk->count==0) 
 			{
 				if (pblk->pblk!=XNULL)
-				{                    	
-					CHECKP(pblk->pblk);
-					pblk=(node_blk_hdr *)XADDR(pblk->pblk);
+				{
+					const xptr tmpx = pblk->pblk;
+					CHECKP(tmpx);
+					pblk=(node_blk_hdr *)XADDR(tmpx);
 				}
 			}
 			if (pblk->desc_last!=0)
