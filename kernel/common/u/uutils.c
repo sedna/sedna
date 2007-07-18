@@ -14,33 +14,12 @@
 char *u_itoa(int value, char *str, int radix)
 {
     if (radix != 10)
+    {
+        d_printf1("radix in call to _ultoa has unsupported value\n");
         return NULL;
-    int is_neg = 0;
-    if (value < 0)
-    {
-        value = -value;
-        is_neg = 1;
     }
-    int i = 1, j = 0;
-    int digit = 0, num = 0;
-    char buf[20];
-    int k = 0;
-    do
-    {
-        j = i;
-        i *= 10;
-        digit = (value % i - num) / j;
-        num = value % i;
-        buf[k++] = (char) (digit + '0');
-    }
-    while (value / i != 0);
 
-    j = 0;
-    if (is_neg)
-        str[j++] = '-';
-    for (i = k - 1; i >= 0; i--, j++)
-        str[j] = buf[i];
-    str[j] = '\0';
+    sprintf(str, "%d", value);
     return str;
 }
 
