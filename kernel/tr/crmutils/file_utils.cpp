@@ -549,6 +549,8 @@ void sc_data(void *userData, const char *s, int len)
 
 void el_ns (void *userData, const char *prefix, const char *uri)
 {
+	if(prefix == NULL && uri == NULL) return;
+
 	const char* prefixm;
 	if (prefix==NULL)
 		prefixm="";
@@ -567,6 +569,10 @@ void el_ns (void *userData, const char *prefix, const char *uri)
 
 void sc_ns (void *userData, const char *prefix, const char *uri)
 {
+	/// This is situation xmlns="". The attribute value in a default namespace declaration MAY be empty. 
+	/// This has the same effect, within the scope of the declaration, of there being no default namespace.
+	if(prefix == NULL && uri == NULL) return;
+	
 	const char* prefixm;
 	if (prefix==NULL)
 		prefixm="";
