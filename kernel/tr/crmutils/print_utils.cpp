@@ -441,7 +441,10 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 			{
 				
 				if (scn->xmlns!=NULL && xm_nsp.find(pref_to_str(scn->xmlns))==xm_nsp.end()&&	my_strcmp(scn->xmlns->prefix,"xml"))
-				printNameSpace(scn->xmlns,crmout,ptype);	
+				printNameSpace(scn->xmlns,crmout,ptype);
+				if (def_set&&scn->xmlns==NULL)				
+					crmout <<" xmlns=\"\"";
+				
 				crmout << ((ptype==xml)? "/>": ")");			
 				return;			
 			}
@@ -471,7 +474,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 					}
 					if (sns->prefix==NULL)
 					{
-						if (!def_set)def_inset=false;
+						if (!def_set)def_inset=true;
 						def_set=true;
 
 					}
@@ -502,7 +505,11 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 
 				}
 				if (scn->xmlns->prefix==NULL)
+				{
+					if (!def_set)def_inset=true;
 					def_set=true;
+				}
+					
 			}
 			else
 			{
@@ -510,6 +517,7 @@ void print_node_with_indent(xptr node, se_ostream& crmout,bool wi, int indent,t_
 				{
 					
 					def_set=false;
+					def_inset=true;
 					crmout <<" xmlns=\"\"";
 				}
 			}
@@ -666,7 +674,7 @@ nsfree:
 				delete pref_ns;
 			}			
 			if (def_inset)
-				def_set=false;
+				def_set=!def_set;
 			
 			break;
 		}
