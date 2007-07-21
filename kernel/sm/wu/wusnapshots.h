@@ -23,13 +23,14 @@ struct SnapshotsSetup
 {
 	TICKET clientStateTicket;
 
+	int (*freeBlock)(XPTR xptr);
 	int (*revertBlock)(VersionsCreateVersionParams *);
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
 	int (*onCanAdvanceSnapshots)();
-	int (*onCurrentSnapshotGrowing)(size_t totalBlocksCount, size_t exclusiveBlocksCount);
-	int (*onPersistentSnapshotGrowing)(size_t totalBlocksCount, size_t exclusiveBlocksCount);
-	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
+	int (*onCurrentSnapshotGrowing)(size_t versionsCount, size_t sharedVersionsCount);
+	int (*onPersistentSnapshotGrowing)(size_t versionsCount, size_t sharedVersionsCount);
+	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs, int *isDiscardingOk);
 };
 
 struct SnapshotsVersionInfo
@@ -42,11 +43,10 @@ struct SnapshotsVersionInfo
 struct SnapshotsOnCheckpointInfo
 {
 	TIMESTAMP persistentSnapshotTs;
-	size_t persistentSnapshotBlocksCount;
-	size_t garbageBlocksCount;
-	int *activeClientIds;
-	size_t activeClientCount;
-	int state; /* 0-begin 2-inprocess 1-end */ 
+	size_t persistentVersionsCount;
+	size_t garbageVersionsCount;
+	size_t persistentVersionsSent;
+	size_t garbageVersionsSent;
 	void *userData;
 };
 

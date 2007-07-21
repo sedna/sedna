@@ -27,7 +27,6 @@ struct VersionsCreateVersionParams
 	XPTR lastCommitedXptr;		/*	physical XPTR of the last commited version */ 
 	TIMESTAMP exclusionTs;		/*	timestamp of the most recent snapshot NOT 
 									having lastCommitedXptr version included in it */ 
- */ 
 };
 
 struct VersionsSetup
