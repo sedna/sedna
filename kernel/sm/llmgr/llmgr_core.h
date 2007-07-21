@@ -20,6 +20,9 @@
 #include "sm/plmgr/plmgr_core.h"
 #include "common/mmgr/memutils.h"
 
+#include "sm/wu/wutypes.h"
+#include "sm/wu/wusnapshots.h"
+
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
 #define NULL_OFFS (-1)
@@ -94,16 +97,21 @@ struct logical_log_head
 
 struct logical_log_file_head
 {
-  LONG_LSN last_commit_lsn;//last record of the last committed trn
+  LONG_LSN last_lsn;//last record of the log
   LONG_LSN next_lsn; //lsn of next record to be recorded
-//  LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
   int prev_file_number;//-1 indicates NULL
   __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
   int valid_number;//identifier of log file from which the needed log records are begin. It is consistent with base addr
+
+  LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
+  LONG_LSN last_chain_lsn; // lsn of the last record in physical records chain
   TIMESTAMP ts; // timestamp of the last persistent snapshot
+  __int64 ph_cp_counter; // last checkpoint counter of the ph file
+//  __int64 ph_cur_counter; // current counter of the ph file
+  bool is_stopped_successfully; // true, if the database was stopped correctly
+  int sedna_db_version;
   //new gield must be appended in the end of structure
 };
-
 
 struct trn_cell
 {
@@ -173,6 +181,8 @@ struct logical_log_sh_mem_head
   LONG_LSN last_checkpoint_lsn; // lsn of the last checkpoint record
   LONG_LSN min_rcv_lsn; // lsn of the start record of logical recovery
   LONG_LSN last_chain_lsn; // lsn of the last record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
+  LONG_LSN last_lsn;  // lsnof the last record in log
+//  int number_of_cp_records; // number of continous checkpoint records
   TIMESTAMP ts; // timestamp of the last persistent snapshot
   trn_tbl t_tbl;//transaction table
   int ll_files_arr[MAX_LL_LOG_FILES_NUMBER];//list of logical log files numbers (last element in the list is a tail of log)
@@ -204,8 +214,6 @@ private:
   bool rollback_active;//used only from transaction (not used from sm)
   bool recovery_active;//used only from rcv_db process and if recovery_active == true the recovery process must not write to phys log
 
-  bool checkpoint_active; // true if checkpoint record was added to buffer; used to flush next_lsn
-
   char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
   int indir_rec_len;
   int indir_rec_buf_size;
@@ -224,7 +232,7 @@ private:
 
 public:
   //create and release functions; called in sm
-  void ll_log_create(std::string _db_files_path_, std::string _db_name_, plmgr_core* _phys_log_mgr_);
+  bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version/*, plmgr_core* _phys_log_mgr_*/);
   void ll_log_create_shared_mem();
   void ll_log_release();
   void ll_log_release_shared_mem();
@@ -258,17 +266,18 @@ public:
 
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
-  LONG_LSN ll_log_checkpoint(bool sync);
+//  LONG_LSN ll_log_checkpoint(bool sync);
+  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
-  void ll_log_free_blocks(void *block, int len, bool sync);
-  void ll_log_pers_snapshot_add(transaction_id trid, const xptr &p, bool sync);
+  void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
+  void ll_log_pers_snapshot_add(transaction_id trid, SnapshotsVersionInfo *blk_info, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
   
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
   void set_prev_rollback_lsn(transaction_id &trid, bool sync);//this function must be called inside microop
 
-
+  void ll_log_flush_all_last_records(bool sync);
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
   void ll_log_flush_all_last_records(bool sync);
@@ -293,17 +302,30 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
 #endif
 
-  void recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sync);
+  void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
+  void recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ bool sync);
   
+  void restorePh();
+  __int64 copyPhFile();
+  void deletePrevPhFile(__int64 prev_ph_counter);
+
+  TIMESTAMP returnTimestampOfPersSnapshot(bool sync);
+
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
+  void flush_file_head(bool sync);
+  void writeIsStoppedCorrectly(bool is_stopped_correctly);
 
-int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
+  int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug
 
   void open_all_log_files();//fills ll_open_files structure
   void close_all_log_files();//close file descriptors of all log files
   void extend_logical_log(bool sync);
 
+  __int64 getNewPhCounter(); // returns file counter for the new ph-file
+  __int64 getCurPhCounter(); // returns file counter for the last ph-file
+
+  void updateMinRcvLSN();
 
 private:
 
@@ -333,6 +355,8 @@ private:
 
   bool find_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list, trn_cell_analysis_redo& redo_trn_cell/*out*/);
   void set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/);
+
+  LONG_LSN getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN); //returns lsn of the first checkpoint record in a bundle
 
   void activate_checkpoint();
 
@@ -392,6 +416,12 @@ UFile create_logical_log(const char* log_file_name,
                          int _prev_file_number_,
                          LONG_LSN commit_lsn,
                          LONG_LSN next_after_commit_lsn,
+
+  						 LONG_LSN last_checkpoint_lsn, 
+  						 LONG_LSN last_chain_lsn, 
+  						 TIMESTAMP ts,
+                         __int64 ph_cp_counter,
+
                          bool is_close_file = false 
                         );
 

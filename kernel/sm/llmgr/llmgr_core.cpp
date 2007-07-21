@@ -19,8 +19,18 @@
 #include "tr/vmm/vmm.h"
 #include "tr/structures/indirection.h"
 
+#include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/bm_rcv.h"
+#include "sm/bufmgr/blk_mngmt.h"
+
 #include "sm/wu/wusnapshots.h"
+
+#ifdef _WIN32
+#include <io.h>
+#else
+#include <sys/types.h>
+#include <dirent.h>
+#endif
 
 using namespace std;
 
@@ -30,10 +40,12 @@ using namespace std;
 ******************************************************************************/
 
 /*                 !!!These Functions called on sm !!!                         */
-void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_core* phys_log_mgr_)
+bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &sedna_db_version/*, plmgr_core* phys_log_mgr_*/)
 {
 
   int res;
+
+  bool _is_stopped_correctly;
   //!!!init logical log protection semaphore!!!
   res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error);  
 
@@ -50,8 +62,15 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   if (ll_open_files.size() < 1) throw SYSTEM_EXCEPTION("There is no logical log files");
 
   logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
-  int valid_number = file_head.valid_number;
 
+  int valid_number = file_head.valid_number;
+  _is_stopped_correctly = file_head.is_stopped_successfully;
+  sedna_db_version = file_head.sedna_db_version;
+
+  this->last_checkpoint_ph_counter = file_head.ph_cp_counter;
+  this->ph_file_counter = file_head.ph_cp_counter;
+
+  writeIsStoppedCorrectly(false);
 
   //delete unnessary files
   int i,j;
@@ -88,7 +107,8 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   read_buf = se_new_cxt(TopMemoryContext) char[LOGICAL_LOG_UNDO_READ_PORTION];
   read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
 
-  this->_phys_log_mgr_ = phys_log_mgr_;
+//  this->_phys_log_mgr_ = phys_log_mgr_;
+  return _is_stopped_correctly;
 }
 
 
@@ -97,6 +117,8 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
 void llmgr_core::ll_log_release()
 {
   int res;
+
+  writeIsStoppedCorrectly(true);
 
   res = USemaphoreRelease(sem_dsc, __sys_call_error);  
 
@@ -150,7 +172,14 @@ void llmgr_core::ll_log_create_shared_mem()
    logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
    mem_head->next_lsn =  file_head.next_lsn;
    mem_head->next_durable_lsn = mem_head->next_lsn;
+
+   mem_head->last_checkpoint_lsn = file_head.last_checkpoint_lsn;
+   mem_head->min_rcv_lsn = NULL_LSN;
+   mem_head->last_chain_lsn = file_head.last_chain_lsn;
+   mem_head->last_lsn = file_head.last_lsn;
    
+   mem_head->ts = file_head.ts;
+
    int i;
    for (i=0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
    {
@@ -228,7 +257,7 @@ void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, plmgr_cor
   db_name = _db_name_;
 
 
-  this->_phys_log_mgr_ = phys_log_mgr_;
+//  this->_phys_log_mgr_ = phys_log_mgr_;
 /*
   ll_file_curr_dsc = uOpenFile(
                        db_files_path.c_str(),
@@ -1151,11 +1180,11 @@ void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 
  master_block                                                                |
  min_lsn (LONG_LSN)     | first lsn from which to begin recovery             | 
-                                                                              
+                  
  count (size_t) number of blocks of persistent snapshot stored in this record
  SnapshotsVersionInfo | count times
 
- prevLSN // lsn of the previous record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
+ prevLSN // lsn of the previous record in physical records chain
 
 */
 
@@ -1169,7 +1198,7 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
   LONG_LSN ret_lsn;
   SnapshotsOnCheckpointInfo *snp_info = (SnapshotsOnCheckpointInfo *)userData;
   
-  ll_log_lock(sync);  
+//  ll_log_lock(sync);  
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
@@ -1177,6 +1206,9 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
 
   if (rec_state == 0)
   {
+//  	mem_head->number_of_cp_records = 1;
+  	mem_head->ts = snp_info->persistentSnapshotTs;
+
   	rec_len = sizeof(char) + sizeof(int) + sizeof(bm_masterblock) + sizeof(LONG_LSN) + sizeof(size_t) + 
   		sizeof(SnapshotsVersionInfo) * count + sizeof(LONG_LSN);
 	tmp_rec = ll_log_malloc(rec_len);
@@ -1194,6 +1226,8 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
   }
   else
   {	
+//	mem_head->number_of_cp_records++;
+
   	rec_len = sizeof(char) + sizeof(int) + sizeof(size_t) + 
   		sizeof(SnapshotsVersionInfo) * count + sizeof(LONG_LSN);
 	tmp_rec = ll_log_malloc(rec_len);
@@ -1206,6 +1240,8 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
 	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(SnapshotsVersionInfo));
   }
 
+  if (rec_state == 0) mem_head->last_chain_lsn = NULL_LSN;
+  
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
   
   //check that log file will not be overflowed
@@ -1220,6 +1256,7 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
 
   //insert record in shared memory
   logical_log_head log_head;
+
   log_head.prev_trn_offs = NULL_OFFS;
   log_head.body_len = rec_len;
 
@@ -1229,10 +1266,11 @@ void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, si
 
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
   
+  mem_head->last_lsn = ret_lsn;
   mem_head->last_checkpoint_lsn = ret_lsn;
   mem_head->last_chain_lsn = ret_lsn;
 
-  ll_log_unlock(sync);
+//  ll_log_unlock(sync);
 
   //std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
 
@@ -1414,17 +1452,20 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
  size (4 bytes?)
  phys_xptr(XPTR);
  block (size bytes)
+ prevLSN // lsn of the previous record in physical records chain
 */
 
 void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
+  LONG_LSN ret_lsn;
+
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   ll_log_lock(sync);
 
-  rec_len = sizeof(char) + sizeof(int) + sizeof(XPTR) + size;
+  rec_len = sizeof(char) + sizeof(int) + sizeof(XPTR) + size + sizeof(LONG_LSN);
   tmp_rec = ll_log_malloc(rec_len);
   char op = LL_FREE_BLOCKS;
   int offs = 0;
@@ -1435,6 +1476,7 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
 //  inc_mem_copy(tmp_rec, offs, &log_xptr, sizeof(LXPTR));
   inc_mem_copy(tmp_rec, offs, &phys_xptr, sizeof(XPTR));
   inc_mem_copy(tmp_rec, offs, block, size);
+  inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
 
   if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
 	  (sizeof(logical_log_head) + rec_len))
@@ -1445,6 +1487,7 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
 
   //insert record in shared memory
   logical_log_head log_head;
+
   log_head.prev_trn_offs = NULL_OFFS;
   log_head.body_len = rec_len;
 
@@ -1452,6 +1495,11 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
   writeSharedMemory(&log_head, sizeof(logical_log_head));
   writeSharedMemory(tmp_rec, rec_len);
 
+  ret_lsn = mem_head->next_lsn;
+
+  mem_head->last_lsn = ret_lsn;
+  mem_head->last_chain_lsn = ret_lsn;
+  
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
@@ -1469,6 +1517,8 @@ void llmgr_core::ll_log_pers_snapshot_add(transaction_id trid, SnapshotsVersionI
 {
   char *tmp_rec;  
   int rec_len;
+  LONG_LSN ret_lsn;
+
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   ll_log_lock(sync);
@@ -1488,7 +1538,11 @@ void llmgr_core::ll_log_pers_snapshot_add(transaction_id trid, SnapshotsVersionI
 //  inc_mem_copy(tmp_rec, offs, &(blk_info->xptr), sizeof(XPTR));
 
   //insert record in shared memory
-  mem_head->last_chain_lsn = ll_log_insert_record(tmp_rec, rec_len, trid, false);
+  
+  ret_lsn = ll_log_insert_record(tmp_rec, rec_len, trid, false);
+
+  mem_head->last_lsn = ret_lsn;
+  mem_head->last_chain_lsn = ret_lsn;
 
   ll_log_unlock(sync);
 }
@@ -1497,17 +1551,19 @@ void llmgr_core::ll_log_pers_snapshot_add(transaction_id trid, SnapshotsVersionI
  decrease log record format:
  op (1 byte)
  old_size (8 bytes)
+ prevLSN // lsn of the previous record in physical records chain
 */
-
 void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
+  LONG_LSN ret_lsn;
+
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   ll_log_lock(sync);
 
-  rec_len = sizeof(char) + sizeof(__int64);
+  rec_len = sizeof(char) + sizeof(__int64) + sizeof(LONG_LSN);
   tmp_rec = ll_log_malloc(rec_len);
   char op = LL_DECREASE;
   int offs = 0;
@@ -1515,6 +1571,7 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &old_size, sizeof(__int64));
+  inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
 
   //insert record in shared memory
   if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
@@ -1526,6 +1583,7 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
 
   //insert record in shared memory
   logical_log_head log_head;
+  
   log_head.prev_trn_offs = NULL_OFFS;
   log_head.body_len = rec_len;
 
@@ -1533,6 +1591,10 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
   writeSharedMemory(&log_head, sizeof(logical_log_head));
   writeSharedMemory(tmp_rec, rec_len);
 
+  ret_lsn = mem_head->next_lsn;
+  
+  mem_head->last_lsn = ret_lsn;
+  mem_head->last_chain_lsn = ret_lsn;
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
@@ -1551,6 +1613,7 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   logical_log_head log_head;
+
   U_ASSERT(mem_head->keep_bytes >= 0);
   U_ASSERT(mem_head->keep_bytes + sizeof(logical_log_sh_mem_head) <= mem_head->size);
 
@@ -1591,6 +1654,8 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   
   ret_lsn = mem_head->t_tbl[trid].last_lsn;
 
+  mem_head->last_lsn = ret_lsn;
+  
   U_ASSERT(mem_head->keep_bytes >= 0);
   U_ASSERT(mem_head->keep_bytes + sizeof(logical_log_sh_mem_head) <= mem_head->size);
 
@@ -1649,131 +1714,6 @@ void llmgr_core::writeSharedMemory(const void* rec_addr, int rec_len)
 /*****************************************************************************
                    Flush functions
 ******************************************************************************/
-// this funtion flushes all remaining records on disk
-// !!! transaction-owned records should be flushed using ll_log_flush functions !!!
-void llmgr_core::ll_log_flush_all_last_records(bool sync)
-{
-  //d_printf1("flushing of logical log started\n");
-  ll_log_lock(sync);
-
-  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
-  char* mem_beg = (char*)shared_mem;
-
-  int rmndr_len;
-
-  // all records have been flushed
-  if (mem_head->begin_not_drbl_offs == mem_head->end_offs)
-  {
-	  ll_log_unlock(sync);
-	  return;
-  }
-  	
-  //compute number of bytes to be flushed 
-  if (mem_head->begin_not_drbl_offs <= mem_head->end_offs)
-     rmndr_len = mem_head->end_offs - mem_head->begin_not_drbl_offs;
-  else
-     rmndr_len = mem_head->size - sizeof(logical_log_sh_mem_head) - 
-                 (mem_head->begin_not_drbl_offs - mem_head->end_offs);
-  
-  // records are written in logical log in nonatomic manner (first header, then the record itself)
-  // here, we can have a situation when we've got only header to flush
-  // in this case we must leave it there
-  if (rmndr_len == sizeof(logical_log_head))
-  {
-	  ll_log_unlock(sync);
-	  return;
-  }
-  
-  U_ASSERT(mem_head->keep_bytes >= rmndr_len);
-
-  int res;
-  int bytes_to_flush = rmndr_len;
-  int offs = mem_head->begin_not_drbl_offs;
-  int to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
-                      rmndr_len,
-                      mem_head->size - offs);
-  int written, i;
-
-  //set file pointer to the end  
-  set_file_pointer(mem_head->next_durable_lsn);
-
-
-  //d_printf2("need to write bytes=%d\n", rmndr_len);
-  //flush needed records;
-  while (rmndr_len > 0)
-  {
-     res = uWriteFile(ll_curr_file_dsc,
-                      (char*)shared_mem + offs,
-                      to_write,
-                      &written,
-                      __sys_call_error
-                    );
-
-     U_ASSERT(res != 0 && to_write == written);
-     if (res == 0 || to_write != written)
-       throw SYSTEM_EXCEPTION("Can't write to logical log");
-
-     if ( (offs + to_write) > mem_head->size)
-        throw SYSTEM_EXCEPTION("Internal Error in Logical Log");
-
-
-     if(( offs + to_write) == mem_head->size) 
-        offs =  sizeof(logical_log_sh_mem_head);
-     else
-        offs += to_write;
-
-     rmndr_len-= to_write;
-     to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
-                     rmndr_len,
-                     mem_head->size - offs);
-     
-  }
-
-  //change sh memory header
-  if ((mem_head->size - mem_head->begin_not_drbl_offs) > bytes_to_flush )
-    mem_head->begin_not_drbl_offs += bytes_to_flush;
-  else
-    mem_head->begin_not_drbl_offs = sizeof(logical_log_sh_mem_head) +
-                                    bytes_to_flush - 
-                                    (mem_head->size - mem_head->begin_not_drbl_offs);
-
-  mem_head->free_bytes += bytes_to_flush;
-  mem_head->keep_bytes -= bytes_to_flush;
-
-  mem_head->next_durable_lsn += bytes_to_flush;
-
-  if (checkpoint_active)
-  {
-        UFile fd = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
-
-  		res = uSetFilePointer(
-        		           fd,
-                		   sizeof(LONG_LSN),
-		                   NULL,
-        		           U_FILE_BEGIN,
-                		   __sys_call_error
-		                 );
-
-		if (res == 0)
-		   throw USER_EXCEPTION2(SE4046, "logical log file");
-
-		res = uWriteFile(fd,
-                         &(mem_head->next_durable_lsn),
-                 		 sizeof(LONG_LSN),
-		                 &written,
-        		         __sys_call_error
-                		);
-  
-  		if (res == 0 || written != sizeof(LONG_LSN))
-   		   throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
-
-        checkpoint_active = false;
-  }
-  
-  ll_log_unlock(sync);
-
-  //d_printf1("flush of logical log finished\n");
-}
 
 void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 {
@@ -2220,7 +2160,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 */
 
 // this function frees blocks from previous persistent snapshot
-void llmgr_core::freePrevCheckpointBlocks(const LONG_LSN& last_cp_lsn, const LONG_LSN& last_lsn, bool sync)
+void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
 {
   const char *rec;
   const char *body_beg;
@@ -2228,19 +2168,26 @@ void llmgr_core::freePrevCheckpointBlocks(const LONG_LSN& last_cp_lsn, const LON
   __int64 file_size, old_size;
 
   int state;
+  int free_blk_info_size;
 
 //  std::vector<SnapshotsVersionInfo> prevPersSnapshotBlocks; // info about blocks from previous pers. snapshot
   
   SnapshotsVersionInfo *blocks_info;
+  size_t count;
   char *blocks_offs;
   
   ll_log_lock(sync);
 
-  if (last_cp_lsn == NULL_LSN || last_lsn == NULL_LSN) return;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  
+//  last_cp_lsn = mem_head->last_checkpoint_lsn;
+//  last_lsn = mem_head->last_chain_lsn;
+
+  if (last_lsn == NULL_LSN) return;
   
   LONG_LSN lsn = last_lsn;
 
-  while (lsn >= last_cp_lsn)
+  while (lsn != NULL_LSN)
   {
   	set_file_pointer(lsn);
   	if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
@@ -2265,23 +2212,33 @@ void llmgr_core::freePrevCheckpointBlocks(const LONG_LSN& last_cp_lsn, const LON
   	if (body_beg[0] == LL_CHECKPOINT)
   	{
   		state = *((int *)(body_beg + sizeof(char)));
-  		blocks_offs = body_beg + sizeof(char) + sizeof(int);
+  		blocks_offs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
   		
   		if (state == 0)
-  			blocks_ofs += /*sizeof(TIMESTAMP) +*/ sizeof(LONG_LSN) + sizeof(bm_masterblock);
+  			blocks_offs += /*sizeof(TIMESTAMP) +*/ sizeof(LONG_LSN) + sizeof(bm_masterblock);
 
   		count = *((size_t *)blocks_offs);
-  		blocks_off += sizeof(size_t);
+  		blocks_offs += sizeof(size_t);
 
-  		blocks_info = (SnapshotsVersionInfo *)blocks_off;
+  		blocks_info = (SnapshotsVersionInfo *)blocks_offs;
   		
   		for (int i = 0; i < count; i++)
-	   		if (!blocks_info[i]->isGarbage)
-   				push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), blocks_info[i]->xptr);
+	   		if (!(blocks_info[i].isGarbage))
+   				push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), blocks_info[i].xptr);
 //  			prevPersSnapshotBlocks.push_back(blocks_info[i]);
 
-  		lsn = *((LONG_LSN *)(blocks_off + count * sizeof(SnapshotsVersionInfo)));
+  		lsn = *((LONG_LSN *)(blocks_offs + count * sizeof(SnapshotsVersionInfo)));
   	}
+  	else
+  	if (body_beg[0] == LL_FREE_BLOCKS)
+  	{
+    	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
+  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size));
+  	}	
+  	if (body_beg[0] == LL_DECREASE)
+  	{
+  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(__int64)));
+  	}	
   	else
   		throw USER_EXCEPTION(SE4154);
   }
@@ -2296,7 +2253,7 @@ void llmgr_core::freePrevCheckpointBlocks(const LONG_LSN& last_cp_lsn, const LON
 }
 
 // this function restores persistent snapshot and free blocks information
-void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sync)
+void llmgr_core::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ bool sync)
 {
   const char *rec;
   const char *body_beg;
@@ -2316,7 +2273,7 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
   logical_log_file_head file_head =
                   read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
-  LONG_LSN last_checkpoint_lsn = last_cp_lsn, first_checkpoint_lsn;
+  LONG_LSN last_checkpoint_lsn = file_head.last_checkpoint_lsn, first_checkpoint_lsn;
   LONG_LSN lsn = last_checkpoint_lsn;
 
 
@@ -2328,8 +2285,10 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
   LONG_LSN rcvLSN = NULL_LSN; // first LSN from which to start redo analysis (it is also used as an offset in checkpoint record)
   SnapshotsVersionInfo *blocks_info; // info about blocks of persistent snapshot
   VersionsCreateVersionParams ver_info; // used in persistent snapshot recovery
-  std::vector<SnapshotsVersionInfo> blocks_from_checkpoint; // info about blocks from checkppoint record
-    
+//  std::vector<SnapshotsVersionInfo> blocks_from_checkpoint; // info about blocks from checkppoint record
+
+  if (last_checkpoint_lsn == NULL_LSN) return;
+
   do
   {
     set_file_pointer(lsn);
@@ -2346,7 +2305,7 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
        throw USER_EXCEPTION(SE4153);
  
     state = *((int *)(body_beg + sizeof(char)));
-    block_ofs = body_beg + sizeof(char) + sizeof(int);
+    block_ofs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
 
     if (state == 0)
     {
@@ -2358,29 +2317,31 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
 //    	num = *((size_t *)block_ofs);
 //    	block_ofs += sizeof(size_t);
 
-		rcvLSN = *((LONG_LSN *)block_ofs);
+		mem_head->min_rcv_lsn = *((LONG_LSN *)block_ofs);
 		block_ofs += sizeof(LONG_LSN);
 	}
   	 
     count = *((size_t *)block_ofs);
     block_ofs += sizeof(size_t);
 
-    blocks_info = (SnapshotsVersionInfo *)block_ofs;
+/*    blocks_info = (SnapshotsVersionInfo *)block_ofs;
     for (int i = 0; i < count; i++)
     {
 		blocks_from_checkpoint.push_back(blocks_info[i]);    	
     }
-
-    lsn -= get_record_length(rec);
+*/
+    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersionInfo)));
   } while (state != 0);
   
-  lsn = file_head.last_commit_lsn;
+  lsn = file_head.last_chain_lsn;
   
   ver_info.creationTs = 0;
   ver_info.alsoUsageSize = 0;
   ver_info.alsoUsage = NULL;
 
-  while (lsn > last_checkpoint_lsn)
+  char *lsn_offs; // address of the prevLSN field in current physical record
+
+  while (lsn != NULL_LSN)
   {
     set_file_pointer(lsn);
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
@@ -2391,25 +2352,27 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
+    lsn_offs = const_cast<char *>(body_beg);
 
     if (body_beg[0] == LL_FREE_BLOCKS)
     {
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
     	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR));
-    	free_blk_xptr = *((XPTR *)(body_beg + sizeof(char) + sizeof(int)));
-    	bm_rcv_change(free_blk_xptr, free_blk_info, free_blk_info_size);
-		
+    	free_blk_info_xptr = *((XPTR *)(body_beg + sizeof(char) + sizeof(int)));
+    	bm_rcv_change(free_blk_info_xptr, free_blk_info, free_blk_info_size);
+        lsn_offs += sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size;
     }
     else
     if (body_beg[0] == LL_PERS_SNAPSHOT_ADD)
     {
-    	blocks_info = *((SnapshotsVersionInfo *)(body_beg + sizeof(char) + sizeof(transaction_id)));
+    	blocks_info = (SnapshotsVersionInfo *)(body_beg + sizeof(char) + sizeof(transaction_id));
     	
-    	ver_info.creationTs = 0;
     	ver_info.lxptr = blocks_info->lxptr;
     	ver_info.lastCommitedXptr = blocks_info->xptr;
 
     	VeRevertBlock(&ver_info);
+
+        lsn_offs += sizeof(char) + sizeof(transaction_id) + sizeof(SnapshotsVersionInfo);
 //        ctrl_blk = malloc(PAGE_SIZE);
 //        bm_rcv_read_block(ctrl_blk_pxptr, ctrl_blk);
     	
@@ -2423,11 +2386,43 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
     {
     	old_size = *((__int64 *)(body_beg + sizeof(char)));
     	bm_rcv_decrease(old_size);
+
+        lsn_offs += sizeof(char) + sizeof(__int64);
     }
+  	else
+  	if (body_beg[0] == LL_CHECKPOINT)
+  	{
+    	state = *((int *)(body_beg + sizeof(char)));
+    	lsn_offs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
 
-    lsn -= get_record_length(rec);
+    	if (state == 0)
+    		lsn_offs += sizeof(bm_masterblock) + sizeof(LONG_LSN);
+  	 
+    	count = *((size_t *)lsn_offs);
+    	lsn_offs += sizeof(size_t);
+
+    	blocks_info = (SnapshotsVersionInfo *)lsn_offs;
+    	for (int i = 0; i < count; i++)
+    	{
+	    	if (blocks_info[i].isGarbage)
+	    		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), blocks_info[i].xptr);
+	    	else
+	    	{
+		    	ver_info.lxptr = blocks_info[i].lxptr;
+    			ver_info.lastCommitedXptr = blocks_info[i].xptr;
+
+    			VeRevertBlock(&ver_info);
+    		}
+    	}
+
+    	lsn_offs += count * sizeof(SnapshotsVersionInfo);
+  	}
+  	else
+  		throw USER_EXCEPTION(SE4154);
+
+    lsn = *((LONG_LSN *)lsn_offs);
   }
-
+/*
   // recover checkpoint blocks
   for (int i = 0; i < blocks_from_checkpoint.size(); i++)
   {
@@ -2440,13 +2435,13 @@ void llmgr_core::recover_db_by_phys_records(const LONG_LSN& last_cp_lsn, bool sy
 
     		VeRevertBlock(&ver_info);
     	}
-  }
+  }*/
   
 //  free(ctrl_blk);
 
   ll_log_unlock(sync);
 
-  return rcvLSN; // return LSN for recovery by logical log
+//  return rcvLSN; // return LSN for recovery by logical log
 }
 
 //this function is run from the special recovery process
@@ -2481,18 +2476,17 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
                   read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
   LONG_LSN last_checkpoint_lsn = last_cp_lsn;
-  LONG_LSN last_commit_lsn = file_head.last_commit_lsn;
+  LONG_LSN last_lsn = file_head.last_lsn;
 
   //cout << "last_checkpoint_lsn=" << last_checkpoint_lsn << "\n";
   //cout << "last_commit_lsn=" << last_commit_lsn << "\n";
 
 //  d_printf2("last_checkpoint_lsn=%d, last_commit_lsn=%d\n", last_checkpoint_lsn, last_commit_lsn);
   string str = string("llmgr_core::recover_db_by_logical_log last_checkpoint_lsn=") + int2string(last_checkpoint_lsn) + string("\n");
-  str += string("llmgr_core::recover_db_by_logical_log last_commit_lsn=") + int2string(last_commit_lsn) + string("\n");
+//  str += string("llmgr_core::recover_db_by_logical_log last_commit_lsn=") + int2string(last_commit_lsn) + string("\n");
   WRITE_DEBUG_LOG(str.c_str());
 
-
-  if (last_checkpoint_lsn == NULL_LSN && last_commit_lsn == NULL_LSN) 
+  if (last_checkpoint_lsn == NULL_LSN && last_lsn == NULL_LSN) 
   { 
      //none transactions have been commited and there was not checkpoints
      //then recovery by physical log quite enough
@@ -2509,13 +2503,27 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
  
 #ifdef EL_DEBUG
 #if (EL_DEBUG == 1)
-  cout << "last_cp_lsn=" << last_checkpoint_lsn << "last_commit_lsn=" << last_commit_lsn << endl;
+  cout << "last_checkpoint_lsn=" << last_checkpoint_lsn << "last_lsn=" << last_lsn << endl;
 #endif
 #endif
 
+  LONG_LSN start_analysis_lsn; 
+  const char *rec;
+
+  if (mem_head->min_rcv_lsn != NULL_LSN) 
+  	 start_analysis_lsn = mem_head->min_rcv_lsn;
+  else if (last_checkpoint_lsn != NULL)	
+  {
+  	 start_analysis_lsn = last_checkpoint_lsn;
+  	 rec = get_record_from_disk(last_checkpoint_lsn);
+  	 start_analysis_lsn += get_record_length(rec);
+  }
+  else
+  	 start_analysis_lsn = sizeof(logical_log_file_head);
+
 //  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
-  get_undo_redo_trns_list(last_checkpoint_lsn,
-                          last_commit_lsn,
+  get_undo_redo_trns_list(start_analysis_lsn,
+                          last_lsn,
 //                          undo_list, /*out*/
                           redo_list, /*out*/
                           _vmm_rcv_add_to_indir_block_set_
@@ -2557,13 +2565,12 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   _sync_indirection_table_();
 
   //redo committed transactions
-  LONG_LSN start_redo_lsn;
-  const char* checkpoint_rec = get_record_from_disk(last_checkpoint_lsn);
+  LONG_LSN start_redo_lsn = start_analysis_lsn;
+//  const char* checkpoint_rec = get_record_from_disk(last_checkpoint_lsn);
 
-  get_record_length(checkpoint_rec);
-  start_redo_lsn = (last_checkpoint_lsn != NULL_LSN) ? last_checkpoint_lsn + get_record_length(checkpoint_rec) :
-                                                       sizeof(logical_log_file_head);
-
+//  get_record_length(checkpoint_rec);
+//  start_redo_lsn = (last_checkpoint_lsn != NULL_LSN) ? last_checkpoint_lsn + get_record_length(checkpoint_rec) :
+//                                                       sizeof(logical_log_file_head);
 
   switch_indirection(redo_indir_mode);
 
@@ -2571,7 +2578,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
 
   redo_commit_trns(redo_list, 
                    start_redo_lsn,
-                   last_commit_lsn,
+                   last_lsn,
                    exec_micro_op);
   
   
@@ -2644,7 +2651,7 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
 
     if ((rec + sizeof(logical_log_head))[0] != LL_COMMIT &&
         (rec + sizeof(logical_log_head))[0] != LL_ROLLBACK &&
-        (rec + sizeof(logical_log_head))[0] != LL_CHECKPOINT
+        (rec + sizeof(logical_log_head))[0] != LL_CHECKPOINT &&
         (rec + sizeof(logical_log_head))[0] != LL_PERS_SNAPSHOT_ADD &&
         (rec + sizeof(logical_log_head))[0] != LL_FREE_BLOCKS &&
         (rec + sizeof(logical_log_head))[0] != LL_DECREASE)
@@ -2689,7 +2696,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
                                         void (*_vmm_rcv_add_to_indir_block_set_)(xptr p)
                                        )
 {
-  LONG_LSN lsn;
+  LONG_LSN lsn = start_lsn;
   const char *rec;
   const char *body_beg;
 //  trns_undo_analysis_list _undo_list_;
@@ -2699,11 +2706,11 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 
   //init trns_map from checkpoint record
 
-  if (start_lsn == NULL_LSN)//there is no checkpoint -> pass from log begin
-     lsn = sizeof(logical_log_file_head);
-  else
-  {
-    rec = get_record_from_disk(start_lsn);
+//  if (start_lsn == NULL_LSN)//there is no checkpoint -> pass from log begin
+//     lsn = sizeof(logical_log_file_head);
+//  else
+//  {
+//    rec = get_record_from_disk(start_lsn);
 /*    body_beg = rec + sizeof(logical_log_head);
     
     if (body_beg[0] != LL_CHECKPOINT)
@@ -2724,10 +2731,11 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 //       trns_map.insert(trn_pair(*trid, trn_cell_analysis(0, *last_lsn)));
     }
 */
-    lsn = start_lsn + get_record_length(rec);    
-  }
+//    lsn = start_lsn + get_record_length(rec);    
+//  }
 
   next_lsn_after_cp = lsn;
+
 
   //pass the log
 //  trns_analysis_map trns_map_after_checkpoint;//map of transactions began after checkpoint
@@ -2935,16 +2943,30 @@ void llmgr_core::commit_trn(transaction_id& trid, bool sync)
   ll_log_unlock(sync);
 }
 
+/*void llmgr_core::ll_log_freePrevPersSnapshotBlocks()
+{
+  ll_log_lock(sync);
+
+  logical_log_file_head file_head =
+              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  freePrevCheckpointBlocks(file_head.last_checkpoint_lsn, file_head.last_lsn, sync);
+
+  ll_log_unlock(sync);
+}
+*/
+
 void llmgr_core::ll_truncate_log(bool sync)
 {
   ll_log_lock(sync);
 
   //execute minLSN
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-  LONG_LSN minLSN = NULL_LSN;
+  LONG_LSN minLSN;// = mem_head->min_rcv_lsn; //NULL_LSN;
+
   int i;
 
-  for(i = 0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
+/*  for(i = 0; i< CHARISMA_MAX_TRNS_NUMBER; i++)
   {
      if (minLSN == NULL_LSN) 
         minLSN = mem_head->t_tbl[i].first_lsn;
@@ -2954,11 +2976,15 @@ void llmgr_core::ll_truncate_log(bool sync)
            minLSN = mem_head->t_tbl[i].first_lsn;
      }
   }
-
+*/
   //determine files to be trancated
   int num_files_to_truncate;
+  
+  minLSN = (mem_head->min_rcv_lsn == NULL_LSN) ? getFirstCheckpointLSN(mem_head->last_checkpoint_lsn) :
+  												  mem_head->min_rcv_lsn;
+
   if (minLSN == NULL_LSN)
-     num_files_to_truncate = mem_head->ll_files_num - 1;
+     return; //num_files_to_truncate = mem_head->ll_files_num - 1;
   else
     num_files_to_truncate = (minLSN - mem_head->base_addr)/LOG_FILE_PORTION_SIZE;
 
@@ -3036,7 +3062,9 @@ void llmgr_core::ll_truncate_log(bool sync)
 void llmgr_core::activate_checkpoint()
 {
     //here phys_log_mgr is a global variable
-    _phys_log_mgr_->activate_checkpoint(true);
+//    _phys_log_mgr_->activate_checkpoint(true);
+    if (USemaphoreUp(wait_for_checkpoint_sem, __sys_call_error) != 0)
+        throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
 }
 
 void llmgr_core::set_prev_rollback_lsn(transaction_id &trid, bool sync)
@@ -3055,3 +3083,159 @@ void llmgr_core::set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LON
   if ( mem_head->t_tbl[trid].mode == ROLLBACK_MODE)
       mem_head->t_tbl[trid].hint_lsn = lsn;
 }
+
+void llmgr_core::restorePh()
+{
+  logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
+
+  __int64 ph_counter = file_head.ph_cp_counter;
+
+  char buf3[20];
+
+  string ph_bu_file_name = string(db_files_path) + string(db_name) + 
+  							string(u_i64toa(ph_counter, buf3, 10)) + ".seph";
+
+  string ph_cur_file_name = string(db_files_path) + string(db_name) +
+  							string(u_i64toa(ph_counter + 1, buf3, 10)) + ".seph";
+
+  if (uCopyFile(ph_bu_file_name.c_str(), ph_cur_file_name.c_str(), false, __sys_call_error) == 0)
+      throw USER_EXCEPTION(SE4306);
+
+  // delete all other ph files	
+  string ph_number;
+  __int64 number;
+ 
+  UFile descr;
+
+#ifdef _WIN32
+
+  char buf[4096];
+  char buf2[4096];
+  char *cur_dir;
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+
+  if (uChangeWorkingDirectory(db_files_path.c_str(), __sys_call_error) != 0 )
+     throw USER_EXCEPTION(SE4604); 
+
+  struct _finddata_t ph_file;
+  long dsc;
+
+  //find first ph file
+
+  if ( (dsc = _findfirst("*seph", &ph_file)) == -1L)
+     throw USER_EXCEPTION2(SE4044, "persistent heap file");
+
+  do 
+  {
+     ph_number = ph_file.name;
+     ph_number = ph_number.erase(0, db_name.size() + 1);
+     ph_number.erase(ph_number.end() - 5, ph_number.end());
+     number = atoi(ph_number.c_str());
+     d_printf3("ph_number_recovered=%s, %d\n", ph_number.c_str(), number);
+
+     if (number != ph_counter && number != (ph_counter + 1))
+     	if (uDeleteFile(ph_file.name, __sys_call_error) == 0)
+        	throw USER_EXCEPTION(SE4041);
+
+  } while(_findnext(dsc, &ph_file) == 0);
+
+    
+  _findclose(dsc);
+
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+     throw USER_EXCEPTION(SE4604); 
+#else
+  DIR *dir;
+  struct dirent* dent;
+
+  dir = opendir(db_files_path.c_str());
+
+  if (dir == NULL)
+     throw USER_EXCEPTION(SE4604); 
+
+  string ext;
+  string is_seph;
+
+  while ( NULL != (dent = readdir (dir)) )
+  {
+     is_seph = (ph_number = dent->d_name);
+//     if (is_seph.size() < 7) continue;
+//d_printf2("IS_LLOG=%s\n", is_llog.c_str());
+
+     if ( is_seph.substr(is_seph.size()-4, 4) != "seph") continue;
+
+     ph_number = ph_number.erase(0, db_name.size() + 1);
+//d_printf2("7log_number =%s\n", log_number.c_str());
+     ph_number.erase(ph_number.end() - 5, ph_number.end());
+//d_printf2("8log_number=%s\n", log_number.c_str());
+     number = atoi(ph_number.c_str());
+//     d_printf3("log_number=%s, %d\n", log_number.c_str(), number);
+
+     if (number != ph_counter && number != (ph_counter + 1))
+     	if (uDeleteFile(ph_file.name.c_str(), __sys_call_error) == 0)
+        	throw USER_EXCEPTION(SE4041);
+  }
+
+  if (0 != closedir(dir))
+     throw USER_EXCEPTION2(SE4054, db_files_path.c_str());
+#endif  
+
+  this->last_checkpoint_ph_counter = ph_counter;  
+  this->ph_file_counter = ph_counter + 1;
+}
+
+// this function copies current ph-file in (counter+1)-file
+// this function returns number of the previous persistent ph-file
+__int64 llmgr_core::copyPhFile()
+{
+  __int64 ret;
+
+  char buf[20];
+
+  string ph_bu_file_name = string(db_files_path) + string(db_name) + 
+  							string(u_i64toa(this->ph_file_counter, buf, 10)) + ".seph";
+
+  string ph_cur_file_name = string(db_files_path) + string(db_name) +
+  							string(u_i64toa(this->ph_file_counter + 1, buf, 10)) + ".seph";
+
+  if (uCopyFile(ph_bu_file_name.c_str(), ph_cur_file_name.c_str(), false, __sys_call_error) == 0)
+      throw USER_EXCEPTION(SE4306);
+
+  ret = this->last_checkpoint_ph_counter;
+
+  this->last_checkpoint_ph_counter = this->ph_file_counter;
+  this->ph_file_counter++;
+
+  return ret;
+}
+  
+// this function deletes previous checkpoint ph-file
+void llmgr_core::deletePrevPhFile(__int64 prev_ph_counter)
+{  
+  char buf[20];
+
+  string ph_prev_file_name = string(db_files_path) + string(db_name) +
+  							string(u_i64toa(prev_ph_counter, buf, 10)) + ".seph";
+
+  if (uDeleteFile(ph_prev_file_name.c_str(), __sys_call_error) == 0)
+      throw USER_EXCEPTION(SE4041);
+}
+
+void llmgr_core::updateMinRcvLSN()
+{
+  LONG_LSN lsn = NULL_LSN;
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+  
+  for (int i = 0; i < CHARISMA_MAX_TRNS_NUMBER; i++)
+  {
+  	if (mem_head->t_tbl[i].first_lsn == NULL_LSN) continue;
+
+  	if (lsn == NULL_LSN)
+  		lsn = mem_head->t_tbl[i].first_lsn;
+  	else if (mem_head->t_tbl[i].first_lsn < lsn)
+  		lsn = mem_head->t_tbl[i].first_lsn;  
+  }
+
+  mem_head->min_rcv_lsn = lsn;
+}
+

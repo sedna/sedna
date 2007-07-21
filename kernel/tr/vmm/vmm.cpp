@@ -161,7 +161,7 @@ static ramoffs default_ram = RAMOFFS_OUT_OFF_BOUNDS;
 #endif
 
 // functions return -1 in case of error
-int __vmm_map(void *addr, ramoffs offs)
+int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 {
 #ifdef _WIN32
     HANDLE m;
@@ -182,14 +182,14 @@ int __vmm_map(void *addr, ramoffs offs)
 #ifdef _WIN32
     addr = MapViewOfFileEx(
               m,						// handle to file-mapping object
-              FILE_MAP_ALL_ACCESS,		// access mode
+              (!is_write) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
               0,						// high-order DWORD of offset
               offs,						// low-order DWORD of offset
               PAGE_SIZE,				// number of bytes to map
               addr						// starting address
            );
 #else
-    addr = mmap(addr, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m, offs);
+    addr = mmap(addr, PAGE_SIZE, (!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m, offs);
 #endif
 #ifdef _WIN32
     if (addr == NULL)
@@ -275,10 +275,10 @@ inline void _vmm_map(void *addr, ramoffs offs)
 #endif
 }
 
-inline void _vmm_remap(void *addr, ramoffs offs)
+inline void _vmm_remap(void *addr, ramoffs offs, bool isWrite = true)
 {
 #ifdef VMM_ACCURATE
-    if (__vmm_unmap(addr) || __vmm_map(addr, offs))
+    if (__vmm_unmap(addr) || __vmm_map(addr, offs, isWrite))
         throw USER_EXCEPTION(SE1035);
 #else
     __vmm_unmap(addr);
@@ -1321,7 +1321,10 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
 
         if (swapped != NULL) _vmm_unmap_decent(XADDR(swapped));
-        _vmm_remap(XADDR(p), offs);
+        _vmm_remap(XADDR(p), offs, false);
+
+        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == trid)
+	        _vmm_remap(XADDR(p), offs, true);
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1331,6 +1334,47 @@ void vmm_unswap_block(xptr p) throw (SednaException)
     USemaphoreUp(vmm_sm_sem, __sys_call_error);
 }
 
+void vmm_unswap_block_write(xptr p) throw (SednaException)
+{
+    if (!(LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)XADDR(p) && 
+          (int)XADDR(p) < LAYER_ADDRESS_SPACE_BOUNDARY_INT))
+        throw USER_EXCEPTION(SE1036);
+
+    USemaphoreDown(vmm_sm_sem, __sys_call_error);
+
+    try {
+
+        p = block_xptr(p);
+
+#ifdef VMM_GATHER_STATISTICS
+        pair<t_block_usage::iterator, bool> ins_res = _vmm_block_usage.insert(pair<xptr, int>(p, 1));
+        if (!ins_res.second) ins_res.first->second++;
+#endif
+        VMM_TRACE_UNSWAP(p)
+
+        msg.cmd = 37; // bm_create_new_version
+        msg.trid = trid;
+        msg.sid = sid;
+        msg.data.swap_data.ptr = *(__int64*)(&p);
+
+        if (ssmmsg->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE1034);
+
+        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+
+        ramoffs offs = msg.data.swap_data.offs;
+        xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
+
+        if (swapped != NULL) _vmm_unmap_decent(XADDR(swapped));
+        _vmm_remap(XADDR(p), offs, true);
+
+    } catch (...) {
+        USemaphoreUp(vmm_sm_sem, __sys_call_error);
+        throw;
+    }
+
+    USemaphoreUp(vmm_sm_sem, __sys_call_error);
+}
 
 int vmm_data_block_count = 0;
 int vmm_data_blocks_allocated()
