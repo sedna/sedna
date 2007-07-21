@@ -145,7 +145,6 @@ bool exist_db(const char* db_name)
 
 int load_metadata_in_database(const char* db_name)
 {
-#ifdef SE_ENABLE_SECURITY
   UPID pid;
   UPHANDLE proc_h;
 
@@ -237,9 +236,6 @@ int load_metadata_in_database(const char* db_name)
      throw SYSTEM_EXCEPTION("Can't stop Storage Manager");
 
   return ret_code;
-#else 
-  return 0;
-#endif
 }
 
 //returns 0 if logical log not exist

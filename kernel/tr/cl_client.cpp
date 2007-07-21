@@ -132,7 +132,7 @@ void command_line_client::init()
                          string("\n\\\n") +
                          string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
 #else
-      plain_batch_text = "0";
+      plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
 #endif
    }
 
