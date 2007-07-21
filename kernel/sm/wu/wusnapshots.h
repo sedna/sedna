@@ -15,8 +15,8 @@ struct SnapshotsResourceDemand
 
 struct SnapshotsClientInfo
 {
-	int clientId;
 	int isUsingSnapshot;
+	TIMESTAMP snapshotTs; /* out */ 
 };
 
 struct SnapshotsSetup
@@ -27,6 +27,9 @@ struct SnapshotsSetup
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
 	int (*onCanAdvanceSnapshots)();
+	int (*onCurrentSnapshotGrowing)(size_t totalBlocksCount, size_t exclusiveBlocksCount);
+	int (*onPersistentSnapshotGrowing)(size_t totalBlocksCount, size_t exclusiveBlocksCount);
+	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
 };
 
 struct SnapshotsVersionInfo
@@ -44,22 +47,30 @@ struct SnapshotsOnCheckpointInfo
 	int *activeClientIds;
 	size_t activeClientCount;
 	int state; /* 0-begin 2-inprocess 1-end */ 
+	void *userData;
 };
 
 int ShInitialise();
+void ShQueryResourceDemand(SnapshotsResourceDemand *resourceDemand);
 int ShStartup(SnapshotsSetup *setup);
-int ShDeinitialise();
+int ShShutdown();
+void ShDeinitialise();
 
-int ShOnRegisterClient(SnapshotsClientInfo *clientInfo, TIMESTAMP *snapshotTs);
-int ShOnUnregisterClient(int clientId);
+int ShOnRegisterClient(SnapshotsClientInfo *clientInfo);
+int ShOnUnregisterClient();
 int ShOnCreateVersion(VersionsCreateVersionParams *);
 int ShOnRollback();
 int ShOnCommit();
-int ShAdvanceSnapshots();
-int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-		   int(*)(SnapshotsOnCheckpointInfo *onCheckpointInfo, SnapshotsVersionInfo *buf, size_t count));
+int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 
-int ShNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
-int ShNotifyCheckpointFinished();
+int ShOnBeginCheckpoint(TIMESTAMP *persistentTs);
+
+int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
+				   int(*saveListsProc)(SnapshotsOnCheckpointInfo *onCheckpointInfo, SnapshotsVersionInfo *buf, size_t count));
+
+int ShOnCompleteCheckpoint();
+
+int WirNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
+int WirNotifyCheckpointFinished();
 
 #endif
