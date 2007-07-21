@@ -59,6 +59,80 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
   return file_head;
 }
 
+// this function writes is_stopped_correctly field in the file_head
+// we use this field to determine if the database was stopped correctly
+void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
+{
+  logical_log_file_head file_head =
+              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  file_head.is_stopped_successfully = is_stopped_correctly;
+
+  //get tail log dsc;
+  //set pointer to the begin of last file 
+  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+  set_file_pointer(lsn);
+
+  int res;
+  int written;
+
+  res = uWriteFile(ll_curr_file_dsc,
+//                   buf,
+                   &file_head
+                   sizeof(logical_log_file_head),
+                   &written,
+                   __sys_call_error
+                    );
+
+  if (res == 0 || written != sizeof(logical_log_file_head))
+     throw SYSTEM_EXCEPTION("Can't write file_head to logical log file");
+}
+
+void llmgr_core::flush_file_head(bool sync)
+{
+
+  ll_log_lock(sync);
+
+  logical_log_file_head file_head =
+              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  //get tail log dsc;
+  //set pointer to the begin of last file 
+  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+  set_file_pointer(lsn);
+
+  int res;
+  int written;
+//  LONG_LSN next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
+
+  file_head.last_lsn = mem_head->last_lsn;
+  file_head.next_lsn = mem_head->next_lsn;
+
+  file_head.last_checkpoint_lsn = mem_head->last_checkpoint_lsn;
+  file_head.last_chain_lsn = mem_head->last_chain_lsn;
+  file_head.ts = mem_head->ts;
+  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
+//  file_head.ph_cur_counter = this->ph_file_counter;
+//  char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
+//  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
+//  memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
+
+  res = uWriteFile(ll_curr_file_dsc,
+//                   buf,
+                   &file_head
+                   sizeof(logical_log_file_head),
+                   &written,
+                   __sys_call_error
+                    );
+  if (res == 0 || written != sizeof(logical_log_file_head))
+     throw SYSTEM_EXCEPTION("Can't write file_head to logical log file");
+
+  ll_log_unlock(sync);
+}
+
+
 void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
 {
   //get tail log dsc;
@@ -232,6 +306,16 @@ const char* llmgr_core::get_record_from_shared_memory(int end_offs, int len)
      
 }
 
+// this function return the timestamp of the last persistent snapshot
+TIMESTAMP llmgr_core::returnTimestampOfPersSnapshot(bool sync)
+{
+  ll_log_lock(sync);
+
+  return mem_head->ts;
+
+  ll_log_unlock(sync);
+}
+
 void llmgr_core::extend_logical_log(bool sync)
 {
   ll_log_lock(sync);
@@ -258,6 +342,12 @@ void llmgr_core::extend_logical_log(bool sync)
                                            mem_head->ll_files_arr[mem_head->ll_files_num - 1],//prev file number
                                            prev_file_head.last_commit_lsn,
                                            prev_file_head.next_lsn,
+
+  						                   prev_file_head.last_checkpoint_lsn, 
+  						                   prev_file_head.last_chain_lsn, 
+  						                   prev_file_head.ts,
+                                           prev_file_head.ph_cp_counter,
+                                           
                                            false                                              
                                           );
 
@@ -514,6 +604,12 @@ UFile create_logical_log(const char* log_file_name,
                          int _prev_file_number_,
                          LONG_LSN commit_lsn,
                          LONG_LSN next_after_commit_lsn,
+  						 
+  						 LONG_LSN last_checkpoint_lsn, 
+  						 LONG_LSN last_chain_lsn, 
+  						 TIMESTAMP ts,
+                         __int64 ph_cp_counter,
+
 						 bool is_close_file
                         )
 {
@@ -542,15 +638,19 @@ UFile create_logical_log(const char* log_file_name,
 
   logical_log_file_head ll_head;
 
-  ll_head.last_commit_lsn = commit_lsn;
+  ll_head.last_lsn = commit_lsn;
   ll_head.next_lsn = next_after_commit_lsn;
   ll_head.prev_file_number = _prev_file_number_; 
   ll_head.base_addr = base_addr;
   ll_head.valid_number = valid_file_number;
 
+  ll_head.last_checkpoint_lsn = last_checkpoint_lsn;
+  ll_head.last_chain_lsn = last_chain_lsn;
+  ll_head.ts = ts;
+  ll_head.ph_cp_counter = ph_cp_counter;
+  ll_head.is_stopped_successfully = false;
+  ll_head.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
   
- 
-
   int nbytes_written;
 
   int res;
@@ -673,4 +773,74 @@ void llmgr_core::set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_
 
   d_printf1("!!!TRID NOT FOUND\n");
   return;
+}
+
+__int64 llmgr_core::getCurPhCounter()
+{
+  ll_log_lock(sync);
+
+  __int64 ret = this->ph_file_counter;
+  
+  ll_log_unlock(sync);
+
+  return ret;
+}
+
+__int64 llmgr_core::getNewPhCounter()
+{
+  ll_log_lock(sync);
+
+  this->ph_file_counter++;
+
+  __int64 ret = this->ph_file_counter;
+
+  ll_log_unlock(sync);
+
+  return ret;
+}
+
+LONG_LSN llmgr_core::getLastChainLSN()
+{
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  return mem_head->last_chain_lsn;
+}
+// this function returns lsn of the first record in the bunch of chckpoint records
+LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
+{
+  LONG_LSN lsn = lastCheckpointLSN, ret_lsn;
+  int state;
+  char *block_ofs;
+
+  do
+  {
+    set_file_pointer(lsn);
+    if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+       throw SYSTEM_EXCEPTION("Can't get file size");
+
+    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+
+    rec = get_record_from_disk(lsn);
+    body_beg = rec + sizeof(logical_log_head);
+
+    if (body_beg[0] != LL_CHECKPOINT)
+       throw USER_EXCEPTION(SE4153);
+ 
+    state = *((int *)(body_beg + sizeof(char)));
+    block_ofs = body_beg + sizeof(char) + sizeof(int);
+
+    if (state == 0)
+    {
+    	block_ofs += sizeof(bm_masterblock) + sizeof(LONG_LSN);
+	}
+  	 
+    count = *((size_t *)block_ofs);
+    block_ofs += sizeof(size_t);
+
+    ret_lsn = lsn;
+    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersionInfo)));
+  } while (state != 0);
+
+  return ret_lsn;
 }

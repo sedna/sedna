@@ -17,7 +17,8 @@ bool OS_exceptions_handler::critical_section = false;
 
 #ifdef _WIN32
 #ifdef PRINT_STACK_TRACE
-#include "sym_engine.h"
+//#include "tr/vmm/sym_engine.h"
+#include "../libs/sym_engine/sym_engine.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,8 +44,15 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
             {
                 bool var1 = LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)(info->ExceptionRecord->ExceptionInformation[1]);
                 bool var2 = (int)(info->ExceptionRecord->ExceptionInformation[1]) < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-                if (var1 && var2)
-                    throw win32_access_violation();
+                bool var3 = (int)(info->ExceptionRecord->ExceptionInformation[0]) == 1;
+                if (var1 && var2 && var3)
+                {
+#ifdef PRINT_STACK_TRACE
+           			sym_engine::stack_trace(std::cout, info->ContextRecord);
+#endif
+                    throw SYSTEM_EXCEPTION("Memory access violation error.");
+//                    throw win32_access_violation();
+                }
                 else
 				{
 #ifdef PRINT_STACK_TRACE

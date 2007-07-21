@@ -44,7 +44,6 @@ struct SnapshotsOnCheckpointInfo
 	int *activeClientIds;
 	size_t activeClientCount;
 	int state; /* 0-begin 2-inprocess 1-end */ 
-	void *userData;
 };
 
 int ShInitialise();
@@ -58,7 +57,7 @@ int ShOnRollback();
 int ShOnCommit();
 int ShAdvanceSnapshots();
 int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-				   int(*)(void *userData, SnapshotsVersionInfo *buf, size_t count), 
+				   void(*)(void *userData, SnapshotsVersionInfo *buf, size_t count), 
 				   void *userData);
 
 int ShNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();

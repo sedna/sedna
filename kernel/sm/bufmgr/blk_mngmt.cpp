@@ -227,8 +227,9 @@ void extend_data_file(int extend_portion) throw (SednaException)
         (__int64)PAGE_SIZE > mb->data_file_max_size + (__int64)PAGE_SIZE)
         throw USER_EXCEPTION(SE1011);
     
-    ll_phys_log_decrease(mb->data_file_cur_size);
-    ll_phys_log_flush();
+//    ll_phys_log_decrease(mb->data_file_cur_size);
+//    ll_phys_log_flush();
+	ll_add_decrease_info(mb->data_file_cur_size);
     
     int res = 0;
     __int64 dsk_offs = 0;

@@ -97,6 +97,8 @@
 
 #define VMM_SIGNAL_MODIFICATION(p)	VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
                                     VMM_TRACE_SIGNAL_MODIFICATION(p)				\
+                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != trid) \
+                                    	vmm_unswap_block_write(p);                  \
                                     ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;
 
 
@@ -131,6 +133,7 @@ void vmm_rcv_clear_indir_block_set() throw (SednaException);
 
 // Internal VMM functions
 void vmm_unswap_block(xptr p) throw (SednaException);
+void vmm_unswap_block_write(xptr p) throw (SednaException);
 
 #ifdef VMM_DEBUG_CHECKP
 void _vmm_unmap_severe(void *addr);
