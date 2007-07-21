@@ -1,3 +1,4 @@
+#define __STDC_CONSTANT_MACROS
 #include <stdint.h>
 
 #ifdef _MSC_VER

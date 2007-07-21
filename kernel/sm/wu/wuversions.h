@@ -17,29 +17,17 @@ struct VersionsResourceDemand
 struct VersionsClientInfo
 {
 	TIMESTAMP snapshotTs;
-	int clientId;
 	int isUsingSnapshot;
 	int isRecoveryAgent;
 };
 
-struct VersionsSnapshotInfo
-{
-	TIMESTAMP snapshotTs;	/* timestamp of the newer snapshot */ 
-	TIMESTAMP replacedTs;	/* what snapshot is replaced */ 
-};
-
-struct VersionsCheckpointInfo
-{
-	TIMESTAMP persistentTs;	/* what snapshot is turned persistent */ 
-};
-
 struct VersionsCreateVersionParams
 {
-	TIMESTAMP creationTs;	/*	timestamp of the working version creation */ 
-	LXPTR lxptr;			/*	Logical XPTR of the block */ 
-	XPTR lastCommitedXptr;	/*	physical XPTR of the last commited version */ 
-	size_t alsoUsageSize;
-	int *alsoUsage;				
+	LXPTR lxptr;				/*	Logical XPTR of the version */ 
+	XPTR lastCommitedXptr;		/*	physical XPTR of the last commited version */ 
+	TIMESTAMP exclusionTs;		/*	timestamp of the most recent snapshot NOT 
+									having lastCommitedXptr version included in it */ 
+ */ 
 };
 
 struct VersionsSetup
@@ -114,7 +102,7 @@ int VeOnRegisterClient(VersionsClientInfo *clientInfo);
 	Cleanup is limited to freeing resources but any actions
 	required by the protocol (for instance things to be done
 	on transaction commit or rollback) are not performed. */ 
-int VeOnUnregisterClient(int clientId);
+int VeOnUnregisterClient();
 
 /*	Puts block to buffer. The debug version will ensure that
 	the block identified by lxptr was ever actually allocated
@@ -142,12 +130,12 @@ int VeRevertBlock(VersionsCreateVersionParams *);
 
 /*	Updates info about active snapshots. The info is required for
 	proper version identification. */ 
-int VeOnSnapshot(VersionsSnapshotInfo *snapshotInfo);
+int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP replacedTs);
 
-/*	Updates info about the persistent snapshot. The info is required for
+/*	Updates info about the persistent snapshot. The info is required 
 	to determine whether given block have a version included in persistent
-	snapshot or not. Additionally necesarry buffer flushes are performed. */ 
-int VeOnCheckpoint(VersionsCheckpointInfo *checkpointInfo);
+	snapshot or not. Necesarry buffer flushes are performed as well. */ 
+int VeOnCheckpoint(TIMESTAMP persistentTs);
 
 /*	Monitor buffers state. MUST be hooked into buffer manager. */ 
 int VeOnFlushBlock(int bufferId);
