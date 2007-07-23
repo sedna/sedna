@@ -4345,8 +4345,18 @@
 ; Returns the logical representation for document or collection
 (define (sa:structural-absolute-xpath? expr)
   (case (sa:op-name expr)
-    ((!fn!document !fn!collection)
+    ((!fn!collection)
      expr)
+    ((!fn!document)
+     (if
+      (= (length (sa:op-args expr)) 1)
+      expr
+      ; Otherwise - a document within a collection 
+      (cl:signal-user-error
+       SE5049
+       (string-append
+        "A single document within a collection "
+        "instead of the collection as a whole"))))
     ((ddo attr-axis child descendant descendant-or-self self)
      (sa:structural-absolute-xpath? (car (sa:op-args expr))))
     (else
