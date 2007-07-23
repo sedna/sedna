@@ -350,6 +350,8 @@
               `(1
                 ,(if
                   (pair? (car node))
+                  (begin
+                    ;(pp node)
                     (if
                      (= (length (car node)) 2)
                      (cl:signal-input-error
@@ -358,7 +360,7 @@
                        "undeclared XQuery variable encountered: "
                        (caar node) (cadar node)))
                      `(PPGlobalVariable ,(caar node))))
-                  `(PPVariable ,@node)))
+                  `(PPVariable ,@node))))
              
              ; *** select ***
 ;             ((eq? op-name 'select)
