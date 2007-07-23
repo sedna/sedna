@@ -54,6 +54,7 @@
   (let ((debug-mode?
          (not (zero? (is-xquery-debug-mode?)))))
     ;(pp (list "debug-mode == " debug-mode?))
+    
     (if
      (not (and (list? query) (>= (length query) 3)
 ;               (eq? (car query) 'query)

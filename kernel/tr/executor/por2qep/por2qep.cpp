@@ -3843,6 +3843,7 @@ d_printf2("\n%d",qe->size());
                 || qe->at(11).type != SCM_LIST)    // rewritten path to the target node
                 throw USER_EXCEPTION2(SE1004, "328");
    			path_to_parent = lr2PathExpr(NULL, lst->at(11).internal.list, true);
+            
             return se_new PPCreateTrigger(qe->at(2).internal.symb, 			// time 
 					               qe->at(3).internal.symb,			// event
                                    counted_ptr<db_entity>(db_ent),	// on (db_entity)
@@ -3850,7 +3851,7 @@ d_printf2("\n%d",qe->size());
 					               qe->at(6).internal.symb,			// granularity 
                                    lst->at(7).internal.list,		// action
             					   qe->at(9).internal.str,			// inserting name
-            					   atoi(qe->at(1).internal.num),	// inserting type
+            					   atoi(qe->at(10).internal.num),	// inserting type
             					   path_to_parent,					// path to parent of the inserted node
 								   make_pp_op(cxt, qe->at(8).internal.list), // trigger name
                                    cxt);
@@ -4238,6 +4239,17 @@ qep_subtree *build_qep(const char* por, int var_cxt_size)
 
     return res;
 }
+
+qep_subtree *build_qep(scheme_list* por, int var_cxt_size)
+{
+    qep_subtree *res = se_new qep_subtree();
+
+    res->cxt = dynamic_context::create_unmanaged(var_cxt_size);
+    res->tree = make_pp_op(res->cxt, por);
+
+    return res;
+}
+
 
 void delete_qep(PPQueryEssence *qep)
 {
