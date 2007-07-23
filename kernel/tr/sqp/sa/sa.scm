@@ -4934,12 +4934,17 @@
   (display "\n-------------\n")
   (cond
     ((eq? (car expr) '!fn!document) (cl:signal-input-error SE3207 expr))
+    ((eq? (car expr) '!fn!collection) (cl:signal-input-error SE3207 expr))
     ((or (eq? (car expr) 'child)
-         (eq? (car expr) 'attribute)
-         (cadr expr)))
-    ((or (eq? (car expr) 'descendant)
-         (eq? (car expr) 'descendant-or-self))
-         `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil"))))))
+         (eq? (car expr) 'attr-axis))
+         (begin
+           (display (list (cadr expr)))
+           (list (cadr expr))))
+    ((eq? (car expr) 'descendant)
+     (list `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil")))))))
+    ((eq? (car expr) 'descendant-or-self)
+     (list (cadadr expr)
+           `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil")))))))
     ((eq? (car expr) 'self) (sa:prepare-trigger-path-to-parent (cadr expr)))
     ((eq? (car expr) 'ddo) (sa:prepare-trigger-path-to-parent (cadr expr)))
     (else (cl:signal-user-error SE3207 "Unknown axis")))
@@ -4998,6 +5003,7 @@
                       statement vars funcs ns-binding default-ns uri modules))
                    (list-ref (sa:op-args expr) 5))
                   ))
+
       (and
        first second third fourth fifth
        (null? (filter 
@@ -5027,22 +5033,21 @@
                 (if (eq? (car expr) '!fn!document) (display "true") (display "false"))
                 (display (car fourth))
                 (display "\n-------\n")
-              (list
-               (sa:op-name expr)  ; operation name
-               (car first)  ; remove argument type
-               (car second)
-               (car third)
-               (and
-                (sa:structural-absolute-xpath? (car fourth))
-                (car fourth))
-               (car fifth)
-               (map car sixth)
-               (sa:prepare-trigger-leaf-name (car fourth))
-               (sa:prepare-trigger-leaf-type (car fourth))
-               (sa:prepare-trigger-path-to-parent (car fourth))
+                (display (map cl:scheme-list->string (map car sixth)))
+                (display "\n-------\n")
+              `(,(sa:op-name expr)  ; operation name
+                ,(car first)  ; remove argument type
+                ,(car second)
+                ,(car third)
+                ,(and
+                  (sa:structural-absolute-xpath? (car fourth))
+                  (car fourth))
+                ,(car fifth)
+                ,(map car sixth)
+                ,(sa:prepare-trigger-leaf-name (car fourth))
+                ,(sa:prepare-trigger-leaf-type (car fourth))
+                ,@(sa:prepare-trigger-path-to-parent (car fourth))
                ))
-              (begin
-                (display (car fourth))
               (list
                (sa:op-name expr)  ; operation name
                (car first)  ; remove argument type
@@ -5052,8 +5057,8 @@
                 (sa:structural-absolute-xpath? (car fourth))
                 (car fourth))
                (car fifth)
-               (map car sixth)
-               )))))))))))
+               (map car sixth))
+               ))))))))
 
 ; Clone from sa:analyze-manage-document
 (define (sa:analyze-trigger-drop
