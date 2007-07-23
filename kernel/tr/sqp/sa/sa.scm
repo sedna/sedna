@@ -4929,9 +4929,6 @@
       #f))  
   
 (define (sa:prepare-trigger-path-to-parent expr)
-  (display "\n-------------\n")
-  (display expr)
-  (display "\n-------------\n")
   (cond
     ((eq? (car expr) '!fn!document) (cl:signal-input-error SE3207 expr))
     ((eq? (car expr) '!fn!collection) (cl:signal-input-error SE3207 expr))
@@ -4976,7 +4973,6 @@
      (list? (list-ref (sa:op-args expr) 5)))
     (cl:signal-input-error SE5075
                            (list-ref (sa:op-args expr) 5))
-    (begin (display "\nHere")
     (let ((first  (sa:analyze-string-const (car (sa:op-args expr))
                                            vars funcs ns-binding default-ns))
           (second (sa:analyze-string-const (cadr (sa:op-args expr))
