@@ -21,7 +21,7 @@ struct VersionsClientInfo
 	int isRecoveryAgent;
 };
 
-struct VersionsCreateVersionParams
+struct VersionsRequestForGc
 {
 	LXPTR lxptr;				/*	Logical XPTR of the version */ 
 	XPTR lastCommitedXptr;		/*	physical XPTR of the last commited version */ 
