@@ -125,7 +125,7 @@ int VeAllocBlock(LXPTR proto, LXPTR *lxptr);
 int VeFreeBlock(LXPTR lxptr);
 
 /*	Used when transaction rolls back or during recovery. */ 
-int VeRevertBlock(VersionsCreateVersionParams *);
+int VeRevertBlock(VersionsCreateVersionParams *, int flags);
 
 /*	Updates info about active snapshots. The info is required for
 	proper version identification. */ 
@@ -134,7 +134,9 @@ int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP replacedTs);
 /*	Updates info about the persistent snapshot. The info is required 
 	to determine whether given block have a version included in persistent
 	snapshot or not. Necesarry buffer flushes are performed as well. */ 
-int VeOnCheckpoint(TIMESTAMP persistentTs);
+int VeOnBeginCheckpoint();
+
+int VeOnCompleteCheckpoint(TIMESTAMP persistentTs);
 
 /*	Monitor buffers state. MUST be hooked into buffer manager. */ 
 int VeOnFlushBlock(int bufferId);

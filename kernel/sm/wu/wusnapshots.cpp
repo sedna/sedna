@@ -7,6 +7,7 @@
 
 #define SH_SNAPSHOTS_COUNT	3
 #define SH_GC_LISTS_COUNT	((SH_SNAPSHOTS_COUNT*SH_SNAPSHOTS_COUNT+SH_SNAPSHOTS_COUNT)/2)
+#define SH_BUFSZ			1024
 
 /* defs */ 
 
@@ -115,11 +116,12 @@ int GetSnapshotByTimestamp(SnapshotsSnapshot *head,
 	int success=0, pos=0;
 	SnapshotsSnapshot *dummy=NULL;
 
-	assert(head && result);
+	assert(result);
 	if (!prev) prev=&dummy;
 	*result=NULL;
 	*prev=NULL;
 
+	if (!head) goto notfound;
 	if (head->timestamp==ts)
 	{
 		*result=head;
@@ -140,6 +142,7 @@ int GetSnapshotByTimestamp(SnapshotsSnapshot *head,
 		}
 		else
 		{
+notfound:
 			/* ERROR: "no snapshot with this timestamp" */ 
 			ERROR("no snapshot with this timestamp");
 		}
@@ -156,11 +159,12 @@ int GetSnapshotByType(SnapshotsSnapshot *head,
 	int success=0, pos=0;
 	SnapshotsSnapshot *dummy=NULL;
 
-	assert(head && result);
+	assert(result);
 	if (!prev) prev=&dummy;
 	*result=NULL;
 	*prev=NULL;
 
+	if (!head) goto notfound;
 	if ((head->type & typeIncl) && !(head->type & typeExcl))
 	{
 		*result=head;
@@ -181,6 +185,7 @@ int GetSnapshotByType(SnapshotsSnapshot *head,
 		}
 		else
 		{
+notfound:
 			/* ERROR: "no snapshot with this type" */ 
 			ERROR("no snapshot with this type");
 		}
@@ -205,7 +210,7 @@ static
 void RotateGcChain(SnapshotsGcList *hd, int victimId, int depth)
 {
 	SnapshotsGcList *i=NULL, *j=NULL;
-	assert(sh);
+	assert(hd);
 	GetGcChainNode(hd,&i,depth-victimId-2);
 	GetGcChainNode(i,&j,victimId+1);
 	assert(i && j && i!=j && j->next==NULL);
@@ -400,46 +405,74 @@ static
 int TransmitGcChain(SnapshotsGcList *head,
 					int length,
 					SnapshotsOnCheckpointInfo *onCheckpointInfo,
-					int(*saveListsProc)(SnapshotsOnCheckpointInfo*,SnapshotsVersionInfo*,size_t),
+					int(*saveListsProc)(SnapshotsOnCheckpointInfo*,SnapshotsVersionInfo*,size_t,int),
 					int isGarbage)
 {
-	success=0;
-	return success;
+	SnapshotsVersionInfo buf[SH_BUFSZ], *i=buf, *e=buf+SH_BUFSZ;
+	std::list<SnapshotsGcEntry>::iterator it;
+	size_t count=0;
+	int failure=0;
+
+	assert(head && onCheckpointInfo && saveListsProc);
+
+	if (head) it=head->entries.begin();
+	while (!failure && head && length>0 && it!=head->entries.end())
+	{
+		for(; i<e && it!=head->entries.end(); ++i, ++it)
+		{
+			i->xptr=it->xptr;
+			i->lxptr=it->lxptr;
+		}
+		if(i==e || head->next==NULL || length=1)
+		{
+			count=(size_t)(i-buf);
+			i=buf;
+			if(!saveListsProc(onCheckpointInfo,buf,count,isGarbage)) failure=1;
+			if(isGarbage) onCheckpointInfo->garbageVersionsSent+=count;
+			else onCheckpointInfo->persistentVersionsSent+=count;
+		}
+		else
+		{
+			head=head->next;
+			if (head) it=head->entries.begin();
+			--length;
+		}
+	}
+
+	assert(length==0 || failure);
+	return (failure==0);
 }
 
 static
 int PurifySnapshots(int isKeepingCurrentSnapshot)
 {
-	int failure=0, isAllowed=0;
+	int failure=0;
 	SnapshotsSnapshot *current=NULL;
-	TIMESTAMP ts=0, victimTs=0;
+	TIMESTAMP ts=0;
 
 	current=GetCurrentSnapshot();
 	if (current && isKeepingCurrentSnapshot) current=current->next;
-	if (current) ts=current->timestamp;
-	current=0;
-	/*	callbacks can call functions affecting snapshots list so
-		we never save pointer to snapshots across callback call */ 
-	while (!failure && GetSnapshotByTimestamp(leadingSnapshot,&current,0,ts))
+	while (!failure && current)
 	{
-		victimTs=ts;
-		ts=(current->next?current->next->timestamp:0);
+		ts=current->timestamp;
 		if (current->occupancy==0 && current->type==SH_REGULAR_SNAPSHOT)
 		{
-			current=NULL;
-			if (!setup->onDiscardSnapshot(victimTs,&isAllowed))
+			if (!setup->onDiscardSnapshot(victimTs))
 			{
 				failure=1;
 			}
-			else if (isAllowed)
+			else if (current->timestamp!=ts)
 			{
-				if (!DiscardSnapshot(victimTs,victimTs)) failure=1;
+				/*	callback somehow managed to dispose snapshot
+					pointed by current ptr, exiting */ 
+				current=NULL;				
+			}
+			else
+			{
+				current=current->next;
+				if (!DiscardSnapshot(ts,ts))) failure=1;
 			}
 		}
-	}
-	if (!failure && leadingSnapshot->type==SH_FUTURE_SNAPSHOT)
-	{
-		if (!setup->onCanAdvanceSnapshots()) failure=1;
 	}
 	return failure==0;
 }
@@ -598,7 +631,7 @@ int ShOnCommit()
 int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 {
 	static int AdvanceSnapshotsRecursion=0;
-	int success=0, failure=0, isDiscardingOk=0;
+	int success=0;
 	SnapshotsSnapshot *current=NULL;
 	TIMESTAMP dummyTs=0;
 
@@ -609,43 +642,23 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 
 	if (AdvanceSnapshotsRecursion>0)
 	{
-		/* ERROR: "snapshots advance already in progress" */ 
-		ERROR("snapshots advance already in progress");
+		/* ERROR: "ShAdvanceSnapshots recursion detected" */ 
+		ERROR("ShAdvanceSnapshots recursion detected");
 	}
 	else
 	{
 		AdvanceSnapshotsRecursion++;
-
-		current=GetCurrentSnapshot();
-		if (IsSnapshotDiscardable(current))
+		if (!PurifySnapshots(0))
 		{
-			if (!setup->onDiscardSnapshot(current->timestamp,&isDiscardingOk))
-			{
-				failure=1; /* failure in callback */ 
-			}
-			else if (isDiscardingOk) failure=!DiscardSnapshot(current->timestamp,current->timestamp);
-			current=NULL;
+			; /* something wrong */ 
 		}
-		if (!failure && CreateSnapshot(snapshotTs))
+		else if (CreateSnapshot(snapshotTs))
 		{
 			GetSnapshotByTimestamp(leadingSnapshot,&current,NULL,*snapshotTs);
 			assert(current);
-			*discardedTs=current->discardedTs;
-
-			if (!PurifySnapshots(1)) 
-			{
-				failure=1;
-			}
-			else if (!setup->onCurrentSnapshotGrowing(0,0)) 
-			{
-				failure=1;
-			}
-			
-			if (failure) DiscardSnapshot(*snapshotTs,*discardedTs));
-
-			success=!failure;		
+			*discardedTs=current->discardedTs;			
+			success=1;
 		}
-
 		AdvanceSnapshotsRecursion--;
 	}
 	return success;
@@ -683,13 +696,15 @@ int ShOnBeginCheckpoint(TIMESTAMP *persistentTs)
 }
 
 int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-				   int(*saveListsProc)(SnapshotsOnCheckpointInfo*,SnapshotsVersionInfo*,size_t))
+				   int(*saveListsProc)(SnapshotsOnCheckpointInfo*,SnapshotsVersionInfo*,size_t,int))
 {
-	int success=0;
-	SnapshotsSnapshot *nextPers=NULL, *pers=NULL, *dummy=NULL;
+	int success=0, failure=0, persPos=0, i=0;
+	size_t total=0, persistent=0;
+	SnapshotsSnapshot *nextPers=NULL, *pers=NULL, *dummy=NULL, *iter=NULL;
+	SnapshotsGcList *top=NULL;
 
 	assert(onCheckpointInfo && saveListsProc);
-	GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0);
+	persPos = GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0)-1;
 	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
 	if (!nextPers || GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0))
 	{
@@ -705,6 +720,34 @@ int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
 		}
 		pers=nextPers;
 		pers->type=SH_PERSISTENT_SNAPSHOT;
+
+		GatherSnapshotsStats(leadingSnapshot,&total,&persistent,NULL,pers->timestamp);
+		onCheckpointInfo->persistentVersionsCount=persistent;
+		onCheckpointInfo->garbageVersionsCount=total-persistent;
+		onCheckpointInfo->persistentVersionsSent=0;
+		onCheckpointInfo->garbageVersionsSent=0;
+
+		/* transmit persistent parallelogram */ 
+		for(i=0, iter=pers; !failure && iter; iter=iter->next, ++i)
+		{
+			GetGcChainNode(iter->gcChain,&top,i);
+			assert(top);
+			if (!TransmitGcChain(top,persPos+1,onCheckpointInfo,saveListsProc,0)) failure=1;
+		}
+
+		/* transmit garbage forward triangle */ 
+		for(i=1, iter=leadingSnapshot; !failure && iter!=pers; iter=iter->next, ++i)
+		{
+			if (!TransmitGcChain(iter->gcChain,i,onCheckpointInfo,saveListsProc,1)) failure=1;
+		}
+
+		/* transmit garbage backward triangle */ 
+		for(i=1, iter=pers->next; !failure && iter; iter=iter->next, ++i)
+		{
+			if (!TransmitGcChain(iter->gcChain,i,onCheckpointInfo,saveListsProc,1)) failure=1;
+		}
+
+		success=(failure==0);
 	}
 	return success;
 }
@@ -730,4 +773,42 @@ int ShOnCompleteCheckpoint()
 		if (PurifySnapshots(1)) success=1;
 	}
 	return success;
+}
+
+int ShGatherStats(SnapshotsVersionsStats *stats)
+{
+	TIMESTAMP ts=0;
+	SnapshotsSnapshot *sh=NULL;
+
+	assert(stats); 
+	sh=GetCurrentSnapshot();
+	ts = (sh? sh->timestamp: 0);
+	GatherSnapshotsStats(leadingSnapshot,
+						 &stats->versionsCount,
+						 &stats->curSnapshotVersionsCount,
+						 &stats->curSnapshotSharedVersionsCount,
+						 ts);
+
+	GetSnapshotByType(leadingSnapshot,&sh,NULL,SH_PERSISTENT_SNAPSHOT,0);
+	ts = (sh? sh->timestamp: 0);
+	GatherSnapshotsStats(leadingSnapshot,
+						 NULL,
+						 &stats->persSnapshotVersionsCount,
+						 &stats->persSnapshotSharedVersionsCount,
+						 ts);
+	return 1;
+}
+
+int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPersistent)
+{
+	SnapshotsSnapshot *current=NULL;
+	int dummy=0;
+
+	assert(canAdvance);
+	if (!canMakeCurrentSnapshotPersistent) canMakeCurrentSnapshotPersistent=&dummy;
+	*canAdvance=(leadingSnapshot->type==SH_FUTURE_SNAPSHOT || 
+				 leadingSnapshot->type==SH_REGULAR_SNAPSHOT && leadingSnapshot->occupancy==0);
+	current=GetCurrentSnapshot();
+	*canMakeCurrentSnapshotPersistent=(current && current->type==SH_REGULAR_SNAPSHOT);
+	return 1;
 }
