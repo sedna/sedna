@@ -113,9 +113,9 @@
 
 ; Processes query essense
 (define (porc:process-essense query-essense debug-mode?)
-  ;(display "\n ------------ porc:process-essense -------------")
-  ;(display query-essense)
-  ;(display "\n ------------ porc:process-essense -------------")
+  (display "\n ------------ porc:process-essense -------------")
+  (display query-essense)
+  (display "\n ------------ porc:process-essense -------------")
   (cond
     ((not (and (pair? query-essense)
                (not (null? query-essense))))
@@ -169,9 +169,9 @@
 ; PhysOp
 (define (porc:process-phys-op
          expr copy? ns-prefix in-attr? debug-mode?)
-  ;(display "\n--------- porc:process-phys-op ----------\n")
-  ;(display expr)
-  ;(display "\n--------- porc:process-phys-op ----------\n")  
+  (display "\n--------- porc:process-phys-op ----------\n")
+  (display expr)
+  (display "\n--------- porc:process-phys-op ----------\n")  
   (cond
     ((or (not (pair? expr)) (null? expr))  ; atomic
      (list expr '() #f))
