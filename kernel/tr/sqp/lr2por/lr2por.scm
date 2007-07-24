@@ -348,19 +348,22 @@
               ; The identifier for global variable is represented as
               ; (list identifier)
               `(1
-                ,(if
-                  (pair? (car node))
-                  (begin
-                    ;(pp node)
-                    (if
-                     (= (length (car node)) 2)
-                     (cl:signal-input-error
-                      SE4008
-                      (string-append
-                       "undeclared XQuery variable encountered: "
-                       (caar node) (cadar node)))
-                     `(PPGlobalVariable ,(caar node))))
-                  `(PPVariable ,@node))))
+                ,(cond
+                   ((pair? (car node))
+                    (begin
+                      ;(pp node)
+                      (if
+                       (= (length (car node)) 2)
+                       (cl:signal-input-error
+                        SE4008
+                        (string-append
+                         "undeclared XQuery variable encountered: "
+                         (caar node) (cadar node)))
+                       `(PPGlobalVariable ,(caar node)))))
+                   ((symbol? (car node))  ; 'NEW, 'OLD, 'WHERE in create-trigger 
+                    `(PPXptr ,@node))
+                   (else
+                    `(PPVariable ,@node)))))
              
              ; *** select ***
 ;             ((eq? op-name 'select)
@@ -1467,7 +1470,6 @@
               ))
              
              ((eq? op-name 'create-trigger)
-              (begin
               (let* ((time    (string->symbol
                                (caddr (cadr node))))
                      (event   (string->symbol
@@ -1477,13 +1479,24 @@
                      (abs-path (caddr AbsPath))
                      (granularity (string->symbol
                                    (caddr (list-ref node 4))))
-                     (action (map cl:scheme-list->string
-                                  (map
-                                   (lambda (x) (porc:process-query x))
-                                   (let ((l (reverse (list-ref node 5))))
-                                     (reverse
-                                     `((query (query-prolog) ,(l2p:lr-query-expr2por `(query-body ,(car l))))
-                                     ,@(map (lambda (z) `(query (query-prolog) ,(l2p:lr-query-expr2por z))) (map (lambda (y) `(update (prolog) ,y)) (cdr l)))))))))
+                     (action (map
+                              l2p:any-lr-node2por
+                              (map
+                               (lambda (action)
+                                 (let loop ((replaces '(NEW OLD WHERE))
+                                            (action action))
+                                   (pp action)
+                                   (if
+                                    (null? replaces)
+                                    action
+                                    (loop
+                                     (cdr replaces)
+                                     (xlr:substitute-var-value
+                                      `(var (""
+                                             ,(symbol->string (car replaces))))
+                                      `(var ,(car replaces))
+                                      action)))))
+                               (list-ref node 5))))
                      (name (l2p:any-lr-node2por (car node))))
                 (if (= (length node) 9)
                      (let* ((insname (list-ref node 6))
@@ -1508,7 +1521,7 @@
                                   ,abs-path
                                   ,granularity
                                   ,action
-                                  ,name)))))
+                                  ,name))))
                                
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!
