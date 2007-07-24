@@ -24,20 +24,16 @@ struct SnapshotsSetup
 	TICKET clientStateTicket;
 
 	int (*freeBlock)(XPTR xptr);
-	int (*revertBlock)(VersionsCreateVersionParams *);
+	int (*revertBlock)(VersionsCreateVersionParams *, int flags);
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
-	int (*onCanAdvanceSnapshots)();
-	int (*onCurrentSnapshotGrowing)(size_t versionsCount, size_t sharedVersionsCount);
-	int (*onPersistentSnapshotGrowing)(size_t versionsCount, size_t sharedVersionsCount);
-	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs, int *isDiscardingOk);
+	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
 };
 
 struct SnapshotsVersionInfo
 {
 	LXPTR lxptr;
 	XPTR xptr;
-	int isGarbage;
 };
 
 struct SnapshotsOnCheckpointInfo
@@ -49,6 +45,15 @@ struct SnapshotsOnCheckpointInfo
 	size_t garbageVersionsSent;
 	void *userData;
 };
+
+struct SnapshotsVersionsStats
+{
+	size_t versionsCount;
+	size_t curSnapshotVersionsCount;
+	size_t curSnapshotSharedVersionsCount;
+	size_t persSnapshotVersionsCount;
+	size_t persSnapshotSharedVersionsCount;
+}
 
 int ShInitialise();
 void ShQueryResourceDemand(SnapshotsResourceDemand *resourceDemand);
@@ -66,11 +71,15 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 int ShOnBeginCheckpoint(TIMESTAMP *persistentTs);
 
 int ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo,
-				   int(*saveListsProc)(SnapshotsOnCheckpointInfo *onCheckpointInfo, SnapshotsVersionInfo *buf, size_t count));
+				   int(*saveListsProc)(SnapshotsOnCheckpointInfo *onCheckpointInfo, SnapshotsVersionInfo *buf, size_t count, int isGarbage));
 
 int ShOnCompleteCheckpoint();
+int ShGatherStats(SnapshotsVersionsStats *stats);
+int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPersistent);
 
+/*
 int WirNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
 int WirNotifyCheckpointFinished();
+*/ 
 
 #endif
