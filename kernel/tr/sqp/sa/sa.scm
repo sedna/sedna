@@ -4983,14 +4983,7 @@
                                    vars funcs ns-binding default-ns uri modules))
           (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
                                            vars funcs ns-binding default-ns))
-          (sixth
-           (let ((vars
-                  (append
-                   (map
-                    (lambda (s) `(("" ,s) ,sa:type-nodes))
-                    '("NEW" "OLD" "WHERE"))
-                   vars)))
-             (map
+          (sixth  (map
                    (lambda (statement)
                      ((if
                        (and (pair? statement)
@@ -5005,8 +4998,7 @@
                        sa:analyze-expr)
                       statement vars funcs ns-binding default-ns uri modules))
                    (list-ref (sa:op-args expr) 5))
-                  )
-          ))
+                  ))
 
       (and
        first second third fourth fifth
