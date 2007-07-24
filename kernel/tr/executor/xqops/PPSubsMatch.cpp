@@ -184,14 +184,14 @@ void PPSubsMatch::next  (tuple &t)
 				if (t2c.is_heavy_atomic())
 					contains<estr_iterator,estr_iterator>(*((estr_iterator*)it1),*((estr_iterator*)it2),len1,len2,t);
 				else
-					contains<estr_iterator,char*>(*((estr_iterator*)it1),(char*&)it2,len1,len2,t);
+					contains<estr_iterator,unsigned char*>(*((estr_iterator*)it1),(unsigned char*&)it2,len1,len2,t);
 			}
 			else
 			{
 				if (t2c.is_heavy_atomic())
-					this->contains<char*,estr_iterator>((char*&)it1,*((estr_iterator*)it2),len1,len2,t);
+					this->contains<unsigned char*,estr_iterator>((unsigned char*&)it1,*((estr_iterator*)it2),len1,len2,t);
 				else
-					this->contains<char*,char*>((char*&)it1,(char*&)it2,len1,len2,t);
+					this->contains<unsigned char*,unsigned char*>((unsigned char*&)it1,(unsigned char*&)it2,len1,len2,t);
 			}
 
 			break;
