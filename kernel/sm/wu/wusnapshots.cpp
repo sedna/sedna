@@ -523,9 +523,27 @@ int ShStartup(SnapshotsSetup *psetup)
 int ShShutdown()
 {
 	int failure=0, i=0;
-	SnapshotsSnapshot *curr=NULL;
-	if (!PurifySnapshots(0)) failure=1;
-	if (GetCurrentSnapshot())
+	size_t versCount=0;
+	SnapshotsSnapshot *curr=NULL, *pers=NULL;
+	if (GetSnapshotByType(leadingSnapshot,&pers,0,SH_PERSISTENT_SNAPSHOT,0))
+	{
+		GatherSnapshotsStats(leadingSnapshot,NULL,&versCount,NULL,pers->timestamp);
+		if (versCount==0)
+		{
+			pers->type=SH_REGULAR_SNAPSHOT;
+		}
+		else
+		{
+			ERROR("persistent snapshot has versions");
+			failure=1;
+		}
+	}
+	if (failure)
+	{
+		; /* something wrong */ 
+	}
+	else if (!PurifySnapshots(0)) failure=1;
+	else if (GetCurrentSnapshot())
 	{
 		failure=1;
 		ERROR("shutdown error");
@@ -745,13 +763,13 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 			if (!TransmitGcChain(top,persPos+1,params,saveListsProc,0)) failure=1;
 		}
 
-		/* transmit garbage forward triangle */ 
+		/* transmit first garbage triangle */ 
 		for(i=1, iter=leadingSnapshot; !failure && iter!=pers; iter=iter->next, ++i)
 		{
 			if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,1)) failure=1;
 		}
 
-		/* transmit garbage backward triangle */ 
+		/* transmit second garbage triangle */ 
 		for(i=1, iter=pers->next; !failure && iter; iter=iter->next, ++i)
 		{
 			if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,1)) failure=1;
@@ -879,8 +897,12 @@ void ShDbgDump(int reserved)
 		hscan[i]=it->gcChain;
 	}
 	fputs("----------------------------------------------------------------------\n",stderr);
+	/* for each depth level... (serving all gcChains simultaneously) */ 
 	while(con)
 	{		
+		con=0;
+		/*	for each gcChain output headers (num of elements)
+			unless any node has non-zero elements con remains zero*/ 
 		for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
 		{
 			*buf=0;
@@ -888,15 +910,12 @@ void ShDbgDump(int reserved)
 			{
 				xscan[i]=hscan[i]->entries.begin();
 				sprintf(buf,"[%d]",hscan[i]->entries.size());
+				if (hscan[i]->entries.size()>0) ++con;
 			}
 			fprintf(stderr,"%17s   ",buf);
 		}
 		fputs("\n",stderr);
-		con=0;
-		for (i=0;i<SH_SNAPSHOTS_COUNT&&!con;++i)
-		{
-			if (hscan[i] && xscan[i]!=hscan[i]->entries.end()) con=1;
-		}
+		/*	for each gcChain dump elements (either until all elements are dumped or SH_DUMP_LIMIT is hit) */ 
 		for (j=0; j<SH_DUMP_LIMIT && con; ++j)
 		{
 			con=0;
@@ -917,6 +936,7 @@ void ShDbgDump(int reserved)
 			}
 			fputs("\n",stderr);
 		}
+		/*	descent one level down gcChains, con remains zero unless any chain has a node at next level */ 
 		con=0;
 		for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
 		{

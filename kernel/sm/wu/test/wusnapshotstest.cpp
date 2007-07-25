@@ -114,6 +114,13 @@ int main()
 	ShDbgDump(0);
 	ClDbgDump(0);
 
+	ShAdvanceSnapshots(&snapshotTs, &discardedTs);
+	ShOnBeginCheckpoint(&persTs);
+	ShOnCheckpoint(&onCheckpointParams,SaveListsProc);
+	ShOnCompleteCheckpoint();
+
+	ShDbgDump(0);
+
 	ShShutdown();
 
 	ShDeinitialise();
