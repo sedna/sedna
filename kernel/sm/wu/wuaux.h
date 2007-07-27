@@ -48,6 +48,7 @@ void *AlignPtr(void *ptr, int alignment)
 }
 
 void DbgInitGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill);
+
 int DbgCheckGuardMemory(void *ptr, ptrdiff_t dist, uint32_t fill, 
 						int isReportingEnabled, 
 						const char *errorMessageHeader);
@@ -104,6 +105,7 @@ int ResetLowestBitSet(uint32_t *val)
 }
 
 #define ERROR(STR) ERRORfn(__FILE__,__LINE__,__FUNCTION__,STR);
+
 void ERRORfn(const char*,int,const char*,const char*);
 
 #endif
