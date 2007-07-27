@@ -4,7 +4,9 @@
  */
 
 #include "common/sedna.h"
+#include <string>
 #include "tr/executor/xqops/PPDebug.h"
+#include "common/u/uutils.h"
 
 
 PPDebug::PPDebug(dynamic_context *_cxt_,
@@ -60,20 +62,30 @@ void PPDebug::next(tuple &t)
     }
     catch(...)
     {
-        dostr.set_debug_info_type(se_QueryDebug);
+        std::string message;
+        char str[40];
 
-        dostr << child_name.get() << " : " << cc;
+        message += child_name.get();
+        message +=  " : ";
+        message += u_itoa(cc, str, 10);
 
-        if(child_info.get() != NULL) dostr << " : " << child_info.get();
+        if(child_info.get() != NULL) 
+        {    
+            message += " : "; 
+            message += child_info.get();
+        }
         
-        dostr << "\n";
+        message += "\n";
+        
+        dostr.set_debug_info_type(se_QueryDebug);
+        dostr << message.c_str();
         dostr.flush();
 
         throw;
     }
 }
 
-/// FIXME!!! Is there any specific behaviour in copy (IS)
+/// FIXME!!! Is there any specific behaviour in copy (IS)?
 PPIterator* PPDebug::copy(dynamic_context *_cxt_)
 {
     PPDebug *res = child_info.get() != NULL ? 
