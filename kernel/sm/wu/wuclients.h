@@ -88,22 +88,6 @@ struct ClientsSetup
 	int maxSizePerClient;
 };
 
-int  ClInitialise();
-int  ClReserveStateBlocks(TICKET *ticket, size_t size);
-int  ClStartup(ClientsSetup *clientsSetup);
-void ClDeinitialise();
-
-void ClQueryMaxClientsCount(int *maxClientsCount);
-int  ClRegisterClient(int *clientId, int isFixed);
-int  ClMarkClientReady(int clientId);
-int  ClMarkClientLeaving(int clientId);
-int  ClUnregisterClient(int clientId);
-
-void ClGetCurrentClientId(int *clientId);
-int  ClSetCurrentClientId(int clientId);
-int  ClGetCurrentStateBlock(void **ptr, TICKET ticket);
-int  ClGetStateBlock(void **ptr, TICKET ticket, int clientId);
-
 struct ClientsEnumClientsInfo
 {
 	int clientsCount;
@@ -111,11 +95,39 @@ struct ClientsEnumClientsInfo
 	void *userData;
 };
 
+int  ClInitialise();
+
+int  ClReserveStateBlocks(TICKET *ticket, size_t size);
+
+int  ClStartup(ClientsSetup *clientsSetup);
+
+void ClDeinitialise();
+
+void ClQueryMaxClientsCount(int *maxClientsCount);
+
+int  ClRegisterClient(int *clientId, int isFixed);
+
+int  ClMarkClientReady(int clientId);
+
+int  ClMarkClientLeaving(int clientId);
+
+int  ClUnregisterClient(int clientId);
+
+void ClGetCurrentClientId(int *clientId);
+
+int  ClSetCurrentClientId(int clientId);
+
+int  ClGetCurrentStateBlock(void **ptr, TICKET ticket);
+
+int  ClGetStateBlock(void **ptr, TICKET ticket, int clientId);
+
 int ClEnumClients(ClientsEnumClientsInfo *enumClientsInfo, 
 				  int(*enumProc)(ClientsEnumClientsInfo *enumClientsInfo, int clientId));
 
 int ClLockClientSet();
+
 int ClUnlockClientSet();
+
 int ClIsClientReady(int *isReady, int clientId);
 
 void ClDbgDump(int reserved);

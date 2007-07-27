@@ -64,7 +64,7 @@ int ShShutdown();
 
 void ShDeinitialise();
 
-int ShOnRegisterClient(int isUsingSnapshot);
+int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs);
 
 int ShOnUnregisterClient();
 

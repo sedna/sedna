@@ -7,6 +7,7 @@
 
 #include "wutypes.h"
 #include "wubuffers.h"
+#include "wusnapshots.h"
 
 struct VersionsResourceDemand
 {
@@ -19,14 +20,6 @@ struct VersionsClientInfo
 	TIMESTAMP snapshotTs;
 	int isUsingSnapshot;
 	int isRecoveryAgent;
-};
-
-struct VersionsRequestForGc
-{
-	LXPTR lxptr;				/*	Logical XPTR of the version */ 
-	XPTR lastCommitedXptr;		/*	physical XPTR of the last commited version */ 
-	TIMESTAMP exclusionTs;		/*	timestamp of the most recent snapshot NOT 
-									having lastCommitedXptr version included in it */ 
 };
 
 struct VersionsSetup
@@ -57,14 +50,11 @@ struct VersionsSetup
 	int (*protectBuffer)(int bufferId, int orMask, int andNotMask);
 	int (*markBufferDirty)(int bufferId, int from, int to, int flags);
 
-	/*	Alloc functions 
-		- allocBlock - allocate block.
-		- freeBlock - frees block, currently unused. */ 
-	int (*allocBlock)(XPTR *xptr, XPTR proto);
+	/*	Alloc functions */ 
+	int (*allocBlock)(XPTR *xptr);
 	int (*freeBlock)(XPTR xptr);
 
-	/* Timestamp functions 
-		- getTimestamp returns unique timestamp, subsequent call must return larger value */ 
+	/* Timestamp functions */ 
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
 	/*	Callbacks 
@@ -76,69 +66,32 @@ struct VersionsSetup
 	int (*onCreateVersion)(VersionsCreateVersionParams *);
 };
 
-/*	Determine the space required to be reserved in other components internal
-	structures. Reservation size is known at compile time but we don't want to
-	expose structures definition. It helps to isolate components from
-	each other and allows virtually unlimited composition possibilities. */ 
-void VeQueryResourceDemand(VersionsResourceDemand *versionsResourceDemand);
-
-/*	Performs initial Ve initialisation. */ 
 int VeInitialise();
 
-/*	Completes initialisation. Installs callbacks and other components functions
-	passed via VersionsSetup. They are used to hook components
-	together. These functions are never called during startup or deinitialise
-	(due to possibly cyclic component interdependencies). */ 
+void VeQueryResourceDemand(VersionsResourceDemand *versionsResourceDemand);
+
 int VeStartup(VersionsSetup *setup);
 
-/*	Shut down Ve. */ 
 void VeDeinitialise();
 
-/*	Initialises private structures instance for the client. */ 
 int VeOnRegisterClient(VersionsClientInfo *clientInfo);
 
-/*	Deinitialises private structures instance for the client.
-	Cleanup is limited to freeing resources but any actions
-	required by the protocol (for instance things to be done
-	on transaction commit or rollback) are not performed. */ 
 int VeOnUnregisterClient();
 
-/*	Puts block to buffer. The debug version will ensure that
-	the block identified by lxptr was ever actually allocated
-	and report error otherwise. */ 
 int VeLoadBuffer(LXPTR lxptr, int *bufferId);
 
-/*	Allocate a block - either a new one or a copy of the
-	block identified by proto. In the later case a new
-	version is created and any further requests for proto will
-	rather return a newer block. If proto is a special value
-	a brand new block is created (either data or temp
-	depending on the proto value). Unless client allocated
-	the block it is readonly for him. If client is not permited
-	to create a version function returns error status emediately
-	since wait-for-version-slot-availible should be rather
-	implemented in Locks. */ 
-int VeAllocBlock(LXPTR proto, LXPTR *lxptr);
+int VeAllocBlock(LXPTR *lxptr);
 
-/*	Free a block. Operation failes unless the same client
-	allocated this block earlier. */ 
 int VeFreeBlock(LXPTR lxptr);
 
-/*	Used when transaction rolls back or during recovery. */ 
-int VeRevertBlock(VersionsCreateVersionParams *, int flags);
+int VeOnCommit();
 
-/*	Updates info about active snapshots. The info is required for
-	proper version identification. */ 
+int VeOnRollback();
+
 int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP replacedTs);
 
-/*	Updates info about the persistent snapshot. The info is required 
-	to determine whether given block have a version included in persistent
-	snapshot or not. Necesarry buffer flushes are performed as well. */ 
-int VeOnBeginCheckpoint();
+int VeOnCheckpoint(TIMESTAMP persistentTs);
 
-int VeOnCompleteCheckpoint(TIMESTAMP persistentTs);
-
-/*	Monitor buffers state. MUST be hooked into buffer manager. */ 
 int VeOnFlushBlock(int bufferId);
 
 #endif

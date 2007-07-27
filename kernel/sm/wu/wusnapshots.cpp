@@ -416,36 +416,64 @@ void GatherSnapshotsStats(SnapshotsSnapshot *head,
 }
 
 static 
+int FlushTransmitBuf(SnapshotsOnCheckpointParams *params,
+					 int(*saveListsProc)(SnapshotsOnCheckpointParams*,SnapshotsVersion*,size_t,int),
+					 SnapshotsVersion *buf,
+					 SnapshotsVersion *ebuf,
+					 SnapshotsVersion **ibuf,
+					 int isGarbage)
+{
+	size_t count=0;
+	int failure=0;
+	
+	assert(params && saveListsProc && buf && ebuf && ibuf && *ibuf && *ibuf>=buf && *ibuf<=ebuf);
+	count=*ibuf-buf;
+	if (count>0)
+	{
+		if(!saveListsProc(params,buf,count,isGarbage)) failure=1;
+		if(isGarbage) 
+		{
+			params->garbageVersionsSent+=count;
+		}
+		else 
+		{
+			params->persistentVersionsSent+=count;
+		}
+		*ibuf=buf;
+	}
+	return failure==0;
+}
+
+static 
 int TransmitGcChain(SnapshotsGcNode *head,
 					int length,
 					SnapshotsOnCheckpointParams *params,
 					int(*saveListsProc)(SnapshotsOnCheckpointParams*,SnapshotsVersion*,size_t,int),
+					SnapshotsVersion *buf,
+					SnapshotsVersion *ebuf,
+					SnapshotsVersion **ibuf,
 					int isGarbage)
 {
-	SnapshotsVersion buf[SH_BUFSZ], *i=buf, *e=buf+SH_BUFSZ;
 	std::list<SnapshotsGcEntry>::iterator it;
-	size_t count=0;
+	SnapshotsVersion *i=NULL;
 	int failure=0;
 
-	assert(head && params && saveListsProc);
+	assert(head && params && saveListsProc && buf && ebuf && ibuf && *ibuf);
+	i=*ibuf;
 
 	if (head) it=head->entries.begin();
 	while (!failure && head && length>0)
 	{
-		for(; i<e && it!=head->entries.end(); ++i, ++it)
+		for(; i<ebuf && it!=head->entries.end(); ++i, ++it)
 		{
 			i->xptr=it->xptr;
 			i->lxptr=it->lxptr;
 		}
-		if(i==e || length==1)
+		if(i==ebuf)
 		{
-			count=(size_t)(i-buf);			
-			if(i!=buf && !saveListsProc(params,buf,count,isGarbage)) failure=1;
-			i=buf;
-			if(isGarbage) params->garbageVersionsSent+=count;
-			else params->persistentVersionsSent+=count;
+			if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&i,isGarbage)) failure=1;
 		}
-		if (it==head->entries.end())
+		else if (it==head->entries.end())
 		{
 			head=head->next;
 			if (head) it=head->entries.begin();
@@ -453,6 +481,7 @@ int TransmitGcChain(SnapshotsGcNode *head,
 		}
 	}
 
+	*ibuf=i;
 	assert(length==0 || failure);
 	return (failure==0);
 }
@@ -556,11 +585,11 @@ void ShDeinitialise()
 {
 }
 
-int ShOnRegisterClient(int isUsingSnapshot)
+int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)
 {
 	int success=0;
 	SnapshotsClientState *state=NULL;
-	SnapshotsSnapshot *current;
+	SnapshotsSnapshot *current=NULL;
 
 	ClGetCurrentStateBlock((void**)&state,ticket);
 	current=GetCurrentSnapshot();
@@ -584,7 +613,8 @@ int ShOnRegisterClient(int isUsingSnapshot)
 		{
 			state->snapshotTs=~(TIMESTAMP)0;
 			success=1;
-		}			
+		}
+		if (snapshotTs) *snapshotTs=state->snapshotTs;
 	}
 	return success;
 }
@@ -659,7 +689,7 @@ int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size
 int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 {
 	static int AdvanceSnapshotsRecursion=0;
-	int success=0;
+	int success=0, canAdvance=0;
 	SnapshotsSnapshot *current=NULL;
 	TIMESTAMP dummyTs=0;
 
@@ -676,7 +706,15 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 	else
 	{
 		AdvanceSnapshotsRecursion++;
-		if (!PurifySnapshots(0))
+		if (!ShCheckIfCanAdvanceSnapshots(&canAdvance,NULL))
+		{
+			; /* something wrong */ 
+		}
+		else if (canAdvance==0)
+		{
+			ERROR("unable to advance snapshots");
+		}
+		else if (!PurifySnapshots(0))
 		{
 			; /* something wrong */ 
 		}
@@ -730,6 +768,7 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 	size_t total=0, persistent=0;
 	SnapshotsSnapshot *nextPers=NULL, *pers=NULL, *dummy=NULL, *iter=NULL;
 	SnapshotsGcNode *top=NULL;
+	SnapshotsVersion buf[SH_BUFSZ], *ibuf=buf, *ebuf=buf+SH_BUFSZ;
 
 	assert(params && saveListsProc);
 	persPos = GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0)-1;
@@ -754,27 +793,43 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 		params->garbageVersionsCount=total-persistent;
 		params->persistentVersionsSent=0;
 		params->garbageVersionsSent=0;
-
-		/* transmit persistent parallelogram */ 
-		for(i=0, iter=pers; !failure && iter; iter=iter->next, ++i)
+		
+		/* if neither garbage nor persistent versions exist call saveListsProc once */ 
+		if (params->persistentVersionsCount==0 && params->garbageVersionsCount==0)
 		{
-			GetGcChainNode(iter->gcChain,&top,i);
-			assert(top);
-			if (!TransmitGcChain(top,persPos+1,params,saveListsProc,0)) failure=1;
+			if(!saveListsProc(params,NULL,0,0)) failure=1;
 		}
-
-		/* transmit first garbage triangle */ 
-		for(i=1, iter=leadingSnapshot; !failure && iter!=pers; iter=iter->next, ++i)
+		else
 		{
-			if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,1)) failure=1;
-		}
+			/* transmit persistent parallelogram */ 
+			for(i=0, iter=pers; !failure && iter; iter=iter->next, ++i)
+			{
+				GetGcChainNode(iter->gcChain,&top,i);
+				assert(top);
+				if (!TransmitGcChain(top,persPos+1,params,saveListsProc,buf,ebuf,&ibuf,0)) failure=1;
+			}
+			/* flush buffer */ 
+			if (!failure)
+			{
+				if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&ibuf,0)) failure=1;
+			}
 
-		/* transmit second garbage triangle */ 
-		for(i=1, iter=pers->next; !failure && iter; iter=iter->next, ++i)
-		{
-			if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,1)) failure=1;
-		}
-
+			/* transmit first garbage triangle */ 
+			for(i=1, iter=leadingSnapshot; !failure && iter!=pers; iter=iter->next, ++i)
+			{
+				if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+			}
+			/* transmit second garbage triangle */ 
+			for(i=1, iter=pers->next; !failure && iter; iter=iter->next, ++i)
+			{
+				if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+			}
+			/* flush buffer */ 
+			if (!failure)
+			{
+				if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+			}
+		}		
 		success=(failure==0);
 	}
 	return success;
@@ -829,15 +884,20 @@ int ShGatherStats(SnapshotsStats *stats)
 
 int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPersistent)
 {
-	SnapshotsSnapshot *current=NULL;
+	SnapshotsSnapshot *current=NULL, *last=NULL, *criterion=NULL;
 	int dummy=0;
 
-	assert(canAdvance);
-	if (!canMakeCurrentSnapshotPersistent) canMakeCurrentSnapshotPersistent=&dummy;
-	*canAdvance=(leadingSnapshot->type==SH_FUTURE_SNAPSHOT || 
-				 leadingSnapshot->type==SH_REGULAR_SNAPSHOT && leadingSnapshot->occupancy==0);
+	assert(canAdvance);	
+	last=leadingSnapshot;
+	assert(last);
+	while (last->next) last=last->next;
+	criterion=(last->occupancy==0?leadingSnapshot:leadingSnapshot->next);
+
+	*canAdvance=(criterion->type==SH_FUTURE_SNAPSHOT || 
+				 criterion->type==SH_REGULAR_SNAPSHOT && criterion->occupancy==0);
 	current=GetCurrentSnapshot();
-	*canMakeCurrentSnapshotPersistent=(current && current->type==SH_REGULAR_SNAPSHOT);
+	dummy=(current && current->type==SH_REGULAR_SNAPSHOT);
+	if (canMakeCurrentSnapshotPersistent) *canMakeCurrentSnapshotPersistent=dummy;
 	return 1;
 }
 
@@ -872,6 +932,7 @@ void ShDbgDump(int reserved)
 		stats.persSnapshotVersionsCount,
 		stats.persSnapshotSharedVersionsCount);
 
+	fprintf(stderr,"   %-16s   %-10s   %-16s   %-6s\n","ts","type","disc.-ts","occup.");
 	for (i=0,it=leadingSnapshot; it; ++i, it=it->next)
 	{
 		switch (it->type)
@@ -889,14 +950,14 @@ void ShDbgDump(int reserved)
 		default:
 			typeStr="UNKNOWN";
 		}
-		fprintf(stderr,"   %0.8X %-10s discard-ts %0.8X, occupancy %d\n",
-			(uint32_t)it->timestamp,
+		fprintf(stderr,"   %0.16I64X   %-10s   %0.16I64X   %6d\n",
+			it->timestamp,
 			typeStr,
-			(uint32_t)it->discardedTs,			
+			it->discardedTs,			
 			it->occupancy);
 		hscan[i]=it->gcChain;
 	}
-	fputs("----------------------------------------------------------------------\n",stderr);
+	fputs("   ---------------------------------------------------------\n",stderr);
 	/* for each depth level... (serving all gcChains simultaneously) */ 
 	while(con)
 	{		
@@ -912,7 +973,7 @@ void ShDbgDump(int reserved)
 				sprintf(buf,"[%d]",hscan[i]->entries.size());
 				if (hscan[i]->entries.size()>0) ++con;
 			}
-			fprintf(stderr,"%17s   ",buf);
+			fprintf(stderr,"   %17s",buf);
 		}
 		fputs("\n",stderr);
 		/*	for each gcChain dump elements (either until all elements are dumped or SH_DUMP_LIMIT is hit) */ 
@@ -932,7 +993,7 @@ void ShDbgDump(int reserved)
 						if (j==SH_DUMP_LIMIT-1) strcpy(buf,"........");
 					}
 				}
-				fprintf(stderr,"%17s   ",buf);
+				fprintf(stderr,"   %17s",buf);
 			}
 			fputs("\n",stderr);
 		}

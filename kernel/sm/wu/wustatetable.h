@@ -30,19 +30,27 @@ struct StateTable
 };
 
 void InitialiseStateTable(StateTable *stateTable);
+
 int  ReserveStateTableColumn(StateTable *stateTable, TICKET *ticket, size_t size, int alignment);
+
 int  CreateStateTableRows(StateTable *stateTable, int rowsCount, size_t maxRowSize);
+
 void ResetStateTable(StateTable *stateTable);
+
 void DeinitialiseStateTable(StateTable *stateTable);
 
 int  GetStateTableCell(StateTable *stateTable, void **dest, TICKET ticket, int rowId);
+
 int  GetStateTableMasterCell(StateTable *stateTable, void **dest, int rowId);
 
 int  OccupyStateTableFirstVacantRow(StateTable *stateTable, int *rowId, int rngBegin, int rngEnd);
+
 int  SetStateTableIsVacantRowFlag(StateTable *stateTable, int rowId, int isVacant);
+
 int  IsStateTableRowVacant(StateTable *stateTable, int *isVacant, int rowId);
 
 void DbgDumpStateTable(StateTable *stateTable);
+
 void DbgDumpStateTableParams(StateTable *stateTable, DbgDumpMemoryParams *params);
 
 #endif

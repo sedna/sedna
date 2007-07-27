@@ -81,12 +81,6 @@ int main()
 
 	ShDbgDump(0);
 
-	ClRegisterClient(&clientId,0);
-	ClSetCurrentClientId(clientId);
-	ShOnRegisterClient(1);
-	ClDbgDump(0);
-
-	ShAdvanceSnapshots(&snapshotTs, &discardedTs);
 	
 	ShOnBeginCheckpoint(&persTs);
 	ShDbgDump(0);
@@ -95,6 +89,17 @@ int main()
 	ShOnCompleteCheckpoint();
 
 	ShAdvanceSnapshots(&snapshotTs, &discardedTs);
+	ShDbgDump(0);
+
+	ClRegisterClient(&clientId,0);
+	ClSetCurrentClientId(clientId);
+	ShOnRegisterClient(1,NULL);
+
+	ClDbgDump(0);
+	ShDbgDump(0);
+
+	ShAdvanceSnapshots(&snapshotTs, &discardedTs);
+	ShDbgDump(0);
 
 	ShAcceptRequestForGc(~(TIMESTAMP)0,sample,10);
 	ShAcceptRequestForGc(BASETS,sample+10,3);
