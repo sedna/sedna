@@ -15,20 +15,13 @@ struct VersionsResourceDemand
 	size_t bufferStateSize;
 };
 
-struct VersionsClientInfo
-{
-	TIMESTAMP snapshotTs;
-	int isUsingSnapshot;
-	int isRecoveryAgent;
-};
-
 struct VersionsSetup
 {
 	TICKET clientStateTicket;
 	TICKET bufferStateTicket; 
 
 	/*	Buffer functions 
-		- renameBuffer - changes an xptr associated with buffer identified
+		- rebindBuffer - changes an xptr associated with buffer identified
 		by bufferId. An error code is returned if a buffer associated with
 		xptr already exists and it's id is not bufferId. 
 		- loadBuffer - puts block identified by xptr in buffer (flags=0). 
@@ -41,7 +34,7 @@ struct VersionsSetup
 		when it is mapped in TRN next time (debug version also changes protection
 		emediately for all TRNs the block is mapped to). 
 		- markBufferDirty - either marks buffer dirty or removes this mark. */ 
-	int (*renameBuffer)(int bufferId, XPTR xptr);
+	int (*rebindBuffer)(int bufferId, XPTR xptr);
 	int (*loadBuffer)(XPTR xptr, int *bufferId, int flags);
 	int (*unloadBuffer)(int bufferId, int flags);
 	int (*getBufferInfo)(int bufferId, BufferInfo *bufferInfo);
@@ -57,13 +50,15 @@ struct VersionsSetup
 	/* Timestamp functions */ 
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
+	/* GC functions */ 
+	int (*acceptRequestForGc)(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count);
+
 	/*	Callbacks 
 		- onCompleteBlockRelocation - called emediately after block who is not included 
 		in the latest snapshot relocates. Block is already written at xptr,
 		however it's copy at lxptr still exists.
 		May be called in context where clientId!=GetCurrentCLientId(). */ 
 	int (*onCompleteBlockRelocation)(int clientId, LXPTR lxptr, XPTR xptr);
-	int (*onCreateVersion)(VersionsCreateVersionParams *);
 };
 
 int VeInitialise();
@@ -74,7 +69,7 @@ int VeStartup(VersionsSetup *setup);
 
 void VeDeinitialise();
 
-int VeOnRegisterClient(VersionsClientInfo *clientInfo);
+int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot);
 
 int VeOnUnregisterClient();
 
@@ -82,16 +77,22 @@ int VeLoadBuffer(LXPTR lxptr, int *bufferId);
 
 int VeAllocBlock(LXPTR *lxptr);
 
+int VeCreateVersion(LXPTR lxptr);
+
 int VeFreeBlock(LXPTR lxptr);
 
 int VeOnCommit();
 
 int VeOnRollback();
 
-int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP replacedTs);
+int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs);
 
 int VeOnCheckpoint(TIMESTAMP persistentTs);
 
 int VeOnFlushBlock(int bufferId);
+
+int VeGetCurrentClientTs(TIMESTAMP *timestamp);
+
+void VeDbgDump(int reserved);
 
 #endif
