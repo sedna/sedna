@@ -11,7 +11,7 @@
 #include "common/base.h"
 #include "common/xptr.h"
 
-void rollback_tr_by_logical_log(transaction_id _trid);
+//void rollback_tr_by_logical_log(transaction_id _trid);
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn);
 void exec_micro_op(const char* rec, int len, bool isUNDO);
 void print_value(const char* value, int value_size);

@@ -455,6 +455,11 @@ int main(int argc, char **argv)
                                 NULL_FILE,
                                 NULL_LSN,
                                 sizeof(logical_log_file_head),
+
+                                NULL_LSN, // last checkpoint lsn
+                                NULL_LSN, // last physical chain lsn
+                                0,        // timestamp of the last persistent snapshot
+
                                 true 
                                );
 

@@ -106,7 +106,7 @@ struct logical_log_file_head
   LONG_LSN last_checkpoint_lsn; //lsn of the last checkpoint record
   LONG_LSN last_chain_lsn; // lsn of the last record in physical records chain
   TIMESTAMP ts; // timestamp of the last persistent snapshot
-  __int64 ph_cp_counter; // last checkpoint counter of the ph file
+//  __int64 ph_cp_counter; // last checkpoint counter of the ph file
 //  __int64 ph_cur_counter; // current counter of the ph file
   bool is_stopped_successfully; // true, if the database was stopped correctly
   int sedna_db_version;
@@ -205,6 +205,9 @@ private:
   UFile ll_curr_file_dsc;
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
+
+  USemaphore wait_for_checkpoint_sem;//semaphore for initing checkpoint
+  
   void *shared_mem;
   char* read_buf;//
   int read_buf_size;
@@ -219,7 +222,7 @@ private:
   int indir_rec_buf_size;
   std::vector<log_file_dsc> ll_open_files;//this structure is ordered in sm and is unordered in transaction (may contain duplicates)
 
-  plmgr_core* _phys_log_mgr_; //used to activate checkpoint
+//  plmgr_core* _phys_log_mgr_; //used to activate checkpoint
 //  stack<int> ll_free_file_name_numbers;//used for creating next log file name (prefix + number)
 //  !!!int log_file_portion_size;//size of one physical log file (must be ininted via input papram)
 
@@ -239,7 +242,7 @@ public:
 
 
   //on session functions
-  void ll_log_open(std::string db_files_path, std::string db_name, plmgr_core* _phys_log_mgr_, bool rcv_active = false);
+  void ll_log_open(std::string db_files_path, std::string db_name, /*plmgr_core* _phys_log_mgr_,*/ bool rcv_active = false);
   void ll_log_open_shared_mem();
   void ll_log_close();
   void ll_log_close_shared_mem();
@@ -267,11 +270,12 @@ public:
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
 //  LONG_LSN ll_log_checkpoint(bool sync);
-  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
+//  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
+  void ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
   void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
-  void ll_log_pers_snapshot_add(transaction_id trid, SnapshotsVersionInfo *blk_info, bool sync);
+  void ll_log_pers_snapshot_add(SnapshotsVersionInfo *blk_info, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
   
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
@@ -327,6 +331,10 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
   void updateMinRcvLSN();
 
+  void activate_checkpoint(bool sync); // moved from private
+
+  void set_checkpoint_on_flag(bool flag); // set flag determing if checkpoint thread is active
+
 private:
 
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
@@ -357,8 +365,6 @@ private:
   void set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_list& redo_list,trn_cell_analysis_redo& redo_trn_cell/*in*/);
 
   LONG_LSN getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN); //returns lsn of the first checkpoint record in a bundle
-
-  void activate_checkpoint();
 
   inline void ll_log_lock(bool sync)
   {
@@ -420,7 +426,7 @@ UFile create_logical_log(const char* log_file_name,
   						 LONG_LSN last_checkpoint_lsn, 
   						 LONG_LSN last_chain_lsn, 
   						 TIMESTAMP ts,
-                         __int64 ph_cp_counter,
+//                         __int64 ph_cp_counter,
 
                          bool is_close_file = false 
                         );
