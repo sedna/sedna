@@ -107,8 +107,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
     flush_data_buffers();
     d_printf1("flush data buffers completed\n");
 
-    __int64 prev_ph_counter = ll_copy_ph_file();
-    d_printf1("persistent heap has been copied successfully\n");
+//    __int64 prev_ph_counter = ll_copy_ph_file();
+//    d_printf1("persistent heap has been copied successfully\n");
 
 //    flush_ph();
 //    d_printf1("flush_ph completed\n");
@@ -152,6 +152,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 //       throw SYSTEM_EXCEPTION("Can't up semaphore for beginning checkpoint");
 
 //    ll_phys_log_set_checkpoint_on_flag(false);
+	ll_set_checkpoint_on_flag(false);
 
     elog(EL_LOG, ("Checkpoint procedure is finished"));
 

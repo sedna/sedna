@@ -16,6 +16,7 @@
 using namespace std;
 
 llmgr_core* logical_log_mgr;
+bool enable_write_of_phys_recs = true;
 
 bool ll_logical_log_startup(int &sedna_db_version)
 {
@@ -49,18 +50,19 @@ void ll_logical_log_shutdown()
 #endif
 }
 
-void ll_logical_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count)
+int ll_logical_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage)
 {
 #ifdef LOGICAL_LOG
   LONG_LSN  ret_lsn;
-  /*ret_lsn =*/ logical_log_mgr->ll_log_checkpoint(userData, buf, count);
+  /*ret_lsn =*/ logical_log_mgr->ll_log_checkpoint(params, buf, count, isGarbage);
 
   string str = string("ll_logical_log_checkpoint finished\n");
   WRITE_DEBUG_LOG(str.c_str());
 
 //  return ret_lsn;
+  return 1;
 #else
-  return -1;
+  return 0;
 #endif
 }
 
@@ -123,12 +125,12 @@ void ll_add_decrease_info(__int64 old_size)
 #endif
 }
 
-void ll_add_pers_snapshot_block_info(transaction_id trid, SnapshotsVersionInfo *blk_info)
+void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info, int isGarbage)
 {
 #ifdef LOGICAL_LOG
-  logical_log_mgr->ll_log_pers_snapshot_add(trid, blk_info, true);
+  logical_log_mgr->ll_log_pers_snapshot_add(blk_info, isGarbage, true);
   logical_log_mgr->ll_log_flush(true);
-//  logical_log_mgr->ll_log_flush_all_last_records(true);
+  logical_log_mgr->ll_log_flush_all_last_records(true);
   logical_log_mgr->flush_file_head(true);
 #endif
 }
@@ -180,5 +182,19 @@ void ll_updateMinRcvLSN()
 {
 #ifdef LOGICAL_LOG
   logical_log_mgr->updateMinRcvLSN();
+#endif
+}
+
+void ll_set_phys_rec_flag(bool flag)
+{
+#ifdef LOGICAL_LOG
+	enable_write_of_phys_recs = flag;
+#endif
+}
+
+void ll_set_checkpoint_on_flag(bool flag)
+{
+#ifdef LOGICAL_LOG
+	logical_log_mgr->set_checkpoint_on_flag(flag);
 #endif
 }

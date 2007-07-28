@@ -40,6 +40,8 @@ void hl_logical_log_on_transaction_begin(bool rcv_active);
 void hl_logical_log_on_session_end();
 void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active);
 
+void up_transaction_block_sems();    // this functions
+void down_transaction_block_sems();  //                serve to block starting of all transactions before checkpoint
 
 void down_concurrent_micro_ops_number();
 void up_concurrent_micro_ops_number();

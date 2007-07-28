@@ -34,7 +34,7 @@ using namespace std;
 int rcv_number_of_records =0;//for debug
 int rcv_number_of_text = 0;
 
-void rollback_tr_by_logical_log(transaction_id _trid)
+/*void rollback_tr_by_logical_log(transaction_id _trid)
 {
 #ifdef LOGICAL_LOG
   switch_to_rollback_mode(MODE_UNDO);
@@ -44,6 +44,7 @@ void rollback_tr_by_logical_log(transaction_id _trid)
 
 #endif
 }
+*/
 
 void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {

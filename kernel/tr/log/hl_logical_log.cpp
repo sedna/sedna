@@ -54,7 +54,7 @@ void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 
 #ifdef LOGICAL_LOG
   tr_llmgr = se_new llmgr_core();
-  tr_llmgr->ll_log_open(logical_log_path, string(db_name), phys_log_mgr, rcv_active);
+  tr_llmgr->ll_log_open(logical_log_path, string(db_name), /*phys_log_mgr,*/ rcv_active);
   tr_llmgr->ll_log_open_shared_mem();
   is_ll_on_session_initialized = true; 
 #endif
@@ -119,7 +119,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
         }
         else
         {
-           rollback_tr_by_logical_log(trid);
+//           rollback_tr_by_logical_log(trid);
 #ifdef SE_ENABLE_FTSEARCH
 	   	   SednaIndexJob::rollback();
 #endif
@@ -186,6 +186,15 @@ void hl_logical_log_unregister_tr_light(transaction_id _trid)
 }
 */
 
+// moved from hl_phys_log.cpp
+void activate_and_wait_for_end_checkpoint()
+{
+#ifdef CHECKPOINT_ON
+     tr_llmgr->activate_checkpoint(true);  
+     uSleep(1, __sys_call_error);
+     wait_for_checkpoint_finished();
+#endif
+}
 
 void down_concurrent_micro_ops_number()
 {
@@ -199,8 +208,8 @@ void down_concurrent_micro_ops_number()
   if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
-     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
+//  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
+//     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 
   down_up_counter++;
 //  down_nums++;
@@ -220,8 +229,8 @@ void up_concurrent_micro_ops_number()
 //  d_printf1("up_concurrent_micro_ops_number() - begin\n");
   tr_llmgr->set_prev_rollback_lsn(trid, true);
 
-  if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
-     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
+//  if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
+//     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
 
   down_up_counter--;
 //  up_nums++;
@@ -233,6 +242,23 @@ void up_concurrent_micro_ops_number()
   //WRITE_DEBUG_LOG(str.c_str());
 #endif
 }
+
+void up_transaction_block_sems()
+{
+#ifdef CHECKPOINT_ON
+  if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
+     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
+#endif
+}
+
+void down_transaction_block_sems()
+{
+#ifdef CHECKPOINT_ON
+  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
+     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
+#endif
+}
+
 
 void wait_for_checkpoint_finished()
 {
@@ -535,56 +561,3 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cu
     return NULL;
 }
 #endif
-    
-#ifdef SE_ENABLE_TRIGGERS
-void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted)
-{
-#ifdef LOGICAL_LOG
-  if (!enable_log) return;
-  number_of_records++;
-  
-  std::ostringstream tr_path(std::ios::out | std::ios::binary);
-  if (trigger_path) 
-  	PathExpr2lr(trigger_path, tr_path);
-
-  std::ostringstream path_to_par(std::ios::out | std::ios::binary);
-  if (path_to_parent) 
-  	PathExpr2lr(path_to_parent, path_to_par);
-  
-  int trac_len = 0;
-
-  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
-      trac_len += strlen(tr_act->statement) + 1 + sizeof(int);
-
-  char *tr_action_buf = new char[trac_len];
-  int tr_action_buf_size = 0;
-  int str_len = 0;
-
-  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
-  {
-      str_len = strlen(tr_act->statement);
-
-      U_ASSERT(tr_action_buf_size + str_len + 1 + sizeof(int) <= trac_len);
-      
-      if (str_len)
-      {
-          memcpy(tr_action_buf + tr_action_buf_size, tr_act->statement, str_len + 1);
-          tr_action_buf_size += str_len + 1;
-      }
-      else
-      {
-          tr_action_buf[tr_action_buf_size] = '\x0';
-          tr_action_buf_size++;
-      }
-      memcpy(tr_action_buf + tr_action_buf_size, &(tr_act->cxt_size), sizeof(int));
-      tr_action_buf_size += sizeof(int);
-  }
-  
-  tr_llmgr->ll_log_trigger(trid, tr_time, tr_event,  tr_path.str().c_str(), tr_gran, tr_action_buf, tr_action_buf_size, 
-  	  insnode.name, insnode.type, path_to_par.str().c_str(), trigger_title, doc_name, is_doc, inserted, true);
-
-  delete[] tr_action_buf;
-#endif
-}
-#endif
-    

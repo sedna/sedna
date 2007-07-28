@@ -224,7 +224,7 @@ void _vmm_preinit_region()
          cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
          cur += (__uint32)PAGE_SIZE)
     {
-        if (__vmm_map((void*)cur, default_ram) == -1)
+        if (__vmm_map((void*)cur, default_ram, false /* mapping with read-only access */) == -1)
             throw USER_EXCEPTION(SE1031);
     }
 #else

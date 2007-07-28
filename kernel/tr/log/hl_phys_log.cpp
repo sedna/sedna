@@ -220,7 +220,8 @@ void hl_phys_log_create_node_blk(const void* p)
 #endif
 }
 
-void activate_and_wait_for_end_checkpoint()
+// this function moved to hl_logical_log.cpp
+/*void activate_and_wait_for_end_checkpoint()
 {
 #ifdef CHECKPOINT_ON
      phys_log_mgr->activate_checkpoint(true);
@@ -228,6 +229,7 @@ void activate_and_wait_for_end_checkpoint()
      wait_for_checkpoint_finished();
 #endif
 }
+*/
 
 int get_phys_record_block_parts(const void * p, int size)
 {

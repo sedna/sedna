@@ -148,10 +148,59 @@ void on_session_end(SSMMsg* &sm_server)
 
 void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 {
+   down_transaction_block_sems();
+
+   d_printf1("Releasing PH between transactions on the same session...");
+
+   if (is_ph_inited)
+   {
+      if (pers_release() != 0)
+         throw USER_EXCEPTION(SE4606);
+
+      is_ph_inited = false;
+   }
+   d_printf1("OK\n");
+
+   if (this_tr_is_query)
+   {
+		sm_msg_struct msg;
+        
+        msg.cmd = 38; // bm_get_snapshot_info
+        msg.trid = 0; // trid is not defined in this point
+        msg.sid = sid;
+
+        if (sm_server->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE1034);
+   		
+   		char buf[20];
+
+   		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
+   			db_name + "." + string(u_i64toa(msg.snp_info.ts, buf, 10)) + ".seph";
+
+   		int type_of_snp = msg.snp_info.type_of_snp; // type of snapshot: 1 or 0
+
+   		d_printf1("Initializing PH between transactions on the same session...");
+   		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
+   			(type_of_snp == 1) ? PERS_HEAP_NEW_1_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
+      		throw USER_EXCEPTION(SE4605);
+
+   		is_ph_inited = true;
+   		d_printf1("OK\n");
+   }
+   else
+   {
+   		d_printf1("Initializing PH between transactions on the same session...");
+   		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
+   		if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
+      		throw USER_EXCEPTION(SE4605);
+   		is_ph_inited = true;
+   		d_printf1("OK\n");
+   }      
+
    d_printf1("Getting transaction identifier...");
    trid = get_transaction_id(sm_server);
    d_printf1("OK\n");
-
+   
    event_logger_set_trid(trid);
 
    d_printf1("Phys log on transaction begin...");
@@ -220,6 +269,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
    d_printf1("OK\n");
 
    event_logger_set_trid(-1);
+
+   up_transaction_block_sems();
 }
 
 void on_kernel_recovery_statement_begin()

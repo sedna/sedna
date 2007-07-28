@@ -15,7 +15,7 @@
 #include "common/utils.h"
 #include "common/u/uprocess.h"
 
-#define SEDNA_DATA_STRUCTURES_VER 5
+#define SEDNA_DATA_STRUCTURES_VER 4
 
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
@@ -140,6 +140,10 @@ struct vmm_region_values
 
 
 extern char *CHARISMA_PH_SHARED_MEMORY_NAME;
+
+extern char *CHARISMA_PH_NEW_SNP_SHARED_MEMORY_NAME;
+extern char *CHARISMA_PH_OLD_SNP_SHARED_MEMORY_NAME;
+
 extern char *CHARISMA_BUFFER_SHARED_MEMORY_NAME;
 extern char *SEDNA_GLOBAL_MEMORY_MAPPING;
 
@@ -155,6 +159,10 @@ extern global_name VMM_SM_SEMAPHORE_STR;
 extern global_name INDIRECTION_TABLE_SEMAPHORE_STR;
 extern global_name VMM_SM_EXCLUSIVE_MODE_SEM_STR;
 extern global_name PERS_HEAP_SEMAPHORE_STR;
+
+extern global_name PERS_HEAP_NEW_SNP_SEMAPHORE_STR;
+extern global_name PERS_HEAP_OLD_SNP_SEMAPHORE_STR;
+
 extern global_name METADATA_SEMAPHORE_STR;
 extern global_name INDEX_SEMAPHORE_STR;
 #ifdef SE_ENABLE_FTSEARCH
@@ -277,6 +285,7 @@ enum QueryType {TL_XQuery	= 9,	// XQuery query
  * 35 - bm_register_transaction
  * 36 - bm_unregister_transaction
  * 37 - bm_create_new_version
+ * 38 - bm_get_snapshot_info
  *
  */
 struct sm_blk_stat
@@ -311,6 +320,11 @@ struct sm_msg_struct
             __int64 swapped;
             int offs;
         } swap_data;
+
+        struct {
+        	TIMESTAMP ts;    // timestamp of snapshot, used to find persistent heap file
+        	int type_of_snp; // 1 or 0, to select name for file mapping
+        } snp_info;
 
         sm_blk_stat stat; // sm block statistics
 

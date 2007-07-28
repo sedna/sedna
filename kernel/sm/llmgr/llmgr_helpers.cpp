@@ -113,7 +113,7 @@ void llmgr_core::flush_file_head(bool sync)
   file_head.last_checkpoint_lsn = mem_head->last_checkpoint_lsn;
   file_head.last_chain_lsn = mem_head->last_chain_lsn;
   file_head.ts = mem_head->ts;
-  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
+//  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
 //  file_head.ph_cur_counter = this->ph_file_counter;
 //  char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
 //  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
@@ -346,7 +346,7 @@ void llmgr_core::extend_logical_log(bool sync)
   						                   prev_file_head.last_checkpoint_lsn, 
   						                   prev_file_head.last_chain_lsn, 
   						                   prev_file_head.ts,
-                                           prev_file_head.ph_cp_counter,
+//                                           prev_file_head.ph_cp_counter,
                                            
                                            false                                              
                                           );
@@ -608,7 +608,7 @@ UFile create_logical_log(const char* log_file_name,
   						 LONG_LSN last_checkpoint_lsn, 
   						 LONG_LSN last_chain_lsn, 
   						 TIMESTAMP ts,
-                         __int64 ph_cp_counter,
+//                         __int64 ph_cp_counter,
 
 						 bool is_close_file
                         )
@@ -647,7 +647,7 @@ UFile create_logical_log(const char* log_file_name,
   ll_head.last_checkpoint_lsn = last_checkpoint_lsn;
   ll_head.last_chain_lsn = last_chain_lsn;
   ll_head.ts = ts;
-  ll_head.ph_cp_counter = ph_cp_counter;
+//  ll_head.ph_cp_counter = ph_cp_counter;
   ll_head.is_stopped_successfully = false;
   ll_head.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
   

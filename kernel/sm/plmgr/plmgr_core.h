@@ -21,12 +21,13 @@ enum  {PL_CHANGE, PL_CHANGE_MASTER, PL_DECREASE, PL_CREATE_NODE_BLK};
 
 //#define PHYS_LOG_TEST
 //must be uncommented for recovery
-#define PHYS_LOG
+//!#define PHYS_LOG
 
 #define  PHYS_LOG_READ_BUF_LENGTH 131072 
 //128kb
 #define  PHYS_LOG_FLUSH_PORTION 128*1024 
 // 128 Kb
+
 #define  PHYS_LOG_SHARED_MEM_SECTORS_NUM  256
 //128Kb (128Kb is minimum)
 
@@ -100,6 +101,7 @@ struct shared_mem_head
   char empty_bulk_load_blk[CHARISMA_MAX_TRNS_NUMBER];//cell is 1 -> transaction must empty a list of blocks which were created (used for checkpoint correctness) 
   int num_of_records_after_cp; //used for debug
   int num_of_records;//total number of records written in phys log (used for debug)
+  bool checkpoint_on; //true means that checkpoint thread is working now
 };
 
 
