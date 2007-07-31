@@ -36,12 +36,15 @@ void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr paramete
     {
         switch ((*qepParIter)->get_type())
         {
-            case TRIGGER_PARAMETER_NEW:   (*qepParIter)->set_xptr(parameter_new);
-                                         break;
-            case TRIGGER_PARAMETER_OLD:   (*qepParIter)->set_xptr(parameter_old);
-                                         break;
-            case TRIGGER_PARAMETER_WHERE: (*qepParIter)->set_xptr(parameter_where);
-                                         break;
+            case TRIGGER_PARAMETER_NEW:   CHECKP(parameter_new);
+                                          (*qepParIter)->set_xptr(parameter_new);
+                                          break;
+            case TRIGGER_PARAMETER_OLD:   CHECKP(parameter_old);
+                                          (*qepParIter)->set_xptr(parameter_old);
+                                          break;
+            case TRIGGER_PARAMETER_WHERE: CHECKP(parameter_where); 
+                                          (*qepParIter)->set_xptr(parameter_where);
+                                          break;
             default: throw USER_EXCEPTION(SE3202);
                      break;
         }
@@ -52,6 +55,9 @@ void clear_built_trigger_actions_map()
 {
     built_trigger_actions_map::iterator mapIter;
     std::vector<built_trigger_action>::iterator vecIter;
+    
+    if(built_trigger_actions.empty()) return;
+    
     for(mapIter = built_trigger_actions.begin( ); mapIter != built_trigger_actions.end( ); mapIter++)
     {
         for(vecIter = mapIter->second.begin(); vecIter != mapIter->second.end(); vecIter++)
@@ -207,3 +213,18 @@ t_triggers_set* find_triggers_for_docnode(doc_schema_node* doc_node, trigger_eve
     }
     return triggers;
 }
+
+xptr prepare_old_node(xptr node, schema_node* scm_node, trigger_event event)
+{
+   	t_triggers_set treated_triggers;
+    CHECKP(node);
+	scm_node = GETSCHEMENODEX(node);
+    
+    if(find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers))
+    {
+        return copy_to_temp(node);
+    }
+    else
+        return XNULL;
+}
+

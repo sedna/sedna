@@ -23,22 +23,18 @@ xptr triggers_test(xptr new_var, xptr where_var, const char* name, t_item node_t
     }
 	return new_var;
 }
-xptr apply_before_insert_triggers(xptr new_var, xptr where_var, const char* name, t_item node_type)
+xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 {
    	if (auth == BLOCK_AUTH_CHECK) return new_var;
     
-    if (((new_var==XNULL)&&(name==NULL))||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
-
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return new_var;
-    
-    if(name==NULL)
-    {   
-        CHECKP(new_var);
-        name=GETNAME(GETSCHEMENODEX(new_var));
-		CHECKP(where_var);
-		node_type = GETTYPE(GETSCHEMENODEX(new_var));
-    }
+
+    if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
+
+    CHECKP(new_var);
+    const char* name=GETNAME(GETSCHEMENODEX(new_var));
+    t_item node_type = GETTYPE(GETSCHEMENODEX(new_var));
 
     //if the node is not element or attribute - return
    	if((node_type!=element)&&(node_type!=attribute))
@@ -70,13 +66,12 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var)
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
 
-    if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
-	
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return;
-    
+
+    if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
+	
     CHECKP(new_var);
-    CHECKP(where_var);
 
 	schema_node* scm_node = GETSCHEMENODEX(new_var);
     //if the node is not element or attribute - return
@@ -168,6 +163,7 @@ xptr apply_before_delete_triggers(xptr old_var)
    	if (auth == BLOCK_AUTH_CHECK) return old_var;
     
     node_triggers_map fired_triggers_for_this_node;
+	CHECKP(old_var);
     schema_node* scm_node = GETSCHEMENODEX(old_var);
     schema_trigger_cell* scm_trc = scm_node->trigger_object;
     std::vector<trigger_cell*> triggers_vec;
@@ -186,11 +182,11 @@ xptr apply_before_delete_triggers(xptr old_var)
     }
     return apply_before_delete_triggers_on_subtree(old_var, &fired_triggers_for_this_node);
 }
-void apply_after_delete_triggers(xptr old_var, xptr where_var)
+void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
     
-    if (old_var==XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
+    if (old_var==XNULL) return;
     CHECKP(old_var);
     CHECKP(where_var);
 
@@ -199,7 +195,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var)
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
-    schema_node* scm_node = GETSCHEMENODEX(old_var);
+ //   schema_node* scm_node = GETSCHEMENODEX(old_var);
 	t_triggers_set treated_triggers;
     trigger_cell* trc;
     while(true)
@@ -207,7 +203,10 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var)
         trc = find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers);
         find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
         if(trc == NULL)
+		{
+			clear_temp();
             return;
+		}
         trc->execute_trigger_action(XNULL, old_var, where_var);
         treated_triggers.insert(trc);
     }
@@ -431,13 +430,13 @@ void apply_after_statement_triggers()
     }
 }
 
-xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger_time time, trigger_event event, const char* new_name, t_item new_type)
+xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_node* scm_node, trigger_time time, trigger_event event)
 {
     switch (time){
         case TRIGGER_BEFORE:
          switch (event){
              case TRIGGER_INSERT_EVENT:
-                  return apply_before_insert_triggers(new_var, where_var, new_name, new_type);
+                  return apply_before_insert_triggers(new_var, where_var);
 //                  return triggers_test(new_var, where_var, new_name, new_type);
                   
              case TRIGGER_DELETE_EVENT:
@@ -457,7 +456,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, trigger
                   return XNULL;
                   
              case TRIGGER_DELETE_EVENT:
-                  apply_after_delete_triggers(old_var, where_var);
+                  apply_after_delete_triggers(old_var, where_var, scm_node);
                   return XNULL;
                   
              case TRIGGER_REPLACE_EVENT:

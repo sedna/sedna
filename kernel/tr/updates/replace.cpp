@@ -20,6 +20,8 @@ void replace(PPOpIn arg)
 	//3. persistent replacements+their position in 2 seq
 //	xptr addr(0,(void*)0x4acc0000);
 //	check_blk_consistency(addr);
+	xptr node, parent, tmp_node, del_node, node_child;
+
 	tuple t(arg.ts);
 	descript_sequence arg3seq(2);
 	xptr_sequence arg1seq;
@@ -32,7 +34,7 @@ void replace(PPOpIn arg)
 	{
 		if (t.cells[0].is_node())
 		{
-			xptr node=t.cells[0].get_node();
+			node=t.cells[0].get_node();
 			CHECKP(node);
 			if ((!is_node_updated || is_node_persistent(node))&& !is_node_document(node)) 
 			{
@@ -92,7 +94,7 @@ void replace(PPOpIn arg)
 		{
 		case 0:
 			{
-				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				node=copy_to_temp((*it3).cells[0].get_node());
 				arg2seq[(*it3).cells[1].get_xs_integer()]=((n_dsc*)XADDR(node))->indir;
 				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
 				++it3;//++it1;
@@ -109,7 +111,7 @@ void replace(PPOpIn arg)
 			break;
 		case -2:
 			{
-				xptr node=copy_to_temp((*it3).cells[0].get_node());
+				node=copy_to_temp((*it3).cells[0].get_node());
 				arg2seq.set(((n_dsc*)XADDR(node))->indir,(*it3).cells[1].get_xs_integer());
 				++it3;
 			}
@@ -147,7 +149,7 @@ void replace(PPOpIn arg)
 	descript_sequence arg4seq(2);
 	do
 	{
-		xptr node=(*it3).cells[0].get_node();
+		node=(*it3).cells[0].get_node();
 		CHECKP(node);
 		tuple t=(*it3);
 		t.cells[0].set_node(((n_dsc*)XADDR(node))->indir);
@@ -161,50 +163,52 @@ void replace(PPOpIn arg)
 	do
 	{
 		--it3;
-		xptr node=removeIndirection((*it3).cells[0].get_node());
+		node=removeIndirection((*it3).cells[0].get_node());
 		
 		//1.insert
 		int pos=(*it3).cells[1].get_xs_integer();
 		sit=arg2seq.begin()+pos;
 		while(*sit!=XNULL)
 		{
-			xptr node_child=*sit;
+			node_child=*sit;
+            CHECKP(node);
 #ifdef SE_ENABLE_TRIGGERS
-            if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) != XNULL)
+            if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
+    			goto next_replacement;
+    		CHECKP(node);
 #endif
-			CHECKP(node);
 			if (is_node_attribute(node)|| is_node_attribute(removeIndirection(node_child)))
 			{
-				xptr par=removeIndirection(GETPARENTPOINTER(node));
+				parent=removeIndirection(GETPARENTPOINTER(node));
 				if (is_node_persistent(node_child)) 
-					node=deep_pers_copy(XNULL, XNULL, par, removeIndirection(node_child),true);
+					node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
 				else
-					node=deep_temp_copy(XNULL, XNULL, par, removeIndirection(node_child),ins_swiz);
+					node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
 			}
 			else
 			{
-			if (is_node_persistent(node_child)) 
-				node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
-			else
-				node=deep_temp_copy(node, XNULL, XNULL, removeIndirection(node_child),ins_swiz);
+				if (is_node_persistent(node_child)) 
+					node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
+				else
+					node=deep_temp_copy(node, XNULL, XNULL, removeIndirection(node_child),ins_swiz);
 			}
 			sit++;
 		}
 
-#ifdef SE_ENABLE_TRIGGERS
-        xptr del_node = removeIndirection((*it3).cells[0].get_node());
-        xptr tmp_node = copy_to_temp(del_node);
-        xptr parent=removeIndirection(((n_dsc*)XADDR(del_node))->pdsc);
-        
-        if (apply_per_node_triggers(XNULL, del_node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
-        {
-            delete_node(node);
-            apply_per_node_triggers(XNULL, tmp_node, parent, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
-        }
-#else
 		//delete node
-		delete_node(removeIndirection((*it3).cells[0].get_node()));
+        del_node = removeIndirection((*it3).cells[0].get_node());
+#ifdef SE_ENABLE_TRIGGERS
+        tmp_node = copy_to_temp(del_node);
+        parent=removeIndirection(((n_dsc*)XADDR(del_node))->pdsc);
+        CHECKP(del_node);
 #endif        
+
+        delete_node(del_node);
+
+#ifdef SE_ENABLE_TRIGGERS
+        apply_per_node_triggers(XNULL, tmp_node, parent, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+#endif
+next_replacement:;    
 	}
 	while (it3!=arg4seq.begin());
 	//3.delete

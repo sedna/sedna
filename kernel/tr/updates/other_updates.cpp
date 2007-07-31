@@ -122,7 +122,7 @@ void rename(PPOpIn arg,const char* name)
 			}
 		}
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+        apply_per_node_triggers(res, XNULL, parent, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 		if (it==argseq.begin()) break;
 	}

@@ -4934,14 +4934,10 @@
     ((eq? (car expr) '!fn!collection) (cl:signal-input-error SE3207 expr))
     ((or (eq? (car expr) 'child)
          (eq? (car expr) 'attr-axis))
-         (begin
-           (display (list (cadr expr)))
-           (list (cadr expr))))
-    ((eq? (car expr) 'descendant)
+     (list (cadr expr)))
+    ((or (eq? (car expr) 'descendant)
+         (eq? (car expr) 'descendant-or-self))
      (list `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil")))))))
-    ((eq? (car expr) 'descendant-or-self)
-     (list (cadadr expr)
-           `(descendant-or-self ,(cadr expr) (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil")))))))
     ((eq? (car expr) 'self) (sa:prepare-trigger-path-to-parent (cadr expr)))
     ((eq? (car expr) 'ddo) (sa:prepare-trigger-path-to-parent (cadr expr)))
     (else (cl:signal-user-error SE3207 "Unknown axis")))
@@ -4983,7 +4979,14 @@
                                    vars funcs ns-binding default-ns uri modules))
           (fifth  (sa:analyze-string-const (list-ref (sa:op-args expr) 4)
                                            vars funcs ns-binding default-ns))
-          (sixth  (map
+          (sixth
+           (let ((vars
+                  (append
+                   (map
+                    (lambda (s) `(("" ,s) ,sa:type-nodes))
+                    '("NEW" "OLD" "WHERE"))
+                   vars)))
+             (map
                    (lambda (statement)
                      ((if
                        (and (pair? statement)
@@ -4998,7 +5001,8 @@
                        sa:analyze-expr)
                       statement vars funcs ns-binding default-ns uri modules))
                    (list-ref (sa:op-args expr) 5))
-                  ))
+                  )
+          ))
 
       (and
        first second third fourth fifth
@@ -5024,13 +5028,6 @@
                                 (caddr (car fifth))))
          (else
           (if (sa:trigger-before-insert-for-each-node? second third fifth)
-              (begin 
-                (display "\n-------\n")
-                (if (eq? (car expr) '!fn!document) (display "true") (display "false"))
-                (display (car fourth))
-                (display "\n-------\n")
-                (display (map cl:scheme-list->string (map car sixth)))
-                (display "\n-------\n")
               `(,(sa:op-name expr)  ; operation name
                 ,(car first)  ; remove argument type
                 ,(car second)
@@ -5043,7 +5040,7 @@
                 ,(sa:prepare-trigger-leaf-name (car fourth))
                 ,(sa:prepare-trigger-leaf-type (car fourth))
                 ,@(sa:prepare-trigger-path-to-parent (car fourth))
-               ))
+               )
               (list
                (sa:op-name expr)  ; operation name
                (car first)  ; remove argument type

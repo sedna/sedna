@@ -53,6 +53,8 @@ trigger_cell* find_trigger_for_docnode(doc_schema_node* doc_node, trigger_event 
 
 t_triggers_set* find_triggers_for_docnode(doc_schema_node* doc_node, trigger_event event, trigger_time time, trigger_granularity granularity, t_triggers_set* triggers);
 
+xptr prepare_old_node(xptr node, schema_node* scm_node, trigger_event event);
+
 extern built_trigger_actions_map built_trigger_actions;
 extern int current_nesting_level;
 

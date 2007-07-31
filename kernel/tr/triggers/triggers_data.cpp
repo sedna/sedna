@@ -317,7 +317,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
     }
 
    current_nesting_level--;
-
+   CHECKP(res_xptr);
    return res_xptr;
 }
 
