@@ -253,7 +253,7 @@ xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xml
 	#ifdef _MYDEBUG
 		crm_out<<" end of secondElementInsertProcedure";
 	#endif
-	return insertBetween ( left_sib, right_sib, new_node);;
+	return insertBetween ( left_sib, right_sib, new_node);
 }
 
 
@@ -1464,6 +1464,8 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 //	d_printf1("\nEL Node DELETE xptr=");
 //	nodex.print();
 	n_dsc* node=(n_dsc*)XADDR(nodex);
+    xptr nodex_tmp;
+    schema_node* scm_node = GETSCHEMENODEX(nodex);
 	//Deletion of inner nodes
 	if (type==element||type==document)
 	{
@@ -1583,15 +1585,21 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 	//NODE STATISTICS
 	CHECKP(nodex);
 	(GETBLOCKBYNODE(nodex))->snode->nodecnt--;
+    xptr par_indir=node->pdsc;
 	if (IS_DATA_BLOCK(nodex))
 	{
+#ifdef SE_ENABLE_TRIGGERS
+		nodex = apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+		if(nodex == XNULL) return;
+		nodex_tmp = prepare_old_node(nodex, scm_node, TRIGGER_DELETE_EVENT);
+#endif
+        
 	//	if (type!=document)
-			down_concurrent_micro_ops_number();
+		down_concurrent_micro_ops_number();
 		//logical log record
 		
 		xptr left_indir=node->ldsc;
 		xptr right_indir=node->rdsc;
-		xptr par_indir=node->pdsc;
 		xptr indir=node->indir;
 		if (left_indir!=NULL)
 		{
@@ -1713,7 +1721,6 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 	}
 	//update of parent  pointer to first child by sort 
 	CHECKP(nodex);
-	xptr par_indir=node->pdsc;
 	if (type!=document)
 	{	
 		n_dsc* prev=getPreviousDescriptorOfSameSort(node);
@@ -1751,11 +1758,6 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		((n_dsc*)XADDR(right_sib))->ldsc=left_sib;
 	}
 	
-//#ifdef SE_ENABLE_TRIGGERS
-//    apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
-//    if (inserted_nodex != XNULL)
-//        apply_per_node_triggers(nodex, inserted_nodex, XNULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-//#endif
 	
 	//text value deleting
 	CHECKP(nodex);
@@ -1819,7 +1821,12 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		block->count=block->count-1;
 	}
 	if (IS_DATA_BLOCK(nodex)&& type!=document)
+    {
 		up_concurrent_micro_ops_number();
+#ifdef SE_ENABLE_TRIGGERS
+    	apply_per_node_triggers(XNULL, nodex_tmp, removeIndirection(par_indir), scm_node, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+#endif        
+    }
 }
 void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 {

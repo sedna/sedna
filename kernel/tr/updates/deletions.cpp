@@ -77,7 +77,7 @@ void delete_undeep(PPOpIn arg)
 		xptr node=removeIndirection(*it);
 		CHECKP(node);
 #ifdef SE_ENABLE_TRIGGERS
-        if (apply_per_node_triggers(XNULL, node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
+        if (apply_per_node_triggers(XNULL, node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
 #endif
 		{
 			t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
@@ -190,18 +190,20 @@ void delete_deep(PPOpIn arg)
 			++it;
 		}
 		while (nid_ancestor(node,*it));
-#ifdef SE_ENABLE_TRIGGERS
+/*#ifdef SE_ENABLE_TRIGGERS
         tmp_node = copy_to_temp(node);
+		schema_node* scm_node=GETSCHEMENODEX(node);
         parent=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
         
-        if (apply_per_node_triggers(XNULL, node, XNULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
+        if (apply_per_node_triggers(XNULL, node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
     	{
         	delete_node(node);
-            apply_per_node_triggers(XNULL, tmp_node, parent, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+            apply_per_node_triggers(XNULL, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
         }
 #else
         delete_node(node);
-#endif
+#endif*/
+        delete_node(node);
 		if (mark) break;
 	}
 	while (true);

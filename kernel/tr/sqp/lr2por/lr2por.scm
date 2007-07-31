@@ -348,19 +348,22 @@
               ; The identifier for global variable is represented as
               ; (list identifier)
               `(1
-                ,(if
-                  (pair? (car node))
-                  (begin
-                    ;(pp node)
-                    (if
-                     (= (length (car node)) 2)
-                     (cl:signal-input-error
-                      SE4008
-                      (string-append
-                       "undeclared XQuery variable encountered: "
-                       (caar node) (cadar node)))
-                     `(PPGlobalVariable ,(caar node))))
-                  `(PPVariable ,@node))))
+                ,(cond
+                   ((pair? (car node))
+                    (begin
+                      ;(pp node)
+                      (if
+                       (= (length (car node)) 2)
+                       (cl:signal-input-error
+                        SE4008
+                        (string-append
+                         "undeclared XQuery variable encountered: "
+                         (caar node) (cadar node)))
+                       `(PPGlobalVariable ,(caar node)))))
+                   ((symbol? (car node))  ; 'NEW, 'OLD, 'WHERE in create trigger 
+                    `(PPXptr ,@node))
+                   (else
+                    `(PPVariable ,@node)))))
              
              ; *** select ***
 ;             ((eq? op-name 'select)
@@ -1467,7 +1470,6 @@
               ))
              
              ((eq? op-name 'create-trigger)
-              (begin
               (let* ((time    (string->symbol
                                (caddr (cadr node))))
                      (event   (string->symbol
@@ -1479,11 +1481,51 @@
                                    (caddr (list-ref node 4))))
                      (action (map cl:scheme-list->string
                                   (map
-                                   (lambda (x) (porc:process-query x))
-                                   (let ((l (reverse (list-ref node 5))))
-                                     (reverse
-                                     `((query (query-prolog) ,(l2p:lr-query-expr2por `(query-body ,(car l))))
-                                     ,@(map (lambda (z) `(query (query-prolog) ,(l2p:lr-query-expr2por z))) (map (lambda (y) `(update (prolog) ,y)) (cdr l)))))))))
+                                   porc:process-query
+                                   (map
+                                    l2p:lr2por
+                                    (map
+                                     (lambda (q)
+                                       (case (car q)
+                                         ((insert-into
+                                           insert-preceding insert-following rename
+                                           delete delete_undeep replace
+                                           move-into move-preceding move-following)
+                                          `(update (prolog) ,q))
+                                         ((create-collection
+                                           drop-collection create-document drop-document
+                                           load create-role drop-role drop-user
+                                           grant-priv-on grant-priv-on-doc grant-priv-on-col
+                                           revoke-priv-from-doc revoke-priv-from-col
+                                           grant-priv revoke-priv
+                                           grant-role revoke-role create-user alter-user
+                                           create-index drop-index
+                                           create-fulltext-index drop-fulltext-index
+                                           create-trigger drop-trigger
+                                           load-module load-or-replace-module drop-module)
+                                          `(manage (prolog) ,q))
+                                         ((retrieve-metadata-documents
+                                           retrieve-metadata-collections
+                                           retrieve-descr-scheme)
+                                          `(retrieve-metadata (prolog) ,q))
+                                         (else
+                                          `(query (prolog) (query-body ,q)))))
+                                     (map
+                                      (lambda (action)
+                                        (let loop ((replaces '(NEW OLD WHERE))
+                                                   (action action))
+                                          (pp action)
+                                          (if
+                                           (null? replaces)
+                                           action
+                                           (loop
+                                            (cdr replaces)
+                                            (xlr:substitute-var-value
+                                             `(var (""
+                                                    ,(symbol->string (car replaces))))
+                                             `(var ,(car replaces))
+                                             action)))))
+                                      (list-ref node 5)))))))
                      (name (l2p:any-lr-node2por (car node))))
                 (if (= (length node) 9)
                      (let* ((insname (list-ref node 6))
@@ -1508,7 +1550,7 @@
                                   ,abs-path
                                   ,granularity
                                   ,action
-                                  ,name)))))
+                                  ,name))))
                                
              ((eq? op-name 'create-fulltext-index)
               ; ATTENTION: `node' is bound to the operation content, not the operation!

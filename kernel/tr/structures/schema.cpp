@@ -700,12 +700,14 @@ void schema_node::remove_trigger(trigger_cell* trigger)
 {
 	schema_trigger_cell* sct=this->trigger_object;
 	while (sct!=NULL)
-	{		
+	{
+    	schema_trigger_cell* sct1=sct->next;
 		if (sct->trigger==trigger) 
 		{
 			this->delete_trigger(sct);
 			break;
-		}		
+		}
+		sct = sct1;
 	}	
 	sc_ref* sc=this->first_child;
 	while (sc!=NULL)

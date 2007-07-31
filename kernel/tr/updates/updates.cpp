@@ -192,7 +192,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 	xptr res;
 #ifdef SE_ENABLE_TRIGGERS
     if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-    node = apply_per_node_triggers(node, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
     if (node == XNULL) return left;
 #endif
 	switch(GETTYPE(GETSCHEMENODEX(node)))
@@ -334,12 +334,12 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
  }
 	
  CHECKP(res);
- #ifdef SE_ENABLE_FTSEARCH
+#ifdef SE_ENABLE_FTSEARCH
  update_insert_sequence(res,(GETBLOCKBYNODE(res))->snode->ft_index_object); 
 #endif
 #ifdef SE_ENABLE_TRIGGERS
  if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
- apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+ apply_per_node_triggers(res, XNULL, parent, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
  CHECKP(res);
  return res;
@@ -405,7 +405,7 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-    node = apply_per_node_triggers(node, XNULL, parent, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
     if (node == XNULL) return left;
 #endif
 	CHECKP(node);
@@ -547,7 +547,7 @@ case xml_namespace:
 #endif
 #ifdef SE_ENABLE_TRIGGERS
     if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
-    apply_per_node_triggers(res, XNULL, parent, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+    apply_per_node_triggers(res, XNULL, parent, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
  CHECKP(res);
 	return res;
@@ -572,6 +572,15 @@ xptr copy_to_temp(xptr node)
 	if(PPConstructor::checkInitial()) carrier=true;
 	return deep_pers_copy(XNULL,XNULL,PPConstructor::virt_root,node,true);
 }
+
+// copies a node without children to temp  (without using deep_pers_copy)  
+/*xptr copy_node_to_temp(xptr node)
+{
+	if(PPConstructor::checkInitial()) carrier=true;
+    CHECKP(node);
+	xptr res;
+    
+}*/
 void clear_temp()
 {
 	if (carrier)
