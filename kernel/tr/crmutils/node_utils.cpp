@@ -597,6 +597,7 @@ xptr findNodeWithSameNameToInsertBefore(xptr left_sib, xptr right_sib, xptr pare
 			else  
 				return XNULL;
 		}
+		CHECKP(tmpx);
 		return tmpx;
 	}
 }
