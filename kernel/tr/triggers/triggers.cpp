@@ -57,6 +57,8 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
            return new_var;
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
 		node_type = GETTYPE(GETSCHEMENODEX(new_var));
+		if((node_type!=element)&&(node_type!=attribute))
+			return new_var;
         name=GETNAME(GETSCHEMENODEX(new_var));
         treated_triggers.insert(trc);
     }

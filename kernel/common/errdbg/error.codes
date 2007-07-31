@@ -980,7 +980,7 @@ sedna-err:SE3204
     Trigger action must always return a result.
 sedna-err:SE3205
 
-    Trigger action attempts to update a document/collection that is currently updating by some outer update statement.
+    Trigger action tries to update a document/collection that is currently updating by the outer update statement.
 sedna-err:SE3206
 
     Cannot execute trigger action, since current cascade level exceeds permissible threshold.
