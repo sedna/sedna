@@ -1458,14 +1458,23 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
     //d_printf1("ait\n");fflush(stdout);
 	return result;
 }
-void delete_node_inner_2 (xptr nodex, t_item type)
+bool delete_node_inner_2 (xptr nodex, t_item type)
 {
 	//d_printf2("EL Node name=%s \n",name);
 //	d_printf1("\nEL Node DELETE xptr=");
 //	nodex.print();
+	bool ret = true;
 	n_dsc* node=(n_dsc*)XADDR(nodex);
     xptr nodex_tmp;
     schema_node* scm_node = GETSCHEMENODEX(nodex);
+    xptr par_indir=node->pdsc;
+#ifdef SE_ENABLE_TRIGGERS
+	nodex = apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), scm_node, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+	if(nodex == XNULL) return false;
+	nodex_tmp = prepare_old_node(nodex, scm_node, TRIGGER_DELETE_EVENT);
+	CHECKP(nodex);
+#endif
+    
 	//Deletion of inner nodes
 	if (type==element||type==document)
 	{
@@ -1478,11 +1487,12 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		{
 			CHECKP(child);
 			tmp=((n_dsc*)XADDR(child))->ldsc;
-			delete_node_inner_2(child,(GETBLOCKBYNODE(child))->snode->type);
+			if(!delete_node_inner_2(child,(GETBLOCKBYNODE(child))->snode->type)) ret=false;
 			child=tmp;
 		}
 		CHECKP(nodex);
 	}
+    if(!ret) return false;
 #ifdef SE_ENABLE_FTSEARCH
  update_delete_sequence(nodex,(GETBLOCKBYNODE(nodex))->snode->ft_index_object); 
 #endif
@@ -1585,15 +1595,8 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 	//NODE STATISTICS
 	CHECKP(nodex);
 	(GETBLOCKBYNODE(nodex))->snode->nodecnt--;
-    xptr par_indir=node->pdsc;
 	if (IS_DATA_BLOCK(nodex))
 	{
-#ifdef SE_ENABLE_TRIGGERS
-		nodex = apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
-		if(nodex == XNULL) return;
-		nodex_tmp = prepare_old_node(nodex, scm_node, TRIGGER_DELETE_EVENT);
-#endif
-        
 	//	if (type!=document)
 		down_concurrent_micro_ops_number();
 		//logical log record
@@ -1601,6 +1604,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
 		xptr left_indir=node->ldsc;
 		xptr right_indir=node->rdsc;
 		xptr indir=node->indir;
+        par_indir=node->pdsc;
 		if (left_indir!=NULL)
 		{
 			CHECKP(left_indir);
@@ -1827,6 +1831,7 @@ void delete_node_inner_2 (xptr nodex, t_item type)
     	apply_per_node_triggers(XNULL, nodex_tmp, removeIndirection(par_indir), scm_node, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
 #endif        
     }
+	return true;
 }
 void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 {
