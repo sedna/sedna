@@ -160,19 +160,36 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
     return node;
 }
 
-xptr apply_before_delete_triggers(xptr old_var)
+xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return old_var;
     
-    node_triggers_map fired_triggers_for_this_node;
+   	if (IS_TMP_BLOCK(old_var)) return old_var;
+
+//    node_triggers_map fired_triggers_for_this_node;
 	CHECKP(old_var);
-    schema_node* scm_node = GETSCHEMENODEX(old_var);
-    schema_trigger_cell* scm_trc = scm_node->trigger_object;
-    std::vector<trigger_cell*> triggers_vec;
-    std::pair< node_triggers_map::iterator, bool > mapRes;
-    typedef std::pair< schema_node*, std::vector<trigger_cell*> > mapPair;
+
+//    schema_node* scm_node = GETSCHEMENODEX(old_var);
+	if ((GETTYPE(scm_node) != element) && (GETTYPE(scm_node) != attribute)) return old_var;
+
+//    schema_trigger_cell* scm_trc = scm_node->trigger_object;
+//    std::vector<trigger_cell*> triggers_vec;
+//    std::pair< node_triggers_map::iterator, bool > mapRes;
+//    typedef std::pair< schema_node*, std::vector<trigger_cell*> > mapPair;
     
-    if(scm_trc!=NULL)
+   	t_triggers_set treated_triggers;
+    trigger_cell* trc;
+    while(true)
+	{
+        trc = find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
+		if(trc == NULL)
+           return old_var;
+        if(trc->execute_trigger_action(XNULL, old_var, where_var) == XNULL) return XNULL;
+        treated_triggers.insert(trc);
+    }
+    return old_var;
+
+/*    if(scm_trc!=NULL)
         mapRes = fired_triggers_for_this_node.insert( mapPair (GETSCHEMENODEX(old_var), triggers_vec) );
     while(scm_trc!=NULL)
     {
@@ -182,7 +199,15 @@ xptr apply_before_delete_triggers(xptr old_var)
             mapRes.first->second.push_back( scm_trc->trigger );
         scm_trc=scm_trc->next;
     }
-    return apply_before_delete_triggers_on_subtree(old_var, &fired_triggers_for_this_node);
+    return apply_before_delete_triggers_on_subtree(old_var, &fired_triggers_for_this_node);*/
+/*    while(true)
+    {
+		if( (scm_trc->trigger->trigger_event == TRIGGER_DELETE_EVENT) &&
+			(scm_trc->trigger->trigger_time == TRIGGER_BEFORE) &&
+			(scm_trc->trigger->trigger_granularity == TRIGGER_FOR_EACH_NODE))
+            mapRes.first->second.push_back( scm_trc->trigger );
+        scm_trc=scm_trc->next;
+    }       */ 
 }
 void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
@@ -190,7 +215,6 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_
     
     if (old_var==XNULL) return;
     CHECKP(old_var);
-    CHECKP(where_var);
 
     //if the node is not element or attribute - return
     t_item node_type = GETTYPE(GETSCHEMENODEX(old_var));
@@ -442,7 +466,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
 //                  return triggers_test(new_var, where_var, new_name, new_type);
                   
              case TRIGGER_DELETE_EVENT:
-                  return apply_before_delete_triggers(old_var);
+                  return apply_before_delete_triggers(old_var, where_var, scm_node);
                   
              case TRIGGER_REPLACE_EVENT:
                   return apply_before_replace_triggers(new_var, old_var);

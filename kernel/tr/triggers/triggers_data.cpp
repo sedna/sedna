@@ -139,7 +139,6 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
             strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
             trac->cxt_size = atoi(action->at(i).internal.str+35);
 // FIXME cxt_size for trigger statements must be extracted in scheme part
-// For now cxt_size=0. This is ok for XQuery constructors.
 //            trac->cxt_size = atoi(action->at(i+1).internal.num); 
         }
         else
@@ -251,7 +250,6 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
         	    {
             	    bta.action_qep_subtree = NULL;
                 	qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
-					//qep_tree = bta.action_qep_tree = build_qep("(query (query-prolog) (PPInsertTo 0 (1 (PPElement (\"\" \"a\") (1 (PPNil)) #t #f)) 0 (1 (PPDDO (1 (PPAbsPath (document \"a\") (((PPAxisChild qname (\"\" \"b\" \"\"))))))))))", nulls, xml);
 	                is_qep_built = true;
     	            built_trigger_actions_vec.push_back(bta);
         	        trac = trac->next;
@@ -301,10 +299,16 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
         is_subqep_opened = true;
 		tuple t = tuple(1);
 		qep_subtree->tree.op->next(t);
-		if ( (trigger_time == TRIGGER_BEFORE) && (!t.cells[0].is_node()) )
-   	        res_xptr = XNULL;
-       	else
-           	res_xptr = t.cells[0].get_node();
+		if ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE))
+			if (!t.cells[0].is_node())
+				res_xptr = XNULL;
+		   	else
+			{
+				res_xptr = t.cells[0].get_node();
+				CHECKP(res_xptr);
+			}
+		else res_xptr = XNULL;
+
    	    qep_subtree->tree.op->close();
    	    is_subqep_opened =  false;
 	}
@@ -317,7 +321,6 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
     }
 
    current_nesting_level--;
-   CHECKP(res_xptr);
    return res_xptr;
 }
 
