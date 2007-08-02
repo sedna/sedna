@@ -74,7 +74,6 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var)
     if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 	
     CHECKP(new_var);
-
 	schema_node* scm_node = GETSCHEMENODEX(new_var);
     //if the node is not element or attribute - return
     t_item node_type = GETTYPE(scm_node);
@@ -167,7 +166,7 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm
    	if (IS_TMP_BLOCK(old_var)) return old_var;
 
 //    node_triggers_map fired_triggers_for_this_node;
-	CHECKP(old_var);
+//	CHECKP(old_var);
 
 //    schema_node* scm_node = GETSCHEMENODEX(old_var);
 	if ((GETTYPE(scm_node) != element) && (GETTYPE(scm_node) != attribute)) return old_var;
@@ -183,7 +182,10 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm
 	{
         trc = find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
 		if(trc == NULL)
-           return old_var;
+		{
+			CHECKP(old_var);
+			return old_var;
+		}
         if(trc->execute_trigger_action(XNULL, old_var, where_var) == XNULL) return XNULL;
         treated_triggers.insert(trc);
     }
@@ -289,7 +291,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node)
     }
 }
 
-void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, xptr_sequence* upd_seq)
+void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct, xptr_sequence* upd_seq, bool upd_seq_direct)
 {
     t_scmnodes_set extended_nodes, extender_nodes;
     t_scmnodes_const matched_nodes;
@@ -297,6 +299,8 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
     schema_nodes_triggers_map::iterator statement_triggers_iter;
 	t_triggers_set::iterator trigers_iter;
     xptr_sequence::iterator it1, it2;
+	schema_node* scn;
+    xptr node;
 
    	if (auth == BLOCK_AUTH_CHECK) return;
 
@@ -309,15 +313,24 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
     //1. creating extended_nodes set
     while(it1!=target_seq->end())
     {
-        extended_nodes.insert(GETSCHEMENODEX(removeIndirection(*it1)));
+        if(target_seq_direct)
+            node = *it1;
+        else
+            node = removeIndirection(*it1);
+		CHECKP(node);
+        extended_nodes.insert(GETSCHEMENODEX(node));
         it1++;
     }
     
     //2. creating extender_nodes vector
     while(it2!=upd_seq->end())
     {
-		schema_node* scn = GETSCHEMENODEX(removeIndirection(*it2));
-        extender_nodes.insert(GETSCHEMENODEX(removeIndirection(*it2)));
+        if(upd_seq_direct)
+            node = *it2;
+        else
+            node = removeIndirection(*it2);
+		CHECKP(node);
+        extender_nodes.insert(GETSCHEMENODEX(node));
         it2++;
     }
 
@@ -343,7 +356,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
     }
 }
 
-void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq)
+void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct)
 {
     std::map <schema_node*, std::vector<xptr> > scm_nodes_map;
     std::pair <std::map <schema_node*, std::vector<xptr> >::iterator, bool> scm_nodes_map_pair;
@@ -403,7 +416,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq)
     
     return;
 }
-void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq)
+void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct)
 {
     t_scmnodes_set scmnodes;
     t_scmnodes_set::iterator scmnodes_iter;
@@ -497,19 +510,19 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
         }
 }
 
-void apply_per_statement_triggers(xptr_sequence* target_seq, xptr_sequence* upd_seq, trigger_time time, trigger_event event)
+void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct, xptr_sequence* upd_seq, bool upd_seq_direct, trigger_time time, trigger_event event)
 {
     switch (time){
         case TRIGGER_BEFORE:
          switch (event){
              case TRIGGER_INSERT_EVENT:
-                 apply_before_insert_for_each_statement_triggers(target_seq, upd_seq);
+                 apply_before_insert_for_each_statement_triggers(target_seq, target_seq_direct, upd_seq, upd_seq_direct);
                  return;
              case TRIGGER_DELETE_EVENT:
-                 apply_before_delete_for_each_statement_triggers(target_seq);
+                 apply_before_delete_for_each_statement_triggers(target_seq, target_seq_direct);
                  return;
              case TRIGGER_REPLACE_EVENT:
-                 apply_before_replace_for_each_statement_triggers(target_seq);
+                 apply_before_replace_for_each_statement_triggers(target_seq, target_seq_direct);
 				 return;
              default: 
                 throw SYSTEM_EXCEPTION("Bad trigger event");

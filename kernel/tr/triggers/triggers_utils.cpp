@@ -36,13 +36,16 @@ void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr paramete
     {
         switch ((*qepParIter)->get_type())
         {
-            case TRIGGER_PARAMETER_NEW:   CHECKP(parameter_new);
+            case TRIGGER_PARAMETER_NEW:   if(parameter_new!=XNULL)
+											  CHECKP(parameter_new);
                                           (*qepParIter)->set_xptr(parameter_new);
                                           break;
-            case TRIGGER_PARAMETER_OLD:   CHECKP(parameter_old);
+            case TRIGGER_PARAMETER_OLD:   if(parameter_old!=XNULL)
+											  CHECKP(parameter_old);
                                           (*qepParIter)->set_xptr(parameter_old);
                                           break;
-            case TRIGGER_PARAMETER_WHERE: CHECKP(parameter_where); 
+            case TRIGGER_PARAMETER_WHERE: if(parameter_where!=XNULL)
+											  CHECKP(parameter_where); 
                                           (*qepParIter)->set_xptr(parameter_where);
                                           break;
             default: throw USER_EXCEPTION(SE3202);

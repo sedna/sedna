@@ -165,7 +165,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(&arg1seq, &arg2seq, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(&arg1seq, false, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
     
 	do
@@ -256,7 +256,7 @@ cycle1:
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 }
 /* second insert procedure: insert following
@@ -412,7 +412,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(&arg1seq, &arg2seq, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(&arg1seq, true, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
 
 	do
@@ -487,7 +487,7 @@ cycle1:
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 }
 /* first insert procedure: insert to
@@ -655,7 +655,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(&arg1seq, &arg2seq, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(&arg1seq, true, &arg2seq, false, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 #endif
 	do
 	{
@@ -706,6 +706,6 @@ while (it1!=arg1seq.end());
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
+    apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
 }

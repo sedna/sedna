@@ -68,7 +68,7 @@ void delete_undeep(PPOpIn arg)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(&argseq, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+	apply_per_statement_triggers(&argseq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
 	it=argseq.end();
 	do
@@ -108,7 +108,7 @@ void delete_undeep(PPOpIn arg)
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+    apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
 #endif
 }
 void delete_deep(PPOpIn arg)
@@ -173,7 +173,7 @@ void delete_deep(PPOpIn arg)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(&argseq, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
+	apply_per_statement_triggers(&argseq, true, NULL, false, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
 #endif
 
 	argseq.sort();
@@ -211,6 +211,6 @@ void delete_deep(PPOpIn arg)
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
+    apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_DELETE_EVENT);
 #endif
 }

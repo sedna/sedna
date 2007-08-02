@@ -122,7 +122,7 @@ void replace(PPOpIn arg)
 	clear_ft_sequences();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(&arg1seq, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+	apply_per_statement_triggers(&arg1seq, false, NULL, false, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
 #endif    
 	//sorting arg1seq
 	arg3seq.clear();
@@ -239,6 +239,6 @@ next_replacement:;
 	execute_modifications();
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-	apply_per_statement_triggers(NULL, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+	apply_per_statement_triggers(NULL, false, NULL, false, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif 
 }
