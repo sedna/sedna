@@ -2260,7 +2260,7 @@ void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
 //  		prevPersSnapshotBlocks.push_back(*blocks_info);
    		isGarbage = *((int *)(body_beg + sizeof(char) + sizeof(SnapshotsVersion)));
    		if (!isGarbage)
-   			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), (blocks_info->xptr));
+   			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)(blocks_info->xptr)));
 
   		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(SnapshotsVersion) + sizeof(int)));
   	}
@@ -2284,7 +2284,7 @@ void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
    		if (!isGarbage)
 	  	{	
 	  		for (int i = 0; i < count; i++)
-				push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), (blocks_info[i].xptr));
+				push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)(blocks_info[i].xptr)));
 //  			prevPersSnapshotBlocks.push_back(blocks_info[i]);
 		}
 
@@ -2433,7 +2433,7 @@ LONG_LSN llmgr_core::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
     	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR));
     	free_blk_info_xptr = *((XPTR *)(body_beg + sizeof(char) + sizeof(int)));
-    	bm_rcv_change(free_blk_info_xptr, free_blk_info, free_blk_info_size);
+    	bm_rcv_change(*((xptr *)free_blk_info_xptr), free_blk_info, free_blk_info_size);
         lsn_offs += sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size;
     }
     else
@@ -2447,9 +2447,9 @@ LONG_LSN llmgr_core::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/
 //    	VeRevertBlock(&ver_info);
 
         ctrl_blk = malloc(PAGE_SIZE);
-        bm_rcv_read_block(blocks_info->xptr, ctrl_blk);
+        bm_rcv_read_block(*((xptr *)blocks_info->xptr), ctrl_blk);
     	//TODO: change phys_xptr to log_xptr for this block
-    	bm_rcv_change(blocks_info->lxptr, ctrl_blk, PAGE_SIZE);
+    	bm_rcv_change(*((xptr *)blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         
         lsn_offs += sizeof(char) + sizeof(SnapshotsVersion) + sizeof(int);
     }
@@ -2480,7 +2480,7 @@ LONG_LSN llmgr_core::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/
     	for (int i = 0; i < count; i++)
     	{
 	    	if (isGarbage)
-	    		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), blocks_info[i].xptr);
+	    		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)blocks_info[i].xptr));
 	    	else
 	    	{
 /*		    	ver_info.lxptr = blocks_info[i].lxptr;
@@ -2488,9 +2488,9 @@ LONG_LSN llmgr_core::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/
 
     			VeRevertBlock(&ver_info);*/
 		        ctrl_blk = malloc(PAGE_SIZE);
-        		bm_rcv_read_block(blocks_info[i].xptr, ctrl_blk);
+        		bm_rcv_read_block(*((xptr *)blocks_info[i].xptr), ctrl_blk);
 		    	//TODO: change phys_xptr to log_xptr for this block
-    			bm_rcv_change(blocks_info[i].lxptr, ctrl_blk, PAGE_SIZE);
+    			bm_rcv_change(*((xptr *)blocks_info[i].lxptr), ctrl_blk, PAGE_SIZE);
     		}
     	}
 

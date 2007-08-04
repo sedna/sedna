@@ -86,7 +86,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     }
     d_printf1("All sems acquired\n");
 
-    ShNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
+    WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
 
 //    flush_master_block();
 //    d_printf1("flush master block completed\n");
@@ -99,8 +99,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 //	LONG_LSN chain_lsn = ll_getLastChainLSN();
 
-    ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
-				   ll_logical_log_checkpoint);
+	SnapshotsOnCheckpointParams params;
+    ShOnCheckpoint(&params, ll_logical_log_checkpoint);
 
 //    ll_freePrevPersSnapshotBlocks(chain_lsn); // free blocks from previous persistent snapshot
 //    d_printf1("previous persistent snapshot blocks free completed\n");
@@ -141,7 +141,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     ll_truncate_logical_log();
 
-    ShNotifyCheckpointFinished();
+    WuNotifyCheckpointFinished();
 
     d_printf2("checkpoint finished times=%d\n", times);
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
