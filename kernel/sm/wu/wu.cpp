@@ -108,7 +108,7 @@ int LocateHeader(int bufferId, VersionsHeader **header)
 int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 {
 	SnapshotsVersion snapshotVersion = {lxptr, xptr};
-	ll_add_pers_snapshot_block_info(ClGetCurrentClientId(),&snapshotVersion);
+	ll_add_pers_snapshot_block_info(&snapshotVersion);
 	return 1;
 }
 
