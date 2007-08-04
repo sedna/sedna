@@ -12,10 +12,11 @@
 #include "common/tr_debug.h"
 #include "common/base.h"
 #include "sm/plmgr/plmgr.h"
+#include "sm/llmgr/sm_llmgr.h"
 
 using namespace std;
 
-llmgr_core* logical_log_mgr;
+sm_llmgr* logical_log_mgr;
 bool enable_write_of_phys_recs = true;
 
 bool ll_logical_log_startup(int &sedna_db_version)
@@ -24,7 +25,7 @@ bool ll_logical_log_startup(int &sedna_db_version)
   bool ret;
 
   d_printf2("db_files_path=%s\n", db_files_path);
-  logical_log_mgr = new llmgr_core();
+  logical_log_mgr = new sm_llmgr();
 //d_printf1("1\n");
   ret = logical_log_mgr->ll_log_create(db_files_path, db_name/*, phys_log_mgr*/, sedna_db_version);
 //d_printf1("2\n");
