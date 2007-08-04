@@ -9,7 +9,7 @@
 #define WUTYPES_INCLUDED
 
 typedef uint64_t XPTR, LXPTR;
-typedef uint64_t TIMESTAMP, LSN;
+typedef uint64_t TIMESTAMP;
 typedef void *TICKET;
 
 #endif
