@@ -19,7 +19,7 @@ extern bool is_stmt_built;
 
 void on_session_begin(SSMMsg* &sm_server, bool rcv_active= false);
 void on_session_end(SSMMsg* &sm_server);
-void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active = false);
+void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active = false, bool is_query = false);
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active = false);
 
 void on_kernel_recovery_statement_begin();

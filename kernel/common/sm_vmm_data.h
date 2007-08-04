@@ -43,6 +43,7 @@ struct vmm_sm_blk_hdr
 #ifdef LRU
 		hdr->lru = 0;
 #endif
+        hdr->trid_wr_access = -1;
 	}
 };
 
