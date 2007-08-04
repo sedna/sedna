@@ -9,6 +9,7 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
+#include "sm/wu/wu.h"
 #include "sm/wu/wusnapshots.h"
 #include "sm/wu/wutypes.h"
 
@@ -38,10 +39,6 @@ void ll_add_pers_snapshot_block_info(transaction_id trid, SnapshotsVersion *blk_
 
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
 
-__int64 getCurPhCounter();
-
-__int64 getNewPhCounter();
-
 //LONG_LSN ll_getLastChainLSN();
 
 void ll_updateMinRcvLSN();
@@ -55,6 +52,8 @@ void ll_log_set_checkpoint_flag(bool flag); // set flag to enable/disable checkp
 LONG_LSN ll_recover_db_by_phys_records(); // physical recovery by log; returns lsn for logical recovery
 
 void ll_recover_pers_heap();
+
+void ll_flush_file_head();
 
 #endif
 

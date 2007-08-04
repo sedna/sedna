@@ -68,7 +68,7 @@ struct VersionsSetup
 	int (*acceptRequestForGc)(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count);
 
 	/* data layout functions */ 
-	int (*locateHeader)(int bufferId, VersionsHeader *header);
+	int (*locateHeader)(int bufferId, VersionsHeader **header);
 
 	/*	Callbacks 
 		- onCompleteBlockRelocation - called emediately after block who is not included 

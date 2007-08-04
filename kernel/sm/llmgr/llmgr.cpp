@@ -142,20 +142,6 @@ TIMESTAMP ll_returnTimestampOfPersSnapshot()
 #endif
 }
 
-__int64 getCurPhCounter()
-{
-#ifdef LOGICAL_LOG
-  return logical_log_mgr->getCurPhCounter();
-#endif
-}
-
-__int64 getNewPhCounter()
-{
-#ifdef LOGICAL_LOG
-  return logical_log_mgr->getNewPhCounter();
-#endif
-}
-
 /*LONG_LSN ll_getLastChainLSN()
 {
 #ifdef LOGICAL_LOG
@@ -205,3 +191,11 @@ void ll_recover_pers_heap()
 	logical_log_mgr->restorePh();
 #endif
 }
+
+void ll_flush_file_head()
+{
+#ifdef LOGICAL_LOG
+	logical_log_mgr->flush_file_head(true);
+#endif
+}
+

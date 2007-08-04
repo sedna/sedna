@@ -98,7 +98,7 @@ endif
 
 
 # INCLUDE_DIRS should be defined
-INCLUDE_DIRECTIVES_VC = $(foreach inc, $(INCLUDE_DIRS), /I$(inc))
+INCLUDE_DIRECTIVES_VC = $(foreach inc, $(INCLUDE_DIRS), /I$(inc)) /I$(PP)/libs/compat
 INCLUDE_DIRECTIVES_GCC = $(foreach inc, $(INCLUDE_DIRS), -I$(inc))
 
 
@@ -134,11 +134,11 @@ ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
 CFLAGS_ST   = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
-              /D_CRT_SECURE_NO_DEPRECATE
+              /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1
 CPPFLAGS_ST = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /EHac /GR /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
-              /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE
+              /DC_EMBEDDED /DXML_STATIC /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=1
 CFLAGS      = $(CFLAGS_ST) /MT
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
@@ -160,12 +160,12 @@ else
 CFLAGS_ST   = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
-              /D_CRT_SECURE_NO_DEPRECATE
+              /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=0
 CPPFLAGS_ST = /nologo /O2 /Ob2 $(INCLUDE_DIRECTIVES_VC) /EHsc /GR /D _CONSOLE \
               /DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
               /DC_EMBEDDED /DC_NO_PIC_NO_DLL /DXML_STATIC \
-              /D_CRT_SECURE_NO_DEPRECATE	
+              /D_CRT_SECURE_NO_DEPRECATE /DDEBUGI=0
 CFLAGS      = $(CFLAGS_ST) /MT
 CFLAGS_NOOPTIM = /nologo /Od /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBUG=$(EL_DEBUG) \
               /DSEDNA_VERSION=\"$(SEDNA_VERSION)\" /DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
@@ -239,12 +239,12 @@ CFLAGS   = -DC_NO_PIC_NO_DLL -g3 -fexceptions -Wall -Wno-deprecated $(INCLUDE_DI
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG)  -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
-           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=1
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS = -g3 -Wall -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
-           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
+           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=1
 LFLAGS   = -g3 -fexceptions $(STATIC_FLAG) -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 else
@@ -252,12 +252,12 @@ CFLAGS   = -DC_NO_PIC_NO_DLL -O0 -w -fexceptions -Wno-deprecated $(INCLUDE_DIREC
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) -fomit-frame-pointer \
            -fno-strict-aliasing -Wno-unused -Wno-uninitialized -DHAVE_ALLOCA_H \
-           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED
+           -DC_STACK_GROWS_DOWNWARD=1 -DC_USE_C_DEFAULTS -DC_EMBEDDED -DDEBUGI=0
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS = -O0 -w -Wno-deprecated -fexceptions $(INCLUDE_DIRECTIVES_GCC) \
            -DSEDNA_VERSION=\"$(SEDNA_VERSION)\" -DSEDNA_BUILD=\"$(SEDNA_BUILD)\" \
            -DEL_DEBUG=$(EL_DEBUG) \
-           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\"
+           -DACTIVE_CONFIGURATION=\"$(ACTIVE_CONFIGURATION)\" -DDEBUGI=0
 LFLAGS   = -O0 $(STATIC_FLAG) -fexceptions -L$(PP)/libs/pg -L$(PP)/libs/expat -L$(PP)/libs/chicken \
            -L$(PP)/libs/pcre
 endif

@@ -17,7 +17,7 @@ struct VersionsMappingEntry
 
 struct VersionsMapping
 {
-	VersionsHeaderEntry version[VE_SNAPSHOTS_COUNT+2];
+	VersionsMappingEntry version[VE_SNAPSHOTS_COUNT+2];
 	int anchor;
 	int validDataBegin;
 	int validDataEnd;
@@ -72,7 +72,7 @@ ResetSnapshotsList(VersionsSnapshotsList *lst)
 {
 	assert(lst);
 	lst->mem=NULL;
-	lst->clientsCount=clientsCount;
+	lst->clientsCount=0;
 	lst->freeList=NULL;
 
 	lst->first.timestamp=~(TIMESTAMP)0;
@@ -316,7 +316,7 @@ int IsVersionYoungerThanSnapshot(VersionsSnapshotsList *lst,
 								 TIMESTAMP creatorTs,
 								 int creator)
 {
-	assert(entry && sh && lst);
+	assert(sh && lst);
 	/*	Creator MAY be greater than lst->clientsCount if database restarted and clientsCount 
 		decreased (someone rebuilt the binaries for instance). Creator MAY be -1 if
 		we are checking "nonexistent" version against the snapshot. */ 
@@ -331,7 +331,7 @@ void ResetMapping(VersionsMapping *map)
 	static const VersionsMappingEntry initC = {0,0,-1};
 	int i=0;
 
-	assert(msp);
+	assert(map);
 	map->anchor = 0;
 	map->validDataBegin = 0;
 	map->validDataEnd = 0;
@@ -350,9 +350,9 @@ void ResetHeader(VersionsHeader *hdr, int start)
 	{
 		hdr->xptr[i] = 0;
 		hdr->creatorTs[i] = 0;
-		hdr->creator = -1;
+		hdr->creator[i] = -1;
 	}
-	hdr->isZomby = 0;
+	hdr->isZombie = 0;
 }
 
 static
@@ -369,7 +369,7 @@ void MakeMappingFromHeader(VersionsSnapshotsList *lst,
 
 	/* process head */ 
 	it=&(lst->first);
-	if (IsEntryYoungerThanSnapshot(lst,it,hdr->creatorTs[0],hdr->creator[0]))
+	if (IsVersionYoungerThanSnapshot(lst,it,hdr->creatorTs[0],hdr->creator[0]))
 	{
 		map->version[0].xptr = hdr->xptr[0]; 
 		map->version[0].creatorTs = hdr->creatorTs[0];
@@ -384,7 +384,7 @@ void MakeMappingFromHeader(VersionsSnapshotsList *lst,
 		else
 		{
 			assert(it && it->next);
-			while(p<VE_SNAPSHOTS_COUNT+2 && !IsEntryYoungerThanSnapshot(lst,it->next,hdr->creatorTs[0],hdr->creator[0]))
+			while(p<VE_SNAPSHOTS_COUNT+2 && !IsVersionYoungerThanSnapshot(lst,it->next,hdr->creatorTs[0],hdr->creator[0]))
 			{
 				map->version[p] = initC;
 				++p;
@@ -398,7 +398,7 @@ void MakeMappingFromHeader(VersionsSnapshotsList *lst,
 	/* process tail */ 
 	for (; it->next; it=it->next, ++p)
 	{
-		while (g<VE_VERSIONS_COUNT && IsEntryYoungerThanSnapshot(lst,it,hdr->creatorTs[g],hdr->creator[g])) ++g;
+		while (g<VE_VERSIONS_COUNT && IsVersionYoungerThanSnapshot(lst,it,hdr->creatorTs[g],hdr->creator[g])) ++g;
 		if (g>=VE_VERSIONS_COUNT) break;
 		if (g==0) map->anchor=p+1;
 		map->version[p].xptr = hdr->xptr[g];
@@ -429,13 +429,13 @@ int PushNewVersionIntoHeader(VersionsSnapshotsList *lst,
 
 	if (hdr->creator[VE_VERSIONS_COUNT-1]!=-1)
 	{
-		snapshot = &(lst.first);
-		while (!IsVersionYoungerThanSnapshot(lst,snapshot,hdr->creatorTs[VE_VERSIONS_COUNT-1],hdr->creator[VE_VERSIONS_COUNT-1))
+		snapshot = &(lst->first);
+		while (!IsVersionYoungerThanSnapshot(lst,snapshot,hdr->creatorTs[VE_VERSIONS_COUNT-1],hdr->creator[VE_VERSIONS_COUNT-1]))
 		{
 			snapshot=snapshot->next;
 			assert(snapshot);
 		}
-		while (snapshot != &lst.last && !failure)
+		while (snapshot != &lst->last && !failure)
 		{
 			if (snapshot->occupancy > 0)
 			{
@@ -452,7 +452,7 @@ int PushNewVersionIntoHeader(VersionsSnapshotsList *lst,
 	if (!failure)
 	{
 		memmove(hdr->xptr+1,hdr->xptr,(VE_VERSIONS_COUNT-1)*sizeof(XPTR));
-		memmove(hdr->creatorTs+1,hdr->CreatorTs,(VE_VERSIONS_COUNT-1)*sizeof(TIMESTAMP));
+		memmove(hdr->creatorTs+1,hdr->creatorTs,(VE_VERSIONS_COUNT-1)*sizeof(TIMESTAMP));
 		memmove(hdr->creator,hdr->creator+1,(VE_VERSIONS_COUNT-1)*sizeof(int));
 		hdr->xptr[1]=xptr;
 		hdr->creatorTs[0]=creatorTs;
@@ -488,7 +488,7 @@ int VeStartup(VersionsSetup *psetup)
 {
 	int success = 0;
 
-	assert(setup);
+	assert(psetup);
 	setup = *psetup;
 	ticket = setup.clientStateTicket;
 	success = InitSnapshotsList(&snapshotsList, ClQueryMaxClientsCount());
@@ -526,10 +526,10 @@ int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
 		snapshot->occupancy ++;
 		success = 1;
 	}
-	else if (getTimestamp(&state->clientTs))
+	else if (setup.getTimestamp(&state->clientTs))
 	{
 		state->pushedVersions = new std::list<VersionsPushedVersion>();
-		snapshotsList.first->clientTs[ClGetCurrentClientId()] = state->clientTs;
+		snapshotsList.first.clientTs[ClGetCurrentClientId()] = state->clientTs;
 		success = 1;
 	}
 	return success;
@@ -553,7 +553,7 @@ int VeOnUnregisterClient()
 	{
 		delete state->pushedVersions;
 		state->pushedVersions = NULL;
-		snapshotsList.first->clientTs[ClGetCurrentClientId()] = 0;
+		snapshotsList.first.clientTs[ClGetCurrentClientId()] = 0;
 		success = 1;
 	}
 	else
@@ -576,18 +576,18 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 	assert(pBufferId);
 	*pBufferId=0;
 
-	if (!GetCurrentStateBlock((void**)&state,ticket))
+	if (!ClGetCurrentStateBlock((void**)&state,ticket))
 	{
 		;
 	}
 	else
 	{
-		ClIsClientReady(CLGetCurrentClientId(),&isReady);
+		ClIsClientReady(&isReady,ClGetCurrentClientId());
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
-		else if (!setup.loadBuffer(lxptr, bufferId, 0))
+		else if (!setup.loadBuffer(lxptr, &bufferId, 0))
 		{
 			;
 		}
@@ -606,7 +606,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		}
 		else
 		{
-			MakeMappingFromHeader(&snapshotsList,&mapping,&header);
+			MakeMappingFromHeader(&snapshotsList,&mapping,header);
 			if (state->pushedVersions)
 			{
 				if (mapping.validDataBegin == 0)
@@ -715,9 +715,9 @@ int VeAllocBlock(LXPTR *lxptr)
 		else
 		{
 			ResetHeader(header,0);
-			header.xptr[0] = xptr;
-			header.creatorTs[0] = state->creatorTs;
-			header.creator[0] = ClGetCurrentClientId();
+			header->xptr[0] = xptr;
+			header->creatorTs[0] = state->clientTs;
+			header->creator[0] = ClGetCurrentClientId();
 			pushedVersion.lxptr = xptr;
 			pushedVersion.lastCommitedXptr = 0;
 			pushedVersion.anchorTs = ~(TIMESTAMP)0;
@@ -737,14 +737,14 @@ int VeCreateVersion(LXPTR lxptr)
 	VersionsPushedVersion pushedVersion;
 	VersionsSnapshot *snapshot=NULL;
 	XPTR xptr=0;
-	int success = 0, isReady = 0, persOrdinal = 0, isSpecial = 0;
+	int success = 0, isReady = 0, persOrdinal = 0, isSpecial = 0, bufferId = 0;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket))
 	{
 	}
 	else
 	{
-		ClIsClientReady(&isReady,ClGetCurrentCLientId());
+		ClIsClientReady(&isReady,ClGetCurrentClientId());
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -756,7 +756,7 @@ int VeCreateVersion(LXPTR lxptr)
 		}else if (!setup.loadBuffer(lxptr,&bufferId,0))
 		{
 		}
-		else if (!setup.LocateHeader(bufferId, &pheader))
+		else if (!setup.locateHeader(bufferId, &pheader))
 		{
 		}
 		else if (!ValidateHeader(pheader))
@@ -771,9 +771,9 @@ int VeCreateVersion(LXPTR lxptr)
 		else
 		{
 			header=*pheader;
-			MakeMappingFromHeader(&snapshotsList,&mapping,header);
+			MakeMappingFromHeader(&snapshotsList,&mapping,pheader);
 			pushedVersion.lxptr=lxptr;
-			pushedVersion.xptr=xptr;
+			pushedVersion.lastCommitedXptr=xptr;
 			GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.anchor);
 			pushedVersion.anchorTs=snapshot->timestamp;
 			if (mapping.publicDataBegin>1)
@@ -794,7 +794,7 @@ int VeCreateVersion(LXPTR lxptr)
 					ERROR(WUERR_GENERAL_ERROR);
 				}
 			}
-			else if (!setup.allocateBlock(&xptr))
+			else if (!setup.allocBlock(&xptr))
 			{
 			}
 			else
@@ -807,18 +807,18 @@ int VeCreateVersion(LXPTR lxptr)
 				else if (!setup.loadBuffer(lxptr,&bufferId,0))
 				{
 				}
-				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentCLientId()))
+				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentClientId()))
 				{
 				}
 				else
 				{
 					setup.locateHeader(bufferId,&pheader);
-					if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentCLientId(),lxptr,xptr))
+					if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentClientId(),lxptr,xptr))
 					{
 					}
 					else
 					{
-						state->pushedVersions->push_back(PushedVersion);
+						state->pushedVersions->push_back(pushedVersion);
 						*pheader=header;
 						setup.markBufferDirty(bufferId, pheader, sizeof *pheader, 0);
 					}					
@@ -846,7 +846,7 @@ int VeFreeBlock(LXPTR lxptr)
 	}
 	else
 	{
-		ClIsClientReady(&isReady,ClGetCurrentCLientId());
+		ClIsClientReady(&isReady,ClGetCurrentClientId());
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -860,7 +860,7 @@ int VeFreeBlock(LXPTR lxptr)
 		{
 			;
 		}
-		else if (!setup.LocateHeader(bufferId, &header))
+		else if (!setup.locateHeader(bufferId, &header))
 		{
 			;
 		}
@@ -894,14 +894,14 @@ int VeFreeBlock(LXPTR lxptr)
 			else
 			{
 				header->isZombie=1;
-				if (setup.markBufferDirty(bufferId,buffer,sizeof *buffer,0))
+				if (setup.markBufferDirty(bufferId,header,sizeof *header,0))
 				{
 					GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.validDataEnd);
 					assert(snapshot);
 					pushedVersion.lxptr = ~(LXPTR)0;
 					pushedVersion.lastCommitedXptr = lxptr;
 					pushedVersion.anchorTs = snapshot->timestamp;
-					state->pushedVersions.push_back(pushedVersion);
+					state->pushedVersions->push_back(pushedVersion);
 					success = 1;
 				}
 			}
@@ -927,11 +927,11 @@ int VeOnCommit()
 	}
 	else
 	{
-		i=state->pushedVersions.begin();
-		while(i!=state->pushedVersions.end() && !failure)
+		i=state->pushedVersions->begin();
+		while(i!=state->pushedVersions->end() && !failure)
 		{
 			ibuf=buf;
-			for (;ibuf<ebuf && i!=state->pushedVersions.end();++i)
+			for (;ibuf<ebuf && i!=state->pushedVersions->end();++i)
 			{
 				if (i->anchorTs == ~(TIMESTAMP)0)
 				{
@@ -965,7 +965,7 @@ int VeOnRollback()
 	}
 	else
 	{
-		for (i=state->pushedVersions.begin(); i!=state->pushedVersions.end() && !failure; ++i)
+		for (i=state->pushedVersions->begin(); i!=state->pushedVersions->end() && !failure; ++i)
 		{
 			if (i->anchorTs!=~(TIMESTAMP)0) /* not the first version */ 
 			{
@@ -991,7 +991,7 @@ int VeOnRollback()
 				}
 				else
 				{
-					failure = (setup.FreeBlock(i->lxptr) == 0);
+					failure = (setup.freeBlock(i->lxptr) == 0);
 				}
 			}
 		}
@@ -1029,7 +1029,7 @@ int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs)
 	{
 		;
 	}
-	else if (!GetSnapshotByTimestamp(&snapshotsList, (VersionsSnapshot *)&(enumClientsInfo.userData), NULL, snapshotTs))
+	else if (!GetSnapshotByTimestamp(&snapshotsList, (VersionsSnapshot **)&(enumClientsInfo.userData), NULL, snapshotTs))
 	{
 		;
 	}

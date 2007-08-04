@@ -85,11 +85,6 @@ int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPer
 
 int ShGetCurrentClientSnapshotTs(TIMESTAMP *timestamp);
 
-void ShDbgDump(int reserved);
-
-/*
-int WirNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
-int WirNotifyCheckpointFinished();
-*/ 
+void ShDbgDump(int reserved); 
 
 #endif
