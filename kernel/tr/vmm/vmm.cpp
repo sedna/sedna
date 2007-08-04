@@ -26,7 +26,7 @@
 #include "tr/structures/schema.h"
 #include "common/gmm.h"
 #include "common/errdbg/d_printf.h"
-
+#include "common/XptrHash.h"
 
 using namespace std;
 
@@ -149,6 +149,8 @@ void vmm_trace_delete_block(const xptr& p)
 
 #endif
 
+typedef XptrHash<void*, 16, 16> t_blocks_write_table;
+static t_blocks_write_table write_table;
 
 
 /*******************************************************************************
@@ -182,7 +184,7 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #ifdef _WIN32
     addr = MapViewOfFileEx(
               m,						// handle to file-mapping object
-              (!is_write) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
+              (!isWrite) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
               0,						// high-order DWORD of offset
               offs,						// low-order DWORD of offset
               PAGE_SIZE,				// number of bytes to map
@@ -204,6 +206,7 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #endif
         return -1;
     }
+    
     return 0;
 }
 
@@ -897,6 +900,14 @@ void vmm_on_transaction_end() throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
+        // reset blocks with write access from current trid
+        t_blocks_write_table::iterator it;
+
+	    for (it = write_table.begin(); it != write_table.end(); ++it)
+      		_vmm_unmap_decent(*it);
+
+      	write_table.clear();
+
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
@@ -1320,11 +1331,19 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         ramoffs offs = msg.data.swap_data.offs;
         xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
 
-        if (swapped != NULL) _vmm_unmap_decent(XADDR(swapped));
+        if (swapped != NULL)
+        {
+        	 _vmm_unmap_decent(XADDR(swapped));
+        	 write_table.remove(swapped);
+        }
+
         _vmm_remap(XADDR(p), offs, false);
 
         if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == trid)
+        {
 	        _vmm_remap(XADDR(p), offs, true);
+	        write_table.insert(p, XADDR(p));
+	    }
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1365,8 +1384,15 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
         ramoffs offs = msg.data.swap_data.offs;
         xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));
 
-        if (swapped != NULL) _vmm_unmap_decent(XADDR(swapped));
+        if (swapped != NULL)
+        {
+        	 _vmm_unmap_decent(XADDR(swapped));
+         	 write_table.remove(swapped);
+        }
+
         _vmm_remap(XADDR(p), offs, true);
+        
+        write_table.insert(p, XADDR(p));
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);

@@ -32,7 +32,7 @@ using namespace std;
 USemaphore wait_for_checkpoint;
 USemaphore checkpoint_finished;
 USemaphore checkpoint_sem; 
-USemaphore concurrent_ops_sem;
+USemaphore concurrent_trns_sem;
 
 USemaphore wait_for_recovery;
 
@@ -78,7 +78,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     int i=0;
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     {
-        if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) !=0 )
+        if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
          throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
 
         d_printf2("Sem %d acquired\n", i);
@@ -99,7 +99,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 //	LONG_LSN chain_lsn = ll_getLastChainLSN();
 
-	ShOnCheckpoint(SnapshotsOnCheckpointInfo *onCheckpointInfo, ll_logical_log_checkpoint, void *userData);
+    ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
+				   ll_logical_log_checkpoint);
 
 //    ll_freePrevPersSnapshotBlocks(chain_lsn); // free blocks from previous persistent snapshot
 //    d_printf1("previous persistent snapshot blocks free completed\n");
@@ -201,13 +202,13 @@ void init_checkpoint_sems()
 /*
   if (USemaphoreCreate(&checkpoint_finished, 0, 1, SEDNA_CHECKPOINT_FINISHED_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "SEDNA_CHECKPOINT_FINISHED_SEM");
-*/
+
 
   if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_CHECKPOINT_SEM");
-
-  if (USemaphoreCreate(&concurrent_ops_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_LOGICAL_OPERATION_ATOMICITY, NULL, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
+*/
+  if (USemaphoreCreate(&concurrent_trns_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, SEDNA_TRNS_FINISHED, NULL, __sys_call_error) != 0)
+     throw USER_EXCEPTION2(SE4010, "SEDNA_TRNS_FINISHED");
 #endif
 }
 
@@ -242,7 +243,7 @@ void release_checkpoint_sems()
   if (USemaphoreRelease(checkpoint_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreRelease(concurrent_ops_sem, __sys_call_error) != 0)
+  if (USemaphoreRelease(concurrent_trns_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHEKPOINT_THREAD_STACK_SIZE");
 
 

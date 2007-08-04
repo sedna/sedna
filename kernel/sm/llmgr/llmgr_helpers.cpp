@@ -12,6 +12,8 @@
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
 
+#include "sm/bufmgr/bm_core.h"
+
 #include <string>
 #include <map>
 
@@ -63,6 +65,8 @@ logical_log_file_head llmgr_core::read_log_file_header(UFile file_dsc)
 // we use this field to determine if the database was stopped correctly
 void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
 {
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
   logical_log_file_head file_head =
               read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
@@ -78,7 +82,7 @@ void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
 
   res = uWriteFile(ll_curr_file_dsc,
 //                   buf,
-                   &file_head
+                   &file_head,
                    sizeof(logical_log_file_head),
                    &written,
                    __sys_call_error
@@ -93,10 +97,10 @@ void llmgr_core::flush_file_head(bool sync)
 
   ll_log_lock(sync);
 
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
   logical_log_file_head file_head =
               read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   //get tail log dsc;
   //set pointer to the begin of last file 
@@ -121,7 +125,7 @@ void llmgr_core::flush_file_head(bool sync)
 
   res = uWriteFile(ll_curr_file_dsc,
 //                   buf,
-                   &file_head
+                   &file_head,
                    sizeof(logical_log_file_head),
                    &written,
                    __sys_call_error
@@ -311,6 +315,8 @@ TIMESTAMP llmgr_core::returnTimestampOfPersSnapshot(bool sync)
 {
   ll_log_lock(sync);
 
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
   return mem_head->ts;
 
   ll_log_unlock(sync);
@@ -340,7 +346,7 @@ void llmgr_core::extend_logical_log(bool sync)
                                            prev_file_head.valid_number,
                                            prev_file_head.base_addr,
                                            mem_head->ll_files_arr[mem_head->ll_files_num - 1],//prev file number
-                                           prev_file_head.last_commit_lsn,
+                                           prev_file_head.last_lsn,
                                            prev_file_head.next_lsn,
 
   						                   prev_file_head.last_checkpoint_lsn, 
@@ -370,7 +376,7 @@ void llmgr_core::extend_logical_log(bool sync)
   ll_open_files.push_back(file_dsc);
 
   if (mem_head->ll_files_num > MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS)
-     activate_checkpoint();//activate checkpoint to trancate uneccary log files
+     activate_checkpoint(false);//activate checkpoint to trancate uneccary log files
   
   ll_log_unlock(sync);
 }
@@ -775,42 +781,23 @@ void llmgr_core::set_last_redo_trn_cell(transaction_id trid, trns_redo_analysis_
   return;
 }
 
-__int64 llmgr_core::getCurPhCounter()
-{
-  ll_log_lock(sync);
-
-  __int64 ret = this->ph_file_counter;
-  
-  ll_log_unlock(sync);
-
-  return ret;
-}
-
-__int64 llmgr_core::getNewPhCounter()
-{
-  ll_log_lock(sync);
-
-  this->ph_file_counter++;
-
-  __int64 ret = this->ph_file_counter;
-
-  ll_log_unlock(sync);
-
-  return ret;
-}
-
-LONG_LSN llmgr_core::getLastChainLSN()
+/*LONG_LSN llmgr_core::getLastChainLSN()
 {
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   return mem_head->last_chain_lsn;
-}
+} */
 // this function returns lsn of the first record in the bunch of chckpoint records
 LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
 {
   LONG_LSN lsn = lastCheckpointLSN, ret_lsn;
   int state;
   char *block_ofs;
+  __int64 file_size;
+  size_t count;
+
+  const char *rec;
+  const char *body_beg;
 
   do
   {
@@ -828,7 +815,7 @@ LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
        throw USER_EXCEPTION(SE4153);
  
     state = *((int *)(body_beg + sizeof(char)));
-    block_ofs = body_beg + sizeof(char) + sizeof(int);
+    block_ofs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
 
     if (state == 0)
     {
@@ -839,7 +826,7 @@ LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
     block_ofs += sizeof(size_t);
 
     ret_lsn = lsn;
-    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersionInfo)));
+    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersion)));
   } while (state != 0);
 
   return ret_lsn;

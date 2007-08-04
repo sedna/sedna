@@ -145,7 +145,7 @@ struct trn_cell_analysis_redo
   trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(TRN_NOT_FINISHED) {};
   trn_cell_analysis_redo(transaction_id _trid_, LONG_LSN _start_, LONG_LSN _end_, trn_analysis_enum _finish_status_): trid(_trid_), trn_start_rcv_lsn(_start_), trn_end_lsn(_end_), finish_status(_finish_status_) {};
 };
-/*
+
 struct trn_cell_analysis_undo
 {
   transaction_id trid;
@@ -155,7 +155,7 @@ struct trn_cell_analysis_undo
   xptr node;//!!!what is it ?
   trn_cell_analysis_undo(transaction_id _trid_, LONG_LSN _lsn_): trid(_trid_), trn_undo_rcv_lsn(_lsn_), first_lsn_after_cp(NULL_LSN),  finish_status(TRN_NOT_FINISHED) {};
 };
-*/
+
 //typedef std::map<transaction_id, trn_cell_analysis> trns_analysis_map;
 
 //typedef std::pair <transaction_id, trn_cell_analysis> trn_pair;
@@ -164,8 +164,8 @@ typedef std::list<trn_cell_analysis_redo> trns_redo_analysis_list;
 typedef std::list<trn_cell_analysis_redo>::iterator trns_redo_analysis_list_iterator;
 typedef std::list<trn_cell_analysis_redo>::reverse_iterator trns_redo_analysis_list_reverse_iterator;
 
-//typedef std::list<trn_cell_analysis_undo> trns_undo_analysis_list;
-//typedef std::list<trn_cell_analysis_undo>::iterator trns_undo_analysis_list_iterator;
+typedef std::list<trn_cell_analysis_undo> trns_undo_analysis_list;
+typedef std::list<trn_cell_analysis_undo>::iterator trns_undo_analysis_list_iterator;
 
 
 
@@ -190,6 +190,8 @@ struct logical_log_sh_mem_head
   int ll_free_files_arr[MAX_LL_LOG_FILES_NUMBER];
   int ll_free_files_num;
   __int64 base_addr;//this addr is used to calculate phys addr of lsn (it is equal to Record_lsn - base_addr)
+  bool checkpoint_flag; // true, if checkpoint is enabled
+  bool checkpoint_on;   // true, if checkpoint is currently in progress
 };
 
 struct log_file_dsc
@@ -275,7 +277,7 @@ public:
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
   void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
-  void ll_log_pers_snapshot_add(SnapshotsVersionInfo *blk_info, bool sync);
+  void ll_log_pers_snapshot_add(SnapshotsVersion *blk_info, int isGarbage, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
   
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
@@ -307,11 +309,9 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 #endif
 
   void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
-  void recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ bool sync);
+  LONG_LSN recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ bool sync);
   
   void restorePh();
-  __int64 copyPhFile();
-  void deletePrevPhFile(__int64 prev_ph_counter);
 
   TIMESTAMP returnTimestampOfPersSnapshot(bool sync);
 
@@ -326,14 +326,16 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
   void close_all_log_files();//close file descriptors of all log files
   void extend_logical_log(bool sync);
 
-  __int64 getNewPhCounter(); // returns file counter for the new ph-file
-  __int64 getCurPhCounter(); // returns file counter for the last ph-file
+//  __int64 getNewPhCounter(); // returns file counter for the new ph-file
+//  __int64 getCurPhCounter(); // returns file counter for the last ph-file
 
   void updateMinRcvLSN();
 
   void activate_checkpoint(bool sync); // moved from private
 
   void set_checkpoint_on_flag(bool flag); // set flag determing if checkpoint thread is active
+
+  void set_checkpoint_flag(bool flag, bool sync); // set flag to enable/disable checkpoint
 
 private:
 
