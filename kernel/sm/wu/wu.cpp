@@ -10,6 +10,7 @@
 #include "sm/llmgr/llmgr.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
+#include "common/sm_vmm_data.h"
 
 static
 TIMESTAMP timestamp = 1000;
@@ -101,8 +102,8 @@ int FreeBlock(XPTR bigXptr)
 
 int LocateHeader(int bufferId, VersionsHeader **header)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	assert(header);
+	return 1;
 }
 
 int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)

@@ -38,7 +38,9 @@
 
   // C99 standard integers
   /* some standard integer types from C99 */
-  #if !defined(uint8_t)     
+  
+#if 0
+#if !defined(uint8_t)     
     typedef unsigned char uint8_t;
   #endif
   #if !defined(int8_t)
@@ -70,6 +72,10 @@
     typedef long long int64_t;
     #endif
   #endif
+#else 
+#include <stdint.h>
+#endif
+
   #include <signal.h>              // for traps
 
   /* Conditional code flag -- set this to 0 for best performance */
