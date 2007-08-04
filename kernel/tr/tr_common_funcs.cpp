@@ -146,7 +146,7 @@ void on_session_end(SSMMsg* &sm_server)
    d_printf1("OK\n");
 }
 
-void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
+void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
 {
    down_transaction_block_sems();
 
@@ -161,7 +161,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    }
    d_printf1("OK\n");
 
-   if (this_tr_is_query)
+   if (is_query)
    {
 		sm_msg_struct msg;
         
@@ -175,9 +175,9 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    		char buf[20];
 
    		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
-   			db_name + "." + string(u_i64toa(msg.snp_info.ts, buf, 10)) + ".seph";
+   			db_name + "." + string(u_i64toa(msg.data.snp_info.ts, buf, 10)) + ".seph";
 
-   		int type_of_snp = msg.snp_info.type_of_snp; // type of snapshot: 1 or 0
+   		int type_of_snp = msg.data.snp_info.type_of_snp; // type of snapshot: 1 or 0
 
    		d_printf1("Initializing PH between transactions on the same session...");
    		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
