@@ -309,9 +309,6 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 #endif
 
   void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
-  LONG_LSN recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ bool sync);
-  
-  void restorePh();
 
   TIMESTAMP returnTimestampOfPersSnapshot(bool sync);
 

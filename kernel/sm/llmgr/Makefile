@@ -6,6 +6,35 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-OBJS = llmgr$(OBJ_EXT) llmgr_core$(OBJ_EXT) llmgr_helpers$(OBJ_EXT)
+all: llmgr$(LIB_EXT) llmgr_tr$(LIB_EXT)
+	@echo ===================================================================
+	@echo Low Level Logical Log has been Done
+	@echo ===================================================================
 
-include $(PP)/Makefile.ordlib
+TR_OBJS = llmgr_helpers$(OBJ_EXT) llmgr_core$(OBJ_EXT)
+OBJS = $(TR_OBJS) llmgr$(OBJ_EXT) sm_llmgr$(OBJ_EXT)
+
+ifneq ($(findstring clean, $(MAKECMDGOALS)), clean)
+ifndef NO_DEP
+include $(OBJS:$(OBJ_EXT)=.d)
+endif
+endif
+
+
+################################################################################
+# PLMGR_LIB                                                                    #
+################################################################################
+llmgr$(LIB_EXT): $(OBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
+llmgr_tr$(LIB_EXT): $(TR_OBJS)
+	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
+
+
+################################################################################
+# Clean                                                                        #
+################################################################################
+.PHONY: clean
+
+clean: generic_clean
+
