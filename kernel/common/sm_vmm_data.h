@@ -9,6 +9,7 @@
 
 #include "common/sedna.h"
 #include "common/xptr.h"
+#include "common/wustructures.h"
 
 #define BLOCK_PARTS           16
 #define BLOCK_PART_SIZE (PAGE_SIZE/BLOCK_PARTS)
@@ -30,6 +31,7 @@ struct vmm_sm_blk_hdr
     LRU_stamp lru;
 #endif
 	int trid_wr_access;
+	VersionsHeader versionsHeader;
 
 	static void init(vmm_sm_blk_hdr* hdr)
 	{
