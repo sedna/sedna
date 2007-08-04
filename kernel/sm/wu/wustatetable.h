@@ -49,6 +49,8 @@ int  SetStateTableIsVacantRowFlag(StateTable *stateTable, int rowId, int isVacan
 
 int  IsStateTableRowVacant(StateTable *stateTable, int *isVacant, int rowId);
 
+int  IsValidStateTableRowId(StateTable *stateTable, int rowId);
+
 void DbgDumpStateTable(StateTable *stateTable);
 
 void DbgDumpStateTableParams(StateTable *stateTable, DbgDumpMemoryParams *params);

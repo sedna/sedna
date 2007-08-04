@@ -214,7 +214,65 @@ void DbgDumpMemory(DbgDumpMemoryParams *dumpMemoryParams)
 	}
 }
 
-void ERRORfn(const char *file, int line, const char *fn, const char *error)
+
+#include <stddef.h>
+
+static const size_t stringTableSize = 36;
+static const char *stringTable[stringTableSize] = 
 {
-	fprintf(stderr,"%s %d (%s): %s\n",file,line,fn,error);
+	"Some error occured.", 
+	"Bad params passed to the function.", 
+	"The called function must be never called in this state.", 
+	"The module failed to perform a clean startup.", 
+	"The module failed to perform a clean shutdown.", 
+	"The data read from persistent storage is corrupt.", 
+	"The called function is intended for debug purposes only and is unavailable in this build.", 
+	"Unable to allocate memory.", 
+	"The ticket is invalid.", 
+	"An attempt was made to reference a state table row by invalid id.", 
+	"State table is full, unable to allocate row.", 
+	"Maximum number of state table columns exceeded.", 
+	"Maximum size of a state table row exceeded.", 
+	"Maximum number of state table columns with debug info exceeded.", 
+	"Bad client id.", 
+	"Unable to assign the given id to the client since this id is already in use.", 
+	"Maximum number of registered clients exceeded.", 
+	"The client is already marked ready.", 
+	"The client is already marked leaving.", 
+	"Client set is already unlocked.", 
+	"The lock count of client set exceeded an implimentation limit.", 
+	"The calling thread locked client set and is unable to mark client ready or leaving.", 
+	"Unable to unregister the client selected as the current client.", 
+	"Unable to unregister the client marked ready.", 
+	"An attempt was made to discard a snapshot that is currently in use.", 
+	"An attempt was made to discard a persistent snapshot or other special snapshot.", 
+	"The snapshot is currently in use and can not be damaged.", 
+	"The snapshot is already persistent.", 
+	"Maximum number of snapshots exceeded.", 
+	"No snapshot with the given timestamp.", 
+	"No snapshot with the given type.", 
+	"No snapshot with the given ordinal number.", 
+	"Unable to create a new snapshot with the given timestamp since another snapshot with this timestamp already exists.", 
+	"Unable to advance snapshots.", 
+	"Currently no snapshots exist.", 
+	"Timestamp is invalid."
+};
+
+static const char * mystrerror(int error)
+{
+	error-=WUERR_FIRST_ERR;
+	return (error>=0 && error<stringTableSize ? stringTable[error] : NULL);
+}
+
+static int lasterr=-1;
+
+int  ISERRORfn(int code) { return code==lasterr; }
+
+void ERRORfn(const char *file, int line, const char *fn, int code)
+{
+	const char *description=NULL;
+	description=mystrerror(code);
+	if (!description) description="no description availible";
+	fprintf(stderr,"%s %d (%s): error %d - %s\n",file,line,fn,code,description);
+	lasterr=code;
 }
