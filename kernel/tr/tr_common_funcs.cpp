@@ -181,7 +181,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 
    		d_printf1("Initializing PH between transactions on the same session...");
    		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
-   			(type_of_snp == 1) ? PERS_HEAP_NEW_1_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
+   			(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
       		throw USER_EXCEPTION(SE4605);
 
    		is_ph_inited = true;
@@ -233,12 +233,6 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 {
    clear_authmap();
-
-#ifdef SE_ENABLE_TRIGGERS
-   d_printf1("Triggers on transaction end...");
-   triggers_on_transaction_end(is_commit);
-   d_printf1("OK\n");
-#endif
 
    d_printf1("\nReleasing logical log...");
    hl_logical_log_on_transaction_end(is_commit, rcv_active);

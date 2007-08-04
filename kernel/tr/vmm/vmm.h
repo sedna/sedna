@@ -15,6 +15,7 @@
 #include "common/persistent_db_data.h"
 #include "common/u/uthread.h"
 
+extern transaction_id trid;
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE

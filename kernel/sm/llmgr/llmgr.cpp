@@ -156,20 +156,6 @@ __int64 getNewPhCounter()
 #endif
 }
 
-__int64 ll_copy_ph_file()
-{
-#ifdef LOGICAL_LOG
-  return logical_log_mgr->copyPhFile();
-#endif
-}
-
-void ll_delete_prev_ph_file(__int64 prev_ph_counter)
-{
-#ifdef LOGICAL_LOG
-  logical_log_mgr->deletePrevPhFile(prev_ph_counter);
-#endif
-}
-
 /*LONG_LSN ll_getLastChainLSN()
 {
 #ifdef LOGICAL_LOG
@@ -196,5 +182,26 @@ void ll_set_checkpoint_on_flag(bool flag)
 {
 #ifdef LOGICAL_LOG
 	logical_log_mgr->set_checkpoint_on_flag(flag);
+#endif
+}
+
+LONG_LSN ll_recover_db_by_phys_records()
+{
+#ifdef LOGICAL_LOG
+	return logical_log_mgr->recover_db_by_phys_records(false);
+#endif
+}
+
+void ll_log_set_checkpoint_flag(bool flag)
+{
+#ifdef PHYS_LOG
+  logical_log_mgr->set_checkpoint_flag(flag, true);
+#endif  
+}
+
+void ll_recover_pers_heap()
+{
+#ifdef LOGICAL_LOG
+	logical_log_mgr->restorePh();
 #endif
 }

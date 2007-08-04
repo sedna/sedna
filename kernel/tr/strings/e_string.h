@@ -14,7 +14,6 @@
 #include "tr/vmm/vmm.h"
 #include "tr/executor/base/tuple.h"
 
-
 #define BLK_BEGIN_INT(p)			((int)(p) & PAGE_BIT_MASK)
 #define E_STR_PROLONGATION(p)		(((e_str_blk_hdr*)(BLK_BEGIN_INT(XADDR(p))))->nblk + sizeof(e_str_blk_hdr))
 #define E_STR_BLK_HDR(p)			((e_str_blk_hdr*)(BLK_BEGIN_INT(XADDR(p))))

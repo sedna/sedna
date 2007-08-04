@@ -160,8 +160,8 @@ extern global_name INDIRECTION_TABLE_SEMAPHORE_STR;
 extern global_name VMM_SM_EXCLUSIVE_MODE_SEM_STR;
 extern global_name PERS_HEAP_SEMAPHORE_STR;
 
-extern global_name PERS_HEAP_NEW_SNP_SEMAPHORE_STR;
-extern global_name PERS_HEAP_OLD_SNP_SEMAPHORE_STR;
+extern global_name PERS_HEAP_1_SNP_SEMAPHORE_STR;
+extern global_name PERS_HEAP_0_SNP_SEMAPHORE_STR;
 
 extern global_name METADATA_SEMAPHORE_STR;
 extern global_name INDEX_SEMAPHORE_STR;
@@ -194,7 +194,7 @@ extern global_name CHARISMA_SM_WAIT_FOR_SHUTDOWN;
 
 extern global_name CHARISMA_CHECKPOINT_SEM;
 extern global_name SEDNA_CHECKPOINT_FINISHED_SEM;
-extern global_name CHARISMA_LOGICAL_OPERATION_ATOMICITY;
+extern global_name SEDNA_TRNS_FINISHED;
 extern global_name CHARISMA_WAIT_FOR_CHECKPOINT;
 extern global_name CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG;
 
@@ -322,7 +322,7 @@ struct sm_msg_struct
         } swap_data;
 
         struct {
-        	TIMESTAMP ts;    // timestamp of snapshot, used to find persistent heap file
+        	__int64 ts;    // timestamp of snapshot, used to find persistent heap file
         	int type_of_snp; // 1 or 0, to select name for file mapping
         } snp_info;
 

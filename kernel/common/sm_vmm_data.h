@@ -29,6 +29,8 @@ struct vmm_sm_blk_hdr
 #ifdef LRU
     LRU_stamp lru;
 #endif
+	int trid_wr_access;
+
 	static void init(vmm_sm_blk_hdr* hdr)
 	{
 		int i = 0;

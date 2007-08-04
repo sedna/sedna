@@ -29,7 +29,7 @@ static bool is_ll_on_session_initialized = false;
 static bool is_ll_on_transaction_initialized = false;
 
 USemaphore checkpoint_sem;
-USemaphore concurrent_ops_sem; 
+USemaphore concurrent_trns_sem; 
 
 ///// FOR DEBUG ////
 int number_of_records = 0;
@@ -45,11 +45,11 @@ bool enable_log = true;
 void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreOpen(&checkpoint_sem, CHARISMA_CHECKPOINT_SEM, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4012, "CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreOpen(&checkpoint_sem, CHARISMA_CHECKPOINT_SEM, __sys_call_error) != 0)
+//     throw USER_EXCEPTION2(SE4012, "CHARISMA_CHECKPOINT_SEM");
 
-  if ( 0 != USemaphoreOpen(&concurrent_ops_sem, CHARISMA_LOGICAL_OPERATION_ATOMICITY, __sys_call_error))
-     throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
+  if ( 0 != USemaphoreOpen(&concurrent_trns_sem, SEDNA_TRNS_FINISHED, __sys_call_error))
+     throw USER_EXCEPTION2(SE4012, "SEDNA_TRNS_FINISHED");
 #endif
 
 #ifdef LOGICAL_LOG
@@ -80,7 +80,7 @@ void hl_logical_log_on_session_end()
    if (USemaphoreClose(checkpoint_sem, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_CHECKPOINT_SEM");
 
-   if (USemaphoreClose(concurrent_ops_sem, __sys_call_error) != 0)
+   if (USemaphoreClose(concurrent_trns_sem, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 
 //   d_printf2("down_nums=%d\n", down_nums);
@@ -202,11 +202,11 @@ void down_concurrent_micro_ops_number()
 
 //  d_printf1("down_concurrent_micro_ops_number() - begin\n");
 
-  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
-     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
+//     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
-     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
+//     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
 
 //  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
 //     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
@@ -246,7 +246,7 @@ void up_concurrent_micro_ops_number()
 void up_transaction_block_sems()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreUp(concurrent_ops_sem, __sys_call_error) != 0)
+  if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY");
 #endif
 }
@@ -254,20 +254,21 @@ void up_transaction_block_sems()
 void down_transaction_block_sems()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreDown(concurrent_ops_sem, __sys_call_error) != 0)
+  if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) != 0)
      throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_LOGICAL_OPERATION_ATOMICITY"); 
 #endif
 }
 
 
+//TODO: check for necessity of this function
 void wait_for_checkpoint_finished()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
-     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreDown(checkpoint_sem, __sys_call_error) != 0)  
+//     throw SYSTEM_EXCEPTION("Can't down semaphore: CHARISMA_CHECKPOINT_SEM");
 
-  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
-     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreUp(checkpoint_sem, __sys_call_error) != 0)
+//     throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_CHECKPOINT_SEM");
 
 
 #endif

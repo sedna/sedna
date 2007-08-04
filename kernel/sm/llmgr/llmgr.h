@@ -9,7 +9,10 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
-void ll_logical_log_startup();
+#include "sm/wu/wusnapshots.h"
+#include "sm/wu/wutypes.h"
+
+bool ll_logical_log_startup(int &sedna_db_version);
 
 void ll_logical_log_shutdown();
 
@@ -39,10 +42,6 @@ __int64 getCurPhCounter();
 
 __int64 getNewPhCounter();
 
-__int64 ll_copy_ph_file();
-
-void ll_delete_prev_ph_file(__int64 prev_ph_counter);
-
 //LONG_LSN ll_getLastChainLSN();
 
 void ll_updateMinRcvLSN();
@@ -50,6 +49,12 @@ void ll_updateMinRcvLSN();
 void ll_set_phys_rec_flag(bool flag); // enable/disable write of physical records in log
 
 void ll_set_checkpoint_on_flag(bool flag); // set flag determing if checkpoint thread is active
+
+void ll_log_set_checkpoint_flag(bool flag); // set flag to enable/disable checkpoint
+
+LONG_LSN ll_recover_db_by_phys_records(); // physical recovery by log; returns lsn for logical recovery
+
+void ll_recover_pers_heap();
 
 #endif
 

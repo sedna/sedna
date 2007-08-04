@@ -101,7 +101,6 @@ struct shared_mem_head
   char empty_bulk_load_blk[CHARISMA_MAX_TRNS_NUMBER];//cell is 1 -> transaction must empty a list of blocks which were created (used for checkpoint correctness) 
   int num_of_records_after_cp; //used for debug
   int num_of_records;//total number of records written in phys log (used for debug)
-  bool checkpoint_on; //true means that checkpoint thread is working now
 };
 
 

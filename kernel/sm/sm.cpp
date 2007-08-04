@@ -24,6 +24,8 @@
 #include "common/config.h"
 #include "common/ipc_ops.h"
 
+#include "sm/wu/wu.h"
+
 using namespace std;
 
 SSMMsg *ssmmsg;
@@ -558,11 +560,12 @@ int main(int argc, char **argv)
 
       
         //start up logical log
-        ll_logical_log_startup();
+		if (!ll_logical_log_startup(sedna_db_version)) throw SYSTEM_EXCEPTION("Inconsistent database state");
         elog(EL_LOG, ("SM ll_logical_log_startup done"));
 
         //enable checkpoints
-        ll_phys_log_set_checkpoint_flag(true);
+//        ll_phys_log_set_checkpoint_flag(true);
+        ll_log_set_checkpoint_flag(true);
         elog(EL_LOG, ("SM ll_logical_log_startup done"));
 
 
@@ -605,6 +608,11 @@ int main(int argc, char **argv)
 
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
+
+            if(!WuInit(0))
+              throw USER_EXCEPTION(SE4801);
+            elog(EL_LOG, ("SM : Wu is initialized"));
+
 
             d_printf1("OK\n");
 
@@ -657,6 +665,10 @@ int main(int argc, char **argv)
 
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
+
+        if (!WuRelease())
+          throw USER_EXCEPTION(SE4802);
+        elog(EL_LOG, ("SM : Wu is released"));
 
         // shutdown bm
         bm_shutdown();
@@ -723,8 +735,9 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : init_checkpoint_sems done"));
 
        //start phys log
-       bool is_stopped_correctly = ll_phys_log_startup(sedna_db_version/*out parameter*/);
-       elog(EL_LOG, ("SM : ll_phys_log_startup done"));
+//       bool is_stopped_correctly = ll_phys_log_startup(sedna_db_version/*out parameter*/);
+       bool is_stopped_correctly = ll_logical_log_startup(sedna_db_version/*out parameter*/);
+       elog(EL_LOG, ("SM : ll_logical_log_startup done"));
        if (sedna_db_version != SEDNA_DATA_STRUCTURES_VER)
        {
           release_checkpoint_sems();
@@ -733,45 +746,55 @@ void recover_database_by_physical_and_logical_log(int db_id)
              throw USER_EXCEPTION2(SE4212, "See file FAQ shipped with the distribution");
        }
 
-       d_printf1("phys log startup call finished successfully\n");
+       d_printf1("logical log startup call finished successfully\n");
+
+       // recover persistent heap
+       if (!is_stopped_correctly) ll_recover_pers_heap();
+       elog(EL_LOG, ("SM : ll_recover_pers_heap done"));
 
        //create checkpoint thread
        start_chekpoint_thread();
        elog(EL_LOG, ("SM : start_chekpoint_thread done"));
 
        //disable write to phys log
-       ll_phys_log_set_phys_log_flag(false);
-       elog(EL_LOG, ("SM : ll_phys_log_set_phys_log_flag done"));
+//       ll_phys_log_set_phys_log_flag(false);
+//       elog(EL_LOG, ("SM : ll_phys_log_set_phys_log_flag done"));
+
+       //start buffer manager
+       bm_startup();
+       elog(EL_LOG, ("SM : bm_startup done"));
+       //!!! indirection_table_free_entry may be inconsistent at this point because of damage of the masterblock; 
+       //!!! this problem is fixed in ll_recover_db_by_phys_records
 
        //recover data base by phisical log
        LONG_LSN last_checkpoint_lsn = NULL_LSN;
-       if (!is_stopped_correctly) last_checkpoint_lsn = ll_phys_log_recover_db();
-       d_printf1("db recovered by phys log successfully\n");
+//       if (!is_stopped_correctly) last_checkpoint_lsn = ll_phys_log_recover_db();
+       if (!is_stopped_correctly) last_checkpoint_lsn = ll_recover_db_by_phys_records();
+
+       d_printf1("db recovered by phys logs successfully\n");
        elog(EL_LOG, ("SM : db recovered by phys log successfully"));
 
-       ll_phys_log_set_phys_log_flag(true);
-       elog(EL_LOG, ("SM : ll_phys_log_set_phys_log_flag done"));
+//       ll_phys_log_set_phys_log_flag(true);
+//       elog(EL_LOG, ("SM : ll_phys_log_set_phys_log_flag done"));
 
        //start up shared memory for phys log
-       ll_phys_log_startup_shared_mem();
-       elog(EL_LOG, ("SM : ll_phys_log_startup_shared_mem done"));
+//       ll_phys_log_startup_shared_mem();
+//       elog(EL_LOG, ("SM : ll_phys_log_startup_shared_mem done"));
 
        //disable checkpoints
-       ll_phys_log_set_checkpoint_flag(false);
-       elog(EL_LOG, ("SM : ll_phys_log_set_checkpoint_flag done"));
+//       ll_phys_log_set_checkpoint_flag(false);
+       ll_log_set_checkpoint_flag(false);
+       elog(EL_LOG, ("SM : ll_log_set_checkpoint_flag done"));
         
        //start up logical log
-       ll_logical_log_startup();
-       elog(EL_LOG, ("SM : ll_logical_log_startup done"));
+//       ll_logical_log_startup();
+//       elog(EL_LOG, ("SM : ll_logical_log_startup done"));
 
 #ifdef LOCK_MGR_ON
        lm_table.init_lock_table();
        elog(EL_LOG, ("SM : lm_table.init_lock_table done"));
 #endif
 
-       //start buffer manager
-       bm_startup();
-       elog(EL_LOG, ("SM : bm_startup done"));
 
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
@@ -789,12 +812,18 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        d_printf1("OK\n");
 
+
+       if(!WuInit(1))
+          throw USER_EXCEPTION(SE4801);
+       elog(EL_LOG, ("SM : Wu is initialized"));
+
        //recover database by logical log
        if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
        elog(EL_LOG, ("SM : db recovered by logical log successfully"));
 
        //enable checkpoints
-       ll_phys_log_set_checkpoint_flag(true);
+//       ll_phys_log_set_checkpoint_flag(true);
+	   ll_log_set_checkpoint_flag(true);
        elog(EL_LOG, ("SM : checkpoints enabled"));
 
        if (ssmmsg->stop_serve_clients() != 0)
@@ -802,6 +831,10 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        if (ssmmsg->shutdown() != 0)
           throw USER_EXCEPTION(SE3033);
+
+       if (!WuRelease())
+          throw USER_EXCEPTION(SE4802);
+       elog(EL_LOG, ("SM : Wu is released"));
 
        //shutdown checkpoint thread (it also makes checkpoint)
        shutdown_chekpoint_thread();
@@ -812,8 +845,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        elog(EL_LOG, ("SM : bm_shutdown done"));
 
        //shutdown phys log
-       ll_phys_log_shutdown();
-       elog(EL_LOG, ("SM : ll_phys_log_shutdown done"));
+//       ll_phys_log_shutdown();
+//       elog(EL_LOG, ("SM : ll_phys_log_shutdown done"));
 
        //shutdown logical log
        ll_logical_log_shutdown();
