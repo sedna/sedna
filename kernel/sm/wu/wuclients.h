@@ -103,7 +103,7 @@ int  ClStartup(ClientsSetup *clientsSetup);
 
 void ClDeinitialise();
 
-void ClQueryMaxClientsCount(int *maxClientsCount);
+int  ClQueryMaxClientsCount();
 
 int  ClRegisterClient(int *clientId, int isFixed);
 
@@ -113,7 +113,7 @@ int  ClMarkClientLeaving(int clientId);
 
 int  ClUnregisterClient(int clientId);
 
-void ClGetCurrentClientId(int *clientId);
+int ClGetCurrentClientId();
 
 int  ClSetCurrentClientId(int clientId);
 

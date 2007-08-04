@@ -64,8 +64,7 @@ int ClStartup(ClientsSetup *clientsSetup)
 
 	if (clientsSetup->maxClientsCount<0)
 	{
-		/* ERROR: "invalid max clients" */ 
-		ERROR("invalid max clients");
+		ERROR(WUERR_BAD_PARAMS);
 	}
 	else
 	{
@@ -96,10 +95,9 @@ void ClDeinitialise()
 	DeinitialiseStateTable(&stateTable);
 }
 
-void ClQueryMaxClientsCount(int *maxClientsCount)
+int ClQueryMaxClientsCount()
 {
-	assert(maxClientsCount);
-	*maxClientsCount=stateTable.rowsCount;
+	return stateTable.rowsCount;
 }
 
 int ClRegisterClient(int *clientId, int isFixed)
@@ -113,12 +111,11 @@ int ClRegisterClient(int *clientId, int isFixed)
 	{
 		if(!IsStateTableRowVacant(&stateTable,&isVacant,*clientId))
 		{
-			; /* bad clientId or something */ 
+			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
 		}
 		else if(!isVacant)
 		{
-			/* ERROR: "client id already in use" */ 
-			ERROR("client id already in use");
+			ERROR(WUERR_CLIENT_ID_ALREADY_IN_USE);
 		}
 		else
 		{
@@ -145,18 +142,16 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 {
 	int success=0;
 	uint32_t mask=1, *pval=NULL;
-	void *dummy;
 
 	if (threadState.clientSetLockCount>0)
 	{
-		/* ERROR: "the calling thread locked client set and is unable to mark client ready or leaving" */ 
-		ERROR("the calling thread locked client set and is unable to mark client ready or leaving");
+		ERROR(WUERR_CLIENT_SET_DEADLOCK_DETECTED);
 	}
 	else
 	{
-		if (!GetStateTableMasterCell(&stateTable,&dummy,clientId))
+		if (!IsValidStateTableRowId(&stateTable,clientId))
 		{
-			/* invalid client id or something */ 
+			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
 		}
 		else
 		{		
@@ -173,8 +168,7 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 				}
 				else
 				{					
-					/* ERROR: "client already marked ready" */ 
-					ERROR("client already marked ready");
+					ERROR(WUERR_CLIENT_ALREADY_MARKED_READY);
 				}
 				break;
 			case 2: /* mark leaving */ 
@@ -186,8 +180,7 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 				}
 				else
 				{
-					/* ERROR: "client already marked leaving" */ 
-					ERROR("client already marked leaving");
+					ERROR(WUERR_CLIENT_ALREADY_MARKED_LEAVING);
 				}
 				break;
 			default:
@@ -216,12 +209,11 @@ int ClUnregisterClient(int clientId)
 
 	if (!GetStateTableMasterCell(&stateTable,(void**)&mgmtData,clientId))
 	{
-		/* invalid client id or something */ 
+		if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID); 
 	}
 	else if (mgmtData->currentCntr>0)
 	{
-		/* ERROR: "unable to unregister the client marked as the current-client" */ 
-		ERROR("unable to unregister the client marked as the current-client");
+		ERROR(WUERR_UNABLE_TO_UNREGISTER_CURRENT_CLIENT);
 	}
 	else
 	{
@@ -230,8 +222,7 @@ int ClUnregisterClient(int clientId)
 
 		if (*pval&mask)
 		{
-			/* ERROR: "unable to unregister the client marked ready" */ 
-			ERROR("unable to unregister the client marked ready");
+			ERROR(WUERR_UNABLE_TO_UNREGISTER_READY_CLIENT);
 		}
 		else if(SetStateTableIsVacantRowFlag(&stateTable,clientId,1))
 		{
@@ -242,10 +233,9 @@ int ClUnregisterClient(int clientId)
 	return success;
 }
 
-void ClGetCurrentClientId(int *clientId)
+int ClGetCurrentClientId()
 {
-	assert(clientId);
-	*clientId=threadState.currentClientId;
+	return threadState.currentClientId;
 }
 
 int ClSetCurrentClientId(int clientId)
@@ -269,7 +259,7 @@ int ClSetCurrentClientId(int clientId)
 	{
 		if (!GetStateTableMasterCell(&stateTable,(void**)&mgmtData,clientId))
 		{
-			; /* bad client id or something */ 
+			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
 		}
 		else
 		{
@@ -296,8 +286,7 @@ int ClLockClientSet()
 	int success=0;
 	if (threadState.clientSetLockCount==INT_MAX)
 	{
-		/* ERROR: "maximum lock count for client set exceeded" */ 
-		ERROR("maximum lock count for client set exceeded");
+		ERROR(WUERR_CLIENT_SET_MAX_NUMBER_OF_LOCKS_EXCEEDED);
 	}
 	else
 	{
@@ -313,8 +302,7 @@ int ClUnlockClientSet()
 	if (threadState.clientSetLockCount<=0)
 	{
 		assert(threadState.clientSetLockCount==0);
-		/* ERROR: "client set already unlocked" */ 
-		ERROR("client set already unlocked");
+		ERROR(WUERR_CLIENT_SET_ALREADY_UNLOCKED);
 	}
 	else
 	{
@@ -356,10 +344,14 @@ int ClEnumClients(ClientsEnumClientsInfo *enumClientsInfo,
 
 int ClIsClientReady(int *isReady, int clientId)
 {
-	int success=0; void *dummy=NULL; uint32_t m=1;
+	int success=0; uint32_t m=1;
 
 	assert(isReady);
-	if (GetStateTableMasterCell(&stateTable,&dummy,clientId))
+	if (!IsValidStateTableRowId(&stateTable,clientId))
+	{
+		if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID); 
+	}
+	else
 	{
 		m<<=clientId%32;
 		*isReady=((readyClientsBitmap[clientId/32]&m)!=0);
@@ -378,15 +370,7 @@ void ClDbgDump(int reserved)
 			threadState.currentClientId, threadState.clientSetLockCount);
 
 	DbgDumpStateTableParams(&stateTable,&params);
-#if 0
-	/* hide first column */ 
-	if (params.sections && params.sectionsSize && params.sectionsCount>0) 
-	{
-		--params.sectionsCount;
-		++params.sections;
-		++params.sectionsSize;
-	}
-#endif
+
 	memset(&marks,0,sizeof marks);
 	marks.mark='R';
 	marks.next=NULL;

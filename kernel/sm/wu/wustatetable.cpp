@@ -71,8 +71,7 @@ int GetColumnInfo(StateTable *t, TICKET ticket,
 	if (colbase<begin || colbase>=end || !CheckTicket(ticket) || colnum<0 || colnum>=t->columnsCount ||
 		DEBUGI && t->columnBase[colnum]!=colbase)
 	{
-		; /* ERROR: "bad ticket" */ 
-		ERROR("bad ticket");
+		ERROR(WUERR_BAD_TICKET);
 	}
 	else if (isBogus)
 	{
@@ -80,8 +79,7 @@ int GetColumnInfo(StateTable *t, TICKET ticket,
 	}
 	else if (!DEBUGI)
 	{
-		/* ERROR: "feature present in debug build only" */ 
-		ERROR("feature present in debug build only");
+		ERROR(WUERR_DEBUG_FUNCTION_UNAVAILABLE);
 	}
 	else
 	{
@@ -215,16 +213,14 @@ int CreateStateTableRows(StateTable *t, int rowsCount, size_t maxRowSize)
 
 	if(rowSize>maxRowSize)
 	{
-		; /* ERROR: "maximum row size in state table exceeded" */ 
-		ERROR("maximum row size in state table exceeded");
+		ERROR(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
 	}
 	else
 	{
 		t->mem=malloc(totalSize);
 		if (NULL==t->mem)
 		{
-			; /* ERROR: "out of memory" */ 
-			ERROR("out of memory");
+			ERROR(WUERR_NO_MEMORY);
 		}
 		else
 		{
@@ -283,18 +279,15 @@ int  ReserveStateTableColumn(StateTable *t, TICKET *ticket, size_t size, int ali
 
 	if (colnum>=(int)ST_MAX_COLUMNS)
 	{
-		/* ERROR: "maximum number of columns in state table exceeded" */ 
-		ERROR("maximum number of columns in state table exceeded");
+		ERROR(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_EXCEEDED);
 	}
 	else if (nsize>=ST_MAX_ROW_SIZE)
 	{
-		/* ERROR: "maximum row size in state table exceeded" */ 
-		ERROR("maximum row size in state table exceeded");
+		ERROR(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
 	}
 	else if (DEBUGI && colnum>=ST_MAX_COLUMNS_WITH_INFO)
 	{
-		/* ERROR: "maximum number of columns with debug info exceeded" */ 
-		ERROR("maximum number of columns with debug info exceeded");
+		ERROR(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_DEBUG_INFO_EXCEEDED);
 	}
 	else
 	{
@@ -320,10 +313,8 @@ int  GetStateTableCell(StateTable *t, void **dest, TICKET ticket, int rowId)
 	if (!ValidateTicket(t,ticket))
 	{
 	}
-	else if (rowId<0 || rowId>=t->rowsCount || ((uint32_t*)t->mem)[rowId/32]&(UINT32_C(1)<<rowId&31))
+	else if (!IsValidStateTableRowId(t,rowId))
 	{
-		/* ERROR: "invalid state table row ID" */ 
-		ERROR("invalid state table row ID");
 	}
 	else
 	{
@@ -374,8 +365,7 @@ int  OccupyStateTableFirstVacantRow(StateTable *t, int *rowId, int rngBegin, int
 
 	if (v==0)
 	{
-		/* ERROR: "state table full" */ 
-		ERROR("state table full");
+		ERROR(WUERR_STATE_TABLE_FULL);
 	}
 	else
 	{
@@ -396,8 +386,7 @@ int  SetStateTableIsVacantRowFlag(StateTable *t, int rowId, int isVacant)
 	assert(t);
 	if (rowId<0 || rowId>=t->rowsCount)
 	{
-		/* ERROR: "invalid state table row ID" */ 
-		ERROR("invalid state table row ID");
+		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
 	}
 	else
 	{
@@ -429,8 +418,7 @@ int  IsStateTableRowVacant(StateTable *t, int *isVacant, int rowId)
 
 	if (rowId<0 || rowId>=t->rowsCount)
 	{
-		/* ERROR: "invalid state table row ID" */ 
-		ERROR("invalid state table row ID");
+		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
 	}
 	else
 	{
@@ -469,15 +457,17 @@ void DbgDumpStateTable(StateTable *t)
 	ValidateGuardMemory(t,0,NULL,ST_TABLE_GUARD);
 }
 
-/*
-WUERR_BAD_STATE_TABLE_ROW_ID
-WUERR_STATE_TABLE_FULL
-WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_EXCEEDED
-WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED
-WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_INFO_EXCEEDED
-WUERR_NO_MEMORY
-WUERR_CREATE_STATE_TABLE_ROWS_FIRST
-WUERR_ALREADY_CREATED_STATE_TABLE_ROWS
-WUERR_BAD_TICKET
-WUERR_FEATURE_MISSING_IN_RELEASE_BUILD
-*/ 
+int  IsValidStateTableRowId(StateTable *t, int rowId)
+{
+	int success=0;
+	assert(t);
+	if (rowId<0 || rowId>=t->rowsCount || ((uint32_t*)t->mem)[rowId/32]&(UINT32_C(1)<<rowId&31))
+	{
+		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
+	}
+	else
+	{
+		success=1;
+	}
+	return success;
+}

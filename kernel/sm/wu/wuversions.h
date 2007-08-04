@@ -9,6 +9,17 @@
 #include "wubuffers.h"
 #include "wusnapshots.h"
 
+#define	VE_VERSIONS_COUNT		4
+#define VE_SNAPSHOTS_COUNT		3
+
+struct VersionsHeader
+{
+	XPTR xptr[VE_VERSIONS_COUNT];
+	TIMESTAMP creatorTs[VE_VERSIONS_COUNT];
+	int creator[VE_VERSIONS_COUNT];
+	int isZombie;
+};
+
 struct VersionsResourceDemand
 {
 	size_t clientStateSize;
@@ -36,12 +47,15 @@ struct VersionsSetup
 		- markBufferDirty - either marks buffer dirty or removes this mark. */ 
 	int (*rebindBuffer)(int bufferId, XPTR xptr);
 	int (*loadBuffer)(XPTR xptr, int *bufferId, int flags);
-	int (*unloadBuffer)(int bufferId, int flags);
+	int (*flushBuffer)(int bufferId, int flags);
 	int (*getBufferInfo)(int bufferId, BufferInfo *bufferInfo);
 	int (*getBufferStateBlock)(int bufferId, TICKET ticket, void **data);
 	int (*fixBuffer)(int bufferId, int orMask, int andNotMask);
 	int (*protectBuffer)(int bufferId, int orMask, int andNotMask);
-	int (*markBufferDirty)(int bufferId, int from, int to, int flags);
+	int (*markBufferDirty)(int bufferId, void *base, size_t size, int flags);
+
+	/* copy data functions */ 
+	int (*copyBlock)(XPTR dest, XPTR src, int flags);
 
 	/*	Alloc functions */ 
 	int (*allocBlock)(XPTR *xptr);
@@ -53,6 +67,9 @@ struct VersionsSetup
 	/* GC functions */ 
 	int (*acceptRequestForGc)(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count);
 
+	/* data layout functions */ 
+	int (*locateHeader)(int bufferId, VersionsHeader *header);
+
 	/*	Callbacks 
 		- onCompleteBlockRelocation - called emediately after block who is not included 
 		in the latest snapshot relocates. Block is already written at xptr,
@@ -63,7 +80,7 @@ struct VersionsSetup
 
 int VeInitialise();
 
-void VeQueryResourceDemand(VersionsResourceDemand *versionsResourceDemand);
+void VeQueryResourceDemand(VersionsResourceDemand *resourceDemand);
 
 int VeStartup(VersionsSetup *setup);
 
@@ -73,7 +90,7 @@ int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot);
 
 int VeOnUnregisterClient();
 
-int VeLoadBuffer(LXPTR lxptr, int *bufferId);
+int VeLoadBuffer(LXPTR lxptr, int *bufferId, int flags);
 
 int VeAllocBlock(LXPTR *lxptr);
 
@@ -87,7 +104,9 @@ int VeOnRollback();
 
 int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs);
 
-int VeOnCheckpoint(TIMESTAMP persistentTs);
+int VeOnBeginCheckpoint();
+
+int VeOnCompleteCheckpoint(TIMESTAMP persistentTs);
 
 int VeOnFlushBlock(int bufferId);
 
