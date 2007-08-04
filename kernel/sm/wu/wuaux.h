@@ -105,6 +105,7 @@ int ResetLowestBitSet(uint32_t *val)
 	return bitId;
 }
 
+#define WUERROR(CODE) ERRORfn(__FILE__,__LINE__,__FUNCTION__,(int)CODE);
 #define ERROR(CODE) ERRORfn(__FILE__,__LINE__,__FUNCTION__,(int)CODE);
 #define ISERROR(CODE) ISERRORfn(CODE)
 

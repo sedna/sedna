@@ -19,6 +19,8 @@
 #define WUERR_PERS_DATA_VALIDATION_FAILED                                ( 5 + WUERR_FIRST_ERR)
 #define WUERR_DEBUG_FUNCTION_UNAVAILABLE                                 ( 6 + WUERR_FIRST_ERR)
 #define WUERR_NO_MEMORY                                                  ( 7 + WUERR_FIRST_ERR)
+#define WUERR_NOT_IMPLEMENTED											 (36 + WUERR_FIRST_ERR)
+
 
 /* state table errors */ 
 

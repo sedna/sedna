@@ -8,17 +8,8 @@
 #include "wutypes.h"
 #include "wubuffers.h"
 #include "wusnapshots.h"
+#include "common/wustructures.h"
 
-#define	VE_VERSIONS_COUNT		4
-#define VE_SNAPSHOTS_COUNT		3
-
-struct VersionsHeader
-{
-	XPTR xptr[VE_VERSIONS_COUNT];
-	TIMESTAMP creatorTs[VE_VERSIONS_COUNT];
-	int creator[VE_VERSIONS_COUNT];
-	int isZombie;
-};
 
 struct VersionsResourceDemand
 {
@@ -31,21 +22,7 @@ struct VersionsSetup
 	TICKET clientStateTicket;
 	TICKET bufferStateTicket; 
 
-	/*	Buffer functions 
-		- rebindBuffer - changes an xptr associated with buffer identified
-		by bufferId. An error code is returned if a buffer associated with
-		xptr already exists and it's id is not bufferId. 
-		- loadBuffer - puts block identified by xptr in buffer (flags=0). 
-		- unloadBuffer - marks buffer as free and flushes if dirty (flags=0).
-		- getBufferInfo - stores buffer info in user-provided structure.
-		- getBufferStateBlock - get state block stored in internal
-		buffer structures.
-		- fixBuffer - prevents buffer from beeing ejected.
-		- protectBuffer - affect memory protection applied to the buffer
-		when it is mapped in TRN next time (debug version also changes protection
-		emediately for all TRNs the block is mapped to). 
-		- markBufferDirty - either marks buffer dirty or removes this mark. */ 
-	int (*rebindBuffer)(int bufferId, XPTR xptr);
+	/*	Buffer functions */ 
 	int (*loadBuffer)(XPTR xptr, int *bufferId, int flags);
 	int (*flushBuffer)(int bufferId, int flags);
 	int (*getBufferInfo)(int bufferId, BufferInfo *bufferInfo);
