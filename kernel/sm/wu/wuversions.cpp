@@ -60,6 +60,7 @@ struct VersionsClientState
 
 /* global state */ 
 
+static int isInitialised = 0;
 static TICKET ticket=NULL;
 static VersionsSetup setup;
 static TIMESTAMP persSnapshotTs=0;
@@ -474,6 +475,8 @@ int PushNewVersionIntoHeader(VersionsSnapshotsList *lst,
 
 int VeInitialise()
 {
+	ResetSnapshotsList(&snapshotsList);
+	isInitialised = 1;
 	return 1;
 }
 
@@ -498,7 +501,11 @@ int VeStartup(VersionsSetup *psetup)
 
 void VeDeinitialise()
 {
-	DeinitSnapshotsList(&snapshotsList);
+	if (isInitialised)
+	{
+		DeinitSnapshotsList(&snapshotsList);
+	}
+	isInitialised = 0;
 }
 
 int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
@@ -541,14 +548,8 @@ int VeOnUnregisterClient()
 	VersionsClientState *state=NULL;
 	VersionsSnapshot *snapshot=NULL;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		/* error */ 
-	}
-	else if (state->pushedVersions && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs))
-	{
-		/* error */ 
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
+	else if (state->pushedVersions && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs)) {}
 	else if (state->pushedVersions)
 	{
 		delete state->pushedVersions;
@@ -576,10 +577,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 	assert(pBufferId);
 	*pBufferId=0;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		;
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else
 	{
 		ClIsClientReady(&isReady,ClGetCurrentClientId());
@@ -587,14 +585,8 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
-		else if (!setup.loadBuffer(lxptr, &bufferId, 0))
-		{
-			;
-		}
-		else if (!setup.locateHeader(bufferId, &header))
-		{
-			;
-		}
+		else if (!setup.loadBuffer(lxptr, &bufferId, 0)) {}
+		else if (!setup.locateHeader(bufferId, &header)) {}
 		else if (!ValidateHeader(header))
 		{
 			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
@@ -618,7 +610,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 					}
 					else if (mapping.publicDataBegin > 0)
 					{
-						/* ERROR: "version is zomby " */ 
+						/* ERROR: "version not availible" */ 
 						ERROR(WUERR_GENERAL_ERROR);
 					}
 					else
@@ -628,7 +620,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				}
 				else if (mapping.publicDataBegin>1)
 				{
-					/* ERROR: "version not availible " */ 
+					/* ERROR: "version not availible" */ 
 					ERROR(WUERR_GENERAL_ERROR);
 				}
 				else
@@ -644,17 +636,11 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				assert(ordinal>=2);
 				if (ordinal < mapping.publicDataBegin || mapping.publicDataEnd <= ordinal)
 				{
-					/* ERROR: "version not availible " */ 
+					/* ERROR: "version not availible" */ 
 					ERROR(WUERR_GENERAL_ERROR);
 				}
-				else if (!setup.loadBuffer(mapping.version[ordinal].xptr, &bufferId, 0))
-				{
-					;
-				}
-				else if (!setup.locateHeader(bufferId, &header))
-				{
-					;
-				}
+				else if (!setup.loadBuffer(mapping.version[ordinal].xptr, &bufferId, 0)) {}
+				else if (!setup.locateHeader(bufferId, &header)) {}
 				else if (!ValidateHeader(header))
 				{
 					ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
@@ -681,16 +667,13 @@ int VeAllocBlock(LXPTR *lxptr)
 	VersionsClientState *state=NULL;
 	VersionsHeader *header=NULL;
 	VersionsPushedVersion pushedVersion;
-	int success=0, bufferId=0, isReady=0;
+	int success=0, okStatus=0, bufferId=0, isReady=0;
 
 	assert(lxptr);
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		;
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else
 	{
-		ClIsClientReady(&isReady,ClGetCurrentClientId());
+		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -700,18 +683,9 @@ int VeAllocBlock(LXPTR *lxptr)
 			/* ERROR: readonly */ 
 			ERROR(WUERR_GENERAL_ERROR);
 		}
-		else if (!setup.allocBlock(&xptr))
-		{
-			;
-		}
-		else if (!setup.loadBuffer(xptr,&bufferId,0))
-		{
-			;
-		}
-		else if (!setup.locateHeader(bufferId, &header))
-		{
-			;
-		}
+		else if (!setup.allocBlock(&xptr)) {}
+		else if (!setup.loadBuffer(xptr,&bufferId,0)) {}
+		else if (!setup.locateHeader(bufferId, &header)) {}
 		else
 		{
 			ResetHeader(header,0);
@@ -737,14 +711,12 @@ int VeCreateVersion(LXPTR lxptr)
 	VersionsPushedVersion pushedVersion;
 	VersionsSnapshot *snapshot=NULL;
 	XPTR xptr=0;
-	int success = 0, isReady = 0, persOrdinal = 0, isSpecial = 0, bufferId = 0;
+	int success = 0, okStatus = 0, isReady = 0, persOrdinal = 0, isSpecial = 0, bufferId = 0;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else
 	{
-		ClIsClientReady(&isReady,ClGetCurrentClientId());
+		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -753,12 +725,9 @@ int VeCreateVersion(LXPTR lxptr)
 		{
 			/* ERROR: "transaction is working on snapshot and hence is unable to create version" */ 
 			ERROR(WUERR_GENERAL_ERROR);
-		}else if (!setup.loadBuffer(lxptr,&bufferId,0))
-		{
 		}
-		else if (!setup.locateHeader(bufferId, &pheader))
-		{
-		}
+		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
+		else if (!setup.locateHeader(bufferId, &pheader)) {}
 		else if (!ValidateHeader(pheader))
 		{
 			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
@@ -773,12 +742,12 @@ int VeCreateVersion(LXPTR lxptr)
 			header=*pheader;
 			MakeMappingFromHeader(&snapshotsList,&mapping,pheader);
 			pushedVersion.lxptr=lxptr;
-			pushedVersion.lastCommitedXptr=xptr;
+			pushedVersion.lastCommitedXptr=0;
 			GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.anchor);
 			pushedVersion.anchorTs=snapshot->timestamp;
 			if (mapping.publicDataBegin>1)
 			{
-				/* ERROR: "no version" */ 
+				/* ERROR: "version not availible" */ 
 				ERROR(WUERR_GENERAL_ERROR);
 			}
 			if (mapping.validDataBegin==0)
@@ -794,36 +763,28 @@ int VeCreateVersion(LXPTR lxptr)
 					ERROR(WUERR_GENERAL_ERROR);
 				}
 			}
-			else if (!setup.allocBlock(&xptr))
-			{
-			}
+			else if (!setup.allocBlock(&xptr)) {}
 			else
 			{
 				persOrdinal=GetSnapshotByTimestamp(&snapshotsList,&snapshot,NULL,persSnapshotTs);
 				isSpecial=(persOrdinal!=0 && mapping.version[1].xptr!=mapping.version[persOrdinal].xptr);
-				if (!setup.copyBlock(xptr,lxptr,isSpecial))
-				{
-				}
-				else if (!setup.loadBuffer(lxptr,&bufferId,0))
-				{
-				}
-				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentClientId()))
-				{
-				}
+				if (!setup.copyBlock(xptr,lxptr,isSpecial)) {}
+				else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
+				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentClientId())) {}
 				else
 				{
-					setup.locateHeader(bufferId,&pheader);
-					if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentClientId(),lxptr,xptr))
-					{
-					}
+					if (!setup.locateHeader(bufferId,&pheader)) {}
+					else if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentClientId(),lxptr,xptr)) {}
 					else
 					{
+						pushedVersion.lastCommitedXptr=xptr;
 						state->pushedVersions->push_back(pushedVersion);
 						*pheader=header;
-						setup.markBufferDirty(bufferId, pheader, sizeof *pheader, 0);
+						okStatus = setup.markBufferDirty(bufferId, pheader, sizeof *pheader, 0);
+						assert(okStatus);
+						success=1;
 					}					
 				}
-
 				if (!success) setup.freeBlock(xptr);
 			}
 		}
@@ -838,15 +799,12 @@ int VeFreeBlock(LXPTR lxptr)
 	VersionsHeader *header = NULL;
 	VersionsMapping mapping;
 	VersionsPushedVersion pushedVersion;
-	int success = 0, isReady = 0, bufferId = 0;
+	int success = 0, okStatus = 0, isReady = 0, bufferId = 0;
 
-	if (!ClGetCurrentStateBlock((void**)state,ticket))
-	{
-		;
-	}
+	if (!ClGetCurrentStateBlock((void**)state,ticket)) {}
 	else
 	{
-		ClIsClientReady(&isReady,ClGetCurrentClientId());
+		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
 			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
@@ -856,14 +814,8 @@ int VeFreeBlock(LXPTR lxptr)
 			/* ERROR: "transaction is working on snapshot and hence is unable to free block" */ 
 			ERROR(WUERR_GENERAL_ERROR);
 		}
-		else if (!setup.loadBuffer(lxptr,&bufferId,0))
-		{
-			;
-		}
-		else if (!setup.locateHeader(bufferId, &header))
-		{
-			;
-		}
+		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
+		else if (!setup.locateHeader(bufferId, &header)) {}
 		else if (!ValidateHeader(header))
 		{
 			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
@@ -917,10 +869,7 @@ int VeOnCommit()
 	std::list<VersionsPushedVersion>::iterator i;
 	int success = 0, failure = 0;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		;
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else if (state->pushedVersions==NULL)
 	{
 		success=1;
@@ -955,10 +904,7 @@ int VeOnRollback()
 	SnapshotsRequestForGc buf[VE_BUFSZ], *ibuf=buf, *ebuf=buf+VE_BUFSZ;
 	int success = 0, failure = 0;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		;
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else if (state->pushedVersions == NULL)
 	{
 		success = 1;
@@ -973,10 +919,7 @@ int VeOnRollback()
 			}
 			if (!failure)
 			{
-				if (i->lxptr == ~(LXPTR)0)
-				{
-					;
-				}
+				if (i->lxptr == ~(LXPTR)0) {}
 				else if (persSnapshotTs < i->anchorTs)
 				{
 					 if (ibuf>=ebuf)
@@ -1021,22 +964,10 @@ int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs)
 	ClientsEnumClientsInfo enumClientsInfo;
 	int success=0;
 
-	if (discardedTs!=0 && !DiscardSnapshot(&snapshotsList, discardedTs))
-	{
-		;
-	}
-	else if (!CreateSnapshot(&snapshotsList, snapshotTs))
-	{
-		;
-	}
-	else if (!GetSnapshotByTimestamp(&snapshotsList, (VersionsSnapshot **)&(enumClientsInfo.userData), NULL, snapshotTs))
-	{
-		;
-	}
-	else if (!ClEnumClients(&enumClientsInfo, setupTsProc))
-	{
-		;
-	}
+	if (discardedTs!=0 && !DiscardSnapshot(&snapshotsList, discardedTs)) {}
+	else if (!CreateSnapshot(&snapshotsList, snapshotTs)) {}
+	else if (!GetSnapshotByTimestamp(&snapshotsList, (VersionsSnapshot **)&(enumClientsInfo.userData), NULL, snapshotTs)) {}
+	else if (!ClEnumClients(&enumClientsInfo, setupTsProc)) {}
 	else
 	{
 		success=1;

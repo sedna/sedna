@@ -76,8 +76,9 @@ struct SnapshotsSnapshot
 
 /* global state */ 
 
-static SnapshotsSetup setup;
+static int isInitialised = 0;
 static TICKET ticket=NULL;
+static SnapshotsSetup setup;
 static SnapshotsSnapshot snapshots[SH_SNAPSHOTS_COUNT], *leadingSnapshot=NULL;
 static SnapshotsGcNode gcNodes[SH_GC_NODES_COUNT];
 
@@ -523,6 +524,7 @@ int PurifySnapshots(int isKeepingCurrentSnapshot)
 
 int ShInitialise()
 {	
+	isInitialised = 1;
 	return 1;
 }
 
@@ -578,6 +580,7 @@ int ShShutdown()
 
 void ShDeinitialise()
 {
+	isInitialised = 0;
 }
 
 int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)

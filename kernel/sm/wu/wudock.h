@@ -7,8 +7,21 @@
 
 #include "wutypes.h"
 #include "common/xptr.h" 
+#include "common/errdbg/exceptions.h"
 
 XPTR WuInternaliseXptr(const xptr& v);
 xptr WuExternaliseXptr(XPTR v);
+int WuSetLastExceptionObject(const SednaException &e);
+void WuThrowException();
+
+#define WU_CATCH_EXCEPTIONS() \
+	catch (SednaException &e) \
+	{ \
+		WUERROR(WuSetLastExceptionObject(e)); \
+	} \
+	catch (...) \
+	{ \
+		WUERROR(WUERR_UNKNOWN_EXCEPTION); \
+	}
 
 #endif
