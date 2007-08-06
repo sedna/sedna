@@ -35,6 +35,7 @@ static StateTable stateTable;
 static uint32_t *readyClientsBitmap=NULL;
 static int clientsCount=0;
 static int readyClientsCount=0;
+static int isInitialised = 0;
 
 /*	Functions. */ 
 int ClInitialise()
@@ -48,6 +49,10 @@ int ClInitialise()
 	InitialiseStateTable(&stateTable);
 
 	success=ReserveStateTableColumn(&stateTable,&dummy,sizeof(ClientsMgmtData),0);
+	if (success) 
+	{
+		isInitialised=1;
+	}
 	return success;
 }
 
@@ -88,11 +93,15 @@ int ClStartup(ClientsSetup *clientsSetup)
 
 void ClDeinitialise()
 {
-	free(readyClientsBitmap);
-	readyClientsBitmap=NULL;
-	clientsCount=0;
-	readyClientsCount=0;
-	DeinitialiseStateTable(&stateTable);
+	if (isInitialised)
+	{
+		free(readyClientsBitmap);
+		readyClientsBitmap=NULL;
+		clientsCount=0;
+		readyClientsCount=0;
+		DeinitialiseStateTable(&stateTable);
+	}
+	isInitialised = 0;
 }
 
 int ClQueryMaxClientsCount()

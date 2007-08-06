@@ -7,6 +7,10 @@
 
 #include "wutypes.h"
 
+int WuGetTimestamp(TIMESTAMP *ts);
+
+int WuSetTimestamp(TIMESTAMP ts);
+
 int WuInit(int is_rcv_mode);
 
 int WuRelease();
@@ -15,9 +19,14 @@ int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
 
 int WuNotifyCheckpointFinished();
 
-int WuGetTimestamp(TIMESTAMP *ts);
+/* reports errors with exceptions instead of error codes */ 
 
-int WuSetTimestamp(TIMESTAMP ts);
+void WuInitExn(int is_rcv_mode);
 
+void WuReleaseExn();
+
+void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
+
+void WuNotifyCheckpointFinishedExn();
 
 #endif

@@ -17,9 +17,14 @@ TIMESTAMP timestamp = 1000;
 
 int WuGetTimestamp(TIMESTAMP *ts)
 {
-	assert(ts);
-	*ts=timestamp++;
-	return 1;
+	int success = 0;
+	assert(ts); *ts=0;
+	if (!timestamp == !(TIMESTAMP)0)
+	{
+		*ts=timestamp++;
+		success = 1;
+	}
+	return success;
 }
 
 int WuSetTimestamp(TIMESTAMP ts)
@@ -85,32 +90,56 @@ int CopyBlock(XPTR dest, XPTR src, int flags)
 
 int AllocBlock(XPTR *bigXptr)
 {
+	int success=0;
 	xptr lilXptr;
-	assert(bigXptr);
-	new_data_block(&lilXptr);
-	*bigXptr=WuInternaliseXptr(lilXptr);
-	return 1;
+	assert(bigXptr); *bigXptr=0;
+	try
+	{
+		new_data_block(&lilXptr);
+		*bigXptr=WuInternaliseXptr(lilXptr);
+		success=1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 int FreeBlock(XPTR bigXptr)
 {
+	int success=0;
 	xptr lilXptr;
 	lilXptr = WuExternaliseXptr(bigXptr);
-	delete_data_block(lilXptr);
-	return 1;
+	try
+	{
+		delete_data_block(lilXptr);
+		success=1;
+	}
+	WU_CATCH_EXCEPTIONS();
+	return success;
 }
 
 int LocateHeader(int bufferId, VersionsHeader **header)
 {
+	/*
+	ramoffs rofs = (ramofs)bufferId;
+	put_block_to_buffer(ClGetCurrentClientId(),
+		);
+		*/ 
+
 	assert(header);
 	return 1;
 }
 
 int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 {
+	int success=0;
 	SnapshotsVersion snapshotVersion = {lxptr, xptr};
-	ll_add_pers_snapshot_block_info(&snapshotVersion);
-	return 1;
+	try
+	{
+		ll_add_pers_snapshot_block_info(0,&snapshotVersion);
+		success=1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
@@ -152,9 +181,8 @@ int WuInit(int is_rcv_mode)
 	};
 	VersionsResourceDemand versionsResourceDemand;
 	SnapshotsResourceDemand snapshotsResourceDemand;
-
-
 	int success=0;
+
 	if (!ClInitialise()) {}
 	else if (!ShInitialise()) {}
 	else if (!VeInitialise()) {}
@@ -163,10 +191,8 @@ int WuInit(int is_rcv_mode)
 		VeQueryResourceDemand(&versionsResourceDemand);
 		ShQueryResourceDemand(&snapshotsResourceDemand);
 
-		if (!ClReserveStateBlocks(&versionsSetup.clientStateTicket,
-			versionsResourceDemand.clientStateSize)) {}
-		else if (!ClReserveStateBlocks(&snapshotsSetup.clientStateTicket,
-			snapshotsResourceDemand.clientStateSize)) {}
+		if (!ClReserveStateBlocks(&versionsSetup.clientStateTicket, versionsResourceDemand.clientStateSize)) {}
+		else if (!ClReserveStateBlocks(&snapshotsSetup.clientStateTicket, snapshotsResourceDemand.clientStateSize)) {}
 		else if (!ClStartup(&clientsSetup)) {}
 		else if (!VeStartup(&versionsSetup)) {}
 		else if (!ShStartup(&snapshotsSetup)) {}
@@ -186,11 +212,16 @@ int WuInit(int is_rcv_mode)
 
 int WuRelease()
 {
-	ShShutdown();
+	int success=0;
+	if (!ShShutdown()) {}
+	else
+	{
+		success=1;
+	}
 	ShDeinitialise();
 	VeDeinitialise();
 	ClDeinitialise();
-	return 1;
+	return success;
 }
 
 int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
@@ -202,3 +233,23 @@ int WuNotifyCheckpointFinished()
 {
 	return 1;
 }	
+
+void WuInitExn(int is_rcv_mode)
+{
+	if (!WuInit(is_rcv_mode)) WuThrowException();
+}
+
+void WuReleaseExn()
+{
+	if (!WuRelease()) WuThrowException();
+}
+
+void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn()
+{
+	if (!WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()) WuThrowException();
+}
+
+void WuNotifyCheckpointFinishedExn()
+{
+	if (!WuNotifyCheckpointFinished()) WuThrowException();
+}
