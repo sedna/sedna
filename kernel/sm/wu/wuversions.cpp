@@ -1,9 +1,10 @@
 #include <assert.h>
 #include <limits.h>
+#include <list>
 #include "wuaux.h"
+#include "wuerr.h"
 #include "wuversions.h"
 #include "wuclients.h"
-#include <list>
 
 #define VE_MAX_CLIENTS_COUNT	0x10000
 #define VE_BUFSZ				1024
@@ -114,11 +115,11 @@ InitSnapshotsList(VersionsSnapshotsList *lst, size_t clientsCount)
 
 	if (clientsCount>VE_MAX_CLIENTS_COUNT)
 	{
-		ERROR(WUERR_MAX_NUMBER_OF_CLIENTS_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_MAX_NUMBER_OF_CLIENTS_EXCEEDED);
 	}
 	else if(!(lst->mem=malloc(snapshotsSize+timestampsSize)))
 	{
-		ERROR(WUERR_NO_MEMORY);
+		WuSetLastErrorMacro(WUERR_NO_MEMORY);
 	}
 	else
 	{
@@ -157,7 +158,7 @@ int FindSnapshotByTimestamp(VersionsSnapshotsList *lst,
 
 	if (ts==~(TIMESTAMP)0)
 	{
-		ERROR(WUERR_BAD_TIMESTAMP);
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
 	else 	
 	{
@@ -187,7 +188,7 @@ int GetSnapshotByTimestamp(VersionsSnapshotsList *lst,
 	
 	if (ts == 0)
 	{
-		ERROR(WUERR_BAD_TIMESTAMP);
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
 	else
 	{
@@ -198,7 +199,7 @@ int GetSnapshotByTimestamp(VersionsSnapshotsList *lst,
 			it=NULL;
 			jt=NULL;
 			success=0;
-			ERROR(WUERR_NO_SNAPSHOT_WITH_THIS_TIMESTAMP);
+			WuSetLastErrorMacro(WUERR_NO_SNAPSHOT_WITH_THIS_TIMESTAMP);
 		}
 	}
 	*result=it;
@@ -221,7 +222,7 @@ int GetSnapshotByOrdinalNumber(VersionsSnapshotsList *lst,
 	}
 	if (!it || ordinal!=1)
 	{
-		ERROR(WUERR_NO_SNAPSHOT_WITH_THIS_ORDINAL);
+		WuSetLastErrorMacro(WUERR_NO_SNAPSHOT_WITH_THIS_ORDINAL);
 	}
 	else
 	{
@@ -243,7 +244,7 @@ int DiscardSnapshot(VersionsSnapshotsList *lst, TIMESTAMP ts)
 	}
 	else if (victim->occupancy>0)
 	{
-		ERROR(WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE);
+		WuSetLastErrorMacro(WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE);
 	}
 	else
 	{
@@ -268,11 +269,11 @@ int CreateSnapshot(VersionsSnapshotsList *lst, TIMESTAMP ts)
 	assert(lst);
 	if (!lst->freeList)
 	{
-		ERROR(WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 	}
 	else if (ts==0 || ts==~(TIMESTAMP)0)
 	{
-		ERROR(WUERR_BAD_TIMESTAMP);
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
 	else
 	{
@@ -280,7 +281,7 @@ int CreateSnapshot(VersionsSnapshotsList *lst, TIMESTAMP ts)
 		assert(insertionPt && beforeInsertionPt);
 		if (insertionPt->timestamp==ts)
 		{
-			ERROR(WUERR_SNAPSHOT_WITH_THIS_TIMESTAMP_ALREADY_EXISTS);
+			WuSetLastErrorMacro(WUERR_SNAPSHOT_WITH_THIS_TIMESTAMP_ALREADY_EXISTS);
 		}
 		else
 		{
@@ -440,7 +441,7 @@ int PushNewVersionIntoHeader(VersionsSnapshotsList *lst,
 		{
 			if (snapshot->occupancy > 0)
 			{
-				ERROR(WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE);
+				WuSetLastErrorMacro(WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE);
 				failure=1;
 			}
 			else
@@ -460,7 +461,7 @@ int PushNewVersionIntoHeader(VersionsSnapshotsList *lst,
 		hdr->creator[0]=creator;
 		if (ValidateHeader(hdr))
 		{
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else 
 		{
@@ -524,7 +525,7 @@ int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
 	}
 	else if (isUsingSnapshot && snapshot->isDamaged)
 	{
-		ERROR(WUERR_UNABLE_TO_USE_DAMAGED_SNAPSHOT);
+		WuSetLastErrorMacro(WUERR_UNABLE_TO_USE_DAMAGED_SNAPSHOT);
 	}
 	else if (isUsingSnapshot)
 	{
@@ -583,18 +584,18 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		ClIsClientReady(&isReady,ClGetCurrentClientId());
 		if (!isReady)
 		{
-			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
 		else if (!setup.loadBuffer(lxptr, &bufferId, 0)) {}
 		else if (!setup.locateHeader(bufferId, &header)) {}
 		else if (!ValidateHeader(header))
 		{
-			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
+			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
 		}
 		else if (header->xptr[0] != lxptr)
 		{
 			/* ERROR: "unexpected version encountered" */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
@@ -606,12 +607,12 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 					if (mapping.version[0].creator != ClGetCurrentClientId())
 					{
 						/* ERROR: "another client already created working version" */ 
-						ERROR(WUERR_GENERAL_ERROR);
+						WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 					}
 					else if (mapping.publicDataBegin > 0)
 					{
 						/* ERROR: "version not availible" */ 
-						ERROR(WUERR_GENERAL_ERROR);
+						WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 					}
 					else
 					{
@@ -621,7 +622,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				else if (mapping.publicDataBegin>1)
 				{
 					/* ERROR: "version not availible" */ 
-					ERROR(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 				else
 				{
@@ -637,18 +638,18 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				if (ordinal < mapping.publicDataBegin || mapping.publicDataEnd <= ordinal)
 				{
 					/* ERROR: "version not availible" */ 
-					ERROR(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 				else if (!setup.loadBuffer(mapping.version[ordinal].xptr, &bufferId, 0)) {}
 				else if (!setup.locateHeader(bufferId, &header)) {}
 				else if (!ValidateHeader(header))
 				{
-					ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
+					WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
 				}
 				else if (header->xptr[0]!=lxptr)
 				{
 					/* ERROR: "unexpected version encountered" */ 
-					ERROR(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 				else
 				{
@@ -676,12 +677,12 @@ int VeAllocBlock(LXPTR *lxptr)
 		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
-			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
 		else if (state->pushedVersions == NULL)
 		{
 			/* ERROR: readonly */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else if (!setup.allocBlock(&xptr)) {}
 		else if (!setup.loadBuffer(xptr,&bufferId,0)) {}
@@ -719,23 +720,23 @@ int VeCreateVersion(LXPTR lxptr)
 		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
-			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
 		else if (state->pushedVersions == NULL)
 		{
 			/* ERROR: "transaction is working on snapshot and hence is unable to create version" */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
 		else if (!setup.locateHeader(bufferId, &pheader)) {}
 		else if (!ValidateHeader(pheader))
 		{
-			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
+			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
 		}
 		else if (pheader->xptr[0]!=lxptr)
 		{
 			/* ERROR: "unexpected version encountered " */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
@@ -748,19 +749,19 @@ int VeCreateVersion(LXPTR lxptr)
 			if (mapping.publicDataBegin>1)
 			{
 				/* ERROR: "version not availible" */ 
-				ERROR(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 			}
 			if (mapping.validDataBegin==0)
 			{
 				if (mapping.version[0].creator != ClGetCurrentClientId())
 				{
 					/* ERROR: "another transaction created working version" */ 
-					ERROR(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 				else
 				{
 					/* ERROR: "version already created" */ 
-					ERROR(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 			}
 			else if (!setup.allocBlock(&xptr)) {}
@@ -807,23 +808,23 @@ int VeFreeBlock(LXPTR lxptr)
 		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);
 		if (!isReady)
 		{
-			ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
 		else if (state->pushedVersions == NULL)
 		{
 			/* ERROR: "transaction is working on snapshot and hence is unable to free block" */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
 		else if (!setup.locateHeader(bufferId, &header)) {}
 		else if (!ValidateHeader(header))
 		{
-			ERROR(WUERR_PERS_DATA_VALIDATION_FAILED);
+			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
 		}
 		else if (header->xptr[0]!=lxptr)
 		{
 			/* ERROR: "unexpected version encountered " */ 
-			ERROR(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
@@ -831,17 +832,17 @@ int VeFreeBlock(LXPTR lxptr)
 			if (mapping.publicDataBegin>1)
 			{
 				/* ERROR: "no version" */ 
-				ERROR(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 			}
 			if (mapping.validDataBegin>0)
 			{
 				/* ERROR: "unable to free - create version first" */ 
-				ERROR(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 			}
 			else if (mapping.version[0].creator != ClGetCurrentClientId())
 			{
 				/* ERROR: "another transaction created working version" */ 
-				ERROR(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 			}
 			else
 			{

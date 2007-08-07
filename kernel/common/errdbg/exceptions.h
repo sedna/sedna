@@ -227,6 +227,8 @@ public:
     virtual std::string getFunction()    const { return function; }
     virtual int         getLine()        const { return line; }
 
+	virtual void raise() const = 0;
+
 };
 
 
@@ -256,6 +258,7 @@ public:
 #endif
         return res;
     }
+	virtual void raise() const { throw *this; }
 };
 
 
@@ -286,6 +289,7 @@ public:
 #endif
         return res;
     }
+	virtual void raise() const { throw *this; }
 };
 
 
@@ -334,6 +338,7 @@ public:
 
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
+	virtual void raise() const { throw *this; }
 };
 
 
@@ -376,6 +381,7 @@ public:
 
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return true; }
+	virtual void raise() const { throw *this; }
 };
 
 
@@ -438,6 +444,7 @@ public:
     }
 
     virtual bool need_rollback() { return rollback; }
+	virtual void raise() const { throw *this; }
 };
 
 
@@ -460,6 +467,7 @@ public:
     virtual std::string getMsg() const { return err_msg; }
 
     virtual bool need_rollback() { return false; }
+	virtual void raise() const { throw *this; }
 };
 
 

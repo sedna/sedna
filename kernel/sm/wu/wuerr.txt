@@ -1,0 +1,156 @@
+# Comments start with #. Comments are ignored.
+# Each error entry consists of 2 lines - error name (no preceeding whitespace 
+# allowed) and error description (must start with tab).
+# Lines starting with ## appear in generated files as comments.
+
+## generic errors
+
+WUERR_GENERAL_ERROR
+	Some error occured.
+
+WUERR_BAD_PARAMS
+	Bad params passed to the function.
+
+WUERR_FUNCTION_INVALID_IN_THIS_STATE
+	The called function must be never called in this state. 
+
+WUERR_STARTUP_ERROR
+	The module failed to perform a clean startup.
+
+WUERR_SHUTDOWN_ERROR
+	The module failed to perform a clean shutdown.
+
+WUERR_PERS_DATA_VALIDATION_FAILED
+	The data read from persistent storage is corrupt.
+
+WUERR_DEBUG_FUNCTION_UNAVAILABLE
+	The called function is intended for debug purposes only and is unavailable in this build.
+
+WUERR_NO_MEMORY
+	Unable to allocate memory.
+
+WUERR_NOT_IMPLEMENTED
+	Function not implemented, sorry.
+
+## exceptions - evil!
+
+WUERR_UNKNOWN_EXCEPTION
+	Unknown exception catched.
+
+WUERR_SEDNA_EXCEPTION
+	An instance of SednaException catched.
+
+WUERR_SEDNA_SYSTEM_EXCEPTION
+	An instance of SednaSystemExcepton catched.
+
+WUERR_SEDNA_SYSTEM_ENV_EXCEPTION
+	An instance of SednaSystemEnvException catched.
+
+WUERR_SEDNA_USER_EXCEPTION
+	An instance of SednaUserException catched.
+
+WUERR_SEDNA_USER_FN_ERROR_EXCEPTION
+	An instance of SednaUserExceptionFnError catched.
+
+WUERR_SEDNA_USER_ENV_EXCEPTION
+	An instance of SednaUserEnvException catched.
+
+WUERR_SEDNA_USER_SOFT_EXCEPTION
+	An instance of SednaUserSoftException catched.
+
+## state table errors
+
+WUERR_BAD_TICKET
+	The ticket is invalid.
+
+WUERR_STATE_TABLE_BAD_ROW_ID
+	An attempt was made to reference a state table row by invalid id.
+
+WUERR_STATE_TABLE_FULL
+	State table is full, unable to allocate row.
+
+WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_EXCEEDED
+	Maximum number of state table columns exceeded.
+
+WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED
+	Maximum size of a state table row exceeded.
+
+WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_DEBUG_INFO_EXCEEDED
+	Maximum number of state table columns with debug info exceeded.
+
+## clients errors
+
+WUERR_BAD_CLIENT_ID
+	Bad client id.
+
+WUERR_CLIENT_ID_ALREADY_IN_USE
+	Unable to assign the given id to the client since this id is already in use.
+
+WUERR_MAX_NUMBER_OF_CLIENTS_EXCEEDED
+	Maximum number of registered clients exceeded.
+
+WUERR_CLIENT_ALREADY_MARKED_READY
+	The client is already marked ready.
+
+WUERR_CLIENT_ALREADY_MARKED_LEAVING
+	The client is already marked leaving.
+
+WUERR_CLIENT_SET_ALREADY_UNLOCKED
+	Client set is already unlocked.
+
+WUERR_CLIENT_SET_MAX_NUMBER_OF_LOCKS_EXCEEDED
+	The lock count of client set exceeded an implementation limit.
+
+WUERR_CLIENT_SET_DEADLOCK_DETECTED
+	The calling thread locked client set and is unable to mark client ready or leaving.
+
+WUERR_UNABLE_TO_UNREGISTER_CURRENT_CLIENT
+	Unable to unregister the client selected as the current client.
+
+WUERR_UNABLE_TO_UNREGISTER_READY_CLIENT
+	Unable to unregister the client marked ready.
+
+## snapshots errors
+
+WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE
+	An attempt was made to discard a snapshot that is currently in use.
+
+WUERR_UNABLE_TO_DISCARD_SPECIAL_SNAPSHOT
+	An attempt was made to discard a persistent snapshot or other special snapshot.
+
+WUERR_UNABLE_TO_USE_DAMAGED_SNAPSHOT
+	Snapshot is damaged and can not be used.	
+
+WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE
+	The snapshot is currently in use and can not be damaged.
+
+WUERR_SNAPSHOT_ALREADY_PERSISTENT
+	The snapshot is already persistent.
+
+WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED
+	Maximum number of snapshots exceeded.
+
+WUERR_NO_SNAPSHOT_WITH_THIS_TIMESTAMP
+	No snapshot with the given timestamp.
+
+WUERR_NO_SNAPSHOT_WITH_THIS_TYPE
+	No snapshot with the given type.
+
+WUERR_NO_SNAPSHOT_WITH_THIS_ORDINAL
+	No snapshot with the given ordinal number.
+
+WUERR_SNAPSHOT_WITH_THIS_TIMESTAMP_ALREADY_EXISTS
+	Unable to create a new snapshot with the given timestamp since another snapshot with this timestamp already exists.
+
+WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS
+	Unable to advance snapshots.
+
+WUERR_NO_SNAPSHOTS_EXIST
+	Currently no snapshots exist.
+
+## timestamps errors
+
+WUERR_BAD_TIMESTAMP
+	Timestamp is invalid.
+
+## no more errors

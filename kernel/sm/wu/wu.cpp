@@ -1,6 +1,7 @@
 #include "wuaux.h"
 #include <assert.h>
 #include "wu.h"
+#include "wuerr.h"
 #include "wuclients.h"
 #include "wusnapshots.h"
 #include "wuversions.h"
@@ -36,55 +37,55 @@ int WuSetTimestamp(TIMESTAMP ts)
 static
 int LoadBuffer(XPTR xptr, int *bufferId, int flags)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int FlushBuffer(int bufferId, int flags)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int GetBufferInfo(int bufferId, BufferInfo *bufferInfo)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int GetBufferStateBlock(int bufferId, TICKET ticket, void **data)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int FixBuffer(int bufferId, int orMask, int andNotMask)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int ProtectBuffer(int bufferId, int orMask, int andNotMask)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 static
 int MarkBufferDirty(int bufferId, void *base, size_t size, int flags)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
 int CopyBlock(XPTR dest, XPTR src, int flags)
 {
-	WUERROR(WUERR_NOT_IMPLEMENTED);
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
 }
 
