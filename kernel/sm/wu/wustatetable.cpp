@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "wustatetable.h"
 #include "wuaux.h"
+#include "wuerr.h"
 
 #define ST_ALIGNMENT				sizeof(void*)
 #define ST_TICKET_PTR_BITS			20
@@ -71,7 +72,7 @@ int GetColumnInfo(StateTable *t, TICKET ticket,
 	if (colbase<begin || colbase>=end || !CheckTicket(ticket) || colnum<0 || colnum>=t->columnsCount ||
 		DEBUGI && t->columnBase[colnum]!=colbase)
 	{
-		ERROR(WUERR_BAD_TICKET);
+		WuSetLastErrorMacro(WUERR_BAD_TICKET);
 	}
 	else if (isBogus)
 	{
@@ -79,7 +80,7 @@ int GetColumnInfo(StateTable *t, TICKET ticket,
 	}
 	else if (!DEBUGI)
 	{
-		ERROR(WUERR_DEBUG_FUNCTION_UNAVAILABLE);
+		WuSetLastErrorMacro(WUERR_DEBUG_FUNCTION_UNAVAILABLE);
 	}
 	else
 	{
@@ -213,14 +214,14 @@ int CreateStateTableRows(StateTable *t, int rowsCount, size_t maxRowSize)
 
 	if(rowSize>maxRowSize)
 	{
-		ERROR(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
 	}
 	else
 	{
 		t->mem=malloc(totalSize);
 		if (NULL==t->mem)
 		{
-			ERROR(WUERR_NO_MEMORY);
+			WuSetLastErrorMacro(WUERR_NO_MEMORY);
 		}
 		else
 		{
@@ -279,15 +280,15 @@ int  ReserveStateTableColumn(StateTable *t, TICKET *ticket, size_t size, int ali
 
 	if (colnum>=(int)ST_MAX_COLUMNS)
 	{
-		ERROR(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_EXCEEDED);
 	}
 	else if (nsize>=ST_MAX_ROW_SIZE)
 	{
-		ERROR(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_MAX_ROW_SIZE_EXCEEDED);
 	}
 	else if (DEBUGI && colnum>=ST_MAX_COLUMNS_WITH_INFO)
 	{
-		ERROR(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_DEBUG_INFO_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_MAX_NUMBER_OF_COLUMNS_WITH_DEBUG_INFO_EXCEEDED);
 	}
 	else
 	{
@@ -365,7 +366,7 @@ int  OccupyStateTableFirstVacantRow(StateTable *t, int *rowId, int rngBegin, int
 
 	if (v==0)
 	{
-		ERROR(WUERR_STATE_TABLE_FULL);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_FULL);
 	}
 	else
 	{
@@ -386,7 +387,7 @@ int  SetStateTableIsVacantRowFlag(StateTable *t, int rowId, int isVacant)
 	assert(t);
 	if (rowId<0 || rowId>=t->rowsCount)
 	{
-		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_BAD_ROW_ID);
 	}
 	else
 	{
@@ -418,7 +419,7 @@ int  IsStateTableRowVacant(StateTable *t, int *isVacant, int rowId)
 
 	if (rowId<0 || rowId>=t->rowsCount)
 	{
-		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_BAD_ROW_ID);
 	}
 	else
 	{
@@ -463,7 +464,7 @@ int  IsValidStateTableRowId(StateTable *t, int rowId)
 	assert(t);
 	if (rowId<0 || rowId>=t->rowsCount || ((uint32_t*)t->mem)[rowId/32]&(UINT32_C(1)<<rowId&31))
 	{
-		ERROR(WUERR_STATE_TABLE_BAD_ROW_ID);
+		WuSetLastErrorMacro(WUERR_STATE_TABLE_BAD_ROW_ID);
 	}
 	else
 	{

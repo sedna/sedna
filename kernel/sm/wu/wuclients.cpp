@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "wuaux.h"
+#include "wuerr.h"
 #include "wuclients.h"
 #include "wustatetable.h"
 
@@ -69,7 +70,7 @@ int ClStartup(ClientsSetup *clientsSetup)
 
 	if (clientsSetup->maxClientsCount<0)
 	{
-		ERROR(WUERR_BAD_PARAMS);
+		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
 	else
 	{
@@ -120,11 +121,11 @@ int ClRegisterClient(int *clientId, int isFixed)
 	{
 		if(!IsStateTableRowVacant(&stateTable,&isVacant,*clientId))
 		{
-			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
+			if (WuGetLastError() == WUERR_STATE_TABLE_BAD_ROW_ID) WuSetLastErrorMacro(WUERR_BAD_CLIENT_ID);
 		}
 		else if(!isVacant)
 		{
-			ERROR(WUERR_CLIENT_ID_ALREADY_IN_USE);
+			WuSetLastErrorMacro(WUERR_CLIENT_ID_ALREADY_IN_USE);
 		}
 		else
 		{
@@ -154,13 +155,13 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 
 	if (threadState.clientSetLockCount>0)
 	{
-		ERROR(WUERR_CLIENT_SET_DEADLOCK_DETECTED);
+		WuSetLastErrorMacro(WUERR_CLIENT_SET_DEADLOCK_DETECTED);
 	}
 	else
 	{
 		if (!IsValidStateTableRowId(&stateTable,clientId))
 		{
-			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
+			if (WuGetLastError() == WUERR_STATE_TABLE_BAD_ROW_ID) WuSetLastErrorMacro(WUERR_BAD_CLIENT_ID);
 		}
 		else
 		{		
@@ -177,7 +178,7 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 				}
 				else
 				{					
-					ERROR(WUERR_CLIENT_ALREADY_MARKED_READY);
+					WuSetLastErrorMacro(WUERR_CLIENT_ALREADY_MARKED_READY);
 				}
 				break;
 			case 2: /* mark leaving */ 
@@ -189,7 +190,7 @@ int ClMarkClientReadyOrLeaving(int clientId, int flag)
 				}
 				else
 				{
-					ERROR(WUERR_CLIENT_ALREADY_MARKED_LEAVING);
+					WuSetLastErrorMacro(WUERR_CLIENT_ALREADY_MARKED_LEAVING);
 				}
 				break;
 			default:
@@ -218,11 +219,11 @@ int ClUnregisterClient(int clientId)
 
 	if (!GetStateTableMasterCell(&stateTable,(void**)&mgmtData,clientId))
 	{
-		if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID); 
+		if (WuGetLastError() == WUERR_STATE_TABLE_BAD_ROW_ID) WuSetLastErrorMacro(WUERR_BAD_CLIENT_ID); 
 	}
 	else if (mgmtData->currentCntr>0)
 	{
-		ERROR(WUERR_UNABLE_TO_UNREGISTER_CURRENT_CLIENT);
+		WuSetLastErrorMacro(WUERR_UNABLE_TO_UNREGISTER_CURRENT_CLIENT);
 	}
 	else
 	{
@@ -231,7 +232,7 @@ int ClUnregisterClient(int clientId)
 
 		if (*pval&mask)
 		{
-			ERROR(WUERR_UNABLE_TO_UNREGISTER_READY_CLIENT);
+			WuSetLastErrorMacro(WUERR_UNABLE_TO_UNREGISTER_READY_CLIENT);
 		}
 		else if(SetStateTableIsVacantRowFlag(&stateTable,clientId,1))
 		{
@@ -268,7 +269,7 @@ int ClSetCurrentClientId(int clientId)
 	{
 		if (!GetStateTableMasterCell(&stateTable,(void**)&mgmtData,clientId))
 		{
-			if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID);
+			if (WuGetLastError() == WUERR_STATE_TABLE_BAD_ROW_ID) WuSetLastErrorMacro(WUERR_BAD_CLIENT_ID);
 		}
 		else
 		{
@@ -295,7 +296,7 @@ int ClLockClientSet()
 	int success=0;
 	if (threadState.clientSetLockCount==INT_MAX)
 	{
-		ERROR(WUERR_CLIENT_SET_MAX_NUMBER_OF_LOCKS_EXCEEDED);
+		WuSetLastErrorMacro(WUERR_CLIENT_SET_MAX_NUMBER_OF_LOCKS_EXCEEDED);
 	}
 	else
 	{
@@ -311,7 +312,7 @@ int ClUnlockClientSet()
 	if (threadState.clientSetLockCount<=0)
 	{
 		assert(threadState.clientSetLockCount==0);
-		ERROR(WUERR_CLIENT_SET_ALREADY_UNLOCKED);
+		WuSetLastErrorMacro(WUERR_CLIENT_SET_ALREADY_UNLOCKED);
 	}
 	else
 	{
@@ -358,7 +359,7 @@ int ClIsClientReady(int *isReady, int clientId)
 	assert(isReady);
 	if (!IsValidStateTableRowId(&stateTable,clientId))
 	{
-		if (ISERROR(WUERR_STATE_TABLE_BAD_ROW_ID)) ERROR(WUERR_BAD_CLIENT_ID); 
+		if (WuGetLastError() == WUERR_STATE_TABLE_BAD_ROW_ID) WuSetLastErrorMacro(WUERR_BAD_CLIENT_ID); 
 	}
 	else
 	{

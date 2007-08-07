@@ -5,6 +5,7 @@
 #include "wuclients.h"
 #include "wusnapshots.h"
 #include "wuaux.h"
+#include "wuerr.h"
 
 #define SH_SNAPSHOTS_COUNT	3
 #define SH_GC_NODES_COUNT	((SH_SNAPSHOTS_COUNT*SH_SNAPSHOTS_COUNT+SH_SNAPSHOTS_COUNT)/2)
@@ -157,7 +158,7 @@ int GetSnapshotByTimestamp(SnapshotsSnapshot *head,
 		else
 		{
 notfound:
-			ERROR(WUERR_NO_SNAPSHOT_WITH_THIS_TIMESTAMP);
+			WuSetLastErrorMacro(WUERR_NO_SNAPSHOT_WITH_THIS_TIMESTAMP);
 		}
 	}
 	return success;
@@ -200,7 +201,7 @@ int GetSnapshotByType(SnapshotsSnapshot *head,
 		else
 		{
 notfound:
-			ERROR(WUERR_NO_SNAPSHOT_WITH_THIS_TYPE);
+			WuSetLastErrorMacro(WUERR_NO_SNAPSHOT_WITH_THIS_TYPE);
 		}
 	}
 	return success;
@@ -294,11 +295,11 @@ int DiscardSnapshot(TIMESTAMP ts, TIMESTAMP discardedTs)
 	}
 	else if (victim->type != SH_REGULAR_SNAPSHOT)
 	{
-		ERROR(WUERR_UNABLE_TO_DISCARD_SPECIAL_SNAPSHOT);
+		WuSetLastErrorMacro(WUERR_UNABLE_TO_DISCARD_SPECIAL_SNAPSHOT);
 	}
 	else if (victim->occupancy > 0)
 	{
-		ERROR(WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE);
+		WuSetLastErrorMacro(WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE);
 	}
 	else if (PurgeVersions(&victim->gcChain->entries))
 	{
@@ -345,7 +346,7 @@ int CreateSnapshot(TIMESTAMP *ts)
 		}
 		else
 		{
-			ERROR(WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
+			WuSetLastErrorMacro(WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 		}
 	}
 	if (!success)
@@ -560,7 +561,7 @@ int ShShutdown()
 		}
 		else
 		{
-			ERROR(WUERR_SHUTDOWN_ERROR);
+			WuSetLastErrorMacro(WUERR_SHUTDOWN_ERROR);
 			failure=1;
 		}
 	}
@@ -572,7 +573,7 @@ int ShShutdown()
 	else if (GetCurrentSnapshot())
 	{
 		failure=1;
-		ERROR(WUERR_SHUTDOWN_ERROR);
+		WuSetLastErrorMacro(WUERR_SHUTDOWN_ERROR);
 	}
 	if (!failure) ResetLists();
 	return failure==0;
@@ -597,7 +598,7 @@ int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)
 		{
 			if (!current)
 			{
-				ERROR(WUERR_NO_SNAPSHOTS_EXIST);
+				WuSetLastErrorMacro(WUERR_NO_SNAPSHOTS_EXIST);
 			}
 			else
 			{
@@ -697,7 +698,7 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 
 	if (AdvanceSnapshotsRecursion>0)
 	{
-		ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
 	else
 	{
@@ -708,7 +709,7 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 		}
 		else if (canAdvance==0)
 		{
-			ERROR(WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS);
+			WuSetLastErrorMacro(WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS);
 		}
 		else if (!PurifySnapshots(0))
 		{
@@ -740,11 +741,11 @@ int ShOnBeginCheckpoint(TIMESTAMP *persistentTs)
 	}
 	else if (GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
 	{
-		ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
 	else if (s->type!=SH_REGULAR_SNAPSHOT)
 	{
-		ERROR(WUERR_SNAPSHOT_ALREADY_PERSISTENT);
+		WuSetLastErrorMacro(WUERR_SNAPSHOT_ALREADY_PERSISTENT);
 	}
 	else
 	{
@@ -769,7 +770,7 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
 	if (!nextPers || GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0))
 	{
-		ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
 	else
 	{
@@ -835,7 +836,7 @@ int ShOnCompleteCheckpoint()
 
 	if (GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
 	{
-		ERROR(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
 	if (!GetSnapshotByType(leadingSnapshot,&prevPers,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0))
 	{

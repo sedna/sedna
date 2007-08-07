@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
-#include "wuerr.h"
 
 static
 inline
@@ -104,10 +103,6 @@ int ResetLowestBitSet(uint32_t *val)
 	*val^=*val&-*val;
 	return bitId;
 }
-
-#define WUERROR(CODE) ERRORfn(__FILE__,__LINE__,__FUNCTION__,(int)CODE);
-#define ERROR(CODE) ERRORfn(__FILE__,__LINE__,__FUNCTION__,(int)CODE);
-#define ISERROR(CODE) ISERRORfn(CODE)
 
 void ERRORfn(const char*,int,const char*,int);
 int  ISERRORfn(int);
