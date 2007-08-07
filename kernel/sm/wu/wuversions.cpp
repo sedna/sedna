@@ -515,14 +515,8 @@ int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
 	VersionsClientState *state=NULL;
 	VersionsSnapshot *snapshot=NULL;
 
-	if (!ClGetCurrentStateBlock((void**)&state,ticket))
-	{
-		/* error */ 
-	}
-	else if (isUsingSnapshot && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, snapshotTs))
-	{
-		/* error */ 
-	}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
+	else if (isUsingSnapshot && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, snapshotTs)) {}
 	else if (isUsingSnapshot && snapshot->isDamaged)
 	{
 		WuSetLastErrorMacro(WUERR_UNABLE_TO_USE_DAMAGED_SNAPSHOT);
@@ -588,14 +582,9 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		}
 		else if (!setup.loadBuffer(lxptr, &bufferId, 0)) {}
 		else if (!setup.locateHeader(bufferId, &header)) {}
-		else if (!ValidateHeader(header))
+		else if (!ValidateHeader(header) || header->xptr[0] != lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
-		}
-		else if (header->xptr[0] != lxptr)
-		{
-			/* ERROR: "unexpected version encountered" */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
@@ -606,13 +595,11 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				{
 					if (mapping.version[0].creator != ClGetCurrentClientId())
 					{
-						/* ERROR: "another client already created working version" */ 
-						WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+						WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 					}
 					else if (mapping.publicDataBegin > 0)
 					{
-						/* ERROR: "version not availible" */ 
-						WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+						WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 					}
 					else
 					{
@@ -621,14 +608,12 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				}
 				else if (mapping.publicDataBegin>1)
 				{
-					/* ERROR: "version not availible" */ 
-					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 				}
 				else
 				{
 					success = 1;
 				}
-
 				if (success) *pBufferId = bufferId; 
 			}
 			else
@@ -637,19 +622,13 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				assert(ordinal>=2);
 				if (ordinal < mapping.publicDataBegin || mapping.publicDataEnd <= ordinal)
 				{
-					/* ERROR: "version not availible" */ 
-					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 				}
 				else if (!setup.loadBuffer(mapping.version[ordinal].xptr, &bufferId, 0)) {}
 				else if (!setup.locateHeader(bufferId, &header)) {}
-				else if (!ValidateHeader(header))
+				else if (!ValidateHeader(header) || header->xptr[0]!=lxptr)
 				{
 					WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
-				}
-				else if (header->xptr[0]!=lxptr)
-				{
-					/* ERROR: "unexpected version encountered" */ 
-					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 				}
 				else
 				{
@@ -681,8 +660,7 @@ int VeAllocBlock(LXPTR *lxptr)
 		}
 		else if (state->pushedVersions == NULL)
 		{
-			/* ERROR: readonly */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
 		else if (!setup.allocBlock(&xptr)) {}
 		else if (!setup.loadBuffer(xptr,&bufferId,0)) {}
@@ -724,19 +702,13 @@ int VeCreateVersion(LXPTR lxptr)
 		}
 		else if (state->pushedVersions == NULL)
 		{
-			/* ERROR: "transaction is working on snapshot and hence is unable to create version" */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
 		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
 		else if (!setup.locateHeader(bufferId, &pheader)) {}
-		else if (!ValidateHeader(pheader))
+		else if (!ValidateHeader(pheader) || pheader->xptr[0]!=lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
-		}
-		else if (pheader->xptr[0]!=lxptr)
-		{
-			/* ERROR: "unexpected version encountered " */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
@@ -748,20 +720,17 @@ int VeCreateVersion(LXPTR lxptr)
 			pushedVersion.anchorTs=snapshot->timestamp;
 			if (mapping.publicDataBegin>1)
 			{
-				/* ERROR: "version not availible" */ 
-				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 			}
 			if (mapping.validDataBegin==0)
 			{
 				if (mapping.version[0].creator != ClGetCurrentClientId())
 				{
-					/* ERROR: "another transaction created working version" */ 
-					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 				}
 				else
 				{
-					/* ERROR: "version already created" */ 
-					WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+					WuSetLastErrorMacro(WUERR_WORKING_VERSION_ALREADY_CREATED);
 				}
 			}
 			else if (!setup.allocBlock(&xptr)) {}
@@ -812,37 +781,28 @@ int VeFreeBlock(LXPTR lxptr)
 		}
 		else if (state->pushedVersions == NULL)
 		{
-			/* ERROR: "transaction is working on snapshot and hence is unable to free block" */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
 		else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
 		else if (!setup.locateHeader(bufferId, &header)) {}
-		else if (!ValidateHeader(header))
+		else if (!ValidateHeader(header) || header->xptr[0]!=lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_PERS_DATA_VALIDATION_FAILED);
-		}
-		else if (header->xptr[0]!=lxptr)
-		{
-			/* ERROR: "unexpected version encountered " */ 
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
 		else
 		{
 			MakeMappingFromHeader(&snapshotsList,&mapping,header);
 			if (mapping.publicDataBegin>1)
 			{
-				/* ERROR: "no version" */ 
-				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 			}
 			if (mapping.validDataBegin>0)
 			{
-				/* ERROR: "unable to free - create version first" */ 
-				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_OPERATION_REQUIRES_WORKING_VERSION);
 			}
 			else if (mapping.version[0].creator != ClGetCurrentClientId())
 			{
-				/* ERROR: "another transaction created working version" */ 
-				WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
+				WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 			}
 			else
 			{
@@ -946,7 +906,6 @@ int VeOnRollback()
 		}
 		success = (failure == 0);
 	}
-
 	return success;
 }
 
@@ -973,7 +932,6 @@ int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs)
 	{
 		success=1;
 	}
-
 	return success;
 }
 
@@ -992,7 +950,6 @@ int VeOnCompleteCheckpoint(TIMESTAMP persistentTs)
 		persSnapshotTs=persistentTs;
 		success = 1;
 	}
-	
 	return success;
 }
 

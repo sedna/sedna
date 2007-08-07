@@ -8,7 +8,7 @@
 
 #define ERR_BUF_SZ	2048
 
-static const size_t appErrorsNum = 46;
+static const size_t appErrorsNum = 51;
 static const char *appErrorsDescription[appErrorsNum] = 
 {
 	"Some error occured.", 
@@ -56,7 +56,12 @@ static const char *appErrorsDescription[appErrorsNum] =
 	"Unable to create a new snapshot with the given timestamp since another snapshot with this timestamp already exists.", 
 	"Unable to advance snapshots.", 
 	"Currently no snapshots exist.", 
-	"Timestamp is invalid."
+	"Timestamp is invalid.", 
+	"No apropriate version of the block exist.", 
+	"The transaction already created a working version of this block.", 
+	"An other active transaction created a working version of this block.", 
+	"The mutating operation is not permited since snapshots are only availible for read-only access.", 
+	"The operation requires working version (currently operating on the last commited version)."
 };
 
 struct ErrorProperties
@@ -226,7 +231,7 @@ void WuThrowException()
 		throw SednaUserException(file,function,line,description,code);
 		break;
 	case WUERR_SEDNA_USER_FN_ERROR_EXCEPTION:
-		throw SednaUserExceptionFnError(file,function,line,"error description lost (TODO: preserve descriptions)",NULL);
+		throw SednaUserExceptionFnError(file,function,line,"error aux info lost (TODO: preserve it)",NULL);
 		break;
 	case WUERR_SEDNA_USER_ENV_EXCEPTION:
 		throw SednaUserEnvException(file,function,line,description,true);

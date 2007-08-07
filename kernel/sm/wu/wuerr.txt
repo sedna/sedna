@@ -153,4 +153,21 @@ WUERR_NO_SNAPSHOTS_EXIST
 WUERR_BAD_TIMESTAMP
 	Timestamp is invalid.
 
+## versions errors
+
+WUERR_NO_APROPRIATE_VERSION
+	No apropriate version of the block exist.
+
+WUERR_WORKING_VERSION_ALREADY_CREATED
+	The transaction already created a working version of this block.
+
+WUERR_WORKING_VERSION_CREATED_BY_ALLY
+	An other active transaction created a working version of this block.
+
+WUERR_SNAPSHOTS_ARE_READ_ONLY
+	The mutating operation is not permited since snapshots are only availible for read-only access.
+
+WUERR_OPERATION_REQUIRES_WORKING_VERSION
+	The operation requires working version (currently operating on the last commited version).
+
 ## no more errors
