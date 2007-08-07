@@ -6,7 +6,7 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-all: llmgr$(LIB_EXT) llmgr_tr$(LIB_EXT)
+all: llmgr$(LIB_EXT) tr_llmgr$(LIB_EXT)
 	@echo ===================================================================
 	@echo Low Level Logical Log has been Done
 	@echo ===================================================================
@@ -27,7 +27,7 @@ endif
 llmgr$(LIB_EXT): $(OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
-llmgr_tr$(LIB_EXT): $(TR_OBJS)
+tr_llmgr$(LIB_EXT): $(TR_OBJS)
 	$(LB) $(LIBFLAGS) $(LIBOUT)$@ $^
 
 

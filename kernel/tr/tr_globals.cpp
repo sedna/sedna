@@ -70,6 +70,8 @@ msg_struct sp_msg;
 
 bool is_need_checkpoint_on_transaction_commit = false;
 
+bool is_this_tr_query = false;
+
 int db_id;
 
 

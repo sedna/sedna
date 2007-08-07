@@ -8,7 +8,7 @@
 #include "sm/bufmgr/blk_mngmt.h"
 #include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/llmgr.h"
-
+#include "sm/wu/wu.h"
 
 
 /*******************************************************************************
@@ -21,6 +21,7 @@ struct free_blk_hdr
     vmm_sm_blk_hdr sm_vmm;	/* sm/vmm parameters */
     xptr nblk;				/* next block */
     int num;				/* number of free block addresses stored */
+    TIMESTAMP ts;
 
 	static void init(void *p);
 };
@@ -34,6 +35,7 @@ void free_blk_hdr::init(void *p)
     free_blk_hdr *hdr = (free_blk_hdr*)p;
     hdr->nblk = XNULL;
 	hdr->num = 0;
+	WuGetTimestamp(&(hdr->ts));
 }
 
 int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
@@ -41,13 +43,13 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
     //d_printf1("push_to_persistent_free_blocks_stack: begin\n");
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
+    
+    TIMESTAMP pers_ts = ll_returnTimestampOfPersSnapshot();
 
     if (*hd == NULL)
     {
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
-
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
 
         free_blk_hdr::init(blk);
         *hd = p;
@@ -65,7 +67,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         put_block_to_buffer(-1, p, &offs);
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
+        //if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
 
         free_blk_hdr::init(blk);
         blk->nblk = *hd;
@@ -73,10 +75,16 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
     }
     else
     {
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
+        if (IS_DATA_BLOCK_LP(blk))// LOG_FREE_BLK_HDR_NUM(blk);
+        {
+        	if (blk->ts < pers_ts)
+        		ll_add_free_blocks_info(*((XPTR *)(hd)), (void *)blk, PAGE_SIZE);
+			WuGetTimestamp(&(blk->ts));
+		}
+
         blk->num++;
 
-		if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_CELL(blk);
+//		if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_CELL(blk);
         *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr))) = p;
     }
 
@@ -91,6 +99,8 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
 
     ramoffs offs = 0;
     free_blk_hdr *blk = NULL;
+    
+    TIMESTAMP pers_ts = ll_returnTimestampOfPersSnapshot();
 
     put_block_to_buffer(-1, *hd, &offs);
     blk = (free_blk_hdr*)OFFS2ADDR(offs);
@@ -98,6 +108,13 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
 
     if (blk->num == 0)
     {
+        if (IS_DATA_BLOCK_LP(blk))
+        {
+        	if (blk->ts < pers_ts)
+        		ll_add_free_blocks_info(*((XPTR *)(hd)), (void *)blk, PAGE_SIZE);
+			WuGetTimestamp(&(blk->ts));
+		}
+
         xptr tmp = blk->nblk;
         *p = *hd;
         *hd = tmp;
@@ -106,7 +123,13 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
     {
         *p = *(xptr*)((char*)blk + (PAGE_SIZE - blk->num * sizeof(xptr)));
 
-        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
+//        if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_NUM(blk);
+        if (IS_DATA_BLOCK_LP(blk))
+        {
+        	if (blk->ts < pers_ts)
+        		ll_add_free_blocks_info(*((XPTR *)hd), (void *)blk, PAGE_SIZE);
+			WuGetTimestamp(&(blk->ts));
+		}
 
         blk->num--;
 

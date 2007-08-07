@@ -99,12 +99,14 @@ void ll_truncate_logical_log()
 
 }
 
+/*
 void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn)
 {
 #ifdef LOGICAL_LOG
   logical_log_mgr->freePrevCheckpointBlocks(last_lsn, true);
 #endif
 }
+*/
 
 void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size)
 {
@@ -126,9 +128,11 @@ void ll_add_decrease_info(__int64 old_size)
 #endif
 }
 
-void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info, int isGarbage)
+void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info)
 {
 #ifdef LOGICAL_LOG
+  bool isGarbage = false;
+
   logical_log_mgr->ll_log_pers_snapshot_add(blk_info, isGarbage, true);
   logical_log_mgr->ll_log_flush(true);
   logical_log_mgr->ll_log_flush_all_last_records(true);

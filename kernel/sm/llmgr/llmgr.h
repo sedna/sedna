@@ -29,13 +29,13 @@ void ll_logical_log_flush_last_record();
 
 void ll_truncate_logical_log();
 
-void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn);
+//void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn);
 
 void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size);
 
 void ll_add_decrease_info(__int64 old_size);
 
-void ll_add_pers_snapshot_block_info(transaction_id trid, SnapshotsVersion *blk_info);
+void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info);
 
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
 

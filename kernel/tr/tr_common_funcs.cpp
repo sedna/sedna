@@ -148,7 +148,10 @@ void on_session_end(SSMMsg* &sm_server)
 
 void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
 {
-   down_transaction_block_sems();
+   is_this_tr_query = is_query;
+
+   if (!is_query)
+	   down_transaction_block_sems();
 
    d_printf1("Releasing PH between transactions on the same session...");
 
@@ -264,7 +267,10 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 
    event_logger_set_trid(-1);
 
-   up_transaction_block_sems();
+   if (!is_this_tr_query)
+       up_transaction_block_sems();
+   
+   is_this_tr_query = false;
 }
 
 void on_kernel_recovery_statement_begin()
