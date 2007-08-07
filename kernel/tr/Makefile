@@ -44,7 +44,7 @@ endif
 
 COMMON_FILES_LIB = $(PP)/kernel/common/common_files$(LIB_EXT)
 PHYS_LOG_LIB = $(PP)/kernel/sm/plmgr/plmgr_tr$(LIB_EXT)
-LOGICAL_LOG_LIB = $(PP)/kernel/sm/llmgr/llmgr$(LIB_EXT)
+LOGICAL_LOG_LIB = $(PP)/kernel/sm/llmgr/tr_llmgr$(LIB_EXT)
 
 
 ifeq ($(PLATFORM), WIN32)

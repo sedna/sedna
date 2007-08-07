@@ -1207,101 +1207,6 @@ void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 
 */
 
-//!!! offset correction needed in case of format change
-void llmgr_core::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage)
-//void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count)
-{
-  char *tmp_rec;  
-  int rec_len;
-  char op = LL_CHECKPOINT;
-//  int num = CHARISMA_MAX_TRNS_NUMBER;
-  int offs = 0;
-  LONG_LSN ret_lsn;
-  SnapshotsOnCheckpointParams *snp_info = params;
-  
-//  ll_log_lock(sync);  
-
-  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-
-  int rec_state = 1;
-
-  if (snp_info->persistentVersionsSent == 0 && snp_info->garbageVersionsSent == 0)
-  	rec_state = 0;
-
-  if (rec_state == 0)
-  {
-//  	mem_head->number_of_cp_records = 1;
-  	mem_head->ts = snp_info->persistentSnapshotTs;
-
-  	rec_len = sizeof(char) + sizeof(int) + sizeof(bm_masterblock) + sizeof(LONG_LSN) + sizeof(int) + sizeof(size_t) + 
-  		sizeof(SnapshotsVersion) * count + sizeof(LONG_LSN);
-	tmp_rec = ll_log_malloc(rec_len);
-  
-    inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
-    inc_mem_copy(tmp_rec, offs, &rec_state, sizeof(int));
-    inc_mem_copy(tmp_rec, offs, mb, sizeof(bm_masterblock));
-//    inc_mem_copy(tmp_rec, offs, &(snp_info->persistentSnapshotTs), sizeof(TIMESTAMP));
-    inc_mem_copy(tmp_rec, offs, &(mem_head->min_rcv_lsn), sizeof(LONG_LSN));
-
-    inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
-    inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
-
-    for (int i = 0; i < count; i++)
-	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(SnapshotsVersion));
-  }
-  else
-  {	
-//	mem_head->number_of_cp_records++;
-
-  	rec_len = sizeof(char) + sizeof(int) + sizeof(int) + sizeof(size_t) + 
-  		sizeof(SnapshotsVersion) * count + sizeof(LONG_LSN);
-	tmp_rec = ll_log_malloc(rec_len);
-
-    inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
-    inc_mem_copy(tmp_rec, offs, &rec_state, sizeof(int));
-    inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
-    inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
-
-    for (int i = 0; i < count; i++)
-	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(SnapshotsVersion));
-  }
-
-  if (rec_state == 0) mem_head->last_chain_lsn = NULL_LSN;
-  
-  inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
-  
-  //check that log file will not be overflowed
-  if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
-	  (sizeof(logical_log_head) + rec_len))
-  {//current log must be flushed and new file created
-     ll_log_flush(false);
-     extend_logical_log(false);
-  }
-
-  ret_lsn = mem_head->next_lsn;
-
-  //insert record in shared memory
-  logical_log_head log_head;
-
-  log_head.prev_trn_offs = NULL_OFFS;
-  log_head.body_len = rec_len;
-
-  //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
-
-  mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
-  
-  mem_head->last_lsn = ret_lsn;
-  mem_head->last_checkpoint_lsn = ret_lsn;
-  mem_head->last_chain_lsn = ret_lsn;
-
-//  ll_log_unlock(sync);
-
-  //std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
-
-//  return ret_lsn;
-} 
 
 
 /*
@@ -2207,7 +2112,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   ll_log_unlock(sync);
 }
 */
-
+/*
 // this function frees blocks from previous persistent snapshot
 //!!! offset correction needed in case of format change
 void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
@@ -2271,8 +2176,9 @@ void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
   		blocks_offs = const_cast<char *>(body_beg) + sizeof(char) + sizeof(int);
   		
   		if (state == 0)
-  			blocks_offs += /*sizeof(TIMESTAMP) +*/ sizeof(LONG_LSN) + sizeof(bm_masterblock);
-
+  		*/
+//  			blocks_offs += /*sizeof(TIMESTAMP) +*/ sizeof(LONG_LSN) + sizeof(bm_masterblock);
+/*
   		isGarbage = *((int *)blocks_offs);
   		blocks_offs += sizeof(int);
 
@@ -2312,7 +2218,7 @@ void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
 
   ll_log_unlock(sync);
 }
-
+*/
 
 //this function is run from the special recovery process
 // TODO: look for indirection table calls

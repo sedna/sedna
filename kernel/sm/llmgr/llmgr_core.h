@@ -203,7 +203,7 @@ struct log_file_dsc
 
 class llmgr_core
 {
-private:
+protected:
   UFile ll_curr_file_dsc;
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
@@ -273,7 +273,6 @@ public:
   void ll_log_rollback(transaction_id _trid, bool sync);
 //  LONG_LSN ll_log_checkpoint(bool sync);
 //  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
-  void ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
   void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
@@ -308,7 +307,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
 #endif
 
-  void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
+//  void freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync);
 
   TIMESTAMP returnTimestampOfPersSnapshot(bool sync);
 
@@ -334,7 +333,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
   void set_checkpoint_flag(bool flag, bool sync); // set flag to enable/disable checkpoint
 
-private:
+protected:
 
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
   void writeSharedMemory(const void*, int len);
