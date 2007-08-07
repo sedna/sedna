@@ -149,8 +149,8 @@ void vmm_trace_delete_block(const xptr& p)
 
 #endif
 
-typedef XptrHash<void*, 16, 16> t_blocks_write_table;
-static t_blocks_write_table write_table;
+//typedef XptrHash<void*, 16, 16> t_blocks_write_table;
+//static t_blocks_write_table write_table;
 
 
 /*******************************************************************************
@@ -901,12 +901,22 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // reset blocks with write access from current trid
-        t_blocks_write_table::iterator it;
+//        t_blocks_write_table::iterator it;
 
-	    for (it = write_table.begin(); it != write_table.end(); ++it)
-      		_vmm_unmap_decent(*it);
+//	    for (it = write_table.begin(); it != write_table.end(); ++it)
+//      		_vmm_unmap_decent(*it);
 
-      	write_table.clear();
+//      	write_table.clear();
+#ifdef VMM_ACCURATE
+    __uint32 cur;
+    for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
+         cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+         cur += (__uint32)PAGE_SIZE)
+    {
+        _vmm_remap((void*)cur, default_ram, false /* re-mapping with read-only access */);
+    }
+#endif
+
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1334,7 +1344,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         if (swapped != NULL)
         {
         	 _vmm_unmap_decent(XADDR(swapped));
-        	 write_table.remove(swapped);
+//        	 write_table.remove(swapped);
         }
 
         _vmm_remap(XADDR(p), offs, false);
@@ -1342,7 +1352,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == trid)
         {
 	        _vmm_remap(XADDR(p), offs, true);
-	        write_table.insert(p, XADDR(p));
+//	        write_table.insert(p, XADDR(p));
 	    }
 
     } catch (...) {
@@ -1387,12 +1397,12 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
         if (swapped != NULL)
         {
         	 _vmm_unmap_decent(XADDR(swapped));
-         	 write_table.remove(swapped);
+//         	 write_table.remove(swapped);
         }
 
         _vmm_remap(XADDR(p), offs, true);
         
-        write_table.insert(p, XADDR(p));
+//        write_table.insert(p, XADDR(p));
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
