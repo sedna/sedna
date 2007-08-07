@@ -113,6 +113,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
         	if (blk->ts < pers_ts)
         		ll_add_free_blocks_info(*((XPTR *)(hd)), (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
+			blk->sm_vmm.is_changed = true;
 		}
 
         xptr tmp = blk->nblk;

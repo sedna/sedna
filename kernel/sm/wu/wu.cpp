@@ -35,17 +35,52 @@ int WuSetTimestamp(TIMESTAMP ts)
 }
 
 static
-int LoadBuffer(XPTR xptr, int *bufferId, int flags)
+int BufferIdFromRamoffs(ramoffs ofs)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	assert(ofs % PAGE_SIZE == 0);
+	return ofs / PAGE_SIZE;
+}
+
+static
+ramoffs RamoffsFromBufferId(int id)
+{
+	return id * PAGE_SIZE;
+}
+
+static
+int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
+{
+	int success=0;
+	xptr lilXptr=WuExternaliseXptr(bigXptr);
+	ramoffs ofs;
+	assert(bufferId); *bufferId=-1;
+	try
+	{
+		put_block_to_buffer(-1,lilXptr,&ofs,true);
+		*bufferId = BufferIdFromRamoffs(ofs);
+		success=1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 static
 int FlushBuffer(int bufferId, int flags)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success = 0;
+	ramoffs ofs = RamoffsFromBufferId(bufferId);
+	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
+	try
+	{
+		if (header->is_changed)
+		{
+			write_block(header->p,ofs,false);
+			header->is_changed = false;
+		}
+		success = 1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 static
@@ -79,14 +114,42 @@ int ProtectBuffer(int bufferId, int orMask, int andNotMask)
 static
 int MarkBufferDirty(int bufferId, void *base, size_t size, int flags)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
+	header->is_changed = true;
+	return 1;
 }
 
-int CopyBlock(XPTR dest, XPTR src, int flags)
+int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	xptr lilDest = WuExternaliseXptr(bigDest), lilSrc = WuExternaliseXptr(bigSrc);
+	ramoffs ofsSrc=0, ofsDest=0;
+	vmm_sm_blk_hdr *header = NULL;
+	int success = 0, repairRequired = 0;
+	if (bigDest == bigSrc)
+	{
+		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
+	}
+	else try
+	{
+		put_block_to_buffer(-1,lilSrc,&ofsSrc,true);
+		if (used_mem.find_remove(ofsSrc))
+		{
+			repairRequired = 1;
+			put_block_to_buffer(-1,lilDest,&ofsDest,true);
+			memcpy(header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofsDest),
+				   OffsetPtr(buf_mem_addr,ofsSrc),
+				   PAGE_SIZE);
+			header->is_changed = true;
+			if (flags&1)
+			{
+				write_block(lilDest,ofsDest,false);
+				header->is_changed = false;
+			}
+		}
+	}
+	WU_CATCH_EXCEPTIONS()
+	if (repairRequired) used_mem.push(ofsSrc);
+	return success;
 }
 
 int AllocBlock(XPTR *bigXptr)
@@ -118,15 +181,11 @@ int FreeBlock(XPTR bigXptr)
 	return success;
 }
 
-int LocateHeader(int bufferId, VersionsHeader **header)
+int LocateHeader(int bufferId, VersionsHeader **veHeader)
 {
-	/*
-	ramoffs rofs = (ramofs)bufferId;
-	put_block_to_buffer(ClGetCurrentClientId(),
-		);
-		*/ 
-
-	assert(header);
+	assert(veHeader);
+	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
+	*veHeader = &header->versionsHeader;
 	return 1;
 }
 
@@ -136,7 +195,7 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 	SnapshotsVersion snapshotVersion = {lxptr, xptr};
 	try
 	{
-		ll_add_pers_snapshot_block_info(0,&snapshotVersion);
+		ll_add_pers_snapshot_block_info(&snapshotVersion);
 		success=1;
 	}
 	WU_CATCH_EXCEPTIONS()

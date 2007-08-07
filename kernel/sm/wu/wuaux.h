@@ -104,7 +104,4 @@ int ResetLowestBitSet(uint32_t *val)
 	return bitId;
 }
 
-void ERRORfn(const char*,int,const char*,int);
-int  ISERRORfn(int);
-
 #endif

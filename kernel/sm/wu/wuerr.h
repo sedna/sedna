@@ -73,6 +73,14 @@
 
 #define WUERR_BAD_TIMESTAMP                                              (45 + WUERR_FIRST_ERR)
 
+/* versions errors */ 
+
+#define WUERR_NO_APROPRIATE_VERSION                                      (46 + WUERR_FIRST_ERR)
+#define WUERR_WORKING_VERSION_ALREADY_CREATED                            (47 + WUERR_FIRST_ERR)
+#define WUERR_WORKING_VERSION_CREATED_BY_ALLY                            (48 + WUERR_FIRST_ERR)
+#define WUERR_SNAPSHOTS_ARE_READ_ONLY                                    (49 + WUERR_FIRST_ERR)
+#define WUERR_OPERATION_REQUIRES_WORKING_VERSION                         (50 + WUERR_FIRST_ERR)
+
 /* no more errors */ 
 
 int WuIsAppError(int error);
