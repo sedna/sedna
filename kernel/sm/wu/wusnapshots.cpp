@@ -61,14 +61,8 @@ struct SnapshotsSnapshot
 
 /*	The most recent SH_REGULAR_SNAPSHOT is turned into SH_NEXT_PERSISTENT_SNAPSHOT as the
 	result of ShOnBeginCheckpoint call. It is later turned into SH_PERSISTENT_SNAPSHOT when
-	ShOnCheckpoint is called. */ 
+	ShOnCompleteCheckpoint is called. */ 
 #define SH_NEXT_PERSISTENT_SNAPSHOT		0x04
-
-/*	ShOnCheckpoint finds SH_PERSISTENT_SNAPSHOT and marks it as SH_PREV_PERSISTENT_SNAPSHOT. 
-	It then turns SH_NEXT_PERSISTENT_SNAPSHOT and turns it into SH_PERSISTENT_SNAPSHOT. Finally
-	when ShOnCompleteCheckpoint is called SH_PREV_PERSISTENT_SNAPSHOT is turned into 
-	SH_REGULAR_SNAPSHOT and rules for auto discarding SH_REGULAR_SNAPSHOT apply. */ 
-#define SH_PREV_PERSISTENT_SNAPSHOT		0x08
 
 /*	There is a fixed number of snapshots allowed - SH_SNAPSHOTS_COUNT. When particular snapshot
 	is currently unused it is marked SH_FUTURE_SNAPSHOT and placed in the head of snapshots
@@ -768,7 +762,7 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 	assert(params && saveListsProc);
 	persPos = GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0)-1;
 	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
-	if (!nextPers || GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0))
+	if (!nextPers)
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
@@ -777,10 +771,8 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 		if (pers) 
 		{
 			assert(!GetSnapshotByType(pers->next,&dummy,NULL,SH_PERSISTENT_SNAPSHOT,0));
-			pers->type=SH_PREV_PERSISTENT_SNAPSHOT;
 		}
 		pers=nextPers;
-		pers->type=SH_PERSISTENT_SNAPSHOT;
 
 		GatherSnapshotsStats(leadingSnapshot,&total,&persistent,NULL,pers->timestamp);
 		params->persistentVersionsCount=persistent;
@@ -832,20 +824,17 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 int ShOnCompleteCheckpoint()
 {
 	int success=0;
-	SnapshotsSnapshot *prevPers=NULL, *dummy=NULL;
+	SnapshotsSnapshot *pers=NULL, *nextPers=NULL;
 
-	if (GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
+	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
+	if (!GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
-	if (!GetSnapshotByType(leadingSnapshot,&prevPers,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0))
-	{
-		success=1;
-	}
 	else
 	{
-		assert(!GetSnapshotByType(prevPers->next,&dummy,NULL,SH_PREV_PERSISTENT_SNAPSHOT,0));
-		prevPers->type=SH_REGULAR_SNAPSHOT;
+		nextPers->type=SH_PERSISTENT_SNAPSHOT;
+		pers->type=SH_REGULAR_SNAPSHOT;
 		if (PurifySnapshots(1)) success=1;
 	}
 	return success;
@@ -936,8 +925,6 @@ void ShDbgDump(int reserved)
 			typeStr="PERSISTENT"; break;
 		case SH_NEXT_PERSISTENT_SNAPSHOT:
 			typeStr="NEXT-PERS."; break;
-		case SH_PREV_PERSISTENT_SNAPSHOT:
-			typeStr="PREV-PERS."; break;
 		case SH_FUTURE_SNAPSHOT:
 			typeStr="FUTURE"; break;
 		default:

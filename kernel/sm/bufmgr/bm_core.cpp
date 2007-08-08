@@ -348,7 +348,10 @@ void flush_buffer(ramoffs offs, bool sync_phys_log)
     blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
 
     if (IS_CHANGED(blk)) 
+	{
         write_block((*phys_xptrs)[ind], offs, sync_phys_log);
+		blk->is_changed=false;
+	}
 }
 
 void flush_buffers(bool sync_phys_log)
