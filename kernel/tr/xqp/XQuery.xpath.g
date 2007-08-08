@@ -119,7 +119,7 @@ primaryExpr!:
 	  vr:varRef                        <<#0=#vr;>>
 	| l:literal                        <<#0=#l;>>
 	| pe:parenthesizedExpr             <<#0=#pe;>> 
-	| cie:contextItemExpr              <<#0=#cie;>>
+//	| cie:contextItemExpr              <<#0=#cie;>>
 	| fc:functionCall                  <<#0=#fc;>>
 	| c:constructor                    <<#0=#c;>>
 	| v:validateExpr                   <<#0=#v;>>
@@ -184,6 +184,11 @@ abbrevReverseStep! [std::string sl]:
 	  DOTDOT <<#0=#[AST_PARENT_AXIS];>>
 	  << #0=#(#[AST_STEP], 
 	          #(#[AST_AXIS], #[AST_PARENT_AXIS]),
+	          #(#[AST_TEST], #[AST_NODE_TEST]));
+	  >>
+	| DOT <<#0=#[AST_CONTEXT_ITEM];>>
+	  << #0=#(#[AST_STEP], 
+	          #(#[AST_AXIS], #[AST_SELF_AXIS]),
 	          #(#[AST_TEST], #[AST_NODE_TEST]));
 	  >>
 ;
