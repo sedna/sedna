@@ -22,8 +22,8 @@
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/bm_rcv.h"
 #include "sm/bufmgr/blk_mngmt.h"
+#include "sm/wu/wu.h"
 
-#include "sm/wu/wusnapshots.h"
 
 #ifdef _WIN32
 #include <io.h>

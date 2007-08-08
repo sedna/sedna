@@ -99,8 +99,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 //	LONG_LSN chain_lsn = ll_getLastChainLSN();
 
-	SnapshotsOnCheckpointParams params;
-    ShOnCheckpoint(&params, ll_logical_log_checkpoint);
+	WuEnumerateVersionsParams params;
+    WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
 
 //    ll_freePrevPersSnapshotBlocks(chain_lsn); // free blocks from previous persistent snapshot
 //    d_printf1("previous persistent snapshot blocks free completed\n");

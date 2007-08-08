@@ -227,7 +227,7 @@ int sm_server_handler(void *arg)
                      }
             case 23: {
                          //d_printf1("query 23: bm_allocate_data_block\n");
-                         bm_allocate_data_block(msg->sid, 
+                         WuAllocateBlockExn(msg->sid, 
                                                 (xptr*)(&(msg->data.swap_data.ptr)), 
                                                 (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                 (xptr*)(&(msg->data.swap_data.swapped)));
@@ -245,13 +245,13 @@ int sm_server_handler(void *arg)
                      }
             case 25: {
                          //d_printf1("query 25: bm_delete_block\n");
-                         bm_delete_block(msg->sid, *(xptr*)(&(msg->data.ptr)));
+                         WuDeleteBlockExn(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
                          break;
                      }
             case 26: {
                          //d_printf1("query 26: bm_get_block\n");
-                         bm_get_block(msg->sid, 
+                         WuGetBlockExn(msg->sid, 
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
                                       (xptr*)(&(msg->data.swap_data.swapped)));
@@ -308,16 +308,58 @@ int sm_server_handler(void *arg)
                      }
             case 35: {
                          //d_printf1("query 35: bm_register_transaction\n");
+						 bool isUsingSnapshot = msg->data.data[0];
+
                          bm_register_transaction(msg->sid, msg->trid);
+						 try
+						 {
+							 WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_info.ts, &msg->data.snp_info.type_of_snp);
+						 }
+						 catch(...)
+						 {
+							 bm_unregister_transaction(msg->sid, msg->trid);
+							 throw;
+						 }
+
                          msg->cmd = 0;
                          break;
                      }
             case 36: {
                          //d_printf1("query 36: bm_unregister_transaction\n");
+						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
+
+						 /* TODO: check if we can advance snapshots and probably advance */ 
+
                          msg->cmd = 0;
                          break;
                      }
+			case 37:
+                     {
+						 /* create version for the block */ 
+                         WuCreateBlockVersionExn(msg->sid, 
+                                      *(xptr*)(&(msg->data.swap_data.ptr)), 
+                                      (ramoffs*)(&(msg->data.swap_data.offs)), 
+                                      (xptr*)(&(msg->data.swap_data.swapped)));
+                         msg->cmd = 0;
+                         break;
+                     }
+			case 38:
+                     {
+						 /* rollback or commit notification */ 
+						 bool isRollback = msg->data.data[0];
+						 if (isRollback)
+						 {
+							 WuOnRollbackTransactionExn(msg->sid);
+						 }
+						 else
+						 {
+							 WuOnCommitTransactionExn(msg->sid);
+						 }
+						 msg->cmd = 0;
+						 break;
+                     }
+
             default: {
                          //d_printf2("query unknown (%d)\n", msg->cmd);
                          msg->cmd = 1;
@@ -609,7 +651,8 @@ int main(int argc, char **argv)
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
-            if(!WuInit(0))
+			/* TODO: gimme timestamp */ 
+            if(!WuInit(0,0,0))
               throw USER_EXCEPTION(SE4801);
             elog(EL_LOG, ("SM : Wu is initialized"));
 
@@ -813,7 +856,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        d_printf1("OK\n");
 
 
-       if(!WuInit(1))
+       if(!WuInit(1,0,0))
           throw USER_EXCEPTION(SE4801);
        elog(EL_LOG, ("SM : Wu is initialized"));
 
