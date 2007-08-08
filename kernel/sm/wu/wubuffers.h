@@ -6,6 +6,7 @@
 #define WUBUFFERS_INCLUDED
 
 #include "wutypes.h"
+#include "wuincguard.h"
 
 struct BufferInfo
 {

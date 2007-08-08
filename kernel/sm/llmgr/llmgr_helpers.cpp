@@ -826,7 +826,7 @@ LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
     block_ofs += sizeof(size_t);
 
     ret_lsn = lsn;
-    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersion)));
+    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(WuVersionEntry)));
   } while (state != 0);
 
   return ret_lsn;

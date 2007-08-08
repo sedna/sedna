@@ -1,3 +1,5 @@
+#define __WUDANG_SOURCES__
+
 #include <stdio.h>
 #define __STDC_CONSTANT_MACROS
 #include <stdint.h>

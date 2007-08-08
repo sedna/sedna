@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+#include "wuincguard.h"
 
 static
 inline

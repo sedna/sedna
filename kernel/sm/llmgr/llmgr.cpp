@@ -51,7 +51,7 @@ void ll_logical_log_shutdown()
 #endif
 }
 
-int ll_logical_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage)
+int ll_logical_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage)
 {
 #ifdef LOGICAL_LOG
   LONG_LSN  ret_lsn;
@@ -128,7 +128,7 @@ void ll_add_decrease_info(__int64 old_size)
 #endif
 }
 
-void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info)
+void ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info)
 {
 #ifdef LOGICAL_LOG
   bool isGarbage = false;

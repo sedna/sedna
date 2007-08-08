@@ -1,3 +1,5 @@
+#define __WUDANG_SOURCES__
+
 #include "wuaux.h"
 #include <assert.h>
 #include "wu.h"
@@ -188,10 +190,10 @@ int LocateHeader(int bufferId, VersionsHeader **veHeader)
 int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 {
 	int success=0;
-	SnapshotsVersion snapshotVersion = {lxptr, xptr};
+	WuVersionEntry versionEntry = {lxptr, xptr};
 	try
 	{
-		ll_add_pers_snapshot_block_info(&snapshotVersion);
+		ll_add_pers_snapshot_block_info(&versionEntry);
 		success=1;
 	}
 	WU_CATCH_EXCEPTIONS()
@@ -201,10 +203,11 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 {
 	/* kill file or something */ 
-	return 1;
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
 }
 
-int WuInit(int is_rcv_mode)
+int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 {
 	ClientsSetup clientsSetup = {CHARISMA_MAX_TRNS_NUMBER, 0x10000};
 	VersionsSetup versionsSetup =
@@ -282,7 +285,8 @@ int WuRelease()
 
 int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
 {
-	return 1;
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
 }
 
 struct WuJunction
@@ -314,24 +318,92 @@ int helperProc(SnapshotsOnCheckpointParams *params2, SnapshotsVersion *buf, size
 	return success;
 }
 
-int WuEnumerateVersionsForCheckpoint(SnapshotsOnCheckpointParams *params,
-									 int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage))
+int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
+									 int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage))
 {
+	/*
 	assert(params);
 	SnapshotsOnCheckpointParams params2;
 	WuJunction junction = {params, saveListsProc};
 	params2.userData = &junction;
 	return ShOnCheckpoint(&params2,helperProc);
+	*/
+
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
 }
 
 int WuNotifyCheckpointFinished()
 {
-	return 1;
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
 }	
 
-void WuInitExn(int is_rcv_mode)
+int WuAllocateBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
-	if (!WuInit(is_rcv_mode)) WuThrowException();
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuDeleteBlock(int sid, xptr p)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuOnCommitTransaction(int sid)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuOnRollbackTransaction(int sid)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuOnUnregisterTransaction(int sid)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuGatherSnapshotStats(WuSnapshotStats *)
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int WuAdvanceSnapshots()
+{
+	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
+	return 0;
+}
+
+/* exn adapters */ 
+
+void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
+{
+	if (!WuInit(isRecoveryMode, isVersionsDisabled, persSnapshotTs)) WuThrowException();
 }
 
 void WuReleaseExn()
@@ -344,13 +416,55 @@ void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn()
 	if (!WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()) WuThrowException();
 }
 
+void WuEnumerateVersionsForCheckpointExn(WuEnumerateVersionsParams *params,
+										 int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage))
+{
+	if (!WuEnumerateVersionsForCheckpoint(params,saveListsProc)) WuThrowException();
+}
+
 void WuNotifyCheckpointFinishedExn()
 {
 	if (!WuNotifyCheckpointFinished()) WuThrowException();
 }
 
-void WuEnumerateVersionsForCheckpointExn(SnapshotsOnCheckpointParams *params,
-										 int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage))
+void WuAllocateBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
-	if (!WuEnumerateVersionsForCheckpoint(params,saveListsProc)) WuThrowException();
+	if (!WuAllocateBlock(sid, p, offs, swapped)) WuThrowException();
 }
+
+void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped)
+{
+	if (!WuCreateBlockVersion(sid, p, offs, swapped)) WuThrowException();
+}
+
+
+void WuDeleteBlockExn(int sid, xptr p)
+{
+	if (!WuDeleteBlock(sid, p)) WuThrowException();
+}
+
+void WuGetBlockExn(int sid, xptr p, ramoffs *offs, xptr *swapped)
+{
+	if (!WuGetBlock(sid, p, offs, swapped)) WuThrowException();
+}
+
+void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *persHeapIndex)
+{
+	if (!WuOnRegisterTransaction(sid, isUsingSnapshot, snapshotTs, persHeapIndex)) WuThrowException();
+}
+
+void WuOnCommitTransactionExn(int sid)
+{
+	if (!WuOnCommitTransaction(sid)) WuThrowException();
+}
+
+void WuOnRollbackTransactionExn(int sid)
+{
+	if (!WuOnRollbackTransaction(sid)) WuThrowException();
+}
+
+void WuOnUnregisterTransactionExn(int sid)
+{
+	if (!WuOnUnregisterTransaction(sid)) WuThrowException();
+}
+

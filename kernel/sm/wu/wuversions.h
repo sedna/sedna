@@ -8,8 +8,8 @@
 #include "wutypes.h"
 #include "wubuffers.h"
 #include "wusnapshots.h"
-#include "common/wustructures.h"
-
+#include "wutypes.h"
+#include "wuincguard.h"
 
 struct VersionsResourceDemand
 {
