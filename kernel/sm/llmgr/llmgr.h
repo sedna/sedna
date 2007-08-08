@@ -10,8 +10,6 @@
 #include "common/base.h"
 
 #include "sm/wu/wu.h"
-#include "sm/wu/wusnapshots.h"
-#include "sm/wu/wutypes.h"
 
 bool ll_logical_log_startup(int &sedna_db_version);
 
@@ -19,7 +17,7 @@ void ll_logical_log_shutdown();
 
 //LONG_LSN ll_logical_log_checkpoint();
 //void ll_logical_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
-int ll_logical_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage);
+int ll_logical_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage);
 
 void ll_logical_log_flush();
 
@@ -35,7 +33,7 @@ void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size);
 
 void ll_add_decrease_info(__int64 old_size);
 
-void ll_add_pers_snapshot_block_info(SnapshotsVersion *blk_info);
+void ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info);
 
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
 

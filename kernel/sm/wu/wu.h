@@ -12,7 +12,7 @@ int WuGetTimestamp(TIMESTAMP *ts);
 
 int WuSetTimestamp(TIMESTAMP ts);
 
-int WuInit(int is_rcv_mode);
+int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=0);
 
 int WuRelease();
 
@@ -47,7 +47,7 @@ int WuDeleteBlock(int sid, xptr p);
 
 int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
-int WuOnRegisterTransaction(int sid, int isUsingSnapshot, int *ipcObjectsSetIndex);
+int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex);
 
 int WuOnCommitTransaction(int sid);
 
@@ -92,7 +92,7 @@ void WuDeleteBlockExn(int sid, xptr p);
 
 void WuGetBlockExn(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
-void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot, int *ipcObjectsSetIndex);
+void WuOnRegisterTransactionExn(int sid, int isUsingSnapshot,  TIMESTAMP *snapshotTs, int *persHeapIndex);
 
 void WuOnCommitTransactionExn(int sid);
 

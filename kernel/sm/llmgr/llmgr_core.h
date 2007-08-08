@@ -20,8 +20,7 @@
 #include "sm/plmgr/plmgr_core.h"
 #include "common/mmgr/memutils.h"
 
-#include "sm/wu/wutypes.h"
-#include "sm/wu/wusnapshots.h"
+#include "sm/wu/wu.h"
 
 #define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
