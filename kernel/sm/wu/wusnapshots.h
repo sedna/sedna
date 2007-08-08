@@ -6,6 +6,7 @@
 #define WUSNAPSHOTS_INCLUDED
 
 #include "wutypes.h"
+#include "wuincguard.h"
 
 struct SnapshotsResourceDemand
 {

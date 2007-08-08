@@ -1,3 +1,5 @@
+#define __WUDANG_SOURCES__
+
 #include <stdio.h>
 #include <list>
 #include <algorithm>

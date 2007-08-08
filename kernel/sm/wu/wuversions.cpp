@@ -1,3 +1,5 @@
+#define __WUDANG_SOURCES__
+
 #include <assert.h>
 #include <limits.h>
 #include <list>

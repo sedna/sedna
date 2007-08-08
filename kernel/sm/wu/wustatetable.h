@@ -7,6 +7,7 @@
 
 #include "wutypes.h"
 #include "wuaux.h"
+#include "wuincguard.h"
 
 #ifdef DEBUG
 #ifndef ST_MAX_COLUMNS_WITH_INFO

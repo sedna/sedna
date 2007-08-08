@@ -86,7 +86,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     }
     d_printf1("All sems acquired\n");
 
-    WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
+    WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
 
 //    flush_master_block();
 //    d_printf1("flush master block completed\n");
@@ -141,7 +141,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     ll_truncate_logical_log();
 
-    WuNotifyCheckpointFinished();
+    WuNotifyCheckpointFinishedExn();
 
     d_printf2("checkpoint finished times=%d\n", times);
     for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    

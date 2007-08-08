@@ -652,8 +652,7 @@ int main(int argc, char **argv)
                 throw USER_EXCEPTION(SE3031);
 
 			/* TODO: gimme timestamp */ 
-            if(!WuInit(0,0,0))
-              throw USER_EXCEPTION(SE4801);
+            WuInitExn(0,0,0);
             elog(EL_LOG, ("SM : Wu is initialized"));
 
 
@@ -709,8 +708,7 @@ int main(int argc, char **argv)
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
 
-        if (!WuRelease())
-          throw USER_EXCEPTION(SE4802);
+        WuReleaseExn();
         elog(EL_LOG, ("SM : Wu is released"));
 
         // shutdown bm
@@ -856,8 +854,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        d_printf1("OK\n");
 
 
-       if(!WuInit(1,0,0))
-          throw USER_EXCEPTION(SE4801);
+       WuInitExn(1,0,0);
        elog(EL_LOG, ("SM : Wu is initialized"));
 
        //recover database by logical log
@@ -875,8 +872,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        if (ssmmsg->shutdown() != 0)
           throw USER_EXCEPTION(SE3033);
 
-       if (!WuRelease())
-          throw USER_EXCEPTION(SE4802);
+       WuReleaseExn();
        elog(EL_LOG, ("SM : Wu is released"));
 
        //shutdown checkpoint thread (it also makes checkpoint)

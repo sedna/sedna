@@ -7,16 +7,11 @@
 
 #include "wutypes.h"
 #include "wudock.h"
+#include "wuerr.h"
 
 int WuGetTimestamp(TIMESTAMP *ts);
 
 int WuSetTimestamp(TIMESTAMP ts);
-
-int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=0);
-
-int WuRelease();
-
-int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
 
 struct WuEnumerateVersionsParams
 {
@@ -34,27 +29,6 @@ struct WuVersionEntry
 	LXPTR lxptr;
 };
 
-int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
-									 int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage));
-
-int WuNotifyCheckpointFinished();
-
-int WuAllocateBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
-
-int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped);
-
-int WuDeleteBlock(int sid, xptr p);
-
-int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped);
-
-int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex);
-
-int WuOnCommitTransaction(int sid);
-
-int WuOnRollbackTransaction(int sid);
-
-int WuOnUnregisterTransaction(int sid);
-
 struct WuSnapshotStats
 {
 	size_t versionsCount;
@@ -67,13 +41,7 @@ struct WuSnapshotStats
 	int isAbleToAdvanceSnapshots;
 };
 
-int WuGatherSnapshotStats(WuSnapshotStats *);
-
-int WuAdvanceSnapshots();
-
-/* reports errors with exceptions instead of error codes */ 
-
-void WuInitExn(int is_rcv_mode);
+void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=0);
 
 void WuReleaseExn();
 
@@ -99,5 +67,41 @@ void WuOnCommitTransactionExn(int sid);
 void WuOnRollbackTransactionExn(int sid);
 
 void WuOnUnregisterTransactionExn(int sid);
+
+
+#ifdef __WUDANG_SOURCES__
+
+int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=0);
+
+int WuRelease();
+
+int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
+
+int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
+									 int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage));
+
+int WuNotifyCheckpointFinished();
+
+int WuAllocateBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
+
+int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped);
+
+int WuDeleteBlock(int sid, xptr p);
+
+int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped);
+
+int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex);
+
+int WuOnCommitTransaction(int sid);
+
+int WuOnRollbackTransaction(int sid);
+
+int WuOnUnregisterTransaction(int sid);
+
+int WuGatherSnapshotStats(WuSnapshotStats *);
+
+int WuAdvanceSnapshots();
+
+#endif
 
 #endif

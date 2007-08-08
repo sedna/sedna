@@ -6,6 +6,7 @@
 #define WUCLIENTS_INCLUDED
 
 #include "wutypes.h"
+#include "wuincguard.h"
 
 /*	[Clients module.]
 	- It does client ids assignment and reuse (ClRegisterClient, ClUnregisterClient).

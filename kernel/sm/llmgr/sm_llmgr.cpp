@@ -52,7 +52,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   char *block_ofs; // pointer to the info about blocks of persistent snapshot 
   LONG_LSN rcvLSN = NULL_LSN; // first LSN from which to start redo analysis (it is also used as an offset in checkpoint record)
-  SnapshotsVersion *blocks_info; // info about blocks of persistent snapshot
+  WuVersionEntry *blocks_info; // info about blocks of persistent snapshot
 //  VersionsCreateVersionParams ver_info; // used in persistent snapshot recovery
 //  std::vector<SnapshotsVersionInfo> blocks_from_checkpoint; // info about blocks from checkppoint record
 
@@ -107,7 +107,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 		blocks_from_checkpoint.push_back(blocks_info[i]);    	
     }
 */
-    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(SnapshotsVersion)));
+    lsn = *((LONG_LSN *)(block_ofs + count * sizeof(WuVersionEntry)));
   } while (state != 0);
   
   lsn = file_head.last_chain_lsn;
@@ -142,7 +142,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     else
     if (body_beg[0] == LL_PERS_SNAPSHOT_ADD)
     {
-    	blocks_info = (SnapshotsVersion *)(body_beg + sizeof(char));
+    	blocks_info = (WuVersionEntry *)(body_beg + sizeof(char));
     	
 //    	ver_info.lxptr = blocks_info->lxptr;
 //    	ver_info.lastCommitedXptr = blocks_info->xptr;
@@ -154,7 +154,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     	//TODO: change phys_xptr to log_xptr for this block
     	bm_rcv_change(*((xptr *)blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         
-        lsn_offs += sizeof(char) + sizeof(SnapshotsVersion) + sizeof(int);
+        lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(int);
     }
     else
     if (body_beg[0] == LL_DECREASE)
@@ -179,7 +179,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     	count = *((size_t *)lsn_offs);
     	lsn_offs += sizeof(size_t);
 
-    	blocks_info = (SnapshotsVersion *)lsn_offs;
+    	blocks_info = (WuVersionEntry *)lsn_offs;
     	for (int i = 0; i < count; i++)
     	{
 	    	if (isGarbage)
@@ -197,7 +197,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     		}
     	}
 
-    	lsn_offs += count * sizeof(SnapshotsVersion);
+    	lsn_offs += count * sizeof(WuVersionEntry);
   	}
   	else
   		throw USER_EXCEPTION(SE4154);
@@ -334,7 +334,7 @@ void sm_llmgr::restorePh()
 
 
 //!!! offset correction needed in case of format change
-void sm_llmgr::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage)
+void sm_llmgr::ll_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage)
 //void llmgr_core::ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count)
 {
   char *tmp_rec;  
@@ -343,7 +343,7 @@ void sm_llmgr::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsV
 //  int num = CHARISMA_MAX_TRNS_NUMBER;
   int offs = 0;
   LONG_LSN ret_lsn;
-  SnapshotsOnCheckpointParams *snp_info = params;
+  WuEnumerateVersionsParams *snp_info = params;
   
 //  ll_log_lock(sync);  
 
@@ -360,7 +360,7 @@ void sm_llmgr::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsV
   	mem_head->ts = snp_info->persistentSnapshotTs;
 
   	rec_len = sizeof(char) + sizeof(int) + sizeof(bm_masterblock) + sizeof(LONG_LSN) + sizeof(int) + sizeof(size_t) + 
-  		sizeof(SnapshotsVersion) * count + sizeof(LONG_LSN);
+  		sizeof(WuVersionEntry) * count + sizeof(LONG_LSN);
 	tmp_rec = ll_log_malloc(rec_len);
   
     inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
@@ -373,14 +373,14 @@ void sm_llmgr::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsV
     inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
 
     for (int i = 0; i < count; i++)
-	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(SnapshotsVersion));
+	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(WuVersionEntry));
   }
   else
   {	
 //	mem_head->number_of_cp_records++;
 
   	rec_len = sizeof(char) + sizeof(int) + sizeof(int) + sizeof(size_t) + 
-  		sizeof(SnapshotsVersion) * count + sizeof(LONG_LSN);
+  		sizeof(WuVersionEntry) * count + sizeof(LONG_LSN);
 	tmp_rec = ll_log_malloc(rec_len);
 
     inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
@@ -389,7 +389,7 @@ void sm_llmgr::ll_log_checkpoint(SnapshotsOnCheckpointParams *params, SnapshotsV
     inc_mem_copy(tmp_rec, offs, &count, sizeof(size_t));
 
     for (int i = 0; i < count; i++)
-	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(SnapshotsVersion));
+	    inc_mem_copy(tmp_rec, offs, &buf[i], sizeof(WuVersionEntry));
   }
 
   if (rec_state == 0) mem_head->last_chain_lsn = NULL_LSN;
