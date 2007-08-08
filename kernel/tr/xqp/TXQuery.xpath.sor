@@ -247,7 +247,7 @@ primaryExpr![in_context in_c] >[out_context out_c]:
 	 | e:expr[in_c] >[out_c]    <<#primaryExpr=e;>>
 
 	 | AST_CONTEXT_ITEM  
-	   <<#primaryExpr=#(#["var"], #(#["\"\""], #["\"$%v\""])); >>
+	   <<#primaryExpr=#(#["ddo"], #(#["var"], #(#["\"\""], #["\"$%v\""]))); >>
 
 	 | AST_EMPTY_SEQUENCE
 	   <<#primaryExpr=#(#[], #["sequence"]); >>
