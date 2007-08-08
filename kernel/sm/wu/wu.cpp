@@ -72,11 +72,7 @@ int FlushBuffer(int bufferId, int flags)
 	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
 	try
 	{
-		if (header->is_changed)
-		{
-			write_block(header->p,ofs,false);
-			header->is_changed = false;
-		}
+		flush_buffer(ofs,false);
 		success = 1;
 	}
 	WU_CATCH_EXCEPTIONS()
@@ -142,7 +138,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 			header->is_changed = true;
 			if (flags&1)
 			{
-				write_block(lilDest,ofsDest,false);
+				flush_buffer(ofsDest,false);
 				header->is_changed = false;
 			}
 		}
@@ -289,6 +285,45 @@ int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
 	return 1;
 }
 
+struct WuJunction
+{
+	SnapshotsOnCheckpointParams *params;
+	int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage);
+};
+
+static
+int helperProc(SnapshotsOnCheckpointParams *params2, SnapshotsVersion *buf, size_t count, int isGarbage)
+{
+	int success=0;
+	WuJunction *junction = (WuJunction *)params2->userData;
+
+	assert(junction && junction->params && junction->saveListsProc);
+
+	junction->params->persistentSnapshotTs = params2->persistentSnapshotTs;
+	junction->params->persistentVersionsCount = params2->persistentVersionsCount;
+	junction->params->garbageVersionsCount = params2->garbageVersionsCount;
+	junction->params->persistentVersionsSent = params2->persistentVersionsSent;
+	junction->params->garbageVersionsSent = params2->garbageVersionsSent;
+
+	try
+	{
+		success = junction->saveListsProc(junction->params, buf, count, isGarbage);
+	}
+	WU_CATCH_EXCEPTIONS()
+
+	return success;
+}
+
+int WuEnumerateVersionsForCheckpoint(SnapshotsOnCheckpointParams *params,
+									 int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage))
+{
+	assert(params);
+	SnapshotsOnCheckpointParams params2;
+	WuJunction junction = {params, saveListsProc};
+	params2.userData = &junction;
+	return ShOnCheckpoint(&params2,helperProc);
+}
+
 int WuNotifyCheckpointFinished()
 {
 	return 1;
@@ -312,4 +347,10 @@ void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn()
 void WuNotifyCheckpointFinishedExn()
 {
 	if (!WuNotifyCheckpointFinished()) WuThrowException();
+}
+
+void WuEnumerateVersionsForCheckpointExn(SnapshotsOnCheckpointParams *params,
+										 int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage))
+{
+	if (!WuEnumerateVersionsForCheckpoint(params,saveListsProc)) WuThrowException();
 }

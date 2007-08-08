@@ -189,9 +189,6 @@ void flush_buffer(ramoffs offs, bool sync_phys_log = true); // this function flu
 void flush_buffers(bool sync_phys_log = true);
 void flush_data_buffers();
 
-void write_block(const xptr &p, ramoffs offs, bool sync_phys_log) throw (SednaException);
-
-
 ////////////////////////////////////////////////////////////////////////////////
 /// PH functions
 ////////////////////////////////////////////////////////////////////////////////
