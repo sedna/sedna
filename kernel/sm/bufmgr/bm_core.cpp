@@ -27,6 +27,9 @@ void* buf_mem_addr = NULL;
 // Buffer memory table that translates xptr addresses to buffer offsets
 t_buffer_table buffer_table;
 
+// Table with physical xptrs
+t_xptr_info *phys_xptrs;
+
 // Lists of blocks
 t_ramoffs_list free_mem;
 t_ramoffs_list used_mem;
@@ -329,13 +332,31 @@ xptr put_block_to_buffer(session_id sid,
     if (read_block_from_disk) read_block(p, *offs);
 
 //d_printf1("put 5\n");
+
+	// store information about physical xptr
+	int ind = (*offs) / PAGE_SIZE;
+	(*phys_xptrs)[ind] = p;
+
     return swapped;
+}
+
+void flush_buffer(ramoffs offs, bool sync_phys_log)
+{
+	vmm_sm_blk_hdr *blk = NULL;
+	int ind = offs / PAGE_SIZE;
+
+    blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
+
+    if (IS_CHANGED(blk)) 
+        write_block((*phys_xptrs)[ind], offs, sync_phys_log);
 }
 
 void flush_buffers(bool sync_phys_log)
 {
     t_buffer_table::iterator it;
     vmm_sm_blk_hdr *blk = NULL;
+
+    int ind; // index of offset in buffer
 
     //d_printf1("Flush buffers: starting...\n");
 
@@ -351,7 +372,8 @@ void flush_buffers(bool sync_phys_log)
             //d_printf2("write record 	(offs = %d) xptr = ", (ramoffs)(*it));
             blk->p.print();
 
-            write_block(blk->p, (ramoffs)(*it), sync_phys_log);
+            ind = (ramoffs)(*it) / PAGE_SIZE;
+            write_block((*phys_xptrs)[ind], (ramoffs)(*it), sync_phys_log);
         }
     }
 
@@ -362,6 +384,8 @@ void flush_data_buffers()
 {
     t_buffer_table::iterator it;
     vmm_sm_blk_hdr *blk = NULL;
+
+    int ind; // index of offset in buffer
 
     d_printf1("Flush data buffers: starting...\n");
 
@@ -379,7 +403,9 @@ void flush_data_buffers()
                 d_printf2("write record 	(offs = %d) xptr = ", (ramoffs)(*it));
                 blk->p.print();
 
-                write_block(blk->p, (ramoffs)(*it));
+                ind = (ramoffs)(*it) / PAGE_SIZE;
+
+                write_block((*phys_xptrs)[ind], (ramoffs)(*it));
             }
         }
     }
