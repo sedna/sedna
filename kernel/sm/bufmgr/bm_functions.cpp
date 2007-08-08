@@ -242,7 +242,9 @@ void bm_startup() throw (SednaException)
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0) != 0)
         throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
 
-
+    // init physical xptrs table
+    phys_xptrs = se_new t_xptr_info(bufs_num);
+    
     mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     read_master_block();
 }
@@ -332,6 +334,9 @@ void bm_shutdown() throw (SednaException)
         trs.erase(it);
         delete (info);
     }
+
+    // release phys xptrs table
+    se_delete(phys_xptrs);
 }
 
 void bm_register_session(session_id sid, persistent_db_data** pdb, int is_rcv_mode) throw (SednaException)

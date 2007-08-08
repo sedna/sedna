@@ -90,6 +90,10 @@ struct tr_info
 typedef std::map<session_id, tr_info*> tr_info_map;
 extern tr_info_map trs;
 
+// Vector that contains information about physical XPTRs
+typedef std::vector<xptr> t_xptr_info;
+extern t_xptr_info *phys_xptrs;
+
 // Shared memory for SM callback call (used for callbacking VMMs - stores args)
 extern void * p_sm_callback_data;
 
@@ -181,6 +185,7 @@ xptr put_block_to_buffer(session_id sid,
                          bool read_block_from_disk = true);
 
 
+void flush_buffer(ramoffs offs, bool sync_phys_log = true); // this function flushes block with a given offset from the buffer
 void flush_buffers(bool sync_phys_log = true);
 void flush_data_buffers();
 
