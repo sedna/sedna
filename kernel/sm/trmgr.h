@@ -40,3 +40,4 @@ extern USemaphore checkpoint_finished;
 
 int PhOnSnapshotCreate(TIMESTAMP ts);
 void PhOnSnapshotDelete(TIMESTAMP ts);
+int GetPhIndex(TIMESTAMP ts);
