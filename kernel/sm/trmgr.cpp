@@ -493,3 +493,13 @@ void PhOnSnapshotDelete(TIMESTAMP ts)
 	    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
     	   throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
 }
+
+int GetPhIndex(TIMESTAMP ts)
+{
+	if (ts_0 == ts)
+		return 0;
+	else if (ts_1 == ts)
+		return 1;
+	else
+    	throw USER_EXCEPTION(SE4605);
+}
