@@ -233,13 +233,13 @@ void sm_llmgr::restorePh()
 //                  read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-  __int64 ph_counter = mem_head->ts;
+  unsigned __int64 ph_counter = mem_head->ts;
 
   char buf3[20];
 
   string ph_bu_file_name = string(db_files_path) + string(db_name) + "." +
-  							string(u_i64toa(ph_counter, buf3, 10)) + ".seph";
-  string ph_bu_file_name_wo_path = string(db_name) + "." + string(u_i64toa(ph_counter, buf3, 10)) + ".seph";
+  							string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
+  string ph_bu_file_name_wo_path = string(db_name) + "." + string(u_ui64toa(ph_counter, buf3, 10)) + ".seph";
 
 
   string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";

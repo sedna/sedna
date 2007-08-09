@@ -63,6 +63,22 @@ char *u_i64toa(__int64 value, char *str, int radix)
 #endif
 }
 
+char *u_ui64toa(unsigned __int64 value, char *str, int radix)
+{
+#ifdef _WIN32
+    _ui64toa(value, str, radix);
+#else
+    if (radix != 10)
+    {
+        d_printf1("radix in call to _ui64toa has unsupported value\n");
+        return NULL;
+    }
+
+    sprintf(str, "%ulld", value);
+    return str;
+#endif
+}
+
 char *u_gcvt(double value, int digits, char *buf)
 {
 #ifdef HAVE_GCVT
