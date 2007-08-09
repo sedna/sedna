@@ -533,14 +533,18 @@ void ShQueryResourceDemand(SnapshotsResourceDemand *demand)
 
 int ShStartup(SnapshotsSetup *psetup)
 {
-	int success=1;
+	int success=0;
+	SnapshotsSnapshot *snapshot=NULL;
 
 	assert(psetup);
 	setup=*psetup;
 	ticket=setup.clientStateTicket;
 	ResetLists();
+	for(snapshot=leadingSnapshot;snapshot->next;snapshot=snapshot->next) {}
+	assert(snapshot);
+	snapshot->type=SH_PERSISTENT_SNAPSHOT;
 
-	return success;
+	return 1;
 }
 
 int ShShutdown()

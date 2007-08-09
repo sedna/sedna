@@ -10,7 +10,7 @@
 
 #define ERR_BUF_SZ	2048
 
-static const size_t appErrorsNum = 51;
+static const size_t appErrorsNum = 53;
 static const char *appErrorsDescription[appErrorsNum] = 
 {
 	"Some error occured.", 
@@ -58,12 +58,14 @@ static const char *appErrorsDescription[appErrorsNum] =
 	"Unable to create a new snapshot with the given timestamp since another snapshot with this timestamp already exists.", 
 	"Unable to advance snapshots.", 
 	"Currently no snapshots exist.", 
+	"The mutating operation is not permited since snapshots are only availible for read-only access.", 
 	"Timestamp is invalid.", 
+	"Maximum timestamp value exceeded. Either 200 years passed or someone is consuming too many timestamps.", 
 	"No apropriate version of the block exist.", 
 	"The transaction already created a working version of this block.", 
 	"An other active transaction created a working version of this block.", 
-	"The mutating operation is not permited since snapshots are only availible for read-only access.", 
-	"The operation requires working version (currently operating on the last commited version)."
+	"The operation requires working version (currently operating on the last commited version).", 
+	"Unable to create versions of the temporary block."
 };
 
 struct ErrorProperties

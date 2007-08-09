@@ -227,7 +227,7 @@ int sm_server_handler(void *arg)
                      }
             case 23: {
                          //d_printf1("query 23: bm_allocate_data_block\n");
-                         WuAllocateBlockExn(msg->sid, 
+                         WuAllocateDataBlockExn(msg->sid, 
                                                 (xptr*)(&(msg->data.swap_data.ptr)), 
                                                 (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                 (xptr*)(&(msg->data.swap_data.swapped)));
@@ -240,6 +240,9 @@ int sm_server_handler(void *arg)
                                                (xptr*)(&(msg->data.swap_data.ptr)), 
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
+
+						 /* everyone like funny expressions */ 
+						 ((vmm_sm_blk_hdr*)&msg->data.swap_data.offs[(char*)buf_mem_addr])->trid_wr_access=msg->sid;
                          msg->cmd = 0;
                          break;
                      }

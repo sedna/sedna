@@ -52,7 +52,7 @@ void WuEnumerateVersionsForCheckpointExn(WuEnumerateVersionsParams *params,
 
 void WuNotifyCheckpointFinishedExn();
 
-void WuAllocateBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped);
+void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped);
 
 void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
@@ -82,7 +82,7 @@ int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 
 int WuNotifyCheckpointFinished();
 
-int WuAllocateBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
+int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
 
 int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped);
 

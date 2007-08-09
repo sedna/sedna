@@ -21,6 +21,8 @@ struct SnapshotsSetup
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 	
 	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
+
+	TIMESTAMP initialPersSnapshotTs;
 };
 
 struct SnapshotsVersion
