@@ -188,7 +188,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
    		char buf[20];
 
    		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
-   			db_name + "." + string(u_i64toa(ts, buf, 10)) + ".seph";
+   			db_name + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
 
    		d_printf1("Initializing PH between transactions on the same session...");
    		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
