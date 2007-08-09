@@ -408,7 +408,11 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 	if (!depth) init_ft_sequences(left,right,parent);	
 #endif
 #ifdef SE_ENABLE_TRIGGERS
-    if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+    if (parent==XNULL) 
+	{
+		CHECKP(left);
+		parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+	}
     node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
     if (node == XNULL) return left;
 #endif
