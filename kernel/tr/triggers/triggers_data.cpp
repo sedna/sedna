@@ -163,6 +163,11 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
         strcpy(trc->innode.name,innode.name);
         trc->innode.type = innode.type;
     }
+	else
+	{
+		trc->path_to_parent = NULL;
+		trc->innode.name = NULL;
+	}
 	trc->trigger_title=(char*)scm_malloc(strlen(trigger_title)+1,true);
 	strcpy(trc->trigger_title,trigger_title);
 	trc->doc_name=(char*)scm_malloc(strlen(doc_name)+1,true);
