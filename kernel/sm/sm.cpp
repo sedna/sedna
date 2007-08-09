@@ -332,7 +332,15 @@ int sm_server_handler(void *arg)
 						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
 
-						 /* TODO: check if we can advance snapshots and probably advance */ 
+						 /* TODO: redo this crap */ 
+						 {
+							 static int cntr=0;
+							 ++cntr;
+							 if (cntr%3==0)
+							 {
+								 WuAdvanceSnapshotsExn();
+							 }
+						 }
 
                          msg->cmd = 0;
                          break;
