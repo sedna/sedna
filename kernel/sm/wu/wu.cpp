@@ -834,3 +834,12 @@ void WuOnUnregisterTransactionExn(int sid)
 	if (!WuOnUnregisterTransaction(sid)) WuThrowException();
 }
 
+void WuGatherSnapshotStatsExn(WuSnapshotStats *stats)
+{
+	if (!WuGatherSnapshotStats(stats)) WuThrowException();
+}
+
+void WuAdvanceSnapshotsExn()
+{
+	if (!WuAdvanceSnapshots()) WuThrowException();
+}

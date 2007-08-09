@@ -68,6 +68,9 @@ void WuOnRollbackTransactionExn(int sid);
 
 void WuOnUnregisterTransactionExn(int sid);
 
+void WuGatherSnapshotStatsExn(WuSnapshotStats *);
+
+void WuAdvanceSnapshotsExn();
 
 #ifdef __WUDANG_SOURCES__
 
