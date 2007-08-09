@@ -394,3 +394,101 @@ void give_transaction_id(transaction_id& trid)
      throw SYSTEM_EXCEPTION("Can't up semaphore: CHARISMA_SYNC_TRN_IDS_TABLE");
 #endif
 }
+
+/*****************************************************************************
+                       Persistent heap management functions
+******************************************************************************/
+
+static TIMESTAMP ts_0 = 0, ts_1 = 0; // timestamps for each type of snapshot (0 means that this type is free)
+char buf[20];
+
+static UFile ph_file_0, ph_file_1;
+static UMMap		ph_file_mapping_0, ph_file_mapping_1;
+static USemaphore	ph_semaphore_0, ph_semaphore_1;
+
+// this function inits ph on snapshot init
+int PhOnSnapshotCreate(TIMESTAMP ts)
+{
+    string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
+	string ph_cur_file_name = string(db_files_path) + string(db_name) + ".seph";
+
+	if (uCopyFile(ph_cur_file_name.c_str(), ph_file_name.c_str(), false, __sys_call_error) == 0)
+      throw USER_EXCEPTION(SE4306);
+	
+	if (!ts_0)
+	{
+	    ph_file_0 = uOpenFile(ph_file_name.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
+	    	U_NO_BUFFERING, __sys_call_error);
+    	if (ph_file_0 == U_INVALID_FD)
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+	    ph_file_mapping_0 = uCreateFileMapping(ph_file_0, 0, CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, NULL, __sys_call_error);
+    	if (U_INVALID_FILEMAPPING(ph_file_mapping_0))
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+	    if (USemaphoreCreate(&ph_semaphore_0, 1, 1, PERS_HEAP_0_SNP_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+        ts_0 = ts;
+
+        return 0;
+    }
+	else if (!ts_1)
+	{
+	    ph_file_1 = uOpenFile(ph_file_name.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
+	    	U_NO_BUFFERING, __sys_call_error);
+    	if (ph_file_1 == U_INVALID_FD)
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+	    ph_file_mapping_1 = uCreateFileMapping(ph_file_1, 0, CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME, NULL, __sys_call_error);
+    	if (U_INVALID_FILEMAPPING(ph_file_mapping_1))
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+	    if (USemaphoreCreate(&ph_semaphore_1, 1, 1, PERS_HEAP_1_SNP_SEMAPHORE_STR, NULL, __sys_call_error) != 0)
+        	throw USER_ENV_EXCEPTION("Cannot open persistent heap", false);
+    	
+        ts_1 = ts;
+
+        return 1;
+    }
+    else
+    	throw USER_EXCEPTION(SE4605);
+}
+
+// this function releases ph on snapshot deletion
+void PhOnSnapshotDelete(TIMESTAMP ts)
+{
+    string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
+
+    if (ts == ts_0)
+    {
+    	if (USemaphoreRelease(ph_semaphore_0, __sys_call_error) != 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+   		if (uReleaseFileMapping(ph_file_mapping_0, NULL, __sys_call_error) != 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+    	if (uCloseFile(ph_file_0, __sys_call_error) == 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+	    ts_0 = 0;
+    }
+    else if (ts == ts_1)
+    {
+    	if (USemaphoreRelease(ph_semaphore_1, __sys_call_error) != 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+   		if (uReleaseFileMapping(ph_file_mapping_1, NULL, __sys_call_error) != 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+    	if (uCloseFile(ph_file_1, __sys_call_error) == 0)
+	        throw USER_ENV_EXCEPTION("Cannot close persistent heap", false);
+
+	    ts_1 = 0;
+    }
+    else
+    	throw USER_EXCEPTION(SE4605);
+    
+    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
+       throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
+}
