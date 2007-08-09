@@ -17,6 +17,7 @@
 #include "common/u/u.h"
 #include "common/u/umutex.h"
 #include "sm/bufmgr/bm_functions.h"
+#include "sm/trmgr.h"
 #include <windows.h>
 
 /* global variables */ 
@@ -243,9 +244,14 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 static
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 {
-	/* kill file or something */ 
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0;
+	try
+	{
+		PhOnSnapshotDelete(snapshotTs);
+		success=1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 /* public api */ 
@@ -597,11 +603,11 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 	return success;
 }
 
-int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex)
+int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *persHeapIndex)
 {
 	int success=0;
 
-	assert(snapshotTs && ipcObjectsSetIndex);
+	assert(snapshotTs && persHeapIndex);
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
@@ -615,9 +621,19 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 				if (!VeOnRegisterClient(isUsingSnapshot,*snapshotTs)) {}
 				if (!ClMarkClientReady(sid)) {}
 				else
+				try
 				{
+					if (isUsingSnapshot)
+					{
+						*persHeapIndex=GetPhIndex(*snapshotTs);
+					}
+					else
+					{
+						*persHeapIndex=-1;
+					}
 					success=1;
 				}
+				WU_CATCH_EXCEPTIONS()
 				ClSetCurrentClientId(-1);
 			}
 			if (!success) ClUnregisterClient(sid);
@@ -736,9 +752,13 @@ int WuAdvanceSnapshots()
 		if (!SetEvent(hSnapshotsAdvancedEvent)) {}
 		else if (!ShAdvanceSnapshots(&curSnapshotTs,&discardedSnapshotTs)) {}
 		else if (!VeOnSnapshotAdvanced(curSnapshotTs,discardedSnapshotTs)) {}
+		else
+		try
 		{
+			PhOnSnapshotCreate(curSnapshotTs);
 			success=1;
 		}
+		WU_CATCH_EXCEPTIONS()
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
 
