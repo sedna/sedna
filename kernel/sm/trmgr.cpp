@@ -489,6 +489,7 @@ void PhOnSnapshotDelete(TIMESTAMP ts)
     else
     	throw USER_EXCEPTION(SE4605);
     
-    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
-       throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
+    if (ts != ll_returnTimestampOfPersSnapshot())
+	    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
+    	   throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
 }
