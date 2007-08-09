@@ -605,6 +605,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 					}
 					else
 					{
+						setup.protectBuffer(bufferId,32,0);
 						success=1;
 					}
 				}
@@ -615,6 +616,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 				else
 				{
 					success = 1;
+					setup.protectBuffer(bufferId,0,0);
 				}
 				if (success) *pBufferId = bufferId; 
 			}

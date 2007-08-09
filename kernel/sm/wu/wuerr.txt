@@ -148,10 +148,16 @@ WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS
 WUERR_NO_SNAPSHOTS_EXIST
 	Currently no snapshots exist.
 
+WUERR_SNAPSHOTS_ARE_READ_ONLY
+	The mutating operation is not permited since snapshots are only availible for read-only access.
+
 ## timestamps errors
 
 WUERR_BAD_TIMESTAMP
 	Timestamp is invalid.
+
+WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED
+	Maximum timestamp value exceeded. Either 200 years passed or someone is consuming too many timestamps.
 
 ## versions errors
 
@@ -164,10 +170,11 @@ WUERR_WORKING_VERSION_ALREADY_CREATED
 WUERR_WORKING_VERSION_CREATED_BY_ALLY
 	An other active transaction created a working version of this block.
 
-WUERR_SNAPSHOTS_ARE_READ_ONLY
-	The mutating operation is not permited since snapshots are only availible for read-only access.
-
 WUERR_OPERATION_REQUIRES_WORKING_VERSION
 	The operation requires working version (currently operating on the last commited version).
+
+WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE
+	Unable to create versions of the temporary block.
+	
 
 ## no more errors

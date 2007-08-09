@@ -68,18 +68,20 @@
 #define WUERR_SNAPSHOT_WITH_THIS_TIMESTAMP_ALREADY_EXISTS                (42 + WUERR_FIRST_ERR)
 #define WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS                                (43 + WUERR_FIRST_ERR)
 #define WUERR_NO_SNAPSHOTS_EXIST                                         (44 + WUERR_FIRST_ERR)
+#define WUERR_SNAPSHOTS_ARE_READ_ONLY                                    (45 + WUERR_FIRST_ERR)
 
 /* timestamps errors */ 
 
-#define WUERR_BAD_TIMESTAMP                                              (45 + WUERR_FIRST_ERR)
+#define WUERR_BAD_TIMESTAMP                                              (46 + WUERR_FIRST_ERR)
+#define WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED                               (47 + WUERR_FIRST_ERR)
 
 /* versions errors */ 
 
-#define WUERR_NO_APROPRIATE_VERSION                                      (46 + WUERR_FIRST_ERR)
-#define WUERR_WORKING_VERSION_ALREADY_CREATED                            (47 + WUERR_FIRST_ERR)
-#define WUERR_WORKING_VERSION_CREATED_BY_ALLY                            (48 + WUERR_FIRST_ERR)
-#define WUERR_SNAPSHOTS_ARE_READ_ONLY                                    (49 + WUERR_FIRST_ERR)
-#define WUERR_OPERATION_REQUIRES_WORKING_VERSION                         (50 + WUERR_FIRST_ERR)
+#define WUERR_NO_APROPRIATE_VERSION                                      (48 + WUERR_FIRST_ERR)
+#define WUERR_WORKING_VERSION_ALREADY_CREATED                            (49 + WUERR_FIRST_ERR)
+#define WUERR_WORKING_VERSION_CREATED_BY_ALLY                            (50 + WUERR_FIRST_ERR)
+#define WUERR_OPERATION_REQUIRES_WORKING_VERSION                         (51 + WUERR_FIRST_ERR)
+#define WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE                   (52 + WUERR_FIRST_ERR)
 
 /* no more errors */ 
 

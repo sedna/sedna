@@ -14,26 +14,50 @@
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/blk_mngmt.h"
 #include "common/sm_vmm_data.h"
+#include "common/u/u.h"
+#include "common/u/umutex.h"
+#include "sm/bufmgr/bm_functions.h"
+#include <windows.h>
+
+/* global variables */ 
+
+static TIMESTAMP timestamp = ~(TIMESTAMP)0;
+static uMutexType gMutex;
+static HANDLE hSnapshotsAdvancedEvent = NULL;
+static TIMESTAMP curSnapshotTs=0, persSnapshotTs=0;
+
+/* utility functions */ 
 
 static
-TIMESTAMP timestamp = 1000;
-
-int WuGetTimestamp(TIMESTAMP *ts)
+int InitSynchObjects()
 {
 	int success = 0;
-	assert(ts); *ts=0;
-	if (!timestamp == !(TIMESTAMP)0)
+	if (uMutexInit(&gMutex,__sys_call_error)!=0) {}
+	else
 	{
-		*ts=timestamp++;
-		success = 1;
+		hSnapshotsAdvancedEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
+		if (hSnapshotsAdvancedEvent)
+		{
+			success=1;
+		}
+		else
+		{
+			uMutexDestroy(&gMutex,__sys_call_error);
+		}
 	}
 	return success;
 }
 
-int WuSetTimestamp(TIMESTAMP ts)
+static
+int DeinitSynchObjects()
 {
-	timestamp = ts;
-	return 1;
+	int failure = 0;
+
+	if (!CloseHandle(hSnapshotsAdvancedEvent)) failure = 1;
+
+	if (!uMutexDestroy(&gMutex,__sys_call_error)) failure = 1;
+
+	return (failure == 0);
 }
 
 static
@@ -48,6 +72,8 @@ ramoffs RamoffsFromBufferId(int id)
 {
 	return id * PAGE_SIZE;
 }
+
+/* wiring functions */ 
 
 static
 int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
@@ -105,8 +131,17 @@ int FixBuffer(int bufferId, int orMask, int andNotMask)
 static
 int ProtectBuffer(int bufferId, int orMask, int andNotMask)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
+	int mask=orMask&~andNotMask;
+	if (mask&32)
+	{
+		header->trid_wr_access=ClGetCurrentClientId();
+	}
+	else
+	{
+		header->trid_wr_access=-1;
+	}
+	return 1;
 }
 
 static
@@ -117,6 +152,7 @@ int MarkBufferDirty(int bufferId, void *base, size_t size, int flags)
 	return 1;
 }
 
+static
 int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 {
 	xptr lilDest = WuExternaliseXptr(bigDest), lilSrc = WuExternaliseXptr(bigSrc);
@@ -150,6 +186,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 	return success;
 }
 
+static
 int AllocBlock(XPTR *bigXptr)
 {
 	int success=0;
@@ -165,6 +202,7 @@ int AllocBlock(XPTR *bigXptr)
 	return success;
 }
 
+static
 int FreeBlock(XPTR bigXptr)
 {
 	int success=0;
@@ -179,6 +217,7 @@ int FreeBlock(XPTR bigXptr)
 	return success;
 }
 
+static
 int LocateHeader(int bufferId, VersionsHeader **veHeader)
 {
 	assert(veHeader);
@@ -187,6 +226,7 @@ int LocateHeader(int bufferId, VersionsHeader **veHeader)
 	return 1;
 }
 
+static
 int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 {
 	int success=0;
@@ -200,11 +240,36 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 	return success;
 }
 
+static
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 {
 	/* kill file or something */ 
 	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
 	return 0;
+}
+
+/* public api */ 
+
+int WuGetTimestamp(TIMESTAMP *ts)
+{
+	int success = 0;
+	assert(ts); *ts=0;
+	if (timestamp == ~(TIMESTAMP)0)
+	{
+		WuSetLastErrorMacro(WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED);
+	}
+	else
+	{
+		*ts=timestamp++;
+		success = 1;
+	}
+	return success;
+}
+
+int WuSetTimestamp(TIMESTAMP ts)
+{
+	timestamp = ts;
+	return 1;
 }
 
 int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
@@ -236,13 +301,15 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 
 		FreeBlock,
 		WuGetTimestamp,
-		OnDiscardSnapshot
+		OnDiscardSnapshot,
+		persSnapshotTs
 	};
 	VersionsResourceDemand versionsResourceDemand;
 	SnapshotsResourceDemand snapshotsResourceDemand;
 	int success=0;
 
-	if (!ClInitialise()) {}
+	if (!InitSynchObjects()) {}
+	else if (!ClInitialise()) {}
 	else if (!ShInitialise()) {}
 	else if (!VeInitialise()) {}
 	else
@@ -271,47 +338,80 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 
 int WuRelease()
 {
-	int success=0;
-	if (!ShShutdown()) {}
-	else
-	{
-		success=1;
-	}
+	int failure=0;
+	if (!ShShutdown()) failure=1;
 	ShDeinitialise();
 	VeDeinitialise();
 	ClDeinitialise();
-	return success;
+	if (!DeinitSynchObjects()) failure=1;
+	return (failure==0);
 }
 
 int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int failure = 0, success = 0, lockedok = 0;
+
+	while (!failure && !lockedok)
+	{
+		if (uMutexLock(&gMutex,__sys_call_error)!=0) { failure=1; }
+		else
+		{
+			if (curSnapshotTs==persSnapshotTs)
+			{
+				uMutexUnlock(&gMutex,__sys_call_error);
+				if (WaitForSingleObject(hSnapshotsAdvancedEvent,INFINITE)!=WAIT_OBJECT_0)
+				{
+					failure=1;
+				}
+				else if (!SetEvent(hSnapshotsAdvancedEvent)) 
+				{
+					failure=1;
+				}
+			}
+			else
+			{
+				lockedok=1;
+				uMutexUnlock(&gMutex,__sys_call_error);
+			}
+		}
+	}
+
+	if (lockedok)
+	{
+		if (!ShOnBeginCheckpoint(&persSnapshotTs)) {}
+		else if (!VeOnBeginCheckpoint()) {}
+		else
+		{
+			success=1;
+		}
+		uMutexUnlock(&gMutex,__sys_call_error);
+	}	 
+	return success; 
 }
 
-struct WuJunction
+struct WuEnumerateVersionsParamsAdapter
 {
-	SnapshotsOnCheckpointParams *params;
-	int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage);
+	WuEnumerateVersionsParams *params;
+	int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage);
 };
 
 static
-int helperProc(SnapshotsOnCheckpointParams *params2, SnapshotsVersion *buf, size_t count, int isGarbage)
+int helperProc(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage)
 {
 	int success=0;
-	WuJunction *junction = (WuJunction *)params2->userData;
+	WuEnumerateVersionsParamsAdapter *adapter = (WuEnumerateVersionsParamsAdapter *)params->userData;
 
-	assert(junction && junction->params && junction->saveListsProc);
+	assert(adapter && adapter->params && adapter->saveListsProc);
 
-	junction->params->persistentSnapshotTs = params2->persistentSnapshotTs;
-	junction->params->persistentVersionsCount = params2->persistentVersionsCount;
-	junction->params->garbageVersionsCount = params2->garbageVersionsCount;
-	junction->params->persistentVersionsSent = params2->persistentVersionsSent;
-	junction->params->garbageVersionsSent = params2->garbageVersionsSent;
+	adapter->params->persistentSnapshotTs = params->persistentSnapshotTs;
+	adapter->params->persistentVersionsCount = params->persistentVersionsCount;
+	adapter->params->garbageVersionsCount = params->garbageVersionsCount;
+	adapter->params->persistentVersionsSent = params->persistentVersionsSent;
+	adapter->params->garbageVersionsSent = params->garbageVersionsSent;
 
 	try
 	{
-		success = junction->saveListsProc(junction->params, buf, count, isGarbage);
+		success = adapter->saveListsProc(adapter->params, (WuVersionEntry *)buf, count, isGarbage);
 	}
 	WU_CATCH_EXCEPTIONS()
 
@@ -321,85 +421,331 @@ int helperProc(SnapshotsOnCheckpointParams *params2, SnapshotsVersion *buf, size
 int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 									 int(*saveListsProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage))
 {
-	/*
+
+	int success;
 	assert(params);
 	SnapshotsOnCheckpointParams params2;
-	WuJunction junction = {params, saveListsProc};
-	params2.userData = &junction;
-	return ShOnCheckpoint(&params2,helperProc);
-	*/
+	WuEnumerateVersionsParamsAdapter adapter = {params, saveListsProc};
+	params2.userData = &adapter;
+	
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ShOnCheckpoint(&params2,helperProc)) {}
+		else
+		{
+			success = 1;
+		}
+		uMutexUnlock(&gMutex,__sys_call_error);
+	}
 
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	return success;
 }
 
 int WuNotifyCheckpointFinished()
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success = 0;
+	if (uMutexLock(&gMutex, __sys_call_error) !=0 ) {}
+	else
+	{
+		if (!VeOnCompleteCheckpoint(persSnapshotTs)) {}
+		else if (!ShOnCompleteCheckpoint()) {}
+		else
+		{
+			success = 1;
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }	
 
-int WuAllocateBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
+int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0, bufferId=0;
+	LXPTR lxptr;
+
+	assert(p && offs && swapped);
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			*p=XNULL;
+			*offs=0;
+			*swapped=XNULL;
+			if (!VeAllocBlock(&lxptr)) {}
+			else if (!LoadBuffer(lxptr,&bufferId,0)) {}
+			{
+				*p=WuExternaliseXptr(lxptr);
+				*offs=RamoffsFromBufferId(bufferId);
+				ProtectBuffer(bufferId,32,0);
+				success=1;
+			}
+			ClSetCurrentClientId(-1);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	LXPTR lxptr=0;
+	int success=0, bufferId=0;
+
+	assert(offs && swapped);
+	*offs=0;
+	*swapped=XNULL;
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (IS_TMP_BLOCK(p))
+		{
+			WuSetLastErrorMacro(WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE);
+		}
+		else
+		{
+			lxptr=WuInternaliseXptr(p);
+			if (!VeCreateVersion(lxptr)) {}
+			else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
+			else
+			{
+				*offs=RamoffsFromBufferId(bufferId);
+				success=1;
+			}
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuDeleteBlock(int sid, xptr p)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	LXPTR lxptr=0;
+	int success=0, bufferId=0;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			if (IS_TMP_BLOCK(p))
+			{
+				try
+				{
+					bm_delete_block(sid,p);
+					success=1;
+				}
+				WU_CATCH_EXCEPTIONS();
+			}
+			else
+			{
+				lxptr = WuInternaliseXptr(p);
+				if (VeFreeBlock(lxptr)) 
+				{
+					success=1;
+				}
+			}
+			ClSetCurrentClientId(-1);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	LXPTR lxptr=0;
+	int success=0, bufferId=0;
+	
+	assert(offs && swapped);
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			lxptr = WuInternaliseXptr(p);
+			*offs=0;
+			*swapped=XNULL;
+			if (IS_DATA_BLOCK(p))
+			{
+				if (VeLoadBuffer(lxptr,&bufferId,0))
+				{
+					success=1;
+				}
+			}
+			else
+			{
+				if(LoadBuffer(lxptr,&bufferId,0))
+				{
+					ProtectBuffer(bufferId,0,0);
+					success=1;
+				}
+			}
+					
+			if (success)
+			{
+				*offs=RamoffsFromBufferId(bufferId);
+			}
+			ClSetCurrentClientId(-1);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs, int *ipcObjectsSetIndex)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0;
+
+	assert(snapshotTs && ipcObjectsSetIndex);
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClRegisterClient(&sid,1)) {}
+		else
+		{
+			if (!ClSetCurrentClientId(sid)) {}
+			else
+			{
+				if (!ShOnRegisterClient(isUsingSnapshot,snapshotTs)) {}
+				if (!VeOnRegisterClient(isUsingSnapshot,*snapshotTs)) {}
+				if (!ClMarkClientReady(sid)) {}
+				else
+				{
+					success=1;
+				}
+				ClSetCurrentClientId(-1);
+			}
+			if (!success) ClUnregisterClient(sid);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuOnCommitTransaction(int sid)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			if (!VeOnCommit()) {}
+			else
+			{
+				success=1;
+			}
+			ClSetCurrentClientId(-1);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuOnRollbackTransaction(int sid)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			if (!VeOnRollback()) {}
+			else
+			{
+				success=1;
+			}
+			ClSetCurrentClientId(-1);
+		}		
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
 int WuOnUnregisterTransaction(int sid)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	int success=0;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			if (!ClMarkClientLeaving(sid)) {}
+			else if (!VeOnUnregisterClient()) {}
+			else if (!ShOnUnregisterClient()) {}
+			else
+			{
+				success=1;
+			}
+			ClSetCurrentClientId(-1);
+			success=ClUnregisterClient(sid);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
 }
 
-int WuGatherSnapshotStats(WuSnapshotStats *)
+int WuGatherSnapshotStats(WuSnapshotStats *stats)
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	SnapshotsStats snStats;
+	int success=0;
+
+	assert(stats);
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ShCheckIfCanAdvanceSnapshots(&stats->isAbleToAdvanceSnapshots,NULL)){}
+		else if (!ShGatherStats(&snStats)) {}
+		else
+		{
+			stats->versionsCount = snStats.versionsCount;
+			stats->runawayVersionsCount = 0;
+			stats->curSnapshotVersionsCount = snStats.curSnapshotVersionsCount;
+			stats->curSnapshotSharedVersionsCount = snStats.curSnapshotSharedVersionsCount;
+			stats->persSnapshotVersionsCount = snStats.persSnapshotVersionsCount;
+			stats->persSnapshotSharedVersionsCount = snStats.persSnapshotSharedVersionsCount;
+			stats->curSnapshotTs = curSnapshotTs;
+			stats->persSnapshotTs = persSnapshotTs;
+			success=1;
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	if (!success) memset(stats,0,sizeof *stats);
+	return success;
 }
 
 int WuAdvanceSnapshots()
 {
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
+	TIMESTAMP discardedSnapshotTs=0;
+	int success=0;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!SetEvent(hSnapshotsAdvancedEvent)) {}
+		else if (!ShAdvanceSnapshots(&curSnapshotTs,&discardedSnapshotTs)) {}
+		else if (!VeOnSnapshotAdvanced(curSnapshotTs,discardedSnapshotTs)) {}
+		{
+			success=1;
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+
+	return success;
 }
 
-/* exn adapters */ 
+/* public api, exn adapters */ 
 
 void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 {
@@ -427,9 +773,9 @@ void WuNotifyCheckpointFinishedExn()
 	if (!WuNotifyCheckpointFinished()) WuThrowException();
 }
 
-void WuAllocateBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
+void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
-	if (!WuAllocateBlock(sid, p, offs, swapped)) WuThrowException();
+	if (!WuAllocateDataBlock(sid, p, offs, swapped)) WuThrowException();
 }
 
 void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped)
