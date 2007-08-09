@@ -83,6 +83,18 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Initializing logical log...");
    hl_logical_log_on_session_begin(log_files_path, rcv_active);
    d_printf1("OK\n");
+
+   // ph shutdown between transactions
+   d_printf1("Releasing PH between transactions on the same session...");
+   if (is_ph_inited)
+   {
+      if (pers_release() != 0)
+         throw USER_EXCEPTION(SE4606);
+
+      is_ph_inited = false;
+   }
+   d_printf1("OK\n");
+   // ph shutdown between transactions
 }
 
 void on_session_end(SSMMsg* &sm_server)
@@ -148,39 +160,35 @@ void on_session_end(SSMMsg* &sm_server)
 
 void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
 {
+   TIMESTAMP ts;
+   int type_of_snp;
+
    is_this_tr_query = is_query;
 
    if (!is_query)
 	   down_transaction_block_sems();
 
-   d_printf1("Releasing PH between transactions on the same session...");
+   d_printf1("Getting transaction identifier...");
+   trid = get_transaction_id(sm_server);
+   d_printf1("OK\n");
+   
+   event_logger_set_trid(trid);
 
-   if (is_ph_inited)
-   {
-      if (pers_release() != 0)
-         throw USER_EXCEPTION(SE4606);
-
-      is_ph_inited = false;
-   }
+   d_printf1("Phys log on transaction begin...");
+   hl_phys_log_on_transaction_begin();
    d_printf1("OK\n");
 
+   d_printf1("Initializing VMM...");
+   vmm_on_transaction_begin(is_query, ts, type_of_snp);
+   d_printf1("OK\n");
+
+   // start of ph reinitialization
    if (is_query)
    {
-		sm_msg_struct msg;
-        
-        msg.cmd = 38; // bm_get_snapshot_info
-        msg.trid = 0; // trid is not defined in this point
-        msg.sid = sid;
-
-        if (sm_server->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
-   		
    		char buf[20];
 
    		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
-   			db_name + "." + string(u_i64toa(msg.data.snp_info.ts, buf, 10)) + ".seph";
-
-   		int type_of_snp = msg.data.snp_info.type_of_snp; // type of snapshot: 1 or 0
+   			db_name + "." + string(u_i64toa(ts, buf, 10)) + ".seph";
 
    		d_printf1("Initializing PH between transactions on the same session...");
    		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
@@ -199,21 +207,8 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
    		is_ph_inited = true;
    		d_printf1("OK\n");
    }      
-
-   d_printf1("Getting transaction identifier...");
-   trid = get_transaction_id(sm_server);
-   d_printf1("OK\n");
+   // end of ph reinitialization
    
-   event_logger_set_trid(trid);
-
-   d_printf1("Phys log on transaction begin...");
-   hl_phys_log_on_transaction_begin();
-   d_printf1("OK\n");
-
-   d_printf1("Initializing VMM...");
-   vmm_on_transaction_begin();
-   d_printf1("OK\n");
-
    d_printf1("Initializing indirection table...");
    indirection_table_on_transaction_begin();
    d_printf1("OK\n");
@@ -249,6 +244,18 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
    indirection_table_on_transaction_end();
    d_printf1("OK\n");
 
+   // ph shutdown between transactions
+   d_printf1("Releasing PH between transactions on the same session...");
+   if (is_ph_inited)
+   {
+      if (pers_release() != 0)
+         throw USER_EXCEPTION(SE4606);
+
+      is_ph_inited = false;
+   }
+   d_printf1("OK\n");
+   // ph shutdown between transactions
+   
    d_printf1("Releasing VMM...");
    vmm_on_transaction_end();
    d_printf1("OK\n");

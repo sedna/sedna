@@ -651,8 +651,8 @@ int main(int argc, char **argv)
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
-			/* TODO: gimme timestamp */ 
-            WuInitExn(0,0,0);
+            WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
+            WuInitExn(0,0, ll_returnTimestampOfPersSnapshot());
             elog(EL_LOG, ("SM : Wu is initialized"));
 
 
@@ -853,8 +853,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        d_printf1("OK\n");
 
-
-       WuInitExn(1,0,0);
+       WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
+       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
        elog(EL_LOG, ("SM : Wu is initialized"));
 
        //recover database by logical log

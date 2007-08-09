@@ -149,8 +149,8 @@ void vmm_trace_delete_block(const xptr& p)
 
 #endif
 
-//typedef XptrHash<void*, 16, 16> t_blocks_write_table;
-//static t_blocks_write_table write_table;
+typedef XptrHash<void*, 16, 16> t_blocks_write_table;
+static t_blocks_write_table write_table;
 
 
 /*******************************************************************************
@@ -206,12 +206,21 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #endif
         return -1;
     }
-    
+
+    if (offs != RAMOFFS_OUT_OFF_BOUNDS && isWrite)
+    {
+        xptr p = ((vmm_sm_blk_hdr *)addr)->p;
+        write_table.insert(p, addr);
+    }
+
     return 0;
 }
 
 inline int __vmm_unmap(void *addr)
 {
+    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
+    write_table.remove(p);
+
 #ifdef _WIN32
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
 #else
@@ -788,7 +797,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
     return db_data_ptr;
 }
 
-void vmm_on_transaction_begin() throw (SednaException)
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) throw (SednaException)
 {
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
@@ -800,11 +809,15 @@ void vmm_on_transaction_begin() throw (SednaException)
         msg.cmd = 35; // bm_register_transaction
         msg.trid = trid;
         msg.sid = sid;
+        msg.data.data[0] = is_query;
 
         if (ssmmsg->send_msg(&msg) != 0)
             throw USER_EXCEPTION(SE1034);
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+
+        ts = msg.data.snp_info.ts;
+        type_of_snp = msg.data.snp_info.type_of_snp;
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -901,22 +914,12 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // reset blocks with write access from current trid
-//        t_blocks_write_table::iterator it;
+        t_blocks_write_table::iterator it;
 
-//	    for (it = write_table.begin(); it != write_table.end(); ++it)
-//      		_vmm_unmap_decent(*it);
+	    for (it = write_table.begin(); it != write_table.end(); ++it)
+      		_vmm_unmap_decent(*it);
 
-//      	write_table.clear();
-#ifdef VMM_ACCURATE
-    __uint32 cur;
-    for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
-         cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-         cur += (__uint32)PAGE_SIZE)
-    {
-        _vmm_remap((void*)cur, default_ram, false /* re-mapping with read-only access */);
-    }
-#endif
-
+      	write_table.clear();
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1349,7 +1352,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 
         _vmm_remap(XADDR(p), offs, false);
 
-        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == trid)
+        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
         {
 	        _vmm_remap(XADDR(p), offs, true);
 //	        write_table.insert(p, XADDR(p));

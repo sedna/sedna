@@ -458,7 +458,7 @@ int main(int argc, char **argv)
 
                                 NULL_LSN, // last checkpoint lsn
                                 NULL_LSN, // last physical chain lsn
-                                0,        // timestamp of the last persistent snapshot
+                                0x10000,        // timestamp of the last persistent snapshot
 
                                 true 
                                );

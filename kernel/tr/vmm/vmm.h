@@ -15,7 +15,9 @@
 #include "common/persistent_db_data.h"
 #include "common/u/uthread.h"
 
-extern transaction_id trid;
+#include  "common/wutypes.h"
+
+extern session_id sid;
 
 //#define VMM_GATHER_STATISTICS
 //#define VMM_TRACE
@@ -98,7 +100,7 @@ extern transaction_id trid;
 
 #define VMM_SIGNAL_MODIFICATION(p)	VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
                                     VMM_TRACE_SIGNAL_MODIFICATION(p)				\
-                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != trid) \
+                                    if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != sid) \
                                     	vmm_unswap_block_write(p);                  \
                                     ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;
 
@@ -108,7 +110,7 @@ void vmm_determine_region(bool log = false) throw (SednaException);
 
 persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) throw (SednaException);
 void vmm_on_session_end() throw (SednaException);
-void vmm_on_transaction_begin() throw (SednaException);
+void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) throw (SednaException);
 void vmm_on_transaction_end() throw (SednaException);
 
 // VMM alloc/delete functions
