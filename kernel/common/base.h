@@ -285,8 +285,7 @@ enum QueryType {TL_XQuery	= 9,	// XQuery query
  * 35 - bm_register_transaction
  * 36 - bm_unregister_transaction
  * 37 - bm_create_new_version
- * 38 - bm_get_snapshot_info
- * 39 - transaction rollback
+ * 38 - transaction rollback
  *
  */
 struct sm_blk_stat
