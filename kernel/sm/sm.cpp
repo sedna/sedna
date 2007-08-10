@@ -33,7 +33,7 @@ SSMMsg *ssmmsg;
 USemaphore wait_for_shutdown;
 
 
-#define SM_BACKGROUND_MODE_TIMEOUT		15000
+#define SM_BACKGROUND_MODE_TIMEOUT		60000
 
 
 
@@ -241,6 +241,7 @@ int sm_server_handler(void *arg)
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
+						 ((vmm_sm_blk_hdr*)((char*)buf_mem_addr+msg->data.swap_data.offs))->trid_wr_access=msg->sid;
                          break;
                      }
             case 25: {
@@ -704,6 +705,7 @@ int main(int argc, char **argv)
 
         delete ssmmsg;
 
+		WuAdvanceSnapshotsExn();
 
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
@@ -872,14 +874,16 @@ void recover_database_by_physical_and_logical_log(int db_id)
        if (ssmmsg->shutdown() != 0)
           throw USER_EXCEPTION(SE3033);
 
-       WuReleaseExn();
-       elog(EL_LOG, ("SM : Wu is released"));
+	   WuAdvanceSnapshotsExn();
 
        //shutdown checkpoint thread (it also makes checkpoint)
        shutdown_chekpoint_thread();
        elog(EL_LOG, ("SM : shutdown checkpoint thread done"));
 
-       // shutdown bm
+       WuReleaseExn();
+       elog(EL_LOG, ("SM : Wu is released"));
+
+	   // shutdown bm
        bm_shutdown();
        elog(EL_LOG, ("SM : bm_shutdown done"));
 

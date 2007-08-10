@@ -83,18 +83,6 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Initializing logical log...");
    hl_logical_log_on_session_begin(log_files_path, rcv_active);
    d_printf1("OK\n");
-
-   // ph shutdown between transactions
-   d_printf1("Releasing PH between transactions on the same session...");
-   if (is_ph_inited)
-   {
-      if (pers_release() != 0)
-         throw USER_EXCEPTION(SE4606);
-
-      is_ph_inited = false;
-   }
-   d_printf1("OK\n");
-   // ph shutdown between transactions
 }
 
 void on_session_end(SSMMsg* &sm_server)
@@ -160,6 +148,18 @@ void on_session_end(SSMMsg* &sm_server)
 
 void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
 {
+   // ph shutdown between transactions
+   d_printf1("Releasing PH between transactions on the same session...");
+   if (is_ph_inited)
+   {
+      if (pers_release() != 0)
+         throw USER_EXCEPTION(SE4606);
+
+      is_ph_inited = false;
+   }
+   d_printf1("OK\n");
+   // ph shutdown between transactions
+
    TIMESTAMP ts;
    int type_of_snp;
 
@@ -192,7 +192,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
 
    		d_printf1("Initializing PH between transactions on the same session...");
    		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
-   			(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
+   			(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
       		throw USER_EXCEPTION(SE4605);
 
    		is_ph_inited = true;
@@ -202,7 +202,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
    {
    		d_printf1("Initializing PH between transactions on the same session...");
    		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
-   		if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 1))
+   		if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
       		throw USER_EXCEPTION(SE4605);
    		is_ph_inited = true;
    		d_printf1("OK\n");

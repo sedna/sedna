@@ -77,8 +77,8 @@ void hl_logical_log_on_session_end()
 #ifdef CHECKPOINT_ON
  if (is_ll_on_session_initialized)
  {
-   if (USemaphoreClose(checkpoint_sem, __sys_call_error) != 0)
-      throw USER_EXCEPTION2(SE4013, "CHARISMA_CHECKPOINT_SEM");
+//   if (USemaphoreClose(checkpoint_sem, __sys_call_error) != 0)
+//      throw USER_EXCEPTION2(SE4013, "CHARISMA_CHECKPOINT_SEM");
 
    if (USemaphoreClose(concurrent_trns_sem, __sys_call_error) != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_OPERATION_ATOMICITY");
