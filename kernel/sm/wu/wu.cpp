@@ -56,7 +56,7 @@ int DeinitSynchObjects()
 
 	if (!CloseHandle(hSnapshotsAdvancedEvent)) failure = 1;
 
-	if (!uMutexDestroy(&gMutex,__sys_call_error)) failure = 1;
+	if (uMutexDestroy(&gMutex,__sys_call_error)!=0) failure = 1;
 
 	return (failure == 0);
 }
@@ -247,6 +247,7 @@ int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 	int success=0;
 	try
 	{
+		WuDbgDump(-1,0);
 		PhOnSnapshotDelete(snapshotTs);
 		success=1;
 	}
@@ -335,6 +336,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		{
 			try
 			{
+				curSnapshotTs=::persSnapshotTs=persSnapshotTs;
 				PhOnInitialSnapshotCreate(persSnapshotTs);
 				success = 1;
 			}
@@ -589,7 +591,7 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			{
 				if(LoadBuffer(lxptr,&bufferId,0))
 				{
-					ProtectBuffer(bufferId,0,0);
+					ProtectBuffer(bufferId,32,0);
 					success=1;
 				}
 			}
@@ -636,9 +638,10 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 					success=1;
 				}
 				WU_CATCH_EXCEPTIONS()
+				WuDbgDump(-1,0);
 				ClSetCurrentClientId(-1);
 			}
-			if (!success) ClUnregisterClient(sid);
+			if (!success) ClUnregisterClient(sid);			
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
@@ -660,6 +663,7 @@ int WuOnCommitTransaction(int sid)
 			{
 				success=1;
 			}
+			WuDbgDump(-1,0);
 			ClSetCurrentClientId(-1);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
@@ -682,6 +686,7 @@ int WuOnRollbackTransaction(int sid)
 			{
 				success=1;
 			}
+			WuDbgDump(-1,0);
 			ClSetCurrentClientId(-1);
 		}		
 		uMutexUnlock(&gMutex, __sys_call_error);
@@ -706,6 +711,7 @@ int WuOnUnregisterTransaction(int sid)
 			{
 				success=1;
 			}
+			WuDbgDump(-1,0);
 			ClSetCurrentClientId(-1);
 			success=ClUnregisterClient(sid);
 		}
@@ -757,6 +763,7 @@ int WuAdvanceSnapshots()
 		else
 		try
 		{
+			WuDbgDump(-1,0);
 			PhOnSnapshotCreate(curSnapshotTs);
 			success=1;
 		}

@@ -66,7 +66,7 @@ int VeStartup(VeSetup *setup);
 
 void VeDeinitialize();
 
-int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot);
+int VeOnRegisterClient(int isUsingSnapshot,TIMESTAMP snapshotTs);
 
 int VeOnUnregisterClient();
 

@@ -527,13 +527,17 @@ void VeDeinitialize()
 	isInitialized = 0;
 }
 
-int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
+int VeOnRegisterClient(int isUsingSnapshot, TIMESTAMP snapshotTs)
 {
 	int success=0;
 	VeClientState *state=NULL;
 	VeSnapshot *snapshot=NULL;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
+	else if (isUsingSnapshot && (0==snapshotTs || ~(TIMESTAMP)0==snapshotTs))
+	{
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+	}
 	else if (isUsingSnapshot && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, snapshotTs)) {}
 	else if (isUsingSnapshot && snapshot->isDamaged)
 	{
@@ -550,6 +554,7 @@ int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot)
 	{
 		state->pushedVersions = new std::list<SnRequestForGc>();
 		snapshotsList.first.clientTs[ClGetCurrentClientId()] = state->clientTs;
+
 		success = 1;
 	}
 	return success;
@@ -562,7 +567,7 @@ int VeOnUnregisterClient()
 	VeSnapshot *snapshot=NULL;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
-	else if (state->pushedVersions && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs)) {}
+	else if (!state->pushedVersions && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs)) {}
 	else if (state->pushedVersions)
 	{
 		delete state->pushedVersions;
@@ -572,6 +577,7 @@ int VeOnUnregisterClient()
 	}
 	else
 	{
+		assert(snapshot);
 		snapshot->occupancy --;
 		success = 1;
 	}
@@ -863,7 +869,7 @@ int VeOnCommit()
 			ibuf=buf;
 			for (;ibuf<ebuf && i!=state->pushedVersions->end();++i)
 			{
-				if (i->anchorTs == ~(TIMESTAMP)0)
+				if (i->anchorTs != ~(TIMESTAMP)0)
 				{
 					ibuf->lxptr = i->lxptr;
 					ibuf->xptr = i->xptr;

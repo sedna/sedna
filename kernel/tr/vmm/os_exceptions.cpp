@@ -9,16 +9,17 @@
 #include "tr/vmm/vmm.h"
 
 
-//#define PRINT_STACK_TRACE
+#define PRINT_STACK_TRACE
 
 
 bool OS_exceptions_handler::critical_section = false;
 
-
 #ifdef _WIN32
 #ifdef PRINT_STACK_TRACE
-//#include "tr/vmm/sym_engine.h"
-#include "../libs/sym_engine/sym_engine.h"
+#include "tr/vmm/sym_engine.h"
+#include <iostream>
+
+//#include "../libs/sym_engine/sym_engine.h"
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
