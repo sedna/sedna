@@ -317,9 +317,9 @@ TIMESTAMP llmgr_core::returnTimestampOfPersSnapshot(bool sync)
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-  return mem_head->ts;
-
   ll_log_unlock(sync);
+
+  return mem_head->ts;
 }
 
 void llmgr_core::extend_logical_log(bool sync)
