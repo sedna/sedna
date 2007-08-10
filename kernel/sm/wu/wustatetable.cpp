@@ -195,7 +195,7 @@ void ValidateGuardMemory(StateTable *t, int rowId, TICKET ticket, int guardKind)
 	assert(isGuardMemoryValidationPassed); /* verbose assert message */ 
 }
 
-void InitialiseStateTable(StateTable *t)
+void InitializeStateTable(StateTable *t)
 {
 	assert(t);
 	t->mem=NULL;
@@ -260,7 +260,7 @@ void ResetStateTable(StateTable *t)
 	}
 }
 
-void DeinitialiseStateTable(StateTable *t)
+void DeinitializeStateTable(StateTable *t)
 {
 	ResetStateTable(t);
 }
