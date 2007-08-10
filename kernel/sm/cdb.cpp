@@ -106,6 +106,11 @@ void create_db(__int64 data_file_max_size,
                   PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR) != 0)
         throw USER_EXCEPTION(SE4302);
 
+    string ph_new_file_name = string(db_files_path) + string(db_name) + ".65536.seph";
+    
+	if (uCopyFile(ph_file_name.c_str(), ph_new_file_name.c_str(), false, __sys_call_error) == 0)
+      throw USER_EXCEPTION(SE4306);    
+    
     persistent_db_data* pdb = (persistent_db_data*)pers_malloc(sizeof(persistent_db_data));
     
     if (pdb == NULL)

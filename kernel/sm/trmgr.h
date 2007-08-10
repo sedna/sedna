@@ -38,6 +38,7 @@ void give_transaction_id(transaction_id& trid);
 extern USemaphore wait_for_checkpoint; 
 extern USemaphore checkpoint_finished;
 
+int PhOnInitialSnapshotCreate(TIMESTAMP ts);
 int PhOnSnapshotCreate(TIMESTAMP ts);
 void PhOnSnapshotDelete(TIMESTAMP ts);
 int GetPhIndex(TIMESTAMP ts);

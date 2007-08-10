@@ -286,6 +286,7 @@ int CreateSnapshot(VeSnapshotsList *lst, TIMESTAMP ts)
 			beforeInsertionPt->next = newSh;
 			newSh->next = insertionPt;
 			newSh->timestamp = ts;
+			success = 1;
 		}
 	}
 	return success;
