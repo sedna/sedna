@@ -338,7 +338,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 				PhOnInitialSnapshotCreate(persSnapshotTs);
 				success = 1;
 			}
-			WU_HANDLE_EXCEPTIONS()			
+			WU_CATCH_EXCEPTIONS()			
 		}
 	}
 	if (!success)
