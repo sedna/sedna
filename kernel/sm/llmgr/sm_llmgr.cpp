@@ -351,13 +351,13 @@ void sm_llmgr::ll_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEnt
 
   int rec_state = 1;
 
-  if (snp_info->persistentVersionsSent == 0 && snp_info->garbageVersionsSent == 0)
+  if (snp_info->persVersionsSent == 0 && snp_info->garbageVersionsSent == 0)
   	rec_state = 0;
 
   if (rec_state == 0)
   {
 //  	mem_head->number_of_cp_records = 1;
-  	mem_head->ts = snp_info->persistentSnapshotTs;
+  	mem_head->ts = snp_info->persSnapshotTs;
 
   	rec_len = sizeof(char) + sizeof(int) + sizeof(bm_masterblock) + sizeof(LONG_LSN) + sizeof(int) + sizeof(size_t) + 
   		sizeof(WuVersionEntry) * count + sizeof(LONG_LSN);

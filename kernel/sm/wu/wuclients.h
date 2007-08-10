@@ -83,26 +83,28 @@
 	client id or -1 that is interpreted as "no current id". ClRegisterClient doesn't
 	affect current client id and so does ClUnregisterClient. */ 
 
-struct ClientsSetup
+struct ClSetup
 {
 	int maxClientsCount;
 	int maxSizePerClient;
 };
 
-struct ClientsEnumClientsInfo
+struct ClEnumerateClientsParams
 {
 	int clientsCount;
 	int alreadyEnumeratedCount;
 	void *userData;
 };
 
-int  ClInitialise();
+typedef int (*ClEnumerateClientsProc)(ClEnumerateClientsParams *params, int clientId);
+
+int  ClInitialize();
 
 int  ClReserveStateBlocks(TICKET *ticket, size_t size);
 
-int  ClStartup(ClientsSetup *clientsSetup);
+int  ClStartup(ClSetup *setup);
 
-void ClDeinitialise();
+void ClDeinitialize();
 
 int  ClQueryMaxClientsCount();
 
@@ -122,8 +124,8 @@ int  ClGetCurrentStateBlock(void **ptr, TICKET ticket);
 
 int  ClGetStateBlock(void **ptr, TICKET ticket, int clientId);
 
-int ClEnumClients(ClientsEnumClientsInfo *enumClientsInfo, 
-				  int(*enumProc)(ClientsEnumClientsInfo *enumClientsInfo, int clientId));
+int ClEnumerateClients(ClEnumerateClientsParams *enumClientsInfo, 
+					   ClEnumerateClientsProc enumProc);
 
 int ClLockClientSet();
 

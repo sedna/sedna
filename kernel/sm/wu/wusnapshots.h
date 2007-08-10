@@ -8,12 +8,12 @@
 #include "wutypes.h"
 #include "wuincguard.h"
 
-struct SnapshotsResourceDemand
+struct SnResourceDemand
 {
 	size_t clientStateSize;
 };
 
-struct SnapshotsSetup
+struct SnSetup
 {
 	TICKET clientStateTicket;
 
@@ -25,31 +25,32 @@ struct SnapshotsSetup
 	TIMESTAMP initialPersSnapshotTs;
 };
 
-struct SnapshotsVersion
+struct SnVersionEntry
 {
 	XPTR xptr;
 	LXPTR lxptr;
 };
 
-struct SnapshotsRequestForGc
+struct SnRequestForGc
 {
 	LXPTR lxptr;				/* logical xptr - used for recovery */ 
-	XPTR snapshotVersionXptr;	/* physical xptr of the snapshot version */ 
+	XPTR xptr;					/* physical xptr of the snapshot version */ 
 	TIMESTAMP anchorTs;			/* timestamp of the most recent snapshot not-having this version */ 
 };
 
-struct SnapshotsOnCheckpointParams
+struct SnEnumerateVersionsParams
 {
-	TIMESTAMP persistentSnapshotTs;
-	size_t persistentVersionsCount;
+	TIMESTAMP persSnapshotTs;
+	size_t persVersionsCount;
 	size_t garbageVersionsCount;
-	size_t persistentVersionsSent;
+	size_t persVersionsSent;
 	size_t garbageVersionsSent;
 	void *userData;
 };
 
-struct SnapshotsStats
+struct SnStats
 {
+	size_t runawayVersionsCount;
 	size_t versionsCount;
 	size_t curSnapshotVersionsCount;
 	size_t curSnapshotSharedVersionsCount;
@@ -57,37 +58,40 @@ struct SnapshotsStats
 	size_t persSnapshotSharedVersionsCount;
 };
 
-int ShInitialise();
+typedef int (*SnEnumerateVersionsProc)(SnEnumerateVersionsParams *params, 
+									   SnVersionEntry *buf, size_t count, int isGarbage);
 
-void ShQueryResourceDemand(SnapshotsResourceDemand *resourceDemand);
+int SnInitialize();
 
-int ShStartup(SnapshotsSetup *setup);
+void SnQueryResourceDemand(SnResourceDemand *resourceDemand);
 
-int ShShutdown();
+int SnStartup(SnSetup *setup);
 
-void ShDeinitialise();
+int SnShutdown();
 
-int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs);
+void SnDeinitialize();
 
-int ShOnUnregisterClient();
+int SnOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs);
 
-int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count);
+int SnOnUnregisterClient();
 
-int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
+int SnAcceptRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count);
 
-int ShOnBeginCheckpoint(TIMESTAMP *persistentTs);
+int SnAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 
-int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
-				   int(*saveListsProc)(SnapshotsOnCheckpointParams *params, SnapshotsVersion *buf, size_t count, int isGarbage));
+int SnOnBeginCheckpoint(TIMESTAMP *persistentTs);
 
-int ShOnCompleteCheckpoint();
+int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
+									 SnEnumerateVersionsProc enumProc);
 
-int ShGatherStats(SnapshotsStats *stats);
+int SnOnCompleteCheckpoint();
 
-int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPersistent);
+int SnGatherStats(SnStats *stats);
 
-int ShGetCurrentClientSnapshotTs(TIMESTAMP *timestamp);
+int SnCheckIfCanAdvanceSnapshots(int *canMakeCurrentSnapshotPersistent);
 
-void ShDbgDump(int reserved); 
+int SnGetCurrentSnapshotTs(TIMESTAMP *timestamp);
+
+void SnDbgDump(int reserved); 
 
 #endif

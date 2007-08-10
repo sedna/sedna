@@ -11,13 +11,13 @@
 #include "wutypes.h"
 #include "wuincguard.h"
 
-struct VersionsResourceDemand
+struct VeResourceDemand
 {
 	size_t clientStateSize;
 	size_t bufferStateSize;
 };
 
-struct VersionsSetup
+struct VeSetup
 {
 	TICKET clientStateTicket;
 	TICKET bufferStateTicket; 
@@ -42,7 +42,7 @@ struct VersionsSetup
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
 	/* GC functions */ 
-	int (*acceptRequestForGc)(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count);
+	int (*acceptRequestForGc)(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count);
 
 	/* data layout functions */ 
 	int (*locateHeader)(int bufferId, VersionsHeader **header);
@@ -53,15 +53,18 @@ struct VersionsSetup
 		however it's copy at lxptr still exists.
 		May be called in context where clientId!=GetCurrentCLientId(). */ 
 	int (*onCompleteBlockRelocation)(int clientId, LXPTR lxptr, XPTR xptr);
+
+	/* params */ 
+	TIMESTAMP initialPersSnapshotTs;
 };
 
-int VeInitialise();
+int VeInitialize();
 
-void VeQueryResourceDemand(VersionsResourceDemand *resourceDemand);
+void VeQueryResourceDemand(VeResourceDemand *resourceDemand);
 
-int VeStartup(VersionsSetup *setup);
+int VeStartup(VeSetup *setup);
 
-void VeDeinitialise();
+void VeDeinitialize();
 
 int VeOnRegisterClient(TIMESTAMP snapshotTs, int isUsingSnapshot);
 
@@ -79,7 +82,7 @@ int VeOnCommit();
 
 int VeOnRollback();
 
-int VeOnSnapshotAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs);
+int VeOnSnapshotsAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs);
 
 int VeOnBeginCheckpoint();
 
@@ -87,7 +90,7 @@ int VeOnCompleteCheckpoint(TIMESTAMP persistentTs);
 
 int VeOnFlushBlock(int bufferId);
 
-int VeGetCurrentClientTs(TIMESTAMP *timestamp);
+int VeGetCurrentTs(TIMESTAMP *timestamp);
 
 void VeDbgDump(int reserved);
 
