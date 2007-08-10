@@ -49,7 +49,7 @@ int ClInitialize()
 	readyClientsBitmap=NULL;
 	clientsCount=0;
 	readyClientsCount=0;
-	InitialiseStateTable(&stateTable);
+	InitializeStateTable(&stateTable);
 
 	success=ReserveStateTableColumn(&stateTable,&dummy,sizeof(ClMgmtData),0);
 	if (success) 
@@ -102,7 +102,7 @@ void ClDeinitialize()
 		readyClientsBitmap=NULL;
 		clientsCount=0;
 		readyClientsCount=0;
-		DeinitialiseStateTable(&stateTable);
+		DeinitializeStateTable(&stateTable);
 	}
 	isInitialized = 0;
 }

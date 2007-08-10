@@ -9,7 +9,7 @@
 #include "wuaux.h"
 #include "wuincguard.h"
 
-#ifdef DEBUG
+#if DEBUGI
 #ifndef ST_MAX_COLUMNS_WITH_INFO
 #define ST_MAX_COLUMNS_WITH_INFO 16
 #endif
@@ -30,7 +30,7 @@ struct StateTable
 	void *columnBase[ST_MAX_COLUMNS_WITH_INFO];
 };
 
-void InitialiseStateTable(StateTable *stateTable);
+void InitializeStateTable(StateTable *stateTable);
 
 int  ReserveStateTableColumn(StateTable *stateTable, TICKET *ticket, size_t size, int alignment);
 
@@ -38,7 +38,7 @@ int  CreateStateTableRows(StateTable *stateTable, int rowsCount, size_t maxRowSi
 
 void ResetStateTable(StateTable *stateTable);
 
-void DeinitialiseStateTable(StateTable *stateTable);
+void DeinitializeStateTable(StateTable *stateTable);
 
 int  GetStateTableCell(StateTable *stateTable, void **dest, TICKET ticket, int rowId);
 
