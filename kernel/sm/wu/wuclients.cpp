@@ -12,24 +12,25 @@
 
 /*	Global state. */ 
 
-struct ClientsMgmtData
+struct ClMgmtData
 {
 	int currentCntr;
 };
 
-struct ClientsThreadState
+struct ClThreadState
 {
 	int currentClientId;
 	int clientSetLockCount;
 };
 
+static int isInitialized = 0;
 static
 #ifdef _MSC_VER
 __declspec(thread)
 #else
 __thread
 #endif
-ClientsThreadState threadState =
+ClThreadState threadState =
 {
 	-1, 0
 };
@@ -38,10 +39,9 @@ static StateTable stateTable;
 static uint32_t *readyClientsBitmap=NULL;
 static int clientsCount=0;
 static int readyClientsCount=0;
-static int isInitialised = 0;
 
 /*	Functions. */ 
-int ClInitialise()
+int ClInitialize()
 {
 	int success=0;
 	TICKET dummy=NULL;
@@ -51,10 +51,10 @@ int ClInitialise()
 	readyClientsCount=0;
 	InitialiseStateTable(&stateTable);
 
-	success=ReserveStateTableColumn(&stateTable,&dummy,sizeof(ClientsMgmtData),0);
+	success=ReserveStateTableColumn(&stateTable,&dummy,sizeof(ClMgmtData),0);
 	if (success) 
 	{
-		isInitialised=1;
+		isInitialized=1;
 	}
 	return success;
 }
@@ -65,25 +65,25 @@ int ClReserveStateBlocks(TICKET *ticket, size_t size)
 	return ReserveStateTableColumn(&stateTable,ticket,size,0);
 }
 
-int ClStartup(ClientsSetup *clientsSetup)
+int ClStartup(ClSetup *setup)
 {
 	int success=0;
 	size_t size=0;
 
-	if (clientsSetup->maxClientsCount<0)
+	if (setup->maxClientsCount<0)
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
 	else
 	{
-		size=sizeof(uint32_t)*RoundSizeUp((size_t)clientsSetup->maxClientsCount,32)/32;
+		size=sizeof(uint32_t)*RoundSizeUp((size_t)setup->maxClientsCount,32)/32;
 		readyClientsBitmap=(uint32_t*)malloc(size);
 		if (readyClientsBitmap!=NULL) 
 		{
 			memset(readyClientsBitmap,0,size);
 			success=CreateStateTableRows(&stateTable,
-										 clientsSetup->maxClientsCount,
-										 clientsSetup->maxSizePerClient);
+										 setup->maxClientsCount,
+										 setup->maxSizePerClient);
 		}
 		if (!success)
 		{
@@ -94,9 +94,9 @@ int ClStartup(ClientsSetup *clientsSetup)
 	return success;
 }
 
-void ClDeinitialise()
+void ClDeinitialize()
 {
-	if (isInitialised)
+	if (isInitialized)
 	{
 		free(readyClientsBitmap);
 		readyClientsBitmap=NULL;
@@ -104,7 +104,7 @@ void ClDeinitialise()
 		readyClientsCount=0;
 		DeinitialiseStateTable(&stateTable);
 	}
-	isInitialised = 0;
+	isInitialized = 0;
 }
 
 int ClQueryMaxClientsCount()
@@ -116,7 +116,7 @@ int ClRegisterClient(int *clientId, int isFixed)
 {
 	int success=0;
 	int isVacant=0;
-	ClientsMgmtData *mgmtData=NULL;
+	ClMgmtData *mgmtData=NULL;
 
 	assert(clientId);	
 	if (isFixed) /* use clientId value, do not search for vacant slots */ 
@@ -217,7 +217,7 @@ int ClUnregisterClient(int clientId)
 {
 	int success=0;
 	uint32_t mask=1, *pval=NULL;
-	ClientsMgmtData *mgmtData=NULL;
+	ClMgmtData *mgmtData=NULL;
 
 	if (!GetStateTableMasterCell(&stateTable,(void**)&mgmtData,clientId))
 	{
@@ -253,7 +253,7 @@ int ClGetCurrentClientId()
 int ClSetCurrentClientId(int clientId)
 {
 	int success=0; 
-	ClientsMgmtData *mgmtData=NULL;
+	ClMgmtData *mgmtData=NULL;
 
 	if (threadState.currentClientId!=-1)
 	{
@@ -324,13 +324,13 @@ int ClUnlockClientSet()
 	return success;
 }
 
-int ClEnumClients(ClientsEnumClientsInfo *enumClientsInfo, 
-				  int(*enumProc)(ClientsEnumClientsInfo *enumClientsInfo, int clientId))
+int ClEnumerateClients(ClEnumerateClientsParams *params, 
+					   ClEnumerateClientsProc enumProc)
 {
 	int cnt=0, bitid=0, okstatus=0;
 	uint32_t *begin=NULL, *i=NULL, *end=NULL, temp=0;
 
-	assert(enumClientsInfo);
+	assert(params && enumProc);
 
 	begin=readyClientsBitmap;
 	end=begin+RoundSizeUp(stateTable.rowsCount,32)/32;
@@ -343,9 +343,9 @@ int ClEnumClients(ClientsEnumClientsInfo *enumClientsInfo,
 		while(temp)
 		{
 			bitid=ResetLowestBitSet(&temp);
-			enumClientsInfo->clientsCount=readyClientsCount;
-			enumClientsInfo->alreadyEnumeratedCount=cnt;
-			if (!enumProc || 0==enumProc(enumClientsInfo,(i-begin)*32+bitid)) break;
+			params->clientsCount=readyClientsCount;
+			params->alreadyEnumeratedCount=cnt;
+			if (0==enumProc(params,(i-begin)*32+bitid)) break;
 			++cnt;
 		}
 	}

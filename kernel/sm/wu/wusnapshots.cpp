@@ -9,75 +9,77 @@
 #include "wuaux.h"
 #include "wuerr.h"
 
-#define SH_SNAPSHOTS_COUNT	3
-#define SH_GC_NODES_COUNT	((SH_SNAPSHOTS_COUNT*SH_SNAPSHOTS_COUNT+SH_SNAPSHOTS_COUNT)/2)
-#define SH_BUFSZ			1024
-#define SH_DUMP_LIMIT		8
+#define SN_SNAPSHOTS_COUNT	3
+#define SN_GC_NODES_COUNT	((SN_SNAPSHOTS_COUNT*SN_SNAPSHOTS_COUNT+SN_SNAPSHOTS_COUNT)/2)
+#define SN_BUFSZ			1024
+#define SN_DUMP_LIMIT		8
 
 /* defs */ 
 
-struct SnapshotsClientState
+struct SnClientState
 {
 	TIMESTAMP snapshotTs;						/*	the snapshot timestamp (0 if not using sh) */ 
 };
 
-struct SnapshotsGcEntry
+struct SnGcNode
 {
-	LXPTR lxptr;	/*	logical XPTR of the version */ 
-	XPTR xptr;		/*	physical XPTR of the version */ 
+	std::list<SnVersionEntry> entries;
+	SnGcNode *next;
 };
 
-struct SnapshotsGcNode
+struct SnEnumerateVersionsBuf
 {
-	std::list<SnapshotsGcEntry> entries;
-	SnapshotsGcNode *next;
+	SnVersionEntry *buf, *ebuf, *ibuf;
+	int isGarbageInside;
 };
 
-struct SnapshotsSnapshot
+struct SnSnapshot
 {
 	TIMESTAMP timestamp;					/*	timestamp assigned to snapshot (future snapshots
 												are timestamped with ~(TIMESTAMP)0, since TIMESTAMP is
 												unsigned it is the maximum possible ts) */ 
 	TIMESTAMP discardedTs;
-	SnapshotsGcNode *gcChain;				/*	each snapshot has a single linked chain of gcList nodes
+	SnGcNode *gcChain;				/*	each snapshot has a single linked chain of gcList nodes
 												attached; the first list contains pushed versions
 												belonging to this snapshot ONLY; the second list
 												contains pushed versions belonging to this snapshot
 												AND the one in front of this snapshot, etc. */ 
 	int type;								/*	snapshot type - see below */ 
 	int occupancy;							/*	the number of clients using this snapshot */  
-	SnapshotsSnapshot *next;				/*	snapshots are arranged in a single linked list
+	SnSnapshot *next;				/*	snapshots are arranged in a single linked list
 												sorted by their timestamps in decreasing order
 												(future snapshots first, then other types of sh) */ 
 };
 
 /*	Just the normal snapshot - has a timestamp assigned and 0+ clients using it; regular 
 	snapshot is	automaticly discarded as soon as it's occupancy counter reaches zero AND 
-	a more recent snapshot different from SH_FUTURE_SNAPSHOT exists. Can be turned into
-	SH_NEXT_PERSISTENT_SNAPSHOT during checkpoint or SH_FUTURE_SNAPSHOT when discarded. */ 
-#define SH_REGULAR_SNAPSHOT				0x01
+	a more recent snapshot different from SN_FUTURE_SNAPSHOT exists. Can be turned into
+	SN_NEXT_PERSISTENT_SNAPSHOT during checkpoint or SN_FUTURE_SNAPSHOT when discarded. */ 
+#define SN_REGULAR_SNAPSHOT				0x01
 
 /*	Persistent snapshot is never discarded. Clients are allowed to use it as if it was 
-	SH_REGULAR_SNAPSHOT. It is turned into SH_PREV_PERSISTENT_SNAPSHOT during checkpoint. */ 
-#define SH_PERSISTENT_SNAPSHOT			0x02
+	SN_REGULAR_SNAPSHOT. It is turned into SN_PREV_PERSISTENT_SNAPSHOT during checkpoint. */ 
+#define SN_PERSISTENT_SNAPSHOT			0x02
 
-/*	The most recent SH_REGULAR_SNAPSHOT is turned into SH_NEXT_PERSISTENT_SNAPSHOT as the
-	result of ShOnBeginCheckpoint call. It is later turned into SH_PERSISTENT_SNAPSHOT when
-	ShOnCompleteCheckpoint is called. */ 
-#define SH_NEXT_PERSISTENT_SNAPSHOT		0x04
+/*	The most recent SN_REGULAR_SNAPSHOT is turned into SN_PERSISTENT_SNAPSHOT as the
+	result of SnOnBeginCheckpoint call. The former persistent snapshot is turned into 
+	SN_PREV_PERSISTENT_SNAPSHOT and is later turned into SN_REGULAR_SNAPSHOT when 
+	SnOnCompleteCheckpoint is called. */ 
+#define SN_PREV_PERSISTENT_SNAPSHOT		0x04
 
-/*	There is a fixed number of snapshots allowed - SH_SNAPSHOTS_COUNT. When particular snapshot
-	is currently unused it is marked SH_FUTURE_SNAPSHOT and placed in the head of snapshots
+/*	There is a fixed number of snapshots allowed - SN_SNAPSHOTS_COUNT. When particular snapshot
+	is currently unused it is marked SN_FUTURE_SNAPSHOT and placed in the head of snapshots
 	list. */ 
-#define SH_FUTURE_SNAPSHOT				0x10
+#define SN_FUTURE_SNAPSHOT				0x10
 
 /* global state */ 
 
-static int isInitialised = 0;
+static int isInitialized = 0;
 static TICKET ticket=NULL;
-static SnapshotsSetup setup;
-static SnapshotsSnapshot snapshots[SH_SNAPSHOTS_COUNT], *leadingSnapshot=NULL;
-static SnapshotsGcNode gcNodes[SH_GC_NODES_COUNT];
+static SnSetup setup={};
+static SnSnapshot snapshots[SN_SNAPSHOTS_COUNT], *leadingSnapshot=NULL;
+static SnGcNode gcNodes[SN_GC_NODES_COUNT];
+static size_t runawayVersionsCount=0;
 
 /* helper functions */ 
 
@@ -85,13 +87,13 @@ static void ResetLists()
 {
 	int i=0, j=0, k=0;
 	leadingSnapshot=snapshots+0;
-	for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
+	for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
 	{
 		snapshots[i].timestamp = ~(TIMESTAMP)0;
 		snapshots[i].discardedTs = 0;
 		snapshots[i].next = snapshots+i+1;
 		snapshots[i].gcChain = gcNodes+k;
-		snapshots[i].type = SH_FUTURE_SNAPSHOT;
+		snapshots[i].type = SN_FUTURE_SNAPSHOT;
 		snapshots[i].occupancy = 0;
 		for (j=0;j<=i;++j)
 		{
@@ -101,11 +103,11 @@ static void ResetLists()
 		}
 		gcNodes[k-1].next=NULL;
 	}
-	snapshots[SH_SNAPSHOTS_COUNT-1].next = NULL;
+	snapshots[SN_SNAPSHOTS_COUNT-1].next = NULL;
 }
 
 static
-int PurgeVersions(std::list<SnapshotsGcEntry> *versList)
+int PurgeVersions(std::list<SnVersionEntry> *versList)
 {
 	int failure=0;
 	assert(versList);
@@ -118,13 +120,13 @@ int PurgeVersions(std::list<SnapshotsGcEntry> *versList)
 }
 
 static
-int GetSnapshotByTimestamp(SnapshotsSnapshot *head,
-						   SnapshotsSnapshot **result, 
-						   SnapshotsSnapshot **prev, 
+int GetSnapshotByTimestamp(SnSnapshot *head,
+						   SnSnapshot **result, 
+						   SnSnapshot **prev, 
 						   TIMESTAMP ts)
 {
 	int success=0, pos=0;
-	SnapshotsSnapshot *dummy=NULL;
+	SnSnapshot *dummy=NULL;
 
 	assert(result);
 	if (!prev) prev=&dummy;
@@ -161,13 +163,13 @@ notfound:
 }
 
 static
-int GetSnapshotByType(SnapshotsSnapshot *head,
-					  SnapshotsSnapshot **result, 
-					  SnapshotsSnapshot **prev, 
+int GetSnapshotByType(SnSnapshot *head,
+					  SnSnapshot **result, 
+					  SnSnapshot **prev, 
 					  int typeIncl, int typeExcl)
 {
 	int success=0, pos=0;
-	SnapshotsSnapshot *dummy=NULL;
+	SnSnapshot *dummy=NULL;
 
 	assert(result);
 	if (!prev) prev=&dummy;
@@ -204,7 +206,7 @@ notfound:
 }
 
 static 
-int GetGcChainNode(SnapshotsGcNode *hd, SnapshotsGcNode **lst, int depth)
+int GetGcChainNode(SnGcNode *hd, SnGcNode **lst, int depth)
 {
 	assert(lst);
 	*lst=NULL;
@@ -217,9 +219,9 @@ int GetGcChainNode(SnapshotsGcNode *hd, SnapshotsGcNode **lst, int depth)
 }
 
 static 
-void RotateGcChain(SnapshotsGcNode *hd, int victimId, int depth)
+void RotateGcChain(SnGcNode *hd, int victimId, int depth)
 {
-	SnapshotsGcNode *i=NULL, *j=NULL;
+	SnGcNode *i=NULL, *j=NULL;
 	assert(hd);
 	GetGcChainNode(hd,&i,depth-victimId-2);
 	GetGcChainNode(i,&j,victimId+1);
@@ -231,12 +233,12 @@ void RotateGcChain(SnapshotsGcNode *hd, int victimId, int depth)
 }
 
 static
-SnapshotsSnapshot *RotateSnapshots(SnapshotsSnapshot *hd, 
-								   SnapshotsSnapshot *beforeVictim,
-								   SnapshotsSnapshot **unaffected)
+SnSnapshot *RotateSnapshots(SnSnapshot *hd, 
+							SnSnapshot *beforeVictim,
+							SnSnapshot **unaffected)
 {
-	SnapshotsSnapshot *victim=NULL, *iter=NULL;
-	SnapshotsGcNode *listsHeap=NULL, *lists2MergeInto=NULL, *bot=NULL;
+	SnSnapshot *victim=NULL, *iter=NULL;
+	SnGcNode *listsHeap=NULL, *lists2MergeInto=NULL, *bot=NULL;
 	int depth=0;
 
 	assert(hd && unaffected);
@@ -245,7 +247,7 @@ SnapshotsSnapshot *RotateSnapshots(SnapshotsSnapshot *hd,
 	assert(victim && victim->gcChain);
 
 	victim->gcChain->entries.clear();
-	victim->type=SH_FUTURE_SNAPSHOT;
+	victim->type=SN_FUTURE_SNAPSHOT;
 	victim->timestamp=~(TIMESTAMP)0;
 
 	if (victim==hd)
@@ -281,7 +283,7 @@ static
 int DiscardSnapshot(TIMESTAMP ts, TIMESTAMP discardedTs)
 {
 	int success=0;
-	SnapshotsSnapshot *victim=NULL, *beforeVictim=NULL, *tail=NULL;
+	SnSnapshot *victim=NULL, *beforeVictim=NULL, *tail=NULL;
 	int victimId=0, depth=0;
 
 	victimId = GetSnapshotByTimestamp(leadingSnapshot, &victim, &beforeVictim, ts)-1;
@@ -289,7 +291,7 @@ int DiscardSnapshot(TIMESTAMP ts, TIMESTAMP discardedTs)
 	{
 		; /* bad timestamp or something */ 
 	}
-	else if (victim->type != SH_REGULAR_SNAPSHOT)
+	else if (victim->type != SN_REGULAR_SNAPSHOT)
 	{
 		WuSetLastErrorMacro(WUERR_UNABLE_TO_DISCARD_SPECIAL_SNAPSHOT);
 	}
@@ -305,7 +307,7 @@ int DiscardSnapshot(TIMESTAMP ts, TIMESTAMP discardedTs)
 		{
 			RotateGcChain(tail->gcChain, victimId, depth);
 		}
-		assert(depth=SH_SNAPSHOTS_COUNT+1);
+		assert(depth=SN_SNAPSHOTS_COUNT+1);
 		success=1;
 	}
 	return success;
@@ -315,7 +317,7 @@ static
 int CreateSnapshot(TIMESTAMP *ts)
 {
 	int success=0;
-	SnapshotsSnapshot *current=NULL, *beforeCurrent=NULL;
+	SnSnapshot *current=NULL, *beforeCurrent=NULL;
 
 	assert(ts);
 	if (!setup.getTimestamp(ts))
@@ -324,19 +326,19 @@ int CreateSnapshot(TIMESTAMP *ts)
 	}
 	else 
 	{
-		GetSnapshotByType(leadingSnapshot,&current,&beforeCurrent,-1,SH_FUTURE_SNAPSHOT);
+		GetSnapshotByType(leadingSnapshot,&current,&beforeCurrent,-1,SN_FUTURE_SNAPSHOT);
 		if (!current)
 		{
 			beforeCurrent=leadingSnapshot;
 			while (beforeCurrent->next) 
 			{
-				assert (beforeCurrent->type == SH_FUTURE_SNAPSHOT);
+				assert (beforeCurrent->type == SN_FUTURE_SNAPSHOT);
 				beforeCurrent=beforeCurrent->next;
 			}
 		}
 		if (beforeCurrent)
 		{
-			beforeCurrent->type=SH_REGULAR_SNAPSHOT;
+			beforeCurrent->type=SN_REGULAR_SNAPSHOT;
 			beforeCurrent->timestamp=*ts;
 			success=1;
 		}
@@ -353,15 +355,15 @@ int CreateSnapshot(TIMESTAMP *ts)
 }
 
 static 
-SnapshotsSnapshot * GetCurrentSnapshot()
+SnSnapshot * GetCurrentSnapshot()
 {
-	SnapshotsSnapshot *result=NULL;
-	GetSnapshotByType(leadingSnapshot,&result,NULL,-1,SH_FUTURE_SNAPSHOT);
+	SnSnapshot *result=NULL;
+	GetSnapshotByType(leadingSnapshot,&result,NULL,-1,SN_FUTURE_SNAPSHOT);
 	return result;
 }
 
 static
-size_t GetGcChainVersionsCount(SnapshotsGcNode *head)
+size_t GetGcChainVersionsCount(SnGcNode *head)
 {
 	size_t result=0;
 	while (head)
@@ -373,14 +375,14 @@ size_t GetGcChainVersionsCount(SnapshotsGcNode *head)
 }
 
 static
-void GatherSnapshotsStats(SnapshotsSnapshot *head,
+void GatherSnapshotsStats(SnSnapshot *head,
 						  size_t *totalVersionsCount,
 						  size_t *snapshotVersionsCount,
 						  size_t *snapshotSharedVersionsCount,
 						  TIMESTAMP snapshotTs)
 {
-	SnapshotsSnapshot *i=NULL;
-	SnapshotsGcNode *top=NULL;
+	SnSnapshot *i=NULL;
+	SnGcNode *top=NULL;
 	int ofs=0;
 	size_t cntT=0, cntX=0;
 
@@ -409,73 +411,59 @@ void GatherSnapshotsStats(SnapshotsSnapshot *head,
 }
 
 static 
-int FlushTransmitBuf(SnapshotsOnCheckpointParams *params,
-					 int(*saveListsProc)(SnapshotsOnCheckpointParams*,SnapshotsVersion*,size_t,int),
-					 SnapshotsVersion *buf,
-					 SnapshotsVersion *ebuf,
-					 SnapshotsVersion **ibuf,
-					 int isGarbage)
+int FlushEnumerateVersionsBuf(SnEnumerateVersionsParams *params,
+							  SnEnumerateVersionsProc enumProc,
+							  SnEnumerateVersionsBuf *buf)
 {
 	size_t count=0;
 	int failure=0;
 	
-	assert(params && saveListsProc && buf && ebuf && ibuf && *ibuf && *ibuf>=buf && *ibuf<=ebuf);
-	count=*ibuf-buf;
+	assert(params && enumProc && buf);
+	count = buf->ibuf-buf->buf;
 	if (count>0)
 	{
-		if(!saveListsProc(params,buf,count,isGarbage)) failure=1;
-		if(isGarbage) 
+		if(!enumProc(params,buf->buf,count,buf->isGarbageInside)) failure=1;
+		if(buf->isGarbageInside) 
 		{
 			params->garbageVersionsSent+=count;
 		}
 		else 
 		{
-			params->persistentVersionsSent+=count;
+			params->persVersionsSent+=count;
 		}
-		*ibuf=buf;
+		buf->ibuf=buf->buf;
 	}
 	return failure==0;
 }
 
 static 
-int TransmitGcChain(SnapshotsGcNode *head,
-					int length,
-					SnapshotsOnCheckpointParams *params,
-					int(*saveListsProc)(SnapshotsOnCheckpointParams*,SnapshotsVersion*,size_t,int),
-					SnapshotsVersion *buf,
-					SnapshotsVersion *ebuf,
-					SnapshotsVersion **ibuf,
-					int isGarbage)
+int EnumerateGcChainVersions(SnGcNode *head,
+							 int length,
+							 SnEnumerateVersionsParams *params,
+							 SnEnumerateVersionsProc enumProc,
+							 SnEnumerateVersionsBuf *buf,
+							 SnEnumerateVersionsBuf *garbageBuf)
 {
-	std::list<SnapshotsGcEntry>::iterator it;
-	SnapshotsVersion *i=NULL;
+	SnEnumerateVersionsBuf *selectedBuf = NULL;
+	std::list<SnVersionEntry>::iterator it;
 	int failure=0;
 
-	assert(head && params && saveListsProc && buf && ebuf && ibuf && *ibuf);
-	i=*ibuf;
+	assert(head && params && enumProc && buf && garbageBuf);
 
-	if (head) it=head->entries.begin();
-	while (!failure && head && length>0)
+	for (;head && length>0 && !failure; head=head->next, --length)
 	{
-		for(; i<ebuf && it!=head->entries.end(); ++i, ++it)
+		for (it=head->entries.begin(); it!=head->entries.end(); ++it)
 		{
-			i->xptr=it->xptr;
-			i->lxptr=it->lxptr;
-		}
-		if(i==ebuf)
-		{
-			if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&i,isGarbage)) failure=1;
-		}
-		else if (it==head->entries.end())
-		{
-			head=head->next;
-			if (head) it=head->entries.begin();
-			--length;
+			selectedBuf = (it->lxptr == ~(LXPTR)0 ? garbageBuf : buf);
+			if (selectedBuf->ibuf >= selectedBuf->ebuf && 
+				!FlushEnumerateVersionsBuf(params,enumProc,selectedBuf))
+			{
+				failure=1;
+				break;
+			}
+			*(selectedBuf->ibuf++)=*it;
 		}
 	}
-
-	*ibuf=i;
-	assert(length==0 || failure);
 	return (failure==0);
 }
 
@@ -483,7 +471,7 @@ static
 int PurifySnapshots(int isKeepingCurrentSnapshot)
 {
 	int failure=0;
-	SnapshotsSnapshot *current=NULL;
+	SnSnapshot *current=NULL;
 	TIMESTAMP ts=0;
 
 	current=GetCurrentSnapshot();
@@ -491,7 +479,7 @@ int PurifySnapshots(int isKeepingCurrentSnapshot)
 	while (!failure && current)
 	{
 		ts=current->timestamp;
-		if (current->occupancy!=0 || current->type!=SH_REGULAR_SNAPSHOT)
+		if (current->occupancy!=0 || current->type!=SN_REGULAR_SNAPSHOT)
 		{
 			current=current->next;
 		}
@@ -519,45 +507,63 @@ int PurifySnapshots(int isKeepingCurrentSnapshot)
 
 /* public api functions */ 
 
-int ShInitialise()
+int SnInitialize()
 {	
-	isInitialised = 1;
+	runawayVersionsCount=0;
+	isInitialized = 1;
 	return 1;
 }
 
-void ShQueryResourceDemand(SnapshotsResourceDemand *demand)
+void SnQueryResourceDemand(SnResourceDemand *demand)
 {
 	assert(demand);
-	demand->clientStateSize = sizeof(SnapshotsClientState);
+	demand->clientStateSize = sizeof(SnClientState);
 }
 
-int ShStartup(SnapshotsSetup *psetup)
+int SnStartup(SnSetup *psetup)
 {
 	int success=0;
-	SnapshotsSnapshot *snapshot=NULL;
+	SnSnapshot *snapshot=NULL;
+	TIMESTAMP initialPersSnapshotTs=0, curTs=0;
 
 	assert(psetup);
 	setup=*psetup;
 	ticket=setup.clientStateTicket;
+	initialPersSnapshotTs=setup.initialPersSnapshotTs;
 	ResetLists();
-	for(snapshot=leadingSnapshot;snapshot->next;snapshot=snapshot->next) {}
-	assert(snapshot);
-	snapshot->type=SH_PERSISTENT_SNAPSHOT;
-
-	return 1;
+	if (initialPersSnapshotTs == 0)
+	{
+		success = 1;
+	}
+	else
+	{
+		if (!setup.getTimestamp(&curTs) || initialPersSnapshotTs >= curTs)
+		{
+			WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+		}
+		else
+		{
+			snapshot=leadingSnapshot;
+			while (snapshot->next) snapshot=snapshot->next;
+			snapshot->type=SN_PERSISTENT_SNAPSHOT;
+			snapshot->timestamp=initialPersSnapshotTs;
+			success = 1;
+		}
+	}	
+	return success;
 }
 
-int ShShutdown()
+int SnShutdown()
 {
 	int failure=0, i=0;
 	size_t versCount=0;
-	SnapshotsSnapshot *curr=NULL, *pers=NULL;
-	if (GetSnapshotByType(leadingSnapshot,&pers,0,SH_PERSISTENT_SNAPSHOT,0))
+	SnSnapshot *curr=NULL, *pers=NULL;
+	if (GetSnapshotByType(leadingSnapshot,&pers,0,SN_PERSISTENT_SNAPSHOT,0))
 	{
 		GatherSnapshotsStats(leadingSnapshot,NULL,&versCount,NULL,pers->timestamp);
 		if (versCount==0)
 		{
-			pers->type=SH_REGULAR_SNAPSHOT;
+			pers->type=SN_REGULAR_SNAPSHOT;
 		}
 		else
 		{
@@ -579,16 +585,16 @@ int ShShutdown()
 	return failure==0;
 }
 
-void ShDeinitialise()
+void SnDeinitialize()
 {
-	isInitialised = 0;
+	isInitialized = 0;
 }
 
-int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)
+int SnOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)
 {
 	int success=0;
-	SnapshotsClientState *state=NULL;
-	SnapshotsSnapshot *current=NULL;
+	SnClientState *state=NULL;
+	SnSnapshot *current=NULL;
 
 	ClGetCurrentStateBlock((void**)&state,ticket);
 	current=GetCurrentSnapshot();
@@ -617,11 +623,11 @@ int ShOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs)
 	return success;
 }
 
-int ShOnUnregisterClient()
+int SnOnUnregisterClient()
 {
 	int success=0;
-	SnapshotsClientState *state=NULL;
-	SnapshotsSnapshot *snapshot=NULL;
+	SnClientState *state=NULL;
+	SnSnapshot *snapshot=NULL;
 
 	ClGetCurrentStateBlock((void**)&state,ticket);
 	if (state)
@@ -641,24 +647,25 @@ int ShOnUnregisterClient()
 	return success;
 }
 
-int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size_t count)
+int SnAcceptRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count)
 {
 	int failure=0, ofs=0;
-	SnapshotsRequestForGc *ebuf=NULL;
-	SnapshotsSnapshot *top=NULL, *i=NULL;
-	SnapshotsGcNode *gcNode=NULL;
-	SnapshotsGcEntry entry;
+	SnRequestForGc *ebuf=NULL;
+	SnSnapshot *top=NULL, *i=NULL;
+	SnGcNode *gcNode=NULL;
+	SnVersionEntry entry;
 	
 	assert(buf || count==0);
 	ebuf=buf+count;
 	for (top=leadingSnapshot; top && top->timestamp>operationTs; top=top->next);
-	GetSnapshotByType(top,&top,NULL,-1,SH_FUTURE_SNAPSHOT);
+	GetSnapshotByType(top,&top,NULL,-1,SN_FUTURE_SNAPSHOT);
 
 	if (!top) 
 	{
 		for (;buf<ebuf && !failure; ++buf)
 		{
-			if (!setup.freeBlock(buf->snapshotVersionXptr)) failure=1;
+			++runawayVersionsCount;
+			if (!setup.freeBlock(buf->xptr)) failure=1;
 		}
 	}
 	else 
@@ -667,7 +674,8 @@ int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size
 		{
 			if (top->timestamp <= buf->anchorTs)
 			{
-				if (!setup.freeBlock(buf->snapshotVersionXptr)) failure=1;
+				++runawayVersionsCount;
+				if (!setup.freeBlock(buf->xptr)) failure=1;
 			}
 			else
 			{
@@ -675,7 +683,7 @@ int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size
 				GetGcChainNode(i->gcChain,&gcNode,ofs);
 				assert(gcNode);
 				entry.lxptr=buf->lxptr;
-				entry.xptr=buf->snapshotVersionXptr;
+				entry.xptr=buf->xptr;
 				gcNode->entries.push_back(entry);
 			}
 		}
@@ -684,11 +692,11 @@ int ShAcceptRequestForGc(TIMESTAMP operationTs, SnapshotsRequestForGc *buf, size
 	return (failure==0);
 }
 
-int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
+int SnAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 {
 	static int AdvanceSnapshotsRecursion=0;
-	int success=0, canAdvance=0;
-	SnapshotsSnapshot *current=NULL;
+	int success=0;
+	SnSnapshot *current=NULL;
 	TIMESTAMP dummyTs=0;
 
 	assert(snapshotTs);
@@ -703,11 +711,7 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 	else
 	{
 		AdvanceSnapshotsRecursion++;
-		if (!ShCheckIfCanAdvanceSnapshots(&canAdvance,NULL))
-		{
-			; /* something wrong */ 
-		}
-		else if (canAdvance==0)
+		if(!SnCheckIfCanAdvanceSnapshots(NULL))
 		{
 			WuSetLastErrorMacro(WUERR_UNABLE_TO_ADVANCE_SNAPSHOTS);
 		}
@@ -724,72 +728,74 @@ int ShAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 		}
 		AdvanceSnapshotsRecursion--;
 	}
+	if (success)
+	{
+		runawayVersionsCount=0;
+	}
 	return success;
 }
 
-int ShOnBeginCheckpoint(TIMESTAMP *persistentTs)
+int SnOnBeginCheckpoint(TIMESTAMP *persistentTs)
 {
 	int success=0;
-	SnapshotsSnapshot *s=NULL, *dummy=NULL;
+	SnSnapshot *snapshot=NULL, *persSnapshot=NULL, *dummy=NULL;
 
 	assert(persistentTs);
 	*persistentTs=0;
-	s=GetCurrentSnapshot();
-	if (!s)
-	{
-		; /* something wrong */ 
-	}
-	else if (GetSnapshotByType(leadingSnapshot,&dummy,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
+	snapshot = GetCurrentSnapshot();
+	GetSnapshotByType(leadingSnapshot,&persSnapshot,NULL,SN_PERSISTENT_SNAPSHOT,0);
+	
+	if (GetSnapshotByType(leadingSnapshot,&dummy,NULL,SN_PREV_PERSISTENT_SNAPSHOT,0))
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
-	else if (s->type!=SH_REGULAR_SNAPSHOT)
+	else if (!snapshot) {}
+	else if (snapshot->type!=SN_REGULAR_SNAPSHOT)
 	{
 		WuSetLastErrorMacro(WUERR_SNAPSHOT_ALREADY_PERSISTENT);
 	}
 	else
 	{
-		s->type=SH_NEXT_PERSISTENT_SNAPSHOT;
-		*persistentTs=s->timestamp;
+		if (persSnapshot) 
+		{
+			persSnapshot->type=SN_PREV_PERSISTENT_SNAPSHOT;
+		}
+		snapshot->type=SN_PERSISTENT_SNAPSHOT;
+		*persistentTs=snapshot->timestamp;
 		success=1;
 	}
 	return success;
 }
 
-int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
-				   int(*saveListsProc)(SnapshotsOnCheckpointParams*,SnapshotsVersion*,size_t,int))
+int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
+									 SnEnumerateVersionsProc enumProc)
 {
 	int success=0, failure=0, persPos=0, i=0;
 	size_t total=0, persistent=0;
-	SnapshotsSnapshot *nextPers=NULL, *pers=NULL, *dummy=NULL, *iter=NULL;
-	SnapshotsGcNode *top=NULL;
-	SnapshotsVersion buf[SH_BUFSZ], *ibuf=buf, *ebuf=buf+SH_BUFSZ;
-
-	assert(params && saveListsProc);
-	persPos = GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0)-1;
-	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
-	if (!nextPers)
+	SnSnapshot *pers=NULL, *dummy=NULL, *iter=NULL;
+	SnGcNode *top=NULL;
+	SnVersionEntry bufStorg[SN_BUFSZ], garbageBufStorg[SN_BUFSZ];
+	SnEnumerateVersionsBuf buf = {bufStorg, bufStorg, bufStorg+SN_BUFSZ, 0};
+	SnEnumerateVersionsBuf garbageBuf = 
 	{
-		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
-	}
-	else
-	{
-		if (pers) 
-		{
-			assert(!GetSnapshotByType(pers->next,&dummy,NULL,SH_PERSISTENT_SNAPSHOT,0));
-		}
-		pers=nextPers;
+		garbageBufStorg, garbageBufStorg, garbageBufStorg+SN_BUFSZ, 0
+	};
 
-		GatherSnapshotsStats(leadingSnapshot,&total,&persistent,NULL,pers->timestamp);
-		params->persistentVersionsCount=persistent;
-		params->garbageVersionsCount=total-persistent;
-		params->persistentVersionsSent=0;
-		params->garbageVersionsSent=0;
-		
+	assert(params && enumProc);
+	persPos = GetSnapshotByType(leadingSnapshot,&pers,NULL,SN_PERSISTENT_SNAPSHOT,0)-1;
+	params->persSnapshotTs = (pers?pers->timestamp:0);
+	GatherSnapshotsStats(leadingSnapshot,&total,&persistent,NULL,params->persSnapshotTs);
+	params->persVersionsCount=persistent;
+	params->garbageVersionsCount=total-persistent;
+	params->persVersionsSent=0;
+	params->garbageVersionsSent=0;
+
+	if (1)
+	{
 		/* if neither garbage nor persistent versions exist call saveListsProc once */ 
-		if (params->persistentVersionsCount==0 && params->garbageVersionsCount==0)
+		if (params->persVersionsCount==0 && params->garbageVersionsCount==0)
 		{
-			if(!saveListsProc(params,NULL,0,0)) failure=1;
+			if(!enumProc(params,NULL,0,0)) failure=1;
 		}
 		else
 		{
@@ -798,70 +804,73 @@ int ShOnCheckpoint(SnapshotsOnCheckpointParams *params,
 			{
 				GetGcChainNode(iter->gcChain,&top,i);
 				assert(top);
-				if (!TransmitGcChain(top,persPos+1,params,saveListsProc,buf,ebuf,&ibuf,0)) failure=1;
+				if (!EnumerateGcChainVersions(top,persPos+1,params,enumProc,&buf,&garbageBuf)) failure=1;
 			}
 			/* flush buffer */ 
 			if (!failure)
 			{
-				if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&ibuf,0)) failure=1;
+				if (!FlushEnumerateVersionsBuf(params,enumProc,&buf)) failure=1;
 			}
 
 			/* transmit first garbage triangle */ 
 			for(i=1, iter=leadingSnapshot; !failure && iter!=pers; iter=iter->next, ++i)
 			{
-				if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+				if (!EnumerateGcChainVersions(iter->gcChain,i,params,enumProc,&garbageBuf,&garbageBuf)) failure=1;
 			}
 			/* transmit second garbage triangle */ 
 			for(i=1, iter=pers->next; !failure && iter; iter=iter->next, ++i)
 			{
-				if (!TransmitGcChain(iter->gcChain,i,params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+				if (!EnumerateGcChainVersions(iter->gcChain,i,params,enumProc,&garbageBuf,&garbageBuf)) failure=1;
 			}
-			/* flush buffer */ 
+			/* flush garbage buffer */ 
 			if (!failure)
 			{
-				if (!FlushTransmitBuf(params,saveListsProc,buf,ebuf,&ibuf,1)) failure=1;
+				if (!FlushEnumerateVersionsBuf(params,enumProc,&garbageBuf)) failure=1;
 			}
 		}		
-		success=(failure==0);
+		success = (failure==0);
 	}
 	return success;
 }
 
-int ShOnCompleteCheckpoint()
+int SnOnCompleteCheckpoint()
 {
 	int success=0;
-	SnapshotsSnapshot *pers=NULL, *nextPers=NULL;
+	SnSnapshot *pers=NULL, *prevPers=NULL, *dummy=NULL;
 
-	GetSnapshotByType(leadingSnapshot,&pers,NULL,SH_PERSISTENT_SNAPSHOT,0);
-	if (!GetSnapshotByType(leadingSnapshot,&nextPers,NULL,SH_NEXT_PERSISTENT_SNAPSHOT,0))
+	GetSnapshotByType(leadingSnapshot,&prevPers,NULL,SN_PREV_PERSISTENT_SNAPSHOT,0);
+	if (!GetSnapshotByType(leadingSnapshot,&pers,NULL,SN_PERSISTENT_SNAPSHOT,0))
 	{
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
 	else
 	{
-		nextPers->type=SH_PERSISTENT_SNAPSHOT;
-		pers->type=SH_REGULAR_SNAPSHOT;
+		if (prevPers)
+		{
+			prevPers->type=SN_REGULAR_SNAPSHOT;			
+		}		
 		if (PurifySnapshots(1)) success=1;
 	}
 	return success;
 }
 
-int ShGatherStats(SnapshotsStats *stats)
+int SnGatherStats(SnStats *stats)
 {
 	TIMESTAMP ts=0;
-	SnapshotsSnapshot *sh=NULL;
+	SnSnapshot *snapshot=NULL;
 
 	assert(stats); 
-	sh=GetCurrentSnapshot();
-	ts = (sh? sh->timestamp: 0);
+	stats->runawayVersionsCount=runawayVersionsCount;
+	snapshot=GetCurrentSnapshot();
+	ts = (snapshot? snapshot->timestamp: 0);
 	GatherSnapshotsStats(leadingSnapshot,
 						 &stats->versionsCount,
 						 &stats->curSnapshotVersionsCount,
 						 &stats->curSnapshotSharedVersionsCount,
 						 ts);
 
-	GetSnapshotByType(leadingSnapshot,&sh,NULL,SH_PERSISTENT_SNAPSHOT,0);
-	ts = (sh? sh->timestamp: 0);
+	GetSnapshotByType(leadingSnapshot,&snapshot,NULL,SN_PERSISTENT_SNAPSHOT,0);
+	ts = (snapshot? snapshot->timestamp: 0);
 	GatherSnapshotsStats(leadingSnapshot,
 						 NULL,
 						 &stats->persSnapshotVersionsCount,
@@ -870,29 +879,28 @@ int ShGatherStats(SnapshotsStats *stats)
 	return 1;
 }
 
-int ShCheckIfCanAdvanceSnapshots(int *canAdvance, int *canMakeCurrentSnapshotPersistent)
+int SnCheckIfCanAdvanceSnapshots(int *canMakeCurrentSnapshotPersistent)
 {
-	SnapshotsSnapshot *current=NULL, *last=NULL, *criterion=NULL;
-	int dummy=0;
+	SnSnapshot *current=NULL, *last=NULL, *criterion=NULL;
+	int dummy=0, canAdvance=0;
 
-	assert(canAdvance);	
 	last=leadingSnapshot;
 	assert(last);
 	while (last->next) last=last->next;
 	criterion=(last->occupancy==0?leadingSnapshot:leadingSnapshot->next);
 
-	*canAdvance=(criterion->type==SH_FUTURE_SNAPSHOT || 
-				 criterion->type==SH_REGULAR_SNAPSHOT && criterion->occupancy==0);
+	canAdvance=(criterion->type==SN_FUTURE_SNAPSHOT || 
+				criterion->type==SN_REGULAR_SNAPSHOT && criterion->occupancy==0);
 	current=GetCurrentSnapshot();
-	dummy=(current && current->type==SH_REGULAR_SNAPSHOT);
+	dummy=(current && current->type==SN_REGULAR_SNAPSHOT);
 	if (canMakeCurrentSnapshotPersistent) *canMakeCurrentSnapshotPersistent=dummy;
-	return 1;
+	return canAdvance;
 }
 
-int ShGetCurrentClientSnapshotTs(TIMESTAMP *timestamp)
+int SnGetCurrentSnapshotTs(TIMESTAMP *timestamp)
 {
 	int success=0;
-	SnapshotsClientState *state=NULL;
+	SnClientState *state=NULL;
 	assert(timestamp);
 	if (ClGetCurrentStateBlock((void**)&state,ticket))
 	{
@@ -902,18 +910,18 @@ int ShGetCurrentClientSnapshotTs(TIMESTAMP *timestamp)
 	return success;
 }
 
-void ShDbgDump(int reserved)
+void SnDbgDump(int reserved)
 {
-	SnapshotsSnapshot *it=NULL;
-	SnapshotsGcNode *hscan[SH_SNAPSHOTS_COUNT];
-	std::list<SnapshotsGcEntry>::iterator xscan[SH_SNAPSHOTS_COUNT];
+	SnSnapshot *it=NULL;
+	SnGcNode *hscan[SN_SNAPSHOTS_COUNT];
+	std::list<SnVersionEntry>::iterator xscan[SN_SNAPSHOTS_COUNT];
 	int i=0, j=0, con=1;
 	const char *typeStr=NULL;
 	char buf[32];
-	SnapshotsStats stats;
+	SnStats stats;
 
-	ShGatherStats(&stats);
-	fprintf(stderr,"ShDbgDump total %d, cur %d, cur-s %d, pers %d, pers-s %d\n", 
+	SnGatherStats(&stats);
+	fprintf(stderr,"SnDbgDump total %d, cur %d, cur-s %d, pers %d, pers-s %d\n", 
 		stats.versionsCount,
 		stats.curSnapshotVersionsCount,
 		stats.curSnapshotSharedVersionsCount,
@@ -925,13 +933,13 @@ void ShDbgDump(int reserved)
 	{
 		switch (it->type)
 		{
-		case SH_REGULAR_SNAPSHOT:
+		case SN_REGULAR_SNAPSHOT:
 			typeStr="REGULAR"; break;
-		case SH_PERSISTENT_SNAPSHOT:
+		case SN_PERSISTENT_SNAPSHOT:
 			typeStr="PERSISTENT"; break;
-		case SH_NEXT_PERSISTENT_SNAPSHOT:
-			typeStr="NEXT-PERS."; break;
-		case SH_FUTURE_SNAPSHOT:
+		case SN_PREV_PERSISTENT_SNAPSHOT:
+			typeStr="PREV-PERS."; break;
+		case SN_FUTURE_SNAPSHOT:
 			typeStr="FUTURE"; break;
 		default:
 			typeStr="UNKNOWN";
@@ -950,7 +958,7 @@ void ShDbgDump(int reserved)
 		con=0;
 		/*	for each gcChain output headers (num of elements)
 			unless any node has non-zero elements con remains zero*/ 
-		for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
+		for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
 		{
 			*buf=0;
 			if (hscan[i]) 
@@ -962,11 +970,11 @@ void ShDbgDump(int reserved)
 			fprintf(stderr,"   %17s",buf);
 		}
 		fputs("\n",stderr);
-		/*	for each gcChain dump elements (either until all elements are dumped or SH_DUMP_LIMIT is hit) */ 
-		for (j=0; j<SH_DUMP_LIMIT && con; ++j)
+		/*	for each gcChain dump elements (either until all elements are dumped or SN_DUMP_LIMIT is hit) */ 
+		for (j=0; j<SN_DUMP_LIMIT && con; ++j)
 		{
 			con=0;
-			for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
+			for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
 			{
 				*buf=0;
 				if (hscan[i] && xscan[i]!=hscan[i]->entries.end())
@@ -976,7 +984,7 @@ void ShDbgDump(int reserved)
 					if (xscan[i]!=hscan[i]->entries.end()) 
 					{
 						++con;
-						if (j==SH_DUMP_LIMIT-1) strcpy(buf,"........");
+						if (j==SN_DUMP_LIMIT-1) strcpy(buf,"........");
 					}
 				}
 				fprintf(stderr,"   %17s",buf);
@@ -985,7 +993,7 @@ void ShDbgDump(int reserved)
 		}
 		/*	descent one level down gcChains, con remains zero unless any chain has a node at next level */ 
 		con=0;
-		for (i=0;i<SH_SNAPSHOTS_COUNT;++i)
+		for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
 		{
 			if (hscan[i])
 			{
