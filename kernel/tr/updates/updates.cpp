@@ -196,7 +196,12 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 		parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
 	}
     node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
-    if (node == XNULL) return left;
+    if (node == XNULL)
+    {
+        if(left==XNULL) return XNULL;
+        CHECKP(left);
+		return left;
+    }
 #endif
 	CHECKP(node);
 	switch(GETTYPE(GETSCHEMENODEX(node)))
@@ -222,7 +227,12 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 			 {
 				 CHECKP(child);
 				 node_indir=((n_dsc*)XADDR(child))->indir;
-				 left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,save_types,depth+1);
+                 //MG: deep_pers_copy can return XNULL if a trigger canceled the insertion 
+				 //    and there were now any left sibling
+			 	 if(left_ngh==XNULL)  
+					left_ngh=deep_pers_copy(XNULL, XNULL, res,child,save_types,depth+1);
+				 else
+					left_ngh=deep_pers_copy(left_ngh, XNULL, XNULL,child,save_types,depth+1);
 				 child=removeIndirection(node_indir);
 				 CHECKP(child);
 				 child=GETRIGHTPOINTER(child);
@@ -414,7 +424,12 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 		parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
 	}
     node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
-    if (node == XNULL) return left;
+	if (node == XNULL)
+	{
+		if(left==XNULL) return XNULL;
+		CHECKP(left);
+		return left;
+	}
 #endif
 	CHECKP(node);
 	xptr res;
@@ -430,21 +445,29 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 			xptr left_ngh=XNULL;
 			xptr child= giveFirstByOrderChild(node,COUNTREFERENCES((GETBLOCKBYNODE(node)),size_of_node((GETBLOCKBYNODE(node)))));
 			if (child!=XNULL)
-		 {
-			 left_ngh=deep_temp_copy(XNULL, XNULL, res,child,updmap,depth+1);
-			 CHECKP(child);
-			 child=GETRIGHTPOINTER(child);
-			 while (child!=XNULL)
-			 {
-				 CHECKP(child);
-				 left_ngh=deep_temp_copy(left_ngh, XNULL, XNULL,child,updmap,depth+1);
-				 CHECKP(child);
-				 child=GETRIGHTPOINTER(child);
-			 }
-			 CHECKP(left_ngh);
-			 xptr indir= ((n_dsc*)XADDR(left_ngh))->pdsc;
-			 res=removeIndirection(indir);			 
-		 }
+		    {
+				left_ngh=deep_temp_copy(XNULL, XNULL, res,child,updmap,depth+1);
+				CHECKP(child);
+				child=GETRIGHTPOINTER(child);
+				while (child!=XNULL)
+				{
+					CHECKP(child);
+					//MG: deep_temp_copy can return XNULL if a trigger canceled the insertion 
+					//    and there were now any left sibling
+					if(left_ngh==XNULL)  
+						left_ngh=deep_temp_copy(XNULL, XNULL, res,child,updmap,depth+1);
+					else
+						left_ngh=deep_temp_copy(left_ngh, XNULL, XNULL,child,updmap,depth+1);
+					CHECKP(child);
+					child=GETRIGHTPOINTER(child);
+				}
+				if(left_ngh!=XNULL)
+				{
+					CHECKP(left_ngh);
+					xptr indir= ((n_dsc*)XADDR(left_ngh))->pdsc;
+					res=removeIndirection(indir);			 
+				}
+			}
 		}
 	 break;
  case text:
