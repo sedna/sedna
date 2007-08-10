@@ -53,9 +53,12 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
             trc = find_trigger_for_newly_inserted_node(scm_parent_node, name, node_type, &treated_triggers);
         else
             trc = find_trigger_for_node(scm_parent_node->get_child(NULL,name, node_type), TRIGGER_INSERT_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
+
 		if(trc == NULL)
-           return new_var;
+			return new_var;
         new_var=trc->execute_trigger_action(new_var, XNULL, where_var);
+		if(new_var == XNULL)
+			return new_var;
 		node_type = GETTYPE(GETSCHEMENODEX(new_var));
 		if((node_type!=element)&&(node_type!=attribute))
 			return new_var;

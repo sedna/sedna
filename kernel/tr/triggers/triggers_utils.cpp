@@ -29,28 +29,56 @@ void nested_updates_tracking(lock_mode mode, schema_node* root)
     }
 }
 
-void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr parameter_where)
+void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr parameter_where, trigger_granularity gran, std::string trigger_title)
 {
     qep_parameters_vec::iterator qepParIter;
+    std::string error_detail;
     for(qepParIter = qep_parameters->begin(); qepParIter != qep_parameters->end(); qepParIter++)
     {
         switch ((*qepParIter)->get_type())
         {
-            case TRIGGER_PARAMETER_NEW:   if(parameter_new==XNULL)
-                							  throw USER_EXCEPTION2(SE3208, "Trigger variable: $NEW");
-            							  CHECKP(parameter_new);
-                                          (*qepParIter)->set_xptr(parameter_new);
-                                          break;
-            case TRIGGER_PARAMETER_OLD:   if(parameter_old==XNULL)
-                							  throw USER_EXCEPTION2(SE3208, "Trigger variable: $OLD");
-										  CHECKP(parameter_old);
-                                          (*qepParIter)->set_xptr(parameter_old);
-                                          break;
-            case TRIGGER_PARAMETER_WHERE: if(parameter_where==XNULL)
-                							  throw USER_EXCEPTION2(SE3208, "Trigger variable: $WHERE");
-											  CHECKP(parameter_where); 
-                                          (*qepParIter)->set_xptr(parameter_where);
-                                          break;
+            case TRIGGER_PARAMETER_NEW:   
+                if(gran==TRIGGER_FOR_EACH_STATEMENT)
+                {
+                    error_detail = "Trigger variable $NEW in trigger " + std::string(trigger_title);
+                    throw USER_EXCEPTION2(SE3209, error_detail.c_str());
+                }
+                if(parameter_new==XNULL)
+                {
+                    error_detail = "Trigger variable $NEW in trigger " + std::string(trigger_title);
+                    throw USER_EXCEPTION2(SE3208, error_detail.c_str());
+                }
+                CHECKP(parameter_new);
+                (*qepParIter)->set_xptr(parameter_new);
+                break;
+            case TRIGGER_PARAMETER_OLD:
+                if(gran==TRIGGER_FOR_EACH_STATEMENT)
+                {
+                    error_detail = "Trigger variable $OLD in trigger " + std::string(trigger_title);
+                    throw USER_EXCEPTION2(SE3209, error_detail.c_str());
+                }
+                if(parameter_old==XNULL)
+                {
+                    error_detail = "Trigger variable $OLD  in trigger " + std::string(trigger_title);
+                    throw USER_EXCEPTION2(SE3208, error_detail.c_str());
+                }
+                CHECKP(parameter_old);
+                (*qepParIter)->set_xptr(parameter_old);
+                break;
+            case TRIGGER_PARAMETER_WHERE: 
+               if(gran==TRIGGER_FOR_EACH_STATEMENT)
+               {
+                   error_detail = "Trigger variable $WHERE in trigger " + std::string(trigger_title);
+                   throw USER_EXCEPTION2(SE3209, error_detail.c_str());
+               }
+               if(parameter_where==XNULL)
+               {
+                   error_detail = "Trigger variable $WHERE in trigger " + std::string(trigger_title);
+                   throw USER_EXCEPTION2(SE3208, error_detail.c_str());
+               }
+               CHECKP(parameter_where); 
+               (*qepParIter)->set_xptr(parameter_where);
+               break;
             default: throw USER_EXCEPTION(SE3202);
                      break;
         }

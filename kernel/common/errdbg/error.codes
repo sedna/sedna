@@ -1678,3 +1678,6 @@ sedna-err:SE3207
 sedna-err:SE3208
 
     The trigger variable is used but undefined in this context.
+sedna-err:SE3209
+
+    It is prohibited to use trigger variables in statement-level triggers.

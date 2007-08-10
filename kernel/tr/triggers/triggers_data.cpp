@@ -289,7 +289,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
          {
           	qep_tree = mapIter->second.at(i).action_qep_tree;
             qep_parameters = &(mapIter->second.at(i).parameters);
-   	        set_action_parameters(parameter_new, parameter_old, parameter_where);
+   	        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
        	    qep_tree->open();
            	is_qep_opened = true;
             if(qep_tree->is_update())
@@ -299,7 +299,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
        	}
        	qep_subtree = mapIter->second.at(i).action_qep_subtree;
         qep_parameters = &(mapIter->second.at(i).parameters);
-   	    set_action_parameters(parameter_new, parameter_old, parameter_where);
+   	    set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
        	qep_subtree->tree.op->open();
         is_subqep_opened = true;
 		tuple t = tuple(1);
