@@ -28,6 +28,7 @@
 #include "common/pping.h"
 #include "common/ipc_ops.h"
 #include "common/config.h"
+#include "sm/llmgr/llmgr.h"
 
 using namespace std;
 
@@ -478,6 +479,9 @@ int main(int argc, char **argv)
              ll_phys_log_startup_shared_mem();
              d_printf1("ll_phys_log_startup_shared_mem call successful\n");
 
+			 ll_logical_log_startup(sedna_db_version);
+             d_printf1("logical_log_startup call successful\n");
+             
              bm_startup();
              is_bm_started = true;
              d_printf1("bm_startup call successful\n");
@@ -501,6 +505,9 @@ int main(int argc, char **argv)
              is_ll_phys_log_started = false;
              ll_phys_log_shutdown();
              d_printf1("phys_log_shutdown call successful\n");
+
+	         ll_logical_log_shutdown();
+             d_printf1("logical_log_shutdown call successful\n");
 
              release_checkpoint_sems();
 

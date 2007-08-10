@@ -240,9 +240,6 @@ int sm_server_handler(void *arg)
                                                (xptr*)(&(msg->data.swap_data.ptr)), 
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
-
-						 /* everyone like funny expressions */ 
-						 ((vmm_sm_blk_hdr*)&msg->data.swap_data.offs[(char*)buf_mem_addr])->trid_wr_access=msg->sid;
                          msg->cmd = 0;
                          break;
                      }
@@ -332,15 +329,7 @@ int sm_server_handler(void *arg)
 						 WuOnUnregisterTransactionExn(msg->sid);
                          bm_unregister_transaction(msg->sid, msg->trid);
 
-						 /* TODO: redo this crap */ 
-						 {
-							 static int cntr=0;
-							 ++cntr;
-							 if (cntr%3==0)
-							 {
-								 WuAdvanceSnapshotsExn();
-							 }
-						 }
+						 /* TODO: check if we can advance snapshots and probably advance */ 
 
                          msg->cmd = 0;
                          break;
@@ -431,7 +420,7 @@ int main(int argc, char **argv)
     bool is_ppc_closed = true;
     char buf[1024];
     UShMem gov_mem_dsc;
-    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
+
 
     try {
 

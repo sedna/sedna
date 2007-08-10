@@ -240,8 +240,8 @@ void release_checkpoint_sems()
      throw USER_EXCEPTION2(SE4011, "SEDNA_CHECKPOINT_FINISHED_SEM");
 */
 
-  if (USemaphoreRelease(checkpoint_sem, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4011, "CHARISMA_CHECKPOINT_SEM");
+//  if (USemaphoreRelease(checkpoint_sem, __sys_call_error) != 0)
+//     throw USER_EXCEPTION2(SE4011, "CHARISMA_CHECKPOINT_SEM");
 
   if (USemaphoreRelease(concurrent_trns_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHEKPOINT_THREAD_STACK_SIZE");
