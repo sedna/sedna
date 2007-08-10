@@ -333,7 +333,12 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		else if (!SnStartup(&snSetup)) {}
 		else
 		{
-			success = 1;
+			try
+			{
+				PhOnInitialSnapshotCreate(persSnapshotTs);
+				success = 1;
+			}
+			WU_HANDLE_EXCEPTIONS()			
 		}
 	}
 	if (!success)
