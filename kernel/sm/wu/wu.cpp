@@ -20,12 +20,17 @@
 #include "sm/trmgr.h"
 #include <windows.h>
 
+#define WU_SWAPPED_XPTRS_COUNT	1
+
 /* global variables */ 
 
 static TIMESTAMP timestamp = ~(TIMESTAMP)0;
 static uMutexType gMutex;
 static HANDLE hSnapshotsAdvancedEvent = NULL;
 static TIMESTAMP curSnapshotTs=0, persSnapshotTs=0;
+
+static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
+static size_t swappedNum = 0;
 
 /* utility functions */ 
 
@@ -85,7 +90,14 @@ int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
 	assert(bufferId); *bufferId=-1;
 	try
 	{
-		put_block_to_buffer(-1,lilXptr,&ofs,true);
+		if (swappedNum==WU_SWAPPED_XPTRS_COUNT) 
+		{
+			put_block_to_buffer(-1,lilXptr,&ofs,true);
+		}
+		else
+		{			
+			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(-1,lilXptr,&ofs,true));
+		}
 		*bufferId = BufferIdFromRamoffs(ofs);
 		success=1;
 	}
@@ -779,6 +791,15 @@ void WuDbgDump(int selector, int reserved)
 	if (selector & WU_CLIENTS) ClDbgDump(reserved);
 	if (selector & WU_VERSIONS) VeDbgDump(reserved);
 	if (selector & WU_SNAPSHOTS) SnDbgDump(reserved);
+}
+
+size_t WuFetchSwappedXptrs(XPTR **xptrs)
+{
+	size_t r=swappedNum;
+	assert(xptrs);
+	swappedNum=0;
+	*xptrs = swapped;
+	return r;
 }
 
 /* public api, exn adapters */ 
