@@ -677,6 +677,8 @@ UFile create_logical_log(const char* log_file_name,
         throw USER_EXCEPTION2(SE4043, "logical log file");
 
   return logical_log_dsc;
+#else
+return 0;
 #endif
 }
 

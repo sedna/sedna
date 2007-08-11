@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 {
     int ret_code = 0;
 	
-	AllocConsole();
+	if (AllocConsole())
 	{
 		freopen("CON","wt",stderr);
 		freopen("CON","wt",stdout);

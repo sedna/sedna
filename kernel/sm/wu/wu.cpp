@@ -84,20 +84,29 @@ ramoffs RamoffsFromBufferId(int id)
 static
 int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
 {
-	int success=0;
+	int success=0, isDataImportant = ((flags & 1) ==0);
+	vmm_sm_blk_hdr *header=NULL;
 	xptr lilXptr=WuExternaliseXptr(bigXptr);
-	ramoffs ofs;
+	ramoffs ofs=0;
 	assert(bufferId); *bufferId=-1;
 	try
 	{
 		if (swappedNum==WU_SWAPPED_XPTRS_COUNT) 
 		{
-			put_block_to_buffer(-1,lilXptr,&ofs,true);
+			put_block_to_buffer(-1,lilXptr,&ofs,isDataImportant);
 		}
 		else
 		{			
-			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(),lilXptr,&ofs,true));
+			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(),lilXptr,&ofs,isDataImportant));
 		}
+		if (!isDataImportant)
+		{
+			memset(OffsetPtr(buf_mem_addr,ofs),0,PAGE_SIZE);
+			header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofs);
+			vmm_sm_blk_hdr::init(header);
+			header->p=lilXptr;
+			header->roffs=ofs;
+		}		
 		*bufferId = BufferIdFromRamoffs(ofs);
 		success=1;
 	}

@@ -13,16 +13,13 @@ endif
 # options: auth is on  - 1
 #          auth is off - 0
 ifndef AUTH_SWITCH
-AUTH_SWITCH = 1
+AUTH_SWITCH = 0
 endif
 
 # options: Compile latex files        - 1
 #          Do not compile latex files - 0
-ifndef MAKE_DOC
-MAKE_DOC = 1
-endif
-ifndef INSTALL_DOC
-INSTALL_DOC = 1
+ifndef DOCUMENTATION
+DOCUMENTATION = 1
 endif
 
 # options: debug is on  - 1

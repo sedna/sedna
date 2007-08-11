@@ -338,7 +338,13 @@ int sm_server_handler(void *arg)
                          bm_unregister_transaction(msg->sid, msg->trid);
 
 						 /* TODO: check if we can advance snapshots and probably advance */ 
-
+/*
+						 {
+							static int cntr=0;
+							++cntr;
+							if (cntr % 3 == 0) WuAdvanceSnapshotsExn();
+						 }
+*/
                          msg->cmd = 0;
                          break;
                      }
@@ -512,7 +518,7 @@ int main(int argc, char **argv)
         setup_sm_globals((gov_config_struct *)gov_shm_pointer);//setup default values from config file
 
 
-        recover_database_by_physical_and_logical_log(db_id);
+//        recover_database_by_physical_and_logical_log(db_id);
 
 
         /////////////// BACKGROUND MODE ////////////////////////////////////////

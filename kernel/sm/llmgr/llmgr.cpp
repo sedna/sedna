@@ -35,6 +35,8 @@ bool ll_logical_log_startup(int &sedna_db_version)
   WRITE_DEBUG_LOG(str.c_str());
 
   return ret;
+#else
+  return 1;
 #endif
 }
 
@@ -112,9 +114,9 @@ void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size)
 {
 #ifdef LOGICAL_LOG
   logical_log_mgr->ll_log_free_blocks(phys_xptr, block, size, true);
-  logical_log_mgr->ll_log_flush(true);
-  logical_log_mgr->ll_log_flush_all_last_records(true);
-  logical_log_mgr->flush_file_head(true);
+//  logical_log_mgr->ll_log_flush(true);
+//  logical_log_mgr->ll_log_flush_all_last_records(true);
+//  logical_log_mgr->flush_file_head(true);
 #endif
 }
 
@@ -144,6 +146,8 @@ TIMESTAMP ll_returnTimestampOfPersSnapshot()
 {
 #ifdef LOGICAL_LOG
   return logical_log_mgr->returnTimestampOfPersSnapshot(true);
+#else
+  return 0x10000;
 #endif
 }
 
@@ -180,6 +184,8 @@ LONG_LSN ll_recover_db_by_phys_records()
 {
 #ifdef LOGICAL_LOG
 	return logical_log_mgr->recover_db_by_phys_records(false);
+#else
+    return NULL_LSN;
 #endif
 }
 

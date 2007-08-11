@@ -456,7 +456,7 @@ int PushNewVersionIntoHeader(VeSnapshotsList *lst,
 		hdr->xptr[1]=xptr;
 		hdr->creatorTs[0]=creatorTs;
 		hdr->creator[0]=creator;
-		if (ValidateHeader(hdr))
+		if (!ValidateHeader(hdr))
 		{
 			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 		}
@@ -689,7 +689,7 @@ int VeAllocBlock(LXPTR *lxptr)
 			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
 		else if (!setup.allocBlock(&xptr)) {}
-		else if (!setup.loadBuffer(xptr,&bufferId,0)) {}
+		else if (!setup.loadBuffer(xptr,&bufferId,1)) {}
 		else if (!setup.locateHeader(bufferId, &header)) {}
 		else
 		{
@@ -763,7 +763,7 @@ int VeCreateVersion(LXPTR lxptr)
 			else
 			{
 				persOrdinal=GetSnapshotByTimestamp(&snapshotsList,&snapshot,NULL,persSnapshotTs);
-				isSpecial=(persOrdinal!=0 && mapping.version[1].xptr!=mapping.version[persOrdinal].xptr);
+				isSpecial=(persOrdinal!=0 && mapping.version[1].xptr==mapping.version[persOrdinal].xptr);
 				if (!setup.copyBlock(xptr,lxptr,isSpecial)) {}
 				else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
 				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentClientId())) {}
