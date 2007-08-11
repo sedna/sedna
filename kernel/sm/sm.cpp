@@ -73,8 +73,8 @@ void SMCtrlHandler(int signo)
 xptr GetSwappedFromWu()
 {
 	XPTR *buf=NULL;
-	WuFetchSwappedXptrs(&buf);
-	return WuExternaliseXptr(*buf);
+	if (WuFetchSwappedXptrs(&buf)) return WuExternaliseXptr(*buf);
+	else return XNULL;
 }
 
 int sm_server_handler(void *arg)
