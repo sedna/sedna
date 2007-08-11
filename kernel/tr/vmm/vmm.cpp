@@ -149,8 +149,8 @@ void vmm_trace_delete_block(const xptr& p)
 
 #endif
 
-typedef XptrHash<void*, 16, 16> t_blocks_write_table;
-static t_blocks_write_table write_table;
+//typedef XptrHash<void*, 16, 16> t_blocks_write_table;
+//static t_blocks_write_table write_table;
 
 
 /*******************************************************************************
@@ -207,19 +207,19 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
         return -1;
     }
 
-    if (offs != RAMOFFS_OUT_OFF_BOUNDS && isWrite)
+/*    if (offs != RAMOFFS_OUT_OFF_BOUNDS && isWrite)
     {
         xptr p = ((vmm_sm_blk_hdr *)addr)->p;
         write_table.insert(p, addr);
     }
-
+*/
     return 0;
 }
 
 inline int __vmm_unmap(void *addr)
 {
     xptr p = ((vmm_sm_blk_hdr *)addr)->p;
-    write_table.remove(p);
+//    write_table.remove(p);
 
 #ifdef _WIN32
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
@@ -914,12 +914,12 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // reset blocks with write access from current trid
-        t_blocks_write_table::iterator it;
+//        t_blocks_write_table::iterator it;
 
-	    for (it = write_table.begin(); it != write_table.end(); ++it)
-      		_vmm_unmap_decent(*it);
+//	    for (it = write_table.begin(); it != write_table.end(); ++it)
+//      		_vmm_unmap_decent(*it);
 
-      	write_table.clear();
+//      	write_table.clear();
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1350,13 +1350,13 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 //        	 write_table.remove(swapped);
         }
 
-        _vmm_remap(XADDR(p), offs, false);
+//        _vmm_remap(XADDR(p), offs, false);
 
-        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
-        {
+//        if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
+//        {
 	        _vmm_remap(XADDR(p), offs, true);
 //	        write_table.insert(p, XADDR(p));
-	    }
+//	    }
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
