@@ -70,7 +70,12 @@ void SMCtrlHandler(int signo)
 }
 #endif
 
-
+xptr GetSwappedFromWu()
+{
+	XPTR *buf=NULL;
+	WuFetchSwappedXptrs(&buf);
+	return WuExternaliseXptr(*buf);
+}
 
 int sm_server_handler(void *arg)
 {
@@ -232,6 +237,7 @@ int sm_server_handler(void *arg)
                                                 (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                 (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
+						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          break;
                      }
             case 24: {
@@ -256,6 +262,7 @@ int sm_server_handler(void *arg)
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
                                       (xptr*)(&(msg->data.swap_data.swapped)));
+						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          msg->cmd = 0;
                          break;
                      }
@@ -342,6 +349,7 @@ int sm_server_handler(void *arg)
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
                                       (xptr*)(&(msg->data.swap_data.swapped)));
+						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          msg->cmd = 0;
                          break;
                      }

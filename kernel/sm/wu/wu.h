@@ -81,7 +81,7 @@ void WuAdvanceSnapshotsExn();
 
 void WuDbgDump(int componentsSelector, int reserved);
 
-size_t WuFetchSwappedXptrs(XPTR *xptrs);
+size_t WuFetchSwappedXptrs(XPTR **xptrs);
 
 #ifdef __WUDANG_SOURCES__
 
