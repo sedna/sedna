@@ -96,7 +96,7 @@ int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
 		}
 		else
 		{			
-			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(-1,lilXptr,&ofs,true));
+			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(),lilXptr,&ofs,true));
 		}
 		*bufferId = BufferIdFromRamoffs(ofs);
 		success=1;
