@@ -81,6 +81,8 @@ void WuAdvanceSnapshotsExn();
 
 void WuDbgDump(int componentsSelector, int reserved);
 
+size_t WuFetchSwappedXptrs(XPTR *xptrs);
+
 #ifdef __WUDANG_SOURCES__
 
 int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=0);
