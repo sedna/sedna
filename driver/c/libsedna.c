@@ -1680,6 +1680,44 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             conn->boundary_space_preserve = (*value == SEDNA_BOUNDARY_SPACE_PRESERVE_ON) ? 1: 0;
             return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+   
+        case SEDNA_ATTR_CONCURRENCY_TYPE:
+            value = (int*) attrValue;
+            if ((*value != SEDNA_READONLY_TRANSACTION) && (*value != SEDNA_UPDATE_TRANSACTION))
+            {
+               setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
+               return SEDNA_ERROR;
+            }
+            conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
+            conn->msg.length = 9;
+            value = (int*) attrValue;
+			int2net_int(*value, conn->msg.body); //option type
+            conn->msg.body[4] = 0;
+            int2net_int(0, conn->msg.body+5); //length of the option value string = 0
+            if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3006, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3007, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (conn->msg.instruction == se_SetSessionOptionsOk)
+                return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            else if (conn->msg.instruction == se_ErrorResponse)
+            {
+                setServerErrorMsg(conn, conn->msg);
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+            else
+            {
+                connectionFailure(conn, SE3008, "Unknown message got while setting session option on the server", NULL);            /* "Unknown message from server" */
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
 
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/

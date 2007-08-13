@@ -1681,3 +1681,6 @@ sedna-err:SE3208
 sedna-err:SE3209
 
     It is prohibited to use trigger variables in statement-level triggers.
+sedna-err:SE4619
+
+   Unknown session option.
