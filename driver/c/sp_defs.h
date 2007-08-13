@@ -25,6 +25,9 @@
 #define SEDNA_DEBUG_OFF                                    0
 #define SEDNA_DEBUG_ON                                     1
 
+#define SEDNA_READONLY_TRANSACTION                         2
+#define SEDNA_UPDATE_TRANSACTION                           3
+
 typedef int sp_int32;
 
 enum se_debug_info_type 
