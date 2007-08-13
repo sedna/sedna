@@ -488,7 +488,14 @@ void socket_client::set_session_options(msg_struct *msg)
             case SEDNA_DEBUG_OFF:
                 dynamic_context::set_session_option(se_debug_mode, (void*)&option, sizeof(int));
                 break;
-
+            case SEDNA_READONLY_TRANSACTION:
+                // set Sasha's parameter here
+                break;
+            case SEDNA_UPDATE_TRANSACTION:
+                // set Sasha's parameter here
+                break;
+			default: 
+                throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
         }
         pos = pos + option_len;
     }
