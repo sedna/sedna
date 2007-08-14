@@ -4968,7 +4968,7 @@
 
 ; checks that trigger action ends up with a query
 (define (sa:check-trigger-action action)
-  (case (car(caadr action))
+  (case (car (last (cadr action)))
     ((insert-into insert-following insert-preceding rename delete delete_undeep replace move-into move-preceding move-following)
      (cl:signal-input-error SE3210 action))
     (else
