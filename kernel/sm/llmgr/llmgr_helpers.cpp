@@ -824,6 +824,8 @@ LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
     	block_ofs += sizeof(bm_masterblock) + sizeof(LONG_LSN);
 	}
   	 
+    block_ofs += sizeof(int);
+
     count = *((size_t *)block_ofs);
     block_ofs += sizeof(size_t);
 

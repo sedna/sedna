@@ -50,9 +50,9 @@ void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
 #ifdef LOGICAL_LOG
  #ifdef SE_ENABLE_FTSEARCH
-  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, true);  
+  tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);  
 #else
-  tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, true);	
+  tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);	
 #endif
   string str = string("recover+db_by_logical_log finished\n");
   WRITE_DEBUG_LOG(str.c_str());

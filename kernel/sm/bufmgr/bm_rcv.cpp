@@ -31,7 +31,8 @@ void bm_rcv_release()
         throw USER_EXCEPTION2(SE4043, ".sedata file");
 }
 
-void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_size)
+//void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_size)
+void bm_rcv_change(const xptr& xaddr, const void *p, int size, __int64 file_size)
 {
     __int64 _dsk_offs;
 
@@ -51,7 +52,7 @@ void bm_rcv_change(const xptr& xaddr, const void *p, shft size, __int64 file_siz
 
     int number_of_bytes_written = 0;
     int res = uWriteFile(data_file_handler, p, size, &number_of_bytes_written, __sys_call_error);
-    if (res == 0 || number_of_bytes_written != size)
+	if (res == 0 || number_of_bytes_written != size)
         throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
 }
 

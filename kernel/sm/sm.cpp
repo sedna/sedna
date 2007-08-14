@@ -518,7 +518,7 @@ int main(int argc, char **argv)
         setup_sm_globals((gov_config_struct *)gov_shm_pointer);//setup default values from config file
 
 
-//        recover_database_by_physical_and_logical_log(db_id);
+        recover_database_by_physical_and_logical_log(db_id);
 
 
         /////////////// BACKGROUND MODE ////////////////////////////////////////
@@ -873,9 +873,11 @@ void recover_database_by_physical_and_logical_log(int db_id)
        WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
        elog(EL_LOG, ("SM : Wu is initialized"));
 
+//	   ll_set_phys_rec_flag(false);
        //recover database by logical log
        if (!is_stopped_correctly) execute_recovery_by_logical_log_process(last_checkpoint_lsn);
        elog(EL_LOG, ("SM : db recovered by logical log successfully"));
+//	   ll_set_phys_rec_flag(true);
 
        //enable checkpoints
 //       ll_phys_log_set_checkpoint_flag(true);

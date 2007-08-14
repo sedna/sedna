@@ -188,7 +188,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 	else try
 	{
 		put_block_to_buffer(-1,lilSrc,&ofsSrc,true);
-		if (used_mem.find_remove(ofsSrc))
+		if (used_mem.find_remove(ofsSrc)==0)
 		{
 			repairRequired = 1;
 			put_block_to_buffer(-1,lilDest,&ofsDest,true);
@@ -201,6 +201,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 				flush_buffer(ofsDest,false);
 				header->is_changed = false;
 			}
+			success=1;
 		}
 	}
 	WU_CATCH_EXCEPTIONS()
@@ -531,20 +532,25 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		if (IS_TMP_BLOCK(p))
-		{
-			WuSetLastErrorMacro(WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE);
-		}
+		if (!ClSetCurrentClientId(sid)) {}
 		else
 		{
-			lxptr=WuInternaliseXptr(p);
-			if (!VeCreateVersion(lxptr)) {}
-			else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
+			if (IS_TMP_BLOCK(p))
+			{
+				WuSetLastErrorMacro(WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE);
+			}
 			else
 			{
-				*offs=RamoffsFromBufferId(bufferId);
-				success=1;
+				lxptr=WuInternaliseXptr(p);
+				if (!VeCreateVersion(lxptr)) {}
+				else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
+				else
+				{
+					*offs=RamoffsFromBufferId(bufferId);
+					success=1;
+				}
 			}
+			ClSetCurrentClientId(-1);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
