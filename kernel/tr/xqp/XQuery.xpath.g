@@ -188,7 +188,7 @@ abbrevReverseStep! [std::string sl]:
 	  >>
 	| DOT <<#0=#[AST_CONTEXT_ITEM];>>
 	  << #0=#(#[AST_STEP], 
-	          #(#[AST_AXIS], #[AST_SELF_AXIS]),
+	          #(#[AST_AXIS], #[AST_CONTEXT_ITEM_AXIS]),
 	          #(#[AST_TEST], #[AST_NODE_TEST]));
 	  >>
 ;
