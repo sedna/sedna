@@ -179,6 +179,7 @@ axis!:
 	 | AST_DESCENDANT_AXIS          <<#axis=#["descendant"];>>
 	 | AST_ATTRIBUTE_AXIS           <<#axis=#["attr-axis"];>>
 	 | AST_SELF_AXIS                <<#axis=#["self"];>>
+	 | AST_CONTEXT_ITEM_AXIS        <<#axis=#["context-item"];>>
 	 | AST_DESCENDANT_OR_SELF_AXIS  <<#axis=#["descendant-or-self"];>>
 	 | AST_FOLLOWING_SIBLING_AXIS   <<#axis=#["following-sibling"];>>
 	 | AST_FOLLOWING_AXIS           <<#axis=#["following"];>>   

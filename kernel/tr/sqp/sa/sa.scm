@@ -296,9 +296,10 @@
       (sa:analyze-const expr vars funcs ns-binding default-ns))
      ;-------------------
      ; Axes
-     ((ancestor ancestor-or-self attr-axis child descendant descendant-or-self
-                following following-sibling parent preceding
-                preceding-sibling self)
+     ((ancestor
+       ancestor-or-self attr-axis child descendant descendant-or-self
+       following following-sibling parent preceding
+       preceding-sibling self context-item)
       ; ATTENTION: namespace axis
       (sa:analyze-axis expr vars funcs ns-binding default-ns uri modules))
      ;-------------------
@@ -2861,27 +2862,30 @@
                             vars funcs ns-binding default-ns uri modules)))
      (and
       a new-type
-      (if
-       (eq? (cdr a) sa:type-atomic)
-       (if (equal? (car (sa:op-args expr)) sa:context-item)
-           (cl:signal-user-error  ; was: SE5029
-            XPTY0020 expr)
-           (cl:signal-user-error XPTY0019 expr))
-       (cons (list
-              (if
-               (and
-                (eq? (sa:op-name expr) 'child)
-                (let ((type-content
-                       (car (sa:op-args
-                             (cadr (sa:op-args expr))  ; yields '(type ...)
-                             ))))
-                  (and (pair? type-content)
-                       (eq? (sa:op-name type-content) 'attr-test))))
-               'attr-axis
-               (sa:op-name expr))
-              (car a)
-              (car new-type))
-             sa:type-nodes))))))
+      (cond
+        ((eq? (sa:op-name expr) 'context-item)
+         a)
+        ((eq? (cdr a) sa:type-atomic)
+         (if (equal? (car (sa:op-args expr)) sa:context-item)
+             (cl:signal-user-error  ; was: SE5029
+              XPTY0020 expr)
+             (cl:signal-user-error XPTY0019 expr)))
+        (else
+         (cons (list
+                (if
+                 (and
+                  (eq? (sa:op-name expr) 'child)
+                  (let ((type-content
+                         (car (sa:op-args
+                               (cadr (sa:op-args expr))  ; yields '(type ...)
+                               ))))
+                    (and (pair? type-content)
+                         (eq? (sa:op-name type-content) 'attr-test))))
+                 'attr-axis
+                 (sa:op-name expr))
+                (car a)
+                (car new-type))
+               sa:type-nodes)))))))
 
 ; Analysing `(type ,something)
 (define (sa:wrapped-type-helper type-analyser)
@@ -3761,13 +3765,19 @@
 (define (sa:analyze-ddo expr vars funcs ns-binding default-ns uri modules)
   (and
    (sa:assert-num-args expr 1)
-   (let ((seq-res (sa:analyze-expr (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
+   (let ((seq-res
+          (sa:analyze-expr
+           (car (sa:op-args expr)) vars funcs ns-binding default-ns uri modules)))
      (and
       seq-res
       (if
        (eq? (cdr seq-res) sa:type-atomic)
-       (cl:signal-input-error SE5034 expr)
-       (cons (list (sa:op-name expr)             
+       (if
+        (equal? (car seq-res) sa:context-item)
+        ; That 'ddo came from the context item expression
+        seq-res
+        (cl:signal-input-error SE5034 expr))
+       (cons (list (sa:op-name expr)
                    (car seq-res))
              (cdr seq-res)))))))
 
