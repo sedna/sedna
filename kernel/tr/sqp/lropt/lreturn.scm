@@ -452,7 +452,7 @@
        #t #f #f))
      ;-------------------
      ; Function call
-     ((fun-call)
+     ((fun-call ext-fun-call)
       (lropt:fun-call expr called-once? order-required?
                       var-types prolog processed-funcs))
      ;-------------------    
