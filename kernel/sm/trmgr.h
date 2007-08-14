@@ -14,10 +14,10 @@
 
 #define TRMGR_ON
 //must be uncommneted
-//#define CHECKPOINT_ON
+#define CHECKPOINT_ON
 //#define TEST_CHECKPOINT_ON
 //must be uncommneted
-//#define RECOVERY_ON
+#define RECOVERY_ON
 //must be uncommneted
 //#define TEST_RECOVERY_ON
 //must be uncommneted

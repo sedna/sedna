@@ -797,7 +797,7 @@ int VeFreeBlock(LXPTR lxptr)
 	SnRequestForGc pushedVersion;
 	int success = 0, okStatus = 0, isReady = 0, bufferId = 0;
 
-	if (!ClGetCurrentStateBlock((void**)state,ticket)) {}
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
 	else
 	{
 		okStatus = ClIsClientReady(&isReady,ClGetCurrentClientId()); assert(okStatus);

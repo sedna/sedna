@@ -113,16 +113,20 @@ void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn)
 void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size)
 {
 #ifdef LOGICAL_LOG
+  if (!enable_write_of_phys_recs) return;
+  
   logical_log_mgr->ll_log_free_blocks(phys_xptr, block, size, true);
-//  logical_log_mgr->ll_log_flush(true);
-//  logical_log_mgr->ll_log_flush_all_last_records(true);
-//  logical_log_mgr->flush_file_head(true);
+  logical_log_mgr->ll_log_flush(true);
+  logical_log_mgr->ll_log_flush_all_last_records(true);
+  logical_log_mgr->flush_file_head(true);
 #endif
 }
 
 void ll_add_decrease_info(__int64 old_size)
 {
 #ifdef LOGICAL_LOG
+  if (!enable_write_of_phys_recs) return;
+
   logical_log_mgr->ll_log_decrease(old_size, true);
   logical_log_mgr->ll_log_flush(true);
   logical_log_mgr->ll_log_flush_all_last_records(true);
@@ -134,6 +138,8 @@ void ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info)
 {
 #ifdef LOGICAL_LOG
   bool isGarbage = false;
+
+  if (!enable_write_of_phys_recs) return;
 
   logical_log_mgr->ll_log_pers_snapshot_add(blk_info, isGarbage, true);
   logical_log_mgr->ll_log_flush(true);

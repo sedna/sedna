@@ -29,7 +29,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
   
   void *free_blk_info, *ctrl_blk;
   int free_blk_info_size;
-  XPTR free_blk_info_xptr;
+  xptr free_blk_info_xptr;
 
   xptr ctrl_blk_pxptr, ctrl_blk_lxptr;
 
@@ -118,6 +118,8 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   char *lsn_offs; // address of the prevLSN field in current physical record
 
+  ctrl_blk = se_new_cxt(TopMemoryContext) char[PAGE_SIZE];
+
   while (lsn != NULL_LSN)
   {
     set_file_pointer(lsn);
@@ -135,8 +137,10 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     {
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
     	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR));
-    	free_blk_info_xptr = *((XPTR *)(body_beg + sizeof(char) + sizeof(int)));
-    	bm_rcv_change(*((xptr *)free_blk_info_xptr), free_blk_info, free_blk_info_size);
+    	free_blk_info_xptr = *((xptr *)(body_beg + sizeof(char) + sizeof(int)));
+
+    	memcpy(ctrl_blk, free_blk_info, PAGE_SIZE);
+    	bm_rcv_change(free_blk_info_xptr, ctrl_blk, free_blk_info_size);
         lsn_offs += sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size;
     }
     else
@@ -149,7 +153,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
 //    	VeRevertBlock(&ver_info);
 
-        ctrl_blk = malloc(PAGE_SIZE);
+//        ctrl_blk = malloc(PAGE_SIZE);
         bm_rcv_read_block(*((xptr *)blocks_info->xptr), ctrl_blk);
     	//TODO: change phys_xptr to log_xptr for this block
     	bm_rcv_change(*((xptr *)blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
