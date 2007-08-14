@@ -1684,3 +1684,6 @@ sedna-err:SE3209
 sedna-err:SE4619
 
    Unknown session option.
+sedna-err:SE3210
+
+    Trigger action must end with an XQuery query.

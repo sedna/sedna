@@ -4951,11 +4951,6 @@
     ((eq? (car expr) 'self) (sa:prepare-trigger-path-to-parent (cadr expr)))
     ((eq? (car expr) 'ddo) (sa:prepare-trigger-path-to-parent (cadr expr)))
     (else (cl:signal-user-error SE3207 "Unknown axis")))
-;  `(ddo (parent
-;         ,expr
-;         (type (elem-test (ename (const (type !xs!QName) *) (type *) (const (type !xs!string) "non-nil"))))))
-;  (list 'ddo (list 'parent expr '(type (elem-test (ename (const (type !xs!QName) *) (type *) (const ;(type !xs!string) "non-nil"))))))
- ; expr
   )
 
 (define (sa:prepare-trigger-leaf-name expr)
@@ -4970,6 +4965,14 @@
   (if (eq? (caadr (cadr (cdadr expr))) 'elem-test)
       0
       1)))
+
+; checks that trigger action ends up with a query
+(define (sa:check-trigger-action action)
+  (case (car(caadr action))
+    ((insert-into insert-following insert-preceding rename delete delete_undeep replace move-into move-preceding move-following)
+     (cl:signal-input-error SE3210 action))
+    (else
+     action)))
 
 (define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
   (and
@@ -5060,7 +5063,7 @@
                 (sa:structural-absolute-xpath? (car fourth))
                 (car fourth))
                (car fifth)
-               (map car sixth))
+               (map car (sa:check-trigger-action sixth)))
                ))))))))
 
 ; Clone from sa:analyze-manage-document
