@@ -200,11 +200,12 @@ void sorted_sequence::add(tuple& p)
 	int size=getSizeFN(p,Udata);
 	//2.2 bind pointers section to data section
 	CHECKP(ptr_place);
+	VMM_SIGNAL_MODIFICATION(ptr_place);
 	data_ptr* ptr=(data_ptr*)XADDR(ptr_place);
 	ptr->size=size;
 	ptr->value=val_place;
 	((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr_place)))->cursor++;
-	VMM_SIGNAL_MODIFICATION(ptr_place);
+	
 	int fp=GET_FREE_SPACE(val_place);
 	if (size>DATA_BLK_SIZE)
 		throw USER_EXCEPTION2(SE1003, "Failed to add big item to sequence");
@@ -215,8 +216,9 @@ void sorted_sequence::add(tuple& p)
 		xptr param=tmp+sizeof(seq_blk_hdr);
 		serialize2FN(p,val_place,fp,param,Udata);
 		CHECKP(val_place);
-		((seq_blk_hdr*)XADDR(BLOCKXPTR(val_place)))->nblk=tmp;
 		VMM_SIGNAL_MODIFICATION(val_place);
+		((seq_blk_hdr*)XADDR(BLOCKXPTR(val_place)))->nblk=tmp;
+		
 		val_place=tmp+(sizeof(seq_blk_hdr)+size-fp);
 	}
 	else
@@ -341,15 +343,17 @@ void sorted_sequence::swap(int a, int b)
 	xptr p = get_data(b);
     data_ptr* dt=(data_ptr*)XADDR(p);
 	CHECKP(p);
+	VMM_SIGNAL_MODIFICATION(p);
 	sp.size=dt->size;
 	sp.value=dt->value;
 	dt->size=dp.size;
 	dt->value=dp.value;
-	VMM_SIGNAL_MODIFICATION(p);
+	
 	CHECKP(t);
+	VMM_SIGNAL_MODIFICATION(t);
 	ct->size=sp.size;
 	ct->value=sp.value;
-	VMM_SIGNAL_MODIFICATION(t);
+	
 	
 }
  
@@ -395,8 +399,9 @@ void sorted_sequence::set_next_block_in_chain(xptr& place, bool marking)
 	xptr tmp=get_free_block();	
 	if (marking) ptr_blk_arr.push_back(tmp);
 	CHECKP(place);
-	((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->nblk=tmp;
 	VMM_SIGNAL_MODIFICATION(place);
+	((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->nblk=tmp;
+	
 	place=tmp+sizeof(seq_blk_hdr);
 }
 void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
@@ -409,8 +414,9 @@ void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 	CHECKP(ptr);
 	data_ptr* dpr=(data_ptr*)XADDR(ptr);	
 	xptr val_ptr=dpr->value;
-	dpr->value=place;	
 	VMM_SIGNAL_MODIFICATION(ptr);
+	dpr->value=place;	
+	
 	int sz=dpr->size;
 	int fpart=(GET_FREE_SPACE(val_ptr)>=sz)?sz:GET_FREE_SPACE(val_ptr);
 	int spart=sz-fpart;
@@ -432,20 +438,23 @@ void sorted_sequence::copy_data_to_new_place(xptr ptr,xptr& place)
 	if (space<sz)
 	{
 		CHECKP(place);
-		memcpy(XADDR(place),temp_buffer,space);		
 		VMM_SIGNAL_MODIFICATION(place);
+		memcpy(XADDR(place),temp_buffer,space);		
+		
 		set_next_block_in_chain(place);
 		CHECKP(place);
-		memcpy(XADDR(place),temp_buffer+space,sz-space);
 		VMM_SIGNAL_MODIFICATION(place);
+		memcpy(XADDR(place),temp_buffer+space,sz-space);
+		
 		place+=(sz-space);	
 		
 	}
 	else
 	{
 		CHECKP(place);
-		memcpy(XADDR(place),temp_buffer,sz);
 		VMM_SIGNAL_MODIFICATION(place);
+		memcpy(XADDR(place),temp_buffer,sz);
+		
 		place+=sz;		
 	}	
 }

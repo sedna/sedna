@@ -238,9 +238,10 @@ void  bt_cursor::bt_set_next_obj(object obj)
 
     /* construct result object; note the target page is already in memory */
     pg = (char*)XADDR(cur_page);
+	VMM_SIGNAL_MODIFICATION(cur_page);
     chnk = (pg + *(shft*)BT_CHNK_TAB_AT(pg, key_idx));
     *(object*)(chnk + sizeof(object) * obj_idx)=obj;
-	VMM_SIGNAL_MODIFICATION(cur_page);
+	
     obj_idx++;
     obj_count++;
    // return result;

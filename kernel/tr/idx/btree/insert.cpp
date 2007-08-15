@@ -100,14 +100,16 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     heap_buf2 = bt_buffer_heap_shft();
 
     /* copy buffers to the pages and actualize headers */
+	VMM_SIGNAL_MODIFICATION(pg_xptr);
     memcpy(pg, buf1, PAGE_SIZE);
 	
     (*BT_NEXT_PTR(pg)) = rpg;
     (*BT_KEY_NUM_PTR(pg)) = split_idx;
     (*BT_HEAP_PTR(pg)) = heap_buf1;
-    VMM_SIGNAL_MODIFICATION(pg_xptr);
+    
 
     CHECKP(rpg);
+	VMM_SIGNAL_MODIFICATION(rpg);
     char* rpg_addr = (char*)XADDR(rpg);
     memcpy((char*)rpg_addr + sizeof(vmm_sm_blk_hdr), buf2 + sizeof(vmm_sm_blk_hdr), PAGE_SIZE - sizeof(vmm_sm_blk_hdr));
     (*BT_PREV_PTR(rpg_addr)) = pg_xptr;
@@ -118,26 +120,28 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 	(*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
 	if (BT_IS_CLUS_HEAD(rpg_addr))
 	{
-		VMM_SIGNAL_MODIFICATION(rpg);
+		
 		CHECKP(pg_xptr);
+		VMM_SIGNAL_MODIFICATION(pg_xptr);
 		(*BT_IS_CLUS_PTR(pg))=false;
 		(*BT_IS_CLUS_HEAD_PTR(pg))=false;
 		(*BT_IS_CLUS_TAIL_PTR(pg))=false;    
-		VMM_SIGNAL_MODIFICATION(pg_xptr);
+		
 	}
 	else
 	{
 		(*BT_IS_CLUS_PTR(rpg_addr))=false;
 		(*BT_IS_CLUS_HEAD_PTR(rpg_addr))=false;
 		(*BT_IS_CLUS_TAIL_PTR(rpg_addr))=false;    
-		VMM_SIGNAL_MODIFICATION(rpg);
+		//VMM_SIGNAL_MODIFICATION(rpg);
 	}
 	if (next_for_rpg!=XNULL)
 	{
 		CHECKP(next_for_rpg);
+		VMM_SIGNAL_MODIFICATION(next_for_rpg);
 		/* right <- */
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
-		VMM_SIGNAL_MODIFICATION(next_for_rpg);
+		
 	}
 
     /* clear out in which block pretender will reside and adjust new index of pretender in that page */
@@ -252,8 +256,9 @@ void propagate_parent_to_cluster(xptr& head, xptr& parent)
 	CHECKP(head);
 	while (true)
 	{
+		VMM_SIGNAL_MODIFICATION(tmp);
 		(*BT_PARENT_PTR(blk)) = parent;
-         VMM_SIGNAL_MODIFICATION(tmp);
+         
 		tmp=BT_NEXT(blk);
 if (tmp==XNULL) return;
 		CHECKP(tmp);
@@ -353,8 +358,9 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
 			propagate_parent_to_cluster(pg_xptr,parent_pg);
 
             CHECKP(rpg);
+			VMM_SIGNAL_MODIFICATION(rpg);
             (*BT_PARENT_PTR((char*)XADDR(rpg))) = parent_pg;
-            VMM_SIGNAL_MODIFICATION(rpg);
+            
            // BTREE_HEIGHT++;
         }
 
@@ -377,7 +383,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
 
     if (!BT_IS_LEAF(pg)) throw USER_EXCEPTION2(SE1008, "Attempt to clusterize non-leaf page");
     if (BT_KEY_NUM(pg) != 1) throw USER_EXCEPTION2(SE1008, "Number of keys in original page is not equal to 1");
-
+	VMM_SIGNAL_MODIFICATION(pg_xptr);
     if (!BT_IS_CLUS(pg))
     {
         (*BT_IS_CLUS_PTR(pg)) = true;
@@ -394,7 +400,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
 	pg_parent = BT_PARENT(pg);
     /* left -> */
     (*BT_NEXT_PTR(pg)) = rpg;
-    VMM_SIGNAL_MODIFICATION(pg_xptr);
+    
     /* create cluster key */
     bt_key key(pg, 0);
 
@@ -404,6 +410,7 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     /* insert cluster key and new object into rpg page */
     bt_leaf_insert(root, rpg_addr, 0, true, key, obj, 0,with_bt);
     CHECKP(rpg);
+	VMM_SIGNAL_MODIFICATION(rpg);
     /* mark page as the cluster tail and link to neighbours */
     (*BT_IS_CLUS_PTR(rpg_addr)) = true;
     (*BT_IS_CLUS_TAIL_PTR(rpg_addr)) = true;
@@ -412,13 +419,14 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
     /* right -> */
     (*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
 	(*BT_PARENT_PTR(rpg_addr)) = pg_parent;
-    VMM_SIGNAL_MODIFICATION(rpg);
+    
 	if (next_for_rpg!=XNULL)
 	{
 		CHECKP(next_for_rpg);
+		VMM_SIGNAL_MODIFICATION(next_for_rpg);
 		/* right <- */
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
-		VMM_SIGNAL_MODIFICATION(next_for_rpg);
+		
 	}
 }
 
@@ -510,8 +518,9 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
             VMM_SIGNAL_MODIFICATION(pg_xptr);*/
 			propagate_parent_to_cluster(pg_xptr, parent_pg);
             CHECKP(rpg);
+			VMM_SIGNAL_MODIFICATION(rpg);
             (*BT_PARENT_PTR((char*)XADDR(rpg))) = parent_pg;
-            VMM_SIGNAL_MODIFICATION(rpg);
+            
             //BTREE_HEIGHT++;
         }
 
@@ -548,7 +557,7 @@ void bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const obje
     shft    area_size = (shft)(area_end - area_begin);
     char*   ptr;
     char*   heap;
-
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
     /* insert new key in key table */
     if (key_size)
     { /* fixed-size key */
@@ -582,7 +591,7 @@ void bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const obje
     *((shft*)area_begin + 1) = 1;
     memcpy(area_begin + 2 * sizeof(shft), insert_buf, area_size);
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+    
     /* update page header */
 }
 
@@ -600,7 +609,7 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
     shft    area_size = (shft)(area_end - area_begin);
     char*   ptr;
     char*   heap;
-
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));	
     /* insert new key in key table */
     if (key_size)
     { /* fixed-size key */
@@ -628,7 +637,7 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
     *(xptr*)area_begin = big_ptr;
     memcpy(area_begin + sizeof(xptr), insert_buf, area_size);
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));	
+    
 	/* update page header */
 }
 
@@ -646,7 +655,7 @@ void bt_do_insert_obj(char* pg, shft key_idx, const object &obj, shft obj_idx)
     int     i;
 
     bt_buffer_header(pg, dst);
-
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
     /* copy keys */
     for(i = 0; i < BT_KEY_NUM(pg); i++) bt_buffer_key(pg, src, dst);
 
@@ -679,7 +688,7 @@ void bt_do_insert_obj(char* pg, shft key_idx, const object &obj, shft obj_idx)
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+    
 }
 
 /* check if the given page will fit insertion of data (key/obj) of given size

@@ -76,18 +76,20 @@ void xptr_sequence::add(const xptr &p)
         blk_arr.push_back(new_blk);
 
         CHECKP(eblk);
+		VMM_SIGNAL_MODIFICATION(eblk);
 
         SEQ_BLK_HDR(eblk)->nblk = new_blk;
-        VMM_SIGNAL_MODIFICATION(eblk);
+        
         eblk = new_blk;
 
         CHECKP(eblk);
     }
 
     xptr* dest_xptr = (xptr*)(SEQ_BLK_CURSOR(XADDR(eblk)));
+	VMM_SIGNAL_MODIFICATION(eblk);
     *dest_xptr = p;
     SEQ_BLK_HDR(eblk)->cursor += sizeof(xptr);
-    VMM_SIGNAL_MODIFICATION(eblk);
+    
 }
 
 xptr xptr_sequence::get(const iterator& it)
@@ -130,9 +132,9 @@ void xptr_sequence::set(const xptr& p, int pos)
     xptr pp = blk_arr[b_ind] + sizeof(seq_blk_hdr) + o_ind * sizeof(xptr);
 
     CHECKP(pp);
-
+	VMM_SIGNAL_MODIFICATION(pp);
     *(xptr*)(XADDR(pp)) = p;
-    VMM_SIGNAL_MODIFICATION(pp);
+    
 }
 
 

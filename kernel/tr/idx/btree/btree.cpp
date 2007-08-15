@@ -264,15 +264,17 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 	if (left!=XNULL)
 	{
 		CHECKP(left);
-		((btree_blk_hdr*)XADDR(left))->next=right;
 		VMM_SIGNAL_MODIFICATION(left);
+		((btree_blk_hdr*)XADDR(left))->next=right;
+		
 
 	}
 	if (right!=XNULL)
 	{
 		CHECKP(right);
-		((btree_blk_hdr*)XADDR(right))->prev=left;
 		VMM_SIGNAL_MODIFICATION(right);
+		((btree_blk_hdr*)XADDR(right))->prev=left;
+		
 
 	}
 	//remove key from upper layers
@@ -314,11 +316,12 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 			char*   dst = bt_tune_buffering(true, 4);
 			memcpy(dst,(char*)XADDR(lmp)+sizeof(vmm_sm_blk_hdr),PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
 			CHECKP(parent);
+			VMM_SIGNAL_MODIFICATION(parent);
 			memcpy((char*)XADDR(parent)+sizeof(vmm_sm_blk_hdr),dst,PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
 			par_hdr->parent=grandpa;//restore
 			par_hdr->prev=left_unc;
 			par_hdr->next=right_unc;
-			VMM_SIGNAL_MODIFICATION(parent);
+			
 			vmm_delete_block(lmp);
 
 		}

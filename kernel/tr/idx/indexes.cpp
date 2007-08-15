@@ -577,6 +577,7 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
 		sz=t.cells[0].get_strlen();
 	CHECKP(v1);
     void * p=XADDR(v1);
+	VMM_SIGNAL_MODIFICATION(v1);
 
 #ifdef ALIGNMENT_REQUIRED
     memcpy(p, &sz, sizeof(shft));
@@ -590,7 +591,7 @@ void idx_serialize (tuple& t,xptr v1, const void * Udata)
 
     tuple_cell& tc=t.cells[0];
 
-    VMM_SIGNAL_MODIFICATION(v1);
+    
     switch (type)
     {
         case xs_float                : {float value = tc.get_xs_float();  memcpy((char*)p+offset, &value, sz); break;}

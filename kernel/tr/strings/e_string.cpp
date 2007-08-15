@@ -42,8 +42,9 @@ void estr::init()
 void estr::reset()
 {
     CHECKP(first_blk);
+	VMM_SIGNAL_MODIFICATION(first_blk);
     ((e_str_blk_hdr*)XADDR(first_blk))->cursor = sizeof(e_str_blk_hdr);
-    VMM_SIGNAL_MODIFICATION(first_blk);
+    
 
     m_size = 0;    
     last_blk = first_blk;
@@ -54,8 +55,9 @@ void estr::truncate(const xptr &ptr)
 {
 	last_blk = BLOCKXPTR(ptr);
 	CHECKP(last_blk);
-	((e_str_blk_hdr*)XADDR(last_blk))->cursor = ptr - last_blk;
 	VMM_SIGNAL_MODIFICATION(last_blk);
+	((e_str_blk_hdr*)XADDR(last_blk))->cursor = ptr - last_blk;
+	
 
 	m_size = 0;
 }
@@ -101,16 +103,18 @@ static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
 		vmm_alloc_tmp_block(&new_blk);
 		e_str_blk_hdr::init(XADDR(new_blk), estr_blk);
 		CHECKP(estr_blk);
-		E_STR_BLK_HDR(estr_blk)->nblk = new_blk;
 		VMM_SIGNAL_MODIFICATION(estr_blk);
+		E_STR_BLK_HDR(estr_blk)->nblk = new_blk;
+		
 		estr_blk = new_blk;
 	}
 	else
 	{
 		estr_blk = E_STR_BLK_HDR(estr_blk)->nblk;
 		CHECKP(estr_blk);
-		E_STR_BLK_HDR(estr_blk)->cursor = sizeof(e_str_blk_hdr);
 		VMM_SIGNAL_MODIFICATION(estr_blk);
+		E_STR_BLK_HDR(estr_blk)->cursor = sizeof(e_str_blk_hdr);
+		
 	}
 }
 
@@ -134,10 +138,10 @@ void estr::copy_text_mstr(xptr dest, const char *src, int count)
     int dest_spc_blk = E_STR_BLK_FREE_SPACE(E_STR_BLK_HDR(dest));
     int src_len = count;
     int real_count = s_min(dest_spc_blk, src_len);
-
+	VMM_SIGNAL_MODIFICATION(dest);
     memcpy(XADDR(dest), src, real_count);
     E_STR_BLK_HDR(dest)->cursor += real_count;
-    VMM_SIGNAL_MODIFICATION(dest);
+    
     m_size += real_count;
 
     if (real_count == src_len)
@@ -166,11 +170,12 @@ void estr::copy_text_estr(xptr dest, xptr src, int count)
 
     memcpy(tr_globals::e_string_buf, XADDR(src), real_count);
     CHECKP(dest);
+	VMM_SIGNAL_MODIFICATION(dest);
     memcpy(XADDR(dest), tr_globals::e_string_buf, real_count);
     m_size += real_count;
 
     dest_blk->cursor += real_count;
-    VMM_SIGNAL_MODIFICATION(dest);
+    
 
     if (real_count == count)
         return;
@@ -230,12 +235,13 @@ void estr::copy_text_pstr_long(xptr dest, xptr src)
 		}
         const int real_count = s_min(dest_spc_blk, src_spc_blk - copied_count);
         CHECKP(dest);
+		VMM_SIGNAL_MODIFICATION(dest);
         memcpy(XADDR(dest), tr_globals::e_string_buf + copied_count, real_count);
         m_size += real_count;
 		dest_spc_blk -= real_count;
 		copied_count += real_count;
         dest_blk->cursor += real_count;
-        VMM_SIGNAL_MODIFICATION(dest);
+        
     
 		if (copied_count == src_spc_blk)
 		{

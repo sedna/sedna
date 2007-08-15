@@ -109,9 +109,9 @@ int sequence::add(const tuple &t)
         blk_arr.push_back(new_blk);
 
         CHECKP(eblk);
-
+		VMM_SIGNAL_MODIFICATION(eblk);
         SEQ_BLK_HDR(eblk)->nblk = new_blk;
-        VMM_SIGNAL_MODIFICATION(eblk);
+        
         eblk = new_blk;
 
         CHECKP(eblk);
@@ -145,9 +145,9 @@ int sequence::add(const tuple &t)
             // because _adjust_serialized_tc does not call CHECKP we do not need to call CHECKP(eblk) here
         }
     }
-
+	VMM_SIGNAL_MODIFICATION(eblk);
     SEQ_BLK_HDR(eblk)->cursor += tuple_sizeof;
-    VMM_SIGNAL_MODIFICATION(eblk);
+    
 
     return 0;
 }
