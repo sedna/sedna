@@ -74,6 +74,8 @@ int VeLoadBuffer(LXPTR lxptr, int *bufferId, int flags);
 
 int VeAllocBlock(LXPTR *lxptr);
 
+int VeInitBlockHeader(LXPTR lxptr, int bufferId);
+
 int VeCreateVersion(LXPTR lxptr);
 
 int VeFreeBlock(LXPTR lxptr);

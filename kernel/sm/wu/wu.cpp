@@ -505,20 +505,20 @@ int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 	else
 	{
 		if (!ClSetCurrentClientId(sid)) {}
-		else if (isVersionsDisabled)
-		{
-			/* TODO: implement it */ 
-		}
 		else
 		{
 			*p=XNULL;
 			*offs=0;
 			*swapped=XNULL;
-			if (!VeAllocBlock(&lxptr)) {}
+			if (isVersionsDisabled && !AllocBlock(&lxptr) || !VeAllocBlock(&lxptr)) {}
 			else if (!LoadBuffer(lxptr,&bufferId,0)) {}
 			{
 				*p=WuExternaliseXptr(lxptr);
 				*offs=RamoffsFromBufferId(bufferId);
+				if (isVersionsDisabled)
+				{
+					VeInitBlockHeader(lxptr, bufferId);
+				}
 				ProtectBuffer(bufferId,32,0);
 				success=1;
 			}
@@ -547,15 +547,12 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			{
 				WuSetLastErrorMacro(WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE);
 			}
-			else if (isVersionsDisabled)
-			{
-				/* TODO: implement it */ 
-			}
 			else
 			{
 				lxptr=WuInternaliseXptr(p);
-				if (!VeCreateVersion(lxptr)) {}
+				if (!isVersionsDisabled && !VeCreateVersion(lxptr)) {}
 				else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
+				else if (!ProtectBuffer(bufferId,32,0)) {}
 				else
 				{
 					*offs=RamoffsFromBufferId(bufferId);
@@ -594,11 +591,11 @@ int WuDeleteBlock(int sid, xptr p)
 				lxptr = WuInternaliseXptr(p);
 				if (isVersionsDisabled)
 				{
-					/* TODO: implement it */ 
+					success=FreeBlock(lxptr); 
 				}
-				else if (VeFreeBlock(lxptr)) 
+				else
 				{
-					success=1;
+					success=VeFreeBlock(lxptr);
 				}
 			}
 			ClSetCurrentClientId(-1);
@@ -657,7 +654,7 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 	assert(snapshotTs && persHeapIndex);
 	if (isUsingSnapshot && isVersionsDisabled)
 	{
-		WuSetlastErrorMacro(WUERR_BAD_PARAMS);
+		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
 	else if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
