@@ -12,6 +12,7 @@
 
 void bt_page_markup(char* pg, xmlscm_type t) {
 	char dummy[10];
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 	(*BT_NEXT_PTR(pg))=XNULL;
 	(*BT_PREV_PTR(pg))=XNULL;
 	(*BT_PARENT_PTR(pg))=XNULL;
@@ -25,7 +26,7 @@ void bt_page_markup(char* pg, xmlscm_type t) {
 	(*BT_KEY_NUM_PTR(pg))=0;
 	(*BT_HEAP_PTR(pg))=PAGE_SIZE;
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+    
 };
 
 /* check page consistency */

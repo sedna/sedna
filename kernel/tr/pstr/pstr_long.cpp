@@ -1154,6 +1154,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				intl_last_blk = pred_blk;
 
 				CHECKP(intl_last_blk);
+				VMM_SIGNAL_MODIFICATION(intl_last_blk);
 
 				//update char counts
 				const int cnt = intl_char_counter->count_chars((char*)XADDR(intl_last_blk) + intl_ftr.cursor, size);
@@ -1161,7 +1162,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 				if (intl_last_blk == BLOCKXPTR(intl_ftr.start))
 					intl_ftr.first_blk_char_count -= cnt;
 
-				VMM_SIGNAL_MODIFICATION(intl_last_blk);
+				
 				ftr = PSTR_LONG_LAST_BLK_FTR(intl_last_blk);
 				if (IS_DATA_BLOCK(intl_last_blk))
 				{
@@ -1336,6 +1337,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	intl_ftr.cursor = (char*)XADDR(trunc_from) - (char*)XADDR(BLOCKXPTR(trunc_from));
 
 	CHECKP(intl_last_blk);
+	VMM_SIGNAL_MODIFICATION(intl_last_blk);
 	U_ASSERT(intl_last_blk + intl_ftr.cursor == trunc_from);
 	const int cnt = intl_char_counter->count_chars((char*)XADDR(trunc_from), PAGE_SIZE - intl_ftr.cursor);
 
@@ -1343,7 +1345,7 @@ void pstr_long_truncate(xptr desc, pstr_long_off_t size)
 	if (intl_last_blk == BLOCKXPTR(intl_ftr.start))
 		intl_ftr.first_blk_char_count -= cnt;
 
-	VMM_SIGNAL_MODIFICATION(intl_last_blk);
+	
 
 	intl_finalize_str(desc, true);
 	charset_handler->free_char_counter(intl_char_counter);

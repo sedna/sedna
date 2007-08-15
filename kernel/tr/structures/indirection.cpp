@@ -53,14 +53,16 @@ xptr indir_blk_hdr::init(xptr p)
 	char* pred = ((char *)XADDR(p)) + sizeof(indir_blk_hdr);
     char* cur = pred + sizeof(xptr);
 	unsigned int bl_end=(unsigned int)(XADDR(p)) + PAGE_SIZE;
+	VMM_SIGNAL_MODIFICATION(p);
     while ((unsigned int)(cur + sizeof(xptr)) <= bl_end)
     {
         *((xptr*)pred) = ADDR2XPTR(cur);
         pred = cur;
         cur += sizeof(xptr);		
     }
+	
 	*((xptr*)pred) = XNULL;
-    VMM_SIGNAL_MODIFICATION(p);
+    
     return p + sizeof(indir_blk_hdr);
 
 }
@@ -71,6 +73,7 @@ xptr fill_empty_block(xptr p)
     char* pred = ((char *)XADDR(p)) + sizeof(indir_blk_hdr);
     char* cur = pred + sizeof(xptr);
 	unsigned int bl_end=(unsigned int)(XADDR(p)) + PAGE_SIZE;
+	VMM_SIGNAL_MODIFICATION(p);
     while ((unsigned int)(cur + sizeof(xptr)) <= bl_end)
     {
         *((xptr*)pred) = ADDR2XPTR(cur);
@@ -78,7 +81,7 @@ xptr fill_empty_block(xptr p)
         cur += sizeof(xptr);		
     }
 	*((xptr*)pred) = XNULL;
-    VMM_SIGNAL_MODIFICATION(p);
+    
     return p + sizeof(indir_blk_hdr);
 }
 
@@ -106,9 +109,10 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 				//1.4 breaking the chain
 				xptr last=first+(cnt*sizeof(xptr));
 				CHECKP(last);
+				VMM_SIGNAL_MODIFICATION(last);
 				hl_phys_log_change(XADDR(last),sizeof(xptr));
 				*(xptr*)XADDR(last)=XNULL;
-				VMM_SIGNAL_MODIFICATION(last);
+				
 				root->ind_free_space=last;
 			}
 			hl_logical_log_indirection( cl_size,NULL);
@@ -150,9 +154,10 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	if  (first!=XNULL)
 	{
 		CHECKP(first);
+		VMM_SIGNAL_MODIFICATION(first);
 		hl_phys_log_change(&(((indir_blk_hdr*)XADDR(BLOCKXPTR(first)))->nblk),sizeof(xptr));
 		((indir_blk_hdr*)XADDR(BLOCKXPTR(first)))->nblk=BLOCKXPTR(tmp);
-		VMM_SIGNAL_MODIFICATION(first);
+		
 		if (cur!=XNULL)
 		{
 			hl_phys_log_change(XADDR(cur),sizeof(xptr));
@@ -189,9 +194,10 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 		}
 		tmp=fill_empty_block(tmp);
 		CHECKP(cur);
+		VMM_SIGNAL_MODIFICATION(cur);
 		((indir_blk_hdr*)XADDR(BLOCKXPTR(cur)))->nblk=BLOCKXPTR(tmp);
 		*(xptr*)XADDR(cur)=tmp;
-		VMM_SIGNAL_MODIFICATION(cur);
+		
 		cur=tmp+(xinp-1)*sizeof(xptr);
 	}
 	//4.Processing the last block in chain of blocks 
@@ -200,8 +206,9 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	{
 		cur=tmp+(cnt-1)*sizeof(xptr);
 		CHECKP(cur);
-		*(xptr*)XADDR(cur)=XNULL;
 		VMM_SIGNAL_MODIFICATION(cur);
+		*(xptr*)XADDR(cur)=XNULL;
+		
 		root->ind_free_space=cur;
 
 	}
@@ -235,11 +242,12 @@ xptr add_record_to_data_indirection_table(xptr p)
 			CHECKP(p);
 			schema_node* sch=(GETBLOCKBYNODE(p))->snode;
 			sch->ind_entry = *(xptr*)(XADDR(rollback_record));
+			CHECKP(rollback_record);
 		}
-
+		VMM_SIGNAL_MODIFICATION(rollback_record);
         *(xptr*)(XADDR(rollback_record)) = p;
 
-        VMM_SIGNAL_MODIFICATION(rollback_record);
+        
 		//redo_hint=-1;
 
         return rollback_record;
@@ -261,10 +269,11 @@ xptr add_record_to_data_indirection_table(xptr p)
 	}
 	//3. filling indirection record|updateing schema node
 	CHECKP(res);
+	VMM_SIGNAL_MODIFICATION(res);
 	sch->ind_entry = *(xptr*)(XADDR(res));
 	hl_phys_log_change(XADDR(res),sizeof(xptr));
 	*(xptr*)(XADDR(res)) = p;
-	VMM_SIGNAL_MODIFICATION(res);
+	
     //USemaphoreUp(indirection_table_sem);
 	
     return res;
@@ -339,10 +348,11 @@ xptr add_record_to_tmp_indirection_table(xptr p)
     CHECKP(tmp_indirection_table_free_entry);
 
     xptr res = tmp_indirection_table_free_entry;
+	VMM_SIGNAL_MODIFICATION(res);
     tmp_indirection_table_free_entry = *(xptr*)(XADDR(res));
     *(xptr*)(XADDR(res)) = p;
 
-    VMM_SIGNAL_MODIFICATION(res);
+    
 
     return res;
 }
@@ -350,11 +360,11 @@ xptr add_record_to_tmp_indirection_table(xptr p)
 void del_record_from_tmp_indirection_table(xptr p)
 {
     CHECKP(p);
-
+	VMM_SIGNAL_MODIFICATION(p);
     *(xptr*)(XADDR(p)) = tmp_indirection_table_free_entry;
     tmp_indirection_table_free_entry = p;
 
-    VMM_SIGNAL_MODIFICATION(p);
+    
 }
 
 void sync_indirection_table()
@@ -381,10 +391,11 @@ void sync_indirection_table()
 			p = it->second->at(i);
 #endif
 			CHECKP(p);
+			VMM_SIGNAL_MODIFICATION(p);
 			hl_phys_log_change(XADDR(p),sizeof(xptr));
 			*(xptr*)(XADDR(p)) = it->first.first->ind_entry;
 			it->first.first->ind_entry= p;
-			VMM_SIGNAL_MODIFICATION(p);
+			
 		}
 			delete it->second;
 			it->second=NULL;

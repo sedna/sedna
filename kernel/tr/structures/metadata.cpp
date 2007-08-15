@@ -309,18 +309,20 @@ else
 	xptr nodex=ADDR2XPTR(node);
 	xptr tmp=add_record_to_indirection_table(nodex);
 	CHECKP(nodex);
+	VMM_SIGNAL_MODIFICATION(nodex);
 	node->indir=tmp;
 	block_hdr->count=1;
 	//NODE STATISTICS
 	block_hdr->snode->nodecnt++;
-	VMM_SIGNAL_MODIFICATION(nodex);
+	
 	nid_create_root(nodex,persistent);
 	if (persistent)
 	{
 	
 		CHECKP(nodex);
-		addTextValue(nodex,name_ptr,name.length());
 		VMM_SIGNAL_MODIFICATION(nodex);
+		addTextValue(nodex,name_ptr,name.length());
+		
 		hl_logical_log_document(node->indir,uri,NULL,true);							
 		up_concurrent_micro_ops_number();
 	}	

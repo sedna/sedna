@@ -61,10 +61,11 @@ void bt_delete_obj(char* pg, shft key_idx, shft obj_idx)
         }
     }
     /* copy buffers to the pages and actualize headers */
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
 
-    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+    
 }
 
 /* */
@@ -107,10 +108,11 @@ void bt_leaf_delete_key(char* pg, shft key_idx)
 		bt_buffer_chnk(pg, src, dst);
 	}
     /* copy buffers to the pages and actualize headers */
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
     (*BT_KEY_NUM_PTR(pg)) -= 1;
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+	
 	if (!BT_KEY_NUM(pg))
 		bt_drop_page((const btree_blk_hdr*) pg);
    
@@ -155,8 +157,9 @@ void bt_nleaf_delete_key(char* pg, shft key_idx)
 		bt_buffer_bigptr(pg, src, dst);
 	}
     /* copy buffers to the pages and actualize headers */
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));   
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
     (*BT_KEY_NUM_PTR(pg)) -= 1;
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));   
+	
 }

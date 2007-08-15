@@ -475,9 +475,10 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
 	}
 	else
 		vmm_alloc_tmp_block(&new_block);
+	VMM_SIGNAL_MODIFICATION(new_block);
 	node_blk_hdr::init(XADDR(new_block),tmp->dsc_size);
 	node_blk_hdr * new_block_hdr=(node_blk_hdr *)(XADDR(new_block));
-	VMM_SIGNAL_MODIFICATION(new_block);
+	
 	new_block_hdr->snode=tmp->snode;
     new_block_hdr->pblk=old_blk;   
     new_block_hdr->nblk=tmp->nblk;
@@ -1198,9 +1199,10 @@ xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr par
 							 xptr par_indir ,  xmlscm_type type, t_item node_typ)
 {
 	node_blk_hdr * block_namesake=(node_blk_hdr*)XADDR(newblock);
+	VMM_SIGNAL_MODIFICATION(newblock);
 	n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
-	VMM_SIGNAL_MODIFICATION(newblock);
+	
 	switch (node_typ)
 	{
 	case(element):
