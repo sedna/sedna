@@ -187,7 +187,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     	for (int i = 0; i < count; i++)
     	{
 	    	if (isGarbage)
-	    		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), *((xptr *)blocks_info[i].xptr));
+	    		push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));
 	    	else
 	    	{
 /*		    	ver_info.lxptr = blocks_info[i].lxptr;
@@ -195,9 +195,9 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
     			VeRevertBlock(&ver_info);*/
 		        ctrl_blk = malloc(PAGE_SIZE);
-        		bm_rcv_read_block(*((xptr *)blocks_info[i].xptr), ctrl_blk);
+        		bm_rcv_read_block(WuExternaliseXptr(blocks_info[i].xptr), ctrl_blk);
 		    	//TODO: change phys_xptr to log_xptr for this block
-    			bm_rcv_change(*((xptr *)blocks_info[i].lxptr), ctrl_blk, PAGE_SIZE);
+    			bm_rcv_change(WuExternaliseXptr(blocks_info[i].xptr), ctrl_blk, PAGE_SIZE);
     		}
     	}
 
