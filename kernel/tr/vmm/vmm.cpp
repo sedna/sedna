@@ -1355,7 +1355,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
         if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
         {
 	        _vmm_remap(XADDR(p), offs, true);
-	        write_table.insert(p, XADDR(p));
+//	        write_table.insert(p, XADDR(p));
 	    }
 
     } catch (...) {
