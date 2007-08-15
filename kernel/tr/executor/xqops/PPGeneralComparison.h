@@ -111,17 +111,16 @@ public:
 class PPNEQGeneralComparison : public PPGeneralComparison
 {
 public:
-	//virtual PPIterator* copy(dynamic_context *_cxt_);
 	virtual void next   (tuple &t);
 	PPNEQGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_);
+    virtual PPIterator* copy(dynamic_context *_cxt_);
 
 };
 
 class PPEQLGeneralComparison : public PPGeneralComparison
 {
 public:
-	//virtual PPIterator* copy(dynamic_context *_cxt_);
 	virtual void next   (tuple &t);
 	PPEQLGeneralComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_);

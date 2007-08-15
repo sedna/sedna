@@ -873,6 +873,7 @@ void PPLMGeneralComparison::next   (tuple &t)
         t.set_eos();
     }
 }
+
 PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)
 {
 	PPEQLGeneralComparison *res ;
@@ -881,3 +882,13 @@ PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)
 	res->seq2.op = seq2.op->copy(_cxt_);
     return res;
 }
+
+PPIterator* PPNEQGeneralComparison::copy(dynamic_context *_cxt_)
+{
+	PPNEQGeneralComparison *res ;
+	res = se_new PPNEQGeneralComparison(_cxt_, seq1,seq2);
+	res->seq1.op = seq1.op->copy(_cxt_);
+	res->seq2.op = seq2.op->copy(_cxt_);
+    return res;
+}
+
