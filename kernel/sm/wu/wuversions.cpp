@@ -667,6 +667,25 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 	return success;
 }
 
+int VeInitBlockHeader(LXPTR xptr, int bufferId)
+{
+	int success = 0, okStatus = 0;
+	VeClientState *state=NULL;
+	VersionsHeader *header=NULL;
+
+	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
+	else if (!setup.locateHeader(bufferId, &header)) {}
+	else
+	{
+		ResetHeader(header,0);
+		header->xptr[0] = xptr;
+		header->creatorTs[0] = state->clientTs;
+		header->creator[0] = ClGetCurrentClientId();
+		success = 1;
+	}
+	return success;
+}
+
 int VeAllocBlock(LXPTR *lxptr)
 {
 	XPTR xptr=0;
@@ -690,19 +709,15 @@ int VeAllocBlock(LXPTR *lxptr)
 		}
 		else if (!setup.allocBlock(&xptr)) {}
 		else if (!setup.loadBuffer(xptr,&bufferId,1)) {}
-		else if (!setup.locateHeader(bufferId, &header)) {}
+		else if (!VeInitBlockHeader(xptr, bufferId)) {}
 		else
-		{
-			ResetHeader(header,0);
-			header->xptr[0] = xptr;
-			header->creatorTs[0] = state->clientTs;
-			header->creator[0] = ClGetCurrentClientId();
+		{			
 			pushedVersion.lxptr = xptr;
 			pushedVersion.xptr = 0;
 			pushedVersion.anchorTs = ~(TIMESTAMP)0;
-			state->pushedVersions->push_back(pushedVersion);
-			*lxptr = xptr;
+			state->pushedVersions->push_back(pushedVersion);			
 			success = 1;
+			*lxptr = xptr;
 		}
 	}
 	return success;
