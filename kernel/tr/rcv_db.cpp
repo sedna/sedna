@@ -142,6 +142,7 @@ int main (int argc, char** argv)
       LONG_LSN last_cp_lsn = _atoi64(argv[2]);
 //      std::cout << "last checkpoint lsn=" << last_cp_lsn << endl;
 
+      DebugBreak();
       recover_db_by_logical_log(last_cp_lsn);
 
 /*

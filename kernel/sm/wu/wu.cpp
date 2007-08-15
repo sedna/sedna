@@ -31,6 +31,7 @@ static TIMESTAMP curSnapshotTs=0, persSnapshotTs=0;
 
 static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
 static size_t swappedNum = 0;
+static int isVersionsDisabled = 0;
 
 /* utility functions */ 
 
@@ -340,6 +341,9 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	SnResourceDemand snResourceDemand = {};
 	int success=0;
 
+	if (isRecoveryMode) isVersionsDisabled=1;
+	::isVersionsDisabled = isVersionsDisabled;
+
 	if (!InitSynchObjects()) {}
 	else if (!ClInitialize()) {}
 	else if (!SnInitialize()) {}
@@ -501,6 +505,10 @@ int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 	else
 	{
 		if (!ClSetCurrentClientId(sid)) {}
+		else if (isVersionsDisabled)
+		{
+			/* TODO: implement it */ 
+		}
 		else
 		{
 			*p=XNULL;
@@ -538,6 +546,10 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			if (IS_TMP_BLOCK(p))
 			{
 				WuSetLastErrorMacro(WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE);
+			}
+			else if (isVersionsDisabled)
+			{
+				/* TODO: implement it */ 
 			}
 			else
 			{
@@ -580,7 +592,11 @@ int WuDeleteBlock(int sid, xptr p)
 			else
 			{
 				lxptr = WuInternaliseXptr(p);
-				if (VeFreeBlock(lxptr)) 
+				if (isVersionsDisabled)
+				{
+					/* TODO: implement it */ 
+				}
+				else if (VeFreeBlock(lxptr)) 
 				{
 					success=1;
 				}
@@ -639,7 +655,11 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 	int success=0;
 
 	assert(snapshotTs && persHeapIndex);
-	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	if (isUsingSnapshot && isVersionsDisabled)
+	{
+		WuSetlastErrorMacro(WUERR_BAD_PARAMS);
+	}
+	else if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
 		if (!ClRegisterClient(&sid,1)) {}
