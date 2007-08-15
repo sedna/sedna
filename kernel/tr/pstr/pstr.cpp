@@ -353,6 +353,7 @@ void pstr_deallocate(xptr node) {
 #ifndef PSTR_NO_CHECKP
 	CHECKP(node);
 #endif
+	VMM_SIGNAL_MODIFICATION(node);
 	if (IS_DATA_BLOCK(node)) 
 	{
 			hl_phys_log_change(&(((t_dsc*)XADDR(node))->data),sizeof(xptr));
