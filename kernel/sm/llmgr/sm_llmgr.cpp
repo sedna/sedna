@@ -154,9 +154,9 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 //    	VeRevertBlock(&ver_info);
 
 //        ctrl_blk = malloc(PAGE_SIZE);
-        bm_rcv_read_block(*((xptr *)blocks_info->xptr), ctrl_blk);
+        bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
     	//TODO: change phys_xptr to log_xptr for this block
-    	bm_rcv_change(*((xptr *)blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
+    	bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         
         lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(int);
     }
