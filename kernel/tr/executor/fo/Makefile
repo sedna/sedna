@@ -24,11 +24,14 @@ generated: gen_num_ops$(EXE_EXT)
 	./gen_num_ops$(EXE_EXT)
 	touch generated
 
+gen_num_ops$(EXE_EXT): gen_num_ops$(OBJ_EXT)
+	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
+
 gen_num_ops$(OBJ_EXT): gen_num_ops.c
 	$(CC) $(CFLAGS_CHICKEN_EXE) $<
 
-gen_num_ops$(EXE_EXT): gen_num_ops$(OBJ_EXT)
-	$(LD) $(LFLAGS_CHICKEN_EXE) $(LDOUT)$@ $^ $(LSLIBS_CHICKEN_EXE)
+gen_num_ops.c: gen_num_ops.scm
+	$(CHICKEN) $< -output-file $@ $(CHICKEN_OPTIONS)	
 
 ################################################################################
 # clean_generated                                                              #
