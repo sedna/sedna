@@ -112,6 +112,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 				VMM_SIGNAL_MODIFICATION(last);
 				hl_phys_log_change(XADDR(last),sizeof(xptr));
 				*(xptr*)XADDR(last)=XNULL;
+				VMM_SIGNAL_MODIFICATION(last);
 				root->ind_free_space=last;
 			}
 			hl_logical_log_indirection( cl_size,NULL);
