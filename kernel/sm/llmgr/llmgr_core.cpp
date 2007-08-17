@@ -34,7 +34,7 @@
 
 using namespace std;
 
-
+static int count_free = 0;
 /*****************************************************************************
                           Init and Close Functions
 ******************************************************************************/
@@ -131,6 +131,8 @@ void llmgr_core::ll_log_release()
      throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
 
   close_all_log_files();
+
+  d_printf2("Free block times: %d\n", count_free);
 }
 
 
@@ -1400,6 +1402,8 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
   tmp_rec = ll_log_malloc(rec_len);
   char op = LL_FREE_BLOCKS;
   int offs = 0;
+
+  count_free++;
 
   //create record body
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
