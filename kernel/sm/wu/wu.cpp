@@ -193,14 +193,14 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 		{
 			repairRequired = 1;
 			put_block_to_buffer(-1,lilDest,&ofsDest,true);
-			memcpy(header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofsDest),
+			header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofsDest);
+			memcpy(header,
 				   OffsetPtr(buf_mem_addr,ofsSrc),
 				   PAGE_SIZE);
 			header->is_changed = true;
 			if (flags&1)
 			{
 				flush_buffer(ofsDest,false);
-				header->is_changed = false;
 			}
 			success=1;
 		}
@@ -552,7 +552,6 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 				lxptr=WuInternaliseXptr(p);
 				if (!isVersionsDisabled && !VeCreateVersion(lxptr)) {}
 				else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
-				else if (!ProtectBuffer(bufferId,32,0)) {}
 				else
 				{
 					*offs=RamoffsFromBufferId(bufferId);

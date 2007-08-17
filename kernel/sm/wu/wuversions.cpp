@@ -445,6 +445,7 @@ int PushNewVersionIntoHeader(VeSnapshotsList *lst,
 			{
 				snapshot->isDamaged |= 1;
 			}
+			snapshot = snapshot->next;
 		}
 	}
 
@@ -452,7 +453,7 @@ int PushNewVersionIntoHeader(VeSnapshotsList *lst,
 	{
 		memmove(hdr->xptr+1,hdr->xptr,(VE_VERSIONS_COUNT-1)*sizeof(XPTR));
 		memmove(hdr->creatorTs+1,hdr->creatorTs,(VE_VERSIONS_COUNT-1)*sizeof(TIMESTAMP));
-		memmove(hdr->creator,hdr->creator+1,(VE_VERSIONS_COUNT-1)*sizeof(int));
+		memmove(hdr->creator+1,hdr->creator,(VE_VERSIONS_COUNT-1)*sizeof(int));
 		hdr->xptr[1]=xptr;
 		hdr->creatorTs[0]=creatorTs;
 		hdr->creator[0]=creator;
