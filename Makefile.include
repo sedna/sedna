@@ -13,7 +13,7 @@ endif
 # options: auth is on  - 1
 #          auth is off - 0
 ifndef AUTH_SWITCH
-AUTH_SWITCH = 0
+AUTH_SWITCH = 1
 endif
 
 # options: Compile latex files        - 1
@@ -140,7 +140,7 @@ CFLAGS      = $(CFLAGS_ST) /MTd
 CFLAGS_NOOPTIM = $(CFLAGS)
 CPPFLAGS    = $(CPPFLAGS_ST) /MTd
 LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat \
+              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib wsock32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib /debug /profile

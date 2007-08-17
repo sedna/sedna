@@ -298,11 +298,17 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         //if (it == trs.end()) break; // successfully approved
     }
 
-    buffer_table.remove(cur_p);
+    buffer_table.remove((*phys_xptrs)[*offs/PAGE_SIZE]);
+	flush_buffer(*offs,false);
+	(*phys_xptrs)[*offs/PAGE_SIZE]=XNULL;
+	
+#if 0
     // store block to disk if it was changed
     vmm_sm_blk_hdr *blk = NULL;
     blk = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
     if (IS_CHANGED(blk)) write_block(cur_p, *offs);
+#endif
+
     return cur_p;
 }
 
