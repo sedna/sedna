@@ -63,7 +63,7 @@ FT_ADD_LIB =
 endif
 
 ADD_LIBS = $(COMMON_FILES_LIB) $(PHYS_LOG_LIB) $(LOGICAL_LOG_LIB) \
-           $(FT_ADD_LIB) $(COMMON_FILES_LIB)
+           $(FT_ADD_LIB) $(COMMON_FILES_LIB) detours.lib detoured.lib ntdll.lib
 
 
 ################################################################################
