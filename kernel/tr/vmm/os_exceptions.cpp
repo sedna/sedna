@@ -7,7 +7,8 @@
 
 #include "tr/vmm/os_exceptions.h"
 #include "tr/vmm/vmm.h"
-
+#include "common/sm_vmm_data.h"
+#include "exndisphook.h"
 
 #define PRINT_STACK_TRACE
 
@@ -18,6 +19,7 @@ bool OS_exceptions_handler::critical_section = false;
 #ifdef PRINT_STACK_TRACE
 #include "tr/vmm/sym_engine.h"
 #include <iostream>
+#include <assert.h>
 
 //#include "../libs/sym_engine/sym_engine.h"
 #endif
@@ -79,9 +81,103 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
     }
 }
 
+const char base[] = __FILE__;
+int strip = 3;
+
+void WriteStackTrace(PCONTEXT context, FILE *file)
+{
+	int success = 0, i = 0;
+	char fileName[MAX_PATH] = "<unknown file>", procName[256] = "<unknown proc>", *fileNamePtr=fileName;
+	const char *j = NULL;
+	unsigned lineNo = 0, displ = 0;
+	size_t len = 0;
+	CONTEXT context2 = {};
+	sym_engine sym(0);
+
+	assert(context);
+	context2=*context;
+	if (!sym.stack_first(&context2)) {}
+	else
+	{
+		success = 1;
+		sym.fileline(fileName, sizeof(fileName), &lineNo, &displ);
+		sym.symbol(procName, sizeof(procName), &displ);
+		len=strlen(procName);
+		if (len>=2 && 0==strcmp(procName+len-2,"()")) procName[len-2]='\0';
+		i=strip+1;
+		j=base+strlen(base);
+		while(j>base)
+		{			
+			if (j[-1]=='\\') --i;
+			if (i<=0) break;
+			--j;
+		}
+		if (strncmp(base,fileName,j-base)==0)
+		{
+			fileNamePtr=fileName+(j-base);
+		}
+	}
+
+	if (!success)
+	{
+		fprintf(file,"No file-line-function info availible, breaking into debugger.\n");
+		DebugBreak();
+	}
+	else
+	{
+		fprintf(file,"%-30s %4d %s\n",procName,lineNo,fileNamePtr);
+	}
+	fflush(file);
+}
+
+static FILE *logfile = NULL;
+
+static LONG NTAPI NullExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
+{
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static __declspec(thread) UserExceptionDispatcherProc exceptionDispatcherProc = NullExceptionDispatcher;
+
+static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
+{
+	PVOID hit = NULL;
+	int isW = 0;
+	LONG resolution = EXCEPTION_CONTINUE_SEARCH;
+	/* if we are invoked recursively we just give up*/ 
+	exceptionDispatcherProc = NullExceptionDispatcher;
+
+	if (ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) 
+	{
+		/* not the type of exception we are interested in */ 
+	}
+	else
+	{
+		hit = (PVOID) ExceptionRecord->ExceptionInformation[1];
+		isW = (int) ExceptionRecord->ExceptionInformation[0];
+		if (isW && LAYER_ADDRESS_SPACE_START_ADDR <= hit && hit < LAYER_ADDRESS_SPACE_BOUNDARY)
+		{
+			WriteStackTrace(Context, logfile ? logfile : stderr);
+			VMM_SIGNAL_MODIFICATION(ADDR2XPTR(hit));
+			resolution = EXCEPTION_CONTINUE_EXECUTION;
+		}
+	}
+
+	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
+	return resolution;
+}
+
+static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
+{
+	return exceptionDispatcherProc(ExceptionRecord,Context);
+}
+
 void OS_exceptions_handler::install_handler()
 {
     _set_se_translator(win32_exception_translate);
+	InstallKiUserExceptionDispatcherHook(RootExceptionDispatcher);
+	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
+	logfile = fopen("VMM_SIGNAL_MODIFICATION.log","at");
 }
 
 void OS_exceptions_handler::enter_stack_overflow_critical_section()
