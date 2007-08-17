@@ -490,9 +490,11 @@ void socket_client::set_session_options(msg_struct *msg)
                 break;
             case SEDNA_READONLY_TRANSACTION:
                 // set Sasha's parameter here
+                SwitchSessionToRO(true);
                 break;
             case SEDNA_UPDATE_TRANSACTION:
                 // set Sasha's parameter here
+                SwitchSessionToRO(false);
                 break;
 			default: 
                 throw USER_EXCEPTION2(SE4619,int2string(option).c_str());

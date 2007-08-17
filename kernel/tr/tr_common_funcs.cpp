@@ -21,6 +21,7 @@ bool is_qep_built = false;
 bool is_qep_opened = false;
 bool is_stmt_built = false;
 
+static bool need_sem = true; // need to use semaphore for updater
 
 void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
 {
@@ -146,11 +147,11 @@ void on_session_end(SSMMsg* &sm_server)
    d_printf1("OK\n");
 }
 
-void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
+void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 {
    // ph shutdown between transactions
    d_printf1("Releasing PH between transactions on the same session...");
-   if (is_ph_inited)
+   if (is_ph_inited && need_ph_reinit)
    {
       if (pers_release() != 0)
          throw USER_EXCEPTION(SE4606);
@@ -163,9 +164,9 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
    TIMESTAMP ts;
    int type_of_snp;
 
-   is_this_tr_query = is_query;
+   need_sem = !is_ro_mode;
 
-   if (!is_query)
+   if (need_sem)
 	   down_transaction_block_sems();
 
    d_printf1("Getting transaction identifier...");
@@ -179,34 +180,40 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active, bool is_query)
    d_printf1("OK\n");
 
    d_printf1("Initializing VMM...");
-   vmm_on_transaction_begin(is_query, ts, type_of_snp);
+   vmm_on_transaction_begin(is_ro_mode, ts, type_of_snp);
    d_printf1("OK\n");
 
    // start of ph reinitialization
-   if (is_query)
+   if (!is_ph_inited && need_ph_reinit)
    {
-   		char buf[20];
+   	   if (is_ro_mode)
+   	   {
+   	   		char buf[20];
 
-   		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
-   			db_name + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
+   			string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + 
+   				db_name + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
 
-   		d_printf1("Initializing PH between transactions on the same session...");
-   		if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
-   			(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
-      		throw USER_EXCEPTION(SE4605);
+   			d_printf1("Initializing PH between transactions on the same session...");
+   			if (0 != pers_init(ph_path.c_str(), (type_of_snp == 1) ? CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME : CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME, 
+   				(type_of_snp == 1) ? PERS_HEAP_1_SNP_SEMAPHORE_STR : PERS_HEAP_0_SNP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
+      				throw USER_EXCEPTION(SE4605);
 
-   		is_ph_inited = true;
-   		d_printf1("OK\n");
-   }
-   else
-   {
-   		d_printf1("Initializing PH between transactions on the same session...");
-   		string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
-   		if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
-      		throw USER_EXCEPTION(SE4605);
-   		is_ph_inited = true;
-   		d_printf1("OK\n");
-   }      
+   			is_ph_inited = true;
+   			d_printf1("OK\n");
+   	   }
+   	   else
+   	   {
+   			d_printf1("Initializing PH between transactions on the same session...");
+   			string ph_path = string(SEDNA_DATA) + "/data/" + db_name + "_files/" + db_name +".seph";
+   			if (0 != pers_init(ph_path.c_str(), CHARISMA_PH_SHARED_MEMORY_NAME, PERS_HEAP_SEMAPHORE_STR, PH_ADDRESS_SPACE_START_ADDR, 0))
+      			throw USER_EXCEPTION(SE4605);
+   			is_ph_inited = true;
+
+   			need_ph_reinit = false;
+
+   			d_printf1("OK\n");
+   	   }
+   }	      
    // end of ph reinitialization
    
    d_printf1("Initializing indirection table...");
@@ -246,7 +253,7 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 
    // ph shutdown between transactions
    d_printf1("Releasing PH between transactions on the same session...");
-   if (is_ph_inited)
+   if (is_ph_inited && need_ph_reinit)
    {
       if (pers_release() != 0)
          throw USER_EXCEPTION(SE4606);
@@ -274,10 +281,8 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 
    event_logger_set_trid(-1);
 
-   if (!is_this_tr_query)
+   if (need_sem)
        up_transaction_block_sems();
-   
-   is_this_tr_query = false;
 }
 
 void on_kernel_recovery_statement_begin()
@@ -340,4 +345,14 @@ bool is_stop_session()
   if (sid < 0 || sid >= MAX_SESSIONS_NUMBER) return true;
 
   return  (((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].stop == 1) ? true : false;
+}
+
+void SwitchSessionToRO(bool flag)
+{
+	if (flag || (is_ro_mode && !flag))
+		need_ph_reinit = true;
+	else
+		need_ph_reinit = false;
+		
+	is_ro_mode = flag;
 }

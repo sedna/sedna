@@ -57,7 +57,8 @@ extern persistent_db_data* entry_point;
 extern msg_struct sp_msg;
 extern bool is_need_checkpoint_on_transaction_commit;
 
-extern bool is_this_tr_query;
+extern bool is_ro_mode;
+extern bool need_ph_reinit;
 
 extern int db_id;
 
