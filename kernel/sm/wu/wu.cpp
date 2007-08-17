@@ -511,7 +511,7 @@ int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 			*p=XNULL;
 			*offs=0;
 			*swapped=XNULL;
-			if (isVersionsDisabled && !AllocBlock(&lxptr) || !VeAllocBlock(&lxptr)) {}
+			if (isVersionsDisabled && !AllocBlock(&lxptr) || !isVersionsDisabled && !VeAllocBlock(&lxptr)) {}
 			else if (!LoadBuffer(lxptr,&bufferId,0)) {}
 			{
 				*p=WuExternaliseXptr(lxptr);
