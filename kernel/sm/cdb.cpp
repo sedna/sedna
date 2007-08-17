@@ -488,8 +488,7 @@ int main(int argc, char **argv)
              d_printf1("logical_log_startup call successful\n");
              
              bm_startup();
-             is_bm_started = true;
-             d_printf1("bm_startup call successful\n");
+             d_printf1("sm_startup call successful\n");
 
              extend_data_file(data_file_initial_size);
              d_printf1("extend_data_file call successful\n");
