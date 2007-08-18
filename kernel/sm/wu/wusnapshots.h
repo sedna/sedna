@@ -22,20 +22,52 @@ struct SnSetup
 	
 	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
 
+	/* params */ 
 	TIMESTAMP initialPersSnapshotTs;
+	int areVersionsDisabled;
 };
 
+/* garbage entries have lxptr==0 */ 
 struct SnVersionEntry
 {
-	XPTR xptr;
 	LXPTR lxptr;
+	XPTR xptr;
 };
+
+/*	SnRequestForGc
+
+	[type==SN_REQUEST_TYPE_NOP]
+	Do nothing. 
+
+	[type==SN_REQUEST_TYPE_ALWAYS_DELETE]
+	Emediately delete the block identified by xptr.
+
+	[type==SN_REQUEST_TYPE_OLDER_VERSION] 
+	Make an older version subject for the GC. Both xptr and lxptr must be valid.
+	Xptr identifies the block; it is deleted as soon as the version becomes useless.
+	Lxptr is a logical XPTR associated with the version. It is essential for the recovery.
+	Finally anchorTs is used to determine snapshots the version belongs to. Every
+	snapshot with timestamp in the range [CUR_TIMESTAMP, anchorTs) is owning the version.
+	Function updates runawayVersionsCount (available through SnGatherStats) if the version 
+	is emediately discarded prior to submission due to no owning snapshot were found.
+
+	[type==SN_REQUEST_TYPE_ZOMBIE]
+	Same as SN_REQUEST_TYPE_OLDER_VERSION except runawayVersionsCount not updated
+	and the version is always reported as garbage by SnEnumerateVersionsForCheckpoint.
+	  
+	*/ 
+
+#define SN_REQUEST_TYPE_NOP				0
+#define SN_REQUEST_TYPE_ALWAYS_DELETE	1
+#define SN_REQUEST_TYPE_OLDER_VERSION	2
+#define SN_REQUEST_TYPE_ZOMBIE			3
 
 struct SnRequestForGc
 {
-	LXPTR lxptr;				/* logical xptr - used for recovery */ 
-	XPTR xptr;					/* physical xptr of the snapshot version */ 
-	TIMESTAMP anchorTs;			/* timestamp of the most recent snapshot not-having this version */ 
+	LXPTR lxptr;
+	XPTR xptr;
+	TIMESTAMP anchorTs;
+	int type;
 };
 
 struct SnEnumerateVersionsParams

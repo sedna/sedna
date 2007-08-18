@@ -24,6 +24,7 @@ struct SnClientState
 struct SnGcNode
 {
 	std::list<SnVersionEntry> entries;
+	size_t garbageCount;
 	SnGcNode *next;
 };
 
@@ -97,6 +98,7 @@ static void ResetLists()
 		snapshots[i].occupancy = 0;
 		for (j=0;j<=i;++j)
 		{
+			gcNodes[k].garbageCount=0;
 			gcNodes[k].entries.clear();
 			gcNodes[k].next=gcNodes+k+1;
 			++k;
@@ -226,6 +228,9 @@ void RotateGcChain(SnGcNode *hd, int victimId, int depth)
 	GetGcChainNode(hd,&i,depth-victimId-2);
 	GetGcChainNode(i,&j,victimId+1);
 	assert(i && j && i!=j && j->next==NULL);
+	
+	i->garbageCount+=i->next->garbageCount; 
+	i->next->garbageCount=0;
 	i->entries.splice(i->entries.end(),i->next->entries);
 	j->next=i->next;
 	i->next=j->next->next;
@@ -263,7 +268,11 @@ SnSnapshot *RotateSnapshots(SnSnapshot *hd,
 		for (iter=hd,depth=1;iter!=victim;++depth,iter=iter->next)
 		{
 			assert (listsHeap && lists2MergeInto);
+
+			lists2MergeInto->garbageCount += listsHeap->garbageCount;
+			listsHeap->garbageCount = 0;
 			lists2MergeInto->entries.splice(lists2MergeInto->entries.end(),listsHeap->entries);
+			
 			lists2MergeInto=lists2MergeInto->next;
 			GetGcChainNode(iter->gcChain,&bot,depth-1);
 			assert(bot && bot->next==NULL);
@@ -363,35 +372,38 @@ SnSnapshot * GetCurrentSnapshot()
 }
 
 static
-size_t GetGcChainVersionsCount(SnGcNode *head)
+size_t GetGcChainVersionsCount(SnGcNode *head, size_t *garbageCount)
 {
-	size_t result=0;
+	size_t result=0, cntG=0;
 	while (head)
 	{
 		result+=head->entries.size();
+		cntG+=head->garbageCount;
 		head=head->next;
 	}
+	if (garbageCount) { *garbageCount=cntG; }
 	return result;
 }
 
 static
-void GatherSnapshotsStats(SnSnapshot *head,
+void GatherSnapshotStats(SnSnapshot *head,
 						  size_t *totalVersionsCount,
 						  size_t *snapshotVersionsCount,
 						  size_t *snapshotSharedVersionsCount,
+						  size_t *snapshotGarbageVersionsCount,
 						  TIMESTAMP snapshotTs)
 {
 	SnSnapshot *i=NULL;
 	SnGcNode *top=NULL;
 	int ofs=0;
-	size_t cntT=0, cntX=0;
+	size_t cntT=0, cntX=0, cntG=0;
 
 	if (totalVersionsCount)
 	{
 		*totalVersionsCount=0;
-		for (i=head; i; i=i->next) *totalVersionsCount+=GetGcChainVersionsCount(i->gcChain);
+		for (i=head; i; i=i->next) { *totalVersionsCount+=GetGcChainVersionsCount(i->gcChain, NULL); }
 	}
-	if (snapshotVersionsCount || snapshotSharedVersionsCount)
+	if (snapshotVersionsCount || snapshotSharedVersionsCount || snapshotGarbageVersionsCount)
 	{
 		if (snapshotTs!=0 && GetSnapshotByTimestamp(head,&head,NULL,snapshotTs))
 		{
@@ -402,11 +414,12 @@ void GatherSnapshotsStats(SnSnapshot *head,
 			{
 				GetGcChainNode(i->gcChain,&top,ofs);
 				assert(top);
-				cntT+=GetGcChainVersionsCount(top);
+				cntT+=GetGcChainVersionsCount(top,&cntG);
 			}
 		}
 		if (snapshotVersionsCount) *snapshotVersionsCount=cntT;
 		if (snapshotSharedVersionsCount) *snapshotSharedVersionsCount=cntT-cntX;
+		if (snapshotGarbageVersionsCount) *snapshotGarbageVersionsCount=cntG;
 	}
 }
 
@@ -416,22 +429,27 @@ int FlushEnumerateVersionsBuf(SnEnumerateVersionsParams *params,
 							  SnEnumerateVersionsBuf *buf)
 {
 	size_t count=0;
+	SnVersionEntry *i=NULL;
 	int failure=0;
 	
 	assert(params && enumProc && buf);
 	count = buf->ibuf-buf->buf;
+	buf->ibuf = buf->buf;
 	if (count>0)
 	{
-		if(!enumProc(params,buf->buf,count,buf->isGarbageInside)) failure=1;
-		if(buf->isGarbageInside) 
+		if (buf->isGarbageInside)
+		{
+			for (i=buf->buf; i-buf->buf<count; ++i) i->lxptr=0;
+		}
+		if (!enumProc(params,buf->buf,count,buf->isGarbageInside)) failure=1;
+		if (buf->isGarbageInside) 
 		{
 			params->garbageVersionsSent+=count;
 		}
 		else 
 		{
 			params->persVersionsSent+=count;
-		}
-		buf->ibuf=buf->buf;
+		}		
 	}
 	return failure==0;
 }
@@ -454,7 +472,7 @@ int EnumerateGcChainVersions(SnGcNode *head,
 	{
 		for (it=head->entries.begin(); it!=head->entries.end(); ++it)
 		{
-			selectedBuf = (it->lxptr == ~(LXPTR)0 ? garbageBuf : buf);
+			selectedBuf = (it->lxptr == 0 ? garbageBuf : buf);
 			if (selectedBuf->ibuf >= selectedBuf->ebuf && 
 				!FlushEnumerateVersionsBuf(params,enumProc,selectedBuf))
 			{
@@ -503,6 +521,33 @@ int PurifySnapshots(int isKeepingCurrentSnapshot)
 		}
 	}
 	return failure==0;
+}
+
+static
+int ValidateRequestForGc(SnRequestForGc *req)
+{
+	int success = 0;
+	assert(req);
+	if (req->type != SN_REQUEST_TYPE_OLDER_VERSION && 
+		req->type != SN_REQUEST_TYPE_NOP && 
+		req->type != SN_REQUEST_TYPE_ZOMBIE &&
+		req->type != SN_REQUEST_TYPE_ALWAYS_DELETE)
+	{
+		/* bad type */ 
+	}
+	else if (req->type != SN_REQUEST_TYPE_NOP && req->xptr == 0)
+	{
+		/* xptr must be always valid */ 
+	}
+	else if (req->type == SN_REQUEST_TYPE_OLDER_VERSION && req->lxptr == 0)
+	{
+		/* must have valid lxptr either */ 
+	}
+	else
+	{
+		success=1;
+	}
+	return success;
 }
 
 /* public api functions */ 
@@ -560,7 +605,7 @@ int SnShutdown()
 	SnSnapshot *curr=NULL, *pers=NULL;
 	if (GetSnapshotByType(leadingSnapshot,&pers,0,SN_PERSISTENT_SNAPSHOT,0))
 	{
-		GatherSnapshotsStats(leadingSnapshot,NULL,&versCount,NULL,pers->timestamp);
+		GatherSnapshotStats(leadingSnapshot,NULL,&versCount,NULL,NULL,pers->timestamp);
 		if (versCount==0)
 		{
 			pers->type=SN_REGULAR_SNAPSHOT;
@@ -657,38 +702,86 @@ int SnAcceptRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t coun
 	
 	assert(buf || count==0);
 	ebuf=buf+count;
-	for (top=leadingSnapshot; top && top->timestamp>operationTs; top=top->next);
+	top=leadingSnapshot;
+	while (top && top->timestamp>operationTs) top=top->next;
 	GetSnapshotByType(top,&top,NULL,-1,SN_FUTURE_SNAPSHOT);
 
 	if (!top) 
 	{
 		for (;buf<ebuf && !failure; ++buf)
 		{
-			++runawayVersionsCount;
-			if (!setup.freeBlock(buf->xptr)) failure=1;
+			if (!ValidateRequestForGc(buf)) 
+			{
+				WuSetLastErrorMacro(WUERR_BAD_PARAMS);
+				failure=1;
+			}
+			else
+			{
+				switch(buf->type)
+				{
+				case SN_REQUEST_TYPE_NOP:
+					break;
+				case SN_REQUEST_TYPE_OLDER_VERSION:
+					++runawayVersionsCount;
+					/* fallthrough */ 
+				case SN_REQUEST_TYPE_ZOMBIE:
+					/* fallthrough */ 
+				case SN_REQUEST_TYPE_ALWAYS_DELETE:
+					if (!setup.freeBlock(buf->xptr)) failure=1;
+					break;
+				}
+			}
 		}
 	}
 	else 
 	{
 		for (;buf<ebuf && !failure; ++buf)
 		{
-			if (top->timestamp <= buf->anchorTs)
+			if (!ValidateRequestForGc(buf)) 
 			{
-				++runawayVersionsCount;
-				if (!setup.freeBlock(buf->xptr)) failure=1;
+				WuSetLastErrorMacro(WUERR_BAD_PARAMS);
+				failure=1;
 			}
 			else
 			{
-				for (ofs=0, i=top; i->next && i->next->timestamp > buf->anchorTs; ++ofs, i=i->next);
-				GetGcChainNode(i->gcChain,&gcNode,ofs);
-				assert(gcNode);
-				entry.lxptr=buf->lxptr;
-				entry.xptr=buf->xptr;
-				gcNode->entries.push_back(entry);
+				switch(buf->type)
+				{
+				case SN_REQUEST_TYPE_NOP:
+					break;					
+				case SN_REQUEST_TYPE_OLDER_VERSION:
+				case SN_REQUEST_TYPE_ZOMBIE:
+					if (top->timestamp <= buf->anchorTs)
+					{
+						if (buf->type == SN_REQUEST_TYPE_OLDER_VERSION) { ++runawayVersionsCount; }
+				case SN_REQUEST_TYPE_ALWAYS_DELETE:
+						if (!setup.freeBlock(buf->xptr)) failure=1;
+					}
+					else
+					{
+						entry.lxptr=buf->lxptr;
+						entry.xptr=buf->xptr;
+						ofs = 0;
+						i = top;
+						while (i->next && i->next->timestamp > buf->anchorTs)
+						{
+							++ofs;
+							i=i->next;
+						}
+						assert(i);
+						GetGcChainNode(i->gcChain,&gcNode,ofs);
+						assert(gcNode);
+						if (buf->type == SN_REQUEST_TYPE_ZOMBIE)
+						{
+							entry.lxptr=0;
+							gcNode->garbageCount++;
+						}
+						gcNode->entries.push_back(entry);
+					}
+					break;
+				}
 			}
 		}
 	}
-
 	return (failure==0);
 }
 
@@ -771,7 +864,7 @@ int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
 									 SnEnumerateVersionsProc enumProc)
 {
 	int success=0, failure=0, persPos=0, i=0;
-	size_t total=0, persistent=0;
+	size_t total=0, persistentRaw=0, garbage=0;
 	SnSnapshot *pers=NULL, *dummy=NULL, *iter=NULL;
 	SnGcNode *top=NULL;
 	SnVersionEntry bufStorg[SN_BUFSZ], garbageBufStorg[SN_BUFSZ];
@@ -784,9 +877,9 @@ int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
 	assert(params && enumProc);
 	persPos = GetSnapshotByType(leadingSnapshot,&pers,NULL,SN_PERSISTENT_SNAPSHOT,0)-1;
 	params->persSnapshotTs = (pers?pers->timestamp:0);
-	GatherSnapshotsStats(leadingSnapshot,&total,&persistent,NULL,params->persSnapshotTs);
-	params->persVersionsCount=persistent;
-	params->garbageVersionsCount=total-persistent;
+	GatherSnapshotStats(leadingSnapshot,&total,&persistentRaw,NULL,&garbage,params->persSnapshotTs);
+	params->persVersionsCount=persistentRaw-garbage;
+	params->garbageVersionsCount=total-params->persVersionsCount;
 	params->persVersionsSent=0;
 	params->garbageVersionsSent=0;
 
@@ -863,18 +956,20 @@ int SnGatherStats(SnStats *stats)
 	stats->runawayVersionsCount=runawayVersionsCount;
 	snapshot=GetCurrentSnapshot();
 	ts = (snapshot? snapshot->timestamp: 0);
-	GatherSnapshotsStats(leadingSnapshot,
+	GatherSnapshotStats(leadingSnapshot,
 						 &stats->versionsCount,
 						 &stats->curSnapshotVersionsCount,
 						 &stats->curSnapshotSharedVersionsCount,
+						 NULL,
 						 ts);
 
 	GetSnapshotByType(leadingSnapshot,&snapshot,NULL,SN_PERSISTENT_SNAPSHOT,0);
 	ts = (snapshot? snapshot->timestamp: 0);
-	GatherSnapshotsStats(leadingSnapshot,
+	GatherSnapshotStats(leadingSnapshot,
 						 NULL,
 						 &stats->persSnapshotVersionsCount,
 						 &stats->persSnapshotSharedVersionsCount,
+						 NULL,
 						 ts);
 	return 1;
 }
@@ -918,6 +1013,7 @@ void SnDbgDump(int reserved)
 	int i=0, j=0, con=1;
 	const char *typeStr=NULL;
 	char buf[32];
+	size_t gCnt=0;
 	SnStats stats;
 
 	SnGatherStats(&stats);
@@ -962,9 +1058,10 @@ void SnDbgDump(int reserved)
 		{
 			*buf=0;
 			if (hscan[i]) 
-			{
+			{				
 				xscan[i]=hscan[i]->entries.begin();
-				sprintf(buf,"[%d]",hscan[i]->entries.size());
+				gCnt=hscan[i]->garbageCount;
+				sprintf(buf,(gCnt>0?"[%d+%d]":"[%d]"),hscan[i]->entries.size()-gCnt,gCnt,hscan[i]->garbageCount);
 				if (hscan[i]->entries.size()>0) ++con;
 			}
 			fprintf(stderr,"   %17s",buf);

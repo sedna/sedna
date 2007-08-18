@@ -10,7 +10,7 @@
 
 #define ERR_BUF_SZ	2048
 
-static const size_t appErrorsNum = 53;
+static const size_t appErrorsNum = 54;
 static const char *appErrorsDescription[appErrorsNum] = 
 {
 	"Some error occured.", 
@@ -65,7 +65,8 @@ static const char *appErrorsDescription[appErrorsNum] =
 	"The transaction already created a working version of this block.", 
 	"An other active transaction created a working version of this block.", 
 	"The operation requires working version (currently operating on the last commited version).", 
-	"Unable to create versions of the temporary block."
+	"Unable to create versions of the temporary block.",
+	"Operation was not performed due to versioning support disabled in this mode."
 };
 
 struct ErrorProperties
