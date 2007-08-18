@@ -319,6 +319,7 @@ void del_record_from_data_indirection_table(xptr p)
 	}
 	CHECKP(p);
 	hl_phys_log_change(XADDR(p),sizeof(xptr));
+	VMM_SIGNAL_MODIFICATION(p);
 	*((xptr*)XADDR(p))=XNULL;
 	
 }

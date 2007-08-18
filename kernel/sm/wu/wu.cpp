@@ -100,10 +100,11 @@ int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
 		{			
 			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(),lilXptr,&ofs,isDataImportant));
 		}
+		header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofs);
+		/* assert(header->p==lilXptr && header->roffs == ofs); */ 
 		if (!isDataImportant)
 		{
-			memset(OffsetPtr(buf_mem_addr,ofs),0,PAGE_SIZE);
-			header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofs);
+			//memset(OffsetPtr(buf_mem_addr,ofs),0,PAGE_SIZE);
 			vmm_sm_blk_hdr::init(header);
 			header->p=lilXptr;
 			header->roffs=ofs;

@@ -175,6 +175,8 @@ WUERR_OPERATION_REQUIRES_WORKING_VERSION
 
 WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE
 	Unable to create versions of the temporary block.
-	
+
+WUERR_VERSIONS_DISABLED
+	Operation was not performed due to versioning support disabled in this mode.	
 
 ## no more errors

@@ -12,6 +12,12 @@
 #define VE_MAX_CLIENTS_COUNT	0x10000
 #define VE_BUFSZ				1024
 
+typedef SnRequestForGc VeVersionManipAction;
+
+#define VE_ACTION_TYPE_CREATE_1ST_VERSION		SN_REQUEST_TYPE_NOP
+#define VE_ACTION_TYPE_CREATE_VERSION			SN_REQUEST_TYPE_OLDER_VERSION
+#define VE_ACTION_TYPE_MARK_VERSION_ZOMBIE		SN_REQUEST_TYPE_ZOMBIE
+
 struct VeMappingEntry
 {
 	XPTR xptr;
@@ -52,7 +58,7 @@ struct VeClientState
 		TIMESTAMP snapshotTs;
 		TIMESTAMP clientTs;
 	};
-	std::list<SnRequestForGc> *pushedVersions; /* NULL if read-only transaction */ 
+	std::list<VeVersionManipAction> *versionManipActions;
 };
 
 /* global state */ 
@@ -64,6 +70,22 @@ static TIMESTAMP persSnapshotTs=0;
 static VeSnapshotsList snapshotsList;
 
 /* utility functions */ 
+
+static
+inline 
+int IsUpdaterState(VeClientState *state)
+{
+	assert(state);
+	return state->versionManipActions != NULL;
+};
+
+static
+inline 
+int IsPureQueryState(VeClientState *state)
+{
+	assert(state);
+	return state->versionManipActions == NULL;
+};
 
 static void
 ResetSnapshotsList(VeSnapshotsList *lst)
@@ -320,8 +342,9 @@ int IsVersionYoungerThanSnapshot(VeSnapshotsList *lst,
 		decreased (someone rebuilt the binaries for instance). Creator MAY be -1 if
 		we are checking "nonexistent" version against the snapshot. */ 
 	return 
-		creatorTs>sh->timestamp || 
-		creator>=0 && creator<lst->clientsCount && creatorTs==sh->clientTs[creator];
+		creatorTs>=sh->timestamp || 
+		creator<0 || 
+		creator<lst->clientsCount && creatorTs==sh->clientTs[creator];
 }
 
 static
@@ -546,16 +569,15 @@ int VeOnRegisterClient(int isUsingSnapshot, TIMESTAMP snapshotTs)
 	}
 	else if (isUsingSnapshot)
 	{
-		state->pushedVersions = NULL;
+		state->versionManipActions = NULL;
 		state->snapshotTs = snapshotTs;
 		snapshot->occupancy ++;
 		success = 1;
 	}
 	else if (setup.getTimestamp(&state->clientTs))
 	{
-		state->pushedVersions = new std::list<SnRequestForGc>();
+		state->versionManipActions = new std::list<VeVersionManipAction>();
 		snapshotsList.first.clientTs[ClGetCurrentClientId()] = state->clientTs;
-
 		success = 1;
 	}
 	return success;
@@ -568,11 +590,14 @@ int VeOnUnregisterClient()
 	VeSnapshot *snapshot=NULL;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
-	else if (!state->pushedVersions && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs)) {}
-	else if (state->pushedVersions)
+	else if (IsPureQueryState(state) && !GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, state->snapshotTs)) 
 	{
-		delete state->pushedVersions;
-		state->pushedVersions = NULL;
+		/* it is probably an internal error */ 
+	}
+	else if (IsUpdaterState(state))
+	{
+		delete state->versionManipActions;
+		state->versionManipActions = NULL;
 		snapshotsList.first.clientTs[ClGetCurrentClientId()] = 0;
 		success = 1;
 	}
@@ -614,7 +639,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		else
 		{
 			MakeMappingFromHeader(&snapshotsList,&mapping,header);
-			if (state->pushedVersions)
+			if (IsUpdaterState(state))
 			{
 				if (mapping.validDataBegin == 0)
 				{
@@ -692,7 +717,7 @@ int VeAllocBlock(LXPTR *lxptr)
 	XPTR xptr=0;
 	VeClientState *state=NULL;
 	VersionsHeader *header=NULL;
-	SnRequestForGc pushedVersion;
+	VeVersionManipAction action={};
 	int success=0, okStatus=0, bufferId=0, isReady=0;
 
 	assert(lxptr);
@@ -704,7 +729,7 @@ int VeAllocBlock(LXPTR *lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
-		else if (state->pushedVersions == NULL)
+		else if (IsPureQueryState(state))
 		{
 			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
@@ -712,11 +737,16 @@ int VeAllocBlock(LXPTR *lxptr)
 		else if (!setup.loadBuffer(xptr,&bufferId,1)) {}
 		else if (!VeInitBlockHeader(xptr, bufferId)) {}
 		else
-		{			
-			pushedVersion.lxptr = xptr;
-			pushedVersion.xptr = 0;
-			pushedVersion.anchorTs = ~(TIMESTAMP)0;
-			state->pushedVersions->push_back(pushedVersion);			
+		{	
+			okStatus = setup.markBufferDirty(bufferId, header, sizeof *header, 0);
+			assert(okStatus);
+
+			action.type = VE_ACTION_TYPE_CREATE_1ST_VERSION;
+			action.lxptr = xptr;
+			action.xptr = xptr;
+			action.anchorTs = 0;
+
+			state->versionManipActions->push_back(action);			
 			success = 1;
 			*lxptr = xptr;
 		}
@@ -727,9 +757,9 @@ int VeAllocBlock(LXPTR *lxptr)
 int VeCreateVersion(LXPTR lxptr)
 {
 	VeClientState *state=NULL;
-	VersionsHeader header, *pheader=NULL;
-	VeMapping mapping;
-	SnRequestForGc pushedVersion;
+	VersionsHeader header={}, *pheader=NULL;
+	VeMapping mapping={};
+	VeVersionManipAction action={};
 	VeSnapshot *snapshot=NULL;
 	XPTR xptr=0;
 	int success = 0, okStatus = 0, isReady = 0, persOrdinal = 0, isSpecial = 0, bufferId = 0;
@@ -742,7 +772,7 @@ int VeCreateVersion(LXPTR lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
-		else if (state->pushedVersions == NULL)
+		else if (IsPureQueryState(state))
 		{
 			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
@@ -755,11 +785,7 @@ int VeCreateVersion(LXPTR lxptr)
 		else
 		{
 			header=*pheader;
-			MakeMappingFromHeader(&snapshotsList,&mapping,pheader);
-			pushedVersion.lxptr=lxptr;
-			pushedVersion.xptr=0;
-			GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.anchor);
-			pushedVersion.anchorTs=snapshot->timestamp;
+			MakeMappingFromHeader(&snapshotsList,&mapping,pheader);			
 			if (mapping.publicDataBegin>1)
 			{
 				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
@@ -789,8 +815,14 @@ int VeCreateVersion(LXPTR lxptr)
 					else if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentClientId(),lxptr,xptr)) {}
 					else
 					{
-						pushedVersion.xptr=xptr;
-						state->pushedVersions->push_back(pushedVersion);
+						GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.anchor);
+
+						action.type = VE_ACTION_TYPE_CREATE_VERSION;
+						action.lxptr = lxptr;
+						action.xptr = xptr;
+						action.anchorTs = snapshot->timestamp;
+
+						state->versionManipActions->push_back(action);
 						*pheader=header;
 						okStatus = setup.markBufferDirty(bufferId, pheader, sizeof *pheader, 0);
 						assert(okStatus);
@@ -809,8 +841,8 @@ int VeFreeBlock(LXPTR lxptr)
 	VeClientState *state=NULL;
 	VeSnapshot *snapshot = NULL;
 	VersionsHeader *header = NULL;
-	VeMapping mapping;
-	SnRequestForGc pushedVersion;
+	VeMapping mapping = {};
+	VeVersionManipAction action = {};
 	int success = 0, okStatus = 0, isReady = 0, bufferId = 0;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
@@ -821,7 +853,7 @@ int VeFreeBlock(LXPTR lxptr)
 		{
 			WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 		}
-		else if (state->pushedVersions == NULL)
+		else if (IsPureQueryState(state))
 		{
 			WuSetLastErrorMacro(WUERR_SNAPSHOTS_ARE_READ_ONLY);
 		}
@@ -853,10 +885,13 @@ int VeFreeBlock(LXPTR lxptr)
 				{
 					GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.validDataEnd);
 					assert(snapshot);
-					pushedVersion.lxptr = ~(LXPTR)0;
-					pushedVersion.xptr = lxptr;
-					pushedVersion.anchorTs = snapshot->timestamp;
-					state->pushedVersions->push_back(pushedVersion);
+
+					action.type = VE_ACTION_TYPE_MARK_VERSION_ZOMBIE;
+					action.lxptr = lxptr;
+					action.xptr = lxptr;
+					action.anchorTs = snapshot->timestamp;
+
+					state->versionManipActions->push_back(action);
 					success = 1;
 				}
 			}
@@ -869,30 +904,32 @@ int VeOnCommit()
 {
 	VeClientState *state=NULL;
 	SnRequestForGc buf[VE_BUFSZ], *ibuf=buf, *ebuf=buf+VE_BUFSZ;
-	std::list<SnRequestForGc>::iterator i;
+	std::list<VeVersionManipAction>::iterator i;
 	int success = 0, failure = 0;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
-	else if (state->pushedVersions==NULL)
+	else if (IsPureQueryState(state))
 	{
 		success=1;
 	}
 	else
 	{
-		i=state->pushedVersions->begin();
-		while(i!=state->pushedVersions->end() && !failure)
+		i=state->versionManipActions->begin();
+		while(i!=state->versionManipActions->end() && !failure)
 		{
-			ibuf=buf;
-			for (;ibuf<ebuf && i!=state->pushedVersions->end();++i)
+			if (ibuf<ebuf)
 			{
-				if (i->anchorTs != ~(TIMESTAMP)0)
-				{
-					ibuf->lxptr = i->lxptr;
-					ibuf->xptr = i->xptr;
-					ibuf->anchorTs = i->anchorTs;
-					++ibuf;
-				}
+				*ibuf++ = *i++;
 			}
+			else
+			{
+				failure = (0 == setup.acceptRequestForGc(~(TIMESTAMP)0,buf,ibuf-buf));
+				ibuf=buf;
+			}
+		}
+		if (!failure)
+		{
+			/* probably we have something left in buf */ 
 			failure = (0 == setup.acceptRequestForGc(~(TIMESTAMP)0,buf,ibuf-buf));
 		}
 		success = (0==failure);
@@ -903,48 +940,64 @@ int VeOnCommit()
 int VeOnRollback()
 {
 	VeClientState *state=NULL;
-	std::list<SnRequestForGc>::iterator i;
+	std::list<VeVersionManipAction>::iterator i;
 	SnRequestForGc buf[VE_BUFSZ], *ibuf=buf, *ebuf=buf+VE_BUFSZ;
 	int success = 0, failure = 0;
 
 	if (!ClGetCurrentStateBlock((void**)&state,ticket)) {}
-	else if (state->pushedVersions == NULL)
+	else if (IsPureQueryState(state))
 	{
 		success = 1;
 	}
 	else
 	{
-		for (i=state->pushedVersions->begin(); i!=state->pushedVersions->end() && !failure; ++i)
+		i=state->versionManipActions->begin();
+		while (i!=state->versionManipActions->end() && !failure)
 		{
-			if (i->anchorTs!=~(TIMESTAMP)0) /* not the first version */ 
+			if (ibuf<ebuf)
 			{
-				failure = (setup.copyBlock(i->lxptr, i->xptr, 0) == 0); 
+				switch (i->type)
+				{
+				case VE_ACTION_TYPE_CREATE_VERSION:
+					if (!setup.copyBlock(i->lxptr, i->xptr, 0)) 
+					{
+						failure=1;
+						break;
+					}
+					if (i->anchorTs <= persSnapshotTs)
+					{
+						/* we do not need this block any more (same branch if this is the 1st version) */ 
+				case VE_ACTION_TYPE_CREATE_1ST_VERSION:
+						*ibuf=*i;
+						ibuf->type = SN_REQUEST_TYPE_ALWAYS_DELETE;
+						ibuf++;
+					}
+					else
+					{
+						/*	we should not emediately delete the block since it is already logged as a 
+							relocated copy of the block from the persistent snapshot */ 
+						*ibuf++=*i;
+					}
+					break;
+				case VE_ACTION_TYPE_MARK_VERSION_ZOMBIE:
+					/* no action required */ 
+					break;
+				default:
+					/* wrong type code */ 
+					assert(0);
+				}
+				++i;
 			}
-			if (!failure)
+			else
 			{
-				if (i->lxptr == ~(LXPTR)0) {}
-				else if (persSnapshotTs < i->anchorTs)
-				{
-					 if (ibuf>=ebuf)
-					 {
-						 failure = (0 == setup.acceptRequestForGc(~(TIMESTAMP)0,buf,ibuf-buf));
-						 ibuf = buf;
-					 }
-					 ibuf->lxptr = i->lxptr;
-					 ibuf->xptr = i->xptr;
-					 ibuf->anchorTs = i->anchorTs;
-					 ++ibuf;
-				}
-				else
-				{
-					failure = (setup.freeBlock(i->lxptr) == 0);
-				}
+				failure = (0 == setup.acceptRequestForGc(~(TIMESTAMP)0,buf,ibuf-buf));
+				ibuf = buf;
 			}
 		}
 		if (!failure) 
 		{
+			/* probably we have something left in buf */ 
 			failure = (0 == setup.acceptRequestForGc(~(TIMESTAMP)0,buf,ibuf-buf));
-			ibuf = buf;
 		}
 		success = (failure == 0);
 	}
@@ -1007,7 +1060,7 @@ int VeGetCurrentTs(TIMESTAMP *timestamp)
 
 	assert(timestamp);
 	*timestamp=0;
-	if (ClGetCurrentStateBlock((void**)state, ticket) && state->pushedVersions)
+	if (ClGetCurrentStateBlock((void**)state, ticket) && IsUpdaterState(state))
 	{
 		*timestamp = state->clientTs;
 	}

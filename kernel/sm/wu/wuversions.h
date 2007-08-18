@@ -56,6 +56,7 @@ struct VeSetup
 
 	/* params */ 
 	TIMESTAMP initialPersSnapshotTs;
+	int areVersionsDisabled;
 };
 
 int VeInitialize();
