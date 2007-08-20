@@ -228,20 +228,24 @@ bool inline is_element (xptr node)
 }
 bool inline is_node_attribute (xptr node)
 {
+	CHECKP(node);
  return (GETSCHEMENODEX(node)->type==attribute);
 }
 bool inline is_node_child (xptr node)
 {
+	CHECKP(node);
 	return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
 }
 bool inline is_node_in_collection (xptr node)
 {
+
 	CHECKP(node);
 	return ((schema_node*)(GETSCHEMENODEX(node))->root)->nodecnt > 1;
 }
 //checks whether the right sibling of the node is  attribute
 bool inline is_next_node_attribute (xptr node)
 {
+	CHECKP(node);
 	node=GETRIGHTPOINTER(node);
 	if (node!=XNULL)
 	{
