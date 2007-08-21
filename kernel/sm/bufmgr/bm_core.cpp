@@ -189,9 +189,18 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
     blk->is_changed = false;
 }
 
+extern int isCopyBlockCalled;
+extern int writeBlockCounter, writeBlockIrrelevantToCreateVersionCount;
+
 void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (SednaException)
 {
     vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
+
+	writeBlockCounter++;
+	if (!isCopyBlockCalled)
+	{
+		writeBlockIrrelevantToCreateVersionCount++;
+	}
 
     blk->roffs = 0;
     blk->is_changed = false;

@@ -1332,7 +1332,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 #endif
         VMM_TRACE_UNSWAP(p)
 
-        msg.cmd = 26; // bm_get_block
+		msg.cmd = 26; // bm_get_block
         msg.trid = trid;
         msg.sid = sid;
         msg.data.swap_data.ptr = *(__int64*)(&p);
