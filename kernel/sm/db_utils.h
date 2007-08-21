@@ -20,4 +20,6 @@ int delete_logical_log(const char* db_name);
 int delete_dtsearch_files(const char* db_name);
 #endif
 
+int delete_ph_files(const char* db_name);
+
 #endif
