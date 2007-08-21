@@ -127,9 +127,11 @@ xptr  getLastByOrderChildNode(xptr source)
 			{
 				if (par_i!=tmp->pdsc) break;
 				node=tmp;
+				nodex=ADDR2XPTR(node);
 			}
+			CHECKP(nodex);
 			if (node->rdsc==XNULL)
-				return ADDR2XPTR(node);
+				return nodex;
 			CHECKP(source);
 		}
 		childx-=1;		

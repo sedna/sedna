@@ -256,6 +256,8 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
             	    bta.action_qep_subtree = NULL;
                 	qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
 	                is_qep_built = true;
+                    qep_tree->open();
+                	is_qep_opened = true;
     	            built_trigger_actions_vec.push_back(bta);
         	        trac = trac->next;
 					if(trac==NULL) throw USER_EXCEPTION2(SE3204, trigger_title);
@@ -265,6 +267,8 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
             	    bta.action_qep_tree = NULL;
                 	qep_subtree = bta.action_qep_subtree = build_qep(trac->statement, trac->cxt_size);
 	                is_subqep_built = true;
+                    qep_subtree->tree.op->open();
+                    is_subqep_opened = true;
     	            built_trigger_actions_vec.push_back(bta);
         	        break;
             	}
@@ -290,17 +294,13 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
           	qep_tree = mapIter->second.at(i).action_qep_tree;
             qep_parameters = &(mapIter->second.at(i).parameters);
    	        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-       	    qep_tree->open();
            	is_qep_opened = true;
             if(qep_tree->is_update())
    	            qep_tree->execute();
-       	    qep_tree->close();
-           	is_qep_opened = false;
        	}
        	qep_subtree = mapIter->second.at(i).action_qep_subtree;
         qep_parameters = &(mapIter->second.at(i).parameters);
    	    set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-       	qep_subtree->tree.op->open();
         is_subqep_opened = true;
 		tuple t = tuple(1);
 		qep_subtree->tree.op->next(t);
@@ -313,15 +313,8 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 				CHECKP(res_xptr);
 			}
 		else res_xptr = XNULL;
-
-   	    qep_subtree->tree.op->close();
-   	    is_subqep_opened =  false;
 	}
     catch (SednaUserException &e) {
-	    if (is_qep_opened)
-            qep_tree->close();
-        if (is_subqep_opened)
-            qep_subtree->tree.op->close();
         throw e;
     }
 
