@@ -193,7 +193,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 		if (used_mem.find_remove(ofsSrc)==0)
 		{
 			repairRequired = 1;
-			put_block_to_buffer(-1,lilDest,&ofsDest,true);
+			put_block_to_buffer(-1,lilDest,&ofsDest,false);
 			header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofsDest);
 			memcpy(header,
 				   OffsetPtr(buf_mem_addr,ofsSrc),

@@ -59,10 +59,10 @@ void create_db(__int64 data_file_max_size,
     if (ph_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
-    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
-    UFile ph_bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
-    if (ph_bu_file_handler == U_INVALID_FD)
-        throw USER_EXCEPTION(SE4301);
+//    string ph_bu_file_name = string(db_files_path) + string(db_name) + ".ph.sebu";
+//    UFile ph_bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
+//    if (ph_bu_file_handler == U_INVALID_FD)
+//        throw USER_EXCEPTION(SE4301);
     
     // close created files
     if (uCloseFile(data_file_handler, __sys_call_error) == 0)
@@ -74,8 +74,8 @@ void create_db(__int64 data_file_max_size,
     if (uCloseFile(ph_file_handler, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4301);
 
-    if (uCloseFile(ph_bu_file_handler, __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE4301);
+//    if (uCloseFile(ph_bu_file_handler, __sys_call_error) == 0)
+//        throw USER_EXCEPTION(SE4301);
     
     event_logger_init(EL_CDB, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
     elog(EL_LOG, ("Request for database creation"));
@@ -84,8 +84,8 @@ void create_db(__int64 data_file_max_size,
     if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4041);
     
-    if (uDeleteFile(ph_bu_file_name.c_str(), __sys_call_error) == 0)
-        throw USER_EXCEPTION(SE4041);
+//    if (uDeleteFile(ph_bu_file_name.c_str(), __sys_call_error) == 0)
+//        throw USER_EXCEPTION(SE4041);
 
 
     open_global_memory_mapping(SE4400);
@@ -122,7 +122,7 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION(SE4304);
 
     //backup persistent heap
-    UFile bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
+/*    UFile bu_file_handler = uCreateFile(ph_bu_file_name.c_str(), 0, U_READ_WRITE, U_NO_BUFFERING, sa, __sys_call_error);
     if (bu_file_handler == U_INVALID_FD)
         throw USER_EXCEPTION(SE4301);
 
@@ -131,7 +131,7 @@ void create_db(__int64 data_file_max_size,
 
     if (uCopyFile(ph_file_name.c_str(), ph_bu_file_name.c_str(), false, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE4306);
-
+*/
 
     mb = (bm_masterblock*)(((__uint32)bm_master_block_buf + MASTER_BLOCK_SIZE) / MASTER_BLOCK_SIZE * MASTER_BLOCK_SIZE);
     // set values for master block

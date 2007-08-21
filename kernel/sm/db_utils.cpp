@@ -83,8 +83,13 @@ int cleanup_db(const char* db_name)
          return 2;   
    }
 
+   //delete ph files
+   res = delete_ph_files(db_name);
 
-   //delete ph.bu file
+   if (res == 2) return 2;
+   if (res > 0) db_exist = true;
+
+/*   //delete ph.bu file
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error))
    {
       db_exist = true;
@@ -104,7 +109,7 @@ int cleanup_db(const char* db_name)
       if (res == 0)
          return 2;
    }
-
+*/
 
    //delete db data directory
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error))
@@ -481,3 +486,87 @@ int delete_dtsearch_files(const char* db_name)
 
 }
 #endif
+
+//returns 0 if ph files do not exist
+//returns 1 if ph files were deleted succesfully
+//returns 2 if ph files can't be deleted
+
+int delete_ph_files(const char* db_name)
+{
+#ifdef _WIN32
+
+  char buf[4096];
+  char *cur_dir;
+  cur_dir  = uGetCurrentWorkingDirectory(buf, 4096, __sys_call_error);
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+
+  if (uChangeWorkingDirectory(path_to_db_files.c_str(), __sys_call_error) != 0 )
+     return 2;
+  
+
+  struct _finddata_t ph_file;
+  long dsc;
+
+  if ( (dsc = _findfirst("*seph", &ph_file)) == -1L)
+  {
+     if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+        return 2;
+
+     return 0;
+  }
+
+  do 
+  {
+     if (uDeleteFile(ph_file.name, __sys_call_error) == 0) 
+     {
+        uChangeWorkingDirectory(cur_dir, __sys_call_error);
+        return 2;
+     }
+
+  } while(_findnext(dsc, &ph_file) == 0);
+
+    
+  _findclose(dsc);
+
+  if (uChangeWorkingDirectory(cur_dir, __sys_call_error) != 0 )
+     return 2;
+
+  return 1;
+#else
+  DIR *dir;
+  struct dirent* dent;
+  string path_to_db_files = string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/";
+
+  dir = opendir(path_to_db_files.c_str());
+
+  if (dir == NULL)
+     return 2;
+
+  dent = readdir (dir);
+  if (dent == NULL) return 2; 
+
+  string is_seph;
+  bool find_ph = false;  
+  do 
+  {
+     is_seph =  dent->d_name;
+
+     if (is_seph.size() >=6)
+        if ( is_seph.substr(is_seph.size()-4, 4) == "seph") 
+        {
+          find_ph = true;
+          if (uDeleteFile((path_to_db_files + dent->d_name).c_str(), __sys_call_error) == 0) 
+             return 2;
+        }
+
+  } while(NULL != (dent=readdir(dir)));
+
+  if (0 != closedir(dir))
+     return 2;
+
+  if (!find_log) return 0;
+
+  return 1;
+#endif  
+
+}
