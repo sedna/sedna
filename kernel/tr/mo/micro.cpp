@@ -1469,8 +1469,8 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
     schema_node* scm_node = GETSCHEMENODEX(nodex);
     xptr par_indir=node->pdsc;
 #ifdef SE_ENABLE_TRIGGERS
-	nodex = apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), scm_node, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT);
-	if(nodex == XNULL) return false;
+	if(apply_per_node_triggers(XNULL, nodex, removeIndirection(par_indir), scm_node, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) == XNULL)
+		return false;
 	nodex_tmp = prepare_old_node(nodex, scm_node, TRIGGER_DELETE_EVENT);
 	CHECKP(nodex);
 #endif

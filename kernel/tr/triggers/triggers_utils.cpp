@@ -97,9 +97,15 @@ void clear_built_trigger_actions_map()
         for(vecIter = mapIter->second.begin(); vecIter != mapIter->second.end(); vecIter++)
         {
             if(vecIter->action_qep_tree!=NULL)
+            {
+                vecIter->action_qep_tree->close();
                 delete_qep(vecIter->action_qep_tree);
+            }
             else
+            {
+                vecIter->action_qep_subtree->tree.op->close();
                 delete_qep(vecIter->action_qep_subtree);
+            }
         }
     }
     built_trigger_actions.clear();
@@ -146,6 +152,10 @@ schema_nodes_triggers_map* get_statement_triggers(schema_nodes_triggers_map* doc
     }
     return docs_triggers;
 }
+
+/* provides map: schema_node -> its statement triggers.
+* !!! may contain trigger dublicatates (the same trigger set for different nodes)
+*/
 schema_nodes_triggers_map* get_statement_triggers_on_subtree(schema_node* scm_node, trigger_event event, trigger_time time, schema_nodes_triggers_map* nodes_triggers)
 {
 	t_triggers_set statement_triggers;
@@ -252,7 +262,7 @@ xptr prepare_old_node(xptr node, schema_node* scm_node, trigger_event event)
 {
    	t_triggers_set treated_triggers;
     CHECKP(node);
-	scm_node = GETSCHEMENODEX(node);
+//	scm_node = GETSCHEMENODEX(node);
     
     if(find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers))
     {

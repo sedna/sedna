@@ -82,13 +82,15 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var)
     t_item node_type = GETTYPE(scm_node);
     if((node_type!=element)&&(node_type!=attribute))
         return;
+    
+    // care about after-statement triggers
+    find_triggers_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
 
 	t_triggers_set treated_triggers;
     trigger_cell* trc;
     while(true)
     {
         trc = find_trigger_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers);
-        find_triggers_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
         if(trc == NULL)
             return;
         trc->execute_trigger_action(new_var, XNULL, where_var);
@@ -218,7 +220,9 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
     
-    if (old_var==XNULL) return;
+    find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
+    
+    if (old_var==XNULL) return; //old_var==XNULL if there are no for-each-node-after-triggers
     CHECKP(old_var);
 
     //if the node is not element or attribute - return
@@ -232,7 +236,6 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_
     while(true)
     {
         trc = find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers);
-        find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
         if(trc == NULL)
 		{
 			clear_temp();
@@ -365,6 +368,9 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
     std::pair <std::map <schema_node*, std::vector<xptr> >::iterator, bool> scm_nodes_map_pair;
     std::map <schema_node*, std::vector<xptr> >::iterator scm_nodes_iter;
     xptr_sequence::iterator it1;
+	xptr node;
+	schema_node* scn;
+	t_triggers_set treated_triggers;
     std::set<trigger_cell*>::iterator set_triggers_iter;
     schema_nodes_triggers_map docs_statement_triggers;
     schema_nodes_triggers_map::iterator statement_triggers_iter;
@@ -377,7 +383,12 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
     get_statement_triggers(&docs_statement_triggers, TRIGGER_DELETE_EVENT, TRIGGER_BEFORE);
     for(it1=target_seq->begin();it1!=target_seq->end(); it1++)
     {
-        schema_node* scn=GETSCHEMENODEX(*it1);
+        if(target_seq_direct)
+            node = *it1;
+        else
+            node = removeIndirection(*it1);
+		CHECKP(node);
+        scn = GETSCHEMENODEX(*it1);
         if(docs_statement_triggers.find(scn->root)!=docs_statement_triggers.end())
         {
             scm_nodes_iter=scm_nodes_map.find(scn);
@@ -391,17 +402,18 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
             	scm_nodes_iter->second.push_back(*it1);
         }
     }
-    //2.descriptive schema tree traversal finding out triggers STATEMENT DELETE AFTER
+    //2.descriptive schema tree traversal finding out triggers STATEMENT DELETE BEFORE
     scm_nodes_iter=scm_nodes_map.begin();
     for(scm_nodes_iter=scm_nodes_map.begin();scm_nodes_iter!=scm_nodes_map.end(); scm_nodes_iter++)
     {
         schema_nodes_triggers_map statement_triggers;
-        //3.get all statement triggers ont the subtree
+        //3.get all statement triggers ont the subtree (may contain trigger dublicates)
         get_statement_triggers_on_subtree(scm_nodes_iter->first, TRIGGER_DELETE_EVENT, TRIGGER_BEFORE, &statement_triggers);
         statement_triggers_iter=statement_triggers.begin();
         //iterate over the nodes with statement triggers
         for(statement_triggers_iter=statement_triggers.begin();statement_triggers_iter!=statement_triggers.end(); statement_triggers_iter++)
         {
+			// descr schema might be "wider" then real data: we need to check if there are data nodes
             std::vector<xptr>::iterator xptr_iter;
             for(xptr_iter=scm_nodes_iter->second.begin();xptr_iter!=scm_nodes_iter->second.end();xptr_iter++)
             {
@@ -409,8 +421,13 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
                 if(getFirstDescandantByScheme(*xptr_iter, statement_triggers_iter->first)!=XNULL)
                 {
                     for(set_triggers_iter=statement_triggers_iter->second.begin();set_triggers_iter!=statement_triggers_iter->second.end();set_triggers_iter++)
-                        (*set_triggers_iter)->execute_trigger_action(XNULL, XNULL, XNULL);
-
+					{
+						if(treated_triggers.find(*set_triggers_iter) == treated_triggers.end())
+						{
+							(*set_triggers_iter)->execute_trigger_action(XNULL, XNULL, XNULL);
+							treated_triggers.insert(*set_triggers_iter);
+						}
+					}
                     break;
                 }
             }
