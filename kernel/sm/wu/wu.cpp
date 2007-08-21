@@ -33,6 +33,10 @@ static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
 static size_t swappedNum = 0;
 static int isVersionsDisabled = 0;
 
+
+int isCopyBlockCalled=0;
+int writeBlockCounter=0, writeBlockIrrelevantToCreateVersionCount=0;
+
 /* utility functions */ 
 
 static
@@ -183,6 +187,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 	ramoffs ofsSrc=0, ofsDest=0;
 	vmm_sm_blk_hdr *header = NULL;
 	int success = 0, repairRequired = 0;
+	isCopyBlockCalled=1;
 	if (bigDest == bigSrc)
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
@@ -208,6 +213,7 @@ int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
 	}
 	WU_CATCH_EXCEPTIONS()
 	if (repairRequired) used_mem.push(ofsSrc);
+	isCopyBlockCalled=0;
 	return success;
 }
 
