@@ -250,6 +250,7 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return old_node;
     
+	CHECKP(old_node);
     schema_node* scm_node = GETSCHEMENODEX(old_node);
     schema_trigger_cell* scm_trc = scm_node->trigger_object;
     xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
@@ -259,14 +260,15 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node)
     while(true)
     {
         trc = find_trigger_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_BEFORE, TRIGGER_FOR_EACH_NODE, &treated_triggers);
-        find_triggers_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
+//        find_triggers_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
         if(trc == NULL)
-            return old_node;
-        if(trc->execute_trigger_action(new_node, old_node, parent) == XNULL) return XNULL;
+            return new_node;
+        new_node = trc->execute_trigger_action(new_node, old_node, parent);
+		if(new_node==XNULL) return XNULL;
         treated_triggers.insert(trc);
     }
 
-	return old_node;
+	return new_node;
 }
 
 void apply_after_replace_triggers(xptr new_node, xptr old_node)
