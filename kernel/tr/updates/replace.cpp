@@ -20,7 +20,7 @@ void replace(PPOpIn arg)
 	//3. persistent replacements+their position in 2 seq
 //	xptr addr(0,(void*)0x4acc0000);
 //	check_blk_consistency(addr);
-	xptr node, parent, tmp_node, del_node, node_child;
+	xptr node, parent, tmp_node, del_node, node_child, repl_node_child;
 
 	tuple t(arg.ts);
 	descript_sequence arg3seq(2);
@@ -171,12 +171,13 @@ void replace(PPOpIn arg)
 		while(*sit!=XNULL)
 		{
 			node_child=*sit;
-            CHECKP(node);
 #ifdef SE_ENABLE_TRIGGERS
-            if(apply_per_node_triggers(removeIndirection(node_child), node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
-    			goto next_replacement;
-    		CHECKP(node);
+			repl_node_child = apply_per_node_triggers(removeIndirection(node_child), node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+			if(repl_node_child==XNULL) goto next_replacement;
+			CHECKP(repl_node_child);
+			node_child = ((n_dsc*)XADDR(repl_node_child))->indir;
 #endif
+			CHECKP(node);
 			if (is_node_attribute(node)|| is_node_attribute(removeIndirection(node_child)))
 			{
 				parent=removeIndirection(GETPARENTPOINTER(node));
@@ -206,7 +207,7 @@ void replace(PPOpIn arg)
         delete_node(del_node);
 
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(XNULL, tmp_node, parent, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+        apply_per_node_triggers(node, tmp_node, parent, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
 next_replacement:;    
 	}
