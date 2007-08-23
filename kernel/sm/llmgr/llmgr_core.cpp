@@ -1946,7 +1946,7 @@ void llmgr_core::ll_log_flush(bool sync)
 ******************************************************************************/
 //function is used for onlne rollback
 
-/*
+
 void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
 {//before this call all log records are completed
   ll_log_lock(sync);
@@ -2010,7 +2010,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
 
   rollback_active = false;
 //  ll_log_unlock(sync);
-}*/
+}
 
 /*
 //function is used for onlne rollback

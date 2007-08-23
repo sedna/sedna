@@ -71,6 +71,7 @@ int main (int argc, char** argv)
       UShMem gov_mem_dsc;
       gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
 
+//      DebugBreak();
       ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_RCV);
       SednaUserException e = USER_EXCEPTION(SE4400);
       ppc->startup(e);
@@ -148,6 +149,7 @@ int main (int argc, char** argv)
 		freopen("CON","wt",stderr);
 		freopen("CON","wt",stdout);
 	}
+//      DebugBreak();
       recover_db_by_logical_log(last_cp_lsn);
 
 /*

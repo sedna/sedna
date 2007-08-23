@@ -289,7 +289,7 @@ public:
   void ll_truncate_log(bool sync);
 
   void commit_trn(transaction_id& trid, bool sync);
-//  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
+  void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
 void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
                                void (*exec_micro_op) (const char*, int, bool),

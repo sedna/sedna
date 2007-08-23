@@ -488,7 +488,8 @@ void _vmm_alloc_block(xptr *p, bool is_data)
     if (ssmmsg->send_msg(&msg) != 0)
         throw USER_EXCEPTION(SE1034);
 
-    if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
+
+	if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     *p = *(xptr*)(&(msg.data.swap_data.ptr));
     xptr swapped = *(xptr*)(&(msg.data.swap_data.swapped));

@@ -202,8 +202,8 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
 		writeBlockIrrelevantToCreateVersionCount++;
 	}
 
-    blk->roffs = 0;
-    blk->is_changed = false;
+//    blk->roffs = 0;
+//    blk->is_changed = false;
 
     if (IS_DATA_BLOCK(p)) 
         ll_phys_log_flush_blk(blk, sync_phys_log);
@@ -331,7 +331,7 @@ xptr put_block_to_buffer(session_id sid,
 //d_printf1("put 1\n");
     res = buffer_table.find(p, *offs);
     if (res == 0) return xptr(); // we have found the block in memory
-
+	
 //d_printf1("put 2\n");
     // this block is not in memory
     // try to find free buffer for the block
@@ -345,6 +345,13 @@ xptr put_block_to_buffer(session_id sid,
 //d_printf1("put 4\n");
     // read block from disk
     if (read_block_from_disk) read_block(p, *offs);
+	else
+	{
+		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
+		vmm_sm_blk_hdr::init(hdr);
+		hdr->p = p;
+		hdr->roffs = *offs;
+	}
 
 //d_printf1("put 5\n");
 
