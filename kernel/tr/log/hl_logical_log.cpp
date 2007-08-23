@@ -119,7 +119,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
         }
         else
         {
-//           rollback_tr_by_logical_log(trid);
+           rollback_tr_by_logical_log(trid);
 #ifdef SE_ENABLE_FTSEARCH
 	   	   SednaIndexJob::rollback();
 #endif
