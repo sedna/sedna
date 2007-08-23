@@ -232,6 +232,7 @@ xptr add_record_to_data_indirection_table(xptr p)
 		{
 			CHECKP(p);
 			schema_node* sch=(GETBLOCKBYNODE(p))->snode;
+//			DebugBreak();
 			create_new_cluster(redo_hint,sch->root,sch,redo_blocks);
 			redo_hint=-1;
 		}

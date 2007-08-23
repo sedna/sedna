@@ -663,6 +663,7 @@ int main(int argc, char **argv)
             if (ssmmsg->init() != 0)
                 throw USER_EXCEPTION(SE3030);
 
+//            DebugBreak();
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
@@ -699,7 +700,7 @@ int main(int argc, char **argv)
             fprintf(res_os, "\nSM has been started\n");
             fflush(res_os);
 
-            USemaphoreDown(wait_for_shutdown, __sys_call_error);
+			USemaphoreDown(wait_for_shutdown, __sys_call_error);
 
             //to this point all sessions are closed by governor
 
