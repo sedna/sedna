@@ -180,8 +180,9 @@ localPart2!:
 	| OPTION       <<#0=#["option", AST_LOCAL_NAME];>>
 	| LOADFILE       <<#0=#["LOADFILE", AST_LOCAL_NAME];>>
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_LOCAL_NAME];>>
+	| CASE_ <<#0=#["case", AST_LOCAL_NAME];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_LOCAL_NAME];>>
-	| CASE <<#0=#["case", AST_LOCAL_NAME];>>
+
 ;
 
 localPart3!:
@@ -340,8 +341,9 @@ prefixPart2!:
 	| OPTION       <<#0=#["option", AST_PREFIX];>>
 	| LOADFILE       <<#0=#["LOADFILE", AST_PREFIX];>>
 	| CDOCUMENT       <<#0=#["DOCUMENT", AST_PREFIX];>>
+	| CASE_ <<#0=#["case", AST_PREFIX];>>
 	| TYPESWITCH <<#0=#["typeswitch", AST_PREFIX];>>
-	| CASE <<#0=#["case", AST_PREFIX];>>
+
 ;
 
 prefixPart3!:
