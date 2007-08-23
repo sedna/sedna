@@ -244,6 +244,19 @@ void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
    hl_logical_log_on_transaction_end(is_commit, rcv_active);
    d_printf1("OK\n");
 
+   d_printf1("\nNotifying sm of commit...");
+   if (!rcv_active || (rcv_active && is_commit))
+   {
+       msg.cmd = 38; // transaction commit/rollback
+       msg.trid = trid; 
+       msg.sid = sid;
+       msg.data.data[0] = 0;
+
+       if (sm_server->send_msg(&msg) != 0)
+           throw USER_EXCEPTION(SE1034);
+   }
+
+
    d_printf1("Syncing indirection table...");
    sync_indirection_table();
    d_printf1("OK\n");
