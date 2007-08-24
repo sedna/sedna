@@ -22,7 +22,7 @@
 
 #include "sm/wu/wu.h"
 
-#define LOGICAL_LOG
+//#define LOGICAL_LOG
 //#define LOGICAL_LOG_TEST
 #define NULL_OFFS (-1)
 #define LOGICAL_LOG_FLUSH_PORTION (128*1024) // 128 Kb
