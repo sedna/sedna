@@ -11,8 +11,8 @@
 
 struct WuVersionEntry
 {
+	XPTR xptr;
 	LXPTR lxptr;
-	XPTR xptr;	
 };
 
 struct WuEnumerateVersionsParams

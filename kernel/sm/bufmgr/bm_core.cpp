@@ -202,8 +202,8 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
 		writeBlockIrrelevantToCreateVersionCount++;
 	}
 
-//    blk->roffs = 0;
-//    blk->is_changed = false;
+    blk->roffs = 0;
+    blk->is_changed = false;
 
     if (IS_DATA_BLOCK(p)) 
         ll_phys_log_flush_blk(blk, sync_phys_log);
