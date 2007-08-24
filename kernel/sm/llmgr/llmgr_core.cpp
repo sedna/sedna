@@ -2872,6 +2872,7 @@ void llmgr_core::activate_checkpoint(bool sync)
 void llmgr_core::set_prev_rollback_lsn(transaction_id &trid, bool sync)
 {
   //!!!The acquire of sem is not needed since I don't read here shared variables!!!
+
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   
   if ( mem_head->t_tbl[trid].mode == ROLLBACK_MODE)

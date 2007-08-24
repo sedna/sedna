@@ -27,7 +27,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   __int64 file_size, old_size;
   
-  void *free_blk_info, *ctrl_blk;
+  void *free_blk_info, *ctrl_blk, *ctrl_blk_buf;
   int free_blk_info_size;
   xptr free_blk_info_xptr;
 
@@ -118,7 +118,16 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
   char *lsn_offs; // address of the prevLSN field in current physical record
 
-  ctrl_blk = se_new_cxt(TopMemoryContext) char[PAGE_SIZE];
+  int sector_size;
+
+  int res = uGetDiskSectorSize(&sector_size, db_files_path.c_str(), __sys_call_error);  
+  if (res == 0) 
+     throw USER_EXCEPTION(SE4051);
+  
+  ctrl_blk_buf = se_new_cxt(TopMemoryContext) char[2*PAGE_SIZE];
+  
+  // sector alligned buffer
+  ctrl_blk = (void *)((__uint32) ((char *)ctrl_blk_buf + sector_size - 1) & ~(sector_size - 1));
 
   while (lsn != NULL_LSN)
   {
@@ -155,7 +164,6 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 
 //        ctrl_blk = malloc(PAGE_SIZE);
         bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
-    	//TODO: change phys_xptr to log_xptr for this block
     	bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         
         lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(int);
@@ -223,7 +231,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     	}
   }*/
   
-  free(ctrl_blk);
+  free(ctrl_blk_buf);
 
   ll_log_unlock(sync);
 

@@ -36,6 +36,7 @@ bool ll_logical_log_startup(int &sedna_db_version)
 
   return ret;
 #else
+  sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
   return 1;
 #endif
 }
