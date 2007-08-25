@@ -2,13 +2,16 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <list>
 #include <stdio.h>
+#include <list>
+#include <hash_map>
+#include <algorithm>
 #include "wuaux.h"
 #include "wuerr.h"
 #include "wuversions.h"
 #include "wuclients.h"
 
+#define VE_SNAPSHOTS_COUNT		3
 #define VE_MAX_CLIENTS_COUNT	0x10000
 #define VE_BUFSZ				1024
 
@@ -18,27 +21,28 @@ typedef SnRequestForGc VeVersionManipAction;
 #define VE_ACTION_TYPE_CREATE_VERSION			SN_REQUEST_TYPE_OLDER_VERSION
 #define VE_ACTION_TYPE_MARK_VERSION_ZOMBIE		SN_REQUEST_TYPE_ZOMBIE
 
-struct VeMappingEntry
-{
-	XPTR xptr;
-	TIMESTAMP creatorTs;
-	int creator;
-};
+/*	version[0] - xptr of the working version
+	version[1] - xptr of the last commited version
+	version[2] - xptr of the version in #1 snapshot
+	version[3] - xptr of the version in #2 snapshot
+	version[n] - xptr of the version in #(n-1) snapshot
 
+	workingVersionTs - timestamp of the working version (0 if no working version exist)
+	anchorTs - timestamp of the most recent snapshot NOT HAVING last commited version in it
+	*/ 
 struct VeMapping
 {
-	VeMappingEntry version[VE_SNAPSHOTS_COUNT+2];
-	int anchor;
+	XPTR version[VE_SNAPSHOTS_COUNT+2];
+	TIMESTAMP workingVersionTs, anchorTs;
 	int validDataBegin;
 	int validDataEnd;
-	int publicDataBegin;
-	int publicDataEnd;
+	int isWorkingVersionPresent;
 };
 
 struct VeSnapshot
 {
 	TIMESTAMP timestamp;	
-	TIMESTAMP *clientTs;
+	TIMESTAMP *activeTransactionsTsBegin, *activeTransactionsTsEnd;
 	int occupancy;
 	int isDamaged;
 	VeSnapshot *next;
@@ -59,6 +63,55 @@ struct VeClientState
 		TIMESTAMP clientTs;
 	};
 	std::list<VeVersionManipAction> *versionManipActions;
+};
+
+/*	We need 2 properties: (1) deleting a block version doesn't require writing either 
+	the requested version or other versions of the same block back to HDD and
+	(2) version deletion doesn't require puting version into buffer. These requirement are
+	essential to reduce the additional buffer manager load imposed by versions as much as possible.
+
+	It means that we CAN NOT use data in version header to perform all desired correctness checks on the 
+	operations issued by transactions. The list of operation along with the correctness checks that
+	require auxilary data structures follows.
+
+	[VeAllocateBlock]	- None.
+	[VeGetBlockVersion] - Is the version selected by version selection algoritm a "live" version or the
+						  block was already freed and only snapshot versions remain?
+	[VeCreateBlockVersion] - Same as for VeGetBlockVersion.
+	[VeFreeBlock]		- Wasn't the block already freed?
+						  Do we have rights to free this block (no other active transaction 
+						  created a working version)?
+						  Assuming that block versions are divided into "master" version and
+						  "slave" versions indistinguishable by xptrs; is VeFreeBlock called on
+						  the master version?
+
+	The well-behaving transactions should never perform incorrect operations; the correctness 
+	checks are primarily intended for debugging purposes. They may be disabled to improve the 
+	performance.
+
+	The solution is to maintain a hash table of VeRestrictionEntry structures (xptr is the key).
+	Every time a transaction creates a working versions (technically speaking, it creates another
+	slave version and initialises it after the master version) 2 entries are posted to the hash table,
+	one for the master version (deletorTs=~(TIMESTAMP)0, creatorId=ClGetCurrentClientId()), the other for
+	the slave version (deletorTs=~(TIMESTAMP)0, creatorId=-1). When the transaction commits entries
+	for master versions are removed. Entries for slave versions are removed as soon as these versions
+	are discarded due to snapshots advance. Whenever the master version is freed an entry
+	(deletorTs=VeGetCurrentTs(), creatorId=ClGetCurrentClientId()) is posted (possibly overwriting an
+	existing entry).
+
+	Looking up deletorTs in the hash table by the given xptr tells whether the version is "live" or
+	not. This check also prevents multiple VeFreeBlock on the same xptr. Non-negative creatorId tells
+	us that a working version was created. If creatorId is different from the transaction's own id 
+	the transaction is not permited to free the block. Finally if an entry for the given xptr is 
+	found and creatorId==-1 the xptr indentifies a slave version which is not allowed to be freed.
+
+*/ 
+
+struct VeRestrictionEntry
+{
+	XPTR xptr;
+	TIMESTAMP deletorTs;
+	int creatorId;
 };
 
 /* global state */ 
@@ -96,13 +149,15 @@ ResetSnapshotsList(VeSnapshotsList *lst)
 	lst->freeList=NULL;
 
 	lst->first.timestamp=~(TIMESTAMP)0;
-	lst->first.clientTs=NULL;
+	lst->first.activeTransactionsTsBegin=NULL;
+	lst->first.activeTransactionsTsEnd=NULL;
 	lst->first.occupancy=INT_MAX;
 	lst->first.isDamaged=0;
 	lst->first.next=&(lst->last);
 	
 	lst->last.timestamp=0;
-	lst->last.clientTs=NULL;
+	lst->last.activeTransactionsTsBegin=NULL;
+	lst->last.activeTransactionsTsEnd=NULL;
 	lst->last.occupancy=INT_MAX;
 	lst->last.isDamaged=0;
 	lst->last.next=NULL;
@@ -146,13 +201,14 @@ InitSnapshotsList(VeSnapshotsList *lst, size_t clientsCount)
 		ti=(TIMESTAMP*)OffsetPtr(lst->mem,snapshotsSize);
 		memset(ti,0,timestampsSize);
 		
-		lst->first.clientTs=ti; ti+=clientsCount;
+		lst->first.activeTransactionsTsBegin=lst->first.activeTransactionsTsEnd=ti; ti+=clientsCount;
 		lst->freeList=si;
 
 		for (i=0;i<VE_SNAPSHOTS_COUNT;++i,++si)
 		{
 			si->timestamp=0;
-			si->clientTs=ti; ti+=clientsCount;
+			si->activeTransactionsTsBegin=si->activeTransactionsTsEnd=ti; 
+			ti+=clientsCount;
 			si->occupancy=0;
 			si->isDamaged=0;
 			si->next=si+1;
@@ -273,7 +329,8 @@ int DiscardSnapshot(VeSnapshotsList *lst, TIMESTAMP ts)
 		victim->timestamp = 0;
 		victim->occupancy = 0;
 		victim->isDamaged = 0;
-		memset(victim->clientTs,0,lst->clientsCount*sizeof(TIMESTAMP));
+		memset(victim->activeTransactionsTsBegin,0,lst->clientsCount*sizeof(TIMESTAMP));
+		victim->activeTransactionsTsEnd=victim->activeTransactionsTsBegin;
 		success=1;
 	}
 	return success;
@@ -317,49 +374,32 @@ int CreateSnapshot(VeSnapshotsList *lst, TIMESTAMP ts)
 static
 int ValidateHeader(VersionsHeader *hdr)
 {
-	int success=1, i=0;
+	int success=0, i=0;
 
-	return success;
-}
-
-static
-int ValidateMapping(VeMapping *map)
-{
-	int success=1, i=0;
-
+	assert(hdr);
+	if (hdr->xptr[0]==0 || hdr->creatorTs[0]==0 || hdr->creatorTs[0]==~(TIMESTAMP)0)
+	{
+		/* must have at least one valid entry */ 
+	}
+	else
+	{
+		for (i=1; i<VE_VERSIONS_COUNT; ++i)
+		{
+			if (hdr->xptr[i]==0 || hdr->creatorTs[i]>=hdr->creatorTs[i-1] || hdr->creatorTs[i]==0) break;
+		}
+		while (i<VE_VERSIONS_COUNT && hdr->xptr[i]==0 && hdr->creatorTs[i]==~(TIMESTAMP)0) ++i;
+		success = (i == VE_VERSIONS_COUNT);
+	}
 	return success;
 }
 
 inline
 static
-int IsVersionYoungerThanSnapshot(VeSnapshotsList *lst, 
-								 VeSnapshot *sh, 
-								 TIMESTAMP creatorTs,
-								 int creator)
+int IsVersionYoungerThanSnapshot(VeSnapshot *sh, 
+								 TIMESTAMP creatorTs)
 {
-	assert(sh && lst);
-	/*	Creator MAY be greater than lst->clientsCount if database restarted and clientsCount 
-		decreased (someone rebuilt the binaries for instance). Creator MAY be -1 if
-		we are checking "nonexistent" version against the snapshot. */ 
-	return 
-		creatorTs>=sh->timestamp || 
-		creator<0 || 
-		creator<lst->clientsCount && creatorTs==sh->clientTs[creator];
-}
-
-static
-void ResetMapping(VeMapping *map)
-{
-	static const VeMappingEntry initC = {0,0,-1};
-	int i=0;
-
-	assert(map);
-	map->anchor = 0;
-	map->validDataBegin = 0;
-	map->validDataEnd = 0;
-	map->publicDataBegin = 0;
-	map->publicDataEnd = 0;
-	for (i=0; i<VE_SNAPSHOTS_COUNT+2; ++i) map->version[i] = initC;
+	assert(sh);
+	return creatorTs>sh->timestamp || std::binary_search(sh->activeTransactionsTsBegin, sh->activeTransactionsTsEnd, creatorTs);
 }
 
 static 
@@ -371,125 +411,143 @@ void ResetHeader(VersionsHeader *hdr, int start)
 	for (i=start; i<VE_VERSIONS_COUNT; ++i)
 	{
 		hdr->xptr[i] = 0;
-		hdr->creatorTs[i] = 0;
-		hdr->creator[i] = -1;
+		hdr->creatorTs[i] = ~(TIMESTAMP)0;
 	}
-	hdr->isZombie = 0;
 }
 
 static
 void MakeMappingFromHeader(VeSnapshotsList *lst, 
 						   VeMapping *map, 
-						   VersionsHeader *hdr)
+						   VersionsHeader *hdr,
+						   TIMESTAMP deletorTs)
 {
-	static const VeMappingEntry initC = {0,0,-1};
+	static const VeMapping initializer = {{},0,~(TIMESTAMP)0,-1,-1,0};
 	VeSnapshot *it=NULL;
 	int i=0, g=0, p=0;
 
 	assert(lst && map && hdr && ValidateHeader(hdr));
-	ResetMapping(map);
+	*map=initializer;
 
-	/* process head */ 
 	it=&(lst->first);
-	if (IsVersionYoungerThanSnapshot(lst,it,hdr->creatorTs[0],hdr->creator[0]))
+	if (IsVersionYoungerThanSnapshot(it,hdr->creatorTs[0]))
 	{
-		map->version[0].xptr = hdr->xptr[0]; 
-		map->version[0].creatorTs = hdr->creatorTs[0];
-		map->version[0].creator = hdr->creator[0];
-		p=1; g=1;
+		/*	have working version */ 
+		map->version[0] = hdr->xptr[0];
+		map->isWorkingVersionPresent = 1;
+		map->workingVersionTs = hdr->creatorTs[0];
 		map->validDataBegin=0;
+		p=1; g=1;
 	}
 	else
 	{
-		map->version[0]=initC; p=1; g=0;
-		if (!hdr->isZombie) { map->validDataBegin=1; }
-		else
+		/*	have no working version, need anchorTs (the timestamp of the MOST RECENT snapshot 
+			NOT HAVING the last commited version in it) */ 
+		p=1; g=0;
+		map->validDataBegin=1;
+		for (; it->next && !IsVersionYoungerThanSnapshot(it,hdr->creatorTs[0]); it=it->next, ++p)
 		{
-			assert(it && it->next);
-			while(p<VE_SNAPSHOTS_COUNT+2 && !IsVersionYoungerThanSnapshot(lst,it->next,hdr->creatorTs[0],hdr->creator[0]))
-			{
-				map->version[p] = initC;
-				++p;
-				it = it->next;
-				assert(it && it->next);
-			}
-			map->validDataBegin = p;
+			map->version[p] = hdr->xptr[0];
 		}
+		map->anchorTs = it->timestamp;
+		g=1;
 	}
 
-	/* process tail */ 
+	/* fill remaining version slots */ 
 	for (; it->next; it=it->next, ++p)
 	{
-		while (g<VE_VERSIONS_COUNT && IsVersionYoungerThanSnapshot(lst,it,hdr->creatorTs[g],hdr->creator[g])) ++g;
+		while (g<VE_VERSIONS_COUNT && IsVersionYoungerThanSnapshot(it,hdr->creatorTs[g])) ++g;
 		if (g>=VE_VERSIONS_COUNT) break;
-		if (g==0) map->anchor=p+1;
-		map->version[p].xptr = hdr->xptr[g];
-		map->version[p].creatorTs = hdr->creatorTs[g];
-		map->version[p].creator = hdr->creator[g];
+		map->version[p] = hdr->xptr[g];
 	}	
-
-	/* misc jobs */ 
 	map->validDataEnd = p;
-	for(; p<VE_SNAPSHOTS_COUNT+2; ++p) map->version[p] = initC;
-	map->publicDataBegin = map->validDataBegin+(hdr->isZombie ? 1 : 0);
-	map->publicDataEnd = map->validDataEnd;
-
-	/* fix anchor */ 
-	if (map->publicDataBegin>1) map->anchor=0;
+	
+	/* update validDataBegin based on deletorTs */ 
+	if (deletorTs == ~(TIMESTAMP)0) {;}
+	else if (IsVersionYoungerThanSnapshot(&(lst->first),deletorTs))
+	{
+		assert(map->isWorkingVersionPresent && deletorTs == map->workingVersionTs);
+		map->version[0]=0;
+		map->validDataBegin=1;
+	}
+	else
+	{
+		assert(!map->isWorkingVersionPresent);
+		map->version[0]=0; p=1; it=lst->first.next;
+		while (it->next && !IsVersionYoungerThanSnapshot(it,deletorTs) && p<map->validDataEnd)
+		{
+			map->version[p]=0;
+			++p; it=it->next;
+		}
+		map->validDataBegin=p;
+	}
 }
 
 static
 int PushNewVersionIntoHeader(VeSnapshotsList *lst,
 							 VersionsHeader *hdr,
 							 XPTR xptr,
-							 TIMESTAMP creatorTs,
-							 int creator)
+							 TIMESTAMP creatorTs)
 {
-	VeSnapshot *snapshot = NULL;
-	int success = 0, failure = 0, i = 0;
-	assert(lst && hdr && ValidateHeader(hdr));
+	VeSnapshot *it = NULL;
+	VersionsHeader hdrResult = {};
+	int success = 0, failure = 0, p = 0, g = 0;
 
-	if (hdr->creator[VE_VERSIONS_COUNT-1]!=-1)
+	assert(lst && hdr);
+	
+	/* compact entries in the hdr */ 
+	if (IsVersionYoungerThanSnapshot(&(lst->first),hdr->creatorTs[0]))
 	{
-		snapshot = &(lst->first);
-		while (!IsVersionYoungerThanSnapshot(lst,snapshot,hdr->creatorTs[VE_VERSIONS_COUNT-1],hdr->creator[VE_VERSIONS_COUNT-1]))
+		WuSetLastErrorMacro(WUERR_WORKING_VERSION_ALREADY_CREATED);
+		failure = 1;
+	}
+	else
+	{
+		g=0; p=1;
+		for (it=&(lst->first); it->next && !failure; it=it->next)
 		{
-			snapshot=snapshot->next;
-			assert(snapshot);
+			/* for each neighboring snapshots pair keep the most recent version in-between */ 
+			while (g<VE_VERSIONS_COUNT && IsVersionYoungerThanSnapshot(it,hdr->creatorTs[g])) ++g;
+			if (g==VE_VERSIONS_COUNT) break;
+			if (IsVersionYoungerThanSnapshot(it->next,hdr->creatorTs[g]))
+			{
+				if (p<VE_VERSIONS_COUNT)
+				{
+					hdrResult.xptr[p] = hdr->xptr[g];
+					hdrResult.creatorTs[p] = hdr->creatorTs[g];
+					++p;
+				}
+				else
+				{
+					/* no room left in hdrResult to put version info, marking the snapshot as damaged */ 
+					if (it->occupancy > 0)
+					{
+						WuSetLastErrorMacro(WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE);
+						failure=1;
+					}
+					else
+					{
+						it->isDamaged = 1;
+					}
+				}
+			}
 		}
-		while (snapshot != &lst->last && !failure)
+		/* filling the tail properly */ 
+		for (; p<VE_VERSIONS_COUNT; ++p)
 		{
-			if (snapshot->occupancy > 0)
-			{
-				WuSetLastErrorMacro(WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE);
-				failure=1;
-			}
-			else
-			{
-				snapshot->isDamaged |= 1;
-			}
-			snapshot = snapshot->next;
+			hdrResult.xptr[p]=0;
+			hdrResult.creatorTs[p]=~(TIMESTAMP)0;
 		}
+		/* finally putting xptr and creatorTs in the header */ 
+		hdrResult.creatorTs[0] = creatorTs;
+		hdrResult.xptr[0] = hdrResult.xptr[1];
+		hdrResult.xptr[1] = xptr;
 	}
 
 	if (!failure)
 	{
-		memmove(hdr->xptr+1,hdr->xptr,(VE_VERSIONS_COUNT-1)*sizeof(XPTR));
-		memmove(hdr->creatorTs+1,hdr->creatorTs,(VE_VERSIONS_COUNT-1)*sizeof(TIMESTAMP));
-		memmove(hdr->creator+1,hdr->creator,(VE_VERSIONS_COUNT-1)*sizeof(int));
-		hdr->xptr[1]=xptr;
-		hdr->creatorTs[0]=creatorTs;
-		hdr->creator[0]=creator;
-		if (!ValidateHeader(hdr))
-		{
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
-		}
-		else 
-		{
-			success=1;
-		}
+		*hdr = hdrResult;
+		success = 1;
 	}
-
 	return success;
 }
 
@@ -577,7 +635,7 @@ int VeOnRegisterClient(int isUsingSnapshot, TIMESTAMP snapshotTs)
 	else if (setup.getTimestamp(&state->clientTs))
 	{
 		state->versionManipActions = new std::list<VeVersionManipAction>();
-		snapshotsList.first.clientTs[ClGetCurrentClientId()] = state->clientTs;
+		*(snapshotsList.first.activeTransactionsTsEnd++) = state->clientTs;
 		success = 1;
 	}
 	return success;
@@ -586,6 +644,7 @@ int VeOnRegisterClient(int isUsingSnapshot, TIMESTAMP snapshotTs)
 int VeOnUnregisterClient()
 {
 	int success=0;
+	TIMESTAMP *pos = NULL;
 	VeClientState *state=NULL;
 	VeSnapshot *snapshot=NULL;
 
@@ -598,7 +657,11 @@ int VeOnUnregisterClient()
 	{
 		delete state->versionManipActions;
 		state->versionManipActions = NULL;
-		snapshotsList.first.clientTs[ClGetCurrentClientId()] = 0;
+		pos = std::lower_bound(snapshotsList.first.activeTransactionsTsBegin,
+							   snapshotsList.first.activeTransactionsTsEnd, 
+							   state->clientTs);
+		assert (pos<snapshotsList.first.activeTransactionsTsEnd && *pos==state->clientTs);
+		memmove(pos,pos+1,CalcPtrDistance(pos,--snapshotsList.first.activeTransactionsTsEnd));
 		success = 1;
 	}
 	else
@@ -607,7 +670,6 @@ int VeOnUnregisterClient()
 		snapshot->occupancy --;
 		success = 1;
 	}
-
 	return success;
 }
 
@@ -638,17 +700,19 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 		}
 		else
 		{
-			MakeMappingFromHeader(&snapshotsList,&mapping,header);
+			MakeMappingFromHeader(&snapshotsList,&mapping,header,~(TIMESTAMP)0);
 			if (IsUpdaterState(state))
 			{
-				if (mapping.validDataBegin == 0)
+				if (mapping.isWorkingVersionPresent)
 				{
-					if (mapping.version[0].creator != ClGetCurrentClientId())
+					if (mapping.workingVersionTs != state->clientTs)
 					{
+						/* working version was created by another transaction */ 
 						WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 					}
-					else if (mapping.publicDataBegin > 0)
+					else if (mapping.validDataBegin > 0)
 					{
+						/* working version was created by the calling transaction, however it already deleted the block */ 
 						WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 					}
 					else
@@ -657,7 +721,7 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 						success=1;
 					}
 				}
-				else if (mapping.publicDataBegin>1)
+				else if (mapping.validDataBegin>1)
 				{
 					WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 				}
@@ -672,11 +736,11 @@ int VeLoadBuffer(LXPTR lxptr, int *pBufferId, int flags)
 			{
 				ordinal=GetSnapshotByTimestamp(&snapshotsList,&snapshot,NULL,state->snapshotTs);
 				assert(ordinal>=2);
-				if (ordinal < mapping.publicDataBegin || mapping.publicDataEnd <= ordinal)
+				if (ordinal < mapping.validDataBegin || mapping.validDataEnd <= ordinal)
 				{
 					WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 				}
-				else if (!setup.loadBuffer(mapping.version[ordinal].xptr, &bufferId, 0)) {}
+				else if (!setup.loadBuffer(mapping.version[ordinal], &bufferId, 0)) {}
 				else if (!setup.locateHeader(bufferId, &header)) {}
 				else if (!ValidateHeader(header) || header->xptr[0]!=lxptr)
 				{
@@ -706,7 +770,6 @@ int VeInitBlockHeader(LXPTR xptr, int bufferId)
 		ResetHeader(header,0);
 		header->xptr[0] = xptr;
 		header->creatorTs[0] = state->clientTs;
-		header->creator[0] = ClGetCurrentClientId();
 		success = 1;
 	}
 	return success;
@@ -785,14 +848,14 @@ int VeCreateVersion(LXPTR lxptr)
 		else
 		{
 			header=*pheader;
-			MakeMappingFromHeader(&snapshotsList,&mapping,pheader);			
-			if (mapping.publicDataBegin>1)
+			MakeMappingFromHeader(&snapshotsList,&mapping,pheader,~(TIMESTAMP)0);			
+			if (mapping.validDataBegin>1)
 			{
 				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
 			}
-			if (mapping.validDataBegin==0)
+			if (mapping.isWorkingVersionPresent)
 			{
-				if (mapping.version[0].creator != ClGetCurrentClientId())
+				if (mapping.workingVersionTs != state->clientTs)
 				{
 					WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 				}
@@ -805,22 +868,20 @@ int VeCreateVersion(LXPTR lxptr)
 			else
 			{
 				persOrdinal=GetSnapshotByTimestamp(&snapshotsList,&snapshot,NULL,persSnapshotTs);
-				isSpecial=(persOrdinal!=0 && mapping.version[1].xptr==mapping.version[persOrdinal].xptr);
+				isSpecial=(persOrdinal!=0 && mapping.version[1]==mapping.version[persOrdinal]);
 				if (!setup.copyBlock(xptr,lxptr,isSpecial)) {}
 				else if (!setup.loadBuffer(lxptr,&bufferId,0)) {}
-				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs, ClGetCurrentClientId())) {}
+				else if (!PushNewVersionIntoHeader(&snapshotsList, &header, xptr, state->clientTs)) {}
 				else
 				{
 					if (!setup.locateHeader(bufferId,&pheader)) {}
 					else if (isSpecial && !setup.onCompleteBlockRelocation(ClGetCurrentClientId(),lxptr,xptr)) {}
 					else
 					{
-						GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.anchor);
-
 						action.type = VE_ACTION_TYPE_CREATE_VERSION;
 						action.lxptr = lxptr;
 						action.xptr = xptr;
-						action.anchorTs = snapshot->timestamp;
+						action.anchorTs = mapping.anchorTs;
 
 						state->versionManipActions->push_back(action);
 						*pheader=header;
@@ -865,35 +926,32 @@ int VeFreeBlock(LXPTR lxptr)
 		}
 		else
 		{
-			MakeMappingFromHeader(&snapshotsList,&mapping,header);
-			if (mapping.publicDataBegin>1)
-			{
-				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
-			}
-			if (mapping.validDataBegin>0)
+			MakeMappingFromHeader(&snapshotsList,&mapping,header,~(TIMESTAMP)0);
+			if (!mapping.isWorkingVersionPresent)
 			{
 				WuSetLastErrorMacro(WUERR_OPERATION_REQUIRES_WORKING_VERSION);
 			}
-			else if (mapping.version[0].creator != ClGetCurrentClientId())
+			else if (mapping.workingVersionTs != state->clientTs)
 			{
 				WuSetLastErrorMacro(WUERR_WORKING_VERSION_CREATED_BY_ALLY);
 			}
+			else if (mapping.validDataBegin>0)
+			{
+				/* we never get here */ 
+				WuSetLastErrorMacro(WUERR_NO_APROPRIATE_VERSION);
+			}
 			else
 			{
-				header->isZombie=1;
-				if (setup.markBufferDirty(bufferId,header,sizeof *header,0))
-				{
-					GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.validDataEnd);
-					assert(snapshot);
+				GetSnapshotByOrdinalNumber(&snapshotsList,&snapshot,mapping.validDataEnd);
+				assert(snapshot);
 
-					action.type = VE_ACTION_TYPE_MARK_VERSION_ZOMBIE;
-					action.lxptr = lxptr;
-					action.xptr = lxptr;
-					action.anchorTs = snapshot->timestamp;
+				action.type = VE_ACTION_TYPE_MARK_VERSION_ZOMBIE;
+				action.lxptr = lxptr;
+				action.xptr = lxptr;
+				action.anchorTs = snapshot->timestamp;
 
-					state->versionManipActions->push_back(action);
-					success = 1;
-				}
+				state->versionManipActions->push_back(action);
+				success = 1;
 			}
 		}
 	}
@@ -1004,27 +1062,23 @@ int VeOnRollback()
 	return success;
 }
 
-static 
-int setupTsProc(ClEnumerateClientsParams *params, int clientId)
-{
-	VeSnapshot *snapshot = NULL;
-	assert(params->userData && clientId>=0 && clientId < snapshotsList.clientsCount);
-	snapshot = (VeSnapshot*)params->userData;
-	snapshot->clientTs[clientId] = snapshotsList.first.clientTs[clientId];
-	return 1;
-}
-
 int VeOnSnapshotsAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs)
 {
-	ClEnumerateClientsParams params;
+	VeSnapshot *snapshot = NULL;
+	size_t size = 0;
 	int success=0;
 
 	if (discardedTs!=0 && !DiscardSnapshot(&snapshotsList, discardedTs)) {}
 	else if (!CreateSnapshot(&snapshotsList, snapshotTs)) {}
-	else if (!GetSnapshotByTimestamp(&snapshotsList, (VeSnapshot **)&(params.userData), NULL, snapshotTs)) {}
-	else if (!ClEnumerateClients(&params, setupTsProc)) {}
+	else if (!GetSnapshotByTimestamp(&snapshotsList, &snapshot, NULL, snapshotTs)) {}
 	else
 	{
+		size = (size_t)(snapshotsList.first.activeTransactionsTsEnd-snapshotsList.first.activeTransactionsTsBegin);
+		snapshot->activeTransactionsTsEnd = snapshot->activeTransactionsTsBegin+size;
+		memcpy(snapshot->activeTransactionsTsBegin,
+			   snapshotsList.first.activeTransactionsTsBegin,
+			   size*sizeof(TIMESTAMP));
+
 		success=1;
 	}
 	return success;

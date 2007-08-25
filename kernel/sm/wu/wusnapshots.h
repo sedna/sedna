@@ -13,18 +13,22 @@ struct SnResourceDemand
 	size_t clientStateSize;
 };
 
+#define SN_SETUP_DISABLE_VERSIONS_FLAG				0x01
+
 struct SnSetup
 {
+	/* params */ 
+	TIMESTAMP initialPersSnapshotTs;
+	int flags;
+
+	/* tickets */ 
 	TICKET clientStateTicket;
 
+	/* wire */ 
 	int (*freeBlock)(XPTR xptr);
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 	
 	int (*onDiscardSnapshot)(TIMESTAMP snapshotTs);
-
-	/* params */ 
-	TIMESTAMP initialPersSnapshotTs;
-	int areVersionsDisabled;
 };
 
 /* garbage entries have lxptr==0 */ 

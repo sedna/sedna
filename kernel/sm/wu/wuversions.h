@@ -17,8 +17,16 @@ struct VeResourceDemand
 	size_t bufferStateSize;
 };
 
+#define VE_SETUP_DISABLE_VERSIONS_FLAG				0x01
+#define VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG	0x02
+
 struct VeSetup
 {
+	/* params */ 
+	TIMESTAMP initialPersSnapshotTs;
+	int flags;
+
+	/* tickets */ 
 	TICKET clientStateTicket;
 	TICKET bufferStateTicket; 
 
@@ -53,10 +61,6 @@ struct VeSetup
 		however it's copy at lxptr still exists.
 		May be called in context where clientId!=GetCurrentCLientId(). */ 
 	int (*onCompleteBlockRelocation)(int clientId, LXPTR lxptr, XPTR xptr);
-
-	/* params */ 
-	TIMESTAMP initialPersSnapshotTs;
-	int areVersionsDisabled;
 };
 
 int VeInitialize();
