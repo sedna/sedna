@@ -314,6 +314,8 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	ClSetup clSetup = {CHARISMA_MAX_TRNS_NUMBER, 0x10000};
 	VeSetup veSetup =
 	{
+		persSnapshotTs,
+		0,
 		NULL,
 		NULL,
 		/* begin wire */ 
@@ -330,19 +332,19 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		WuGetTimestamp,
 		SnAcceptRequestForGc,
 		LocateHeader,
-		OnCompleteBlockRelocation,
-		/* end wire */ 
-		persSnapshotTs
+		OnCompleteBlockRelocation
+		/* end wire */ 		
 	};
 	SnSetup snSetup =
 	{
+		persSnapshotTs,
+		0,
 		NULL,
 		/* begin wire */ 
 		FreeBlock,
 		WuGetTimestamp,
-		OnDiscardSnapshot,
-		/* end wire */ 
-		persSnapshotTs
+		OnDiscardSnapshot
+		/* end wire */ 		
 	};
 	VeResourceDemand veResourceDemand = {};
 	SnResourceDemand snResourceDemand = {};
