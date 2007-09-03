@@ -7,6 +7,9 @@
 
 #include "tr/executor/root/PPDropTrigger.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/triggers/triggers.h"
+#include "tr/locks/locks.h"
+
 
 PPDropTrigger::PPDropTrigger(PPOpIn _trigger_name_, dynamic_context *_cxt_) :	trigger_name(_trigger_name_), cxt(_cxt_)
 {
@@ -48,6 +51,9 @@ void PPDropTrigger::execute()
         
     tc = tuple_cell::make_sure_light_atomic(tc);
 
+    if(trigger_cell::find_trigger(tc.get_str_mem()) == NULL) 
+    	throw USER_EXCEPTION2(SE3211, (std::string("Trigger '") + tc.get_str_mem() + "'").c_str());
+//    local_lock_mrg->put_lock_on_index(tc.get_str_mem());
 	trigger_cell::delete_trigger(tc.get_str_mem());
 }
 
