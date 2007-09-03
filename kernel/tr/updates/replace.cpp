@@ -20,7 +20,8 @@ void replace(PPOpIn arg)
 	//3. persistent replacements+their position in 2 seq
 //	xptr addr(0,(void*)0x4acc0000);
 //	check_blk_consistency(addr);
-	xptr node, parent, tmp_node, del_node, node_child, repl_node_child;
+	xptr node, parent, tmp_node, old_node, node_child, repl_node_child, del_node;
+	schema_node* scm_node;
 
 	tuple t(arg.ts);
 	descript_sequence arg3seq(2);
@@ -151,9 +152,8 @@ void replace(PPOpIn arg)
 	{
 		node=(*it3).cells[0].get_node();
 		CHECKP(node);
-		xptr tind=((n_dsc*)XADDR(node))->indir;
 		tuple t=(*it3);
-		t.cells[0].set_node(tind);
+		t.cells[0].set_node(((n_dsc*)XADDR(node))->indir);
 		++it3;
 		arg4seq.add(t);
 		
@@ -164,8 +164,21 @@ void replace(PPOpIn arg)
 	do
 	{
 		--it3;
-		node=removeIndirection((*it3).cells[0].get_node());
+		node = old_node = removeIndirection((*it3).cells[0].get_node());
+#ifdef SE_ENABLE_TRIGGERS
+		CHECKP(old_node);
+		scm_node = GETSCHEMENODEX(old_node);
+		parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
+		CHECKP(old_node);
+        tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
+#endif        
 		
+/*		if(old_node == XNULL) 
+		{
+			SYSTEM_EXCEPTION("!");
+		}
+*/
+
 		//1.insert
 		int pos=(*it3).cells[1].get_xs_integer();
 		sit=arg2seq.begin()+pos;
@@ -173,7 +186,7 @@ void replace(PPOpIn arg)
 		{
 			node_child=*sit;
 #ifdef SE_ENABLE_TRIGGERS
-			repl_node_child = apply_per_node_triggers(removeIndirection(node_child), node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+			repl_node_child = apply_per_node_triggers(removeIndirection(node_child), old_node, XNULL, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
 			if(repl_node_child==XNULL) goto next_replacement;
 			CHECKP(repl_node_child);
 			node_child = ((n_dsc*)XADDR(repl_node_child))->indir;
@@ -199,16 +212,11 @@ void replace(PPOpIn arg)
 
 		//delete node
         del_node = removeIndirection((*it3).cells[0].get_node());
-#ifdef SE_ENABLE_TRIGGERS
-        tmp_node = copy_to_temp(del_node);
-        parent=removeIndirection(((n_dsc*)XADDR(del_node))->pdsc);
         CHECKP(del_node);
-#endif        
-
         delete_node(del_node);
 
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(node, tmp_node, parent, NULL, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+        apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
 #endif
 next_replacement:;    
 	}

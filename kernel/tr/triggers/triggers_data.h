@@ -12,8 +12,6 @@
 #include "tr/executor/base/XPathOnSchema.h"
 #include "tr/executor/base/PPBase.h"
 
-#define TRIGGER_MAX_CASCADE_LEVEL 5
-
 class PPXptr;    
 class PathExpr;
 

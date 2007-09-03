@@ -76,9 +76,6 @@ void delete_undeep(PPOpIn arg)
 		--it;
 		xptr node=removeIndirection(*it);
 		CHECKP(node);
-#ifdef SE_ENABLE_TRIGGERS
-        if (apply_per_node_triggers(XNULL, node, XNULL, NULL, TRIGGER_BEFORE, TRIGGER_DELETE_EVENT) != XNULL)
-#endif
 		{
 			t_item type=GETTYPE((GETBLOCKBYNODE(node))->snode);
 			switch(type)

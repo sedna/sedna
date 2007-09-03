@@ -262,9 +262,8 @@ xptr prepare_old_node(xptr node, schema_node* scm_node, trigger_event event)
 {
    	t_triggers_set treated_triggers;
     CHECKP(node);
-//	scm_node = GETSCHEMENODEX(node);
     
-    if(find_trigger_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers))
+    if(find_trigger_for_node(scm_node, event, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers))
     {
         return copy_to_temp(node);
     }
