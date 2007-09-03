@@ -61,7 +61,7 @@ endif
 # options: triggers is on  - 1
 #          triggers is off - 0
 ifndef ENABLE_TRIGGERS
-ENABLE_TRIGGERS = 0
+ENABLE_TRIGGERS = 1
 endif
 
 # options: static libodbc - 1
