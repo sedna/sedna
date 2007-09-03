@@ -4966,16 +4966,18 @@
       0
       1)))
 
-; checks that trigger action ends up with a query
-(define (sa:check-trigger-action action)
-(display "\n=================\n")
-(display   (car (last action)))
-(display "\n=================\n")
-  (case (caar (last action))
-    ((insert-into insert-following insert-preceding rename delete delete_undeep replace move-into move-preceding move-following)
-     (cl:signal-input-error SE3210 action))
-    (else
-     action)))
+; checks that trigger action ends up with a query (for for-each-node triggers only)
+(define (sa:check-trigger-action action granularity)
+  (display "\n==========\n")
+    (display (caddar granularity))
+  (display "\n==========\n")
+  (if (string=? (caddar granularity) "NODE")
+      (case (caar (last action))
+        ((insert-into insert-following insert-preceding rename delete delete_undeep replace move-into move-preceding move-following)
+         (cl:signal-input-error SE3210 action))
+        (else
+         action))
+      action))
 
 (define (sa:analyze-trigger-create expr vars funcs ns-binding default-ns uri modules)
   (and
@@ -5066,7 +5068,7 @@
                 (sa:structural-absolute-xpath? (car fourth))
                 (car fourth))
                (car fifth)
-               (map car (sa:check-trigger-action sixth)))
+               (map car (sa:check-trigger-action sixth fifth)))
                ))))))))
 
 ; Clone from sa:analyze-manage-document

@@ -62,6 +62,7 @@ pers_sset<trigger_cell,unsigned short>::pers_sset_entry* search_triggerdata_cell
 {
 	return triggerdata->get(trigger_title,NULL);	
 }
+
 bool trigger_cell::fits_to_trigger(schema_node* snode)
 {
 	t_scmnodes objs=execute_abs_path_expr(snode->root,trigger_path);
@@ -133,7 +134,7 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
     trigger_action_cell* trac = trc->trigger_action;
     for(int i = 0; i < action->size(); i++)
     {
-        if(i == action->size()-1) // the last element : query (its cxt number is extracted)
+		if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
         {
             trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
             strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
@@ -141,7 +142,7 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
 // FIXME cxt_size for trigger statements must be extracted in scheme part
 //            trac->cxt_size = atoi(action->at(i+1).internal.num); 
         }
-        else
+        else  //this is update
         {
             trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
             strcpy(trac->statement,action->at(i).internal.str);
@@ -236,7 +237,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
    typedef std::pair< std::string, std::vector<built_trigger_action> > trigger_actions_pair;
    
    current_nesting_level++;
-   if(current_nesting_level > TRIGGER_MAX_CASCADE_LEVEL) throw USER_EXCEPTION2(SE3206,trigger_title);
+   if(current_nesting_level > TRIGGER_MAX_CASCADING_LEVEL) throw USER_EXCEPTION2(SE3206,trigger_title);
    
     built_trigger_actions_map::iterator mapIter;
    	mapIter = built_trigger_actions.find(std::string(trigger_title));
@@ -246,33 +247,31 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
         trigger_action_cell* trac = trigger_action;
         try
         {
-            while(1)
+			built_trigger_action bta;
+            is_qep_built = is_subqep_built = false;
+	        qep_parameters = &(bta.parameters);
+            while(trac!=NULL)
         	{
-				built_trigger_action bta;
-                is_qep_built = is_subqep_built = false;
-		        qep_parameters = &(bta.parameters);
-    	        if(trac->next!=NULL)
-        	    {
-            	    bta.action_qep_subtree = NULL;
-                	qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
-	                is_qep_built = true;
-                    qep_tree->open();
-                	is_qep_opened = true;
-    	            built_trigger_actions_vec.push_back(bta);
-        	        trac = trac->next;
-					if(trac==NULL) throw USER_EXCEPTION2(SE3204, trigger_title);
-	            }
-    	        else
-        	    {
-            	    bta.action_qep_tree = NULL;
-                	qep_subtree = bta.action_qep_subtree = build_qep(trac->statement, trac->cxt_size);
-	                is_subqep_built = true;
-                    qep_subtree->tree.op->open();
-                    is_subqep_opened = true;
-    	            built_trigger_actions_vec.push_back(bta);
-        	        break;
-            	}
-        	}
+				if(strstr(trac->statement, "query") == NULL)
+				{
+					bta.action_qep_subtree = NULL;
+					qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
+					is_qep_built = true;
+					qep_tree->open();
+					is_qep_opened = true;
+					built_trigger_actions_vec.push_back(bta);
+					trac = trac->next;
+				}
+				else
+				{
+       				bta.action_qep_tree = NULL;
+           			qep_subtree = bta.action_qep_subtree = build_qep(trac->statement, trac->cxt_size);
+					is_subqep_built = true;
+					qep_subtree->tree.op->open();
+					is_subqep_opened = true;
+					built_trigger_actions_vec.push_back(bta);
+				}
+	        }
         }
         catch(SednaUserException &e) {
         if (is_qep_built)

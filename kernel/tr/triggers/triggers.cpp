@@ -82,10 +82,10 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var)
     t_item node_type = GETTYPE(scm_node);
     if((node_type!=element)&&(node_type!=attribute))
         return;
-    
-    // care about after-statement triggers
-    find_triggers_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
 
+	// care about after-statement triggers
+    find_triggers_for_node(scm_node, TRIGGER_INSERT_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
+    
 	t_triggers_set treated_triggers;
     trigger_cell* trc;
     while(true)
@@ -219,7 +219,8 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm
 void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
-    
+
+	// care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
     
     if (old_var==XNULL) return; //old_var==XNULL if there are no for-each-node-after-triggers
@@ -246,12 +247,11 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_
     }
 }
 
-xptr apply_before_replace_triggers(xptr new_node, xptr old_node)
+xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node* scm_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return old_node;
     
 	CHECKP(old_node);
-    schema_node* scm_node = GETSCHEMENODEX(old_node);
     schema_trigger_cell* scm_trc = scm_node->trigger_object;
     xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
     
@@ -271,21 +271,22 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node)
 	return new_node;
 }
 
-void apply_after_replace_triggers(xptr new_node, xptr old_node)
+void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if ((auth == BLOCK_AUTH_CHECK)||(old_node==XNULL)) return;
 
-    if ((old_node==XNULL)||(new_node==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
+    // care about after-statement triggers
+    find_triggers_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
+
+    if (new_node==XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
     CHECKP(old_node);
 
     //if the node is not element or attribute - return
-    t_item node_type = GETTYPE(GETSCHEMENODEX(old_node));
+    t_item node_type = GETTYPE(scm_node);
     if((node_type!=element)&&(node_type!=attribute))
         return;
 
-    schema_node* scm_node = GETSCHEMENODEX(old_node);
     schema_trigger_cell* scm_trc = scm_node->trigger_object;
-    xptr parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
     
    	t_triggers_set treated_triggers;
     trigger_cell* trc;
@@ -294,7 +295,7 @@ void apply_after_replace_triggers(xptr new_node, xptr old_node)
         trc = find_trigger_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers);
         if(trc == NULL)
             return;
-        trc->execute_trigger_action(new_node, old_node, parent);
+        trc->execute_trigger_action(new_node, old_node, where_var);
         treated_triggers.insert(trc);
     }
 }
@@ -504,7 +505,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
                   return apply_before_delete_triggers(old_var, where_var, scm_node);
                   
              case TRIGGER_REPLACE_EVENT:
-                  return apply_before_replace_triggers(new_var, old_var);
+                  return apply_before_replace_triggers(new_var, old_var, scm_node);
              
              default: 
                   throw SYSTEM_EXCEPTION("Bad trigger event");
@@ -521,7 +522,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
                   return XNULL;
                   
              case TRIGGER_REPLACE_EVENT:
-                  apply_after_replace_triggers(new_var, old_var);
+                  apply_after_replace_triggers(new_var, old_var, where_var, scm_node);
                   return XNULL;
                   
              default: 
