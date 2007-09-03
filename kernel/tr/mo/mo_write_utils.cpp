@@ -2014,6 +2014,7 @@ void insertTextValue(xptr node,const void* text, unsigned int size,text_type tty
 		{			
 			char* z=se_new char[size+cur_size];
 			copy_to_buffer(z,text,size,ttype);
+			CHECKP(ind_ptr);
 			memcpy(z+size,data,cur_size);
 			pstr_modify(node, z, size+cur_size);
 			delete []z;
