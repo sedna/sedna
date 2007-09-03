@@ -3,7 +3,7 @@
 % Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
 \documentclass[a4paper,12pt]{article}
-\font\mmmm cmtt10
+\font\mmmm cmtt9
 \makeatletter
 \def\verbatim@font{\mmmm}
 \makeatother
@@ -1562,7 +1562,7 @@ declare option output "indent=yes";
 %==========================================================================
 \subsubsection{Value Index-scan Functions}
 \label{sec:value-index-scan-fun}
-In the current version of Sedna, query executor does not use indecies automatically. Use the following functions
+In the current version of Sedna, query executor does not use indices automatically. Use the following functions
 to enforce executor to employ indices. 
 
 \begin{verbatim}
@@ -2588,9 +2588,203 @@ The statistical information in \verb!$document_<name>! and \verb!$collection_<na
 \item \verb!NID! - the histogram of the labeling numbers its length
 \end{itemize}
 
+%==================================================================================
+%																				 ==
+%								XQuery Triggers 								 ==
+%																				 ==
+%==================================================================================
+\subsection{XQuery Triggers}
+
+XQuery triggers support in Sedna is provided as an XQuery extension. To create a trigger into the Sedna database you have to issue the following \verb!CREATE TRIGGER! statement:
+
+\begin{verbatim}
+CREATE TRIGGER trigger-name
+( BEFORE | AFTER ) (INSERT | DELETE | REPLACE)
+ON path
+( FOR EACH NODE | FOR EACH STATEMENT )
+DO
+{
+  Update-statement ($NEW, $OLD,$WHERE);
+            . . .
+  Update-statement ($NEW, $OLD,$WHERE);
+  XQuery-statement ($NEW, $OLD, $WHERE);
+}
+\end{verbatim}
+
+Triggers can be defined to execute either \emph{before} or \emph{after} any \verb!INSERT!, \verb!DELETE! or \verb!REPLACE! operation, either once per modified node (\emph{node-level} triggers), or once per XQuery statement (\emph{statement-level} triggers). If a trigger event occurs, the trigger's action is called at the appropriate time to handle the event.
+
+\begin{itemize}
+\item \verb!trigger-name! is the unique trigger name.
+
+\item \verb!ON path! is XPath expression without any filter expression (predicates) that identifies the nodes on which the trigger is set. That means that the trigger fires when corresponding modification (insertion, deletion or replacement) of those nodes occurs. This XPath expression is prohibited to have predicates and parent axes.
+
+\item \verb!FOR EACH NODE!/\verb!FOR EACH STATEMENT!: these key words mean the trigger created is a \verb!node-level! or \verb!statement-level! trigger. With a node-level trigger, the trigger action is invoked once for each node that is affected by the update statement that fired the trigger. In contrast, a statement-level trigger is invoked only once when an appropriate statement is executed, regardless of the number of nodes affected by that statement. 
+
+\item \verb!BEFORE!/\verb!AFTER!: triggers are also classified as \emph{before}-triggers and \emph{after}-triggers. \verb!BEFORE! keyword in \verb!CREATE TRIGGER! statement means the trigger created is \emph{before}-trigger; \verb!AFTER! keyword means the trigger created is \emph{after}-trigger. Statement-level-before triggers fire before the statement starts to do anything, while statement-level-after triggers fire at the very end of the statement. Node-level-before triggers fire immediately before a particular node is operated on, while node-level-after triggers fire immediately after the node is operated on (but before any statement-level-after trigger).
+
+\item \verb!DO!: trigger action is specified in braces \verb!{}! after the \verb!DO! key word. Action contains zero or more update statements and an XQuery query. It is a mandatory requirement that node-level trigger action  ends with an XQuery query, while this is optional for actions of statement-level triggers. It is prohibited to use prolog in statements of the trigger action.
+
+\item Transition variables \verb!$NEW!, \verb!$OLD! and \verb!$WHERE! are defined for each node-level trigger firing and can be used in each statement of the trigger action. These tree variables are defines as follows:
+\begin{itemize}
+\item For \verb!INSERT!: \verb!$NEW! is the node being inserted; \verb!$OLD! is undefined; \verb!$WHERE! is the parent node in case in \emph{insert-into} statement and sibling node in case of \emph{insert-preceding} and \emph{insert-following} statements;
+\item For \verb!DELETE!: \verb!$NEW! is undefined; \verb!$OLD! is the node being deleted; \verb!$WHERE! is the parent of the deleted node;
+\item For \verb!REPLACE!: \verb!$NEW! is the node being inserted during the replacement; \verb!$OLD! is the node being replaced; \verb!$WHERE! is the parent of the replaced node.
+\end{itemize}
+You cannot use transition variables in statement-level triggers.
+\end{itemize}
+
+XQuery query in the trigger action of a node-level trigger can \emph{return a node} to the calling executor, if they choose. A node-level-trigger fired before an operation has the following choices: 
+
+\begin{itemize}
+\item It can return \verb!empty sequence! (\verb!( )!) to skip the operation for the current node. This instructs the executor to not perform the node-level operation that invoked the trigger (the insertion or replacement of a particular node).
+
+\item For node-level \verb!INSERT! and \verb!REPLACE! triggers only, the returned node becomes the node that \emph{will be inserted} or \emph{will replace} the node being updated. This allows the trigger to modify the node being inserted or updated.
+
+\item A node-level before trigger that does not intend to cause either of these behaviors must be careful to return as its result the same node that was passed in (that is, the \verb!$NEW! node for \verb!INSERT! and \verb!UPDATE! triggers, for \verb!DELETE! triggers – its returned value is ignored in all cases except it is an empty sequence). 
+\end{itemize}
+
+The trigger action return value is ignored for node-level triggers fired after an operation, and for all statement-level triggers, and so they may as well return empty sequence.
+
+If more than one trigger is defined for the same event on the same document, the triggers will be fired in alphabetical order by trigger name. In the case of before triggers, the possibly-modified node returned by each trigger becomes the input to the next trigger. If any before trigger returns empty sequence, the operation is abandoned for that node and subsequent triggers are not fired. 
+
+
+Typically, node-level-before triggers are used for checking or modifying the data that will be inserted or updated. For example, a before trigger might be used to insert the current time node as a child of the inserting node, or to check that two descendants of the inserting node are consistent. Node-level-after triggers are most sensibly used to propagate the updates to other documents, or make consistency checks against other documents. The reason for this division of labor is that an after-trigger can be certain it is seeing the final value of the node, while a before-trigger cannot; there might be other before triggers firing after it.
+
+If a trigger function executes update-statement then these commands may fire other triggers again (cascading triggers). Currently \emph{trigger cascading level} in Sedna is limited to 10.
+
+\begin{figure}[h]
+\begin{center}
+{\footnotesize\begin{tabular}{|c||c|c|c|}
+
+\hline
+   & \emph{update}:  & \emph{update}:  & \emph{update}:  \\
+   & INSERT   & DELETE   & REPLACE  \\
+\hline
+\hline
+\emph{trigger event}:  & length of trigger path &   &  length of trigger path   \\
+     INSERT            &          $>$=          &   &          $>$=             \\
+                       & length of update path  &   &  length of update path    \\
+
+
+\hline
+
+\emph{trigger event}:  &  & length of trigger path &  length of trigger path \\
+      DELETE           &  &         $>$=           &          $>$=          \\
+                       &  & length of update path  &  length of update path \\
+
+
+\hline
+
+\emph{trigger event}: &  &   &  length of trigger path \\
+      REPLACE         &  &   &         $>$=            \\
+                      &  &   &  length of update path  \\
+\hline
+
+\end{tabular}}
+\caption{\label{triggertab} Update and trigger path lengths needed for trigger firing}
+\end{center}
+\end{figure}
+
+\begin{note}
+Currently is it prohibited in a trigger action to update the same document that is being updated by the outer update statement that has fired this trigger.
+\end{note}
+
+
+Note also that hierarchy of the XML data sometimes can affect the trigger firing in a complicated way. For example, if a node is deleted with all its descendant subtree, then a \verb!DELETE!-trigger set on the descendants of the deleting node is fired. In this situation \emph{length of trigger path} $>$= \emph{length of update path}.  In general, triggers fire according to the table in figure \ref{triggertab}.
+
+
+
+
+\subsubsection{Trigger examples}
+
+The following trigger is set on insertion of \verb!person! nodes. When some \verb!person! node is inserted, the trigger analyzes its content and modifies it in the following way. If the person is under 14 years old, the trigger inserts additional child node \verb!age-group! with the text value 'infant': if the person is older than 14 years old - the trigger inserts \verb!age-group! node with value 'adult'.
+
+{\footnotesize\begin{verbatim}
+CREATE TRIGGER "tr1"
+BEFORE INSERT
+ON doc("auction")/site//person
+FOR EACH NODE
+DO
+{
+	if($NEW/age < 14) 
+	then 
+	  <person>{attribute id {$NEW/@id}}
+	          {$NEW/*}
+	          <age-group>infant</age-group>
+	  </person>
+	else
+	  <person>{attribute id {$NEW/@id}}
+	          {$NEW/*}
+	          <age-group>adult</age-group>
+	  </person>;
+}
+\end{verbatim}}
+
+The following trigger \emph{tr2} prohibits (throws exception) stake increase if the person has already more than 3 open auctions.
+\begin{verbatim}
+CREATE TRIGGER "tr2"
+BEFORE INSERT
+ON doc("auction")/site/open_auctions/open_auction/bidder
+FOR EACH NODE
+DO
+{
+ if(($NEW/increase > 10.5)
+ && (count($WHERE/../open_auction[bidder/personref/@person=$NEW/personref/@person]) 
+     > 3))
+ then error("The increase is prohibited");
+ else ($NEW);
+}
+\end{verbatim}
+
+The following trigger \emph{tr3} cancels \verb!person! node deletion if there are any open auctions referenced by this person:
+
+\begin{verbatim}
+CREATE TRIGGER "tr3"
+BEFORE DELETE
+ON doc("auction")/site//person
+FOR EACH NODE
+DO
+{
+	if(exists($WHERE//open_auction/bidder/personref/@person=$OLD/@id))
+	then ( )
+	else $OLD;
+}
+\end{verbatim}
+
+The next statement-level trigger \emph{tr4} maintains statistics in document \emph{stat}. When this trigger is fired, the update operation is completed – that gives the possibility to make aggregative checks on the updated data. After deletion of any node in \emph{auction} document, the trigger refreshes statistics in \emph{stat} and throws exception if there are more then 50 persons left.
+
+\begin{verbatim}
+CREATE TRIGGER "tr4"
+AFTER DELETE
+ON doc("auction")//*
+FOR EACH STATEMENT
+DO
+{
+	UPDATE replace $b in doc("stat")/stat with
+	 <stat>
+	  <open_auctions>{count(doc("auction")//open_auction)}</open_auctions>
+	  <closed_auctions>{{count(doc("auction")//closed_auction)}}</closed_auctions>
+	  <persons>{count(doc("auction")//person)}</persons>
+	 </stat>;
+	
+	UPDATE insert 
+	        if(count(doc("auction")//person)<10)
+	        then <warning>"Critical number of person left in the auction"</warning>
+	        else ( )
+	       into doc("stat")/stat;
+
+}
+\end{verbatim}
+
+%==================================================================================
+%																				 ==
+%								Debug Facilities								 ==
+%																				 ==
+%==================================================================================
+
 \subsection{Debug Facilities}
 \subsubsection{Trace}
-\ref{trace}
+\label{trace}
 Sedna supports standard XQuery function \verb!fn:trace! \cite{paper:query-fo} providing user helper facility to trace queries. While executing XQuery query using fn:trace function intermediate results are shown to the user.
 
 For example in Sedna Terminal the query with \verb!fn:trace! function will provide the following output. Trace information is marked with \verb!##! string:
