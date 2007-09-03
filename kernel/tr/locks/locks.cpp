@@ -139,6 +139,18 @@ void LocalLockMgr::put_lock_on_index(const char *name)
 #endif
 }
 
+/*void LocalLockMgr::put_lock_on_trigger(const char *name)
+{
+#ifdef LOCK_MGR_ON
+  if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
+     throw USER_EXCEPTION(SE4702);
+
+  obtain_lock(db_name, LM_DATABASE, true);
+  obtain_lock(name, LM_TRIGGER);
+#endif
+}
+*/
+    
 void LocalLockMgr::put_lock_on_db()
 {
 #ifdef LOCK_MGR_ON

@@ -161,12 +161,14 @@ extern global_name FT_INDEX_SEMAPHORE_STR;
 extern global_name TRIGGER_SEMAPHORE_STR;
 #endif
 
+#define TRIGGER_MAX_CASCADING_LEVEL						10
+
 #define SM_NUMBER_OF_SERVER_THREADS						1
 
 
 //gov's SSMMsg shared memory name 
 extern global_name CHARISMA_SSMMSG_GOV_ID;
-#define GOV_NUMBER_OF_SERVER_THREADS              1
+#define GOV_NUMBER_OF_SERVER_THREADS 		            1
 
 //notify stop_serv that server shutdown completely
 extern global_name CHARISMA_GOVERNOR_IS_READY;
