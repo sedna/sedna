@@ -152,8 +152,9 @@ void replace(PPOpIn arg)
 	{
 		node=(*it3).cells[0].get_node();
 		CHECKP(node);
+		xptr tind=((n_dsc*)XADDR(node))->indir;
 		tuple t=(*it3);
-		t.cells[0].set_node(((n_dsc*)XADDR(node))->indir);
+		t.cells[0].set_node(tind);
 		++it3;
 		arg4seq.add(t);
 		
