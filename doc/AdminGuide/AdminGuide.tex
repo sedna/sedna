@@ -160,9 +160,23 @@ options:
                            (default 5050)
 \end{verbatim}
 
-The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_gov! command.
-The third option allows to get the version of the \emph{Governor}.
+\verb!--help! and \verb!-help! options provide the exhaustive information about the \verb!se_gov! command.
+\verb!-version! option allows getting the version of the \emph{Governor}.
 The fourth option \verb!-background-mode! allows Administrator to start \emph{Governor} in the background mode. Finally, last option \verb!-port-number! allows to set up the Sedna connection port number. The default value is 5050.
+
+To get the information about running Sedna components one can use \verb!se_rc! command.
+
+The usage of the \verb!se_rc! command is as follows:
+
+\begin{verbatim}
+Usage: se_rc [options]
+
+options:
+  --help		   display this help and exit
+  -help			   display this help and exit
+  -version		   display product version and exit
+\end{verbatim}
+
 
 \subsubsection{Stopping Sedna}
 
