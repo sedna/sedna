@@ -218,10 +218,10 @@ To create a database, use the \verb!se_cdb! command.
 Each database consists of the following files, which are located as described in Section \ref{sec:dir-structure}.
 
 \begin{itemize}
-\item The \verb!<db_name>.data! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions. 
-\item The \verb!<db_name>.tmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
-\item The \verb!<db_name>.ph! and \verb!<db_name>.ph.bu! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
-\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
+\item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions. 
+\item The \verb!<db_name>.setmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
+\item The \verb!<db_name>.seph! and \verb!<db_name>.ph.sebu! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
+%\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
 \end{itemize}
 
 Besides, for each database there are run-time configuration parameters, which are stored in the database configuration file (see Section \ref{ConfigDB}).
