@@ -252,7 +252,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 	        qep_parameters = &(bta.parameters);
             while(trac!=NULL)
         	{
-				if(strstr(trac->statement, "query") == NULL)
+				if(strstr(trac->statement, "query") != NULL)
 				{
 					bta.action_qep_subtree = NULL;
 					qep_tree = bta.action_qep_tree = build_qep(trac->statement, nulls, xml);
@@ -260,7 +260,6 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 					qep_tree->open();
 					is_qep_opened = true;
 					built_trigger_actions_vec.push_back(bta);
-					trac = trac->next;
 				}
 				else
 				{
@@ -271,6 +270,7 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 					is_subqep_opened = true;
 					built_trigger_actions_vec.push_back(bta);
 				}
+				trac = trac->next;
 	        }
         }
         catch(SednaUserException &e) {
@@ -288,23 +288,33 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
      try
      {
          int i = 0;
-         for(i = 0; i < mapIter->second.size()-1; i++)
+         int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
+         for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
          {
-          	qep_tree = mapIter->second.at(i).action_qep_tree;
+             if(mapIter->second.at(i).action_qep_tree)
+             {
+                 qep_tree = mapIter->second.at(i).action_qep_tree;
+                 qep_parameters = &(mapIter->second.at(i).parameters);
+	 			 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+           	     if(qep_tree->is_update())
+   	             qep_tree->execute();
+             }
+             /*else
+             {
+                 qep_subtree = mapIter->second.at(i).action_qep_subtree;
+                 qep_parameters = &(mapIter->second.at(i).parameters);
+                 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+				 tuple t = tuple(1);
+		   		 qep_subtree->tree.op->next(t);
+             }*/
+		}
+		if (action_returns_value)
+        {
+            qep_subtree = mapIter->second.at(i).action_qep_subtree;
             qep_parameters = &(mapIter->second.at(i).parameters);
-   	        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-           	//is_qep_opened = true;
-            if(qep_tree->is_update())
-   	            qep_tree->execute();
-       	}
-       	qep_subtree = mapIter->second.at(i).action_qep_subtree;
-        qep_parameters = &(mapIter->second.at(i).parameters);
-   	    set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-//        is_subqep_opened = true;
-		tuple t = tuple(1);
-		qep_subtree->tree.op->next(t);
-		
-		if ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE))
+            set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+			tuple t = tuple(1);
+		   	qep_subtree->tree.op->next(t);
 			if (!t.cells[0].is_node())
 				res_xptr = XNULL;
 		   	else
@@ -312,11 +322,12 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 				res_xptr = t.cells[0].get_node();
 				CHECKP(res_xptr);
 			}
+       		// retrieve all items to make the qep_subtree usable next time
+			while(!t.is_eos()) 
+				qep_subtree->tree.op->next(t);
+        }
 		else res_xptr = XNULL;
 
-		// retrieve all items to make the qep_subtree usable next time
-		while(!t.is_eos()) 
-			qep_subtree->tree.op->next(t);
 	}
     catch (SednaUserException &e) {
         throw e;
