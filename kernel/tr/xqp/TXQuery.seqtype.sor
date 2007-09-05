@@ -1,7 +1,7 @@
 /**/
 
 singleType!:
-	#(AST_TYPE #(AST_ATOMIC qn:qname), {m:AST_MULTIPLICITY})
+	#(AST_TYPE #(AST_ATOMIC qn:qname) {m:AST_MULTIPLICITY})
 	<<
 	  if(std::string(((SORAST *)qn)->getText())=="\"xs\"" &&
 	             (std::string(((SORAST *)(qn->down()))->getText())=="\"anySimpleType\"" ||

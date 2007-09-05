@@ -36,7 +36,7 @@ metadata!:
 	   >>
 
 
-	| #(AST_DESCR_SCHEMA_FOR_COL, e4:exprSingle[in_c] >[out_c])
+	| #(AST_DESCR_SCHEMA_FOR_COL e4:exprSingle[in_c] >[out_c])
 	   << #metadata=#(#["retrieve-descr-scheme-collection"], e4);>>
 
 	)
