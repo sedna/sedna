@@ -310,12 +310,12 @@ libedit/lib/libedit.a: libedit/Makefile
 	-$(MAKE) -C libedit
 	-$(MAKE) -C libedit install
 
+libedit/Makefile: libedit
+	cd libedit ; ./configure --enable-static --prefix=`pwd`
+
 libedit:
 	tar -zxf libedit-*.tar.gz
 	mv `find -name 'libedit-*' -type d | head -n 1` libedit
-
-libedit/Makefile:
-	cd libedit ; ./configure --enable-static --prefix=`pwd`
 
 
 clean_libedit:

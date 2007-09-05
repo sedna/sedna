@@ -202,7 +202,6 @@ void create_data_directory()
       throw USER_EXCEPTION2(SE4300, data_files_path.c_str());
 
    uReleaseSA(dir_sa, __sys_call_error);
-   
 }
 
 
