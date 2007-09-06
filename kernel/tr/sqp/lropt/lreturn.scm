@@ -2114,15 +2114,54 @@
          processed-funcs
          (lropt:unite-order-for-variables
           second-order-for-vars third-order-for-vars)))))))
+
+(define (lropt:trigger-create expr called-once? order-required?                        
+                              var-types prolog processed-funcs)
+  (call-with-values
+   (lambda ()
+     (lropt:expr (cadddr (xlr:op-args expr))  ; fourth argument
+                 called-once? order-required?
+                 var-types prolog processed-funcs))
+   (lambda (fourth fourth-ddo-auto? fourth-0-or-1? fourth-level?
+                   processed-funcs fourth-order-for-vars)
+     (let ((sixth
+            (map
+             (lambda (statement)
+               (call-with-values
+                (lambda ()
+                  (lropt:update statement
+                                called-once? order-required?
+                                var-types prolog processed-funcs))
+                (lambda (rewritten . rest) rewritten)))
+             (list-ref (xlr:op-args expr) 5))))
+       (values
+        (append
+         (list
+          (xlr:op-name expr)  ; == 'create-trigger
+          (car (xlr:op-args expr))
+          (cadr (xlr:op-args expr))
+          (caddr (xlr:op-args expr))
+          fourth
+          (list-ref (xlr:op-args expr) 4)
+          sixth)
+         (list-tail (xlr:op-args expr) 6))
+         ; we do not care about ddo-auto, zero-or-one and single-level in
+         ; the caller
+         #f #f #f
+         processed-funcs
+         fourth-order-for-vars)))))
   
 ; Manage operation
 ; TODO: add create-trigger here
 (define (lropt:manage expr called-once? order-required?
                       var-types prolog processed-funcs)
-  (if
-   (and (pair? expr) (eq? (car expr) 'create-index))
-   (lropt:create-index expr called-once? order-required?
-                       var-types prolog processed-funcs)
+  (cond
+   ((and (pair? expr) (eq? (car expr) 'create-index))
+    (lropt:create-index expr called-once? order-required?                        
+                        var-types prolog processed-funcs))
+   ((and (pair? expr) (eq? (car expr) 'create-trigger))
+    (lropt:trigger-create expr called-once? order-required?                        
+                          var-types prolog processed-funcs))
    (lropt:propagate expr called-once? order-required?
                     var-types prolog processed-funcs
                     #f #f #f)))
