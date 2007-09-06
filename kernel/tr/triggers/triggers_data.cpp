@@ -285,53 +285,38 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
     }
 
      //executing built actions
-     try
+     int i = 0;
+     int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
+     for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
      {
-         int i = 0;
-         int action_returns_value = ((trigger_time == TRIGGER_BEFORE)&&(trigger_granularity == TRIGGER_FOR_EACH_NODE)) ? 1 : 0;
-         for(i = 0; i < mapIter->second.size()-action_returns_value; i++)
+         if(mapIter->second.at(i).action_qep_tree)
          {
-             if(mapIter->second.at(i).action_qep_tree)
-             {
-                 qep_tree = mapIter->second.at(i).action_qep_tree;
-                 qep_parameters = &(mapIter->second.at(i).parameters);
-	 			 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-           	     if(qep_tree->is_update())
-   	             qep_tree->execute();
-             }
-             /*else
-             {
-                 qep_subtree = mapIter->second.at(i).action_qep_subtree;
-                 qep_parameters = &(mapIter->second.at(i).parameters);
-                 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-				 tuple t = tuple(1);
-		   		 qep_subtree->tree.op->next(t);
-             }*/
+             qep_tree = mapIter->second.at(i).action_qep_tree;
+             qep_parameters = &(mapIter->second.at(i).parameters);
+			 set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+       	     if(qep_tree->is_update())
+	             qep_tree->execute();
+         }
+     }
+	 if (action_returns_value)
+     {
+        qep_subtree = mapIter->second.at(i).action_qep_subtree;
+        qep_parameters = &(mapIter->second.at(i).parameters);
+        set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
+		tuple t = tuple(1);
+		qep_subtree->tree.op->next(t);
+		if (!t.cells[0].is_node())
+			res_xptr = XNULL;
+		else
+		{
+			res_xptr = t.cells[0].get_node();
+			CHECKP(res_xptr);
 		}
-		if (action_returns_value)
-        {
-            qep_subtree = mapIter->second.at(i).action_qep_subtree;
-            qep_parameters = &(mapIter->second.at(i).parameters);
-            set_action_parameters(parameter_new, parameter_old, parameter_where, trigger_granularity, std::string(trigger_title));
-			tuple t = tuple(1);
-		   	qep_subtree->tree.op->next(t);
-			if (!t.cells[0].is_node())
-				res_xptr = XNULL;
-		   	else
-			{
-				res_xptr = t.cells[0].get_node();
-				CHECKP(res_xptr);
-			}
-       		// retrieve all items to make the qep_subtree usable next time
-			while(!t.is_eos()) 
-				qep_subtree->tree.op->next(t);
-        }
-		else res_xptr = XNULL;
-
-	}
-    catch (SednaUserException &e) {
-        throw e;
-    }
+       	// retrieve all items to make the qep_subtree usable next time
+		while(!t.is_eos()) 
+			qep_subtree->tree.op->next(t);
+     }
+	 else res_xptr = XNULL;
 
    current_nesting_level--;
    return res_xptr;
