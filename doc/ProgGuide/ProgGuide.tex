@@ -2648,7 +2648,7 @@ The trigger action return value is ignored for node-level triggers fired after a
 If more than one trigger is defined for the same event on the same document, the triggers will be fired in alphabetical order by trigger name. In the case of before triggers, the possibly-modified node returned by each trigger becomes the input to the next trigger. If any before trigger returns empty sequence, the operation is abandoned for that node and subsequent triggers are not fired. 
 
 
-Typically, node-level-before triggers are used for checking or modifying the data that will be inserted or updated. For example, a before trigger might be used to insert the current time node as a child of the inserting node, or to check that two descendants of the inserting node are consistent. Node-level-after triggers are most sensibly used to propagate the updates to other documents, or make consistency checks against other documents. The reason for this division of labor is that an after-trigger can be certain it is seeing the final value of the node, while a before-trigger cannot; there might be other before triggers firing after it.
+Typically, node-level-before triggers are used for checking or modifying the data that will be inserted or updated. For example, a before trigger might be used to insert the current time node as a child of the inserting node, or to check that two descendants of the inserting node are consistent. Node-level-after triggers are most sensibly used to propagate the updates to other documents, or make consistency checks against other documents. The reason for this division of labor is that an after-trigger can be certain it is seeing the final value of the node, while a before-trigger cannot; there might be other before triggers firing after it. When designing your trigger-application note, that node-level triggers are typically cheaper then statement-level ones.
 
 If a trigger function executes update-statement then these commands may fire other triggers again (cascading triggers). Currently \emph{trigger cascading level} in Sedna is limited to 10.
 
@@ -2728,10 +2728,10 @@ ON doc("auction")/site/open_auctions/open_auction/bidder
 FOR EACH NODE
 DO
 {
- if(($NEW/increase > 10.5)
- && (count($WHERE/../open_auction[bidder/personref/@person=$NEW/personref/@person]) 
-     > 3))
- then error("The increase is prohibited");
+ if(($NEW/increase > 10.5) and
+  (count($WHERE/../open_auction[bidder/personref/@person=$NEW/personref/@person]) 
+   > 3))
+ then error(xs:QName("tr2"),"The increase is prohibited")
  else ($NEW);
 }
 \end{verbatim}
@@ -2768,7 +2768,7 @@ DO
 	 </stat>;
 	
 	UPDATE insert 
-	        if(count(doc("auction")//person)<10)
+	        if(count(doc("auction")//person) < 10)
 	        then <warning>"Critical number of person left in the auction"</warning>
 	        else ( )
 	       into doc("stat")/stat;
