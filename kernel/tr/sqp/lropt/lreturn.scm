@@ -2162,9 +2162,10 @@
    ((and (pair? expr) (eq? (car expr) 'create-trigger))
     (lropt:trigger-create expr called-once? order-required?                        
                           var-types prolog processed-funcs))
-   (lropt:propagate expr called-once? order-required?
-                    var-types prolog processed-funcs
-                    #f #f #f)))
+   (else
+    (lropt:propagate expr called-once? order-required?
+                     var-types prolog processed-funcs
+                     #f #f #f))))
 
 
 ;=========================================================================
