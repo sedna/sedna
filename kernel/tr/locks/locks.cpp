@@ -139,7 +139,7 @@ void LocalLockMgr::put_lock_on_index(const char *name)
 #endif
 }
 
-/*void LocalLockMgr::put_lock_on_trigger(const char *name)
+void LocalLockMgr::put_lock_on_trigger(const char *name)
 {
 #ifdef LOCK_MGR_ON
   if(strlen(name) > (MAX_RESOURCE_NAME_LENGTH - 1) )
@@ -149,7 +149,7 @@ void LocalLockMgr::put_lock_on_index(const char *name)
   obtain_lock(name, LM_TRIGGER);
 #endif
 }
-*/
+
     
 void LocalLockMgr::put_lock_on_db()
 {
@@ -178,7 +178,7 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
      msg.data.data[0] = ((mode == lm_s) ? 'r' : 'w'); //'r' intention read; 'w' intention write
 
 
-  msg.data.data[1] = (kind == LM_DOCUMENT) ? 'd' : ((kind == LM_COLLECTION)? 'c': ((kind == LM_INDEX)? 'i': 'b'));
+  msg.data.data[1] = (kind == LM_DOCUMENT) ? 'd' : ((kind == LM_COLLECTION)? 'c': ((kind == LM_INDEX)? 'i': ((kind == LM_TRIGGER)? 't': 'b')));
  
   strcpy((msg.data.data)+2, name);
 
@@ -270,7 +270,7 @@ void LocalLockMgr::release_resource(const char* name, resource_kind kind)
   msg.cmd = 5;
   msg.trid = trid;
 
-  msg.data.data[1] = (kind == LM_DOCUMENT) ? 'd' : ((kind == LM_COLLECTION)? 'c': ((kind == LM_INDEX)? 'i': 'b'));
+  msg.data.data[1] = (kind == LM_DOCUMENT) ? 'd' : ((kind == LM_COLLECTION)? 'c': ((kind == LM_INDEX)? 'i': ((kind == LM_TRIGGER)? 't': 'b')));
  
   strcpy((msg.data.data)+2, name);
 

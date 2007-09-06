@@ -53,7 +53,9 @@ void PPDropTrigger::execute()
 
     if(trigger_cell::find_trigger(tc.get_str_mem()) == NULL) 
     	throw USER_EXCEPTION2(SE3211, (std::string("Trigger '") + tc.get_str_mem() + "'").c_str());
-//    local_lock_mrg->put_lock_on_index(tc.get_str_mem());
+
+    local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
+
 	trigger_cell::delete_trigger(tc.get_str_mem());
 }
 

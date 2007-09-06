@@ -44,6 +44,7 @@ public:
     void put_lock_on_document(const char *name);
     void put_lock_on_collection(const char *name);
     void put_lock_on_index(const char *name);
+    void put_lock_on_trigger(const char *name);
     void put_lock_on_db();
     void lock(lock_mode _mode_) {mode = _mode_;};
     lock_mode get_cur_lock_mode() {return mode;};

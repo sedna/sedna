@@ -8,6 +8,7 @@
 #include "tr/executor/root/PPCreateTrigger.h"
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/locks/locks.h"
 
 using namespace std;
 
@@ -139,7 +140,7 @@ void PPCreateTrigger::execute()
         
     tc = tuple_cell::make_sure_light_atomic(tc);
 
-    //local_lock_mrg->put_lock_on_index(tc.get_str_mem());
+    local_lock_mrg->put_lock_on_trigger(tc.get_str_mem());
 
 	trigger_cell* trc = trigger_cell::create_trigger (time,
 				event,
