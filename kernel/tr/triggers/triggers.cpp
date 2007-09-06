@@ -7,6 +7,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/tr_globals.h"
 #include "tr/auth/auc.h"
+#include "tr/updates/updates.h"
 
 static t_triggers_set after_statement_triggers;
 
