@@ -20,7 +20,7 @@
 
 #define LOCK_MGR_ON
 
-enum resource_kind {LM_DOCUMENT, LM_COLLECTION, LM_INDEX, LM_DATABASE};
+enum resource_kind {LM_DOCUMENT, LM_COLLECTION, LM_INDEX, LM_TRIGGER, LM_DATABASE};
 
 enum lock_mode
 {
@@ -65,6 +65,9 @@ public:
                             break;
 
         case LM_INDEX: hash_r_id = std::string("_ind_") + res_name;
+                       break;
+
+        case LM_TRIGGER: hash_r_id = std::string("_trg_") + res_name;
                        break;
 
         case LM_DATABASE: hash_r_id = std::string("_dtb_") + res_name;

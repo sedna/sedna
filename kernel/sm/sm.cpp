@@ -110,6 +110,7 @@ int sm_server_handler(void *arg)
                          if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
                          else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
+                         else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
                          else kind = LM_DATABASE;
   
                          lock_reply r = lm_table.lock(msg->trid, msg->sid, resource_id(string((msg->data.data)+2), kind), mode, LOCK_LONG, 0/*timeout is not important by now*/);
@@ -175,6 +176,7 @@ int sm_server_handler(void *arg)
                          if (msg->data.data[1] == 'd') kind = LM_DOCUMENT;
                          else if (msg->data.data[1] == 'c') kind = LM_COLLECTION;
                          else if (msg->data.data[1] == 'i') kind = LM_INDEX;
+                         else if (msg->data.data[1] == 't') kind = LM_TRIGGER;
                          else kind = LM_DATABASE;
   
                          lock_reply r = lm_table.unlock(msg->trid, resource_id(string((msg->data.data)+2), kind));
