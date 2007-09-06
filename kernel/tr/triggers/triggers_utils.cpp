@@ -4,6 +4,7 @@
  */
 
 #include "tr/triggers/triggers_utils.h"
+#include "tr/updates/updates.h"
 
 static update_root_map update_roots;
 int current_nesting_level;
