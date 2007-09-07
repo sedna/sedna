@@ -304,10 +304,11 @@ ifeq ("$(build_libedit)","yes")
 BUILD_DEPS+=build_libedit
 CLEAN_DEPS+=clean_libedit
 
-build_libedit: libedit libedit/Makefile libedit/lib/libedit.a
+build_libedit: libedit/lib/libedit.a
 
 libedit/lib/libedit.a: libedit/Makefile
 	-$(MAKE) -C libedit
+	-$(MAKE) -C libedit install
 
 libedit/Makefile: libedit/configure
 	cd libedit ; ./configure --enable-static --prefix=`pwd`
@@ -318,6 +319,7 @@ libedit/configure:
 
 
 clean_libedit:
+   	-$(MAKE) -C libedit uninstall
 	-$(MAKE) -C libedit clean
 
 endif
