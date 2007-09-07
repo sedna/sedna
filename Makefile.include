@@ -266,7 +266,7 @@ LSLIBS  += -lnsl -lrt -lsocket
 endif
 
 ifeq ("$(SUB_PLATFORM)","FreeBSD")
-LSLIBS  = -lpccts -lexpat -lchicken -lpcre -fexceptions -lcompat -pthreads
+LSLIBS  = -lpccts -lexpat -lchicken -lpcre -fexceptions -lcompat -pthread
 endif
 
 ifeq ($(SQL_CONNECTION),1)
