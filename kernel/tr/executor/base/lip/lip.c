@@ -26,7 +26,11 @@ granted for free re-distribution for non-commercial uses only.
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+
+#ifdef HAVE_MALLOC
 #include <malloc.h>
+#endif
+
 #include <stddef.h>
 #include <math.h>
 #include <stdio.h>

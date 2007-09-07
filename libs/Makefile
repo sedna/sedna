@@ -308,18 +308,16 @@ build_libedit: libedit libedit/Makefile libedit/lib/libedit.a
 
 libedit/lib/libedit.a: libedit/Makefile
 	-$(MAKE) -C libedit
-	-$(MAKE) -C libedit install
 
-libedit/Makefile: libedit
+libedit/Makefile: libedit/configure
 	cd libedit ; ./configure --enable-static --prefix=`pwd`
 
-libedit:
+libedit/configure:
 	tar -zxf libedit-*.tar.gz
-	mv `find -name 'libedit-*' -type d | head -n 1` libedit
+	mv `find libedit-* -type d | head -n 1` libedit
 
 
 clean_libedit:
-	-$(MAKE) -C libedit uninstall
 	-$(MAKE) -C libedit clean
 
 endif

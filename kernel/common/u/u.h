@@ -80,6 +80,12 @@
 #define HAVE_PROC
 #endif
 
+#if(defined(FreeBSD))
+/* don't have malloc.h */
+#else
+#define HAVE_MALLOC
+#endif
+
 
 #if (!defined(WIN32) && !defined(__cygwin__))
 #if (defined(DARWIN) || defined(FreeBSD))
