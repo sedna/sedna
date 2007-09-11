@@ -450,7 +450,16 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 #endif
 }
 
+int uNonBlockingWaitForChildProcesses()
+{
+#ifdef _WIN32
+/// Nothing doing here
+#else
+    int status;
 
+    return waitpid(-1, &status, WNOHANG);
+#endif
+}
 
 #if (!defined(_WIN32) && !(defined(HAVE_PROC_EXE)))
 

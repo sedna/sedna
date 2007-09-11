@@ -304,6 +304,8 @@ void info_table::erase_all_closed_pids()
   vector<UPID> tmp;
   int i;
 
+  uNonBlockingWaitForChildProcesses();
+
   for(it = _pids_table_.begin(); it != _pids_table_.end(); it++)
   {
     if (uIsProcessExist(it->first, it->second.p, __sys_call_error) != 1)
