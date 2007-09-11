@@ -453,11 +453,14 @@ int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun)
 int uNonBlockingWaitForChildProcesses()
 {
 #ifdef _WIN32
+    return 0;
 /// Nothing doing here
 #else
-    int status;
+    int status = 0;
 
-    return waitpid(-1, &status, WNOHANG);
+    int res = waitpid(-1, &status, WNOHANG);
+
+    return res;
 #endif
 }
 
