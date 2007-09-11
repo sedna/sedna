@@ -72,6 +72,8 @@ int uCloseProcess(UPHANDLE h, sys_call_error_fun fun);
 int uWaitForChildProcess(UPID pid, UPHANDLE h, int *status, sys_call_error_fun fun);
 int uWaitForProcess(UPID pid, UPHANDLE h, sys_call_error_fun fun);
 
+int uNonBlockingWaitForChildProcesses();
+
 
 extern char *program_name_argv_0;
 /* The result if written to buf. The size of the buf should be
