@@ -1432,6 +1432,8 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
 
   ret_lsn = mem_head->next_lsn;
 
+  ((vmm_sm_blk_hdr *)block)->lsn = ret_lsn; // for WAL purposes
+
   mem_head->last_lsn = ret_lsn;
   mem_head->last_chain_lsn = ret_lsn;
   
@@ -1448,7 +1450,7 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
  prevLSN // lsn of the previous record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
 */
 
-void llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync)
+LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
@@ -1502,6 +1504,8 @@ void llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbag
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
+
+  return ret_lsn;
 }
 
 /*
@@ -1930,16 +1934,128 @@ void llmgr_core::ll_log_flush(bool sync)
       mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
   }
 
-  //there was a bug here, because we could get buffer filled with rogue rollback records
-  //the above logic doesn't flush this records since corresponding transactions are not in t_tbl anymore
-  //another possible bug: flushing only transaction-owned records might be not enough to free the needed space
-  //fixed: implemented "true" flushing function, which flushes all last independent records also
-  ll_log_flush_all_last_records(false); // flush all last records (not transaction-owned)
-
   ll_log_unlock(sync);
 }
 
+void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
+{
+  //d_printf1("flushing of logical log started\n");
+  ll_log_lock(sync);
+ 
 
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+  char* mem_beg = (char*)shared_mem;
+
+  // check if needed records are already flushed
+  if (lsn == NULL_LSN || lsn < mem_head->next_durable_lsn)
+  {
+  		ll_log_unlock(sync);
+  		return;
+  }
+
+  LONG_LSN curr_lsn = mem_head->next_durable_lsn;
+  int mem_offs = mem_head->begin_not_drbl_offs;
+  int bytes_to_flush = 0;
+
+  int rec_len;
+  int first_portion;
+  int second_portion;
+  logical_log_head hd;
+
+  while (curr_lsn <= lsn)
+  {
+	  // obtain record header
+	  if ((mem_offs + sizeof(logical_log_head)) <= mem_head->size) 
+	  {
+	     memcpy(&hd, mem_beg + mem_offs, sizeof(logical_log_head));
+	  }
+	  else
+	  {//record header is not contiguous
+	     first_portion = mem_head->size - mem_offs;
+    	 second_portion = sizeof(logical_log_head) - first_portion;
+
+	     memcpy(&hd, mem_beg + mem_offs, first_portion);
+    	 memcpy(((char*)(&hd))+first_portion, mem_beg + sizeof(logical_log_sh_mem_head), second_portion);   
+	  }
+      
+      rec_len = sizeof(logical_log_head) + hd.body_len;
+      bytes_to_flush += rec_len;
+      curr_lsn += rec_len;
+
+      if (mem_offs + rec_len < mem_head->size)
+      	 mem_offs += rec_len;
+      else
+      	 mem_offs = sizeof(logical_log_sh_mem_head) + rec_len - (mem_head->size - mem_offs);
+  }
+
+  int res;
+  int rmndr_len = bytes_to_flush;
+  int offs = mem_head->begin_not_drbl_offs;
+  int to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
+                      rmndr_len,
+                      mem_head->size - offs);
+  int written, i;
+
+  //set file pointer to the end  
+  set_file_pointer(mem_head->next_durable_lsn);
+
+
+  //d_printf2("need to write bytes=%d\n", rmndr_len);
+  //flush needed records;
+  while (rmndr_len > 0)
+  {
+     res = uWriteFile(ll_curr_file_dsc,
+                      (char*)shared_mem + offs,
+                      to_write,
+                      &written,
+                      __sys_call_error
+                    );
+
+     U_ASSERT(res != 0 && to_write == written);
+     if (res == 0 || to_write != written)
+       throw SYSTEM_EXCEPTION("Can't write to logical log");
+
+     if ( (offs + to_write) > mem_head->size)
+        throw SYSTEM_EXCEPTION("Internal Error in Logical Log");
+
+
+     if(( offs + to_write) == mem_head->size) 
+        offs =  sizeof(logical_log_sh_mem_head);
+     else
+        offs += to_write;
+
+     rmndr_len-= to_write;
+     to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
+                     rmndr_len,
+                     mem_head->size - offs);
+     
+  }
+
+  //change sh memory header
+  if ((mem_head->size - mem_head->begin_not_drbl_offs) > bytes_to_flush )
+    mem_head->begin_not_drbl_offs += bytes_to_flush;
+  else
+    mem_head->begin_not_drbl_offs = sizeof(logical_log_sh_mem_head) +
+                                    bytes_to_flush - 
+                                    (mem_head->size - mem_head->begin_not_drbl_offs);
+
+  mem_head->free_bytes += bytes_to_flush;
+  mem_head->keep_bytes -= bytes_to_flush;
+
+  for (i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)
+  {
+     if (mem_head->t_tbl[i].last_lsn <= lsn)
+        mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
+  }
+
+  mem_head->next_durable_lsn += bytes_to_flush;
+
+  flush_file_head(false); // flush file header
+
+  ll_log_unlock(sync);
+
+  //d_printf1("flush of logical log finished\n");
+}
 
 /*****************************************************************************
                     UNDO, REDO functions
@@ -1968,6 +2084,8 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
   }
 
   ll_log_flush(trid, false);
+  flush_file_head(false);
+    
   ll_log_unlock(sync);
 
   //there is at least one record for tr to be rolled back
@@ -2722,7 +2840,9 @@ void llmgr_core::commit_trn(transaction_id& trid, bool sync)
 
   LONG_LSN commit_lsn = ll_log_commit(trid, false);
   ll_log_flush(trid, false);
-  flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
+//  flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
+  
+  flush_file_head(false); // flush file header
 
   ll_log_unlock(sync);
 }
