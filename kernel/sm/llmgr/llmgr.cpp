@@ -127,7 +127,7 @@ void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn)
 }
 */
 
-void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size)
+void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size)
 {
 #ifdef LOGICAL_LOG
   if (!enable_write_of_phys_recs) return;

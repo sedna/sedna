@@ -1383,12 +1383,12 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
  free blocks log record format:
  op (1 byte)
  size (4 bytes?)
- phys_xptr(XPTR);
+ phys_xptr(xptr);
  block (size bytes)
  prevLSN // lsn of the previous record in physical records chain
 */
 
-void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync)
+void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
@@ -1398,7 +1398,7 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
 
   ll_log_lock(sync);
 
-  rec_len = sizeof(char) + sizeof(int) + sizeof(XPTR) + size + sizeof(LONG_LSN);
+  rec_len = sizeof(char) + sizeof(int) + sizeof(xptr) + size + sizeof(LONG_LSN);
   tmp_rec = ll_log_malloc(rec_len);
   char op = LL_FREE_BLOCKS;
   int offs = 0;
@@ -1409,7 +1409,7 @@ void llmgr_core::ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool 
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
   inc_mem_copy(tmp_rec, offs, &size, sizeof(int));
 //  inc_mem_copy(tmp_rec, offs, &log_xptr, sizeof(LXPTR));
-  inc_mem_copy(tmp_rec, offs, &phys_xptr, sizeof(XPTR));
+  inc_mem_copy(tmp_rec, offs, &phys_xptr, sizeof(xptr));
   inc_mem_copy(tmp_rec, offs, block, size);
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
 
@@ -2322,7 +2322,7 @@ void llmgr_core::freePrevCheckpointBlocks(LONG_LSN last_lsn, bool sync)
   	if (body_beg[0] == LL_FREE_BLOCKS)
   	{
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
-  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size));
+  		lsn = *((LONG_LSN *)(body_beg + sizeof(char) + sizeof(int) + sizeof(xptr) + free_blk_info_size));
   	}	
   	if (body_beg[0] == LL_DECREASE)
   	{

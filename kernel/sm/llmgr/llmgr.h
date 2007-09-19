@@ -31,7 +31,7 @@ void ll_truncate_logical_log();
 
 //void ll_freePrevPersSnapshotBlocks(LONG_LSN last_lsn);
 
-void ll_add_free_blocks_info(XPTR phys_xptr, void *block, int size);
+void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size);
 
 void ll_add_decrease_info(__int64 old_size);
 
