@@ -52,7 +52,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         //if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
-        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(WuInternaliseXptr(p), (void *)blk, PAGE_SIZE);
+        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
         *hd = p;
@@ -71,7 +71,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         blk = (free_blk_hdr*)OFFS2ADDR(offs);
 
         //if (IS_DATA_BLOCK_LP(blk)) LOG_FREE_BLK_HDR_ADDITIONAL_PART(blk);
-        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(WuInternaliseXptr(p), (void *)blk, PAGE_SIZE);
+        if (IS_DATA_BLOCK_LP(blk)) ll_add_free_blocks_info(p, (void *)blk, PAGE_SIZE);
 
         free_blk_hdr::init(blk);
         blk->nblk = *hd;
@@ -82,7 +82,7 @@ int push_to_persistent_free_blocks_stack(xptr *hd, xptr p)
         if (IS_DATA_BLOCK_LP(blk))// LOG_FREE_BLK_HDR_NUM(blk);
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(WuInternaliseXptr(*hd), (void *)blk, PAGE_SIZE);
+        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 
@@ -115,7 +115,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(WuInternaliseXptr(*hd), (void *)blk, PAGE_SIZE);
+        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 
@@ -131,7 +131,7 @@ int pop_from_persistent_free_blocks_stack(xptr *hd, xptr *p)
         if (IS_DATA_BLOCK_LP(blk))
         {
         	if (blk->ts < pers_ts)
-        		ll_add_free_blocks_info(WuInternaliseXptr(*hd), (void *)blk, PAGE_SIZE);
+        		ll_add_free_blocks_info(*hd, (void *)blk, PAGE_SIZE);
 			WuGetTimestamp(&(blk->ts));
 		}
 

@@ -274,7 +274,7 @@ public:
 //  void ll_log_checkpoint(void *userData, SnapshotsVersionInfo *buf, size_t count);
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
-  void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
+  void ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool sync);
   LONG_LSN ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
   
