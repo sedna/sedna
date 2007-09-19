@@ -9,6 +9,7 @@
 #include "common/ph/pers_heap.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/plmgr/plmgr.h"
+#include "sm/llmgr/llmgr.h"
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
 
@@ -205,8 +206,10 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
     blk->roffs = 0;
     blk->is_changed = false;
 
+//    if (IS_DATA_BLOCK(p)) 
+//        ll_phys_log_flush_blk(blk, sync_phys_log);
     if (IS_DATA_BLOCK(p)) 
-        ll_phys_log_flush_blk(blk, sync_phys_log);
+		ll_logical_log_flush_lsn(blk->lsn);
 
     // write block
     __int64 dsk_offs = 0;

@@ -25,7 +25,7 @@ struct vmm_sm_blk_hdr
     xptr p;		// the first 4 bytes is the layer of the block
     ramoffs roffs;	// address of block in buffer memory
     bool is_changed;
-    LSN lsn;
+    LONG_LSN lsn;
     CP_counter cntrs[BLOCK_PARTS];
 #ifdef LRU
     LRU_stamp lru;

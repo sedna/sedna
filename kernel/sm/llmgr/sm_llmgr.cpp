@@ -146,9 +146,9 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     {
     	free_blk_info_size = *((int *)(body_beg + sizeof(char)));
     	free_blk_info = (void *)(body_beg + sizeof(char) + sizeof(int) + sizeof(XPTR));
-    	free_blk_info_xptr = *((xptr *)(body_beg + sizeof(char) + sizeof(int)));
+    	free_blk_info_xptr = WuExternaliseXptr(*((XPTR *)(body_beg + sizeof(char) + sizeof(int))));
 
-    	memcpy(ctrl_blk, free_blk_info, PAGE_SIZE);
+    	memcpy(ctrl_blk, free_blk_info, free_blk_info_size);
     	bm_rcv_change(free_blk_info_xptr, ctrl_blk, free_blk_info_size);
         lsn_offs += sizeof(char) + sizeof(int) + sizeof(XPTR) + free_blk_info_size;
     }

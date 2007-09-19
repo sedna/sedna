@@ -275,12 +275,13 @@ public:
   void ll_log_indirection(transaction_id trid, int cl_hint, std::vector<xptr>* blocks, bool sync);
 
   void ll_log_free_blocks(XPTR phys_xptr, void *block, int size, bool sync);
-  void ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync);
+  LONG_LSN ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync);
   void ll_log_decrease(__int64 old_size, bool sync);
   
   void set_hint_lsn_for_prev_rollback_record(transaction_id &trid, LONG_LSN lsn);
   void set_prev_rollback_lsn(transaction_id &trid, bool sync);//this function must be called inside microop
 
+  void ll_log_flush_lsn(LONG_LSN lsn, bool sync);
   void ll_log_flush_all_last_records(bool sync);
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
