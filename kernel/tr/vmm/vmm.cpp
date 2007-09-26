@@ -916,10 +916,19 @@ void vmm_on_transaction_end() throw (SednaException)
 
         // reset blocks with write access from current trid
         t_blocks_write_table::iterator it;
+		void *fckXptr=NULL;
 
-	    for (it = write_table.begin(); it != write_table.end(); ++it)
-      		_vmm_unmap_decent(*it);
-
+		it = write_table.begin();
+		while (it != write_table.end())
+		{
+			fckXptr = *it;
+			_vmm_unmap_decent(fckXptr);
+			/*
+				Note that XptrHash has weird remove-increment-iterator semantics.
+				Remove BEFORE!!!!! increment.
+			*/ 
+			++it;
+		}
       	write_table.clear();
 
     } catch (...) {
@@ -1001,7 +1010,7 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 
 void vmm_delete_block(xptr p) throw (SednaException)
 {
-	VMM_SIGNAL_MODIFICATION(p);
+	if (IS_DATA_BLOCK(p)) VMM_SIGNAL_MODIFICATION(p);
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         p = block_xptr(p);

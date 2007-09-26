@@ -111,8 +111,8 @@ void bm_rcv_tmp_file()
         throw USER_EXCEPTION2(SE4043, tmp_file_name.c_str());
 
     // reform tmp file
-    bm_startup();
-    d_printf1("sm_startup call successful\n");
+//    bm_startup();
+//    d_printf1("sm_startup call successful\n");
 
     __int64 tmp_file_cur_size = mb->tmp_file_cur_size / (__int64)PAGE_SIZE;
     mb->tmp_file_cur_size = (__int64)0;
@@ -121,8 +121,8 @@ void bm_rcv_tmp_file()
     extend_tmp_file (tmp_file_cur_size);
     d_printf1("extend_tmp_file call successful\n");
 
-    bm_shutdown();
-    d_printf1("sm_shutdown call successful\n");
+//    bm_shutdown();
+//    d_printf1("sm_shutdown call successful\n");
 }
 
 void bm_rcv_ph(bool ph_bu_to_ph)

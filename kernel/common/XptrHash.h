@@ -144,7 +144,9 @@ XptrHash<T, middle_significan_bits, right_zero_bits>::~XptrHash()
     clear();
 }
 
-
+/*
+	Multiple entries with the same key may exist!!!
+*/ 
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::insert(xptr key, T val)
 {
