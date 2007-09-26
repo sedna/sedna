@@ -134,6 +134,7 @@ void PackStrings(char *buf, size_t sz, ...)
 	va_list marker;
 
 	assert(buf && sz>0);
+	va_start(marker,sz);
 
 	while((input=va_arg(marker,const char*)))
 	{
@@ -148,7 +149,6 @@ void PackStrings(char *buf, size_t sz, ...)
 		if (buf+1<ebuf) ++buf;
 	}
 
-	va_start(marker,sz);
 	va_end(marker);
 }
 

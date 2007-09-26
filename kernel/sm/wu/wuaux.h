@@ -5,7 +5,6 @@
 #ifndef WUAUX_INCLUDED
 #define WUAUX_INCLUDED
 
-#define __STDC_CONSTANT_MACROS
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>

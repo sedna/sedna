@@ -94,6 +94,11 @@ int ClStartup(ClSetup *setup)
 	return success;
 }
 
+int ClShutdown()
+{
+	return 1;
+}
+
 void ClDeinitialize()
 {
 	if (isInitialized)
@@ -293,7 +298,7 @@ int ClGetStateBlock(void **ptr, TICKET ticket, int clientId)
 	return GetStateTableCell(&stateTable,ptr,ticket,clientId);
 }
 
-int ClLockClientSet()
+int ClLockClientsSet()
 {
 	int success=0;
 	if (threadState.clientSetLockCount==INT_MAX)
@@ -308,7 +313,7 @@ int ClLockClientSet()
 	return success;
 }
 
-int ClUnlockClientSet()
+int ClUnlockClientsSet()
 {
 	int success=0;
 	if (threadState.clientSetLockCount<=0)
@@ -335,7 +340,7 @@ int ClEnumerateClients(ClEnumerateClientsParams *params,
 	begin=readyClientsBitmap;
 	end=begin+RoundSizeUp(stateTable.rowsCount,32)/32;
 
-	okstatus=ClLockClientSet();
+	okstatus=ClLockClientsSet();
 	assert(okstatus);
 	for(i=begin;i<end;++i)
 	{
@@ -349,7 +354,7 @@ int ClEnumerateClients(ClEnumerateClientsParams *params,
 			++cnt;
 		}
 	}
-	okstatus=ClUnlockClientSet();
+	okstatus=ClUnlockClientsSet();
 	assert(okstatus);
 	return 1;
 }

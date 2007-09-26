@@ -144,12 +144,13 @@ int main (int argc, char** argv)
 //      std::cout << "last checkpoint lsn=" << last_cp_lsn << endl;
 
 //      DebugBreak();
-	AllocConsole();
+/*
+	if (AllocConsole())
 	{
 		freopen("CON","wt",stderr);
 		freopen("CON","wt",stdout);
 	}
-//      DebugBreak();
+*/
       recover_db_by_logical_log(last_cp_lsn);
 
 /*
