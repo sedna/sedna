@@ -839,9 +839,11 @@ int WuAdvanceSnapshots()
 
 void WuDbgDump(int selector, int reserved)
 {
-	if (selector & WU_CLIENTS) ClDbgDump(reserved);
-	if (selector & WU_VERSIONS) VeDbgDump(reserved);
-	if (selector & WU_SNAPSHOTS) SnDbgDump(reserved);
+#if (EL_DEBUG == 1)
+		if (selector & WU_CLIENTS) ClDbgDump(reserved);
+		if (selector & WU_VERSIONS) VeDbgDump(reserved);
+		if (selector & WU_SNAPSHOTS) SnDbgDump(reserved);
+#endif
 }
 
 size_t WuFetchSwappedXptrs(XPTR **xptrs)
