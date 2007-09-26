@@ -305,7 +305,7 @@ inline
 void _vmm_unmap_severe(void *addr)
 {
 #ifdef VMM_ACCURATE
-    if (__vmm_unmap(addr) || __vmm_map(addr, default_ram))
+    if (__vmm_unmap(addr) || __vmm_map(addr, default_ram, false))
         throw USER_EXCEPTION(SE1035);
 #else
     if (__vmm_unmap(addr) == -1)
@@ -316,7 +316,7 @@ void _vmm_unmap_severe(void *addr)
 inline void _vmm_unmap_decent(void *addr)
 {
 #ifdef VMM_ACCURATE
-    if (__vmm_unmap(addr) || __vmm_map(addr, default_ram))
+    if (__vmm_unmap(addr) || __vmm_map(addr, default_ram, false))
         throw USER_EXCEPTION(SE1035);
 #else
     __vmm_unmap(addr);
@@ -915,21 +915,22 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // reset blocks with write access from current trid
-        t_blocks_write_table::iterator it;
-		void *fckXptr=NULL;
+		std::vector<void *> intermedStorg;
+		void **i=NULL, **iend=NULL;
+		t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
 
-		it = write_table.begin();
-		while (it != write_table.end())
+		intermedStorg.reserve(write_table.size());
+		for (0; it!=itend; ++it)
 		{
-			fckXptr = *it;
-			_vmm_unmap_decent(fckXptr);
-			/*
-				Note that XptrHash has weird remove-increment-iterator semantics.
-				Remove BEFORE!!!!! increment.
-			*/ 
-			++it;
+			intermedStorg.push_back(*it);
 		}
-      	write_table.clear();
+		i=&(*intermedStorg.begin());
+		iend=&(*intermedStorg.end());
+		for (0; i!=iend; ++i)
+		{
+			_vmm_unmap_decent(*i);
+		}
+		write_table.clear();      	
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
@@ -1010,7 +1011,10 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 
 void vmm_delete_block(xptr p) throw (SednaException)
 {
-	if (IS_DATA_BLOCK(p)) VMM_SIGNAL_MODIFICATION(p);
+	if (IS_DATA_BLOCK(p)) 
+	{
+		VMM_SIGNAL_MODIFICATION(p);
+	}
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         p = block_xptr(p);

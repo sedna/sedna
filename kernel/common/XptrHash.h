@@ -115,6 +115,8 @@ public:
     int replace(xptr key, const T &new_val, T &old_val);
     void clear();
 
+	size_t size() const { return (size_t)num; }
+
     iterator begin() { return xhit::begin(this); }
     iterator end() { return xhit::end(this); }
 };
@@ -204,6 +206,34 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::find(xptr key, T &val)
 }
 
 
+/*
+	Remove from XPtrHash invalidates all iterators!
+	Consider the following standard example:
+
+	Container container;
+	for (Container::iterator it=container.begin(); it!=container.end(); false)
+	{
+		Container::iterator temp=it;
+		++it;						// (1)
+		Container.remove(temp);		// (2)
+	}
+
+	If you swap (1) and (2) you are in trouble, at least with STL.
+	XptrHash doesn't have a remove(Iterator) function, however it
+	has remove-by-key function which has the same issues.
+
+	See code below for labels (A,B,C).
+	(A) Removing an element that is stored in tbl[] invalidates a iterator
+		pointing to the first element in the collision list attached to the same cell.
+		An iterator pointing to the removed element is now pointing to the former first
+		element of the list.
+	(B,C) Removing an element from collision list invalidates iterators pointing
+		to the removed element. Other iterators are not affected.
+
+	The outlined inconsistency in iterator invalidation rules makes it impossible
+	to write a safe code that does for-each-element-remove-those-that-meet-some-condition with
+	XptrHash.
+*/ 
 template <class T, __uint32 middle_significan_bits, __uint32 right_zero_bits>
 int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
 {
@@ -221,7 +251,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
             else
             {
                 start.key = start.next->key;
-                start.val = start.next->val;
+                start.val = start.next->val;  /* (A) */ 
                 add_cell *p = start.next;
                 start.next = start.next->next;
                 delete p;
@@ -237,7 +267,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
             if (start.next->key == key)
             {
                 add_cell * p = start.next;
-                start.next = start.next->next;
+                start.next = start.next->next; /* (B) */ 
                 delete p;
                 --num;
                 return 0;
@@ -250,7 +280,7 @@ int XptrHash<T, middle_significan_bits, right_zero_bits>::remove(xptr key)
             {
                 if (cur->key == key)
                 {
-                    pred->next = cur->next;
+                    pred->next = cur->next; /* (C) */  
                     delete cur;
                     --num;
                     return 0;
