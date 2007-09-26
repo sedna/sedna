@@ -111,7 +111,7 @@ int SnOnRegisterClient(int isUsingSnapshot, TIMESTAMP *snapshotTs);
 
 int SnOnUnregisterClient();
 
-int SnAcceptRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count);
+int SnSubmitRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count);
 
 int SnAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs);
 

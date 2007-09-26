@@ -91,7 +91,7 @@ static void ResetLists()
 	for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
 	{
 		snapshots[i].timestamp = ~(TIMESTAMP)0;
-		snapshots[i].discardedTs = 0;
+		snapshots[i].discardedTs = INVALID_TIMESTAMP;
 		snapshots[i].next = snapshots+i+1;
 		snapshots[i].gcChain = gcNodes+k;
 		snapshots[i].type = SN_FUTURE_SNAPSHOT;
@@ -692,7 +692,7 @@ int SnOnUnregisterClient()
 	return success;
 }
 
-int SnAcceptRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count)
+int SnSubmitRequestForGc(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count)
 {
 	int failure=0, ofs=0;
 	SnRequestForGc *ebuf=NULL;
@@ -794,8 +794,8 @@ int SnAdvanceSnapshots(TIMESTAMP *snapshotTs, TIMESTAMP *discardedTs)
 
 	assert(snapshotTs);
 	if (!discardedTs) discardedTs=&dummyTs;
-	*snapshotTs=0;
-	*discardedTs=0;
+	*snapshotTs=INVALID_TIMESTAMP;
+	*discardedTs=INVALID_TIMESTAMP;
 
 	if (AdvanceSnapshotsRecursion>0)
 	{

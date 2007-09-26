@@ -24,10 +24,10 @@
 
 /* global variables */ 
 
-static TIMESTAMP timestamp = ~(TIMESTAMP)0;
+static TIMESTAMP timestamp = INVALID_TIMESTAMP;
 static uMutexType gMutex;
 static HANDLE hSnapshotsAdvancedEvent = NULL;
-static TIMESTAMP curSnapshotTs=0, persSnapshotTs=0;
+static TIMESTAMP curSnapshotTs=INVALID_TIMESTAMP, persSnapshotTs=INVALID_TIMESTAMP;
 
 static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
 static size_t swappedNum = 0;
@@ -264,7 +264,8 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 	WuVersionEntry versionEntry = {lxptr, xptr};
 	try
 	{
-		ll_add_pers_snapshot_block_info(&versionEntry);
+		LONG_LSN lsn=ll_add_pers_snapshot_block_info(&versionEntry);
+		ll_logical_log_flush_lsn(lsn);	
 		success=1;
 	}
 	WU_CATCH_EXCEPTIONS()
@@ -290,8 +291,8 @@ int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 int WuGetTimestamp(TIMESTAMP *ts)
 {
 	int success = 0;
-	assert(ts); *ts=0;
-	if (timestamp == ~(TIMESTAMP)0)
+	assert(ts); *ts=INVALID_TIMESTAMP;
+	if (!IsValidTimestamp(timestamp))
 	{
 		WuSetLastErrorMacro(WUERR_MAX_TIMESTAMP_VALUE_EXCEEDED);
 	}
@@ -305,8 +306,16 @@ int WuGetTimestamp(TIMESTAMP *ts)
 
 int WuSetTimestamp(TIMESTAMP ts)
 {
-	timestamp = ts;
-	return 1;
+	int success=0;
+	if (!IsValidTimestamp(ts))
+	{
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+	}
+	else
+	{
+		timestamp = ts;
+	}
+	return success;
 }
 
 int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
@@ -330,7 +339,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 		AllocBlock,
 		FreeBlock,
 		WuGetTimestamp,
-		SnAcceptRequestForGc,
+		SnSubmitRequestForGc,
 		LocateHeader,
 		OnCompleteBlockRelocation
 		/* end wire */ 		
@@ -395,6 +404,8 @@ int WuRelease()
 	VeDeinitialize();
 	ClDeinitialize();
 	if (!DeinitSynchObjects()) failure=1;
+	curSnapshotTs=INVALID_TIMESTAMP;
+	persSnapshotTs=INVALID_TIMESTAMP;
 	return (failure==0);
 }
 
@@ -559,7 +570,7 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			else
 			{
 				lxptr=WuInternaliseXptr(p);
-				if (!isVersionsDisabled && !VeCreateVersion(lxptr)) {}
+				if (!isVersionsDisabled && !VeCreateBlockVersion(lxptr)) {}
 				else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
 				else
 				{
