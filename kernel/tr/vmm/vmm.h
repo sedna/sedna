@@ -98,11 +98,11 @@ extern session_id sid;
 #endif /*_WIN32*/
 
 
-#define VMM_SIGNAL_MODIFICATION(p)	VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
+#define VMM_SIGNAL_MODIFICATION(p)	{VMM_INC_NUMBER_OF_MODIFICATIONS(p)				\
                                     VMM_TRACE_SIGNAL_MODIFICATION(p)				\
                                     if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != sid) \
                                     	vmm_unswap_block_write(p);                  \
-                                    ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;
+                                    ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;}
 
 
 void vmm_preliminary_call() throw (SednaException);
