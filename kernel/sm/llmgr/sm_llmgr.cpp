@@ -233,6 +233,8 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
   
   free(ctrl_blk_buf);
 
+  bm_rcv_tmp_file();
+
   ll_log_unlock(sync);
 
 //  return rcvLSN; // return LSN for recovery by logical log
