@@ -274,12 +274,12 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node* sc
 
 void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, schema_node* scm_node)
 {
-   	if ((auth == BLOCK_AUTH_CHECK)||(old_node==XNULL)) return;
+   	if (auth == BLOCK_AUTH_CHECK) return;
 
     // care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
 
-    if (new_node==XNULL) throw SYSTEM_EXCEPTION("Bad parameters");
+    if (old_node==XNULL) return; //old_var==XNULL if there are no for-each-node-after-triggers
     CHECKP(old_node);
 
     //if the node is not element or attribute - return
@@ -458,7 +458,9 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
    	it1=target_seq->begin();
     while(it1!=target_seq->end())
     {
-        schema_node* scn=GETSCHEMENODEX(removeIndirection(*it1));
+		xptr p=removeIndirection(*it1);
+		CHECKP(p);
+        schema_node* scn=GETSCHEMENODEX(p);
         scmnodes.insert(scn);
         it1++;
     }
