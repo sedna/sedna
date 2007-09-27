@@ -68,7 +68,7 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
     }
 }
 
-void apply_after_insert_triggers(xptr new_var, xptr where_var)
+void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node* scm_node)
 {
    	if (auth == BLOCK_AUTH_CHECK) return;
 
@@ -78,7 +78,7 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var)
     if ((new_var==XNULL)||(where_var==XNULL)) throw SYSTEM_EXCEPTION("Bad parameters");
 	
     CHECKP(new_var);
-	schema_node* scm_node = GETSCHEMENODEX(new_var);
+	scm_node = GETSCHEMENODEX(new_var);
     //if the node is not element or attribute - return
     t_item node_type = GETTYPE(scm_node);
     if((node_type!=element)&&(node_type!=attribute))
@@ -517,7 +517,7 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
         case TRIGGER_AFTER:
           switch (event){
              case TRIGGER_INSERT_EVENT:
-                  apply_after_insert_triggers(new_var, where_var);
+                  apply_after_insert_triggers(new_var, where_var, scm_node);
                   return XNULL;
                   
              case TRIGGER_DELETE_EVENT:
