@@ -161,11 +161,6 @@ static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRec
 			VMM_SIGNAL_MODIFICATION(ADDR2XPTR(hit));
 			resolution = EXCEPTION_CONTINUE_EXECUTION;
 		}
-		else
-		{
-			/* TODO: Just a kludge for now, remove as soon as get VC2005 */ 
-			U_ASSERT(0);
-		}
 	}
 
 	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
@@ -174,7 +169,22 @@ static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRec
 
 static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
 {
-	return exceptionDispatcherProc(ExceptionRecord,Context);
+	LONG resolution = exceptionDispatcherProc(ExceptionRecord,Context);
+#	if (_MSC_VER <= 1400)
+	/*	If we are compiling with Microsoft compiler and it is anything older than ver. 2005
+		call UnhandledExceptionFilter() now to get a "the program performed an ilegal operation" 
+		dialog that offers us to attach a debuger. The old Microsoft compilers generated
+		the code that catched SEH exceptions with catch(...) statement; that is bad. */ 
+	if (resolution == EXCEPTION_CONTINUE_SEARCH &&
+		ExceptionRecord->ExceptionCode != 0xE06D7363 /* C++ exception*/ && 
+		ExceptionRecord->ExceptionCode != EXCEPTION_BREAKPOINT &&
+		ExceptionRecord->ExceptionCode != EXCEPTION_SINGLE_STEP) 
+	{
+		EXCEPTION_POINTERS ep = {ExceptionRecord, Context};
+		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) DebugBreak();
+	}
+#	endif
+	return resolution;
 }
 
 void OS_exceptions_handler::install_handler()
