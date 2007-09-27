@@ -30,14 +30,14 @@ createExpr!:
 	            #[$s20->getText(), AST_STRING_CONST]);
 	     >>
 	     )
-	   | ((INDEX | INDEX_LOWCASE) n1:exprSingle CON
+	   | ((INDEX | INDEX_LOWCASE) n1:exprSingle (CON | ON)
 	      p1:pathExpr CBY p2:pathExpr CAS t:singleType
 	      <<
 	         #0=#(#[AST_CREATE_INDEX], #n1, #p1, #p2, #t);
 	      >>
 	     )
 	   | ((FULLTEXT | FULLTEXT_LOWCASE) (INDEX | INDEX_LOWCASE) n2_1:exprSingle 
-	               CON p3_1:pathExpr CTYPE s21_1:STRINGLITERAL {e2_1:expr}
+	               (CON | ON) p3_1:pathExpr CTYPE s21_1:STRINGLITERAL {e2_1:expr}
 	      <<if (#e2_1 != NULL)
 	           #0=#(#[AST_CREATE_FULLTEXT_INDEX], #n2_1, #p3_1, #[$s21_1->getText(), AST_STRING_CONST], #e2_1);
 	        else
@@ -49,7 +49,7 @@ createExpr!:
 	   | ((TRIGGER | TRIGGER_LOWCASE) <<#0=#[AST_CREATE_TRIGGER];>> ct_s:STRINGLITERAL <<#0->addChild(#[$ct_s->getText(), AST_STRING_CONST]);>>
 	      ((BEFORE | BEFORE_LOWCASE) <<#0->addChild(#["\"BEFORE\"", AST_STRING_CONST]);>> | (AFTER | AFTER_LOWCASE) <<#0->addChild(#["\"AFTER\"", AST_STRING_CONST]);>>)
 	      ((CINSERT | CINSERT_LOWCASE) <<#0->addChild(#["\"INSERT\"", AST_STRING_CONST]);>> | (CDELETE | CDELETE_LOWCASE) <<#0->addChild(#["\"DELETE\"", AST_STRING_CONST]);>>| (CREPLACE | CREPLACE_LOWCASE) <<#0->addChild(#["\"REPLACE\"", AST_STRING_CONST]);>>)
-	      CON ct_pe:pathExpr <<#0->addChild(#ct_pe);>>
+	      (CON | ON) ct_pe:pathExpr <<#0->addChild(#ct_pe);>>
 	      (FOR_ | FOR) (EACH | EACH_LOWCASE) ((CNODE | NODE) <<#0->addChild(#["\"NODE\"", AST_STRING_CONST]);>> | (STATEMENT | STATEMENT_LOWCASE) <<#0->addChild(#["\"STATEMENT\"", AST_STRING_CONST]);>>)
 	      (CDO | CDO_LOWCASE) LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
 	      <<#0->addChild(lst);>>
@@ -135,7 +135,7 @@ createExpr!:
 
 
 	| (GRANT | GRANT_LOWCASE) privl1:privList
-	  (   CON ( s12:STRINGLITERAL (CTO | TO) u13:userList
+	  (   (CON | ON) ( s12:STRINGLITERAL (CTO | TO) u13:userList
 	           <<
 	             #0=#(#[AST_GRANT_PRIV_ON_DOC], 
 	                  #privl1,
@@ -179,7 +179,7 @@ createExpr!:
 	  )
 
 	| (REVOKE | REVOKE_LOWCASE) privl2:privList
-	  (   CON  ( s16:STRINGLITERAL (FROM | FROM_LOWCASE) u17:userList
+	  (   (CON | ON)  ( s16:STRINGLITERAL (FROM | FROM_LOWCASE) u17:userList
 	            <<
 	              #0=#(#[AST_REVOKE_PRIV_FR_DOC], 
 	                   #privl2,
