@@ -313,10 +313,11 @@ CHICKEN_INCLUDE = $(CHICKEN_HOME)
 #LD_LIBRARY_PATH+=$(CHICKEN_HOME)
 endif
 
-
-
-
-CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
+CHICKEN_HEAP_SPEC = -heap-initial-size 1M
+#CHICKEN_HEAP_SPEC = -heap-size 5M
+CHICKEN_OPTIONS = $(CHICKEN_HEAP_SPEC) -include-path $(CHICKEN_INCLUDE)
+# Was:
+#CHICKEN_OPTIONS = -heap-size 100M -include-path $(CHICKEN_INCLUDE)
 
 
 %$(OBJ_EXT): %.cpp
