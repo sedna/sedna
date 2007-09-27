@@ -916,7 +916,7 @@ void vmm_on_transaction_end() throw (SednaException)
 
         // reset blocks with write access from current trid
 		std::vector<void *> intermedStorg;
-		void **i=NULL, **iend=NULL;
+		std::vector<void *>::iterator i;
 		t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
 
 		intermedStorg.reserve(write_table.size());
@@ -924,9 +924,7 @@ void vmm_on_transaction_end() throw (SednaException)
 		{
 			intermedStorg.push_back(*it);
 		}
-		i=&(*intermedStorg.begin());
-		iend=&(*intermedStorg.end());
-		for (0; i!=iend; ++i)
+		for (i=intermedStorg.begin(); i!=intermedStorg.end(); ++i)
 		{
 			_vmm_unmap_decent(*i);
 		}
