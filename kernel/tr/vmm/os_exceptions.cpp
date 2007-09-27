@@ -167,9 +167,16 @@ static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRec
 	return resolution;
 }
 
+extern "C"
+WINBASEAPI
+BOOL
+WINAPI
+IsDebuggerPresent( VOID );
+
 static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
 {
 	LONG resolution = exceptionDispatcherProc(ExceptionRecord,Context);
+	BOOL wasDebuggerPresent = FALSE;
 #	if (_MSC_VER <= 1400)
 	/*	If we are compiling with Microsoft compiler and it is anything older than ver. 2005
 		call UnhandledExceptionFilter() now to get a "the program performed an ilegal operation" 
@@ -181,7 +188,12 @@ static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCO
 		ExceptionRecord->ExceptionCode != EXCEPTION_SINGLE_STEP) 
 	{
 		EXCEPTION_POINTERS ep = {ExceptionRecord, Context};
-		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) DebugBreak();
+		wasDebuggerPresent = IsDebuggerPresent();
+		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) 
+		{
+			/* a debuger just attached, rethrow exception the weird way */ 
+			if (wasDebuggerPresent==FALSE) resolution=EXCEPTION_CONTINUE_EXECUTION;
+		}
 	}
 #	endif
 	return resolution;
