@@ -308,17 +308,17 @@ xptr trigger_cell::execute_trigger_action(xptr parameter_new, xptr parameter_old
 		if (!t.cells[0].is_node())
 			res_xptr = XNULL;
 		else
-		{
 			res_xptr = t.cells[0].get_node();
-			CHECKP(res_xptr);
-		}
-       	// retrieve all items to make the qep_subtree usable next time
+
+		// retrieve all items to make the qep_subtree usable next time
 		while(!t.is_eos()) 
 			qep_subtree->tree.op->next(t);
      }
 	 else res_xptr = XNULL;
 
    current_nesting_level--;
+
+   if(res_xptr!=XNULL) CHECKP(res_xptr);
    return res_xptr;
 }
 

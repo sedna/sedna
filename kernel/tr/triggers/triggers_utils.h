@@ -26,7 +26,7 @@ typedef std::set<trigger_cell*> t_triggers_set;
 
 typedef std::map<schema_node*, std::set<trigger_cell*> > schema_nodes_triggers_map;
 
-void nested_updates_tracking(lock_mode mode, schema_node* root);
+void nested_updates_tracking(lock_mode mode, schema_node* root, const char* doc_name);
 
 void set_action_parameters(xptr parameter_new, xptr parameter_old, xptr parameter_where, trigger_granularity gran, std::string trigger_title);
 
