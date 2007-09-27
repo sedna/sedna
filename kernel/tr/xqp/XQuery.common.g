@@ -47,7 +47,7 @@ qname!:
 
 qname!:
      << ASTBase* pref = NULL, *local= NULL;>>
-	( {(p1:prefixPart1 <<pref=#p1;>> | p2:prefixPart2 <<pref=#p2;>>| p3:prefixPart3 <<pref=#p3;>>) COLON} (l1:localPart1 <<local=#l1;>> | l2:localPart2 <<local=#l2;>> | l3:localPart3 <<local=#l3;>>)
+	( {(p1:prefixPart1 <<pref=#p1;>> | p2:prefixPart2 <<pref=#p2;>>| p3:prefixPart3 <<pref=#p3;>> | p4:prefixPart4 <<pref=#p4;>>) COLON} (l1:localPart1 <<local=#l1;>> | l2:localPart2 <<local=#l2;>> | l3:localPart3 <<local=#l3;>> | l4:localPart4 <<local=#l4;>>)
 	)
 	  <<
 	     #0=#(#[AST_QNAME], local, pref);
@@ -220,6 +220,46 @@ localPart3!:
 	| COR <<#0=#["OR", AST_LOCAL_NAME];>>
 ;	
 
+// sed 's/"$/" dummy/g' |
+// awk '{print "\t| "$2, "<<#0=#["$3", AST_LOCAL_NAME];>>"}'
+localPart4!:
+	CREATE_LOWCASE <<#0=#["create", AST_LOCAL_NAME];>>
+	| DROP_LOWCASE <<#0=#["drop", AST_LOCAL_NAME];>>
+	| GRANT_LOWCASE <<#0=#["grant", AST_LOCAL_NAME];>>
+	| REVOKE_LOWCASE <<#0=#["revoke", AST_LOCAL_NAME];>>
+	| LOADFILE_LOWCASE <<#0=#["loadfile", AST_LOCAL_NAME];>>
+	| LOAD_LOWCASE <<#0=#["load", AST_LOCAL_NAME];>>
+	| ALTER_LOWCASE <<#0=#["alter", AST_LOCAL_NAME];>>
+	| ROLE_LOWCASE <<#0=#["role", AST_LOCAL_NAME];>>
+	| DATABASE_LOWCASE <<#0=#["database", AST_LOCAL_NAME];>>
+	| INDEX_LOWCASE <<#0=#["index", AST_LOCAL_NAME];>>
+	| FULLTEXT_LOWCASE <<#0=#["full\-text", AST_LOCAL_NAME];>>
+	| FROM_LOWCASE <<#0=#["from", AST_LOCAL_NAME];>>
+	| STDIN_LOWCASE <<#0=#["stdin", AST_LOCAL_NAME];>>
+	| USER_LOWCASE <<#0=#["user", AST_LOCAL_NAME];>>
+	| PASSWORD_LOWCASE <<#0=#["password", AST_LOCAL_NAME];>>
+	| ALL_LOWCASE <<#0=#["all", AST_LOCAL_NAME];>>
+	| PUBLIC_LOWCASE <<#0=#["public", AST_LOCAL_NAME];>>
+	| TRIGGER_LOWCASE <<#0=#["trigger", AST_LOCAL_NAME];>>
+	| BEFORE_LOWCASE <<#0=#["before", AST_LOCAL_NAME];>>
+	| AFTER_LOWCASE <<#0=#["after", AST_LOCAL_NAME];>>
+	| CINSERT_LOWCASE <<#0=#["insert", AST_LOCAL_NAME];>>
+	| CDELETE_LOWCASE <<#0=#["delete", AST_LOCAL_NAME];>>
+	| CREPLACE_LOWCASE <<#0=#["replace", AST_LOCAL_NAME];>>
+	| EACH_LOWCASE <<#0=#["each", AST_LOCAL_NAME];>>
+	| STATEMENT_LOWCASE <<#0=#["statement", AST_LOCAL_NAME];>>
+	| CDO_LOWCASE <<#0=#["do", AST_LOCAL_NAME];>>
+	| COMMIT_LOWCASE <<#0=#["commit", AST_LOCAL_NAME];>>
+	| ROLLBACK_LOWCASE <<#0=#["rollback", AST_LOCAL_NAME];>>
+	| RETRIEVE_LOWCASE <<#0=#["retrieve", AST_LOCAL_NAME];>>
+	| METADATA_LOWCASE <<#0=#["metadata", AST_LOCAL_NAME];>>
+	| DOCUMENTS_LOWCASE <<#0=#["documents", AST_LOCAL_NAME];>>
+	| COLLECTIONS_LOWCASE <<#0=#["collections", AST_LOCAL_NAME];>>
+	| CCOLLECTION_LOWCASE <<#0=#["collection", AST_LOCAL_NAME];>>
+	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_LOCAL_NAME];>>
+	| STATISTICS_LOWCASE <<#0=#["statistics", AST_LOCAL_NAME];>>
+;
+
 prefixPart1!:
   	  nn:NCNAME <<#0=#[$nn->getText(), AST_PREFIX];>>
 	| DECLARE <<#0=#["declare", AST_PREFIX];>>
@@ -377,6 +417,43 @@ prefixPart3!:
 	| COR <<#0=#["or", AST_PREFIX];>>
 ;
 
+prefixPart4!:
+	CREATE_LOWCASE <<#0=#["create", AST_PREFIX];>>
+	| DROP_LOWCASE <<#0=#["drop", AST_PREFIX];>>
+	| GRANT_LOWCASE <<#0=#["grant", AST_PREFIX];>>
+	| REVOKE_LOWCASE <<#0=#["revoke", AST_PREFIX];>>
+	| LOADFILE_LOWCASE <<#0=#["loadfile", AST_PREFIX];>>
+	| LOAD_LOWCASE <<#0=#["load", AST_PREFIX];>>
+	| ALTER_LOWCASE <<#0=#["alter", AST_PREFIX];>>
+	| ROLE_LOWCASE <<#0=#["role", AST_PREFIX];>>
+	| DATABASE_LOWCASE <<#0=#["database", AST_PREFIX];>>
+	| INDEX_LOWCASE <<#0=#["index", AST_PREFIX];>>
+	| FULLTEXT_LOWCASE <<#0=#["full\-text", AST_PREFIX];>>
+	| FROM_LOWCASE <<#0=#["from", AST_PREFIX];>>
+	| STDIN_LOWCASE <<#0=#["stdin", AST_PREFIX];>>
+	| USER_LOWCASE <<#0=#["user", AST_PREFIX];>>
+	| PASSWORD_LOWCASE <<#0=#["password", AST_PREFIX];>>
+	| ALL_LOWCASE <<#0=#["all", AST_PREFIX];>>
+	| PUBLIC_LOWCASE <<#0=#["public", AST_PREFIX];>>
+	| TRIGGER_LOWCASE <<#0=#["trigger", AST_PREFIX];>>
+	| BEFORE_LOWCASE <<#0=#["before", AST_PREFIX];>>
+	| AFTER_LOWCASE <<#0=#["after", AST_PREFIX];>>
+	| CINSERT_LOWCASE <<#0=#["insert", AST_PREFIX];>>
+	| CDELETE_LOWCASE <<#0=#["delete", AST_PREFIX];>>
+	| CREPLACE_LOWCASE <<#0=#["replace", AST_PREFIX];>>
+	| EACH_LOWCASE <<#0=#["each", AST_PREFIX];>>
+	| STATEMENT_LOWCASE <<#0=#["statement", AST_PREFIX];>>
+	| CDO_LOWCASE <<#0=#["do", AST_PREFIX];>>
+	| COMMIT_LOWCASE <<#0=#["commit", AST_PREFIX];>>
+	| ROLLBACK_LOWCASE <<#0=#["rollback", AST_PREFIX];>>
+	| RETRIEVE_LOWCASE <<#0=#["retrieve", AST_PREFIX];>>
+	| METADATA_LOWCASE <<#0=#["metadata", AST_PREFIX];>>
+	| DOCUMENTS_LOWCASE <<#0=#["documents", AST_PREFIX];>>
+	| COLLECTIONS_LOWCASE <<#0=#["collections", AST_PREFIX];>>
+	| CCOLLECTION_LOWCASE <<#0=#["collection", AST_PREFIX];>>
+	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_PREFIX];>>
+	| STATISTICS_LOWCASE <<#0=#["statistics", AST_PREFIX];>>
+;
 
 ncname!: 
 	  l1:localPart1 <<#0=#l1;>>

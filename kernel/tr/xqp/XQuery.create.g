@@ -6,12 +6,12 @@ createExpr!:
           <<std::string stream; bool b;
 	    ASTBase* lst;
 	      >>
-	  CREATE 
-	  ( ( CCOLLECTION e1:exprSingle
+	  (CREATE | CREATE_LOWCASE)
+	  ( ( (CCOLLECTION | CCOLLECTION_LOWCASE) e1:exprSingle
 	     <<#0=#(#[AST_CREATE_COLLECTION], #e1);>>
 	    )
 
-	   | ( CDOCUMENT e2:exprSingle  {CIN_ CCOLLECTION e3:exprSingle}
+	   | ( (CDOCUMENT | LDOCUMENT) e2:exprSingle  {(CIN_ | IN_) (CCOLLECTION | CCOLLECTION_LOWCASE) e3:exprSingle}
 	     <<
 	       if (#e3 == NULL) 
 	          #0=#(#[AST_CREATE_DOCUMENT], #e2);
@@ -19,24 +19,24 @@ createExpr!:
 	          #0=#(#[AST_CREATE_DOCUMENT], #e2, #e3);
 	     >>
 	     )
-	   | ( ROLE s9:STRINGLITERAL
+	   | ( (ROLE | ROLE_LOWCASE) s9:STRINGLITERAL
 	     <<
 	       #0=#(#[AST_CREATE_ROLE], #[$s9->getText(), AST_STRING_CONST]); 	        
 	     >> 
 	     )
-	   | ( USER s19:STRINGLITERAL CWITH PASSWORD s20:STRINGLITERAL
+	   | ( (USER | USER_LOWCASE) s19:STRINGLITERAL (CWITH | WITH) (PASSWORD | PASSWORD_LOWCASE) s20:STRINGLITERAL
 	     <<#0=#(#[AST_CREATE_USER], 
 	            #[$s19->getText(), AST_STRING_CONST],
 	            #[$s20->getText(), AST_STRING_CONST]);
 	     >>
 	     )
-	   | (INDEX n1:exprSingle CON
+	   | ((INDEX | INDEX_LOWCASE) n1:exprSingle CON
 	      p1:pathExpr CBY p2:pathExpr CAS t:singleType
 	      <<
 	         #0=#(#[AST_CREATE_INDEX], #n1, #p1, #p2, #t);
 	      >>
 	     )
-	   | (FULLTEXT INDEX n2_1:exprSingle 
+	   | ((FULLTEXT | FULLTEXT_LOWCASE) (INDEX | INDEX_LOWCASE) n2_1:exprSingle 
 	               CON p3_1:pathExpr CTYPE s21_1:STRINGLITERAL {e2_1:expr}
 	      <<if (#e2_1 != NULL)
 	           #0=#(#[AST_CREATE_FULLTEXT_INDEX], #n2_1, #p3_1, #[$s21_1->getText(), AST_STRING_CONST], #e2_1);
@@ -46,12 +46,12 @@ createExpr!:
 
 	     )
 
-	   | (TRIGGER <<#0=#[AST_CREATE_TRIGGER];>> ct_s:STRINGLITERAL <<#0->addChild(#[$ct_s->getText(), AST_STRING_CONST]);>>
-	      (BEFORE <<#0->addChild(#["\"BEFORE\"", AST_STRING_CONST]);>> | AFTER <<#0->addChild(#["\"AFTER\"", AST_STRING_CONST]);>>)
-	      (CINSERT <<#0->addChild(#["\"INSERT\"", AST_STRING_CONST]);>> | CDELETE <<#0->addChild(#["\"DELETE\"", AST_STRING_CONST]);>>| CREPLACE <<#0->addChild(#["\"REPLACE\"", AST_STRING_CONST]);>>)
+	   | ((TRIGGER | TRIGGER_LOWCASE) <<#0=#[AST_CREATE_TRIGGER];>> ct_s:STRINGLITERAL <<#0->addChild(#[$ct_s->getText(), AST_STRING_CONST]);>>
+	      ((BEFORE | BEFORE_LOWCASE) <<#0->addChild(#["\"BEFORE\"", AST_STRING_CONST]);>> | (AFTER | AFTER_LOWCASE) <<#0->addChild(#["\"AFTER\"", AST_STRING_CONST]);>>)
+	      ((CINSERT | CINSERT_LOWCASE) <<#0->addChild(#["\"INSERT\"", AST_STRING_CONST]);>> | (CDELETE | CDELETE_LOWCASE) <<#0->addChild(#["\"DELETE\"", AST_STRING_CONST]);>>| (CREPLACE | CREPLACE_LOWCASE) <<#0->addChild(#["\"REPLACE\"", AST_STRING_CONST]);>>)
 	      CON ct_pe:pathExpr <<#0->addChild(#ct_pe);>>
-	      FOR_ EACH (CNODE <<#0->addChild(#["\"NODE\"", AST_STRING_CONST]);>> | STATEMENT <<#0->addChild(#["\"STATEMENT\"", AST_STRING_CONST]);>>)
-	      CDO LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
+	      (FOR_ | FOR) (EACH | EACH_LOWCASE) ((CNODE | NODE) <<#0->addChild(#["\"NODE\"", AST_STRING_CONST]);>> | (STATEMENT | STATEMENT_LOWCASE) <<#0->addChild(#["\"STATEMENT\"", AST_STRING_CONST]);>>)
+	      (CDO | CDO_LOWCASE) LBRACE ct_e1:triggerDoStmt SEMICOLON <<lst=#(#[AST_DO_STMNT_LIST], #ct_e1);>> ( ct_e2:triggerDoStmt SEMICOLON <<lst->addChild(#ct_e2);>>)* RBRACE
 	      <<#0->addChild(lst);>>
 	     )
 
@@ -60,12 +60,12 @@ createExpr!:
 	  )
 	  
 
-	| DROP 
-	  (  ( CCOLLECTION e5:exprSingle
+	| (DROP | DROP_LOWCASE)
+	  (  ( (CCOLLECTION | CCOLLECTION_LOWCASE) e5:exprSingle
 	       <<#0=#(#[AST_DROP_COLLECTION], #e5);>>
 	     )
 	     
-	   | ( CDOCUMENT e6:exprSingle {CIN_ CCOLLECTION e8:exprSingle}
+	   | ( (CDOCUMENT | LDOCUMENT) e6:exprSingle {(CIN_ | IN_) (CCOLLECTION | CCOLLECTION_LOWCASE) e8:exprSingle}
 	     <<
 	       if (#e8 == NULL)
 	           #0=#(#[AST_DROP_DOCUMENT], #e6);
@@ -74,30 +74,30 @@ createExpr!:
 	     >>
 	     )
 
-	   | ( ROLE s10:STRINGLITERAL
+	   | ( (ROLE | ROLE_LOWCASE) s10:STRINGLITERAL
 	     <<
 	       #0=#(#[AST_DROP_ROLE], #[$s10->getText(), AST_STRING_CONST]);
 	     >>
 	     )
-	   | ( USER s21:STRINGLITERAL 
+	   | ( (USER | USER_LOWCASE) s21:STRINGLITERAL 
 	     <<#0=#(#[AST_DROP_USER], #[$s21->getText(), AST_STRING_CONST]);>>
 	     )
 
-	   | (INDEX n3:exprSingle
+	   | ((INDEX | INDEX_LOWCASE) n3:exprSingle
 	      <<#0=#(#[AST_DROP_INDEX], #n3); >>
 	     )
 
-	   | (FULLTEXT INDEX n4:exprSingle
+	   | ((FULLTEXT | FULLTEXT_LOWCASE) (INDEX | INDEX_LOWCASE) n4:exprSingle
 	      <<#0=#(#[AST_DROP_FULLTEXT_INDEX], #n4);>>
 	     )
 
-	   | (TRIGGER dt_s:STRINGLITERAL <<#0=#(#[AST_DROP_TRIGGER], #[$dt_s->getText(), AST_STRING_CONST]);>>)
-	   | ( CMODULE m_st1:STRINGLITERAL <<#0=#(#[AST_DROP_MODULE], #[$m_st1->getText(), AST_STRING_CONST]);>> )
+	   | ((TRIGGER | TRIGGER_LOWCASE) dt_s:STRINGLITERAL <<#0=#(#[AST_DROP_TRIGGER], #[$dt_s->getText(), AST_STRING_CONST]);>>)
+	   | ( (CMODULE | MODULE) m_st1:STRINGLITERAL <<#0=#(#[AST_DROP_MODULE], #[$m_st1->getText(), AST_STRING_CONST]);>> )
 
 
 	  )
 
-	| ALTER USER s22:STRINGLITERAL CWITH PASSWORD s23:STRINGLITERAL
+	| (ALTER | ALTER_LOWCASE) (USER | USER_LOWCASE) s22:STRINGLITERAL (CWITH | WITH) (PASSWORD | PASSWORD_LOWCASE) s23:STRINGLITERAL
 	  << #0=#(#[AST_ALTER_USER],
                 #[$s22->getText(), AST_STRING_CONST],
                 #[$s23->getText(), AST_STRING_CONST]);
@@ -105,8 +105,8 @@ createExpr!:
 
     |
 
-     LOAD (( (  s5_1:STRINGLITERAL <<stream=$s5_1->getText();>>
-            | STDIN              <<stream = "\"/STDIN/\"";>>
+     (LOAD | LOAD_LOWCASE) (( (  s5_1:STRINGLITERAL <<stream=$s5_1->getText();>>
+            | (STDIN | STDIN_LOWCASE)              <<stream = "\"/STDIN/\"";>>
             )
               s6_1:STRINGLITERAL {s7_1:STRINGLITERAL}
 
@@ -120,12 +120,12 @@ createExpr!:
 
 	     >>
 	    )
-	   | (CMODULE lm_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lm_st2->getText(), AST_STRING_CONST]);>> (COMMA lm_st3:STRINGLITERAL <<#0->addChild(#[$lm_st3->getText(), AST_STRING_CONST]);>>)* )
+	   | ((CMODULE | MODULE) lm_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lm_st2->getText(), AST_STRING_CONST]);>> (COMMA lm_st3:STRINGLITERAL <<#0->addChild(#[$lm_st3->getText(), AST_STRING_CONST]);>>)* )
 
-	   | (COR CREPLACE CMODULE lr_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_OR_REPL_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lr_st2->getText(), AST_STRING_CONST]);>> (COMMA lr_st3:STRINGLITERAL <<#0->addChild(#[$lr_st3->getText(), AST_STRING_CONST]);>>)*)
+	   | ((COR | OR) (CREPLACE | CREPLACE_LOWCASE) (CMODULE | MODULE) lr_st2:STRINGLITERAL <<#0=#(#[AST_LOAD_OR_REPL_MODULE], #["\"dummy-for-compatibility\"", AST_STRING_CONST], #[$lr_st2->getText(), AST_STRING_CONST]);>> (COMMA lr_st3:STRINGLITERAL <<#0->addChild(#[$lr_st3->getText(), AST_STRING_CONST]);>>)*)
 	
 	   )
-	| LOADFILE e5_1:exprSingle CAS e6_1:exprSingle {CIN_ e7_1:exprSingle}
+	| (LOADFILE | LOADFILE_LOWCASE) e5_1:exprSingle CAS e6_1:exprSingle {(CIN_ | IN_) e7_1:exprSingle}
       <<
          if (#e7_1 == NULL)
             #0=#(#[AST_LOAD_FILE_EX], #e5_1, #e6_1);
@@ -134,8 +134,8 @@ createExpr!:
       >>
 
 
-	| GRANT privl1:privList
-	  (   CON ( s12:STRINGLITERAL CTO u13:userList
+	| (GRANT | GRANT_LOWCASE) privl1:privList
+	  (   CON ( s12:STRINGLITERAL (CTO | TO) u13:userList
 	           <<
 	             #0=#(#[AST_GRANT_PRIV_ON_DOC], 
 	                  #privl1,
@@ -143,14 +143,14 @@ createExpr!:
 	                  #u13
                       );
 	           >>
-	          | DATABASE CTO u13_1:userList
+	          | (DATABASE | DATABASE_LOWCASE) (CTO | TO) u13_1:userList
 	           <<
 	             #0=#(#[AST_GRANT_PRIV], 
 	                  #privl1,
 	                  #u13_1
                      );
 	           >>
-	          | CDOCUMENT s13_2:STRINGLITERAL CTO u13_3:userList
+	          | (CDOCUMENT | LDOCUMENT) s13_2:STRINGLITERAL (CTO | TO) u13_3:userList
 	           <<
 	             #0=#(#[AST_GRANT_PRIV_ON_DOC], 
 	                  #privl1,
@@ -158,7 +158,7 @@ createExpr!:
 	                  #u13_3
                      );
 	           >>
-	          | CCOLLECTION s13_4:STRINGLITERAL CTO u13_5:userList
+	          | (CCOLLECTION | CCOLLECTION_LOWCASE) s13_4:STRINGLITERAL (CTO | TO) u13_5:userList
 	           <<
 	             #0=#(#[AST_GRANT_PRIV_ON_COL], 
 	                  #privl1,
@@ -168,7 +168,7 @@ createExpr!:
 	           >>
 
 	         )
-	    | CTO u14:userList
+	    | (CTO | TO) u14:userList
 	      <<
 	        #0=#(#[AST_GRANT_ROLE], 
 	             #privl1,
@@ -178,8 +178,8 @@ createExpr!:
 
 	  )
 
-	| REVOKE privl2:privList
-	  (   CON  ( s16:STRINGLITERAL FROM u17:userList
+	| (REVOKE | REVOKE_LOWCASE) privl2:privList
+	  (   CON  ( s16:STRINGLITERAL (FROM | FROM_LOWCASE) u17:userList
 	            <<
 	              #0=#(#[AST_REVOKE_PRIV_FR_DOC], 
 	                   #privl2,
@@ -187,7 +187,7 @@ createExpr!:
 	                   #u17
                       );
 	            >>
-	           | DATABASE FROM u18:userList
+	           | (DATABASE | DATABASE_LOWCASE) (FROM | FROM_LOWCASE) u18:userList
 	            <<
 	              #0=#(#[AST_REVOKE_PRIV], 
 	                   #privl2,
@@ -195,7 +195,7 @@ createExpr!:
                       );
 	            >>
 
-	           | CDOCUMENT s19_0:STRINGLITERAL FROM u20_0:userList
+	           | (CDOCUMENT | LDOCUMENT) s19_0:STRINGLITERAL (FROM | FROM_LOWCASE) u20_0:userList
 	            <<
 	              #0=#(#[AST_REVOKE_PRIV_FR_DOC], 
 	                   #privl2,
@@ -204,7 +204,7 @@ createExpr!:
                       );
 	            >>
 
-	           | CCOLLECTION s19_1:STRINGLITERAL FROM u20_1:userList
+	           | (CCOLLECTION | CCOLLECTION_LOWCASE) s19_1:STRINGLITERAL (FROM | FROM_LOWCASE) u20_1:userList
 	            <<
 	              #0=#(#[AST_REVOKE_PRIV_FR_COL], 
 	                   #privl2,
@@ -214,7 +214,7 @@ createExpr!:
 	            >>
 
 	          )
-	    | FROM u25:userList
+	    | (FROM | FROM_LOWCASE) u25:userList
 	      <<
 	        #0=#(#[AST_REVOKE_ROLE], 
 	             #privl2,
@@ -230,7 +230,7 @@ privList!:
 	( s1:STRINGLITERAL <<#0=#(#[AST_PRIV_LIST], #[$s1->getText(), AST_STRING_CONST]);>>
 	  (COMMA s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>)*	
 	|
-	  ALL 
+	  (ALL | ALL_LOWCASE)
 	  <<#0=#[AST_PRIV_ALL];>>
 	)
 ;
@@ -239,7 +239,7 @@ userList!:
 	( s1:STRINGLITERAL <<#0=#(#[AST_USER_LIST], #[$s1->getText(), AST_STRING_CONST]);>>
 	  (COMMA s2:STRINGLITERAL <<#0->addChild(#[$s2->getText(), AST_STRING_CONST]);>>)*	
 	|
-	  PUBLIC 
+	  (PUBLIC | PUBLIC_LOWCASE)
 	  <<#0=#[AST_USER_PUBLIC];>>
 	)
 ;

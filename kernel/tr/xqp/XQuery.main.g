@@ -110,9 +110,9 @@ query![ASTBase* vd]:
 
 	   <<#0=#(#[AST_METADATA], #(#[AST_PROLOG], prol), #md);>>
 
-	 | ROLLBACK <<#0=#[AST_ROLLBACK];>>
+	 | (ROLLBACK | ROLLBACK_LOWCASE) <<#0=#[AST_ROLLBACK];>>
 
-	 | COMMIT <<#0=#[AST_COMMIT];>>
+	 | (COMMIT | COMMIT_LOWCASE) <<#0=#[AST_COMMIT];>>
      )
 ;
 

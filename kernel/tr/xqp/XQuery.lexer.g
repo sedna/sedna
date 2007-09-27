@@ -147,6 +147,7 @@ virtual void errstd(const char *s){
 #token ON "on"
 #token CON "ON"
 
+//-------------------------- manage -----------------
 /*  This keywords are added for manage expressions      */
 #token CREATE "CREATE"
 #token DROP "DROP"
@@ -199,6 +200,49 @@ virtual void errstd(const char *s){
 #token CMODULE "MODULE"
 #token COR "OR"
 
+//-------------------------- lower-case analogues -----------------
+// Generated with
+// awk '{print $1, $2"_LOWCASE", tolower($3)}
+
+#token CREATE_LOWCASE "create"
+#token DROP_LOWCASE "drop"
+#token GRANT_LOWCASE "grant"
+#token REVOKE_LOWCASE "revoke"
+#token LOADFILE_LOWCASE "loadfile"
+#token LOAD_LOWCASE "load"
+#token ALTER_LOWCASE "alter"
+
+#token ROLE_LOWCASE "role"
+#token DATABASE_LOWCASE "database"
+#token INDEX_LOWCASE "index"
+#token FULLTEXT_LOWCASE "full\-text"
+#token FROM_LOWCASE "from"
+#token STDIN_LOWCASE "stdin"
+#token USER_LOWCASE "user"
+#token PASSWORD_LOWCASE "password"
+#token ALL_LOWCASE "all"
+#token PUBLIC_LOWCASE "public"
+#token TRIGGER_LOWCASE "trigger"
+#token BEFORE_LOWCASE "before"
+#token AFTER_LOWCASE "after"
+#token CINSERT_LOWCASE "insert"
+#token CDELETE_LOWCASE "delete"
+#token CREPLACE_LOWCASE "replace"
+#token EACH_LOWCASE "each"
+#token STATEMENT_LOWCASE "statement"
+#token CDO_LOWCASE "do"
+
+#token COMMIT_LOWCASE "commit"
+#token ROLLBACK_LOWCASE "rollback"
+
+#token RETRIEVE_LOWCASE "retrieve"
+
+#token METADATA_LOWCASE "metadata"
+#token DOCUMENTS_LOWCASE "documents"
+#token COLLECTIONS_LOWCASE "collections"
+#token CCOLLECTION_LOWCASE "collection"
+#token DESCRIPTIVE_LOWCASE "descriptive"
+#token STATISTICS_LOWCASE "statistics"
 
 //-------------------------- operations -----------------
 
