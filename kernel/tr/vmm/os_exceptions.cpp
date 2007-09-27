@@ -161,6 +161,11 @@ static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRec
 			VMM_SIGNAL_MODIFICATION(ADDR2XPTR(hit));
 			resolution = EXCEPTION_CONTINUE_EXECUTION;
 		}
+		else
+		{
+			/* TODO: Just a kludge for now, remove as soon as get VC2005 */ 
+			U_ASSERT(0);
+		}
 	}
 
 	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
