@@ -406,7 +406,7 @@ char* SEDNA_DATA;
 
 char* get_sedna_data_path(const char* cfg_text, char* buf)
 {
-   char* beg, *fin;
+   const char* beg, *fin;
 
    beg = strstr(cfg_text, "<sedna_data>");
    fin = strstr(cfg_text, "</sedna_data>");
