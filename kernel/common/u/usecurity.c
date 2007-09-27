@@ -112,7 +112,7 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
 #ifdef _WIN32
     *sa = NULL;
     return 0;
-# else
+#else
     *sa = (USECURITY_ATTRIBUTES *) malloc(sizeof(USECURITY_ATTRIBUTES));
     (**sa) = 0;
     return 0;

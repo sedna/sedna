@@ -92,6 +92,7 @@ void GOVCtrlHandler(int signo)
 
 int main(int argc, char** argv)
 {
+    
     program_name_argv_0 = argv[0];
     pping_server *pps = NULL;
     gov_config_struct cfg;
@@ -107,8 +108,8 @@ int main(int argc, char** argv)
 
 #ifdef _WIN32
 #else
-        if ( uMkDir("/var/lib/sedna", NULL, __sys_call_error) == 0)
-           throw USER_EXCEPTION2(SE4055, "/var/lib/sedna");
+        //if ( uMkDir("/var/lib/sedna", NULL, __sys_call_error) == 0)
+        //   throw USER_EXCEPTION2(SE4055, "/var/lib/sedna");
 #endif
 
         pps = new pping_server(cfg.gov_vars.ping_port_number, EL_GOV);

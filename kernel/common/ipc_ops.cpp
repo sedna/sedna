@@ -24,6 +24,7 @@ void parse_config_file(gov_header_struct* cfg, string& cfg_text);
 void startElement_gov_cfg(void *cfg, const char *name, const char **atts);
 void endElement_gov_cfg(void *cfg, const char *name);
 void characterData_gov_cfg(void *cfg, const XML_Char *s, int len);
+char* get_sedna_data_path(const char* cfg_text, char* buf);
 string erase_ws(string str);
 
 
@@ -139,6 +140,7 @@ void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
   //find and parse sednaconf.xml
   char sedna_cfg_file[U_MAX_PATH + 1];
   char proc_buf[U_MAX_PATH + 1];
+  char sedna_data_path[U_MAX_PATH + 1];
 
   uGetImageProcPath(proc_buf, __sys_call_error);
   if (proc_buf[0] == '\0') 
@@ -183,7 +185,7 @@ void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
 
      parse_config_file(cfg, cfg_text);
 
-//     strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
+     strcpy(cfg->SEDNA_DATA, get_sedna_data_path(cfg_text.c_str(), sedna_data_path));
   }
   else
   {
@@ -207,7 +209,7 @@ void get_gov_config_parameters_from_sednaconf(gov_header_struct* cfg)
         fclose(fs);
 
         parse_config_file(cfg, cfg_text);
-//        strcpy(SEDNA_DATA, get_sedna_data_path(cfg_text, sedna_data_path));
+        strcpy(cfg->SEDNA_DATA, get_sedna_data_path(cfg_text.c_str(), sedna_data_path));
      }
 #endif
   }
@@ -386,7 +388,7 @@ string erase_ws(std::string str)
         break;
    }
 
-   res = str.substr(i, str.size() - i);   
+   res = str.substr(i, str.size() - i);  
 
    //erase whitespaces from the end of string
    for (i = res.size() - 1; i >= 0; --i)
@@ -402,7 +404,7 @@ string erase_ws(std::string str)
 
 char* SEDNA_DATA;
 
-char* get_sedna_data_path(char* cfg_text, char* buf)
+char* get_sedna_data_path(const char* cfg_text, char* buf)
 {
    char* beg, *fin;
 
@@ -416,7 +418,7 @@ char* get_sedna_data_path(char* cfg_text, char* buf)
    memcpy(buf, beg + 12, (int)fin-((int)beg + 12));
    buf[(int)fin-((int)beg + 12)] = '\0';
 
-   std::string tmp = buf;
+   std::string tmp(buf);
    tmp = erase_ws(tmp);
    strcpy(buf, tmp.c_str());
 

@@ -65,5 +65,5 @@ void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare);
 
 std::string trim(std::string str);
 
-std::string get_sedna_data_path(std::string cfg_text);
+
 #endif
