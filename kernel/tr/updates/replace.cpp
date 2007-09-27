@@ -160,6 +160,7 @@ void replace(PPOpIn arg)
 		
 	}
 	while (it3!=arg3seq.end());
+    
 	// inserting new nodes
 	it3=arg4seq.end();
 	do
@@ -174,12 +175,6 @@ void replace(PPOpIn arg)
         tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
 #endif        
 		
-/*		if(old_node == XNULL) 
-		{
-			SYSTEM_EXCEPTION("!");
-		}
-*/
-
 		//1.insert
 		int pos=(*it3).cells[1].get_xs_integer();
 		sit=arg2seq.begin()+pos;
