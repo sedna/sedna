@@ -11,7 +11,7 @@ int current_nesting_level;
 built_trigger_actions_map built_trigger_actions;
 
 
-void nested_updates_tracking(lock_mode mode, schema_node* root)
+void nested_updates_tracking(lock_mode mode, schema_node* root, const char* doc_name)
 {
     if (mode != lm_s)
     {
@@ -25,7 +25,7 @@ void nested_updates_tracking(lock_mode mode, schema_node* root)
 		{
             schema_node* sc = mapIter->first;
 			int cnl = mapIter->second;
-            if(mapIter->second < current_nesting_level) throw USER_EXCEPTION2(SE3205,root->first_child->name);
+            if(mapIter->second < current_nesting_level) throw USER_EXCEPTION2(SE3205,doc_name);
 		}
     }
 }
