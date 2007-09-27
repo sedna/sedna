@@ -79,11 +79,15 @@ void _bm_init_buffer_pool()
     if (buf_mem_addr == NULL)
         throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
 
-#ifndef REQUIRE_ROOT
-    if (is_root && lock_memory)
-#endif
+//#ifndef REQUIRE_ROOT
+    if (lock_memory)
+//#endif
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
-            throw USER_EXCEPTION2(SE1016, "See file FAQ shipped with the distribution");
+        {
+            d_printf1("Memory locking is not supported without root.");
+            lock_memory = false;
+        }
+//          throw USER_EXCEPTION2(SE1016, "See file FAQ shipped with the distribution");
 
     for (int i = 0; i < bufs_num; i++) free_mem.push(i * PAGE_SIZE);
 }
@@ -95,10 +99,10 @@ void _bm_release_buffer_pool()
     used_mem.clear();
     blocked_mem.clear();
 
-#ifndef REQUIRE_ROOT
+//#ifndef REQUIRE_ROOT
     int is_root = uIsAdmin(__sys_call_error);
-    if (is_root && lock_memory)
-#endif
+    if (lock_memory)
+//#endif
         if (uMemUnlock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
             throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 
