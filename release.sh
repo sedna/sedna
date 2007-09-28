@@ -126,6 +126,7 @@ s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+$/SQL_CONNECTION = 0/
 s/^STATIC_SYS_LIBS[ ]\+\?=[A-Za-z0-9 ]\+$/STATIC_SYS_LIBS = 0/
 s/^SE_ENABLE_GCOV[ ]\+\?=[A-Za-z0-9 ]\+$/SE_ENABLE_GCOV = 0/
 s/^ENABLE_DTSEARCH[ ]\+\?=[A-Za-z0-9 ]\+$/ENABLE_DTSEARCH = 0/
+s/^ENABLE_TRIGGERS[ ]\+\?=[A-Za-z0-9 ]\+$/ENABLE_TRIGGERS = 1/
 EEE
 }
 
