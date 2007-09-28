@@ -5,7 +5,7 @@
 class XQueryParser {
 
 updateExpr!:
-	UPDATE
+	(UPDATE | UPDATE_LOWCASE)
 	(  ie1:insertExpr          <<#0=#ie1;>>
 	 | de1:deleteExpr          <<#0=#de1;>>
 	 | due1:delete_undeepExpr  <<#0=#due1;>>

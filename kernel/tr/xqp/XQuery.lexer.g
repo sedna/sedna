@@ -136,6 +136,7 @@ virtual void errstd(const char *s){
 
 /*  This keywords are added for update expressions      */
 #token UPDATE "UPDATE" <<mode(UPDATE_CLASS);>>
+#token UPDATE_LOWCASE "update" <<mode(UPDATE_CLASS);>>
 //#token INSERT "insert"
 #token INTO "into"
 //#token DELETE_ "delete"
