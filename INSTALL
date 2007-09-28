@@ -104,11 +104,10 @@ export AUTH_SWITCH=1
        to 0 if you would like to turn this feature off (if you are not 
        planning to use this feature we recommend to turn it off).
 
-export ENABLE_TRIGGERS=0
+export ENABLE_TRIGGERS=1
 
-       Turns off support for triggers. Set ENABLE_TRIGGERS to 1 if you would 
-       like to turn support for triggers on. Note, currently triggers are in 
-       developing phase, thus, we would strongly recommend to turn this feature off.
+       Turns on support for triggers. Set ENABLE_TRIGGERS to 0 if you would 
+       like to turn support for triggers off.
 
 export DOCUMENTATION=1
 
