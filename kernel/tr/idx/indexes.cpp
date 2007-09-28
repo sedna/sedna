@@ -175,6 +175,7 @@ index_cell* create_index (PathExpr *object_path,
 
 						//X. Find descriptor object that corresponds to sn_obj
                         //   schema node and is an ancestor to node_key
+						CHECKP(node_key);
 						xptr obj_indir = getAncestorIndirectionByScheme((n_dsc*)XADDR(node_key), skey[j], sobj[i]);
 
 						
