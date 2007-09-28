@@ -102,6 +102,7 @@ INCLUDE_DIRECTIVES_GCC = $(foreach inc, $(INCLUDE_DIRS), -I$(inc))
 M4 = m4
 MKDIR = mkdir
 INSTALL = install
+ECHO = echo
 REMOVE = rm -f
 REMOVE_DIR = rm -f -r
 COPY = cp -r

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # File:  linux-install.sh
-# Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+# Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
 
 # This is self-extracting shell script for Sedna distribution.
@@ -63,29 +63,29 @@ export _POSIX2_VERSION
 
 origpwd="`pwd`"
 
-if test ! `id -u` "=" "0"; then
-  echo -n "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
-  echo -n "To obtain best performance Sedna components use sophisticated memory management techniques and "
-  echo -n "low-level disk access operations, which require additional privelegies."
-  echo ""
-  echo ""
-  failwith "You have to be root to perform installation operation."
-fi
+#if test ! `id -u` "=" "0"; then
+#  echo -n "NOTICE: $DISTNAME is system software that requires deep integration with your operating system. "
+#  echo -n "To obtain best performance Sedna components use sophisticated memory management techniques and "
+#  echo -n "low-level disk access operations, which require additional privelegies."
+#  echo ""
+#  echo ""
+#  failwith "You have to be root to perform installation operation."
+#fi
 
 echo "This program will extract and install $DISTNAME."
 echo ""
 echo "Where do you want to install the \"$TARGET\" directory tree?"
-echo "  1 - /usr/local/$TARGET [default]"
+echo "  1 - /usr/local/$TARGET"
 echo "  2 - /opt/$TARGET"
-echo "  3 - \$HOME/$TARGET ($HOME/$TARGET)"
+echo "  3 - \$HOME/$TARGET ($HOME/$TARGET) [default]"
 echo "  4 - ./$TARGET (here)"
 echo "  Or enter a different directory to install in."
 echo -n "> "
 read where
 case "$where" in
-  "" | 1 ) where="/usr/local" ;;
+  "1" ) where="/usr/local" ;;
   "2" ) where="/opt" ;;
-  "3" ) where="$HOME" ;;
+  "" | "3" ) where="$HOME" ;;
   "4" | "." ) where="`pwd`" ;;
   "/"* )
     TARGET="`\"$basename\" \"$where\"`"
@@ -139,20 +139,41 @@ test -d "bin" \
 echo "done"
 
 echo -n "Running the Sedna installer... "
-"$chown" -R root:root "$where/$TARGET" || failwith "chown"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_cdb"       || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_ddb"       || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_gov"       || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_rc"        || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_sm"        || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_smsd"      || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_stop"      || failwith "chmod"
+#"$chown" -R root:root "$where/$TARGET" || failwith "chown"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_cdb"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_ddb"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_gov"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_rc"        || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_sm"        || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_smsd"      || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_stop"      || failwith "chmod"
 "$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_term"      || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_trn"       || failwith "chmod"
-"$chmod" u=rws,g=rwx,o=x "$where/$TARGET/bin/se_rcv"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_trn"       || failwith "chmod"
+"$chmod" u=rwx,g=rwx,o=x "$where/$TARGET/bin/se_rcv"       || failwith "chmod"
 echo "done"
 
 cd "$where"
+
+echo -n "Creating sedna configuration file... "
+
+cat > $TARGET/etc/sednaconf.xml <<EOF
+<?xml version="1.0" standalone="yes"?>
+
+<sednaconf>
+  <!-- Path to database files -->
+  <sedna_data>`pwd`/$TARGET</sedna_data>
+  <!-- Left bounf of range for identifiers of system resources -->
+  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>
+  <!-- Sedna server listening port number -->
+  <listener_port>5050</listener_port>
+  <!-- Sedna server ping port number -->
+  <ping_port>5151</ping_port>
+</sednaconf>
+EOF
+rm $TARGET/etc/sednaconf.xml.sample
+
+echo "done"
+
 if test -d "bin"; then
   echo "Do you want to install new system links within the bin subdirectory of "
   echo "\"$where\", "
