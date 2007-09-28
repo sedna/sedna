@@ -252,6 +252,7 @@ cycle1:
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
+	clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
@@ -483,6 +484,7 @@ cycle1:
 //		checkSwiizleTab(ins_swiz);
 		delete ins_swiz;
 	}
+	clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
@@ -702,6 +704,7 @@ while (it1!=arg1seq.end());
 //		checkSwiizleTab(ins_swiz);	
 		delete ins_swiz;
 	}
+	clear_temp();
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
