@@ -87,7 +87,10 @@ clean:
 	$(MAKE) -C libs clean
 
 
-.PHONY: build bi clean grouped_install dispersal_install install uninstall
+.PHONY: build bi clean grouped_install install uninstall
+ifeq ($(PLATFORM), UNIX)
+.PHONY: dispersal_install
+endif
 
 
 ifeq ($(JAVA_DRIVER), 1)
@@ -191,6 +194,20 @@ endif
 	$(INSTALL) -Dp $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
 	$(INSTALL) -Dp $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
 	$(INSTALL) -Dp $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
+ifeq ($(PLATFORM), UNIX)
+	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '<sednaconf>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <!-- Path to database files -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <sedna_data>$(SEDNA_INSTALL)/sedna</sedna_data>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <!-- Left bounf of range for identifiers of system resources -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <!-- Sedna server listening port number -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <listener_port>5050</listener_port>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <!-- Sedna server ping port number -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '  <ping_port>5151</ping_port>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+	$(ECHO) '</sednaconf>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
+endif
 
 
 ifndef PREFIX
@@ -212,7 +229,7 @@ endif
 SEDNA_DIR := sedna-$(SEDNA_VERSION).$(SEDNA_BUILD)
 
 
-
+ifeq ($(PLATFORM), UNIX)
 # dispersal_install goal
 # This is the default installation goal for Unix'es. 
 # Installs executables into $(PREFIX)/bin, doc files into share
@@ -273,7 +290,21 @@ endif
 	$(INSTALL) -Dp $(PERM3) HISTORY   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/HISTORY
 	$(INSTALL) -Dp $(PERM3) LICENSE   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/LICENSE
 	$(INSTALL) -Dp $(PERM3) README    $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/README
-
+endif
+ifeq ($(PLATFORM), UNIX)
+	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '<sednaconf>' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <!-- Path to database files -->' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <sedna_data>/var/lib/sedna</sedna_data>' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <!-- Left bounf of range for identifiers of system resources -->' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <!-- Sedna server listening port number -->' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <listener_port>5050</listener_port>' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <!-- Sedna server ping port number -->' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '  <ping_port>5151</ping_port>' >> $(ETC_PREFIX)/sednaconf.xml
+	$(ECHO) '</sednaconf>' >> $(ETC_PREFIX)/sednaconf.xml
+endif
 
 
 install: grouped_install
