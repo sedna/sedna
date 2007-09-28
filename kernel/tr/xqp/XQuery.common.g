@@ -249,8 +249,6 @@ localPart4!:
 	| EACH_LOWCASE <<#0=#["each", AST_LOCAL_NAME];>>
 	| STATEMENT_LOWCASE <<#0=#["statement", AST_LOCAL_NAME];>>
 	| CDO_LOWCASE <<#0=#["do", AST_LOCAL_NAME];>>
-	| COMMIT_LOWCASE <<#0=#["commit", AST_LOCAL_NAME];>>
-	| ROLLBACK_LOWCASE <<#0=#["rollback", AST_LOCAL_NAME];>>
 	| RETRIEVE_LOWCASE <<#0=#["retrieve", AST_LOCAL_NAME];>>
 	| METADATA_LOWCASE <<#0=#["metadata", AST_LOCAL_NAME];>>
 	| DOCUMENTS_LOWCASE <<#0=#["documents", AST_LOCAL_NAME];>>
@@ -258,6 +256,7 @@ localPart4!:
 	| CCOLLECTION_LOWCASE <<#0=#["collection", AST_LOCAL_NAME];>>
 	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_LOCAL_NAME];>>
 	| STATISTICS_LOWCASE <<#0=#["statistics", AST_LOCAL_NAME];>>
+	| UPDATE_LOWCASE <<#0=#["update", AST_LOCAL_NAME];>>
 ;
 
 prefixPart1!:
@@ -445,20 +444,20 @@ prefixPart4!:
 	| STATEMENT_LOWCASE <<#0=#["statement", AST_PREFIX];>>
 	| CDO_LOWCASE <<#0=#["do", AST_PREFIX];>>
 	| COMMIT_LOWCASE <<#0=#["commit", AST_PREFIX];>>
-	| ROLLBACK_LOWCASE <<#0=#["rollback", AST_PREFIX];>>
-	| RETRIEVE_LOWCASE <<#0=#["retrieve", AST_PREFIX];>>
 	| METADATA_LOWCASE <<#0=#["metadata", AST_PREFIX];>>
 	| DOCUMENTS_LOWCASE <<#0=#["documents", AST_PREFIX];>>
 	| COLLECTIONS_LOWCASE <<#0=#["collections", AST_PREFIX];>>
 	| CCOLLECTION_LOWCASE <<#0=#["collection", AST_PREFIX];>>
 	| DESCRIPTIVE_LOWCASE <<#0=#["descriptive", AST_PREFIX];>>
 	| STATISTICS_LOWCASE <<#0=#["statistics", AST_PREFIX];>>
+	| UPDATE_LOWCASE <<#0=#["update", AST_PREFIX];>>
 ;
 
 ncname!: 
 	  l1:localPart1 <<#0=#l1;>>
 	| l2:localPart2 <<#0=#l2;>>
 	| l3:localPart3 <<#0=#l3;>>
+	| l4:localPart4 <<#0=#l4;>>
 ;
 
 /*
