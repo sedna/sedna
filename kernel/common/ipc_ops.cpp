@@ -420,6 +420,9 @@ char* get_sedna_data_path(const char* cfg_text, char* buf)
 
    std::string tmp(buf);
    tmp = erase_ws(tmp);
+   
+   if(tmp.length() > U_MAX_PATH) throw USER_EXCEPTION2(SE4300, "sedna_data parameter in sednaconf.xml is too long");
+   
    strcpy(buf, tmp.c_str());
 
    return buf;   
