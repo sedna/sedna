@@ -656,6 +656,8 @@ void vmm_determine_region(bool log) throw (SednaException)
         }
     }
 
+    if(log) return;
+
     LAYER_ADDRESS_SPACE_SIZE = s_min(segment_size - PH_SIZE, VMM_REGION_MAX_SIZE);
 
     LAYER_ADDRESS_SPACE_BOUNDARY_INT = res_right + PAGE_SIZE;

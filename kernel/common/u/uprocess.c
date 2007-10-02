@@ -143,8 +143,12 @@ int uCreateProcess(
     ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
     ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO); 
-    siStartInfo.dwFlags = STARTF_USESHOWWINDOW;
-    siStartInfo.wShowWindow = SW_HIDE;
+
+    if(CREATE_NEW_CONSOLE == flags)
+    { 
+        siStartInfo.dwFlags = STARTF_USESHOWWINDOW;
+        siStartInfo.wShowWindow = SW_HIDE;
+    }
 
     res = CreateProcess(
                 NULL,								/* name of executable module */

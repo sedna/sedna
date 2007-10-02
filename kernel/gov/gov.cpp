@@ -96,7 +96,6 @@ int main(int argc, char** argv)
     program_name_argv_0 = argv[0];
     pping_server *pps = NULL;
     gov_config_struct cfg;
-    Beep(1000, 1000);
 
     bool is_pps_close = true;
 
@@ -191,7 +190,11 @@ int main(int argc, char** argv)
             if (0 != USemaphoreCreate(&started_sem, 0, 1, CHARISMA_GOVERNOR_IS_READY, NULL, __sys_call_error))
                 throw USER_EXCEPTION(SE4401);
 
+#ifdef _WIN32
             if (uCreateProcess(command_line_str, false, NULL, CREATE_NEW_CONSOLE, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
+#else
+            if (uCreateProcess(command_line_str, false, NULL, U_DETACHED_PROCESS, NULL, NULL, NULL, NULL, NULL, __sys_call_error) != 0)
+#endif
                 throw USER_EXCEPTION(SE4401);
 
             int res;
@@ -244,9 +247,9 @@ int main(int argc, char** argv)
 
 #ifdef _WIN32
       BOOL fSuccess; 
+      SetProcessShutdownParameters(0x3FF, 0);
       fSuccess = SetConsoleCtrlHandler((PHANDLER_ROUTINE) GOVCtrlHandler, TRUE);                           // add to list 
       if (!fSuccess) throw USER_EXCEPTION(SE4403);
-      SetProcessShutdownParameters(0x3FF, 0);
 #else
         if ((int)signal(SIGINT, GOVCtrlHandler) == -1)
            throw USER_EXCEPTION(SE4403);
