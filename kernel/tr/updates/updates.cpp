@@ -621,6 +621,8 @@ void clear_temp()
 		PPConstructor::root_schema->delete_scheme_node();
 
 		PPConstructor::firstCons=true;
+        
+        carrier = false;
 	}
 }
 
