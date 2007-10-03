@@ -170,7 +170,7 @@ CFLAGS_NOOPTIM = /nologo /Od /Ob2 $(INCLUDE_DIRECTIVES_VC) /D _CONSOLE /DEL_DEBU
               /D_CRT_SECURE_NO_DEPRECATE
 CPPFLAGS    = $(CPPFLAGS_ST) /MT
 LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs/expat \
+              /NODEFAULTLIB:LIBCD.LIB /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs /LIBPATH:$(PP)/libs/expat \
               /LIBPATH:$(PP)/libs/dtsearch/lib /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg \
               libchicken-static.lib LIBCMT.LIB wsock32.lib Advapi32.lib libexpatmt.lib \
               pccts_release.lib libpcre.lib
