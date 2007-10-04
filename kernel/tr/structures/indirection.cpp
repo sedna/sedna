@@ -373,42 +373,46 @@ void sync_indirection_table()
 
     //USemaphoreDown(indirection_table_sem);
 
-#ifndef OTK_XPTR
-	std::map<id_pair,xptr_sequence *>::iterator it= deleted_cells->begin();
-#else
-	std::map<id_pair,std::vector<xptr> *>::iterator it= deleted_cells->begin();
-#endif
-	while (it!=deleted_cells->end())
+    if(indirection_transaction_initialized)
 	{
-		if (deleted_docs->find(it->first.second)==deleted_docs->end())
-		{
-			xptr p;
-			for (int i = 0; i < it->second->size(); i++)
-		{
+
 #ifndef OTK_XPTR
-			p = it->second->get(i);
+	    std::map<id_pair,xptr_sequence *>::iterator it= deleted_cells->begin();
 #else
-			p = it->second->at(i);
+	    std::map<id_pair,std::vector<xptr> *>::iterator it= deleted_cells->begin();
 #endif
-			CHECKP(p);
-			VMM_SIGNAL_MODIFICATION(p);
-			hl_phys_log_change(XADDR(p),sizeof(xptr));
-			*(xptr*)(XADDR(p)) = it->first.first->ind_entry;
-			it->first.first->ind_entry= p;
+	    while (it!=deleted_cells->end())
+	    {
+		    if (deleted_docs->find(it->first.second)==deleted_docs->end())
+		    {
+			    xptr p;
+			    for (int i = 0; i < it->second->size(); i++)
+		        {
+#ifndef OTK_XPTR
+			       p = it->second->get(i);
+#else
+			       p = it->second->at(i);
+#endif
+			       CHECKP(p);
+			       VMM_SIGNAL_MODIFICATION(p);
+			       hl_phys_log_change(XADDR(p),sizeof(xptr));
+			       *(xptr*)(XADDR(p)) = it->first.first->ind_entry;
+			       it->first.first->ind_entry= p;
 			
-		}
-			delete it->second;
-			it->second=NULL;
-		}
+		        }
+			    delete it->second;
+			    it->second=NULL;
+		    }
 		it++;
-	}
-	std::set<xptr>::iterator it2= deleted_docs->begin();
-    xptr block;
-	while (it2!=deleted_docs->end())
-	{
-        block = *it2;
-		clear_ind_sequence(block);
-		it2++;
+	    }
+	    std::set<xptr>::iterator it2= deleted_docs->begin();
+        xptr block;
+	    while (it2!=deleted_docs->end())
+ 	    {
+            block = *it2;
+		    clear_ind_sequence(block);
+			it2++;
+		}
 	}
    // USemaphoreUp(indirection_table_sem);    
 }
