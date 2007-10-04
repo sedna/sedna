@@ -192,8 +192,16 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
 #ifdef SE_ENABLE_TRIGGERS
 	if (parent==XNULL)
 	{
-		CHECKP(left);
-		parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+		if(left!=XNULL)
+		{
+			CHECKP(left);
+			parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+		}
+		else
+		{
+			CHECKP(right);
+			parent=removeIndirection(((n_dsc*)XADDR(right))->pdsc);
+		}
 	}
     node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
     if (node == XNULL)
@@ -420,8 +428,16 @@ xptr deep_temp_copy(xptr left, xptr right, xptr parent, xptr node,upd_ns_map*& u
 #ifdef SE_ENABLE_TRIGGERS
     if (parent==XNULL) 
 	{
-		CHECKP(left);
-		parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+		if(left!=XNULL)
+		{
+			CHECKP(left);
+			parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
+		}
+		else
+		{
+			CHECKP(right);
+			parent=removeIndirection(((n_dsc*)XADDR(right))->pdsc);
+		}
 	}
     node = apply_per_node_triggers(node, XNULL, parent, NULL, TRIGGER_BEFORE, TRIGGER_INSERT_EVENT);
 	if (node == XNULL)
@@ -623,6 +639,7 @@ void clear_temp()
 		PPConstructor::firstCons=true;
         
         carrier = false;
+
 	}
 }
 
