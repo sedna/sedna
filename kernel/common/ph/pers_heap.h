@@ -35,7 +35,7 @@ void pers_free(void *ptr);
 void * pers_realloc(void *ptr, size_t size);
 
 
-
+#define PH_CANNOT_ALLOCATE_MSG "Can not allocate memory in the persistent heap. Use collections to load large amount of documents into the Sedna (see Sedna's documentation how to use collections). Also you can use '-persistent-heap-size' option of the 'se_cdb' utility to create database with extended persistent heap. Feel free to contact us with questions at modis@ispras.ru."
 
 #endif
 

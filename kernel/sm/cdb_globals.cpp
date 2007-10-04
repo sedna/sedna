@@ -49,7 +49,7 @@ arg_rec cdb_argtable[] =
 {"-tmp-file-ext-portion",  " Mbs", arg_int, &_tmp_file_extending_portion_, "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
 {"-data-file-init-size",      " Mbs", arg_int, &_data_file_initial_size_,     "100",  "\tthe data file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
 {"-tmp-file-init-size",       " Mbs", arg_int, &_tmp_file_initial_size_,       "100",  "\tthe tmp file initial size (in Mb),\n\t\t\t\tdefault 100Mb"},
-{"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tmaximum allowed < 100,\n\t\t\t\tdefault 10Mb"},
+{"-persistent-heap-size",       " Mbs", arg_int, &_persistent_heap_size_,        "10",  "\tthe persistent heap size (in Mb), \n\t\t\t\tallowed in the range of 10Mb - 99Mb,\n\t\t\t\tdefault 10Mb"},
 {"-bufs-num",                    " N",   arg_int, &_bufs_num_,                   "1600","\t\t\tthe number of buffers in main memory,\n\t\t\t\tdefault 1600 (the size of the buffer is 64Kb)"},
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
@@ -94,6 +94,8 @@ void setup_cdb_globals(int argc,
    if (arg_scan_ret_val == 0)
       throw USER_EXCEPTION2(SE4601, errmsg);
 
+   if (_persistent_heap_size_ < 10 || _persistent_heap_size_ > 99)
+      throw USER_EXCEPTION2(SE4601, "Invalid persistent heap size - it must be in the range of 10 and 99");
 
    data_file_max_size = (__int64)_data_file_max_size_ * 0x100000;
    tmp_file_max_size = (__int64)_tmp_file_max_size_ * 0x100000;
@@ -107,12 +109,12 @@ void setup_cdb_globals(int argc,
    phys_log_size = _phys_log_size_ * 0x100000;
    phys_log_ext_portion = _phys_log_ext_portion_ * 0x100000;
 
-
    if (strcmp(db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
 
    if (strlen(SEDNA_DATA) + strlen(db_name) + 14 > U_MAX_PATH)
       throw USER_EXCEPTION2(SE1009, "Path to database files is too long");
+
    strcpy(db_files_path, SEDNA_DATA);
    strcat(db_files_path, "/data/");
    strcat(db_files_path, db_name);
