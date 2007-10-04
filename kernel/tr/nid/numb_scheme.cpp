@@ -690,7 +690,7 @@ void updateEP_nid(void)
 		entry_point->last_nid_size=1;
 		entry_point->last_nid=(unsigned char*)pers_malloc(1);
 		if(entry_point->last_nid == NULL) 
-		    throw SYSTEM_EXCEPTION("Can not allocate memory from persistent heap");
+		    throw SYSTEM_EXCEPTION(PH_CANNOT_ALLOCATE_MSG);
 		entry_point->last_nid[0]=1;
 		return;
 	}
@@ -726,7 +726,7 @@ void updateEP_nid(void)
 			entry_point->last_nid_size+=2;
 			entry_point->last_nid=(unsigned char*)pers_malloc(entry_point->last_nid_size);
 			if(entry_point->last_nid == NULL) 
-			    throw SYSTEM_EXCEPTION("Can not allocate memory from persistent heap");
+			    throw SYSTEM_EXCEPTION(PH_CANNOT_ALLOCATE_MSG);
             int i = 0;
 			for (i=0;i<entry_point->last_nid_size;i+=2)	entry_point->last_nid[i]=1;
 			for (i=1;i<entry_point->last_nid_size;i+=2)	entry_point->last_nid[i]=ALPHABET_SIZE;
