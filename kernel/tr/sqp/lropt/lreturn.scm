@@ -338,7 +338,7 @@
       ; "The ordering of output from invocations of the fn:trace()
       ; function is implementation dependent."
       (let ((return-first
-             (lambda (value label) value)))
+             (lambda x (car x))))
         (lropt:propagate expr called-once?
                          (list order-required? #f)
                          var-types prolog processed-funcs
@@ -347,14 +347,13 @@
       (lropt:propagate expr called-once?
                        (list #t
                              #f  ; see [*]
-                             #t)
+                             #t #f)
                        var-types prolog processed-funcs
                        #f #f #f))
      ((!fn!remove)
-      (let ((return-first
-             (lambda (target position) target)))
+      (let ((return-first (lambda x (car x))))
         (lropt:propagate expr called-once?
-                         (list #t #f)
+                         (list #t #f #f)
                          var-types prolog processed-funcs
                          ; Order, zero-or-one and single-level are preserved
                          ; when an item is removed from a sequences
@@ -372,9 +371,9 @@
              (lambda x (car x))))
         (lropt:propagate expr called-once?
                          (lambda (arg-lng)
-                           (if (= arg-lng 2)
-                               '(#t #f)
-                               '(#t #f #f)))
+                           (if (= arg-lng 3)
+                               '(#t #f #f)
+                               '(#t #f #f #f)))
                          var-types prolog processed-funcs
                          ; Order, zero-or-one and single-level are preserved
                          ; when selecting a subsequence
@@ -412,9 +411,9 @@
              (lambda x (car x))))
         (lropt:propagate expr called-once?
                          (lambda (arg-lng)
-                           (if (= arg-lng 3)
-                               (list order-required? #f #f)
-                               (list order-required? #f #f #f)))
+                           (if (= arg-lng 4) ; line number
+                               (list order-required? #f #f #f)
+                               (list order-required? #f #f #f #f)))
                          var-types prolog processed-funcs
                          return-first return-first return-first)))
      ((!fn!fthighlight !fn!fthighlight2)
@@ -433,7 +432,7 @@
                          var-types prolog processed-funcs
                          identity identity identity)))
      ((!fn!item-at)
-      (lropt:propagate expr called-once? (list #t #f)
+      (lropt:propagate expr called-once? (list #t #f #f)
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!test)
@@ -1861,6 +1860,12 @@
            `(ddo (self ,kid (type (node-test))))))
         (xlr:op-args expr))))
 
+; Filters a list for non-number members
+(define (lropt:discard-numbers lst)
+  (filter
+   (lambda (x) (not (number? x)))
+   lst))
+
 (define (lropt:fun-call expr called-once? order-required?
                         var-types prolog processed-funcs)
   (call-with-values
@@ -1869,7 +1874,8 @@
                                    called-once? order-required?
                                    var-types prolog processed-funcs
                                    (length  ; arity
-                                    (cdr (xlr:op-args expr)))
+                                    (lropt:discard-numbers
+                                     (cdr (xlr:op-args expr))))
                                    ))
    (lambda (entry processed-funcs)
      (if
@@ -1877,7 +1883,10 @@
       (lropt:propagate expr
                        called-once?
                        (cons #f  ; for function name
-                             (lropt:procced-func-for-args entry))
+                             (append
+                              (lropt:procced-func-for-args entry)
+                              #f  ; line number
+                              ))
                        var-types prolog processed-funcs
                        (lropt:procced-func-ddo-auto? entry)
                        (lropt:procced-func-0-or-1? entry)

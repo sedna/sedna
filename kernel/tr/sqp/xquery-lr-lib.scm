@@ -11,6 +11,7 @@
 (define (xlr:substitute-var-value var value expr)
   (let rpt ((expr expr))
     (cond 
+      ((not (pair? expr)) expr)
       ((xlr:var? expr)
        (if (equal? (xlr:var-value expr)  ; list of 2 members
                    (xlr:var-value var))

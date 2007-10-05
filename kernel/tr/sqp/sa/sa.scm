@@ -40,6 +40,19 @@
    (= (length (sa:op-args expr)) num)
    (cl:signal-input-error SE5000 expr)))
 
+; Filters a list for non-number members
+(define (sa:discard-numbers lst)
+  (filter
+   (lambda (x) (not (number? x)))
+   lst))
+
+; Returns the last member of the list.
+; The list must be non-null
+(define (sa:list-last lst)
+  (if (null? (cdr lst))
+      (car lst)
+      (sa:list-last (cdr lst))))
+
 ;-------------------------------------------------
 ; Query prolog and body
 
@@ -3956,7 +3969,9 @@
 
 ; Function call
 (define (sa:analyze-fun-call expr vars funcs ns-binding default-ns uri modules)
-  (let ((args (sa:op-args expr)))
+  (let ((args (sa:discard-numbers (sa:op-args expr)))
+        (line-num (let ((nums (filter number? (sa:op-args expr))))
+                    (if (null? nums) 0 (car nums)))))
     (if
      (null? args)  ; no arguments
      (cl:signal-input-error SE5036 expr)
@@ -3966,7 +3981,8 @@
         fun-name
         (let ((name-parts (sa:proper-qname fun-name))
               (num-actual (length  ; arity
-                           (cdr (sa:op-args expr)))))
+                           (sa:discard-numbers
+                            (cdr (sa:op-args expr))))))
           (cond
             ((sa:find-function-declaration-by-name-and-arity
               (car name-parts) (cadr name-parts)
@@ -3999,7 +4015,9 @@
                                  ((not extra)  ; call to external function
                                   (cons 'ext-fun-call
                                         (cons fun-name
-                                              (map car actual-args))))
+                                              (append
+                                               (map car actual-args)
+                                               (list line-num)))))
                                  ((and (pair? extra) (eq? (car extra) 'cast))
                                   `(cast
                                     ,@(map car actual-args)
@@ -4007,10 +4025,14 @@
                                  (else  ; Basic name for function provided
                                   (cons
                                    (list-ref fun-declaration 6)  ; fun name
-                                   (map car actual-args)))))
+                                   (append
+                                    (map car actual-args)
+                                    (list line-num))))))
                              (cons (sa:op-name expr) ; ='fun-call
                                    (cons fun-name
-                                         (map car actual-args))))
+                                         (append
+                                          (map car actual-args)
+                                          (list line-num)))))
                             ; function return type
                             (list-ref fun-declaration 5))
                            vars funcs
@@ -4036,7 +4058,9 @@
                 (cons
                  (cons (sa:op-name expr) ; ='fun-call
                        (cons fun-name
-                             (map car actual-args)))
+                             (append
+                              (map car actual-args)
+                              (list line-num))))
                  sa:type-any))))
             (else  ; Function declaration not found
              (cl:signal-user-error
@@ -4460,8 +4484,9 @@
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!normalize-space
                  !fn!string !fn!local-name !fn!number !fn!base-uri
                  !fn!root)
+       (let ((line-num (sa:list-last expr)))
        (if
-        (null? (cdr expr))  ; no argument
+        (null? (sa:discard-numbers (cdr expr)))  ; no argument
         (let ((context-pair
                (sa:analyze-expr
                 sa:context-item  ; adding context item as argument
@@ -4472,11 +4497,12 @@
                   (sa:op-name expr)  ; function name
                   (if
                    (eq? (sa:op-name expr) '!fn!normalize-space)
-                   `(!fn!string ,(car context-pair))
-                   (car context-pair)))
+                   `(!fn!string ,(car context-pair) ,line-num)
+                   (car context-pair))
+                  line-num)
                  (cdr pair)  ; return type
                  )))
-        pair))
+        pair)))
       ((!fn!position !fn!last)
        ; See XQTS tests like "position-2"
        (and
@@ -4486,7 +4512,7 @@
         pair))
       ((!fn!contains)
        (if  ; collation supplied?
-        (= (length (sa:op-args expr)) 3)
+        (= (length (sa:discard-numbers (sa:op-args expr))) 3)
         (if
          (equal?  ; default collation?
           (caddr (sa:op-args expr))
@@ -4494,7 +4520,10 @@
             (type !xs!string)
             "http://www.w3.org/2005/xpath-functions/collation/codepoint"))
          (cons  ; removing the 3rd argument from function call
-          (reverse (cdr (reverse (car pair))))
+          (cons (sa:op-name (car pair))
+                (cons (car (sa:op-args (car pair)))
+                      (cons (cadr (sa:op-args (car pair)))
+                            (cdddr (sa:op-args (car pair))))))
           (cdr pair))
          (cl:signal-user-error
           FOCH0002  ; Was: FOCH0004
@@ -4508,7 +4537,7 @@
        (let ((second-arg
               (if
                ; Second argument not supplied explicitly
-               (null? (cdr (sa:op-args expr)))               
+               (null? (sa:discard-numbers (cdr (sa:op-args expr))))
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
@@ -4519,6 +4548,7 @@
                (cadr (sa:op-args expr)))))
          (and
           second-arg
+          (let ((line-num (sa:list-last expr)))
           ; Rewriting the function call to fn:lang into logical representation
           ; for the following XQuery expression:
           ;  let $testlang as xs:string? := fn:lower-case(fn:string("arg1")),
@@ -4538,7 +4568,9 @@
           ;   ))
           (cons
            `(let@
-                (!fn!lower-case (!fn!string ,(car (sa:op-args expr))))
+                (!fn!lower-case
+                 (!fn!string ,(car (sa:op-args expr)) ,line-num)
+                 ,line-num)
               (fun-def
                (((optional !xs!string) (var ("" "testlang"))))
                (let@
@@ -4590,9 +4622,11 @@
                     (fun-def
                      (((optional (node-test)) (var ("" "attr"))))
                      (and@
-                      (!fn!not (!fn!empty (var ("" "attr"))))
+                      (!fn!not (!fn!empty (var ("" "attr")) ,line-num) ,line-num)
                       (let@
-                          (!fn!lower-case (!fn!string (var ("" "attr"))))
+                          (!fn!lower-case
+                           (!fn!string (var ("" "attr")) ,line-num)
+                           ,line-num)
                         (fun-def
                          (((one !xs!string) (var ("" "lang_value"))))
                          (or@
@@ -4601,13 +4635,15 @@
                            (var ("" "lang_value"))
                            (!fn!concat
                             (var ("" "testlang"))
-                            (const (type !xs!string) "-")))))))))))))
-           sa:type-atomic))))
+                            (const (type !xs!string) "-")
+                            ,line-num)
+                           ,line-num)))))))))))
+           sa:type-atomic)))))
       ((!fn!id)
        (let ((second-arg
               (if
                ; Second argument not supplied explicitly
-               (null? (cdr (sa:op-args expr)))               
+               (null? (sa:discard-numbers (cdr (sa:op-args expr))))
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
@@ -4618,6 +4654,7 @@
                (cadr (sa:op-args expr)))))
          (and
           second-arg
+          (let ((line-num (sa:list-last expr)))
           ; Rewriting the function call to fn:id and !fn!idref into logical
           ; representation for the following XQuery expression:
           ;  let $arg      as xs:string* := "arg1",
@@ -4650,8 +4687,9 @@
                         ((xs:anyType (var ("" "s"))))
                         (!fn!concat
                          (const (type !xs!string) " ")
-                         (!fn!normalize-space (var ("" "s")))
-                         (const (type !xs!string) " "))))
+                         (!fn!normalize-space (var ("" "s")) ,line-num)
+                         (const (type !xs!string) " ")
+                         ,line-num)))
                     (fun-def
                      (((zero-or-more !xs!string) (var ("" "patterns"))))
                      (ddo
@@ -4709,15 +4747,19 @@
                                       (type *)
                                       (const (type !xs!string) "non-nil"))))))
                                  (!fn!ends-with
-                                  (!fn!lower-case (!fn!local-name (var ("" "$%v"))))
-                                  (const (type !xs!string) "id")))))
+                                  (!fn!lower-case
+                                   (!fn!local-name (var ("" "$%v")) ,line-num)
+                                   ,line-num)
+                                  (const (type !xs!string) "id")
+                                  ,line-num))))
                               (fun-def
                                ((!xs!anyType (var ("" "$%v"))))
                                (let@
                                    (!fn!concat
                                     (const (type !xs!string) " ")
-                                    (!fn!string (var ("" "$%v")))
-                                    (const (type !xs!string) " "))
+                                    (!fn!string (var ("" "$%v")) ,line-num)
+                                    (const (type !xs!string) " ")
+                                    ,line-num)
                                  (fun-def
                                   (((one !xs!string) (var ("" "attr_value"))))
                                   (some
@@ -4726,13 +4768,14 @@
                                     ((xs:anyType (var ("" "s"))))
                                     (!fn!contains
                                      (var ("" "s"))
-                                     (var ("" "attr_value")))))))))))))))))))))))
-           sa:type-nodes))))
+                                     (var ("" "attr_value"))
+                                     ,line-num)))))))))))))))))))))
+           sa:type-nodes)))))
       ((!fn!idref)
        (let ((second-arg
               (if
                ; Second argument not supplied explicitly
-               (null? (cdr (sa:op-args expr)))               
+               (null? (sa:discard-numbers (cdr (sa:op-args expr))))
                (let ((context-pair
                       (sa:analyze-expr
                        sa:context-item  ; adding context item as argument
@@ -4743,6 +4786,7 @@
                (cadr (sa:op-args expr)))))
          (and
           second-arg
+          (let ((line-num (sa:list-last expr)))
           ; Rewriting the function call to fn:id and !fn!idref into logical
           ; representation for the following XQuery expression:
           ;  let $arg      as xs:string* := "arg1",
@@ -4775,8 +4819,9 @@
                         ((xs:anyType (var ("" "s"))))
                         (!fn!concat
                          (const (type !xs!string) " ")
-                         (!fn!normalize-space (var ("" "s")))
-                         (const (type !xs!string) " "))))
+                         (!fn!normalize-space (var ("" "s")) ,line-num)
+                         (const (type !xs!string) " ")
+                         ,line-num)))
                     (fun-def
                      (((zero-or-more !xs!string) (var ("" "patterns"))))
                      (ddo
@@ -4807,15 +4852,19 @@
                           (fun-def
                            ((!xs!anyType (var ("" "$%v"))))
                            (!fn!contains
-                            (!fn!lower-case (!fn!local-name (var ("" "$%v"))))
-                            (const (type !xs!string) "idref"))))
+                            (!fn!lower-case
+                             (!fn!local-name (var ("" "$%v")) ,line-num)
+                             ,line-num)
+                            (const (type !xs!string) "idref")
+                            ,line-num)))
                          (fun-def
                           ((!xs!anyType (var ("" "$%v"))))
                           (let@
                               (!fn!concat
                                (const (type !xs!string) " ")
-                               (!fn!string (var ("" "$%v")))
-                               (const (type !xs!string) " "))
+                               (!fn!string (var ("" "$%v")) ,line-num)
+                               (const (type !xs!string) " ")
+                               ,line-num)
                             (fun-def
                              (((one !xs!string) (var ("" "attr_value"))))
                              (some
@@ -4824,8 +4873,9 @@
                                ((xs:anyType (var ("" "s"))))
                                (!fn!contains
                                 (var ("" "s"))
-                                (var ("" "attr_value"))))))))))))))))))
-           sa:type-nodes))))
+                                (var ("" "attr_value"))
+                                ,line-num))))))))))))))))
+           sa:type-nodes)))))
       ((cast)
        ; Special check for xs:QName constructor function
        ; See "3.12.5 Constructor Functions" in XQuery specification
