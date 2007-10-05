@@ -157,6 +157,7 @@ enum document_type {
     DT_DOCUMENTS,
     DT_INDEXES,
     DT_FTINDEXES,
+    DT_TRIGGERS,
     DT_SCHEMA,
     DT_COLLECTIONS,
     DT_ERRORS,

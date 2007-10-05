@@ -1,6 +1,6 @@
 /*
  * File:  system_tables.cpp
- * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ * Copyright (C) 2007 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
 #include "common/sedna.h"
@@ -18,7 +18,9 @@
 #include "tr/executor/base/dm_accessors.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btree.h"
-#include "tr/idx/index_data.h"
+#include "tr/triggers/triggers_data.h"
+
+
 typedef void (*system_fun)(xptr root, const char* title);
 static std::vector<schema_node*>* sys_schema=NULL;
 
@@ -131,6 +133,9 @@ document_type get_document_type(const char* title, db_entity_type type)
 #ifdef SE_ENABLE_FTSEARCH
         if(!my_strcmp(title, "$ftindexes"))       return DT_FTINDEXES;
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+        if(!my_strcmp(title, "$triggers"))       return DT_TRIGGERS;
+#endif
         if(!my_strcmp(title, "$errors"))          return DT_ERRORS;
         if(strstr(title, "$collection_")==title)  return DT_COLLECTION_;
         if(strstr(title, "$document_")==title)    return DT_DOCUMENT_;
@@ -219,6 +224,55 @@ void get_indexes (xptr node,const char* title)
 	}
 	index_sem_up();
 }
+
+#ifdef SE_ENABLE_TRIGGERS
+void get_triggers (xptr node,const char* title)
+{
+	addTextValue(node,"$TRIGGERS.XML",13);
+	xptr parent=insert_element(XNULL,XNULL,node,"triggers",xs_untyped,NULL,NULL);
+	xptr left=XNULL;
+	trigger_sem_down();
+	local_lock_mrg->put_lock_on_db();
+	pers_sset<trigger_cell,unsigned short>::pers_sset_entry* mdc=triggerdata->rb_minimum(triggerdata->root);
+	while (mdc!=NULL)
+	{
+		if (left==XNULL)
+		{
+			left=insert_element(XNULL,XNULL,parent,"trigger",xs_untyped,NULL);
+		}
+		else
+			left=insert_element(left,XNULL,XNULL,"trigger",xs_untyped,NULL);
+		
+		trigger_cell* tc=mdc->obj;
+		xptr node=insert_attribute(XNULL,XNULL,left,"name",xs_untypedAtomic,tc->trigger_title,
+						strlen(tc->trigger_title),NULL);
+		node=insert_attribute(node,XNULL,XNULL,"object_type",xs_untypedAtomic,(tc->is_doc)?"document":"collection", 
+						(tc->is_doc)?8:10,NULL);
+		node=insert_attribute(node,XNULL,XNULL,"object_name",xs_untypedAtomic,tc->doc_name,
+			strlen(tc->doc_name),NULL);
+        
+        std::string trigger_event;
+        (tc->trigger_event == TRIGGER_INSERT_EVENT) ? trigger_event="INSERT" : ((tc->trigger_event == TRIGGER_DELETE_EVENT) ? trigger_event="DELETE" : trigger_event="REPLACE");
+		node=insert_attribute(node,XNULL,XNULL,"event", xs_untypedAtomic, trigger_event.c_str(), trigger_event.length(), NULL);
+        
+        std::string trigger_time;
+        (tc->trigger_time == TRIGGER_BEFORE) ? trigger_time="BEFORE" : trigger_time="AFTER";
+		node=insert_attribute(node,XNULL,XNULL,"time", xs_untypedAtomic, trigger_time.c_str(), trigger_time.length(), NULL);
+        
+        std::string trigger_granularity;
+        (tc->trigger_granularity == TRIGGER_FOR_EACH_NODE) ? trigger_granularity="FOR_EACH_NODE" : trigger_granularity="FOR_EACH_STATEMENT";
+		node=insert_attribute(node,XNULL,XNULL,"granularity", xs_untypedAtomic, trigger_granularity.c_str(), trigger_granularity.length(), NULL);
+        
+		std::ostringstream str1;
+		tc->trigger_path->print(str1);
+		node=insert_attribute(node,XNULL,XNULL,"on_path",xs_untypedAtomic,str1.str().c_str(),
+		strlen(str1.str().c_str()),NULL);
+			
+		mdc=triggerdata->rb_successor(mdc);
+	}
+	trigger_sem_up();
+}
+#endif
 
 #ifdef SE_ENABLE_FTSEARCH
 void print_ft_type_name(ft_index_type ftype, char* buf)
@@ -458,6 +512,9 @@ schema_node* get_system_doc(document_type type, const char* title)
 	    case DT_INDEXES       : func = get_indexes; break;
 #ifdef SE_ENABLE_FTSEARCH
 	    case DT_FTINDEXES     : func = get_ftindexes; break;
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+	    case DT_TRIGGERS      : func = get_triggers; break;
 #endif
 	    case DT_SCHEMA        : func = get_schema; break;
 	    case DT_COLLECTIONS   : func = get_collections; break;
