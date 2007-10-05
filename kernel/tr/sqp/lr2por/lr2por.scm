@@ -337,6 +337,20 @@
 
 ;-------------------------------------------------------------------------------
 ; l2p:any-lr-node2por - translates any LR operation to the POR one
+
+; Filters a list for non-number members
+(define (l2p:discard-numbers lst)
+  (filter
+   (lambda (x) (not (number? x)))
+   lst))
+
+; Returns the last member of the list.
+; The list must be non-null
+(define (l2p:list-last lst)
+  (if (null? (cdr lst))
+      (car lst)
+      (l2p:list-last (cdr lst))))
+
 (define (l2p:any-lr-node2por node)
 
   (cond ;((symbol? node) `(1 (PPVariable ,node))) 
@@ -713,7 +727,8 @@
                                ,(l2p:any-lr-node2por (car node))
                                ,then-expr
                                (,ts-then (PPNil)))))                   
-                  ((= ts-then ts-else)
+                  ((= (if (pair? ts-then) (car ts-then) ts-then)
+                      (if (pair? ts-else) (car ts-else) ts-else))
                    `(,ts-then (PPIf
                                ,(l2p:any-lr-node2por (car node))
                                ,then-expr
@@ -1026,153 +1041,96 @@
                  (!fn!implicit-timezone . PPFnImplicitTimezone)
                  (!fn!default-collation . PPFnDefaultCollation)
                  (!fn!static-base-uri .   PPFnStaticBaseUri)
-
-                 
+                 ;----------------------------------------
+                 ; XQuery Data Model functions
+                 (!fn!string-value . PPDmStringValue)
+                 (!fn!typed-value .  PPDmTypedValue)
+                 (!fn!node-kind .    PPDmNodeKind)
+                 ;----------------------------------------
+                 ; Sedna extensions
+                 (!fn!checkpoint .         PPFnCheckpoint)
+                 (!se!checkpoint .         PPCheckpoint)
+                 (!fn!ftindex-scan .       PPFtIndexScan)
+                 (!fn!ftscan .             PPFtScan)
+                 (!fn!fthighlight .        PPFtHighlight)
+                 (!fn!fthighlight2 .       PPFtHighlight2)
+                 (!fn!is_ancestor .        PPANNodeComparison)
+                 (!fn!filter_entry_level . PPFEL)
+                 (!fn!test .               PPTest)
+                 (!fn!item-at .            PPFnItemAt)
+                 (!fn!sql-connect .        PPFnSQLConnect)
+                 (!fn!sql-prepare .        PPFnSQLPrepare)
+                 (!fn!sql-execute .        PPFnSQLExecute)
+                 (!fn!sql-exec-update .    PPFnSQLExecUpdate)
+                 (!fn!sql-close .          PPFnSQLClose)
+                 (!fn!sql-commit .         PPFnSQLCommit)
+                 (!fn!sql-rollback .       PPFnSQLRollback)
                  ))
               => (lambda (pair)
-                   `(1 ,(cons (cdr pair)
-                              (map l2p:any-lr-node2por node)))))
-             
-;             ((assq op-name '((!fn!max . PPFnMax)
-;                              (!fn!min . PPFnMin)
-;                              (!fn!sum . PPFnSum)))
-;              ; Ignore the second argument
-;              ; TODO: should be implemented in accordance with the
-;              ; specification
-;              => (lambda (pair)
-;                   `(1 ,(list (cdr pair)
-;                              (l2p:any-lr-node2por (car node))))))
+                   (let ((line-num (l2p:list-last node)))
+                   `((1 ,line-num)
+                     ,(cons (cdr pair)
+                            (map
+                             l2p:any-lr-node2por
+                             (l2p:discard-numbers node)))))))           
              
              ;----------------------------------------
-                   
-             
-             
-                        
-             ; *** string-value ***
-             ((eq? op-name '!fn!string-value)
-              `(1 (PPDmStringValue ,(l2p:any-lr-node2por (car node))))
-             )
-
-             ; *** typed-value ***
-             ((eq? op-name '!fn!typed-value)
-              `(1 (PPDmTypedValue ,(l2p:any-lr-node2por (car node))))
-             )
-                                      
-             
-             
-             
-             ; *** item-at ***
-             ((eq? op-name '!fn!item-at)
-              `(1 (PPFnItemAt ,(l2p:any-lr-node2por (car node)) ,(l2p:any-lr-node2por (cadr node))))
-             )
-            
-                                            
-            
-         
-             
-             ; *** checkpoint ***
-             ((eq? op-name '!fn!checkpoint) 
-              `(1 (PPFnCheckpoint))
-             )
-             ((eq? op-name '!se!checkpoint) 
-              `(1 (PPCheckpoint))
-             )             
              
              ; *** !fn!replace ***
-             ((eq? op-name '!fn!replace) 
-              `(1 (PPPatMatch  pm_replace
-                               ,(l2p:any-lr-node2por (car node))
-                               ,(l2p:any-lr-node2por (cadr node))
-                               ,(l2p:any-lr-node2por (caddr node))
-                               ,@(if (null? (cdddr node))  ; no 4th argument
-                                     '()
-                                     (list (l2p:any-lr-node2por (cadddr node))))
-                               )))
+             ((eq? op-name '!fn!replace)
+              (let ((line-num (l2p:list-last node)))
+              `((1 ,line-num)
+                (PPPatMatch
+                 pm_replace
+                 ,(l2p:any-lr-node2por (car node))
+                 ,(l2p:any-lr-node2por (cadr node))
+                 ,(l2p:any-lr-node2por (caddr node))
+                 ,@(if
+                    (null? (l2p:discard-numbers (cdddr node)))  ; no 4th argument
+                    '()
+                    (list (l2p:any-lr-node2por (cadddr node))))))))
              
              ; *** matches ***
-             ((eq? op-name '!fn!matches) 
-              `(1 (PPPatMatch  pm_matches
-                               ,(l2p:any-lr-node2por (car node))
-                               ,(l2p:any-lr-node2por (cadr node))
-                               ,@(if (null? (cddr node))  ; no 3rd argument
-                                     '()
-                                     (list (l2p:any-lr-node2por (caddr node))))
-                               )))
-             
-             ; *** test ***
-             ((eq? op-name '!fn!test) 
-              `(1 (PPTest ,(l2p:any-lr-node2por (car node))))
-             )             
-
-             ; *** node-kind
-             ((eq? op-name '!fn!node-kind) 
-              `(1 (PPDmNodeKind ,(l2p:any-lr-node2por (car node))))
-             )             
+             ((eq? op-name '!fn!matches)
+              (let ((line-num (l2p:list-last node)))
+              `((1 ,line-num)
+                (PPPatMatch
+                 pm_matches
+                 ,(l2p:any-lr-node2por (car node))
+                 ,(l2p:any-lr-node2por (cadr node))
+                 ,@(if
+                    (null? (l2p:discard-numbers (cddr node)))  ; no 3rd argument
+                    '()
+                    (list (l2p:any-lr-node2por (caddr node))))))))
              
              ; *** !fn!document ***
-             ((eq? op-name '!fn!document)
-              (if (eq? (length node) 1)
-                  `(1 (PPAbsPath (document ,(l2p:getDocorCollNamePor (car node))) ()))
-                  `(1 (PPDocInCol ,(l2p:any-lr-node2por (cadr node))
-                                  ,(l2p:any-lr-node2por (car node)))))
-             )
-             
-             ; *** !fn!doc ***
-             ((eq? op-name '!fn!doc)
-              (if (eq? (length node) 1)
-                  `(1 (PPAbsPath (document ,(l2p:getDocorCollNamePor (car node))) ()))
-                  `(1 (PPDocInCol ,(l2p:any-lr-node2por (cadr node))
-                                  ,(l2p:any-lr-node2por (car node)))))
-             )             
-             
+             ((memq op-name '(!fn!document !fn!doc))
+              (let ((line-num (l2p:list-last node)))
+              `((1 ,line-num)
+                ,(if
+                  (eq? (length (l2p:discard-numbers node)) 1)
+                  `(PPAbsPath (document
+                               ,(l2p:getDocorCollNamePor (car node)))
+                              ())
+                  `(PPDocInCol ,(l2p:any-lr-node2por (cadr node))
+                               ,(l2p:any-lr-node2por (car node)))))))
+                          
              ; *** !fn!collection ***
              ((eq? op-name '!fn!collection)
-              `(1 (PPAbsPath (collection ,(l2p:getDocorCollNamePor (car node))) ()))
-             )
-
-
-
-             ; *** !fn!sql-connect ***
-             ((eq? op-name '!fn!sql-connect)
-              `(1 (PPFnSQLConnect ,@(map l2p:any-lr-node2por node)))
-             )       
-             
-             ; *** !fn!sql-prepare ***
-             ((eq? op-name '!fn!sql-prepare)
-              `(1 (PPFnSQLPrepare ,@(map l2p:any-lr-node2por node)))
-             )             
-
-             ; *** !fn!sql-execute ***
-             ((eq? op-name '!fn!sql-execute)
-              `(1 (PPFnSQLExecute ,@(map l2p:any-lr-node2por node)))
-             )             
-
-             ; *** !fn!sql-exec-update ***
-             ((eq? op-name '!fn!sql-exec-update)
-              `(1 (PPFnSQLExecUpdate ,@(map l2p:any-lr-node2por node)))
-             )             
-
-             ; *** !fn!sql-close ***
-             ((eq? op-name '!fn!sql-close)
-              `(1 (PPFnSQLClose ,@(map l2p:any-lr-node2por node)))
-             )       
-             
-             ; *** !fn!sql-commit ***
-             ((eq? op-name '!fn!sql-commit)
-              `(1 (PPFnSQLCommit ,@(map l2p:any-lr-node2por node)))
-             )                 
-
-             ; *** !fn!sql-rollback ***
-             ((eq? op-name '!fn!sql-rollback)
-              `(1 (PPFnSQLRollback ,@(map l2p:any-lr-node2por node)))
-             )               
+              (let ((line-num (l2p:list-last node)))
+              `((1 ,line-num)
+                (PPAbsPath (collection
+                            ,(l2p:getDocorCollNamePor (car node)))
+                           ()))))
 
              ; *** !fn!index-scan ***
              ((eq? op-name '!fn!index-scan)
-              (let* ((ind-name (caddr (car node)))
-                     (condition (l2p:lr-scan-cond2por-scan-cond (caddr (caddr node))))
-                     )
-              `(1 (PPIndexScan 
+              (let ((ind-name (caddr (car node)))
+                    (condition (l2p:lr-scan-cond2por-scan-cond
+                                (caddr (caddr node))))
+                    (line-num (l2p:list-last node)))
+                `((1 ,line-num)
+                  (PPIndexScan 
                    ,ind-name
                    ,(l2p:any-lr-node2por (cadr node))
                    ; DL: the 4th list member was: (1 (PPConst 0 !xs!integer))
@@ -1181,47 +1139,22 @@
              
              ; *** !fn!index-scan-between ***
              ((eq? op-name '!fn!index-scan-between)
-              (let* ((ind-name (caddr (car node)))
-                     (range (l2p:lr-range2por-range (caddr (cadddr node)))))
-              `(1 (PPIndexScan 
+              (let ((ind-name (caddr (car node)))
+                    (range (l2p:lr-range2por-range
+                            (caddr (cadddr node))))
+                    (line-num (l2p:list-last node)))
+                `((1 ,line-num)
+                  (PPIndexScan 
                    ,ind-name
                    ,(l2p:any-lr-node2por (cadr node)) 
                    ,(l2p:any-lr-node2por (caddr node))
                    ,range))))
-				   
-			; *** !fn!ftindex-scan ***
-             ((eq? op-name '!fn!ftindex-scan)
-              `(1 (PPFtIndexScan ,@(map l2p:any-lr-node2por node)))
-             )                 
-			 
-			; *** !fn!ftscan ***
-             ((eq? op-name '!fn!ftscan)
-              `(1 (PPFtScan ,@(map l2p:any-lr-node2por node)))
-             )                 
-             
-			; *** !fn!fthighlight ***
-             ((eq? op-name '!fn!fthighlight)
-              `(1 (PPFtHighlight ,@(map l2p:any-lr-node2por node)))
-             )                 
-			 
-			; *** !fn!fthighlight2 ***
-             ((eq? op-name '!fn!fthighlight2)
-              `(1 (PPFtHighlight2 ,@(map l2p:any-lr-node2por node)))
-             )
-             
-             ; *** !fn!is_ancestor ***
-             ((eq? op-name '!fn!is_ancestor)
-              `(1 (PPANNodeComparison ,@(map l2p:any-lr-node2por node)))
-             )
-             
-             ; *** !fn!filter_entry_level ***
-             ((eq? op-name '!fn!filter_entry_level)
-              `(1 (PPFEL ,(l2p:any-lr-node2por (car node))))
-             )
 			 
              ; *** scan ***
              ((eq? op-name 'scan)
-              (let* ((entity (if (eq? (car (cadr node)) '!fn!document) 'document 'collection))
+              (let* ((entity
+                      (if (eq? (car (cadr node)) '!fn!document)
+                          'document 'collection))
                      (ent-name (caddr (cadr (cadr node)))))
                      `(1 (PPScan ,(caddr (car node)) (,entity ,ent-name)))))
              
@@ -1296,10 +1229,11 @@
                       (l2p:find-func-index
                        (list
                         (l2p:qname->uri+local (car node))  ; function name
-                        (length (cdr node))  ; number of arguments
-                        )
+                        (length    ; number of arguments
+                         (l2p:discard-numbers (cdr node))))
                        ; DL: was: (caddr (car node))
-                       funcs-map)))
+                       funcs-map))
+                     (line-num (l2p:list-last node)))
                  (if
                   (eq? func-index #f)
                   (cl:signal-input-error
@@ -1318,15 +1252,23 @@
                           (cadr name-pair)
                           (string-append
                            (car name-pair) ":" (cadr name-pair))))
-                       (,tuple-size
+                       ((,tuple-size ,line-num)
                         (PPFunCall
                          ,func-index
-                         ,@(map l2p:any-lr-node2por (cdr node))))))))))
+                         ,@(map
+                            l2p:any-lr-node2por
+                            (l2p:discard-numbers (cdr node)))))))))))
              
              ; *** ext-fun-call ***
              ((eq? op-name 'ext-fun-call)
-               (let* ((func-name (cadr (caddr (car node)))))
-                  `(1 (PPExtFunCall  ,func-name ,@(map l2p:any-lr-node2por (cdr node))))))             
+               (let* ((func-name (cadr (caddr (car node))))
+                      (line-num (l2p:list-last node)))
+                  `((1 ,line-num)
+                    (PPExtFunCall
+                     ,func-name
+                     ,@(map
+                        l2p:any-lr-node2por
+                        (l2p:discard-numbers (cdr node)))))))
              
              ((eq? op-name 'insert-into)
               (let* ((left-operand (l2p:any-lr-node2por (car node)))
