@@ -47,6 +47,14 @@ void init_local_lock_mgr(SSMMsg* _sm_server_)
   is_init_lock_mgr = true;
 }
 
+void set_tr_mode_lock_mgr(bool flag)
+{
+  if (is_init_lock_mgr)
+  {
+     local_lock_mrg->ro_mode(flag);
+  }
+}
+
 void release_locks()
 {
   if (is_init_lock_mgr)
@@ -165,6 +173,8 @@ void LocalLockMgr::put_lock_on_db()
 void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intention_mode)
 {
 #ifdef LOCK_MGR_ON
+  if (tr_ro_mode) return; // we don't need any locks for ro-transaction
+  
   sm_msg_struct msg;
 
   msg.cmd = 3;
@@ -247,6 +257,8 @@ void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intent
 void LocalLockMgr::release()
 {
 #ifdef LOCK_MGR_ON
+  if (tr_ro_mode) return; // we don't need to release any locks for ro-transaction
+
   sm_msg_struct msg;
   msg.cmd = 4;
   msg.trid = trid;
@@ -266,6 +278,8 @@ void LocalLockMgr::release()
 void LocalLockMgr::release_resource(const char* name, resource_kind kind)
 {
 #ifdef LOCK_MGR_ON
+  if (tr_ro_mode) return; // we don't need to release any locks for ro-transaction
+
   sm_msg_struct msg;
   msg.cmd = 5;
   msg.trid = trid;

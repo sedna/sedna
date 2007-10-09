@@ -73,6 +73,7 @@ void SMCtrlHandler(int signo)
 int sm_server_handler(void *arg)
 {
     //d_printf1("query received\n");   
+
     sm_msg_struct *msg = (sm_msg_struct*)arg;
 
     try {
@@ -239,13 +240,14 @@ int sm_server_handler(void *arg)
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
-						 
+						 ((vmm_sm_blk_hdr*)((char*)buf_mem_addr+msg->data.swap_data.offs))->trid_wr_access=msg->sid;
                          break;
                      }
             case 25: {
                          //d_printf1("query 25: bm_delete_block\n");
                          WuDeleteBlockExn(msg->sid, *(xptr*)(&(msg->data.ptr)));
                          msg->cmd = 0;
+
                          break;
                      }
             case 26: {
