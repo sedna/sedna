@@ -173,6 +173,9 @@ void LocalLockMgr::put_lock_on_db()
 void LocalLockMgr::obtain_lock(const char* name, resource_kind kind, bool intention_mode)
 {
 #ifdef LOCK_MGR_ON
+  if (tr_ro_mode && mode == lm_x)  // cannot acquire eXclusive locks in RO-mode
+      throw USER_EXCEPTION(SE4706);
+
   if (tr_ro_mode) return; // we don't need any locks for ro-transaction
   
   sm_msg_struct msg;
