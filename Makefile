@@ -21,9 +21,9 @@ SRC_EXT := tar.gz
 # for ordinary files
 #PERM3 := -oroot -groot -m0664
 # for directory
-PERM4 := -m0775
-PERM1 := -m0775
-PERM2 := -m0775
+PERM4 := -m0755
+PERM1 := -m0755
+PERM2 := -m0755
 PERM3 := -m0664
 else
 BUILD_FILE := build-$(SEDNA_VERSION)
