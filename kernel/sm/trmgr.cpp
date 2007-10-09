@@ -86,6 +86,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     }
     d_printf1("All sems acquired\n");
 
+	WuAdvanceSnapshotsExn();
     WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
 
 //    flush_master_block();

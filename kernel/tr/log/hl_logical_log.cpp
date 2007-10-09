@@ -62,10 +62,18 @@ void hl_logical_log_on_session_begin(string logical_log_path, bool rcv_active)
 
 }
 
-void hl_logical_log_on_transaction_begin(bool rcv_active)
+void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
 {
 #ifdef LOGICAL_LOG
   //Here trid is a global variable inited before
+  if (tr_ro_mode) // we don't need log in RO-mode
+  {
+	  enable_log = false;
+	  is_need_checkpoint_on_transaction_commit = false;
+	  is_ll_on_transaction_initialized = false; 
+	  return;
+  }
+
   tr_llmgr->ll_log_on_transaction_begin(rcv_active, trid, true);
   is_need_checkpoint_on_transaction_commit = false;
   is_ll_on_transaction_initialized = true; 
@@ -131,6 +139,7 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
      tr_llmgr->ll_log_on_transaction_end(trid, true);
   }
 
+  enable_log = true;  // log might have been disabled for RO-mode
   is_ll_on_transaction_initialized = false;
 #endif
 }

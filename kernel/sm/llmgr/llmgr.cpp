@@ -210,7 +210,7 @@ LONG_LSN ll_recover_db_by_phys_records()
 
 void ll_log_set_checkpoint_flag(bool flag)
 {
-#ifdef PHYS_LOG
+#ifdef LOGICAL_LOG
   logical_log_mgr->set_checkpoint_flag(flag, true);
 #endif  
 }

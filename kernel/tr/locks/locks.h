@@ -22,6 +22,8 @@ void lockWriteXptr(xptr block);
 
 void init_local_lock_mgr(SSMMsg* _sm_server_);
 
+void set_tr_mode_lock_mgr(bool flag);
+
 void release_local_lock_mgr();
 
 void release_locks();
@@ -34,6 +36,7 @@ class LocalLockMgr
 {
 private:
     //std::list<resource_id> resource_l;
+    bool tr_ro_mode; // is transaction in RO-mode?
     lock_mode mode;
     USemaphore sem;
     SSMMsg *sm_server;
@@ -47,6 +50,7 @@ public:
     void put_lock_on_trigger(const char *name);
     void put_lock_on_db();
     void lock(lock_mode _mode_) {mode = _mode_;};
+    void ro_mode(bool flag) {tr_ro_mode = flag;};
     lock_mode get_cur_lock_mode() {return mode;};
     
     //void lock(const char* name, resource_kind kind, lock_mode mode) throw (LockMgrException);

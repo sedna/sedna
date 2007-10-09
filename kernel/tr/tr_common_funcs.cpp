@@ -222,7 +222,11 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("OK\n");
 
    d_printf1("Logical log on transaction begin...");
-   hl_logical_log_on_transaction_begin(rcv_active);
+   hl_logical_log_on_transaction_begin(rcv_active, is_ro_mode);
+   d_printf1("OK\n");
+
+   d_printf1("Setting transaction mode for local lock manager...");
+   set_tr_mode_lock_mgr(is_ro_mode);
    d_printf1("OK\n");
 
 #ifdef SE_ENABLE_TRIGGERS
