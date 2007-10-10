@@ -13,11 +13,11 @@ The following primary exceptions are defined for Sedna (later referred as
                          //          \\______________________
                         //            \\_____________________\\
                        //                                     \\
-       SednaSystemException                               SednaUserException
-               ||                                ________//      ||       \\____________
-               ||                              / ________/       ||        \____________\\
-               ||                             //                 ||                      \\
-     SednaSystemEnvException   SednaUserExceptionFnError SednaUserEnvException SednaUserSoftException
+       SednaSystemException                               SednaUserException  ______________________________
+               ||                                ________//      ||       \\____________    _______________\\
+               ||                              / ________/       ||        \____________\\                  \\
+               ||                             //                 ||                      \\                  \\
+     SednaSystemEnvException   SednaUserExceptionFnError SednaUserEnvException SednaUserSoftException SednaXQueryException
 
 
 SednaException -- abstract base exception class. You cannot use it for raising
@@ -40,6 +40,10 @@ caused by trn. The reaction on this error is to produce correct message to the
 user with an explanation of the problem. Error codes and descriptions of errors
 are defined in error.codes file, which is in the same directory as the file you
 are reading now.
+
+SednaXQueryException -- use it within physical plan operations (PP*). It has 
+semantic as SednaUserException with better diagnostic. Line of the XQuery query
+must be provided with which error is connected. 0 means 'I can't say exact line'.
 
 SednaUserExceptionFnError -- use it for errors raised by users (fn:error function).
 
@@ -83,19 +87,21 @@ For raising exception it is better to use these macroses:
 #define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
 #define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
 #define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
+#define XQUERY_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code, __xquery_line)
+#define XQUERY_EXCEPTION2(code, details)			SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code, __xquery_line)
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
 #define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
 #define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
 #define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
 
 Their names are straightfoward. Parameters are:
-msg      -- a textual message (some kind of error description)
-code     -- the code for user defined error (use constants defined in 
-            error_codes.h; example is SE1001)
-details  -- details for user error
-expl     -- explanation of error
-rollback -- does the error leads to rollback?
-
+msg              -- a textual message (some kind of error description)
+code             -- the code for user defined error (use constants defined in 
+                    error_codes.h; example is SE1001)
+details          -- details for user error
+expl             -- explanation of error
+rollback         -- does the error leads to rollback?
+__xquery_line    -- must be defined in the context of the throw operator. PPIterator defines _line member.
 
 
 
@@ -154,6 +160,19 @@ Errors could be outputted to the user in the format of <sedna-message>:
                      details)), \
      SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code))
 
+#define XQUERY_EXCEPTION(internal_code) \
+    (elog(EL_ERROR, ("(%s) %s", \
+                     user_error_code_entries[internal_code].code, \
+                     user_error_code_entries[internal_code].descr)), \
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, __xquery_line))
+
+#define XQUERY_EXCEPTION2(internal_code, details) \
+    (elog(EL_ERROR, ("(%s) %s Details: %s", \
+                     user_error_code_entries[internal_code].code, \
+                     user_error_code_entries[internal_code].descr, \
+                     details)), \
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, __xquery_line))
+
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) \
     (elog(EL_ERROR, ("(%s) %s", \
                      err_name, \
@@ -180,6 +199,9 @@ Errors could be outputted to the user in the format of <sedna-message>:
      SednaUserSoftException(__FILE__, __SE_FUNCTION__, __LINE__, msg)
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SednaException
 {
@@ -207,6 +229,12 @@ public:
 
 };
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaSystemException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SednaSystemException : public SednaException
 {
 public:
@@ -229,6 +257,12 @@ public:
         return res;
     }
 };
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaSystemEnvException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SednaSystemEnvException : public SednaSystemException
 {
@@ -253,6 +287,11 @@ public:
         return res;
     }
 };
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaUserException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SednaUserException : public SednaException
 {
@@ -297,6 +336,67 @@ public:
     virtual bool need_rollback() { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
 };
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaXQueryException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SednaXQueryException : public SednaUserException
+{
+protected:
+    int xquery_line;
+
+public:
+    SednaXQueryException(const char* _file_, 
+                         const char* _function_,
+                         int _line_,
+                         int _internal_code_,
+                         int _xquery_line_) : SednaUserException(_file_,
+                                                                 _function_,
+                                                                 _line_,
+                                                                 "",
+                                                                 _internal_code_), 
+                                              xquery_line(_xquery_line_)   {}
+    SednaXQueryException(const char* _file_, 
+                         const char* _function_,
+                         int _line_,
+                         const char* _err_msg_,
+                         int _internal_code_,
+                         int _xquery_line_) : SednaUserException(_file_,
+                                                                 _function_,
+                                                                 _line_,
+                                                                 _err_msg_,
+                                                                 _internal_code_), 
+                                              xquery_line(_xquery_line_) {}
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += "SEDNA Message: ERROR ";
+        res += std::string(user_error_code_entries[internal_code].code) + "\n";
+        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
+        if (err_msg.length() != 0)
+        {
+            res += "Details: " + err_msg + "\n";
+        }
+        if (xquery_line != 0)
+        {
+            res += "Line: " + int2string(xquery_line) + "\n";
+        }
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+        return res;
+    }
+
+    virtual int  get_xquery_line() const { return xquery_line; }
+};
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaUserExceptionFnError
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SednaUserExceptionFnError : public SednaUserException
 {
 protected:
@@ -333,6 +433,12 @@ public:
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return true; }
 };
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaUserEnvException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class SednaUserEnvException : public SednaUserException
 {
@@ -390,6 +496,12 @@ public:
     virtual bool need_rollback() { return rollback; }
 };
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// SednaUserSoftException
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class SednaUserSoftException : public SednaUserException
 {
 public:
@@ -408,10 +520,11 @@ public:
 
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// Sedna soft fault fuctions.
+/// 'sedna_soft_fault' fuction with no message parameter is defined in event_loc.h
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Sedna soft fault fuctions.
- * !! sedna_soft_fault fuction with no message parameter is defined in event_loc.h
- */
 void sedna_soft_fault(const SednaException &e, int component);
 void sedna_soft_fault(const char* s, int  component);
 

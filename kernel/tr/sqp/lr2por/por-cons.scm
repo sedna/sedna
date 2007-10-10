@@ -175,7 +175,10 @@
   (cond
     ((or (not (pair? expr)) (null? expr))  ; atomic
      (list expr '() #f))
-    ((and (number? (car expr))
+    ((and (or (number? (car expr))
+              (and (list? (car expr))
+                   (= (length (car expr)) 2)
+                   (= (length (filter number? (car expr))) 2)))
           (= (length expr) 2))
      (let ((new
             (porc:process-op

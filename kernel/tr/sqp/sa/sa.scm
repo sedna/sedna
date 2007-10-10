@@ -2505,8 +2505,9 @@
               (let ((arg-results
                      (map
                       (lambda (kid) (tree-walk kid bound-vars))
+                      (sa:discard-numbers
                       (cdr  ; except for function name
-                       (sa:op-args expr)))))
+                       (sa:op-args expr))))))
                 (list
                  (sa:apply-append-remove-equal-duplicates
                   (map car arg-results))
@@ -2516,7 +2517,7 @@
                     (list (cadr (sa:op-args  ; function name
                                  (car (sa:op-args expr))  ; '(const ...)
                                  ))
-                          (length (cdr (sa:op-args expr)))))
+                          (length (sa:discard-numbers (cdr (sa:op-args expr))))))
                    (map cadr arg-results))))))
              ((fun-def)
               (tree-walk
@@ -3612,7 +3613,7 @@
                     (lambda (x)
                       (not (and (pair? x)
                                 (eq? (sa:op-name x) 'const))))
-                    (sa:op-args after-analysis))))
+                    (sa:discard-numbers (sa:op-args after-analysis)))))
                  (and
                   (eq? (sa:op-name after-analysis) 'cast)
                   (equal?
@@ -3627,7 +3628,7 @@
                    (castable
                     ,(caar args)
                     (type (one !xs!string)))
-                   (!fn!false))
+                   (!fn!false 0))
                   sa:type-atomic))
           ((assq item-type
                  '((!xs!anyAtomicType . "xs:anyAtomicType")
@@ -3964,7 +3965,7 @@
         (car name-parts)
         (cadr name-parts)
         (length  ; arity
-         (cdr (sa:op-args fun-call)))
+         (sa:discard-numbers (cdr (sa:op-args fun-call))))
         funcs)))))
 
 ; Function call

@@ -67,6 +67,7 @@ class PPIterator
 {
 protected:
     dynamic_context *cxt;
+    int __xquery_line;
 public:
     virtual void open          ()         = 0;
     virtual void reopen        ()         = 0;
@@ -76,7 +77,8 @@ public:
 
     virtual PPIterator* copy(dynamic_context *_cxt_) = 0;
 
-    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_) {}
+    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0) {}
+	virtual void set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
 	virtual bool is_const(){return false;}
     virtual ~PPIterator() {}
 };

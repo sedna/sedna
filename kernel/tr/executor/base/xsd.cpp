@@ -127,19 +127,20 @@ char *xs_QName_create(const char *uri,
                       const char *prefix,
                       const char *local,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
+                      dynamic_context *cxt,
+                      int __xquery_line)
 {
 	xml_ns* ns = NULL;
 	if (uri && *uri && prefix && *prefix)
     {
         if (!check_constraints_for_xs_NCName(prefix))
-            throw USER_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
 
 		ns = cxt->st_cxt->get_ns_pair(prefix, uri);
     }
 
     if (!check_constraints_for_xs_NCName(local))
-        throw USER_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
+        throw XQUERY_EXCEPTION2(XPTY0004, "Error in functions xs:QName");
 
     return xs_QName_create(ns, local, alloc_func);
 }
@@ -147,7 +148,8 @@ char *xs_QName_create(const char *uri,
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
+                      dynamic_context *cxt,
+                      int __xquery_line)
 {
     U_ASSERT(prefix_and_local);
 
@@ -166,20 +168,20 @@ char *xs_QName_create(const char* uri,
         local = prefix_and_local;
 
     if (!check_constraints_for_xs_NCName(local))
-        throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+        throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
     if (*uri) // uri is present
     {
 		if (pos)
 			if (!check_constraints_for_xs_NCName(prefix_and_local, pos))
-				throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+				throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
 
         xmlns = cxt->st_cxt->get_ns_pair(std::string(prefix_and_local, pos).c_str(), uri);
     }
     else
     { // uri is empty...
         if (pos) // ... and prefix is not empty
-            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
+            throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:QName");
         // prefix is empty already (xmlns = NULL)
     }
 
@@ -189,7 +191,8 @@ char *xs_QName_create(const char* uri,
 char *xs_QName_create(const char* prefix_and_local,
                       const xptr& elem_node,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt)
+                      dynamic_context *cxt,
+                      int __xquery_line)
 {
     U_ASSERT(prefix_and_local);
 
@@ -210,11 +213,11 @@ char *xs_QName_create(const char* prefix_and_local,
         src_local  = prefix_and_local + pos + 1;
 
         if (!check_constraints_for_xs_NCName(src_prefix, pos))
-            throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
+            throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
     }
 
     if (!check_constraints_for_xs_NCName(src_local))
-        throw USER_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
+        throw XQUERY_EXCEPTION2(FOCA0002, "Error in functions fn:resolve-QName");
 
     std::vector<xml_ns*> xmlns;
     get_in_scope_namespaces(elem_node, xmlns, cxt);
@@ -232,7 +235,7 @@ char *xs_QName_create(const char* prefix_and_local,
     if (src_local == prefix_and_local)
         return xs_QName_create((xml_ns*)NULL, src_local, alloc_func);
 
-    throw USER_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
+    throw XQUERY_EXCEPTION2(FONS0004, "Error in functions fn:resolve-QName");
 }
 
 

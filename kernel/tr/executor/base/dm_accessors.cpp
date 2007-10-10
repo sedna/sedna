@@ -12,7 +12,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/xs_uri.h"
 
-tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
+tuple_cell dm_base_uri(xptr node, dynamic_context *cxt, int __xquery_line)
 {
     CHECKP(node);
 
@@ -43,19 +43,19 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
         bool is_relative = Uri::is_relative(&tc, &nfo);
         
         /// I suppose base usi must be stored in normalized form. (IS)
-        if(!nfo.normalized) throw USER_EXCEPTION2(SE1003, "Base URI is not properly normalized");
+        if(!nfo.normalized) throw XQUERY_EXCEPTION2(SE1003, "Base URI is not properly normalized");
         
         /// If URI is relative and static base uri is defined we should perform resolving. (IS)
         if(is_relative && cxt->st_cxt->base_uri)
         {
              stmt_str_buf result(1);
              tc = tuple_cell::make_sure_light_atomic(tc);
-             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->base_uri, result))
-                 return cast_primitive_to_xs_anyURI(tc);
+             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->base_uri, result, __xquery_line))
+                 return cast_primitive_to_xs_anyURI(tc, __xquery_line);
              return tuple_cell::atomic(xs_anyURI, result.get_str());
         }
         else
-            return cast_primitive_to_xs_anyURI(tc);
+            return cast_primitive_to_xs_anyURI(tc, __xquery_line);
     }
     
     /* xml_base_node == NULL here */

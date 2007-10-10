@@ -157,14 +157,14 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
     if(start == end && !(counter & 1)) (*valid) = true; //chech evenness at last;
 }
 
-tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
+tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c, int __xquery_line)
 { 
     bool valid;
     stmt_str_buf res;
 
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_hexBinary, &c, res, &valid);
     
-    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:hexBinary type.");
+    if(!valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:hexBinary type.");
     tuple_cell rc = res.get_tuple_cell();
     rc.set_xtype(xs_hexBinary);
     return rc;
@@ -313,14 +313,14 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
 }
 
 
-tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
+tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c, int __xquery_line)
 { 
     bool valid;
     stmt_str_buf res;
 
     STRING_ITERATOR_CALL_TEMPLATE_1tcptr_2p(check_constraints_for_xs_base64Binary, &c, res, &valid);
     
-    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
+    if(!valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:base64Binary type.");
     tuple_cell rc = res.get_tuple_cell();
     rc.set_xtype(xs_base64Binary);
     return rc;

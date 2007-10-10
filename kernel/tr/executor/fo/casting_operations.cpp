@@ -17,36 +17,36 @@
 
 /******************************************************************************/
 
-inline tuple_cell cast_string_type_to_xs_float(const tuple_cell &c)
-    { return tuple_cell::atomic(c_str2xs_float(_get_pointer_to_c_str(c))); }
+inline tuple_cell cast_string_type_to_xs_float(const tuple_cell &c, int __xquery_line = 0)
+    { return tuple_cell::atomic(c_str2xs_float(_get_pointer_to_c_str(c), __xquery_line)); }
 
-inline tuple_cell cast_string_type_to_xs_double(const tuple_cell &c)
-    { return tuple_cell::atomic(c_str2xs_double(_get_pointer_to_c_str(c))); }
+inline tuple_cell cast_string_type_to_xs_double(const tuple_cell &c, int __xquery_line = 0)
+    { return tuple_cell::atomic(c_str2xs_double(_get_pointer_to_c_str(c), __xquery_line)); }
 
-inline tuple_cell cast_string_type_to_xs_decimal(const tuple_cell &c)
-    { return tuple_cell::atomic(xs_decimal_t(_get_pointer_to_c_str(c))); }
+inline tuple_cell cast_string_type_to_xs_decimal(const tuple_cell &c, int __xquery_line = 0)
+    { return tuple_cell::atomic(xs_decimal_t(_get_pointer_to_c_str(c), __xquery_line)); }
 
-inline tuple_cell cast_string_type_to_xs_integer(const tuple_cell &c)
-    { return tuple_cell::atomic(c_str2xs_integer(_get_pointer_to_c_str(c))); }
+inline tuple_cell cast_string_type_to_xs_integer(const tuple_cell &c, int __xquery_line = 0)
+    { return tuple_cell::atomic(c_str2xs_integer(_get_pointer_to_c_str(c), __xquery_line)); }
 
-tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtype)
+tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtype, int __xquery_line = 0)
 {
     char *t = _get_pointer_to_c_str(c);
     XMLDateTime res;
 
     switch(xtype)
     {
-        case xs_gYearMonth        : res.parseYearMonth(t); break;
-        case xs_gYear             : res.parseYear(t); break;
-        case xs_gMonthDay         : res.parseMonthDay(t); break;
-        case xs_gDay              : res.parseDay(t); break;
-        case xs_gMonth            : res.parseMonth(t); break;
-        case xs_dateTime          : res.parseDateTime(t); break;
-        case xs_time              : res.parseTime(t); break;
-        case xs_date              : res.parseDate(t); break;
-        case xs_duration          : res.parseDuration(t); break;
-        case xs_yearMonthDuration : res.parseYearMonthDuration(t); break;
-        case xs_dayTimeDuration   : res.parseDayTimeDuration(t); break;
+        case xs_gYearMonth        : res.parseYearMonth(t, __xquery_line); break;
+        case xs_gYear             : res.parseYear(t, __xquery_line); break;
+        case xs_gMonthDay         : res.parseMonthDay(t, __xquery_line); break;
+        case xs_gDay              : res.parseDay(t, __xquery_line); break;
+        case xs_gMonth            : res.parseMonth(t, __xquery_line); break;
+        case xs_dateTime          : res.parseDateTime(t, __xquery_line); break;
+        case xs_time              : res.parseTime(t, __xquery_line); break;
+        case xs_date              : res.parseDate(t, __xquery_line); break;
+        case xs_duration          : res.parseDuration(t, __xquery_line); break;
+        case xs_yearMonthDuration : res.parseYearMonthDuration(t, __xquery_line); break;
+        case xs_dayTimeDuration   : res.parseDayTimeDuration(t, __xquery_line); break;
         default                   : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast_to_xs_dateTime");
     }
 
@@ -59,18 +59,18 @@ tuple_cell cast_string_type_to_xs_dateTime(const tuple_cell &c, xmlscm_type xtyp
    }
 }
 
-inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c)
-    { return tuple_cell::atomic(c_str2xs_boolean(_get_pointer_to_c_str(c))); }
+inline tuple_cell cast_string_type_to_xs_boolean(const tuple_cell &c, int __xquery_line = 0)
+    { return tuple_cell::atomic(c_str2xs_boolean(_get_pointer_to_c_str(c), __xquery_line)); }
 
 
-inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
+inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c, int __xquery_line = 0)
 { 
     bool valid = false;
     tuple_cell res;
     Uri::Information nfo;
     Uri::check_constraints(&c, &valid, &nfo);
     
-    if(!valid) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
+    if(!valid) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the lexical constraints defined for the xs:anyURI type.");
 
     if(!nfo.normalized)
     {
@@ -85,9 +85,9 @@ inline tuple_cell cast_string_type_to_xs_anyURI(const tuple_cell &c)
     return res;
 }
 
-inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c)
+inline tuple_cell cast_string_type_to_xs_QName(const tuple_cell &c, int __xquery_line = 0)
 {
-    throw USER_EXCEPTION2(SE1003, "Casting to xs:QName should be performed at compile time");
+    throw XQUERY_EXCEPTION2(SE1003, "Casting to xs:QName should be performed at compile time");
 /*
     // !!! FIXME: check lexical representation
     tuple_cell tmp = tuple_cell::make_sure_light_atomic(c);
@@ -126,9 +126,9 @@ inline tuple_cell cast_xs_integer_to_string_type(const tuple_cell &c, xmlscm_typ
 inline tuple_cell cast_xs_dateTime_to_string_type(const tuple_cell &c, xmlscm_type xtype, xmlscm_type res_type)
 {
     if (xtype == xs_duration || xtype == xs_yearMonthDuration || xtype == xs_dayTimeDuration )
-    	get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_duration(), xtype));
+        get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_duration(), xtype));
     else
-	get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
+        get_xs_dateTime_lexical_representation(tr_globals::mem_str_buf, XMLDateTime(c.get_xs_dateTime(), xtype));
     return tuple_cell::atomic_deep(res_type, tr_globals::mem_str_buf);
 }
 
@@ -187,7 +187,7 @@ inline tuple_cell cast_xs_base64Binary_to_xs_hexBinary(const tuple_cell &c)
 
 /******************************************************************************/
 
-static tuple_cell _cast_is_not_supported(xmlscm_type from, xmlscm_type to)
+static tuple_cell _cast_is_not_supported(xmlscm_type from, xmlscm_type to, int __xquery_line = 0)
 {
     char buf[128];
     strcpy(buf, "Cast from ");
@@ -195,14 +195,14 @@ static tuple_cell _cast_is_not_supported(xmlscm_type from, xmlscm_type to)
     strcat(buf, " to ");
     strcat(buf, xmlscm_type2c_str(to));
     strcat(buf, " is not supported");
-    throw USER_EXCEPTION2(XPTY0004, buf);
+    throw XQUERY_EXCEPTION2(XPTY0004, buf);
 }
 
 
 /*******************************************************************************
  * CASTS FOR PRIMITIVE DATATYPES (CASTING TABLE IMPLEMENTATION)
  ******************************************************************************/
-tuple_cell cast_primitive_to_xs_untypedAtomic(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_untypedAtomic(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
@@ -238,11 +238,11 @@ tuple_cell cast_primitive_to_xs_untypedAtomic(const tuple_cell &c)
                                   }
         case xs_anyURI			: return cast_xs_anyURI_to_string_type(c, xs_untypedAtomic);
         case xs_QName			: return cast_xs_QName_to_string_type(c, xs_untypedAtomic);
-        default                 : return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic);
+        default                 : return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_string(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
@@ -283,77 +283,77 @@ tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
                                       res.set_xtype(xs_string);
                                       return res;
                                   }
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_float(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_float(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_float(c);
+        case xs_string			: return cast_string_type_to_xs_float(c, __xquery_line);
         case xs_float			: return c;
         case xs_double			: return tuple_cell::atomic((float)(c.get_xs_double()));
         case xs_decimal			: return tuple_cell::atomic(c.get_xs_decimal().get_float());
         case xs_integer 		: return tuple_cell::atomic((float)(c.get_xs_integer()));
         case xs_boolean			: return c.get_xs_boolean() ? tuple_cell::atomic((float)1.0e0)
                                                             : tuple_cell::atomic((float)0.0e0);
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_float);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_float, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_double(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_double(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_double(c);
+        case xs_string			: return cast_string_type_to_xs_double(c, __xquery_line);
         case xs_float			: return tuple_cell::atomic((double)(c.get_xs_float()));
         case xs_double			: return c;
         case xs_decimal			: return tuple_cell::atomic(c.get_xs_decimal().get_double());
         case xs_integer 		: return tuple_cell::atomic((double)(c.get_xs_integer()));
         case xs_boolean			: return c.get_xs_boolean() ? tuple_cell::atomic((double)1.0e0)
                                                             : tuple_cell::atomic((double)0.0e0);
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_double);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_double, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_decimal(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_decimal(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_decimal(c);
-        case xs_float			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_float()));
-        case xs_double			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_double()));
+        case xs_string			: return cast_string_type_to_xs_decimal(c, __xquery_line);
+        case xs_float			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_float(), __xquery_line));
+        case xs_double			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_double(), __xquery_line));
         case xs_decimal			: return c;
-        case xs_integer 		: return tuple_cell::atomic(xs_decimal_t(c.get_xs_integer()));
-        case xs_boolean			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_boolean()));
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_decimal);
+        case xs_integer 		: return tuple_cell::atomic(xs_decimal_t(c.get_xs_integer(), __xquery_line));
+        case xs_boolean			: return tuple_cell::atomic(xs_decimal_t(c.get_xs_boolean(), __xquery_line));
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_decimal, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_integer(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_integer(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_integer(c);
-        case xs_float			: return tuple_cell::atomic(xs_float2xs_integer(c.get_xs_float()));
-        case xs_double			: return tuple_cell::atomic(xs_double2xs_integer(c.get_xs_double()));
+        case xs_string			: return cast_string_type_to_xs_integer(c, __xquery_line);
+        case xs_float			: return tuple_cell::atomic(xs_float2xs_integer(c.get_xs_float(), __xquery_line));
+        case xs_double			: return tuple_cell::atomic(xs_double2xs_integer(c.get_xs_double(), __xquery_line));
         case xs_decimal			: return tuple_cell::atomic(c.get_xs_decimal().get_int());
         case xs_integer 		: return c;
         case xs_boolean			: return tuple_cell::atomic(xs_boolean2xs_integer(c.get_xs_boolean()));
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_integer);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_integer, __xquery_line);
     }
 }
 
@@ -369,14 +369,14 @@ tuple_cell cast_xs_duration_to_xs_duration(const tuple_cell &c, xmlscm_type type
 	return tuple_cell::atomic(dt1.convertTo(type).getPackedDuration(), type); 
 }
 
-tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
+tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic    : 
-        case xs_string           : return cast_string_type_to_xs_dateTime(c, type);
+        case xs_string           : return cast_string_type_to_xs_dateTime(c, type, __xquery_line);
         case xs_duration         : 
         case xs_yearMonthDuration:
         case xs_dayTimeDuration  : 
@@ -385,7 +385,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_duration         :
                 case xs_yearMonthDuration:
                 case xs_dayTimeDuration  : return cast_xs_duration_to_xs_duration(c, type);
-                default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
+                default                  : return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
             }
 	
         case xs_dateTime         :
@@ -399,12 +399,12 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_gMonthDay        : 
                 case xs_gDay             : 
                 case xs_gMonth           : return cast_xs_dateTime_to_xs_dateTime(c, type);
-                default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
+                default                  : return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
             }
 
 
         case xs_time             : if (type == c.get_atomic_type()) return c;
-                                   else return _cast_is_not_supported(c.get_atomic_type(), type);
+                                   else return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
         case xs_date             :
             switch(type)
             {
@@ -415,7 +415,7 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
                 case xs_gMonthDay        : 
                 case xs_gDay             : 
                 case xs_gMonth           : return  cast_xs_dateTime_to_xs_dateTime(c, type);
-                default                  : return _cast_is_not_supported(c.get_atomic_type(), type);
+                default                  : return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
             }
 
 
@@ -425,19 +425,19 @@ tuple_cell cast_primitive_to_xs_dateTime(const tuple_cell &c, xmlscm_type type)
         case xs_gMonthDay        : 
         case xs_gDay             : 
         case xs_gMonth           : if (type == c.get_atomic_type()) return c; 
-                                   else return _cast_is_not_supported(c.get_atomic_type(), type);
-        default					 : return _cast_is_not_supported(c.get_atomic_type(), type);
+                                   else return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
+        default					 : return _cast_is_not_supported(c.get_atomic_type(), type, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_boolean(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_boolean(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_boolean(c);
+        case xs_string			: return cast_string_type_to_xs_boolean(c, __xquery_line);
         case xs_float			: 
         {
             float value = c.get_xs_float();
@@ -455,83 +455,83 @@ tuple_cell cast_primitive_to_xs_boolean(const tuple_cell &c)
         case xs_decimal			: return c.get_xs_decimal().is_zero()        ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
         case xs_integer 		: return c.get_xs_integer() == (__int64)0    ? tuple_cell::atomic(false) : tuple_cell::atomic(true);
         case xs_boolean			: return c;
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_boolean);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_boolean, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_base64Binary(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_base64Binary(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_base64Binary(c);
+        case xs_string			: return cast_string_type_to_xs_base64Binary(c, __xquery_line);
         case xs_base64Binary	: return c;
         case xs_hexBinary		: return cast_xs_hexBinary_to_xs_base64Binary(c);
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_base64Binary);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_base64Binary, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_hexBinary(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_hexBinary(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_hexBinary(c);
+        case xs_string			: return cast_string_type_to_xs_hexBinary(c, __xquery_line);
         case xs_base64Binary	: return cast_xs_base64Binary_to_xs_hexBinary(c);
         case xs_hexBinary		: return c;
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_hexBinary);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_hexBinary, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_anyURI(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_anyURI(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
         case xs_untypedAtomic	: 
-        case xs_string			: return cast_string_type_to_xs_anyURI(c);
+        case xs_string			: return cast_string_type_to_xs_anyURI(c, __xquery_line);
         case xs_anyURI          : return c;
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_anyURI);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_anyURI, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_QName(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_QName(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     switch (c.get_atomic_type())
     {
-        case xs_string			: return cast_string_type_to_xs_QName(c);
+        case xs_string			: return cast_string_type_to_xs_QName(c, __xquery_line);
         case xs_QName			: return c;
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_QName);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_QName, __xquery_line);
     }
 }
 
-tuple_cell cast_primitive_to_xs_NOTATION(const tuple_cell &c)
+tuple_cell cast_primitive_to_xs_NOTATION(const tuple_cell &c, int __xquery_line)
 {
     U_ASSERT(c.is_atomic());
 
     // Since we do not provide support for types derived from xs:NOTATION,
     // any casting to xs:NOTATION is prohibited
 
-    return _cast_is_not_supported(c.get_atomic_type(), xs_NOTATION);
+    return _cast_is_not_supported(c.get_atomic_type(), xs_NOTATION, __xquery_line);
 }
 
-tuple_cell cast_primitive(const tuple_cell &c, xmlscm_type xtype)
+tuple_cell cast_primitive(const tuple_cell &c, xmlscm_type xtype, int __xquery_line = 0)
 {
     switch (xtype)
     {
-        case xs_untypedAtomic    : return cast_primitive_to_xs_untypedAtomic(c);
-        case xs_string           : return cast_primitive_to_xs_string(c);
-        case xs_float            : return cast_primitive_to_xs_float(c);
-        case xs_double           : return cast_primitive_to_xs_double(c);
-        case xs_decimal          : return cast_primitive_to_xs_decimal(c);
-        case xs_integer          : return cast_primitive_to_xs_integer(c);
+        case xs_untypedAtomic    : return cast_primitive_to_xs_untypedAtomic(c, __xquery_line);
+        case xs_string           : return cast_primitive_to_xs_string(c, __xquery_line);
+        case xs_float            : return cast_primitive_to_xs_float(c, __xquery_line);
+        case xs_double           : return cast_primitive_to_xs_double(c, __xquery_line);
+        case xs_decimal          : return cast_primitive_to_xs_decimal(c, __xquery_line);
+        case xs_integer          : return cast_primitive_to_xs_integer(c, __xquery_line);
         case xs_duration         : 
         case xs_yearMonthDuration: 
         case xs_dayTimeDuration  : 
@@ -542,13 +542,13 @@ tuple_cell cast_primitive(const tuple_cell &c, xmlscm_type xtype)
         case xs_gYear            : 
         case xs_gMonthDay        : 
         case xs_gDay             : 
-        case xs_gMonth           : return cast_primitive_to_xs_dateTime(c, xtype);
-        case xs_boolean          : return cast_primitive_to_xs_boolean(c);
-        case xs_base64Binary     : return cast_primitive_to_xs_base64Binary(c);
-        case xs_hexBinary        : return cast_primitive_to_xs_hexBinary(c);
-        case xs_anyURI           : return cast_primitive_to_xs_anyURI(c);
-        case xs_QName            : return cast_primitive_to_xs_QName(c);
-        case xs_NOTATION         : return cast_primitive_to_xs_NOTATION(c);
+        case xs_gMonth           : return cast_primitive_to_xs_dateTime(c, xtype, __xquery_line);
+        case xs_boolean          : return cast_primitive_to_xs_boolean(c, __xquery_line);
+        case xs_base64Binary     : return cast_primitive_to_xs_base64Binary(c, __xquery_line);
+        case xs_hexBinary        : return cast_primitive_to_xs_hexBinary(c, __xquery_line);
+        case xs_anyURI           : return cast_primitive_to_xs_anyURI(c, __xquery_line);
+        case xs_QName            : return cast_primitive_to_xs_QName(c, __xquery_line);
+        case xs_NOTATION         : return cast_primitive_to_xs_NOTATION(c, __xquery_line);
         default                  : throw USER_EXCEPTION2(SE1003, "Unexpected XML Schema simple type passed to cast");
     }
 }
@@ -623,7 +623,7 @@ static inline bool check_constraints_for_xs_language(const tuple_cell *value)
 	return charset_handler->matches(value, regex);
 }
 
-static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type)
+static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xmlscm_type base_type, int __xquery_line = 0)
 {
     if (TT == base_type) return SV;
 
@@ -676,7 +676,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
 	    }
     }
 
-    if (!sat) throw USER_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
+    if (!sat) throw XQUERY_EXCEPTION2(FORG0001, "The value does not conform to the facets defined for the target type");
 
     tuple_cell TV;
     
@@ -697,7 +697,7 @@ static tuple_cell cast_within_a_branch(const tuple_cell &SV, xmlscm_type TT, xml
 /*******************************************************************************
  * CAST FOR DATATYPES
  ******************************************************************************/
-tuple_cell cast(const tuple_cell &SV, xmlscm_type TT)
+tuple_cell cast(const tuple_cell &SV, xmlscm_type TT, int __xquery_line)
 {
     xmlscm_type ST = SV.get_atomic_type();
 
@@ -711,7 +711,7 @@ tuple_cell cast(const tuple_cell &SV, xmlscm_type TT)
     // If condition is true, then casting is described in section 
     // "17.1 Casting from primitive types to primitive types"
     if (ST_primitive && TT_primitive)
-        return cast_primitive(SV, TT);
+        return cast_primitive(SV, TT, __xquery_line);
 
     // Otherwise we have to deal with derived types as section
     // "17.2 Casting to derived types" stands
@@ -736,7 +736,7 @@ tuple_cell cast(const tuple_cell &SV, xmlscm_type TT)
     if (ST_base == TT_base)
     {
         // Casting is described in "17.4 Casting within a branch of the type hierarchy"
-        return cast_within_a_branch(SV, TT, TT_base);
+        return cast_within_a_branch(SV, TT, TT_base, __xquery_line);
     }
     else
     {
@@ -754,19 +754,19 @@ tuple_cell cast(const tuple_cell &SV, xmlscm_type TT)
 
         // 2. Cast the value to the primitive type of TT, as described in 
         //    "17.1 Casting from primitive types to primitive types".
-        res = cast_primitive(res, TT_base);
+        res = cast_primitive(res, TT_base, __xquery_line);
 
         // 3. Cast the value down to the TT, as described in "17.4 Casting 
         //    within a branch of the type hierarchy"
-        return cast_within_a_branch(res, TT, TT_base);
+        return cast_within_a_branch(res, TT, TT_base, __xquery_line);
     }
 }
 
-bool is_castable(const tuple_cell &SV, xmlscm_type TT)
+bool is_castable(const tuple_cell &SV, xmlscm_type TT, int __xquery_line)
 {
 	try
 	{
-		cast(SV, TT);	
+		cast(SV, TT, __xquery_line);	
 		return true;
 	}
 	catch(SednaUserException &e)

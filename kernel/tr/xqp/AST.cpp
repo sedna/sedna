@@ -79,6 +79,18 @@ AST::AST(char *s, ASTNodeType type) {
   //d_printf2("constructor text=%s\n\n", s);
 }
 
+
+// called when #[string, ASTNodeType, int] is seen in an action
+AST::AST(char *s, ASTNodeType type, int line) {
+  token = new ANTLRToken();
+  token->setText(s);
+  token->setLine(line);
+  token->setType(ANTLRTokenType(type));
+  //d_printf2("constructor text=%s\n\n", s);
+}
+
+
+
 // called when #[string, ASTNodeType] is seen in an action
 AST::AST(string str, ASTNodeType type){
   token = new ANTLRToken();
@@ -112,6 +124,14 @@ AST::AST(ASTNodeType type) {
   //d_printf1("constructor\n");
 }
 
+// called when #[ASTNodeType, int] is seen in action
+AST::AST(ASTNodeType type, int line){
+  token = new ANTLRToken();
+  token->setType((ANTLRTokenType)type);
+  token->setLine(line);
+}
+
+
 
 // empty constructor
 AST::AST() {
@@ -126,6 +146,7 @@ AST::AST (const AST &t) {
   token= new ANTLRToken();
   token->setText((t.token)->getText());
   token->setType((t.token)->getType());
+  token->setLine((t.token)->getLine());
 //  *token = *(t.token);
   setDown(NULL);
   setRight(NULL);
@@ -180,6 +201,11 @@ AST::type () {return (int) token->getType(); }
 // return AST text value
 char*
 AST::getText() { return token->getText(); }
+
+// return AST line number
+int
+AST::getLine() { return token->getLine(); }
+
 
 void
 AST::setText(string text)

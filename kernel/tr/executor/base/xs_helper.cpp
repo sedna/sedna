@@ -55,7 +55,7 @@ static void _strip_c_str(const char* t, const char** start, const char** end)
     ++(*end);
 }
 
-float c_str2xs_float(const char *t)
+float c_str2xs_float(const char *t, int __xquery_line)
 {
     float res = 0.0;
     const char *start = NULL;
@@ -72,14 +72,14 @@ float c_str2xs_float(const char *t)
     {
         char* stop = NULL;
         double d = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
+        if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:float type");
 		res = (float)d;
     }
 
     return res;
 }
 
-double c_str2xs_double(const char *t)
+double c_str2xs_double(const char *t, int __xquery_line)
 {
     double res = 0.0;
     const char *start = NULL;
@@ -96,13 +96,13 @@ double c_str2xs_double(const char *t)
     {
         char* stop = NULL;
         res = strtod(start, &stop);
-        if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
+        if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:double type");
     }
 
     return res;
 }
 
-__int64 c_str2xs_integer(const char *t)
+__int64 c_str2xs_integer(const char *t, int __xquery_line)
 {
     __int64 res = 0;
     char* stop = NULL;
@@ -111,12 +111,12 @@ __int64 c_str2xs_integer(const char *t)
     _strip_c_str(t, &start, &end);
 
     res = strto__int64(start, &stop, 10);
-    if ((end - start == 0) || (stop != end)) throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
+    if ((end - start == 0) || (stop != end)) throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:integer type");
 
     return res;
 }
 
-bool c_str2xs_boolean(const char *t)
+bool c_str2xs_boolean(const char *t, int __xquery_line)
 {
     bool res = false;
     const char *start = NULL;
@@ -127,11 +127,11 @@ bool c_str2xs_boolean(const char *t)
     {
         if (strncmp(start, "1", 1) == 0) res = true;
         else if (strncmp(start, "0", 1) == 0) res = false;
-        else throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
+        else throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
     }
     else if ((end - start == 4) && (strncmp(start, "true", 4) == 0)) res = true;
     else if ((end - start == 5) && (strncmp(start, "false", 5) == 0)) res = false;
-    else throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
+    else throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:boolean type");
 
     return res;
 }
@@ -372,23 +372,23 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 /////////////////////////////////////////////////////////////////////////
 /// XML Schema fixed datatypes to fixed datatypes conversion routines.
 /////////////////////////////////////////////////////////////////////////
-__int64 xs_float2xs_integer(float v)
+__int64 xs_float2xs_integer(float v, int __xquery_line)
 {
     if (u_is_neg_inf((double)v) || u_is_pos_inf((double)v) || u_is_nan((double)v))
-        throw USER_EXCEPTION2(FOCA0002, "Error casting xs:float value to xs:integer");
+        throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:float value to xs:integer");
 
     double i = 0.0;
     modf((double)v, &i);
     return (__int64)i;
 }
 
-__int64 xs_double2xs_integer(double v)
+__int64 xs_double2xs_integer(double v, int __xquery_line)
 {
     if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
-        throw USER_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
+        throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
 
     if(v > _I64_MAX || v < _I64_MIN) 
-        throw USER_EXCEPTION2(FOCA0003, "Error casting xs:double value to xs:integer (too long value given)");
+        throw XQUERY_EXCEPTION2(FOCA0003, "Error casting xs:double value to xs:integer (too long value given)");
 
     double i = 0.0;
     modf(v, &i);

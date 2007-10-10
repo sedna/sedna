@@ -496,24 +496,24 @@ char* remove_dot_segments(const char* path)
     return result;
 }
 
-bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
+bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest, int __xquery_line)
 {
     /// Since xs:anyURI type is not strict and allows spaces we must
     /// check there if given URIs contain spaces or not:
     bool is_spaces;
     const char* str = relative;
     is_URI_contains_space<const char*> (str, str + strlen(str), &is_spaces);
-    if(is_spaces) throw USER_EXCEPTION2(FORG0009, "Relative URI contains spaces.");
+    if(is_spaces) throw XQUERY_EXCEPTION2(FORG0009, "Relative URI contains spaces.");
     str = base;
     is_URI_contains_space<const char*> (str, str + strlen(str), &is_spaces);
-    if(is_spaces) throw USER_EXCEPTION2(FORG0009, "Absolute URI contains spaces.");
+    if(is_spaces) throw XQUERY_EXCEPTION2(FORG0009, "Absolute URI contains spaces.");
 
     Uri R = parse(relative);      /// Parsed relative URI which we are going to resolve.
     
     if(R.scheme_defined)
     {
         if(R.fragment_defined)    
-            throw USER_EXCEPTION2(FORG0009, "Relative URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
+            throw XQUERY_EXCEPTION2(FORG0009, "Relative URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
         return false;             /// If we have absolute URI given as $relative argument then we have nothing to do.
     }
 
@@ -522,10 +522,10 @@ bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
     if(B.scheme_defined)
     {
         if(B.fragment_defined)    
-            throw USER_EXCEPTION2(FORG0009, "Base URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
+            throw XQUERY_EXCEPTION2(FORG0009, "Base URI contains invalid absolute URI. Absolute URI can not contain fragment component (#).");
     }
     else 
-        throw USER_EXCEPTION2(FORG0009, "Base URI is relative. Absolute URI was expected.");
+        throw XQUERY_EXCEPTION2(FORG0009, "Base URI is relative. Absolute URI was expected.");
     
     Uri T;                        /// Target URI which we will return after recomposition.
 

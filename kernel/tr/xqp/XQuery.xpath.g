@@ -263,7 +263,7 @@ wildcard!:
 functionCall!:
 	(
 	  qn:qname LPAR {p1:params} RPAR
-	   <<#0=#(#[AST_FCALL], #qn, #p1);>>
+	   <<#0=#(#[AST_FCALL, ((AST*)#qn)->getLine()], #qn, #p1);>>
 /*
 	 | TEXT LPAR {p2:params} RPAR
 	   <<#0=#(#[AST_FCALL], 
