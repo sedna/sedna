@@ -23,12 +23,12 @@
 #endif
 
 
-tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype)
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype, int __xquery_line)
 {
 	if (xtype == se_separator) return tuple_cell::atomic_se_separator();
 
     tuple_cell c = tuple_cell::atomic_deep(xs_untypedAtomic, value.c_str());
-    return cast(c, xtype);
+    return cast(c, xtype, __xquery_line);
 }
 
 double get_numeric_value(const tuple_cell &tc)
@@ -62,7 +62,7 @@ double get_numeric_value(const tuple_cell &tc)
  ******************************************************************************/
 
 
-tuple_cell effective_boolean_value(const tuple_cell &t)
+tuple_cell effective_boolean_value(const tuple_cell &t, int __xquery_line)
 {
 	xmlscm_type xtype = t.get_atomic_type();    
 
@@ -118,35 +118,35 @@ tuple_cell effective_boolean_value(const tuple_cell &t)
 
     
     // 6. In all other cases, fn:boolean raises a type error [err:FORG0006].
-    else throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over given simple type.");
+    else throw XQUERY_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over given simple type.");
 }
 
-tuple_cell effective_boolean_value(const sequence *s)
+tuple_cell effective_boolean_value(const sequence *s, int __xquery_line)
 {
-    if (s->size() == 0) return tuple_cell::atomic(false);      //1. If its operand is an empty sequence, fn:boolean returns false.
+    if (s->size() == 0) return tuple_cell::atomic(false);                     //1. If its operand is an empty sequence, fn:boolean returns false.
    
     const tuple_cell &tc = s->get_00();
-    if (tc.is_node()) return tuple_cell::atomic(true);         //2. If its operand is a sequence whose first item is a node, fn:boolean returns true.
+    if (tc.is_node()) return tuple_cell::atomic(true);                        //2. If its operand is a sequence whose first item is a node, fn:boolean returns true.
     
-    if (s->size() > 1) throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
+    if (s->size() > 1) throw XQUERY_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
     
-    if (tc.is_atomic()) return effective_boolean_value(tc);    //3. If its operand is a SINGLETON value of type ... get effective boolean of this value
-															   //4. In all other cases, fn:boolean raises a type error [err:FORG0006].
+    if (tc.is_atomic()) return effective_boolean_value(tc, __xquery_line);    //3. If its operand is a SINGLETON value of type ... get effective boolean of this value
+															                  //4. In all other cases, fn:boolean raises a type error [err:FORG0006].
     throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
 }
 
 
-tuple_cell predicate_boolean_value(const tuple_cell &t, int pos)
+tuple_cell predicate_boolean_value(const tuple_cell &t, int pos, int __xquery_line = 0)
 {
     xmlscm_type xtype = t.get_atomic_type();
 
     if(is_numeric_type(xtype)) 
 	    return op_eq(tuple_cell::atomic((__int64)pos), t, NULL/*it will not be string comparison*/);
     else
-	    return effective_boolean_value(t);
+	    return effective_boolean_value(t, __xquery_line);
 }
 
-tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value)
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value, int __xquery_line)
 {
 	is_numeric = false;
 
@@ -180,16 +180,16 @@ tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bo
     			value = get_numeric_value(tc);
 	        }
 
-	        return effective_boolean_value(tc);
+	        return effective_boolean_value(tc, __xquery_line);
         }
         else										//4. In all other cases, fn:boolean raises a type error [err:FORG0006].
-	        throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
+	        throw XQUERY_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
     }
 
-    throw USER_EXCEPTION2(SE1003, "Impossible case in predicate_numeric_or_boolean_value");
+    throw XQUERY_EXCEPTION2(SE1003, "Impossible case in predicate_numeric_or_boolean_value");
 }
 
-tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos, int __xquery_line)
 {
     child.op->next(t);
 
@@ -214,15 +214,15 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
         if (t.is_eos())
         {
             eos_reached = true;
-            return pos ? predicate_boolean_value(tc, pos)
-                       : effective_boolean_value(tc);
+            return pos ? predicate_boolean_value(tc, pos, __xquery_line)
+                       : effective_boolean_value(tc, __xquery_line);
         }
         else										       //4. In all other cases, fn:boolean raises a type error [err:FORG0006].
-	        throw USER_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
+	        throw XQUERY_EXCEPTION2(FORG0006, "Effective boolean value can not be evaluated over non-singleton value.");
 
     }
 
-    throw USER_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
+    throw XQUERY_EXCEPTION2(SE1003, "Impossible case in effective_boolean_value");
 }
 
 
@@ -232,7 +232,7 @@ tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, 
 
 
 
-schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details)
+schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details, int __xquery_line)
 {
     schema_node *root = NULL;
 
@@ -242,9 +242,9 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
     if(!valid) 
     {
         if (db_ent->type == dbe_document)
-            throw USER_EXCEPTION2(FODC0005, (std::string("Invalid document URI '") + db_ent->name + "'").c_str());
+            throw XQUERY_EXCEPTION2(FODC0005, (std::string("Invalid document URI '") + db_ent->name + "'").c_str());
         else 
-            throw USER_EXCEPTION2(FODC0002, (std::string("Invalid collection URI '") + db_ent->name + "'").c_str());    
+            throw XQUERY_EXCEPTION2(FODC0002, (std::string("Invalid collection URI '") + db_ent->name + "'").c_str());    
     }
     
     switch (db_ent->type)
@@ -257,9 +257,9 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
     if (!root) 
     {
         if (db_ent->type == dbe_document)
-            throw USER_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
+            throw XQUERY_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
         else 
-            throw USER_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
+            throw XQUERY_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
     }
 #ifdef SE_ENABLE_TRIGGERS
 	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root, db_ent->name);

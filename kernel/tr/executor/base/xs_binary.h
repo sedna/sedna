@@ -14,8 +14,8 @@
 /// For binary types we can perform only the following operations:
 /////////////////////////////////////////////////////////////////////
 
-tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c);
-tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c);
+tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c, int __xquery_line = 0);
+tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c, int __xquery_line = 0);
 
 tuple_cell cast_base64Binary_to_hexBinary(const tuple_cell &c);
 tuple_cell cast_hexBinary_to_base64Binary(const tuple_cell &c);

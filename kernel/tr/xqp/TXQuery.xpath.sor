@@ -253,7 +253,7 @@ primaryExpr![in_context in_c] >[out_context out_c]:
 	 | AST_EMPTY_SEQUENCE
 	   <<#primaryExpr=#(#[], #["sequence"]); >>
 
-	 | #(AST_FCALL qn:qname 
+	 | #(fc:AST_FCALL qn:qname 
              (e:exprSingle[in_c] >[out_c] 
 	      <<if(f_params == NULL)
 	        { 
@@ -283,9 +283,19 @@ primaryExpr![in_context in_c] >[out_context out_c]:
         else
         {
 */
-           #primaryExpr=#(#["fun-call"],
-                          #(#["const"], #(#["type"], #["!xs!QName"]), qn),
-                          f_params);
+           if(f_params != NULL)
+           {
+               #primaryExpr=#(#["fun-call"],
+                              #(#["const"], #(#["type"], #["!xs!QName"]), qn),
+                              f_params,
+                              #[int2string(fc->getLine()).c_str()]);
+           }
+           else
+           {
+               #primaryExpr=#(#["fun-call"],
+                              #(#["const"], #(#["type"], #["!xs!QName"]), qn),
+                              #[int2string(fc->getLine()).c_str()]);
+           }
            
 //        }
 	

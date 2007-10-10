@@ -93,7 +93,7 @@ void PPVarDecl::next(tuple &t, var_dsc dsc, var_c_id id)
     if (first_time && need_to_check_type)
     {
        if (!type_matches(child, s, source, seq_filled, st))
-          throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
+          throw XQUERY_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
        first_time = false;	
     }
 

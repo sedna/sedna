@@ -1068,7 +1068,7 @@
                  ))
               => (lambda (pair)
                    (let ((line-num (l2p:list-last node)))
-                   `((1 ,line-num)
+                   `((1 ,(if (number? line-num) line-num 0))
                      ,(cons (cdr pair)
                             (map
                              l2p:any-lr-node2por
@@ -1591,7 +1591,7 @@
 
 ;--------------------------------------------------------------------------------
 (define (l2p:tuple-size PhysOp)
-  (car PhysOp)
+  ((lambda (x) (if (list? x) (car x) x)) (car PhysOp))
 )
 
 (define (l2p:lr-axis2por-axis axis)

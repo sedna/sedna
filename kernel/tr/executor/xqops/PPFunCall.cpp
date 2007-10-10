@@ -23,16 +23,16 @@ void fun_conv_rules::next(tuple &t)
 
     switch (st->oi)
     {
-        case st_empty			: if (num != 0) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_empty			: if (num != 0) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
-        case st_one				: if (num != 1) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_one				: if (num != 1) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
-        case st_optional		: if (!(num == 0 || num == 1)) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_optional		: if (!(num == 0 || num == 1)) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
         case st_zero_or_more	: break;
-        case st_one_or_more		: if (!(num >= 1)) throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_one_or_more		: if (!(num >= 1)) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
                                   break;
-        default					: throw USER_EXCEPTION2(SE1003, "Unexpected case in fcr::next");
+        default					: throw XQUERY_EXCEPTION2(SE1003, "Unexpected case in fcr::next");
     }
 
     if (t.is_eos()) 
@@ -49,16 +49,16 @@ void fun_conv_rules::next(tuple &t)
         if(st->type.info.single_type != xs_anyAtomicType)
         {
             if (tc.get_atomic_type() == xs_untypedAtomic)
-                tc = cast(tc, st->type.info.single_type);
+                tc = cast(tc, st->type.info.single_type, __xquery_line);
             else
-                type_promotion(tc, st->type.info.single_type);
+                type_promotion(tc, st->type.info.single_type, __xquery_line);
         }
 
         t.copy(tc);
     }
 
     if (!type_matches_single(tc, st->type))
-        throw USER_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
 }
 
 #ifdef STRICT_FUNS
@@ -254,7 +254,8 @@ void PPFunCall::next(tuple &t)
 
             for (i = 0; i < args_num; i++)
                 args[i] = se_new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
-                                      ch_arr[i].op);
+                                         ch_arr[i].op, 
+                                         __xquery_line);
 #ifdef STRICT_FUNS
         }
         else args[i]->reopen();
@@ -327,7 +328,7 @@ void PPFunCall::next(tuple &t)
         }
 #endif
 
-        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body);
+        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, __xquery_line);
     }
 
 
@@ -347,6 +348,8 @@ PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
 {
     PPFunCall *res = se_new PPFunCall(_cxt_, ch_arr, fn_id);
 
+    res->__xquery_line = __xquery_line;
+    
     for (int i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 

@@ -40,31 +40,31 @@ void xs_decimal_t::init()
 /*******************************************************************************
  * SET FUNCTIONS
  ******************************************************************************/
-void xs_decimal_t::set(__int64 a)
+void xs_decimal_t::set(__int64 a, int __xquery_line)
 {
     get_xs_integer_lexical_representation(tr_globals::mem_str_buf, a);
-    this->set(tr_globals::mem_str_buf);
+    this->set(tr_globals::mem_str_buf, true);
 }
 
-void xs_decimal_t::set(float a)
+void xs_decimal_t::set(float a, int __xquery_line)
 {
     this->set((double)a);
 }
 
-void xs_decimal_t::set(double a)
+void xs_decimal_t::set(double a, int __xquery_line)
 {
     if (u_is_nan(a) || u_is_neg_inf(a) || u_is_pos_inf(a))
-        throw USER_EXCEPTION2(FOCA0002, "Cannot convert to xs:decimal type");
+        throw XQUERY_EXCEPTION2(FOCA0002, "Cannot convert to xs:decimal type");
 
     double abs_a = a < 0.0 ? -a : a;
     if (abs_a > XS_DECIMAL_MAX_VALUE_DOUBLE || (a != 0 && abs_a < XS_DECIMAL_MIN_VALUE_DOUBLE))
-        throw USER_EXCEPTION2(FOCA0001, "Cannot convert to xs:decimal type");
+        throw XQUERY_EXCEPTION2(FOCA0001, "Cannot convert to xs:decimal type");
 
     sprintf(tr_globals::mem_str_buf, "%E", a);
-    this->set(tr_globals::mem_str_buf, false);
+    this->set(tr_globals::mem_str_buf, false, __xquery_line);
 }
 
-void xs_decimal_t::set(bool a)
+void xs_decimal_t::set(bool a, int __xquery_line)
 {
     dec_cxt.status = 0;
     if (a)
@@ -80,7 +80,7 @@ static const unsigned char decimal_allowed[16] = {0x00, 0x00, 0x00, 0x00,
 #define IS_BYTE_DECIMAL_ALLOWED(byte) \
     (byte & 0x80 ? 0 : (decimal_allowed[(byte >> 3)] & (0x80 >> (byte & 7))))
 
-void xs_decimal_t::set(const char *a, bool xs_compliant)
+void xs_decimal_t::set(const char *a, bool xs_compliant, int __xquery_line)
 {
     char* norm_a = NULL;
     decNumber dv;
@@ -90,13 +90,13 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
         collapse_string_normalization(a, res);
         norm_a = res.get_str();
         if (strcmp(norm_a, "NaN") == 0)
-            throw USER_EXCEPTION2(FORG0001, "Cannot convert string \"NaN\" to xs:decimal");
+            throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert string \"NaN\" to xs:decimal");
 
         if (xs_compliant)
         {
             for (unsigned char *c = (unsigned char*) norm_a; *c != '\0'; c++)
                if (!IS_BYTE_DECIMAL_ALLOWED(*c))
-                    throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
+                    throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
         }
 
         dec_cxt.status = 0;
@@ -119,15 +119,15 @@ void xs_decimal_t::set(const char *a, bool xs_compliant)
     {
         //printf("0x%x %s\n", dec_cxt.status, decContextStatusToString(&dec_cxt));
         if (dec_cxt.status & DEC_IEEE_854_Overflow)
-            throw USER_EXCEPTION2(FOAR0002, "xs:decimal overflow");
+            throw XQUERY_EXCEPTION2(FOAR0002, "xs:decimal overflow");
         else if (dec_cxt.status & DEC_IEEE_854_Underflow)
             decimal128FromString((decimal128*)(v.v1), "0.0", &dec_cxt);
         else // DEC_IEEE_854_Division_by_zero | DEC_IEEE_854_Invalid_operation
-            throw USER_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
+            throw XQUERY_EXCEPTION2(FORG0001, "Cannot convert to xs:decimal type");
     }
     else if (dec_cxt.status & (DEC_Information ^ (DEC_Rounded | DEC_Inexact)))
     {
-        throw USER_EXCEPTION2(FOCA0006, "Cannot convert to xs:decimal type");
+        throw XQUERY_EXCEPTION2(FOCA0006, "Cannot convert to xs:decimal type");
     }
 
     dec_cxt.status = 0;

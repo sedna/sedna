@@ -22,10 +22,11 @@ private:
     const sequence_type *st;
     PPIterator *child;
     int num;
+    int __xquery_line;
 
 public:
-    fun_conv_rules(const sequence_type *_st_, PPIterator *_child_) :
-                   st(_st_), child(_child_), num(0) {}
+    fun_conv_rules(const sequence_type *_st_, PPIterator *_child_, int _xquery_line_ = 0) :
+                   st(_st_), child(_child_), num(0), __xquery_line(_xquery_line_) {}
     ~fun_conv_rules() {}
 
     void reopen() { child->reopen(); num = 0; }
@@ -39,6 +40,7 @@ private:
     fun_conv_rules fcr;
     sequence *s;
     bool seq_filled;
+    int __xquery_line;
 
 public:
 
@@ -51,8 +53,8 @@ public:
     void reopen();
     void next(tuple /*out*/ &t, var_c_id /*out*/ &id);
 
-    fun_arg(const sequence_type *_st_, PPIterator *_child_) :
-            fcr(_st_, _child_), seq_filled(false) { s = se_new sequence(1); }
+    fun_arg(const sequence_type *_st_, PPIterator *_child_, int _xquery_line_ = 0) :
+            fcr(_st_, _child_, _xquery_line_), seq_filled(false), __xquery_line(_xquery_line_) { s = se_new sequence(1); }
     ~fun_arg() { delete s; }
 };
 
@@ -78,7 +80,6 @@ private:
 #endif
 
     inline void reinit_consumer_table();
-
 
     void children(arr_of_PPOpIn &_ch_arr_)
     {

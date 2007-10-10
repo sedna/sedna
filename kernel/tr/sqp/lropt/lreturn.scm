@@ -315,7 +315,7 @@
                   called-once? #f  ; order not required
                   var-types prolog processed-funcs))
      ((!fn!data !fn!zero-or-one !fn!one-or-more)
-      (let ((identity (lambda (x) x)))
+      (let ((identity (lambda x (car x))))
         ; NOTE: Should be updated when collations are introduced to
         ; fn:distinct-values in Sedna
         (lropt:propagate expr called-once? order-required?
@@ -340,7 +340,7 @@
       (let ((return-first
              (lambda x (car x))))
         (lropt:propagate expr called-once?
-                         (list order-required? #f)
+                         (list order-required? #f #f)
                          var-types prolog processed-funcs
                          return-first return-first return-first)))
      ((!fn!insert-before)
@@ -359,7 +359,7 @@
                          ; when an item is removed from a sequences
                          return-first return-first return-first)))
      ((!fn!reverse)
-      (let ((identity (lambda (x) x)))
+      (let ((identity (lambda x (car x))))
         (lropt:propagate expr called-once? order-required?
                          var-types prolog processed-funcs
                          #f  ; order not preserved
@@ -427,7 +427,7 @@
                        var-types prolog processed-funcs
                        #t #t #t))
      ((!fn!filter_entry_level)
-      (let ((identity (lambda (x) x)))
+      (let ((identity (lambda x (car x))))
         (lropt:propagate expr called-once? order-required?
                          var-types prolog processed-funcs
                          identity identity identity)))
@@ -1885,7 +1885,7 @@
                        (cons #f  ; for function name
                              (append
                               (lropt:procced-func-for-args entry)
-                              #f  ; line number
+                              (list #f)  ; line number
                               ))
                        var-types prolog processed-funcs
                        (lropt:procced-func-ddo-auto? entry)

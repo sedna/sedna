@@ -53,13 +53,13 @@ void PPDmNodeKind::next  (tuple &t)
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
 
         dm_node_kind_type res = dm_node_kind(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-kind is not a node");
 
         switch (res)
         {
@@ -98,6 +98,7 @@ void PPDmNodeKind::next  (tuple &t)
 PPIterator* PPDmNodeKind::copy(dynamic_context *_cxt_)
 {
     PPDmNodeKind *res = se_new PPDmNodeKind(_cxt_, child);
+    res->set_xquery_line(__xquery_line);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -197,12 +198,12 @@ void PPFnNodeName::next  (tuple &t)
 
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
         tuple_cell tc = dm_node_name(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -222,7 +223,7 @@ PPIterator* PPFnNodeName::copy(dynamic_context *_cxt_)
 {
     PPFnNodeName *res = se_new PPFnNodeName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -292,12 +293,12 @@ void PPFnNilled::next  (tuple &t)
 		child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
 
         tuple_cell tc = dm_nilled(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -317,7 +318,7 @@ PPIterator* PPFnNilled::copy(dynamic_context *_cxt_)
 {
     PPFnNilled *res = se_new PPFnNilled(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -383,7 +384,7 @@ void PPFnString::next  (tuple &t)
             tc = cast(child.get(t), xs_string);
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string is more than 1");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string is more than 1");
 
         t.copy(tc);
     }
@@ -398,7 +399,7 @@ PPIterator* PPFnString::copy(dynamic_context *_cxt_)
 {
     PPFnString *res = se_new PPFnString(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -456,7 +457,7 @@ PPIterator* PPFnData::copy(dynamic_context *_cxt_)
 {
     PPFnData *res = se_new PPFnData(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -507,12 +508,12 @@ void PPFnBaseURI::next  (tuple &t)
 		child.op->next(t);
         if (t.is_eos()) return;
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
-        tuple_cell tc = dm_base_uri(child.get(t).get_node(), cxt);
+        tuple_cell tc = dm_base_uri(child.get(t).get_node(), cxt, __xquery_line);
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -531,6 +532,7 @@ void PPFnBaseURI::next  (tuple &t)
 PPIterator* PPFnBaseURI::copy(dynamic_context *_cxt_)
 {
     PPFnBaseURI *res = se_new PPFnBaseURI(_cxt_, child);
+    res->set_xquery_line(__xquery_line);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -590,12 +592,12 @@ void PPFnDocumentURI::next  (tuple &t)
             return;
         }
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
 
         tuple_cell tc = dm_document_uri(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
 
         if (tc.is_eos())
         {
@@ -617,6 +619,7 @@ void PPFnDocumentURI::next  (tuple &t)
 PPIterator* PPFnDocumentURI::copy(dynamic_context *_cxt_)
 {
     PPFnDocumentURI *res = se_new PPFnDocumentURI(_cxt_, child);
+    res->set_xquery_line(__xquery_line);
     res->child.op = child.op->copy(_cxt_);
 
     return res;
@@ -670,6 +673,7 @@ void PPFnStaticBaseUri::next  (tuple &t)
 PPIterator* PPFnStaticBaseUri::copy(dynamic_context *_cxt_)
 {
     PPFnStaticBaseUri *res = se_new PPFnStaticBaseUri(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -718,6 +722,7 @@ void PPFnDefaultCollation::next  (tuple &t)
 PPIterator* PPFnDefaultCollation::copy(dynamic_context *_cxt_)
 {
     PPFnDefaultCollation *res = se_new PPFnDefaultCollation(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

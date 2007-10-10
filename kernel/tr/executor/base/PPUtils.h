@@ -22,7 +22,7 @@ inline xptr first_child(xptr node)
 }
 
 
-tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype);
+tuple_cell string2tuple_cell(const std::string &value, xmlscm_type xtype, int __xquery_line = 0);
 
 double get_numeric_value(const tuple_cell &tc);
 
@@ -49,24 +49,24 @@ inline tuple_cell atomize(const tuple_cell& t)
     return t.get_type() == tc_node ? dm_typed_value(t.get_node()) : t;
 }
 
-tuple_cell effective_boolean_value(const tuple_cell &t);
-tuple_cell effective_boolean_value(const sequence *s);
+tuple_cell effective_boolean_value(const tuple_cell &t, int __xquery_line = 0);
+tuple_cell effective_boolean_value(const sequence *s, int __xquery_line = 0);
 
 
-tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value);
-tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos);
+tuple_cell predicate_boolean_and_numeric_value(const PPOpIn &child, tuple &t, bool &eos_reached, bool &is_numeric, double &value, int __xquery_line = 0);
+tuple_cell predicate_and_effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos, int __xquery_line = 0);
 
 
-inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos)
+inline tuple_cell predicate_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int pos, int __xquery_line = 0)
 {
 	U_ASSERT(pos > 0);
-	return predicate_and_effective_boolean_value(child, t, eos_reached, pos);		
+	return predicate_and_effective_boolean_value(child, t, eos_reached, pos, __xquery_line);		
 }
 
 
-inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached)
+inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &eos_reached, int __xquery_line = 0)
 {
-	return predicate_and_effective_boolean_value(child, t, eos_reached, 0);		
+	return predicate_and_effective_boolean_value(child, t, eos_reached, 0, __xquery_line);		
 }
 
 
@@ -75,7 +75,7 @@ inline tuple_cell effective_boolean_value(const PPOpIn &child, tuple &t, bool &e
  ******************************************************************************/
 
 
-schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details);
+schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_details, int __xquery_line = 0);
 
 
 

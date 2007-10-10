@@ -38,10 +38,16 @@ public:
 // called when #[string, ASTNodeType] is seen in an action
  AST(char *, ASTNodeType);
 
+// called when #[string, ASTNodeType, int] is seen in an action
+ AST(char *, ASTNodeType, int);
+
 // called when #[string, ASTNodeType] is seen in an action
  AST(std::string, ASTNodeType);
 // called when #[ASTNodeType] is seen in action
  AST(ASTNodeType);
+
+// called when #[ASTNodeType, int] is seen in action
+ AST(ASTNodeType, int);
 
 // constructor called by parser for token references in grammar
 // AST(ANTLRTokenPtr);
@@ -69,8 +75,11 @@ public:
 // return type's value
  int type ();
 
-// retrn AST text value
+// return AST text value
  char *getText();
+
+// return AST line number
+ int getLine();
 
   // set new text of the AST node
  void setText(std::string);
