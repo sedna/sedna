@@ -194,6 +194,7 @@ PPIterator* PPFnUriEncoding::copy(dynamic_context *_cxt_)
 {
     PPFnUriEncoding *res = se_new PPFnUriEncoding(_cxt_, child, type);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -317,7 +318,7 @@ void PPFnResolveUri::next  (tuple &t)
         if(!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
 
         stmt_str_buf result;
-        if(Uri::resolve(relative_tc.get_str_mem(), base_uri, result)) 
+        if(Uri::resolve(relative_tc.get_str_mem(), base_uri, result, __xquery_line)) 
             t.copy(result.get_tuple_cell());
         else 
             t.copy(relative_tc);
@@ -336,6 +337,7 @@ PPIterator* PPFnResolveUri::copy(dynamic_context *_cxt_)
     PPFnResolveUri *res = is_base_static ? se_new PPFnResolveUri(_cxt_, relative) 
                                          : se_new PPFnResolveUri(_cxt_, relative, base);
     res->relative.op = relative.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     if(!is_base_static) res->base.op = base.op->copy(_cxt_);
     return res;
 }

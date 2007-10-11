@@ -74,7 +74,7 @@ PPIterator* PPFnEmpty::copy(dynamic_context *_cxt_)
 {
     PPFnEmpty *res = se_new PPFnEmpty(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -164,7 +164,7 @@ PPIterator* PPFnExists::copy(dynamic_context *_cxt_)
 {
     PPFnExists *res = se_new PPFnExists(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -240,12 +240,12 @@ void PPFnItemAt::next(tuple &t)
         first_time = false;
 
         pos_child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
 
-        __int64 pos = cast(pos_child.get(t), xs_integer).get_xs_integer();
+        __int64 pos = cast(pos_child.get(t), xs_integer, __xquery_line).get_xs_integer();
 
         pos_child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
         if (pos < 1) throw USER_EXCEPTION(SE1007);
 
         for (__int64 i = 1; i <= pos; i++)
@@ -277,7 +277,7 @@ PPIterator* PPFnItemAt::copy(dynamic_context *_cxt_)
     PPFnItemAt *res = se_new PPFnItemAt(_cxt_, seq_child, pos_child);
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -399,15 +399,15 @@ void PPFnDistinctValues::next(tuple &t)
         {
             collation_child.op->next(t);
             if(t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:distinct-values()");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:distinct-values()");
 
             tuple_cell col = atomize(collation_child.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:distinct-values() (xs_string/derived/promotable is expected)");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:distinct-values() (xs_string/derived/promotable is expected)");
 
             collation_child.op->next(t);
             if (!t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:distinct-values(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
             handler = cxt->st_cxt->get_collation(col.get_str_mem());
@@ -466,7 +466,7 @@ PPIterator* PPFnDistinctValues::copy(dynamic_context *_cxt_)
     res->child.op = child.op->copy(_cxt_);
     if (collation_child.op)
         res->collation_child.op = collation_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -552,15 +552,15 @@ void PPFnIndexOf::next(tuple &t)
         {
             collation_child.op->next(t);
             if(t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument. Argument contains zero items in fn:index-of()");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument. Argument contains zero items in fn:index-of()");
 
             tuple_cell col = atomize(collation_child.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:index-of() (xs_string/derived/promotable is expected)");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:index-of() (xs_string/derived/promotable is expected)");
 
             collation_child.op->next(t);
             if (!t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:index-of(). Argument contains more than one item");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:index-of(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
             handler = cxt->st_cxt->get_collation(col.get_str_mem());
@@ -568,13 +568,13 @@ void PPFnIndexOf::next(tuple &t)
 
         srch_child.op->next(t);
         if(t.is_eos()) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:index-of()");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument. Argument contains zero items in fn:index-of()");
 
         search_param = atomize(srch_child.get(t));
 
         srch_child.op->next(t);
         if (!t.is_eos()) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:index-of(). Argument contains more than one item");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:index-of(). Argument contains more than one item");
     }
 
     while(true)
@@ -610,7 +610,7 @@ PPIterator* PPFnIndexOf::copy(dynamic_context *_cxt_)
 
     if (collation_child.op)
         res->collation_child.op = collation_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -688,6 +688,7 @@ PPIterator* PPFnReverse::copy(dynamic_context *_cxt_)
 {
     PPFnReverse *res = se_new PPFnReverse(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -768,34 +769,34 @@ void PPFnSubsequence::next(tuple &t)
         first_time = false;
 
         start_child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:subsequence.");
         
         tuple_cell tc = atomize(start_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
         
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:subsequence (xs:double or promotable expected).");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:subsequence (xs:double or promotable expected).");
         
-        start_pos = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
+        start_pos = floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         
         start_child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
 
         if(is_length)
         {
             length_child.op->next(t);
-            if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
+            if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty third argument is not allowed in fn:subsequence.");
             
             tc = atomize(start_child.get(t));
             xtype = tc.get_atomic_type();
 
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
-                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:subsequence (xs:double or promotable expected).");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:subsequence (xs:double or promotable expected).");
 
-            length = floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
+            length = floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(t);
-            if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
+            if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
         }
         
         current_pos = 0;           
@@ -825,7 +826,7 @@ PPIterator* PPFnSubsequence::copy(dynamic_context *_cxt_)
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->start_child.op = start_child.op->copy(_cxt_);
     if(is_length) res->length_child.op = length_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -886,7 +887,7 @@ void PPFnRemove::next(tuple &t)
         first_time = false;
 
         pos_child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:remove.");
         
         tuple_cell tc = atomize(pos_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
@@ -894,12 +895,12 @@ void PPFnRemove::next(tuple &t)
         if(!(xtype == xs_untypedAtomic ||
              xtype == xs_integer ||
              is_derived_from_xs_integer(xtype)))  
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
 
-        remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
+        remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer, __xquery_line).get_xs_integer() : tc.get_xs_integer(); 
         
         pos_child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
 
         current_pos = 0;
     }
@@ -922,7 +923,7 @@ PPIterator* PPFnRemove::copy(dynamic_context *_cxt_)
                                 
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -993,7 +994,7 @@ void PPFnInsertBefore::next(tuple &t)
         eos_reached = false;
 
         pos_child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Empty second argument is not allowed in fn:insert-before.");
         
         tuple_cell tc = atomize(pos_child.get(t));
         xmlscm_type xtype = tc.get_atomic_type();
@@ -1001,12 +1002,12 @@ void PPFnInsertBefore::next(tuple &t)
         if(!(xtype == xs_untypedAtomic ||
              xtype == xs_integer ||
              is_derived_from_xs_integer(xtype)))  
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:insert-before (xs:untypedAtomic, xs:integer or derived expected).");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:insert-before (xs:untypedAtomic, xs:integer or derived expected).");
 
-        insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
+        insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer, __xquery_line).get_xs_integer() : tc.get_xs_integer(); 
         
         pos_child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
 
         current_pos = 1;
     }
@@ -1042,7 +1043,7 @@ PPIterator* PPFnInsertBefore::copy(dynamic_context *_cxt_)
     res->seq_child.op = seq_child.op->copy(_cxt_);
     res->pos_child.op = pos_child.op->copy(_cxt_);
     res->ins_child.op = ins_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1098,7 +1099,7 @@ void PPFnZeroOrOne::next  (tuple &t)
         {
             tuple temp(child.ts);
             child.op->next(temp);
-            if(!temp.is_eos()) throw USER_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
+            if(!temp.is_eos()) throw XQUERY_EXCEPTION(FORG0003); //error code description: fn:zero-or-one called with a sequence containing more than one item.
         }
     }
     else
@@ -1112,7 +1113,7 @@ PPIterator* PPFnZeroOrOne::copy(dynamic_context *_cxt_)
 {
     PPFnZeroOrOne *res = se_new PPFnZeroOrOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1162,7 +1163,7 @@ void PPFnOneOrMore::next  (tuple &t)
     child.op->next(t);
     if (t.is_eos()) 
     {
-        if(first_time) throw USER_EXCEPTION(FORG0004); //error code description: fn:one-or-more called with a sequence containing no items.
+        if(first_time) throw XQUERY_EXCEPTION(FORG0004); //error code description: fn:one-or-more called with a sequence containing no items.
         first_time = true;
     }
     else first_time = false;
@@ -1172,7 +1173,7 @@ PPIterator* PPFnOneOrMore::copy(dynamic_context *_cxt_)
 {
     PPFnOneOrMore *res = se_new PPFnOneOrMore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1223,11 +1224,11 @@ void PPFnExactlyOne::next  (tuple &t)
     {
         first_time = false;
         child.op->next(t);
-        if(t.is_eos()) throw USER_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
+        if(t.is_eos()) throw XQUERY_EXCEPTION2(FORG0005, "Empty sequence is not allowed in fn:exactly-one.");
 
         tuple temp(child.ts);
         child.op->next(temp);
-        if(!temp.is_eos()) throw USER_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
+        if(!temp.is_eos()) throw XQUERY_EXCEPTION2(FORG0005, "More than one item is not allowed in fn:exactly-one.");
     }
     else
     {
@@ -1240,7 +1241,7 @@ PPIterator* PPFnExactlyOne::copy(dynamic_context *_cxt_)
 {
     PPFnExactlyOne *res = se_new PPFnExactlyOne(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

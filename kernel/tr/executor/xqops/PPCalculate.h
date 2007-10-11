@@ -18,12 +18,15 @@
 
 class CalcOp
 {
+protected:
+    int __xquery_line;
 public:
     virtual tuple_cell next(dynamic_context *cxt) = 0;
     //virtual tuple_cell result(/**/std::vector<void*>& v/**/) = 0;
     virtual CalcOp* copy(arr_of_PPOpIn *children) = 0;
     virtual void reopen() = 0;
-    CalcOp() {}
+    virtual void set_xquery_line(int _xquery_line_) {__xquery_line = _xquery_line_; }
+    CalcOp() : __xquery_line(0) {}
     virtual ~CalcOp() {}
 };
 

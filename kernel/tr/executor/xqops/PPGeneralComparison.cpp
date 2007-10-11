@@ -68,30 +68,30 @@ void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell
 {
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()==xs_untypedAtomic)
 	{
-		cell1=cast_primitive_to_xs_string(cell1);
-		cell2=cast_primitive_to_xs_string(cell2);
+		cell1=cast_primitive_to_xs_string(cell1, __xquery_line);
+		cell2=cast_primitive_to_xs_string(cell2, __xquery_line);
 		return; 
 	}
 	if (cell1.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell2.get_atomic_type()))
 	{
-		cell1=cast(cell1, xs_double);
+		cell1=cast(cell1, xs_double, __xquery_line);
 		return; 
 	}
 	if (cell2.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell1.get_atomic_type()))
 	{
-		cell2=cast(cell2, xs_double);
+		cell2=cast(cell2, xs_double, __xquery_line);
 		return; 
 	}
 	
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()!=xs_untypedAtomic)
 	{
-		cell1=cast(cell1,cell2.get_atomic_type());
+		cell1=cast(cell1,cell2.get_atomic_type(), __xquery_line);
 		return;
 	}
 
 	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.get_atomic_type()!=xs_untypedAtomic)
 	{
-		cell2=cast(cell2,cell1.get_atomic_type());
+		cell2=cast(cell2,cell1.get_atomic_type(), __xquery_line);
 		return;
 	}
 }
@@ -152,6 +152,7 @@ PPIterator* PPGeneralComparison::copy(dynamic_context *_cxt_)
 	res = se_new PPGeneralComparison(_cxt_, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 bool PPGeneralComparison::result(PPIterator* cur, dynamic_context *cxt, void*& r)
@@ -185,7 +186,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value, xs_double);
+			tuple_cell num_val=cast(value, xs_double, __xquery_line);
 			if (min_ut_num)
 			{
 				if (op_lt(num_val,min_ut_num_cell,handler).get_xs_boolean()) 
@@ -209,7 +210,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value,xs_date);
+			tuple_cell num_val=cast(value,xs_date, __xquery_line);
 			if (min_ut_dat)
 			{
 				if (op_lt(num_val,min_ut_dat_cell,handler).get_xs_boolean()) 
@@ -292,7 +293,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value, xs_double);
+			tuple_cell num_val=cast(value, xs_double, __xquery_line);
 			if (max_ut_num)
 			{
 				if (op_gt(num_val,max_ut_num_cell,handler).get_xs_boolean()) 
@@ -316,7 +317,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value,xs_date);
+			tuple_cell num_val=cast(value,xs_date, __xquery_line);
 			if (max_ut_dat)
 			{
 				if (op_gt(num_val,max_ut_dat_cell,handler).get_xs_boolean()) 
@@ -482,6 +483,7 @@ PPIterator* PPLMGeneralComparison::copy(dynamic_context *_cxt_)
 	res = se_new PPLMGeneralComparison(_cxt_, seq1,seq2,more);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -678,7 +680,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						else
 						{
-							if (op_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string),handler).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string, __xquery_line),handler).get_xs_boolean())
 								two_diffs_exist[pr]=true;
 						}
 						if (
@@ -691,7 +693,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						if (uv_exist[1-pr])
 						{
-							if (op_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string),handler).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string, __xquery_line),cast(seq_str_val[1-pr], xs_string, __xquery_line),handler).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
 								return;
@@ -880,6 +882,7 @@ PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)
 	res = se_new PPEQLGeneralComparison(_cxt_, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -889,6 +892,7 @@ PPIterator* PPNEQGeneralComparison::copy(dynamic_context *_cxt_)
 	res = se_new PPNEQGeneralComparison(_cxt_, seq1,seq2);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

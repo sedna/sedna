@@ -21,9 +21,9 @@ using namespace std;
 /// Returns the least common type that has a gt operator.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
-static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
+static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2, int __xquery_line = 0)
 {
-    xmlscm_type t = evaluate_common_type(t1, t2);    
+    xmlscm_type t = evaluate_common_type(t1, t2, __xquery_line);    
     
     if(t == xs_string  || is_derived_from_xs_string(t) || t == xs_anyURI)  
         return xs_string;
@@ -41,7 +41,7 @@ static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_t
         case xs_double                : 
         case xs_decimal               : 
         case xs_boolean               : return t;
-        default                       : throw USER_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator.");
+        default                       : throw XQUERY_EXCEPTION2(XPTY0004, "Least common type doesn't have a gt operator.");
     }    
 }
 
@@ -99,7 +99,7 @@ void PPOrderBy::open  ()
     udata.stable    = stable;
     udata.temps[0]  = NULL;
     udata.temps[1]  = NULL;
-
+    udata.__xquery_line = __xquery_line;
     ss = se_new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
 
@@ -165,17 +165,17 @@ void PPOrderBy::next  (tuple &t)
                         tuple_cell tc = source.cells[i];
                         
                         if(tc.is_atomic() && tc.get_atomic_type() == se_sequence)
-                            throw USER_EXCEPTION2(XPTY0004, "A sequence of more than one item is not allowed in order by specification.");
+                            throw XQUERY_EXCEPTION2(XPTY0004, "A sequence of more than one item is not allowed in order by specification.");
                         
                         tc = atomize(tc);
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
-                                                          cast_primitive_to_xs_string(tc) : tc ;
+                                                          cast_primitive_to_xs_string(tc, __xquery_line) : tc ;
                         
                         common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
                         
                         if(ct->initialized)
-                            ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
+                            ct->xtype = get_least_common_type_with_gt(ct->xtype, t, __xquery_line);
                         else
                         {
                             ct->xtype = t;
@@ -205,7 +205,7 @@ void PPOrderBy::next  (tuple &t)
             if(sort_size % 8 != 0) udata.size++;
 
             if(udata.size > DATA_BLK_SIZE) 
-                throw USER_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
+                throw XQUERY_EXCEPTION2(SE1003, "Order by clause contains too many specifications.");
 
             CHECK_PTR_AND_CLEAR(udata.buffer);
             CHECK_PTR_AND_CLEAR(udata.temps[0]);
@@ -253,6 +253,7 @@ PPIterator* PPOrderBy::copy(dynamic_context *_cxt_)
                                    data_size);
 
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -531,7 +532,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
     orb_user_data* ud = (orb_user_data*)Udata;
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
-        
+    int __xquery_line = ud->__xquery_line;    
     temp_buffer* buffer = ud -> buffer;
 
     #ifdef ALIGNMENT_REQUIRED
@@ -548,7 +549,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
             if(t.cells[i].is_eos()) bs.setAt(i);
             else 
             {
-                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
+                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type, __xquery_line);
                 buffer->serialize_to_buffer(t.cells[i]);
             }
         }
@@ -572,7 +573,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
             if(t.cells[i].is_eos()) bs.setAt(i);
             else 
             {
-                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
+                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type, __xquery_line);
                 
                 switch (type)
                 {
@@ -615,6 +616,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
     orb_user_data* ud = (orb_user_data*)Udata;
+    int __xquery_line = ud->__xquery_line;
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
     
@@ -894,6 +896,7 @@ PPIterator* PPSTuple::copy(dynamic_context *_cxt_)
     for (i = 0; i < ch_arr.size(); i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
 
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -985,6 +988,7 @@ PPIterator* PPSLet::copy(dynamic_context *_cxt_)
     PPSLet *res = se_new PPSLet(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

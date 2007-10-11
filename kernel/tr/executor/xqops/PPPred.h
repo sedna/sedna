@@ -76,6 +76,8 @@ private:
     
     void print_state();
 
+    int __xquery_line;
+
 public:
     
     int add_new_constraint(operation_compare_condition occ, const PPOpIn &conjunct);
@@ -90,6 +92,7 @@ public:
     
     int reinit_with_position(double position);
     void reinit();
+    void set_xquery_line(int _xquery_line_) { __xquery_line = _xquery_line_;}
 };
 
 

@@ -39,33 +39,33 @@ void separateLocalAndPrefix(char*& prefix,const char*& qname)
 			return;
 		}
 }
-tuple_cell getQnameParameter(PPOpIn qname)
+tuple_cell getQnameParameter(PPOpIn qname, int __xquery_line = 0)
 {
 	tuple name(qname.ts);
 	qname.op->next(name);
-	if (name.is_eos()) throw USER_EXCEPTION(XPTY0004);
-	if (!(name.cells_number==1 )) throw USER_EXCEPTION(XPTY0004);
+	if (name.is_eos()) throw XQUERY_EXCEPTION(XPTY0004);
+	if (!(name.cells_number==1 )) throw XQUERY_EXCEPTION(XPTY0004);
 	tuple_cell res=atomize(name.cells[0]);
 	xmlscm_type xtype=res.get_atomic_type();
 	if (xtype==xs_untypedAtomic)
 	{
-		res=cast(res, xs_string);
+		res=cast(res, xs_string, __xquery_line);
 		//res=cast(res, xs_QName);
 	}
 	else
 		if	(is_derived_from_xs_string(xtype)||xtype==xs_string);
 	else if(xtype!=xs_QName)
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 	res=tuple_cell::make_sure_light_atomic(res);
 	qname.op->next(name);
-	if (!(name.is_eos())) throw USER_EXCEPTION(XPTY0004);
+	if (!(name.is_eos())) throw XQUERY_EXCEPTION(XPTY0004);
 	return res;
 }
 /*tuple_cell getStringParameter(PPOpIn content)
 {
 	return tuple_cell::atomic_deep(xs_string,"");	
 }*/
-bool getStringParameter(PPOpIn content)
+bool getStringParameter(PPOpIn content, int __xquery_line = 0)
 {
 	
 	tuple value(content.ts);
@@ -99,7 +99,7 @@ bool getStringParameter(PPOpIn content)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast(res, xs_string);
+		res=cast(res, xs_string, __xquery_line);
 		res=tuple_cell::make_sure_light_atomic(res);
 	/*	if (it!=at_vals.begin())
 		{
@@ -114,7 +114,7 @@ bool getStringParameter(PPOpIn content)
 	return false;
 	//str_val.push_to_memory();
 }
-void getStringWSParameter(PPOpIn content)
+void getStringWSParameter(PPOpIn content, int __xquery_line = 0)
 {
 	str_val.clear();
 	tuple value(content.ts);
@@ -140,7 +140,7 @@ void getStringWSParameter(PPOpIn content)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast(res, xs_string);
+		res=cast(res, xs_string, __xquery_line);
 		res=tuple_cell::make_sure_light_atomic(res);
 		str_val.append(res);
 		it++;
@@ -273,7 +273,7 @@ void PPElementConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (name==NULL)
 		{
-			res=getQnameParameter(qname);
+			res=getQnameParameter(qname, __xquery_line);
 			name=res.get_str_mem();
 		}
 		
@@ -327,7 +327,7 @@ void PPElementConstructor::next  (tuple &t)
 		}
 		if (!check_constraints_for_xs_NCName(name)||
 			(ns!=NULL && ns->prefix!=NULL &&!check_constraints_for_xs_NCName(ns->prefix)))
-			throw USER_EXCEPTION(XQDY0074);
+			throw XQUERY_EXCEPTION(XQDY0074);
 		//Element insertion
 		xptr new_element;
 		if (parind==XNULL || deep_copy)
@@ -393,7 +393,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string);
+						tcc=cast(tcc, xs_string, __xquery_line);
 						str_val.append(tcc);
 						it++;
 
@@ -440,7 +440,7 @@ void PPElementConstructor::next  (tuple &t)
 					}
 				case attribute:
 					{
-						if (!mark_attr) throw USER_EXCEPTION(XQTY0024);
+						if (!mark_attr) throw XQUERY_EXCEPTION(XQTY0024);
 					}
 				}
 				if (conscnt>cnt)
@@ -501,7 +501,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string);
+						tcc=cast(tcc, xs_string, __xquery_line);
 						str_val.append(tcc);
 						it++;
 
@@ -547,6 +547,7 @@ PPIterator* PPElementConstructor::copy(dynamic_context *_cxt_)
 		res->qname.op = qname.op->copy(_cxt_);
 	}
 	res->content.op = content.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -656,7 +657,7 @@ void PPAttributeConstructor::next  (tuple &t)
 		tuple_cell res1;
 		if (name==NULL)
 		{
-			res1=getQnameParameter(qname);
+			res1=getQnameParameter(qname, __xquery_line);
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
@@ -672,7 +673,7 @@ void PPAttributeConstructor::next  (tuple &t)
 				 ||
                  (ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0 )
                 ))
-				throw USER_EXCEPTION(XQDY0044);
+				throw XQUERY_EXCEPTION(XQDY0044);
 		}
 		else
 		{
@@ -682,7 +683,7 @@ void PPAttributeConstructor::next  (tuple &t)
 				     || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
 			{
 				if (prefix != NULL) { delete prefix; prefix = NULL; }  /// Added by Ivan Shcheklein
-				throw USER_EXCEPTION(XQDY0044);
+				throw XQUERY_EXCEPTION(XQDY0044);
 			}
 			if (prefix!=NULL)
 			{
@@ -692,13 +693,13 @@ void PPAttributeConstructor::next  (tuple &t)
 		}
 		if (!check_constraints_for_xs_NCName(name)||
 			(ns!=NULL &&  ns->prefix!=NULL && !check_constraints_for_xs_NCName(ns->prefix)))
-			throw USER_EXCEPTION(XQDY0074);
+			throw XQUERY_EXCEPTION(XQDY0074);
 		const char* value=at_value;
 		tuple_cell res;
 		int size;
 		if (value==NULL)
 		{
-			getStringWSParameter(content);
+			getStringWSParameter(content, __xquery_line);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -743,6 +744,7 @@ PPIterator* PPAttributeConstructor::copy(dynamic_context *_cxt_)
 	}
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
 	if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -841,7 +843,7 @@ void PPNamespaceConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (uri==NULL)
 		{
-			getStringParameter(content);
+			getStringParameter(content, __xquery_line);
 			uri=(char*)str_val.c_str();
 		}
 		xml_ns* ns=cxt->st_cxt->add_to_context(prefix,uri);
@@ -865,6 +867,7 @@ PPIterator* PPNamespaceConstructor::copy(dynamic_context *_cxt_)
 	if (at_value!=NULL)	res = se_new PPNamespaceConstructor(_cxt_, at_name,at_value);
 	else res = se_new PPNamespaceConstructor(_cxt_, at_name,content);
 	if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -946,7 +949,7 @@ void PPCommentConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (value==NULL)
 		{
-			getStringParameter(content);
+			getStringParameter(content, __xquery_line);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -955,7 +958,7 @@ void PPCommentConstructor::next  (tuple &t)
 		
 		int rst=strm.parse(value,size,NULL,NULL);
 		if (rst==1||(size>0 && value[size-1]=='-')) 
-			throw USER_EXCEPTION(XQDY0072);
+			throw XQUERY_EXCEPTION(XQDY0072);
 		xptr newcomm;
 		if (cont_parind==XNULL || deep_copy )
 			newcomm= insert_comment(XNULL,XNULL,virt_root,value,size);
@@ -988,6 +991,7 @@ PPIterator* PPCommentConstructor::copy(dynamic_context *_cxt_)
 		res = se_new PPCommentConstructor(_cxt_, content, deep_copy);
 		res->content.op = content.op->copy(_cxt_);
 	}
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1103,7 +1107,7 @@ void PPPIConstructor::next  (tuple &t)
 		tuple_cell res1;
 		if (name==NULL)
 		{
-			res1=getQnameParameter(qname);
+			res1=getQnameParameter(qname, __xquery_line);
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
@@ -1112,7 +1116,7 @@ void PPPIConstructor::next  (tuple &t)
 			prefix=(char*)xs_QName_get_prefix(name);
 			name=xs_QName_get_local_name(name);
 			if (prefix!=NULL)
-				throw USER_EXCEPTION(XQDY0041);			
+				throw XQUERY_EXCEPTION(XQDY0041);			
 		}
 		else
 		{
@@ -1120,19 +1124,19 @@ void PPPIConstructor::next  (tuple &t)
 			if (prefix!=NULL)
 			{
 			    delete prefix;
-				throw USER_EXCEPTION(XQDY0041);
+				throw XQUERY_EXCEPTION(XQDY0041);
 			}
 		}
 		if (!check_constraints_for_xs_NCName(name))
-			throw USER_EXCEPTION(XQDY0041);
+			throw XQUERY_EXCEPTION(XQDY0041);
 		if(charset_handler->matches(name, "^(?i:xml)$"))
-			throw USER_EXCEPTION(XQDY0064);
+			throw XQUERY_EXCEPTION(XQDY0064);
 		const char* value=at_value;
 		tuple_cell res;
 		int size;
 		if (value==NULL)
 		{
-			getStringParameter(content);
+			getStringParameter(content, __xquery_line);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -1141,7 +1145,7 @@ void PPPIConstructor::next  (tuple &t)
 		
 		int rst=strm.parse(value,size,NULL,NULL);
 		if (rst==1) 
-			throw USER_EXCEPTION(XQDY0026);
+			throw XQUERY_EXCEPTION(XQDY0026);
 		int wp_k=0;
 		int wp_s=size;
 		while (wp_k<wp_s)
@@ -1189,6 +1193,7 @@ PPIterator* PPPIConstructor::copy(dynamic_context *_cxt_)
 	}
     if (at_name==NULL)res->qname.op = qname.op->copy(_cxt_);
 	if (at_value==NULL)res->content.op = content.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1269,7 +1274,7 @@ void PPTextConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (value==NULL)
 		{
-			if (getStringParameter(content))
+			if (getStringParameter(content, __xquery_line))
 			{
 				t.set_eos();
 				return;
@@ -1312,6 +1317,7 @@ PPIterator* PPTextConstructor::copy(dynamic_context *_cxt_)
 		res = se_new PPTextConstructor(_cxt_, content, deep_copy);
 		res->content.op = content.op->copy(_cxt_);
 	}
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -1407,7 +1413,7 @@ void PPDocumentConstructor::next  (tuple &t)
 					do
 					{
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string);
+						tcc=cast(tcc, xs_string, __xquery_line);
 						str_val.append(tcc);
 						it++;
 					}
@@ -1437,7 +1443,7 @@ void PPDocumentConstructor::next  (tuple &t)
 					}
 				case attribute:
 					{
-						throw USER_EXCEPTION(XPTY0004);
+						throw XQUERY_EXCEPTION(XPTY0004);
 					}
 				}
 				if (conscnt>cnt)
@@ -1477,7 +1483,7 @@ void PPDocumentConstructor::next  (tuple &t)
 					do
 					{
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string);
+						tcc=cast(tcc, xs_string, __xquery_line);
 						str_val.append(tcc);
 						it++;
 					}
@@ -1503,6 +1509,8 @@ PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)
 	PPDocumentConstructor *res ;
 	res = se_new PPDocumentConstructor(_cxt_, content);
 	res->content.op = content.op->copy(_cxt_);
+	res->set_xquery_line(__xquery_line);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

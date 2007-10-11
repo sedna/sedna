@@ -28,7 +28,7 @@ public:
 
     virtual PPIterator* copy(dynamic_context *_cxt_);
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);
-	static void generalNodePrepare(tuple_cell& cell1, tuple_cell& cell2);
+	
     PPNodeComparison(dynamic_context *_cxt_, 
             PPOpIn _seq1_, PPOpIn _seq2_, int _type_);
     virtual ~PPNodeComparison();

@@ -77,7 +77,7 @@ letClause!:
 ;
 
 whereClause!:
-	WHERE e:expr
+	WHERE e:exprSingle
 	<<#0=#e;>>
 ;
 

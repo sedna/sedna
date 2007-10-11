@@ -65,10 +65,10 @@ void PPFnResolveQName::next(tuple &t)
         tuple_cell qname_tc = atomize(child_qname.get(t));
 
         if (!is_string_type(qname_tc.get_atomic_type())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
 
         child_qname.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong first argument of fn:resolve-QName function");
 
         qname_tc = tuple_cell::make_sure_light_atomic(qname_tc);
 
@@ -76,26 +76,27 @@ void PPFnResolveQName::next(tuple &t)
         child_elem.op->next(t);
 
         if (t.is_eos())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
         if (!child_elem.get(t).is_node())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
         xptr node = child_elem.get(t).get_node();
 
         child_elem.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
         CHECKP(node);
         if (GETSCHEMENODE(XADDR(node))->type != element)
-            throw USER_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong second argument of fn:resolve-QName function");
 
 
         char *qname = xs_QName_create(qname_tc.get_str_mem(),
                                       node, 
                                       malloc,
-                                      cxt);
+                                      cxt,
+                                      __xquery_line);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
     }
@@ -111,7 +112,7 @@ PPIterator* PPFnResolveQName::copy(dynamic_context *_cxt_)
     PPFnResolveQName *res = se_new PPFnResolveQName(_cxt_, child_qname, child_elem);
     res->child_qname.op = child_qname.op->copy(_cxt_);
     res->child_elem.op = child_elem.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -175,26 +176,26 @@ void PPFnQName::next(tuple &t)
         if (!t.is_eos())
         {
             if (!(child_uri.get(t).is_atomic()) || child_uri.get(t).get_atomic_type() != xs_string) 
-                throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
             uri_tc = tuple_cell::make_sure_light_atomic(child_uri.get(t));
 
             child_uri.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
+            if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
         }
 
         tuple_cell qname_tc;
         child_qname.op->next(t);
         if (t.is_eos())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
         if (!(child_qname.get(t).is_atomic()) || child_qname.get(t).get_atomic_type() != xs_string) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
         qname_tc = tuple_cell::make_sure_light_atomic(child_qname.get(t));
 
         child_qname.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:QName function");
 
         char *qname = xs_QName_create(uri_tc.is_eos() ? NULL : uri_tc.get_str_mem(),
                                       qname_tc.get_str_mem(), 
@@ -215,7 +216,7 @@ PPIterator* PPFnQName::copy(dynamic_context *_cxt_)
     PPFnQName *res = se_new PPFnQName(_cxt_, child_uri, child_qname);
     res->child_uri.op = child_uri.op->copy(_cxt_);
     res->child_qname.op = child_qname.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -272,7 +273,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
             return;
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
         tuple_cell tc = child.get(t);
 
@@ -280,7 +281,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
 
         child.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
 
         const char *prefix = xs_QName_get_prefix(tc.get_str_mem());
         if (prefix)
@@ -302,7 +303,7 @@ PPIterator* PPFnPrefixFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnPrefixFromQName *res = se_new PPFnPrefixFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -358,7 +359,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
             return;
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
 
         tuple_cell tc = child.get(t);
 
@@ -366,7 +367,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
 
         child.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
 
         const char *local_name = xs_QName_get_local_name(tc.get_str_mem());
         t.copy(tuple_cell::atomic_deep(xs_NCName, local_name));
@@ -382,7 +383,7 @@ PPIterator* PPFnLocalNameFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnLocalNameFromQName *res = se_new PPFnLocalNameFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -438,7 +439,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
             return;
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
 
         tuple_cell tc = child.get(t);
 
@@ -446,7 +447,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
 
         child.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
 
         const char *uri = xs_QName_get_uri(tc.get_str_mem());
         if (!uri) uri = "";
@@ -464,7 +465,7 @@ PPIterator* PPFnNamespaceUriFromQName::copy(dynamic_context *_cxt_)
 {
     PPFnNamespaceUriFromQName *res = se_new PPFnNamespaceUriFromQName(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -526,31 +527,31 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
         if (!t.is_eos())
         {
             if (!(child_prefix.get(t).is_atomic()) || child_prefix.get(t).get_atomic_type() != xs_string) 
-                throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
             prefix_tc = tuple_cell::make_sure_light_atomic(child_prefix.get(t));
             prefix = prefix_tc.get_str_mem();
 
             child_prefix.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+            if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
         }
 
         child_element.op->next(t);
         if (t.is_eos())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
         if (!child_element.get(t).is_node())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
         child_element.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
         xptr node = child_element.get(t).get_node();
 
         CHECKP(node);
         if (GETSCHEMENODE(XADDR(node))->type != element)
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-for-prefix function");
 
 
 
@@ -579,7 +580,7 @@ PPIterator* PPFnNamespaceUriForPrefix::copy(dynamic_context *_cxt_)
     PPFnNamespaceUriForPrefix *res = se_new PPFnNamespaceUriForPrefix(_cxt_, child_prefix, child_element);
     res->child_prefix.op = child_prefix.op->copy(_cxt_);
     res->child_element.op = child_element.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -633,20 +634,20 @@ void PPFnInScopePrefixes::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
         if (!child.get(t).is_node())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
         xptr node = child.get(t).get_node();
 
         child.op->next(t);
         if (!(t.is_eos())) 
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
         CHECKP(node);
         if (GETSCHEMENODE(XADDR(node))->type != element)
-            throw USER_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:in-scope-prefixes function");
 
 
         get_in_scope_namespaces(node, xmlns, cxt);
@@ -673,7 +674,7 @@ PPIterator* PPFnInScopePrefixes::copy(dynamic_context *_cxt_)
 {
     PPFnInScopePrefixes *res = se_new PPFnInScopePrefixes(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

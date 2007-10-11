@@ -2849,7 +2849,8 @@ fn_dt_funcs_correct_type:
                                       prefix,
                                       local,
                                       malloc,
-                                      cxt);
+                                      cxt,
+                                      line);
 
         opit = se_new PPConst(cxt, tuple_cell::atomic(xs_QName, qname));
     }

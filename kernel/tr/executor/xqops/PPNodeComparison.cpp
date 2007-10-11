@@ -36,6 +36,7 @@ PPIterator* PPNodeComparison::copy(dynamic_context *_cxt_)
 	res = se_new PPNodeComparison(_cxt_, seq1,seq2,type);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 void PPNodeComparison::close ()
@@ -127,13 +128,13 @@ void PPNodeComparison::next  (tuple &t)
 		{
 			seq1.op->next(t1);
 			if (!t1.is_eos())
-				throw USER_EXCEPTION(XPTY0004);
+				throw XQUERY_EXCEPTION(XPTY0004);
 		}
 		if (!t2.is_eos())
 		{
 			seq2.op->next(t2);
 			if (!t2.is_eos())
-				throw USER_EXCEPTION(XPTY0004);
+				throw XQUERY_EXCEPTION(XPTY0004);
 		}
     }
     else 
