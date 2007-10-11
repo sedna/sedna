@@ -101,8 +101,8 @@ bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node* sc
 
 bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
-	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
-	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
+	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1), __xquery_line);
+	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2), __xquery_line);
 	if (op_eq(n1,n2,handler).get_xs_boolean())	
 		return true;
 	else
@@ -174,15 +174,15 @@ void PPFnDeepEqual::next  (tuple &t)
         {
             collation.op->next(t);
             if(t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument." );
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument." );
 
             tuple_cell col = atomize(collation.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument ");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument ");
 
             collation.op->next(t);
             if (!t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument " );
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument " );
             
             col = tuple_cell::make_sure_light_atomic(col);
             handler = cxt->st_cxt->get_collation(col.get_str_mem());
@@ -267,7 +267,7 @@ PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)
     PPFnDeepEqual *res = se_new PPFnDeepEqual(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

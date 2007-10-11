@@ -62,14 +62,14 @@ void PPCast::next  (tuple &t)
                 t.set_eos();
                 return;
             }
-            else throw USER_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
+            else throw XQUERY_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
 
         tuple_cell tc = atomize(child.get(t));
 
         child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "cast expression (the result of atomization is a sequence of more than one atomic value)");
 
-        t.copy(cast(tc, target_type));
+        t.copy(cast(tc, target_type, __xquery_line));
     }
     else
     {
@@ -82,7 +82,7 @@ PPIterator* PPCast::copy(dynamic_context *_cxt_)
 {
     PPCast *res = se_new PPCast(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -193,7 +193,7 @@ void PPCastable::next  (tuple &t)
             tuple_cell tc = atomize(child.get(t));
             child.op->next(t);
             if (!t.is_eos())  res = false; //cast expression (the result of atomization is a sequence of more than one atomic value)
-            else res = is_castable(tc, target_type);
+            else res = is_castable(tc, target_type, __xquery_line);
         }
         
         t.copy(tuple_cell::atomic(res));
@@ -209,7 +209,7 @@ PPIterator* PPCastable::copy(dynamic_context *_cxt_)
 {
     PPCastable *res = se_new PPCastable(_cxt_, child, target_type, can_be_empty_seq);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -291,7 +291,7 @@ PPIterator* PPInstanceOf::copy(dynamic_context *_cxt_)
 {
     PPInstanceOf *res = se_new PPInstanceOf(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -364,7 +364,7 @@ void PPTreat::next(tuple &t)
         first_time = false;
         if (!eos_reached) child.op->reopen();
         bool res = type_matches(child, s, t, eos_reached, st);
-        if(res == false) throw USER_EXCEPTION(XPDY0050);
+        if(res == false) throw XQUERY_EXCEPTION(XPDY0050);
     }
    
     if(pos < s->size())
@@ -389,7 +389,7 @@ PPIterator* PPTreat::copy(dynamic_context *_cxt_)
 {
     PPTreat *res = se_new PPTreat(_cxt_, child, st);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -549,7 +549,7 @@ PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->default_child.op = default_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

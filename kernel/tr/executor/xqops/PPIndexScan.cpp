@@ -88,10 +88,10 @@ void PPIndexScan::open ()
 
     // Find B-Tree root
     btree = find_btree(index_name.c_str());
-    if (btree == NULL) throw USER_EXCEPTION2(SE1061, index_name.c_str());
+    if (btree == NULL) throw XQUERY_EXCEPTION2(SE1061, index_name.c_str());
 
     idx_type = get_index_xmlscm_type(index_name.c_str());
-    if (idx_type == -1) throw USER_EXCEPTION2(SE1061, index_name.c_str());
+    if (idx_type == -1) throw XQUERY_EXCEPTION2(SE1061, index_name.c_str());
 
     switch (isc)
     {
@@ -141,26 +141,26 @@ void PPIndexScan::close ()
                                     res = *(xptr*)(XADDR(res));
 
 
-void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type)
+void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type, int __xquery_line = 0)
 {
     if (child.op)
     {
         tuple t(1);
         child.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
 
         tc = child.get(t);
         tc = atomize(tc);
 
         child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence");
     }
 
 
     if (tc.get_atomic_type() == xs_untypedAtomic)
-        tc = cast(tc, idx_type);
+        tc = cast(tc, idx_type, __xquery_line);
     else
-        type_promotion(tc, idx_type);
+        type_promotion(tc, idx_type, __xquery_line);
 }
 
 
@@ -168,7 +168,7 @@ void PPIndexScan::next_eq(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
+        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
 
         tuple_cell2bt_key(tc, key);
         cursor = bt_find(btree, key);
@@ -187,7 +187,7 @@ void PPIndexScan::next_lt_le(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
+        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
 
         tuple_cell2bt_key(tc, key);
         cursor = bt_lm(btree);
@@ -218,7 +218,7 @@ void PPIndexScan::next_gt_ge(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
+        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
 
         tuple_cell2bt_key(tc, key);
         cursor = isc == isc_gt ? bt_find_gt(btree, key)
@@ -242,8 +242,8 @@ void PPIndexScan::next_between(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
-        obtain_tuple_cell(tc2, child2, idx_type);
+        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
+        obtain_tuple_cell(tc2, child2, idx_type, __xquery_line);
 
         tuple_cell2bt_key(tc, key);
         tuple_cell2bt_key(tc2, key2);
@@ -297,6 +297,8 @@ PPIterator* PPIndexScan::copy(dynamic_context *_cxt_)
     {
         res = se_new PPIndexScan(_cxt_, index_name, tc, tc2, isc);
     }
+
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }

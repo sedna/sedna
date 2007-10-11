@@ -307,7 +307,7 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     strcpy(default_collation_uri, normalized_value);
 }
 
-/// Collarions are used primarily in F&O Spec. so we raise 
+/// Collations are used primarily in F&O Spec. so we raise 
 /// FOCH0002 in this method. XQTS0076 is equivalent in XQuery Spec. 
 /// Use try-catch to change FOCH0002 to XQST0076 or other.
 CollationHandler* static_context::get_collation(const char *uri)

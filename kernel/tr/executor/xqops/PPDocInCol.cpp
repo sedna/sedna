@@ -59,18 +59,18 @@ void PPDocInCol::next(tuple &t)
         if (t.is_eos()) return;
         
         tuple_cell tc_col= atomize(col_name_op.get(t));
-        if(!is_string_type(tc_col.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
+        if(!is_string_type(tc_col.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
         col_name_op.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:doc. Argument contains more than one item.");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:doc. Argument contains more than one item.");
         tc_col = tuple_cell::make_sure_light_atomic(tc_col);
 
         doc_name_op.op->next(t);
         if (t.is_eos()) return;
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
-        if(!is_string_type(tc_doc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
+        if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
         doc_name_op.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:doc. Argument contains more than one item.");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:doc. Argument contains more than one item.");
         tc_doc = tuple_cell::make_sure_light_atomic(tc_doc);
 
         first_time = false;
@@ -80,16 +80,16 @@ void PPDocInCol::next(tuple &t)
         db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
 		db_ent->type = dbe_collection;
-        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
+        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol", __xquery_line);
 
         bool valid;
         Uri::check_constraints(&tc_doc, &valid, NULL);
-        if(!valid) throw USER_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc.");
+        if(!valid) throw XQUERY_EXCEPTION2(FODC0005, "Invalid uri in the first argument of fn:doc.");
         
         xptr res = find_document((const char*)tc_col.get_str_mem(), (const char*)tc_doc.get_str_mem());
         if (res == NULL)
         {
-            throw USER_EXCEPTION2(SE1006, (std::string("Document '") + 
+            throw XQUERY_EXCEPTION2(SE1006, (std::string("Document '") + 
                                            tc_doc.get_str_mem() + 
                                            "' in collection '" + 
                                            tc_col.get_str_mem() + "'").c_str());

@@ -9,9 +9,9 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
 
-inline tuple_cell getAtomizedCell(tuple& tup)
+inline tuple_cell getAtomizedCell(tuple& tup, int __xquery_line)
 {
-	if (!(tup.cells_number==1 )) throw USER_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
+	if (!(tup.cells_number==1 )) throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
 }
 int PPRange::getIntFromOp(PPOpIn & op)
@@ -23,15 +23,15 @@ int PPRange::getIntFromOp(PPOpIn & op)
 		is_emp=true;
 		return 0;
 	}
-	tuple_cell res=getAtomizedCell(t);
+	tuple_cell res=getAtomizedCell(t, __xquery_line);
 	op.op->next(t);
-	if (!(t.is_eos())) throw USER_EXCEPTION(XPTY0004);
+	if (!(t.is_eos())) throw XQUERY_EXCEPTION(XPTY0004);
 	if (res.get_atomic_type()==xs_untypedAtomic)
 	{
-		res=cast(res,xs_integer);
+		res=cast(res,xs_integer, __xquery_line);
 	}
 	if (res.get_atomic_type()!=xs_integer&&!is_derived_from_xs_integer(res.get_atomic_type()))
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 	return res.get_xs_integer();
 }
 
@@ -102,6 +102,7 @@ PPIterator* PPRange::copy(dynamic_context *_cxt_)
     PPRange *res = se_new PPRange(_cxt_, start_op,end_op);
 	res->start_op.op=start_op.op->copy(_cxt_);
 	res->end_op.op=end_op.op->copy(_cxt_);
+	res->set_xquery_line(__xquery_line);
     return res;
 }
 bool PPRange::result(PPIterator* cur, dynamic_context *cxt, void*& r)

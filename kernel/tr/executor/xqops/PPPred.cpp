@@ -238,7 +238,7 @@ int PPPredRange::add_new_constraint(operation_compare_condition occ, const PPOpI
             }
             else if(tc.get_atomic_type() == xs_untypedAtomic)
             {
-                tc = cast_primitive_to_xs_double(tc);
+                tc = cast_primitive_to_xs_double(tc, __xquery_line);
                 double_values.push_back(tc.get_xs_double());
             }
         }   
@@ -568,6 +568,7 @@ PPPred1::PPPred1(dynamic_context *_cxt_,
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred1");
+    range.set_xquery_line(__xquery_line);
 }
 
 PPPred1::~PPPred1()
@@ -655,7 +656,7 @@ void PPPred1::next(tuple &t)
         {
             if(conjuncts.size() != 0) 
             {
-                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
+                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached, __xquery_line);
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
@@ -670,7 +671,7 @@ void PPPred1::next(tuple &t)
             {
                 bool is_numeric;
                 double value;
-                tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value);
+                tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value, __xquery_line);
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
@@ -737,8 +738,8 @@ void PPPred1::next(tuple &t)
                     reinit_consumer_table();
                 }
                 
-                tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
-                                                          effective_boolean_value(data_child, data, eos_reached);
+                tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos, __xquery_line) :
+                                                          effective_boolean_value(data_child, data, eos_reached, __xquery_line);
                 need_reopen = true;
                 if(tc.get_xs_boolean()) return;
             }
@@ -770,6 +771,7 @@ PPIterator* PPPred1::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -948,7 +950,7 @@ PPPred2::PPPred2(dynamic_context *_cxt_,
 {
     if(conjuncts.size() != conditions.size()) 
         throw USER_EXCEPTION2(SE1003, "Quantities of conjuncts and conditions are not equal in PPPred2");
-
+    range.set_xquery_line(__xquery_line);
 }
 
 /*
@@ -1075,7 +1077,7 @@ void PPPred2::next(tuple &t)
         {
             if(conjuncts.size() != 0) 
             {
-                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
+                tuple_cell tc = effective_boolean_value(data_child, data, eos_reached, __xquery_line);
                 if( tc.get_xs_boolean() )
                 {
                     range.reinit();
@@ -1090,7 +1092,7 @@ void PPPred2::next(tuple &t)
             {
                 bool is_numeric;
                 double value;
-                tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value);
+                tuple_cell tc = predicate_boolean_and_numeric_value(data_child, data, eos_reached, is_numeric, value, __xquery_line);
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
@@ -1150,8 +1152,8 @@ void PPPred2::next(tuple &t)
                     if(!eos_reached) data_child.op->reopen();
                     reinit_consumer_table();
                 }
-                tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
-                                                          effective_boolean_value(data_child, data, eos_reached);
+                tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos, __xquery_line) :
+                                                          effective_boolean_value(data_child, data, eos_reached, __xquery_line);
                 need_reopen = true;
                 if(tc.get_xs_boolean()) return;
             }
@@ -1182,6 +1184,7 @@ PPIterator* PPPred2::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);     
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

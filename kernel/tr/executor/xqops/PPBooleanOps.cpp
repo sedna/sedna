@@ -164,7 +164,7 @@ void PPFnNot::next  (tuple &t)
 
         if (!eos_reached) child.op->reopen();
 
-        t.copy(my_boolean_not_e(effective_boolean_value(child, t, eos_reached)));
+        t.copy(my_boolean_not_e(effective_boolean_value(child, t, eos_reached, __xquery_line)));
     }
     else 
     {
@@ -177,7 +177,7 @@ PPIterator* PPFnNot::copy(dynamic_context *_cxt_)
 {
     PPFnNot *res = se_new PPFnNot(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -249,7 +249,7 @@ void PPFnBoolean::next  (tuple &t)
     {
         first_time = false;
         if (!eos_reached) child.op->reopen();
-        t.copy(effective_boolean_value(child, t, eos_reached));
+        t.copy(effective_boolean_value(child, t, eos_reached, __xquery_line));
     }
     else 
     {
@@ -262,7 +262,7 @@ PPIterator* PPFnBoolean::copy(dynamic_context *_cxt_)
 {
     PPFnBoolean *res = se_new PPFnBoolean(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

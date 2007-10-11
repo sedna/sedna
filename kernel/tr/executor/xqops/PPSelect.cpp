@@ -97,7 +97,7 @@ void PPSelect::next(tuple &t)
             if (!eos_reached) data_child.op->reopen();
         }
 
-        tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
+        tuple_cell tc = effective_boolean_value(data_child, data, eos_reached, __xquery_line);
 
         if (tc.get_xs_boolean()) return;
     }
@@ -108,6 +108,7 @@ PPIterator* PPSelect::copy(dynamic_context *_cxt_)
     PPSelect *res = se_new PPSelect(_cxt_, var_dscs, source_child, data_child);
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

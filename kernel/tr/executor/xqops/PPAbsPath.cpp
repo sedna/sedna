@@ -199,9 +199,9 @@ bool PPAbsPath::determine_root()
         if (t.is_eos()) return true;                                 ///If $uri is the empty sequence, the result is an empty sequence
 
         tc= atomize(name.get(t));
-        if(!is_string_type(tc.get_atomic_type())) throw USER_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
+        if(!is_string_type(tc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the argument in fn:doc (xs_string/derived/promotable is expected).");
         name.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the argument in fn:doc. Argument contains more than one item.");
 
         tc = tuple_cell::make_sure_light_atomic(tc);
         if (db_ent->name) delete [] db_ent->name;
@@ -212,7 +212,7 @@ bool PPAbsPath::determine_root()
 	document_type dt = get_document_type(db_ent);
 
 	if (dt == DT_NON_SYSTEM)
-		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
+		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath", __xquery_line);
 	else
 	   	root = get_system_doc(dt, db_ent->name);
 
@@ -232,6 +232,7 @@ PPIterator* PPAbsPath::copy(dynamic_context *_cxt_)
     {
         res = se_new PPAbsPath(_cxt_, path_expr, db_ent, name, root);
     }
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }

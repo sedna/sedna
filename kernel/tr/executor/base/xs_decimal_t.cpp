@@ -43,7 +43,7 @@ void xs_decimal_t::init()
 void xs_decimal_t::set(__int64 a, int __xquery_line)
 {
     get_xs_integer_lexical_representation(tr_globals::mem_str_buf, a);
-    this->set(tr_globals::mem_str_buf, true);
+    this->set(tr_globals::mem_str_buf, true, __xquery_line);
 }
 
 void xs_decimal_t::set(float a, int __xquery_line)
