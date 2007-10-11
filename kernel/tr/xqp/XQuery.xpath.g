@@ -6,7 +6,8 @@ class XQueryParser{
 
 pathExpr!:
 	<<ASTBase* steps;>>
-	(  SLASH rpe1:relativePathExpr 
+	(  
+	  SLASH rpe1:relativePathExpr
 	   <<
 	     steps = #(#[AST_FILTER_PATH_STEP],
 	                   #(#[AST_TREAT], 
@@ -14,9 +15,19 @@ pathExpr!:
 	                     #(#[AST_TYPE], #[AST_DOCUMENT_TEST])),	                   
 	                   #[AST_PREDICATES]
 	              );
-	     steps->append(#rpe1);
+	     if(#rpe1 != NULL) steps->append(#rpe1);
 	     #0=#(#[AST_RELATIVE_PATH], steps);
 
+	   >>
+	 | SLASH
+	   <<
+	     steps = #(#[AST_FILTER_PATH_STEP],
+                   #(#[AST_TREAT], 
+                     #(#[AST_RELATIVE_PATH], #(#[AST_FILTER_PATH_STEP], #(#[AST_FCALL], #(#[AST_QNAME], #["root", AST_LOCAL_NAME], #["fn", AST_PREFIX])) ,#[AST_PREDICATES])),
+                     #(#[AST_TYPE], #[AST_DOCUMENT_TEST])),	                   
+                   #[AST_PREDICATES]
+              );
+	     #0=#(#[AST_RELATIVE_PATH], steps);
 	   >>
 	 | SLASHSLASH rpe2:relativePathExpr
 	   <<
