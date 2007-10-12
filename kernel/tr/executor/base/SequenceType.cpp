@@ -9,7 +9,10 @@
 #include "tr/executor/base/SequenceType.h"
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/sequence.h"
+#include "tr/executor/base/dm_accessors.h"
 
+
+using namespace std;
 
 bool is_derived(xmlscm_type t1, xmlscm_type t2)
 {
@@ -307,6 +310,77 @@ bool type_matches(const PPOpIn &child, sequence *s, tuple &t, bool &eos_reached,
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+static inline string elem_name_and_type2string(const xptr& p)
+{
+    string res;
+    
+    xml_ns* node_ns  = GETSCHEMENODE(XADDR(p))->xmlns;
+    char* node_uri   = node_ns ? node_ns->uri : NULL;
+    char *node_local = GETSCHEMENODE(XADDR(p))->name;
+    if (node_uri != NULL) {res += node_uri; res += ":";}
+    if (node_local != NULL) res += node_local;
+    else res += "*";
+    res += ", "; res += xmlscm_type2c_str(E_DSC(p)->type); 
+
+    return res;
+}
+
+static inline string attr_name_and_type2string(const xptr& p)
+{
+    string res;
+    
+    xml_ns* node_ns  = GETSCHEMENODE(XADDR(p))->xmlns;
+    char* node_uri   = node_ns ? node_ns->uri : NULL;
+    char *node_local = GETSCHEMENODE(XADDR(p))->name;
+    if (node_uri != NULL) {res += node_uri; res += ":";}
+    if (node_local != NULL) res += node_local;
+    else res += "*";
+    res += ", "; res += xmlscm_type2c_str(A_DSC(p)->type); 
+
+    return res;
+}
+
+
+string node_type2string(const xptr& node)
+{
+    string res;
+    
+    CHECKP(node);
+
+    switch(GETSCHEMENODEX(node)->type)
+    {
+        case document:
+        {
+            res = "document(";
+            
+            xptr p = getFirstByOrderElementChild(node);
+            if (p != NULL && getNextByOrderElement(p) == NULL) 
+                res += " element(" + elem_name_and_type2string(p) + ") ";
+
+            res += ")";
+            break;
+        }
+        case text:          res = "text()"; break;
+        case attribute:     res = "attribute(" + attr_name_and_type2string(node) + ")"; break;
+        case element:       res = "element("   + elem_name_and_type2string(node) + ")"; break;
+        case comment:       res = "comment()"; break;
+        case pr_ins:        
+        {
+            res = "process-instruction("; 
+            pi_dsc *pi = PI_DSC(node);
+            shft target = pi->target;
+            xptr data = pi->data;
+            CHECKP(data);
+            data = PSTRDEREF(data);
+            res = res.append((char*)XADDR(data), target);
+            res += ")";  break;
+        }
+        default:            res = "item()";
+    }
+
+    return res;
+}
+
 void type_promotion(tuple_cell &tc, xmlscm_type type, int __xquery_line) //tc contains result tuple_cell after promotion
 {
     if (!tc.is_atomic()) throw XQUERY_EXCEPTION2(SE1003, "Type promotion is called on none atomic value");
@@ -326,6 +400,71 @@ void type_promotion(tuple_cell &tc, xmlscm_type type, int __xquery_line) //tc co
         return;
     }
 }
+
+string sequence_type::to_str() const 
+{
+    string res;
+
+    switch(oi)
+    {
+        case st_empty:        res = "empty-sequence()"; break;
+        case st_one:          res = type.to_str(); break;
+        case st_optional:     res = type.to_str() + "?"; break;
+        case st_zero_or_more: res = type.to_str() + "*"; break;
+        case st_one_or_more:  res = type.to_str() + "+"; break;
+        default:
+            throw USER_EXCEPTION2(SE1003, "Unexpected occurence indicator type in sequence_type::to_str");
+    }
+
+    return res;
+}
+
+string st_item_type::to_str() const
+{
+    string res;
+    
+    switch(type)
+    {
+        case st_atomic_type:      res = xmlscm_type2c_str(info.single_type); break;
+        case st_document:         res = "document()"; break;
+        case st_document_element: res = "document( element(" + info.ea.to_str() + ") )"; break;
+        case st_element:          res = "element(" + info.ea.to_str() + ")"; break;
+        case st_attribute:        res = "attribute(" + info.ea.to_str() + ")"; break;
+        case st_pi:               res = "process-instruction("; res += (info.ncname!=NULL?info.ncname:""); res += ")"; break;
+        case st_comment:          res = "comment()"; break;
+        case st_text:             res = "text()"; break;
+        case st_node:             res = "node()"; break;
+        case st_item:             res = "item()"; break;
+        default:
+            throw USER_EXCEPTION2(SE1003, "Unexpected item type in st_item_type::to_str");
+    }
+    return res;
+}
+
+string st_elem_attr_data::to_str() const
+{
+   string res;
+
+   if(nne == st_nne_wildcard)
+      res += "*";
+   else
+   {
+      if(node_name_uri != NULL) {res += node_name_uri; res += ":";}
+      res += node_name_local;
+   }
+
+   switch(tne)
+   {
+       case st_tne_nothing:  break;
+       case st_tne_optional: res += ", "; res += xmlscm_type2c_str(type_name); res += "?"; break;
+       case st_tne_present:  res += ", "; res += xmlscm_type2c_str(type_name); break;
+       default:
+           throw USER_EXCEPTION2(SE1003, "Unexpected type name in st_elem_attr_data::to_str");
+   }
+
+   return res;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // 3.8.3 Order By and Return Clauses

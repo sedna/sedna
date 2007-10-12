@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include <string>
 
 #include "common/sedna.h"
 
@@ -13,7 +14,9 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/xqops/PPSLStub.h"
 
+
 using namespace std;
+
 
 void fun_conv_rules::next(tuple &t)
 {
@@ -23,14 +26,17 @@ void fun_conv_rules::next(tuple &t)
 
     switch (st->oi)
     {
-        case st_empty			: if (num != 0) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_empty			: if (num != 0) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ".").c_str());
                                   break;
-        case st_one				: if (num != 1) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
-                                  break;
-        case st_optional		: if (!(num == 0 || num == 1)) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_one				: {
+                                      if (num == 0) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", empty sequence is given.").c_str());
+                                      if (num > 1) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", more than one item is given.").c_str());
+                                      break;
+                                  }
+        case st_optional		: if (!(num == 0 || num == 1)) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", more than one item is given.").c_str());
                                   break;
         case st_zero_or_more	: break;
-        case st_one_or_more		: if (!(num >= 1)) throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        case st_one_or_more		: if (!(num >= 1)) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", empty sequence is given.").c_str());
                                   break;
         default					: throw XQUERY_EXCEPTION2(SE1003, "Unexpected case in fcr::next");
     }
@@ -58,7 +64,19 @@ void fun_conv_rules::next(tuple &t)
     }
 
     if (!type_matches_single(tc, st->type))
-        throw XQUERY_EXCEPTION2(XPTY0004, "Value does not match the required type in function call");
+        throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", given type is [" + tc.type2string() + "].").c_str());
+}
+
+string fun_conv_rules::error()
+{
+    string res;    
+
+    if(arg_num != 0)
+        res = "Argument [" + int2string(arg_num) + "] does not match the required type in function call. Expected type is [" +  st->to_str() +  "]";
+    else
+        res = "Return value does not match the required type in function call. Expected type is [" +  st->to_str() +  "]";
+
+    return res;
 }
 
 #ifdef STRICT_FUNS
@@ -255,6 +273,7 @@ void PPFunCall::next(tuple &t)
             for (i = 0; i < args_num; i++)
                 args[i] = se_new fun_arg(&(dynamic_context::funct_cxt.fun_decls[fn_id].args[i]),
                                          ch_arr[i].op, 
+                                         i+1,
                                          __xquery_line);
 #ifdef STRICT_FUNS
         }
@@ -328,7 +347,7 @@ void PPFunCall::next(tuple &t)
         }
 #endif
 
-        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, __xquery_line);
+        body_fcr = se_new fun_conv_rules(&(fd.ret_st), body, 0, __xquery_line);  /// arg_num == 0 means function return value
     }
 
 
