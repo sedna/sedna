@@ -206,12 +206,16 @@ void str_buf_base::append(const char *str, int add_len)
 	}
 	else
 	{
+		char *str_copy = (char*)malloc(add_len); //FIXME (what if NULL)
+		memcpy(str_copy, str, add_len);
+		//TODO: add a flag/another func that avoids copying str & use it where possible
 		if (!(m_flags & f_text_in_estr_buf))
 			move_to_estr();
-		m_estr.append_mstr(str, add_len);
+		m_estr.append_mstr(str_copy, add_len);
 		m_len = new_len;
 		m_ttype = text_estr;
 		m_flags = f_text_in_estr_buf; //clear f_text_in_buf
+		free(str_copy); //FIXME: check that no exceptions can be thrown above
 	}
 }
 	
