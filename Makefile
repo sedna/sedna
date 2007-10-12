@@ -88,9 +88,6 @@ clean:
 
 
 .PHONY: build bi clean grouped_install install uninstall
-ifeq ($(PLATFORM), UNIX)
-.PHONY: dispersal_install
-endif
 
 
 ifeq ($(JAVA_DRIVER), 1)
@@ -194,6 +191,8 @@ endif
 	$(INSTALL) -Dp $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
 	$(INSTALL) -Dp $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
 	$(INSTALL) -Dp $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
+	$(INSTALL) -p $(PERM3) -d $(SEDNA_INSTALL)/sedna/cfg
+	$(INSTALL) -p $(PERM3) -d $(SEDNA_INSTALL)/sedna/data
 ifeq ($(PLATFORM), UNIX)
 	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
 	$(ECHO) '' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
@@ -228,83 +227,6 @@ endif
 
 SEDNA_DIR := sedna-$(SEDNA_VERSION).$(SEDNA_BUILD)
 
-
-ifeq ($(PLATFORM), UNIX)
-# dispersal_install goal
-# This is the default installation goal for Unix'es. 
-# Installs executables into $(PREFIX)/bin, doc files into share
-dispersal_install:
-	$(INSTALL) -Dp $(PERM1) bin/se_gov$(EXE_EXT)  $(PREFIX)/bin/se_gov$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_stop$(EXE_EXT) $(PREFIX)/bin/se_stop$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_rc$(EXE_EXT)   $(PREFIX)/bin/se_rc$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_cdb$(EXE_EXT)  $(PREFIX)/bin/se_cdb$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_sm$(EXE_EXT)   $(PREFIX)/bin/se_sm$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_smsd$(EXE_EXT) $(PREFIX)/bin/se_smsd$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_trn$(EXE_EXT)  $(PREFIX)/bin/se_trn$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_rcv$(EXE_EXT)  $(PREFIX)/bin/se_rcv$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM1) bin/se_ddb$(EXE_EXT)  $(PREFIX)/bin/se_ddb$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM2) bin/se_term$(EXE_EXT) $(PREFIX)/bin/se_term$(EXE_EXT)
-	$(INSTALL) -Dp $(PERM2) bin/se_exp$(EXE_EXT)  $(PREFIX)/bin/se_exp$(EXE_EXT)
-ifeq ($(DOCUMENTATION), 1)
-	$(INSTALL) -Dp $(PERM3) doc/AdminGuide/AdminGuide.pdf $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/AdminGuide.pdf
-	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ProgGuide.pdf $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/ProgGuide.pdf
-	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/ClientServerProtocol.pdf
-	$(INSTALL) -Dp $(PERM3) doc/QuickStart/QuickStart.pdf $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/QuickStart.pdf
-endif
-ifeq ($(JAVA_DRIVER), 1)
-	$(INSTALL) -Dp $(PERM3) driver/java/sednadriver.jar $(SHARE_PREFIX)/java/sednadriver.jar
-endif
-	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.a $(PREFIX)/lib/libsedna.a
-	$(INSTALL) -Dp $(PERM2) examples/applications/c/Clientbuild.sh $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/c/Clientbuild.sh
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Clientbuild.sh $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/java/Clientbuild.sh
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Client.sh $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/java/Client.sh
-	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.h $(INCLUDE_PREFIX)/libsedna.h
-	$(INSTALL) -Dp $(PERM3) driver/c/sp_defs.h $(INCLUDE_PREFIX)/sp_defs.h
-	$(INSTALL) -Dp $(PERM3) driver/scheme/collect-sedna-plt.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/collect-sedna-plt.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/collect-sedna-chicken.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/collect-sedna-chicken.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/srfi-12.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/srfi-12.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/plt/common.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/plt/common.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/plt/myenv.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/plt/myenv.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/common.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/chicken/common.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/libs/chicken/myenv.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/libs/chicken/myenv.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/sedna-api/sedna-api.scm
-	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/driver/scheme/sedna-api/sedna-low.scm
-	$(INSTALL) -Dp $(PERM3) etc/sednaconf.xml.sample $(ETC_PREFIX)/sednaconf.xml.sample
-	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/client.scm $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/scheme/client.scm
-	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/region.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/scheme/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/applications/c/region.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/c/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/applications/c/Client.c $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/c/Client.c
-	$(INSTALL) -Dp $(PERM3) examples/applications/java/Client.java $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/java/Client.java
-	$(INSTALL) -Dp $(PERM3) examples/applications/java/region.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/java/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/databases/auction/auction.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/databases/auction/auction.xml
-	$(INSTALL) -Dp $(PERM3) examples/databases/auction/*.xquery $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/databases/auction/
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/sample.xquery $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/external-functions/c/sample.xquery
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/sample.cpp $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/external-functions/c/sample.cpp
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/Makefile $(SHARE_PREFIX)/$(SEDNA_DIR)/examples/applications/external-functions/c/Makefile
-	$(INSTALL) -Dp $(PERM3) include/sedna_ef.h $(INCLUDE_PREFIX)/sedna_ef.h
-ifeq ($(AUTH_SWITCH), 1)
-	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SHARE_PREFIX)/$(SEDNA_DIR)/sedna_auth_md.xml
-endif
-	$(INSTALL) -Dp $(PERM3) AUTHORS   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/AUTHORS
-	$(INSTALL) -Dp $(PERM3) COPYRIGHT $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/COPYRIGHT
-	$(INSTALL) -Dp $(PERM3) HISTORY   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/HISTORY
-	$(INSTALL) -Dp $(PERM3) LICENSE   $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/LICENSE
-	$(INSTALL) -Dp $(PERM3) README    $(SHARE_PREFIX)/doc/$(SEDNA_DIR)/README
-endif
-ifeq ($(PLATFORM), UNIX)
-	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '<sednaconf>' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <!-- Path to database files -->' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <sedna_data>/var/lib/sedna</sedna_data>' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <!-- Left bounf of range for identifiers of system resources -->' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <!-- Sedna server listening port number -->' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <listener_port>5050</listener_port>' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <!-- Sedna server ping port number -->' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '  <ping_port>5151</ping_port>' >> $(ETC_PREFIX)/sednaconf.xml
-	$(ECHO) '</sednaconf>' >> $(ETC_PREFIX)/sednaconf.xml
-endif
 
 
 install: grouped_install
