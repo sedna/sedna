@@ -4384,7 +4384,7 @@
      expr)
     ((!fn!document)
      (if
-      (= (length (sa:op-args expr)) 1)
+      (= (length (sa:discard-numbers (sa:op-args expr))) 1)
       expr
       ; Otherwise - a document within a collection 
       (cl:signal-user-error
