@@ -7,6 +7,8 @@
 #ifndef _TUPLE_H
 #define _TUPLE_H
 
+#include <string>
+
 #include "common/sedna.h"
 
 #include "common/counted_ptr.h"
@@ -458,6 +460,8 @@ public:
     /// copy content of the string to buf (!!! FIXME: not very well designed approach...)
     char* copy_string(char *buf) const;
     char* copy_string(char *buf, __int64 n) const;
+
+    std::string type2string() const;
 };
 
 

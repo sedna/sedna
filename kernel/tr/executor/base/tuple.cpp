@@ -11,6 +11,7 @@
 #include "tr/pstr/pstr.h"
 #include "tr/pstr/pstr_long.h"
 #include "common/errdbg/d_printf.h"
+#include "tr/executor/base/dm_accessors.h"
 
 
 tuple_cell EMPTY_STRING_TC(tuple_cell::atomic_deep(xs_string, ""));
@@ -109,6 +110,34 @@ void tuple_cell::print(bool b) const
     }
 
     if (b) d_printf1("\n");
+}
+
+std::string tuple_cell::type2string() const
+{
+    std::string res;
+    
+    switch (get_type())
+    {
+        case tc_eos: 
+            res = "empty sequence";
+            break;
+
+        case tc_node: 
+            res = node_type2string(get_node());
+            break;
+
+        case tc_light_atomic_fix_size:
+        case tc_light_atomic_var_size:
+        case tc_heavy_atomic_estr:
+        case tc_heavy_atomic_pstr_short:
+        case tc_heavy_atomic_pstr_long: 
+            res = xmlscm_type2c_str(get_atomic_type());
+            break;
+        default:
+            throw USER_EXCEPTION2(SE1003, "Unexpected type of the tuple_cell in type2string");
+    }
+
+    return res;        
 }
 
 tuple_cell tuple_cell::make_sure_light_atomic(const tuple_cell& tc)

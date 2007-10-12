@@ -381,7 +381,7 @@ public:
         }
         if (xquery_line != 0)
         {
-            res += "Line: " + int2string(xquery_line) + "\n";
+            res += "Query line: " + int2string(xquery_line) + "\n";
         }
 #if (EL_DEBUG == 1)
         res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";

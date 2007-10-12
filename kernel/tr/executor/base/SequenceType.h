@@ -14,6 +14,8 @@
 #include "tr/executor/base/tuple.h"
 #include "tr/vmm/vmm.h"
 #include <vector>
+#include <string>
+
 
 // FIXME: Possibly, we have memory leaks with sequence_type (for node_name_uri, node_name_local and possibly ncname)
 
@@ -50,6 +52,8 @@ struct st_elem_attr_data
     char *node_name_uri;
     char *node_name_local;
     xmlscm_type type_name;
+
+    std::string to_str() const;
 };
 
 enum st_item_type_enum
@@ -75,6 +79,8 @@ struct st_item_type
         char *ncname;            // for processing-instruction
         st_elem_attr_data ea;    // information for ElementTest and AttributeTest
     } info;
+
+    std::string to_str() const;
 };
 
 /// sequence type
@@ -82,7 +88,11 @@ struct sequence_type
 {
     st_occurence_indicator oi;
     st_item_type type;
+
+    std::string to_str() const;
 };
+
+std::string node_type2string(const xptr& node);
 
 typedef std::vector<sequence_type>		arr_of_sequence_type;
 

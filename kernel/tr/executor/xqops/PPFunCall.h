@@ -7,7 +7,10 @@
 #ifndef __PPFUNCALL_H
 #define __PPFUNCALL_H
 
+#include <string>
+
 #include "common/sedna.h"
+
 #include "tr/executor/base/PPBase.h"
 
 
@@ -22,14 +25,16 @@ private:
     const sequence_type *st;
     PPIterator *child;
     int num;
+    int arg_num;
     int __xquery_line;
 
 public:
-    fun_conv_rules(const sequence_type *_st_, PPIterator *_child_, int _xquery_line_ = 0) :
-                   st(_st_), child(_child_), num(0), __xquery_line(_xquery_line_) {}
+    fun_conv_rules(const sequence_type *_st_, PPIterator *_child_, int _arg_num_, int _xquery_line_ = 0) :
+                   st(_st_), child(_child_), num(0), arg_num(_arg_num_), __xquery_line(_xquery_line_) {}
     ~fun_conv_rules() {}
 
     void reopen() { child->reopen(); num = 0; }
+    std::string error();
     void next(tuple &t);
 };
 
@@ -53,8 +58,8 @@ public:
     void reopen();
     void next(tuple /*out*/ &t, var_c_id /*out*/ &id);
 
-    fun_arg(const sequence_type *_st_, PPIterator *_child_, int _xquery_line_ = 0) :
-            fcr(_st_, _child_, _xquery_line_), seq_filled(false), __xquery_line(_xquery_line_) { s = se_new sequence(1); }
+    fun_arg(const sequence_type *_st_, PPIterator *_child_, int _arg_num_, int _xquery_line_ = 0) :
+            fcr(_st_, _child_, _arg_num_, _xquery_line_), seq_filled(false), __xquery_line(_xquery_line_) { s = se_new sequence(1); }
     ~fun_arg() { delete s; }
 };
 
