@@ -351,7 +351,7 @@ string node_type2string(const xptr& node)
     {
         case document:
         {
-            res = "document(";
+            res = "document-node(";
             
             xptr p = getFirstByOrderElementChild(node);
             if (p != NULL && getNextByOrderElement(p) == NULL) 
@@ -426,8 +426,8 @@ string st_item_type::to_str() const
     switch(type)
     {
         case st_atomic_type:      res = xmlscm_type2c_str(info.single_type); break;
-        case st_document:         res = "document()"; break;
-        case st_document_element: res = "document( element(" + info.ea.to_str() + ") )"; break;
+        case st_document:         res = "document-node()"; break;
+        case st_document_element: res = "document-node( element(" + info.ea.to_str() + ") )"; break;
         case st_element:          res = "element(" + info.ea.to_str() + ")"; break;
         case st_attribute:        res = "attribute(" + info.ea.to_str() + ")"; break;
         case st_pi:               res = "process-instruction("; res += (info.ncname!=NULL?info.ncname:""); res += ")"; break;
