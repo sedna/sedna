@@ -109,6 +109,8 @@ void PPFtHighlight::close()
 
 void PPFtHighlight::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		tuple_cell tc;
@@ -118,15 +120,15 @@ void PPFtHighlight::next(tuple &t)
 			sj=se_new SednaSearchJob(true, hl_fragment);
 			index.op->next(t);
 			if (t.is_eos())
-				throw USER_EXCEPTION(SE1071);
+				throw XQUERY_EXCEPTION(SE1071);
 			tc = t.cells[0];
 			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-				throw USER_EXCEPTION(SE1071);
+				throw XQUERY_EXCEPTION(SE1071);
 	
 			sj->set_index(tc);
 			index.op->next(t);
 			if (!t.is_eos())
-				throw USER_EXCEPTION(SE1071);
+				throw XQUERY_EXCEPTION(SE1071);
 
 		}
 		else
@@ -134,15 +136,15 @@ void PPFtHighlight::next(tuple &t)
 
 		query.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		sj->set_request(tc);
 		query.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		first_time = false;
 	}
@@ -166,7 +168,7 @@ void PPFtHighlight::next(tuple &t)
 				{
 					delete sj;
 					sj = NULL;
-					throw USER_EXCEPTION2(SE1071, "problem with dtsearch"); //FIXME: change exception code
+					throw XQUERY_EXCEPTION2(SE1071, "problem with dtsearch"); //FIXME: change exception code
 				}
 				break;
 			}
@@ -181,6 +183,8 @@ void PPFtHighlight::next(tuple &t)
 		sj = NULL;
 		first_time = true;
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
@@ -199,7 +203,7 @@ PPIterator*  PPFtHighlight::copy(dynamic_context *_cxt_)
 	    res->seq.op = seq.op->copy(_cxt_);
 	    res->query.op = query.op->copy(_cxt_);
 	}
-
+	res->set_xquery_line(__xquery_line);
 	return res;
 }
 

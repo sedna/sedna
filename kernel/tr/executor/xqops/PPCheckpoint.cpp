@@ -33,14 +33,19 @@ void PPCheckpoint::close ()
 
 void PPCheckpoint::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     t.set_eos();
     activate_and_wait_for_end_checkpoint();
     // call checkpoint here
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPCheckpoint::copy(dynamic_context *_cxt_)
 {
     PPCheckpoint *res = se_new PPCheckpoint(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

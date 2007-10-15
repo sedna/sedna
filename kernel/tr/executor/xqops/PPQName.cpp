@@ -55,11 +55,13 @@ void PPFnResolveQName::close ()
 
 void PPFnResolveQName::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         child_qname.op->next(t);
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         first_time = false;
         tuple_cell qname_tc = atomize(child_qname.get(t));
@@ -95,8 +97,7 @@ void PPFnResolveQName::next(tuple &t)
         char *qname = xs_QName_create(qname_tc.get_str_mem(),
                                       node, 
                                       malloc,
-                                      cxt,
-                                      __xquery_line);
+                                      cxt);
 
         t.copy(tuple_cell::atomic(xs_QName, qname));
     }
@@ -105,6 +106,8 @@ void PPFnResolveQName::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnResolveQName::copy(dynamic_context *_cxt_)
@@ -167,6 +170,8 @@ void PPFnQName::close ()
 
 void PPFnQName::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -209,6 +214,8 @@ void PPFnQName::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnQName::copy(dynamic_context *_cxt_)
@@ -263,6 +270,8 @@ void PPFnPrefixFromQName::close ()
 
 void PPFnPrefixFromQName::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -270,7 +279,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
@@ -297,6 +306,8 @@ void PPFnPrefixFromQName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnPrefixFromQName::copy(dynamic_context *_cxt_)
@@ -349,6 +360,8 @@ void PPFnLocalNameFromQName::close ()
 
 void PPFnLocalNameFromQName::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -356,7 +369,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
@@ -377,6 +390,8 @@ void PPFnLocalNameFromQName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnLocalNameFromQName::copy(dynamic_context *_cxt_)
@@ -429,6 +444,8 @@ void PPFnNamespaceUriFromQName::close ()
 
 void PPFnNamespaceUriFromQName::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -436,7 +453,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
@@ -459,6 +476,8 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNamespaceUriFromQName::copy(dynamic_context *_cxt_)
@@ -519,6 +538,8 @@ void PPFnNamespaceUriForPrefix::close ()
 
 void PPFnNamespaceUriForPrefix::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         tuple_cell prefix_tc;
@@ -566,13 +587,15 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
             {
                 t.copy(tuple_cell::atomic_deep(xs_anyURI, xmlns[i]->uri));
                 first_time = false;
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
         }
     }
 
     first_time = true;
     t.set_eos();
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNamespaceUriForPrefix::copy(dynamic_context *_cxt_)
@@ -629,6 +652,8 @@ void PPFnInScopePrefixes::close ()
 
 void PPFnInScopePrefixes::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (pos < 0)
     {
         child.op->next(t);
@@ -668,6 +693,8 @@ void PPFnInScopePrefixes::next  (tuple &t)
         pos = -1;
         xmlns.clear();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnInScopePrefixes::copy(dynamic_context *_cxt_)

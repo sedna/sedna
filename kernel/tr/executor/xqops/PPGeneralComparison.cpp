@@ -68,30 +68,30 @@ void PPGeneralComparison::generalNodePrepare(tuple_cell& cell1, tuple_cell& cell
 {
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()==xs_untypedAtomic)
 	{
-		cell1=cast_primitive_to_xs_string(cell1, __xquery_line);
-		cell2=cast_primitive_to_xs_string(cell2, __xquery_line);
+		cell1=cast_primitive_to_xs_string(cell1);
+		cell2=cast_primitive_to_xs_string(cell2);
 		return; 
 	}
 	if (cell1.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell2.get_atomic_type()))
 	{
-		cell1=cast(cell1, xs_double, __xquery_line);
+		cell1=cast(cell1, xs_double);
 		return; 
 	}
 	if (cell2.get_atomic_type()==xs_untypedAtomic && is_numeric_type(cell1.get_atomic_type()))
 	{
-		cell2=cast(cell2, xs_double, __xquery_line);
+		cell2=cast(cell2, xs_double);
 		return; 
 	}
 	
 	if (cell1.get_atomic_type()==xs_untypedAtomic && cell2.get_atomic_type()!=xs_untypedAtomic)
 	{
-		cell1=cast(cell1,cell2.get_atomic_type(), __xquery_line);
+		cell1=cast(cell1,cell2.get_atomic_type());
 		return;
 	}
 
 	if (cell2.get_atomic_type()==xs_untypedAtomic && cell1.get_atomic_type()!=xs_untypedAtomic)
 	{
-		cell2=cast(cell2,cell1.get_atomic_type(), __xquery_line);
+		cell2=cast(cell2,cell1.get_atomic_type());
 		return;
 	}
 }
@@ -131,6 +131,8 @@ void PPGeneralComparison::close ()
 
 void PPGeneralComparison::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -144,6 +146,8 @@ void PPGeneralComparison::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPGeneralComparison::copy(dynamic_context *_cxt_)
@@ -186,7 +190,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value, xs_double, __xquery_line);
+			tuple_cell num_val=cast(value, xs_double);
 			if (min_ut_num)
 			{
 				if (op_lt(num_val,min_ut_num_cell,handler).get_xs_boolean()) 
@@ -205,12 +209,12 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		catch(...)
 		{
 		 if (max_num)
-			 throw USER_EXCEPTION(FORG0001);
+			 throw XQUERY_EXCEPTION(FORG0001);
 			min_num_cast=true;
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value,xs_date, __xquery_line);
+			tuple_cell num_val=cast(value,xs_date);
 			if (min_ut_dat)
 			{
 				if (op_lt(num_val,min_ut_dat_cell,handler).get_xs_boolean()) 
@@ -229,7 +233,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 		catch(...)
 		{
 			if (max_dat)
-			 throw USER_EXCEPTION(FORG0001);
+			 throw XQUERY_EXCEPTION(FORG0001);
 			min_dat_cast=true;
 		}
 		return ret_type;
@@ -293,7 +297,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value, xs_double, __xquery_line);
+			tuple_cell num_val=cast(value, xs_double);
 			if (max_ut_num)
 			{
 				if (op_gt(num_val,max_ut_num_cell,handler).get_xs_boolean()) 
@@ -312,12 +316,12 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		catch(...)
 		{
 			if (min_num)
-			 throw USER_EXCEPTION(FORG0001);
+			 throw XQUERY_EXCEPTION(FORG0001);
 			max_num_cast=true;
 		}
 		try
 		{ 
-			tuple_cell num_val=cast(value,xs_date, __xquery_line);
+			tuple_cell num_val=cast(value,xs_date);
 			if (max_ut_dat)
 			{
 				if (op_gt(num_val,max_ut_dat_cell,handler).get_xs_boolean()) 
@@ -336,7 +340,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 		catch(...)
 		{
 			if (min_dat)
-			 throw USER_EXCEPTION(FORG0001);
+			 throw XQUERY_EXCEPTION(FORG0001);
 			max_dat_cast=true;
 		}
 		return ret_type;
@@ -586,7 +590,7 @@ PPIterator* PPLMGeneralComparison::copy(dynamic_context *_cxt_)
 			(min_num && max_dat)||
 			(min_dat && max_num)
 			)
-		throw USER_EXCEPTION(XP0021);
+		throw XQUERY_EXCEPTION(XP0021);
 		t.copy(tuple_cell::atomic(false));
 		return;
 		//t.copy(tuple_cell::node(removeIndirection(indir)));
@@ -601,6 +605,8 @@ v v v v v v v
 
 void PPNEQGeneralComparison::next   (tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
     {
         first_time = false;
@@ -622,14 +628,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		{
 			eos_reached1 = true;
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		seq[1]->op->next(*cont[1]);
 		if ((*cont[1]).is_eos())
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		tuple_cell res[2];
 		res[0]=getAtomizedCell(*cont[0]);
@@ -648,7 +654,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		if (op_ne(res[0],res[1],handler).get_xs_boolean())
 		{
 			t.copy(tuple_cell::atomic(true));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		int pr=0;
 		while(true)
@@ -665,7 +671,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (seq_end[1-pr])
 					{
 						t.copy(tuple_cell::atomic(false));
-						return;
+						{UNDO_XQUERY_LINE; return;}
 					}
 				}
 				else
@@ -680,7 +686,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 						}
 						else
 						{
-							if (op_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string, __xquery_line),handler).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string),cast(res[pr], xs_string),handler).get_xs_boolean())
 								two_diffs_exist[pr]=true;
 						}
 						if (
@@ -689,14 +695,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 							)
 						{
 							t.copy(tuple_cell::atomic(true));
-							return;
+							{UNDO_XQUERY_LINE; return;}
 						}
 						if (uv_exist[1-pr])
 						{
-							if (op_ne(cast(seq_str_val[pr], xs_string, __xquery_line),cast(seq_str_val[1-pr], xs_string, __xquery_line),handler).get_xs_boolean())
+							if (op_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string),handler).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
-								return;
+								{UNDO_XQUERY_LINE; return;}
 							}
 						}
 					}
@@ -704,7 +710,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (op_ne(res[0],res[1],handler).get_xs_boolean())
 					{
 						t.copy(tuple_cell::atomic(true));
-						return;
+						{UNDO_XQUERY_LINE; return;}
 					}
 				}
 			}
@@ -715,9 +721,13 @@ void PPNEQGeneralComparison::next   (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 void PPEQLGeneralComparison::next   (tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
     {
 		first_time = false;
@@ -736,7 +746,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -747,7 +757,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 			if (op_eq(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				return;
+				{UNDO_XQUERY_LINE; return;}
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -756,7 +766,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -770,7 +780,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 				if (op_eq(res1,res2,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					return;
+					{UNDO_XQUERY_LINE; return;}
 				}
 				it++;
 			}
@@ -779,7 +789,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		return;
+		{UNDO_XQUERY_LINE; return;}
 
 	}
 	else 
@@ -787,9 +797,13 @@ void PPEQLGeneralComparison::next   (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 void PPLMGeneralComparison::next   (tuple &t)
 {
+ 	SET_XQUERY_LINE(__xquery_line);
+ 	
  	if (first_time)
     {
 		first_time = false;
@@ -823,7 +837,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -834,7 +848,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 			if (comp_op(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				return;
+				{UNDO_XQUERY_LINE; return;}
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -843,7 +857,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -857,7 +871,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 				if (comp_op(res2,res1,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					return;
+					{UNDO_XQUERY_LINE; return;}
 				}
 				it++;
 			}
@@ -866,7 +880,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		return;
+		{UNDO_XQUERY_LINE; return;}
 
 	}
 	else 
@@ -874,6 +888,8 @@ void PPLMGeneralComparison::next   (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)

@@ -148,20 +148,22 @@ const char* PPNumericFuncs::error()
 
 void PPNumericFuncs::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         child.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         first_time = false;
 
-        if (!(child.get(t).is_atomic()) || !(is_numeric_type(child.get(t).get_atomic_type()))) throw USER_EXCEPTION2(XPTY0004, error());
+        if (!(child.get(t).is_atomic()) || !(is_numeric_type(child.get(t).get_atomic_type()))) throw XQUERY_EXCEPTION2(XPTY0004, error());
         tuple_cell tc = (this->*func)(child.get(t));
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, error());
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, error());
         t.copy(tc);
     }
     else
@@ -169,13 +171,15 @@ void PPNumericFuncs::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPNumericFuncs::copy(dynamic_context *_cxt_)
 {
     PPNumericFuncs *res = se_new PPNumericFuncs(_cxt_, child, func);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -257,35 +261,37 @@ tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, __int64
 
 void PPFnRoundHalfToEven::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time)
     {
         child_arg.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         tuple_cell tc_arg = child_arg.get(t);
         if (!(tc_arg.is_atomic()) || !(is_numeric_type(tc_arg.get_atomic_type()))) 
-            throw USER_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
 
         child_arg.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:round-half-to-even is not a numeric");
 
         if (child_p.op)
         {
             child_p.op->next(t);
 
             if (t.is_eos())
-                throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
 
             tuple_cell tc_p = child_p.get(t);
             if (!(tc_p.is_atomic()) || (tc_p.get_atomic_type() != xs_integer))
-                throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
 
             precision = tc_p.get_xs_integer();
 
             child_p.op->next(t);
-            if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
+            if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Precision argument of fn:round-half-to-even is not an xs:integer");
         }
 
         first_time = false;
@@ -296,6 +302,8 @@ void PPFnRoundHalfToEven::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnRoundHalfToEven::copy(dynamic_context *_cxt_)
@@ -312,6 +320,7 @@ PPIterator* PPFnRoundHalfToEven::copy(dynamic_context *_cxt_)
     }
 
     res->child_arg.op = child_arg.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }

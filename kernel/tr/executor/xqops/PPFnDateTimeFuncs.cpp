@@ -38,6 +38,8 @@ void PPFnDateTimeFuncNoParam::close ()
 
 void PPFnDateTimeFuncNoParam::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
 	first_time = false;
@@ -58,6 +60,8 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDateTimeFuncNoParam::copy(dynamic_context *_cxt_)
@@ -110,6 +114,8 @@ void PPFnDateTimeFunc::close ()
 
 void PPFnDateTimeFunc::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -122,7 +128,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
  	        xmlscm_type tc_type = tc.get_atomic_type();
  	        
  	        ///Each item in the atomic sequence that is of type xs:untypedAtomic is cast to the expected atomic type.
-            if(tc_type == xs_untypedAtomic) { tc = cast(tc, expected_type, __xquery_line); tc_type = expected_type; }
+            if(tc_type == xs_untypedAtomic) { tc = cast(tc, expected_type); tc_type = expected_type; }
 
             child.op->next(t);
               if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:dateTime function is more than 1");
@@ -278,6 +284,8 @@ void PPFnDateTimeFunc::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDateTimeFunc::copy(dynamic_context *_cxt_)
@@ -333,6 +341,8 @@ void PPFnDateTimeFunc2Params::close ()
 
 void PPFnDateTimeFunc2Params::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -410,6 +420,8 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDateTimeFunc2Params::copy(dynamic_context *_cxt_)

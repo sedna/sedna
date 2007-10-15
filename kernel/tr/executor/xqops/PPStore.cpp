@@ -49,6 +49,8 @@ void PPStore::close ()
 
 void PPStore::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (pos < eos_pos) s->get(t, pos++);
     else
     {
@@ -74,12 +76,15 @@ void PPStore::next (tuple &t)
             }
         }
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPStore::copy(dynamic_context *_cxt_)
 {
     PPStore *res = se_new PPStore(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

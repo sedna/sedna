@@ -339,7 +339,7 @@ db_entity *make_db_entity(scheme_list *ent_lst, bool explicit_name)
     return db_ent;
 }
 
-tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value, int __xquery_line)
+tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value)
 {
     if (const_type.type != SCM_SYMBOL
        ) throw USER_EXCEPTION2(SE1004, "153");
@@ -350,11 +350,11 @@ tuple_cell make_const(const scm_elem& const_type, const scm_elem& const_value, i
 
     switch (const_value.type)
     {
-        case SCM_SYMBOL: tc = string2tuple_cell(std::string(const_value.internal.symb), xtype, __xquery_line);
+        case SCM_SYMBOL: tc = string2tuple_cell(std::string(const_value.internal.symb), xtype);
                          break;
-        case SCM_NUMBER: tc = string2tuple_cell(std::string(const_value.internal.num), xtype, __xquery_line);
+        case SCM_NUMBER: tc = string2tuple_cell(std::string(const_value.internal.num), xtype);
                          break;
-        case SCM_STRING: tc = string2tuple_cell(std::string(const_value.internal.str), xtype, __xquery_line);
+        case SCM_STRING: tc = string2tuple_cell(std::string(const_value.internal.str), xtype);
                          break;
         default        : throw USER_EXCEPTION2(SE1004, "154");
     }        
@@ -644,7 +644,7 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         if (lst->size() != 3
            ) throw USER_EXCEPTION2(SE1004, "08");
 
-        tuple_cell tc = make_const(lst->at(2), lst->at(1), line);
+        tuple_cell tc = make_const(lst->at(2), lst->at(1));
 
         opit = se_new PPConst(cxt, tc);
     }
@@ -1726,8 +1726,8 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
 
         if (op1 == "PPConst" && op2 == "PPConst")
         {
-            tuple_cell tc = make_const(p1->at(1).internal.list->at(2), p1->at(1).internal.list->at(1), line);
-            tuple_cell tc2 = make_const(p2->at(1).internal.list->at(2), p2->at(1).internal.list->at(1), line);
+            tuple_cell tc = make_const(p1->at(1).internal.list->at(2), p1->at(1).internal.list->at(1));
+            tuple_cell tc2 = make_const(p2->at(1).internal.list->at(2), p2->at(1).internal.list->at(1));
 
             opit = se_new PPIndexScan(cxt,
                                    index_name,
@@ -2849,8 +2849,7 @@ fn_dt_funcs_correct_type:
                                       prefix,
                                       local,
                                       malloc,
-                                      cxt,
-                                      line);
+                                      cxt);
 
         opit = se_new PPConst(cxt, tuple_cell::atomic(xs_QName, qname));
     }

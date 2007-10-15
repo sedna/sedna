@@ -28,12 +28,15 @@ void PPNil::close ()
 
 void PPNil::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
     t.set_eos();
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPNil::copy(dynamic_context *_cxt_)
 {
     PPNil *res = se_new PPNil(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

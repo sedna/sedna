@@ -138,6 +138,7 @@ void PPAbsPath::close ()
 
 void PPAbsPath::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
 //    d_printf1("++++++++++++\n");
 //    path_expr->print();
 //    d_printf1("\n");
@@ -150,7 +151,7 @@ void PPAbsPath::next(tuple &t)
         if (determine_root()) 
         {
             t.set_eos();
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
        
 /*
@@ -187,6 +188,8 @@ void PPAbsPath::next(tuple &t)
         t.copy(tuple_cell::node(res));
         merged_seq_arr[0] = getNextDescriptorOfSameSortXptr(res);
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 bool PPAbsPath::determine_root()
@@ -212,7 +215,7 @@ bool PPAbsPath::determine_root()
 	document_type dt = get_document_type(db_ent);
 
 	if (dt == DT_NON_SYSTEM)
-		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath", __xquery_line);
+		root = get_schema_node(db_ent, "Unknown entity passed to PPAbsPath");
 	else
 	   	root = get_system_doc(dt, db_ent->name);
 

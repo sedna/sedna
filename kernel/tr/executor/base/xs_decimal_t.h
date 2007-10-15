@@ -32,20 +32,20 @@ public:
     static void init();
 
     xs_decimal_t() { v.v2.x = v.v2.y = (__int64)0; }
-    xs_decimal_t(__int64 v, int __xquery_line = 0)     { this->set(v,__xquery_line); }
-    xs_decimal_t(float v, int __xquery_line = 0)       { this->set(v,__xquery_line); }
-    xs_decimal_t(double v, int __xquery_line = 0)      { this->set(v,__xquery_line); }
-    xs_decimal_t(bool v, int __xquery_line = 0)        { this->set(v,__xquery_line); }
-    xs_decimal_t(const char* v, int __xquery_line = 0) { this->set(v,true,__xquery_line); }
+    xs_decimal_t(__int64 v)     { this->set(v); }
+    xs_decimal_t(float v)       { this->set(v); }
+    xs_decimal_t(double v)      { this->set(v); }
+    xs_decimal_t(bool v)        { this->set(v); }
+    xs_decimal_t(const char* v) { this->set(v,true); }
 
     xs_decimal_t(const xs_decimal_t& d) { v.v2.x = d.v.v2.x; v.v2.y = d.v.v2.y; }
     xs_decimal_t &operator =(const xs_decimal_t &d) { v = d.v; return *this; }
 
-    void set(__int64 a, int __xquery_line = 0);
-    void set(float a, int __xquery_line = 0);
-    void set(double a, int __xquery_line = 0);
-    void set(bool a, int __xquery_line = 0);
-    void set(const char *a, bool xs_compliant, int __xquery_line = 0);
+    void set(__int64 a);
+    void set(float a);
+    void set(double a);
+    void set(bool a);
+    void set(const char *a, bool xs_compliant);
 
     __int64 get_int   () const;
     float   get_float () const;

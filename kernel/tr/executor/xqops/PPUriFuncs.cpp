@@ -134,6 +134,8 @@ void PPFnUriEncoding::close ()
 
 void PPFnUriEncoding::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         child.op->next(t);
@@ -173,6 +175,8 @@ void PPFnUriEncoding::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 const char* PPFnUriEncoding::error()
@@ -263,6 +267,8 @@ void PPFnResolveUri::close ()
 
 void PPFnResolveUri::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         relative.op->next(t);
@@ -270,7 +276,7 @@ void PPFnResolveUri::next  (tuple &t)
         if(t.is_eos()) 
         {
             if(is_base_static) need_reopen = true;
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
         
         tuple_cell base_tc;
@@ -318,7 +324,7 @@ void PPFnResolveUri::next  (tuple &t)
         if(!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:resolve-uri. First argument contains more than one item.");
 
         stmt_str_buf result;
-        if(Uri::resolve(relative_tc.get_str_mem(), base_uri, result, __xquery_line)) 
+        if(Uri::resolve(relative_tc.get_str_mem(), base_uri, result)) 
             t.copy(result.get_tuple_cell());
         else 
             t.copy(relative_tc);

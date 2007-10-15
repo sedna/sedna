@@ -194,7 +194,7 @@ char * static_context::get_uri_by_prefix(const char* _prefix,t_item type) const
 		if (it!=insc_ns.end()&& it->second.size()>0)
 			uri=it->second.back()->uri;
 		else
-			throw USER_EXCEPTION(XPST0008);
+			throw XQUERY_EXCEPTION(XPST0008);
 	}
 	return uri;
 }
@@ -213,7 +213,7 @@ xml_ns* static_context::get_xmlns_by_prefix(const char *_prefix, int count)
 		if (it!=insc_ns.end()&& it->second.size()>0)
 			return it->second.back();
 		else
-			throw USER_EXCEPTION(XQDY0074);
+			throw XQUERY_EXCEPTION(XQDY0074);
 	}
 }
 
@@ -224,7 +224,7 @@ void static_context::set_base_uri(const char* _base_uri_)
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(_base_uri_, &valid, &nfo);
-    if (!valid) throw USER_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
+    if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog base-uri property contains invalid URI.");
     ///////////////////////////////////////////////////////////////////////
     
     ///////////////////////////////////////////////////////////////////////
@@ -260,11 +260,11 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(_default_collation_uri_, &valid, &nfo);
-    if (!valid) throw USER_EXCEPTION2(XQST0046, "Prolog default-collation property contains invalid URI.");
+    if (!valid) throw XQUERY_EXCEPTION2(XQST0046, "Prolog default-collation property contains invalid URI.");
     ///////////////////////////////////////////////////////////////////////
     
     if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
-        throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (it could not be relative while base-uri is not defined).");
+        throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (it could not be relative while base-uri is not defined).");
     
     const char* normalized_value = _default_collation_uri_;
 
@@ -293,14 +293,14 @@ void static_context::set_default_collation_uri(const char* _default_collation_ur
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (possibly, base-uri contains relative URI).");
+           if(e.get_code() == FORG0009) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (possibly, base-uri contains relative URI).");
            throw;
        }
     }
     ///////////////////////////////////////////////////////////////////////
     
     default_collation_handler = dynamic_context::collation_manager.get_collation_handler(normalized_value);
-    if(default_collation_handler == NULL) throw USER_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");            
+    if(default_collation_handler == NULL) throw XQUERY_EXCEPTION2(XQST0038, "Unknown collation in prolog (statically unknown collation).");            
 
     if (default_collation_uri != NULL) delete default_collation_uri;
     default_collation_uri = se_new char[strlen(normalized_value) + 1];
@@ -319,11 +319,11 @@ CollationHandler* static_context::get_collation(const char *uri)
     bool valid;
     Uri::Information nfo;
     Uri::check_constraints(uri, &valid, &nfo);
-    if (!valid) throw USER_EXCEPTION2(FOCH0002, "Given URI is not valid.");
+    if (!valid) throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is not valid.");
     ///////////////////////////////////////////////////////////////////////
     
     if(nfo.type == Uri::UT_RELATIVE && base_uri == NULL) 
-        throw USER_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
+        throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri property is not defined.");
 
     tuple_cell tc;
     const char *normalized_value = uri;
@@ -353,7 +353,7 @@ CollationHandler* static_context::get_collation(const char *uri)
        }
        catch(SednaUserException &e)
        {
-           if(e.get_code() == FORG0009) throw USER_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
+           if(e.get_code() == FORG0009) throw XQUERY_EXCEPTION2(FOCH0002, "Given URI is relative and base-uri contains relative URI.");
            throw;
        }
     }
@@ -361,7 +361,7 @@ CollationHandler* static_context::get_collation(const char *uri)
     
     CollationHandler *ch = dynamic_context::collation_manager.get_collation_handler(normalized_value);
     if (!ch)
-        throw USER_EXCEPTION(FOCH0002);
+        throw XQUERY_EXCEPTION(FOCH0002);
 
     return ch;
 }

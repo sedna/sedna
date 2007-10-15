@@ -84,7 +84,7 @@ void PPAxisFP::next_processing_instruction(tuple &t)
 		while (true)
 		{
 			next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
-			if (t.is_eos()) return;
+			if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 			xptr tmp=child.get(t).get_node();
 			if (tmp!=XNULL)
 			{
@@ -97,7 +97,7 @@ void PPAxisFP::next_processing_instruction(tuple &t)
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {UNDO_XQUERY_LINE; return;}
 				}
 			}
 		}   
@@ -118,8 +118,8 @@ void PPAxisFP::next_node(tuple &t)
     {
         child.op->next(t);
         if (t.is_eos()) 		
-			return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+			{UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		if (following)
 			cur = getNextNDNode(child.get(t).get_node());
 		else
@@ -167,9 +167,9 @@ void PPAxisFP::next_wildcard_star(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
         base = child.get(t).get_node();
 		if (following)
@@ -247,6 +247,7 @@ PPIterator* PPAxisFP::copy(dynamic_context *_cxt_)
 {
     PPAxisFP *res = se_new PPAxisFP(_cxt_, child, nt_type, nt_data,following);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -259,9 +260,9 @@ void PPAxisFP::next_qname_and_text(tuple &t,const char* uri,const char* name,t_i
      while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
         base = child.get(t).get_node();
 		is_col=is_node_in_collection(base);

@@ -51,6 +51,8 @@ void PPIntersect::close ()
 
 void PPIntersect::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     while (true)
     {
         if (tug_first)
@@ -62,7 +64,7 @@ void PPIntersect::next  (tuple &t)
             }
             else
             {
-                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
+                if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
                 xptr1 = child1.get(t).get_node();
             }
 
@@ -78,7 +80,7 @@ void PPIntersect::next  (tuple &t)
             }
             else
             {
-                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
+                if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of intersect is not a node");
                 xptr2 = child2.get(t).get_node();
             }
 
@@ -102,7 +104,7 @@ void PPIntersect::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
 
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             case  1: /// (1) > (2)
             {
@@ -112,6 +114,8 @@ void PPIntersect::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPIntersect::next");
         }
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPIntersect::copy(dynamic_context *_cxt_)
@@ -119,7 +123,7 @@ PPIterator* PPIntersect::copy(dynamic_context *_cxt_)
     PPIntersect *res = se_new PPIntersect(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

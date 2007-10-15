@@ -205,6 +205,7 @@ PPIterator* PPPatMatch::copy(dynamic_context *_cxt_)
 		res->seq4.op = seq4.op->copy(_cxt_);
 		break;
 	}
+	res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -214,19 +215,21 @@ static inline tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_em
     if(t.is_eos()) 
     {
         if(is_empty_allowed) return EMPTY_STRING_TC;
-        else throw USER_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains empty sequence.").c_str());
+        else throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains empty sequence.").c_str());
     }
     tuple_cell res = atomize(seq.get(t));
     if(!is_string_type(res.get_atomic_type())) 
-        throw USER_EXCEPTION2(XPTY0004, (std::string("Invalid type of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + " (xs_string/derived/promotable is expected).").c_str());
+        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid type of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + " (xs_string/derived/promotable is expected).").c_str());
     seq.op->next(t);
     if(!t.is_eos())
-        throw USER_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains more than one item.").c_str());
+        throw XQUERY_EXCEPTION2(XPTY0004, (std::string("Invalid arity of the ") + get_argument_name(arg_num) + " of " + get_function_name(pmt) + ". Argument contains more than one item.").c_str());
     return res;
 }
 
 void PPPatMatch::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -275,6 +278,8 @@ void PPPatMatch::next  (tuple &t)
 			t.set_eos();
 		}
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)

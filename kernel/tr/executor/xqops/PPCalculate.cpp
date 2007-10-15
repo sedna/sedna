@@ -55,6 +55,8 @@ void PPCalculate::close ()
 
 void PPCalculate::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time)
     {
         first_time = false;
@@ -71,6 +73,8 @@ void PPCalculate::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
@@ -89,6 +93,7 @@ PPIterator* PPCalculate::copy(dynamic_context *_cxt_)
         res->ch_arr->at(i).op = ch_arr->at(i).op->copy(_cxt_);
 
     res->tree = tree->copy(res->ch_arr);
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }

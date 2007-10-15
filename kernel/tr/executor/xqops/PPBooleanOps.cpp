@@ -40,6 +40,8 @@ void PPFnTrue::close ()
 
 void PPFnTrue::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time) 
     {
         first_time = false;
@@ -50,11 +52,15 @@ void PPFnTrue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnTrue::copy(dynamic_context *_cxt_)
 {
-    return se_new PPFnTrue(_cxt_);
+    PPFnTrue* res = se_new PPFnTrue(_cxt_);
+    res->set_xquery_line(__xquery_line);
+    return res;
 }
 
 bool PPFnTrue::result(PPIterator* cur, dynamic_context *cxt, void*& r)
@@ -94,6 +100,8 @@ void PPFnFalse::close ()
 
 void PPFnFalse::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time) 
     {
         first_time = false;
@@ -108,7 +116,9 @@ void PPFnFalse::next  (tuple &t)
 
 PPIterator* PPFnFalse::copy(dynamic_context *_cxt_)
 {
-    return se_new PPFnFalse(_cxt_);
+    PPFnFalse* res = se_new PPFnFalse(_cxt_);
+    res->set_xquery_line(__xquery_line);
+    return res;
 }
 
 bool PPFnFalse::result(PPIterator* cur, dynamic_context *cxt, void*& r)
@@ -158,13 +168,15 @@ void PPFnNot::close ()
 
 void PPFnNot::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
 
         if (!eos_reached) child.op->reopen();
 
-        t.copy(my_boolean_not_e(effective_boolean_value(child, t, eos_reached, __xquery_line)));
+        t.copy(my_boolean_not_e(effective_boolean_value(child, t, eos_reached)));
     }
     else 
     {
@@ -245,11 +257,13 @@ void PPFnBoolean::close ()
 
 void PPFnBoolean::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
         if (!eos_reached) child.op->reopen();
-        t.copy(effective_boolean_value(child, t, eos_reached, __xquery_line));
+        t.copy(effective_boolean_value(child, t, eos_reached));
     }
     else 
     {

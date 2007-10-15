@@ -96,6 +96,8 @@ void PPSubsMatch::close ()
 }
 void PPSubsMatch::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     //d_printf1("1\n");
     if (first_time)
     {
@@ -115,7 +117,7 @@ void PPSubsMatch::next  (tuple &t)
 				t1c.set_xtype(xs_string);
 			else
 				if (!is_string_type(t1c.get_atomic_type()))
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 		}
 		tuple_cell t2c= t2.cells[0];
 		if (t2.is_eos())t2c.set_eos();
@@ -126,7 +128,7 @@ void PPSubsMatch::next  (tuple &t)
 				t2c.set_xtype(xs_string);
 			else		
 				if (!is_string_type(t2c.get_atomic_type()))
-					throw USER_EXCEPTION(XPTY0004);
+					throw XQUERY_EXCEPTION(XPTY0004);
 		}
 		bool mark=false;
 		// memory mapping
@@ -204,13 +206,13 @@ void PPSubsMatch::next  (tuple &t)
 		{
 			seq1.op->next(t1);
 			if (!t1.is_eos())
-				throw USER_EXCEPTION(XPTY0004);
+				throw XQUERY_EXCEPTION(XPTY0004);
 		}
 		if (!t2c.is_eos())
 		{
 			seq2.op->next(t2);
 			if (!t2.is_eos())
-				throw USER_EXCEPTION(XPTY0004);
+				throw XQUERY_EXCEPTION(XPTY0004);
 		}
 	}
     else 
@@ -218,6 +220,8 @@ void PPSubsMatch::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 bool PPSubsMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
@@ -229,5 +233,6 @@ PPIterator* PPSubsMatch::copy(dynamic_context *_cxt_)
 	res = se_new PPSubsMatch(_cxt_, seq1,seq2,smt);
 	res->seq1.op = seq1.op->copy(_cxt_);
 	res->seq2.op = seq2.op->copy(_cxt_);
+	res->set_xquery_line(__xquery_line);
     return res;
 }

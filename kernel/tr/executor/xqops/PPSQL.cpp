@@ -302,6 +302,8 @@ static char *getStringParameter(PPOpIn content)
 
 void PPFnSQLConnect::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		first_time = false;
@@ -354,6 +356,8 @@ void PPFnSQLConnect::next(tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
@@ -362,6 +366,7 @@ PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
 
 	for (int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
 
 	return res;
 }
@@ -443,6 +448,8 @@ void PPFnSQLExecute::close ()
 
 void PPFnSQLExecute::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		first_time = false;
@@ -452,20 +459,20 @@ void PPFnSQLExecute::next(tuple &t)
 		arr[0].op->next(tmp);
 
 		if (tmp.is_eos())
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		arr[0].op->next(tmp);
 		if (!tmp.is_eos())
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 
 		if (handle == NULL)
-			throw USER_EXCEPTION(SE2101);
+			throw XQUERY_EXCEPTION(SE2101);
 
 		get_executor();
 		if (NULL == executor)
-			throw USER_EXCEPTION(SE2102);
+			throw XQUERY_EXCEPTION(SE2102);
 
 		//TODO - check wherer prepared stmt or not here
 		switch (handle->type)
@@ -476,7 +483,7 @@ void PPFnSQLExecute::next(tuple &t)
 				{
 					t.set_eos();
 					first_time = true;
-					return;
+					{UNDO_XQUERY_LINE; return;}
 				}
 
 				{
@@ -495,13 +502,13 @@ void PPFnSQLExecute::next(tuple &t)
 				executor->execute_prepared(arr);
 				break;
 			default:
-				throw USER_EXCEPTION(SE2103);
+				throw XQUERY_EXCEPTION(SE2103);
 		}
 
 		if (exec_update)
 		{
 			t.copy(tuple_cell::atomic((__int64)executor->update_row_count()));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 	}
 
@@ -517,6 +524,8 @@ void PPFnSQLExecute::next(tuple &t)
 			first_time = true;
 		}
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
@@ -586,6 +595,8 @@ void PPFnSQLPrepare::close()
 }
 void PPFnSQLPrepare::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		SQLHandle *handle;
@@ -597,19 +608,19 @@ void PPFnSQLPrepare::next(tuple &t)
 		connection.op->next(tmp);
 
 		if (tmp.is_eos())
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 
 		handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 		connection.op->next(tmp);
 		if (!tmp.is_eos())
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 
 		if (handle == NULL)
-			throw USER_EXCEPTION(SE2101);
+			throw XQUERY_EXCEPTION(SE2101);
 
 		if (handle->type != SQLH_CONNECTION)
-			throw USER_EXCEPTION(SE2104);
+			throw XQUERY_EXCEPTION(SE2104);
 
 		char *query	= NULL;
 		int	query_len = 0;
@@ -630,6 +641,8 @@ void PPFnSQLPrepare::next(tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
+
+	UNDO_XQUERY_LINE;
 }
 PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
 {
@@ -677,6 +690,8 @@ void PPFnSQLClose::close()
 }
 void PPFnSQLClose::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	int handle_id;
 	SQLHandle *handle;
 	tuple tmp(1);
@@ -685,26 +700,28 @@ void PPFnSQLClose::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	handle_id = tmp.cells[0].get_xs_integer();
 	handle = sql_handle_manager->get_handle(handle_id);
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
-		throw USER_EXCEPTION(SE2101);
+		throw XQUERY_EXCEPTION(SE2101);
 
 	if (handle->type != SQLH_CONNECTION)
-		throw USER_EXCEPTION(SE2104);
+		throw XQUERY_EXCEPTION(SE2104);
 
 	handle->close();
 	//TODO - free handle? would require either releasing all executors 
 	//or delaying connecton object destruction
 
 	t.set_eos();
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator * PPFnSQLClose::copy(dynamic_context *_cxt_)
@@ -747,6 +764,8 @@ void PPFnSQLCommit::close()
 }
 void PPFnSQLCommit::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	SQLHandle *handle;
 	tuple tmp(1);
 	tuple_cell tmp_cell;
@@ -754,23 +773,25 @@ void PPFnSQLCommit::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
-		throw USER_EXCEPTION(SE2101);
+		throw XQUERY_EXCEPTION(SE2101);
 
 	if (handle->type != SQLH_CONNECTION)
-		throw USER_EXCEPTION(SE2104);
+		throw XQUERY_EXCEPTION(SE2104);
 
 	handle->commit();
 
 	t.set_eos();
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator * PPFnSQLCommit::copy(dynamic_context *_cxt_)
@@ -813,6 +834,8 @@ void PPFnSQLRollback::close()
 }
 void PPFnSQLRollback::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	SQLHandle *handle;
 	tuple tmp(1);
 	tuple_cell tmp_cell;
@@ -820,23 +843,25 @@ void PPFnSQLRollback::next(tuple &t)
 	connection.op->next(tmp);
 
 	if (tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	handle = sql_handle_manager->get_handle(tmp.cells[0].get_xs_integer());
 
 	connection.op->next(tmp);
 	if (!tmp.is_eos())
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	if (handle == NULL)
-		throw USER_EXCEPTION(SE2101);
+		throw XQUERY_EXCEPTION(SE2101);
 
 	if (handle->type != SQLH_CONNECTION)
-		throw USER_EXCEPTION(XPTY0004);
+		throw XQUERY_EXCEPTION(XPTY0004);
 
 	handle->rollback();
 
 	t.set_eos();
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator * PPFnSQLRollback::copy(dynamic_context *_cxt_)

@@ -120,6 +120,8 @@ void PPReturn::close ()
 
 void PPReturn::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         t.set_eos();
@@ -139,13 +141,13 @@ void PPReturn::next(tuple &t)
             first_time = true;			// reopens automatically
             pos = 0;                    // reopens automatically
             reinit_consumer_table();	// reopens automatically
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         if (need_to_check_type)
         {
         	if (st.oi == st_empty || !type_matches_single(source.cells[0], st.type)) 
-        		throw USER_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
+        		throw XQUERY_EXCEPTION2(XPTY0004, "Type of a value bound to the variable does not match the declared type according to the rules for SequenceType matching.");
         }
 
         reinit_consumer_table();
@@ -153,6 +155,8 @@ void PPReturn::next(tuple &t)
         // there should be 'data_child.op->reopen()' call but data child reopens automatically
         data_child.op->next(t);
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPReturn::copy(dynamic_context *_cxt_)
@@ -162,7 +166,7 @@ PPIterator* PPReturn::copy(dynamic_context *_cxt_)
     
     res->source_child.op = source_child.op->copy(_cxt_);
     res->data_child.op = data_child.op->copy(_cxt_);
-    
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -175,6 +179,8 @@ var_c_id PPReturn::register_consumer(var_dsc dsc)
 
 void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -188,6 +194,8 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPReturn::reopen(var_dsc dsc, var_c_id id)

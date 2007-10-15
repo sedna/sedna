@@ -50,6 +50,8 @@ void PPUnion::close ()
 
 void PPUnion::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (tug_first)
     {
         child1.op->next(t);
@@ -59,7 +61,7 @@ void PPUnion::next  (tuple &t)
         }
         else
         {
-            if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of union is not a node");
+            if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of union is not a node");
             xptr1 = child1.get(t).get_node();
         }
 
@@ -75,7 +77,7 @@ void PPUnion::next  (tuple &t)
         }
         else
         {
-            if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of union is not a node");
+            if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of union is not a node");
             xptr2 = child2.get(t).get_node();
         }
 
@@ -88,7 +90,7 @@ void PPUnion::next  (tuple &t)
         {
             tug_first = true;
             t.copy(tuple_cell::node(xptr1));
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
         case  0: /// 1 == 2
         {
@@ -100,16 +102,18 @@ void PPUnion::next  (tuple &t)
             tug_first = true;
             tug_second = true;
 
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
         case  1: /// 1 > 2
         {
             tug_second = true;
             t.copy(tuple_cell::node(xptr2));
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
         default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPUnion::next");
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPUnion::copy(dynamic_context *_cxt_)
@@ -117,7 +121,7 @@ PPIterator* PPUnion::copy(dynamic_context *_cxt_)
     PPUnion *res = se_new PPUnion(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

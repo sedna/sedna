@@ -40,18 +40,18 @@ void xs_decimal_t::init()
 /*******************************************************************************
  * SET FUNCTIONS
  ******************************************************************************/
-void xs_decimal_t::set(__int64 a, int __xquery_line)
+void xs_decimal_t::set(__int64 a)
 {
     get_xs_integer_lexical_representation(tr_globals::mem_str_buf, a);
-    this->set(tr_globals::mem_str_buf, true, __xquery_line);
+    this->set(tr_globals::mem_str_buf, true);
 }
 
-void xs_decimal_t::set(float a, int __xquery_line)
+void xs_decimal_t::set(float a)
 {
     this->set((double)a);
 }
 
-void xs_decimal_t::set(double a, int __xquery_line)
+void xs_decimal_t::set(double a)
 {
     if (u_is_nan(a) || u_is_neg_inf(a) || u_is_pos_inf(a))
         throw XQUERY_EXCEPTION2(FOCA0002, "Cannot convert to xs:decimal type");
@@ -61,10 +61,10 @@ void xs_decimal_t::set(double a, int __xquery_line)
         throw XQUERY_EXCEPTION2(FOCA0001, "Cannot convert to xs:decimal type");
 
     sprintf(tr_globals::mem_str_buf, "%E", a);
-    this->set(tr_globals::mem_str_buf, false, __xquery_line);
+    this->set(tr_globals::mem_str_buf, false);
 }
 
-void xs_decimal_t::set(bool a, int __xquery_line)
+void xs_decimal_t::set(bool a)
 {
     dec_cxt.status = 0;
     if (a)
@@ -80,7 +80,7 @@ static const unsigned char decimal_allowed[16] = {0x00, 0x00, 0x00, 0x00,
 #define IS_BYTE_DECIMAL_ALLOWED(byte) \
     (byte & 0x80 ? 0 : (decimal_allowed[(byte >> 3)] & (0x80 >> (byte & 7))))
 
-void xs_decimal_t::set(const char *a, bool xs_compliant, int __xquery_line)
+void xs_decimal_t::set(const char *a, bool xs_compliant)
 {
     char* norm_a = NULL;
     decNumber dv;
@@ -258,9 +258,9 @@ xs_decimal_t xs_decimal_t::operator - () const
     if (dec_cxt.status & DEC_Errors)
     {
         if (dec_cxt.status & DEC_IEEE_854_Division_by_zero)
-            throw USER_EXCEPTION2(FOAR0001, "xs:decimal");
+            throw XQUERY_EXCEPTION2(FOAR0001, "xs:decimal");
         else if (dec_cxt.status & DEC_IEEE_854_Overflow)
-            throw USER_EXCEPTION2(FOAR0002, "xs:decimal overflow");
+            throw XQUERY_EXCEPTION2(FOAR0002, "xs:decimal overflow");
         else if (dec_cxt.status & DEC_IEEE_854_Underflow)
         {
             dec_cxt.status = 0;
@@ -288,9 +288,9 @@ xs_decimal_t xs_decimal_t::numerical_operation(const xs_decimal_t & d, int idx) 
     if (dec_cxt.status & DEC_Errors)
     {
         if (dec_cxt.status & DEC_IEEE_854_Division_by_zero)
-            throw USER_EXCEPTION2(FOAR0001, "xs:decimal");
+            throw XQUERY_EXCEPTION2(FOAR0001, "xs:decimal");
         else if (dec_cxt.status & DEC_IEEE_854_Overflow)
-            throw USER_EXCEPTION2(FOAR0002, "xs:decimal overflow");
+            throw XQUERY_EXCEPTION2(FOAR0002, "xs:decimal overflow");
         else if (dec_cxt.status & DEC_IEEE_854_Underflow)
         {
             dec_cxt.status = 0;

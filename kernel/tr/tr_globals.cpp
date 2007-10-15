@@ -71,3 +71,5 @@ msg_struct sp_msg;
 bool is_need_checkpoint_on_transaction_commit = false;
 
 int db_id;
+
+

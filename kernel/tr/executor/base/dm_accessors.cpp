@@ -12,7 +12,7 @@
 #include "tr/crmutils/node_utils.h"
 #include "tr/executor/base/xs_uri.h"
 
-tuple_cell dm_base_uri(xptr node, dynamic_context *cxt, int __xquery_line)
+tuple_cell dm_base_uri(xptr node, dynamic_context *cxt)
 {
     CHECKP(node);
 
@@ -50,12 +50,12 @@ tuple_cell dm_base_uri(xptr node, dynamic_context *cxt, int __xquery_line)
         {
              stmt_str_buf result(1);
              tc = tuple_cell::make_sure_light_atomic(tc);
-             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->base_uri, result, __xquery_line))
-                 return cast_primitive_to_xs_anyURI(tc, __xquery_line);
+             if(!Uri::resolve(tc.get_str_mem(), cxt->st_cxt->base_uri, result))
+                 return cast_primitive_to_xs_anyURI(tc);
              return tuple_cell::atomic(xs_anyURI, result.get_str());
         }
         else
-            return cast_primitive_to_xs_anyURI(tc, __xquery_line);
+            return cast_primitive_to_xs_anyURI(tc);
     }
     
     /* xml_base_node == NULL here */

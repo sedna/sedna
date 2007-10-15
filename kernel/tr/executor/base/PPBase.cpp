@@ -37,3 +37,12 @@ char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
 
 char e_string_buf[PAGE_SIZE];
 }
+
+
+#ifdef _MSC_VER
+__declspec(thread)
+#else
+__thread
+#endif
+int __xquery_line_thread = 0;
+

@@ -63,42 +63,44 @@ void PPFnError::close ()
 
 void PPFnError::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     tuple_cell err_name_tc; // eos by default
     tuple_cell err_descr_tc; // eos by default
 
     if (child_err.op)
     {
         child_err.op->next(t);
-        if (t.is_eos() && !(child_descr.op)) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+        if (t.is_eos() && !(child_descr.op)) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
         if (!t.is_eos())
         {
             err_name_tc = child_err.get(t);
             if (!err_name_tc.is_atomic() || err_name_tc.get_atomic_type() != xs_QName)
-                throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
             err_name_tc = tuple_cell::make_sure_light_atomic(err_name_tc);
             child_err.op->next(t);
 
             if (!t.is_eos())
-                throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
         }
     }
 
     if (child_descr.op)
     {
         child_descr.op->next(t);
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
         err_descr_tc = child_descr.get(t);
         if (!err_descr_tc.is_atomic() || err_descr_tc.get_atomic_type() != xs_string)
-            throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
 
         err_descr_tc = tuple_cell::make_sure_light_atomic(err_descr_tc);
         child_descr.op->next(t);
 
         if (!t.is_eos())
-            throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:error");
     }
 
 
@@ -108,6 +110,8 @@ void PPFnError::next  (tuple &t)
     const char *err_descr = err_descr_tc.is_eos() ? NULL : err_descr_tc.get_str_mem();
 
     throw USER_EXCEPTION_FNERROR(err_name, err_descr);
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnError::copy(dynamic_context *_cxt_)
@@ -116,7 +120,7 @@ PPIterator* PPFnError::copy(dynamic_context *_cxt_)
     if (child_err.op)   res->child_err.op   = child_err.op->copy(_cxt_);
     if (child_descr.op) res->child_descr.op = child_descr.op->copy(_cxt_);
     if (child_obj.op)   res->child_obj.op   = child_obj.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -169,6 +173,8 @@ void PPFnTrace::close ()
 
 void PPFnTrace::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     bool is_first = false;
     if (first_time)
     {
@@ -176,14 +182,14 @@ void PPFnTrace::next(tuple &t)
         is_first = true;
 
         label_child.op->next(t);    
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
     
         tc = label_child.get(t);
         if (!tc.is_atomic() || tc.get_atomic_type() != xs_string)
-            throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
     
         label_child.op->next(t);
-        if (!t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
+        if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Wrong arguments in function fn:trace");
             
         tc = tuple_cell::make_sure_light_atomic(tc);
     }
@@ -198,6 +204,8 @@ void PPFnTrace::next(tuple &t)
         print_tuple_indent(t, dostr, xml, is_first, cxt);
         dostr.flush();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
@@ -205,7 +213,7 @@ PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)
     PPFnTrace *res = se_new PPFnTrace(_cxt_, value_child, label_child);
     res->value_child.op = value_child.op->copy(_cxt_);
     res->label_child.op = label_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

@@ -39,6 +39,8 @@ void PPConst::close ()
 
 void PPConst::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
 /***********************************
 #define ALLOC_SIZE	1024
 #define ALLOC_ATTEMPTS	(1024 * 12)
@@ -62,11 +64,14 @@ void PPConst::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPConst::copy(dynamic_context *_cxt_)
 {
     PPConst *res = se_new PPConst(_cxt_, c);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

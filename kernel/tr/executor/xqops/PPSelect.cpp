@@ -82,13 +82,15 @@ void PPSelect::close ()
 
 void PPSelect::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     while (true)
     {
         if (standard) source_child.op->next(t);
         else { t = source; standard = true; }
         cur_tuple = &t;
 
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
         if (first_time) first_time = false;
         else
@@ -97,10 +99,12 @@ void PPSelect::next(tuple &t)
             if (!eos_reached) data_child.op->reopen();
         }
 
-        tuple_cell tc = effective_boolean_value(data_child, data, eos_reached, __xquery_line);
+        tuple_cell tc = effective_boolean_value(data_child, data, eos_reached);
 
-        if (tc.get_xs_boolean()) return;
+        if (tc.get_xs_boolean()) {UNDO_XQUERY_LINE; return;}
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPSelect::copy(dynamic_context *_cxt_)
@@ -120,6 +124,8 @@ var_c_id PPSelect::register_consumer(var_dsc dsc)
 
 void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     producer &p = cxt->var_cxt.producers[dsc];
 
     if (p.svc->at(id))
@@ -132,6 +138,8 @@ void PPSelect::next(tuple &t, var_dsc dsc, var_c_id id)
         p.svc->at(id) = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPSelect::reopen(var_dsc dsc, var_c_id id)

@@ -157,7 +157,7 @@ static inline void check_constraints_for_xs_hexBinary(Iterator &start, const Ite
     if(start == end && !(counter & 1)) (*valid) = true; //chech evenness at last;
 }
 
-tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c, int __xquery_line)
+tuple_cell cast_string_type_to_xs_hexBinary(const tuple_cell &c)
 { 
     bool valid;
     stmt_str_buf res;
@@ -313,7 +313,7 @@ static inline void check_constraints_for_xs_base64Binary(Iterator &start, const 
 }
 
 
-tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c, int __xquery_line)
+tuple_cell cast_string_type_to_xs_base64Binary(const tuple_cell &c)
 { 
     bool valid;
     stmt_str_buf res;

@@ -45,13 +45,15 @@ void PPSResLStub::close ()
 
 void PPSResLStub::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (s)
     {
         if (it != s->end())
         {
             s->get(t, it);
             ++it;
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
         else
         {
@@ -61,6 +63,8 @@ void PPSResLStub::next(tuple &t)
     }
 
     op->next(t);
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPSResLStub::copy(dynamic_context *_cxt_)

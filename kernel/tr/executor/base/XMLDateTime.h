@@ -135,27 +135,27 @@ public:
     // parsers
     // -----------------------------------------------------------------------
 
-    void                  parseDateTime(const char* buf, int __xquery_line = 0);           //DateTime
+    void                  parseDateTime(const char* buf);           //DateTime
                                                                                        
-    void                  parseDate(const char* buf, int __xquery_line = 0);               //Date
+    void                  parseDate(const char* buf);               //Date
 
-    void                  parseTime(const char* buf, int __xquery_line = 0);               //Time
+    void                  parseTime(const char* buf);               //Time
 
-    void                  parseDay(const char* buf, int __xquery_line = 0);                //gDay
+    void                  parseDay(const char* buf);                //gDay
 
-    void                  parseMonth(const char* buf, int __xquery_line = 0);              //gMonth
+    void                  parseMonth(const char* buf);              //gMonth
 
-    void                  parseYear(const char* buf, int __xquery_line = 0);               //gYear
+    void                  parseYear(const char* buf);               //gYear
 
-    void                  parseMonthDay(const char* buf, int __xquery_line = 0);           //gMonthDay
+    void                  parseMonthDay(const char* buf);           //gMonthDay
 
-    void                  parseYearMonth(const char* buf, int __xquery_line = 0);          //gYearMonth
+    void                  parseYearMonth(const char* buf);          //gYearMonth
 
-    void                  parseDuration(const char* buf, int __xquery_line = 0);           //duration
+    void                  parseDuration(const char* buf);           //duration
 
-    void                  parseYearMonthDuration(const char* buf, int __xquery_line = 0);  //yearMonthDuration
+    void                  parseYearMonthDuration(const char* buf);  //yearMonthDuration
 
-    void                  parseDayTimeDuration(const char* buf, int __xquery_line = 0);    //dayTimeDuration
+    void                  parseDayTimeDuration(const char* buf);    //dayTimeDuration
 
 
     //---------------------------------------------------------------------------
@@ -239,15 +239,15 @@ private:
     // scaners
     // -----------------------------------------------------------------------
 
-    void                  getDate(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line = 0); 
+    void                  getDate(const char* fBuffer, int& fStart, int& fEnd); 
 
-    void                  getTime(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line = 0);
+    void                  getTime(const char* fBuffer, int& fStart, int& fEnd);
 
-    void                  getYearMonth(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line = 0);
+    void                  getYearMonth(const char* fBuffer, int& fStart, int& fEnd);
 
-    void                  getTimeZone(const char* fBuffer, const int& fStart, int& end, int __xquery_line = 0);
+    void                  getTimeZone(const char* fBuffer, const int& fStart, int& end);
 
-    void                  parseTimeZone(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line = 0);
+    void                  parseTimeZone(const char* fBuffer, int& fStart, int& fEnd);
 
     // -----------------------------------------------------------------------
     // locator and converter
@@ -264,24 +264,21 @@ private:
 
     int                   parseInt(const char *fBuffer, 
                                    const int start, 
-                                   const int end,
-                                   int __xquery_line = 0) const;
+                                   const int end) const;
 
     int                   parseIntYear(const char* fBuffer, 
                                        const int start, 
-                                       const int end, 
-                                       int __xquery_line = 0) const;
+                                       const int end) const;
 
     double                parseMiliSecond(const char* fBuffer, 
                                           const int start, 
-                                          const int end, 
-                                          int __xquery_line = 0) const;
+                                          const int end) const;
 
     // -----------------------------------------------------------------------
     // validator and normalizer
     // -----------------------------------------------------------------------
 
-    void                  validateDateTime(int __xquery_line = 0)          const;
+    void                  validateDateTime()          const;
 
 
     void                  fillString(char*& ptr, int value, int expLen) const;
@@ -333,7 +330,7 @@ inline bool XMLDateTime::isNormalized() const
     // Adjustment functions
     //--------------------------------------------------------------------------
     XMLDateTime adjustToTimezone(const XMLDateTime& d);
-    XMLDateTime adjustToTimezone(const XMLDateTime& d, const XMLDateTime& tz, int __xquery_line = 0);
-    XMLDateTime fnDateTime(const XMLDateTime& dt, const XMLDateTime& t, int __xquery_line = 0);
+    XMLDateTime adjustToTimezone(const XMLDateTime& d, const XMLDateTime& tz);
+    XMLDateTime fnDateTime(const XMLDateTime& dt, const XMLDateTime& t);
 
 #endif

@@ -48,19 +48,21 @@ void PPDmStringValue::close ()
 
 void PPDmStringValue::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
         tuple_cell tc = dm_string_value(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:string-value is not a node");
 
         t.copy(tc);
     }
@@ -69,13 +71,15 @@ void PPDmStringValue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDmStringValue::copy(dynamic_context *_cxt_)
 {
     PPDmStringValue *res = se_new PPDmStringValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -141,19 +145,21 @@ void PPDmTypedValue::close ()
 
 void PPDmTypedValue::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
 
         child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
         tuple_cell tc = dm_typed_value(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:typed-value is not a node");
 
         t.copy(tc);
     }
@@ -162,13 +168,15 @@ void PPDmTypedValue::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDmTypedValue::copy(dynamic_context *_cxt_)
 {
     PPDmTypedValue *res = se_new PPDmTypedValue(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -233,17 +241,19 @@ void PPDmDocumentURI::close ()
 
 void PPDmDocumentURI::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
+        if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
 
         tuple_cell tc = dm_document_uri(child.get(t).get_node());
 
         child.op->next(t);
-        if (!(t.is_eos())) throw USER_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
+        if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of dm:document-uri is not a node");
 
         if (tc.is_eos()) t.set_eos();
 		else 
@@ -257,13 +267,15 @@ void PPDmDocumentURI::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDmDocumentURI::copy(dynamic_context *_cxt_)
 {
     PPDmDocumentURI *res = se_new PPDmDocumentURI(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

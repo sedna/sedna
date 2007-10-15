@@ -21,10 +21,10 @@
 
 char *_get_pointer_to_c_str(const tuple_cell &c);
 
-float   c_str2xs_float  (const char *t, int __xquery_line = 0);
-double  c_str2xs_double (const char *t, int __xquery_line = 0);
-__int64 c_str2xs_integer(const char *t, int __xquery_line = 0);
-bool    c_str2xs_boolean(const char *t, int __xquery_line = 0);
+float   c_str2xs_float  (const char *t);
+double  c_str2xs_double (const char *t);
+__int64 c_str2xs_integer(const char *t);
+bool    c_str2xs_boolean(const char *t);
 
 
 /////////////////////////////////////////////////////////////////////////
@@ -43,8 +43,8 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 /////////////////////////////////////////////////////////////////////////
 /// XML Schema fixed datatypes to fixed datatypes conversion routines.
 /////////////////////////////////////////////////////////////////////////
-__int64 xs_float2xs_integer(float v, int __xquery_line = 0);
-__int64 xs_double2xs_integer(double v, int __xquery_line = 0);
+__int64 xs_float2xs_integer(float v);
+__int64 xs_double2xs_integer(double v);
 inline __int64 xs_boolean2xs_integer(bool v)
 {
     return (v ? (__int64)1 : (__int64)0);

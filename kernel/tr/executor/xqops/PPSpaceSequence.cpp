@@ -33,18 +33,21 @@ PPIterator* PPSpaceSequence::copy(dynamic_context *_cxt_)
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }
 void PPSpaceSequence::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (!int_tup.is_eos())
 	{
 		t.copy(int_tup);
 		space=int_tup.cells[0].is_atomic()||isAtomized;
 		int_tup.set_eos();
 		
-		return;
+		{UNDO_XQUERY_LINE; return;}
 	}
 	while (it < ch_arr.size())
     {
@@ -65,11 +68,13 @@ void PPSpaceSequence::next(tuple &t)
 				int_tup.set_eos();
 				
 			}
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
     }
 
     t.set_eos();
     it = 0;
 	space=false;
+
+	UNDO_XQUERY_LINE;
 }

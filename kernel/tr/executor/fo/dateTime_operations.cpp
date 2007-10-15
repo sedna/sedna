@@ -228,9 +228,9 @@ tuple_cell op_multiply_yearMonthDuration_by_numeric(const tuple_cell &a1, const 
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-yearMonthDuration-by-numeric on invalid arguments");
 
     double multiplier = cast(a2, xs_double).get_xs_double();
-    if (u_is_nan(multiplier)) throw USER_EXCEPTION2(FOCA0005, "Calling op:multiply-yearMonthDuration-by-numeric with a NaN argument");
+    if (u_is_nan(multiplier)) throw XQUERY_EXCEPTION2(FOCA0005, "Calling op:multiply-yearMonthDuration-by-numeric with a NaN argument");
     if (u_is_neg_inf(multiplier) || u_is_pos_inf(multiplier))
-	throw USER_EXCEPTION2(FODT0002, "Calling op:multiply-yearMonthDuration-by-numeric with an INF argument");
+	throw XQUERY_EXCEPTION2(FODT0002, "Calling op:multiply-yearMonthDuration-by-numeric with an INF argument");
 
     return tuple_cell::atomic(multiplyDuration(
 				XMLDateTime(a1.get_xs_duration(), xs_yearMonthDuration),
@@ -249,9 +249,9 @@ tuple_cell op_multiply_dayTimeDuration_by_numeric(const tuple_cell &a1, const tu
 	throw USER_EXCEPTION2(SE1003, "Calling op:multiply-dayTimeDuration-by-numeric on invalid arguments");
 
     double multiplier = cast(a2, xs_double).get_xs_double();
-    if (u_is_nan(multiplier)) throw USER_EXCEPTION2(FOCA0005, "Calling op:multiply-dayTimeDuration-by-numeric with a NaN argument");
+    if (u_is_nan(multiplier)) throw XQUERY_EXCEPTION2(FOCA0005, "Calling op:multiply-dayTimeDuration-by-numeric with a NaN argument");
     if (u_is_neg_inf(multiplier) || u_is_pos_inf(multiplier))
-	throw USER_EXCEPTION2(FODT0002, "Calling op:multiply-dayTimeDuration-by-numeric with an INF argument");
+	throw XQUERY_EXCEPTION2(FODT0002, "Calling op:multiply-dayTimeDuration-by-numeric with an INF argument");
 
     return tuple_cell::atomic(multiplyDuration(
 				XMLDateTime(a1.get_xs_duration(), xs_dayTimeDuration),
@@ -270,8 +270,8 @@ tuple_cell op_divide_yearMonthDuration_by_numeric(const tuple_cell &a1, const tu
 	throw USER_EXCEPTION2(SE1003, "Calling op:divide-yearMonthDuration-by-numeric on invalid arguments");
 
     double multiplier = cast(a2, xs_double).get_xs_double();
-    if (u_is_nan(multiplier)) throw USER_EXCEPTION2(FOCA0005, "Calling op:divide-yearMonthDuration-by-numeric with a NaN argument");
-    if (multiplier ==0.0) throw USER_EXCEPTION2(FODT0002, "Calling op:divide-yearMonthDuration-by-numeric by zero");
+    if (u_is_nan(multiplier)) throw XQUERY_EXCEPTION2(FOCA0005, "Calling op:divide-yearMonthDuration-by-numeric with a NaN argument");
+    if (multiplier ==0.0) throw XQUERY_EXCEPTION2(FODT0002, "Calling op:divide-yearMonthDuration-by-numeric by zero");
 
     return tuple_cell::atomic(divideDuration(
 				XMLDateTime(a1.get_xs_duration(), xs_yearMonthDuration),
@@ -285,8 +285,8 @@ tuple_cell op_divide_dayTimeDuration_by_numeric(const tuple_cell &a1, const tupl
 	throw USER_EXCEPTION2(SE1003, "Calling op:divide-dayTimeDuration-by-numeric on invalid arguments");
 
     double multiplier = cast(a2, xs_double).get_xs_double();
-    if (u_is_nan(multiplier)) throw USER_EXCEPTION2(FOCA0005, "Calling op:divide-dayTimeDuration-by-numeric with a NaN argument");
-    if (multiplier ==0.0) throw USER_EXCEPTION2(FODT0002, "Calling op:divide-dayTimeDuration-by-numeric by zero");
+    if (u_is_nan(multiplier)) throw XQUERY_EXCEPTION2(FOCA0005, "Calling op:divide-dayTimeDuration-by-numeric with a NaN argument");
+    if (multiplier ==0.0) throw XQUERY_EXCEPTION2(FODT0002, "Calling op:divide-dayTimeDuration-by-numeric by zero");
 
     return tuple_cell::atomic(divideDuration(
 				XMLDateTime(a1.get_xs_duration(), xs_dayTimeDuration),

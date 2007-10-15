@@ -91,7 +91,7 @@ PPIterator* PPAxisDescendant::copy(dynamic_context *_cxt_)
 {
     PPAxisDescendant *res = se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -114,9 +114,9 @@ void PPAxisDescendant::next_node(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-		if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+		if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)
@@ -132,7 +132,7 @@ void PPAxisDescendant::next_node(tuple &t)
 	if (tmp!=XNULL) 
 	{
 		cur=tmp;
-		return;
+		{UNDO_XQUERY_LINE; return;}
 	}
 	while (!self || descstack.size()>1)
 	{
@@ -141,7 +141,7 @@ void PPAxisDescendant::next_node(tuple &t)
 		{
 			cur=tmp;
 			descstack.pop_back();
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		descstack.pop_back();
 		if (descstack.size()>0)
@@ -163,7 +163,7 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 		while (true)
 		{
 			next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
-			if (t.is_eos()) return;
+			if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 			xptr tmp=child.get(t).get_node();
 			if (tmp!=XNULL)
 			{
@@ -176,7 +176,7 @@ void PPAxisDescendant::next_processing_instruction(tuple &t)
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {UNDO_XQUERY_LINE; return;}
 				}
 			}
 		}   
@@ -190,9 +190,9 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
         xptr tmp=child.get(t).get_node();
 		if (tmp!=XNULL)
 		{
@@ -238,7 +238,7 @@ void PPAxisDescendant::next_qname_and_text(tuple &t,const char* uri,const char* 
 		/*if (cur==XNULL)
 		{
 			t.set_eos();
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}*/
 	}
     t.copy(tuple_cell::node(cur));
@@ -269,9 +269,9 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)
@@ -288,7 +288,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 	if (tmp!=XNULL) 
 	{
 		cur=tmp;
-		return;
+		{UNDO_XQUERY_LINE; return;}
 	}
 	while (!self || descstack.size()>1)
 	{
@@ -302,7 +302,7 @@ void PPAxisDescendant::next_wildcard_star(tuple &t)
 			{
 				cur=tmp;
 				descstack.pop_back();
-				return;
+				{UNDO_XQUERY_LINE; return;}
 			}
 		}
 		descstack.pop_back();
@@ -336,8 +336,8 @@ void PPAxisDescendantAttr::next_text(tuple &t)
    while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 	next_wildcard_star(t);
 }
@@ -346,8 +346,8 @@ void PPAxisDescendantAttr::next_node(tuple &t)
 	/*while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }*/
 	next_wildcard_star(t);
 }
@@ -370,9 +370,9 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 	while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
         cur = child.get(t).get_node();
 		if (cur!=XNULL)
@@ -393,7 +393,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 	if (cur!=XNULL)
 	{
 		CHECKP(cur);
-		if ((GETBLOCKBYNODE(cur))->snode->type==attribute) return;
+		if ((GETBLOCKBYNODE(cur))->snode->type==attribute) {UNDO_XQUERY_LINE; return;}
 	}
 	cur=getFirstAttributeDescendantAndFillPath(descstack);
     while(cur==XNULL)
@@ -401,7 +401,7 @@ void PPAxisDescendantAttr::next_wildcard_star(tuple &t)
 		xptr node=descstack[descstack.size()-1];
 		descstack.pop_back();
 		node=getNextByOrderElement(node);
-		if (/*node==XNULL && */descstack.size()==0) return;
+		if (/*node==XNULL && */descstack.size()==0) {UNDO_XQUERY_LINE; return;}
 		if (node!=XNULL)
 		{
 			cur=getFirstByOrderAttributeChild(node);

@@ -55,6 +55,8 @@ void PPDebug::close ()
 
 void PPDebug::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     try
     {
         cc++;
@@ -83,6 +85,8 @@ void PPDebug::next(tuple &t)
 
         throw;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 /// FIXME!!! Is there any specific behaviour in copy (IS)?
@@ -92,6 +96,7 @@ PPIterator* PPDebug::copy(dynamic_context *_cxt_)
                    se_new PPDebug(_cxt_, child, child_name, child_info) : 
                    se_new PPDebug(_cxt_, child, child_name);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

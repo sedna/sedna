@@ -39,14 +39,18 @@ void PPVariable::close ()
 
 void PPVariable::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     cxt->var_cxt.producers[dsc].op->next(t, dsc, id);
 
+    UNDO_XQUERY_LINE;
 //    if (t.is_eos()) cxt->producers[dsc].op->reopen(dsc, id);
 }
 
 PPIterator* PPVariable::copy(dynamic_context *_cxt_)
 {
     PPVariable *res = se_new PPVariable(_cxt_, dsc);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -101,12 +105,15 @@ void PPGlobalVariable::close ()
 
 void PPGlobalVariable::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     dynamic_context::glb_var_cxt.producers[dsc].op->next(t, dsc, id);
 }
 
 PPIterator* PPGlobalVariable::copy(dynamic_context *_cxt_)
 {
     PPGlobalVariable *res = se_new PPGlobalVariable(_cxt_, dsc);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

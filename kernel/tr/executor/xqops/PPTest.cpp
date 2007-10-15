@@ -59,18 +59,20 @@ void PPTest::close ()
 }
 void PPTest::next  (tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	tuple t1(seq.ts);
 	seq.op->next(t1);
 	//Preliminary node analysis
 	if (t1.is_eos()) 
 	{
 		t.set_eos();
-		return;
+		{UNDO_XQUERY_LINE; return;}
 	}
 	tuple_cell& tc= t1.cells[0];
 	if (!tc.is_node())
 	{
-		throw USER_EXCEPTION(SE2031);
+		throw XQUERY_EXCEPTION(SE2031);
 	}
 	xptr node=tc.get_node();
 	CHECKP(node);
@@ -173,7 +175,8 @@ void PPTest::next  (tuple &t)
 	//int res= checkFT(seq);
 	//t.copy(tuple_cell::atomic(res));	
 	*/
-	
+
+	UNDO_XQUERY_LINE;
 }
 bool PPTest::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {
@@ -184,6 +187,7 @@ PPIterator* PPTest::copy(dynamic_context *_cxt_)
 	PPTest *res ;
 	res = se_new PPTest(_cxt_, seq);
 	res->seq.op = seq.op->copy(_cxt_);
+	res->set_xquery_line(__xquery_line);
 	return res;
 }
 xptr get_root (xptr node)
@@ -250,7 +254,7 @@ void PPTest::checkTreeConsistency(xptr node)
 	//1. indirection test
 	xptr indir=node_d->indir;
 	if (removeIndirection(indir)!=node)
-		throw USER_EXCEPTION(SE2030);
+		throw XQUERY_EXCEPTION(SE2030);
 	//2. parent test
 	CHECKP(node);
 	xptr par_indir=node_d->pdsc;
@@ -261,13 +265,13 @@ void PPTest::checkTreeConsistency(xptr node)
 	{
 		parent=removeIndirection(par_indir);
 		if (!nid_ancestor(parent,node))
-			throw USER_EXCEPTION(SE2025);
+			throw XQUERY_EXCEPTION(SE2025);
 		if (prev_dsc==NULL|| prev_dsc->pdsc!=par_indir)
 		{
 			CHECKP(parent);
 			xptr* ptr=elementContainsChild((n_dsc*)XADDR(parent),scn->name,scn->type,scn->xmlns);
 			if (ptr==NULL || *ptr!=node)
-				throw USER_EXCEPTION(SE2026); 
+				throw XQUERY_EXCEPTION(SE2026); 
 		}
 	}
 	//3. left siblings + nid comparison
@@ -277,9 +281,9 @@ void PPTest::checkTreeConsistency(xptr node)
 	{
 		CHECKP(left);
 		if (((n_dsc*)XADDR(left))->rdsc!=node)
-			throw USER_EXCEPTION(SE2027);
+			throw XQUERY_EXCEPTION(SE2027);
 		if (nid_cmp(left,node)>=0)
-			throw USER_EXCEPTION(SE2028);
+			throw XQUERY_EXCEPTION(SE2028);
 	}
 	//4. descriptor's order
 	if (prev_x!=NULL && scn->type!=document)
@@ -289,7 +293,7 @@ void PPTest::checkTreeConsistency(xptr node)
 		if (!lt || getNextDescriptorOfSameSort(prev_dsc)!=node_d   )
 		{
 			if (is_same_root(prev_x,node))
-				throw USER_EXCEPTION(SE2029);
+				throw XQUERY_EXCEPTION(SE2029);
 		}
 	}
 #endif

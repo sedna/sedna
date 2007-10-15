@@ -836,7 +836,7 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt)
 	return fNewDate;
 }
 
-XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz, int __xquery_line)
+XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz)
 {
 	XMLDateTime fNewDate = dt;
 
@@ -866,7 +866,7 @@ XMLDateTime adjustToTimezone(const XMLDateTime& dt, const XMLDateTime& tz, int _
 	return fNewDate;
 }
 
-XMLDateTime fnDateTime(const XMLDateTime& d, const XMLDateTime& t, int __xquery_line)
+XMLDateTime fnDateTime(const XMLDateTime& d, const XMLDateTime& t)
 {
 	XMLDateTime fNewDateTime = d;
 
@@ -1028,17 +1028,17 @@ void XMLDateTime::copy(const XMLDateTime &toCopy)
 //
 // [-]{CCYY-MM-DD}[TimeZone]
 //
-void XMLDateTime::parseDate(const char* buf, int __xquery_line)
+void XMLDateTime::parseDate(const char* buf)
 {
     setValue(Type, xs_date);
     int start = 0, end = strlen(buf);
     handleWhitespace(buf, start, end);
-    getDate(buf, start, end, __xquery_line);
-    parseTimeZone(buf, start, end, __xquery_line);
-    validateDateTime(__xquery_line);
+    getDate(buf, start, end);
+    parseTimeZone(buf, start, end);
+    validateDateTime();
 }
 
-void XMLDateTime::parseTime(const char* buf, int __xquery_line)
+void XMLDateTime::parseTime(const char* buf)
 {
 
     setValue(Type, xs_time);
@@ -1046,27 +1046,27 @@ void XMLDateTime::parseTime(const char* buf, int __xquery_line)
     handleWhitespace(buf, start, end);
     // time initialize to default values
 
-    getTime(buf, start, end, __xquery_line);
+    getTime(buf, start, end);
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
 // 
 // [-]{CCYY-MM-DD}'T'{HH:MM:SS.MS}[TimeZone]
 // 
-void XMLDateTime::parseDateTime(const char* buf, int __xquery_line)
+void XMLDateTime::parseDateTime(const char* buf)
 {
     setValue(Type, xs_dateTime);
     int fStart = 0, fEnd = strlen(buf);
     handleWhitespace(buf, fStart, fEnd);
-    getDate(buf,fStart, fEnd, __xquery_line);
+    getDate(buf,fStart, fEnd);
 
     //fStart is supposed to point to 'T'
     if (buf[fStart++] != DATETIME_SEPARATOR)
 	throw XQUERY_EXCEPTION2(FORG0001, "Missing a time separator in dateTime value");
 
-    getTime(buf, fStart, fEnd, __xquery_line);
-    validateDateTime(__xquery_line);
+    getTime(buf, fStart, fEnd);
+    validateDateTime();
     normalizeDateTimeWeak();
 }
 
@@ -1074,7 +1074,7 @@ void XMLDateTime::parseDateTime(const char* buf, int __xquery_line)
 // {---DD}[TimeZone]
 //  01234
 //
-void XMLDateTime::parseDay(const char* buf, int __xquery_line)
+void XMLDateTime::parseDay(const char* buf)
 {
     setValue(Type, xs_gDay);
     int start=0, end=strlen(buf);
@@ -1086,7 +1086,7 @@ void XMLDateTime::parseDay(const char* buf, int __xquery_line)
 	throw XQUERY_EXCEPTION2(FORG0001, "invalid gDay value");
 
     //initialize values
-    setValue(Day, parseInt(buf, start+3, start+5, __xquery_line));
+    setValue(Day, parseInt(buf, start+3, start+5));
 
     if ( start+DAY_SIZE < end )
     {        
@@ -1096,18 +1096,18 @@ void XMLDateTime::parseDay(const char* buf, int __xquery_line)
         else
         {
     	    setValue(utc, pos+1);
-            getTimeZone(buf, start+DAY_SIZE, end, __xquery_line);
+            getTimeZone(buf, start+DAY_SIZE, end);
         }
     }
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
 //
 // {--MM--}[TimeZone]
 // {--MM}[TimeZone]
 //
-void XMLDateTime::parseMonth(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseMonth(const char* fBuffer)
 {
     setValue(Type, xs_gMonth);
     int fStart=0, fEnd=strlen(fBuffer);
@@ -1119,7 +1119,7 @@ void XMLDateTime::parseMonth(const char* fBuffer, int __xquery_line)
     // REVISIT: allow both --MM and --MM-- now. 
     // need to remove the following lines to disallow --MM-- 
     // when the errata is officially in the rec. 
-    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4, __xquery_line));
+    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4));
  
     fStart = fStart+4;
     if ( fEnd >= fStart+2 && fBuffer[fStart] == DATE_SEPARATOR && fBuffer[fStart+1] == DATE_SEPARATOR ) 
@@ -1138,18 +1138,18 @@ void XMLDateTime::parseMonth(const char* fBuffer, int __xquery_line)
         else
         {
     	    setValue(utc, pos+1);
-            getTimeZone(fBuffer, fStart, fEnd, __xquery_line);
+            getTimeZone(fBuffer, fStart, fEnd);
         }
     }
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
 //
 //[-]{CCYY}[TimeZone]
 // 0  1234
 //
-void XMLDateTime::parseYear(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseYear(const char* fBuffer)
 {
 
     setValue(Type, xs_gYear);
@@ -1161,24 +1161,24 @@ void XMLDateTime::parseYear(const char* fBuffer, int __xquery_line)
 
     if (sign == NOT_FOUND)
     {
-        setValue(CentYear, parseIntYear(fBuffer,fStart,fEnd, __xquery_line));
+        setValue(CentYear, parseIntYear(fBuffer,fStart,fEnd));
     }
     else
     {
-        setValue(CentYear, parseIntYear(fBuffer, fStart, sign, __xquery_line));
-        getTimeZone(fBuffer, sign, fEnd, __xquery_line);
+        setValue(CentYear, parseIntYear(fBuffer, fStart, sign));
+        getTimeZone(fBuffer, sign, fEnd);
     }
 
     //initialize values
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
 //
 //{--MM-DD}[TimeZone]
 // 0123456
 //
-void XMLDateTime::parseMonthDay(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseMonthDay(const char* fBuffer)
 {
 
     setValue(Type, xs_gMonthDay);
@@ -1192,8 +1192,8 @@ void XMLDateTime::parseMonthDay(const char* fBuffer, int __xquery_line)
 
 	
     //initialize
-    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4, __xquery_line));	
-    setValue(Day, parseInt(fBuffer, fStart+5, fStart+7, __xquery_line));
+    setValue(Month, parseInt(fBuffer, fStart+2, fStart+4));	
+    setValue(Day, parseInt(fBuffer, fStart+5, fStart+7));
 
     if ( fStart+MONTHDAY_SIZE < fEnd )
     {        
@@ -1203,24 +1203,24 @@ void XMLDateTime::parseMonthDay(const char* fBuffer, int __xquery_line)
         else
         {
     	    setValue(utc, pos+1);
-            getTimeZone(fBuffer,fStart+MONTHDAY_SIZE,fEnd, __xquery_line);
+            getTimeZone(fBuffer,fStart+MONTHDAY_SIZE,fEnd);
         }
     }
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
-void XMLDateTime::parseYearMonth(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseYearMonth(const char* fBuffer)
 {
     setValue(Type, xs_gYearMonth);
     int fStart=0, fEnd=strlen(fBuffer);
     handleWhitespace(fBuffer, fStart, fEnd);
 
     // get date
-    getYearMonth(fBuffer, fStart, fEnd, __xquery_line);
-    parseTimeZone(fBuffer, fStart, fEnd, __xquery_line);
+    getYearMonth(fBuffer, fStart, fEnd);
+    parseTimeZone(fBuffer, fStart, fEnd);
 
-    validateDateTime(__xquery_line);
+    validateDateTime();
 }
 
 //
@@ -1231,7 +1231,7 @@ void XMLDateTime::parseYearMonth(const char* fBuffer, int __xquery_line)
 //  Note: the n above shall be >= 0
 //        if no time element found, 'T' shall be absent
 //
-void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseDuration(const char* fBuffer)
 {
     setValue(Type, xs_duration);
     int fStart=0, fEnd = strlen(fBuffer);
@@ -1278,7 +1278,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
     {
         //scan year
 	if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-        setValue(CentYear, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+        setValue(CentYear, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
     }
@@ -1288,7 +1288,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
     {
         //scan month
 	if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-        setValue(Month, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+        setValue(Month, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
     }
@@ -1298,7 +1298,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
     {
         //scan day
 	if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-        setValue(Day, negate * parseInt(fBuffer, fStart,end, __xquery_line));
+        setValue(Day, negate * parseInt(fBuffer, fStart,end));
         fStart = end+1;
         designator = true;
     }
@@ -1318,7 +1318,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
         {
             //scan hours
 	    if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-            setValue(Hour, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+            setValue(Hour, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
         }
@@ -1328,7 +1328,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
         {
             //scan min
 	    if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-            setValue(Minute, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+            setValue(Minute, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
         }
@@ -1353,15 +1353,15 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
                 if ( mlsec+1 == end )
 		throw XQUERY_EXCEPTION2(FORG0001, "invalid milisecond value in duration");
 
-                setValue(Second, negate * parseInt(fBuffer, fStart, mlsec, __xquery_line));
-                int rawMilis = parseInt(fBuffer, mlsec+1, end, __xquery_line);
+                setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
+                int rawMilis = parseInt(fBuffer, mlsec+1, end);
 		int miliSecondLen = end-mlsec-1;
 		setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
 	    }
             else
             {
 	        if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid duration");
-                setValue(Second, negate * parseInt(fBuffer, fStart,end, __xquery_line));
+                setValue(Second, negate * parseInt(fBuffer, fStart,end));
             }
 
             fStart = end+1;
@@ -1389,7 +1389,7 @@ void XMLDateTime::parseDuration(const char* fBuffer, int __xquery_line)
 // [-]{'P'{[n'Y'][n'M']}}
 //
 //
-void XMLDateTime::parseYearMonthDuration(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseYearMonthDuration(const char* fBuffer)
 {
     setValue(Type, xs_yearMonthDuration);
     int fStart=0, fEnd = strlen(fBuffer);
@@ -1430,7 +1430,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer, int __xquery_line)
     {
         //scan year
 	if (fStart==fEnd) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
-        setValue(CentYear, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+        setValue(CentYear, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
     }
@@ -1440,7 +1440,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer, int __xquery_line)
     {
         //scan month
 	if (fStart==fEnd) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_yearMonthDuration");
-        setValue(Month, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+        setValue(Month, negate * parseInt(fBuffer, fStart, end));
         fStart = end+1;
         designator = true;
     }
@@ -1462,7 +1462,7 @@ void XMLDateTime::parseYearMonthDuration(const char* fBuffer, int __xquery_line)
 //  Note: the n above shall be >= 0
 //        if no time element found, 'T' shall be absent
 //
-void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
+void XMLDateTime::parseDayTimeDuration(const char* fBuffer)
 {
     setValue(Type, xs_dayTimeDuration);
     int fStart=0, fEnd = strlen(fBuffer);
@@ -1505,7 +1505,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
     {
         //scan day
 	if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
-        setValue(Day, negate * parseInt(fBuffer, fStart,end, __xquery_line));
+        setValue(Day, negate * parseInt(fBuffer, fStart,end));
         fStart = end+1;
         designator = true;
     }
@@ -1525,7 +1525,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
         {
             //scan hours
 	    if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
-            setValue(Hour, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+            setValue(Hour, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
         }
@@ -1535,7 +1535,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
         {
             //scan min
 	    if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
-            setValue(Minute, negate * parseInt(fBuffer, fStart, end, __xquery_line));
+            setValue(Minute, negate * parseInt(fBuffer, fStart, end));
             fStart = end+1;
             designator = true;
         }
@@ -1560,7 +1560,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
                 if ( mlsec+1 == end )
 		throw XQUERY_EXCEPTION2(FORG0001, "invalid milisecond value in xs_dayTimeDuration");
 
-                setValue(Second, negate * parseInt(fBuffer, fStart, mlsec, __xquery_line));
+                setValue(Second, negate * parseInt(fBuffer, fStart, mlsec));
                 int rawMilis = parseInt(fBuffer, mlsec+1, end);
 		int miliSecondLen = end-mlsec-1;
 		setValue(MiliSecond, negate * adjustMiliseconds(rawMilis, miliSecondLen, DUR_MILISECOND_DIGITS));
@@ -1568,7 +1568,7 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
             else
             {
 	        if (fStart==end) throw XQUERY_EXCEPTION2(FORG0001, "invalid xs_dayTimeDuration");
-                setValue(Second, negate * parseInt(fBuffer, fStart,end, __xquery_line));
+                setValue(Second, negate * parseInt(fBuffer, fStart,end));
             }
 
             fStart = end+1;
@@ -1601,19 +1601,19 @@ void XMLDateTime::parseDayTimeDuration(const char* fBuffer, int __xquery_line)
 //       fStart updated to point to the position right AFTER the second 'D'
 //       Since the lenght of CCYY might be variable, we can't check format upfront
 //
-void XMLDateTime::getDate(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line)
+void XMLDateTime::getDate(const char* fBuffer, int& fStart, int& fEnd)
 {
 
     // Ensure enough chars in buffer
     if ( (fStart+YMD_MIN_SIZE) > fEnd)
 	throw XQUERY_EXCEPTION2(FORG0001, "incomplete date");
 
-    getYearMonth(fBuffer, fStart, fEnd, __xquery_line);    // Scan YearMonth and
+    getYearMonth(fBuffer, fStart, fEnd);    // Scan YearMonth and
                        // fStart point to the next '-'
     if (fBuffer[fStart++] != DATE_SEPARATOR)
 	throw XQUERY_EXCEPTION2(FORG0001, "invalid date, CCYY-MM must be followed by a '-' sign");
 
-    setValue(Day, parseInt(fBuffer, fStart, fStart+2, __xquery_line));
+    setValue(Day, parseInt(fBuffer, fStart, fStart+2));
     fStart += 2 ;  //fStart points right after the Day
 
     return;
@@ -1628,7 +1628,7 @@ void XMLDateTime::getDate(const char* fBuffer, int& fStart, int& fEnd, int __xqu
 //       fStart updated to point to the position right AFTER the second 's'
 //                                                  or ms if any
 //
-void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line)
+void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd)
 {
 
     // Ensure enough chars in buffer
@@ -1645,9 +1645,9 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd, int __xqu
     //
     // get hours, minute and second
     //
-    setValue(Hour, parseInt(fBuffer, fStart + 0, fStart + 2, __xquery_line));
-    setValue(Minute, parseInt(fBuffer, fStart + 3, fStart + 5, __xquery_line));
-    setValue(Second, parseInt(fBuffer, fStart + 6, fStart + 8, __xquery_line));
+    setValue(Hour, parseInt(fBuffer, fStart + 0, fStart + 2));
+    setValue(Minute, parseInt(fBuffer, fStart + 3, fStart + 5));
+    setValue(Second, parseInt(fBuffer, fStart + 6, fStart + 8));
     fStart += 8;
 
     // to see if any ms and/or utc part after that
@@ -1672,13 +1672,13 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd, int __xqu
 
 	if ( sign == NOT_FOUND )
         {
-            rawMilis = parseInt(fBuffer, fStart, fEnd, __xquery_line);  //get ms between '.' and fEnd
+            rawMilis = parseInt(fBuffer, fStart, fEnd);  //get ms between '.' and fEnd
 	    miliSecondLen = fEnd-fStart;
             fStart = fEnd;
         }
         else
         {
-            rawMilis = parseInt(fBuffer, fStart, sign, __xquery_line);  //get ms between UTC sign and fEnd
+            rawMilis = parseInt(fBuffer, fStart, sign);  //get ms between UTC sign and fEnd
 	    miliSecondLen = sign-fStart;
         }
 
@@ -1693,7 +1693,7 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd, int __xqu
 
     //parse UTC time zone (hh:mm)
     if ( sign > 0 ) {
-        getTimeZone(fBuffer,sign,fEnd, __xquery_line);
+        getTimeZone(fBuffer,sign,fEnd);
     }
 
 }
@@ -1704,7 +1704,7 @@ void XMLDateTime::getTime(const char* fBuffer, int& fStart, int& fEnd, int __xqu
 // Note: CCYY could be more than 4 digits
 //       fStart updated to point AFTER the second 'M' (probably meet the fEnd)
 //
-void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line)
+void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd)
 {
 
     // Ensure enough chars in buffer
@@ -1723,7 +1723,7 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd, int 
 	throw XQUERY_EXCEPTION2(FORG0001, "year separator is missing or misplaced");
         //("Year separator is missing or misplaced");
 
-    setValue(CentYear, parseIntYear(fBuffer,fStart,yearSeparator, __xquery_line));
+    setValue(CentYear, parseIntYear(fBuffer,fStart,yearSeparator));
     fStart = yearSeparator + 1;  //skip the '-' and point to the first M
 
     //
@@ -1733,14 +1733,14 @@ void XMLDateTime::getYearMonth(const char* fBuffer, int& fStart, int& fEnd, int 
 	throw XQUERY_EXCEPTION2(FORG0001, "no month specified");
         //"no month in buffer"
 
-    setValue(Month, parseInt(fBuffer,fStart, yearSeparator + 3, __xquery_line));
+    setValue(Month, parseInt(fBuffer,fStart, yearSeparator + 3));
 
     fStart += 2;  //fStart points right after the MONTH
 
     return;
 }
 
-void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd, int __xquery_line)
+void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd)
 {
     //fStart points right after the date   	 
   	if ( fStart < fEnd ) {
@@ -1749,7 +1749,7 @@ void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd, int
 	   throw XQUERY_EXCEPTION2(FORG0001, "no UTC sign in the timezone");
    		else { 
     	    	setValue(utc, pos+1);
-  	        getTimeZone(fBuffer,fStart,fEnd, __xquery_line);   		
+  	        getTimeZone(fBuffer,fStart,fEnd);   		
    		}
     }
 
@@ -1763,7 +1763,7 @@ void XMLDateTime::parseTimeZone(const char* fBuffer, int& fStart, int& fEnd, int
 // Note: Assuming fStart points to the beginning of TimeZone section
 //       fStart updated to meet fEnd
 //
-void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd, int __xquery_line)
+void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd)
 {
 
     if ( fBuffer[sign] == UTC_STD_CHAR )
@@ -1786,8 +1786,8 @@ void XMLDateTime::getTimeZone(const char* fBuffer, const int& sign, int& fEnd, i
 	throw XQUERY_EXCEPTION2(FORG0001, "error parsing time zone");
         //("Error in parsing time zone");
 
-    setValue(tz_hh, parseInt(fBuffer,sign+1, sign+3, __xquery_line));
-    setValue(tz_mm, parseInt(fBuffer,sign+4, fEnd, __xquery_line));
+    setValue(tz_hh, parseInt(fBuffer,sign+1, sign+3));
+    setValue(tz_mm, parseInt(fBuffer,sign+4, fEnd));
         		
     return;
 }
@@ -2017,7 +2017,7 @@ void XMLDateTime::normalizeDuration()
     return;
 }
 
-void XMLDateTime::validateDateTime(int __xquery_line) const
+void XMLDateTime::validateDateTime() const
 {
 
     //REVISIT: should we throw an exception for not valid dates
@@ -2115,7 +2115,7 @@ int XMLDateTime::findUTCSign (const char* fBuffer, const int start, const int fE
 //    end:   ending point in fBuffer (exclusive)
 //    fStart NOT updated
 //
-int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end, int __xquery_line) const
+int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end) const
 {
     int retVal = 0;
     for (int i=start; i < end; i++) {
@@ -2141,7 +2141,7 @@ int XMLDateTime::parseInt(const char* fBuffer, const int start, const int end, i
 //       end (exclusive)
 //       fStart NOT updated
 //
-int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int end, int __xquery_line) const
+int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int end) const
 {
     // skip the first leading '-'
     int start = ( fBuffer[fStart] == '-') ? fStart + 1 : fStart;
@@ -2156,7 +2156,7 @@ int XMLDateTime::parseIntYear(const char* fBuffer, const int fStart, const int e
         // otherwise they are forbidden");
 
     bool negative = (fBuffer[fStart] == '-');
-    int  yearVal = parseInt(fBuffer, (negative ? fStart+1 : fStart), end, __xquery_line);
+    int  yearVal = parseInt(fBuffer, (negative ? fStart+1 : fStart), end);
     return ( negative ? (-1) * yearVal : yearVal );
 }
 

@@ -53,10 +53,12 @@ void PPDocInCol::close ()
 
 void PPDocInCol::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time)
     {
         col_name_op.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
         
         tuple_cell tc_col= atomize(col_name_op.get(t));
         if(!is_string_type(tc_col.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -65,7 +67,7 @@ void PPDocInCol::next(tuple &t)
         tc_col = tuple_cell::make_sure_light_atomic(tc_col);
 
         doc_name_op.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
         if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -80,7 +82,7 @@ void PPDocInCol::next(tuple &t)
         db_ent->name = se_new char[tc_col.get_strlen_mem() + 1];
         strcpy(db_ent->name, tc_col.get_str_mem());
 		db_ent->type = dbe_collection;
-        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol", __xquery_line);
+        schema_node *root = get_schema_node(db_ent, "Unknown entity passed to PPDocInCol");
 
         bool valid;
         Uri::check_constraints(&tc_doc, &valid, NULL);
@@ -102,6 +104,8 @@ void PPDocInCol::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)
@@ -109,6 +113,7 @@ PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)
     PPDocInCol *res = se_new PPDocInCol(_cxt_, col_name_op, doc_name_op);
     res->col_name_op.op = col_name_op.op->copy(_cxt_);
     res->doc_name_op.op = doc_name_op.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

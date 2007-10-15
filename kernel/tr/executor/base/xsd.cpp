@@ -127,8 +127,7 @@ char *xs_QName_create(const char *uri,
                       const char *prefix,
                       const char *local,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line)
+                      dynamic_context *cxt)
 {
 	xml_ns* ns = NULL;
 	if (uri && *uri && prefix && *prefix)
@@ -148,8 +147,7 @@ char *xs_QName_create(const char *uri,
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line)
+                      dynamic_context *cxt)
 {
     U_ASSERT(prefix_and_local);
 
@@ -191,8 +189,7 @@ char *xs_QName_create(const char* uri,
 char *xs_QName_create(const char* prefix_and_local,
                       const xptr& elem_node,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line)
+                      dynamic_context *cxt)
 {
     U_ASSERT(prefix_and_local);
 

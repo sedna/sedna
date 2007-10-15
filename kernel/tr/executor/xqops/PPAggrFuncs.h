@@ -246,6 +246,8 @@ void PPAggrFuncContainer<Essence>::close ()
 template<class Essence>
 void PPAggrFuncContainer<Essence>::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -267,6 +269,8 @@ void PPAggrFuncContainer<Essence>::next(tuple &t)
         ess.reopen();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 template<class Essence>
@@ -274,6 +278,7 @@ PPIterator* PPAggrFuncContainer<Essence>::copy(dynamic_context *_cxt_)
 {
     PPAggrFuncContainer<Essence> *res = se_new PPAggrFuncContainer<Essence>(_cxt_, child);
     res->child.op = child.op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

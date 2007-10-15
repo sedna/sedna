@@ -133,7 +133,7 @@ void PPIndexScan::close ()
 #define SET_EOS_AND_EXIT		    {								\
                                         first_time = true;			\
                                         t.set_eos();				\
-                                        return;						\
+                                        {UNDO_XQUERY_LINE; return;}	\
                                     }
 
 #define DEREF_AND_SET				CHECKP(res);					\
@@ -141,7 +141,7 @@ void PPIndexScan::close ()
                                     res = *(xptr*)(XADDR(res));
 
 
-void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type, int __xquery_line = 0)
+void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_type idx_type)
 {
     if (child.op)
     {
@@ -158,9 +158,9 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
 
 
     if (tc.get_atomic_type() == xs_untypedAtomic)
-        tc = cast(tc, idx_type, __xquery_line);
+        tc = cast(tc, idx_type);
     else
-        type_promotion(tc, idx_type, __xquery_line);
+        type_promotion(tc, idx_type);
 }
 
 
@@ -168,7 +168,7 @@ void PPIndexScan::next_eq(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
+        obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
         cursor = bt_find(btree, key);
@@ -187,7 +187,7 @@ void PPIndexScan::next_lt_le(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
+        obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
         cursor = bt_lm(btree);
@@ -218,7 +218,7 @@ void PPIndexScan::next_gt_ge(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
+        obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
         cursor = isc == isc_gt ? bt_find_gt(btree, key)
@@ -242,8 +242,8 @@ void PPIndexScan::next_between(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type, __xquery_line);
-        obtain_tuple_cell(tc2, child2, idx_type, __xquery_line);
+        obtain_tuple_cell(tc, child, idx_type);
+        obtain_tuple_cell(tc2, child2, idx_type);
 
         tuple_cell2bt_key(tc, key);
         tuple_cell2bt_key(tc2, key2);

@@ -51,6 +51,8 @@ void PPDAFilter::close ()
 
 void PPDAFilter::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     while (true)
     {
         if (tug_first)
@@ -63,11 +65,11 @@ void PPDAFilter::next  (tuple &t)
 
                 child2.op->reopen();
 
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             else
             {
-                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of ancestor-descendant-filter is not a node");
+                if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of ancestor-descendant-filter is not a node");
                 xptr1 = child1.get(t).get_node();
             }
 
@@ -84,11 +86,11 @@ void PPDAFilter::next  (tuple &t)
 
                 child1.op->reopen();
 
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             else
             {
-                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of ancestor-descendant-filter is not a node");
+                if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of ancestor-descendant-filter is not a node");
                 xptr2 = child2.get(t).get_node();
             }
 
@@ -102,7 +104,7 @@ void PPDAFilter::next  (tuple &t)
             {
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             case -1: /// (1) < (2)
             {
@@ -114,7 +116,7 @@ void PPDAFilter::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             case  1: /// (1) > (2)
             {
@@ -129,6 +131,8 @@ void PPDAFilter::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPDAFilter::next");
         }
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDAFilter::copy(dynamic_context *_cxt_)
@@ -136,7 +140,7 @@ PPIterator* PPDAFilter::copy(dynamic_context *_cxt_)
     PPDAFilter *res = se_new PPDAFilter(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
