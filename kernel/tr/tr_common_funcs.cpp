@@ -85,6 +85,8 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Initializing logical log...");
    hl_logical_log_on_session_begin(log_files_path, rcv_active);
    d_printf1("OK\n");
+
+   need_ph_reinit = is_ft_disabled = is_ro_mode;
 }
 
 void on_session_end(SSMMsg* &sm_server)
@@ -228,13 +230,6 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Setting transaction mode for local lock manager...");
    set_tr_mode_lock_mgr(is_ro_mode);
    d_printf1("OK\n");
-
-#ifdef SE_ENABLE_TRIGGERS
-   d_printf1("Triggers on transaction begin...");
-   triggers_on_transaction_begin(rcv_active);
-   d_printf1("OK\n");
-#endif
-   
 }
 
 // is_commit defines mode: 
