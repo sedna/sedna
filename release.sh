@@ -96,7 +96,18 @@ prepare_windows_source() {
     rm -rf $FILE_BASE/libs/src &&
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
     sed -e 's/\(build_\w\+\)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
-    rm -f $FILE_BASE/libs/Makefile.orig
+    rm -f $FILE_BASE/libs/Makefile.orig &&
+    cd $FILE_BASE/doc &&
+    make &&
+    mv AdminGuide/AdminGuide.pdf . &&
+    rm -rf AdminGuide &&
+    mv QuickStart/QuickStart.pdf . &&
+    rm -rf QuickStart &&
+    mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
+    mv ProgGuide/ProgGuide.pdf . &&
+    rm -rf ProgGuide &&
+    rm Makefile
+    cd -
 }
 
 prepare_linux_source() {
@@ -111,7 +122,18 @@ prepare_linux_source() {
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
     sed -e 's/\(build_\w\+\)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
-    rm -rf $FILE_BASE/libs/bin
+    rm -rf $FILE_BASE/libs/bin &&
+    cd $FILE_BASE/doc &&
+    make &&
+    mv AdminGuide/AdminGuide.pdf . &&
+    rm -rf AdminGuide &&
+    mv QuickStart/QuickStart.pdf . &&
+    rm -rf QuickStart &&
+    mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
+    mv ProgGuide/ProgGuide.pdf . &&
+    rm -rf ProgGuide &&
+    rm Makefile
+    cd -
 }
 
 create_sed_script()
@@ -119,9 +141,9 @@ create_sed_script()
     cat > $SEDSCRIPT <<EEE
 s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+$/ACTIVE_CONFIGURATION = Release/
 s/^AUTH_SWITCH[ ]\+\?=[A-Za-z0-9 ]\+$/AUTH_SWITCH = 1/
-s/^DOCUMENTATION[ ]\+\?=[A-Za-z0-9 ]\+$/DOCUMENTATION = 1/
+s/^DOCUMENTATION[ ]\+\?=[A-Za-z0-9 ]\+$/DOCUMENTATION = 0/
 s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+$/EL_DEBUG = 0/
-s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+$/JAVA_DRIVER = 1/
+s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+$/JAVA_DRIVER = 0/
 s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+$/SQL_CONNECTION = 0/
 s/^STATIC_SYS_LIBS[ ]\+\?=[A-Za-z0-9 ]\+$/STATIC_SYS_LIBS = 0/
 s/^SE_ENABLE_GCOV[ ]\+\?=[A-Za-z0-9 ]\+$/SE_ENABLE_GCOV = 0/

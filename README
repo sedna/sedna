@@ -61,8 +61,7 @@ Linux platform:
    The installation process consists of running self-extracting script
    and following its instruction.
    Note: To avoid incompatibility problems with different glibc versions
-   we _strongly_ recommend you building Sedna from source code or using
-   Sedna package (RPM or DEB) if it is provided by your Linux vendor.
+   we _strongly_ recommend you building Sedna from source code.
 
 
    _______________________________________________________________________
