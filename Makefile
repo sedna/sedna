@@ -193,21 +193,6 @@ endif
 	$(INSTALL) -Dp $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
 	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/cfg
 	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/data
-ifeq ($(PLATFORM), UNIX)
-	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '<sednaconf>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <!-- Path to database files -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <sedna_data>$(SEDNA_INSTALL)/sedna</sedna_data>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <!-- Left bounf of range for identifiers of system resources -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <os_primitives_id_min_bound>1500</os_primitives_id_min_bound>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <!-- Sedna server listening port number -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <listener_port>5050</listener_port>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <!-- Sedna server ping port number -->' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '  <ping_port>5151</ping_port>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-	$(ECHO) '</sednaconf>' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
-endif
-
 
 ifndef PREFIX
 SHARE_PREFIX := /usr/share

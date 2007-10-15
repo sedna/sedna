@@ -89,6 +89,7 @@ for exclude_file in libs/AntlrMSVC60.mak libs/Makefile.antlr libs/Makefile.dlg l
 done
 
 prepare_windows_source() {
+    echo prepare_windows_source &&
     rm -rf $FILE_BASE/libs/*.tar.gz &&
     rm -rf $FILE_BASE/libs/pcre/*.a &&
     make -C $FILE_BASE/libs &&
@@ -97,7 +98,9 @@ prepare_windows_source() {
     mv $FILE_BASE/libs/Makefile $FILE_BASE/libs/Makefile.orig &&
     sed -e 's/\(build_\w\+\)=yes/\1=no/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
+    OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
+    echo `pwd` &&
     make &&
     mv AdminGuide/AdminGuide.pdf . &&
     rm -rf AdminGuide &&
@@ -106,8 +109,8 @@ prepare_windows_source() {
     mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
     mv ProgGuide/ProgGuide.pdf . &&
     rm -rf ProgGuide &&
-    rm Makefile
-    cd -
+    rm Makefile &&
+    cd "$OLDDIR"
 }
 
 prepare_linux_source() {
@@ -123,6 +126,7 @@ prepare_linux_source() {
     sed -e 's/\(build_\w\+\)=no/\1=yes/' $FILE_BASE/libs/Makefile.orig > $FILE_BASE/libs/Makefile &&
     rm -f $FILE_BASE/libs/Makefile.orig &&
     rm -rf $FILE_BASE/libs/bin &&
+    OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
     make &&
     mv AdminGuide/AdminGuide.pdf . &&
@@ -132,8 +136,8 @@ prepare_linux_source() {
     mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
     mv ProgGuide/ProgGuide.pdf . &&
     rm -rf ProgGuide &&
-    rm Makefile
-    cd -
+    rm Makefile &&
+    cd "$OLDDIR"
 }
 
 create_sed_script()

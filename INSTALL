@@ -157,11 +157,11 @@ make install
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
-       To grant the necessary permisions to a user you can use the following command
-       (suppose, sedna-user is Linux user that is going to run Sedna. 
-       sedna-user-group is sedna-user's group):
+       To grant the necessary permisions to the user on Linux 
+       you can use the following command (suppose, <sedna-user> is the user 
+       that is going to run Sedna):
 
-chown sedna-user:sedna-user-group cfg data
+chown <sedna-user> cfg data
 
    Uninstallation: To undo the installation just delete files installed 
    into $SEDNA_INSTALL/sedna.
@@ -180,12 +180,10 @@ Environment Variables
 
 Database Files
 
-   In Windows database files will be placed by default into $SEDNA_INSTALL/sedna.
-   In Unix database files will be placed into the directory specified 
-   in sednaconf.xml in 'sedna_data' parameter. You may want to set up this path manually
-   by modifying $SEDNA_INSTALL/sedna/etc/sednaconf.xml. Initially after installation
-   'sedna_data' parameter is set to $SEDNA_INSTALL/sedna.
-   See Sedna Administration Guide for details.
+   Database files will be placed by default into $SEDNA_INSTALL/sedna.
+   You may want to set up the place where database files are stored by modifying
+   $SEDNA_INSTALL/sedna/etc/sednaconf.xml.sample. 
+   See Sedna Administration Guide for details on how to configure Sedna.
 
      _________________________________________________________________
 

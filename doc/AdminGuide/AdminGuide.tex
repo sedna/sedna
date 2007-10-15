@@ -90,7 +90,7 @@ SEDNA_INSTALL/data/<db_name>_files/lib
 SEDNA_INSTALL/doc          Sedna documentation
 SEDNA_INSTALL/driver       API drivers for various programming languages
 SEDNA_INSTALL/include      include files
-SEDNA_INSTALL/etc          Sedna config file sednaconf.xml
+SEDNA_INSTALL/etc          Sedna configure sample file sednaconf.xml.sample
 SEDNA_INSTALL/examples     example databases and applications for 
                            the Sedna APIs
 SEDNA_INSTALL/share        Sedna database metadata files (currently only 
@@ -196,7 +196,7 @@ Note that \verb!se_stop! command causes a roll back of all active transactions i
 \subsubsection{Configuring Sedna}
 \label{sec:ConfigSedna}
 Sedna configuration parameters are stored in the configuration file \verb!sednaconf.xml! located in
-\verb![win:] PREFIX\etc!, \verb![linux:] PREFIX/etc! or \verb![linux:]/etc!. On Linux, \verb!sednaconf.xml! is searched in the following order: \verb!PREFIX/etc!, \verb!/etc!. The file is optional. If there is no such file, the default values are used.
+\verb![win:] SEDNA_INSTALL\etc!, \verb![linux:] SEDNA_INSTALL/etc!. The file is optional. If there is no such file, the default values are used.
 The file is an XML document, which satisfies the following DTD:
 
 \begin{verbatim}
@@ -211,7 +211,7 @@ The file is an XML document, which satisfies the following DTD:
 The \verb!sedna_data! element contains the path to the directory where 
 database configuration files (in the \verb!cfg! subdirectory) and 
 databases (in the \verb!data! subdirectory) are stored. The path by default is
-\verb![win:] PREFIX! \verb![linux:] /var/lib/sedna!.
+\verb![win:] SEDNA_INSTALL/sedna! \verb![linux:] SEDNA_INSTALL/sedna!.
 
 The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should configure this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
 
@@ -297,7 +297,7 @@ The last parameter \verb!db_name! is the name of the database to be created. Adm
 
 \subsubsection{Configuring a Database}
 \label{ConfigDB}
-For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] PREFIX\cfg! \verb![linux:] PREFIX/cfg! or \verb![linux:] /var/lib/sedna/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}) for both Windows and Linux. 
+For each database there is a set of run-time configuration parameters, which store in the database configuration file. The name of the database configuration file is \verb!<db_name>_cfg.xml! where \verb!<db_name>! is the name of the database. The location of configuration file is \verb![win:] SEDNA_INSTALL\cfg! \verb![linux:] SEDNA_INSTALL/cfg! or as specified in the Sedna configuration file (see Section \ref{sec:ConfigSedna}) for both Windows and Linux. 
 
 The configuration file is an XML document, which satisfies the following DTD: 
 
