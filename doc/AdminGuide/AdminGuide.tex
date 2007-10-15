@@ -46,97 +46,94 @@ This guide describes administration of the Sedna XML Database Management System 
 \emph{Governor} serves as  ``control center'' of the system. All other components register at the Governor. The Governor knows which other components (e.g. databases and sessions) are running in the system and controls them. Other components cannot function properly if the Governor is not running so you must start it to use Sedna. Besides, Governor is responsible for handling remote client's requests. For each request it creates a session which keeps the direct connection with client. Then the client interacts with the system via session. You may run only one instance of the Governor.
 
 
-\emph{Session} keeps the client's settings and allows client to run a sequence of transactions. The transactions within a session are strictly serial, that is one transaction ends before next one starts, there is only one active transaction per session. Transaction provides functionality required for execution of the client's queries. The query execution consists of several steps: (1) parsing of the query and translation of the query into its logical representation, (2) processing of the logical representation by optimizer that produces the optimal query execution plan, (3) execution of the optimal query plan and passing results to the client. Transaction is rolled back if error is occured during its execution.
+\emph{Session} keeps the client's settings and allows client to run a sequence of transactions. The transactions within a session are strictly serial, that is one transaction ends before next one starts, there is only one active transaction per session. Transaction provides functionality required for execution of the client's queries. The query execution consists of several steps: (1) parsing of the query and translation of the query into its logical representation, (2) processing of the logical representation by optimizer that produces the optimal query execution plan, (3) execution of the optimal query plan and passing results to the client. Transaction is rolled back if error is occurred during its execution.
 
 \emph{Storage manager} manages a database and provides memory management functionality to the executor. There is an instance of storage manager for each database run. 
 
 All the components described above are implemented as operating system processes.
  
-%Administrator can manage only Governor, listener, transaction and storage manager. All other components (such as connetion) are internal components and are managed by the system. 
 
-%There are two typical configurations of Sedna.
+One can run sessions via Sedna client applications (See Sedna Programmer's Guide how to use Sedna APIs) or via Sedna interactive terminal (see \ref{terminal}). In both cases, first of all the Governor and storage managers (one for each databases required) components should be run.
 
-One can run session locally via command line or as a remote client via remote request to Governor. In both cases, first of all the Governor and storage managers (one for each databases required) components should be run. For each client a session is created. In turn, within session client can run a sequence of transactions.
 
-%One is \emph{to work with remote clients} distributed over network. In this configuration first of all the Governor must be run. Then the listener and storage managers (one for each database required) should be run. In this case for each client a session is created. In turn, within session client can run a sequence of transactions.
-
-%Another typical configuration is \emph{to work locally via command line}. In this configuration, first of all the governer component should be run (the listener is not required), then storage managers (one for each database required) should be run. In this case client can create session and run transaction within it using command line utilities.
-
-There are a set of command line utitilies that allow you to administrate all aspects of Sedna.
+There are a set of command line utilities that allow you to administrate all aspects of Sedna.
 These utilities are described in detail in the following section.
 
 \section{Sedna Administration via Command Line}
 
 \subsection{Sedna Directory Structure}
 \label{sec:dir-structure}
-The Sedna directory hierarchy is fundamental to obtaining an overall understanding of the system. This section desribes 
-how the Sedna directory structure is set up and what it contains for different kinds of Sedna packages.
+The Sedna directory hierarchy is fundamental to obtaining an overall understanding of the system. 
 
-\subsubsection{Sedna Installed from Precompiled Binaries}
-\label{sec:binary-pack}
-If you install Sedna from precompiled binaries, the directory structures are identical on Windows and Linux platforms.
-Below \verb!PREFIX! refers to the directory where Sedna is installed.
+%This section describes 
+%how the Sedna directory structure is set up and what it contains for different kinds of Sedna packages.
 
-\begin{verbatim}
-PREFIX/bin        command line utilities for managing 
-                  Sedna and databases, running queries, etc.
-PREFIX/cfg        database configuration files named 
-                  <db_name>_cfg.xml, where <db_name> is 
-                  the name of the corresponding database
-PREFIX/data       database data stored in subdirectories 
-                  named <db_name>_files, where <db_name> 
-                  is the name of the corresponding database 									
-PREFIX/lib        database-independent libraries of external 
-                  functions
-PREFIX/data/<db_name>_files/lib        
-                  database-specific libraries of external
-                  functions                  
-PREFIX/doc        Sedna documentation
-PREFIX/driver     API drivers for various programming languages
-PREFIX/include    include files
-PREFIX/etc        Sedna config file sednaconf.xml (optional)
-/etc              Sedna config file sednaconf.xml if it is not 
-                  found in PREFIX/etc (also optional)
-PREFIX/examples   example databases and applications for 
-                  the Sedna APIs
-\end{verbatim}
-
-\subsubsection{Sedna Installed from RPM or DEB Packages}
-\label{sec:rpm-deb-pack}
-If you install Sedna from RPM or DEB packages on Linux, the directory structure is as follows.
-Below \verb!PREFIX! refers to the directory where Sedna is installed. 
-\verb!SHARE_PREFIX! is defined as /usr/share if \verb!PREFIX! is \verb!/! and \verb!SHARE_PREFIX! is defined as \verb!PREFIX/share! otherwise.
+%\subsubsection{Sedna Installed from Precompiled Binaries}
+%\label{sec:binary-pack}
+%If you install Sedna from precompiled binaries, the directory structures are identical on Windows and Linux platforms.
+Below \verb!SEDNA_INSTALL! refers to the directory where Sedna is installed. The directory structures are identical on Windows and Linux platforms.
 
 \begin{verbatim}
-PREFIX/bin/se_*                     command line utilities for managing 
-                                    Sedna and databases, running queries
-PREFIX/etc/sednaconf.xml            Sedna configuration file (optional)
-/etc/sednaconf.xml                  Sedna configuration file if it is not 
-                                    found in PREFIX/etc (also optional)
-PREFIX/include/libsedna.h           C API header file
-PREFIX/include/sedna_ef.h           Sedna C external function API header file
-PREFIX/lib/libsedna.a               C API driver for Sedna
-SHARE_PREFIX/doc/sedna-x.x.x        Sedna documentation
-SHARE_PREFIX/java/sednadriver.jar   Java API Driver for Sedna
-/var/lib/sedna/cfg                  database configuration files named 
-                                    <db_name>_cfg.xml, where <db_name> is
-                                    the name of the corresponding database
-/var/lib/sedna/data                 databases stored in subdirectories named
-                                    <db_name>_files, where <db_name> is the 
-                                    name of the corresponding database
-/var/lib/sedna/lib                  database-independent libraries of external 
-                                    functions
-/var/lib/sedna/data/<db_name>_files/lib
-                                    database-specific libraries of external
-                                    functions
-SHARE_PREFIX/sedna-x.x.x/examples   example databases and applications for 
-                                    the Sedna APIs
-SHARE_PREFIX/sedna-x.x.x/driver     additonal API drivers 
+SEDNA_INSTALL/bin          command line utilities for managing 
+                           Sedna and databases, running queries, etc.
+SEDNA_INSTALL/cfg          database configuration files named 
+                           <db_name>_cfg.xml, where <db_name> is 
+                           the name of the corresponding database
+SEDNA_INSTALL/data         database data stored in subdirectories 
+                           named <db_name>_files, where <db_name> 
+                           is the name of the corresponding database 									
+SEDNA_INSTALL/lib          database-independent libraries of external 
+                           functions
+SEDNA_INSTALL/data/<db_name>_files/lib        
+                           database-specific libraries of external
+                           functions                  
+SEDNA_INSTALL/doc          Sedna documentation
+SEDNA_INSTALL/driver       API drivers for various programming languages
+SEDNA_INSTALL/include      include files
+SEDNA_INSTALL/etc          Sedna config file sednaconf.xml
+SEDNA_INSTALL/examples     example databases and applications for 
+                           the Sedna APIs
+SEDNA_INSTALL/share        Sedna database metadata files (currently only 
+                           database users and privileges metadata)
 \end{verbatim}
 
-\subsubsection{Sedna Installed from Source Code}
-If you install Sedna from source code using \verb!make install!, the directory structure is the same as described in Section \ref{sec:binary-pack}.
-If you install Sedna from source code using \verb!make dispersal_install!, the directory structure is the same as described in Section \ref{sec:rpm-deb-pack}. Note that the latter is available only on Linux. 
+For the installation instructions see INSTALL file shipped with the Sedna distribution.
+%\subsubsection{Sedna Installed from RPM or DEB Packages}
+%\label{sec:rpm-deb-pack}
+%If you install Sedna from RPM or DEB packages on Linux, the directory structure is as follows.
+%Below \verb!PREFIX! refers to the directory where Sedna is installed. 
+%\verb!SHARE_PREFIX! is defined as /usr/share if \verb!PREFIX! is \verb!/! and \verb!SHARE_PREFIX! is defined as \verb!PREFIX/share! otherwise.
+
+%\begin{verbatim}
+%PREFIX/bin/se_*                     command line utilities for managing 
+%                                    Sedna and databases, running queries
+%PREFIX/etc/sednaconf.xml            Sedna configuration file
+%/etc/sednaconf.xml                  Sedna configuration file if it is not 
+%                                    found in PREFIX/etc (optional)
+%PREFIX/include/libsedna.h           C API header file
+%PREFIX/include/sedna_ef.h           Sedna C external function API header file
+%PREFIX/lib/libsedna.a               C API driver for Sedna
+%SHARE_PREFIX/doc/sedna-x.x.x        Sedna documentation
+%SHARE_PREFIX/java/sednadriver.jar   Java API Driver for Sedna
+%/var/lib/sedna/cfg                  database configuration files named 
+%                                    <db_name>_cfg.xml, where <db_name> is
+%                                    the name of the corresponding database
+%/var/lib/sedna/data                 databases stored in subdirectories named
+%                                    <db_name>_files, where <db_name> is the 
+%                                    name of the corresponding database
+%/var/lib/sedna/lib                  database-independent libraries of external 
+%                                    functions
+%/var/lib/sedna/data/<db_name>_files/lib
+%                                    database-specific libraries of external
+%                                    functions
+%SHARE_PREFIX/sedna-x.x.x/examples   example databases and applications for 
+%                                    the Sedna APIs
+%SHARE_PREFIX/sedna-x.x.x/driver     additonal API drivers 
+%\end{verbatim}
+
+%\subsubsection{Sedna Installed from Source Code}
+%If you install Sedna from source code using \verb!make install!, the directory structure is the same as described in Section \ref{sec:binary-pack}.
+%If you install Sedna from source code using \verb!make dispersal_install!, the directory structure is the same as described in Section \ref{sec:rpm-deb-pack}. Note that the latter is available only on %Linux. 
 
 \subsection{Managing Sedna}
 \subsubsection{Running Sedna}
@@ -192,7 +189,7 @@ options:
   -help                    display this help and exit
   -version                 display product version and exit
 \end{verbatim}
-The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_stop! command. Option \verb!-version! allows to get the version of the \verb!se_stop!.
+The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_stop! command. Option \verb!-version! allows getting the version of the \verb!se_stop!.
 
 Note that \verb!se_stop! command causes a roll back of all active transactions in the system.
 
@@ -216,7 +213,7 @@ database configuration files (in the \verb!cfg! subdirectory) and
 databases (in the \verb!data! subdirectory) are stored. The path by default is
 \verb![win:] PREFIX! \verb![linux:] /var/lib/sedna!.
 
-The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should config this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
+The \verb!os_primitives_id_min_bound! element defines the minimal value for identifiers of OS resources (e.g. semaphores) used in Sedna. In order to run several Sedna instances on one machine Administrator should configure this parameter in a such way that identifiers belonging to different Sedna instances does not intersect. In a standard configuration one Sedna instance acquires a range of identifiers which length is equal to 150.
 
 The \verb!listener_port! element defines the port number for listening for a connection requests from a client.
 
@@ -234,7 +231,8 @@ Each database consists of the following files, which are located as described in
 \begin{itemize}
 \item The \verb!<db_name>.sedata! file is used for storing persistent XML data, which are loaded to the database by user using LOAD/UPDATE expressions. 
 \item The \verb!<db_name>.setmp! file is used for storing temporary XML data. It appears in the database during query execution and contains intermediate results.
-\item The \verb!<db_name>.seph! and \verb!<db_name>.ph.sebu! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
+\item The \verb!<db_name>.*.seph! files are used for storing XML metadata (for example, the descriptive scheme of XML documents).
+\item The \verb!<db_name>.*llog! files are used for storing database logical log.
 %\item The \verb!buf! directory contains some intermidiate data. It is created when the database is run and removed when the database is stopped.
 \end{itemize}
 
@@ -266,8 +264,8 @@ options:
                                 default 10Mb
   -bufs-num N                   the number of buffers in main memory,
                                 default 1600
-  -max-trs-num N                the number of concurrent micro ransactions
-                                over database, default 10
+  -max-trs-num N                the number of concurrent micro transactions
+                                over database, default 20
 
 db_name         the name of the database to be created
 \end{verbatim}
@@ -275,7 +273,7 @@ db_name         the name of the database to be created
 
 The first and second options are straightforward, typing one of these options Administrator can get the exhaustive information about the \verb!se_cdb! command.
 
-The third option allows to get the version of the \verb!se_cdb! command.
+The third option allows getting the version of the \verb!se_cdb! command.
 
 The \verb!-data-file-max-size! option allows Administrator to set up the maximum size (in Mb) of the file where the persistent data are stored. The default value for this option is infinite.
 
@@ -293,7 +291,7 @@ The \verb!-persistent-heap-size! option allows Administrator to set up the size 
 
 The \verb!-bufs-num! option allows Administrator to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is 1600 buffers, which is equal to 100Mb and we do not recommend to use less number of buffers. The size of one buffer is 64Kb and can't be customized by Administrator.
 
-The \verb!-max-trs-num! option is the parameter of the Sedna storage manager and we will not discuss the meaning of this parameter in this guide. We recommend to use default value.
+The \verb!-max-trs-num! option is the parameter of the Sedna Storage Manager. In current version of Sedna only default value can be used for this parameter.
 
 The last parameter \verb!db_name! is the name of the database to be created. Administrator can use the arbitrary sequence of latin characters and digits for database name. There  cannot be two databases with the same name.
 
@@ -334,16 +332,16 @@ options:
 
 The first and second options are straightforward, typing one of these options Administrator can get the exhaustive information about the \verb!se_ddb! command.
 
-The third option allows to get the version of the \verb!se_ddb! command.
+The third option allows getting the version of the \verb!se_ddb! command.
 
 The last parameter \verb!db_name! is the name of the database to be dropped.
 
-Note that Administrator must stop database firstly and then run \verb!se_ddb! utility. 
+Note that Administrator must stop database firstly (see \ref{StopDB}) and then run \verb!se_ddb! utility. 
 
 \subsubsection{Running a Database}
 \label{RunDB}
 
-To run the database with name \verb!db_name! Administrator should use \verb!se_sm! command. The run-time configuration parameters of the database can be set by means of \verb!se_sm! command line options. If configuration parameter is not set via command line option, than the database storage manager retrieves the default value of this parameter from configuration file (see section \ref{ConfigDB}).
+To run the database with name \verb!db_name! Administrator should use \verb!se_sm! command. The run-time configuration parameters of the database can be set by means of \verb!se_sm! command line options. If configuration parameter is not set via command line option, than the database Storage Manager retrieves the default value of this parameter from configuration file (see section \ref{ConfigDB}).
 
 The usage of the \verb!se_sm! command is as follows:
 
@@ -365,13 +363,13 @@ options:
 
 The first and second options are straightforward, typing this option Administrator can get the exhaustive information about the \verb!se_sm! command.
 
-The third option allows to get the version of the \verb!se_sm! command.
+The third option allows getting the version of the \verb!se_sm! command.
 The \verb!-background-mode! option allows Administrator to start database in the background mode.
 
 The \verb!-bufs-num! option allows to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is retrieved from configuration file. The size of one buffer is 64Kb and can't be customized.
 
 
-The \verb!-max-trs-num! option is the parameter of the Sedna storage manager and we will not discuss the meaning of this parameter in the current version of Sedna. We recommend to use default value from configuration file.
+The \verb!-max-trs-num! option will allow setting up the number of concurrent micro transactions over database. In current version of Sedna only default value can be used for this parameter.
 
 
 The last parameter \verb!dbname!  defines the name of the database to be started up. 
@@ -380,6 +378,7 @@ The last parameter \verb!dbname!  defines the name of the database to be started
 Note: before running any database be sure that Sedna Server is strarted up (see section \ref{StartSedna}).
 
 \subsubsection{Stopping a Database}
+\label{StopDB}
 
 To stop the database with name \verb!db_name!, Administrator should use \verb!se_smsd! command. This command takes one input parameter, which defines the name of the database to be shut down. The usage of the \verb!se_smsd! command is as follows:
 
@@ -394,12 +393,13 @@ options:
 \end{verbatim}
 
 The first and second options are straightforward, typing these options Administrator can get the exhaustive information about the \verb!se_smsd! command.
-The third option allows to get the version of the \verb!se_smsd!.
+The third option allows getting the version of the \verb!se_smsd!.
 
 Note that \verb!se_smsd! command causes a roll back of all active transactions executed over \verb!db_name! database.
 
 
 \subsection{Sedna Terminal}
+\label{terminal}
 \verb!se_term! is an interactive terminal to Sedna. It is a C application that uses Sedna C API (see "Sedna Programmer's Guide") to work with Sedna. It enables you to open a session to one of the Sedna database, type in queries interactively, issue them to the database and see the query results. Alternatively, input can be from a file, or a single query can be passed for execution as a command line parameter. In addition, it provides a number of meta-commands. 
 
 The usage of the \verb!se_term! is as follows:
@@ -428,7 +428,7 @@ options:
 
 \verb!-help! or \verb!--help! provides the exhaustive information about the \verb!se_term!.
 
-\verb!-version! option allows to get the version of the \verb!se_term!.
+\verb!-version! option allows getting the version of the \verb!se_term!.
 
 \verb!-file! option specifies the name of the file that contains any number of queries and meta-commands. \verb!se_term! uses this file as the source of queries and meta-commands instead of reading them interactively. \verb!se_term! executes the queries and meta-commands from file consequently and exit.
 
@@ -438,14 +438,14 @@ options:
 
 \verb!-echo! option specifies if \verb!se_term! output needs to be displayed or not. If the \verb!echo! is on, the output is displayed, if the \verb!echo! is off, the output is not displayed. By default, the \verb!echo! option is set to on when using \verb!se_term! in an interactive mode, and the \verb!echo! option is set to off when using \verb!se_term! in a batch mode (running queries/commands from file).
 
-\verb!-show-time! option allows to get the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
+\verb!-show-time! option allows getting the time of the latest query execution. If used with the \verb!-query! option provides the time of the specified query execution; if used with the \verb!-file! option provides the time of the execution of the last query in file.
 
-\verb!-debug! option specifies session debug mode. If \verb!-debug! option is on, statements of this session are exectued in a debug mode. If \verb!-debug! option is off, statement of this session are executed in normal (not debug) mode. For details see "Debug Facilities" section of the Sedna Programmer's Guide.
+\verb!-debug! option specifies session debug mode. If \verb!-debug! option is on, statements of this session are executed in a debug mode. If \verb!-debug! option is off, statement of this session are executed in normal (not debug) mode. For details see "Debug Facilities" section of the Sedna Programmer's Guide.
 \verb!-host! option specifies the name of the machine with Sedna DBMS running. If not used, default value \verb!localhost! is used.
 
 \verb!-port! option specifies the TCP/IP port on which Sedna server is listening to client applications. If omitted, port number 5050 is used by default.
 
-\verb!-name! and \verb!-password! options specify the user name and the password. If omitted, connects as a predifined user \verb!SYSTEM! with password \verb!MANAGER!.
+\verb!-name! and \verb!-password! options specify the user name and the password. If omitted, connects as a predefined user \verb!SYSTEM! with password \verb!MANAGER!.
 
 \verb!dbname! is a non-option argument. It specifies the name of the database to connect to.
 
@@ -478,12 +478,12 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 
 \subsection{Backup and Restore}
 
-As with everything that contains valuable data, Sedna databases should be backed up regularly.
-In this section we present different aproaches to backing up Sedna data and the process of 
+As any database system that contains valuable data, Sedna databases should be backed up regularly.
+In this section we present different aproaches to back up Sedna data and the process of 
 migration between different Sedna releases.
 
 
-\subsubsection{se\_exp utility}
+\subsubsection{Export/Import Utility}
 
 The purpose of \verb!se_exp! utility is to provide functionality of exporting/importing data. The 
 idea behind the \verb!se_exp! method is to generate a set of XML files and XQuery 
@@ -612,7 +612,7 @@ Sedna stores databases. You can use whatever method you prefer for doing usual f
 To restore a database, copy the corresponding backup directory to the location where Sedna stores
 databases.
 
-There is a requirement is that the target database must be shut down in order to get a usable backup.
+There is a requirement is that the target database must be stopped in order to get a usable backup.
 Half-way measures such as disallowing all connections will not work.
 
 Note that a file system backup will not necessarily be smaller than an back up via export. On 

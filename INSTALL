@@ -14,9 +14,11 @@ export SEDNA_INSTALL=<install-path>
 make
 make install
 
-   Note: You may want to set up variables according to your needs. You may
-   also want to perform "make dispersal_install" instead of "make install".
-   See details below.
+   Note: The operating system user that is going to run Sedna must have 
+   r-w-x permissions for the following Sedna directories:
+
+$SEDNA_INSTALL/data
+$SEDNA_INSTALL/cfg
 
      _________________________________________________________________
 
@@ -24,26 +26,18 @@ make install
 
    The long version is the rest of this document.
 
-   For this moment Sedna is not sharpened for building it by outsiders. But 
-   if you have some time and patience you can succeed.
-
      _________________________________________________________________
 
                                 Requirements
-
-   Historically, Sedna was developed for the Windows platform (NT family), but
-   for now it is also available for Linux. Despite the fact that Sedna was 
-   natively developed for Windows, you need to use a set of Unix tools to build 
-   it even for the Windows platform. Note that Sedna will *not* run on Microsoft 
-   Windows 95/98/ME.
 
    Sedna is expected to build and run on the following platforms:
    1. Microsoft Windows 2000, XP, 2003 (and possibly Windows NT)
    2. Linux with kernel version 2.4.xxx and 2.6.xxx
 
+   Note that Sedna will *not* run on Microsoft Windows 95/98/ME.
+
    A modern POSIX-compatible platform should be able to run Sedna potentially, 
    but some effort should be made.
-
 
    The following software packages are required for building Sedna:
 
@@ -60,13 +54,12 @@ make install
        GCC in it).
      * gzip is needed to unpack the distribution in the first place. If
        you are reading this, you probably already got past that hurdle.
-     * For building documentation you need LaTex package. You also need some
-       additional tools like ps2pdf. For the Windows platform it is 
+     * For building documentation you need LaTex package. For the Windows platform it is 
        recommended to use GhostScript package version 6.5 or higher (paths to 
        its bin and lib should be in the environment variable PATH).
      * For building Java API driver your need Sun Microsystems JDK version 
        1.4 or higher.
-     * The Sedna source code distribution for Windows consists of some 
+     * The Sedna source code distribution for Windows contains some 
        libraries in the binary form. They are modified PCRE library, Chicken 
        Scheme compiler, Expat XML parser and PCCTS Tools. They are provided 
        in the binary form to simplify building process while they are still 
@@ -77,13 +70,12 @@ make install
    Note: We neither support nor plan to support MinGW environment for building
    Sedna on Windows. If you do not have Microsoft Visual C++ consider using
    free building tools from Microsoft: Microsoft Visual C++ Toolkit 2003 
-   togeter with Microsoft Windows Platform SDK.
+   together with Microsoft Windows Platform SDK.
 
 
    Also check that you have sufficient disk space. You will need about 100
    MB for the source tree during compilation and about 10 MB for the
-   installation directory (note that this is measurement for the Windows 
-   platform and results may vary). The default size database requires 
+   installation directory. The default size database requires 
    additionally about 250 Mb.
      _________________________________________________________________
 
@@ -159,63 +151,21 @@ Make done
 
     3. Installing the Files
 
-       You have two ways of installing Sedna (the latter is available
-       only in Unix):
-
 make install
        This will install files into the directory identified by 
        $SEDNA_INSTALL that was specified in step 1. Make sure that you have 
        appropriate permissions to write into that area. 
-       Normally, you would get installation of Sedna like if you were
-       installing it from the binary package except one point. In Unix
-       you will not be able to run Sedna if you are not root. To make 
-       Sedna available to other users change permissions as shown in 4.
 
-make dispersal_install
-       This will install files into the directories $PREFIX/bin, 
-       $PREFIX/lib, $PREFIX/include, $PREFIX/share, etc according to
-       file types. For some reasons you may find this type of installation
-       preferable comparing with "make install" (because, for example
-       $PREFIX/bin directory is already in your $PATH). 
-       This type of installation is valid only for Unix. Note that you
-       will not be able to run Sedna if you are not root. To make 
-       Sedna available to other users change permissions as shown in 4.
+    4. Setting Operating System Environment
 
-    4. Changing Permissions
-       In Unix you will not be able to run Sedna if you are not root.
-       This problem can be fixed by changing file permissions.
+       The operating system user that is going to run Sedna must have 
+       r-w-x permissions for the following Sedna directories:
 
-       If you have installed Sedna by "make install" type (note, that
-       you have to be root to perform this operation):
+$SEDNA_INSTALL/data
+$SEDNA_INSTALL/cfg
 
-chown -R root:root $SEDNA_INSTALL
-chmod u=rws,g=rwx,o=x $SEDNA_INSTALL/bin/se_*
-
-       If you have installed Sedna by "make dispersal_install" type (note,
-       that you have to be root to perform this operation):
-
-chown root:root $PREFIX/bin/se_*
-chmod u=rws,g=rwx,o=x $PREFIX/bin/se_*
-
-
-
-   Uninstallation: To undo the installation in case of "make install" just
-   delete files installed into $SEDNA_INSTALL/sedna. In case of 
-   "make dispersal_install" you have to remove manually the following
-   files and directories (SHARE_PREFIX is defined as /usr/share if PREFIX
-   is / and SHARE_PREFIX is defined as PREFIX/share otherwise): 
-
-$PREFIX/bin/se_*
-$SHARE_PREFIX/doc/sedna-x.x.x
-$SHARE_PREFIX/java/sednadriver.jar
-$PREFIX/lib/libsedna.a
-$PREFIX/include/libsedna.h
-$SHARE_PREFIX/sedna-x.x.x
-
-   Optionally, if you want to delete Sedna databases, remove the following
-   directory:
-
-/var/lib/sedna
+   Uninstallation: To undo the installation just delete files installed 
+   into $SEDNA_INSTALL/sedna.
 
    Cleaning: After the installation you can make room by removing the
    built files from the source tree with the command "make clean".
@@ -231,10 +181,12 @@ Environment Variables
 
 Database Files
 
-   Database files will be placed by default into $SEDNA_INSTALL/sedna in
-   Windows and into /var/lib/sedna in Linux. You may want to set up this
-   path manually by creating $SEDNA_INSTALL/sedna/etc/sednaconf.xml. See
-   Administration Guide for details.
+   In Windows database files will be placed by default into $SEDNA_INSTALL/sedna.
+   In Unix database files will be placed into the directory specified 
+   in sednaconf.xml in 'sedna_data' parameter. You may want to set up this path manually
+   by modifying $SEDNA_INSTALL/sedna/etc/sednaconf.xml. Initially after installation
+   'sedna_data' parameter is set to $SEDNA_INSTALL/sedna.
+   See Sedna Administration Guide for details.
 
      _________________________________________________________________
 
@@ -242,27 +194,25 @@ Database Files
 
    Sedna is distributed with examples and instructions how to run it.
    See Sedna Quick Start available at "doc" subdirectory of the directory 
-   where Sedna is installed (or in $PREFIX/share/doc/sedna-x.x.x if you have
-   chosen "make dispersal_install").
+   where Sedna is installed.
 
      _________________________________________________________________
 
                                  What Now?
 
-     * The Sedna distribution contains a documentation set, which should be
-       useful. See documentation at "doc" subdirectory of the directory 
-       where Sedna is installed (or in $PREFIX/share/doc/sedna-x.x.x if you 
-       have chosen "make dispersal_install").
-     * For support, please, feel free to contact us with questions, 
-       suggestions, bug reports and comments:
+   * The Sedna distribution contains a documentation set, which should be
+     useful. See documentation at "doc" subdirectory of the directory 
+     where Sedna is installed.
+   * For support, please, feel free to contact us with questions, 
+     suggestions, bug reports and comments:
 
 modis@ispras.ru
 
-       For up-to-date information and new versions of Sedna visit the Sedna 
-       homepage:
+     For up-to-date information and new versions of Sedna visit the Sedna 
+     homepage:
 
 http://www.modis.ispras.ru/sedna
 
-       You can also join the Sedna mail lists at
+     You can also join the Sedna mail lists at
 
 https://lists.sourceforge.net/lists/listinfo/sedna-discussion
