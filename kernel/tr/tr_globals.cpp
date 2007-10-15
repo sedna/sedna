@@ -70,7 +70,7 @@ msg_struct sp_msg;
 
 bool is_need_checkpoint_on_transaction_commit = false;
 
-bool is_ro_mode = false, need_ph_reinit = false;
+bool is_ro_mode = false, need_ph_reinit, is_ft_disabled;
 
 int db_id;
 

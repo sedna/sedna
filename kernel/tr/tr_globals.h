@@ -59,6 +59,7 @@ extern bool is_need_checkpoint_on_transaction_commit;
 
 extern bool is_ro_mode;
 extern bool need_ph_reinit;
+extern bool is_ft_disabled;
 
 extern int db_id;
 
