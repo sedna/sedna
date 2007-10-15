@@ -191,8 +191,8 @@ endif
 	$(INSTALL) -Dp $(PERM3) HISTORY   $(SEDNA_INSTALL)/sedna/HISTORY
 	$(INSTALL) -Dp $(PERM3) LICENSE   $(SEDNA_INSTALL)/sedna/LICENSE
 	$(INSTALL) -Dp $(PERM3) README    $(SEDNA_INSTALL)/sedna/README
-	$(INSTALL) -p $(PERM3) -d $(SEDNA_INSTALL)/sedna/cfg
-	$(INSTALL) -p $(PERM3) -d $(SEDNA_INSTALL)/sedna/data
+	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/cfg
+	$(INSTALL) -p $(PERM4) -d $(SEDNA_INSTALL)/sedna/data
 ifeq ($(PLATFORM), UNIX)
 	$(ECHO) '<?xml version="1.0" standalone="yes"?>' > $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
 	$(ECHO) '' >> $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml
