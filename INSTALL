@@ -164,6 +164,12 @@ make install
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
+       To grant the necessary permisions to a user you can use the following command
+       (suppose, sedna-user is Linux user that is going to run Sedna. 
+       sedna-user-group is sedna-user's group):
+
+chown sedna-user:sedna-user-group cfg data
+
    Uninstallation: To undo the installation just delete files installed 
    into $SEDNA_INSTALL/sedna.
 
