@@ -132,13 +132,6 @@ export SEDNA_INSTALL=<install-path>
        Identifies the directory where to install Sedna in case of
        "make install" (see below).
 
-export PREFIX=<prefix-path>
-
-       Identifies the prefix directory where to install Sedna in case of
-       "make dispersal_install" (see below). This option is valid only for
-       Unix platforms. The rational example of PREFIX' value are "/usr" or
-       "/usr/local" (type them without quotes).
-
     2. Build
        To start the build, type
 make
