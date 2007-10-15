@@ -57,7 +57,7 @@ public:
     virtual void reopen ();
     virtual void close  ();
     virtual strict_fun res_fun () { return result; };
-    virtual void next   (tuple &t) { (this->*next_fun)(t); }
+    virtual void next   (tuple &t) { SET_XQUERY_LINE(__xquery_line); (this->*next_fun)(t); UNDO_XQUERY_LINE;}
 
     virtual PPIterator* copy(dynamic_context *_cxt_);
     static bool result(PPIterator* cur, dynamic_context *cxt, void*& r);

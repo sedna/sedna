@@ -52,6 +52,8 @@ void PPExcept::close ()
 
 void PPExcept::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     while (true)
     {
         if (tug_first)
@@ -63,7 +65,7 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child1.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of except is not a node");
+                if (!child1.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of except is not a node");
                 xptr1 = child1.get(t).get_node();
             }
             tug_first = false;
@@ -78,7 +80,7 @@ void PPExcept::next  (tuple &t)
             }
             else
             {
-                if (!child2.get(t).is_node()) throw USER_EXCEPTION2(XPTY0004, "Argument of except is not a node");
+                if (!child2.get(t).is_node()) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of except is not a node");
                 xptr2 = child2.get(t).get_node();
             }
             tug_second = false;
@@ -90,7 +92,7 @@ void PPExcept::next  (tuple &t)
             {
                 tug_first = true;
                 t.copy(tuple_cell::node(xptr1));
-                return;
+                UNDO_XQUERY_LINE; return;
             }
             case  0: /// (1) == (2)
             {
@@ -100,7 +102,7 @@ void PPExcept::next  (tuple &t)
                 if (xptr1 == NULL) 
                 {
                     t.set_eos();
-                    return;
+                    UNDO_XQUERY_LINE; return;
                 }
 
                 break;
@@ -113,6 +115,8 @@ void PPExcept::next  (tuple &t)
             default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPExcept::next");
         }
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPExcept::copy(dynamic_context *_cxt_)
@@ -120,7 +124,7 @@ PPIterator* PPExcept::copy(dynamic_context *_cxt_)
     PPExcept *res = se_new PPExcept(_cxt_, child1, child2);
     res->child1.op = child1.op->copy(_cxt_);
     res->child2.op = child2.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

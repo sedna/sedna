@@ -82,7 +82,7 @@ public:
     /// If $base is relative URI then throws FORG0009.
     /// Else $dest will be initialized with target URI.
     ////////////////////////////////////////////////////////////////////
-    static bool resolve(const char* relative, const char* base, stmt_str_buf &dest, int __xquery_line = 0);
+    static bool resolve(const char* relative, const char* base, stmt_str_buf &dest);
 
     ////////////////////////////////////////////////////////////////////
     /// Component recomposition algorithm implementation (RFC 3986). 

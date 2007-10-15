@@ -101,8 +101,8 @@ bool PPFnDeepEqual::are_attributes_equal(xptr& node1,xptr& node2,schema_node* sc
 
 bool PPFnDeepEqual::are_text_nodes_equal(xptr& node1,xptr& node2)
 {
-	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1), __xquery_line);
-	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2), __xquery_line);
+	tuple_cell n1=cast_primitive_to_xs_string(dm_typed_value(node1));
+	tuple_cell n2=cast_primitive_to_xs_string(dm_typed_value(node2));
 	if (op_eq(n1,n2,handler).get_xs_boolean())	
 		return true;
 	else
@@ -167,6 +167,8 @@ void PPFnDeepEqual::close ()
 
 void PPFnDeepEqual::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!handler)
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -207,7 +209,7 @@ void PPFnDeepEqual::next  (tuple &t)
 				if (!are_nodes_deep_equal(node1,node2))
 				{
 					t.copy(tuple_cell::atomic(false));
-					return;
+					{UNDO_XQUERY_LINE; return;}
 				}
 			}
 			else if (!tc1.is_node() && !tc2.is_node() )
@@ -221,20 +223,20 @@ void PPFnDeepEqual::next  (tuple &t)
 						if (!op_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
 						{
 							t.copy(tuple_cell::atomic(false));
-							return;
+							{UNDO_XQUERY_LINE; return;}
 						}
 					}
 					catch (SednaUserException &e)
 					{
 						t.copy(tuple_cell::atomic(false));
-						return;
+						{UNDO_XQUERY_LINE; return;}
 					}
 				}
 			}
 			else
 			{
 				t.copy(tuple_cell::atomic(false));
-				return;
+				{UNDO_XQUERY_LINE; return;}
 			}
 
 			child1.op->next(cont1);
@@ -245,14 +247,14 @@ void PPFnDeepEqual::next  (tuple &t)
 			eos_reached1 = true;
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(true));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
 		else
 		{
 			eos_reached1 = cont1.is_eos();
 			eos_reached2 = cont2.is_eos();
 			t.copy(tuple_cell::atomic(false));
-			return;
+			{UNDO_XQUERY_LINE; return;}
 		}
     }
     else 
@@ -260,6 +262,8 @@ void PPFnDeepEqual::next  (tuple &t)
         handler=NULL;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)

@@ -74,6 +74,8 @@ void PPFnCompare::close ()
 
 void PPFnCompare::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         CollationHandler* handler = is_codepoint_equal ? 
@@ -84,15 +86,15 @@ void PPFnCompare::next(tuple &t)
         {
             collation_child.op->next(t);
             if(t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument. Argument contains zero items in fn:compare()");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument. Argument contains zero items in fn:compare()");
 
             tuple_cell col = atomize(collation_child.get(t));
             if (!is_string_type(col.get_atomic_type())) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:compare() (xs_string/derived/promotable is expected)");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:compare() (xs_string/derived/promotable is expected)");
 
             collation_child.op->next(t);
             if (!t.is_eos()) 
-                throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:compare(). Argument contains more than one item");
+                throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the third argument in fn:compare(). Argument contains more than one item");
             
             col = tuple_cell::make_sure_light_atomic(col);
             handler = cxt->st_cxt->get_collation(col.get_str_mem());
@@ -102,28 +104,28 @@ void PPFnCompare::next(tuple &t)
 
         str1_child.op->next(t);
         if (t.is_eos()) 
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         tc1 = atomize(str1_child.get(t));              
         if (!is_string_type(tc1.get_atomic_type())) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:compare() (xs_string/derived/promotable is expected)");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:compare() (xs_string/derived/promotable is expected)");
     
         str1_child.op->next(t);                                                                               
         if (!t.is_eos()) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:compare(). Argument contains more than one item");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the first argument in fn:compare(). Argument contains more than one item");
 
         
         str2_child.op->next(t);
         if (t.is_eos()) 
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         tc2 = atomize(str2_child.get(t));              
         if (!is_string_type(tc2.get_atomic_type())) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:compare() (xs_string/derived/promotable is expected)");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:compare() (xs_string/derived/promotable is expected)");
     
         str2_child.op->next(t);                                                                               
         if (!t.is_eos()) 
-            throw USER_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:compare(). Argument contains more than one item");
+            throw XQUERY_EXCEPTION2(XPTY0004, "Invalid arity of the second argument in fn:compare(). Argument contains more than one item");
 
         first_time = false;
         if (is_codepoint_equal)
@@ -136,6 +138,8 @@ void PPFnCompare::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)
@@ -152,7 +156,7 @@ PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)
     res->str1_child.op = str1_child.op->copy(_cxt_);
     res->str2_child.op = str2_child.op->copy(_cxt_);
     if(collation_child.op) res->collation_child.op = collation_child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

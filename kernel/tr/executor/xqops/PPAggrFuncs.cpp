@@ -78,6 +78,8 @@ void PPFnMaxMin::close ()
 
 void PPFnMaxMin::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (!handler) // the same as 'first_time'
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -114,12 +116,12 @@ void PPFnMaxMin::next(tuple &t)
 
             if (type == xs_untypedAtomic)
             {
-                tca = cast(tca, xs_double, __xquery_line);
+                tca = cast(tca, xs_double);
                 type = xs_double;
             }
             else if (type == xs_anyURI)
             {
-                tca = cast(tca, xs_string, __xquery_line);
+                tca = cast(tca, xs_string);
                 type = xs_string;
             }
 
@@ -148,19 +150,21 @@ void PPFnMaxMin::next(tuple &t)
             }
 
             if (!(least_common_type == xs_double || least_common_type == xs_string))
-                least_common_type = evaluate_common_type(tca.get_atomic_type(), least_common_type, __xquery_line);
+                least_common_type = evaluate_common_type(tca.get_atomic_type(), least_common_type);
         }
 
         if (res.is_eos())
             t.set_eos();
         else
-            t.copy(cast((has_NaN ? tuple_cell::atomic(float_NaN) : res), least_common_type, __xquery_line));
+            t.copy(cast((has_NaN ? tuple_cell::atomic(float_NaN) : res), least_common_type));
     }
     else
     {
         t.set_eos();
         handler = NULL;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnMaxMin::copy(dynamic_context *_cxt_)
@@ -243,6 +247,8 @@ void PPFnSumAvg::close ()
 
 void PPFnSumAvg::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time) // the same as 'first_time'
     {
         first_time = false;
@@ -262,7 +268,7 @@ void PPFnSumAvg::next(tuple &t)
 
             if (type == xs_untypedAtomic)
             {
-                tca = cast(tca, xs_double, __xquery_line);
+                tca = cast(tca, xs_double);
                 type = xs_double;
             }
 
@@ -315,6 +321,8 @@ void PPFnSumAvg::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnSumAvg::copy(dynamic_context *_cxt_)

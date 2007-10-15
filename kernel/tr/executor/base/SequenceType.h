@@ -112,11 +112,11 @@ inline bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const
 }
 
 
-void type_promotion(tuple_cell /*out*/&tc, xmlscm_type type, int __xquery_line = 0);
+void type_promotion(tuple_cell /*out*/&tc, xmlscm_type type);
 
 
 /// evaluates a common type by subtype substitution and/or type promotion. 
-xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2, int __xquery_line = 0);	
+xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2);	
 
 #endif
 

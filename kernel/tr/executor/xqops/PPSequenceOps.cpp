@@ -52,6 +52,8 @@ void PPFnEmpty::close ()
 
 void PPFnEmpty::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -68,6 +70,8 @@ void PPFnEmpty::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnEmpty::copy(dynamic_context *_cxt_)
@@ -142,6 +146,8 @@ void PPFnExists::close ()
 
 void PPFnExists::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -158,6 +164,8 @@ void PPFnExists::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnExists::copy(dynamic_context *_cxt_)
@@ -235,6 +243,8 @@ void PPFnItemAt::close ()
 
 void PPFnItemAt::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -242,7 +252,7 @@ void PPFnItemAt::next(tuple &t)
         pos_child.op->next(t);
         if (t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
 
-        __int64 pos = cast(pos_child.get(t), xs_integer, __xquery_line).get_xs_integer();
+        __int64 pos = cast(pos_child.get(t), xs_integer).get_xs_integer();
 
         pos_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid argument to fn:item-at");
@@ -257,7 +267,7 @@ void PPFnItemAt::next(tuple &t)
                 {
                     t.set_eos();
                     first_time = true;
-                    return;
+                    {UNDO_XQUERY_LINE; return;}
                 }
 
                 throw USER_EXCEPTION(SE1007);
@@ -270,6 +280,8 @@ void PPFnItemAt::next(tuple &t)
         seq_child.op->reopen();
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnItemAt::copy(dynamic_context *_cxt_)
@@ -391,6 +403,8 @@ void PPFnDistinctValues::close ()
 
 void PPFnDistinctValues::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!handler) // the same as 'first_time'
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -425,7 +439,7 @@ void PPFnDistinctValues::next(tuple &t)
             s->clear();
             handler = NULL;
             has_NaN = false;
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         tuple_cell tc = atomize(child.get(t));
@@ -456,8 +470,10 @@ void PPFnDistinctValues::next(tuple &t)
     store_item_and_return:
         t.copy(tc);
         s->add(t);
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDistinctValues::copy(dynamic_context *_cxt_)
@@ -544,6 +560,8 @@ void PPFnIndexOf::close ()
 
 void PPFnIndexOf::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!handler) // the same as 'first_time'
     {
         handler = charset_handler->get_unicode_codepoint_collation();
@@ -586,7 +604,7 @@ void PPFnIndexOf::next(tuple &t)
         {
             handler = NULL;
             pos = 0;
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         tuple_cell tc = atomize(seq_child.get(t));
@@ -600,6 +618,8 @@ void PPFnIndexOf::next(tuple &t)
     }
 
     t.copy(tuple_cell::atomic(pos));
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnIndexOf::copy(dynamic_context *_cxt_)
@@ -662,6 +682,8 @@ void PPFnReverse::close ()
 
 void PPFnReverse::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
     	pos = -1;
@@ -682,6 +704,8 @@ void PPFnReverse::next (tuple &t)
      	s->clear();
      	first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnReverse::copy(dynamic_context *_cxt_)
@@ -764,6 +788,8 @@ void PPFnSubsequence::close ()
 
 void PPFnSubsequence::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -777,7 +803,7 @@ void PPFnSubsequence::next(tuple &t)
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:subsequence (xs:double or promotable expected).");
         
-        start_pos = floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
+        start_pos = floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         
         start_child.op->next(t);
         if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:subsequence.");
@@ -793,7 +819,7 @@ void PPFnSubsequence::next(tuple &t)
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:subsequence (xs:double or promotable expected).");
 
-            length = floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
+            length = floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(t);
             if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:subsequence.");
@@ -810,12 +836,14 @@ void PPFnSubsequence::next(tuple &t)
            seq_child.op->next(t);
            current_pos++;
            bool length_check = is_length ? (current_pos < start_pos + length) : true;
-           if(!t.is_eos() && start_pos <= current_pos && length_check) return;
+           if(!t.is_eos() && start_pos <= current_pos && length_check) {UNDO_XQUERY_LINE; return;}
        } while( !t.is_eos() && length_check );
     }
     
     t.set_eos();
     first_time = true; 
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnSubsequence::copy(dynamic_context *_cxt_)
@@ -882,6 +910,8 @@ void PPFnRemove::close ()
 
 void PPFnRemove::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -897,7 +927,7 @@ void PPFnRemove::next(tuple &t)
              is_derived_from_xs_integer(xtype)))  
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:remove (xs:untypedAtomic, xs:integer or derived expected).");
 
-        remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer, __xquery_line).get_xs_integer() : tc.get_xs_integer(); 
+        remove_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
         
         pos_child.op->next(t);
         if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:remove.");
@@ -915,6 +945,8 @@ void PPFnRemove::next(tuple &t)
     }
     
     if(t.is_eos()) first_time = true; 
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnRemove::copy(dynamic_context *_cxt_)
@@ -987,6 +1019,8 @@ void PPFnInsertBefore::close ()
 
 void PPFnInsertBefore::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time  = false;
@@ -1004,7 +1038,7 @@ void PPFnInsertBefore::next(tuple &t)
              is_derived_from_xs_integer(xtype)))  
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:insert-before (xs:untypedAtomic, xs:integer or derived expected).");
 
-        insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer, __xquery_line).get_xs_integer() : tc.get_xs_integer(); 
+        insert_pos = xtype == xs_untypedAtomic ? cast(tc, xs_integer).get_xs_integer() : tc.get_xs_integer(); 
         
         pos_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:insert-before.");
@@ -1016,7 +1050,7 @@ void PPFnInsertBefore::next(tuple &t)
     {
     	ins_child.op->next(t);
     	if(t.is_eos()) inserted = true;
-    	else return;
+    	else {UNDO_XQUERY_LINE; return;}
     }
         
     if(!eos_reached)
@@ -1030,10 +1064,12 @@ void PPFnInsertBefore::next(tuple &t)
     {
     	ins_child.op->next(t);
     	if(t.is_eos()) inserted = true;
-    	else return;
+    	else {UNDO_XQUERY_LINE; return;}
     }
 
     if(inserted && eos_reached) first_time = true;
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnInsertBefore::copy(dynamic_context *_cxt_)
@@ -1090,6 +1126,8 @@ void PPFnZeroOrOne::close ()
 
 void PPFnZeroOrOne::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         child.op->next(t);
@@ -1107,6 +1145,8 @@ void PPFnZeroOrOne::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnZeroOrOne::copy(dynamic_context *_cxt_)
@@ -1160,6 +1200,8 @@ void PPFnOneOrMore::close ()
 
 void PPFnOneOrMore::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     child.op->next(t);
     if (t.is_eos()) 
     {
@@ -1167,6 +1209,8 @@ void PPFnOneOrMore::next  (tuple &t)
         first_time = true;
     }
     else first_time = false;
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnOneOrMore::copy(dynamic_context *_cxt_)
@@ -1220,6 +1264,8 @@ void PPFnExactlyOne::close ()
 
 void PPFnExactlyOne::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         first_time = false;
@@ -1235,6 +1281,8 @@ void PPFnExactlyOne::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnExactlyOne::copy(dynamic_context *_cxt_)

@@ -79,7 +79,9 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t) 
 	{ 
+		SET_XQUERY_LINE(__xquery_line);
 		(this->*next_fun)(t); 
+		UNDO_XQUERY_LINE;
 	}
 
     virtual PPIterator* copy(dynamic_context *_cxt_);

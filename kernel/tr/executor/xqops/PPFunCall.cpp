@@ -55,9 +55,9 @@ void fun_conv_rules::next(tuple &t)
         if(st->type.info.single_type != xs_anyAtomicType)
         {
             if (tc.get_atomic_type() == xs_untypedAtomic)
-                tc = cast(tc, st->type.info.single_type, __xquery_line);
+                tc = cast(tc, st->type.info.single_type);
             else
-                type_promotion(tc, st->type.info.single_type, __xquery_line);
+                type_promotion(tc, st->type.info.single_type);
         }
 
         t.copy(tc);
@@ -245,6 +245,8 @@ void PPFunCall::close ()
 
 void PPFunCall::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
 #ifdef STRICT_FUNS
     if (spos != -1)
     {
@@ -256,7 +258,7 @@ void PPFunCall::next(tuple &t)
             delete s;
             s = NULL;
         }
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }
 #endif
 
@@ -321,7 +323,7 @@ void PPFunCall::next(tuple &t)
                 }
                 else { s->get(t, 0); spos = 1; }
 
-                return;
+                {UNDO_XQUERY_LINE; return;}
             }
             else
             {
@@ -361,13 +363,15 @@ void PPFunCall::next(tuple &t)
     body_fcr->next(t);
 
     if (t.is_eos()) need_reopen = true;
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
 {
     PPFunCall *res = se_new PPFunCall(_cxt_, ch_arr, fn_id);
 
-    res->__xquery_line = __xquery_line;
+    res->set_xquery_line(__xquery_line);
     
     for (int i = 0; i < args_num; i++)
         res->ch_arr[i].op = ch_arr[i].op->copy(_cxt_);
@@ -384,7 +388,9 @@ var_c_id PPFunCall::register_consumer(var_dsc dsc)
 
 void PPFunCall::next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    SET_XQUERY_LINE(__xquery_line);
     args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
+    UNDO_XQUERY_LINE;
 }
 
 void PPFunCall::reopen(var_dsc dsc, var_c_id id)

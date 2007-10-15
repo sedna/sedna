@@ -71,8 +71,8 @@ void PPAxisAttribute::next_processing_instruction(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -81,8 +81,8 @@ void PPAxisAttribute::next_comment(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -91,8 +91,8 @@ void PPAxisAttribute::next_text(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -101,9 +101,9 @@ void PPAxisAttribute::next_node(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderAttributeChild(child.get(t).get_node());
     }
@@ -122,9 +122,9 @@ void PPAxisAttribute::next_qname(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          nt_data.uri,
@@ -142,9 +142,9 @@ void PPAxisAttribute::next_wildcard_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = getFirstByOrderAttributeChild(child.get(t).get_node());
     }
@@ -158,9 +158,9 @@ void PPAxisAttribute::next_wildcard_ncname_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          nt_data.uri,
@@ -178,9 +178,9 @@ void PPAxisAttribute::next_wildcard_star_ncname(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = merge.init(child.get(t).get_node(),
                          NULL,
@@ -309,7 +309,7 @@ PPIterator* PPAxisAttribute::copy(dynamic_context *_cxt_)
 {
     PPAxisAttribute *res = se_new PPAxisAttribute(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

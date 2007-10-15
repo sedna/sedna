@@ -47,6 +47,8 @@ void PPDmNodeKind::close ()
 
 void PPDmNodeKind::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -93,6 +95,8 @@ void PPDmNodeKind::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDmNodeKind::copy(dynamic_context *_cxt_)
@@ -100,7 +104,7 @@ PPIterator* PPDmNodeKind::copy(dynamic_context *_cxt_)
     PPDmNodeKind *res = se_new PPDmNodeKind(_cxt_, child);
     res->set_xquery_line(__xquery_line);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -192,11 +196,13 @@ void PPFnNodeName::close ()
 
 void PPFnNodeName::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
@@ -217,6 +223,8 @@ void PPFnNodeName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNodeName::copy(dynamic_context *_cxt_)
@@ -288,10 +296,12 @@ void PPFnNilled::close ()
 
 void PPFnNilled::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
 		child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
 
@@ -312,6 +322,8 @@ void PPFnNilled::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNilled::copy(dynamic_context *_cxt_)
@@ -365,6 +377,8 @@ void PPFnString::close ()
 
 void PPFnString::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -374,14 +388,14 @@ void PPFnString::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         tuple_cell tc;
         if ((child.get(t).is_node())) 
             tc = dm_string_value(child.get(t).get_node());
         else
-            tc = cast(child.get(t), xs_string, __xquery_line);
+            tc = cast(child.get(t), xs_string);
 
         child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Length of sequence passed to fn:string is more than 1");
@@ -393,6 +407,8 @@ void PPFnString::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnString::copy(dynamic_context *_cxt_)
@@ -444,6 +460,8 @@ void PPFnData::close ()
 
 void PPFnData::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     child.op->next(t);
 
     if (!t.is_eos() && child.get(t).is_node())
@@ -451,6 +469,8 @@ void PPFnData::next  (tuple &t)
         tuple_cell tc = dm_typed_value(child.get(t).get_node());
         t.copy(tc);
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnData::copy(dynamic_context *_cxt_)
@@ -503,14 +523,16 @@ void PPFnBaseURI::close ()
 
 void PPFnBaseURI::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
 		child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
-        tuple_cell tc = dm_base_uri(child.get(t).get_node(), cxt, __xquery_line);
+        tuple_cell tc = dm_base_uri(child.get(t).get_node(), cxt);
 
         child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
@@ -527,6 +549,8 @@ void PPFnBaseURI::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnBaseURI::copy(dynamic_context *_cxt_)
@@ -580,6 +604,8 @@ void PPFnDocumentURI::close ()
 
 void PPFnDocumentURI::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -589,7 +615,7 @@ void PPFnDocumentURI::next  (tuple &t)
         if (t.is_eos())
         {
             first_time = true;
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
@@ -614,6 +640,8 @@ void PPFnDocumentURI::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnDocumentURI::copy(dynamic_context *_cxt_)
@@ -650,6 +678,8 @@ void PPFnStaticBaseUri::close ()        { }
 
 void PPFnStaticBaseUri::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         first_time = false;    
@@ -667,6 +697,8 @@ void PPFnStaticBaseUri::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 
@@ -702,6 +734,8 @@ void PPFnDefaultCollation::close ()        { }
 
 void PPFnDefaultCollation::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         first_time = false;    
@@ -716,6 +750,8 @@ void PPFnDefaultCollation::next  (tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 

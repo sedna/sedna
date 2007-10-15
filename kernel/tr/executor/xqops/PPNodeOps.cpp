@@ -49,6 +49,8 @@ void PPFnName::close ()
 
 void PPFnName::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -58,7 +60,7 @@ void PPFnName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
@@ -74,7 +76,7 @@ void PPFnName::next  (tuple &t)
         }
         else
         {
-            t.copy(cast_primitive_to_xs_string(tc, __xquery_line));
+            t.copy(cast_primitive_to_xs_string(tc));
         }
     }
     else
@@ -82,6 +84,8 @@ void PPFnName::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnName::copy(dynamic_context *_cxt_)
@@ -170,7 +174,7 @@ void PPFnLocalName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:local-name is not a node");
@@ -257,7 +261,7 @@ void PPFnNamespaceUri::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:namespace-uri is not a node");
@@ -335,6 +339,8 @@ void PPFnNumber::close ()
 
 void PPFnNumber::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (first_time)
     {
         first_time = false;
@@ -344,7 +350,7 @@ void PPFnNumber::next(tuple &t)
         if (t.is_eos())
         {
             t.copy(tuple_cell::atomic(double_NaN));
-            return;
+            {UNDO_XQUERY_LINE; return;}
         }
 
         tuple_cell tc = atomize(child.get(t));
@@ -360,7 +366,7 @@ void PPFnNumber::next(tuple &t)
         {
             try
             {
-                t.copy(cast(tc, xs_double, __xquery_line));
+                t.copy(cast(tc, xs_double));
             }
             catch(SednaUserException &e)
             {
@@ -373,6 +379,8 @@ void PPFnNumber::next(tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNumber::copy(dynamic_context *_cxt_)
@@ -425,12 +433,14 @@ void PPFnRoot::close ()
 
 void PPFnRoot::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         child.op->next(t);
 
         if (t.is_eos())
-            return;
+            {UNDO_XQUERY_LINE; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
 
@@ -447,6 +457,8 @@ void PPFnRoot::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnRoot::copy(dynamic_context *_cxt_)

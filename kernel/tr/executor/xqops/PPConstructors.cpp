@@ -39,7 +39,7 @@ void separateLocalAndPrefix(char*& prefix,const char*& qname)
 			return;
 		}
 }
-tuple_cell getQnameParameter(PPOpIn qname, int __xquery_line = 0)
+tuple_cell getQnameParameter(PPOpIn qname)
 {
 	tuple name(qname.ts);
 	qname.op->next(name);
@@ -49,7 +49,7 @@ tuple_cell getQnameParameter(PPOpIn qname, int __xquery_line = 0)
 	xmlscm_type xtype=res.get_atomic_type();
 	if (xtype==xs_untypedAtomic)
 	{
-		res=cast(res, xs_string, __xquery_line);
+		res=cast(res, xs_string);
 		//res=cast(res, xs_QName);
 	}
 	else
@@ -65,7 +65,7 @@ tuple_cell getQnameParameter(PPOpIn qname, int __xquery_line = 0)
 {
 	return tuple_cell::atomic_deep(xs_string,"");	
 }*/
-bool getStringParameter(PPOpIn content, int __xquery_line = 0)
+bool getStringParameter(PPOpIn content)
 {
 	
 	tuple value(content.ts);
@@ -99,7 +99,7 @@ bool getStringParameter(PPOpIn content, int __xquery_line = 0)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast(res, xs_string, __xquery_line);
+		res=cast(res, xs_string);
 		res=tuple_cell::make_sure_light_atomic(res);
 	/*	if (it!=at_vals.begin())
 		{
@@ -114,7 +114,7 @@ bool getStringParameter(PPOpIn content, int __xquery_line = 0)
 	return false;
 	//str_val.push_to_memory();
 }
-void getStringWSParameter(PPOpIn content, int __xquery_line = 0)
+void getStringWSParameter(PPOpIn content)
 {
 	str_val.clear();
 	tuple value(content.ts);
@@ -140,7 +140,7 @@ void getStringWSParameter(PPOpIn content, int __xquery_line = 0)
 	do
 	{
 		tuple_cell res=atomize((*it).cells[0]);
-		res=cast(res, xs_string, __xquery_line);
+		res=cast(res, xs_string);
 		res=tuple_cell::make_sure_light_atomic(res);
 		str_val.append(res);
 		it++;
@@ -262,6 +262,8 @@ void PPElementConstructor::close ()
 
 void PPElementConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -273,7 +275,7 @@ void PPElementConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (name==NULL)
 		{
-			res=getQnameParameter(qname, __xquery_line);
+			res=getQnameParameter(qname);
 			name=res.get_str_mem();
 		}
 		
@@ -393,7 +395,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string, __xquery_line);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 
@@ -501,7 +503,7 @@ void PPElementConstructor::next  (tuple &t)
 							str_val.append(" ");						
 						}*/
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string, __xquery_line);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 
@@ -534,6 +536,8 @@ void PPElementConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPElementConstructor::copy(dynamic_context *_cxt_)
@@ -646,6 +650,8 @@ void PPAttributeConstructor::close ()
 
 void PPAttributeConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -657,7 +663,7 @@ void PPAttributeConstructor::next  (tuple &t)
 		tuple_cell res1;
 		if (name==NULL)
 		{
-			res1=getQnameParameter(qname, __xquery_line);
+			res1=getQnameParameter(qname);
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
@@ -699,7 +705,7 @@ void PPAttributeConstructor::next  (tuple &t)
 		int size;
 		if (value==NULL)
 		{
-			getStringWSParameter(content, __xquery_line);
+			getStringWSParameter(content);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -727,6 +733,8 @@ void PPAttributeConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPAttributeConstructor::copy(dynamic_context *_cxt_)
@@ -834,6 +842,8 @@ void PPNamespaceConstructor::close ()
 
 void PPNamespaceConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -843,7 +853,7 @@ void PPNamespaceConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (uri==NULL)
 		{
-			getStringParameter(content, __xquery_line);
+			getStringParameter(content);
 			uri=(char*)str_val.c_str();
 		}
 		xml_ns* ns=cxt->st_cxt->add_to_context(prefix,uri);
@@ -859,6 +869,8 @@ void PPNamespaceConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPNamespaceConstructor::copy(dynamic_context *_cxt_)
@@ -941,6 +953,8 @@ void PPCommentConstructor::close ()
 
 void PPCommentConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -949,7 +963,7 @@ void PPCommentConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (value==NULL)
 		{
-			getStringParameter(content, __xquery_line);
+			getStringParameter(content);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -980,6 +994,8 @@ void PPCommentConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPCommentConstructor::copy(dynamic_context *_cxt_)
@@ -1096,6 +1112,8 @@ void PPPIConstructor::close ()
 
 void PPPIConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -1107,7 +1125,7 @@ void PPPIConstructor::next  (tuple &t)
 		tuple_cell res1;
 		if (name==NULL)
 		{
-			res1=getQnameParameter(qname, __xquery_line);
+			res1=getQnameParameter(qname);
 			name=res1.get_str_mem();
 		}
 		char* prefix=NULL;
@@ -1136,7 +1154,7 @@ void PPPIConstructor::next  (tuple &t)
 		int size;
 		if (value==NULL)
 		{
-			getStringParameter(content, __xquery_line);
+			getStringParameter(content);
 			value=(char*)str_val.c_str();
 			size=str_val.get_size();
 		}
@@ -1176,6 +1194,8 @@ void PPPIConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPPIConstructor::copy(dynamic_context *_cxt_)
@@ -1266,6 +1286,8 @@ void PPTextConstructor::close ()
 
 void PPTextConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -1274,10 +1296,10 @@ void PPTextConstructor::next  (tuple &t)
 		tuple_cell res;
 		if (value==NULL)
 		{
-			if (getStringParameter(content, __xquery_line))
+			if (getStringParameter(content))
 			{
 				t.set_eos();
-				return;
+				{UNDO_XQUERY_LINE; return;}
 			}
 			value=(char*)str_val.c_str();
 			
@@ -1306,6 +1328,8 @@ void PPTextConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPTextConstructor::copy(dynamic_context *_cxt_)
@@ -1372,6 +1396,8 @@ void PPDocumentConstructor::close ()
 
 void PPDocumentConstructor::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -1413,7 +1439,7 @@ void PPDocumentConstructor::next  (tuple &t)
 					do
 					{
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string, __xquery_line);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 					}
@@ -1483,7 +1509,7 @@ void PPDocumentConstructor::next  (tuple &t)
 					do
 					{
 						tcc=tuple_cell::make_sure_light_atomic((*it).cells[0]);
-						tcc=cast(tcc, xs_string, __xquery_line);
+						tcc=cast(tcc, xs_string);
 						str_val.append(tcc);
 						it++;
 					}
@@ -1502,6 +1528,8 @@ void PPDocumentConstructor::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)
@@ -1510,7 +1538,6 @@ PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)
 	res = se_new PPDocumentConstructor(_cxt_, content);
 	res->content.op = content.op->copy(_cxt_);
 	res->set_xquery_line(__xquery_line);
-    res->set_xquery_line(__xquery_line);
     return res;
 }
 

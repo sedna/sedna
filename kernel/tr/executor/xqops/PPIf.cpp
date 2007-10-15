@@ -80,10 +80,12 @@ void PPIf::close ()
 
 void PPIf::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (data_child == NULL)
     {
         eos_reached = true;
-        tuple_cell c = effective_boolean_value(if_child, if_data, eos_reached, __xquery_line);
+        tuple_cell c = effective_boolean_value(if_child, if_data, eos_reached);
 
         if (c.get_xs_boolean()) data_child = then_child.op;
         else data_child = else_child.op;
@@ -96,6 +98,8 @@ void PPIf::next(tuple &t)
         data_child = NULL;
         if (!eos_reached) if_child.op->reopen();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPIf::copy(dynamic_context *_cxt_)

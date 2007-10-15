@@ -87,7 +87,7 @@ For raising exception it is better to use these macroses:
 #define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
 #define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
 #define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
-#define XQUERY_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code, __xquery_line)
+#define XQUERY_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code, __xquery_line_thread)
 #define XQUERY_EXCEPTION2(code, details)			SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code, __xquery_line)
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
 #define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
@@ -95,13 +95,13 @@ For raising exception it is better to use these macroses:
 #define USER_SOFT_EXCEPTION(msg)					SednaUserSoftException(__FILE__, __FUNCTION__, __LINE__, msg)
 
 Their names are straightfoward. Parameters are:
-msg              -- a textual message (some kind of error description)
-code             -- the code for user defined error (use constants defined in 
-                    error_codes.h; example is SE1001)
-details          -- details for user error
-expl             -- explanation of error
-rollback         -- does the error leads to rollback?
-__xquery_line    -- must be defined in the context of the throw operator. PPIterator defines _line member.
+msg                     -- a textual message (some kind of error description)
+code                    -- the code for user defined error (use constants defined in 
+                           error_codes.h; example is SE1001)
+details                 -- details for user error
+expl                    -- explanation of error
+rollback                -- does the error leads to rollback?
+__xquery_line_thread    -- defined within thread each executor context 
 
 
 
@@ -164,14 +164,14 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, __xquery_line))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, __xquery_line_thread))
 
 #define XQUERY_EXCEPTION2(internal_code, details) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr, \
                      details)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, __xquery_line))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, __xquery_line_thread))
 
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) \
     (elog(EL_ERROR, ("(%s) %s", \

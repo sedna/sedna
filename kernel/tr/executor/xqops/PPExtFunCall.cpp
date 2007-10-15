@@ -35,6 +35,8 @@ void PPExtFunCall::close  ()
 
 void PPExtFunCall::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		func->invoke(arr);
@@ -44,6 +46,8 @@ void PPExtFunCall::next(tuple &t)
 	func->result_next(t);
 	if (t.is_eos())
 		first_time = true;
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPExtFunCall::copy(dynamic_context *_cxt_)
@@ -52,7 +56,7 @@ PPIterator* PPExtFunCall::copy(dynamic_context *_cxt_)
 
 	for (int it = 0; it < arr.size(); it++)
 		res->arr[it].op = arr[it].op->copy(_cxt_);
-
+	res->set_xquery_line(__xquery_line);
 	return res;
 }
 

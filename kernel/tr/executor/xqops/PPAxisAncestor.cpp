@@ -79,7 +79,7 @@ PPIterator* PPAxisAncestor::copy(dynamic_context *_cxt_)
 {
     PPAxisAncestor *res = se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -101,8 +101,8 @@ void PPAxisAncestor::next_processing_instruction(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -111,8 +111,8 @@ void PPAxisAncestor::next_comment(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -121,8 +121,8 @@ void PPAxisAncestor::next_text(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
 
@@ -131,9 +131,9 @@ void PPAxisAncestor::next_node(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);
@@ -157,9 +157,9 @@ void PPAxisAncestor::next_qname(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);		
@@ -183,7 +183,7 @@ void PPAxisAncestor::next_qname(tuple &t)
                               nt_data.uri,
                               nt_data.ncname_local, 
                               element))
-							  return;
+							  {UNDO_XQUERY_LINE; return;}
 		cur = get_parent_node(cur);
 	}
     
@@ -194,9 +194,9 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
 		if (!self) cur = get_parent_node(cur);		
@@ -221,7 +221,7 @@ void PPAxisAncestor::next_wildcard_star(tuple &t)
                         NULL,
                         NULL, 
                         element))
-							  return;
+							  {UNDO_XQUERY_LINE; return;}
 		cur = get_parent_node(cur);
 	}
 }
@@ -231,9 +231,9 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);
@@ -259,7 +259,7 @@ void PPAxisAncestor::next_wildcard_ncname_star(tuple &t)
                         nt_data.uri,
                         NULL, 
                         element))
-							  return;
+							  {UNDO_XQUERY_LINE; return;}
 		cur = get_parent_node(cur);
 	}
 }
@@ -269,9 +269,9 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) return;
+        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
 
-        if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+        if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
         cur = child.get(t).get_node();
         if (!self) cur = get_parent_node(cur);        
@@ -296,7 +296,7 @@ void PPAxisAncestor::next_wildcard_star_ncname(tuple &t)
                               NULL,
                               nt_data.ncname_local, 
                               element))
-							  return;
+							  {UNDO_XQUERY_LINE; return;}
 		cur = get_parent_node(cur);
 	}
 }

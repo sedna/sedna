@@ -87,6 +87,8 @@ var_c_id PPVarDecl::register_consumer(var_dsc dsc)
 
 void PPVarDecl::next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     global_producer &p = cxt->glb_var_cxt.producers[dsc];
     complex_var_consumption &cvc = p.cvc;
 
@@ -125,6 +127,8 @@ void PPVarDecl::next(tuple &t, var_dsc dsc, var_c_id id)
             }
         }
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPVarDecl::reopen(var_dsc dsc, var_c_id id)

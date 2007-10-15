@@ -9,7 +9,7 @@
 #include "tr/executor/fo/casting_operations.h"
 #include "tr/executor/base/PPUtils.h"
 
-inline tuple_cell getAtomizedCell(tuple& tup, int __xquery_line)
+inline tuple_cell getAtomizedCell(tuple& tup)
 {
 	if (!(tup.cells_number==1 )) throw XQUERY_EXCEPTION2(XPTY0004, "Name argument of Constructor is not a single atomic value");
 	return atomize(tup.cells[0]);
@@ -23,12 +23,12 @@ int PPRange::getIntFromOp(PPOpIn & op)
 		is_emp=true;
 		return 0;
 	}
-	tuple_cell res=getAtomizedCell(t, __xquery_line);
+	tuple_cell res=getAtomizedCell(t);
 	op.op->next(t);
 	if (!(t.is_eos())) throw XQUERY_EXCEPTION(XPTY0004);
 	if (res.get_atomic_type()==xs_untypedAtomic)
 	{
-		res=cast(res,xs_integer, __xquery_line);
+		res=cast(res,xs_integer);
 	}
 	if (res.get_atomic_type()!=xs_integer&&!is_derived_from_xs_integer(res.get_atomic_type()))
 		throw XQUERY_EXCEPTION(XPTY0004);
@@ -79,6 +79,8 @@ void PPRange::close ()
 
 void PPRange::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (cur==start)
 	{
 		if (!start_op.op->is_const())
@@ -91,7 +93,7 @@ void PPRange::next(tuple &t)
 	{
 		t.set_eos();
 		cur=start;
-		return;
+		{UNDO_XQUERY_LINE; return;}
 	}
 	t.copy(tuple_cell::atomic((__int64)cur));
     cur++;

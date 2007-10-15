@@ -111,20 +111,17 @@ char *xs_QName_create(const char *uri,
                       const char *prefix,
                       const char *local,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line = 0);
+                      dynamic_context *cxt);
 // backs up fn:QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* uri,
                       const char* prefix_and_local, 
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line = 0);
+                      dynamic_context *cxt);
 // backs up fn:resolve-QName() function (prefix_and_local constains prefix and local part separated by ':')
 char *xs_QName_create(const char* prefix_and_local,
                       const xptr& elem_node,
                       void* (*alloc_func)(size_t),
-                      dynamic_context *cxt,
-                      int __xquery_line = 0);
+                      dynamic_context *cxt);
 
 
 void  xs_QName_release(char *qname, void (*free_func)(void*));

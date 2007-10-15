@@ -37,6 +37,8 @@ void PPXptr::close ()
 
 void PPXptr::next (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -47,11 +49,14 @@ void PPXptr::next (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPXptr::copy(dynamic_context *_cxt_)
 {
     PPXptr *res = se_new PPXptr(_cxt_, var_type, p);
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 

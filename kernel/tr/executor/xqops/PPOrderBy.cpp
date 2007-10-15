@@ -21,9 +21,9 @@ using namespace std;
 /// Returns the least common type that has a gt operator.
 /// Throws XPTY0004 if least common type doesn't have a gt operator.
 
-static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2, int __xquery_line = 0)
+static inline xmlscm_type get_least_common_type_with_gt(xmlscm_type t1, xmlscm_type t2)
 {
-    xmlscm_type t = evaluate_common_type(t1, t2, __xquery_line);    
+    xmlscm_type t = evaluate_common_type(t1, t2);    
     
     if(t == xs_string  || is_derived_from_xs_string(t) || t == xs_anyURI)  
         return xs_string;
@@ -99,7 +99,6 @@ void PPOrderBy::open  ()
     udata.stable    = stable;
     udata.temps[0]  = NULL;
     udata.temps[1]  = NULL;
-    udata.__xquery_line = __xquery_line;
     ss = se_new sorted_sequence(compare,get_size,serialize,serialize_2_blks,deserialize,deserialize_2_blks,&udata);
 }
 
@@ -127,6 +126,8 @@ void PPOrderBy::close ()
 
 void PPOrderBy::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if(first_time)
     {
         if(need_reinit)
@@ -169,13 +170,13 @@ void PPOrderBy::next  (tuple &t)
                         
                         tc = atomize(tc);
                         sort_tuple.cells[i - data_size] = tc.get_atomic_type() == xs_untypedAtomic ? 
-                                                          cast_primitive_to_xs_string(tc, __xquery_line) : tc ;
+                                                          cast_primitive_to_xs_string(tc) : tc ;
                         
                         common_type* ct = &types.at(i - data_size);
                         xmlscm_type t = sort_tuple.cells[i - data_size].get_atomic_type();
                         
                         if(ct->initialized)
-                            ct->xtype = get_least_common_type_with_gt(ct->xtype, t, __xquery_line);
+                            ct->xtype = get_least_common_type_with_gt(ct->xtype, t);
                         else
                         {
                             ct->xtype = t;
@@ -242,6 +243,8 @@ void PPOrderBy::next  (tuple &t)
         data_cells -> clear();
         sort_cells -> clear();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPOrderBy::copy(dynamic_context *_cxt_)
@@ -532,7 +535,6 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
     orb_user_data* ud = (orb_user_data*)Udata;
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
-    int __xquery_line = ud->__xquery_line;    
     temp_buffer* buffer = ud -> buffer;
 
     #ifdef ALIGNMENT_REQUIRED
@@ -549,7 +551,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
             if(t.cells[i].is_eos()) bs.setAt(i);
             else 
             {
-                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type, __xquery_line);
+                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
                 buffer->serialize_to_buffer(t.cells[i]);
             }
         }
@@ -573,7 +575,7 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
             if(t.cells[i].is_eos()) bs.setAt(i);
             else 
             {
-                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type, __xquery_line);
+                if(t.cells[i].get_atomic_type() != type) t.cells[i] = cast(t.cells[i], type);
                 
                 switch (type)
                 {
@@ -616,7 +618,6 @@ void PPOrderBy::serialize (tuple& t, xptr v1, const void * Udata)
 void PPOrderBy::serialize_2_blks (tuple& t, xptr& v1, shft size1, xptr& v2, const void * Udata)
 {
     orb_user_data* ud = (orb_user_data*)Udata;
-    int __xquery_line = ud->__xquery_line;
     __int64 pos = ud  -> pos;
     bit_set bs((ud -> header) -> size());
     
@@ -851,6 +852,8 @@ void PPSTuple::close ()
 
 void PPSTuple::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);   
+    
     if (!i)
     {
         t.eos = false;
@@ -887,6 +890,8 @@ void PPSTuple::next(tuple &t)
         t.set_eos();
         i = 0;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPSTuple::copy(dynamic_context *_cxt_)
@@ -969,6 +974,8 @@ void PPSLet::close ()
 
 void PPSLet::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     if (need_reopen)
     {
         source_child.op->reopen();
@@ -981,6 +988,8 @@ void PPSLet::next(tuple &t)
     data_child.op->next(t);
 
     if (t.is_eos()) need_reopen = true;
+    
+    UNDO_XQUERY_LINE;    
 }
 
 PPIterator* PPSLet::copy(dynamic_context *_cxt_)
@@ -1001,6 +1010,8 @@ var_c_id PPSLet::register_consumer(var_dsc dsc)
 
 void PPSLet::next(tuple &t, var_dsc dsc, var_c_id id)
 {
+    SET_XQUERY_LINE(__xquery_line);
+
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
 
@@ -1029,6 +1040,8 @@ void PPSLet::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
         cvc[id] = 0;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPSLet::reopen(var_dsc dsc, var_c_id id)

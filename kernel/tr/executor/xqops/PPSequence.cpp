@@ -60,16 +60,20 @@ void PPSequence::close ()
 
 void PPSequence::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     while (it < ch_arr.size())
     {
         ch_arr[it].op->next(t);
 
         if (t.is_eos()) it++;
-        else return;
+        else {UNDO_XQUERY_LINE; return;}
     }
 
     t.set_eos();
     it = 0;
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPSequence::copy(dynamic_context *_cxt_)
@@ -78,6 +82,7 @@ PPIterator* PPSequence::copy(dynamic_context *_cxt_)
 
     for (it = 0; it < ch_arr.size(); it++)
         res->ch_arr[it].op = ch_arr[it].op->copy(_cxt_);
+    res->set_xquery_line(__xquery_line);
 
     return res;
 }

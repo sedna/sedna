@@ -17,6 +17,18 @@
 #include "tr/executor/base/sequence.h"
 
 
+#ifdef _MSC_VER
+__declspec(thread)
+#else
+__thread
+#endif
+extern int __xquery_line_thread;
+
+
+#define SET_XQUERY_LINE(line) __xquery_line_backup = __xquery_line_thread; __xquery_line_thread = line;
+#define UNDO_XQUERY_LINE      __xquery_line_thread = __xquery_line_backup; __xquery_line_backup = 0;
+
+
 /*******************************************************************************
  * List of classes used
  ******************************************************************************/
@@ -68,6 +80,7 @@ class PPIterator
 protected:
     dynamic_context *cxt;
     int __xquery_line;
+    int __xquery_line_backup;
 public:
     virtual void open          ()         = 0;
     virtual void reopen        ()         = 0;
@@ -77,7 +90,7 @@ public:
 
     virtual PPIterator* copy(dynamic_context *_cxt_) = 0;
 
-    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0) {}
+    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0), __xquery_line_backup(0) {}
 	virtual void set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
 	virtual bool is_const(){return false;}
     virtual ~PPIterator() {}

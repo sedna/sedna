@@ -120,16 +120,18 @@ void PPFtScan::close()
 
 void PPFtScan::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+
 	if (first_time)
 	{
 		tuple_cell tc;
 
 		index_type.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = tuple_cell::make_sure_light_atomic(tc);
 		ft_index_type itype = str2index_type(tc.get_str_mem());
 
@@ -153,15 +155,15 @@ void PPFtScan::next(tuple &t)
 
 		query.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		sj->set_request(tc);
 		query.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		first_time = false;
 	}
@@ -173,6 +175,8 @@ void PPFtScan::next(tuple &t)
 		sj = NULL;
 		first_time = true;
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator*  PPFtScan::copy(dynamic_context *_cxt_)
@@ -187,7 +191,7 @@ PPIterator*  PPFtScan::copy(dynamic_context *_cxt_)
     res->index_type.op = index_type.op->copy(_cxt_);
 	if (cust_rules.op)
 		res->cust_rules.op = cust_rules.op->copy(_cxt_);
-
+	res->set_xquery_line(__xquery_line);
 	return res;
 }
 

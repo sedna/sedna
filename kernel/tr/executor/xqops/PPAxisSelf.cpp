@@ -59,7 +59,7 @@ PPIterator* PPAxisSelf::copy(dynamic_context *_cxt_)
 {
     PPAxisSelf *res = se_new PPAxisSelf(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
     return res;
 }
 
@@ -67,7 +67,8 @@ PPIterator* PPAxisSelf::copy(dynamic_context *_cxt_)
 
 void PPAxisSelf::next   (tuple &t) 
 { 
-	
+		SET_XQUERY_LINE(__xquery_line);
+
 		switch (nt_type)
 		{
         case node_test_string					: 
@@ -80,8 +81,8 @@ void PPAxisSelf::next   (tuple &t)
 			while (true)
 			{
 				child.op->next(t);
-				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+				if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+				if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{
@@ -90,7 +91,7 @@ void PPAxisSelf::next   (tuple &t)
 					if (type!=pr_ins) continue;
 					else
 					{
-						if (!nt_data.ncname_local) return;
+						if (!nt_data.ncname_local) {UNDO_XQUERY_LINE; return;}
 						else
 						{
 							pi_dsc* desc=(pi_dsc*)XADDR(node);
@@ -101,7 +102,7 @@ void PPAxisSelf::next   (tuple &t)
 								CHECKP(ind_ptr);
 								shft shift= *((shft*)XADDR(ind_ptr));
 								char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-								if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) return;
+								if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {UNDO_XQUERY_LINE; return;}
 								else continue;
 							}
 						}
@@ -115,8 +116,8 @@ void PPAxisSelf::next   (tuple &t)
 			while (true)
 			{
 				child.op->next(t);
-				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+				if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+				if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{
@@ -126,19 +127,19 @@ void PPAxisSelf::next   (tuple &t)
 					{
 					case text						:
 						if (nt_type!=node_test_text && nt_type!=node_test_node) continue;
-						else return;
+						else {UNDO_XQUERY_LINE; return;}
 					case comment					:
 						if (nt_type!=node_test_comment && nt_type!=node_test_node) continue;
-						else return;
+						else {UNDO_XQUERY_LINE; return;}
 					case pr_ins					:
 						if (nt_type!=node_test_node) continue;
-						else return;
+						else {UNDO_XQUERY_LINE; return;}
 					case xml_namespace: continue;
 					case element						:
-						if (nt_type!=node_test_text  &&  nt_type!=node_test_comment) return;
+						if (nt_type!=node_test_text  &&  nt_type!=node_test_comment) {UNDO_XQUERY_LINE; return;}
 						else continue;
 					default:
-						if (nt_type==node_test_node ) return;
+						if (nt_type==node_test_node ) {UNDO_XQUERY_LINE; return;}
 						else continue;
 
 					}
@@ -150,8 +151,8 @@ void PPAxisSelf::next   (tuple &t)
 			while (true)
 			{
 				child.op->next(t);
-				if (t.is_eos()) return;
-				if (!(child.get(t).is_node())) throw USER_EXCEPTION(XPTY0020);
+				if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+				if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 				xptr node=child.get(t).get_node();
 				if (node!=XNULL)
 				{
@@ -179,11 +180,13 @@ void PPAxisSelf::next   (tuple &t)
 						fun=comp_uri_type;
 						uri=nt_data.uri;
 					}
-					if (fun(scm,uri,local,element)) return;
+					if (fun(scm,uri,local,element)) {UNDO_XQUERY_LINE; return;}
 				}
 
 			}
 		default									: throw USER_EXCEPTION2(SE1003, "in AxisSelf");
 		}
+
+		UNDO_XQUERY_LINE;
 		
 }

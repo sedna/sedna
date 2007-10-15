@@ -70,6 +70,8 @@ PPNodeComparison::~PPNodeComparison()
 }
 void PPNodeComparison::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -81,7 +83,7 @@ void PPNodeComparison::next  (tuple &t)
 		
 		//1. operands verify
 		if (!( (t1.cells[0].is_node()||t1.is_eos())&&((t2.cells[0].is_node()||t2.is_eos()))))
-			throw USER_EXCEPTION(XPTY0004);
+			throw XQUERY_EXCEPTION(XPTY0004);
 		//2. emty sequence check
 		if (t1.is_eos()||t2.is_eos())
 		{
@@ -142,4 +144,6 @@ void PPNodeComparison::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }

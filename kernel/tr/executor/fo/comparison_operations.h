@@ -8,6 +8,7 @@
 
 #include "common/sedna.h"
 #include "tr/executor/fo/op_map.h"
+#include "tr/executor/base/PPBase.h"
 
 tuple_cell node_comp_is(const tuple_cell &a1, const tuple_cell &a2);
 tuple_cell node_comp_isnot(const tuple_cell &a1, const tuple_cell &a2);

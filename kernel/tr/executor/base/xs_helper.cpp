@@ -55,7 +55,7 @@ static void _strip_c_str(const char* t, const char** start, const char** end)
     ++(*end);
 }
 
-float c_str2xs_float(const char *t, int __xquery_line)
+float c_str2xs_float(const char *t)
 {
     float res = 0.0;
     const char *start = NULL;
@@ -79,7 +79,7 @@ float c_str2xs_float(const char *t, int __xquery_line)
     return res;
 }
 
-double c_str2xs_double(const char *t, int __xquery_line)
+double c_str2xs_double(const char *t)
 {
     double res = 0.0;
     const char *start = NULL;
@@ -102,7 +102,7 @@ double c_str2xs_double(const char *t, int __xquery_line)
     return res;
 }
 
-__int64 c_str2xs_integer(const char *t, int __xquery_line)
+__int64 c_str2xs_integer(const char *t)
 {
     __int64 res = 0;
     char* stop = NULL;
@@ -116,7 +116,7 @@ __int64 c_str2xs_integer(const char *t, int __xquery_line)
     return res;
 }
 
-bool c_str2xs_boolean(const char *t, int __xquery_line)
+bool c_str2xs_boolean(const char *t)
 {
     bool res = false;
     const char *start = NULL;
@@ -372,7 +372,7 @@ char *get_lexical_representation_for_fixed_size_atomic(char *s, const tuple_cell
 /////////////////////////////////////////////////////////////////////////
 /// XML Schema fixed datatypes to fixed datatypes conversion routines.
 /////////////////////////////////////////////////////////////////////////
-__int64 xs_float2xs_integer(float v, int __xquery_line)
+__int64 xs_float2xs_integer(float v)
 {
     if (u_is_neg_inf((double)v) || u_is_pos_inf((double)v) || u_is_nan((double)v))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:float value to xs:integer");
@@ -382,7 +382,7 @@ __int64 xs_float2xs_integer(float v, int __xquery_line)
     return (__int64)i;
 }
 
-__int64 xs_double2xs_integer(double v, int __xquery_line)
+__int64 xs_double2xs_integer(double v)
 {
     if (u_is_neg_inf(v) || u_is_pos_inf(v) || u_is_nan(v))
         throw XQUERY_EXCEPTION2(FOCA0002, "Error casting xs:double value to xs:integer");
@@ -440,23 +440,23 @@ float xs_divide(float x, float y)
 
 xs_decimal_t xs_divide(__int64 x, __int64 y)
 {
-    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
+    if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
     return xs_decimal_t(x) / xs_decimal_t(y);
 }
 
 xs_decimal_t xs_divide(xs_decimal_t x, xs_decimal_t y)
 {
-    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
+    if (y.is_zero()) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-divide");
     return x / y;
 }
 
 __int64 xs_integer_divide(double x, double y)
 {
     if (y == 0.0)
-        throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+        throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
 
     if (u_is_nan(x) || u_is_nan(y) || u_is_neg_inf(x) || u_is_pos_inf(x))
-        throw USER_EXCEPTION(FOAR0002);
+        throw XQUERY_EXCEPTION(FOAR0002);
 
     return xs_double2xs_integer(x / y);
 }
@@ -464,23 +464,23 @@ __int64 xs_integer_divide(double x, double y)
 __int64 xs_integer_divide(float x, float y)
 {
     if ((double)y == 0.0)
-        throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+        throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
 
     if (u_is_nan((double)x) || u_is_nan((double)y) || u_is_neg_inf((double)x) || u_is_pos_inf((double)x))
-        throw USER_EXCEPTION(FOAR0002);
+        throw XQUERY_EXCEPTION(FOAR0002);
 
     return xs_float2xs_integer(x / y);
 }
 
 __int64 xs_integer_divide(__int64 x, __int64 y)
 {
-    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+    if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
     return x / y;
 }
 
 __int64 xs_integer_divide(xs_decimal_t x, xs_decimal_t y)
 {
-    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
+    if (y.is_zero()) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-integer-divide");
     return (x / y).get_int();
 }
 
@@ -508,13 +508,13 @@ float xs_mod(float x, float y)
 
 __int64 xs_mod(__int64 x, __int64 y)
 {
-    if (y == 0) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
+    if (y == 0) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
     return x % y;
 }
 
 xs_decimal_t xs_mod(xs_decimal_t x, xs_decimal_t y)
 {
-    if (y.is_zero()) throw USER_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
+    if (y.is_zero()) throw XQUERY_EXCEPTION2(FOAR0001, "Division by zero in op:numeric-mod");
     return x % y;
 }
 

@@ -110,7 +110,6 @@ struct orb_user_data
     temp_buffer* buffer;                            //Buffer for memory copy operations (when ALIGNMENT_REQUIRED or two blocks are used).
     bool stable;                                    //'true' if 'stable order by' version used.
     char* temps[2];                                 //Buffer memory used in comparator.
-    int __xquery_line;
 };
 
 

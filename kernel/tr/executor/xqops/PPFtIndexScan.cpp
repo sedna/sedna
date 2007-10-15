@@ -73,32 +73,34 @@ void PPFtIndexScan::close()
 
 void PPFtIndexScan::next(tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+
 	if (first_time)
 	{
 		tuple_cell tc;
 
 		query.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		sj=se_new SednaSearchJob();
 		sj->set_request(tc);
 		query.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		idx_name.op->next(t);
 		if (t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		tc = t.cells[0];
 		if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 		sj->set_index(tc);
 		idx_name.op->next(t);
 		if (!t.is_eos())
-			throw USER_EXCEPTION(SE1071);
+			throw XQUERY_EXCEPTION(SE1071);
 
 		first_time = false;
 	}
@@ -110,6 +112,8 @@ void PPFtIndexScan::next(tuple &t)
 		sj = NULL;
 		first_time = true;
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
@@ -117,7 +121,7 @@ PPIterator*  PPFtIndexScan::copy(dynamic_context *_cxt_)
 	PPFtIndexScan *res = se_new PPFtIndexScan(_cxt_, idx_name, query);
     res->idx_name.op = idx_name.op->copy(_cxt_);
     res->query.op = query.op->copy(_cxt_);
-
+    res->set_xquery_line(__xquery_line);
 	return res;
 }
 

@@ -496,7 +496,7 @@ char* remove_dot_segments(const char* path)
     return result;
 }
 
-bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest, int __xquery_line)
+bool Uri::resolve(const char* relative, const char* base, stmt_str_buf &dest)
 {
     /// Since xs:anyURI type is not strict and allows spaces we must
     /// check there if given URIs contain spaces or not:

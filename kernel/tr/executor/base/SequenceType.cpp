@@ -381,7 +381,7 @@ string node_type2string(const xptr& node)
     return res;
 }
 
-void type_promotion(tuple_cell &tc, xmlscm_type type, int __xquery_line) //tc contains result tuple_cell after promotion
+void type_promotion(tuple_cell &tc, xmlscm_type type) //tc contains result tuple_cell after promotion
 {
     if (!tc.is_atomic()) throw XQUERY_EXCEPTION2(SE1003, "Type promotion is called on none atomic value");
 
@@ -389,14 +389,14 @@ void type_promotion(tuple_cell &tc, xmlscm_type type, int __xquery_line) //tc co
 
     if (stype == xs_float && type == xs_double)
     {
-        tc = cast_primitive_to_xs_double(tc, __xquery_line);
+        tc = cast_primitive_to_xs_double(tc);
         return;
     }
 
     if ((stype == xs_decimal || stype == xs_integer) &&
         (type == xs_float || type == xs_double))
     {
-        tc = cast(tc, type, __xquery_line);
+        tc = cast(tc, type);
         return;
     }
 }
@@ -474,7 +474,7 @@ string st_elem_attr_data::to_str() const
 // ...
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2, int __xquery_line)
+xmlscm_type evaluate_common_type(xmlscm_type t1, xmlscm_type t2)
 {
 	if(t1 == t2) return t1;
 	if(is_derived(t1, t2)) return t2;

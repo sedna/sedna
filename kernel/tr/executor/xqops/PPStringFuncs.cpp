@@ -59,11 +59,13 @@ void PPFnConcat::close ()
 
 void PPFnConcat::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }
 
     first_time = false;
@@ -79,7 +81,7 @@ void PPFnConcat::next(tuple &t)
         }
 
         tuple_cell tc = ch_arr[i].get(t);
-        tcv[i] = cast(atomize(tc), xs_string, __xquery_line);
+        tcv[i] = cast(atomize(tc), xs_string);
         res_str_len += tcv[i].get_strlen();
 
         ch_arr[i].op->next(t);
@@ -113,6 +115,8 @@ void PPFnConcat::next(tuple &t)
     }
 
     t.copy(res);
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
@@ -176,12 +180,14 @@ void PPFnStringJoin::close ()
 
 void PPFnStringJoin::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!first_time)
     {
         first_time = true;
         need_clear = true;
         t.set_eos();
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }
 
     first_time = false;
@@ -218,6 +224,8 @@ void PPFnStringJoin::next(tuple &t)
         result.append(tcv[i]);
     }
     t.copy(result.get_tuple_cell());
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnStringJoin::copy(dynamic_context *_cxt_)
@@ -306,11 +314,13 @@ void PPFnStartsEndsWith::close ()
 
 void PPFnStartsEndsWith::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }
     first_time = false;
 
@@ -345,8 +355,8 @@ void PPFnStartsEndsWith::next(tuple &t)
         prf_len = prf.get_strlen();
     }
 
-    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); return; } 
-    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); return; }
+    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); {UNDO_XQUERY_LINE; return;} } 
+    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); {UNDO_XQUERY_LINE; return;} }
     
     if(is_collation)
     {
@@ -372,7 +382,8 @@ void PPFnStartsEndsWith::next(tuple &t)
         t.copy(tuple_cell::atomic(handler->ends_with(&src, &prf)));
     else 
         throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::next().");
-    
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPFnStartsEndsWith::error(const char* msg)
@@ -445,6 +456,8 @@ void PPFnString2CodePoints::close ()
 
 void PPFnString2CodePoints::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         child.op->next(t);
@@ -460,7 +473,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 
 		    ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
-		else return;
+		else {UNDO_XQUERY_LINE; return;}
     }
 	int code = ucp_it->get_next_char();
 	if (code != -1)
@@ -475,6 +488,8 @@ void PPFnString2CodePoints::next  (tuple &t)
 		ucp_it = NULL;
 		in_str.set_eos();
 	}    
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnString2CodePoints::copy(dynamic_context *_cxt_)
@@ -526,6 +541,8 @@ void PPFnCodePoints2String::close ()
 
 void PPFnCodePoints2String::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time  = false;
@@ -545,7 +562,7 @@ void PPFnCodePoints2String::next  (tuple &t)
                      throw XQUERY_EXCEPTION2(XPTY0004, "Invalid item type in the argument of fn:codepoints-to-string (xs:untypedAtomic, xs:integer or derived expected).");
 
             __int64 value = (xtype == xs_untypedAtomic ? 
-                             cast(tc, xs_integer, __xquery_line).get_xs_integer() : 
+                             cast(tc, xs_integer).get_xs_integer() : 
                              tc.get_xs_integer()); 
             
             if(value > 0x10FFFF || !isXML10Valid(value)) 
@@ -567,6 +584,8 @@ void PPFnCodePoints2String::next  (tuple &t)
         need_clear = true;
         t.set_eos();
     }    
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnCodePoints2String::copy(dynamic_context *_cxt_)
@@ -629,6 +648,8 @@ void PPFnTranslate::close ()
 
 void PPFnTranslate::next  (tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		first_time = false;
@@ -683,6 +704,8 @@ void PPFnTranslate::next  (tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnTranslate::copy(dynamic_context *_cxt_)
@@ -794,11 +817,13 @@ static inline tuple_cell byte_based_substring(const tuple_cell *tc, __int64 star
 
 void PPFnSubsBeforeAfter::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (handler) // the same as '!first_time'
     {
         handler = NULL;
         t.set_eos();
-        return;
+        {UNDO_XQUERY_LINE; return;}
     }    
         
     handler = charset_handler->get_unicode_codepoint_collation();
@@ -869,6 +894,8 @@ void PPFnSubsBeforeAfter::next(tuple &t)
         else
             t.copy(EMPTY_STRING_TC);
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 void PPFnSubsBeforeAfter::error(const char* msg)
@@ -933,6 +960,8 @@ void PPFnChangeCase::close ()
 
 void PPFnChangeCase::next  (tuple &t)
 {
+	SET_XQUERY_LINE(__xquery_line);
+	
 	if (first_time)
 	{
 		first_time = false;
@@ -959,6 +988,8 @@ void PPFnChangeCase::next  (tuple &t)
 		first_time = true;
 		t.set_eos();
 	}
+
+	UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnChangeCase::copy(dynamic_context *_cxt_)
@@ -1009,6 +1040,8 @@ void PPFnStringLength::close ()
 
 void PPFnStringLength::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -1018,7 +1051,7 @@ void PPFnStringLength::next  (tuple &t)
         if (!t.is_eos())
         {
             tuple_cell tc = child.get(t);
-            tc = cast(atomize(tc), xs_string, __xquery_line);
+            tc = cast(atomize(tc), xs_string);
 			len = charset_handler->length(&tc);
 
             child.op->next(t);
@@ -1032,6 +1065,8 @@ void PPFnStringLength::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnStringLength::copy(dynamic_context *_cxt_)
@@ -1081,6 +1116,8 @@ void PPFnNormalizeSpace::close ()
 
 void PPFnNormalizeSpace::next  (tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     if (first_time)
     {
         first_time = false;
@@ -1107,6 +1144,8 @@ void PPFnNormalizeSpace::next  (tuple &t)
         first_time = true;
         t.set_eos();
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnNormalizeSpace::copy(dynamic_context *_cxt_)
@@ -1188,6 +1227,8 @@ void PPFnSubstring::close ()
 
 void PPFnSubstring::next(tuple &t)
 {
+    SET_XQUERY_LINE(__xquery_line);
+    
     __int64 start_pos = 0;
     __int64 length = 0;
     if (first_time)
@@ -1205,7 +1246,7 @@ void PPFnSubstring::next(tuple &t)
         if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic)) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:substring (xs:double or promotable expected).");
         
-        start_pos = (__int64)floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
+        start_pos = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5);  //floor(x+0.5) is equal there to fn:round
         
         start_child.op->next(t);
         if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the second argument in fn:substring.");
@@ -1221,7 +1262,7 @@ void PPFnSubstring::next(tuple &t)
             if(!is_numeric_type(xtype) && !(xtype == xs_untypedAtomic))  
                 throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the third argument in fn:substring (xs:double or promotable expected).");
 
-            length = (__int64)floor(cast(tc, xs_double, __xquery_line).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
+            length = (__int64)floor(cast(tc, xs_double).get_xs_double() + 0.5); //floor(x+0.5) is equal there to fn:round
         
             length_child.op->next(t);
             if (!(t.is_eos())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid cardinality of the third argument in fn:substring.");
@@ -1231,7 +1272,7 @@ void PPFnSubstring::next(tuple &t)
         if (t.is_eos())
         {
              t.copy(EMPTY_STRING_TC);
-             return;
+             {UNDO_XQUERY_LINE; return;}
         }
         tc = atomize(str_child.get(t));
         if (!is_string_type(tc.get_atomic_type()))
@@ -1259,6 +1300,8 @@ void PPFnSubstring::next(tuple &t)
         t.set_eos();
         first_time = true;
     }
+
+    UNDO_XQUERY_LINE;
 }
 
 PPIterator* PPFnSubstring::copy(dynamic_context *_cxt_)

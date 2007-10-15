@@ -364,7 +364,7 @@ inline void SQLODBCExecutor::set_param_type(int i, SQLSMALLINT vtype, SQLSMALLIN
 
 		if (!result_ok(rc)) {
 			std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-			throw USER_EXCEPTION2(SE2106, ("BindParameter: " + diag).c_str());
+			throw XQUERY_EXCEPTION2(SE2106, ("BindParameter: " + diag).c_str());
 		}
 		param_types[i-1] = vtype;
 	}
@@ -378,13 +378,13 @@ void SQLODBCExecutor::prepare(char *query, int query_len, PPOpIn *options)
 	rc = SQLODBCBase::fSQLPrepare(hstmt, (SQLCHAR *)query, query_len);
 	if ( !result_ok(rc)) {
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-		throw USER_EXCEPTION2(SE2105, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2105, diag.c_str());
 	}
 			
 	rc = SQLODBCBase::fSQLNumParams(hstmt, &cnt);
 	if (!result_ok(rc)) {
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-		throw USER_EXCEPTION2(SE2105, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2105, diag.c_str());
 	}
 
 	param_ind = SQL_LEN_DATA_AT_EXEC(0);
@@ -409,7 +409,7 @@ void SQLODBCExecutor::prepare_results()
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
 		close_query();
-		throw USER_EXCEPTION2(SE2112, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2112, diag.c_str());
 	}
 
 	results_count = num_cols;
@@ -447,7 +447,7 @@ void SQLODBCExecutor::execute_query (char *query, int query_len, PPOpIn *options
 	if (!result_ok(rc) && rc != SQL_NO_DATA)
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-		throw USER_EXCEPTION2(SE2112, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2112, diag.c_str());
 	}
 
 	prepare_results();
@@ -525,7 +525,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 	SQLRETURN rc;
 	
 	if (params.size() != param_types.size()+1)
-		throw USER_EXCEPTION2(SE2106, "bad parameters count");
+		throw XQUERY_EXCEPTION2(SE2106, "bad parameters count");
 
 	std::vector<tuple_cell> values(param_types.size());
 	for (id = 1; id < params.size(); id++)
@@ -552,11 +552,11 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 					set_param_type(id, SQL_C_CHAR, SQL_CHAR, 128);
 					break;
 				default:
-					throw USER_EXCEPTION2(SE2106, "bad parameter type");
+					throw XQUERY_EXCEPTION2(SE2106, "bad parameter type");
 			}
 		}
 		else
-			throw USER_EXCEPTION2(SE2106, "bad parameter");
+			throw XQUERY_EXCEPTION2(SE2106, "bad parameter");
 
 	}
 
@@ -566,7 +566,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 		if (rc != SQL_NEED_DATA)
 		{
 			//TODO - if not result_ok(rc) add ODBC diag
-			throw USER_EXCEPTION(SE2106);
+			throw XQUERY_EXCEPTION(SE2106);
 		}
 
 		while (rc == SQL_NEED_DATA)
@@ -574,7 +574,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 			tuple_cell tmp;
 			//TODO - buf!!! wtfdtm????
 			if (id <= 0 || id >= params.size())
-				throw USER_EXCEPTION(SE2106);
+				throw XQUERY_EXCEPTION(SE2106);
 
 			tmp = values[id-1];
 			if (tmp.is_eos())
@@ -594,15 +594,15 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 						rc = SQLODBCBase::fSQLPutData(hstmt, (SQLCHAR *)tmp.get_str_mem(), SQL_NTS);
 						break;
 					default:
-						throw USER_EXCEPTION2(SE2106, "bad parameter type");
+						throw XQUERY_EXCEPTION2(SE2106, "bad parameter type");
 				}
 			}
 			else
-				throw USER_EXCEPTION2(SE2106, "bad parameter");
+				throw XQUERY_EXCEPTION2(SE2106, "bad parameter");
 			if (!result_ok(rc))
 			{
 				std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-				throw USER_EXCEPTION2(SE2106, diag.c_str());
+				throw XQUERY_EXCEPTION2(SE2106, diag.c_str());
 			}
 
 			rc = SQLODBCBase::fSQLParamData(hstmt, (SQLPOINTER*)&id);
@@ -611,7 +611,7 @@ void SQLODBCExecutor::execute_prepared(arr_of_PPOpIn params)
 	//see execute_query for comments about SQL_NO_DATA
 	if (!result_ok(rc) && rc != SQL_NO_DATA) {
 		std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-		throw USER_EXCEPTION2(SE2106, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2106, diag.c_str());
 	}
 
 	prepare_results();
@@ -661,7 +661,7 @@ void SQLODBCExecutor::fetch(tuple &t, xptr virt_root, xptr &last_elem)
 		if (!result_ok(rc))
 		{
 			std::string diag = getODBCDiag(SQL_HANDLE_STMT, hstmt);
-			throw USER_EXCEPTION2(SE2112, diag.c_str());
+			throw XQUERY_EXCEPTION2(SE2112, diag.c_str());
 		}
 
 		int offset = 0;
@@ -760,7 +760,7 @@ SQLHandle* SQLODBCConnection::prepare_stmt(char *query, int query_len, PPOpIn *o
 	SQLODBCExecutor *executor;
 
 	if (hdbc == SQL_NULL_HDBC)
-		throw USER_EXCEPTION2(SE2105, "Connection closed");
+		throw XQUERY_EXCEPTION2(SE2105, "Connection closed");
 
 	executor = (SQLODBCExecutor *)get_executor();
 
@@ -783,7 +783,7 @@ void SQLODBCConnection::close()
 	if (!result_ok(rc))
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_DBC, hdbc);
-		throw USER_EXCEPTION2(SE2108, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2108, diag.c_str());
 	}
 	SQLODBCBase::fSQLFreeHandle(SQL_HANDLE_DBC, hdbc);
 	hdbc = SQL_NULL_HDBC;
@@ -795,7 +795,7 @@ void SQLODBCConnection::commit()
 	if (!result_ok(rc))
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_DBC, hdbc);
-		throw USER_EXCEPTION2(SE2109, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2109, diag.c_str());
 	}
 }
 void SQLODBCConnection::rollback()
@@ -805,7 +805,7 @@ void SQLODBCConnection::rollback()
 	if (!result_ok(rc))
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_DBC, hdbc);
-		throw USER_EXCEPTION2(SE2110, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2110, diag.c_str());
 	}
 }
 
@@ -827,7 +827,7 @@ SQLODBCPreparedStmt::SQLODBCPreparedStmt(SQLODBCConnection *_connection_, SQLODB
 SQLExecutor* SQLODBCPreparedStmt::get_executor()
 {
 	if (executor == NULL)
-		throw USER_EXCEPTION2(SE2106, "Prepared statement not available anymore");
+		throw XQUERY_EXCEPTION2(SE2106, "Prepared statement not available anymore");
 	return executor;
 }
 void SQLODBCPreparedStmt::release_executor(SQLExecutor *executor)
@@ -959,7 +959,7 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 	{
 		std::string diag = getODBCDiag(SQL_HANDLE_DBC, hdbc);
 		SQLODBCBase::fSQLFreeHandle(SQL_HANDLE_DBC, hdbc);
-		throw USER_EXCEPTION2(SE2111, diag.c_str());
+		throw XQUERY_EXCEPTION2(SE2111, diag.c_str());
 	}
 
 	if (options != NULL)
@@ -974,12 +974,12 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 				break;
 
 			if (t.cells_number != 1)
-				throw USER_EXCEPTION(SE2100);
+				throw XQUERY_EXCEPTION(SE2100);
 
 			tuple_cell opt = options->get(t);
 
 			if (!SQLOptionParse(opt, name, value))
-				throw USER_EXCEPTION(SE2100);
+				throw XQUERY_EXCEPTION(SE2100);
 
 			if (!strcmp(name, "manual-commit"))
 			{
@@ -987,14 +987,14 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 				if (!value)
 				{
 					delete[] name;
-					throw USER_EXCEPTION(SE2100);
+					throw XQUERY_EXCEPTION(SE2100);
 				}
 				x = SQLOptionGetBool(value);
 				if (x == -1)
 				{
 					delete[] name;
 					delete[] value;
-					throw USER_EXCEPTION(SE2100);
+					throw XQUERY_EXCEPTION(SE2100);
 				}
 				//TODO - set  SQL_AUTOCOMMIT_ON if !x
 				if (x)
@@ -1011,7 +1011,7 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 						delete[] name;
 						delete[] value;
 						//TODO - make another exception type for this
-						throw USER_EXCEPTION2(SE2111, diag.c_str());
+						throw XQUERY_EXCEPTION2(SE2111, diag.c_str());
 					}
 				}
 			}
@@ -1019,7 +1019,7 @@ SQLConnection*	SQLODBCDriver::new_connection(char *connect_str, int connect_str_
 				delete[] name;
 				if (value)
 					delete[] value;
-				throw USER_EXCEPTION(SE2100);
+				throw XQUERY_EXCEPTION(SE2100);
 			}
 			delete[] name;
 			if (value)
