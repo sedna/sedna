@@ -143,16 +143,16 @@ prepare_linux_source() {
 create_sed_script()
 {
     cat > $SEDSCRIPT <<EEE
-s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+$/ACTIVE_CONFIGURATION = Release/
-s/^AUTH_SWITCH[ ]\+\?=[A-Za-z0-9 ]\+$/AUTH_SWITCH = 1/
-s/^DOCUMENTATION[ ]\+\?=[A-Za-z0-9 ]\+$/DOCUMENTATION = 0/
-s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+$/EL_DEBUG = 0/
-s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+$/JAVA_DRIVER = 0/
-s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+$/SQL_CONNECTION = 0/
-s/^STATIC_SYS_LIBS[ ]\+\?=[A-Za-z0-9 ]\+$/STATIC_SYS_LIBS = 0/
-s/^SE_ENABLE_GCOV[ ]\+\?=[A-Za-z0-9 ]\+$/SE_ENABLE_GCOV = 0/
-s/^ENABLE_DTSEARCH[ ]\+\?=[A-Za-z0-9 ]\+$/ENABLE_DTSEARCH = 0/
-s/^ENABLE_TRIGGERS[ ]\+\?=[A-Za-z0-9 ]\+$/ENABLE_TRIGGERS = 1/
+s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
+s/^AUTH_SWITCH[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/AUTH_SWITCH = 1\1/
+s/^DOCUMENTATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/DOCUMENTATION = 0\1/
+s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
+s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/JAVA_DRIVER = 0\1/
+s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/SQL_CONNECTION = 0\1/
+s/^STATIC_SYS_LIBS[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/STATIC_SYS_LIBS = 0\1/
+s/^SE_ENABLE_GCOV[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/SE_ENABLE_GCOV = 0\1/
+s/^ENABLE_DTSEARCH[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_DTSEARCH = 0\1/
+s/^ENABLE_TRIGGERS[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ENABLE_TRIGGERS = 1\1/
 EEE
 }
 
