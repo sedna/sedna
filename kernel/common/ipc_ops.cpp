@@ -125,7 +125,8 @@ void get_default_sednaconf_values(gov_header_struct* cfg)
   strcpy(cfg->SEDNA_DATA, proc_buf);
   strcat(cfg->SEDNA_DATA, "\\..");
 #else
-  strcpy(cfg->SEDNA_DATA, "/var/lib/sedna");
+  strcpy(cfg->SEDNA_DATA, proc_buf);
+  strcat(cfg->SEDNA_DATA, "/..");
 #endif
 
   cfg->is_server_stop = 0;
