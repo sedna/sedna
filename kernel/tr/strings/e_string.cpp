@@ -107,6 +107,7 @@ static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
 		E_STR_BLK_HDR(estr_blk)->nblk = new_blk;
 		
 		estr_blk = new_blk;
+		CHECKP(estr_blk);
 	}
 	else
 	{
@@ -114,7 +115,6 @@ static inline void estr_get_next_blk(xptr &estr_blk, int &m_blks)
 		CHECKP(estr_blk);
 		VMM_SIGNAL_MODIFICATION(estr_blk);
 		E_STR_BLK_HDR(estr_blk)->cursor = sizeof(e_str_blk_hdr);
-		
 	}
 }
 
