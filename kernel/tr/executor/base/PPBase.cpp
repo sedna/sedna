@@ -44,5 +44,5 @@ __declspec(thread)
 #else
 __thread
 #endif
-int __xquery_line_thread = 0;
+PPIterator* __current_physop = NULL;
 

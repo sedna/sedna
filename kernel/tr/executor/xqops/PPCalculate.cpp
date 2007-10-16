@@ -55,7 +55,7 @@ void PPCalculate::close ()
 
 void PPCalculate::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time)
     {
@@ -74,7 +74,7 @@ void PPCalculate::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPCalculate::copy(dynamic_context *_cxt_)

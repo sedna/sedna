@@ -79,7 +79,7 @@ void PPRange::close ()
 
 void PPRange::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (cur==start)
 	{
@@ -93,7 +93,7 @@ void PPRange::next(tuple &t)
 	{
 		t.set_eos();
 		cur=start;
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
 	}
 	t.copy(tuple_cell::atomic((__int64)cur));
     cur++;

@@ -53,12 +53,12 @@ void PPDocInCol::close ()
 
 void PPDocInCol::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time)
     {
         col_name_op.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         
         tuple_cell tc_col= atomize(col_name_op.get(t));
         if(!is_string_type(tc_col.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the first argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -67,7 +67,7 @@ void PPDocInCol::next(tuple &t)
         tc_col = tuple_cell::make_sure_light_atomic(tc_col);
 
         doc_name_op.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         tuple_cell tc_doc= atomize(doc_name_op.get(t));
         if(!is_string_type(tc_doc.get_atomic_type())) throw XQUERY_EXCEPTION2(XPTY0004, "Invalid type of the second argument in fn:doc (xs_string/derived/promotable is expected).");
@@ -105,7 +105,7 @@ void PPDocInCol::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDocInCol::copy(dynamic_context *_cxt_)

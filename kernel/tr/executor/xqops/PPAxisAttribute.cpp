@@ -71,7 +71,7 @@ void PPAxisAttribute::next_processing_instruction(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -81,7 +81,7 @@ void PPAxisAttribute::next_comment(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -91,7 +91,7 @@ void PPAxisAttribute::next_text(tuple &t)
     while (true)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
     }
 }
@@ -101,7 +101,7 @@ void PPAxisAttribute::next_node(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -122,7 +122,7 @@ void PPAxisAttribute::next_qname(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -142,7 +142,7 @@ void PPAxisAttribute::next_wildcard_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -158,7 +158,7 @@ void PPAxisAttribute::next_wildcard_ncname_star(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 
@@ -178,7 +178,7 @@ void PPAxisAttribute::next_wildcard_star_ncname(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 

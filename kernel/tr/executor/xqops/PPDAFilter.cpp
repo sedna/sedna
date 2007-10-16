@@ -51,7 +51,7 @@ void PPDAFilter::close ()
 
 void PPDAFilter::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     while (true)
     {
@@ -65,7 +65,7 @@ void PPDAFilter::next  (tuple &t)
 
                 child2.op->reopen();
 
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             else
             {
@@ -86,7 +86,7 @@ void PPDAFilter::next  (tuple &t)
 
                 child1.op->reopen();
 
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             else
             {
@@ -104,7 +104,7 @@ void PPDAFilter::next  (tuple &t)
             {
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             case -1: /// (1) < (2)
             {
@@ -116,7 +116,7 @@ void PPDAFilter::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
                 t.copy(tuple_cell::node(xptr2));
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             case  1: /// (1) > (2)
             {
@@ -132,7 +132,7 @@ void PPDAFilter::next  (tuple &t)
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDAFilter::copy(dynamic_context *_cxt_)

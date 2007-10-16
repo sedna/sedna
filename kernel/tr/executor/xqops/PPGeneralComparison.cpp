@@ -131,7 +131,7 @@ void PPGeneralComparison::close ()
 
 void PPGeneralComparison::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -147,7 +147,7 @@ void PPGeneralComparison::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPGeneralComparison::copy(dynamic_context *_cxt_)
@@ -605,7 +605,7 @@ v v v v v v v
 
 void PPNEQGeneralComparison::next   (tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
     {
@@ -628,14 +628,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		{
 			eos_reached1 = true;
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		seq[1]->op->next(*cont[1]);
 		if ((*cont[1]).is_eos())
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		tuple_cell res[2];
 		res[0]=getAtomizedCell(*cont[0]);
@@ -654,7 +654,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 		if (op_ne(res[0],res[1],handler).get_xs_boolean())
 		{
 			t.copy(tuple_cell::atomic(true));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		int pr=0;
 		while(true)
@@ -671,7 +671,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (seq_end[1-pr])
 					{
 						t.copy(tuple_cell::atomic(false));
-						{UNDO_XQUERY_LINE; return;}
+						{RESTORE_CURRENT_PP; return;}
 					}
 				}
 				else
@@ -695,14 +695,14 @@ void PPNEQGeneralComparison::next   (tuple &t)
 							)
 						{
 							t.copy(tuple_cell::atomic(true));
-							{UNDO_XQUERY_LINE; return;}
+							{RESTORE_CURRENT_PP; return;}
 						}
 						if (uv_exist[1-pr])
 						{
 							if (op_ne(cast(seq_str_val[pr], xs_string),cast(seq_str_val[1-pr], xs_string),handler).get_xs_boolean())
 							{
 								t.copy(tuple_cell::atomic(true));
-								{UNDO_XQUERY_LINE; return;}
+								{RESTORE_CURRENT_PP; return;}
 							}
 						}
 					}
@@ -710,7 +710,7 @@ void PPNEQGeneralComparison::next   (tuple &t)
 					if (op_ne(res[0],res[1],handler).get_xs_boolean())
 					{
 						t.copy(tuple_cell::atomic(true));
-						{UNDO_XQUERY_LINE; return;}
+						{RESTORE_CURRENT_PP; return;}
 					}
 				}
 			}
@@ -722,11 +722,11 @@ void PPNEQGeneralComparison::next   (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 void PPEQLGeneralComparison::next   (tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
     {
@@ -746,7 +746,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -757,7 +757,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 			if (op_eq(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				{UNDO_XQUERY_LINE; return;}
+				{RESTORE_CURRENT_PP; return;}
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -766,7 +766,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -780,7 +780,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 				if (op_eq(res1,res2,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					{UNDO_XQUERY_LINE; return;}
+					{RESTORE_CURRENT_PP; return;}
 				}
 				it++;
 			}
@@ -789,7 +789,7 @@ void PPEQLGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
 
 	}
 	else 
@@ -798,11 +798,11 @@ void PPEQLGeneralComparison::next   (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 void PPLMGeneralComparison::next   (tuple &t)
 {
- 	SET_XQUERY_LINE(__xquery_line);
+ 	SET_CURRENT_PP(this);
  	
  	if (first_time)
     {
@@ -837,7 +837,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		{
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		tuple_cell res1=getAtomizedCell(cont2);
 		while (!cont1.is_eos())
@@ -848,7 +848,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 			if (comp_op(res,res1,handler).get_xs_boolean())
 			{
 				t.copy(tuple_cell::atomic(true));
-				{UNDO_XQUERY_LINE; return;}
+				{RESTORE_CURRENT_PP; return;}
 			}
 			seq.add(at_tup);
 			seq1.op->next(cont1);
@@ -857,7 +857,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		if (seq.size()<1)
 		{
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		seq2.op->next(cont2);
 		while (!cont2.is_eos())
@@ -871,7 +871,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 				if (comp_op(res2,res1,handler).get_xs_boolean())
 				{
 					t.copy(tuple_cell::atomic(true));
-					{UNDO_XQUERY_LINE; return;}
+					{RESTORE_CURRENT_PP; return;}
 				}
 				it++;
 			}
@@ -880,7 +880,7 @@ void PPLMGeneralComparison::next   (tuple &t)
 		}
 		eos_reached2 = true;
 		t.copy(tuple_cell::atomic(false));
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
 
 	}
 	else 
@@ -889,7 +889,7 @@ void PPLMGeneralComparison::next   (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPEQLGeneralComparison::copy(dynamic_context *_cxt_)

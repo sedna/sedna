@@ -120,7 +120,7 @@ void PPFtScan::close()
 
 void PPFtScan::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 
 	if (first_time)
 	{
@@ -176,7 +176,7 @@ void PPFtScan::next(tuple &t)
 		first_time = true;
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator*  PPFtScan::copy(dynamic_context *_cxt_)

@@ -73,7 +73,7 @@ void PPDDO::close ()
 
 void PPDDO::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
 #ifdef TURN_ON_DDO
     if (!pos)
@@ -110,14 +110,14 @@ while (true)
 	{
 		pos = 0;
         s->clear();
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
 	}
 	else
 	{
 		if (t.cells[0].get_node()!=ret_val)
 		{
 			ret_val=t.cells[0].get_node();
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 	}
 }
@@ -129,7 +129,7 @@ while (true)
 		if (t.cells[0].get_node()!=ret_val)
 		{
 			ret_val=t.cells[0].get_node();
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 	}
     else 
@@ -137,7 +137,7 @@ while (true)
         t.set_eos();
         pos = 0;
         s->clear();
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
     }
 }
 */
@@ -145,7 +145,7 @@ while (true)
     child.op->next(t);
 #endif
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDDO::copy(dynamic_context *_cxt_)

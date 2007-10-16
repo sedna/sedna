@@ -103,7 +103,7 @@ void PPLet::close ()
 
 void PPLet::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (need_reopen)
     {
@@ -126,7 +126,7 @@ void PPLet::next(tuple &t)
 
     if (t.is_eos()) need_reopen = true;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPLet::copy(dynamic_context *_cxt_)
@@ -148,7 +148,7 @@ var_c_id PPLet::register_consumer(var_dsc dsc)
 
 void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
@@ -184,7 +184,7 @@ void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPLet::reopen(var_dsc dsc, var_c_id id)

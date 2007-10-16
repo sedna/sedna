@@ -80,7 +80,7 @@ void PPIf::close ()
 
 void PPIf::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (data_child == NULL)
     {
@@ -99,7 +99,7 @@ void PPIf::next(tuple &t)
         if (!eos_reached) if_child.op->reopen();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPIf::copy(dynamic_context *_cxt_)

@@ -52,7 +52,7 @@ void PPFnEmpty::close ()
 
 void PPFnEmpty::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -71,7 +71,7 @@ void PPFnEmpty::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnEmpty::copy(dynamic_context *_cxt_)
@@ -146,7 +146,7 @@ void PPFnExists::close ()
 
 void PPFnExists::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -165,7 +165,7 @@ void PPFnExists::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnExists::copy(dynamic_context *_cxt_)
@@ -243,7 +243,7 @@ void PPFnItemAt::close ()
 
 void PPFnItemAt::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -267,7 +267,7 @@ void PPFnItemAt::next(tuple &t)
                 {
                     t.set_eos();
                     first_time = true;
-                    {UNDO_XQUERY_LINE; return;}
+                    {RESTORE_CURRENT_PP; return;}
                 }
 
                 throw USER_EXCEPTION(SE1007);
@@ -281,7 +281,7 @@ void PPFnItemAt::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnItemAt::copy(dynamic_context *_cxt_)
@@ -403,7 +403,7 @@ void PPFnDistinctValues::close ()
 
 void PPFnDistinctValues::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!handler) // the same as 'first_time'
     {
@@ -439,7 +439,7 @@ void PPFnDistinctValues::next(tuple &t)
             s->clear();
             handler = NULL;
             has_NaN = false;
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         tuple_cell tc = atomize(child.get(t));
@@ -470,10 +470,10 @@ void PPFnDistinctValues::next(tuple &t)
     store_item_and_return:
         t.copy(tc);
         s->add(t);
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDistinctValues::copy(dynamic_context *_cxt_)
@@ -560,7 +560,7 @@ void PPFnIndexOf::close ()
 
 void PPFnIndexOf::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!handler) // the same as 'first_time'
     {
@@ -604,7 +604,7 @@ void PPFnIndexOf::next(tuple &t)
         {
             handler = NULL;
             pos = 0;
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         tuple_cell tc = atomize(seq_child.get(t));
@@ -619,7 +619,7 @@ void PPFnIndexOf::next(tuple &t)
 
     t.copy(tuple_cell::atomic(pos));
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnIndexOf::copy(dynamic_context *_cxt_)
@@ -682,7 +682,7 @@ void PPFnReverse::close ()
 
 void PPFnReverse::next (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -705,7 +705,7 @@ void PPFnReverse::next (tuple &t)
      	first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnReverse::copy(dynamic_context *_cxt_)
@@ -788,7 +788,7 @@ void PPFnSubsequence::close ()
 
 void PPFnSubsequence::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -836,14 +836,14 @@ void PPFnSubsequence::next(tuple &t)
            seq_child.op->next(t);
            current_pos++;
            bool length_check = is_length ? (current_pos < start_pos + length) : true;
-           if(!t.is_eos() && start_pos <= current_pos && length_check) {UNDO_XQUERY_LINE; return;}
+           if(!t.is_eos() && start_pos <= current_pos && length_check) {RESTORE_CURRENT_PP; return;}
        } while( !t.is_eos() && length_check );
     }
     
     t.set_eos();
     first_time = true; 
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnSubsequence::copy(dynamic_context *_cxt_)
@@ -910,7 +910,7 @@ void PPFnRemove::close ()
 
 void PPFnRemove::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -946,7 +946,7 @@ void PPFnRemove::next(tuple &t)
     
     if(t.is_eos()) first_time = true; 
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnRemove::copy(dynamic_context *_cxt_)
@@ -1019,7 +1019,7 @@ void PPFnInsertBefore::close ()
 
 void PPFnInsertBefore::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1050,7 +1050,7 @@ void PPFnInsertBefore::next(tuple &t)
     {
     	ins_child.op->next(t);
     	if(t.is_eos()) inserted = true;
-    	else {UNDO_XQUERY_LINE; return;}
+    	else {RESTORE_CURRENT_PP; return;}
     }
         
     if(!eos_reached)
@@ -1064,12 +1064,12 @@ void PPFnInsertBefore::next(tuple &t)
     {
     	ins_child.op->next(t);
     	if(t.is_eos()) inserted = true;
-    	else {UNDO_XQUERY_LINE; return;}
+    	else {RESTORE_CURRENT_PP; return;}
     }
 
     if(inserted && eos_reached) first_time = true;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnInsertBefore::copy(dynamic_context *_cxt_)
@@ -1126,7 +1126,7 @@ void PPFnZeroOrOne::close ()
 
 void PPFnZeroOrOne::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -1146,7 +1146,7 @@ void PPFnZeroOrOne::next  (tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnZeroOrOne::copy(dynamic_context *_cxt_)
@@ -1200,7 +1200,7 @@ void PPFnOneOrMore::close ()
 
 void PPFnOneOrMore::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     child.op->next(t);
     if (t.is_eos()) 
@@ -1210,7 +1210,7 @@ void PPFnOneOrMore::next  (tuple &t)
     }
     else first_time = false;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnOneOrMore::copy(dynamic_context *_cxt_)
@@ -1264,7 +1264,7 @@ void PPFnExactlyOne::close ()
 
 void PPFnExactlyOne::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -1282,7 +1282,7 @@ void PPFnExactlyOne::next  (tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnExactlyOne::copy(dynamic_context *_cxt_)

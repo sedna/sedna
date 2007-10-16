@@ -59,7 +59,7 @@ void PPTest::close ()
 }
 void PPTest::next  (tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	tuple t1(seq.ts);
 	seq.op->next(t1);
@@ -67,7 +67,7 @@ void PPTest::next  (tuple &t)
 	if (t1.is_eos()) 
 	{
 		t.set_eos();
-		{UNDO_XQUERY_LINE; return;}
+		{RESTORE_CURRENT_PP; return;}
 	}
 	tuple_cell& tc= t1.cells[0];
 	if (!tc.is_node())
@@ -176,7 +176,7 @@ void PPTest::next  (tuple &t)
 	//t.copy(tuple_cell::atomic(res));	
 	*/
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 bool PPTest::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {

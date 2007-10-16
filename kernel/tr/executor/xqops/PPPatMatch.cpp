@@ -228,7 +228,7 @@ static inline tuple_cell check_string_argument(tuple &t, PPOpIn &seq, bool is_em
 
 void PPPatMatch::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -279,7 +279,7 @@ void PPPatMatch::next  (tuple &t)
 		}
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPPatMatch::tokenize (tuple &t,tuple_cell *t1,tuple_cell *t2,tuple_cell *t3,tuple_cell *t4)

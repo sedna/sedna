@@ -48,7 +48,7 @@ void PPDmStringValue::close ()
 
 void PPDmStringValue::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -72,7 +72,7 @@ void PPDmStringValue::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDmStringValue::copy(dynamic_context *_cxt_)
@@ -145,7 +145,7 @@ void PPDmTypedValue::close ()
 
 void PPDmTypedValue::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -169,7 +169,7 @@ void PPDmTypedValue::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDmTypedValue::copy(dynamic_context *_cxt_)
@@ -241,7 +241,7 @@ void PPDmDocumentURI::close ()
 
 void PPDmDocumentURI::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -268,7 +268,7 @@ void PPDmDocumentURI::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDmDocumentURI::copy(dynamic_context *_cxt_)

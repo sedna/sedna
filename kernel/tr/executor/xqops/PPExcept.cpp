@@ -52,7 +52,7 @@ void PPExcept::close ()
 
 void PPExcept::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     while (true)
     {
@@ -92,7 +92,7 @@ void PPExcept::next  (tuple &t)
             {
                 tug_first = true;
                 t.copy(tuple_cell::node(xptr1));
-                UNDO_XQUERY_LINE; return;
+                RESTORE_CURRENT_PP; return;
             }
             case  0: /// (1) == (2)
             {
@@ -102,7 +102,7 @@ void PPExcept::next  (tuple &t)
                 if (xptr1 == NULL) 
                 {
                     t.set_eos();
-                    UNDO_XQUERY_LINE; return;
+                    RESTORE_CURRENT_PP; return;
                 }
 
                 break;
@@ -116,7 +116,7 @@ void PPExcept::next  (tuple &t)
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPExcept::copy(dynamic_context *_cxt_)

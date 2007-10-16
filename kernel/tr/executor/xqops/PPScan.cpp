@@ -43,7 +43,7 @@ void PPScan::close ()
 
 void PPScan::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (res == NULL)
     {
@@ -52,7 +52,7 @@ void PPScan::next(tuple &t)
         if (res == NULL)
         {
             t.set_eos();
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         CHECKP(res);
@@ -63,7 +63,7 @@ void PPScan::next(tuple &t)
         else
             t.copy(tuple_cell::node(res));
 
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
 
     res = getNextDescriptorOfSameSortXptr(res);
@@ -72,7 +72,7 @@ void PPScan::next(tuple &t)
     else
         t.copy(tuple_cell::node(res));
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPScan::copy(dynamic_context *_cxt_)

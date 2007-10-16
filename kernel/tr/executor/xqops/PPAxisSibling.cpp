@@ -82,7 +82,7 @@ void PPAxisSibling::next_processing_instruction(tuple &t)
 		while (true)
 		{
 			next_qname_and_text(t,NULL,NULL,pr_ins,comp_type);
-			if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+			if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 			xptr tmp=child.get(t).get_node();
 			if (tmp!=XNULL)
 			{
@@ -95,7 +95,7 @@ void PPAxisSibling::next_processing_instruction(tuple &t)
 					CHECKP(ind_ptr);
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
-					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {UNDO_XQUERY_LINE; return;}
+					if (strcmp(nt_data.ncname_local, std::string(data,tsize).c_str()) == 0) {RESTORE_CURRENT_PP; return;}
 				}
 			}
 		}   
@@ -115,7 +115,7 @@ void PPAxisSibling::next_node(tuple &t)
     while (cur == NULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		xptr tmp=child.get(t).get_node();
@@ -163,7 +163,7 @@ void PPAxisSibling::next_wildcard_star(tuple &t)
     while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		
@@ -282,7 +282,7 @@ void PPAxisSibling::next_qname_and_text(tuple &t,const char* uri,const char* nam
      while (cur == XNULL)
     {
         child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION(XPTY0020);
 		

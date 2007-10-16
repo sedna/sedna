@@ -70,7 +70,7 @@ PPNodeComparison::~PPNodeComparison()
 }
 void PPNodeComparison::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -145,5 +145,5 @@ void PPNodeComparison::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }

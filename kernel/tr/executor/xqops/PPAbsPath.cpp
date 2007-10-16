@@ -138,7 +138,7 @@ void PPAbsPath::close ()
 
 void PPAbsPath::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 //    d_printf1("++++++++++++\n");
 //    path_expr->print();
 //    d_printf1("\n");
@@ -151,7 +151,7 @@ void PPAbsPath::next(tuple &t)
         if (determine_root()) 
         {
             t.set_eos();
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
        
 /*
@@ -189,7 +189,7 @@ void PPAbsPath::next(tuple &t)
         merged_seq_arr[0] = getNextDescriptorOfSameSortXptr(res);
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 bool PPAbsPath::determine_root()

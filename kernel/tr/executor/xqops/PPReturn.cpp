@@ -120,7 +120,7 @@ void PPReturn::close ()
 
 void PPReturn::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -141,7 +141,7 @@ void PPReturn::next(tuple &t)
             first_time = true;			// reopens automatically
             pos = 0;                    // reopens automatically
             reinit_consumer_table();	// reopens automatically
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         if (need_to_check_type)
@@ -156,7 +156,7 @@ void PPReturn::next(tuple &t)
         data_child.op->next(t);
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPReturn::copy(dynamic_context *_cxt_)
@@ -179,7 +179,7 @@ var_c_id PPReturn::register_consumer(var_dsc dsc)
 
 void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -195,7 +195,7 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPReturn::reopen(var_dsc dsc, var_c_id id)

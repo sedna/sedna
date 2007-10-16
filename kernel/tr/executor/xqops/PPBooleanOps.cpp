@@ -40,7 +40,7 @@ void PPFnTrue::close ()
 
 void PPFnTrue::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time) 
     {
@@ -53,7 +53,7 @@ void PPFnTrue::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnTrue::copy(dynamic_context *_cxt_)
@@ -100,7 +100,7 @@ void PPFnFalse::close ()
 
 void PPFnFalse::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time) 
     {
@@ -168,7 +168,7 @@ void PPFnNot::close ()
 
 void PPFnNot::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -257,7 +257,7 @@ void PPFnBoolean::close ()
 
 void PPFnBoolean::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
