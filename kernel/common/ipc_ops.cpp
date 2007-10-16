@@ -453,7 +453,9 @@ int set_sedna_data(char* SEDNA_DATA, sys_call_error_fun fun)
   strcpy(SEDNA_DATA, proc_buf);
   strcat(SEDNA_DATA, "\\..");
 #else
-  strcpy(SEDNA_DATA, "/var/lib/sedna");
+  strcpy(SEDNA_DATA, proc_buf);
+  strcat(SEDNA_DATA, "/..");
+//  strcpy(SEDNA_DATA, "/var/lib/sedna");
 #endif
 
 #ifdef _WIN32
