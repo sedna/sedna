@@ -74,7 +74,7 @@ void PPFnCompare::close ()
 
 void PPFnCompare::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -104,7 +104,7 @@ void PPFnCompare::next(tuple &t)
 
         str1_child.op->next(t);
         if (t.is_eos()) 
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         tc1 = atomize(str1_child.get(t));              
         if (!is_string_type(tc1.get_atomic_type())) 
@@ -117,7 +117,7 @@ void PPFnCompare::next(tuple &t)
         
         str2_child.op->next(t);
         if (t.is_eos()) 
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         tc2 = atomize(str2_child.get(t));              
         if (!is_string_type(tc2.get_atomic_type())) 
@@ -139,7 +139,7 @@ void PPFnCompare::next(tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnCompare::copy(dynamic_context *_cxt_)

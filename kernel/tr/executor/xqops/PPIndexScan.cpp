@@ -133,7 +133,7 @@ void PPIndexScan::close ()
 #define SET_EOS_AND_EXIT		    {								\
                                         first_time = true;			\
                                         t.set_eos();				\
-                                        {UNDO_XQUERY_LINE; return;}	\
+                                        {RESTORE_CURRENT_PP; return;}	\
                                     }
 
 #define DEREF_AND_SET				CHECKP(res);					\

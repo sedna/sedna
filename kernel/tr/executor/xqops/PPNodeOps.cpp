@@ -49,7 +49,7 @@ void PPFnName::close ()
 
 void PPFnName::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -60,7 +60,7 @@ void PPFnName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:name is not a node");
@@ -85,7 +85,7 @@ void PPFnName::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnName::copy(dynamic_context *_cxt_)
@@ -174,7 +174,7 @@ void PPFnLocalName::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:local-name is not a node");
@@ -261,7 +261,7 @@ void PPFnNamespaceUri::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:namespace-uri is not a node");
@@ -339,7 +339,7 @@ void PPFnNumber::close ()
 
 void PPFnNumber::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time)
     {
@@ -350,7 +350,7 @@ void PPFnNumber::next(tuple &t)
         if (t.is_eos())
         {
             t.copy(tuple_cell::atomic(double_NaN));
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         tuple_cell tc = atomize(child.get(t));
@@ -380,7 +380,7 @@ void PPFnNumber::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNumber::copy(dynamic_context *_cxt_)
@@ -433,14 +433,14 @@ void PPFnRoot::close ()
 
 void PPFnRoot::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
         child.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:root is not a node");
 
@@ -458,7 +458,7 @@ void PPFnRoot::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnRoot::copy(dynamic_context *_cxt_)

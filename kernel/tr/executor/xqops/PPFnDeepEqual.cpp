@@ -167,7 +167,7 @@ void PPFnDeepEqual::close ()
 
 void PPFnDeepEqual::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!handler)
     {
@@ -209,7 +209,7 @@ void PPFnDeepEqual::next  (tuple &t)
 				if (!are_nodes_deep_equal(node1,node2))
 				{
 					t.copy(tuple_cell::atomic(false));
-					{UNDO_XQUERY_LINE; return;}
+					{RESTORE_CURRENT_PP; return;}
 				}
 			}
 			else if (!tc1.is_node() && !tc2.is_node() )
@@ -223,20 +223,20 @@ void PPFnDeepEqual::next  (tuple &t)
 						if (!op_eq(cont1.cells[0],cont2.cells[0],handler).get_xs_boolean())
 						{
 							t.copy(tuple_cell::atomic(false));
-							{UNDO_XQUERY_LINE; return;}
+							{RESTORE_CURRENT_PP; return;}
 						}
 					}
 					catch (SednaUserException &e)
 					{
 						t.copy(tuple_cell::atomic(false));
-						{UNDO_XQUERY_LINE; return;}
+						{RESTORE_CURRENT_PP; return;}
 					}
 				}
 			}
 			else
 			{
 				t.copy(tuple_cell::atomic(false));
-				{UNDO_XQUERY_LINE; return;}
+				{RESTORE_CURRENT_PP; return;}
 			}
 
 			child1.op->next(cont1);
@@ -247,14 +247,14 @@ void PPFnDeepEqual::next  (tuple &t)
 			eos_reached1 = true;
 			eos_reached2 = true;
 			t.copy(tuple_cell::atomic(true));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 		else
 		{
 			eos_reached1 = cont1.is_eos();
 			eos_reached2 = cont2.is_eos();
 			t.copy(tuple_cell::atomic(false));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
     }
     else 
@@ -263,7 +263,7 @@ void PPFnDeepEqual::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDeepEqual::copy(dynamic_context *_cxt_)

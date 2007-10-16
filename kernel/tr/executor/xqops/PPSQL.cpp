@@ -302,7 +302,7 @@ static char *getStringParameter(PPOpIn content)
 
 void PPFnSQLConnect::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
 	{
@@ -357,7 +357,7 @@ void PPFnSQLConnect::next(tuple &t)
 		t.set_eos();
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnSQLConnect::copy(dynamic_context *_cxt_)
@@ -448,7 +448,7 @@ void PPFnSQLExecute::close ()
 
 void PPFnSQLExecute::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
 	{
@@ -483,7 +483,7 @@ void PPFnSQLExecute::next(tuple &t)
 				{
 					t.set_eos();
 					first_time = true;
-					{UNDO_XQUERY_LINE; return;}
+					{RESTORE_CURRENT_PP; return;}
 				}
 
 				{
@@ -508,7 +508,7 @@ void PPFnSQLExecute::next(tuple &t)
 		if (exec_update)
 		{
 			t.copy(tuple_cell::atomic((__int64)executor->update_row_count()));
-			{UNDO_XQUERY_LINE; return;}
+			{RESTORE_CURRENT_PP; return;}
 		}
 	}
 
@@ -525,7 +525,7 @@ void PPFnSQLExecute::next(tuple &t)
 		}
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnSQLExecute::copy(dynamic_context *_cxt_)
@@ -595,7 +595,7 @@ void PPFnSQLPrepare::close()
 }
 void PPFnSQLPrepare::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
 	{
@@ -642,7 +642,7 @@ void PPFnSQLPrepare::next(tuple &t)
 		t.set_eos();
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 PPIterator * PPFnSQLPrepare::copy(dynamic_context *_cxt_)
 {
@@ -690,7 +690,7 @@ void PPFnSQLClose::close()
 }
 void PPFnSQLClose::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	int handle_id;
 	SQLHandle *handle;
@@ -721,7 +721,7 @@ void PPFnSQLClose::next(tuple &t)
 
 	t.set_eos();
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator * PPFnSQLClose::copy(dynamic_context *_cxt_)
@@ -764,7 +764,7 @@ void PPFnSQLCommit::close()
 }
 void PPFnSQLCommit::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	SQLHandle *handle;
 	tuple tmp(1);
@@ -791,7 +791,7 @@ void PPFnSQLCommit::next(tuple &t)
 
 	t.set_eos();
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator * PPFnSQLCommit::copy(dynamic_context *_cxt_)
@@ -834,7 +834,7 @@ void PPFnSQLRollback::close()
 }
 void PPFnSQLRollback::next(tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	SQLHandle *handle;
 	tuple tmp(1);
@@ -861,7 +861,7 @@ void PPFnSQLRollback::next(tuple &t)
 
 	t.set_eos();
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator * PPFnSQLRollback::copy(dynamic_context *_cxt_)

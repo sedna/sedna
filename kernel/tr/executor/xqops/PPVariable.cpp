@@ -39,11 +39,11 @@ void PPVariable::close ()
 
 void PPVariable::next (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     cxt->var_cxt.producers[dsc].op->next(t, dsc, id);
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 //    if (t.is_eos()) cxt->producers[dsc].op->reopen(dsc, id);
 }
 
@@ -105,7 +105,7 @@ void PPGlobalVariable::close ()
 
 void PPGlobalVariable::next (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     dynamic_context::glb_var_cxt.producers[dsc].op->next(t, dsc, id);
 }

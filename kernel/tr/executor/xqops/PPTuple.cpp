@@ -52,7 +52,7 @@ void PPTuple::close ()
 
 void PPTuple::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!i)
     {
@@ -78,7 +78,7 @@ void PPTuple::next(tuple &t)
         i = 0;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPTuple::copy(dynamic_context *_cxt_)

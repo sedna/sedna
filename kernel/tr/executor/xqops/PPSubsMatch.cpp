@@ -96,7 +96,7 @@ void PPSubsMatch::close ()
 }
 void PPSubsMatch::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     //d_printf1("1\n");
     if (first_time)
@@ -221,7 +221,7 @@ void PPSubsMatch::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 bool PPSubsMatch::result(PPIterator* cur, dynamic_context *cxt, void*& r)
 {

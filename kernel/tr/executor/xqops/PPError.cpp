@@ -63,7 +63,7 @@ void PPFnError::close ()
 
 void PPFnError::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     tuple_cell err_name_tc; // eos by default
     tuple_cell err_descr_tc; // eos by default
@@ -111,7 +111,7 @@ void PPFnError::next  (tuple &t)
 
     throw USER_EXCEPTION_FNERROR(err_name, err_descr);
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnError::copy(dynamic_context *_cxt_)
@@ -173,7 +173,7 @@ void PPFnTrace::close ()
 
 void PPFnTrace::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     bool is_first = false;
     if (first_time)
@@ -205,7 +205,7 @@ void PPFnTrace::next(tuple &t)
         dostr.flush();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnTrace::copy(dynamic_context *_cxt_)

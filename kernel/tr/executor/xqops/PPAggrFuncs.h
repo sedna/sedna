@@ -246,7 +246,7 @@ void PPAggrFuncContainer<Essence>::close ()
 template<class Essence>
 void PPAggrFuncContainer<Essence>::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -270,7 +270,7 @@ void PPAggrFuncContainer<Essence>::next(tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 template<class Essence>

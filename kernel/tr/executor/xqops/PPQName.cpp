@@ -55,13 +55,13 @@ void PPFnResolveQName::close ()
 
 void PPFnResolveQName::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
         child_qname.op->next(t);
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         first_time = false;
         tuple_cell qname_tc = atomize(child_qname.get(t));
@@ -107,7 +107,7 @@ void PPFnResolveQName::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnResolveQName::copy(dynamic_context *_cxt_)
@@ -170,7 +170,7 @@ void PPFnQName::close ()
 
 void PPFnQName::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -215,7 +215,7 @@ void PPFnQName::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnQName::copy(dynamic_context *_cxt_)
@@ -270,7 +270,7 @@ void PPFnPrefixFromQName::close ()
 
 void PPFnPrefixFromQName::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -279,7 +279,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:prefix-from-QName function");
@@ -307,7 +307,7 @@ void PPFnPrefixFromQName::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnPrefixFromQName::copy(dynamic_context *_cxt_)
@@ -360,7 +360,7 @@ void PPFnLocalNameFromQName::close ()
 
 void PPFnLocalNameFromQName::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -369,7 +369,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:local-name-from-QName function");
@@ -391,7 +391,7 @@ void PPFnLocalNameFromQName::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnLocalNameFromQName::copy(dynamic_context *_cxt_)
@@ -444,7 +444,7 @@ void PPFnNamespaceUriFromQName::close ()
 
 void PPFnNamespaceUriFromQName::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -453,7 +453,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
         child.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_atomic()) || child.get(t).get_atomic_type() != xs_QName) 
             throw XQUERY_EXCEPTION2(XPTY0004, "Wrong argument of fn:namespace-uri-from-QName function");
@@ -477,7 +477,7 @@ void PPFnNamespaceUriFromQName::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNamespaceUriFromQName::copy(dynamic_context *_cxt_)
@@ -538,7 +538,7 @@ void PPFnNamespaceUriForPrefix::close ()
 
 void PPFnNamespaceUriForPrefix::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -587,7 +587,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
             {
                 t.copy(tuple_cell::atomic_deep(xs_anyURI, xmlns[i]->uri));
                 first_time = false;
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
         }
     }
@@ -595,7 +595,7 @@ void PPFnNamespaceUriForPrefix::next(tuple &t)
     first_time = true;
     t.set_eos();
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNamespaceUriForPrefix::copy(dynamic_context *_cxt_)
@@ -652,7 +652,7 @@ void PPFnInScopePrefixes::close ()
 
 void PPFnInScopePrefixes::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (pos < 0)
     {
@@ -694,7 +694,7 @@ void PPFnInScopePrefixes::next  (tuple &t)
         xmlns.clear();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnInScopePrefixes::copy(dynamic_context *_cxt_)

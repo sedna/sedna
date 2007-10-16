@@ -42,7 +42,7 @@ void PPSLStub::close ()
 
 void PPSLStub::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (s)
     {
@@ -61,7 +61,7 @@ void PPSLStub::next(tuple &t)
     else
         op->next(t);
     
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPSLStub::copy(dynamic_context *_cxt_)

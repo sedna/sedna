@@ -28,9 +28,9 @@ void PPNil::close ()
 
 void PPNil::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     t.set_eos();
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPNil::copy(dynamic_context *_cxt_)

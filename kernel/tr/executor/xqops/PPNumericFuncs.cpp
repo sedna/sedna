@@ -148,14 +148,14 @@ const char* PPNumericFuncs::error()
 
 void PPNumericFuncs::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
         child.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         first_time = false;
 
@@ -172,7 +172,7 @@ void PPNumericFuncs::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPNumericFuncs::copy(dynamic_context *_cxt_)
@@ -261,14 +261,14 @@ tuple_cell PPFnRoundHalfToEven::round_half_to_even(const tuple_cell& tc, __int64
 
 void PPFnRoundHalfToEven::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time)
     {
         child_arg.op->next(t);
 
         if (t.is_eos())
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
 
         tuple_cell tc_arg = child_arg.get(t);
         if (!(tc_arg.is_atomic()) || !(is_numeric_type(tc_arg.get_atomic_type()))) 
@@ -303,7 +303,7 @@ void PPFnRoundHalfToEven::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnRoundHalfToEven::copy(dynamic_context *_cxt_)

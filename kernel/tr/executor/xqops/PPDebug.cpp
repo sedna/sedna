@@ -55,7 +55,7 @@ void PPDebug::close ()
 
 void PPDebug::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     try
     {
@@ -86,7 +86,7 @@ void PPDebug::next(tuple &t)
         throw;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 /// FIXME!!! Is there any specific behaviour in copy (IS)?

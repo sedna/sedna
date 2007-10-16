@@ -59,13 +59,13 @@ void PPFnConcat::close ()
 
 void PPFnConcat::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
 
     first_time = false;
@@ -116,7 +116,7 @@ void PPFnConcat::next(tuple &t)
 
     t.copy(res);
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnConcat::copy(dynamic_context *_cxt_)
@@ -180,14 +180,14 @@ void PPFnStringJoin::close ()
 
 void PPFnStringJoin::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!first_time)
     {
         first_time = true;
         need_clear = true;
         t.set_eos();
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
 
     first_time = false;
@@ -225,7 +225,7 @@ void PPFnStringJoin::next(tuple &t)
     }
     t.copy(result.get_tuple_cell());
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnStringJoin::copy(dynamic_context *_cxt_)
@@ -314,13 +314,13 @@ void PPFnStartsEndsWith::close ()
 
 void PPFnStartsEndsWith::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (!first_time)
     {
         first_time = true;
         t.set_eos();
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
     first_time = false;
 
@@ -355,8 +355,8 @@ void PPFnStartsEndsWith::next(tuple &t)
         prf_len = prf.get_strlen();
     }
 
-    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); {UNDO_XQUERY_LINE; return;} } 
-    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); {UNDO_XQUERY_LINE; return;} }
+    if(prf_len == 0) { t.copy(tuple_cell::atomic(true)); {RESTORE_CURRENT_PP; return;} } 
+    else if(src_len == 0 || src_len < prf_len) { t.copy(tuple_cell::atomic(false)); {RESTORE_CURRENT_PP; return;} }
     
     if(is_collation)
     {
@@ -383,7 +383,7 @@ void PPFnStartsEndsWith::next(tuple &t)
     else 
         throw USER_EXCEPTION2(SE1003, "Imposible type of function in PPFnStartsEndsWith::next().");
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPFnStartsEndsWith::error(const char* msg)
@@ -456,7 +456,7 @@ void PPFnString2CodePoints::close ()
 
 void PPFnString2CodePoints::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -473,7 +473,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 
 		    ucp_it = charset_handler->get_unicode_cp_iterator(&in_str);
         }
-		else {UNDO_XQUERY_LINE; return;}
+		else {RESTORE_CURRENT_PP; return;}
     }
 	int code = ucp_it->get_next_char();
 	if (code != -1)
@@ -489,7 +489,7 @@ void PPFnString2CodePoints::next  (tuple &t)
 		in_str.set_eos();
 	}    
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnString2CodePoints::copy(dynamic_context *_cxt_)
@@ -541,7 +541,7 @@ void PPFnCodePoints2String::close ()
 
 void PPFnCodePoints2String::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -585,7 +585,7 @@ void PPFnCodePoints2String::next  (tuple &t)
         t.set_eos();
     }    
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnCodePoints2String::copy(dynamic_context *_cxt_)
@@ -648,7 +648,7 @@ void PPFnTranslate::close ()
 
 void PPFnTranslate::next  (tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
 	{
@@ -705,7 +705,7 @@ void PPFnTranslate::next  (tuple &t)
 		t.set_eos();
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnTranslate::copy(dynamic_context *_cxt_)
@@ -817,13 +817,13 @@ static inline tuple_cell byte_based_substring(const tuple_cell *tc, __int64 star
 
 void PPFnSubsBeforeAfter::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (handler) // the same as '!first_time'
     {
         handler = NULL;
         t.set_eos();
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }    
         
     handler = charset_handler->get_unicode_codepoint_collation();
@@ -895,7 +895,7 @@ void PPFnSubsBeforeAfter::next(tuple &t)
             t.copy(EMPTY_STRING_TC);
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPFnSubsBeforeAfter::error(const char* msg)
@@ -960,7 +960,7 @@ void PPFnChangeCase::close ()
 
 void PPFnChangeCase::next  (tuple &t)
 {
-	SET_XQUERY_LINE(__xquery_line);
+	SET_CURRENT_PP(this);
 	
 	if (first_time)
 	{
@@ -989,7 +989,7 @@ void PPFnChangeCase::next  (tuple &t)
 		t.set_eos();
 	}
 
-	UNDO_XQUERY_LINE;
+	RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnChangeCase::copy(dynamic_context *_cxt_)
@@ -1040,7 +1040,7 @@ void PPFnStringLength::close ()
 
 void PPFnStringLength::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1066,7 +1066,7 @@ void PPFnStringLength::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnStringLength::copy(dynamic_context *_cxt_)
@@ -1116,7 +1116,7 @@ void PPFnNormalizeSpace::close ()
 
 void PPFnNormalizeSpace::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1145,7 +1145,7 @@ void PPFnNormalizeSpace::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNormalizeSpace::copy(dynamic_context *_cxt_)
@@ -1227,7 +1227,7 @@ void PPFnSubstring::close ()
 
 void PPFnSubstring::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     __int64 start_pos = 0;
     __int64 length = 0;
@@ -1272,7 +1272,7 @@ void PPFnSubstring::next(tuple &t)
         if (t.is_eos())
         {
              t.copy(EMPTY_STRING_TC);
-             {UNDO_XQUERY_LINE; return;}
+             {RESTORE_CURRENT_PP; return;}
         }
         tc = atomize(str_child.get(t));
         if (!is_string_type(tc.get_atomic_type()))
@@ -1301,7 +1301,7 @@ void PPFnSubstring::next(tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnSubstring::copy(dynamic_context *_cxt_)

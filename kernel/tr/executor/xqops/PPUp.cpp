@@ -41,7 +41,7 @@ void PPUp::close ()
 
 void PPUp::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     while (true)
     {
@@ -49,7 +49,7 @@ void PPUp::next  (tuple &t)
         if (t.is_eos()) 
         {
             previous = XNULL;
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of PPUp is not a node");
 
@@ -67,11 +67,11 @@ void PPUp::next  (tuple &t)
         {
             previous = p;
             t.copy(tuple_cell::node(p));
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPUp::copy(dynamic_context *_cxt_)

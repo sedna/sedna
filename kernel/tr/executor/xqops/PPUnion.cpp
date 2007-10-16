@@ -50,7 +50,7 @@ void PPUnion::close ()
 
 void PPUnion::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (tug_first)
     {
@@ -90,7 +90,7 @@ void PPUnion::next  (tuple &t)
         {
             tug_first = true;
             t.copy(tuple_cell::node(xptr1));
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
         case  0: /// 1 == 2
         {
@@ -102,18 +102,18 @@ void PPUnion::next  (tuple &t)
             tug_first = true;
             tug_second = true;
 
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
         case  1: /// 1 > 2
         {
             tug_second = true;
             t.copy(tuple_cell::node(xptr2));
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
         default: throw USER_EXCEPTION2(SE1003, "Impossible case in PPUnion::next");
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPUnion::copy(dynamic_context *_cxt_)

@@ -134,7 +134,7 @@ void PPFnUriEncoding::close ()
 
 void PPFnUriEncoding::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -176,7 +176,7 @@ void PPFnUriEncoding::next  (tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 const char* PPFnUriEncoding::error()
@@ -267,7 +267,7 @@ void PPFnResolveUri::close ()
 
 void PPFnResolveUri::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -276,7 +276,7 @@ void PPFnResolveUri::next  (tuple &t)
         if(t.is_eos()) 
         {
             if(is_base_static) need_reopen = true;
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
         
         tuple_cell base_tc;

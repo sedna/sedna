@@ -87,8 +87,8 @@ For raising exception it is better to use these macroses:
 #define SYSTEM_ENV_EXCEPTION(msg)					SednaSystemEnvException(__FILE__, __FUNCTION__, __LINE__, msg)
 #define USER_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code)
 #define USER_EXCEPTION2(code, details)				SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code)
-#define XQUERY_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code, __xquery_line_thread)
-#define XQUERY_EXCEPTION2(code, details)			SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code, __xquery_line)
+#define XQUERY_EXCEPTION(code)						SednaUserException(__FILE__, __FUNCTION__, __LINE__, code, __current_physop)
+#define XQUERY_EXCEPTION2(code, details)			SednaUserException(__FILE__, __FUNCTION__, __LINE__, details, code, __current_physop)
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) SednaUserException(__FILE__, __SE_FUNCTION__, __LINE__, err_name, err_descr))
 #define USER_ENV_EXCEPTION(msg, rollback)			SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, rollback)
 #define USER_ENV_EXCEPTION2(msg, expl, rollback)	SednaUserEnvException(__FILE__, __FUNCTION__, __LINE__, msg, expl, rollback)
@@ -101,7 +101,7 @@ code                    -- the code for user defined error (use constants define
 details                 -- details for user error
 expl                    -- explanation of error
 rollback                -- does the error leads to rollback?
-__xquery_line_thread    -- defined within thread each executor context 
+__current_physop        -- defines current physical operation
 
 
 
@@ -164,14 +164,14 @@ Errors could be outputted to the user in the format of <sedna-message>:
     (elog(EL_ERROR, ("(%s) %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, __xquery_line_thread))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, internal_code, __current_physop))
 
 #define XQUERY_EXCEPTION2(internal_code, details) \
     (elog(EL_ERROR, ("(%s) %s Details: %s", \
                      user_error_code_entries[internal_code].code, \
                      user_error_code_entries[internal_code].descr, \
                      details)), \
-     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, __xquery_line_thread))
+     SednaXQueryException(__FILE__, __SE_FUNCTION__, __LINE__, details, internal_code, __current_physop))
 
 #define USER_EXCEPTION_FNERROR(err_name, err_descr) \
     (elog(EL_ERROR, ("(%s) %s", \
@@ -334,62 +334,6 @@ public:
 
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return user_error_code_entries[internal_code].act == ueca_ROLLBACK_TRN; }
-};
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// SednaXQueryException
-//////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class SednaXQueryException : public SednaUserException
-{
-protected:
-    int xquery_line;
-
-public:
-    SednaXQueryException(const char* _file_, 
-                         const char* _function_,
-                         int _line_,
-                         int _internal_code_,
-                         int _xquery_line_) : SednaUserException(_file_,
-                                                                 _function_,
-                                                                 _line_,
-                                                                 "",
-                                                                 _internal_code_), 
-                                              xquery_line(_xquery_line_)   {}
-    SednaXQueryException(const char* _file_, 
-                         const char* _function_,
-                         int _line_,
-                         const char* _err_msg_,
-                         int _internal_code_,
-                         int _xquery_line_) : SednaUserException(_file_,
-                                                                 _function_,
-                                                                 _line_,
-                                                                 _err_msg_,
-                                                                 _internal_code_), 
-                                              xquery_line(_xquery_line_) {}
-    virtual std::string getMsg() const
-    {
-        std::string res;
-        res += "SEDNA Message: ERROR ";
-        res += std::string(user_error_code_entries[internal_code].code) + "\n";
-        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
-        if (err_msg.length() != 0)
-        {
-            res += "Details: " + err_msg + "\n";
-        }
-        if (xquery_line != 0)
-        {
-            res += "Query line: " + int2string(xquery_line) + "\n";
-        }
-#if (EL_DEBUG == 1)
-        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
-#endif
-        return res;
-    }
-
-    virtual int  get_xquery_line() const { return xquery_line; }
 };
 
 

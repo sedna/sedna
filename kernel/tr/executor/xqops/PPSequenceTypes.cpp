@@ -50,7 +50,7 @@ void PPCast::close ()
 
 void PPCast::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -62,7 +62,7 @@ void PPCast::next  (tuple &t)
             {
                 first_time = true;
                 t.set_eos();
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             else throw XQUERY_EXCEPTION2(XPTY0004, "cast expression ('?' is not specified in target type but empty sequence is given)");
 
@@ -79,7 +79,7 @@ void PPCast::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPCast::copy(dynamic_context *_cxt_)
@@ -181,7 +181,7 @@ void PPCastable::close ()
 
 void PPCastable::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     bool res;
     if (first_time)
@@ -210,7 +210,7 @@ void PPCastable::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPCastable::copy(dynamic_context *_cxt_)
@@ -278,7 +278,7 @@ bool type_matches(const PPOpIn &child, tuple &t, bool &eos_reached, const sequen
 
 void PPInstanceOf::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -296,7 +296,7 @@ void PPInstanceOf::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPInstanceOf::copy(dynamic_context *_cxt_)
@@ -371,7 +371,7 @@ void PPTreat::close ()
 
 void PPTreat::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -384,13 +384,13 @@ void PPTreat::next(tuple &t)
     if(pos < s->size())
     {
         s->get(t, pos++);
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
     else if(!eos_reached)
     {
         child.op->next(t);
         if(t.is_eos()) eos_reached = true;
-        else {UNDO_XQUERY_LINE; return;}
+        else {RESTORE_CURRENT_PP; return;}
     }
 
     t.set_eos();
@@ -398,7 +398,7 @@ void PPTreat::next(tuple &t)
     s->clear();
     pos=0;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPTreat::copy(dynamic_context *_cxt_)
@@ -518,7 +518,7 @@ void PPTypeswitch::close ()
 
 void PPTypeswitch::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -552,7 +552,7 @@ void PPTypeswitch::next(tuple &t)
         need_reopen = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPTypeswitch::copy(dynamic_context *_cxt_)
@@ -582,7 +582,7 @@ var_c_id PPTypeswitch::register_consumer(var_dsc dsc)
 
 void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
@@ -618,7 +618,7 @@ void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)

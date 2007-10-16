@@ -39,7 +39,7 @@ void PPConst::close ()
 
 void PPConst::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
 /***********************************
 #define ALLOC_SIZE	1024
@@ -65,7 +65,7 @@ void PPConst::next(tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPConst::copy(dynamic_context *_cxt_)

@@ -38,7 +38,7 @@ void fun_conv_rules::next(tuple &t)
         case st_zero_or_more	: break;
         case st_one_or_more		: if (!(num >= 1)) throw XQUERY_EXCEPTION2(XPTY0004, (error() + ", empty sequence is given.").c_str());
                                   break;
-        default					: throw XQUERY_EXCEPTION2(SE1003, "Unexpected case in fcr::next");
+        default					: throw XQUERY_EXCEPTION2(SE1003, "Unexpected case in fcr::next.");
     }
 
     if (t.is_eos()) 
@@ -72,9 +72,9 @@ string fun_conv_rules::error()
     string res;    
 
     if(arg_num != 0)
-        res = "Argument [" + int2string(arg_num) + "] does not match the required type in function call. Expected type is [" +  st->to_str() +  "]";
+        res = "Argument [" + int2string(arg_num) + "] does not match the required type. Expected type is [" +  st->to_str() +  "]";
     else
-        res = "Return value does not match the required type in function call. Expected type is [" +  st->to_str() +  "]";
+        res = "Return value does not match the required type. Expected type is [" +  st->to_str() +  "]";
 
     return res;
 }
@@ -245,7 +245,7 @@ void PPFunCall::close ()
 
 void PPFunCall::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
 #ifdef STRICT_FUNS
     if (spos != -1)
@@ -258,7 +258,7 @@ void PPFunCall::next(tuple &t)
             delete s;
             s = NULL;
         }
-        {UNDO_XQUERY_LINE; return;}
+        {RESTORE_CURRENT_PP; return;}
     }
 #endif
 
@@ -323,7 +323,7 @@ void PPFunCall::next(tuple &t)
                 }
                 else { s->get(t, 0); spos = 1; }
 
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             else
             {
@@ -364,7 +364,7 @@ void PPFunCall::next(tuple &t)
 
     if (t.is_eos()) need_reopen = true;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFunCall::copy(dynamic_context *_cxt_)
@@ -388,9 +388,9 @@ var_c_id PPFunCall::register_consumer(var_dsc dsc)
 
 void PPFunCall::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPFunCall::reopen(var_dsc dsc, var_c_id id)

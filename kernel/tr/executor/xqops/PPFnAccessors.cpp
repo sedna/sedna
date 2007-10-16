@@ -47,7 +47,7 @@ void PPDmNodeKind::close ()
 
 void PPDmNodeKind::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -96,7 +96,7 @@ void PPDmNodeKind::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDmNodeKind::copy(dynamic_context *_cxt_)
@@ -196,13 +196,13 @@ void PPFnNodeName::close ()
 
 void PPFnNodeName::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
 		child.op->next(t);
 
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:node-name is not a node");
 
@@ -224,7 +224,7 @@ void PPFnNodeName::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNodeName::copy(dynamic_context *_cxt_)
@@ -296,12 +296,12 @@ void PPFnNilled::close ()
 
 void PPFnNilled::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
 		child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:nilled is not a node");
 
@@ -323,7 +323,7 @@ void PPFnNilled::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnNilled::copy(dynamic_context *_cxt_)
@@ -377,7 +377,7 @@ void PPFnString::close ()
 
 void PPFnString::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -388,7 +388,7 @@ void PPFnString::next  (tuple &t)
         if (t.is_eos())
         {
             t.copy(EMPTY_STRING_TC);
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         tuple_cell tc;
@@ -408,7 +408,7 @@ void PPFnString::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnString::copy(dynamic_context *_cxt_)
@@ -460,7 +460,7 @@ void PPFnData::close ()
 
 void PPFnData::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     child.op->next(t);
 
@@ -470,7 +470,7 @@ void PPFnData::next  (tuple &t)
         t.copy(tc);
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnData::copy(dynamic_context *_cxt_)
@@ -523,12 +523,12 @@ void PPFnBaseURI::close ()
 
 void PPFnBaseURI::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
 		child.op->next(t);
-        if (t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if (t.is_eos()) {RESTORE_CURRENT_PP; return;}
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:base-uri is not a node");
 
@@ -550,7 +550,7 @@ void PPFnBaseURI::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnBaseURI::copy(dynamic_context *_cxt_)
@@ -604,7 +604,7 @@ void PPFnDocumentURI::close ()
 
 void PPFnDocumentURI::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -615,7 +615,7 @@ void PPFnDocumentURI::next  (tuple &t)
         if (t.is_eos())
         {
             first_time = true;
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
 
         if (!(child.get(t).is_node())) throw XQUERY_EXCEPTION2(XPTY0004, "Argument of fn:document-uri is not a node");
@@ -641,7 +641,7 @@ void PPFnDocumentURI::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDocumentURI::copy(dynamic_context *_cxt_)
@@ -678,7 +678,7 @@ void PPFnStaticBaseUri::close ()        { }
 
 void PPFnStaticBaseUri::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -698,7 +698,7 @@ void PPFnStaticBaseUri::next  (tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 
@@ -734,7 +734,7 @@ void PPFnDefaultCollation::close ()        { }
 
 void PPFnDefaultCollation::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(first_time)
     {
@@ -751,7 +751,7 @@ void PPFnDefaultCollation::next  (tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 

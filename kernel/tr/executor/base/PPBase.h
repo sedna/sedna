@@ -17,17 +17,6 @@
 #include "tr/executor/base/sequence.h"
 
 
-#ifdef _MSC_VER
-__declspec(thread)
-#else
-__thread
-#endif
-extern int __xquery_line_thread;
-
-
-#define SET_XQUERY_LINE(line) __xquery_line_backup = __xquery_line_thread; __xquery_line_thread = line;
-#define UNDO_XQUERY_LINE      __xquery_line_thread = __xquery_line_backup; __xquery_line_backup = 0;
-
 
 /*******************************************************************************
  * List of classes used
@@ -79,8 +68,10 @@ class PPIterator
 {
 protected:
     dynamic_context *cxt;
+    
     int __xquery_line;
-    int __xquery_line_backup;
+    PPIterator* __current_physop_backup;
+
 public:
     virtual void open          ()         = 0;
     virtual void reopen        ()         = 0;
@@ -90,8 +81,12 @@ public:
 
     virtual PPIterator* copy(dynamic_context *_cxt_) = 0;
 
-    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0), __xquery_line_backup(0) {}
-	virtual void set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
+    PPIterator(dynamic_context *_cxt_) : cxt(_cxt_), __xquery_line(0), __current_physop_backup(NULL) {}
+	
+	virtual void  set_xquery_line(int _xquery_line_){__xquery_line = _xquery_line_;}
+	virtual int   get_xquery_line() const           { return __xquery_line; }
+	virtual char* get_error_msg()   const           { return NULL; }
+
 	virtual bool is_const(){return false;}
     virtual ~PPIterator() {}
 };
@@ -154,6 +149,94 @@ public:
 
 
 
+/*******************************************************************************
+ * Thread variable to throw smart XQUERY_EXCEPTION
+ ******************************************************************************/
+
+extern
+#ifdef _MSC_VER
+__declspec(thread)
+#else
+__thread
+#endif
+PPIterator* __current_physop;
+
+
+#define SET_CURRENT_PP(pp) __current_physop_backup = __current_physop; __current_physop = (pp);
+#define RESTORE_CURRENT_PP __current_physop = __current_physop_backup; __current_physop_backup = NULL;
+#define RESET_CURRENT_PP   __current_physop = NULL;
+
+/*******************************************************************************
+ * SednaXQueryException
+ ******************************************************************************/
+
+class SednaXQueryException : public SednaUserException
+{
+protected:
+    int   xquery_line;
+    char* physop_msg;
+
+public:
+    SednaXQueryException(const char* _file_, 
+                         const char* _function_,
+                         int _line_,
+                         int _internal_code_,
+                         PPIterator* _current_physop_) : SednaUserException(_file_,
+                                                                            _function_,
+                                                                            _line_,
+                                                                            "",
+                                                                            _internal_code_),
+                                                                            xquery_line(0),
+                                                                            physop_msg(NULL) {
+    if(_current_physop_)
+    {
+        xquery_line = _current_physop_->get_xquery_line();
+        physop_msg  = _current_physop_->get_error_msg();
+    }
+    RESET_CURRENT_PP;
+}
+    SednaXQueryException(const char* _file_, 
+                         const char* _function_,
+                         int _line_,
+                         const char* _err_msg_,
+                         int _internal_code_,
+                         PPIterator* _current_physop_) : SednaUserException(_file_,
+                                                                            _function_,
+                                                                            _line_,
+                                                                            _err_msg_,
+                                                                            _internal_code_), 
+                                                                            xquery_line(0),
+                                                                            physop_msg(NULL) {
+    if(_current_physop_)
+    {
+        xquery_line = _current_physop_->get_xquery_line();
+        physop_msg  = _current_physop_->get_error_msg();
+    }
+    RESET_CURRENT_PP;
+}
+
+
+    virtual std::string getMsg() const
+    {
+        std::string res;
+        res += "SEDNA Message: ERROR ";
+        res += std::string(user_error_code_entries[internal_code].code) + "\n";
+        res += std::string(user_error_code_entries[internal_code].descr) + "\n";
+        
+        if (err_msg.length() != 0)
+        {
+            res += "Details: ";
+            if(physop_msg != NULL) {res += physop_msg; res += " ";}
+            res += err_msg + "\n";
+        }
+        if (xquery_line != 0)
+            res += "Query line: " + int2string(xquery_line) + "\n";
+#if (EL_DEBUG == 1)
+        res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+        return res;
+    }
+};
 
 
 

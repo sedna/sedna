@@ -98,6 +98,8 @@ public:
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t);
 
+    virtual char* get_error_msg() const { return "Error in function call."; }
+
     virtual PPIterator* copy(dynamic_context *_cxt_);
 
     PPFunCall(dynamic_context *_cxt_,

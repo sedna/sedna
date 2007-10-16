@@ -78,7 +78,7 @@ void PPFnMaxMin::close ()
 
 void PPFnMaxMin::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (!handler) // the same as 'first_time'
     {
@@ -164,7 +164,7 @@ void PPFnMaxMin::next(tuple &t)
         handler = NULL;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnMaxMin::copy(dynamic_context *_cxt_)
@@ -247,7 +247,7 @@ void PPFnSumAvg::close ()
 
 void PPFnSumAvg::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     if (first_time) // the same as 'first_time'
     {
@@ -322,7 +322,7 @@ void PPFnSumAvg::next(tuple &t)
         first_time = true;
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnSumAvg::copy(dynamic_context *_cxt_)

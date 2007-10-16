@@ -643,7 +643,7 @@ void PPPred1::close ()
                                                                           
 void PPPred1::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(need_reopen)
     {
@@ -664,10 +664,10 @@ void PPPred1::next(tuple &t)
                     range.reinit();
                     for(int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
-                    if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;}}
+                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
                     else if(range.is_any()) result_ready = true; 
                 }
-                else { t.set_eos(); {UNDO_XQUERY_LINE; return;}} 
+                else { t.set_eos(); {RESTORE_CURRENT_PP; return;}} 
             }
             else
             {
@@ -677,10 +677,10 @@ void PPPred1::next(tuple &t)
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
-                    if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;}}
+                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
                 }                                       
                 else if( tc.get_xs_boolean() ) result_ready = true;
-                else { t.set_eos(); {UNDO_XQUERY_LINE; return;}}
+                else { t.set_eos(); {RESTORE_CURRENT_PP; return;}}
             }
             need_reopen = true;     
         }
@@ -689,7 +689,7 @@ void PPPred1::next(tuple &t)
             range.reinit();
             for(int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
-            if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;}} 
+            if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;}} 
         }
         
         first_time = false;
@@ -710,7 +710,7 @@ void PPPred1::next(tuple &t)
         source_child.op->next(t);
         ++pos;
         cur_tuple = &t;
-        if(!t.is_eos()) {UNDO_XQUERY_LINE; return;}
+        if(!t.is_eos()) {RESTORE_CURRENT_PP; return;}
     }   
     else    
     {
@@ -743,9 +743,9 @@ void PPPred1::next(tuple &t)
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
                                                           effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
-                if(tc.get_xs_boolean()) {UNDO_XQUERY_LINE; return;}
+                if(tc.get_xs_boolean()) {RESTORE_CURRENT_PP; return;}
             }
-            else {UNDO_XQUERY_LINE; return;}
+            else {RESTORE_CURRENT_PP; return;}
         }
     }
     
@@ -754,7 +754,7 @@ void PPPred1::next(tuple &t)
     first_time = true; 
     t.set_eos();
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPPred1::copy(dynamic_context *_cxt_)                      
@@ -787,7 +787,7 @@ var_c_id PPPred1::register_consumer(var_dsc dsc)
 
 void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)                     
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
 
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -803,7 +803,7 @@ void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPPred1::reopen(var_dsc dsc, var_c_id id)
@@ -1063,7 +1063,7 @@ void PPPred2::close ()
 
 void PPPred2::next(tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if(need_reopen)
     {
@@ -1081,7 +1081,7 @@ void PPPred2::next(tuple &t)
             if (t.is_eos()) break;
             else s->add(t);
         }
-        if(s->size() == 0) {UNDO_XQUERY_LINE; return;}
+        if(s->size() == 0) {RESTORE_CURRENT_PP; return;}
 
         if(once)
         {
@@ -1093,10 +1093,10 @@ void PPPred2::next(tuple &t)
                     range.reinit();
                     for(int i = 0; i < conjuncts.size(); i++)
                         range.add_new_constraint(conditions[i], conjuncts[i]);  
-                    if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;} }
+                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
                     else if(range.is_any()) result_ready = true; 
                 }
-                else { t.set_eos(); {UNDO_XQUERY_LINE; return;} }
+                else { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
             }
             else
             {
@@ -1106,10 +1106,10 @@ void PPPred2::next(tuple &t)
                 if(is_numeric)
                 {
                     range.reinit_with_position(value);
-                    if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;} }
+                    if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
                 }
                 else if( tc.get_xs_boolean() ) result_ready = true;
-                else { t.set_eos(); {UNDO_XQUERY_LINE; return;} }
+                else { t.set_eos(); {RESTORE_CURRENT_PP; return;} }
             }
             need_reopen = true;
         }
@@ -1118,7 +1118,7 @@ void PPPred2::next(tuple &t)
             range.reinit();
             for(int i = 0; i < conjuncts.size(); i++)
                 range.add_new_constraint(conditions[i], conjuncts[i]);  
-            if(range.is_empty()) { t.set_eos(); {UNDO_XQUERY_LINE; return;} } 
+            if(range.is_empty()) { t.set_eos(); {RESTORE_CURRENT_PP; return;} } 
         }
         
         first_time = false;
@@ -1139,7 +1139,7 @@ void PPPred2::next(tuple &t)
         if(pos < s->size()) 
         {
             s->get(t, pos++);
-            {UNDO_XQUERY_LINE; return;}
+            {RESTORE_CURRENT_PP; return;}
         }
     }   
     else
@@ -1165,9 +1165,9 @@ void PPPred2::next(tuple &t)
                 tuple_cell tc = (conjuncts.size() == 0) ? predicate_boolean_value(data_child, data, eos_reached, pos) :
                                                           effective_boolean_value(data_child, data, eos_reached);
                 need_reopen = true;
-                if(tc.get_xs_boolean()) {UNDO_XQUERY_LINE; return;}
+                if(tc.get_xs_boolean()) {RESTORE_CURRENT_PP; return;}
             }
-            else {UNDO_XQUERY_LINE; return;}
+            else {RESTORE_CURRENT_PP; return;}
         }
     }
     
@@ -1176,7 +1176,7 @@ void PPPred2::next(tuple &t)
     t.set_eos();
     pos = 0;
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPPred2::copy(dynamic_context *_cxt_)
@@ -1208,7 +1208,7 @@ var_c_id PPPred2::register_consumer(var_dsc dsc)
 
 void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -1225,7 +1225,7 @@ void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 void PPPred2::reopen(var_dsc dsc, var_c_id id)

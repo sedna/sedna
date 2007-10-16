@@ -51,7 +51,7 @@ void PPIntersect::close ()
 
 void PPIntersect::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     while (true)
     {
@@ -104,7 +104,7 @@ void PPIntersect::next  (tuple &t)
                 tug_first = true;
                 tug_second = true;
 
-                {UNDO_XQUERY_LINE; return;}
+                {RESTORE_CURRENT_PP; return;}
             }
             case  1: /// (1) > (2)
             {
@@ -115,7 +115,7 @@ void PPIntersect::next  (tuple &t)
         }
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPIntersect::copy(dynamic_context *_cxt_)

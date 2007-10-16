@@ -262,7 +262,7 @@ void PPElementConstructor::close ()
 
 void PPElementConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -537,7 +537,7 @@ void PPElementConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPElementConstructor::copy(dynamic_context *_cxt_)
@@ -650,7 +650,7 @@ void PPAttributeConstructor::close ()
 
 void PPAttributeConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -734,7 +734,7 @@ void PPAttributeConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPAttributeConstructor::copy(dynamic_context *_cxt_)
@@ -842,7 +842,7 @@ void PPNamespaceConstructor::close ()
 
 void PPNamespaceConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -870,7 +870,7 @@ void PPNamespaceConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPNamespaceConstructor::copy(dynamic_context *_cxt_)
@@ -953,7 +953,7 @@ void PPCommentConstructor::close ()
 
 void PPCommentConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -995,7 +995,7 @@ void PPCommentConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPCommentConstructor::copy(dynamic_context *_cxt_)
@@ -1112,7 +1112,7 @@ void PPPIConstructor::close ()
 
 void PPPIConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1195,7 +1195,7 @@ void PPPIConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPPIConstructor::copy(dynamic_context *_cxt_)
@@ -1286,7 +1286,7 @@ void PPTextConstructor::close ()
 
 void PPTextConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1299,7 +1299,7 @@ void PPTextConstructor::next  (tuple &t)
 			if (getStringParameter(content))
 			{
 				t.set_eos();
-				{UNDO_XQUERY_LINE; return;}
+				{RESTORE_CURRENT_PP; return;}
 			}
 			value=(char*)str_val.c_str();
 			
@@ -1329,7 +1329,7 @@ void PPTextConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPTextConstructor::copy(dynamic_context *_cxt_)
@@ -1396,7 +1396,7 @@ void PPDocumentConstructor::close ()
 
 void PPDocumentConstructor::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -1529,7 +1529,7 @@ void PPDocumentConstructor::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPDocumentConstructor::copy(dynamic_context *_cxt_)

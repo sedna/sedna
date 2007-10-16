@@ -38,7 +38,7 @@ void PPFnDateTimeFuncNoParam::close ()
 
 void PPFnDateTimeFuncNoParam::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -61,7 +61,7 @@ void PPFnDateTimeFuncNoParam::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDateTimeFuncNoParam::copy(dynamic_context *_cxt_)
@@ -114,7 +114,7 @@ void PPFnDateTimeFunc::close ()
 
 void PPFnDateTimeFunc::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -285,7 +285,7 @@ void PPFnDateTimeFunc::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDateTimeFunc::copy(dynamic_context *_cxt_)
@@ -341,7 +341,7 @@ void PPFnDateTimeFunc2Params::close ()
 
 void PPFnDateTimeFunc2Params::next  (tuple &t)
 {
-    SET_XQUERY_LINE(__xquery_line);
+    SET_CURRENT_PP(this);
     
     if (first_time)
     {
@@ -421,7 +421,7 @@ void PPFnDateTimeFunc2Params::next  (tuple &t)
         t.set_eos();
     }
 
-    UNDO_XQUERY_LINE;
+    RESTORE_CURRENT_PP;
 }
 
 PPIterator* PPFnDateTimeFunc2Params::copy(dynamic_context *_cxt_)
