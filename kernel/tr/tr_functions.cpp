@@ -39,6 +39,8 @@ void on_kernel_statement_begin(scheme_list *por,
 
 void on_kernel_statement_end(PPQueryEssence *&qep_tree)
 {
+    RESET_CURRENT_PP;
+
     if (is_qep_opened)
     {
        qep_tree->close();
