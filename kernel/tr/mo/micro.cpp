@@ -1976,6 +1976,7 @@ void delete_node (xptr node)
 		throw USER_EXCEPTION(SE2036);
 #ifdef SE_ENABLE_FTSEARCH
 init_ft_sequences (node,XNULL,XNULL);
+CHECKP(node);
 #endif
 #ifdef FASTDELETE
 	delete_node_inner (node,block,type);
@@ -1993,6 +1994,7 @@ init_ft_sequences (node,XNULL,XNULL);
 		throw USER_EXCEPTION(SE2036);
 #ifdef SE_ENABLE_FTSEARCH
 init_ft_sequences (deleted_node,XNULL,XNULL);
+CHECKP(deleted_node);
 #endif
 #ifdef FASTDELETE
 	delete_node_inner (deleted_node,block,type);
@@ -2010,6 +2012,7 @@ void delete_doc_node (xptr node)
 		throw SYSTEM_EXCEPTION("Wrong type of node");
 /*#ifdef SE_ENABLE_FTSEARCH
     init_ft_sequences (node,XNULL,XNULL);
+	CHECKP(node);
 #endif*/
 #ifdef FASTDELETE
 	delete_node_inner (node,block,type);
