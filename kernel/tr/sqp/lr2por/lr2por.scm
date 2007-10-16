@@ -345,11 +345,14 @@
    lst))
 
 ; Returns the last member of the list.
-; The list must be non-null
+; NOTE!!!: If the list is null, returns 0
 (define (l2p:list-last lst)
-  (if (null? (cdr lst))
-      (car lst)
-      (l2p:list-last (cdr lst))))
+  (cond
+    ((null? lst) 0)
+    ((null? (cdr lst))
+     (car lst))
+    (else
+     (l2p:list-last (cdr lst)))))
 
 (define (l2p:any-lr-node2por node)
 
