@@ -81,16 +81,11 @@ struct SnSnapshot
 	list. This is required for simple GcNodes management. */ 
 #define SN_FUTURE_SNAPSHOT				0x10
 
-/*	The last (fake) snapshot in the list with no GcNodes attached and timestamp==0. */ 
-#define SN_TERMINATING_SNAPSHOT			0x20
-
-/*	The fake snapshot with no GcNodes and timestamp==SN_LAST_COMMITED_VERSION_TIMESTAMP. */ 
-#define SN_INITIATING_SNAPSHOT			0x40
-
 struct SnSnapshotsList
 {
 	void *mem;
-	SnSnapshot initiatingSnapshot, terminatingSnapshot, *leadingSnapshot;
+	SnSnapshot *leadingSnapshot;
+	TIMESTAMP *tsBegin, *tsEnd;
 	int nClientsMax;
 	int nSnapshotsMax;
 	size_t runawayCount;
@@ -180,19 +175,9 @@ int InitSnapshotsList(SnSnapshotsList *lst,
 			/* lst */ 
 			*lst=initializer;
 			lst->mem = mem;
+			lst->tsBegin = lst->tsEnd = timestampsPool;
 			lst->nClientsMax = nClientsMaxParam;
 			lst->nSnapshotsMax = nSnapshotsMaxParam;
-
-			/* lst->initiatingSnapshot */ 
-			pSn=&(lst->initiatingSnapshot);
-			pSn->timestamp = SN_LAST_COMMITED_VERSION_TIMESTAMP;
-			pSn->tsBegin = pSn->tsEnd = timestampsPool;
-			pSn->type = SN_INITIATING_SNAPSHOT;
-			pSn->next = &(lst->terminatingSnapshot);
-
-			/* lst->terminatingSnapshot*/ 
-			pSn=&(lst->terminatingSnapshot);
-			pSn->type = SN_TERMINATING_SNAPSHOT;
 			
 			/* otherSnapshots*/ 
 			lst->leadingSnapshot = snapshotsPool;
@@ -215,7 +200,7 @@ int InitSnapshotsList(SnSnapshotsList *lst,
 				}
 				pGn[-1].next=NULL;
 			}
-			pSn->next = &(lst->terminatingSnapshot);
+			pSn->next = NULL;
 
 			/* yes! */ 
 			success=1;
@@ -355,10 +340,8 @@ static
 SnSnapshot *GetCurrentSnapshot(SnSnapshotsList *snLst)
 {
 	SnSnapshot *current=NULL;
-
-	assert(snLst);
-	current = snLst->initiatingSnapshot.next;
-	return (current==&(snLst->terminatingSnapshot) ? NULL : current);
+	GetSnapshotByType(snLst, &current, NULL, ~SN_FUTURE_SNAPSHOT);
+	return current;
 }
 					  
 /*	Get a pointer to SnGcNode list item by index (starting from 0). 
@@ -515,13 +498,8 @@ int DiscardSnapshot(SnSnapshotsList *snLst,
 		victim->occupancy = 0;
 		free(victim->tsBegin);
 		victim->tsBegin = victim->tsEnd = NULL;
-		/* repair next pointer in initiating snapshot */ 
-		if (snLst->initiatingSnapshot.next==victim)
-		{
-			snLst->initiatingSnapshot.next = victim->next;
-		}
 		/* rotate chains after victim */ 
-		for (iter = victim->next; iter!=&(snLst->terminatingSnapshot); ++i, iter=iter->next)
+		for (iter = victim->next; iter!=NULL; ++i, iter=iter->next)
 		{
 			RotateGcChain(iter->gcChain, i);
 		}
@@ -544,7 +522,7 @@ int CreateSnapshot(SnSnapshotsList *snLst,
 	size_t tsPoolSz = 0;
 
 	assert(ts && snLst);
-	tsPoolSz = sizeof(TIMESTAMP) * (snLst->initiatingSnapshot.tsEnd - snLst->initiatingSnapshot.tsBegin);
+	tsPoolSz = sizeof(TIMESTAMP) * (snLst->tsEnd - snLst->tsBegin);
 	if (!IsValidTimestamp(ts))
 	{
 		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
@@ -560,7 +538,7 @@ int CreateSnapshot(SnSnapshotsList *snLst,
 	else
 	{
 		/* copy current active timestamps */ 
-		memcpy(tsPool,snLst->initiatingSnapshot.tsBegin,tsPoolSz);
+		memcpy(tsPool,snLst->tsBegin,tsPoolSz);
 		/* select snapshot to reuse */ 
 		GetSnapshotByType(snLst, &firstNonFutureSn, &lastFutureSn, ~SN_FUTURE_SNAPSHOT);
 		assert(lastFutureSn);
@@ -571,8 +549,6 @@ int CreateSnapshot(SnSnapshotsList *snLst,
 		lastFutureSn->type = type;
 		lastFutureSn->occupancy = 0;
 		lastFutureSn->isDamaged = 0;
-		/* adjust next pointer for initiating snapshot */ 
-		snLst->initiatingSnapshot.next = lastFutureSn;
 	}
 	if (!success)
 	{
@@ -612,7 +588,7 @@ int VisitNodes(SnSnapshotsList *snLst,
 	{
 		int x=0;
 		for (sniter = snLst->leadingSnapshot; 
-			 sniter != &(snLst->terminatingSnapshot);
+			 sniter != NULL;
 			 x++, sniter = sniter->next)
 		{			
 			int y=0;
@@ -838,7 +814,7 @@ int ValidateRequestForGc(const SnRequestForGc *req)
  
 static
 int SubmitRequestForGc(SnSnapshotsList *snLst, 
-					   SnSnapshot *pSn, 
+					   const SnSnapshot *pSn, 
 					   const SnRequestForGc *request)
 {
 	int success=0;
@@ -900,14 +876,13 @@ int AddActiveTimestamp(SnSnapshotsList *snLst,
 	{
 		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
-	else if (snLst->initiatingSnapshot.tsEnd == 
-			 snLst->initiatingSnapshot.tsBegin + snLst->nClientsMax)
+	else if (snLst->tsEnd == snLst->tsBegin + snLst->nClientsMax)
 	{
 		WuSetLastErrorMacro(WUERR_MAX_NUMBER_OF_CLIENTS_EXCEEDED);
 	}
 	else
 	{
-		*(snLst->initiatingSnapshot.tsEnd++)=ts;
+		*(snLst->tsEnd++)=ts;
 		success=1;
 	}
 	return success;
@@ -921,18 +896,16 @@ int RemoveActiveTimestamp(SnSnapshotsList *snLst,
 	TIMESTAMP *tsptr = NULL;
 
 	assert(snLst);
-	tsptr=std::lower_bound(snLst->initiatingSnapshot.tsBegin,
-						   snLst->initiatingSnapshot.tsEnd,
-						   ts);
-	if (tsptr==snLst->initiatingSnapshot.tsEnd || *tsptr!=ts)
+	tsptr=std::lower_bound(snLst->tsBegin, snLst->tsEnd, ts);
+	if (tsptr==snLst->tsEnd || *tsptr!=ts)
 	{
 		WuSetLastErrorMacro(WUERR_GENERAL_ERROR);
 	}
 	else
 	{
-		size_t tailsz = sizeof(TIMESTAMP)*(snLst->initiatingSnapshot.tsEnd-tsptr-1);
+		size_t tailsz = sizeof(TIMESTAMP)*(snLst->tsEnd-tsptr-1);
 		memmove(tsptr, tsptr+1, tailsz);
-		--snLst->initiatingSnapshot.tsEnd;
+		--snLst->tsEnd;
 	}
 	return success;
 }
@@ -943,6 +916,18 @@ int IsObjectYoungerThanSnapshot(SnSnapshot *pSn,
 {
 	assert(pSn && pSn->tsBegin);
 	return ts > pSn->timestamp || std::binary_search(pSn->tsBegin, pSn->tsEnd, ts);
+}
+
+static
+void InitFakeHeadSnapshot(SnSnapshotsList *snLst,
+						  SnSnapshot *pSn)
+{
+	assert (snLst && pSn);
+	pSn->timestamp = SN_LAST_COMMITED_VERSION_TIMESTAMP;
+	pSn->type = 0;
+	pSn->next = GetCurrentSnapshot (snLst);
+	pSn->tsBegin = snLst->tsBegin;
+	pSn->tsEnd = snLst->tsEnd;
 }
 
 /* global state */ 
@@ -1182,17 +1167,17 @@ int SnOnUnregisterClient()
 
 int SnSubmitRequestForGc(const SnRequestForGc *buf, size_t count)
 {
-	SnSnapshot *entrySn = NULL;
+	static const SnSnapshot infinipast = {};
+	const SnSnapshot *entrySn = NULL;
 	const SnRequestForGc *ebuf = buf + count;
 
 	assert(buf || count==0);
+	entrySn = GetCurrentSnapshot(&snapshots);
 	/*	In normal mode SubmitRequestForGc will start from the current snapshot. 
-		In versions-disabled mode SubmitRequestForGc will start from terminating
+		In versions-disabled mode SubmitRequestForGc will start from infinipast
 		snapshot; that results in blocks submited with SN_REQUEST_ADD_NORMAL_VERSION
 		and SN_REQUEST_ADD_BOGUS_VERSION to be discarded imediately. */ 
-	entrySn = ((setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG) ?
-		&snapshots.terminatingSnapshot : GetCurrentSnapshot(&snapshots));
-
+	if (!entrySn || (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)) entrySn = &infinipast;
 	for (; buf!=ebuf; ++buf)
 	{
 		if (!SubmitRequestForGc(&snapshots, entrySn, buf)) break;
@@ -1425,50 +1410,155 @@ int SnGetTransactionTs(TIMESTAMP *timestamp)
 
 int SnCompactDFVHeader(const TIMESTAMP tsIn[],
 					   size_t szIn,
-					   int idsOut[],
+					   int idOut[],
 					   size_t *szOut)
 {
-	return 0;
+	int success = 0;
+	SnSnapshot fakeHead = {}, *sniter = &fakeHead;
+	const TIMESTAMP *tsInEnd = tsIn + szIn, *tsInCur = tsIn;
+	int *idOutEnd = NULL, *idOutCur = idOut;
+
+	assert(szOut && (tsIn || szIn==0) && (idOut || *szOut==0));
+	idOutEnd = idOut + *szOut;
+	InitFakeHeadSnapshot(&snapshots, &fakeHead);
+
+	if (szIn == 0 || *tsInCur==INVALID_TIMESTAMP) 
+	{
+		success=1;
+	}
+	else if(!IsValidTimestamp(*tsInCur))
+	{
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+	}
+	else
+	{
+		if (IsObjectYoungerThanSnapshot(&fakeHead, *tsInCur))
+		{
+			/* if have room to store record */ 
+			if (tsOutCur < tsOutEnd)
+			{
+				idOutCur[0] = 0;
+			}
+			idOutCur++;
+		}
+		while(1)
+		{
+			/* no more snapshots to match against */ 
+			if (sniter==NULL) { success=1; break; }
+			/* match snapshot version */ 
+			while (tsInCur < tsInEnd && 
+				   IsValidTimestamp(*tsInCur) && 
+			       IsObjectYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
+			/* list ended? */ 
+			if (tsInCur == tsInEnd || *tsInCur==INVALID_TIMESTAMP) { success=1; break; }
+			/* bad timestamp? */ 
+			if (!IsValidTimestamp(*tsInCur)) { WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP); break; }
+			/* the matched version doesn't belong to next snapshot as well - each */ 
+			if (sniter->next==NULL || IsObjectYoungerThanSnapshot(sniter->next, *tsInCur))
+			{
+				/* if have room to store record */ 
+				if (tsOutCur < tsOutEnd)
+				{
+					idOutCur [0] = (int)(tsInCur - tsIn);
+				}
+				++idOutCur;
+			}
+		}
+	}
+	if (success)
+	{
+		*szOut = idOutCur - idOut;
+		if (idOutCur>idOutEnd)
+		{
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR); /* WUERR_INSUFFICIENT_BUFFER */ 
+			success = 0;
+		}
+	}
+	else
+	{
+		*szOut = 0;
+	}
+	return success;
 }
 
 int SnExpandDFVHeader(const TIMESTAMP tsIn[],
 					  size_t szIn,
 					  TIMESTAMP tsOut[],
-					  int idsOut[],
+					  int idOut[],
 					  size_t *szOut)
 {
 	int success = 0;
-#if 0
-	SnSnapshot dummy = {SN_WORKING_VERSION_TIMESTAMP, &snapshots.initiatingSnapshot};
-	SnSnapshot *sniter = &dummy;
+	SnSnapshot fakeHead = {}, *sniter = &fakeHead;
 	const TIMESTAMP *tsInEnd = tsIn + szIn, *tsInCur = tsIn;
 	TIMESTAMP *tsOutEnd = NULL, *tsOutCur = tsOut;
-	int *idsOutCur = idsOut;
+	int *idOutCur = idOut;
 
-	assert(tsIn && szIn && tsOut && szOut);
+	assert(szOut && (tsIn || szIn==0) && (tsOut && idOut || *szOut==0));
 	tsOutEnd = tsOut + *szOut;
-	*szOut = 0;
+	InitFakeHeadSnapshot(&snapshots, &fakeHead);
 
-	while(1)
+	if (szIn == 0 || *tsInCur==INVALID_TIMESTAMP) 
 	{
-		/* no more snapshots to match */ 
-		if (sniter == NULL)
-		{
-			success = 1;
-			break;
-		}
-
-		while (tsInCur < tsInEnd && IsValidTimestamp(*tsInCur) && 
-			   IsObjectYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
-		if (tsInCur
+		success=1;
 	}
-
+	else if(!IsValidTimestamp(*tsInCur))
+	{
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+	}
+	else
+	{
+		if (IsObjectYoungerThanSnapshot(&fakeHead, *tsInCur))
+		{
+			/* if have room to store record */ 
+			if (tsOutCur < tsOutEnd)
+			{
+				tsOutCur[0] = SN_WORKING_VERSION_TIMESTAMP;
+				idOutCur[0] = 0;
+			}
+			tsOutCur++;
+			idOutCur++;
+		}
+		while(1)
+		{
+			/* no more snapshots to match against */ 
+			if (sniter==NULL) { success=1; break; }
+			/* match snapshot version */ 
+			while (tsInCur < tsInEnd && 
+				   IsValidTimestamp(*tsInCur) && 
+			       IsObjectYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
+			/* list ended? */ 
+			if (tsInCur == tsInEnd || *tsInCur==INVALID_TIMESTAMP) { success=1; break; }
+			/* bad timestamp? */ 
+			if (!IsValidTimestamp(*tsInCur)) { WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP); break; }
+			/* if have room to store record */ 
+			if (tsOutCur < tsOutEnd)
+			{
+				tsOutCur [0] = sniter->timestamp;
+				idOutCur [0] = (int)(tsInCur - tsIn);
+			}
+			++tsOutCur;
+			++idOutCur;
+		}
+	}
 	if (success)
 	{
 		*szOut = tsOutCur - tsOut;
+		if (tsOutCur>tsOutEnd)
+		{
+			WuSetLastErrorMacro(WUERR_GENERAL_ERROR); /* WUERR_INSUFFICIENT_BUFFER */ 
+			success = 0;
+		}
 	}
-#endif
+	else
+	{
+		*szOut = 0;
+	}
 	return success;
+}
+
+int SnDamageSnapshots(TIMESTAMP startingTs)
+{
+	return 0;
 }
 
 void SnDbgDump(int reserved)
@@ -1503,10 +1593,6 @@ void SnDbgDump(int reserved)
 			typeStr="PREV-PERS."; break;
 		case SN_FUTURE_SNAPSHOT:
 			typeStr="FUTURE"; break;
-		case SN_TERMINATING_SNAPSHOT:
-			typeStr="TERMINATIN"; break;
-		case SN_INITIATING_SNAPSHOT:
-			typeStr="INITIATING"; break;
 		default:
 			typeStr="UNKNOWN";
 		}

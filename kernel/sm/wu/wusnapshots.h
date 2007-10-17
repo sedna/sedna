@@ -147,7 +147,7 @@ int SnGetTransactionTs(TIMESTAMP *timestamp);
 
 int SnCompactDFVHeader(const TIMESTAMP tsIn[],
 					   size_t szIn,
-					   int idsOut[],
+					   int idOut[],
 					   size_t *szOut);
 
 #define SN_LAST_COMMITED_VERSION_TIMESTAMP		(TIMESTAMP_MAX+1)
@@ -156,16 +156,18 @@ int SnCompactDFVHeader(const TIMESTAMP tsIn[],
 int SnExpandDFVHeader(const TIMESTAMP tsIn[],
 					  size_t szIn,
 					  TIMESTAMP tsOut[],
-					  int idsOut[],
+					  int idOut[],
 					  size_t *szOut);
+
+int SnDamageSnapshots(TIMESTAMP startingTs);
 
 /* SnDbgDump */ 
 #define SN_DUMP_STATS							0x1000
-#define SN_DUMP_SNAPSHOTS_LIST					0x2000
-#define SN_DUMP_GC_NODES						0x4000
-#define SN_DUMP_SHOW_FUTURE_SNAPSHOTS_FLAG		0x0001
-#define SN_DUMP_SHOW_FAKE_SNAPSHOTS_FLAG		0x0002
-#define SN_DUMP_NO_LIMIT_FLAG					0x0004
+#define SN_DUMP_ATIMESTAMPS						0x2000
+#define SN_DUMP_SNAPSHOTS						0x4000
+#define SN_DUMP_GC_NODES						0x8000
+#define SN_DUMP_UNLIMITED_FLAG					0x0001
+#define SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG		0x0002
 
 void SnDbgDump(int flags); 
 
