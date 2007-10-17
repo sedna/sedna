@@ -435,9 +435,9 @@ int uGetFileSizeByName(const char* name, __int64 * file_size, sys_call_error_fun
    UFile fd;
 
    fd = uOpenFile(name,
-                        U_SHARE_READ | U_SHARE_WRITE,
-                        U_READ_WRITE,
-                        U_WRITE_THROUGH,
+                        U_SHARE_READ,
+                        U_READ,
+                        0,
                         __sys_call_error);
 
    if (fd == U_INVALID_FD)  return 0;
