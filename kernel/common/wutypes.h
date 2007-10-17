@@ -29,4 +29,6 @@ bool IsValidTimestamp(TIMESTAMP ts)
 /* INVALID_TIMESTAMP is the greatest possible value for the variable of TIMESTAMP type */ 
 #define INVALID_TIMESTAMP	UINT64_C(0xFFFFFFFFFFFFFFFF)
 
+#define INVALID_TICKET		NULL
+
 #endif

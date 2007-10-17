@@ -19,7 +19,8 @@
 #define ST_MAX_COLUMNS				(1U<<(ST_TICKET_ORD_BITS-1))
 
 /*	the mask (a) must be non zero (b) must have 2 high bit set so that resulting pointer
-	is invalid since it points to kernel address space both on Windows and Linux */ 
+	is invalid since it points to kernel address space both on Windows and Linux 
+	(c) must never produce NULL values */ 
 #define ST_TICKET_XOR_MASK			UINT32_C(0xFFAFE0CC)
 
 static inline 

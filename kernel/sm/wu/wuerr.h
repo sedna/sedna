@@ -9,6 +9,8 @@
 #define WUERR_FIRST_ERR 0x20000000
 #endif
 
+#define WUERR_OK	0
+
 /* generic errors */ 
 
 #define WUERR_GENERAL_ERROR                                              ( 0 + WUERR_FIRST_ERR)

@@ -250,7 +250,7 @@ int ClUnregisterClient(int clientId)
 	return success;
 }
 
-int ClGetCurrentClientId()
+int ClGetCurrentClientId(TICKET ticket)
 {
 	return threadState.currentClientId;
 }
