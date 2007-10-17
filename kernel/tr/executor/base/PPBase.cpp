@@ -41,8 +41,6 @@ char e_string_buf[PAGE_SIZE];
 
 #ifdef _MSC_VER
 __declspec(thread)
-#else
-__thread
 #endif
 PPIterator* __current_physop = NULL;
 
