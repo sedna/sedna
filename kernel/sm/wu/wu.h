@@ -75,9 +75,9 @@ void WuGatherSnapshotsStatsExn(WuSnapshotStats *);
 
 void WuAdvanceSnapshotsExn();
 
-#define WU_CLIENTS		1
-#define WU_VERSIONS		2
-#define WU_SNAPSHOTS	4
+#define WU_DBG_DUMP_CLIENTS		1
+#define WU_DBG_DUMP_VERSIONS	2
+#define WU_DBG_DUMP_SNAPSHOTS	4
 
 void WuDbgDump(int componentsSelector, int reserved);
 

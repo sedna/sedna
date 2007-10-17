@@ -43,7 +43,7 @@ int  ClMarkClientLeaving(int clientId);
 
 int  ClUnregisterClient(int clientId);
 
-int ClGetCurrentClientId();
+int ClGetCurrentClientId(TICKET ticket);
 
 int  ClSetCurrentClientId(int clientId);
 

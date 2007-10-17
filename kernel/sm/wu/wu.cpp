@@ -102,7 +102,7 @@ int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
 		}
 		else
 		{			
-			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(),lilXptr,&ofs,isDataImportant));
+			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(INVALID_TICKET),lilXptr,&ofs,isDataImportant));
 		}
 		header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofs);
 		/* assert(header->p==lilXptr && header->roffs == ofs); */ 
@@ -163,7 +163,7 @@ int ProtectBuffer(int bufferId, int orMask, int andNotMask)
 	int mask=orMask&~andNotMask;
 	if (mask&32)
 	{
-		header->trid_wr_access=ClGetCurrentClientId();
+		header->trid_wr_access=ClGetCurrentClientId(INVALID_TICKET);
 	}
 	else
 	{
@@ -840,9 +840,9 @@ int WuAdvanceSnapshots()
 void WuDbgDump(int selector, int reserved)
 {
 #if (EL_DEBUG == 1)
-		if (selector & WU_CLIENTS) ClDbgDump(reserved);
-		if (selector & WU_VERSIONS) VeDbgDump(reserved);
-		if (selector & WU_SNAPSHOTS) SnDbgDump(reserved);
+		if (selector & WU_DBG_DUMP_CLIENTS) ClDbgDump(reserved);
+		if (selector & WU_DBG_DUMP_VERSIONS) VeDbgDump(reserved);
+		if (selector & WU_DBG_DUMP_SNAPSHOTS) SnDbgDump(reserved);
 #endif
 }
 
