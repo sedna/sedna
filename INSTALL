@@ -20,6 +20,11 @@ make install
 $SEDNA_INSTALL/data
 $SEDNA_INSTALL/cfg
 
+   To grant the necessary permisions to the user on Linux 
+   you can use the following command (suppose, <sedna-user> is the user 
+   that is going to run Sedna):
+
+chown <sedna-user> cfg data
      _________________________________________________________________
 
                                 Long Version
@@ -100,11 +105,6 @@ export ENABLE_TRIGGERS=1
 
        Turns on support for triggers. Set ENABLE_TRIGGERS to 0 if you would 
        like to turn support for triggers off.
-
-export DOCUMENTATION=1
-
-       Compiles documentation. Set DOCUMENTATION to 0 if you do not want docs 
-       to be compiled.
 
 export EL_DEBUG=0
 

@@ -3,9 +3,25 @@
 
      _________________________________________________________________
 
+                             Release 2.1
+
+     Release date: 2007-07-10
+     _________________________________________________________________
+
+New:
+- Further indexes optimization;
+- Further bulk load optimization;
+- A lot of bug fixes and small improvments.
+
+Note: Use export utility (see Sedna Administration Guide) to
+convert Sedna's 2.0 (or earlier) databases into Sedna 2.1 format. 
+
+
+     _________________________________________________________________
+
                              Release 2.0
 
-     Release date: as current of 2007-04-11
+     Release date: 2007-04-16
      _________________________________________________________________
 
 New:

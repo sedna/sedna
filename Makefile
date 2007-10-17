@@ -63,7 +63,7 @@ build:
 	@echo Building export utility
 	@echo ===================================================================
 	$(MAKE) -C export
-ifeq ($(DOCUMENTATION), 1)
+ifeq ($(MAKE_DOC), 1)
 	@echo ===================================================================
 	@echo Building Docs
 	@echo ===================================================================
@@ -80,7 +80,7 @@ bi: build install
 clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C driver clean
-ifeq ($(DOCUMENTATION), 1)
+ifeq ($(MAKE_DOC), 1)
 	$(MAKE) -C doc clean
 endif
 	$(MAKE) -C bin clean
@@ -114,7 +114,7 @@ grouped_install:
 	$(INSTALL) -Dp $(PERM1) bin/se_ddb$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_ddb$(EXE_EXT)
 	$(INSTALL) -Dp $(PERM2) bin/se_term$(EXE_EXT) $(SEDNA_INSTALL)/sedna/bin/se_term$(EXE_EXT)
 	$(INSTALL) -Dp $(PERM2) bin/se_exp$(EXE_EXT)  $(SEDNA_INSTALL)/sedna/bin/se_exp$(EXE_EXT)
-ifeq ($(DOCUMENTATION), 1)
+ifeq ($(INSTALL_DOC), 1)
 	$(INSTALL) -Dp $(PERM3) doc/AdminGuide/AdminGuide.pdf $(SEDNA_INSTALL)/sedna/doc/AdminGuide.pdf
 	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ProgGuide.pdf $(SEDNA_INSTALL)/sedna/doc/ProgGuide.pdf
 	$(INSTALL) -Dp $(PERM3) doc/ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf $(SEDNA_INSTALL)/sedna/doc/ClientServerProtocol.pdf
