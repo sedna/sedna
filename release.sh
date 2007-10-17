@@ -102,13 +102,10 @@ prepare_windows_source() {
     cd $FILE_BASE/doc &&
     echo `pwd` &&
     make &&
-    mv AdminGuide/AdminGuide.pdf . &&
-    rm -rf AdminGuide &&
-    mv QuickStart/QuickStart.pdf . &&
-    rm -rf QuickStart &&
-    mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
-    mv ProgGuide/ProgGuide.pdf . &&
-    rm -rf ProgGuide &&
+    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
+    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
+    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
+    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
     rm Makefile &&
     cd "$OLDDIR"
 }
@@ -129,13 +126,10 @@ prepare_linux_source() {
     OLDDIR="`pwd`" &&
     cd $FILE_BASE/doc &&
     make &&
-    mv AdminGuide/AdminGuide.pdf . &&
-    rm -rf AdminGuide &&
-    mv QuickStart/QuickStart.pdf . &&
-    rm -rf QuickStart &&
-    mv ProgGuide/ClientServerProtocol/ClientServerProtocol.pdf . &&
-    mv ProgGuide/ProgGuide.pdf . &&
-    rm -rf ProgGuide &&
+    rm -f AdminGuide/*.{aux,log,tex,toc} AdminGuide/Makefile &&
+    rm -f QuickStart/*.{aux,log,tex,toc} QuickStart/Makefile &&
+    rm -f ProgGuide/ClientServerProtocol/*.{aux,log,tex,toc} ProgGuide/ClientServerProtocol/Makefile &&
+    rm -f ProgGuide/*.{aux,log,tex,toc} ProgGuide/Makefile &&
     rm Makefile &&
     cd "$OLDDIR"
 }
@@ -145,7 +139,8 @@ create_sed_script()
     cat > $SEDSCRIPT <<EEE
 s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
 s/^AUTH_SWITCH[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/AUTH_SWITCH = 1\1/
-s/^DOCUMENTATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/DOCUMENTATION = 0\1/
+s/^MAKE_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/MAKE_DOC = 0\1/
+s/^INSTALL_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/INSTALL_DOC = 1\1/
 s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
 s/^JAVA_DRIVER[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/JAVA_DRIVER = 0\1/
 s/^SQL_CONNECTION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/SQL_CONNECTION = 0\1/
