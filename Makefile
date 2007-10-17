@@ -80,7 +80,9 @@ bi: build install
 clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C driver clean
+ifeq ($(DOCUMENTATION), 1)
 	$(MAKE) -C doc clean
+endif
 	$(MAKE) -C bin clean
 	$(MAKE) -C term clean
 	$(MAKE) -C export clean
