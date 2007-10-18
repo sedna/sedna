@@ -609,8 +609,12 @@ int uGetUniqueFileStruct(const char *directoryName, struct file_struct *fs, int 
     return 1;
 #else
     char tmp_template[64];
-    strcpy(tmp_template, "tmpXXXXXX");
+    strcpy(tmp_template, directoryName);
+    strcat(tmp_template, "/");
+    strcat(tmp_template, "tmpXXXXXX");
+    
     fs->f = mkstemp(tmp_template);
+    
     if (fs->f == -1)
     {
         sys_call_error("mkstemp");
