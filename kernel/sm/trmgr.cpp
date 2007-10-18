@@ -401,6 +401,7 @@ void give_transaction_id(transaction_id& trid)
 ******************************************************************************/
 
 static TIMESTAMP ts_0 = 0, ts_1 = 0; // timestamps for each type of snapshot (0 means that this type is free)
+static TIMESTAMP ts_tmp = 0; // for the case of third snapshot
 char buf[20];
 
 static UFile ph_file_0, ph_file_1;
@@ -461,6 +462,13 @@ int PhOnSnapshotCreate(TIMESTAMP ts)
 	if (uCopyFile(ph_cur_file_name.c_str(), ph_file_name.c_str(), false, __sys_call_error) == 0)
       throw USER_EXCEPTION(SE4306);
 	
+	if (ts_0 && ts_1) // the case of "three" snapshots
+	{
+		ts_tmp = (ts_0 < ts_1) ? ts_0 : ts_1;
+
+		PhOnSnapshotDelete(ts_tmp, false);
+	}
+				
 	if (!ts_0)
 	{
 	    ph_file_0 = uOpenFile(ph_file_name.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, 
@@ -498,11 +506,12 @@ int PhOnSnapshotCreate(TIMESTAMP ts)
         return 1;
     }
     else
+    	
     	throw USER_EXCEPTION(SE4605);
 }
 
 // this function releases ph on snapshot deletion
-void PhOnSnapshotDelete(TIMESTAMP ts)
+void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete)
 {
     string ph_file_name = string(db_files_path) + string(db_name) + "." + string(u_ui64toa(ts, buf, 10)) + ".seph";
 
@@ -532,10 +541,18 @@ void PhOnSnapshotDelete(TIMESTAMP ts)
 
 	    ts_1 = 0;
     }
+    else if (ts == ts_tmp)
+    {
+        if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
+    	   throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
+
+    	ts_tmp = 0;
+    	return;
+    }
     else
     	throw USER_EXCEPTION(SE4605);
     
-    if (ts != ll_returnTimestampOfPersSnapshot())
+    if (isDelete && ts != ll_returnTimestampOfPersSnapshot())
 	    if (uDeleteFile(ph_file_name.c_str(), __sys_call_error) == 0)
     	   throw USER_EXCEPTION2(SE4041, ph_file_name.c_str());
 }

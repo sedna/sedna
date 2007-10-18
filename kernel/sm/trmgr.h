@@ -3,6 +3,10 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+
+#ifndef _TR_MGR_H
+#define _TR_MGR_H
+
 #include "common/sedna.h"
 #include "common/base.h"
 
@@ -40,5 +44,6 @@ extern USemaphore checkpoint_finished;
 
 int PhOnInitialSnapshotCreate(TIMESTAMP ts);
 int PhOnSnapshotCreate(TIMESTAMP ts);
-void PhOnSnapshotDelete(TIMESTAMP ts);
+void PhOnSnapshotDelete(TIMESTAMP ts, bool isDelete = true);
 int GetPhIndex(TIMESTAMP ts);
+#endif

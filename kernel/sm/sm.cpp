@@ -712,7 +712,7 @@ int main(int argc, char **argv)
 
         delete ssmmsg;
 
-		WuAdvanceSnapshotsExn();
+//		WuAdvanceSnapshotsExn();
 
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
@@ -883,7 +883,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        if (ssmmsg->shutdown() != 0)
           throw USER_EXCEPTION(SE3033);
 
-	   WuAdvanceSnapshotsExn();
+//	   WuAdvanceSnapshotsExn();
 
        //shutdown checkpoint thread (it also makes checkpoint)
        shutdown_chekpoint_thread();
