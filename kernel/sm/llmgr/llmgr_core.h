@@ -334,7 +334,6 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
   void set_checkpoint_flag(bool flag, bool sync); // set flag to enable/disable checkpoint
 
 protected:
-
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
   void writeSharedMemory(const void*, int len);
 //  logical_log_file_head read_log_file_header();
