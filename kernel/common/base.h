@@ -214,8 +214,8 @@ extern global_name CHARISMA_SM_IS_READY;
 #define SECURITY_METADATA_DOCUMENT						"$db_security_data"
 #define INITIAL_SECURITY_METADATA_FILE_NAME				"sedna_auth_md.xml"
 
-#define CHARISMA_MAX_TRNS_NUMBER                        20
-#define MAX_SESSIONS_NUMBER								20
+#define CHARISMA_MAX_TRNS_NUMBER                        50
+#define MAX_SESSIONS_NUMBER								50
 #define MAX_DBS_NUMBER									10
 #define STRMAXSIZE   4000000000lu
 
