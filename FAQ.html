@@ -117,6 +117,27 @@ Sometimes the following NOD32 configuring helps: go to "IMON module->SETUP->Adva
 <code>se_gov</code> process.
 </p>     
 
+<div class="question">
+<p>W2. I am on a Windows XP. <code>se_gov</code> runs fine, and it says that the <code>GOVERNER is
+running</code>. Start database with <code>se_sm</code> also works.
+The problem being, I cannot open a session with <code>se_term</code> utility. I get the following error:
+<pre>     
+Failed to open session
+SEDNA Message: ERROR SE3007
+Failed to receive a message.
+Details: Connection was broken while receive se_SendSessionParameters
+message from server
+</pre>     
+</p>
+</div>
+<p>It looks like Winsock2 on you Windows XP has been corrupted. 
+Please read this Microsoft support page and try to determine whether the
+Winsock2 key is corrupted, and if yes - recover from Winsock2 corruption:
+<br/>
+<a href="http://support.microsoft.com/kb/811259/en">http://support.microsoft.com/kb/811259/en</a>
+</p>
+</p>     
+
 <h2>Linux Specific Questions</h2>
 
 <div class="question">
@@ -205,8 +226,20 @@ restart). Note that you need root privileges.</p>
           on in your Linux kernel. In this case we recommend upgrading to 
           a more recent Linux kernel, or contacting your Linux Distribution 
           vendor for more information on enabling POSIX Shared Memory.</li>
+</ol>
 </ul></li>
 </ol>          
+
+<div class="question">
+<p>L4. I Can't create more than one database on Linux.
+</p>
+</div>     
+
+<p>One of the possible reason of this behaviour is the /dev/shm temporary filesystem size (use df -h to check it size). Try to extend it using the following command:
+<br/>
+<code>mount -o remount,size=<size> /dev/shm (substitute <size> with exact value)</code>
+<p>
+
 
 </body>
 </html>
