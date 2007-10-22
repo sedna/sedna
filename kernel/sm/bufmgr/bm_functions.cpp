@@ -63,6 +63,50 @@ void _bm_restore_working_set_size()
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
 }
 
+#ifndef _WIN32
+static sigjmp_buf jmpbuf;
+static volatile sig_atomic_t canjump;
+
+void _bm_sigbus_handler(int signo)
+{
+    if(canjump == 0) return;	
+	canjump = 0;	
+	siglongjmp(jmpbuf, 1);
+}
+
+
+static inline void _bm_guarantee_buffer_pool(void* addr, int size)
+{
+    int page_size = getpagesize();
+    int res = 0;
+
+    int total_pages = size / page_size;
+    if (size % page_size != 0) total_pages++;
+
+    unsigned char* buf_mem = (unsigned char*) addr;
+    
+    struct sigaction sigbus_act, sig_backup;
+    memset(&sigbus_act, '\0', sizeof(struct sigaction));
+    memset(&sig_backup, '\0', sizeof(struct sigaction));
+    sigbus_act.sa_handler = _bm_sigbus_handler;
+
+    if(sigaction(SIGBUS, &sigbus_act, &sig_backup) == -1)
+        USER_EXCEPTION2(SE1033, "Can't set SIGBUS handler to preallocate buffer pool.");
+
+    if(sigsetjmp(jmpbuf, 1) != 0)
+        throw USER_EXCEPTION2(SE1015, "Cannot preallocate shared memory. There are not enough system resources. Linux: try to remount /dev/shm with a greater size. See also FAQ shipped with the distribution.");
+    else
+    {
+        canjump = 1;
+        for(int i = 0; i <= total_pages; i++)
+            memset(buf_mem + i * page_size, '\0', sizeof(unsigned char));
+    }
+
+    if(sigaction(SIGBUS, &sig_backup, NULL) == -1)
+        USER_EXCEPTION2(SE1033, "Can't restore SIGBUS handler in buffer pool preallocation.");
+}
+#endif /* _WIN32 */
+
 void _bm_init_buffer_pool()
 {
 #ifndef REQUIRE_ROOT
@@ -83,7 +127,12 @@ void _bm_init_buffer_pool()
     {
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         {
+#ifndef _WIN32            
             elog(EL_LOG, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
+            _bm_guarantee_buffer_pool(buf_mem_addr, bufs_num * PAGE_SIZE);
+#else
+            elog(EL_LOG, ("Can't lock memory. There are no admin rights."));
+#endif
             lock_memory = 0;
         }
     }
