@@ -470,7 +470,7 @@ int main(int argc, char **argv)
              d_printf1("ll_phys_log_startup_shared_mem call successful\n");
 
              bm_startup();
-             d_printf1("sm_startup call successful\n");
+             d_printf1("bm_startup call successful\n");
 
              extend_data_file(data_file_initial_size);
              d_printf1("extend_data_file call successful\n");
@@ -479,7 +479,7 @@ int main(int argc, char **argv)
              d_printf1("extend_tmp_file call successful\n");
 
              bm_shutdown();
-             d_printf1("sm_shutdown call successful\n");
+             d_printf1("bm_shutdown call successful\n");
 
              ll_phys_log_clear((LONG_LSN)(-1));
              d_printf1("ll_phys_log_clear call successful\n");

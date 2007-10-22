@@ -104,6 +104,14 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name, sys_call_error_fun 
 int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
 {
 #ifdef _WIN32
+    if( m.fd != INVALID_HANDLE_VALUE)
+    {
+        if( CloseHandle(m.fd) == 0)
+        {
+          sys_call_error("CloseHandle");
+          return -1;
+        }
+    }
     if( CloseHandle(m.map) == 0)
     {
       sys_call_error("CloseHandle");

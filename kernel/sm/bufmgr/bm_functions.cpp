@@ -83,7 +83,7 @@ void _bm_init_buffer_pool()
     {
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         {
-            elog(EL_LOG, ("Memory locking is not supported without root"));
+            elog(EL_LOG, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
             lock_memory = 0;
         }
     }
