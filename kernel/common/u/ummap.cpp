@@ -111,6 +111,15 @@ int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
     }
     else return 0;
 #else
+    if( m.map != -1)
+    {
+        if (close(m.map) == -1)
+        {
+            sys_call_error("close");
+            return -1;
+        }
+    }
+
     if (name)
     {
         if (shm_unlink(name) == -1)
@@ -153,22 +162,15 @@ void *uMapViewOfFile(UMMap m, void *addr, int size, int offs, sys_call_error_fun
     void* ret_val;
 
     if (addr)
-    { 
       ret_val = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m.map, offs);
-      if (ret_val == MAP_FAILED)
-         sys_call_error("mmap");
-
-      return ret_val;
-    }
     else
-    {
-      ret_val= mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m.map, offs);
-      if (ret_val == MAP_FAILED)
-         sys_call_error("mmap");
+      ret_val = mmap(addr, size, PROT_READ | PROT_WRITE, MAP_SHARED, m.map, offs);
 
-      return ret_val;
+    if (ret_val == MAP_FAILED)
+        sys_call_error("mmap");
 
-    }
+    return ret_val == MAP_FAILED ? NULL : ret_val;
+    
 #endif
 }
 
