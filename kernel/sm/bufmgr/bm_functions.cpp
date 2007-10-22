@@ -98,7 +98,7 @@ static inline void _bm_guarantee_buffer_pool(void* addr, int size)
     else
     {
         canjump = 1;
-        for(int i = 0; i <= total_pages; i++)
+        for(int i = 0; i < total_pages; i++)
             memset(buf_mem + i * page_size, '\0', sizeof(unsigned char));
     }
 
