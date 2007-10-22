@@ -188,7 +188,8 @@ int pers_close()
 
     if (uReleaseFileMapping(ph_file_mapping, NULL, __sys_call_error) != 0) return 3;
 
-    if (uCloseFile(ph_file, __sys_call_error) == 0) return 4;
+    /// ph_file is closed in uReleaseFileMapping now
+    /// if (uCloseFile(ph_file, __sys_call_error) == 0) return 4;
 
     return 0;
 }
@@ -223,7 +224,8 @@ int pers_create(const char *file_name, const char *fm_name, const void *addr, in
 
     if (uReleaseFileMapping(ph_file_mapping, fm_name, __sys_call_error) != 0) return 7;
 
-    if (uCloseFile(ph_file, __sys_call_error) == 0) return 8;
+    /// ph_file is closed in uReleaseFileMapping now
+    /// if (uCloseFile(ph_file, __sys_call_error) == 0) return 8;
 
     return 0;
 }
