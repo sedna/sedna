@@ -2263,7 +2263,7 @@ rename Expr on QName
 The following expression changes the name of \verb!<job/>! elements without changing their contents:
 \begin{verbatim}
 UPDATE
-rename //job[.="bit banger"] on profession
+rename doc("foo.xml")//job[.="bit banger"] on profession
 \end{verbatim}
 
 \subsection{Bulk Load}
