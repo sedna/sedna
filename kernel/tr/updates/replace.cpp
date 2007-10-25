@@ -216,14 +216,12 @@ void replace(PPOpIn arg)
 						node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
 			sit++;
 #ifdef SE_ENABLE_TRIGGERS
-			apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-#endif            
-		}
-		//2. finding place of insertion
-		if (a_m)
-		{
-			node=getFirstByOrderChildNode(removeIndirection(par_ind));
-			if (node!=XNULL)
+			repl_node_child = apply_per_node_triggers(removeIndirection(node_child), old_node, XNULL, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+			if(repl_node_child==XNULL) goto next_replacement;
+			CHECKP(repl_node_child);
+			node_child = ((n_dsc*)XADDR(repl_node_child))->indir;
+#endif
+			if (is_node_attribute(node)|| is_node_attribute(removeIndirection(node_child)))
 			{
 				if (is_node_element(node))
 				{

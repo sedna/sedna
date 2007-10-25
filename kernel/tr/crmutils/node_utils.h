@@ -231,6 +231,13 @@ bool inline is_node_attribute (xptr node)
 	CHECKP(node);
  return (GETSCHEMENODEX(node)->type==attribute);
 }
+
+bool inline checkp_and_call_is_node_attribute (xptr node)
+{
+	CHECKP(node);
+	return is_node_attribute(node);
+}
+
 bool inline is_node_child (xptr node)
 {
 	CHECKP(node);
