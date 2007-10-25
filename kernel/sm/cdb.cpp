@@ -318,6 +318,8 @@ int main(int argc, char **argv)
 //    int phys_log_ext_portion = 0xA00000;                // = 10Mb
     pping_client *ppc = NULL;
     bool is_ppc_closed = true;
+    bool is_bm_started = false;
+    bool is_ll_phys_log_started = false;
     UShMem gov_mem_dsc;
     int db_id;
 
@@ -462,6 +464,7 @@ int main(int argc, char **argv)
 
 
              ll_phys_log_startup(sedna_db_version);
+             is_ll_phys_log_started = true;
              d_printf1("phys_log_startup call successful\n");
 
              ll_phys_log_set_phys_log_flag(false);
@@ -470,6 +473,7 @@ int main(int argc, char **argv)
              d_printf1("ll_phys_log_startup_shared_mem call successful\n");
 
              bm_startup();
+             is_bm_started = true;
              d_printf1("bm_startup call successful\n");
 
              extend_data_file(data_file_initial_size);
@@ -479,6 +483,7 @@ int main(int argc, char **argv)
              d_printf1("extend_tmp_file call successful\n");
 
              bm_shutdown();
+             is_bm_started = false;
              d_printf1("bm_shutdown call successful\n");
 
              ll_phys_log_clear((LONG_LSN)(-1));
@@ -488,6 +493,7 @@ int main(int argc, char **argv)
              d_printf1("ll_phys_log_set_ph_bu_to_ph\n");
 
              ll_phys_log_shutdown();
+             is_ll_phys_log_started = false;
              d_printf1("phys_log_shutdown call successful\n");
 
              release_checkpoint_sems();
@@ -516,16 +522,22 @@ int main(int argc, char **argv)
         } catch (SednaUserException &e) {
              event_logger_release();
              if (!is_ppc_closed) {if (ppc) ppc->shutdown();}
+             if (is_bm_started) bm_shutdown();
+             if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db(db_name);
              fprintf(stderr, "%s\n", e.getMsg().c_str());
              uSocketCleanup(__sys_call_error);  
              erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
              return 1;
         } catch (SednaException &e) {
-             cleanup_db(db_name);
+             if (is_bm_started) bm_shutdown();
+             if (is_ll_phys_log_started) ll_phys_log_shutdown();
+             cleanup_db(db_name);            
              sedna_soft_fault(e, EL_CDB);
         } catch (...) {
-             cleanup_db(db_name);
+             if (is_bm_started) bm_shutdown();
+             if (is_ll_phys_log_started) ll_phys_log_shutdown();
+             cleanup_db(db_name);            
              sedna_soft_fault(EL_CDB);
         }
 
