@@ -1,3 +1,5 @@
+#define _WIN32_WINNT 0x1000 
+
 /*
  * File:  exceptions.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
@@ -176,7 +178,6 @@ IsDebuggerPresent( VOID );
 static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
 {
 	LONG resolution = exceptionDispatcherProc(ExceptionRecord,Context);
-	BOOL wasDebuggerPresent = FALSE;
 #	if (_MSC_VER <= 1400)
 	/*	If we are compiling with Microsoft compiler and it is anything older than ver. 2005
 		call UnhandledExceptionFilter() now to get a "the program performed an ilegal operation" 
@@ -188,12 +189,7 @@ static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCO
 		ExceptionRecord->ExceptionCode != EXCEPTION_SINGLE_STEP) 
 	{
 		EXCEPTION_POINTERS ep = {ExceptionRecord, Context};
-		wasDebuggerPresent = IsDebuggerPresent();
-		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) 
-		{
-			/* a debuger just attached, rethrow exception the weird way */ 
-			if (wasDebuggerPresent==FALSE) resolution=EXCEPTION_CONTINUE_EXECUTION;
-		}
+		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) DebugBreak();
 	}
 #	endif
 	return resolution;

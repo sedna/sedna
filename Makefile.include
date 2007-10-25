@@ -18,8 +18,11 @@ endif
 
 # options: Compile latex files        - 1
 #          Do not compile latex files - 0
-ifndef DOCUMENTATION
-DOCUMENTATION = 1
+ifndef MAKE_DOC
+MAKE_DOC = 1
+endif
+ifndef INSTALL_DOC
+INSTALL_DOC = 1
 endif
 
 # options: debug is on  - 1
