@@ -15,7 +15,7 @@
 #include "common/utils.h"
 #include "common/u/uprocess.h"
 
-#define SEDNA_DATA_STRUCTURES_VER 4
+#define SEDNA_DATA_STRUCTURES_VER 6
 
 // buffer memory offset; this type is used for addressing buffers in buffer
 // memory area by defining offset of buffer from the beginning of the shared
