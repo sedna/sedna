@@ -46,7 +46,6 @@ int cleanup_db(const char* db_name)
       res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".sedata").c_str(), __sys_call_error);
       if (res == 0)
          return 2;
-      
    }
 
 
@@ -90,6 +89,7 @@ int cleanup_db(const char* db_name)
    {
       db_exist = true;
       res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".seph").c_str(), __sys_call_error);
+      
       if (res == 0)
          return 2;
    }
@@ -100,6 +100,7 @@ int cleanup_db(const char* db_name)
    {
       db_exist = true;
       res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/" + string(db_name) + ".ph.sebu").c_str(), __sys_call_error);
+
       if (res == 0)
          return 2;
    }

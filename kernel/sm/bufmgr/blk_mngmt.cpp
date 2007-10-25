@@ -226,10 +226,10 @@ void extend_data_file(int extend_portion) throw (SednaException)
         (__int64)extend_portion * 
         (__int64)PAGE_SIZE > mb->data_file_max_size + (__int64)PAGE_SIZE)
         throw USER_EXCEPTION(SE1011);
-
+    
     ll_phys_log_decrease(mb->data_file_cur_size);
     ll_phys_log_flush();
-
+    
     int res = 0;
     __int64 dsk_offs = 0;
 
@@ -237,34 +237,34 @@ void extend_data_file(int extend_portion) throw (SednaException)
     if (uSetEndOfFile(data_file_handler, dsk_offs, U_FILE_END, __sys_call_error) == 0)
         throw USER_EXCEPTION(SE1013);
 
-
     __int64 data_file_old_size = mb->data_file_cur_size;
     mb->data_file_cur_size += (__int64)extend_portion * (__int64)PAGE_SIZE;
     xptr xptr_cursor = DATA_FILE_OFFS2XPTR(data_file_old_size - (__int64)PAGE_SIZE);
-
+    
     if (uSetFilePointer(data_file_handler, data_file_old_size, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
-
-	int i = 0;
+    
+    int i = 0;
     system_data_aligned_ptr = (char*)(((__uint32)system_data_buf + VMM_SM_BLK_HDR_MAX_SIZE) / VMM_SM_BLK_HDR_MAX_SIZE * VMM_SM_BLK_HDR_MAX_SIZE);
     vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)system_data_aligned_ptr;
-	vmm_sm_blk_hdr::init(hdr);
-
+    vmm_sm_blk_hdr::init(hdr);
+    
     for (i = 0; i < extend_portion; i++)
     {
         // fill header of the block
         hdr->p = xptr_cursor;
         int number_of_bytes_written = 0;
-
+        
         res = uWriteFile(data_file_handler, hdr, VMM_SM_BLK_HDR_MAX_SIZE, &number_of_bytes_written, __sys_call_error);
+        
         if (res == 0 || number_of_bytes_written != VMM_SM_BLK_HDR_MAX_SIZE)
             throw SYSTEM_ENV_EXCEPTION("Cannot write to file");
-
+        
         // put to the list of free blocks
         push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), xptr_cursor);
-
+        
         xptr_cursor += PAGE_SIZE;
-
+        
         dsk_offs = data_file_old_size + (__int64)(i + 1) * (__int64)PAGE_SIZE;
         if (uSetFilePointer(data_file_handler, dsk_offs, NULL, U_FILE_BEGIN, __sys_call_error) == 0)
             throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
