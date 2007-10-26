@@ -335,6 +335,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
 protected:
   LONG_LSN ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync);
+  void writeSharedMemoryWithCheck(const void *header, const void* rec_addr);
   void writeSharedMemory(const void*, int len);
 //  logical_log_file_head read_log_file_header();
 //  logical_log_file_head read_tail_log_file_header();

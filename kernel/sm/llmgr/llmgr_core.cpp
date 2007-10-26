@@ -1427,8 +1427,9 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
   log_head.body_len = rec_len;
 
   //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
+  writeSharedMemoryWithCheck(&log_head, tmp_rec);
+//  writeSharedMemory(&log_head, sizeof(logical_log_head));
+//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
 
@@ -1494,8 +1495,9 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
   log_head.body_len = rec_len;
 
   //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
+  writeSharedMemoryWithCheck(&log_head, tmp_rec);
+//  writeSharedMemory(&log_head, sizeof(logical_log_head));
+//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
 
@@ -1549,8 +1551,9 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
   log_head.body_len = rec_len;
 
   //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
+  writeSharedMemoryWithCheck(&log_head, tmp_rec);
+//  writeSharedMemory(&log_head, sizeof(logical_log_head));
+//  writeSharedMemory(tmp_rec, rec_len);
 
   ret_lsn = mem_head->next_lsn;
   
@@ -1599,8 +1602,9 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   int rec_offs = mem_head->end_offs;
 
   //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(addr, len);
+  writeSharedMemoryWithCheck(&log_head, addr);
+//  writeSharedMemory(&log_head, sizeof(logical_log_head));
+//  writeSharedMemory(addr, len);
 
   
   //reinit shared memory header (only lsns)
@@ -1629,12 +1633,27 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 }
 
 
+void llmgr_core::writeSharedMemoryWithCheck(const void *header, const void* rec_addr)
+{
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  int body_len = ((logical_log_head *)header)->body_len;
+  int rec_len = sizeof(logical_log_head) + body_len;
+
+  if ( rec_len > mem_head->free_bytes)
+     ll_log_flush(false);
+
+  writeSharedMemory(header, sizeof(logical_log_head));
+  writeSharedMemory(rec_addr, body_len);
+}
+
 void llmgr_core::writeSharedMemory(const void* rec_addr, int rec_len)
 {
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
-  if ( rec_len > mem_head->free_bytes)
-     ll_log_flush(false);
+//  moved to writeSharedMemoryWithCheck
+//  if ( rec_len > mem_head->free_bytes)
+//     ll_log_flush(false);
 
   //now there is enough space of free sh memory
   if ((mem_head->size - mem_head->end_offs) < rec_len)  

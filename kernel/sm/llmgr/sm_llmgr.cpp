@@ -427,8 +427,9 @@ void sm_llmgr::ll_log_checkpoint(WuEnumerateVersionsParams *params, WuVersionEnt
   log_head.body_len = rec_len;
 
   //insert log record into shared memory
-  writeSharedMemory(&log_head, sizeof(logical_log_head));
-  writeSharedMemory(tmp_rec, rec_len);
+  writeSharedMemoryWithCheck(&log_head, tmp_rec);
+//  writeSharedMemory(&log_head, sizeof(logical_log_head));
+//  writeSharedMemory(tmp_rec, rec_len);
 
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
   
