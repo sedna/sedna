@@ -110,12 +110,13 @@ Is it a bug in se_term?
 </div>
 <p>No, it is not. More likely you have NOD32 Antivirus installed. It 
 conflicts with Sedna and some other programs. The bug is in NOD32, 
-actually. You can solve the problem by uninstalling NOD32 (turning it off
-will not help).</p>
+actually. You can solve the problem by configuring NOD32 in the following way.</p>
 <p>
 Sometimes the following NOD32 configuring helps: go to "IMON module->SETUP->Advanced"; here you can exclude 
 <code>se_gov</code> process.
 </p>     
+<p>If this does not help turn off NOD32 Internet Monitoring module IMON and then restart Windows: "NOD32 Control Center > IMON > Quit" + System Restart.
+</p>
 
 <div class="question">
 <p>W2. I am on a Windows XP. <code>se_gov</code> runs fine, and it says that the <code>GOVERNER is
