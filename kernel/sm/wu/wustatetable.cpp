@@ -374,7 +374,9 @@ int  OccupyStateTableFirstVacantRow(StateTable *t, int *rowId, int rngBegin, int
 	else
 	{
 		bitId=FindLowestBitSet(v);
+#pragma warning( disable : 4146 )
 		*i&=~(v&-v);
+#pragma warning( default : 4146 )
 		*rowId=bitId+(i-(uint32_t*)t->mem)*32;
 		ValidateGuardMemory(t,*rowId,NULL,ST_ROW_GUARD);
 		success=1;

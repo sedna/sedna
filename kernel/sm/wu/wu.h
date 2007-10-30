@@ -7,38 +7,16 @@
 
 #include "wutypes.h"
 #include "wudock.h"
+#include "wusnapshotscs.h"
 #include "wuerr.h"
 
-struct WuVersionEntry
-{
-	LXPTR lxptr;
-	XPTR xptr;	
-};
+typedef SnVersionEntry WuVersionEntry;
 
-struct WuEnumerateVersionsParams
-{
-	TIMESTAMP persSnapshotTs;
-	size_t persVersionsCount;
-	size_t garbageVersionsCount;
-	size_t persVersionsSent;
-	size_t garbageVersionsSent;
-	void *userData;
-};
+typedef SnEnumerateVersionsParams WuEnumerateVersionsParams;
 
-typedef int (*WuEnumerateVersionsProc)(WuEnumerateVersionsParams *params, 
-									   WuVersionEntry *buf, size_t count, int isGarbage);
+typedef SnEnumerateVersionsProc WuEnumerateVersionsProc;
 
-struct WuSnapshotStats
-{
-	TIMESTAMP curSnapshotTs, persSnapshotTs;
-	size_t runawayVersionsCount;
-	size_t versionsCount;	
-	size_t curSnapshotVersionsCount;
-	size_t curSnapshotSharedVersionsCount;
-	size_t persSnapshotVersionsCount;
-	size_t persSnapshotSharedVersionsCount;	
-	int isAbleToAdvanceSnapshots;
-};
+typedef SnSnapshotStats WuSnapshotStats;
 
 int WuGetTimestamp(TIMESTAMP *ts);
 

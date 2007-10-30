@@ -5,7 +5,7 @@
 #ifndef WUSNAPSHOTS_H_INCLUDED
 #define WUSNAPSHOTS_H_INCLUDED
 
-#include "wutypes.h"
+#include "wusnapshotscs.h"
 #include "wuincguard.h"
 
 struct SnResourceDemand
@@ -13,7 +13,7 @@ struct SnResourceDemand
 	size_t clientStateSize;
 };
 
-#define SN_SETUP_DISABLE_VERSIONS_FLAG				0x01
+#define SN_SETUP_DISABLE_VERSIONS_FLAG			0x01
 
 struct SnSetup
 {
@@ -33,41 +33,34 @@ struct SnSetup
 	int (*onBeforeDiscardSnapshot)(TIMESTAMP snapshotTs, int *bDenyDiscarding);
 };
 
-/* garbage entries have lxptr==0 */ 
-struct SnVersionEntry
-{
-	LXPTR lxptr;
-	XPTR xptr;
-};
-
 /*	SnSubmitRequestForGc
 
-	[type==SN_REQUEST_TYPE_NOP]
+	[type==SN_REQUEST_NOP]
 	Do nothing. 
 
-	[type==SN_REQUEST_TYPE_DISCARD_VERSION]
+	[type==SN_REQUEST_DISCARD_VERSION]
 	Emediately delete the block identified by xptr.
 
-	[type==SN_REQUEST_TYPE_ADD_NORMAL_VERSION] 
+	[type==SN_REQUEST_ADD_NORMAL_VERSION] 
 	Make an older version subject for the GC. Both xptr and lxptr must be valid.
 	Xptr identifies the block; it is deleted as soon as the version becomes useless.
 	Lxptr is a logical XPTR associated with the version. It is essential for the recovery.
 	Finally anchorTs is used to determine snapshots the version belongs to. Every
-	snapshot with timestamp in the range [CUR_TIMESTAMP, anchorTs) is owning the version.
-	Function updates runawayVersionsCount (available through SnGatherStats) if the version 
+	snapshot with timestamp in the range [CUR_TIMESTAMP, anchorTs] is owning the version.
+	Function updates runawayVersionsCount (available through SnGatherSnapshotStats) if the version 
 	is emediately discarded prior to submission due to no owning snapshot was found.
 
-	[type==SN_REQUEST_TYPE_ADD_BOGUS_VERSION]
-	Same as SN_REQUEST_TYPE_ADD_NORMAL_VERSION except runawayVersionsCount not updated
+	[type==SN_REQUEST_ADD_BOGUS_VERSION]
+	Same as SN_REQUEST_ADD_NORMAL_VERSION except runawayVersionsCount not updated
 	and the version is always reported as garbage by SnEnumerateVersionsForCheckpoint.
 	  
 	*/ 
 
 /* SnRequestForGc */ 
-#define SN_REQUEST_NOP					0
-#define SN_REQUEST_DISCARD_VERSION		1
-#define SN_REQUEST_ADD_NORMAL_VERSION	2
-#define SN_REQUEST_ADD_BOGUS_VERSION	3
+#define SN_REQUEST_NOP							0
+#define SN_REQUEST_DISCARD_VERSION				1
+#define SN_REQUEST_ADD_NORMAL_VERSION			2
+#define SN_REQUEST_ADD_BOGUS_VERSION			3
 
 struct SnRequestForGc
 {
@@ -77,38 +70,13 @@ struct SnRequestForGc
 	int type;
 };
 
-struct SnEnumerateVersionsParams
-{
-	TIMESTAMP persSnapshotTs;
-	size_t persVersionsCount;
-	size_t garbageVersionsCount;
-	size_t persVersionsSent;
-	size_t garbageVersionsSent;
-	void *userData;
-};
-
-struct SnStats
-{
-	TIMESTAMP curSnapshotTs;
-	TIMESTAMP persSnapshotTs;
-	size_t versionsCount;
-	size_t runawayVersionsCount;
-	size_t curSnapshotVersionsCount;
-	size_t curSnapshotSharedVersionsCount;
-	size_t persSnapshotVersionsCount;
-	size_t persSnapshotSharedVersionsCount;
-};
-
-typedef int (*SnEnumerateVersionsProc)(SnEnumerateVersionsParams *params, 
-									   SnVersionEntry *buf, size_t count, int isGarbage);
-
 int SnInitialize();
 
 void SnDeinitialize();
 
 void SnQueryResourceDemand(SnResourceDemand *resourceDemand);
 
-int SnStartup(SnSetup *setup);
+int SnStartup(const SnSetup *setup);
 
 int SnShutdown();
 
@@ -116,11 +84,13 @@ int SnOnRegisterClient(int isUsingSnapshot);
 
 int SnOnUnregisterClient();
 
-int SnOnTransactionEnd();
+int SnOnTransactionEnd(TIMESTAMP *currentSnapshotTs);
 
-int SnSubmitRequestForGc(const SnRequestForGc *buf, size_t count);
+int SnSubmitRequestForGc(TIMESTAMP currentSnapshotTs, const SnRequestForGc *buf, size_t count);
 
-int SnTryAdvanceSnapshots(TIMESTAMP *snapshotTs);
+int SnTryAdvanceSnapshots(TIMESTAMP *newSnapshotTs);
+
+int SnPurifySnapshots();
 
 int SnOnBeginCheckpoint(TIMESTAMP *persistentTs);
 
@@ -129,15 +99,15 @@ int SnOnCompleteCheckpoint();
 int SnEnumerateVersionsForCheckpoint(SnEnumerateVersionsParams *params,
 									 SnEnumerateVersionsProc enumProc);
 
-int SnGatherStats(SnStats *stats);
+int SnGatherSnapshotStats(SnSnapshotStats *stats);
 
 int SnGetSnapshotTimestamps(TIMESTAMP *curSnapshotTs,
 							TIMESTAMP *persSnapshotTs);
 
 /* SnGetTransactionStatusAndType */ 
-#define SN_UPDATER_TRANSACTION				1
-#define SN_READ_ONLY_TRANSACTON				2
-#define SN_COMPLETED_TRANSACTION			3
+#define SN_UPDATER_TRANSACTION					1
+#define SN_READ_ONLY_TRANSACTON					2
+#define SN_COMPLETED_TRANSACTION				3
 
 int SnGetTransactionStatusAndType(int *statusAndType);
 
@@ -145,29 +115,27 @@ int SnGetTransactionSnapshotTs(TIMESTAMP *timestamp);
 
 int SnGetTransactionTs(TIMESTAMP *timestamp);
 
-int SnCompactDFVHeader(const TIMESTAMP tsIn[],
-					   size_t szIn,
-					   int idOut[],
-					   size_t *szOut);
+/* SnExpandDfvHeader */ 
+#define SN_LAST_COMMITED_VERSION_TIMESTAMP		(1 + TIMESTAMP_MAX)
+#define SN_WORKING_VERSION_TIMESTAMP			(2 + TIMESTAMP_MAX)
 
-#define SN_LAST_COMMITED_VERSION_TIMESTAMP		(TIMESTAMP_MAX+1)
-#define SN_WORKING_VERSION_TIMESTAMP			(TIMESTAMP_MAX+2)
-
-int SnExpandDFVHeader(const TIMESTAMP tsIn[],
+int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 					  size_t szIn,
 					  TIMESTAMP tsOut[],
 					  int idOut[],
-					  size_t *szOut);
+					  size_t *szOut,
+					  TIMESTAMP *anchorTs);
 
-int SnDamageSnapshots(TIMESTAMP startingTs);
+int SnDamageSnapshots(TIMESTAMP timestampFrom);
 
 /* SnDbgDump */ 
-#define SN_DUMP_STATS							0x1000
 #define SN_DUMP_ATIMESTAMPS						0x2000
 #define SN_DUMP_SNAPSHOTS						0x4000
 #define SN_DUMP_GC_NODES						0x8000
 #define SN_DUMP_UNLIMITED_FLAG					0x0001
 #define SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG		0x0002
+#define SN_DUMP_FUTURE_SNAPSHOTS_FLAG			0x0004
+#define SN_DUMP_SNAPSHOT_PROPERTIES_FLAG		0x0008
 
 void SnDbgDump(int flags); 
 
