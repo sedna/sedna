@@ -1,14 +1,13 @@
-#ifdef _MSC_VER
+#if (_MSC_VER > 1000)
 #pragma once
 #endif
 
-#ifndef WUVERSIONS_INCLUDED
-#define WUVERSIONS_INCLUDED
+#ifndef WUVERSIONS_H_INCLUDED
+#define WUVERSIONS_H_INCLUDED
 
 #include "wutypes.h"
 #include "wubuffers.h"
 #include "wusnapshots.h"
-#include "wutypes.h"
 #include "wuincguard.h"
 
 struct VeResourceDemand
@@ -23,7 +22,6 @@ struct VeResourceDemand
 struct VeSetup
 {
 	/* params */ 
-	TIMESTAMP initialPersSnapshotTs;
 	int flags;
 
 	/* tickets */ 
@@ -50,7 +48,7 @@ struct VeSetup
 	int (*getTimestamp)(TIMESTAMP *timestamp);
 
 	/* GC functions */ 
-	int (*submitRequestForGc)(TIMESTAMP operationTs, SnRequestForGc *buf, size_t count);
+	int (*submitRequestForGc)(const SnRequestForGc *buf, size_t count);
 
 	/* data layout functions */ 
 	int (*locateHeader)(int bufferId, VersionsHeader **header);
@@ -65,48 +63,28 @@ struct VeSetup
 
 int VeInitialize();
 
+void VeDeinitialize();
+
 void VeQueryResourceDemand(VeResourceDemand *resourceDemand);
 
 int VeStartup(VeSetup *setup);
 
-void VeDeinitialize();
-
-int VeOnRegisterClient(int isUsingSnapshot, TIMESTAMP snapshotTs);
+int VeOnRegisterClient();
 
 int VeOnUnregisterClient();
 
-/* VePutBlockToBuffer*/ 
-int VeLoadBuffer(LXPTR lxptr, int *bufferId, int flags);
+int VeOnTransactionEnd(int how);
 
-/* VeAllocateBlock */ 
-int VeAllocBlock(LXPTR *lxptr);
+int VePutBlockToBuffer(LXPTR lxptr, int *bufferId, int flags);
 
-/* remove it */ 
-int VeInitBlockHeader(LXPTR lxptr, int bufferId);
+int VeAllocateBlock(LXPTR *lxptr);
 
 int VeCreateBlockVersion(LXPTR lxptr);
 
 int VeFreeBlock(LXPTR lxptr);
 
-/*	This is not intended for the direct use but should be rather hooked into Snapshots module. 
-	The function is called when the block sheduled for deletion (SnSubmitRequestForGc()) is really
-	deleted. At this point we have to update internal data structures. Finally calls setup.freeBlock on the xptr. */ 
+/*	Do not call it unless you know what you are doing! */ 
 int VeReallyFreeBlock(XPTR xptr);
-
-int VeOnCommit();
-
-int VeOnRollback();
-
-int VeOnSnapshotsAdvanced(TIMESTAMP snapshotTs, TIMESTAMP discardedTs);
-
-int VeOnBeginCheckpoint();
-
-int VeOnCompleteCheckpoint(TIMESTAMP persistentTs);
-
-int VeOnFlushBlock(int bufferId);
-
-/* The transaction timestamp associated with the current client; INVALID_TIMESTAMP if the transaction is a pure query. */ 
-int VeGetCurrentTs(TIMESTAMP *timestamp);
 
 void VeDbgDump(int reserved);
 

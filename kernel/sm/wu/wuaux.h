@@ -10,6 +10,8 @@
 #include <assert.h>
 #include "wuincguard.h"
 
+#define  I64FMT		"I64"
+
 static
 inline
 int Is2Power(int val)
@@ -90,7 +92,10 @@ int FindLowestBitSet(uint32_t val)
 	int bitId=0;
 
 	assert(val);
+
+#pragma warning( disable : 4146 )
 	bitId=tab[(val&-val)*UINT32_C(0x077CB531)>>27];
+#pragma warning( default : 4146 )
 
 	return bitId;
 }
@@ -100,7 +105,11 @@ inline
 int ResetLowestBitSet(uint32_t *val)
 {
 	int bitId=FindLowestBitSet(*val);
+
+#pragma warning( disable : 4146 )
 	*val^=*val&-*val;
+#pragma warning( default : 4146 )
+
 	return bitId;
 }
 

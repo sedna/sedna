@@ -286,6 +286,12 @@ int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 	return success;
 }
 
+static
+int OnBeforeDiscardSnapshot(TIMESTAMP snapshotTs, int *bDenyDiscarding)
+{
+	return 1;
+}
+
 /* public api */ 
 
 int WuGetTimestamp(TIMESTAMP *ts)
@@ -325,6 +331,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	{
 		persSnapshotTs,
 		0,
+		/* tickets */ 
 		NULL,
 		NULL,
 		/* begin wire */ 
@@ -346,13 +353,15 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	};
 	SnSetup snSetup =
 	{
-		persSnapshotTs,
 		0,
+		CHARISMA_MAX_TRNS_NUMBER,
+		/* tickets */ 
 		NULL,
 		/* begin wire */ 
 		FreeBlock,
 		WuGetTimestamp,
-		OnDiscardSnapshot
+		OnDiscardSnapshot,
+		OnBeforeDiscardSnapshot
 		/* end wire */ 		
 	};
 	VeResourceDemand veResourceDemand = {};
@@ -446,29 +455,28 @@ int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
 	return success; 
 }
 
-struct WuEnumerateVersionsParamsAdapter
+struct WuEnumerateAdapter
 {
 	WuEnumerateVersionsParams *params;
-	int(*enumProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage);
+	WuEnumerateVersionsProc enumProc;
 };
 
 static
-int helperProc(SnEnumerateVersionsParams *params, SnVersionEntry *buf, size_t count, int isGarbage)
+int WuEnumerateHelperProc(WuEnumerateVersionsParams *params, 
+						  WuVersionEntry *buf, 
+						  size_t count, int isGarbage)
 {
 	int success=0;
-	WuEnumerateVersionsParamsAdapter *adapter = (WuEnumerateVersionsParamsAdapter *)params->userData;
+	void *userData = NULL;
+	WuEnumerateAdapter *adapter = (WuEnumerateAdapter *)params->userData;
 
-	assert(adapter && adapter->params && adapter->enumProc);
-
-	adapter->params->persSnapshotTs = params->persSnapshotTs;
-	adapter->params->persVersionsCount = params->persVersionsCount;
-	adapter->params->garbageVersionsCount = params->garbageVersionsCount;
-	adapter->params->persVersionsSent = params->persVersionsSent;
-	adapter->params->garbageVersionsSent = params->garbageVersionsSent;
+	userData = adapter->params->userData;
+	*(adapter->params) = *params;
+	adapter->params->userData = userData;
 
 	try
 	{
-		success = adapter->enumProc(adapter->params, (WuVersionEntry *)buf, count, isGarbage);
+		success = adapter->enumProc(adapter->params, buf, count, isGarbage);
 	}
 	WU_CATCH_EXCEPTIONS()
 
@@ -476,19 +484,20 @@ int helperProc(SnEnumerateVersionsParams *params, SnVersionEntry *buf, size_t co
 }
 
 int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
-									 int(*enumProc)(WuEnumerateVersionsParams *params, WuVersionEntry *buf, size_t count, int isGarbage))
+									 WuEnumerateVersionsProc enumProc)
 {
 
 	int success;
+	WuEnumerateAdapter adapter = {params, enumProc};
+	WuEnumerateVersionsParams params2 = {};
+
 	assert(params);
-	SnEnumerateVersionsParams snParams = {};
-	WuEnumerateVersionsParamsAdapter adapter = {params, enumProc};
-	snParams.userData = &adapter;
+	params2.userData = &adapter;
 	
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		if (!SnEnumerateVersionsForCheckpoint(&snParams,helperProc)) {}
+		if (!SnEnumerateVersionsForCheckpoint(&params2,WuEnumerateHelperProc)) {}
 		else
 		{
 			success = 1;
@@ -684,9 +693,10 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 			if (!ClSetCurrentClientId(sid)) {}
 			else
 			{
-				if (!SnOnRegisterClient(isUsingSnapshot,snapshotTs)) {}
-				if (!VeOnRegisterClient(isUsingSnapshot,*snapshotTs)) {}
-				if (!ClMarkClientReady(sid)) {}
+				if (!SnOnRegisterClient(isUsingSnapshot)) {}
+				else if (!SnGetTransactionSnapshotTs(snapshotTs)) {}
+				else if (!VeOnRegisterClient(isUsingSnapshot,*snapshotTs)) {}
+				else if (!ClMarkClientReady(sid)) {}
 				else
 				try
 				{
@@ -785,43 +795,28 @@ int WuOnUnregisterTransaction(int sid)
 
 int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 {
-	SnStats snStats;
 	int success=0;
 
 	assert(stats);
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		stats->isAbleToAdvanceSnapshots = SnCheckIfCanAdvanceSnapshots(NULL);
-		if (!SnGatherStats(&snStats)) {}
-		else
-		{
-			stats->versionsCount = snStats.versionsCount;
-			stats->runawayVersionsCount = 0;
-			stats->curSnapshotVersionsCount = snStats.curSnapshotVersionsCount;
-			stats->curSnapshotSharedVersionsCount = snStats.curSnapshotSharedVersionsCount;
-			stats->persSnapshotVersionsCount = snStats.persSnapshotVersionsCount;
-			stats->persSnapshotSharedVersionsCount = snStats.persSnapshotSharedVersionsCount;
-			stats->curSnapshotTs = curSnapshotTs;
-			stats->persSnapshotTs = persSnapshotTs;
-			success=1;
-		}
+		SnGatherSnapshotStats(stats);
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
-	if (!success) memset(stats,0,sizeof *stats);
 	return success;
 }
 
 int WuAdvanceSnapshots()
 {
-	TIMESTAMP discardedSnapshotTs=0;
+	TIMESTAMP discardedSnapshotTs = INVALID_TIMESTAMP;
 	int success=0;
 
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
 		if (!SetEvent(hSnapshotsAdvancedEvent)) {}
-		else if (!SnAdvanceSnapshots(&curSnapshotTs,&discardedSnapshotTs)) {}
+		else if (!SnTryAdvanceSnapshots(&curSnapshotTs) || curSnapshotTs==INVALID_TIMESTAMP) {}
 		else if (!VeOnSnapshotsAdvanced(curSnapshotTs,discardedSnapshotTs)) {}
 		else
 		try

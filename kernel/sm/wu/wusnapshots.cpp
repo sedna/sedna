@@ -192,11 +192,12 @@ int InitSnapshotsList(SnSnapshotsList *lst,
 				pSn->type = SN_FUTURE_SNAPSHOT;
 
 				pGn = gcNodesPool+(i+1)*i/2;
-				pSn->gcChain = pGn+1;
+				pSn->gcChain = pGn;
 				for (j=0; j<=i; ++j)
 				{
 					/* occupancy & stuff initialized earlier */ 
-					pGn->next=++pGn;
+					pGn->next=pGn+1;
+					++pGn;
 				}
 				pGn[-1].next=NULL;
 			}
@@ -231,16 +232,21 @@ void DestroySnapshotsList(SnSnapshotsList *lst)
 
 /*	Free all blocks in list. */ 
 static
-int PurgeVersions(std::list<SnVersionEntry> *versList)
+int PurgeVersions(SnGcNode *pGn)
 {
-	int failure=0;
-	assert(versList);
-	while (!versList->empty() && !failure)
+	int success=0;
+	assert(pGn);
+	while (!pGn->entries.empty())
 	{
-		if (!ImpFreeBlock(versList->front().xptr)) failure=1;
-		else versList->pop_front();
+		if (!ImpFreeBlock(pGn->entries.front().xptr)) break;
+		else pGn->entries.pop_front();
 	}
-	return failure==0;
+	success = (pGn->entries.empty());
+	if (success)
+	{
+		pGn->garbageCount = 0;
+	}
+	return success;
 }
 
 /*	Get snapshot by timestamp, returns 0 on failure (*result==NULL)
@@ -487,7 +493,7 @@ int DiscardSnapshot(SnSnapshotsList *snLst,
 	{
 		WuSetLastErrorMacro(WUERR_UNABLE_TO_DISCARD_SNAPSHOT_IN_USE);
 	}
-	else if (PurgeVersions(&victim->gcChain->entries))
+	else if (PurgeVersions(victim->gcChain))
 	{
 		SnSnapshot *iter=NULL;
 		int i=0;
@@ -541,7 +547,13 @@ int CreateSnapshot(SnSnapshotsList *snLst,
 		memcpy(tsPool,snLst->tsBegin,tsPoolSz);
 		/* select snapshot to reuse */ 
 		GetSnapshotByType(snLst, &firstNonFutureSn, &lastFutureSn, ~SN_FUTURE_SNAPSHOT);
-		assert(lastFutureSn);
+		if (!lastFutureSn)
+		{
+			/* all snapshots are future ones */ 
+			lastFutureSn = snLst->leadingSnapshot;
+			while (lastFutureSn->next) lastFutureSn = lastFutureSn->next;
+			assert(lastFutureSn->type == SN_FUTURE_SNAPSHOT);
+		}
 		/* setup snapshot */ 
 		lastFutureSn->timestamp = ts;
 		lastFutureSn->tsBegin = tsPool;
@@ -549,6 +561,7 @@ int CreateSnapshot(SnSnapshotsList *snLst,
 		lastFutureSn->type = type;
 		lastFutureSn->occupancy = 0;
 		lastFutureSn->isDamaged = 0;
+		success = 1;
 	}
 	if (!success)
 	{
@@ -657,8 +670,8 @@ void InitEnumerateVersionsBuf(SnEnumerateVersionsBuf *enumBuf,
 	enumBuf->bufferSz = bufSz;
 	enumBuf->normalBufPos = buf;
 	enumBuf->garbageBufPos = buf + bufSz;
-	enumBuf->normalBufEnd = enumBuf->normalBufEnd + bufSz;
-	enumBuf->garbageBufEnd = enumBuf->garbageBufEnd + bufSz;
+	enumBuf->normalBufEnd = enumBuf->normalBufPos + bufSz;
+	enumBuf->garbageBufEnd = enumBuf->garbageBufPos + bufSz;
 	enumBuf->params = params;
 	enumBuf->enumProc = enumProc;
 }
@@ -749,7 +762,7 @@ int PurifySnapshots(SnSnapshotsList *snLst,
 		TIMESTAMP ts=current->timestamp;
 
 		bDenyDiscarding = (current->occupancy!=0 || current->type!=SN_REGULAR_SNAPSHOT);
-		if(!ImpOnBeforeDiscardSnapshot(ts,&bDenyDiscarding))
+		if(!bDenyDiscarding && !ImpOnBeforeDiscardSnapshot(ts,&bDenyDiscarding))
 		{
 			failure=1;
 		}
@@ -815,46 +828,48 @@ int ValidateRequestForGc(const SnRequestForGc *req)
 static
 int SubmitRequestForGc(SnSnapshotsList *snLst, 
 					   const SnSnapshot *pSn, 
-					   const SnRequestForGc *request)
+					   SnRequestForGc request)
 {
 	int success=0;
 
-	assert(snLst && pSn && request);
-	if (!ValidateRequestForGc(request)) {}
+	assert(snLst && pSn);
+	if (!ValidateRequestForGc(&request)) { WuSetLastErrorMacro(WUERR_BAD_PARAMS); }
+	else if (request.type == SN_REQUEST_NOP)
+	{
+		success = 1;
+	}
 	else
 	{
-		int type = request->type, level = 0;
+		int level = 0;
 		SnGcNode *pGn = NULL;
 		SnVersionEntry entry = {};
 
-		if (!(pSn->timestamp > request->anchorTs))
+		if (pSn->timestamp < request.anchorTs)
 		{
-			if (type == SN_REQUEST_ADD_NORMAL_VERSION)
+			if (request.type == SN_REQUEST_ADD_NORMAL_VERSION)
 			{
 				snLst->runawayCount++;
 			}
-			type = SN_REQUEST_DISCARD_VERSION;
+			request.type = SN_REQUEST_DISCARD_VERSION;
 		}
-		else while (pSn->next->timestamp > request->anchorTs)
+		else while (pSn->next && (pSn->next->timestamp >= request.anchorTs ))
 		{
 			pSn = pSn->next;
 			++level;
 		}
+
 		GetGcNodeByIndex(pSn->gcChain,&pGn,level);
-		switch(type)
+		switch(request.type)
 		{
-		case SN_REQUEST_NOP:
-			success = 1;
-			break;
 		case SN_REQUEST_DISCARD_VERSION:
-			success = ImpFreeBlock(request->xptr);
+			success = ImpFreeBlock(request.xptr);
 			break;
 		case SN_REQUEST_ADD_BOGUS_VERSION:
 			pGn->garbageCount++;
 			/* fallthrough */ 
 		case SN_REQUEST_ADD_NORMAL_VERSION:
-			entry.xptr = request->xptr;
-			entry.lxptr = (type == SN_REQUEST_ADD_BOGUS_VERSION ? 0 : request->lxptr);
+			entry.xptr = request.xptr;
+			entry.lxptr = (request.type == SN_REQUEST_ADD_BOGUS_VERSION ? 0 : request.lxptr);
 			pGn->entries.push_back(entry);
 			success = 1;
 			break;
@@ -911,8 +926,8 @@ int RemoveActiveTimestamp(SnSnapshotsList *snLst,
 }
 
 static inline
-int IsObjectYoungerThanSnapshot(SnSnapshot *pSn, 
-								TIMESTAMP ts)
+int IsVersionYoungerThanSnapshot(SnSnapshot *pSn, 
+								 TIMESTAMP ts)
 {
 	assert(pSn && pSn->tsBegin);
 	return ts > pSn->timestamp || std::binary_search(pSn->tsBegin, pSn->tsEnd, ts);
@@ -928,6 +943,224 @@ void InitFakeHeadSnapshot(SnSnapshotsList *snLst,
 	pSn->next = GetCurrentSnapshot (snLst);
 	pSn->tsBegin = snLst->tsBegin;
 	pSn->tsEnd = snLst->tsEnd;
+}
+
+void DbgDumpTimestamps(const TIMESTAMP *begin,
+					   const TIMESTAMP *end,
+					   const char *padding, 
+					   const char *padding1st)
+{
+	assert(begin || begin==end);
+	if (!padding) padding = "";
+	if (!padding1st) padding1st = padding;
+	int lineno = 0;
+	if (begin>=end) printf("\n");
+	while (begin<end)
+	{
+		printf("%s",(lineno==0 ? padding1st : padding));
+		for (int i=0; i<3 && begin<end; ++i, ++begin)
+		{
+			printf(" %016"I64FMT"x", *begin);
+		}
+		printf("\n"); ++lineno;
+	}
+}
+
+void DbgDumpSnapshots(SnSnapshotsList *snapshots, 
+					  int flags, 
+					  const char *padding, 
+					  const char *padding1st)
+{
+	assert(snapshots);
+	char timestampsPadding[128]="";
+	if (!padding) padding = "";
+	if (!padding1st) padding1st = padding;
+	int lineno = 0;
+	strcpy(timestampsPadding, padding);
+	strcat(timestampsPadding, "   TS:");
+
+	SnSnapshot *sniter = snapshots->leadingSnapshot;
+	if (0 == (flags & SN_DUMP_FUTURE_SNAPSHOTS_FLAG)) 
+	{
+		sniter = GetCurrentSnapshot(snapshots);
+	}
+	if (!sniter) 
+	{
+		printf("\n");
+	}
+	else if (0 == (flags & SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG) &&
+			 0 == (flags & SN_DUMP_SNAPSHOT_PROPERTIES_FLAG))
+	{			
+		while (sniter)
+		{
+			int i=0;
+			printf("%s",(lineno==0 ? padding1st : padding));
+			while (sniter && i<3)
+			{
+				printf(" %016"I64FMT"x", sniter->timestamp);
+				sniter = sniter->next;
+				++i;
+			}
+			printf("\n"); ++lineno;
+		}
+	}
+	else while (sniter)
+	{
+		printf("%s",(lineno==0 ? padding1st : padding));
+		printf(" %016"I64FMT"x", sniter->timestamp);
+		if (flags & SN_DUMP_SNAPSHOT_PROPERTIES_FLAG)
+		{
+			const char *typeStr = "unknown";
+			switch (sniter->type)
+			{
+			case SN_REGULAR_SNAPSHOT:
+				typeStr="regular"; break;
+			case SN_PERSISTENT_SNAPSHOT:
+				typeStr="persistent"; break;
+			case SN_PREV_PERSISTENT_SNAPSHOT:
+				typeStr="prev.pers."; break;
+			case SN_FUTURE_SNAPSHOT:
+				typeStr="future"; break;
+			}
+			printf(" %11s %2d tr.%s", typeStr, sniter->occupancy, 
+				(sniter->isDamaged ? " [damaged]" : ""));
+		}
+		printf("\n"); ++lineno;
+		if (flags & SN_DUMP_SNAPSHOT_ATIMESTAMPS_FLAG &&
+			sniter->tsBegin != sniter->tsEnd)
+		{
+			DbgDumpTimestamps(sniter->tsBegin, sniter->tsEnd, timestampsPadding, NULL);
+		}
+		sniter = sniter->next;
+	}
+}
+
+void DbgDumpGcNodes(SnSnapshotsList *snapshots,
+					int limit,
+					int limit2,
+					const char *padding,
+					const char *padding1st)
+{
+		SnGcNode *hscan[SN_SNAPSHOTS_COUNT];
+		std::list<SnVersionEntry>::iterator xscan[SN_SNAPSHOTS_COUNT];
+		int perChainOutCountX2[SN_SNAPSHOTS_COUNT];
+		SnSnapshot *sniter=NULL;
+		int i=0, lineno = 0;
+
+		assert(snapshots);
+		if (!padding) padding = "";
+		if (!padding1st) padding1st = padding;
+
+		/* initialize hscan */ 
+		sniter = snapshots->leadingSnapshot;
+		for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
+		{
+			if (sniter)
+			{
+				hscan[i]=sniter->gcChain;
+				sniter=sniter->next;
+			}
+			else hscan[i]=NULL;
+		}
+		/* process all chains simultaneously */ 
+		while(1)
+		{
+			int j = 0;
+			int rowDensity = 0;
+			/* initialize xscan & perChainOutCountX2 */ 
+			for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
+			{
+				perChainOutCountX2[i] = 0;
+				if (hscan[i])
+				{
+					xscan[i] = hscan[i]->entries.begin();
+					rowDensity ++;
+				}
+				else
+				{
+					xscan[i] = std::list<SnVersionEntry>::iterator();					
+				}
+			}
+			/* all chains exhausted? */ 
+			if (rowDensity==0)
+			{
+				if (lineno==0) printf("\n");
+				break;
+			}
+			/* output headers */ 
+			printf("%s", (lineno==0 ? padding1st : padding));
+			for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
+			{
+				char buf[32] = "";
+				if (hscan[i]) 
+				{
+					sprintf(buf, 
+						(hscan[i]->garbageCount ? "[%d--%db]" : "[%d]"), 
+						hscan[i]->entries.size() - hscan[i]->garbageCount,
+						hscan[i]->garbageCount);
+				}
+				printf("  %18s", buf);
+			}
+			printf("\n"); lineno++;
+			/* output content */ 
+			for (j=0; j<limit2; ++j)
+			{
+				rowDensity = 0;
+				for (i=0; i<SN_SNAPSHOTS_COUNT && limit>0; ++i)
+				{
+					if (hscan[i] && xscan[i]!=hscan[i]->entries.end()) ++rowDensity;
+				}
+				if (rowDensity==0) break;
+				printf("%s", padding);
+				for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
+				{
+					char buf[32] = "";
+					if (hscan[i] && xscan[i]!=hscan[i]->entries.end())
+					{
+						if (perChainOutCountX2[i]&1)
+						{
+							sprintf(buf,". %016"I64FMT"x",xscan[i]->xptr);
+							xscan[i]++;
+							perChainOutCountX2[i]++;
+						}
+						else
+						{
+							if (perChainOutCountX2[i]/2+1==limit ||
+								j+1 == limit2 || j+2==limit2 && xscan[i]->lxptr)
+							{
+								strcpy(buf,"................");
+								xscan[i]=hscan[i]->entries.end();
+							}
+							else if (xscan[i]->lxptr==0)
+							{
+								sprintf(buf,"  %016"I64FMT"x",xscan[i]->xptr);
+								xscan[i]++;
+								perChainOutCountX2[i]+=2;
+							}
+							else
+							{
+								sprintf(buf,"L %016"I64FMT"x",xscan[i]->lxptr);
+								perChainOutCountX2[i]++;
+							}							
+						}
+					}
+					printf("  %18s", buf);
+				}
+				printf("\n");
+			}
+			/* descent down the chains */ 
+			rowDensity=0;
+			for (i=0; i<SN_SNAPSHOTS_COUNT; ++i)
+			{
+				if (hscan[i]) 
+				{
+					hscan[i]=hscan[i]->next;
+					rowDensity++;
+				}
+			}
+			/* output extra space */ 
+			if (rowDensity&&j>0) printf("\n");
+		}
 }
 
 /* global state */ 
@@ -996,15 +1229,13 @@ void SnQueryResourceDemand(SnResourceDemand *demand)
 	demand->clientStateSize = sizeof(SnClientState);
 }
 
-int SnStartup(SnSetup *setupParam)
+int SnStartup(const SnSetup *setupParam)
 {
 	int success = 0;
 	
 	assert(setupParam);
 	setup = *setupParam;
-	if (!InitSnapshotsList(&snapshots, setupParam->maxClientsCount, SN_SNAPSHOTS_COUNT))
-	{
-	}
+	if (!InitSnapshotsList(&snapshots, setupParam->maxClientsCount, SN_SNAPSHOTS_COUNT)) {}
 	else
 	{
 		if (setupParam->initialPersSnapshotTs == INVALID_TIMESTAMP)
@@ -1096,7 +1327,7 @@ int SnOnRegisterClient(int isUsingSnapshot)
 	return success;
 }
 
-int SnOnTransactionEnd()
+int SnOnTransactionEnd(TIMESTAMP *currentSnapshotTs)
 {
 	int success=0;
 	SnClientState *state=NULL;
@@ -1136,6 +1367,11 @@ int SnOnTransactionEnd()
 		state->statusAndType = SN_COMPLETED_TRANSACTION;
 		state->timestamp = INVALID_TIMESTAMP;
 	}
+	if (currentSnapshotTs)
+	{
+		SnSnapshot *currentSn = GetCurrentSnapshot(&snapshots);
+		*currentSnapshotTs = (currentSn ? currentSn->timestamp : INVALID_TIMESTAMP);
+	}
 	return success;
 }
 
@@ -1159,31 +1395,45 @@ int SnOnUnregisterClient()
 		}
 		else
 		{
-			success = SnOnTransactionEnd();
+			success = SnOnTransactionEnd(NULL);
 		}
 	}
 	return success;
 }
 
-int SnSubmitRequestForGc(const SnRequestForGc *buf, size_t count)
+int SnSubmitRequestForGc(TIMESTAMP currentSnapshotTs, const SnRequestForGc *buf, size_t count)
 {
 	static const SnSnapshot infinipast = {};
+	int success = 0;
 	const SnSnapshot *entrySn = NULL;
 	const SnRequestForGc *ebuf = buf + count;
 
 	assert(buf || count==0);
-	entrySn = GetCurrentSnapshot(&snapshots);
-	/*	In normal mode SubmitRequestForGc will start from the current snapshot. 
-		In versions-disabled mode SubmitRequestForGc will start from infinipast
-		snapshot; that results in blocks submited with SN_REQUEST_ADD_NORMAL_VERSION
-		and SN_REQUEST_ADD_BOGUS_VERSION to be discarded imediately. */ 
-	if (!entrySn || (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)) entrySn = &infinipast;
-	for (; buf!=ebuf; ++buf)
+	if (!IsValidTimestamp(currentSnapshotTs))
 	{
-		if (!SubmitRequestForGc(&snapshots, entrySn, buf)) break;
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
+	else
+	{
+		entrySn = GetCurrentSnapshot(&snapshots);
+		while (entrySn && entrySn->timestamp > currentSnapshotTs) entrySn = entrySn->next;
+		/*	In normal mode SubmitRequestForGc will start from the current snapshot. 
+			In versions-disabled mode SubmitRequestForGc will start from infinipast
+			snapshot; that results in blocks submited with SN_REQUEST_ADD_NORMAL_VERSION
+			and SN_REQUEST_ADD_BOGUS_VERSION to be discarded imediately. */ 
+		if (!entrySn || (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)) entrySn = &infinipast;
+		for (; buf!=ebuf; ++buf)
+		{
+			if (!SubmitRequestForGc(&snapshots, entrySn, buf[0])) break;
+		}
+		success = (buf==ebuf);
+	}
+	return success;
+}
 
-	return (buf==ebuf);
+int SnPurifySnapshots()
+{
+	return PurifySnapshots(&snapshots, 1);
 }
 
 int SnTryAdvanceSnapshots(TIMESTAMP *snapshotTs)
@@ -1343,7 +1593,7 @@ int SnGetSnapshotTimestamps(TIMESTAMP *curSnapshotTs,
 	return 1;
 }
 
-int SnGatherStats(SnStats *stats)
+int SnGatherSnapshotStats(SnSnapshotStats *stats)
 {
 	SnInternalSnapshotStats statsCur = {}, statsPers = {};
 	int success = 0;
@@ -1408,89 +1658,18 @@ int SnGetTransactionTs(TIMESTAMP *timestamp)
 	return success;
 }
 
-int SnCompactDFVHeader(const TIMESTAMP tsIn[],
-					   size_t szIn,
-					   int idOut[],
-					   size_t *szOut)
-{
-	int success = 0;
-	SnSnapshot fakeHead = {}, *sniter = &fakeHead;
-	const TIMESTAMP *tsInEnd = tsIn + szIn, *tsInCur = tsIn;
-	int *idOutEnd = NULL, *idOutCur = idOut;
-
-	assert(szOut && (tsIn || szIn==0) && (idOut || *szOut==0));
-	idOutEnd = idOut + *szOut;
-	InitFakeHeadSnapshot(&snapshots, &fakeHead);
-
-	if (szIn == 0 || *tsInCur==INVALID_TIMESTAMP) 
-	{
-		success=1;
-	}
-	else if(!IsValidTimestamp(*tsInCur))
-	{
-		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
-	}
-	else
-	{
-		if (IsObjectYoungerThanSnapshot(&fakeHead, *tsInCur))
-		{
-			/* if have room to store record */ 
-			if (tsOutCur < tsOutEnd)
-			{
-				idOutCur[0] = 0;
-			}
-			idOutCur++;
-		}
-		while(1)
-		{
-			/* no more snapshots to match against */ 
-			if (sniter==NULL) { success=1; break; }
-			/* match snapshot version */ 
-			while (tsInCur < tsInEnd && 
-				   IsValidTimestamp(*tsInCur) && 
-			       IsObjectYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
-			/* list ended? */ 
-			if (tsInCur == tsInEnd || *tsInCur==INVALID_TIMESTAMP) { success=1; break; }
-			/* bad timestamp? */ 
-			if (!IsValidTimestamp(*tsInCur)) { WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP); break; }
-			/* the matched version doesn't belong to next snapshot as well - each */ 
-			if (sniter->next==NULL || IsObjectYoungerThanSnapshot(sniter->next, *tsInCur))
-			{
-				/* if have room to store record */ 
-				if (tsOutCur < tsOutEnd)
-				{
-					idOutCur [0] = (int)(tsInCur - tsIn);
-				}
-				++idOutCur;
-			}
-		}
-	}
-	if (success)
-	{
-		*szOut = idOutCur - idOut;
-		if (idOutCur>idOutEnd)
-		{
-			WuSetLastErrorMacro(WUERR_GENERAL_ERROR); /* WUERR_INSUFFICIENT_BUFFER */ 
-			success = 0;
-		}
-	}
-	else
-	{
-		*szOut = 0;
-	}
-	return success;
-}
-
-int SnExpandDFVHeader(const TIMESTAMP tsIn[],
+int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 					  size_t szIn,
 					  TIMESTAMP tsOut[],
 					  int idOut[],
-					  size_t *szOut)
+					  size_t *szOut,
+					  TIMESTAMP *anchorTsParam)
 {
 	int success = 0;
 	SnSnapshot fakeHead = {}, *sniter = &fakeHead;
 	const TIMESTAMP *tsInEnd = tsIn + szIn, *tsInCur = tsIn;
 	TIMESTAMP *tsOutEnd = NULL, *tsOutCur = tsOut;
+	TIMESTAMP anchorTs = INVALID_TIMESTAMP;
 	int *idOutCur = idOut;
 
 	assert(szOut && (tsIn || szIn==0) && (tsOut && idOut || *szOut==0));
@@ -1507,7 +1686,7 @@ int SnExpandDFVHeader(const TIMESTAMP tsIn[],
 	}
 	else
 	{
-		if (IsObjectYoungerThanSnapshot(&fakeHead, *tsInCur))
+		if (IsVersionYoungerThanSnapshot(&fakeHead, *tsInCur))
 		{
 			/* if have room to store record */ 
 			if (tsOutCur < tsOutEnd)
@@ -1525,7 +1704,7 @@ int SnExpandDFVHeader(const TIMESTAMP tsIn[],
 			/* match snapshot version */ 
 			while (tsInCur < tsInEnd && 
 				   IsValidTimestamp(*tsInCur) && 
-			       IsObjectYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
+			       IsVersionYoungerThanSnapshot(sniter, *tsInCur)) ++tsInCur;
 			/* list ended? */ 
 			if (tsInCur == tsInEnd || *tsInCur==INVALID_TIMESTAMP) { success=1; break; }
 			/* bad timestamp? */ 
@@ -1548,111 +1727,94 @@ int SnExpandDFVHeader(const TIMESTAMP tsIn[],
 			WuSetLastErrorMacro(WUERR_GENERAL_ERROR); /* WUERR_INSUFFICIENT_BUFFER */ 
 			success = 0;
 		}
+		else
+		{
+			int i=0, n=(int)*szOut;
+			
+			/* locate last commited version slot */ 
+			for (i = 0; 
+				 i < n && tsOut[i]!=SN_LAST_COMMITED_VERSION_TIMESTAMP; 
+				 ++i) {}
+
+			if (i < n)
+			{
+				/* found last commited version slot */ 
+				int idLC = idOut[i];
+				
+				for (; i<n && idOut[i]==idLC; ++i) {}
+				anchorTs = tsOut[i-1];
+
+				if (anchorTs == SN_LAST_COMMITED_VERSION_TIMESTAMP)
+				{
+					/* currently no snapshots uses this object's versions */ 
+					SnGetSnapshotTimestamps(&anchorTs, NULL);
+					anchorTs++;
+				}
+			}			
+		}
 	}
 	else
 	{
 		*szOut = 0;
 	}
+	if (anchorTsParam) *anchorTsParam = anchorTs;
 	return success;
 }
 
-int SnDamageSnapshots(TIMESTAMP startingTs)
+int SnDamageSnapshots(TIMESTAMP timestampFrom)
 {
-	return 0;
-}
+	int success=0;
 
-void SnDbgDump(int reserved)
-{
-	SnSnapshot *it=NULL;
-	SnGcNode *hscan[SN_SNAPSHOTS_COUNT];
-	std::list<SnVersionEntry>::iterator xscan[SN_SNAPSHOTS_COUNT];
-	int i=0, j=0, con=1;
-	const char *typeStr=NULL;
-	char buf[32];
-	size_t gCnt=0;
-	SnStats stats;
-
-	SnGatherStats(&stats);
-	fprintf(stderr,"SnDbgDump total %d, cur %d, cur-s %d, pers %d, pers-s %d\n", 
-		stats.versionsCount,
-		stats.curSnapshotVersionsCount,
-		stats.curSnapshotSharedVersionsCount,
-		stats.persSnapshotVersionsCount,
-		stats.persSnapshotSharedVersionsCount);
-
-	fprintf(stderr,"   %-16s   %-10s   %-6s\n","ts","type","occup.");
-	for (i=0,it=snapshots.leadingSnapshot; it; ++i, it=it->next)
+	if (!IsValidTimestamp(timestampFrom))
 	{
-		switch (it->type)
-		{
-		case SN_REGULAR_SNAPSHOT:
-			typeStr="REGULAR"; break;
-		case SN_PERSISTENT_SNAPSHOT:
-			typeStr="PERSISTENT"; break;
-		case SN_PREV_PERSISTENT_SNAPSHOT:
-			typeStr="PREV-PERS."; break;
-		case SN_FUTURE_SNAPSHOT:
-			typeStr="FUTURE"; break;
-		default:
-			typeStr="UNKNOWN";
-		}
-		fprintf(stderr,"   %0.16I64X   %-10s   %6d\n",
-			it->timestamp,
-			typeStr, 
-			it->occupancy);
-		hscan[i]=it->gcChain;
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
-	fputs("   ---------------------------------------------------------\n",stderr);
-	/* for each depth level... (serving all gcChains simultaneously) */ 
-	while(con)
-	{		
-		con=0;
-		/*	for each gcChain output headers (num of elements)
-			unless any node has non-zero elements con remains zero*/ 
-		for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
+	else if (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)
+	{
+		WuSetLastErrorMacro(WUERR_VERSIONS_DISABLED);
+	}
+	else
+	{
+		SnSnapshot *sniter = GetCurrentSnapshot(&snapshots);
+		while (1)
 		{
-			*buf=0;
-			if (hscan[i]) 
-			{				
-				xscan[i]=hscan[i]->entries.begin();
-				gCnt=hscan[i]->garbageCount;
-				sprintf(buf,(gCnt>0?"[%d+%d]":"[%d]"),hscan[i]->entries.size()-gCnt,gCnt,hscan[i]->garbageCount);
-				if (hscan[i]->entries.size()>0) ++con;
-			}
-			fprintf(stderr,"   %17s",buf);
-		}
-		fputs("\n",stderr);
-		/*	for each gcChain dump elements (either until all elements are dumped or SN_DUMP_LIMIT is hit) */ 
-		for (j=0; j<SN_DUMP_LIMIT && con; ++j)
-		{
-			con=0;
-			for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
+			if (sniter==NULL) { success=1; break; }
+			if (sniter->timestamp <= timestampFrom)
 			{
-				*buf=0;
-				if (hscan[i] && xscan[i]!=hscan[i]->entries.end())
+				if (sniter->occupancy>0) 
 				{
-					sprintf(buf,"%0.8X:%0.8X",(uint32_t)xscan[i]->lxptr,(uint32_t)xscan[i]->xptr);
-					++xscan[i];
-					if (xscan[i]!=hscan[i]->entries.end()) 
-					{
-						++con;
-						if (j==SN_DUMP_LIMIT-1) strcpy(buf,"........");
-					}
+					WuSetLastErrorMacro(WUERR_UNABLE_TO_DAMAGE_SNAPSHOT_IN_USE); 
+					break;
 				}
-				fprintf(stderr,"   %17s",buf);
-			}
-			fputs("\n",stderr);
-		}
-		/*	descent one level down gcChains, con remains zero unless any chain has a node at next level */ 
-		con=0;
-		for (i=0;i<SN_SNAPSHOTS_COUNT;++i)
-		{
-			if (hscan[i])
-			{
-				++con;
-				hscan[i]=hscan[i]->next;
+				sniter->isDamaged = 1;
+				sniter=sniter->next;
 			}
 		}
 	}
+	return success;
 }
 
+void SnDbgDump(int flags)
+{
+	static const char *padding = "          ";
+	if (flags & SN_DUMP_ATIMESTAMPS)
+	{
+		printf("active TS:");
+		DbgDumpTimestamps(snapshots.tsBegin, snapshots.tsEnd, padding, "");
+	}
+
+	if (flags & SN_DUMP_SNAPSHOTS)
+	{		
+		printf("snapshots:");
+		DbgDumpSnapshots(&snapshots, flags, padding, "");
+	}
+
+	if (flags & SN_DUMP_GC_NODES)
+	{
+		printf("GC nodes: ");
+		DbgDumpGcNodes(
+			&snapshots, INT_MAX, 
+			(flags & SN_DUMP_UNLIMITED_FLAG ? INT_MAX : SN_DUMP_LIMIT), 
+			padding, "");
+	}
+}
