@@ -58,7 +58,7 @@ endif
 # options: Enable dtsearch  - 1
 #          Disable dfsearch - 0
 ifndef ENABLE_DTSEARCH
-ENABLE_DTSEARCH = 0
+ENABLE_DTSEARCH = 1
 endif
 
 # options: triggers is on  - 1
@@ -149,7 +149,7 @@ LFLAGS      = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLI
               pccts_release.lib libpcre.lib /debug /profile
 ifeq ($(ENABLE_DTSEARCH),1)
 LFLAGS_DTS  = /OPT:NOREF /nologo /subsystem:console /incremental:no /NODEFAULTLIB:LIBC.LIB \
-              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) \
+              /NODEFAULTLIB:LIBCD.LIB /NODEFAULTLIB:Nafxcw.lib /LIBPATH:$(CHICKEN_HOME) /LIBPATH:$(PP)/libs \
               /LIBPATH:$(PP)/libs/expat /LIBPATH:$(PP)/libs/dtsearch/lib \
               /LIBPATH:$(PP)/libs/pcre /LIBPATH:$(PP)/libs/pg libchicken-static.lib \
               wsock32.lib Advapi32.lib libexpatmt.lib pccts_release.lib libpcre.lib	\
