@@ -89,7 +89,8 @@ void PPAxisDescendant::close ()
 }
 PPIterator* PPAxisDescendant::copy(dynamic_context *_cxt_)
 {
-    PPAxisDescendant *res = se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
+    PPAxisDescendant *res = self ? se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data, true) :
+                                   se_new PPAxisDescendant(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);
     return res;
