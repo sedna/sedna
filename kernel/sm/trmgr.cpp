@@ -49,7 +49,126 @@ vector<transaction_id> _ids_table_;
                   !!! Checkpoint functions
 ******************************************************************************/
 
+// some very rough criterion for snapshot advancement
+static bool SnapshotAdvanceCriterion()
+{
+	WuSnapshotStats wuStats;
+   	
+    // obtain very rough statistics :)
+    WuGatherSnapshotsStatsExn(&wuStats);
 
+
+
+    return true;
+}
+
+// new checkpoint and snaphot advancer thread
+U_THREAD_PROC (checkpoint_thread, arg)
+{
+#ifdef CHECKPOINT_ON
+ try{
+
+
+  int times=1;  
+  LONG_LSN cp_lsn;
+
+  while (true)
+  {
+    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
+       throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
+
+
+    d_printf2("checkpoint thread procedure started num=%d\n", times);
+
+    if (shutdown_checkpoint_thread || ll_log_get_checkpoint_on_flag()) // checkpoint is needed
+    {
+	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
+    	{
+        	if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
+	         throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+		
+        	d_printf2("Sem %d acquired\n", i);
+
+	    }
+    	d_printf1("All sems acquired\n");
+
+		WuSnapshotStats wuStats;
+    	// obtain timestamps of persistent and current snapshots
+    	WuGatherSnapshotsStatsExn(&wuStats);
+		
+		if (wuStats.curSnapshotTs == wuStats.persSnapshotTs)
+			WuAdvanceSnapshotsExn(); // TODO: change this to event-driven mode
+    	
+    	WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
+
+		WuEnumerateVersionsParams params;
+    	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+
+	    flush_data_buffers();
+    	d_printf1("flush data buffers completed\n");
+
+	    ll_logical_log_flush();
+    	d_printf1("flush logical log completed\n");
+
+	    ll_truncate_logical_log();
+
+    	WuNotifyCheckpointFinishedExn();
+
+    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
+        	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
+	         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+
+
+		ll_set_checkpoint_on_flag(false);
+	}
+	else // we need only snapshot advance (subject to criterion)
+	{
+		if (SnapshotAdvanceCriterion())
+		{
+		    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
+    		{
+        		if (USemaphoreDown(concurrent_trns_sem, __sys_call_error) !=0 )
+	        	 throw SYSTEM_EXCEPTION("Can't down semaphore concurrent micro ops number semaphore");
+		
+	        	d_printf2("Sem %d acquired\n", i);
+
+		    }
+    		d_printf1("All sems acquired\n");
+
+			WuAdvanceSnapshotsExn(); // TODO: change this to event-driven mode
+
+	    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
+    	    	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
+	    	     throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
+	    }
+   	}
+   	
+    d_printf2("checkpoint finished times=%d\n", times);
+
+   	elog(EL_LOG, ("Checkpoint procedure is finished"));
+
+    times++;
+
+///////////////////
+//for DEBUG    
+//exit(1);
+///////////////////
+
+   	if (shutdown_checkpoint_thread == true) return 0;
+
+
+  }//end while
+ } catch(SednaException &e) {
+   sedna_soft_fault(e, EL_SM);
+ } catch (...) {
+   sedna_soft_fault(EL_SM);
+ }
+#endif
+
+ return 0;
+}
+
+/* an old checkpoint thread
 U_THREAD_PROC (checkpoint_thread, arg)
 {
 #ifdef CHECKPOINT_ON
@@ -182,7 +301,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
  return 0;
 }
-
+*/
 
 void start_chekpoint_thread()
 {
@@ -218,6 +337,7 @@ void shutdown_chekpoint_thread()
 #ifdef CHECKPOINT_ON
   //shutdown thread
   shutdown_checkpoint_thread = true;
+
   if (USemaphoreUp(wait_for_checkpoint, __sys_call_error) !=0)
      throw SYSTEM_EXCEPTION("Can't Up WAIT_FOR_CHECKPOINT semaphore");
 
