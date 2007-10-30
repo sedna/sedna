@@ -54,7 +54,11 @@ endif
 
 ifeq ($(ENABLE_DTSEARCH), 1)
 ifeq ($(PLATFORM), WIN32)
+ifeq ("$(ACTIVE_CONFIGURATION)","Debug")
+FT_ADD_LIB = dten600.lib Nafxcwd.lib LIBCMTD.LIB
+else
 FT_ADD_LIB = dten600.lib Nafxcw.lib LIBCMT.LIB
+endif
 else
 FT_ADD_LIB = 
 endif

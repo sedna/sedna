@@ -9,6 +9,8 @@
 #include "tr/executor/por2qep/ext.h"
 #include "tr/strings/e_string.h"
 #include "tr/executor/fo/op_map.h"
+
+#include "tr/tr_globals.h"
     
 #ifdef SE_ENABLE_TRIGGERS
 #include "tr/triggers/triggers_data.h"
