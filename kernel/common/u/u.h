@@ -257,8 +257,10 @@ typedef char bool;
  */
 #ifdef _WIN32
 typedef const char *global_name;
+#define U_INVALID_GLOBAL_NAME	NULL
 #else
 typedef key_t global_name;
+#define U_INVALID_GLOBAL_NAME	IPC_PRIVATE
 #endif /* _WIN32 */
 
 
@@ -638,6 +640,13 @@ extern "C" {
 
 //#define sys_call_error(sys_call)  __sys_call_error(__FILE__, __LINE__, __SE_FUNCTION__, sys_call)
 
+#define SYS_CALL_ERROR(FN, SYSCALL_STR) \
+	(((FN)?(FN):__sys_call_error_nop) \
+	(__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), NULL))
+
+#define SYS_CALL_ERROR2(FN, SYSCALL_STR, PARAMS_STR) \
+	(((FN)?(FN):__sys_call_error_nop) \
+	(__FILE__,__LINE__,__SE_FUNCTION__, (SYSCALL_STR), (PARAMS_STR)))
 
 #define sys_call_error(sys_call)  (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, NULL) : (void)0)
 #define sys_call_error2(sys_call, arg)  (fun ? fun(__FILE__, __LINE__, __SE_FUNCTION__, sys_call, arg) : (void)0)
@@ -650,6 +659,8 @@ char* ustrerror(int errnum);
 int ustrerror_r(int errnum, char *buf, size_t n);
 void uperror(const char *s);
 void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
+void __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
+
 int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
 int uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun);
 

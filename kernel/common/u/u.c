@@ -169,6 +169,10 @@ void __sys_call_error(const char *filename, int lineno, const char *funcname, co
 #endif
 }
 
+void __sys_call_error_nop(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg)
+{
+}
+
 int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun)
 {
 #ifdef _WIN32
