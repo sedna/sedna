@@ -195,7 +195,7 @@ void ll_set_phys_rec_flag(bool flag)
 void ll_set_checkpoint_on_flag(bool flag)
 {
 #ifdef LOGICAL_LOG
-	logical_log_mgr->set_checkpoint_on_flag(flag);
+	logical_log_mgr->set_checkpoint_on_flag(flag, true);
 #endif
 }
 
@@ -212,6 +212,15 @@ void ll_log_set_checkpoint_flag(bool flag)
 {
 #ifdef LOGICAL_LOG
   logical_log_mgr->set_checkpoint_flag(flag, true);
+#endif  
+}
+
+bool ll_log_get_checkpoint_on_flag()
+{
+#ifdef LOGICAL_LOG
+  return logical_log_mgr->get_checkpoint_on_flag(true);
+#else
+  return false;
 #endif  
 }
 

@@ -54,6 +54,7 @@ LONG_LSN ll_recover_db_by_phys_records(); // physical recovery by log; returns l
 void ll_recover_pers_heap();
 
 //void ll_flush_file_head();
+bool ll_log_get_checkpoint_on_flag();
 
 #endif
 

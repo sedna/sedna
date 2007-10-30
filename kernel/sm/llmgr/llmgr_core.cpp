@@ -2436,7 +2436,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
   	 rec = get_record_from_disk(last_checkpoint_lsn);
   	 start_analysis_lsn += get_record_length(rec);
   }
-  else
+  else // if we are here, we are in trouble
   	 start_analysis_lsn = sizeof(logical_log_file_head);
 
 //  d_printf3("get_undo_redo_trns_map last_cp_lsn=%lld, last_commit_lsn=%lld\n", last_checkpoint_lsn, last_commit_lsn);
@@ -2620,7 +2620,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
   const char *body_beg;
 //  trns_undo_analysis_list _undo_list_;
   trns_redo_analysis_list _redo_list_;
-  LONG_LSN next_lsn_after_cp;
+//  LONG_LSN next_lsn_after_cp;
 
 
   //init trns_map from checkpoint record
@@ -2653,7 +2653,7 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
 //    lsn = start_lsn + get_record_length(rec);    
 //  }
 
-  next_lsn_after_cp = lsn;
+//  next_lsn_after_cp = lsn;
 
 
   //pass the log
@@ -3000,10 +3000,10 @@ void llmgr_core::activate_checkpoint(bool sync)
     	return; 
     }
         
+    mem_head->checkpoint_on = true;
+
     if (USemaphoreUp(wait_for_checkpoint_sem, __sys_call_error) != 0)
        throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
-
-    mem_head->checkpoint_on = true;
 
 	ll_log_unlock(sync);
 }
@@ -3042,14 +3042,33 @@ void llmgr_core::updateMinRcvLSN()
   		lsn = mem_head->t_tbl[i].first_lsn;  
   }
 
-  mem_head->min_rcv_lsn = lsn;
+  mem_head->min_rcv_lsn = (lsn == NULL_LSN) ? mem_head->next_lsn : lsn;
 }
 
-void llmgr_core::set_checkpoint_on_flag(bool flag)
+void llmgr_core::set_checkpoint_on_flag(bool flag, bool sync)
 {
+  ll_log_lock(sync);
+
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   mem_head->checkpoint_on = flag;
+
+  ll_log_unlock(sync);
+}
+
+bool llmgr_core::get_checkpoint_on_flag(bool sync)
+{
+  bool res;
+
+  ll_log_lock(sync);
+
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  res = mem_head->checkpoint_on;
+
+  ll_log_unlock(sync);
+  
+  return res;
 }
 
 void llmgr_core::set_checkpoint_flag(bool flag, bool sync)
