@@ -77,7 +77,8 @@ void PPAxisAncestor::close ()
 }
 PPIterator* PPAxisAncestor::copy(dynamic_context *_cxt_)
 {
-    PPAxisAncestor *res = se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data);
+    PPAxisAncestor *res = self ? se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data, true) :
+                                 se_new PPAxisAncestor(_cxt_, child, nt_type, nt_data);
     res->child.op = child.op->copy(_cxt_);
     res->set_xquery_line(__xquery_line);
     return res;
