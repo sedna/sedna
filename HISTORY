@@ -3,6 +3,31 @@
 
      _________________________________________________________________
 
+                             Release 2.2
+
+     Release date: 2007-10-23
+     _________________________________________________________________
+
+New (since the previous release 2.1):
+- XQuery triggers
+  * Sedna now provides support for triggers natively based on XPath/XQuery and
+    the Sedna XML update language (see Sedna Programmer's Guide for details)
+
+- Improved diagnostic of dynamic errors in XQuery/update statements
+
+- Root privileges are no longer necessary to run Sedna on Linux;
+
+- Bug fixes:
+  * correct Sedna shut down on Windows restart
+  * every session process now needs significantly less memory when running
+
+- Comprehensive testing now covers Red Hat Enterprise Linux 5.
+
+Important note: Databases created with previous versions of Sedna will not work properly with Sedna 2.2. Please, use Sedna import/export utility to migrate your data to Sedna 2.2 (see Sedna Administration Guide, section 2.5).
+
+
+     _________________________________________________________________
+
                              Release 2.1
 
      Release date: 2007-07-10
