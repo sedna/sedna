@@ -62,6 +62,18 @@ Linux platform:
    Note: To avoid incompatibility problems with different glibc versions
    we _strongly_ recommend you building Sedna from source code.
 
+   Note: The operating system user that is going to run Sedna must have 
+   r-w-x permissions for the following Sedna directories:
+
+$SEDNA_INSTALL/data
+$SEDNA_INSTALL/cfg
+
+   To grant the necessary permisions to the user on Linux 
+   you can use the following command (suppose, <sedna-user> is the user 
+   that is going to run Sedna):
+
+chown <sedna-user> cfg data
+
    _______________________________________________________________________
 
                        Sedna Quick Start

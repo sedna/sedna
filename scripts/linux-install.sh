@@ -231,7 +231,22 @@ if test ! "x$sysdir" = "x"; then
 fi
 
 echo ""
-echo "All done"
+echo "ALL DONE"
+echo ""
+echo "==========================================="
+echo "Note: The operating system user that is going to run Sedna must have "
+echo "r-w-x permissions for the following Sedna directories: "
+echo ""
+echo "$where/$TARGET/data"
+echo "$where/$TARGET/cfg"
+echo ""
+echo "To grant the necessary permisions to the user on Linux "
+echo "you can use the following command (suppose, <sedna-user> is the user "
+echo "that is going to run Sedna): "
+echo ""
+echo "chown <sedna-user> cfg data"
+echo "==========================================="
+echo ""
 echo "See file $where/$TARGET/README to get started"
 
 exit
