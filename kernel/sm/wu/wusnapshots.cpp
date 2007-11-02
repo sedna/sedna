@@ -33,6 +33,13 @@ struct SnGcNode
 	SnGcNode *next;
 	std::list<SnVersionEntry> entries;
 	size_t garbageCount;
+	SnGcNode *next;
+};
+
+struct SnEnumerateVersionsBuf
+{
+	SnVersionEntry *buf, *ebuf, *ibuf;
+	int isGarbageInside;
 };
 
 struct SnSnapshot
