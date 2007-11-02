@@ -50,9 +50,12 @@ bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &se
   res = USemaphoreCreate(&sem_dsc, 1, 1, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME, NULL, __sys_call_error);  
 
   // open checkpoint activation semaphore 
-  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
-     throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
+//  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
+//     throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
 
+  if (UEventOpen(&init_checkpoint_event, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
+     throw USER_EXCEPTION2(SE4012, "SNAPSHOT_CHECKPOINT_EVENT");  
+  
   if ( res != 0 )
      throw USER_EXCEPTION2(SE4010, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
@@ -127,8 +130,11 @@ void llmgr_core::ll_log_release()
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
-     throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
+//  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
+//     throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
+
+  if (UEventClose(&init_checkpoint_event, __sys_call_error) != 0) 
+     throw USER_EXCEPTION2(SE4013, "SNAPSHOT_CHECKPOINT_EVENT");  
 
   close_all_log_files();
 
@@ -266,8 +272,11 @@ void llmgr_core::ll_log_open(string _db_files_path_, string _db_name_, /*plmgr_c
      throw USER_EXCEPTION2(SE4012, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
   // open checkpoint activation semaphore 
-  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
-     throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
+//  if ( USemaphoreOpen(&wait_for_checkpoint_sem, CHARISMA_WAIT_FOR_CHECKPOINT, __sys_call_error) != 0) 
+//     throw USER_EXCEPTION2(SE4012, "CHARISMA_WAIT_FOR_CHECKPOINT");  
+
+  if (UEventOpen(&init_checkpoint_event, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error) != 0) 
+     throw USER_EXCEPTION2(SE4012, "SNAPSHOT_CHECKPOINT_EVENT");  
 
   db_files_path = _db_files_path_;
   db_name = _db_name_;
@@ -333,8 +342,11 @@ void llmgr_core::ll_log_close()
   if (res != 0)
       throw USER_EXCEPTION2(SE4013, "CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME");
 
-  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
-     throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
+//  if ( 0 != USemaphoreClose(wait_for_checkpoint_sem, __sys_call_error))
+//     throw USER_EXCEPTION2(SE4013, "CHARISMA_WAIT_FOR_CHECKPOINT");
+
+  if (UEventClose(&init_checkpoint_event, __sys_call_error) != 0) 
+     throw USER_EXCEPTION2(SE4013, "SNAPSHOT_CHECKPOINT_EVENT");  
 
 /*
   res = uCloseFile(ll_file_curr_dsc);
@@ -3002,8 +3014,10 @@ void llmgr_core::activate_checkpoint(bool sync)
         
     mem_head->checkpoint_on = true;
 
-    if (USemaphoreUp(wait_for_checkpoint_sem, __sys_call_error) != 0)
-       throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
+//    if (USemaphoreUp(wait_for_checkpoint_sem, __sys_call_error) != 0)
+//       throw SYSTEM_EXCEPTION("Can't up checkpoint semaphore");
+    if (UEventSet(&init_checkpoint_event,  __sys_call_error) != 0)
+       throw SYSTEM_EXCEPTION("Event signaling for checkpoint thread failed");
 
 	ll_log_unlock(sync);
 }

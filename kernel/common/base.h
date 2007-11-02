@@ -163,6 +163,9 @@ extern global_name PERS_HEAP_SEMAPHORE_STR;
 extern global_name PERS_HEAP_1_SNP_SEMAPHORE_STR;
 extern global_name PERS_HEAP_0_SNP_SEMAPHORE_STR;
 
+extern global_name SNAPSHOT_CHECKPOINT_EVENT;
+extern global_name TRY_ADVANCE_SNAPSHOT_EVENT;
+
 extern global_name METADATA_SEMAPHORE_STR;
 extern global_name INDEX_SEMAPHORE_STR;
 #ifdef SE_ENABLE_FTSEARCH

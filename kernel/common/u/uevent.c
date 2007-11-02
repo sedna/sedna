@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "uevent.h"
+#include "common/errdbg/d_printf.h"
 
 #ifdef _WIN32
 
@@ -9,7 +10,7 @@ int UEventUnlink(global_name gn,
 	int status = -1;
 	if (gn == NULL)
 	{
-		dprintf1("UEventUnlink: U_INVALID_GLOBAL_NAME is invalid in this context\n");
+		d_printf1("UEventUnlink: U_INVALID_GLOBAL_NAME is invalid in this context\n");
 	}
 	else
 	{
@@ -30,7 +31,7 @@ int UEventCreate(UEvent *uEvent,
 	assert(uEvent);
 	if (eventType!=U_AUTORESET_EVENT && eventType!=U_MANUALRESET_EVENT)
 	{
-		dprintf1("UEventCreate: unrecognised event type requested\n");
+		d_printf1("UEventCreate: unrecognised event type requested\n");
 	}
 	else if (NULL == (handle=CreateEvent(sa, eventType==U_MANUALRESET_EVENT, isSet, gn)))
 	{

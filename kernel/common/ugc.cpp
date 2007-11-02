@@ -15,6 +15,12 @@
 
 
 
+#define EVENT_CLEANUP(name)						if (UEventOpen(&ev, name, __sys_call_error) == 0)						\
+                                                {																			\
+                                                    UEventCloseAndUnlink(&ev, __sys_call_error);								\
+                                                    d_printf1("Event cleanup    : "#name"\n");							\
+                                                }
+
 #define SEMAPHORE_CLEANUP(name)					if (USemaphoreOpen(&sem, name, __sys_call_error) == 0)						\
                                                 {																			\
                                                     USemaphoreRelease(sem, __sys_call_error);								\
@@ -86,6 +92,7 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
     USemaphore sem;
     UShMem shm;
     UMMap map;
+    UEvent ev;
     char buf[1024];
 
     if (background_off_from_background_on) return;
@@ -120,6 +127,9 @@ void sm_ugc(bool background_off_from_background_on, int db_id, int os_primitives
 	SEMAPHORE_CLEANUP(PERS_HEAP_1_SNP_SEMAPHORE_STR);
 	SEMAPHORE_CLEANUP(PERS_HEAP_0_SNP_SEMAPHORE_STR);    
     
+	EVENT_CLEANUP(SNAPSHOT_CHECKPOINT_EVENT);
+	EVENT_CLEANUP(TRY_ADVANCE_SNAPSHOT_EVENT);
+
     SHAREDMEM_CLEANUP(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME, 8);
     SEMAPHORE_CLEANUP(CHARISMA_SYNC_TRN_IDS_TABLE);
     SEMAPHORE_CLEANUP(CHARISMA_SM_SMSD_ID);

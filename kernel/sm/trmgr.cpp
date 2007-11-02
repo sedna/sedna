@@ -8,6 +8,7 @@
 #include <vector>
 #include <iostream>
 #include "common/u/usem.h"
+#include "common/u/uevent.h"
 #include "common/u/uthread.h"
 #include "common/u/uprocess.h"
 #include "common/u/uutils.h"
@@ -29,7 +30,7 @@
 using namespace std;
 
 /* global variables for checkpoint */
-USemaphore wait_for_checkpoint;
+//USemaphore wait_for_checkpoint;
 USemaphore checkpoint_finished;
 USemaphore checkpoint_sem; 
 USemaphore concurrent_trns_sem;
@@ -37,7 +38,7 @@ USemaphore concurrent_trns_sem;
 USemaphore wait_for_recovery;
 
 UTHANDLE  checkpoint_thread_dsc;
-volatile bool shutdown_checkpoint_thread = false;
+bool shutdown_checkpoint_thread = false;
 
 /* global variables for transaction ids table */
 USemaphore trn_table_ids_sync_sem;
@@ -50,6 +51,9 @@ vector<transaction_id> _ids_table_;
 ******************************************************************************/
 
 // some very rough criterion for snapshot advancement
+#define UPDATED_PART_THRESHOLD 0.25
+#define CREATED_PART_THRESHOLD 0.25
+
 static bool SnapshotAdvanceCriterion()
 {
 	WuSnapshotStats wuStats;
@@ -57,9 +61,42 @@ static bool SnapshotAdvanceCriterion()
     // obtain very rough statistics :)
     WuGatherSnapshotsStatsExn(&wuStats);
 
+    size_t updatedBlocks = wuStats.curSnapshotVersionsCount;
+    size_t blocksCount = mb->data_file_cur_size / PAGE_SIZE - wuStats.versionsCount;
+    size_t createdBlocks = 0; // TODO: add this statistics in proper manner
 
+    double updFract = (double)updatedBlocks / (blocksCount - createdBlocks);
+    double crtFract = (double)createdBlocks / (blocksCount - createdBlocks);
+    
+    // first rule: some part of the database is updated
+    if (updFract >= UPDATED_PART_THRESHOLD) return true; 
+    // second rule: portion of a new data is created
+    if (crtFract >= CREATED_PART_THRESHOLD) return true; 
 
-    return true;
+    return false;
+}
+
+// this function tries to advance snapshots; if fails it will wait for signaled event on ro-transaction end
+void AdvanceSnapshots()
+{
+	while (true)
+	{
+		try
+		{
+			WuAdvanceSnapshotsExn();
+			return;
+		}
+		catch (SednaUserEnvException &e)
+		{
+			std::string err_msg = e.getDescription();
+
+			if (strcmp(err_msg.c_str(), "Unable to advance snapshots."))
+				throw;
+		}
+
+   		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
+   			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
+	}
 }
 
 // new checkpoint and snaphot advancer thread
@@ -71,16 +108,18 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
   int times=1;  
   LONG_LSN cp_lsn;
-
   while (true)
   {
-    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
-       throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
-
+//    if (USemaphoreDown(wait_for_checkpoint, __sys_call_error) !=0 )
+//       throw SYSTEM_EXCEPTION("Can't down semaphore for checkpoint wait");
+    if (UEventWait(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+       throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
 
     d_printf2("checkpoint thread procedure started num=%d\n", times);
 
-    if (shutdown_checkpoint_thread || ll_log_get_checkpoint_on_flag()) // checkpoint is needed
+    shutdown_event_call = shutdown_checkpoint_thread;
+
+    if (shutdown_event_call || ll_log_get_checkpoint_on_flag()) // checkpoint is needed
     {
 	    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	{
@@ -96,8 +135,9 @@ U_THREAD_PROC (checkpoint_thread, arg)
     	// obtain timestamps of persistent and current snapshots
     	WuGatherSnapshotsStatsExn(&wuStats);
 		
-		if (wuStats.curSnapshotTs == wuStats.persSnapshotTs)
-			WuAdvanceSnapshotsExn(); // TODO: change this to event-driven mode
+//		if (!is_recovery_mode)
+			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
+				AdvanceSnapshots(); // TODO: check for shutdown on recovery
     	
     	WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
 
@@ -123,7 +163,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 	}
 	else // we need only snapshot advance (subject to criterion)
 	{
-		if (SnapshotAdvanceCriterion())
+		if (!is_recovery_mode && SnapshotAdvanceCriterion())
 		{
 		    for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     		{
@@ -135,7 +175,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 		    }
     		d_printf1("All sems acquired\n");
 
-			WuAdvanceSnapshotsExn(); // TODO: change this to event-driven mode
+			AdvanceSnapshots();
 
 	    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	    	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
@@ -154,7 +194,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 //exit(1);
 ///////////////////
 
-   	if (shutdown_checkpoint_thread == true) return 0;
+//   	if (shutdown_checkpoint_thread == true) return 0;
+   	if (shutdown_event_call == true) return 0;
 
 
   }//end while
@@ -306,6 +347,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 void start_chekpoint_thread()
 {
 #ifdef CHECKPOINT_ON
+
   if (0 != uCreateThread(checkpoint_thread, NULL, &checkpoint_thread_dsc, CHEKPOINT_THREAD_STACK_SIZE, NULL, __sys_call_error))
      throw USER_EXCEPTION2(SE4060, "checkpoint thread");
 
@@ -317,8 +359,8 @@ void start_chekpoint_thread()
 void init_checkpoint_sems()
 {
 #ifdef CHECKPOINT_ON
-  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4010, "CHARISMA_WAIT_FOR_CHECKPOINT");
+//  if (USemaphoreCreate(&wait_for_checkpoint, 0, 1, CHARISMA_WAIT_FOR_CHECKPOINT, NULL, __sys_call_error) != 0)
+//     throw USER_EXCEPTION2(SE4010, "CHARISMA_WAIT_FOR_CHECKPOINT");
 /*
   if (USemaphoreCreate(&checkpoint_finished, 0, 1, SEDNA_CHECKPOINT_FINISHED_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "SEDNA_CHECKPOINT_FINISHED_SEM");
@@ -327,6 +369,17 @@ void init_checkpoint_sems()
   if (USemaphoreCreate(&checkpoint_sem, 1, 1, CHARISMA_CHECKPOINT_SEM, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "CHARISMA_CHECKPOINT_SEM");
 */
+  USECURITY_ATTRIBUTES *sa;	
+  if(uCreateSA(&sa, U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK, 0, __sys_call_error)!=0) throw USER_EXCEPTION(SE3060);
+
+  if (0 != UEventCreate(&start_checkpoint_snapshot, sa, U_AUTORESET_EVENT, false, SNAPSHOT_CHECKPOINT_EVENT, __sys_call_error))
+     throw USER_EXCEPTION2(SE4010, "SNAPSHOT_CHECKPOINT_EVENT");
+
+  if (0 != UEventCreate(&end_of_rotr_event, sa, U_AUTORESET_EVENT, false, TRY_ADVANCE_SNAPSHOT_EVENT, __sys_call_error))
+     throw USER_EXCEPTION2(SE4010, "TRY_ADVANCE_SNAPSHOT_EVENT");
+
+  if(uReleaseSA(sa, __sys_call_error)!=0) throw USER_EXCEPTION(SE3063);
+
   if (USemaphoreCreate(&concurrent_trns_sem, CHARISMA_MAX_TRNS_NUMBER, CHARISMA_MAX_TRNS_NUMBER, SEDNA_TRNS_FINISHED, NULL, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4010, "SEDNA_TRNS_FINISHED");
 #endif
@@ -338,9 +391,12 @@ void shutdown_chekpoint_thread()
   //shutdown thread
   shutdown_checkpoint_thread = true;
 
-  if (USemaphoreUp(wait_for_checkpoint, __sys_call_error) !=0)
-     throw SYSTEM_EXCEPTION("Can't Up WAIT_FOR_CHECKPOINT semaphore");
+//  if (USemaphoreUp(wait_for_checkpoint, __sys_call_error) !=0)
+//     throw SYSTEM_EXCEPTION("Can't Up WAIT_FOR_CHECKPOINT semaphore");
 
+  if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+     throw SYSTEM_EXCEPTION("Event signaling for checkpoint_snapshot thread shutdown failed");
+  
   if (uThreadJoin(checkpoint_thread_dsc, __sys_call_error) != 0)
      throw USER_EXCEPTION(SE4210);
 
@@ -354,8 +410,8 @@ void release_checkpoint_sems()
 {
 #ifdef CHECKPOINT_ON
   //release semaphores
-  if (USemaphoreRelease(wait_for_checkpoint, __sys_call_error) != 0)
-     throw USER_EXCEPTION2(SE4011, "CHARISMA_WAIT_FOR_CHECKPOINT");
+//  if (USemaphoreRelease(wait_for_checkpoint, __sys_call_error) != 0)
+//     throw USER_EXCEPTION2(SE4011, "CHARISMA_WAIT_FOR_CHECKPOINT");
 /*
   if (USemaphoreRelease(checkpoint_finished, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "SEDNA_CHECKPOINT_FINISHED_SEM");
@@ -367,6 +423,12 @@ void release_checkpoint_sems()
   if (USemaphoreRelease(concurrent_trns_sem, __sys_call_error) != 0)
      throw USER_EXCEPTION2(SE4011, "CHEKPOINT_THREAD_STACK_SIZE");
 
+
+  if (UEventCloseAndUnlink(&start_checkpoint_snapshot, __sys_call_error) != 0)
+     throw USER_EXCEPTION2(SE4011, "SNAPSHOT_CHECKPOINT_EVENT");
+
+  if (UEventCloseAndUnlink(&end_of_rotr_event, __sys_call_error) != 0)
+     throw USER_EXCEPTION2(SE4011, "TRY_ADVANCE_SNAPSHOT_EVENT");
 
 #endif
 }
