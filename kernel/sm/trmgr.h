@@ -10,6 +10,8 @@
 #include "common/sedna.h"
 #include "common/base.h"
 
+#include "common/u/uevent.h"
+
 #ifdef _WIN32
 #define CHEKPOINT_THREAD_STACK_SIZE		10024
 #else
@@ -39,8 +41,13 @@ void release_transaction_ids_table();
 transaction_id get_transaction_id();
 void give_transaction_id(transaction_id& trid);
 
-extern USemaphore wait_for_checkpoint; 
+//extern USemaphore wait_for_checkpoint; 
 extern USemaphore checkpoint_finished;
+
+extern UEvent start_checkpoint_snapshot;
+extern UEvent end_of_rotr_event;
+
+extern bool is_recovery_mode;
 
 int PhOnInitialSnapshotCreate(TIMESTAMP ts);
 int PhOnSnapshotCreate(TIMESTAMP ts);

@@ -12,6 +12,7 @@
 #include "sm/plmgr/plmgr.h"
 #include "sm/llmgr/llmgr.h"
 #include "common/u/usem.h"
+#include "common/u/uevent.h"
 #include "common/SSMMsg.h"
 #include "common/errdbg/d_printf.h"
 #include "sm/trmgr.h"
@@ -85,6 +86,18 @@ int sm_server_handler(void *arg)
                      }
             case 2:  {//give identifier for transaction
                          give_transaction_id(msg->trid);
+                         
+                         if (msg->data.data[0]) // query has just finished; snapshot advancement might be possible
+  						 {	
+  						 	if (UEventSet(&end_of_rotr_event, __sys_call_error) != 0)
+                         		throw SYSTEM_EXCEPTION("Event signaling for possibility of snapshot advancement failed");
+						 }
+						 else // updater has just ended; check for need to advance snapshots
+						 {
+  						 	if (UEventSet(&start_checkpoint_snapshot,  __sys_call_error) != 0)
+                         		throw SYSTEM_EXCEPTION("Event signaling for checking of snapshot advancement failed");
+                         }
+                         	
                          break;
                      }
 #ifdef LOCK_MGR_ON
@@ -773,6 +786,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
     if (uGetEnvironmentVariable(SM_BACKGROUND_MODE, buf, 1024, __sys_call_error) != 0)
     {//I am in running sm process
 
+       is_recovery_mode = true;
+
        event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
        elog(EL_LOG, ("SM event log in recovery procedure is ready"));
 
@@ -917,6 +932,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
 #endif
        elog(EL_LOG, ("SM recovery procedure is finished successfully"));
        event_logger_release();
+    
+       is_recovery_mode = false;
     }
   } catch (SednaUserException &e) {
        fprintf(stderr, "%s\n", e.getMsg().c_str());

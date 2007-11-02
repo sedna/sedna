@@ -16,6 +16,7 @@
 #include "common/xptr.h"
 #include "common/u/uhdd.h"
 #include "common/u/usem.h"
+#include "common/u/uevent.h"
 #include "common/u/ushm.h"
 #include "sm/plmgr/plmgr_core.h"
 #include "common/mmgr/memutils.h"
@@ -207,8 +208,8 @@ protected:
   UShMem shared_mem_dsc;
   USemaphore sem_dsc;
 
-  USemaphore wait_for_checkpoint_sem;//semaphore for initing checkpoint
-  
+//  USemaphore wait_for_checkpoint_sem;//semaphore for initing checkpoint
+  UEvent init_checkpoint_event; // event to initiate checkpoint
   void *shared_mem;
   char* read_buf;//
   int read_buf_size;

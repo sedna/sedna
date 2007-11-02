@@ -344,6 +344,8 @@ void release_transaction_id(SSMMsg* sm_server)
       sm_msg_struct msg;
       msg.cmd = 2;
       msg.trid = trid;
+      msg.data.data[0] = !need_sem;
+
       if (sm_server->send_msg(&msg) !=0 )
          throw USER_EXCEPTION(SE3034);
    }
