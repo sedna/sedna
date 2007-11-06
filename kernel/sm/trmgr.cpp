@@ -84,6 +84,7 @@ void AdvanceSnapshots()
 		try
 		{
 			WuAdvanceSnapshotsExn();
+			ll_updateMinRcvLSN();
 			return;
 		}
 		catch (SednaUserEnvException &e)
