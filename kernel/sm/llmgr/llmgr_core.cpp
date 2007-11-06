@@ -2926,6 +2926,8 @@ void llmgr_core::ll_truncate_log(bool sync)
   else
     num_files_to_truncate = (minLSN - mem_head->base_addr)/LOG_FILE_PORTION_SIZE;
 
+  if (num_files_to_truncate == mem_head->ll_files_num) num_files_to_truncate--;
+
   if (num_files_to_truncate  == 0)
   {
 	  ll_log_unlock(sync);
