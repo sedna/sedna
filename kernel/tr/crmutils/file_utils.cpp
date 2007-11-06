@@ -884,7 +884,8 @@ xptr loadfile(FILE* f, se_ostream &s, const char* uri,bool stripped,int& need_cp
 	}
 	if (!print_progress) print_p=true;
 
-	return ((n_dsc*)XADDR(docnode))->indir;
+	//return ((n_dsc*)XADDR(docnode))->indir;
+	return docnode;
 }
 
 xptr loadfile(FILE* f, se_ostream &s, const char* uri,const char * collection, bool stripped,int& need_cp, bool print_progress)
@@ -936,7 +937,8 @@ update_insert_sequence(docnode,sc_parent->ft_index_object);
 #ifdef SE_ENABLE_FTSEARCH
 	execute_modifications();
 #endif
-	return ((n_dsc*)XADDR(docnode))->indir;
+//	return ((n_dsc*)XADDR(docnode))->indir;
+	return docnode;	
 }
 
 
