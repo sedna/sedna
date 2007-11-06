@@ -118,6 +118,11 @@ void PPBulkLoad::execute()
     else
           write_to_logical_log = false;
     
+    // we cannot make checkpoint before commit now
+    // in this case redo info woulb be lost
+    // TODO: we can fix it later by releasing transaction concurrent semaphore a bit earlier
+    write_to_logical_log = true;
+
     bool boundary_space_strip = (cxt1->st_cxt->boundary_space == xq_boundary_space_strip);
 
     try {
