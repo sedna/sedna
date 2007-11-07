@@ -193,18 +193,10 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
     blk->is_changed = false;
 }
 
-extern int isCopyBlockCalled;
-extern int writeBlockCounter, writeBlockIrrelevantToCreateVersionCount;
 
 void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (SednaException)
 {
     vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
-
-	writeBlockCounter++;
-	if (!isCopyBlockCalled)
-	{
-		writeBlockIrrelevantToCreateVersionCount++;
-	}
 
     blk->roffs = 0;
     blk->is_changed = false;
@@ -287,7 +279,7 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
 #endif
 		bool approved = false;
 		
-		if (offs != buffer_on_stake)
+		if (*offs != buffer_on_stake)
 		{
 
 			cur_p = ((vmm_sm_blk_hdr*)OFFS2ADDR(*offs))->p;

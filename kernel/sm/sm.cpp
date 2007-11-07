@@ -253,7 +253,6 @@ int sm_server_handler(void *arg)
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
-						 ((vmm_sm_blk_hdr*)((char*)buf_mem_addr+msg->data.swap_data.offs))->trid_wr_access=msg->sid;
                          break;
                      }
             case 25: {
