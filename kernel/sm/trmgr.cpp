@@ -79,8 +79,17 @@ static bool SnapshotAdvanceCriterion()
 // this function tries to advance snapshots; if fails it will wait for signaled event on ro-transaction end
 void AdvanceSnapshots()
 {
-	while (true)
+	//while (true)
+	//{
+
+	while (!WuTryAdvanceSnapshotsExn())
 	{
+   		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
+   			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
+	}
+	ll_updateMinRcvLSN();
+
+#if 0	
 		try
 		{
 			WuAdvanceSnapshotsExn();
@@ -98,6 +107,7 @@ void AdvanceSnapshots()
    		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
    			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
 	}
+#endif
 }
 
 // new checkpoint and snaphot advancer thread
@@ -140,7 +150,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 //			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
 				AdvanceSnapshots(); // TODO: check for shutdown on recovery
     	
-    	WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
+    	WuOnBeginCheckpointExn();
 
 		WuEnumerateVersionsParams params;
     	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
@@ -153,7 +163,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
 	    ll_truncate_logical_log();
 
-    	WuNotifyCheckpointFinishedExn();
+    	WuOnCompleteCheckpointExn();
 
     	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
         	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
