@@ -136,7 +136,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
     	// obtain timestamps of persistent and current snapshots
     	WuGatherSnapshotsStatsExn(&wuStats);
 		
-//		if (!is_recovery_mode)
+		if (!is_recovery_mode)
 //			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
 				AdvanceSnapshots(); // TODO: check for shutdown on recovery
     	
