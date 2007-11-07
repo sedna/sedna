@@ -1409,7 +1409,7 @@ int SnSubmitRequestForGc(TIMESTAMP currentSnapshotTs, const SnRequestForGc *buf,
 	const SnRequestForGc *ebuf = buf + count;
 
 	assert(buf || count==0);
-	if (!IsValidTimestamp(currentSnapshotTs))
+	if (!IsValidTimestamp(currentSnapshotTs) && currentSnapshotTs!=INVALID_TIMESTAMP)
 	{
 		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
@@ -1611,6 +1611,14 @@ int SnGatherSnapshotStats(SnSnapshotStats *stats)
 		stats->persSnapshotSharedVersionsCount = statsPers.nSnapshotSharedVersions;
 		success = 1;
 	}
+	if (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)
+	{
+		stats->isSnapshotSlotAvalible = 0;
+	}
+	else
+	{
+		stats->isSnapshotSlotAvalible = (snapshots.leadingSnapshot->type == SN_FUTURE_SNAPSHOT);
+	}
 	return success;
 }
 
@@ -1715,6 +1723,7 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 				tsOutCur [0] = sniter->timestamp;
 				idOutCur [0] = (int)(tsInCur - tsIn);
 			}
+			sniter = sniter->next;
 			++tsOutCur;
 			++idOutCur;
 		}

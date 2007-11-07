@@ -26,49 +26,45 @@
 
 static TIMESTAMP timestamp = INVALID_TIMESTAMP;
 static uMutexType gMutex;
-static HANDLE hSnapshotsAdvancedEvent = NULL;
-static TIMESTAMP curSnapshotTs=INVALID_TIMESTAMP, persSnapshotTs=INVALID_TIMESTAMP;
+static int isSynchrObjectsInitialized = 0;
 
 static XPTR swapped[WU_SWAPPED_XPTRS_COUNT] = {};
-static size_t swappedNum = 0;
-static int isVersionsDisabled = 0;
-
-
-int isCopyBlockCalled=0;
-int writeBlockCounter=0, writeBlockIrrelevantToCreateVersionCount=0;
+static size_t numSwapped = 0;
 
 /* utility functions */ 
 
 static
-int InitSynchObjects()
+int InitSynchrObjects()
 {
 	int success = 0;
-	if (uMutexInit(&gMutex,__sys_call_error)!=0) {}
+	if (isSynchrObjectsInitialized)
+	{
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+	}
+	else if (uMutexInit(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		hSnapshotsAdvancedEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
-		if (hSnapshotsAdvancedEvent)
-		{
-			success=1;
-		}
-		else
-		{
-			uMutexDestroy(&gMutex,__sys_call_error);
-		}
+		isSynchrObjectsInitialized=1;
+		success=1;
 	}
 	return success;
 }
 
 static
-int DeinitSynchObjects()
+int DeinitSynchrObjects()
 {
-	int failure = 0;
+	int success = 0;
 
-	if (!CloseHandle(hSnapshotsAdvancedEvent)) failure = 1;
-
-	if (uMutexDestroy(&gMutex,__sys_call_error)!=0) failure = 1;
-
-	return (failure == 0);
+	if (!isSynchrObjectsInitialized)
+	{
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+	}
+	else 
+	{
+		if (uMutexDestroy(&gMutex,__sys_call_error)==0) success = 1;
+		isSynchrObjectsInitialized=0;
+	}
+	return success;
 }
 
 static
@@ -84,152 +80,176 @@ ramoffs RamoffsFromBufferId(int id)
 	return id * PAGE_SIZE;
 }
 
-/* wiring functions */ 
-
 static
-int LoadBuffer(XPTR bigXptr, int *bufferId, int flags)
-{
-	int success=0, isDataImportant = ((flags & 1) ==0);
-	vmm_sm_blk_hdr *header=NULL;
-	xptr lilXptr=WuExternaliseXptr(bigXptr);
-	ramoffs ofs=0;
-	assert(bufferId); *bufferId=-1;
-	try
-	{
-		if (swappedNum==WU_SWAPPED_XPTRS_COUNT) 
-		{
-			put_block_to_buffer(-1,lilXptr,&ofs,isDataImportant);
-		}
-		else
-		{			
-			swapped[swappedNum++] = WuInternaliseXptr(put_block_to_buffer(ClGetCurrentClientId(INVALID_TICKET),lilXptr,&ofs,isDataImportant));
-		}
-		header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofs);
-		/* assert(header->p==lilXptr && header->roffs == ofs); */ 
-		if (!isDataImportant)
-		{
-			//memset(OffsetPtr(buf_mem_addr,ofs),0,PAGE_SIZE);
-			vmm_sm_blk_hdr::init(header);
-			header->p=lilXptr;
-			header->roffs=ofs;
-		}		
-		*bufferId = BufferIdFromRamoffs(ofs);
-		success=1;
-	}
-	WU_CATCH_EXCEPTIONS()
-	return success;
-}
-
-static
-int FlushBuffer(int bufferId, int flags)
+int LocateBlockHeader(int bufferId, vmm_sm_blk_hdr **header)
 {
 	int success = 0;
-	ramoffs ofs = RamoffsFromBufferId(bufferId);
-	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
-	try
-	{
-		flush_buffer(ofs,false);
-		success = 1;
-	}
-	WU_CATCH_EXCEPTIONS()
-	return success;
-}
-
-static
-int GetBufferInfo(int bufferId, BufferInfo *bufferInfo)
-{
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
-}
-
-static
-int GetBufferStateBlock(int bufferId, TICKET ticket, void **data)
-{
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
-}
-
-static
-int FixBuffer(int bufferId, int orMask, int andNotMask)
-{
-	WuSetLastErrorMacro(WUERR_NOT_IMPLEMENTED);
-	return 0;
-}
-
-static
-int ProtectBuffer(int bufferId, int orMask, int andNotMask)
-{
-	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
-	int mask=orMask&~andNotMask;
-	if (mask&32)
-	{
-		header->trid_wr_access=ClGetCurrentClientId(INVALID_TICKET);
-	}
-	else
-	{
-		header->trid_wr_access=-1;
-	}
-	return 1;
-}
-
-static
-int MarkBufferDirty(int bufferId, void *base, size_t size, int flags)
-{
-	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
-	header->is_changed = true;
-	return 1;
-}
-
-static
-int CopyBlock(XPTR bigDest, XPTR bigSrc, int flags)
-{
-	xptr lilDest = WuExternaliseXptr(bigDest), lilSrc = WuExternaliseXptr(bigSrc);
-	ramoffs ofsSrc=0, ofsDest=0;
-	vmm_sm_blk_hdr *header = NULL;
-	int success = 0, repairRequired = 0;
-	isCopyBlockCalled=1;
-	if (bigDest == bigSrc)
+	
+	assert(header); *header=NULL;
+	if (bufferId<0)
 	{
 		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
 	}
-	else try
+	else
 	{
-		put_block_to_buffer(-1,lilSrc,&ofsSrc,true);
-		if (used_mem.find_remove(ofsSrc)==0)
-		{
-			repairRequired = 1;
-			put_block_to_buffer(-1,lilDest,&ofsDest,false);
-			header=(vmm_sm_blk_hdr *)OffsetPtr(buf_mem_addr,ofsDest);
-			memcpy(header,
-				   OffsetPtr(buf_mem_addr,ofsSrc),
-				   PAGE_SIZE);
-			header->is_changed = true;
-			if (flags&1)
-			{
-				flush_buffer(ofsDest,false);
-			}
-			success=1;
-		}
+		*header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr, RamoffsFromBufferId(bufferId));
+		success = 1;
+	}
+	return success;
+}
+
+static int
+GetSwapCode()
+{
+	int code = -1;
+	if (numSwapped < WU_SWAPPED_XPTRS_COUNT)
+	{
+		code = ClGetCurrentClientId(NULL);
+	}
+	return code;
+}
+
+static void
+PushSwappedXptr(XPTR xptr)
+{
+	if (numSwapped < WU_SWAPPED_XPTRS_COUNT)
+	{
+		swapped[numSwapped++] = xptr;
+	}
+}
+
+XPTR PopSwappedXptr()
+{
+	XPTR xptr=0;
+	if (numSwapped > 0) xptr = swapped[--numSwapped];
+	return xptr;
+}
+
+/* wiring functions */ 
+
+static 
+int PutBlockToBuffer (XPTR xptr, int *bufferId)
+{
+	int success = 0;
+	XPTR swapped = 0;
+	ramoffs ofs = 0;
+
+	assert(bufferId); *bufferId = -1;
+	try
+	{
+		swapped = 
+			WuInternaliseXptr(put_block_to_buffer(GetSwapCode(), WuExternaliseXptr(xptr), &ofs, true));
+
+		PushSwappedXptr(swapped);
+		*bufferId = BufferIdFromRamoffs(ofs);
+		success = 1;
 	}
 	WU_CATCH_EXCEPTIONS()
-	if (repairRequired) used_mem.push(ofsSrc);
-	isCopyBlockCalled=0;
+
 	return success;
 }
 
 static
-int AllocBlock(XPTR *bigXptr)
+int MarkBufferDirty(int bufferId)
 {
-	int success=0;
-	xptr lilXptr;
-	assert(bigXptr); *bigXptr=0;
+	int success = 0;
+	vmm_sm_blk_hdr *header = NULL;
+	if (LocateBlockHeader(bufferId, &header))
+	{
+		header->is_changed = true;
+		success = 1;
+	}
+	return success;
+}
+
+static
+int GrantExclusiveAccessToBuffer(int bufferId)
+{
+	int success = 0;
+	vmm_sm_blk_hdr *header = NULL;
+	if (LocateBlockHeader(bufferId, &header))
+	{
+		header->trid_wr_access = ClGetCurrentClientId(NULL);
+		success = 1;
+	}
+	return 1;
+}
+
+static
+int AllocateDataBlock (XPTR *pXptr, int *pBufferId)
+{
+	int success = 0, bufferId = -1;
+	XPTR bigXptr=0, bigSwapped=0;
+	xptr lilXptr, lilSwapped;
+	ramoffs ofs = 0;
+	vmm_sm_blk_hdr *header = NULL;
+
+	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
 	try
 	{
-		new_data_block(&lilXptr);
-		*bigXptr=WuInternaliseXptr(lilXptr);
-		success=1;
+		bm_allocate_data_block(GetSwapCode(), &lilXptr, &ofs, &lilSwapped);
+
+		bigXptr = WuInternaliseXptr(lilXptr);
+		bigSwapped = WuInternaliseXptr(lilSwapped);
+		PushSwappedXptr(bigSwapped);
+		bufferId = BufferIdFromRamoffs(ofs);
+		success = 1;
 	}
 	WU_CATCH_EXCEPTIONS()
+	*pBufferId = bufferId; *pXptr = bigXptr;
+
+	return success;
+}
+
+static
+int AllocateTempBlock (XPTR *pXptr, int *pBufferId)
+{
+	int success = 0, bufferId = -1;
+	XPTR bigXptr=0, bigSwapped=0;
+	xptr lilXptr, lilSwapped;
+	ramoffs ofs = 0;
+	vmm_sm_blk_hdr *header = NULL;
+
+	assert(pXptr && pBufferId); *pXptr=0; *pBufferId=-1;
+	try
+	{
+		bm_allocate_tmp_block(GetSwapCode(), &lilXptr, &ofs, &lilSwapped);
+
+		bigXptr = WuInternaliseXptr(lilXptr);
+		bigSwapped = WuInternaliseXptr(lilSwapped);
+		PushSwappedXptr(bigSwapped);
+		bufferId = BufferIdFromRamoffs(ofs);
+		success = 1;
+	}
+	WU_CATCH_EXCEPTIONS()
+	*pBufferId = bufferId; *pXptr = bigXptr;
+
+	return success;
+}
+
+static
+int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
+{
+	int success = 0;
+	vmm_sm_blk_hdr *srcHeader = NULL, *destHeader = NULL;
+
+	assert(xptr && bufferId); *xptr=0; *bufferId=-1;
+
+	if (!LocateBlockHeader(srcBufferId, &srcHeader))
+	{
+		/* error! */ 
+	}
+	else
+	{
+		/* we protect a source buffer from beeng victimized by get_free_buffer */ 
+		buffer_on_stake = srcBufferId;
+		if (AllocateDataBlock(xptr, bufferId) && LocateBlockHeader(*bufferId, &destHeader))
+		{
+			memcpy(destHeader, srcHeader, PAGE_SIZE);
+			success = 1;
+		}
+		buffer_on_stake = -1;
+	}
 	return success;
 }
 
@@ -249,12 +269,18 @@ int FreeBlock(XPTR bigXptr)
 }
 
 static
-int LocateHeader(int bufferId, VersionsHeader **veHeader)
+int LocateVersionsHeader(int bufferId, VersionsHeader **veHeader)
 {
-	assert(veHeader);
-	vmm_sm_blk_hdr *header = (vmm_sm_blk_hdr*)OffsetPtr(buf_mem_addr,RamoffsFromBufferId(bufferId));
-	*veHeader = &header->versionsHeader;
-	return 1;
+	int success = 0;
+	vmm_sm_blk_hdr *blockHeader = NULL;
+
+	assert(veHeader); *veHeader=NULL;
+	if (LocateBlockHeader(bufferId, &blockHeader))
+	{
+		*veHeader = &blockHeader->versionsHeader;
+		success;
+	}
+	return success;
 }
 
 static
@@ -324,83 +350,83 @@ int WuSetTimestamp(TIMESTAMP ts)
 	return success;
 }
 
+
 int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 {
-	ClSetup clSetup = {CHARISMA_MAX_TRNS_NUMBER, 0x10000};
-	VeSetup veSetup =
-	{
-		persSnapshotTs,
-		0,
-		/* tickets */ 
-		NULL,
-		NULL,
-		/* begin wire */ 
-		LoadBuffer,
-		FlushBuffer,
-		GetBufferInfo,
-		GetBufferStateBlock,
-		FixBuffer,
-		ProtectBuffer,
-		MarkBufferDirty,
-		CopyBlock,
-		AllocBlock,
-		FreeBlock,
-		WuGetTimestamp,
-		SnSubmitRequestForGc,
-		LocateHeader,
-		OnCompleteBlockRelocation
-		/* end wire */ 		
-	};
-	SnSetup snSetup =
-	{
-		0,
-		CHARISMA_MAX_TRNS_NUMBER,
-		/* tickets */ 
-		NULL,
-		/* begin wire */ 
-		FreeBlock,
-		WuGetTimestamp,
-		OnDiscardSnapshot,
-		OnBeforeDiscardSnapshot
-		/* end wire */ 		
-	};
-	VeResourceDemand veResourceDemand = {};
-	SnResourceDemand snResourceDemand = {};
-	int success=0;
+	int success = 0;
+	ClSetup clSetup = {};
+	VeSetup veSetup = {};
+	SnSetup snSetup = {};
 
-	if (isRecoveryMode) isVersionsDisabled=1;
-	::isVersionsDisabled = isVersionsDisabled;
+	/* static */ 
+	clSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
+	clSetup.maxSizePerClient = 0x10000;
 
-	if (!InitSynchObjects()) {}
-	else if (!ClInitialize()) {}
-	else if (!SnInitialize()) {}
-	else if (!VeInitialize()) {}
+	veSetup.allocateBlock = AllocateDataBlock;
+	veSetup.allocateBlockAndCopyData = AllocateDataBlockAndCopyData;
+	veSetup.freeBlock = FreeBlock;
+	veSetup.grantExclusiveAccessToBuffer = GrantExclusiveAccessToBuffer;
+	veSetup.locateVersionsHeader = LocateVersionsHeader;
+	veSetup.markBufferDirty = MarkBufferDirty;
+
+	snSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
+	snSetup.freeBlock = VeFreeBlockLowAndUpdateRestrictions;
+	snSetup.getTimestamp = WuGetTimestamp;
+	snSetup.onBeforeDiscardSnapshot = OnBeforeDiscardSnapshot;
+	snSetup.onDiscardSnapshot = OnDiscardSnapshot;
+
+	/* param */ 
+	snSetup.initialPersSnapshotTs = persSnapshotTs;
+	if (isRecoveryMode || isVersionsDisabled)
+	{
+		veSetup.flags |= VE_SETUP_DISABLE_VERSIONS_FLAG;
+		snSetup.flags |= SN_SETUP_DISABLE_VERSIONS_FLAG;
+	}
+	if (!DEBUGI)
+	{
+		veSetup.flags |= VE_SETUP_DISABLE_CORRECTNESS_CHECKS_FLAG;
+	}
+
+	if (!InitSynchrObjects() ||
+		!ClInitialize() ||
+		!SnInitialize() ||
+		!VeInitialize())
+	{
+		/* error! */ 
+	}
 	else
 	{
+		VeResourceDemand veResourceDemand = {};
+		SnResourceDemand snResourceDemand = {};
+
 		VeQueryResourceDemand(&veResourceDemand);
 		SnQueryResourceDemand(&snResourceDemand);
 
-		if (!ClReserveStateBlocks(&veSetup.clientStateTicket, veResourceDemand.clientStateSize)) {}
-		else if (!ClReserveStateBlocks(&snSetup.clientStateTicket, snResourceDemand.clientStateSize)) {}
-		else if (!ClStartup(&clSetup)) {}
-		else if (!VeStartup(&veSetup)) {}
-		else if (!SnStartup(&snSetup)) {}
-		else
+		if (!ClReserveStateBlocks(&veSetup.clientStateTicket, veResourceDemand.clientStateSize) ||
+			!ClReserveStateBlocks(&snSetup.clientStateTicket, snResourceDemand.clientStateSize) ||
+			!ClStartup(&clSetup) ||
+			!VeStartup(&veSetup) ||
+			!SnStartup(&snSetup))
+		{
+			/* error! */ 
+		}
+		else 
 		{
 			try
 			{
-				curSnapshotTs=::persSnapshotTs=persSnapshotTs;
 				PhOnInitialSnapshotCreate(persSnapshotTs);
 				success = 1;
 			}
-			WU_CATCH_EXCEPTIONS()			
+			WU_CATCH_EXCEPTIONS()
 		}
 	}
+
 	if (!success)
 	{
-		SnDeinitialize();
 		VeDeinitialize();
+		SnDeinitialize();
 		ClDeinitialize();
+		DeinitSynchrObjects();
 	}
 	return success;
 }
@@ -408,51 +434,34 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 int WuRelease()
 {
 	int failure=0;
-	if (!SnShutdown()) failure=1;
+	if (!SnShutdown() || !VeShutdown()) failure=1;
 	SnDeinitialize();
 	VeDeinitialize();
 	ClDeinitialize();
-	if (!DeinitSynchObjects()) failure=1;
-	curSnapshotTs=INVALID_TIMESTAMP;
-	persSnapshotTs=INVALID_TIMESTAMP;
+	if (!DeinitSynchrObjects()) failure=1;
 	return (failure==0);
 }
 
-int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()
+int WuOnBeginCheckpoint()
 {
-	int failure = 0, success = 0, lockedok = 0;
-
-	while (!failure && !lockedok)
+	int success = 0;
+	TIMESTAMP ts = INVALID_TIMESTAMP;
+	if (uMutexLock(&gMutex,__sys_call_error)==0)
 	{
-		if (uMutexLock(&gMutex,__sys_call_error)!=0) { failure=1; }
-		else
-		{
-			if (curSnapshotTs==persSnapshotTs)
-			{
-				uMutexUnlock(&gMutex,__sys_call_error);
-				if (WaitForSingleObject(hSnapshotsAdvancedEvent,INFINITE)!=WAIT_OBJECT_0)
-				{
-					failure=1;
-				}
-			}
-			else
-			{
-				lockedok=1;
-			}
-		}
-	}
-
-	if (lockedok)
-	{
-		if (!SnOnBeginCheckpoint(&persSnapshotTs)) {}
-		else if (!VeOnBeginCheckpoint()) {}
-		else
-		{
-			success=1;
-		}
+		success = SnOnBeginCheckpoint(&ts);
 		uMutexUnlock(&gMutex,__sys_call_error);
-	}	 
-	return success; 
+	}
+	return success;
+}
+
+int WuOnCompleteCheckpoint()
+{
+	int success = 0;
+	if (uMutexLock(&gMutex,__sys_call_error)==0)
+	{
+		success = SnOnCompleteCheckpoint();
+	}
+	return success;
 }
 
 struct WuEnumerateAdapter
@@ -507,23 +516,6 @@ int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 	return success;
 }
 
-int WuNotifyCheckpointFinished()
-{
-	int success = 0;
-	if (uMutexLock(&gMutex, __sys_call_error) !=0 ) {}
-	else
-	{
-		if (!VeOnCompleteCheckpoint(persSnapshotTs)) {}
-		else if (!SnOnCompleteCheckpoint()) {}
-		else
-		{
-			success = 1;
-		}
-		uMutexUnlock(&gMutex, __sys_call_error);
-	}
-	return success;
-}	
-
 int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 {
 	int success=0, bufferId=0;
@@ -539,22 +531,42 @@ int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 			*p=XNULL;
 			*offs=0;
 			*swapped=XNULL;
-			if (isVersionsDisabled && !AllocBlock(&lxptr) || !isVersionsDisabled && !VeAllocBlock(&lxptr)) {}
-			else if (!LoadBuffer(lxptr,&bufferId,isVersionsDisabled)) {} /* TODO: fix flags here */ 
+			if (!VeAllocateBlock(&lxptr,&bufferId)) {}
 			{
 				*p=WuExternaliseXptr(lxptr);
 				*offs=RamoffsFromBufferId(bufferId);
-				if (isVersionsDisabled)
-				{
-					VeInitBlockHeader(lxptr, bufferId);
-				}
-				ProtectBuffer(bufferId,32,0);
 				success=1;
 			}
 			ClSetCurrentClientId(-1);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
+	*swapped = WuExternaliseXptr(PopSwappedXptr());
+	return success;
+}
+
+int WuAllocateTempBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
+{
+	XPTR bigXptr = 0;
+	int success = 0, bufferId = -1;
+
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		if (!ClSetCurrentClientId(sid)) {}
+		else
+		{
+			if (AllocateTempBlock(&bigXptr, &bufferId) && GrantExclusiveAccessToBuffer(bufferId))
+			{
+				*p = WuExternaliseXptr(bigXptr);
+				*offs = RamoffsFromBufferId(bufferId);
+				success=1;
+			}
+			ClSetCurrentClientId(-1);
+		}
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	*swapped = WuExternaliseXptr(PopSwappedXptr());
 	return success;
 }
 
@@ -579,9 +591,7 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			else
 			{
 				lxptr=WuInternaliseXptr(p);
-				if (!isVersionsDisabled && !VeCreateBlockVersion(lxptr)) {}
-				else if (!VeLoadBuffer(lxptr,&bufferId,0)) {}
-				else
+				if (VeCreateBlockVersion(lxptr, &bufferId))
 				{
 					*offs=RamoffsFromBufferId(bufferId);
 					success=1;
@@ -591,6 +601,7 @@ int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped)
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
+	*swapped = WuExternaliseXptr(PopSwappedXptr());
 	return success;
 }
 
@@ -617,14 +628,7 @@ int WuDeleteBlock(int sid, xptr p)
 			else
 			{
 				lxptr = WuInternaliseXptr(p);
-				if (isVersionsDisabled)
-				{
-					success=FreeBlock(lxptr); 
-				}
-				else
-				{
-					success=VeFreeBlock(lxptr);
-				}
+				success=VeFreeBlock(lxptr);
 			}
 			ClSetCurrentClientId(-1);
 		}
@@ -650,28 +654,20 @@ int WuGetBlock(int sid, xptr p, ramoffs *offs, xptr *swapped)
 			*swapped=XNULL;
 			if (IS_DATA_BLOCK(p))
 			{
-				if (VeLoadBuffer(lxptr,&bufferId,0))
-				{
-					success=1;
-				}
+				success = VePutBlockToBuffer(lxptr,&bufferId);
 			}
 			else
 			{
-				if(LoadBuffer(lxptr,&bufferId,0))
-				{
-					ProtectBuffer(bufferId,32,0);
-					success=1;
-				}
+				success = 
+					(PutBlockToBuffer(lxptr, &bufferId) && GrantExclusiveAccessToBuffer(bufferId));
 			}
 					
-			if (success)
-			{
-				*offs=RamoffsFromBufferId(bufferId);
-			}
+			if (success) *offs=RamoffsFromBufferId(bufferId);
 			ClSetCurrentClientId(-1);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
+	*swapped = WuExternaliseXptr(PopSwappedXptr());
 	return success;
 }
 
@@ -680,11 +676,8 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 	int success=0;
 
 	assert(snapshotTs && persHeapIndex);
-	if (isUsingSnapshot && isVersionsDisabled)
-	{
-		WuSetLastErrorMacro(WUERR_BAD_PARAMS);
-	}
-	else if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
 		if (!ClRegisterClient(&sid,1)) {}
@@ -695,7 +688,7 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 			{
 				if (!SnOnRegisterClient(isUsingSnapshot)) {}
 				else if (!SnGetTransactionSnapshotTs(snapshotTs)) {}
-				else if (!VeOnRegisterClient(isUsingSnapshot,*snapshotTs)) {}
+				else if (!VeOnRegisterClient()) {}
 				else if (!ClMarkClientReady(sid)) {}
 				else
 				try
@@ -711,7 +704,6 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 					success=1;
 				}
 				WU_CATCH_EXCEPTIONS()
-				WuDbgDump(-1,0);
 				ClSetCurrentClientId(-1);
 			}
 			if (!success) ClUnregisterClient(sid);			
@@ -723,6 +715,7 @@ int WuOnRegisterTransaction(int sid, int isUsingSnapshot, TIMESTAMP *snapshotTs,
 
 int WuOnCommitTransaction(int sid)
 {
+	TIMESTAMP currentSnapshotTs = INVALID_TIMESTAMP;
 	int success=0;
 
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
@@ -731,12 +724,8 @@ int WuOnCommitTransaction(int sid)
 		if (!ClSetCurrentClientId(sid)) {}
 		else
 		{
-			if (!VeOnCommit()) {}
-			else
-			{
-				success=1;
-			}
-			WuDbgDump(-1,0);
+			success = (SnOnTransactionEnd(&currentSnapshotTs) &&
+					   VeOnTransactionEnd(VE_COMMIT_TRANSACTION, currentSnapshotTs));
 			ClSetCurrentClientId(-1);
 		}
 		uMutexUnlock(&gMutex, __sys_call_error);
@@ -746,6 +735,7 @@ int WuOnCommitTransaction(int sid)
 
 int WuOnRollbackTransaction(int sid)
 {
+	TIMESTAMP currentSnapshotTs = INVALID_TIMESTAMP;
 	int success=0;
 
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
@@ -754,18 +744,19 @@ int WuOnRollbackTransaction(int sid)
 		if (!ClSetCurrentClientId(sid)) {}
 		else
 		{
-			if (!VeOnRollback()) {}
+			if (!VeOnTransactionEnd(VE_ROLLBACK_TRANSACTION, INVALID_TIMESTAMP) ||
+				!SnOnTransactionEnd(&currentSnapshotTs)) {}
 			else
 			{
 				success=1;
 			}
-			WuDbgDump(-1,0);
 			ClSetCurrentClientId(-1);
 		}		
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
 	return success;
 }
+
 
 int WuOnUnregisterTransaction(int sid)
 {
@@ -807,22 +798,24 @@ int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 	return success;
 }
 
-int WuAdvanceSnapshots()
+int WuTryAdvanceSnapshots(int *bSuccess)
 {
-	TIMESTAMP discardedSnapshotTs = INVALID_TIMESTAMP;
+	TIMESTAMP discardedSnapshotTs = INVALID_TIMESTAMP, curSnapshotTs = INVALID_TIMESTAMP;
 	int success=0;
 
+	assert(bSuccess); *bSuccess=0;
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		if (!SetEvent(hSnapshotsAdvancedEvent)) {}
-		else if (!SnTryAdvanceSnapshots(&curSnapshotTs) || curSnapshotTs==INVALID_TIMESTAMP) {}
-		else if (!VeOnSnapshotsAdvanced(curSnapshotTs,discardedSnapshotTs)) {}
+		if (!SnTryAdvanceSnapshots(&curSnapshotTs) || curSnapshotTs==INVALID_TIMESTAMP) 
+		{
+			success =  (WuGetLastError() == WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
+		}
 		else
 		try
 		{
-			WuDbgDump(-1,0);
 			PhOnSnapshotCreate(curSnapshotTs);
+			*bSuccess=1;
 			success=1;
 		}
 		WU_CATCH_EXCEPTIONS()
@@ -841,15 +834,6 @@ void WuDbgDump(int selector, int reserved)
 #endif
 }
 
-size_t WuFetchSwappedXptrs(XPTR **xptrs)
-{
-	size_t r=swappedNum;
-	assert(xptrs);
-	swappedNum=0;
-	*xptrs = swapped;
-	return r;
-}
-
 /* public api, exn adapters */ 
 
 void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
@@ -862,9 +846,9 @@ void WuReleaseExn()
 	if (!WuRelease()) WuThrowException();
 }
 
-void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn()
+void WuOnBeginCheckpointExn()
 {
-	if (!WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced()) WuThrowException();
+	if (!WuOnBeginCheckpoint()) WuThrowException();
 }
 
 void WuEnumerateVersionsForCheckpointExn(WuEnumerateVersionsParams *params,
@@ -873,9 +857,9 @@ void WuEnumerateVersionsForCheckpointExn(WuEnumerateVersionsParams *params,
 	if (!WuEnumerateVersionsForCheckpoint(params,saveListsProc)) WuThrowException();
 }
 
-void WuNotifyCheckpointFinishedExn()
+void WuOnCompleteCheckpointExn()
 {
-	if (!WuNotifyCheckpointFinished()) WuThrowException();
+	if (!WuOnCompleteCheckpoint()) WuThrowException();
 }
 
 void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
@@ -883,11 +867,15 @@ void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 	if (!WuAllocateDataBlock(sid, p, offs, swapped)) WuThrowException();
 }
 
+void WuAllocateTempBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped)
+{
+	if (!WuAllocateTempBlock(sid, p, offs, swapped)) WuThrowException(); 
+}
+
 void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped)
 {
 	if (!WuCreateBlockVersion(sid, p, offs, swapped)) WuThrowException();
 }
-
 
 void WuDeleteBlockExn(int sid, xptr p)
 {
@@ -924,7 +912,9 @@ void WuGatherSnapshotsStatsExn(WuSnapshotStats *stats)
 	if (!WuGatherSnapshotsStats(stats)) WuThrowException();
 }
 
-void WuAdvanceSnapshotsExn()
+bool WuTryAdvanceSnapshotsExn()
 {
-	if (!WuAdvanceSnapshots()) WuThrowException();
+	int bSuccess = 0;
+	if (!WuTryAdvanceSnapshots(&bSuccess)) WuThrowException();
+	return bSuccess;
 }
