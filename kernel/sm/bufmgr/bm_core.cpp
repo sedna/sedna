@@ -36,6 +36,9 @@ t_ramoffs_list free_mem;
 t_ramoffs_list used_mem;
 t_ramoffs_list blocked_mem;
 
+// A single buffer that is protected from beeng flushed
+ramoffs buffer_on_stake = -1;
+
 // File mappings
 UMMap  file_mapping;
 UShMem p_sm_callback_file_mapping;
@@ -282,29 +285,34 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         res = used_mem.pop(*offs);
         if (res != 0) throw SYSTEM_EXCEPTION("There is absolutely no buffer memory");
 #endif
+		bool approved = false;
+		
+		if (offs != buffer_on_stake)
+		{
 
-        cur_p = ((vmm_sm_blk_hdr*)OFFS2ADDR(*offs))->p;
-        /*
-        // approve of offs 
-        tr_info_map::iterator it;
-        for (it = trs.begin(); it != trs.end(); it++)
-        {
-            if (it->first != sid)
-            {
-                *(xptr*)p_sm_callback_data = cur_p;
+			cur_p = ((vmm_sm_blk_hdr*)OFFS2ADDR(*offs))->p;
+			/*
+			// approve of offs 
+			tr_info_map::iterator it;
+			for (it = trs.begin(); it != trs.end(); it++)
+			{
+				if (it->first != sid)
+				{
+					*(xptr*)p_sm_callback_data = cur_p;
 
-                USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error);
-                USemaphoreDown(it->second->sm_to_vmm_callback_sem2, __sys_call_error);
+					USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error);
+					USemaphoreDown(it->second->sm_to_vmm_callback_sem2, __sys_call_error);
 
-                if (!(*(bool*)p_sm_callback_data))
-                {
-                    used_mem.push(*offs);
-                    break;
-                }
-            }
-        }
-        */
-        bool approved = unmap_block_in_trs(sid, cur_p, false);
+					if (!(*(bool*)p_sm_callback_data))
+					{
+						used_mem.push(*offs);
+						break;
+					}
+				}
+			}
+			*/
+			approved = unmap_block_in_trs(sid, cur_p, false);
+		}
         if (approved) break;
         else used_mem.push(*offs);
         //if (it == trs.end()) break; // successfully approved

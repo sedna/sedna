@@ -34,6 +34,7 @@ struct SnSnapshotStats
 	size_t curSnapshotSharedVersionsCount;
 	size_t persSnapshotVersionsCount;
 	size_t persSnapshotSharedVersionsCount;
+	int isSnapshotSlotAvalible;
 };
 
 typedef int (*SnEnumerateVersionsProc)(SnEnumerateVersionsParams *params, 

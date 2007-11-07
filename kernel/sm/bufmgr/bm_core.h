@@ -64,6 +64,9 @@ extern t_ramoffs_list free_mem;
 extern t_ramoffs_list used_mem;
 extern t_ramoffs_list blocked_mem;
 
+// A single buffer that is protected from beeng flushed
+extern ramoffs buffer_on_stake;
+
 // File mappings
 extern UMMap  file_mapping;
 extern UShMem p_sm_callback_file_mapping;

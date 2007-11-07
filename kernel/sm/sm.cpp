@@ -70,13 +70,6 @@ void SMCtrlHandler(int signo)
 }
 #endif
 
-xptr GetSwappedFromWu()
-{
-	XPTR *buf=NULL;
-	if (WuFetchSwappedXptrs(&buf)) return WuExternaliseXptr(*buf);
-	else return XNULL;
-}
-
 int sm_server_handler(void *arg)
 {
     //d_printf1("query received\n");   
@@ -237,17 +230,16 @@ int sm_server_handler(void *arg)
                                                 (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                 (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
-						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          break;
                      }
             case 24: {
                          //d_printf1("query 24: bm_allocate_tmp_block\n");
-                         bm_allocate_tmp_block(msg->sid, 
+                         WuAllocateTempBlockExn(msg->sid, 
                                                (xptr*)(&(msg->data.swap_data.ptr)), 
                                                (ramoffs*)(&(msg->data.swap_data.offs)), 
                                                (xptr*)(&(msg->data.swap_data.swapped)));
                          msg->cmd = 0;
-						 ((vmm_sm_blk_hdr*)((char*)buf_mem_addr+msg->data.swap_data.offs))->trid_wr_access=msg->sid;
+						 
                          break;
                      }
             case 25: {
@@ -262,7 +254,6 @@ int sm_server_handler(void *arg)
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
                                       (xptr*)(&(msg->data.swap_data.swapped)));
-						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          msg->cmd = 0;
                          break;
                      }
@@ -355,7 +346,6 @@ int sm_server_handler(void *arg)
                                       *(xptr*)(&(msg->data.swap_data.ptr)), 
                                       (ramoffs*)(&(msg->data.swap_data.offs)), 
                                       (xptr*)(&(msg->data.swap_data.swapped)));
-						 *(xptr *)&msg->data.swap_data.swapped=GetSwappedFromWu();
                          msg->cmd = 0;
                          break;
                      }

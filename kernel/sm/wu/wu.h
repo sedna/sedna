@@ -26,14 +26,16 @@ void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapsho
 
 void WuReleaseExn();
 
-void WuNotifyCheckpointActivatedAndWaitForSnapshotAdvancedExn();
+void WuOnBeginCheckpointExn();
 
 void WuEnumerateVersionsForCheckpointExn(WuEnumerateVersionsParams *params,
 										 WuEnumerateVersionsProc enumProc);
 
-void WuNotifyCheckpointFinishedExn();
+void WuOnCompleteCheckpointExn();
 
 void WuAllocateDataBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped);
+
+void WuAllocateTempBlockExn(int sid, xptr *p, ramoffs *offs, xptr *swapped);
 
 void WuCreateBlockVersionExn(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
@@ -51,7 +53,7 @@ void WuOnUnregisterTransactionExn(int sid);
 
 void WuGatherSnapshotsStatsExn(WuSnapshotStats *);
 
-void WuAdvanceSnapshotsExn();
+bool WuTryAdvanceSnapshotsExn();
 
 #define WU_DBG_DUMP_CLIENTS		1
 #define WU_DBG_DUMP_VERSIONS	2
@@ -67,14 +69,16 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs=
 
 int WuRelease();
 
-int WuNotifyCheckpointActivatedAndWaitForSnapshotAdvanced();
+int WuOnBeginCheckpoint();
 
 int WuEnumerateVersionsForCheckpoint(WuEnumerateVersionsParams *params,
 									 WuEnumerateVersionsProc enumProc);
 
-int WuNotifyCheckpointFinished();
+int WuOnCompleteCheckpoint();
 
 int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
+
+int WuAllocateTempBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped);
 
 int WuCreateBlockVersion(int sid, xptr p, ramoffs *offs, xptr *swapped);
 
@@ -92,7 +96,7 @@ int WuOnUnregisterTransaction(int sid);
 
 int WuGatherSnapshotsStats(WuSnapshotStats *);
 
-int WuAdvanceSnapshots();
+int WuTryAdvanceSnapshots(int *bSuccess);
 
 #endif
 

@@ -119,10 +119,10 @@ int SnGetTransactionTs(TIMESTAMP *timestamp);
 #define SN_LAST_COMMITED_VERSION_TIMESTAMP		(1 + TIMESTAMP_MAX)
 #define SN_WORKING_VERSION_TIMESTAMP			(2 + TIMESTAMP_MAX)
 
-int SnExpandDfvHeader(const TIMESTAMP tsIn[],
+int SnExpandDfvHeader(const TIMESTAMP tsInBuf[],
 					  size_t szIn,
-					  TIMESTAMP tsOut[],
-					  int idOut[],
+					  TIMESTAMP tsOutBuf[],
+					  int idOutBuf[],
 					  size_t *szOut,
 					  TIMESTAMP *anchorTs);
 
