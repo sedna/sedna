@@ -278,7 +278,7 @@ int LocateVersionsHeader(int bufferId, VersionsHeader **veHeader)
 	if (LocateBlockHeader(bufferId, &blockHeader))
 	{
 		*veHeader = &blockHeader->versionsHeader;
-		success;
+		success = 1;
 	}
 	return success;
 }
@@ -368,6 +368,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	veSetup.grantExclusiveAccessToBuffer = GrantExclusiveAccessToBuffer;
 	veSetup.locateVersionsHeader = LocateVersionsHeader;
 	veSetup.markBufferDirty = MarkBufferDirty;
+	veSetup.putBlockToBuffer = PutBlockToBuffer;
 
 	snSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
 	snSetup.freeBlock = VeFreeBlockLowAndUpdateRestrictions;
@@ -531,7 +532,7 @@ int WuAllocateDataBlock(int sid, xptr *p, ramoffs *offs, xptr *swapped)
 			*p=XNULL;
 			*offs=0;
 			*swapped=XNULL;
-			if (!VeAllocateBlock(&lxptr,&bufferId)) {}
+			if (VeAllocateBlock(&lxptr,&bufferId))
 			{
 				*p=WuExternaliseXptr(lxptr);
 				*offs=RamoffsFromBufferId(bufferId);
@@ -792,7 +793,7 @@ int WuGatherSnapshotsStats(WuSnapshotStats *stats)
 	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
-		SnGatherSnapshotStats(stats);
+		success = SnGatherSnapshotStats(stats);
 		uMutexUnlock(&gMutex, __sys_call_error);
 	}
 	return success;
