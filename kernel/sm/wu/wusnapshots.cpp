@@ -929,7 +929,7 @@ static inline
 int IsVersionYoungerThanSnapshot(SnSnapshot *pSn, 
 								 TIMESTAMP ts)
 {
-	assert(pSn && pSn->tsBegin);
+	assert(pSn && (pSn->tsBegin == pSn->tsEnd || pSn->tsBegin));
 	return ts > pSn->timestamp || std::binary_search(pSn->tsBegin, pSn->tsEnd, ts);
 }
 
@@ -1442,11 +1442,12 @@ int SnTryAdvanceSnapshots(TIMESTAMP *snapshotTs)
 
 	assert(snapshotTs);
 	*snapshotTs = INVALID_TIMESTAMP;
+	/*
 	if (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)
 	{
 		WuSetLastErrorMacro(WUERR_VERSIONS_DISABLED);
 	}
-	else if (!PurifySnapshots(&snapshots, 0)) {}
+	else*/ if (!PurifySnapshots(&snapshots, 0)) {}
 	else if (!ImpGetTimestamp(snapshotTs)) {}
 	else
 	{
@@ -1485,6 +1486,7 @@ int SnOnBeginCheckpoint(TIMESTAMP *persistentTs)
 		/* someone forgot to call SnOnCompleteCheckpoint, SN_PREV_PERSISTENT_SNAPSHOT is on list */ 
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
+#if 0
 	/*	if versions are disabled we have to create a new snapshot here so 
 		persistentTs recieves consistent values */ 
 	else if ((setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG) && (
@@ -1493,6 +1495,7 @@ int SnOnBeginCheckpoint(TIMESTAMP *persistentTs)
 	{
 		*persistentTs=INVALID_TIMESTAMP;
 	}
+#endif
 	else if (!(nextPersSnapshot = GetCurrentSnapshot(&snapshots))) 
 	{
 		WuSetLastErrorMacro(WUERR_NO_SNAPSHOTS_EXIST);

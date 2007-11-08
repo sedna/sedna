@@ -576,6 +576,7 @@ int VeInitialize()
 	{
 		restrictionHash = NULL;
 		isInitialized = 1;
+		success = 1;
 	}
 	return success;
 }
