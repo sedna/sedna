@@ -745,6 +745,28 @@ int EnumerateVersionsForCheckpointProc(SnGcNode *node,
 	return 1;
 }
 
+/* Mark all snapshots without transactions as damaged. */ 
+int AutoDamageSnapshotsAndScanForGarbage(SnSnapshotsList *snLst,
+										 int isKeepingCurrentSnapshot)
+{
+	SnSnapshot *snapshot = NULL;
+
+	assert(snLst);
+	snapshot = GetCurrentSnapshot(snLst);
+	if (snapshot)
+	{
+		/* skip the current snapshot */ 
+		if (isKeepingCurrentSnapshot) snapshot = snapshot->next;
+		/* mark all other snapshots as damaged */ 
+		while (snapshot)
+		{
+			if (snapshot->occupancy==0) snapshot->isDamaged=1;
+			snapshot = snapshot->next;
+		}
+	}
+	return 1;
+};
+
 /*	Discard all those snapshots that can be discarded now. */ 
 static
 int PurifySnapshots(SnSnapshotsList *snLst,
@@ -790,7 +812,7 @@ int PurifySnapshots(SnSnapshotsList *snLst,
 			if (!DiscardSnapshot(snLst,ts)) failure=1;
 		}
 	}
-	return failure==0;
+	return failure==0 && AutoDamageSnapshotsAndScanForGarbage(snLst, isKeepingCurrentSnapshot);
 }
 
 static
@@ -832,7 +854,7 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 {
 	int success=0;
 
-	assert(snLst && pSn);
+	assert(snLst);
 	if (!ValidateRequestForGc(&request)) { WuSetLastErrorMacro(WUERR_BAD_PARAMS); }
 	else if (request.type == SN_REQUEST_NOP)
 	{
@@ -840,25 +862,47 @@ int SubmitRequestForGc(SnSnapshotsList *snLst,
 	}
 	else
 	{
-		int level = 0;
+		int level = 0, levelLastNotDamaged = 0;
+		const SnSnapshot *pSnLastNotDamaged = NULL;
 		SnGcNode *pGn = NULL;
 		SnVersionEntry entry = {};
 
-		if (pSn->timestamp < request.anchorTs)
+		/*	no snapshot depends on the version? */ 
+		if (!pSn || pSn->timestamp < request.anchorTs)
 		{
-			if (request.type == SN_REQUEST_ADD_NORMAL_VERSION)
-			{
-				snLst->runawayCount++;
-			}
-			request.type = SN_REQUEST_DISCARD_VERSION;
+			pSn = NULL;
 		}
+		/*	find the last snapshot depending on the version (pSn is the first one) */ 
 		else while (pSn->next && (pSn->next->timestamp >= request.anchorTs ))
 		{
+			if (!pSn->isDamaged)
+			{
+				levelLastNotDamaged = level;
+				pSnLastNotDamaged = pSn;
+			}
 			pSn = pSn->next;
 			++level;
 		}
 
-		GetGcNodeByIndex(pSn->gcChain,&pGn,level);
+		/*	if we are commiting a bogus version (used to navigate to older versions)
+			we can exclude damaged snapshots since they aren't used for navigation */ 
+		if (request.type == SN_REQUEST_ADD_BOGUS_VERSION && pSn && pSn->isDamaged)
+		{
+			pSn = pSnLastNotDamaged;
+			level = levelLastNotDamaged;
+		}
+
+		/*	if no snapshot depends on the version feel free to discard it */ 
+		if (!pSn)
+		{
+			if (request.type == SN_REQUEST_ADD_NORMAL_VERSION) snLst->runawayCount++;
+			request.type = SN_REQUEST_DISCARD_VERSION;
+		}
+		else
+		{
+			GetGcNodeByIndex(pSn->gcChain,&pGn,level);
+		}
+		
 		switch(request.type)
 		{
 		case SN_REQUEST_DISCARD_VERSION:
@@ -943,6 +987,22 @@ void InitFakeHeadSnapshot(SnSnapshotsList *snLst,
 	pSn->next = GetCurrentSnapshot (snLst);
 	pSn->tsBegin = snLst->tsBegin;
 	pSn->tsEnd = snLst->tsEnd;
+}
+
+
+int EnsureCanAdvanceSnapshots(SnSnapshotsList *snLst)
+{
+	int count = 0;
+	SnSnapshot *snapshot = NULL;
+
+	assert(snLst);
+	snapshot = GetCurrentSnapshot(snLst);
+	while (snapshot)
+	{
+		count += (!snapshot->isDamaged);
+		snapshot = snapshot->next;
+	}
+	return (count < SN_SNAPSHOTS_COUNT-1 && snLst->leadingSnapshot->type == SN_FUTURE_SNAPSHOT);
 }
 
 void DbgDumpTimestamps(const TIMESTAMP *begin,
@@ -1442,33 +1502,18 @@ int SnTryAdvanceSnapshots(TIMESTAMP *snapshotTs)
 
 	assert(snapshotTs);
 	*snapshotTs = INVALID_TIMESTAMP;
-	/*
-	if (setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG)
+	if (!PurifySnapshots(&snapshots, 0)) {}
+	else if (!EnsureCanAdvanceSnapshots(&snapshots))
 	{
-		WuSetLastErrorMacro(WUERR_VERSIONS_DISABLED);
+		WuSetLastErrorMacro(WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED);
 	}
-	else*/ if (!PurifySnapshots(&snapshots, 0)) {}
-	else if (!ImpGetTimestamp(snapshotTs)) {}
-	else
+	else if (ImpGetTimestamp(snapshotTs) && 
+			 CreateSnapshot(&snapshots, *snapshotTs, SN_REGULAR_SNAPSHOT))
 	{
-		WuSetLastErrorMacro(WUERR_OK);
-		if (!CreateSnapshot(&snapshots, *snapshotTs, SN_REGULAR_SNAPSHOT))
-		{
-			*snapshotTs = INVALID_TIMESTAMP;
-			if (WuGetLastError() == WUERR_MAX_NUMBER_OF_SNAPSHOTS_EXCEEDED)
-			{
-				/*	we failed to create a snapshot but it is due to 
-					maximum number of snapshots reached */ 
-				success = 1;
-			}
-		}
-		else
-		{
-			/* advanced snapshots successfully */ 
-			snapshots.runawayCount = 0;
-			success=1;
-		}
+		snapshots.runawayCount = 0;
+		success = 1;
 	}
+	if (!success) *snapshotTs = INVALID_TIMESTAMP;
 	return success;
 }
 
@@ -1486,16 +1531,6 @@ int SnOnBeginCheckpoint(TIMESTAMP *persistentTs)
 		/* someone forgot to call SnOnCompleteCheckpoint, SN_PREV_PERSISTENT_SNAPSHOT is on list */ 
 		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
 	}
-#if 0
-	/*	if versions are disabled we have to create a new snapshot here so 
-		persistentTs recieves consistent values */ 
-	else if ((setup.flags & SN_SETUP_DISABLE_VERSIONS_FLAG) && (
-			 !ImpGetTimestamp(persistentTs) || 
-			 !CreateSnapshot(&snapshots, *persistentTs, SN_REGULAR_SNAPSHOT)))
-	{
-		*persistentTs=INVALID_TIMESTAMP;
-	}
-#endif
 	else if (!(nextPersSnapshot = GetCurrentSnapshot(&snapshots))) 
 	{
 		WuSetLastErrorMacro(WUERR_NO_SNAPSHOTS_EXIST);
@@ -1726,7 +1761,9 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 				tsOutCur [0] = sniter->timestamp;
 				idOutCur [0] = (int)(tsInCur - tsIn);
 			}
-			sniter = sniter->next;
+			/* match versions for the next snapshot, skipping damaged ones */ 
+			do sniter = sniter->next; while (sniter && sniter->isDamaged);
+			/* offset output position */ 
 			++tsOutCur;
 			++idOutCur;
 		}
