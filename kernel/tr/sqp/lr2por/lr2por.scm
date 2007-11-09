@@ -316,24 +316,27 @@
      (cl:signal-input-error SE4008 "bad query body, it is empty")
      (begin
        (set! var-count '0)
-       (cond  ((eq? 'query-body (car query-in-lr))
-                (let ((query (l2p:any-lr-node2por (cadr query-in-lr)))
-                      (context (if (eq? var-count 0) 0 var-count)))
-                  (list 'PPQueryRoot context query)))
-         
-              ; DL: in the following 3 cases, cadr -> caddr
-              ; because of the query prolog
-               ((eq? 'update (car query-in-lr))
-                 (l2p:any-lr-node2por (caddr query-in-lr)))
-               ((eq? 'manage (car query-in-lr))
-                 (l2p:any-lr-node2por (caddr query-in-lr)))
-               ((eq? 'retrieve-metadata (car query-in-lr))
-                 (l2p:any-lr-node2por (caddr query-in-lr)))
-
-           
-               (else (cl:signal-input-error SE4008 "argument is not query-body or update"))
-  )
-)))
+       (cond
+         ((eq? 'query-body (car query-in-lr))
+          (let ((query (l2p:any-lr-node2por (cadr query-in-lr)))
+                (context (if (eq? var-count 0) 0 var-count)))
+            (list 'PPQueryRoot context query)))
+         ; DL: in the following 3 cases, cadr -> caddr
+         ; because of the query prolog
+         ((memq (car query-in-lr) '(update manage retrieve-metadata))
+          (l2p:any-lr-node2por
+           (car
+            (filter
+             (lambda (x)
+               (not (and (pair? x) (memq (car x) '(module prolog)))))
+             (cdr query-in-lr)))))
+;          ((eq? 'manage (car query-in-lr))
+;           (l2p:any-lr-node2por (caddr query-in-lr)))
+;          ((eq? 'retrieve-metadata (car query-in-lr))
+;           (l2p:any-lr-node2por (caddr query-in-lr)))
+         (else
+          (cl:signal-input-error
+           SE4008 "argument is not query-body or update"))))))
 
 ;-------------------------------------------------------------------------------
 ; l2p:any-lr-node2por - translates any LR operation to the POR one

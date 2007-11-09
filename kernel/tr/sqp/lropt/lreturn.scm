@@ -2218,7 +2218,10 @@
              ((manage) lropt:manage)
              (else  ; this should not happen
               lropt:expr))
-           (cadr (xlr:op-args query))
+           (cadr (filter
+                   (lambda (x)
+                     (not (and (pair? x) (eq? (xlr:op-name x) 'module))))
+                   (xlr:op-args query)))
            #t #t
            var-types prolog processed-funcs)))
        (lambda (body dummy-auto? dummy-0-or-1? dummy-level?
