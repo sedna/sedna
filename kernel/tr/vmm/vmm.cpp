@@ -152,7 +152,6 @@ void vmm_trace_delete_block(const xptr& p)
 typedef XptrHash<void*, 16, 16> t_blocks_write_table;
 static t_blocks_write_table write_table;
 
-
 /*******************************************************************************
 ********************************************************************************
   VMM MAP/REMAP/UNMAP FUNCTIONS
@@ -184,14 +183,24 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #ifdef _WIN32
     addr = MapViewOfFileEx(
               m,						// handle to file-mapping object
+#ifdef VMM_DEBUG_VERSIONS
               (!isWrite) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
+#else
+			  FILE_MAP_ALL_ACCESS, // access mode
+#endif
               0,						// high-order DWORD of offset
               offs,						// low-order DWORD of offset
               PAGE_SIZE,				// number of bytes to map
               addr						// starting address
            );
 #else
-    addr = mmap(addr, PAGE_SIZE, (!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m, offs);
+    addr = mmap(addr, PAGE_SIZE, 
+#ifdef VMM_DEBUG_VERSIONS
+    	(!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
+#else
+        PROT_READ | PROT_WRITE,
+#endif
+    	MAP_SHARED | MAP_FIXED, m, offs);
 #endif
 #ifdef _WIN32
     if (addr == NULL)
@@ -294,7 +303,7 @@ inline void _vmm_remap(void *addr, ramoffs offs, bool isWrite = true)
         throw USER_EXCEPTION(SE1035);
 #else
     __vmm_unmap(addr);
-    if (__vmm_map(addr, offs))
+    if (__vmm_map(addr, offs, isWrite))
         throw USER_EXCEPTION(SE1035);
 #endif
 }
@@ -1370,8 +1379,11 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 
         if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access == sid)
         {
+#ifdef VMM_DEBUG_VERSIONS
 	        _vmm_remap(XADDR(p), offs, true);
-//	        write_table.insert(p, XADDR(p));
+#else
+	        write_table.insert(p, XADDR(p));
+#endif
 	    }
 
     } catch (...) {

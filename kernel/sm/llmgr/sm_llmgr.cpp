@@ -155,6 +155,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     else
     if (body_beg[0] == LL_PERS_SNAPSHOT_ADD)
     {
+    	TIMESTAMP ts = *((TIMESTAMP *)(body_beg + sizeof(char) + sizeof(WuVersionEntry)));
     	blocks_info = (WuVersionEntry *)(body_beg + sizeof(char));
     	
 //    	ver_info.lxptr = blocks_info->lxptr;
@@ -163,9 +164,15 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 //    	VeRevertBlock(&ver_info);
 
 //        ctrl_blk = malloc(PAGE_SIZE);
-        bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
-    	bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
+        bm_rcv_read_block(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk); // read "last" block
         
+        // we must recover block only if it was moved to "blocks_info->xptr" place
+        if (ts != ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0])
+        {
+        	bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
+    		bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
+        }
+
         lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(int);
     }
     else
@@ -205,7 +212,8 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
 		        ctrl_blk = malloc(PAGE_SIZE);
         		bm_rcv_read_block(WuExternaliseXptr(blocks_info[i].xptr), ctrl_blk);
 		    	//TODO: change phys_xptr to log_xptr for this block
-    			bm_rcv_change(WuExternaliseXptr(blocks_info[i].xptr), ctrl_blk, PAGE_SIZE);
+    			bm_rcv_change(WuExternaliseXptr(blocks_info[i].lxptr), ctrl_blk, PAGE_SIZE);
+    			push_to_persistent_free_blocks_stack(&(mb->free_data_blocks), WuExternaliseXptr(blocks_info[i].xptr));
     		}
     	}
 

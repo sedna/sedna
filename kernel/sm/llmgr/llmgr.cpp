@@ -147,14 +147,14 @@ void ll_add_decrease_info(__int64 old_size)
 #endif
 }
 
-LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info)
+LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info, TIMESTAMP ts)
 {
 #ifdef LOGICAL_LOG
   bool isGarbage = false;
 
   if (!enable_write_of_phys_recs) return NULL_LSN;
 
-  return logical_log_mgr->ll_log_pers_snapshot_add(blk_info, isGarbage, true);
+  return logical_log_mgr->ll_log_pers_snapshot_add(blk_info, isGarbage, ts, true);
 //  logical_log_mgr->ll_log_flush(true);
 #else
   return NULL_LSN;

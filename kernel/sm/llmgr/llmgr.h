@@ -35,7 +35,7 @@ void ll_add_free_blocks_info(xptr phys_xptr, void *block, int size);
 
 void ll_add_decrease_info(__int64 old_size);
 
-LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info);
+LONG_LSN ll_add_pers_snapshot_block_info(WuVersionEntry *blk_info, TIMESTAMP ts);
 
 TIMESTAMP ll_returnTimestampOfPersSnapshot();
 
