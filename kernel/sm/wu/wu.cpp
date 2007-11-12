@@ -461,6 +461,7 @@ int WuOnCompleteCheckpoint()
 	if (uMutexLock(&gMutex,__sys_call_error)==0)
 	{
 		success = SnOnCompleteCheckpoint();
+		uMutexUnlock(&gMutex,__sys_call_error);
 	}
 	return success;
 }

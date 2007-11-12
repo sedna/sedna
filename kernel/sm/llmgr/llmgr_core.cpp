@@ -1459,11 +1459,12 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
  persistent snapshot add log record format:
  op (1 byte)
  SnapshotsVersion --- info about physical/logical xptr of block
+ TIMESTAMP - timestamp of moved version
  isGarbage 
  prevLSN // lsn of the previous record in LL_CHECKPOINT-LL_PERS_SNAPSHOT_ADD chain
 */
 
-LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, bool sync)
+LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, TIMESTAMP ts, bool sync)
 {
   char *tmp_rec;  
   int rec_len;
@@ -1473,7 +1474,7 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
 
   ll_log_lock(sync);
 
-  rec_len = sizeof(char) + sizeof(WuVersionEntry) + sizeof(int) + sizeof(LONG_LSN);
+  rec_len = sizeof(char) + sizeof(WuVersionEntry) + sizeof(TIMESTAMP) + sizeof(int) + sizeof(LONG_LSN);
   tmp_rec = ll_log_malloc(rec_len);
   char op = LL_PERS_SNAPSHOT_ADD;
   int offs = 0;
@@ -1482,6 +1483,7 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
   inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
 //  inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
   inc_mem_copy(tmp_rec, offs, blk_info, sizeof(WuVersionEntry));
+  inc_mem_copy(tmp_rec, offs, &ts, sizeof(TIMESTAMP));
   inc_mem_copy(tmp_rec, offs, &isGarbage, sizeof(int));
   inc_mem_copy(tmp_rec, offs, &(mem_head->last_chain_lsn), sizeof(LONG_LSN));
 
