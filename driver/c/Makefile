@@ -8,7 +8,6 @@ VPATH = . $(PP)/kernel/common/u $(PP)/kernel/common/errdbg $(PP)/kernel/common
 
 include $(PP)/Makefile.include
 
-
 ifeq ("$(PLATFORM)", "WIN32")
 all: libsednamt$(LIB_EXT) libsedna$(LIB_EXT)
 	@echo ===================================================================
@@ -62,10 +61,12 @@ libsedna$(LIB_EXT): $(ST_OBJS)
 	$(CC) $(CFLAGS_ST) $(OBJ_NAME)$@ $<
 
 # multi-threaded dynamic library
-#libsednamt$(DL_EXT): $(DLL_OBJS)
-#	link /DLL $(LIBFLAGS) $(LIBOUT)$@ $^
-
-#%.dl$(OBJ_EXT): %.c
+# libsednamt$(DL_EXT): $(DLL_MT_OBJS)
+#	link /DLL  $(LIBFLAGS) $(LIBOUT)$@ $^ wsock32.lib Advapi32.lib
+#
+#%.dl.mt$(OBJ_EXT): %.d
+#
+#%.dl.mt$(OBJ_EXT): %.c
 #	$(CC) $(CFLAGS) /MD $(OBJ_NAME)$@ $<
 
 else
