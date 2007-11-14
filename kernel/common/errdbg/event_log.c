@@ -254,6 +254,29 @@ static int __event_log_write_hdr(int elevel,
     return 0;
 }
 
+static int uMakeLowLevelDescriptorNonInheritable(FILE* f)
+{
+    int res, fd;
+
+#ifdef _WIN32
+    HANDLE hnd;
+    
+    fd = _fileno(f);
+    if(fd == -1) return 1;
+    hnd = (HANDLE)_get_osfhandle(fd);
+    if(hnd == INVALID_HANDLE_VALUE) return 1;
+    res = SetHandleInformation(hnd, HANDLE_FLAG_INHERIT, 0);
+    if(res == 0) return 1;
+#else
+    fd = fileno(f);
+    if(fd == -1) return 1;
+    res = fcntl(fd, F_SETFD, FD_CLOEXEC);
+    if(res == -1) return 1;
+#endif
+
+    return 0;
+}
+
 static void __event_log_check_output_stream()
 {
     struct stat st;
@@ -274,6 +297,15 @@ event_log_init_file:
         
         el_ostr = fopen(buf, "at");
         if (!el_ostr) return;
+        
+        /// We must make it non inheritable, other way sessions created by 
+        /// governor inherit it and block log file rename.
+        if(uMakeLowLevelDescriptorNonInheritable(el_ostr))
+        {
+            fclose(el_ostr);
+            el_ostr = NULL;
+            return;
+        }
     }
 
     if (fstat(fileno(el_ostr), &st) == 0) 
@@ -341,7 +373,10 @@ event_log_init_file:
         }
 
         if (rename(buf1, buf2))
-            return;
+        {
+             perror("rename:");
+             return;
+        }
 
         /* create new file and initialize output stream */
         goto event_log_init_file;
