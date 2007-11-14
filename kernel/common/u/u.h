@@ -613,6 +613,7 @@ int ustrerror_r(int errnum, char *buf, size_t n);
 void uperror(const char *s);
 void __sys_call_error(const char *filename, int lineno, const char *funcname, const char *sys_call, const void* arg);
 int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun);
+int uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun);
 
 #ifdef __cplusplus
 }
