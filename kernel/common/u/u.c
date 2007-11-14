@@ -173,3 +173,49 @@ int uNotInheritDescriptor(UHANDLE h, sys_call_error_fun fun)
         return 0;
 #endif
 }
+
+
+int uMakeLowLevelDescriptorNonInheritable(FILE* f, sys_call_error_fun fun)
+{
+    int fd;
+
+#ifdef _WIN32
+    HANDLE hnd;
+
+    fd = _fileno(f);
+    if(fd == -1) 
+    {
+        sys_call_error("_fileno");
+        return -1;
+    }
+    
+    hnd = (HANDLE)_get_osfhandle(fd);
+    if(hnd == INVALID_HANDLE_VALUE)
+    {
+        sys_call_error("_get_osfhandle");
+        return -1;
+    }
+
+    if(SetHandleInformation(hnd, HANDLE_FLAG_INHERIT, 0) == 0)
+    {
+        sys_call_error("SetHandleInformation");
+        return -1;
+    }
+    return 0;
+#else
+    fd = fileno(f);
+    if(fd == -1) 
+    {
+        sys_call_error("fileno");
+        return -1;
+    }
+
+    if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+    {
+        sys_call_error("fcntl");
+        return -1;
+    }
+    return 0;
+#endif
+}
+
