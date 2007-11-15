@@ -290,7 +290,7 @@ int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
 	WuVersionEntry versionEntry = {lxptr, xptr};
 	try
 	{
-		LONG_LSN lsn=ll_add_pers_snapshot_block_info(&versionEntry);
+		LONG_LSN lsn=ll_add_pers_snapshot_block_info(&versionEntry, INVALID_TIMESTAMP);
 		ll_logical_log_flush_lsn(lsn);	
 		success=1;
 	}
