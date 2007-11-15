@@ -1655,7 +1655,7 @@ int SnGatherSnapshotStats(SnSnapshotStats *stats)
 	}
 	else
 	{
-		stats->isSnapshotSlotAvalible = (snapshots.leadingSnapshot->type == SN_FUTURE_SNAPSHOT);
+		stats->isSnapshotSlotAvalible = EnsureCanAdvanceSnapshots(&snapshots);
 	}
 	return success;
 }
@@ -1761,8 +1761,8 @@ int SnExpandDfvHeader(const TIMESTAMP tsIn[],
 				tsOutCur [0] = sniter->timestamp;
 				idOutCur [0] = (int)(tsInCur - tsIn);
 			}
-			/* match versions for the next snapshot, skipping damaged ones */ 
-			do sniter = sniter->next; while (sniter && sniter->isDamaged);
+			/* switch to the next snapshot */ 
+			sniter = sniter->next;
 			/* offset output position */ 
 			++tsOutCur;
 			++idOutCur;
