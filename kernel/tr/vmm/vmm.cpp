@@ -170,6 +170,11 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
     int m;
 #endif
 
+#ifndef VMM_DEBUG_VERSIONS
+    /* if debug mode disabled we always map memory with write permissions */ 
+    isWrite = true;
+#endif
+
     if (offs == RAMOFFS_OUT_OFF_BOUNDS)
     {
         m = global_memory_mapping.map;
@@ -183,11 +188,7 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
 #ifdef _WIN32
     addr = MapViewOfFileEx(
               m,						// handle to file-mapping object
-#ifdef VMM_DEBUG_VERSIONS
               (!isWrite) ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS,		// access mode
-#else
-			  FILE_MAP_ALL_ACCESS, // access mode
-#endif
               0,						// high-order DWORD of offset
               offs,						// low-order DWORD of offset
               PAGE_SIZE,				// number of bytes to map
@@ -195,11 +196,7 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
            );
 #else
     addr = mmap(addr, PAGE_SIZE, 
-#ifdef VMM_DEBUG_VERSIONS
     	(!isWrite) ? PROT_READ : PROT_READ | PROT_WRITE,
-#else
-        PROT_READ | PROT_WRITE,
-#endif
     	MAP_SHARED | MAP_FIXED, m, offs);
 #endif
 #ifdef _WIN32

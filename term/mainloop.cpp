@@ -643,7 +643,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
                 break;
             }
     	}
-	if (1 || have_results) term_output1("\n\n");
+		fprintf(res_os, "\n");
     }
     else if(result == SEDNA_UPDATE_SUCCEEDED) 
     {
