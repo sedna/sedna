@@ -1,4 +1,3 @@
-#define _WIN32_WINNT 0x1000 
 
 /*
  * File:  exceptions.cpp
@@ -169,16 +168,10 @@ static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRec
 	return resolution;
 }
 
-extern "C"
-WINBASEAPI
-BOOL
-WINAPI
-IsDebuggerPresent( VOID );
-
 static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
 {
 	LONG resolution = exceptionDispatcherProc(ExceptionRecord,Context);
-#	if (_MSC_VER <= 1400)
+#	if (_MSC_VER < 1400)
 	/*	If we are compiling with Microsoft compiler and it is anything older than ver. 2005
 		call UnhandledExceptionFilter() now to get a "the program performed an ilegal operation" 
 		dialog that offers us to attach a debuger. The old Microsoft compilers generated
