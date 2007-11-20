@@ -33,10 +33,10 @@ bool				bt_locate_obj_bisection(const object* ar, shft ar_size, const object &ob
 
 
 /* insert functions */
-xptr				bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size);
+xptr				bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size, bool want_insertion = true);
+void				bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx, bool with_bt);
 shft				bt_find_split_key(char* pg, shft pretender_idx, shft pretender_size, bool & pretender_goes_left);
 xptr				bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, const bt_key &key, const object &obj, shft obj_idx,bool with_bt);
-void				bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj,bool with_bt);
 void				bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_ptr,bool with_bt);
 void				bt_promote_key(xptr &root, const xptr &pg, const xptr &parent_pg,bool with_bt);
 void				bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const object &obj);

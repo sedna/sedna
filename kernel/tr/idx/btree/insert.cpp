@@ -12,7 +12,6 @@
 #include "tr/vmm/vmm.h"
 
 
-
 /* temporary buffer used for performing page insert operations */
 char insert_buf[PAGE_SIZE];
 /* debug counter of btree height */
@@ -36,7 +35,7 @@ char insert_buf[PAGE_SIZE];
 	  situation is treated as well: one of the pages becomes empty, while all the data
 	  in original page settle in another page.
  */
-xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size)
+xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretender_size, bool want_insertion)
 {
     xptr    pg_xptr = ADDR2XPTR(pg);
     xptr    next_for_rpg = BT_NEXT(pg);
@@ -50,9 +49,12 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     char    *dst = NULL, *src = NULL;
     int i;
         
-    if (next_for_rpg == XNULL && pretender_idx == key_num)
+	if (key_num == 1) {
+		split_idx = 1;
+	} 
+	else if (next_for_rpg == XNULL && pretender_idx == key_num)
     {
-        split_idx = key_num - 1;
+		split_idx = key_num - 1;
     }
     else
     {
@@ -120,13 +122,11 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 	(*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
 	if (BT_IS_CLUS_HEAD(rpg_addr))
 	{
-		
 		CHECKP(pg_xptr);
 		VMM_SIGNAL_MODIFICATION(pg_xptr);
 		(*BT_IS_CLUS_PTR(pg))=false;
 		(*BT_IS_CLUS_HEAD_PTR(pg))=false;
 		(*BT_IS_CLUS_TAIL_PTR(pg))=false;    
-		
 	}
 	else
 	{
@@ -141,17 +141,18 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 		VMM_SIGNAL_MODIFICATION(next_for_rpg);
 		/* right <- */
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
-		
 	}
 
     /* clear out in which block pretender will reside and adjust new index of pretender in that page */
-    if (pretender_goes_left)
+	if (pretender_goes_left && want_insertion) {
         /* pretender index remains the same */
         return pg_xptr;
+	}
     else
     {
         /* pretender goes to the right page */
         pretender_idx = pretender_idx - split_idx;
+
         return rpg;
     }
 }
@@ -178,6 +179,7 @@ shft bt_find_split_key(char* pg, shft pretender_idx, shft pretender_size, bool &
         if (i == pretender_idx)
         {
             pretender_goes_left = true;
+
             volume += pretender_size;
             if (volume > border_volume)
                 /* i-1 was below half, the pretender size is less than half, it can not overload the page
@@ -301,6 +303,7 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
             splitting_occurred = true;
         }
 
+
         bt_leaf_do_insert_key(key_pg, key_idx, key, obj);
     } 
     else
@@ -313,24 +316,25 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
             if (BT_KEY_NUM(pg) == 1)
             { /* cluster case - nothing is promoted, instantly return */
 #ifdef PERMIT_CLUSTERS
-                bt_page_clusterize(root, pg, rpg, obj,with_bt);
+                bt_page_clusterize(root, pg, rpg, obj, obj_idx, with_bt);
                 return rpg;
 #else
                 throw USER_EXCEPTION2(SE1008, "Not enough space to insert new key/object into page (clusterization prohibited)");
 #endif
             }
             /* not cluster case - page splitting */
-            xptr tmp = bt_page_split(pg, rpg, key_idx, sizeof(object));
+            xptr tmp = bt_page_split(pg, rpg, key_idx, sizeof(object), false);
 
             CHECKP(tmp);
+
             key_pg = (char*)XADDR(tmp);
             key_pg_xptr = tmp;
             splitting_occurred = true;
         }
 
+		CHECKP(key_pg_xptr);
         bt_do_insert_obj(key_pg, key_idx, obj, obj_idx);
     }
-
 
     /* if splitting took place, promote splitting key (i.e. leftmost key in rpg page) to the parent page 
        note, if there is no parent block, new one is created an parent links of 'pg' and 'rpg' are made
@@ -366,60 +370,112 @@ xptr bt_leaf_insert(xptr &root, char* pg, shft key_idx, bool create_new_key, con
 
         bt_promote_key(root, rpg, parent_pg,with_bt);
     }
+	
     return key_pg_xptr;
 }
-
 
 /* attach new (rpg) page next to pg as cluster page. If the original pg page is not cluster yet, 
    mark it as cluster, i.e. form the cluster. The new page is initially unformatted. Insert object
    into new page
  */
-void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj,bool with_bt)
+void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj, shft obj_idx, bool with_bt)
 {
     xptr        pg_xptr = ADDR2XPTR(pg);
     xptr        next_for_rpg;
 	xptr        pg_parent;
     xmlscm_type pg_type = BT_KEY_TYPE(pg);
+	btree_chnk_hdr c = *(BT_CHNK_ITEM_AT(pg, 0));
+	char * tmp_rpg = insert_buf;
+	char * goal_page;
 
     if (!BT_IS_LEAF(pg)) throw USER_EXCEPTION2(SE1008, "Attempt to clusterize non-leaf page");
     if (BT_KEY_NUM(pg) != 1) throw USER_EXCEPTION2(SE1008, "Number of keys in original page is not equal to 1");
+
+	CHECKP(pg_xptr);
+	memcpy(tmp_rpg, pg, BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg)) - pg);
+
 	VMM_SIGNAL_MODIFICATION(pg_xptr);
+
     if (!BT_IS_CLUS(pg))
     {
         (*BT_IS_CLUS_PTR(pg)) = true;
         (*BT_IS_CLUS_HEAD_PTR(pg)) = true;
+        (*BT_IS_CLUS_PTR(tmp_rpg)) = true;
+        (*BT_IS_CLUS_TAIL_PTR(tmp_rpg)) = true;
     } 
-    else 
-    {
-        if (!BT_IS_CLUS_TAIL(pg) || BT_IS_CLUS_HEAD(pg))
-            throw USER_EXCEPTION2(SE1008, "Trying to clusterize non-tail cluster page");
-        (*BT_IS_CLUS_TAIL_PTR(pg)) = false;
-    }
 
     next_for_rpg = BT_NEXT(pg);
-	pg_parent = BT_PARENT(pg);
-    /* left -> */
-    (*BT_NEXT_PTR(pg)) = rpg;
-    
-    /* create cluster key */
-    bt_key key(pg, 0);
+	(*BT_NEXT_PTR(pg)) = rpg;
+    BT_IS_CLUS_HEAD(tmp_rpg) = false;
+	BT_HEAP(tmp_rpg) = PAGE_SIZE;
+	BT_PREV(tmp_rpg) = pg_xptr;
 
-    CHECKP(rpg);
-    char* rpg_addr = (char*)XADDR(rpg);
-    bt_page_markup(rpg_addr, pg_type);
-    /* insert cluster key and new object into rpg page */
-    bt_leaf_insert(root, rpg_addr, 0, true, key, obj, 0,with_bt);
-    CHECKP(rpg);
-	VMM_SIGNAL_MODIFICATION(rpg);
-    /* mark page as the cluster tail and link to neighbours */
-    (*BT_IS_CLUS_PTR(rpg_addr)) = true;
-    (*BT_IS_CLUS_TAIL_PTR(rpg_addr)) = true;
-    /* left <- */
-    (*BT_PREV_PTR(rpg_addr)) = pg_xptr;
-    /* right -> */
-    (*BT_NEXT_PTR(rpg_addr)) = next_for_rpg;
-	(*BT_PARENT_PTR(rpg_addr)) = pg_parent;
-    
+	if (BT_IS_CLUS_TAIL(pg)) {
+		BT_IS_CLUS_TAIL(pg) = false;
+	}
+
+	// move key from pg to tmp_rpg
+	if (BT_VARIABLE_KEY_TYPE(pg)) {
+		btree_key_hdr k = *(BT_KEY_ITEM_AT(pg, 0));
+		BT_HEAP(tmp_rpg) = PAGE_SIZE - k.k_size;
+		memcpy(tmp_rpg + BT_HEAP(tmp_rpg), pg + k.k_shft, k.k_size);
+		BT_KEY_ITEM_AT(tmp_rpg, 0)->k_shft = BT_HEAP(tmp_rpg);
+	}
+
+	if (obj_idx == BT_RIGHTMOST) {
+		BT_HEAP(tmp_rpg) -= sizeof(object);
+		* ((object *) (tmp_rpg + BT_HEAP(tmp_rpg))) = obj;
+		BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_shft = BT_HEAP(tmp_rpg);
+		BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_size = 1;
+	} else {
+		int split_idx = c.c_size / 2;
+
+		BT_HEAP(tmp_rpg) -= (c.c_size - split_idx) * sizeof(object);
+		BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_shft = BT_HEAP(tmp_rpg);
+		BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_size = (c.c_size - split_idx);
+
+		BT_HEAP(pg) += (c.c_size - split_idx) * sizeof(object);
+		BT_CHNK_ITEM_AT(pg, 0)->c_size = split_idx;
+		BT_CHNK_ITEM_AT(pg, 0)->c_shft = PAGE_SIZE
+			- (BT_VARIABLE_KEY_TYPE(pg) ? BT_KEY_ITEM_AT(pg, 0)->k_size : 0)
+			- split_idx * sizeof(object);
+
+		memcpy(
+			tmp_rpg + BT_CHNK_ITEM_AT(tmp_rpg, 0)->c_shft, 
+			pg + c.c_shft + split_idx * sizeof(object), 
+			(c.c_size - split_idx) * sizeof(object));
+
+		memmove(
+			pg + BT_CHNK_ITEM_AT(pg, 0)->c_shft, 
+			pg + c.c_shft, 
+			split_idx * sizeof(object));
+
+		// When we are sure, the key is at the end of block, it's just easier to work with it.
+
+		if (BT_VARIABLE_KEY_TYPE(pg)) {
+			BT_KEY_ITEM_AT(pg, 0)->k_shft = PAGE_SIZE - BT_KEY_ITEM_AT(pg, 0)->k_size;
+			memmove(
+				tmp_rpg + BT_KEY_ITEM_AT(tmp_rpg, 0)->k_shft, 
+				pg + BT_KEY_ITEM_AT(pg, 0)->k_shft,
+				BT_KEY_ITEM_AT(pg, 0)->k_size);
+		}
+
+		if (obj_idx >= split_idx) {
+			goal_page = tmp_rpg;
+			obj_idx -= split_idx;
+		} else {
+			goal_page = pg;
+		}
+
+		// DO INSERT OBJECT
+
+		memmove(goal_page + BT_HEAP(goal_page) - sizeof(object), goal_page + BT_HEAP(goal_page), obj_idx * sizeof(object));
+		BT_HEAP(goal_page) -= sizeof(object);
+		BT_CHNK_ITEM_AT(goal_page, 0)->c_shft -= sizeof(object);
+		BT_CHNK_ITEM_AT(goal_page, 0)->c_size ++;
+		*(((object *) (goal_page + BT_HEAP(goal_page))) + obj_idx) = obj;
+	}
+
 	if (next_for_rpg!=XNULL)
 	{
 		CHECKP(next_for_rpg);
@@ -428,6 +484,10 @@ void bt_page_clusterize(xptr &root, char* pg, const xptr &rpg, const object &obj
 		(*BT_PREV_PTR((char*)XADDR(next_for_rpg))) = rpg;
 		
 	}
+
+	CHECKP(rpg);
+	VMM_SIGNAL_MODIFICATION(rpg);
+	memcpy((char*) XADDR(rpg) + sizeof(vmm_sm_blk_hdr), tmp_rpg + sizeof(vmm_sm_blk_hdr), PAGE_SIZE - sizeof(vmm_sm_blk_hdr));
 }
 
 /* for given non-leaf page insert a given pair (key, big_ptr) 
@@ -458,7 +518,7 @@ void bt_nleaf_insert(xptr &root, char* pg, const bt_key& key, const xptr &big_pt
     if (BT_VARIABLE_KEY_TYPE(pg))
         /* key content + slot in key tab + slot in bigptr tab */
         key_with_load_size = key.get_size() + 2 * sizeof(shft) + sizeof(xptr);
-    else
+    else	
         /* key content + slot in bigptr tab */
         key_with_load_size = key.get_size() + sizeof(xptr);
 
@@ -636,8 +696,7 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
     memcpy(insert_buf, area_begin, area_size);
     *(xptr*)area_begin = big_ptr;
     memcpy(area_begin + sizeof(xptr), insert_buf, area_size);
-
-    
+  
 	/* update page header */
 }
 
@@ -687,8 +746,6 @@ void bt_do_insert_obj(char* pg, shft key_idx, const object &obj, shft obj_idx)
     /* copy buffers to the pages and actualize headers */
     memcpy(pg, buf, PAGE_SIZE);
     (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
-
-    
 }
 
 /* check if the given page will fit insertion of data (key/obj) of given size
