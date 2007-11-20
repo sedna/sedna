@@ -190,10 +190,10 @@ static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCO
 
 void OS_exceptions_handler::install_handler()
 {
-    //_set_se_translator(win32_exception_translate);
-	InstallKiUserExceptionDispatcherHook(RootExceptionDispatcher);
-	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
-	logfile = fopen("VMM_SIGNAL_MODIFICATION.log","at");
+//    _set_se_translator(win32_exception_translate);
+//	InstallKiUserExceptionDispatcherHook(RootExceptionDispatcher);
+//	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
+//	logfile = fopen("VMM_SIGNAL_MODIFICATION.log","at");
 }
 
 void OS_exceptions_handler::enter_stack_overflow_critical_section()
