@@ -58,7 +58,7 @@ endif
 # options: Enable dtsearch  - 1
 #          Disable dfsearch - 0
 ifndef ENABLE_DTSEARCH
-ENABLE_DTSEARCH = 0
+ENABLE_DTSEARCH = 1
 endif
 
 # options: triggers is on  - 1
