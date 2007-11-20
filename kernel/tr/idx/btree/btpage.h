@@ -33,6 +33,18 @@ struct btree_blk_hdr
     shft heap;
 };
 
+struct btree_chnk_hdr 
+{
+	shft	c_shft;
+	shft	c_size;
+};
+
+struct btree_key_hdr 
+{
+	shft	k_shft;
+	shft	k_size;
+};
+
 /*
 	Makeup of a page and funcs used in manipulating btree pages
 	===========================================================
@@ -122,7 +134,7 @@ struct btree_blk_hdr
 
  */
 
-//#define PAGE_SIZE 1024
+// #define PAGE_SIZE 64*1024
 
 /* this switch define if the btree implementation will support clusters of leaf pages. If defined,
    the groups of objects sticking to common key which don't fit in single block will be permitted
@@ -225,6 +237,13 @@ inline	bool	BT_VARIABLE_KEY_TYPE(char* p)
 /* head of key table (page body begining) */
 inline	char*	BT_KEY_TAB(char* p)			{return (p + BT_HSIZE);}
 
+/* returns the actual length of the record in key table */
+inline	shft	BT_KEY_TAB_SIZE(char* pg)
+											{
+											 return (BT_KEY_SIZE(pg)) ? (BT_KEY_SIZE(pg)) : 2*sizeof(shft);
+											}
+
+
 /* return pointer to the i-th element of key table (counted from 0) */
 inline	char*	BT_KEY_TAB_AT(char* pg, shft i)
 											{
@@ -234,6 +253,12 @@ inline	char*	BT_KEY_TAB_AT(char* pg, shft i)
 															 2*sizeof(shft);
 											return (BT_KEY_TAB(pg) + i*el_size);
 											}
+
+inline	btree_key_hdr *	BT_KEY_ITEM_AT(char* pg, shft i) {
+											/* assume the caller knows what he need it for */
+											return ((btree_key_hdr *) (BT_KEY_TAB(pg) + i*2*sizeof(shft)));
+											}
+
 /* head of big_ptr table */
 inline	char*	BT_BIGPTR_TAB(char* p)		{ return BT_KEY_TAB_AT(p, BT_KEY_NUM(p)); }
 
@@ -249,6 +274,19 @@ inline	char*	BT_CHNK_TAB(char* p)		{ return BT_BIGPTR_TAB(p);}
 /* return pointer to the i-th element of chunk table (counted from 0) */
 inline	char*	BT_CHNK_TAB_AT(char* p, shft i)			
 											{return (BT_CHNK_TAB(p) + i*2*sizeof(shft));}
+
+/* the same as previous, but return value is casted to (btree_chnk_hdr *) */
+inline	btree_chnk_hdr *	BT_CHNK_ITEM_AT(char* p, shft i)
+											{return ((btree_chnk_hdr *)(BT_CHNK_TAB(p) + i*2*sizeof(shft)));}
+
+
+/* return shift field of the i-th element of chunk table */
+inline	shft	BT_CHNK_ITEM_SHIFT(char* p, shft i)			
+											{return (BT_CHNK_ITEM_AT(p, i)->c_shft);}
+
+/* return size field of the i-th element of chunk table */
+inline	shft	BT_CHNK_ITEM_SIZE(char* p, shft i)			
+											{return (BT_CHNK_ITEM_AT(p, i)->c_size);}
 
 /* current amount of page free space */
 inline	shft	BT_PFS(char* p)				{
