@@ -700,7 +700,11 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 		if (GETTYPE(left->snode)!=attribute && GETTYPE(left->snode)!=xml_namespace) throw USER_EXCEPTION(SE2007);
 		if ( right_sib!=GETRIGHTPOINTER(left_sib)) 
 			if  ( right_sib!=XNULL)   throw SYSTEM_EXCEPTION("Bad parameters");
-			else right_sib=GETRIGHTPOINTER(left_sib);
+			else 
+			{
+				right_sib=GETRIGHTPOINTER(left_sib);
+				right = GETBLOCKBYNODE(right_sib);
+			}
 	}
 	xptr par_indir=XNULL;
 	if (parent==XNULL)
@@ -1316,7 +1320,11 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 		right = GETBLOCKBYNODE(right_sib);
 		if  ( left_sib!=GETLEFTPOINTER(right_sib))
 			if  ( left_sib!=XNULL)   throw SYSTEM_EXCEPTION("Bad parameters");
-			else left_sib=GETLEFTPOINTER(right_sib);
+			else 
+			{
+				left_sib=GETLEFTPOINTER(right_sib);
+				left= GETBLOCKBYNODE(left_sib);
+			}
 		if (truep==XNULL)
 		{
 			xptr parind=GETPARENTPOINTER(right_sib);
