@@ -186,7 +186,7 @@ void replace(PPOpIn arg)
         
 #ifdef SE_ENABLE_TRIGGERS
         // Before-for-each-node triggers (cycle for all inserted nodes)
-		xptr_sequence::iterator tr_it=arg2seq.begin();
+		xptr_sequence::iterator tr_it=sit;
     	while(*tr_it!=XNULL)
         {
             node_child=*tr_it;
