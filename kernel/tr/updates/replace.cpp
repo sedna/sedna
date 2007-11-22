@@ -161,59 +161,172 @@ void replace(PPOpIn arg)
 	}
 	while (it3!=arg3seq.end());
     
-	// inserting new nodes
+	// deleting- inserting new nodes
 	it3=arg4seq.end();
 	do
 	{
 		--it3;
 		node = old_node = removeIndirection((*it3).cells[0].get_node());
+		int pos=(*it3).cells[1].get_xs_integer();
+		sit=arg2seq.begin()+pos;
+		CHECKP(node);
+		xptr leftn=((n_dsc*)XADDR(old_node))->ldsc;
+		xptr rightn=((n_dsc*)XADDR(old_node))->rdsc;
+		xptr par_ind=((n_dsc*)XADDR(old_node))->pdsc;		
+		bool a_m=is_node_attribute(node);
+		bool d_m=a_m||is_node_text(node);
+        
 #ifdef SE_ENABLE_TRIGGERS
 		CHECKP(old_node);
 		scm_node = GETSCHEMENODEX(old_node);
 		parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
 		CHECKP(old_node);
-        tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
-#endif        
-		
-		//1.insert
-		int pos=(*it3).cells[1].get_xs_integer();
-		sit=arg2seq.begin()+pos;
+		tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
+#endif
+        
+#ifdef SE_ENABLE_TRIGGERS
+        // Before-for-each-node triggers (cycle for all inserted nodes)
+		xptr_sequence::iterator tr_it=arg2seq.begin();
+    	while(*tr_it!=XNULL)
+        {
+            node_child=*tr_it;
+            parent=removeIndirection(par_ind);
+            if(apply_per_node_triggers(removeIndirection(node_child), old_node, parent, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT) == XNULL)
+               goto next_replacement;
+            tr_it++;
+		}
+#endif 
+        
+		//pre_deletion
+		if (d_m)
+		{		
+			delete_node(old_node);
+		}
+		//1.inserting attributes from sequence
 		while(*sit!=XNULL)
 		{
 			node_child=*sit;
+			if (!is_node_attribute(removeIndirection(node_child)))
+				break;
+			parent=removeIndirection(par_ind);
+            
+			if (is_node_persistent(node_child)) 
+						node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
+			else
+						node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
+			sit++;
 #ifdef SE_ENABLE_TRIGGERS
-			repl_node_child = apply_per_node_triggers(removeIndirection(node_child), old_node, XNULL, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
-			if(repl_node_child==XNULL) goto next_replacement;
-			CHECKP(repl_node_child);
-			node_child = ((n_dsc*)XADDR(repl_node_child))->indir;
-#endif
-			CHECKP(node);
-			if (is_node_attribute(node)|| is_node_attribute(removeIndirection(node_child)))
+			apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+#endif            
+		}
+		//2. finding place of insertion
+		if (a_m)
+		{
+			node=getFirstByOrderChildNode(removeIndirection(par_ind));
+			if (node!=XNULL)
 			{
-				parent=removeIndirection(GETPARENTPOINTER(node));
-				if (is_node_persistent(node_child)) 
-					node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
+				if (is_node_element(node))
+				{
+					rightn=node;
+					node=XNULL;
+				}
 				else
-					node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
+				{
+					rightn=XNULL;
+				}
+			}
+		}
+		else
+		{
+			if (d_m)
+			{
+				if (rightn==XNULL)
+					node=leftn;
+				else
+					node=XNULL;
 			}
 			else
 			{
-				if (is_node_persistent(node_child)) 
-					node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
-				else
-					node=deep_temp_copy(node, XNULL, XNULL, removeIndirection(node_child),ins_swiz);
+				rightn=node;
+				node=XNULL;
 			}
-			sit++;
+
 		}
-
-		//delete node
-        del_node = removeIndirection((*it3).cells[0].get_node());
-        CHECKP(del_node);
-        delete_node(del_node);
-
+		//3.main insert cycle
+		while(*sit!=XNULL)
+		{
+			node_child=*sit;
+			parent=removeIndirection(par_ind);
+			if (is_node_persistent(node_child)) 
+						node=deep_pers_copy(node, rightn, parent, removeIndirection(node_child),true);
+					else
+						node=deep_temp_copy(node, rightn, parent, removeIndirection(node_child),ins_swiz);
+			sit++;
 #ifdef SE_ENABLE_TRIGGERS
-        apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
-#endif
+			apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+#endif            
+		}
+		//post_deletion
+		if (!d_m)
+		{		
+			del_node = removeIndirection((*it3).cells[0].get_node());
+			CHECKP(del_node);
+			delete_node(del_node);
+		}
+/*
+	#ifdef SE_ENABLE_TRIGGERS
+			CHECKP(old_node);
+			scm_node = GETSCHEMENODEX(old_node);
+			parent=removeIndirection(((n_dsc*)XADDR(old_node))->pdsc);
+			CHECKP(old_node);
+			tmp_node = prepare_old_node(old_node, scm_node, TRIGGER_REPLACE_EVENT);
+	#endif        
+			
+			//1.insert
+			
+			while(*sit!=XNULL)
+			{
+				node_child=*sit;
+	#ifdef SE_ENABLE_TRIGGERS
+				repl_node_child = apply_per_node_triggers(removeIndirection(node_child), old_node, XNULL, scm_node, TRIGGER_BEFORE, TRIGGER_REPLACE_EVENT);
+				if(repl_node_child==XNULL) goto next_replacement;
+				CHECKP(repl_node_child);
+				node_child = ((n_dsc*)XADDR(repl_node_child))->indir;
+	#endif
+				CHECKP(node);
+				if ( is_node_attribute(removeIndirection(node_child)))
+				{
+					parent=removeIndirection(GETPARENTPOINTER(node));
+					if (is_node_persistent(node_child)) 
+						node=deep_pers_copy(XNULL, XNULL, parent, removeIndirection(node_child),true);
+					else
+						node=deep_temp_copy(XNULL, XNULL, parent, removeIndirection(node_child),ins_swiz);
+				}
+				else
+				{
+					if (is_node_persistent(node_child)) 
+						node=deep_pers_copy(node, XNULL, XNULL, removeIndirection(node_child),true);
+					else
+						node=deep_temp_copy(node, XNULL, XNULL, removeIndirection(node_child),ins_swiz);
+				}
+				sit++;
+			}
+
+			//delete node
+			del_node = removeIndirection((*it3).cells[0].get_node());
+			CHECKP(del_node);
+			delete_node(del_node);
+
+	#ifdef SE_ENABLE_TRIGGERS
+			apply_per_node_triggers(node, tmp_node, parent, scm_node, TRIGGER_AFTER, TRIGGER_REPLACE_EVENT);
+	#endif
+		}
+		if (border!=XNULL)
+		{
+			delete_node(removeIndirection(border));
+			border=XNULL;
+		}
+*/
 next_replacement:;    
 	}
 	while (it3!=arg4seq.begin());

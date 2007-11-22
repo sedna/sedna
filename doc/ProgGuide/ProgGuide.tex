@@ -2653,9 +2653,11 @@ XQuery query in the trigger action of a node-level trigger can \emph{return a no
 \begin{itemize}
 \item It can return \verb!empty sequence! (\verb!( )!) to skip the operation for the current node. This instructs the executor to not perform the node-level operation that invoked the trigger (the insertion or replacement of a particular node).
 
-\item For node-level \verb!INSERT! and \verb!REPLACE! triggers only, the returned node becomes the node that \emph{will be inserted} or \emph{will replace} the node being updated. This allows the trigger to modify the node being inserted or updated.
+%\item For node-level \verb!INSERT! and \verb!REPLACE! triggers only, the returned node becomes the node that \emph{will be inserted} or \emph{will replace} the node being updated. This allows the %trigger to modify the node being inserted or updated.
 
-\item A node-level before trigger that does not intend to cause either of these behaviors must be careful to return as its result the same node that was passed in (that is, the \verb!$NEW! node for \verb!INSERT! and \verb!UPDATE! triggers, for \verb!DELETE! triggers – its returned value is ignored in all cases except it is an empty sequence). 
+\item For node-level \verb!INSERT! triggers only, the returned node becomes the node that \emph{will be inserted}. This allows the trigger to modify the node being inserted.
+
+\item A node-level before trigger that does not intend to cause either of these behaviors must be careful to return as its result the same node that was passed in (that is, the \verb!$NEW! node for \verb!INSERT! and \verb!REPLACE! triggers. For \verb!DELETE! triggers – its returned value is ignored in all cases except it is an empty sequence). 
 \end{itemize}
 
 The trigger action return value is ignored for node-level triggers fired after an operation, and for all statement-level triggers, and so they may as well return empty sequence.
