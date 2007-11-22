@@ -344,6 +344,7 @@ int uIsProcessExist(UPID pid, UPHANDLE h, sys_call_error_fun fun)
     return 1; 
 #else
     /* !!!   check for errno   !!! */
+    if (pid == 0) return 0;  /// For the compatibility of the FreeBSD and Linux. Sometimes we have kill(0,0) is Sedna.
     int res = kill(pid, 0);
     if (res == -1) sys_call_error("kill");
 
@@ -364,6 +365,9 @@ int uOpenProcess(UPID pid, UPHANDLE *h, sys_call_error_fun fun)
     }
     else return 0;
 #else
+    *h = 0;
+    if(pid == 0) return -1;          /// FreeBSD has process with PID=0, Linux doesn't.
+    if(kill(pid,0) < 0) return -1;   /// Can't open process. It doesn't exist.
     return 0;
 #endif
 }
