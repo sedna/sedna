@@ -16,150 +16,116 @@
 /* temporary buffer used for performing page delete operations */
 char delete_buf[PAGE_SIZE];
 
-/* */
 void bt_delete_obj(char* pg, shft key_idx, shft obj_idx) 
 {
-    /* if there is only one object for given key, the key is to be deleted with all associated data */
+// This function works properly in assumption that CHUNK_ITEM_SIZE >= 2
     if (*((shft*)BT_CHNK_TAB_AT(pg, key_idx) + 1) == 1)
     {
         bt_leaf_delete_key(pg, key_idx);
         return;
     }
 
-    shft    key_size = BT_KEY_SIZE(pg);
-    char*   dst = bt_tune_buffering(true, key_size);
-    char*   buf = dst;
-    char*   src = BT_KEY_TAB(pg);
-    shft    heap_shft;
-    int     i;
+	shft	old_heap_shift = BT_HEAP(pg);
+	shft	obj_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx) + obj_idx * sizeof(object);
 
-    bt_buffer_header(pg, dst);
-    /* copy keys */
-    for(i = 0; i < BT_KEY_NUM(pg); i++) bt_buffer_key(pg, src, dst);
-
-	/* copy chunks, deleting object from needed position */
-    src = BT_CHNK_TAB(pg);
-    for (i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        bt_buffer_chnk(pg, src, dst);
-        if (i == key_idx)
-        {
-            /* delete object */
-            /* heap pointer is at the begining of the target chunk now */
-            heap_shft = bt_buffer_heap_shft();
-            char* chnk_tab_slot = BT_CHNK_TAB_AT(buf, key_idx);
-            char* area_begin = buf+ heap_shft;
-            char* area_end = buf + heap_shft + obj_idx * sizeof(object);
-            shft  area_size = (shft)(area_end - area_begin);
-            /* delete object in needed position */
-            memcpy(delete_buf, area_begin, area_size);
-            memcpy(area_begin + sizeof(object), delete_buf, area_size);
-            bt_buffer_heap_shft_inc(sizeof(object));
-            /* update chunk table slot correspondingly */
-            *(shft*)chnk_tab_slot += sizeof(object);
-            *((shft*)chnk_tab_slot + 1) -= 1;
-        }
-    }
-    /* copy buffers to the pages and actualize headers */
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-    memcpy(pg, buf, PAGE_SIZE);
-    (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
+	memmove(pg + old_heap_shift + sizeof(object), pg + old_heap_shift, obj_shift - old_heap_shift);
 
-    
+	// update all heap "pointers"
+
+	if (BT_KEY_SIZE(pg) == 0) {										// in case of variable key length, update key pointers
+		for (int i = 0; i < BT_KEY_NUM(pg); i++) {
+			if (BT_KEY_ITEM_AT(pg, i)->k_shft < obj_shift) 
+				{ BT_KEY_ITEM_AT(pg, i)->k_shft += sizeof(object); }
+		}
+	}
+
+	for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update chunk "pointers"
+		if (BT_CHNK_ITEM_AT(pg, i)->c_shft <= obj_shift)
+			{ BT_CHNK_ITEM_AT(pg, i)->c_shft += sizeof(object); }
+	}
+
+	BT_HEAP(pg) += sizeof(object);
+	BT_CHNK_ITEM_AT(pg, key_idx)->c_size -= 1;
 }
 
-/* */
-void bt_leaf_delete_key(char* pg, shft key_idx)
+void bt_leaf_delete_key(char* pg, shft key_idx) 
 {
-    shft    key_size = BT_KEY_SIZE(pg);
-    shft    key_tab_slot_size;
-    char*   dst = bt_tune_buffering(true, key_size);
-    char*   buf = dst;
-    char*   src = BT_KEY_TAB(pg);
-    shft    heap_shft;
-    int     i;
+// This function works properly in assumption that CHUNK_ITEM_SIZE = 1 !!!
 
-    /* set the key table slot size */
-    if (!key_size)
-        key_tab_slot_size = 2*sizeof(shft);
-    else
-        key_tab_slot_size = key_size;
-
-    bt_buffer_header(pg, dst);
-    /* copy all but 'key_idx'-th keys */
-    for(i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        if (i == key_idx)
-        { /* move to next key tab slot */
-            src += key_tab_slot_size;
-            continue;
-        }
-        bt_buffer_key(pg, src, dst);
-    }
-    /* copy all but 'key_idx'-th chunks */
-    src = BT_CHNK_TAB(pg);
-    for (i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        if (i == key_idx)
-        { /* move to next chnk tab slot */
-            src += 2 * sizeof(shft);
-            continue;
-        }
-		bt_buffer_chnk(pg, src, dst);
-	}
-    /* copy buffers to the pages and actualize headers */
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-    memcpy(pg, buf, PAGE_SIZE);
-    (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
-    (*BT_KEY_NUM_PTR(pg)) -= 1;
+	shft	heap_shift = BT_HEAP(pg);
+	shft	obj_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx);
+	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
+	shft	actkey_shift = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_shft : 0);
+	shft	actkey_size = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_size : 0);
+	char *	chnk_pos = BT_CHNK_TAB_AT(pg, key_idx);
+	shft	chnk_size = sizeof(btree_chnk_hdr);
+	char *	last = BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg));
 	
-	if (!BT_KEY_NUM(pg))
-		bt_drop_page((const btree_blk_hdr*) pg);
-   
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+
+	shft	len = (chnk_pos - key_pos) - key_size;
+	memmove(key_pos, key_pos + key_size, len);
+	memmove(key_pos + len, chnk_pos + chnk_size, (last - chnk_pos) - chnk_size);
+	memmove(pg + heap_shift + sizeof(object), pg + heap_shift, obj_shift - heap_shift);
+	heap_shift += sizeof(object);
+
+	BT_KEY_NUM(pg) -= 1;
+
+	if (var_key_size) {
+		memmove(pg + heap_shift + actkey_size, pg + heap_shift, actkey_shift - heap_shift);
+		heap_shift += actkey_size;
+
+		for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update key "pointers"
+			btree_key_hdr * v = BT_KEY_ITEM_AT(pg, i);
+			int s = v->k_shft; // save unmodified shift
+			if (s < obj_shift) { v->k_shft += sizeof(object); }
+			if (s < actkey_shift) { v->k_shft += actkey_size; }
+		}
+	}
+
+	for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update chunk "pointers"
+		btree_chnk_hdr * v = BT_CHNK_ITEM_AT(pg, i);
+		int s = v->c_shft; // save unmodified shift
+		if (s < obj_shift) { v->c_shft += sizeof(object); }
+		if (s < actkey_shift) { v->c_shft += actkey_size; }
+	}
+
+	BT_HEAP(pg) = heap_shift;
 }
 
-void bt_nleaf_delete_key(char* pg, shft key_idx)
+
+void bt_nleaf_delete_key(char* pg, shft key_idx) 
 {
-    shft    key_size = BT_KEY_SIZE(pg);
-    shft    key_tab_slot_size;
-    char*   dst = bt_tune_buffering(true, key_size);
-    char*   buf = dst;
-    char*   src = BT_KEY_TAB(pg);
-    shft    heap_shft;
-    int     i;
+	shft	heap_shift = BT_HEAP(pg);
+	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
+	shft	actkey_shift = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_shft : 0);
+	shft	actkey_size = (var_key_size ? BT_KEY_ITEM_AT(pg, key_idx)->k_size : 0);
+	char *	ptr_pos = BT_BIGPTR_TAB_AT(pg, key_idx);
+	shft	ptr_size = sizeof(xptr);
+	char *	last = BT_BIGPTR_TAB_AT(pg, BT_KEY_NUM(pg));
 
-    /* set the key table slot size */
-    if (!key_size)
-        key_tab_slot_size = 2*sizeof(shft);
-    else
-        key_tab_slot_size = key_size;
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 
-    bt_buffer_header(pg, dst);
-    /* copy all but 'key_idx'-th keys */
-    for(i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        if (i == key_idx)
-        { /* move to next key tab slot */
-            src += key_tab_slot_size;
-            continue;
-        }
-        bt_buffer_key(pg, src, dst);
-    }
-    /* copy all but 'key_idx'-th chunks */
-    src = BT_CHNK_TAB(pg);
-    for (i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        if (i == key_idx)
-        { /* move to next chnk tab slot */
-            src += sizeof(xptr);
-            continue;
-        }
-		bt_buffer_bigptr(pg, src, dst);
+	shft	len = (ptr_pos - key_pos) - key_size;
+	memmove(key_pos, key_pos + key_size, len);
+	memmove(key_pos + len, ptr_pos + ptr_size, (last - ptr_pos) - ptr_size);
+
+	BT_KEY_NUM(pg) -= 1;
+
+	if (var_key_size) {
+		memmove(pg + heap_shift + actkey_size, pg + heap_shift, actkey_shift - heap_shift);
+		heap_shift += actkey_size;
+
+		for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update key "pointers"
+			btree_key_hdr * v = BT_KEY_ITEM_AT(pg, i);
+			if (v->k_shft < actkey_shift) { v->k_shft += actkey_size; }
+		}
 	}
-    /* copy buffers to the pages and actualize headers */
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));   
-    memcpy(pg, buf, PAGE_SIZE);
-    (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
-    (*BT_KEY_NUM_PTR(pg)) -= 1;
-	
+
+	BT_HEAP(pg) = heap_shift;
 }
