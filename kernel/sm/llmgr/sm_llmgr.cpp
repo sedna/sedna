@@ -255,7 +255,7 @@ void sm_llmgr::restorePh()
 //                  read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
-  unsigned __int64 ph_counter = mem_head->ts;
+  __uint64 ph_counter = mem_head->ts;
 
   char buf3[20];
 

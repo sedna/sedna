@@ -33,7 +33,7 @@ extern "C"
     char *u_ltoa(long value, char *str, int radix);
     char *u_ultoa(unsigned long value, char *str, int radix);
     char *u_i64toa(__int64 value, char *str, int radix);
-	char *u_ui64toa(unsigned __int64 value, char *str, int radix);
+	char *u_ui64toa(__uint64 value, char *str, int radix);
     char *u_gcvt(double value, int digits, char *buf);
     int _stricmp(const char *str1, const char *str2);
     int _strnicmp(const char *str1, const char *str2, size_t n);

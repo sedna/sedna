@@ -10,6 +10,7 @@
 #include "common/u/ushm.h"
 #include "common/u/usem.h"
 #include "common/u/ummap.h"
+#include "common/u/uevent.h"
 #include "common/errdbg/d_printf.h"
 #include "common/config.h"
 

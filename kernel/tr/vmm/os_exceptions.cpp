@@ -5,11 +5,10 @@
  */
 
 #include "common/sedna.h"
-
 #include "tr/vmm/os_exceptions.h"
 #include "tr/vmm/vmm.h"
 #include "common/sm_vmm_data.h"
-#include "exndisphook.h"
+
 
 #define PRINT_STACK_TRACE
 
@@ -17,13 +16,14 @@
 bool OS_exceptions_handler::critical_section = false;
 
 #ifdef _WIN32
+
 #ifdef PRINT_STACK_TRACE
 #include "tr/vmm/sym_engine.h"
+#endif
+
 #include <iostream>
 #include <assert.h>
-
-//#include "../libs/sym_engine/sym_engine.h"
-#endif
+#include "exndisphook.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// WIN32 SECTION
@@ -75,7 +75,7 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
         default							:
             {
 #ifdef PRINT_STACK_TRACE
-            	sym_engine::stack_trace(std::cout, info->ContextRecord);
+             	sym_engine::stack_trace(std::cout, info->ContextRecord);
 #endif
                 throw SYSTEM_EXCEPTION("Unknown system error");
             }

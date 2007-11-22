@@ -564,7 +564,7 @@ int delete_ph_files(const char* db_name)
   if (0 != closedir(dir))
      return 2;
 
-  if (!find_log) return 0;
+  if (!find_ph) return 0;
 
   return 1;
 #endif  

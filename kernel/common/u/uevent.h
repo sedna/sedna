@@ -27,7 +27,7 @@ private:
 #ifdef _WIN32
 	HANDLE handle;
 #else
-	int sem_id;
+	int semid;
 #endif
 }
 UEvent;
