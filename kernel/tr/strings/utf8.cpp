@@ -110,6 +110,9 @@ static inline mapent *me_bsearch(mapent *map_arr, int size, int c)
 	int l = 0;
 	int r = size-1;
 	int m;
+	
+	if(map_arr == NULL) return NULL;
+	
 	if (map_arr[0].src == c)
 		return &map_arr[0];
 	//l.src < c <= r.src
@@ -162,11 +165,13 @@ static inline void utf8_translate_proc(const Iterator &start, const Iterator &en
 void CharsetHandler_utf8::transtale (tuple &t, tuple_cell *arg, tuple_cell *map_str, tuple_cell *trans_str)
 {
 	int map_len = length(map_str);
-	mapent *map_arr;
+	mapent *map_arr = NULL;
 	//TODO - assert map_str & trans_str are light atomic
 	char_iterator_utf8 map_it(map_str->get_str_mem(), map_str->get_strlen_mem(), 0);
 	char_iterator_utf8 trans_it(trans_str->get_str_mem(), trans_str->get_strlen_mem(), 0);
-	map_arr = (mapent *)malloc(sizeof(mapent) * map_len);
+	//NOTE - in FreeBSD malloc(0) returns valid pointer by default
+	if(map_len) 
+        map_arr = (mapent *)malloc(sizeof(mapent) * map_len);
 	//FIXME: int i/map_len is ok?
 	for (int i = 0; i < map_len; i++)
 	{
