@@ -4,8 +4,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <list>
-#include <hash_map>
 #include <algorithm>
+#include "common/u/uhash_map.h"
 #include "wuaux.h"
 #include "wuerr.h"
 #include "wuversions.h"
@@ -13,7 +13,7 @@
 #include "wusnapshots.h"
 
 #define VE_SNAPSHOTS_COUNT						3
-#define VE_BUFSZ								1024
+#define VE_BUFSZ							1024
 
 typedef SnRequestForGc VeFunction;
 
@@ -41,7 +41,15 @@ struct VeRestriction
 
 typedef std::list<VeFunction> VeFunctionList;
 
-typedef stdext::hash_map<XPTR,VeRestriction> VeRestrictionHash;
+struct MyHash
+{
+	size_t operator() (XPTR xptr) const
+	{
+		return (size_t)(xptr >> 16);
+	}
+};
+
+typedef U_HASH_MAP_W_CUSTOM_HASH_FN(XPTR, VeRestriction, MyHash) VeRestrictionHash;
 
 struct VeClientState
 {

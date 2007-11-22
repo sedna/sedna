@@ -63,7 +63,7 @@ char *u_i64toa(__int64 value, char *str, int radix)
 	return str;
 }
 
-char *u_ui64toa(unsigned __int64 value, char *str, int radix)
+char *u_ui64toa(__uint64 value, char *str, int radix)
 {
 #ifdef _WIN32
     _ui64toa(value, str, radix);
@@ -74,7 +74,7 @@ char *u_ui64toa(unsigned __int64 value, char *str, int radix)
         return NULL;
     }
 
-    sprintf(str, "%ulld", value);
+    sprintf(str, "%llu", value);
     return str;
 #endif
 }

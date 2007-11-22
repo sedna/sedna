@@ -3,7 +3,10 @@
 #include <stddef.h>
 #include <string.h>
 #include <assert.h>
+#ifdef _WIN32
 #include <windows.h>
+#endif
+#include <errno.h>
 #include <stdarg.h>
 #include "wuerr.h"
 #include "wudock.h"
@@ -80,7 +83,12 @@ struct ErrorProperties
 	int code;
 };
 
-__declspec(thread) ErrorProperties errorProperties =
+#ifdef _WIN32
+__declspec(thread) 
+#else
+__thread
+#endif	
+ErrorProperties errorProperties =
 {
 	0, NULL, -1, NULL, NULL, "", 0
 };
@@ -97,7 +105,11 @@ void WuSetLastError(int error)
 
 void WuSetLastError2(const char *file, int line, const char *function, int error)
 {
+#ifdef _WIN32
 	SetLastError((DWORD)error);
+#else
+	errno = error;
+#endif
 	errorProperties.error = error;
 	errorProperties.file = file;
 	errorProperties.line = line;
@@ -108,7 +120,11 @@ void WuSetLastError2(const char *file, int line, const char *function, int error
 
 int WuGetLastError()
 {
+#ifdef _WIN32
 	return (int) GetLastError();
+#else
+	return errno;
+#endif
 }
 
 void WuGetLastErrorProperties(WuErrorProperties *wuErrorProperties)

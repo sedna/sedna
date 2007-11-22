@@ -18,7 +18,6 @@
 #include "common/u/umutex.h"
 #include "sm/bufmgr/bm_functions.h"
 #include "sm/trmgr.h"
-#include <windows.h>
 
 #define WU_SWAPPED_XPTRS_COUNT	1
 
