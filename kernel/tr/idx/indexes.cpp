@@ -454,7 +454,7 @@ static tuple_cell get_tc(void* buf, xmlscm_type type, shft size)
     }
 }
 
-static void idx_get_size (xptr& v1, xptr& v2, int& s1, int&s2, const void * Udata)
+static void idx_get_size (xptr& v1, xptr& v2, int& s1, int&s2, const void * Udata, xptr& key)
 {
 	shft sz = 0;
 	CHECKP(v1);
@@ -466,11 +466,31 @@ static void idx_get_size (xptr& v1, xptr& v2, int& s1, int&s2, const void * Udat
 		CHECKP(v);
 		((idx_user_data*)Udata)->buf->copy_to_buffer(v+sizeof(seq_blk_hdr),GET_FREE_SPACE(v1),sizeof(shft)-GET_FREE_SPACE(v1));
 		sz=*(shft*)(((idx_user_data*)Udata)->buf->get_buffer_pointer());
+
+        key = *((xptr*)(XADDR(v + 
+                              sizeof(seq_blk_hdr) + 
+                              sizeof(shft)-GET_FREE_SPACE(v1))));
 		CHECKP(v1);
 	}
 	else
 	{
-		sz=*((shft*)XADDR(v1));					
+		sz=*((shft*)XADDR(v1));
+		if (GET_FREE_SPACE(v1)<sizeof(shft)+sizeof(xptr))
+		{
+		    char buf[sizeof(xptr)];
+		    memcpy(buf, XADDR(v1 + sizeof(shft)), GET_FREE_SPACE(v1) - sizeof(shft));
+		    xptr v=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk;
+            CHECKP(v);
+            memcpy(buf + GET_FREE_SPACE(v1) - sizeof(shft), 
+                   XADDR(v + sizeof(seq_blk_hdr)), 
+                   sizeof(xptr) - (GET_FREE_SPACE(v1) - sizeof(shft)));
+            key = *((xptr*)buf);
+            CHECKP(v1);
+		}
+		else
+		{
+            key = *((xptr*) (XADDR(v1 + sizeof(shft))));
+		}
 	}
 	if (GET_FREE_SPACE(v1)<sizeof(shft)+sizeof(xptr)+sz)
 	{
@@ -500,14 +520,14 @@ static void idx_get_size (xptr& v1, xptr& v2, int& s1, int&s2, const void * Udat
     }
 }
 
-static inline xptr idx_get_ptr_to_complete_serialized_data(xptr v, /* out */ char** temp, int n, idx_user_data* ud, /* out */ int& s)
+static inline xptr idx_get_ptr_to_complete_serialized_data(xptr v, /* out */ char** temp, int n, idx_user_data* ud, /* out */ int& s, /* out */ xptr& key)
 {
     CHECKP(v);
     xptr v1 = v;
     xptr v2;
     int s1 = 0, s2 = 0;
     
-    idx_get_size(v1, v2, s1, s2, ud);
+    idx_get_size(v1, v2, s1, s2, ud, key);
     s = s1 + s2;
 	
 	if(v1 != XNULL && v2 != XNULL)
@@ -536,8 +556,11 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
     xptr addr1, addr2;
 	int s1, s2;
     
-    addr1 = idx_get_ptr_to_complete_serialized_data(v1, &temp1, 1, ud, s1);
-    addr2 = idx_get_ptr_to_complete_serialized_data(v2, &temp2, 2, ud, s2);
+    xptr key1;
+    xptr key2;
+    
+    addr1 = idx_get_ptr_to_complete_serialized_data(v1, &temp1, 1, ud, s1, key1);
+    addr2 = idx_get_ptr_to_complete_serialized_data(v2, &temp2, 2, ud, s2, key2);
     
 	if(addr1 != XNULL) CHECKP(addr1);
 	tuple_cell tc1 = get_tc(addr1 != XNULL ? XADDR(addr1) : temp1, type, s1);
@@ -560,6 +583,9 @@ int idx_compare_less(xptr v1, xptr v2, const void * Udata)
     else
 	    result = r.f.bf(tc1, tc2).get_xs_boolean();
     if(result) return 1;
+
+    if(key1 < key2) return -1;
+    if(key2 < key1) return 1;
 
     return 0;
 }
@@ -687,7 +713,8 @@ void idx_deserialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void *
 	xptr vf=v1;
 	xptr vs=v2;
 	int s1,s2;
-	idx_get_size(vf,vs,s1,s2,Udata);
+	xptr key;
+	idx_get_size(vf,vs,s1,s2,Udata, key);
 	buffer->copy_to_buffer(v1, size1);
 	vs=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 	buffer->copy_to_buffer(vs, size1,s1+s2+sizeof(shft)+sizeof(xptr)-size1);
