@@ -16,7 +16,7 @@
  * 				    HASH_FUNCTION must be a class
  * 				    with overloaded operator
  * 				    
- * 				    size_t operator() (const KEY_TYPE &)
+ * 				    size_t operator() (const KEY_TYPE &) const
  *
  * 				    which computes a hash function of the
  * 				    given key
@@ -36,6 +36,11 @@ namespace __sedna_U
 	{
 		hash_fn_t m_hash_fn;
 	public:
+		bool operator() (const key_t& kvala, const key_t& kvalb) const
+		{
+			return stdext::hash_compare<key_t>::operator() (kvala, kvalb);
+		}
+
 		size_t operator() (const key_t& kval) const
 		{
 			return m_hash_fn.operator () (kval);
