@@ -98,10 +98,15 @@ SednaIndexJob::SednaIndexJob(ft_index_cell* _ft_idx_) : ft_idx(_ft_idx_)
 		opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
 	else
 		opts.fieldFlags = dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+	//FIXME: mb check that length fits into dtsearch options?
 	std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
 	                + std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
 					
 	strcpy(opts.stemmingRulesFile, stemming_file.c_str());
+	std::string noisewords_file = std::string(SEDNA_DATA) + std::string("/data/")
+	                + std::string(db_name) + std::string("_files/dtsearch/noisewords.dat");
+					
+	strcpy(opts.noiseWordFile, noisewords_file.c_str());
 	dtssSetOptions(opts, result);
 }
 void SednaIndexJob::set_index_name(tuple_cell& request)
