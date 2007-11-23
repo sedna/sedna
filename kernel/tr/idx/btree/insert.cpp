@@ -50,7 +50,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
     int i;
         
 	if (key_num == 1) {
-		split_idx = 1;
+		split_idx = pretender_idx;
 	} 
 	else if (next_for_rpg == XNULL && pretender_idx == key_num)
     {
@@ -144,7 +144,7 @@ xptr bt_page_split(char* pg, const xptr &rpg, shft & pretender_idx, shft pretend
 	}
 
     /* clear out in which block pretender will reside and adjust new index of pretender in that page */
-	if (pretender_goes_left && want_insertion) {
+	if (pretender_goes_left && ((pretender_idx < split_idx) || want_insertion)) {
         /* pretender index remains the same */
         return pg_xptr;
 	}
@@ -609,50 +609,34 @@ void bt_promote_key(xptr &root, const xptr &pg, const xptr &parent_pg,bool with_
  */
 void bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const object &obj)
 {
-    shft key_size = BT_KEY_SIZE(pg);
-    /* area of page from key_idx position in key/chunk table up to the end of chunk table
-       is to be shifted right */
-    char*   area_begin = BT_KEY_TAB_AT(pg, key_idx);
-    char*   area_end = BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg));
-    shft    area_size = (shft)(area_end - area_begin);
-    char*   ptr;
-    char*   heap;
+	shft	heap_shift = BT_HEAP(pg);
+	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	shft	key_size = (var_key_size ? sizeof(btree_key_hdr) : BT_KEY_SIZE(pg));
+	char *	chnk_pos = BT_CHNK_TAB_AT(pg, key_idx);
+	shft	chnk_size = sizeof(btree_chnk_hdr);
+	char *	last = BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg));
+
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-    /* insert new key in key table */
-    if (key_size)
-    { /* fixed-size key */
-        memcpy(insert_buf, area_begin, area_size);
-        memcpy(area_begin, key.data(), key_size);
-        memcpy(area_begin + key_size, insert_buf, area_size);
-    } 
-    else
-    {
-        memcpy(insert_buf, area_begin, area_size);
-        (*BT_HEAP_PTR(pg)) -= key.get_size();
-        heap = pg + BT_HEAP(pg);
-        memcpy(heap, key.data(), key.get_size());
-        *(shft*)area_begin = BT_HEAP(pg);
-        *((shft*)area_begin + 1) = key.get_size();
-        memcpy(area_begin + 2 * sizeof(shft), insert_buf, area_size);
-    }
 
-   (*BT_KEY_NUM_PTR(pg)) += 1;
+	memmove(chnk_pos + chnk_size + key_size, chnk_pos, (last - chnk_pos));
+	memmove(key_pos + key_size,              key_pos,  (chnk_pos - key_pos));
 
-    /* insert new chunk in chunk table and new object; 
-       as we are creating new chunk, we allocate it in the top of heap */
-    area_begin = BT_CHNK_TAB_AT(pg, key_idx);
-    area_end = BT_CHNK_TAB_AT(pg, BT_KEY_NUM(pg) - 1);
-    area_size = (shft)(area_end - area_begin);
-    memcpy(insert_buf, area_begin, area_size);
-    (*BT_HEAP_PTR(pg)) -= sizeof(object);
-    heap = pg + BT_HEAP(pg);
-    *(object*)heap = obj;
-    *(shft*)area_begin = BT_HEAP(pg);
-    *((shft*)area_begin + 1) = 1;
-    memcpy(area_begin + 2 * sizeof(shft), insert_buf, area_size);
+	BT_KEY_NUM(pg) += 1;
 
-    
-    /* update page header */
+	if (var_key_size) {
+		BT_HEAP(pg) -= key.get_size();
+		memcpy(pg + BT_HEAP(pg), key.data(), key.get_size());
+		BT_KEY_ITEM_AT(pg, key_idx)->k_shft = BT_HEAP(pg);
+		BT_KEY_ITEM_AT(pg, key_idx)->k_size = key.get_size();
+	} else {
+		memcpy(BT_KEY_TAB_AT(pg, key_idx), key.data(), key.get_size());
+	}
+
+	BT_HEAP(pg) -= sizeof(object);
+	* (object *) (pg + BT_HEAP(pg)) = obj;
+	BT_CHNK_ITEM_AT(pg, key_idx)->c_shft = BT_HEAP(pg);
+	BT_CHNK_ITEM_AT(pg, key_idx)->c_size = 1;
 }
 
 /* make actual insertion of key and big_ptr sticking to that key into given place in key table
@@ -661,43 +645,31 @@ void bt_leaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const obje
  */
 void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xptr &big_ptr)
 {
-    shft	key_size = BT_KEY_SIZE(pg);
-    /* area of page from key_idx position in key/bigptr table up to the end of bigptr table
-       is to be shifted right */
-    char*   area_begin = BT_KEY_TAB_AT(pg, key_idx);
-    char*   area_end = BT_BIGPTR_TAB_AT(pg, BT_KEY_NUM(pg));
-    shft    area_size = (shft)(area_end - area_begin);
-    char*   ptr;
-    char*   heap;
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));	
-    /* insert new key in key table */
-    if (key_size)
-    { /* fixed-size key */
-        memcpy(insert_buf, area_begin, area_size);
-        memcpy(area_begin, key.data(), key_size);
-        memcpy(area_begin + key_size, insert_buf, area_size);
-    } 
-    else
-    {
-        memcpy(insert_buf, area_begin, area_size);
-        (*BT_HEAP_PTR(pg)) -= key.get_size();
-        heap = pg + BT_HEAP(pg);
-        memcpy(heap, key.data(), key.get_size());
-        *(shft*)area_begin = BT_HEAP(pg);
-        *((shft*)area_begin + 1) = key.get_size();
-        memcpy(area_begin + 2 * sizeof(shft), insert_buf, area_size);
-    }
-    (*BT_KEY_NUM_PTR(pg)) += 1;
+	shft	heap_shift = BT_HEAP(pg);
+	char *	key_pos = BT_KEY_TAB_AT(pg, key_idx);
+	bool	var_key_size = BT_KEY_SIZE(pg) == 0; 
+	shft	key_size = (var_key_size ? 2 * sizeof(shft) : BT_KEY_SIZE(pg));
+	char *	ptr_pos = BT_BIGPTR_TAB_AT(pg, key_idx);
+	shft	ptr_size = sizeof(xptr);
+	char *	last = BT_BIGPTR_TAB_AT(pg, BT_KEY_NUM(pg));
 
-    /* insert new bigptr in bigptr table */
-    area_begin = BT_BIGPTR_TAB_AT(pg, key_idx);
-    area_end = BT_BIGPTR_TAB_AT(pg, BT_KEY_NUM(pg) - 1);
-    area_size = (shft)(area_end - area_begin);
-    memcpy(insert_buf, area_begin, area_size);
-    *(xptr*)area_begin = big_ptr;
-    memcpy(area_begin + sizeof(xptr), insert_buf, area_size);
-  
-	/* update page header */
+	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+
+	memmove(ptr_pos + ptr_size + key_size, ptr_pos, (last - ptr_pos));
+	memmove(key_pos + key_size,            key_pos, (ptr_pos - key_pos));
+
+	BT_KEY_NUM(pg) += 1;
+
+	* (xptr *) BT_BIGPTR_TAB_AT(pg, key_idx) = big_ptr;
+
+	if (var_key_size) {
+		BT_HEAP(pg) -= key.get_size();
+		memcpy(pg + BT_HEAP(pg), key.data(), key.get_size());
+		BT_KEY_ITEM_AT(pg, key_idx)->k_shft = BT_HEAP(pg);
+		BT_KEY_ITEM_AT(pg, key_idx)->k_size = key.get_size();
+	} else {
+		memcpy(BT_KEY_TAB_AT(pg, key_idx), key.data(), key.get_size());
+	}
 }
 
 /* make actual insertion of object into chunk of given key of leaf page;
@@ -706,46 +678,33 @@ void bt_nleaf_do_insert_key(char* pg, shft key_idx, const bt_key& key, const xpt
  */
 void bt_do_insert_obj(char* pg, shft key_idx, const object &obj, shft obj_idx)
 {
-    shft    key_size = BT_KEY_SIZE(pg);
-    char*   dst = bt_tune_buffering(true, key_size);
-    char*   buf = dst;
-    char*   src = BT_KEY_TAB(pg);
-    shft    heap_shft;
-    int     i;
+	shft	old_heap_shift = BT_HEAP(pg);
+	shft	new_heap_shift = old_heap_shift - sizeof(object);
+	shft	chnk_shift = BT_CHNK_ITEM_SHIFT(pg, key_idx);
+	shft	obj_shift = chnk_shift + obj_idx * sizeof(object);
+	shft	insertion_obj_shift = obj_shift - sizeof(object);
 
-    bt_buffer_header(pg, dst);
 	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
-    /* copy keys */
-    for(i = 0; i < BT_KEY_NUM(pg); i++) bt_buffer_key(pg, src, dst);
+	memmove(pg + new_heap_shift, pg + old_heap_shift, obj_shift - old_heap_shift);
 
-    /* copy chunks, inserting object into needed position */
-    src = BT_CHNK_TAB(pg);
-    for (i = 0; i < BT_KEY_NUM(pg); i++)
-    {
-        bt_buffer_chnk(pg, src, dst);
-        if (i == key_idx)
-        { /* insert object */
-          /* heap pointer is at the begining of the target chunk now */
-            heap_shft = bt_buffer_heap_shft();
-            char*   chnk_tab_slot = BT_CHNK_TAB_AT(buf, key_idx);
-            char*   area_begin = buf + heap_shft;
-            char*   area_end = buf + heap_shft + obj_idx * sizeof(object);
-            shft    area_size = (shft)(area_end - area_begin);
-            /* insert object in needed position */
-            memcpy(insert_buf, area_begin, area_size);
-            area_end -= sizeof(object);
-            *(object*)area_end = obj;
-            memcpy(area_begin - sizeof(object), insert_buf, area_size);
-            bt_buffer_heap_shft_dec(sizeof(object));
-            /* update chunk table slot correspondingly */
-            *(shft*)chnk_tab_slot -= sizeof(object);
-            *((shft*)chnk_tab_slot + 1) += 1;
-        }
-    }
+	* (object *) (pg + insertion_obj_shift) = obj;
 
-    /* copy buffers to the pages and actualize headers */
-    memcpy(pg, buf, PAGE_SIZE);
-    (*BT_HEAP_PTR(pg)) = bt_buffer_heap_shft();
+	// update all heap "pointers"
+
+	if (BT_KEY_SIZE(pg) == 0) {										// in case of variable key length, update key pointers
+		for (int i = 0; i < BT_KEY_NUM(pg); i++) {
+			if (BT_KEY_ITEM_AT(pg, i)->k_shft < chnk_shift) 
+				{ BT_KEY_ITEM_AT(pg, i)->k_shft -= sizeof(object); }
+		}
+	}
+
+	for (int i = 0; i < BT_KEY_NUM(pg); i++) {						// update chunk "pointers"
+		if (BT_CHNK_ITEM_AT(pg, i)->c_shft <= chnk_shift)
+			{ BT_CHNK_ITEM_AT(pg, i)->c_shft -= sizeof(object); }
+	}
+
+	BT_HEAP(pg) -= sizeof(object);
+	BT_CHNK_ITEM_AT(pg, key_idx)->c_size += 1;
 }
 
 /* check if the given page will fit insertion of data (key/obj) of given size
