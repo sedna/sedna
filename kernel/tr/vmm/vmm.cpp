@@ -53,7 +53,7 @@ bool vmm_is_busy_called = false;
 
 
 xptr vmm_cur_xptr;
-void * vmm_cur_ptr;
+volatile void * vmm_cur_ptr;
 
 // pointer to SSMMsg - link to SM
 static SSMMsg *ssmmsg;
