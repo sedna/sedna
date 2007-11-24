@@ -179,7 +179,7 @@ var_c_id PPReturn::register_consumer(var_dsc dsc)
 
 void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -195,7 +195,7 @@ void PPReturn::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPReturn::reopen(var_dsc dsc, var_c_id id)

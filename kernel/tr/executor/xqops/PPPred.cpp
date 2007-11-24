@@ -787,7 +787,7 @@ var_c_id PPPred1::register_consumer(var_dsc dsc)
 
 void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)                     
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
 
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -803,7 +803,7 @@ void PPPred1::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPPred1::reopen(var_dsc dsc, var_c_id id)
@@ -1208,7 +1208,7 @@ var_c_id PPPred2::register_consumer(var_dsc dsc)
 
 void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
 
@@ -1225,7 +1225,7 @@ void PPPred2::next(tuple &t, var_dsc dsc, var_c_id id)
         t.set_eos();
     }
 
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPPred2::reopen(var_dsc dsc, var_c_id id)
