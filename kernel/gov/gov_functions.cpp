@@ -65,6 +65,7 @@ bool is_first_start_of_gov(int ping_port)
   } catch (...) {
     return true;//cannot connect to pping server
   }
+    return true;
 }
 
 void RenameLastSoftFaultDir(const char* SEDNA_DATA)
@@ -82,9 +83,6 @@ void RenameLastSoftFaultDir(const char* SEDNA_DATA)
   buf += "/data";
   last_sf_dir = buf + std::string("/") + SE_LAST_SOFT_FAULT_DIR;
 #endif
-
-
-
 
   if(uIsFileExist(last_sf_dir.c_str(), NULL))
   {
@@ -123,23 +121,23 @@ void RenameLastSoftFaultDir(const char* SEDNA_DATA)
     uCloseFile(hFile, NULL);
 
 #else
-
     struct stat statbuf;
-    struct tm      *tm;
-    char   datestring[256];
-   
+    struct tm tm;
+    struct tm *tm_res;
+  
     if (stat(last_sf_dir.c_str(), &statbuf) == -1)
        throw USER_EXCEPTION2(SE4042, last_sf_dir.c_str());  
-
-    tm = localtime(&statbuf.st_mtime);
+    
+    /* localtime_r is thread safe version of localtime */
+    tm_res = localtime_r(&statbuf.st_mtime, &tm);
 
     /* Get localized date string. */
-    //strftime(datestring, sizeof(datestring), nl_langinfo(D_T_FMT), tm);
-    strftime(datestring, sizeof(datestring), "%02d-%02m-%Y-%02H-%02M", tm);
-
-    sprintf(buf2, "%s", datestring);
-
-   //get time of creation for this directory under Linux
+    if(tm_res != NULL)
+        sprintf(buf2, "%02d-%02d-%04d-%02d-%02d",
+                tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900,
+                tm.tm_hour, tm.tm_min);
+    else
+        sprintf(buf2, "%s", "lt-error");
 #endif
 
 
@@ -163,13 +161,10 @@ void RenameLastSoftFaultDir(const char* SEDNA_DATA)
        new_name += string(".")  + u_itoa(i, val, 10);
     }
 
-
     if(uMoveFile(last_sf_dir.c_str(),
                  new_name.c_str(),
                  NULL) == 0)
         throw USER_EXCEPTION(SE4410);
-
-
   }
 
   return;

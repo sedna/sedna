@@ -27,7 +27,6 @@
 #include "common/config.h"
 #include "gov/config_utils.h"
 
-
 #define GOV_BACKGROUND_MODE_TIMEOUT					15000
 #define GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON		"SEDNA_GOV_BACKGROUND_OFF_FROM_BACKGROUND_ON"
 
@@ -96,7 +95,7 @@ int main(int argc, char** argv)
     program_name_argv_0 = argv[0];
     pping_server *pps = NULL;
     gov_config_struct cfg;
-
+    
     bool is_pps_close = true;
 
     try {
@@ -164,7 +163,7 @@ int main(int argc, char** argv)
 #else
             // perform standard routines to run the process in the background mode
             setsid();
-            chdir(SEDNA_DATA);
+            //chdir(cfg.gov_vars.SEDNA_DATA);
             //umask(0);
 #endif
         }
@@ -176,6 +175,7 @@ int main(int argc, char** argv)
         {
         try {
             string command_line = argv[0];
+
             command_line += " -background-mode off";
             command_line += " -port-number " + int2string(lstnr_port);
 

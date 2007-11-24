@@ -32,7 +32,15 @@ string int2string(int value)
 
 void u_ftime(u_timeb *t)
 {
-    ftime(t);
+    struct timeval tv;
+    struct timezone tz;
+    
+    gettimeofday(&tv, &tz);    /// ftime() is obsolete in FreeBSD 6.2 and higher
+    
+    t->time     = tv.tv_sec;
+    t->millitm  = tv.tv_usec;
+    t->dstflag  = tz.tz_dsttime;
+    t->timezone = tz.tz_minuteswest; 
 }
 
 #else
@@ -83,7 +91,7 @@ string to_string(u_timeb t)
 {
     char buf[80];
     
-    sprintf(buf, "%d.%03d secs", (int)(t.time), t.millitm);
+    sprintf(buf, "%d.%03ld secs", (int)t.time, t.millitm);
 
     return string(buf);
 }

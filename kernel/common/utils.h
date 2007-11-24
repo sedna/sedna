@@ -17,10 +17,16 @@ std::string int2string(int value);
 
 /* datatypes and functions for working with time (time in sec + time in millisec)*/
 #ifndef _WIN32
-typedef  timeb u_timeb;
-#else
-typedef _timeb u_timeb;
+struct _timeb
+{
+    long time;
+    long millitm;
+    int timezone;
+    int dstflag;
+};
 #endif
+
+typedef _timeb u_timeb;
 
 void u_ftime(u_timeb *t);
 
