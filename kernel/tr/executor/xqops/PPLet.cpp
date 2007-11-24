@@ -148,7 +148,7 @@ var_c_id PPLet::register_consumer(var_dsc dsc)
 
 void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
 
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
@@ -184,7 +184,7 @@ void PPLet::next(tuple &t, var_dsc dsc, var_c_id id)
         }
     }
 
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPLet::reopen(var_dsc dsc, var_c_id id)

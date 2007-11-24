@@ -388,9 +388,9 @@ var_c_id PPFunCall::register_consumer(var_dsc dsc)
 
 void PPFunCall::next(tuple &t, var_dsc dsc, var_c_id id)
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
     args[dsc]->next(t, new_cxt->var_cxt.producers[dsc].cvc->at(id));
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPFunCall::reopen(var_dsc dsc, var_c_id id)

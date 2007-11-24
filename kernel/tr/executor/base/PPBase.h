@@ -70,7 +70,7 @@ protected:
     dynamic_context *cxt;
     
     int __xquery_line;
-    PPIterator* __current_physop_backup;
+    PPIterator* __current_physop_backup;          /// Backups __current_physop pointer when called from the parent operation by next(tuple& t)
 
 public:
     virtual void open          ()         = 0;
@@ -97,6 +97,9 @@ public:
  ******************************************************************************/
 class PPVarIterator : public PPIterator
 {
+protected:
+    PPIterator* __current_physop_backup_var;      /// Backups __current_physop pointer when called from descendant variable 
+                                                  /// consumer operation by next(tuple &t, var_dsc dsc, var_c_id id);
 public:
     /// register consumer of the variable dsc
     virtual var_c_id register_consumer(var_dsc dsc) = 0;
@@ -110,7 +113,7 @@ public:
     /// close and release resources
     virtual void close(var_dsc dsc, var_c_id id) = 0;
 
-    PPVarIterator(dynamic_context *_cxt_) : PPIterator(_cxt_) {}
+    PPVarIterator(dynamic_context *_cxt_) : PPIterator(_cxt_),  __current_physop_backup_var(NULL) {}
     virtual ~PPVarIterator() {}
 	
 };
@@ -159,10 +162,17 @@ __declspec(thread)
 #endif
 PPIterator* __current_physop;
 
+/// These macroses must be called on operation enter and exit correspondingly!
+/// *       - in next(tuple)
+/// *_VAR   - in next(tuple, var)
+#define SET_CURRENT_PP(pp)       __current_physop_backup = __current_physop; __current_physop = (pp);
+#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = __current_physop; __current_physop = (pp);
 
-#define SET_CURRENT_PP(pp) __current_physop_backup = __current_physop; __current_physop = (pp);
-#define RESTORE_CURRENT_PP __current_physop = __current_physop_backup; __current_physop_backup = NULL;
-#define RESET_CURRENT_PP   __current_physop = NULL;
+#define RESTORE_CURRENT_PP       __current_physop = __current_physop_backup; __current_physop_backup = NULL;
+#define RESTORE_CURRENT_PP_VAR   __current_physop = __current_physop_backup_var; __current_physop_backup_var = NULL;
+
+/// Must be called after delete qep_tree in trn!
+#define RESET_CURRENT_PP         __current_physop = NULL;
 
 /*******************************************************************************
  * SednaXQueryException

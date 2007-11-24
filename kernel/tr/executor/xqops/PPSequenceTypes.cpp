@@ -582,7 +582,7 @@ var_c_id PPTypeswitch::register_consumer(var_dsc dsc)
 
 void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)                    
 {
-    SET_CURRENT_PP(this);
+    SET_CURRENT_PP_VAR(this);
     
     producer &p = cxt->var_cxt.producers[dsc];
     complex_var_consumption &cvc = *(p.cvc);
@@ -618,7 +618,7 @@ void PPTypeswitch::next(tuple &t, var_dsc dsc, var_c_id id)
         }
     }
 
-    RESTORE_CURRENT_PP;
+    RESTORE_CURRENT_PP_VAR;
 }
 
 void PPTypeswitch::reopen(var_dsc dsc, var_c_id id)
