@@ -37,7 +37,7 @@ USemaphore concurrent_ops_sem;
 USemaphore wait_for_recovery;
 
 UTHANDLE  checkpoint_thread_dsc;
-bool shutdown_checkpoint_thread = false;
+volatile bool shutdown_checkpoint_thread = false;
 
 /* global variables for transaction ids table */
 USemaphore trn_table_ids_sync_sem;

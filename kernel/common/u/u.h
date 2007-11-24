@@ -139,18 +139,19 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <errno.h>
 
 
 #ifdef _WIN32
 #include <windows.h>
+#include <sys/timeb.h>
 #else
 #include <sys/ipc.h>
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/time.h>
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
