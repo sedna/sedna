@@ -46,7 +46,11 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _SM_TO_VMM_CALLBACK_SEM1_BASE_STR		 (_CHARISMA_BUFFER_SHARED_MEMORY_NAME + MAX_DBS_NUMBER)
 #else
 #define _CHARISMA_PH_SHARED_MEMORY_NAME			 NULL
+#ifdef FreeBSD
+#define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/tmp/CharismaBufferSharedMemory"
+#else
 #define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/CharismaBufferSharedMemory"
+#endif
 #define _SM_TO_VMM_CALLBACK_SEM1_BASE_STR		 (_CHARISMA_ITFE_SHARED_MEMORY_NAME + MAX_DBS_NUMBER)
 #endif
 
@@ -86,9 +90,11 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _TRIGGER_SEMAPHORE_STR				 (_SE_EVENT_LOG_SEMAPHORES_NAME + 1 + MAX_DBS_NUMBER)
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
-#else 
+#elif defined(FreeBSD)
+#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/tmp/SEDNA_GLOBAL_MEMORY_MAPPING"
+#else
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
 #endif
 

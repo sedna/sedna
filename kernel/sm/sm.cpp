@@ -409,7 +409,7 @@ int main(int argc, char **argv)
         set_global_names(cfg.os_primitives_id_min_bound);
 
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
-   
+
         db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
 
         if (db_id == -1)//there is no such database
@@ -451,9 +451,9 @@ int main(int argc, char **argv)
 #else
             // perform standard routines to run the process in the background mode
             setsid();
-            chdir(SEDNA_DATA);
+            //chdir(SEDNA_DATA);
             //umask(0);
-            elog(EL_LOG, ("SM standard routines to run the process in the background mode (setsid, chdir) done"));
+            elog(EL_LOG, ("SM standard routines to run the process in the background mode (setsid) done"));
 #endif
         }
 

@@ -176,11 +176,11 @@ int USemaphoreDown(USemaphore sem, sys_call_error_fun fun)
 {
     int res;
 	
-    static struct sembuf op_op[1] = {{0, -1, 0}};
+     struct sembuf op_op[1] = {{0, -1, 0}};
 
     while (true)
     {
-        res = semop(sem, &op_op[0], 1);
+        res = semop(sem, op_op, 1);
 	
         if (res == 0) return 0;
         else if (errno == EINTR) continue;
@@ -217,11 +217,11 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec, sys_call_error_
     int res = 0;
     unsigned int count = 0;
     
-    static struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
+     struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
         
     for(; count < (millisec/1000); count++)
     {    
-    	res = semop(sem, &op_op[0], 1);
+    	res = semop(sem, op_op, 1);
 	
     	if (res == 0) return 0; 
         else if (errno == EAGAIN)
@@ -258,9 +258,9 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun)
 {
 	int res;
 	
-	static struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
+	 struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
 
-	res = semop(sem, &op_op[0], 1);	
+	res = semop(sem, op_op, 1);	
 	if(res < 0)
 	{
         sys_call_error("semop");
@@ -529,14 +529,14 @@ int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
 
     while (true)
     {
-        res = semop(sem, &op_op[0], 1);
+	int attempt = 0;
+	res = semop(sem, op_op, 1);
 	
         if (res == 0) return 0;
         else if (errno == EINTR) continue;
         else 
         {
             sys_call_error("semop");
-            //d_printf2("USemaphoreArrDown error (index - %d)\n", i);
             return 1;
         }
     }
@@ -567,12 +567,12 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sy
     int res = 0;
     unsigned int count = 0;
     
-    static struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
+     struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
     op_op[0].sem_num = i;
         
     for(; count < (millisec/1000); count++)
     {    
-    	res = semop(sem, &op_op[0], 1);
+    	res = semop(sem, op_op, 1);
 	
     	if (res == 0) return 0; 
         else if (errno == EAGAIN)
@@ -611,10 +611,10 @@ int USemaphoreArrUp(USemaphoreArr sem, int i, sys_call_error_fun fun)
 {
 	int res;
 	
-	static struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
+	struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
     op_op[0].sem_num = i;
 
-	res = semop(sem, &op_op[0], 1);
+	res = semop(sem, op_op, 1);
 	
 	if(res < 0)
 	{

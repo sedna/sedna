@@ -32,7 +32,11 @@
 #define SunOS
 #endif
 
-
+#if (defined(FreeBSD) || defined(Linux))
+#define HAVE_GETCWD
+#else
+/* don't have getcwd() */
+#endif
 
 #if (defined(FreeBSD))
 /* don't have gcvt() */
@@ -135,7 +139,7 @@
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/timeb.h>
+#include <sys/time.h>
 #include <errno.h>
 
 
@@ -582,10 +586,15 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 #define u_is_nan(d)         (_isnan(d))
 #define u_is_neg_inf(d)     (_fpclass(d) == _FPCLASS_NINF)
 #define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
-#else
+#else 
 #define u_is_nan(d)         (isnan(d))
+#ifdef FreeBSD // In FreeBSD isinf() returns 1 in both cases INF and -INF
+#define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
+#define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
+#else
 #define u_is_neg_inf(d)     (isinf(d) == -1)
 #define u_is_pos_inf(d)     (isinf(d) == 1)
+#endif
 #endif
 
 

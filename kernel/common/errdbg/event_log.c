@@ -56,7 +56,7 @@ int event_log_truncate = 0;
 
 
 static event_log_msg *el_msg = NULL;
-static bool el_shutdown_daemon = false;
+volatile static bool el_shutdown_daemon = false;
 static UShMem el_shmem;
 static USemaphoreArr el_sems;
 static UTHANDLE el_thread_handle;
@@ -789,20 +789,16 @@ int event_logger_set_trid(int trid)
 void sedna_soft_fault_log(const char* log_message, int  component)
 {
     char buf_pid[20];
-	char buf[SEDNA_DATA_VAR_SIZE + 128];
+    char buf[SEDNA_DATA_VAR_SIZE + 128];
     char log_buf[SE_SOFT_FAULT_LOG_CONTENT_LEN + 128];
     char dt_buf[32];
-    struct tm *newtime;
-    time_t aclock;
     const char* str = NULL;
-    const char* sf_msg = "SEDNA soft fault message:\n";
-	UFile soft_fault_file_handle;    
+    UFile soft_fault_file_handle;    
     int res, bytes_written = 0;
 
-	if(log_message == NULL) return;
+    if(log_message == NULL) return;
 
-    //
-    if (! set_sedna_data(buf, NULL)) 
+    if (!set_sedna_data(buf, NULL)) 
     {
       fprintf(stderr, "Can't set sedna data");
       return;
@@ -819,7 +815,6 @@ void sedna_soft_fault_log(const char* log_message, int  component)
        fprintf(stderr, "Cannot create data directory for soft fault logs\n");
        return;  
     }
-
 
     strcat(buf, SE_LAST_SOFT_FAULT_DIR);
 
@@ -866,12 +861,9 @@ void sedna_soft_fault_log(const char* log_message, int  component)
     }
     
     strcat(buf, str);
-#ifdef _WIN32
     strcat(buf, u_itoa(uGetCurrentProcessId(__sys_call_error), buf_pid, 10));
-#else
-    strcat(buf, u_gcvt(uGetCurrentProcessId(__sys_call_error), 10, buf_pid));
-#endif
     strcat(buf, ".log");
+
     soft_fault_file_handle = uCreateFile(buf, 0, U_READ_WRITE, U_WRITE_THROUGH, NULL, NULL);
     if(soft_fault_file_handle == U_INVALID_FD)
     {
@@ -898,7 +890,8 @@ void sedna_soft_fault_log(const char* log_message, int  component)
         return;
     }
 #endif
-	res = uCloseFile(soft_fault_file_handle, NULL);
+    
+    res = uCloseFile(soft_fault_file_handle, NULL);
     if(res == 0)
     {
         fprintf(stderr, "Cannot close soft fault log file");

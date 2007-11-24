@@ -19,6 +19,7 @@
 #endif
 
 
+
 int uSetEnvironmentVariable(const char* name, const char* value, sys_call_error_fun fun)
 {
 #ifdef _WIN32
@@ -224,7 +225,7 @@ int uCreateProcess(
 
         char *pred = NULL;
         char *cur = command_line;
-        
+
         while (true)
         {
             while (whitespace(*cur)) cur++;
@@ -244,7 +245,7 @@ int uCreateProcess(
         }
 
         args[args_num] = NULL;
-
+        
         if (execvp(args[0], args) == -1)
         {
             sys_call_error("execvp");
@@ -528,6 +529,23 @@ int find_executable(const char *name, char *buf, int size)
 # endif
 #endif
             strcat(tbuf, name + 1);
+            strncpy(buf, tbuf, size);
+            return 0;
+        }
+
+        if ((name[0] == '.') && (name[1] == '.') && (name[2] == '/'))
+        {
+
+#ifdef HAVE_GETCWD
+            getcwd(tbuf, MAXPATHLEN);
+            strcat(tbuf, "/");
+#else
+# ifdef HAVE_GETWD
+            getwd(tbuf);
+            strcat(tbuf, "/");
+# endif
+#endif
+            strcat(tbuf, name);
             strncpy(buf, tbuf, size);
             return 0;
         }

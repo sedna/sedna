@@ -38,8 +38,10 @@ build_pcre=yes
 build_libedit=no
 
 ifneq ("$(PLATFORM)","WIN32")
+ifneq ("$(SUB_PLATFORM)", "FreeBSD")
 ifeq ("$(ENABLE_LIBEDIT)","1")
 build_libedit=yes
+endif
 endif
 endif
 
