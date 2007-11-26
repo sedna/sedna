@@ -145,7 +145,7 @@ extern uspinlock *vmm_spin_lock;
 extern bool vmm_is_busy_called;
 #endif /*_WIN32*/
 
-extern void * vmm_cur_ptr;
+extern volatile void * vmm_cur_ptr;
 extern xptr vmm_cur_xptr;
 
 extern int vmm_data_block_count;

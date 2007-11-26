@@ -88,5 +88,5 @@ extern USemaphore wait_for_recovery;
 
 extern UTHANDLE  checkpoint_thread_dsc;
 
-extern bool shutdown_checkpoint_thread;
+extern volatile bool shutdown_checkpoint_thread;
 #endif
