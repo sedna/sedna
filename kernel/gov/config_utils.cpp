@@ -194,6 +194,11 @@ void endElement_sm_cfg(void *cfg, const char *name)
      ((gov_db_struct*)cfg)->phys_log_size = atoi(erase_ws(elem_content.c_str()).c_str()) * 0x100000;
   }
 
+  if (strcmp(name, "upd_crt") == 0)
+  {
+     ((gov_db_struct*)cfg)->upd_crt = atof(erase_ws(elem_content.c_str()).c_str());
+  }
+
   elem_content = "";
 }
 

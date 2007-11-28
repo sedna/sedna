@@ -38,6 +38,8 @@ extern int phys_log_ext_portion;
 //phys log size (retrieved from cfg file)
 extern int phys_log_size;
 
+extern double upd_crt;
+
 // database name
 extern char db_name[];
 
@@ -68,6 +70,8 @@ extern int __bufs_num__;
 extern int __max_trs_num__;
 
 extern int write_phys_log;
+
+extern double __upd_crt__;
 
 struct CfgParserContext
 {

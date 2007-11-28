@@ -35,6 +35,7 @@ int bufs_num;
 int max_trs_num;
 int phys_log_ext_portion;
 int phys_log_size;
+double upd_crt;
 
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char db_files_path[U_MAX_PATH + 1];
@@ -64,12 +65,16 @@ void setup_sm_globals(gov_config_struct* cfg)
    max_trs_num = cfg->db_vars[db_id].max_trs_num;
    phys_log_ext_portion = cfg->db_vars[db_id].phys_log_ext_portion;
    phys_log_size = cfg->db_vars[db_id].phys_log_size;
+   upd_crt = cfg->db_vars[db_id].upd_crt;
 
    if ( __bufs_num__ > 0 )
        bufs_num = __bufs_num__;
 
    if ( __max_trs_num__ > 0 )
        max_trs_num = __max_trs_num__;
+
+   if (__upd_crt__ > 0)
+   	   upd_crt = __upd_crt__;
 }
 
 /*****************************************************************************/
@@ -135,8 +140,9 @@ int __bufs_num__ = 0;
 int __max_trs_num__ = 0;
 int write_phys_log = 1;
 
+double __upd_crt__ = 0;
 
-const size_t narg = 7;
+const size_t narg = 8;
 
 arg_rec sm_argtable[] =
 {
@@ -146,6 +152,7 @@ arg_rec sm_argtable[] =
 {"-background-mode", " on/off",  arg_bool, &background_mode,         "on",  "  start the server in the background mode (default on)"},
 {"-bufs-num",        " N",       arg_int,  &__bufs_num__,             "-1",  "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
 {"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,          "-1",  "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
+{"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,                  "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t (default value retrieved from config file)"},
 /*
 {"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,           "on",  "   write to physical log (default on)"},
 */

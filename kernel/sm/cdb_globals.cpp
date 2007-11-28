@@ -35,8 +35,10 @@ int _phys_log_buf_size_ = 1;
 int _bufs_num_ =1600;
 int _max_trs_num_ =10;
 
+double _upd_crt_ = 0.25;
 
-const size_t cdb_narg = 15;
+
+const size_t cdb_narg = 16;
 
 arg_rec cdb_argtable[] =
 {
@@ -54,6 +56,7 @@ arg_rec cdb_argtable[] =
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
 {"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
+{"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter (fraction of database), default 0.25"},
 
 {NULL,                     "\ndb_name", arg_str, &db_name,               "???", "\t\tthe name of the database to be created"}
 };
@@ -108,6 +111,8 @@ void setup_cdb_globals(int argc,
    max_trs_num = _max_trs_num_;
    phys_log_size = _phys_log_size_ * 0x100000;
    phys_log_ext_portion = _phys_log_ext_portion_ * 0x100000;
+   upd_crt = _upd_crt_;
+
 
    if (strcmp(db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");
@@ -126,7 +131,8 @@ void create_cfg_file(char *db_name,
                      int max_trs_num,
                      int bufs_num,
                      int phys_log_size,
-                     int phys_log_ext_portion
+                     int phys_log_ext_portion,
+                     double upd_crt
                     )
 {
    UFile cfg_file_handle;
@@ -166,6 +172,11 @@ void create_cfg_file(char *db_name,
 
    cfg_file_content += "   <init_phys_log_size>" + int2string(phys_log_size) + string("</init_phys_log_size>\n");
    cfg_file_content += "   <phys_log_ext_portion>" + int2string(phys_log_ext_portion) + string("</phys_log_ext_portion>\n");
+
+   char buf[100];
+   sprintf(buf, "%.2f", upd_crt);
+
+   cfg_file_content += "   <upd_crt>" + string(buf) + string("</upd_crt>\n");
 
    cfg_file_content += "</db>\n";
    //cfg_file_content += "</dbs>";

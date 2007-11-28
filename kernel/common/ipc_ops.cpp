@@ -358,7 +358,8 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
                                    int max_trs_num,
                                    int phys_log_ext_portion,
                                    int phys_log_size,
-                                   int logical_log_file_size)
+                                   int logical_log_file_size,
+                                   double upd_crt)
 {
    strcpy(cfg->db_vars[db_id].db_name, db_name);
    cfg->db_vars[db_id].is_stop = -1;
@@ -368,6 +369,7 @@ void fill_database_cell_in_gov_shm(gov_config_struct* cfg,
    cfg->db_vars[db_id].phys_log_ext_portion = phys_log_ext_portion;
    cfg->db_vars[db_id].phys_log_size = phys_log_size;
    cfg->db_vars[db_id].logical_log_file_size = logical_log_file_size;
+   cfg->db_vars[db_id].upd_crt = upd_crt;
 
    return;
 }            

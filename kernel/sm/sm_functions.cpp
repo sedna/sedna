@@ -54,6 +54,10 @@ void endElement_sm_cfg(void *cnt, const char *name)
     phys_log_size = atoi(_content_.c_str()) * 0x100000;
   }
 
+  if ( _tag_name_ == "upd_crt" )
+  {
+     upd_crt = atof(_content_.c_str());
+  }
 
   ((CfgParserContext*)cnt)->tag_name = "";
   ((CfgParserContext*)cnt)->content = "";
