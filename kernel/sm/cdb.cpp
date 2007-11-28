@@ -419,7 +419,8 @@ int main(int argc, char **argv)
                                       max_trs_num,
                                       phys_log_ext_portion,
                                       phys_log_size,
-                                      LOG_FILE_PORTION_SIZE);
+                                      LOG_FILE_PORTION_SIZE,
+                                      upd_crt);
 
         SetGlobalNamesDB(db_id);
 
@@ -438,7 +439,8 @@ int main(int argc, char **argv)
                              max_trs_num,
                              bufs_num,
                              (phys_log_size / 0x100000),
-                             (phys_log_ext_portion / 0x100000)
+                             (phys_log_ext_portion / 0x100000),
+                             upd_crt
                             );
 
              create_data_directory();

@@ -543,6 +543,11 @@ int main(int argc, char **argv)
             command_line += " -background-mode off ";
             command_line += " -bufs-num " + int2string(__bufs_num__);
             command_line += " -max-trs-num " + int2string(__max_trs_num__) + " ";
+
+            char buf_uc[100];
+            sprintf(buf_uc, "%.2f", __upd_crt__);
+
+            command_line += string(" -upd-crt ") + buf_uc + " ";
             command_line += db_name;
 
             command_line_str = new char[command_line.length() + 1];

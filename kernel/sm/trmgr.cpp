@@ -52,7 +52,8 @@ vector<transaction_id> _ids_table_;
 ******************************************************************************/
 
 // some very rough criterion for snapshot advancement
-#define UPDATED_PART_THRESHOLD 0.25
+//#define UPDATED_PART_THRESHOLD 0.25
+#define UPDATED_PART_THRESHOLD upd_crt
 #define CREATED_PART_THRESHOLD 0.25
 
 static bool SnapshotAdvanceCriterion()

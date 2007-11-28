@@ -27,6 +27,7 @@ extern int _persisitent_heap_size_;
 
 extern int _bufs_num_;
 extern int _max_trs_num_;
+extern double _upd_crt_;
 
 extern arg_rec cdb_argtable[];
 extern const size_t cdb_narg;
@@ -35,7 +36,7 @@ void print_cdb_usage();
 
 void setup_cdb_globals(int, char**, __int64 &, __int64 &, int &, int &, int &, int &, int &, int &, int &);
 
-void create_cfg_file(char *, int, int, int, int);
+void create_cfg_file(char *, int, int, int, int, double);
 
 void create_data_directory();
 
