@@ -155,7 +155,7 @@ class SednaIndexJob : public dtSearch::DIndexJob {
      public:
            
            //SednaIndexJob(PPOpIn* _seq_);
-		   SednaIndexJob(ft_index_cell* _ft_idx_);
+		   SednaIndexJob(ft_index_cell* _ft_idx_, bool no_log = false);
 		   void set_index_name(tuple_cell& request);
 		   void create_index(std::vector<xptr> *first_nodes);
 		   static int clear_index(const char *index_name);

@@ -796,7 +796,8 @@ try{
                             ind_name,
                             doc_name,
                             true,
-                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size));
+                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
+							true);
            else throw SYSTEM_EXCEPTION("Can't create index for document");
         } 
         else
@@ -812,7 +813,8 @@ try{
                             ind_name,
                             doc_name,
                             false,
-                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size));
+                            ft_rebuild_cust_tree(custom_tree_buf, custom_tree_size),
+							true);
            else throw SYSTEM_EXCEPTION("Can't create index for collection");
 
         }
@@ -821,7 +823,7 @@ try{
      {//delete index
 //          d_printf2("ind_name=%s\n", ind_name);
          ;
-          ft_index_cell::delete_index (ind_name);
+          ft_index_cell::delete_index (ind_name, true);
      }
 //     d_printf1("rollback index operation end\n");
 
