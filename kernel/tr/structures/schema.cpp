@@ -403,7 +403,10 @@ schema_node* schema_node::init( doc_schema_node* root,xml_ns* _xmlns,const char*
 	sc->type=type;
 	sc->xmlns=_xmlns;
 	if(sc->xmlns&&sc->persistent)sc->xmlns->counter++;
-	sc->root=root;
+	if (root!=NULL)
+		sc->root=root;
+	else
+		sc->root=(doc_schema_node*)sc;
 	return sc;
 }
 temp_schema_node* temp_schema_node::init( xml_ns* _xmlns,const char* name, t_item type)
