@@ -431,7 +431,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         if(temp2 != NULL) CHECKP(v2);
                         get_deserialized_value(&flag1, (char*)addr1+offset, xs_boolean);
                         get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
-                        result = strcmp((char*)addr2+offset+sizeof(bool), (char*)addr1+offset+sizeof(bool))*order;
+                        result = sign(strcmp((char*)addr2+offset+sizeof(bool), (char*)addr1+offset+sizeof(bool))*order);
                     }
                     else 
                     {
@@ -441,7 +441,7 @@ int PPOrderBy::compare (xptr v1, xptr v2, const void * Udata)
                         strcpy(prefix, (char*)addr1+offset+sizeof(bool));
                         CHECKP(v2);
                         get_deserialized_value(&flag2, (char*)addr2+offset, xs_boolean);
-                        result = strcmp((char*)addr2+offset+sizeof(bool), prefix)*order;
+                        result = sign(strcmp((char*)addr2+offset+sizeof(bool), prefix)*order);
                         delete prefix;
                     }
                     if (result == 0 && (!flag1 || !flag2))

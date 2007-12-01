@@ -71,5 +71,16 @@ void elim_disturb2(void *base, size_t num, size_t width, compare_fun compare);
 
 std::string trim(std::string str);
 
+/// Intented to be used with primarily with strcmp and memcmp
+///     res = memcmp(ptr1, ptr2)
+///     return sign(res)
+/// In such a way we will guarantee -1 and 1 values.
+static inline int sign(int i)
+{
+    if (i > 0) return 1;
+    if (i < 0) return -1;
+    return i;
+}
+
 
 #endif
