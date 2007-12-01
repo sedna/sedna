@@ -281,7 +281,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		int s2_p1=min(GET_FREE_SPACE(data),s2);
 		CHECKP(data);
 		int res=memcmp(temp_buffer,XADDR(data),min(s1,s2_p1));
-		if (res) return res;
+		if (res) return sign(res);
 		else
 		{
 			if (s1<s2_p1) return -1;
@@ -293,7 +293,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v2)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
 					res=memcmp(temp_buffer+s2_p1,XADDR(data),min(s1,s2)-s2_p1);
-					if (res) return -res;
+					if (res) return -sign(res);
 					else
 						return (s1-s2);
 				}
@@ -308,7 +308,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		int s1_p1=min(GET_FREE_SPACE(data),s1);
 		CHECKP(data);
 		int res=memcmp(temp_buffer,XADDR(data),min(s2,s1_p1));
-		if (res) return -res;
+		if (res) return -sign(res);
 		else
 		{
 			if (s2<s1_p1) return 1;
@@ -320,7 +320,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
 					res=memcmp(temp_buffer+s1_p1,XADDR(data),min(s1,s2)-s1_p1);
-					if (res) return res;
+					if (res) return sign(res);
 					else
 						return (s1-s2);
 				}

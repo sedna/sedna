@@ -32,7 +32,7 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
             if(k1.v.d_v == k2.v.d_v) return 0;
             return (k1.v.d_v > k2.v.d_v ? 1 : -1);
         }
-        case xs_string	: return strcmp(k1.v.s_v, k2.v.s_v);
+        case xs_string	: return sign(strcmp(k1.v.s_v, k2.v.s_v));
         case xs_date    : 
         case xs_dateTime:
         case xs_time    :
@@ -95,7 +95,7 @@ int bt_cmp_key(char* pg, const void* tab_el, const bt_key& k2)
                               int size2 = strlen(k2.v.s_v);
 
                               int res = memcmp(head, k2.v.s_v, s_min(size1, size2));
-                              if (res != 0) return res;
+                              if (res != 0) return sign(res); /// There is no guarantee that memcmp returns 1, -1, 0!
                               else return size1 - size2;
                           }
         case xs_date:

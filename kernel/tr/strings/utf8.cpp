@@ -638,13 +638,6 @@ bool CharsetHandler_utf8::matches (const char *tc, const char *regex)
 // Collation Handler
 //////////////////////////////////////////////////////////////////////////
 
-static inline int sign(int i)
-{
-    if (i > 0) return 1;
-    if (i < 0) return -1;
-    return i;
-}
-
 int CollationHandler_utf8::compare(str_cursor *cur1, str_cursor *cur2)
 {
     char *str1_ptr = NULL, *str2_ptr = NULL;

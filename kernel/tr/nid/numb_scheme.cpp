@@ -280,7 +280,7 @@ int		nid_cmp_effective(xptr node1, xptr node2) {
 	} 
 	int		result=0;
 	int i=0;
-	result=memcmp(ptr1,ptr2,min(size1,size2));
+	result=sign(memcmp(ptr1,ptr2,min(size1,size2))); /// There is no guarantee that memcmp returns 1, -1, 0!
 	if (!result)
 	{
 		if (size1>size2) result=2;
