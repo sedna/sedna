@@ -230,7 +230,7 @@ try{
     throw USER_EXCEPTION(SE3060);
 
     // Spawn the child process.
-    // Socket HANDLE are passed throught a environment variable
+    // Socket HANDLE are passed throught an environment variable
                  	 
     char buf[U_MAX_PATH + 10];
     string con_path_str = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE;
