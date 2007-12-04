@@ -156,11 +156,13 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
         if (!t.is_eos()) throw XQUERY_EXCEPTION2(XPTY0004, "Value argument of index-scan is not a single sequence.");
     }
 
-
+/*
     if (tc.get_atomic_type() == xs_untypedAtomic)
-        tc = cast(tc, idx_type);
+	    tc = cast(tc, idx_type);
     else
         type_promotion(tc, idx_type);
+*/
+	tc = cast(tc, idx_type);
 }
 
 
