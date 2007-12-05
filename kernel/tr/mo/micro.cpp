@@ -1260,7 +1260,7 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns)
 		if (GETTYPE(right->snode)==xml_namespace) 
 			result = secondElementInsertProcedure(right_sib,  parent,xml_namespace,0);
 	}
-	else if(result == XNULL)
+	if(result == XNULL)
 		result=thirdElementAndTextInsertProcedure(left_sib,right_sib,parent,NULL,NULL,xml_namespace,NULL);
 	VMM_SIGNAL_MODIFICATION(result);
 	((ns_dsc*)XADDR(result))->ns=ns;
