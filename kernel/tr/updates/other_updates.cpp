@@ -99,11 +99,11 @@ void rename(PPOpIn arg,const char* name)
 					shft shift= *((shft*)XADDR(ind_ptr));
 					char* data=(char*)XADDR(BLOCKXPTR(ind_ptr))+shift;
 					memcpy(z,data,size);
-					insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,z,size,NULL);
+					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,z,size,NULL);
 					delete z;
 				}
 				else
-					insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,NULL,0,NULL);
+					res=insert_attribute(left, XNULL, parent,name, ((a_dsc*)desc)->type,NULL,0,NULL);
 				//2. delete
 				CHECKP(indir);
 				delete_node(*((xptr*)XADDR(indir)));
