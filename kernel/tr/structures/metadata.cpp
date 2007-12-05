@@ -446,6 +446,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 	}
 	else
 	{
+		CHECKP(block);
 		node_blk_hdr* block_hdr=(node_blk_hdr*) XADDR(block);
 		node= GETPOINTERTODESC(block_hdr,block_hdr->free_first);
 		block_hdr->free_first=*((shft*)node);
