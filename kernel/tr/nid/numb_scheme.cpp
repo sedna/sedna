@@ -509,7 +509,8 @@ void incrementNID(t_prefix &lp,int size)
 				pos++;
 			}
 			lp.prefix[lp.size]=1;
-			lp.size+=1;	
+			lp.prefix[lp.size+1]=1;
+			lp.size+=2;	
 		}
 	}
 }

@@ -668,6 +668,8 @@ xptr insert_element(xptr left_sib, xptr right_sib, xptr parent,const char* name,
 		CHECKP(result);
 		up_concurrent_micro_ops_number();
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 	return result;
 }
 
@@ -842,6 +844,8 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 		CHECKP(tmp);
 		up_concurrent_micro_ops_number();		
 	}
+	else
+		(GETSCHEMENODEX(tmp))->lastnode_ind=((n_dsc*)XADDR(tmp))->indir;
 	return tmp;
 
 }
@@ -952,6 +956,8 @@ xptr insert_comment(xptr left_sib, xptr right_sib, xptr parent,const char* value
 		CHECKP(result);
 		up_concurrent_micro_ops_number();		
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 	return result;
 }
 xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent,const char* value, int size)
@@ -1059,6 +1065,8 @@ xptr insert_cdata(xptr left_sib, xptr right_sib, xptr parent,const char* value, 
 		CHECKP(result);
 		up_concurrent_micro_ops_number();		
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 	return result;
 }
 xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, int tsize,const char* data, int dsize)
@@ -1177,6 +1185,8 @@ xptr insert_pi(xptr left_sib, xptr right_sib, xptr parent,const char* target, in
 		up_concurrent_micro_ops_number();
 		
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 	delete[]z;
 	return result;
 }
@@ -1280,6 +1290,8 @@ xptr insert_namespace(xptr left_sib, xptr right_sib, xptr parent,xml_ns* ns)
 		up_concurrent_micro_ops_number();
 		
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 	return result;
 }
 xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,unsigned int size,text_type ttype)
@@ -1462,6 +1474,8 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
 
 			up_concurrent_micro_ops_number();
 	}
+	else
+		(GETSCHEMENODEX(result))->lastnode_ind=((n_dsc*)XADDR(result))->indir;
 
     //d_printf1("ait\n");fflush(stdout);
 	return result;

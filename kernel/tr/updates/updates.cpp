@@ -363,7 +363,7 @@ xptr deep_pers_copy(xptr left, xptr right, xptr parent, xptr node,bool save_type
  if (parent==XNULL) parent=removeIndirection(((n_dsc*)XADDR(left))->pdsc);
  apply_per_node_triggers(res, XNULL, parent, NULL, TRIGGER_AFTER, TRIGGER_INSERT_EVENT);
 #endif
- CHECKP(res);
+ CHECKP(res); 
  return res;
 }
 xptr copy_content(xptr newnode,xptr node,xptr left,bool save_types)
