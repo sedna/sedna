@@ -275,6 +275,12 @@ ifeq ("$(SUB_PLATFORM)","FreeBSD")
 LSLIBS  = -lthr -lpccts -lexpat -lchicken -lpcre -fexceptions
 endif
 
+ifeq ("$(SUB_PLATFORM)","Darwin")
+ENABLE_LIBEDIT = 0
+LSLIBS  = -lthr -lpccts -lexpat -lchicken -lpcre -fexceptions
+endif
+
+
 ifeq ($(SQL_CONNECTION),1)
 ifeq ($(LIBODBC_STATIC),1)
 LSLIBS  += -lodbc -lltdl

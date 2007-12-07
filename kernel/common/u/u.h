@@ -32,13 +32,13 @@
 #define SunOS
 #endif
 
-#if (defined(FreeBSD) || defined(Linux))
+#if (defined(FreeBSD) || defined(DARWIN) || defined(Linux))
 #define HAVE_GETCWD
 #else
 /* don't have getcwd() */
 #endif
 
-#if (defined(FreeBSD))
+#if (defined(FreeBSD) || defined(DARWIN))
 /* don't have gcvt() */
 #else
 #define HAVE_GCVT
@@ -84,7 +84,7 @@
 #define HAVE_PROC
 #endif
 
-#if(defined(FreeBSD))
+#if(defined(FreeBSD) || defined(DARWIN))
 /* don't have malloc.h */
 #else
 #define HAVE_MALLOC
@@ -589,7 +589,7 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 #define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
 #else 
 #define u_is_nan(d)         (isnan(d))
-#ifdef FreeBSD // In FreeBSD isinf() returns 1 in both cases INF and -INF
+#if  (defined(FreeBSD) || defined(DARWIN)) // In FreeBSD isinf() returns 1 in both cases INF and -INF
 #define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
 #define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
 #else
