@@ -112,7 +112,9 @@ U_THREAD_PROC (checkpoint_thread, arg)
     ll_logical_log_flush();
     d_printf1("flush logical log completed\n");
 
-    ll_logical_log_flush_last_record();
+    // there was a bug in the next function since last record is not exactly checkpoint one
+    // fixed: all flush logic is now encapsulated in ll_logical_log_flush
+//    ll_logical_log_flush_last_record();
     d_printf1("checkpoint record has been flushed\n");
 
     //clear physical log

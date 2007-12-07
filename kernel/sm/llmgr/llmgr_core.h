@@ -260,6 +260,7 @@ public:
 
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
+  void ll_log_flush_all_last_records(bool sync);
   void ll_log_flush_last_record(bool sync);
   void ll_truncate_log(bool sync);
 
