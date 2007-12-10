@@ -32,7 +32,7 @@ void on_session_begin(SSMMsg* &sm_server, bool rcv_active)
 //   DebugBreak();
    sm_server = se_new SSMMsg(SSMMsg::Client, 
                           sizeof (sm_msg_struct), 
-                          CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
+                          CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
                           SM_NUMBER_OF_SERVER_THREADS, 
                           U_INFINITE);
 

@@ -111,14 +111,24 @@ int main(int argc, char *argv[])
         else
            os_primitives_id_min_bound = atoi(buf);
 
-        set_global_names(os_primitives_id_min_bound);
-
         INIT_TOTAL_TIME_VARS u_ftime(&t_total1);
 
         if (uGetEnvironmentVariable(SEDNA_DETERMINE_VMM_REGION, buf, 1024, NULL) != 0)
             determine_vmm_region = 0;
         else
             determine_vmm_region = atoi(buf);
+
+		/*	Probably it is wrong since we get region info from global shared memory and if we
+			run tr from command line (no environment variable set) and non-default id_min_bound
+			is used we won't find the shmem. Also we can erroneously access shmem from the
+			wrong Sedna installation which is not good (different vmm region settings are
+			possible though the probability is low, however the worse thing is that we wreck isolation
+			of unrelated installations; we may even fail if the shmem is created by the
+			installation running as a different user). 
+			
+			ZN*/ 
+		InitGlobalNames(os_primitives_id_min_bound, INT_MAX);
+		SetGlobalNames();
 
         if (determine_vmm_region == 1)
         {
@@ -135,6 +145,8 @@ int main(int argc, char *argv[])
             }
             OS_EXCEPTIONS_INSTALL_HANDLER
         }
+
+		ReleaseGlobalNames();
 
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
@@ -184,7 +196,9 @@ int main(int argc, char *argv[])
         client->get_session_parameters();
 
         //init global names
-        set_global_names(client->get_os_primitives_id_min_bound());
+        InitGlobalNames(client->get_os_primitives_id_min_bound(), INT_MAX);
+		SetGlobalNames();
+
         gov_shm_pointer = open_gov_shm(&gov_shm_dsc);
         is_init_gov_shm = true;
         socket_port = ((gov_config_struct *) gov_shm_pointer)->gov_vars.lstnr_port_number;
@@ -203,7 +217,7 @@ int main(int argc, char *argv[])
         if (db_id == -1)//there is no such database
            throw USER_EXCEPTION2(SE4200, db_name);
 
-        set_global_names(client->get_os_primitives_id_min_bound(), db_id);
+        SetGlobalNamesDB(db_id);
 
         //register session on governer
         register_session_on_gov();

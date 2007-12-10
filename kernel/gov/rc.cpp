@@ -75,7 +75,8 @@ int main(int argc, char **argv)
         get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
      
-        set_global_names(cfg.os_primitives_id_min_bound);
+		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+		SetGlobalNames();
 
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
 

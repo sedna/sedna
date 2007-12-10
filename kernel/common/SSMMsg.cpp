@@ -8,6 +8,7 @@
 #include "common/SSMMsg.h"
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/ugnames.h"
 
 using namespace std;
 
@@ -52,6 +53,7 @@ SSMMsg::SSMMsg(mode _m_,
                int _servers_amount_, 
                unsigned int _millisec_)
 {
+	char buf1[128], buf2[128];
     m = _m_;
     msg_size = _msg_size_;
     servers_amount = _servers_amount_;
@@ -68,8 +70,8 @@ SSMMsg::SSMMsg(mode _m_,
     sems_num = NAMED_SEMS_NUM + 3 * servers_amount;
 
 #ifdef _WIN32
-    _g_name_shmem = string(_g_name_) + SSMMSG_SHMEM_SUFFIX;
-    _g_name_sems = string(_g_name_) + SSMMSG_SEMS_SUFFIX;
+    _g_name_shmem = UGlobalNameFromCompoundName(_g_name_, 0, buf1, 128);
+    _g_name_sems = UGlobalNameFromCompoundName(_g_name_, 1, buf2, 128);
     g_name_shmem = _g_name_shmem.c_str();
     g_name_sems = _g_name_sems.c_str();
 #else

@@ -6,15 +6,19 @@
 
 #include "common/u/ummap.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/ugnames.h"
 
 //#define RIGHTS		00660
 
 UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
+	char buf[128];
+	const char *uName = NULL;
 #ifdef _WIN32
     UMMap m;
     m.fd = fd;
-    m.map = CreateFileMapping(fd, sa, PAGE_READWRITE, 0, size, name);
+	uName = UWinIPCNameFromGlobalName(name, buf, sizeof buf);
+    m.map = CreateFileMapping(fd, sa, PAGE_READWRITE, 0, size, uName);
     if (m.map == NULL) sys_call_error("CreateFileMapping");
 
     if (m.map == NULL || GetLastError() == ERROR_ALREADY_EXISTS) m.map = NULL;
@@ -22,11 +26,12 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
     return m;
 #else
     UMMap m;
+	uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
     if (fd == U_INVALID_FD)
     {
         USECURITY_ATTRIBUTES mmap_access_mode = U_SEDNA_DEFAULT_ACCESS_PERMISSIONS_MASK;
         if (sa) mmap_access_mode = *sa;
-        m.map = shm_open(name, O_RDWR | O_CREAT | O_EXCL, mmap_access_mode);
+        m.map = shm_open(uName, O_RDWR | O_CREAT | O_EXCL, mmap_access_mode);
         m.size = size;
         m.to_file = 0;
         if (m.map == -1)
@@ -63,17 +68,21 @@ UMMap uCreateFileMapping(UFile fd, int size, const char* name, USECURITY_ATTRIBU
 
 UMMap uOpenFileMapping(UFile fd, int size, const char *name, sys_call_error_fun fun)
 {
+	char buf[128];
+	const char *uName = NULL;
 #ifdef _WIN32
     UMMap m;
     m.fd = INVALID_HANDLE_VALUE;
-    m.map = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
+	uName = UWinIPCNameFromGlobalName(name, buf, sizeof buf);
+    m.map = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, uName);
     if (m.map == NULL) sys_call_error("OpenFileMapping");
     return m;
 #else
     UMMap m;
+	uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
     if (fd == U_INVALID_FD)
     {
-        m.map = shm_open(name, O_RDWR, 0);
+        m.map = shm_open(uName, O_RDWR, 0);
         m.size = size;
         m.to_file = 0;
         if (m.map == -1)
@@ -103,7 +112,10 @@ UMMap uOpenFileMapping(UFile fd, int size, const char *name, sys_call_error_fun 
 
 int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
 {
+	char buf[128];
+	const char *uName = NULL;
 #ifdef _WIN32
+	uName = UWinIPCNameFromGlobalName(name, buf, sizeof buf);
     if( CloseHandle(m.map) == 0)
     {
         sys_call_error("CloseHandle");
@@ -111,7 +123,8 @@ int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
     }
     else return 0;
 #else
-    if (name)
+	uName = UPosixIPCNameFromGlobalName(name, buf, sizeof buf);
+    if (uName)
     {
         if(0 == m.to_file && -1 != m.map)
         {
@@ -122,7 +135,7 @@ int uReleaseFileMapping(UMMap m, const char *name, sys_call_error_fun fun)
             }
         }
         
-        if (shm_unlink(name) == -1)
+        if (shm_unlink(uName) == -1)
         {
             sys_call_error("shm_unlink");
             return -1;

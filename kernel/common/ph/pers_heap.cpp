@@ -45,6 +45,20 @@ struct ph_masterblock
 
 static struct ph_masterblock *ph_mb;
 
+static global_name
+FixPersHeapFileMappingName(global_name name)
+{
+	/*	On Unices file-mapping emulation is brain-dead. A regular file
+		is mapped in memory without any proxy objects creation (no file-mapping
+		object) and unlike Windows all mapped views derived from the same file
+		are coherent. So concerning persistent heap, the file-mapping name is unused,
+		so we reset it. */ 
+#if _WIN32
+	return name;
+#else
+	return NULL;
+#endif
+}
 
 void *_persistent_morecore(long size)
 {
@@ -84,7 +98,7 @@ int pers_init(const char *file_name, const char *fm_name, global_name sph_name, 
     ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (ph_file == U_INVALID_FD) return 2;
 
-    ph_file_mapping = uOpenFileMapping(ph_file, 0, fm_name, __sys_call_error);
+    ph_file_mapping = uOpenFileMapping(ph_file, 0, FixPersHeapFileMappingName(fm_name), __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
     ph_start_address = uMapViewOfFile(ph_file_mapping, _addr, 0, 0, __sys_call_error);
@@ -151,7 +165,7 @@ int pers_open(const char *file_name, const char *fm_name, global_name sph_name, 
     ph_file = uOpenFile(file_name, U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, __sys_call_error);
     if (ph_file == U_INVALID_FD) return 2;
 
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, NULL, __sys_call_error);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, FixPersHeapFileMappingName(fm_name), NULL, __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 3;
 
     if (should_map)
@@ -204,7 +218,7 @@ int pers_create(const char *file_name, const char *fm_name, const void *addr, in
     if (uSetEndOfFile(ph_file, (__int64)(heap_size + BLOCKSIZE), U_FILE_BEGIN, __sys_call_error) == 0) return 3;
 
     // Create file mapping
-    ph_file_mapping = uCreateFileMapping(ph_file, 0, fm_name, sa, __sys_call_error);
+    ph_file_mapping = uCreateFileMapping(ph_file, 0, FixPersHeapFileMappingName(fm_name), sa, __sys_call_error);
     if (U_INVALID_FILEMAPPING(ph_file_mapping)) return 4;
 
     void *_addr = (void*)addr;

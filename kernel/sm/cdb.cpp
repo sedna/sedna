@@ -349,7 +349,8 @@ int main(int argc, char **argv)
         get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg); 
 
-        set_global_names(cfg.os_primitives_id_min_bound);
+		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+		SetGlobalNames();
 
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
 
@@ -420,7 +421,7 @@ int main(int argc, char **argv)
                                       phys_log_size,
                                       LOG_FILE_PORTION_SIZE);
 
-        set_global_names(cfg.os_primitives_id_min_bound, db_id);
+        SetGlobalNamesDB(db_id);
 
         cdb_ugc(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound);
 
