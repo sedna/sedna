@@ -469,8 +469,8 @@ int main(int argc, char **argv)
         get_default_sednaconf_values(&cfg);
         get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
 
-        set_global_names(cfg.os_primitives_id_min_bound);
-
+		InitGlobalNames(cfg.os_primitives_id_min_bound, INT_MAX);
+		SetGlobalNames();
         gov_shm_pointer = open_gov_shm(&gov_mem_dsc);
 
         db_id = get_db_id_by_name((gov_config_struct*)gov_shm_pointer, db_name);
@@ -480,7 +480,9 @@ int main(int argc, char **argv)
 
         SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
 
-        set_global_names(cfg.os_primitives_id_min_bound, db_id);
+		SetGlobalNamesDB(db_id);
+
+        //set_global_names(cfg.os_primitives_id_min_bound, db_id);
 
 		/* event_logger_init must be after set_global_names */
         event_logger_init(EL_SM, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);
@@ -659,15 +661,15 @@ int main(int argc, char **argv)
             // Starting SSMMsg server
             d_printf1("Starting SSMMsg...");
 
+			//((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound
             ssmmsg = new SSMMsg(SSMMsg::Server, 
                                 sizeof (sm_msg_struct), 
-                                CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
+                                CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
                                 SM_NUMBER_OF_SERVER_THREADS,
                                 U_INFINITE);
             if (ssmmsg->init() != 0)
                 throw USER_EXCEPTION(SE3030);
 
-//            DebugBreak();
             if (ssmmsg->serve_clients(sm_server_handler) != 0)
                 throw USER_EXCEPTION(SE3031);
 
@@ -863,9 +865,10 @@ void recover_database_by_physical_and_logical_log(int db_id)
        // Starting SSMMsg server
        d_printf1("Starting SSMMsg...");
 
+	   //((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound
        ssmmsg = new SSMMsg(SSMMsg::Server, 
                            sizeof (sm_msg_struct), 
-                           CHARISMA_SSMMSG_SM_ID(db_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024),
+                           CHARISMA_SSMMSG_SM_ID(db_id, buf, 1024),
                            SM_NUMBER_OF_SERVER_THREADS,
                            U_INFINITE);
        if (ssmmsg->init() != 0)

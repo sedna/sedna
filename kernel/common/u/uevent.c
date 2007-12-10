@@ -2,6 +2,7 @@
 #include "uevent.h"
 #include "common/errdbg/d_printf.h"
 #include "common/u/usecurity.h"
+#include "common/u/ugnames.h"
 
 #ifdef _WIN32
 
@@ -19,7 +20,7 @@ int UEventUnlink(global_name gn,
 	int status = -1;
 	if (gn == NULL)
 	{
-		d_printf1("UEventUnlink: U_INVALID_GLOBAL_NAME is invalid in this context\n");
+		d_printf1("UEventUnlink: NULL is invalid in this context\n");
 	}
 	else
 	{
@@ -36,13 +37,17 @@ int UEventCreate(UEvent *uEvent,
 				 sys_call_error_fun fun)
 {
 	int status = -1; 
+	char buf[128];
+	const char *wName = NULL;
 	HANDLE handle = NULL;
+
 	assert(uEvent);
+	wName = UWinIPCNameFromGlobalName(gn,buf,sizeof buf);
 	if (eventType!=U_AUTORESET_EVENT && eventType!=U_MANUALRESET_EVENT)
 	{
 		d_printf1("UEventCreate: unrecognised event type requested\n");
 	}
-	else if (NULL == (handle=CreateEvent(sa, eventType==U_MANUALRESET_EVENT, isSet, gn)))
+	else if (NULL == (handle=CreateEvent(sa, eventType==U_MANUALRESET_EVENT, isSet, wName)))
 	{
 		SYS_CALL_ERROR(fun, "CreateEvent");
 	}
@@ -59,9 +64,13 @@ int UEventOpen(UEvent *uEvent,
 			   sys_call_error_fun fun)
 {
 	int status = -1;
+	char buf[128];
+	const char *wName = NULL;
 	HANDLE handle = NULL;
+
 	assert(uEvent);
-	if (NULL == (handle=OpenEvent(EVENT_ALL_ACCESS, FALSE, gn)))
+	wName = UWinIPCNameFromGlobalName(gn,buf,sizeof buf);
+	if (NULL == (handle=OpenEvent(EVENT_ALL_ACCESS, FALSE, wName)))
 	{
 		SYS_CALL_ERROR(fun, "OpenEvent");
 	}
@@ -208,8 +217,10 @@ int UEventCreate(UEvent *uEvent,
 	int status = -1;
 	int semid = -1;
 	USECURITY_ATTRIBUTES evmode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
+	key_t key = IPC_PRIVATE;
 
 	assert(uEvent);
+	key = USys5IPCKeyFromGlobalName(gn);
 	uEvent->semid = -1;
 	if (sa) evmode = *sa;
 	evmode |= IPC_CREAT | IPC_EXCL;
@@ -218,7 +229,7 @@ int UEventCreate(UEvent *uEvent,
 	{
 		d_printf1("UEventCreate: unrecognised event type requested\n");
 	}
-	else if (semid = semget(gn, SEMARR_SIZE, evmode), semid == -1) 
+	else if (semid = semget(key, SEMARR_SIZE, evmode), semid == -1) 
 	{
 		SYS_CALL_ERROR(fun, "semget");
 	}
@@ -251,13 +262,15 @@ int UEventOpen(UEvent *uEvent,
 			   sys_call_error_fun fun)
 {
 	int status = -1, semid = -1;
+	key_t key = IPC_PRIVATE;
 	
 	assert(uEvent);
-	if (gn == IPC_PRIVATE)
+	key = USys5IPCKeyFromGlobalName(gn);
+	if (gn == NULL)
 	{
-		d_printf1("UEventOpen: bad global name (IPC_PRIVATE)\n");
+		d_printf1("UEventOpen: NULL invalid in this context\n");
 	}
-	else if (semid = semget(gn, 0, 0), semid==-1)
+	else if (semid = semget(key, 0, 0), semid==-1)
 	{
 		SYS_CALL_ERROR(fun,"semget");
 	}

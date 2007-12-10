@@ -7,6 +7,7 @@
 #include "common/u/usem.h"
 #include "common/u/uutils.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/ugnames.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Semaphore implementation
@@ -15,7 +16,10 @@
 int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name name, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    *sem = CreateSemaphore(sa, init_value, max_value, name);
+	char buf[128];
+	const char *wName = UWinIPCNameFromGlobalName(name,buf,128);
+
+    *sem = CreateSemaphore(sa, init_value, max_value, wName);
 
     if (*sem == NULL)
     {
@@ -40,16 +44,13 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 	    struct semid_sd *buf;
 	    ushort *array;
 	} semctl_arg;
+	key_t key = IPC_PRIVATE;
 
-	if (name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);
-		return 1;
-	}
+	key = USys5IPCKeyFromGlobalName(name);
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
-    int res = semget(name, 1, IPC_CREAT | IPC_EXCL | sem_access_mode);
+    int res = semget(key, 1, IPC_CREAT | IPC_EXCL | sem_access_mode);
     *sem = res;
 
     if (*sem < 0)
@@ -73,7 +74,9 @@ int USemaphoreCreate(USemaphore *sem, int init_value, int max_value, global_name
 int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
 #ifdef _WIN32
 {
-    *sem = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, name);
+	char buf[128];
+	const char *wName = UWinIPCNameFromGlobalName(name,buf,128);
+    *sem = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, wName);
 
     if (*sem == NULL)
     {
@@ -85,13 +88,10 @@ int USemaphoreOpen(USemaphore *sem, global_name name, sys_call_error_fun fun)
 }
 #else
 {
-	if (name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);	
-		return 1;
-	}
+	key_t key = IPC_PRIVATE;
+	key = USys5IPCKeyFromGlobalName(name);
 
-    *sem = semget(name, 1, 0);
+    *sem = semget(key, 1, 0);
 
     if (*sem < 0)
     {
@@ -300,30 +300,28 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 #ifdef _WIN32
 {
     int i = 0;
-    char buf[SIZE_OF_BUF_FOR_ADJUSTED_NAME];
-    int name_len = strlen(name);
+    char buf[128];
+	const char *wName = NULL;
+    size_t name_len = 0;
+
+	wName = UWinIPCNameFromGlobalName(name,buf,128);
+	if (wName) name_len = strlen(wName);
 
     /*
      * We concatenate name with a number and put the result to buf. 
      * Because int2c_str requieres 20 bytes the length of the name
      * must not be greater than (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20)
      */
-    if (name_len > (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20))
-    {
-        return 1;
-    }
-    strcpy(buf, name);
-
     *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
-        int2c_str(i, buf + name_len);
+		sprintf(buf+name_len,":%d",i);
 
         (*sem)[i] = CreateSemaphore(sa,
                                     init_values[i],
                                     INT_MAX,
-                                    buf);
+                                    wName);
 
         if ((*sem)[i] == NULL)
         {
@@ -351,17 +349,14 @@ int USemaphoreArrCreate(USemaphoreArr *sem, int size, const int *init_values, gl
 	    struct semid_sd *buf;
 	    ushort *array;
 	} semctl_arg;
+	key_t key = IPC_PRIVATE;
     int i = 0;
 
-	if (name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);
-		return 1;
-	}
+	key = USys5IPCKeyFromGlobalName(name);
 
     USECURITY_ATTRIBUTES sem_access_mode = U_SEDNA_SEMAPHORE_ACCESS_PERMISSIONS_MASK;
     if (sa) sem_access_mode = *sa;
-    *sem = semget(name, size, IPC_CREAT | IPC_EXCL | sem_access_mode);
+    *sem = semget(key, size, IPC_CREAT | IPC_EXCL | sem_access_mode);
 
     if (*sem < 0)
     {
@@ -390,29 +385,22 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_e
 #ifdef _WIN32
 {
     int i = 0;
-    char buf[SIZE_OF_BUF_FOR_ADJUSTED_NAME];
-    int name_len = strlen(name);
+    char buf[128];
+    size_t name_len = 0;
+	const char *wName = NULL;
 
-    /*
-     * We concatenate name with a number and put the result to buf. 
-     * Because int2c_str requieres 20 bytes the length of the name
-     * must not be greater than (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20)
-     */
-    if (name_len > (SIZE_OF_BUF_FOR_ADJUSTED_NAME - 20))
-    {
-        return 1;
-    }
-    strcpy(buf, name);
+	wName = UWinIPCNameFromGlobalName(name,buf,128);
+	if (wName) name_len = strlen(wName);
 
     *sem = (USemaphoreArr)malloc(sizeof(HANDLE) * size);
 
     for (i = 0; i < size; i++)
     {
-        int2c_str(i, buf + name_len);
+		sprintf(buf+name_len,":%d",i);
 
         (*sem)[i] = OpenSemaphore(SEMAPHORE_ALL_ACCESS, 
                                   FALSE, 
-                                  buf);
+                                  wName);
 
         if ((*sem)[i] == NULL)
         {
@@ -426,13 +414,10 @@ int USemaphoreArrOpen(USemaphoreArr *sem, int size, global_name name, sys_call_e
 }
 #else
 {
-	if (name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);	
-		return 1;
-	}
+	key_t key = IPC_PRIVATE;
+	key = USys5IPCKeyFromGlobalName(name);
 
-    *sem = semget(name, size, 0);
+    *sem = semget(key, size, 0);
 
     if (*sem < 0)
     {

@@ -6,19 +6,25 @@
 
 #include "common/u/ushm.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/ugnames.h"
 
 //#define RIGHTS		0666
 
 int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #ifdef _WIN32
 {
+	char buf[128];
+	const char *wName = NULL;
+
+	wName = UWinIPCNameFromGlobalName(name,buf,128);
+
     //printf("uCreateShMem name = %s\n", name);
     *id = CreateFileMapping(INVALID_HANDLE_VALUE,
                             sa,
                             PAGE_READWRITE,
                             0,
                             size,
-                            name
+                            wName
                            );
 
     //printf("CreateFileMapping %s\n", name);
@@ -33,15 +39,12 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
 }
 #else
 {
-	if(name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);
-		return 1;
-	}
+	key_t key = IPC_PRIVATE;
+	key = USys5IPCKeyFromGlobalName(name);
 
     USECURITY_ATTRIBUTES shm_access_mode = U_SEDNA_SHMEM_ACCESS_PERMISSIONS_MASK;
     if (sa) shm_access_mode = *sa;
-	*id = shmget(name, size, IPC_CREAT | IPC_EXCL | shm_access_mode);
+	*id = shmget(key, size, IPC_CREAT | IPC_EXCL | shm_access_mode);
 
 	if(*id == -1)
 	{
@@ -68,10 +71,15 @@ int uCreateShMem(UShMem *id, global_name name, int size, USECURITY_ATTRIBUTES* s
 int uOpenShMem(UShMem *id, global_name name, int size, sys_call_error_fun fun)
 #ifdef _WIN32
 {
+	char buf[128];
+	const char *wName = NULL;
+
+	wName = UWinIPCNameFromGlobalName(name,buf,128);
+
     //printf("uOpenShMem name = %s\n", name);
     *id = OpenFileMapping(FILE_MAP_ALL_ACCESS,				// Read/write permission. 
                           FALSE,							// Do not inherit the name
-                          name								// of the mapping object. 
+                          wName								// of the mapping object. 
                          );
 
     //printf("OpenFileMapping %s\n", name);
@@ -86,14 +94,11 @@ int uOpenShMem(UShMem *id, global_name name, int size, sys_call_error_fun fun)
 }
 #else
 {
-	if (name == IPC_PRIVATE)
-	{
-		d_printf2("Key value %x is used for special cases\n", (int)name);
-		return 1;
-	}
+	key_t key = IPC_PRIVATE;
+	key = USys5IPCKeyFromGlobalName(name);
 
     //d_printf2("name = %d\n", name);
-	*(id) = shmget(name, size, 0);
+	*(id) = shmget(key, size, 0);
 
 	if(*id == -1)
 	{

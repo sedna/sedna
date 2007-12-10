@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include "common/base.h"
+#include "common/u/ugnames.h"
 #include "common/u/uhdd.h"
 #include "common/u/uprocess.h"
 #include "common/errdbg/d_printf.h"
@@ -14,22 +15,14 @@
 
 using namespace std;
 
-#ifdef _WIN32
-void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL; //((void*)0x30000000);
-void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL; //((void*)0x60000000);
-void  *PH_ADDRESS_SPACE_START_ADDR        = NULL; //((void*)0x2BC00000);
-__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((__uint32)0x30000000);
-__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((__uint32)0x60000000);
-__uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((__uint32)0x2BC00000);
+void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL;
+void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL;
+void  *PH_ADDRESS_SPACE_START_ADDR        = NULL;
+__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0;
+__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0;
+__uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0;
 
-__uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
-#else
-void  *LAYER_ADDRESS_SPACE_START_ADDR     = NULL; //((void*)0x60000000);
-void  *LAYER_ADDRESS_SPACE_BOUNDARY       = NULL; //((void*)0x90000000);
-void  *PH_ADDRESS_SPACE_START_ADDR        = NULL; //((void*)0x59C00000);
-__uint32 LAYER_ADDRESS_SPACE_START_ADDR_INT = 0; //((__uint32)0x60000000);
-__uint32 LAYER_ADDRESS_SPACE_BOUNDARY_INT   = 0; //((__uint32)0x90000000);
-__uint32 PH_ADDRESS_SPACE_START_ADDR_INT    = 0; //((__uint32)0x59C00000);
+__uint32 LAYER_ADDRESS_SPACE_SIZE           = 0;
 
 __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #endif
@@ -51,7 +44,6 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #else
 #define _CHARISMA_PH_SHARED_MEMORY_NAME			 NULL
 #define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/CharismaBufferSharedMemory"
-#endif
 #define _SM_TO_VMM_CALLBACK_SEM1_BASE_STR		 (_CHARISMA_ITFE_SHARED_MEMORY_NAME + MAX_DBS_NUMBER)
 #endif
 
@@ -98,11 +90,9 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #define _TRIGGER_SEMAPHORE_STR				 (_SE_EVENT_LOG_SEMAPHORES_NAME + 1 + MAX_DBS_NUMBER)
 #endif
 
-#if defined(_WIN32)
+#ifdef _WIN32
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
-#elif (defined(FreeBSD) || defined(DARWIN))
-#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/tmp/SEDNA_GM_MAPPING"
-#else
+#else 
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
 #endif
 
@@ -160,241 +150,304 @@ global_name SE_EVENT_LOG_SEMAPHORES_NAME;
 global_name CHARISMA_SM_SMSD_ID;
 global_name CHARISMA_SM_IS_READY;
 
+/*	global names */ 
 
-FILE* res_os = stdout; //otput stream of transaction results (result of the user's query)
+#define POLICY_SINGLETON()				NULL,1
+#define POLICY_INSTANCE_PER_DB()		"DB",(MAX_DBS_NUMBER)
+#define POLICY_INSTANCE_PER_SESSION()	"SES",(UPPER_SESSIONS_NUM_BOUND)
 
-
-global_name SM_TO_VMM_CALLBACK_SEM1_BASE_STR(session_id id, int os_primitives_id_min_bound, char* buf, int size)
+/*	If you want to add a new global IPC object, do it here.
+	We are going to extract basenames automaticly, so don't 
+	try anything funny below and preserve markers. */ 
+static UGlobalNamesRegistryItem globalNamesRegistry[] =
 {
-#ifdef _WIN32
-    string tmp = string("SEDNA_GN_PREFIX") +  int2string(os_primitives_id_min_bound + _SM_TO_VMM_CALLBACK_SEM1_BASE_STR + id);
-    if (tmp.length() > size - 1) throw USER_EXCEPTION(SE1009);
-    strcpy(buf, tmp.c_str());
-    return buf;
-#else
-    return os_primitives_id_min_bound + _SM_TO_VMM_CALLBACK_SEM1_BASE_STR + id;
-#endif
+	/* {% GlobalNamesRegistry */ 
+	{"SHMEM_GLOBAL",					POLICY_SINGLETON()}, /* vmm region info + VMM placeholder when no buffer mapped */ 
+	
+	{"SHMEM_GOV",						POLICY_SINGLETON()}, /* holding system state and config info (gov_config_struct) */ 
+	
+	{"SHMEM_EVENT_LOG",					POLICY_SINGLETON()}, /* event logger */ 
+	{"SEMAR_EVENT_LOG",				POLICY_SINGLETON()}, /* event logger  */ 
+
+	{"SHMEM_BUFFERS",					POLICY_INSTANCE_PER_DB()}, /* buffer memory */  
+	{"SEMAP_BUFMGR_EXCL_MODE",			POLICY_INSTANCE_PER_DB()}, /* regulates the exclusive mode entering by TRN */ 
+	{"SHMEM_BUFFERS_LRU",				POLICY_INSTANCE_PER_DB()}, /* LRU stats on buffers usage */ 
+
+	{"SHMEM_SM_TALK",					POLICY_INSTANCE_PER_DB()}, /* used by shared memory-based SM messaging interface */ 
+	{"SEMAR_SM_TALK",					POLICY_INSTANCE_PER_DB()}, /* used by shared memory-based SM messaging interface */ 
+
+	{"SEMAP_VMM_INIT",					POLICY_INSTANCE_PER_DB()}, /* VMM initialisation is serialised with this sem */ 
+	{"SHMEM_VMM_CALLBACK_PARAMS",		POLICY_INSTANCE_PER_DB()}, /* parameters passed to VMM calback */ 
+	{"EVENT_VMM_CALLBACK",				POLICY_INSTANCE_PER_SESSION()}, /* VMM callback thread waits on it */ 
+	{"EVENT_VMM_CALLBACK_COMPLETED",	POLICY_INSTANCE_PER_SESSION()}, /* sem for callback thread to signal call completion */ 
+
+	{"SHMEM_PERS_HEAP",					POLICY_INSTANCE_PER_DB()}, /* shared memory for persistent heap */ 
+	{"SEMAP_PERS_HEAP",					POLICY_INSTANCE_PER_DB()}, /* serialises memory allocation in PH */ 
+	
+	{"SHMEM_PERS_HEAP_SNAPSHOT_0",		POLICY_INSTANCE_PER_DB()}, /* PH for snapshot with id #0 */ 
+	{"SEMAP_PERS_HEAP_SNAPSHOT_0",		POLICY_INSTANCE_PER_DB()}, /* dummy sem */ 
+
+	{"SHMEM_PERS_HEAP_SNAPSHOT_1",		POLICY_INSTANCE_PER_DB()}, /* PH for snapshot with id #1 */ 
+	{"SEMAP_PERS_HEAP_SNAPSHOT_1",		POLICY_INSTANCE_PER_DB()}, /* dummy sem */ 
+
+	{"SHMEM_INDIRECTION",				POLICY_INSTANCE_PER_DB()}, /* indirection table free entry (?) */ 
+	{"SEMAP_INDIRECTION",					POLICY_INSTANCE_PER_DB()}, /* sync of some kind */ 
+
+	{"SEMAP_METADATA",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to metadata registry in PH */ 
+
+	{"SEMAP_INDICES",						POLICY_INSTANCE_PER_DB()}, /* synchronises access to indices registry in PH */ 
+
+	{"SEMAP_FT_INDICES",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to full-text indices registry in PH */ 
+
+	{"SEMAP_TRIGGERS",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to triggers registry in PH */ 
+
+	{"SEMAP_LOCKMGR",						POLICY_INSTANCE_PER_DB()}, /* serialises requests to lock manager (in SM) */ 
+	{"EVENT_LOCK_GRANTED",				POLICY_INSTANCE_PER_SESSION()}, /* if transaction request for a lock on DB entity is not satisfied immediately trn waits until the event is signalled (hence if transaction enters the wait state, it can't become a victim for the deadlock-resolution process) */ 
+
+	{"SEMAP_TRN_REGULATION",				POLICY_INSTANCE_PER_DB()}, /* currently if checkpoint is active no updater transactions are allowed and vice-versa (earlier mutual exclusion applied to micro-ops but not transactions) */ 
+	{"EVENT_NEW_JOB_4_CHECKPOINT_THREAD", POLICY_INSTANCE_PER_DB()}, /* signals that a checkpoint must be activated or snapshots must be advanced */ 
+	{"EVENT_READONLY_TRN_COMPLETED",	POLICY_INSTANCE_PER_DB()}, /* signals read-only transaction completion */ 
+
+	{"SHMEM_PHYSICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* physical log state & buffer in shared memory */ 
+	{"SEMAP_PHYSICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with physical log */ 
+
+	{"SHMEM_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */ 
+	{"SEMAP_LOGICAL_LOG",					POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
+
+	{"EVENT_SM_SHUTDOWN_COMMAND",		POLICY_INSTANCE_PER_DB()}, /* signaled by SSMMsg thread in SM when shutdown command arrives via messaging interface */ 
+
+	{"EVENT_RECOVERY_COMPLETED",		POLICY_INSTANCE_PER_DB()}, /* signaled when se_rcv completes the recovery */ 
+
+	{"SEMAP_TRNS_TABLE",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to transactions table in SM */ 
+
+	{"EVENT_SM_READY",					POLICY_INSTANCE_PER_DB()}, /* used to signal initialisation completion when starting SM in background mode */ 
+
+	{"EVENT_GOV_READY",					POLICY_SINGLETON()}, /* used to signal initialisation completion when starting GOV in background mode */ 
+
+	/* %} */ 
+	{NULL}
+};
+
+void InitGlobalNames(int rangeBegin, int rangeEnd)
+{
+	UInitGlobalNamesRegistry(globalNamesRegistry, NULL, rangeBegin, rangeEnd);
 }
 
-global_name SM_TO_VMM_CALLBACK_SEM2_BASE_STR(session_id id, int os_primitives_id_min_bound, char* buf, int size)
+void ReleaseGlobalNames()
 {
-#ifdef _WIN32
-    string tmp = string("SEDNA_GN_PREFIX") +  int2string(os_primitives_id_min_bound + _SM_TO_VMM_CALLBACK_SEM2_BASE_STR + id);
-    if (tmp.length() > size - 1) throw USER_EXCEPTION(SE1009);
-    strcpy(buf, tmp.c_str());
-    return buf;
-#else
-    return os_primitives_id_min_bound + _SM_TO_VMM_CALLBACK_SEM2_BASE_STR + id;
-#endif
+	UReleaseGlobalNamesRegistry();
 }
 
-
-global_name SEDNA_TRANSACTION_LOCK(session_id id, int os_primitives_id_min_bound, char* buf, int size)
+global_name CreateNameOfSmTalk(int databaseId, char *buf, size_t bufSize)
 {
-#ifdef _WIN32
-    string tmp = string("SEDNA_GN_PREFIX") + int2string(os_primitives_id_min_bound + _SEDNA_TRANSACTION_LOCK + id);
+	const char *namesVec[2];
+	char bufa[128], bufb[128];
 
-    if (tmp.length() > size - 1) throw USER_EXCEPTION(SE1009);
-    strcpy(buf, tmp.c_str());
-    return buf;
-#else
-    return os_primitives_id_min_bound + _SEDNA_TRANSACTION_LOCK + id;
-#endif
+	namesVec[0] = UCreateGlobalName("SHMEM_SM_TALK", databaseId, bufa, 128);
+	namesVec[1] = UCreateGlobalName("SEMAR_SM_TALK", databaseId, bufb, 128);
+	
+	return UCreateCompoundName(namesVec, 2, buf, bufSize);
 }
 
-global_name CHARISMA_SSMMSG_SM_ID(int db_id, int os_primitives_id_min_bound, char* buf, int size )
+global_name CreateNameOfEventVmmCalback(int sessionId, char *buf, size_t bufSize)
 {
-#ifdef _WIN32
-    string tmp = string("SEDNA_GN_PREFIX") + int2string(os_primitives_id_min_bound + _CHARISMA_SSMMSG_SM_ID + db_id);
-
-    if (tmp.length() > size - 1) throw USER_EXCEPTION(SE1009);
-    strcpy(buf, tmp.c_str());
-    return buf;
-#else
-    return os_primitives_id_min_bound + _CHARISMA_SSMMSG_SM_ID + db_id;
-#endif
+	return UCreateGlobalName("EVENT_VMM_CALLBACK", sessionId, buf, bufSize);
 }
 
-
-#define WIN_GN_INIT1(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
-                     		strcpy((char*)c, "SEDNA_GN_PREFIX");								\
-                                strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c, buf, 10));
-
-#define WIN_GN_INIT2(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
-                     		strcpy((char*)c, "SEDNA_GN_PREFIX");								\
-                                strcat((char*)c, _itoa(os_primitives_id_min_bound + _##c + id, buf, 10));
-
-#define WIN_GN_INIT4(c)		c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
-                     		strcpy((char*)c, _##c);								\
-                                strcat((char*)c, _itoa(os_primitives_id_min_bound, buf, 10));
-
-/*
-#define WIN_GN_INIT1(c)		tmp = string(_##c) + db_name;									\
-                     		c = se_new char[tmp.length() + 1];									\
-                     		strcpy((char*)c, tmp.c_str());
-
-#define WIN_GN_INIT2(c)		tmp = string(_##c);												\
-                     		c = se_new char[tmp.length() + 1];									\
-                     		strcpy((char*)c, tmp.c_str());
-
-#define WIN_GN_INIT3(c)		if (_##c)														\
-                            {																\
-                                tmp = string(_##c) + db_name;								\
-                     		    c = se_new char[tmp.length() + 1];								\
-                     		    strcpy((char*)c, tmp.c_str());								\
-                            }																\
-                            else c = NULL;
-*/
-
-#define UNIX_GN_INIT1(c)	c = os_primitives_id_min_bound + _##c;
-
-#define UNIX_GN_INIT2(c)	c = os_primitives_id_min_bound + _##c + id;
-
-
-#define UNIX_GN_INIT3(c)	if ((char*)(_##c) != NULL)														\
-                                {																\
-                     		    c = new char[128+sizeof(_##c)];													\
-                                    strcpy((char*)c, _##c);\
-                     		    strcat((char*)c, u_itoa(os_primitives_id_min_bound +id, buf, 10));											\
-                                }																\
-                                else c = NULL;
-
-#define UNIX_GN_INIT4(c)	c = new char[128];/*enough memory for prefix and string representation of numeric id*/ 		\
-                     		strcpy((char*)c, _##c);								\
-                                strcat((char*)c, u_itoa(os_primitives_id_min_bound, buf, 10));
-
-
-/*
-#define UNIX_GN_INIT3(c)	if (_##c)														\
-                            {																\
-                                tmp = string(_##c) + db_name;								\
-                     		    c = se_new char[tmp.length() + 1];								\
-                     		    strcpy((char*)c, tmp.c_str());								\
-                            }																\
-                            else c = NULL;
-*/
-
-void set_global_names(int os_primitives_id_min_bound)
+global_name CreateNameOfEventVmmCalbackCompleted(int sessionId, char *buf, size_t bufSize)
 {
-    char buf[256];
-#ifdef _WIN32
-    WIN_GN_INIT1(GOVERNOR_SHARED_MEMORY_NAME);
-    WIN_GN_INIT1(CHARISMA_GOVERNOR_IS_READY);
-    WIN_GN_INIT1(SE_EVENT_LOG_SHARED_MEMORY_NAME);
-    WIN_GN_INIT1(SE_EVENT_LOG_SEMAPHORES_NAME);
-    WIN_GN_INIT4(SEDNA_GLOBAL_MEMORY_MAPPING);
-#else
-    UNIX_GN_INIT1(GOVERNOR_SHARED_MEMORY_NAME);
-    UNIX_GN_INIT1(CHARISMA_GOVERNOR_IS_READY);
-    UNIX_GN_INIT1(SE_EVENT_LOG_SHARED_MEMORY_NAME);
-    UNIX_GN_INIT1(SE_EVENT_LOG_SEMAPHORES_NAME);
-    UNIX_GN_INIT4(SEDNA_GLOBAL_MEMORY_MAPPING);
-#endif
+	return UCreateGlobalName("EVENT_VMM_CALLBACK_COMPLETED", sessionId, buf, bufSize);
 }
 
-void set_global_names(int os_primitives_id_min_bound, int id)
+global_name CreateNameOfEventLockGranted(int sessionId, char *buf, size_t bufSize)
 {
-    char buf[256];
-#ifdef _WIN32
-    WIN_GN_INIT2(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME);
-    WIN_GN_INIT2(CHARISMA_ITFE_SHARED_MEMORY_NAME);
-
-    WIN_GN_INIT2(CHARISMA_BUFFER_SHARED_MEMORY_NAME);
-    WIN_GN_INIT2(CHARISMA_PH_SHARED_MEMORY_NAME);
-
-	WIN_GN_INIT2(CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME);
-	WIN_GN_INIT2(CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME);
-
-    WIN_GN_INIT2(VMM_SM_SEMAPHORE_STR);
-    WIN_GN_INIT2(INDIRECTION_TABLE_SEMAPHORE_STR);
-    WIN_GN_INIT2(VMM_SM_EXCLUSIVE_MODE_SEM_STR);
-    WIN_GN_INIT2(PERS_HEAP_SEMAPHORE_STR);
-
-	WIN_GN_INIT2(PERS_HEAP_1_SNP_SEMAPHORE_STR);
-	WIN_GN_INIT2(PERS_HEAP_0_SNP_SEMAPHORE_STR);
-    
-    WIN_GN_INIT2(SNAPSHOT_CHECKPOINT_EVENT);
-    WIN_GN_INIT2(TRY_ADVANCE_SNAPSHOT_EVENT);
-
-    WIN_GN_INIT2(METADATA_SEMAPHORE_STR);
-    WIN_GN_INIT2(INDEX_SEMAPHORE_STR);
-#ifdef SE_ENABLE_FTSEARCH
-    WIN_GN_INIT2(FT_INDEX_SEMAPHORE_STR);
-#endif
-#ifdef SE_ENABLE_TRIGGERS
-    WIN_GN_INIT2(TRIGGER_SEMAPHORE_STR);
-#endif
-    WIN_GN_INIT2(PHYS_LOG_SHARED_MEM_NAME);
-    WIN_GN_INIT2(PHYS_LOG_PROTECTION_SEMAPHORE_NAME);
-
-    WIN_GN_INIT2(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME);
-    WIN_GN_INIT2(CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);
-
-    WIN_GN_INIT2(CHARISMA_CHECKPOINT_SEM);
-    WIN_GN_INIT2(SEDNA_CHECKPOINT_FINISHED_SEM);
-    WIN_GN_INIT2(SEDNA_TRNS_FINISHED);
-    WIN_GN_INIT2(CHARISMA_WAIT_FOR_CHECKPOINT);
-    WIN_GN_INIT2(CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG);
-
-    WIN_GN_INIT2(CHARISMA_SYNC_TRN_IDS_TABLE);
-
-    WIN_GN_INIT2(CHARISMA_SM_WAIT_FOR_SHUTDOWN);
-
-    WIN_GN_INIT2(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME);
-
-    WIN_GN_INIT2(SEDNA_LOCK_MANAGER_SEM);
-    WIN_GN_INIT2(CHARISMA_SM_SMSD_ID);
-    WIN_GN_INIT2(CHARISMA_SM_IS_READY);
-#else
-
-    UNIX_GN_INIT2(CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME);
-    UNIX_GN_INIT2(CHARISMA_ITFE_SHARED_MEMORY_NAME);
-
-    UNIX_GN_INIT3(CHARISMA_BUFFER_SHARED_MEMORY_NAME);
-    UNIX_GN_INIT3(CHARISMA_PH_SHARED_MEMORY_NAME);
-
-	UNIX_GN_INIT3(CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME);
-	UNIX_GN_INIT3(CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME);
-
-    UNIX_GN_INIT2(VMM_SM_SEMAPHORE_STR);
-    UNIX_GN_INIT2(INDIRECTION_TABLE_SEMAPHORE_STR);
-    UNIX_GN_INIT2(VMM_SM_EXCLUSIVE_MODE_SEM_STR);
-    UNIX_GN_INIT2(PERS_HEAP_SEMAPHORE_STR);
-
-	UNIX_GN_INIT2(PERS_HEAP_1_SNP_SEMAPHORE_STR);
-	UNIX_GN_INIT2(PERS_HEAP_0_SNP_SEMAPHORE_STR);
-    
-    UNIX_GN_INIT2(SNAPSHOT_CHECKPOINT_EVENT);
-    UNIX_GN_INIT2(TRY_ADVANCE_SNAPSHOT_EVENT);
-
-    UNIX_GN_INIT2(METADATA_SEMAPHORE_STR);
-    UNIX_GN_INIT2(INDEX_SEMAPHORE_STR);
-#ifdef SE_ENABLE_FTSEARCH
-    UNIX_GN_INIT2(FT_INDEX_SEMAPHORE_STR);
-#endif
-#ifdef SE_ENABLE_TRIGGERS
-    UNIX_GN_INIT2(TRIGGER_SEMAPHORE_STR);
-#endif
-
-    UNIX_GN_INIT2(PHYS_LOG_SHARED_MEM_NAME);
-    UNIX_GN_INIT2(PHYS_LOG_PROTECTION_SEMAPHORE_NAME);
-
-    UNIX_GN_INIT2(CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME);
-    UNIX_GN_INIT2(CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME);
-
-    UNIX_GN_INIT2(CHARISMA_CHECKPOINT_SEM);
-    UNIX_GN_INIT2(SEDNA_CHECKPOINT_FINISHED_SEM);
-    UNIX_GN_INIT2(SEDNA_TRNS_FINISHED);
-    UNIX_GN_INIT2(CHARISMA_WAIT_FOR_CHECKPOINT);
-    UNIX_GN_INIT2(CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG);
-
-    UNIX_GN_INIT2(CHARISMA_SYNC_TRN_IDS_TABLE);
-    UNIX_GN_INIT2(CHARISMA_SM_WAIT_FOR_SHUTDOWN);
-
-    UNIX_GN_INIT2(CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME);
-
-    UNIX_GN_INIT2(SEDNA_LOCK_MANAGER_SEM);
-    UNIX_GN_INIT2(CHARISMA_SM_SMSD_ID);
-    UNIX_GN_INIT2(CHARISMA_SM_IS_READY);
-#endif
+	return UCreateGlobalName("EVENT_LOCK_GRANTED", sessionId, buf, bufSize);
 }
+
+/* empty string is invalid as global name but NULL is valid, so we use empty string as initializer  */ 
+global_name GOVERNOR_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_GOVERNOR_IS_READY = "";
+global_name SE_EVENT_LOG_SHARED_MEMORY_NAME = "";
+global_name SE_EVENT_LOG_SEMAPHORES_NAME = "";
+global_name SEDNA_GLOBAL_MEMORY_MAPPING = "";
+
+void SetGlobalNames()
+{
+	static char 
+		GOVERNOR_SHARED_MEMORY_NAME__buf__		[128],
+		CHARISMA_GOVERNOR_IS_READY__buf__		[128],
+		SE_EVENT_LOG_SHARED_MEMORY_NAME__buf__	[128],
+		SE_EVENT_LOG_SEMAPHORES_NAME__buf__		[128],
+		SEDNA_GLOBAL_MEMORY_MAPPING__buf__		[128];
+
+	GOVERNOR_SHARED_MEMORY_NAME = 
+		UCreateGlobalName("SHMEM_GOV", 0, GOVERNOR_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_GOVERNOR_IS_READY = 
+		UCreateGlobalName("EVENT_GOV_READY", 0, CHARISMA_GOVERNOR_IS_READY__buf__, 128);
+
+	SE_EVENT_LOG_SHARED_MEMORY_NAME = 
+		UCreateGlobalName("SHMEM_EVENT_LOG", 0, SE_EVENT_LOG_SHARED_MEMORY_NAME__buf__, 128);
+
+	SE_EVENT_LOG_SEMAPHORES_NAME = 
+		UCreateGlobalName("SEMAR_EVENT_LOG", 0, SE_EVENT_LOG_SEMAPHORES_NAME__buf__, 128);
+
+	SEDNA_GLOBAL_MEMORY_MAPPING = 
+		UCreateGlobalName("SHMEM_GLOBAL", 0, SEDNA_GLOBAL_MEMORY_MAPPING__buf__, 128);
+}
+
+/* empty string is invalid as global name but NULL is valid, so we use empty string as initializer  */ 
+global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_ITFE_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_PH_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME = "";
+global_name CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME = "";
+global_name VMM_SM_SEMAPHORE_STR = "";
+global_name INDIRECTION_TABLE_SEMAPHORE_STR = "";
+global_name VMM_SM_EXCLUSIVE_MODE_SEM_STR = "";
+global_name PERS_HEAP_SEMAPHORE_STR = "";
+global_name PERS_HEAP_1_SNP_SEMAPHORE_STR = "";
+global_name PERS_HEAP_0_SNP_SEMAPHORE_STR = "";
+global_name SNAPSHOT_CHECKPOINT_EVENT = "";
+global_name TRY_ADVANCE_SNAPSHOT_EVENT = "";
+global_name METADATA_SEMAPHORE_STR = "";
+global_name INDEX_SEMAPHORE_STR = "";
+global_name FT_INDEX_SEMAPHORE_STR = "";
+global_name TRIGGER_SEMAPHORE_STR = "";
+global_name PHYS_LOG_SHARED_MEM_NAME = "";
+global_name PHYS_LOG_PROTECTION_SEMAPHORE_NAME = "";
+global_name CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME = "";
+global_name CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME = "";
+global_name CHARISMA_CHECKPOINT_SEM = "";
+global_name SEDNA_CHECKPOINT_FINISHED_SEM = "";
+global_name SEDNA_TRNS_FINISHED = "";
+global_name CHARISMA_WAIT_FOR_CHECKPOINT = "";
+global_name CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG = "";
+global_name CHARISMA_SYNC_TRN_IDS_TABLE = "";
+global_name CHARISMA_SM_WAIT_FOR_SHUTDOWN = "";
+global_name CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME = "";
+global_name SEDNA_LOCK_MANAGER_SEM = "";
+global_name CHARISMA_SM_SMSD_ID = "";
+global_name CHARISMA_SM_IS_READY = "";
+
+void SetGlobalNamesDB(int databaseId)
+{
+	static char
+		CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME__buf__  [128],
+		CHARISMA_ITFE_SHARED_MEMORY_NAME__buf__			[128],
+		CHARISMA_BUFFER_SHARED_MEMORY_NAME__buf__		[128],
+		CHARISMA_PH_SHARED_MEMORY_NAME__buf__			[128],
+		CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME__buf__		[128],
+		CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME__buf__		[128],
+		VMM_SM_SEMAPHORE_STR__buf__						[128],
+		INDIRECTION_TABLE_SEMAPHORE_STR__buf__			[128],
+		VMM_SM_EXCLUSIVE_MODE_SEM_STR__buf__			[128],
+		PERS_HEAP_SEMAPHORE_STR__buf__					[128],
+		PERS_HEAP_1_SNP_SEMAPHORE_STR__buf__			[128],
+		PERS_HEAP_0_SNP_SEMAPHORE_STR__buf__			[128],
+		SNAPSHOT_CHECKPOINT_EVENT__buf__				[128],
+		TRY_ADVANCE_SNAPSHOT_EVENT__buf__				[128],
+		METADATA_SEMAPHORE_STR__buf__					[128],
+		INDEX_SEMAPHORE_STR__buf__						[128],
+		FT_INDEX_SEMAPHORE_STR__buf__					[128],
+		TRIGGER_SEMAPHORE_STR__buf__					[128],
+		PHYS_LOG_SHARED_MEM_NAME__buf__					[128],
+		PHYS_LOG_PROTECTION_SEMAPHORE_NAME__buf__		[128],
+		CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__		[128],
+		CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME__buf__	[128],
+		SEDNA_TRNS_FINISHED__buf__						[128],
+		CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG__buf__		[128],
+		CHARISMA_SYNC_TRN_IDS_TABLE__buf__				[128],
+		CHARISMA_SM_WAIT_FOR_SHUTDOWN__buf__			[128],
+		CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME__buf__	[128],
+		SEDNA_LOCK_MANAGER_SEM__buf__					[128],
+		CHARISMA_SM_IS_READY__buf__						[128];
+
+	CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = 
+		UCreateGlobalName("SHMEM_VMM_CALLBACK_PARAMS", databaseId, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_ITFE_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_INDIRECTION", databaseId, CHARISMA_ITFE_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_BUFFER_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_BUFFERS", databaseId, CHARISMA_BUFFER_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_PH_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_PERS_HEAP", databaseId, CHARISMA_PH_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_PERS_HEAP_SNAPSHOT_1", databaseId, CHARISMA_PH_1_SNP_SHARED_MEMORY_NAME__buf__, 128);
+
+	CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_PERS_HEAP_SNAPSHOT_0", databaseId, CHARISMA_PH_0_SNP_SHARED_MEMORY_NAME__buf__, 128);
+
+	VMM_SM_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_VMM_INIT", databaseId, VMM_SM_SEMAPHORE_STR__buf__, 128);
+
+	INDIRECTION_TABLE_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_INDIRECTION", databaseId, INDIRECTION_TABLE_SEMAPHORE_STR__buf__, 128);
+
+	VMM_SM_EXCLUSIVE_MODE_SEM_STR =
+		UCreateGlobalName("SEMAP_BUFMGR_EXCL_MODE", databaseId, VMM_SM_EXCLUSIVE_MODE_SEM_STR__buf__, 128);
+
+	PERS_HEAP_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_PERS_HEAP", databaseId, PERS_HEAP_SEMAPHORE_STR__buf__, 128);
+
+	PERS_HEAP_1_SNP_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_PERS_HEAP_SNAPSHOT_1", databaseId, PERS_HEAP_1_SNP_SEMAPHORE_STR__buf__, 128);
+
+	PERS_HEAP_0_SNP_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_PERS_HEAP_SNAPSHOT_0", databaseId, PERS_HEAP_0_SNP_SEMAPHORE_STR__buf__, 128);
+
+	SNAPSHOT_CHECKPOINT_EVENT =
+		UCreateGlobalName("EVENT_NEW_JOB_4_CHECKPOINT_THREAD", databaseId, SNAPSHOT_CHECKPOINT_EVENT__buf__, 128);
+
+	TRY_ADVANCE_SNAPSHOT_EVENT =
+		UCreateGlobalName("EVENT_READONLY_TRN_COMPLETED", databaseId, TRY_ADVANCE_SNAPSHOT_EVENT__buf__, 128);
+
+	METADATA_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_METADATA", databaseId, METADATA_SEMAPHORE_STR__buf__, 128);
+
+	INDEX_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_INDICES", databaseId, INDEX_SEMAPHORE_STR__buf__, 128);
+
+	FT_INDEX_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_FT_INDICES", databaseId, FT_INDEX_SEMAPHORE_STR__buf__, 128);
+
+	TRIGGER_SEMAPHORE_STR =
+		UCreateGlobalName("SEMAP_TRIGGERS", databaseId, TRIGGER_SEMAPHORE_STR__buf__, 128);
+
+	PHYS_LOG_SHARED_MEM_NAME =
+		UCreateGlobalName("SHMEM_PHYSICAL_LOG", databaseId, PHYS_LOG_SHARED_MEM_NAME__buf__, 128);
+
+	PHYS_LOG_PROTECTION_SEMAPHORE_NAME =
+		UCreateGlobalName("SEMAP_PHYSICAL_LOG", databaseId, PHYS_LOG_PROTECTION_SEMAPHORE_NAME__buf__, 128);
+
+	CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME =
+		UCreateGlobalName("SHMEM_LOGICAL_LOG", databaseId, CHARISMA_LOGICAL_LOG_SHARED_MEM_NAME__buf__, 128);
+
+	CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME =
+		UCreateGlobalName("SEMAP_LOGICAL_LOG", databaseId, CHARISMA_LOGICAL_LOG_PROTECTION_SEM_NAME__buf__, 128);
+
+	SEDNA_TRNS_FINISHED =
+		UCreateGlobalName("SEMAP_TRN_REGULATION", databaseId, SEDNA_TRNS_FINISHED__buf__, 128);
+
+	CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG =
+		UCreateGlobalName("EVENT_RECOVERY_COMPLETED", databaseId, CHARISMA_DB_RECOVERED_BY_LOGICAL_LOG__buf__, 128);
+
+	CHARISMA_SYNC_TRN_IDS_TABLE =
+		UCreateGlobalName("SEMAP_TRNS_TABLE", databaseId, CHARISMA_SYNC_TRN_IDS_TABLE__buf__, 128);
+
+	CHARISMA_SM_WAIT_FOR_SHUTDOWN =
+		UCreateGlobalName("EVENT_SM_SHUTDOWN_COMMAND", databaseId, CHARISMA_SM_WAIT_FOR_SHUTDOWN__buf__, 128);
+
+	CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME =
+		UCreateGlobalName("SHMEM_BUFFERS_LRU", databaseId, CHARISMA_LRU_STAMP_SHARED_MEMORY_NAME__buf__, 128);
+
+	SEDNA_LOCK_MANAGER_SEM =
+		UCreateGlobalName("SEMAP_LOCKMGR", databaseId, SEDNA_LOCK_MANAGER_SEM__buf__, 128);
+
+	CHARISMA_SM_IS_READY =
+		UCreateGlobalName("EVENT_SM_READY", databaseId, CHARISMA_SM_IS_READY__buf__, 128);
+};

@@ -43,7 +43,7 @@ void clean_resources(gov_config_struct& cfg, bool background_off_from_background
   {
      if (cfg.db_vars[i].db_name[0] != '\0')
      {
-        set_global_names(cfg.gov_vars.os_primitives_id_min_bound, i);
+        SetGlobalNamesDB(i);
         sm_ugc(background_off_from_background_on, i, cfg.gov_vars.os_primitives_id_min_bound); 
      }
   }

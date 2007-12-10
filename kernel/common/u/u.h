@@ -255,14 +255,7 @@ typedef char bool;
  * global_name
  *     Interprocess name for IPC resources
  */
-#ifdef _WIN32
 typedef const char *global_name;
-#define U_INVALID_GLOBAL_NAME	NULL
-#else
-typedef key_t global_name;
-#define U_INVALID_GLOBAL_NAME	IPC_PRIVATE
-#endif /* _WIN32 */
-
 
 /*
  * UHANDLE

@@ -139,7 +139,8 @@ int main(int argc, char** argv)
         if (!uIsAdmin(__sys_call_error)) throw USER_EXCEPTION(SE3064);
 #endif
 
-        set_global_names(cfg.gov_vars.os_primitives_id_min_bound);
+		InitGlobalNames(cfg.gov_vars.os_primitives_id_min_bound,INT_MAX);
+        SetGlobalNames();
 
         if (!is_first_start_of_gov(cfg.gov_vars.ping_port_number))
            throw USER_EXCEPTION(SE4408);
@@ -152,7 +153,6 @@ int main(int argc, char** argv)
             // we were started by command "gov -background-mode on" or
             // "gov -background-mode off" directly
             background_off_from_background_on = false;
-
 
         clean_resources(cfg, background_off_from_background_on);
 

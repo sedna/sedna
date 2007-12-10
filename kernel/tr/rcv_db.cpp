@@ -58,7 +58,8 @@ int main (int argc, char** argv)
       if (uGetEnvironmentVariable(SEDNA_OS_PRIMITIVES_ID_MIN_BOUND, buf, ENV_BUF_SIZE, __sys_call_error) != 0)
           throw USER_EXCEPTION2(SE4073, SEDNA_OS_PRIMITIVES_ID_MIN_BOUND);
 
-      set_global_names(atoi(buf));
+	  InitGlobalNames(atoi(buf), INT_MAX);
+      SetGlobalNames();
 
       vmm_preliminary_call();
 
@@ -84,7 +85,7 @@ int main (int argc, char** argv)
 
       SEDNA_DATA = ((gov_header_struct *) gov_shm_pointer)->SEDNA_DATA;
 
-      set_global_names(((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, db_id);
+      SetGlobalNamesDB(db_id);
 
       // sid is known
       event_logger_init(EL_RCV, db_name, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME);

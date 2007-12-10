@@ -760,11 +760,11 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
 
         char buf[100];
         if (USemaphoreOpen(&sm_to_vmm_callback_sem1, 
-                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 100), __sys_call_error) != 0)
+                           SM_TO_VMM_CALLBACK_SEM1_BASE_STR(sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
         if (USemaphoreOpen(&sm_to_vmm_callback_sem2, 
-                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound,  buf, 100), __sys_call_error) != 0)
+                           SM_TO_VMM_CALLBACK_SEM2_BASE_STR(sid, buf, 100), __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4012, "SM_TO_VMM_CALLBACK_SEM2_BASE_STR");
 
         if (uOpenShMem(&p_sm_callback_file_mapping, CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME, sizeof(xptr) + sizeof(int), __sys_call_error) != 0)

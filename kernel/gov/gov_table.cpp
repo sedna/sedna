@@ -366,7 +366,7 @@ void info_table::stop_database(const database_id& db_id)
 
   sm_server = new SSMMsg(SSMMsg::Client, 
                          sizeof (sm_msg_struct), 
-                         CHARISMA_SSMMSG_SM_ID(get_db_id_by_name((gov_config_struct*)gov_shared_mem, db_id.c_str()), ((gov_config_struct*)gov_shared_mem)->gov_vars.os_primitives_id_min_bound, buf, 1024), 
+                         CHARISMA_SSMMSG_SM_ID(get_db_id_by_name((gov_config_struct*)gov_shared_mem, db_id.c_str()), buf, 1024), 
                          SM_NUMBER_OF_SERVER_THREADS);
 
   if (sm_server->init() != 0) 

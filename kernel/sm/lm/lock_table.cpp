@@ -54,7 +54,7 @@ lock_request::lock_request(transaction_id tr_id,
   //open process_sem
   char buf[1024];
 
-  if ( 0 != USemaphoreOpen(&process_xsem, SEDNA_TRANSACTION_LOCK(s_id, ((gov_config_struct*)gov_shm_pointer)->gov_vars.os_primitives_id_min_bound, buf, 1024), __sys_call_error))
+  if ( 0 != USemaphoreOpen(&process_xsem, SEDNA_TRANSACTION_LOCK(s_id, buf, 1024), __sys_call_error))
      throw USER_EXCEPTION2(SE4012, "SEDNA_TRANSACTION_LOCK");
 
   //maintain the transaction lock list

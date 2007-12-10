@@ -106,6 +106,7 @@ int ustrerror_r(int errnum, char *buf, size_t n)
 int uerrno(const char *funcname, const void* arg)
 {
 #ifdef _WIN32
+#if 0
     if (strcmp(funcname, "WSAStartup") == 0)
     {
         return (arg ? *(int*)arg : 0);
@@ -131,6 +132,9 @@ int uerrno(const char *funcname, const void* arg)
     {
         return GetLastError();
     }
+#endif
+    /* WSAGetLastError() is an alias for GetLastError() */ 
+    return GetLastError();
 #else
     return errno;
 #endif
