@@ -47,7 +47,7 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #else
 #define _CHARISMA_PH_SHARED_MEMORY_NAME			 NULL
 #if (defined(FreeBSD) || defined(DARWIN))
-#define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/tmp/CharismaBufferSharedMemory"
+#define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/tmp/CharismaBufferSM"
 #else
 #define _CHARISMA_BUFFER_SHARED_MEMORY_NAME		 "/CharismaBufferSharedMemory"
 #endif
@@ -93,7 +93,7 @@ __uint32 LAYER_ADDRESS_SPACE_SIZE           = 0; //0x30000000;
 #if defined(_WIN32)
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "SEDNA_GLOBAL_MEMORY_MAPPING"
 #elif (defined(FreeBSD) || defined(DARWIN))
-#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/tmp/SEDNA_GLOBAL_MEMORY_MAPPING"
+#define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/tmp/SEDNA_GM_MAPPING"
 #else
 #define _SEDNA_GLOBAL_MEMORY_MAPPING                     "/SEDNA_GLOBAL_MEMORY_MAPPING"
 #endif

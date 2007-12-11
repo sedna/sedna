@@ -277,7 +277,7 @@ endif
 
 ifeq ("$(SUB_PLATFORM)","Darwin")
 ENABLE_LIBEDIT = 0
-LSLIBS  = -lthr -lpccts -lexpat -lchicken -lpcre -fexceptions
+LSLIBS  = -lpthread -lpccts -lexpat -lchicken -lpcre -fexceptions
 endif
 
 

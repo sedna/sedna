@@ -79,6 +79,9 @@ struct vmm_region_values
 #ifdef _WIN32
 #define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
 #define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x80000000)
+#elif defined(DARWIN)
+#define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
+#define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x68000000)
 #else
 #define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x40000000)
 #define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0xB0000000)

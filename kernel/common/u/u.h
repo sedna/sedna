@@ -52,10 +52,10 @@
 #endif
 
 
-#if (defined(DARWIN) || defined(FreeBSD))
-#define __MSG_NOSIGNAL 0        /*SO_NOSIGPIPE */
+#if defined(DARWIN)
+#define U_MSG_NOSIGNAL SO_NOSIGPIPE
 #else
-#define __MSG_NOSIGNAL MSG_NOSIGNAL
+#define U_MSG_NOSIGNAL MSG_NOSIGNAL
 #endif
 
 #if (defined(DARWIN) || defined(FreeBSD))
@@ -588,10 +588,27 @@ int se_ExceptionalCondition(char *conditionName, char *errorType,
 #define u_is_neg_inf(d)     (_fpclass(d) == _FPCLASS_NINF)
 #define u_is_pos_inf(d)     (_fpclass(d) == _FPCLASS_PINF)
 #else 
+
+#if defined(DARWIN)
+#ifdef __cplusplus
+extern "C"
+#endif
+int u_is_nan(double d);
+#else
 #define u_is_nan(d)         (isnan(d))
-#if  (defined(FreeBSD) || defined(DARWIN)) // In FreeBSD isinf() returns 1 in both cases INF and -INF
+#endif
+#if  defined(FreeBSD) // In FreeBSD isinf() returns 1 in both cases INF and -INF
 #define u_is_neg_inf(d)     (isinf(d) && (d) < 0.0)
 #define u_is_pos_inf(d)     (isinf(d) && (d) > 0.0)
+#elif defined(DARWIN)
+#ifdef __cplusplus
+extern "C" {
+#endif
+bool u_is_neg_inf(double d);
+bool u_is_pos_inf(double d);
+#ifdef __cplusplus
+}
+#endif
 #else
 #define u_is_neg_inf(d)     (isinf(d) == -1)
 #define u_is_pos_inf(d)     (isinf(d) == 1)
