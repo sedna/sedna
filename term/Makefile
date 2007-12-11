@@ -13,9 +13,7 @@ all: $(PP)/bin/se_term$(EXE_EXT)
 
 ifeq ($(ENABLE_LIBEDIT),1)
 ifneq ($(PLATFORM),WIN32)
-ifneq ("$(SUB_PLATFORM)","FreeBSD")
 CPPFLAGS += -I../libs/libedit/include -DENABLE_LIBEDIT
-endif
 endif
 endif
 
@@ -31,10 +29,8 @@ else
 DRIVER_LIB = $(PP)/driver/c/libsedna$(LIB_EXT)
 DRIVER_LIB_S = -L$(PP)/driver/c -lsedna 
 ifeq ($(ENABLE_LIBEDIT),1)
-ifneq ("$(SUB_PLATFORM)","FreeBSD")
 #libedit.so is picked if I try -ledit
 DRIVER_LIB_S += $(PP)/libs/libedit/lib/libedit.a -lncurses
-endif
 endif
 endif
 
