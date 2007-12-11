@@ -23,6 +23,23 @@ void uSleep(unsigned int secs, sys_call_error_fun fun)
 #endif
 }
 
+#if defined(DARWIN)
+int u_is_nan(double d)
+{
+    return isnan(d);
+}
+
+bool u_is_neg_inf(double d)
+{
+     return (isinf(d) && (d) < 0.0);
+}
+
+bool u_is_pos_inf(double d)    
+{
+     return (isinf(d) && (d) > 0.0);
+}
+#endif
+
 /* ustrerror is not thread safe */
 char* ustrerror(int errnum)
 {
