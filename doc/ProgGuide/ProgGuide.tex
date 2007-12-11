@@ -2780,7 +2780,7 @@ DO
 	UPDATE replace $b in doc("stat")/stat with
 	 <stat>
 	  <open_auctions>{count(doc("auction")//open_auction)}</open_auctions>
-	  <closed_auctions>{{count(doc("auction")//closed_auction)}}</closed_auctions>
+	  <closed_auctions>{count(doc("auction")//closed_auction)}</closed_auctions>
 	  <persons>{count(doc("auction")//person)}</persons>
 	 </stat>;
 	
