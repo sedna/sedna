@@ -272,6 +272,7 @@ LSLIBS  += -lnsl -lrt -lsocket
 endif
 
 ifeq ("$(SUB_PLATFORM)","FreeBSD")
+ENABLE_LIBEDIT = 0
 LSLIBS  = -lthr -lpccts -lexpat -lchicken -lpcre -fexceptions
 endif
 
