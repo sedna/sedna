@@ -535,3 +535,10 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cu
     return NULL;
 }
 #endif
+    
+#ifdef SE_ENABLE_TRIGGERS
+void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted)
+{
+}
+#endif
+    

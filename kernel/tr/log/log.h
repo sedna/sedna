@@ -20,6 +20,10 @@
 #include "tr/ft/ft_index_data.h"
 #endif
 
+#ifdef SE_ENABLE_TRIGGERS
+#include "tr/triggers/triggers_data.h"
+#endif
+
 void hl_phys_log_on_session_begin(std::string phys_log_path);
 void hl_phys_log_on_transaction_begin();
 void hl_phys_log_on_session_end();
@@ -55,6 +59,9 @@ void hl_logical_log_text_edit(const xptr &self,int data_size,bool begin,bool ins
 #ifdef SE_ENABLE_FTSEARCH
 void hl_logical_log_ft_index(PathExpr *object_path, ft_index_type itconst, char * index_title, const char* doc_name,bool is_doc,pers_sset<ft_custom_cell,unsigned short> * custom_tree,bool inserted); 
 std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cust_tree(const char *custom_tree_buf, int custom_tree_size);
+#endif
+#ifdef SE_ENABLE_TRIGGERS
+void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted); 
 #endif
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted); 
 void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted); 

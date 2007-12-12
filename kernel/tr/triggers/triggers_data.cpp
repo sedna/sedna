@@ -113,7 +113,7 @@ void inline free_triggerdata_cell(pers_sset<trigger_cell,unsigned short>::pers_s
     }
     scm_free(trc,true);
 }
-trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger_event event, PathExpr *trigger_path,  enum trigger_granularity gran, scheme_list* action, inserting_node innode, PathExpr *path_to_parent, doc_schema_node* schemaroot,const char * trigger_title, const char* doc_name,bool is_doc)
+trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trigger_event tr_event, PathExpr *trigger_path,  enum trigger_granularity tr_gran, scheme_list* action, inserting_node innode, PathExpr *path_to_parent, doc_schema_node* schemaroot, const char * trigger_title, const char* doc_name, bool is_doc)
 {
 	// I. Create and fill new trigger cell
 	trigger_sem_down();
@@ -127,9 +127,9 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
 	trc->schemaroot = schemaroot;
 	schemaroot->create_trigger(trc);
 	trc->trigger_path = trigger_path;
-	trc->trigger_event = event;
-    trc->trigger_time = time;
-    trc->trigger_granularity = gran;
+	trc->trigger_event = tr_event;
+    trc->trigger_time = tr_time;
+    trc->trigger_granularity = tr_gran;
     trc->trigger_action = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
     trigger_action_cell* trac = trc->trigger_action;
     for(int i = 0; i < action->size(); i++)
@@ -177,7 +177,7 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time time, enum trigger
 
 	triggerdata->put(trc);
 	trigger_sem_up();
-//    hl_logical_log_ft_index(object_path, it,(char *) index_title, doc_name,is_doc,idc->custom_tree,true);
+    hl_logical_log_trigger(tr_time, tr_event, trigger_path, tr_gran, trc->trigger_action, innode, path_to_parent, trigger_title, doc_name, is_doc, true);
 
 	// ALGORITHM: setting up trigger over discriptive scheme
 	//II. Execute abs path (object_path) on the desriptive schema
@@ -201,6 +201,7 @@ void trigger_cell::delete_trigger (const char *trigger_title)
 	{
 		down_concurrent_micro_ops_number();
 //		hl_logical_log_ft_index((idc->obj)->object,(idc->obj)->ftype,(idc->obj)->index_title,(idc->obj)->doc_name,(idc->obj)->is_doc,(idc->obj)->custom_tree,false);
+        hl_logical_log_trigger((trc->obj)->trigger_time, (trc->obj)->trigger_event, (trc->obj)->trigger_path, (trc->obj)->trigger_granularity, (trc->obj)->trigger_action, (trc->obj)->innode, (trc->obj)->path_to_parent, (trc->obj)->trigger_title, (trc->obj)->doc_name, (trc->obj)->is_doc, false);
 		trigger_cell* tc=trc->obj;
 		doc_schema_node* sm=(trc->obj)->schemaroot;
 		free_triggerdata_cell(trc);
