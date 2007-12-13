@@ -74,12 +74,12 @@ void se_term_debug_handler(se_debug_info_type subtype, const char *msg)
 
 int slash_commands_help()
 {
-	term_output1("Terminate queries with ampersand+line feed.\n");
+	term_output1("Terminate queries with ampersand + line feed.\n");
 	term_output1("\\?        - for help\n");
 	term_output1("\\commit   - to commit transaction\n");
 	term_output1("\\rollback - to rollback transaction\n");
 	term_output1("\\showtime - to show the time of the latest query execution\n");
-	term_output1("\\set      - to set the terminal internal variable\n");
+	term_output1("\\set      - to set the terminal internal variable (on help for internal variables type \\set?)\n");
 	term_output1("\\unset    - to unset the terminal internal variable\n");
 	term_output1("\\quit     - to close session and quit the Sedna Terminal\n");
 
@@ -91,6 +91,31 @@ int slash_commands_help()
 	}
 
 	return 0;
+}
+
+int set_commans_help()
+{
+	term_output1("set and unset meta-commands are used for managing se_term internal variables. \n");
+    term_output1("There are following se_term internal varibales:\n");
+    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("AUTOCOMMIT -        when set, autocommit mode is on. \n");
+    term_output1("                    When unset manual-commit mode is on. \n"); 
+    term_output1("                    AUTOCOMMIT mode is set by default.\n");
+    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("ON_ERROR_STOP -     when set, se_term returns with the code 3 when\n");
+    term_output1("                    statement or meta-command fails. \n");
+    term_output1("                    When unset se_term processing continues,\n");
+    term_output1("                    unless it is the connection failure. \n");
+    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("DEBUG -             when set, session debug mode is on.\n");
+    term_output1("                    When unset, session debug mode is off.\n");
+    term_output1("-----------------------------------------------------------------------\n");
+    term_output1("TRANSACTION_READ_ONLY - when set, transactions are run as READ-ONLY.\n");
+    term_output1("                        When unset, transactions are run as UPDATE-transactions.\n");
+    term_output1("                        By default transactions are run as UPDATE-transactions.\n");
+    term_output1("-----------------------------------------------------------------------\n");
+    
+   	return 0;
 }
 
 /*
@@ -341,6 +366,12 @@ int process_command(char* buffer)
 		}
 		return EXIT_USER;
 	}
+  	else if(strcmp(buffer,"set?") == 0)
+    {
+        set_commans_help();
+        return EXIT_SUCCESS;
+    }
+
 	else if(strncmp(buffer,"set ",4) == 0)
 	{
         if(strcmp(buffer+4, "AUTOCOMMIT") == 0)
@@ -366,6 +397,22 @@ int process_command(char* buffer)
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("Debug mode is on.\n");
+            return EXIT_SUCCESS;
+        }
+        else if(strcmp(buffer+4, "TRANSACTION_READ_ONLY") == 0)
+        {
+            int value = SEDNA_READONLY_TRANSACTION;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_CONCURRENCY_TYPE, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
+                term_output1("The current and next transactions will be run as READ-ONLY.\n");
+            else
+                term_output1("The next transactions will be run as READ-ONLY.\n");
+            
             return EXIT_SUCCESS;
         }
         else
@@ -399,6 +446,21 @@ int process_command(char* buffer)
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("Debug mode is off.\n");
+            return EXIT_SUCCESS;
+        }
+        else if(strcmp(buffer+6, "TRANSACTION_READ_ONLY") == 0)
+        {
+            int value = SEDNA_UPDATE_TRANSACTION;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
+                term_output1("The current and following transactions will be run as UPDATE-transactions.\n");
+            else
+                term_output1("The following transactions will be run as UPDATE-transactions.\n");
             return EXIT_SUCCESS;
         }
         else
