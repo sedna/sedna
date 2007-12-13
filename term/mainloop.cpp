@@ -21,6 +21,7 @@ int quit_term()
 	if(show_time != 0)
 	{
 		fprintf(stderr, "total time: %s\n",SEshowTime(&conn));
+        fflush(stderr);
 	}
 	
 	term_output1("Closing session...");
@@ -132,6 +133,7 @@ MainLoop(FILE *source)
 	if(source == NULL) 
 	{
 		fprintf(stderr, "Failed to get input file\n");
+        fflush(stderr);
 		return 1;
 	}
 	
@@ -159,6 +161,7 @@ MainLoop(FILE *source)
     if(res != SEDNA_SESSION_OPEN)
     {
 	   fprintf(stderr, "failed to open session \n%s\n", SEgetLastErrorMsg(&conn));
+       fflush(stderr);
 	   return 1;
     }
 	/* if we read query from file, set session directory to the one file is located in */ 
@@ -168,18 +171,21 @@ MainLoop(FILE *source)
         if (uGetAbsoluteFilePath(filename, file_abs_path, U_MAX_PATH, __sys_call_error) == NULL)
         {
 	        fprintf(stderr, "failed to get an absolute path of the script file \n%s\n", SEgetLastErrorMsg(&conn));
+            fflush(stderr);
 			quit_term();
 	        return 1;
         }
         if (uGetDirectoryFromFilePath(file_abs_path, session_dir, U_MAX_DIR, __sys_call_error) == NULL)
         {
 	        fprintf(stderr, "failed to get a directory from the file path \n%s\n", SEgetLastErrorMsg(&conn));
+            fflush(stderr);
 			quit_term();
 	        return 1;
         }
 	    if (SEsetConnectionAttr(&conn, SEDNA_ATTR_SESSION_DIRECTORY, session_dir, strlen(session_dir)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
         {
 	        fprintf(stderr, "failed to set the Sedna session directory attribute \n%s\n", SEgetLastErrorMsg(&conn));
+            fflush(stderr);
 			quit_term();
 	        return 1;
         }
@@ -191,6 +197,7 @@ MainLoop(FILE *source)
     if (SEsetConnectionAttr(&conn, SEDNA_ATTR_DEBUG, (void*)&debug_option, sizeof(int)) != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
     {
         fprintf(stderr, "failed to set the Sedna debug mode attribute \n%s\n", SEgetLastErrorMsg(&conn));
+        fflush(stderr);
 		quit_term();
         return 1;
     }
@@ -311,6 +318,7 @@ int process_command(char* buffer)
                 if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
                 {
                     fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                    fflush(stderr);
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
                     if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
@@ -337,6 +345,7 @@ int process_command(char* buffer)
                if(res != SEDNA_ROLLBACK_TRANSACTION_SUCCEEDED) 
                {
                    fprintf(stderr, "Rollback transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                   fflush(stderr);
                    error_code = SEgetLastErrorCode(&conn);
                    // if socket is broken
                    if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
@@ -357,6 +366,7 @@ int process_command(char* buffer)
 		    if(res != SEDNA_COMMIT_TRANSACTION_SUCCEEDED) 
 	    	{
 	    		fprintf(stderr, "Commit transaction failed \n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
                 if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
@@ -394,6 +404,7 @@ int process_command(char* buffer)
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("Debug mode is on.\n");
@@ -406,6 +417,7 @@ int process_command(char* buffer)
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
@@ -418,6 +430,7 @@ int process_command(char* buffer)
         else
         {
    	    	fprintf(stderr, "Unknown variable.\n");
+            fflush(stderr);
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
 	}
@@ -443,6 +456,7 @@ int process_command(char* buffer)
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set debug mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             term_output1("Debug mode is off.\n");
@@ -455,6 +469,7 @@ int process_command(char* buffer)
             if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
             {
                 fprintf(stderr, "Failed to set transaction mode.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 return EXIT_STATEMENT_OR_COMMAND_FAILED;
             }
             if (SEtransactionStatus(&conn) == SEDNA_TRANSACTION_ACTIVE)
@@ -466,12 +481,14 @@ int process_command(char* buffer)
         else
         {
 	    	fprintf(stderr, "Unknown variable.\n");
+            fflush(stderr);
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
     }
 	else 
 	{
 		fprintf(stderr, "Unknown command. Print \\? - for help on internal slash commands\n");
+        fflush(stderr);
 		
 		return EXIT_STATEMENT_OR_COMMAND_FAILED;
 	}
@@ -490,6 +507,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
 		if(result != SEDNA_BEGIN_TRANSACTION_SUCCEEDED) 
 		{
 			fprintf(stderr, "failed to begin transaction\n%s\n", SEgetLastErrorMsg(&conn));
+            fflush(stderr);
             error_code = SEgetLastErrorCode(&conn);
             // if socket is broken
             if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
@@ -503,17 +521,20 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     	if( (long_query = fopen(tmp_file_name, "r")) == NULL)
         {
             fprintf(stderr,"failed to open file\n");
+            fflush(stderr);
             return EXIT_TERM_FAILED;
         }
         result = SEexecuteLong(&conn, long_query); 
     	if(0 != fclose(long_query))
         {
             fprintf(stderr,"failed to close file\n");
+            fflush(stderr);
             return EXIT_TERM_FAILED;
         }
     	if(0 == uDeleteFile(tmp_file_name, NULL))
         {
             fprintf(stderr,"failed to delete file\n");
+            fflush(stderr);
             return EXIT_TERM_FAILED;
         }
     }
@@ -525,6 +546,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     if(result == SEDNA_QUERY_FAILED) 
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+        fflush(stderr);
         if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -534,6 +556,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else if(result == SEDNA_UPDATE_FAILED) 
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+        fflush(stderr);
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -543,6 +566,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else if(result == SEDNA_BULK_LOAD_FAILED) 
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+        fflush(stderr);
     	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
@@ -552,7 +576,8 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     else if(result == SEDNA_ERROR) 
     {
     	fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
-    	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
+    	fflush(stderr);
+        if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
         error_code = SEgetLastErrorCode(&conn);
         // if socket is broken
         if((error_code == 207) || (error_code == 208)) return EXIT_CONNECTION_BROKEN;
@@ -573,6 +598,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
         if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
         {
             fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+            fflush(stderr);
             return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
         
@@ -583,6 +609,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             if (bytes_read == SEDNA_ERROR)
             {
        	        fprintf(stderr, "Next item failed: \n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
             	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                 error_code = SEgetLastErrorCode(&conn);
                 // if socket is broken
@@ -593,10 +620,12 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
     		{
 	    		buf[bytes_read] = '\0';
     			fprintf(res_os, "%s", buf);
+                fflush(res_os);
     			bytes_read = SEgetData(&conn, buf, RESULT_MSG_SIZE);
                 if (bytes_read == SEDNA_ERROR)
                 {
        	            fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+                    fflush(stderr);
                 	if(!conn.autocommit) term_output1("Rollback transaction...Ok \n");
                     error_code = SEgetLastErrorCode(&conn);
                     // if socket is broken
@@ -610,6 +639,7 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
             if((res_next == SEDNA_NEXT_ITEM_FAILED) || (res_next == SEDNA_ERROR))
             {
                 fprintf(stderr, "%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
                 break;
             }
     	}
@@ -620,16 +650,19 @@ int process_query(char* buffer, bool is_query_from_file, char* tmp_file_name)
  //       term_debug_info_output(); // output debug info if there was any
         
     	fprintf(res_os, "UPDATE is executed successfully\n");
+        fflush(res_os);
     }
     else if(result == SEDNA_BULK_LOAD_SUCCEEDED) 
     {
 //        term_debug_info_output(); // output debug info if there was any
         
     	fprintf(res_os, "Bulk load succeeded\n");
+        fflush(res_os);
     }
     else 
     {
     	fprintf(stderr, "Unknown message from server\n");
+        fflush(stderr);
         return EXIT_STATEMENT_OR_COMMAND_FAILED;
     }
 	return EXIT_SUCCESS;
