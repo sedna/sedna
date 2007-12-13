@@ -375,6 +375,13 @@ void bm_unregister_session(session_id sid) throw (SednaException)
     tr_info_map::iterator it = trs.find(sid);
     if (it == trs.end()) throw USER_EXCEPTION(SE1018);
 
+	/*	A workaround to wakeup VMM callback thread when session is unregistered. 
+		We can't do it in TRN since a semaphore is destroyed as a part of bm_unregister_session
+		call. We can't shutdown VMM callback thread *before* calling bm_unregister_session
+		because SM can callback TRN *after* the callback thread is already gone and will lock forever. */ 
+	if (USemaphoreUp(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
+		throw SYSTEM_ENV_EXCEPTION("Cannot up SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
+
     if (USemaphoreRelease(it->second->sm_to_vmm_callback_sem1, __sys_call_error) != 0)
         throw SYSTEM_ENV_EXCEPTION("Cannot release SM_TO_VMM_CALLBACK_SEM1_BASE_STR");
 
