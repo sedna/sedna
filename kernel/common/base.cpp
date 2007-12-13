@@ -167,7 +167,7 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"SHMEM_GOV",						POLICY_SINGLETON()}, /* holding system state and config info (gov_config_struct) */ 
 	
 	{"SHMEM_EVENT_LOG",					POLICY_SINGLETON()}, /* event logger */ 
-	{"SEMAR_EVENT_LOG",				POLICY_SINGLETON()}, /* event logger  */ 
+	{"SEMAR_EVENT_LOG",					POLICY_SINGLETON()}, /* event logger  */ 
 
 	{"SHMEM_BUFFERS",					POLICY_INSTANCE_PER_DB()}, /* buffer memory */  
 	{"SEMAP_BUFMGR_EXCL_MODE",			POLICY_INSTANCE_PER_DB()}, /* regulates the exclusive mode entering by TRN */ 
@@ -191,20 +191,20 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"SEMAP_PERS_HEAP_SNAPSHOT_1",		POLICY_INSTANCE_PER_DB()}, /* dummy sem */ 
 
 	{"SHMEM_INDIRECTION",				POLICY_INSTANCE_PER_DB()}, /* indirection table free entry (?) */ 
-	{"SEMAP_INDIRECTION",					POLICY_INSTANCE_PER_DB()}, /* sync of some kind */ 
+	{"SEMAP_INDIRECTION",				POLICY_INSTANCE_PER_DB()}, /* sync of some kind */ 
 
 	{"SEMAP_METADATA",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to metadata registry in PH */ 
 
-	{"SEMAP_INDICES",						POLICY_INSTANCE_PER_DB()}, /* synchronises access to indices registry in PH */ 
+	{"SEMAP_INDICES",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to indices registry in PH */ 
 
-	{"SEMAP_FT_INDICES",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to full-text indices registry in PH */ 
+	{"SEMAP_FT_INDICES",				POLICY_INSTANCE_PER_DB()}, /* synchronises access to full-text indices registry in PH */ 
 
 	{"SEMAP_TRIGGERS",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to triggers registry in PH */ 
 
-	{"SEMAP_LOCKMGR",						POLICY_INSTANCE_PER_DB()}, /* serialises requests to lock manager (in SM) */ 
+	{"SEMAP_LOCKMGR",					POLICY_INSTANCE_PER_DB()}, /* serialises requests to lock manager (in SM) */ 
 	{"EVENT_LOCK_GRANTED",				POLICY_INSTANCE_PER_SESSION()}, /* if transaction request for a lock on DB entity is not satisfied immediately trn waits until the event is signalled (hence if transaction enters the wait state, it can't become a victim for the deadlock-resolution process) */ 
 
-	{"SEMAP_TRN_REGULATION",				POLICY_INSTANCE_PER_DB()}, /* currently if checkpoint is active no updater transactions are allowed and vice-versa (earlier mutual exclusion applied to micro-ops but not transactions) */ 
+	{"SEMAP_TRN_REGULATION",			POLICY_INSTANCE_PER_DB()}, /* currently if checkpoint is active no updater transactions are allowed and vice-versa (earlier mutual exclusion applied to micro-ops but not transactions) */ 
 	{"EVENT_NEW_JOB_4_CHECKPOINT_THREAD", POLICY_INSTANCE_PER_DB()}, /* signals that a checkpoint must be activated or snapshots must be advanced */ 
 	{"EVENT_READONLY_TRN_COMPLETED",	POLICY_INSTANCE_PER_DB()}, /* signals read-only transaction completion */ 
 
@@ -212,17 +212,17 @@ static UGlobalNamesRegistryItem globalNamesRegistry[] =
 	{"SEMAP_PHYSICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with physical log */ 
 
 	{"SHMEM_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* logical log state & buffer in shared memory */ 
-	{"SEMAP_LOGICAL_LOG",					POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
+	{"SEMAP_LOGICAL_LOG",				POLICY_INSTANCE_PER_DB()}, /* synchronises operation with logical log */ 
 
 	{"EVENT_SM_SHUTDOWN_COMMAND",		POLICY_INSTANCE_PER_DB()}, /* signaled by SSMMsg thread in SM when shutdown command arrives via messaging interface */ 
 
 	{"EVENT_RECOVERY_COMPLETED",		POLICY_INSTANCE_PER_DB()}, /* signaled when se_rcv completes the recovery */ 
 
-	{"SEMAP_TRNS_TABLE",					POLICY_INSTANCE_PER_DB()}, /* synchronises access to transactions table in SM */ 
+	{"SEMAP_TRNS_TABLE",				POLICY_INSTANCE_PER_DB()}, /* synchronises access to transactions table in SM */ 
 
-	{"EVENT_SM_READY",					POLICY_INSTANCE_PER_DB()}, /* used to signal initialisation completion when starting SM in background mode */ 
+	{"EVENT_SM_READY",					POLICY_INSTANCE_PER_DB()}, /* used to signal initialisation completion when starting SM in the background mode */ 
 
-	{"EVENT_GOV_READY",					POLICY_SINGLETON()}, /* used to signal initialisation completion when starting GOV in background mode */ 
+	{"EVENT_GOV_READY",					POLICY_SINGLETON()}, /* used to signal initialisation completion when starting GOV in the background mode */ 
 
 	/* %} */ 
 	{NULL}
@@ -264,7 +264,7 @@ global_name CreateNameOfEventLockGranted(int sessionId, char *buf, size_t bufSiz
 	return UCreateGlobalName("EVENT_LOCK_GRANTED", sessionId, buf, bufSize);
 }
 
-/* empty string is invalid as global name but NULL is valid, so we use empty string as initializer  */ 
+/* empty string is invalid as a global name but NULL is valid, so we use empty string as initializer  */ 
 global_name GOVERNOR_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_GOVERNOR_IS_READY = "";
 global_name SE_EVENT_LOG_SHARED_MEMORY_NAME = "";
@@ -296,7 +296,7 @@ void SetGlobalNames()
 		UCreateGlobalName("SHMEM_GLOBAL", 0, SEDNA_GLOBAL_MEMORY_MAPPING__buf__, 128);
 }
 
-/* empty string is invalid as global name but NULL is valid, so we use empty string as initializer  */ 
+/* empty string is invalid as a global name but NULL is valid, so we use empty string as initializer  */ 
 global_name CHARISMA_SM_CALLBACK_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_ITFE_SHARED_MEMORY_NAME = "";
 global_name CHARISMA_BUFFER_SHARED_MEMORY_NAME = "";
