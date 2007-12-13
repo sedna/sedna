@@ -841,8 +841,19 @@ void vmm_on_session_end() throw (SednaException)
 
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
+		msg.cmd = 22; // bm_unregister_session
+        msg.trid = trid;
+        msg.sid = sid;
+
         shutdown_vmm_thread = true;
-        USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
+
+		/*	USemaphoreUp(sm_to_vmm_callback_sem1, __sys_call_error);
+			SM will do it instead, see comments in bm_unregister_session function. */ 
+
+		if (ssmmsg->send_msg(&msg) != 0)
+            throw USER_EXCEPTION(SE1034);
+
+        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         if (uThreadJoin(vmm_thread_handle, __sys_call_error) != 0)
             throw USER_EXCEPTION(SE1039);
@@ -869,15 +880,6 @@ void vmm_on_session_end() throw (SednaException)
 
         USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);
         USemaphoreClose(sm_to_vmm_callback_sem2, __sys_call_error);
-
-        msg.cmd = 22; // bm_unregister_session
-        msg.trid = trid;
-        msg.sid = sid;
-
-        if (ssmmsg->send_msg(&msg) != 0)
-            throw USER_EXCEPTION(SE1034);
-
-        if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
