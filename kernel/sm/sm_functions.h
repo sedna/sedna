@@ -27,4 +27,9 @@ void execute_recovery_by_logical_log_process();
 
 void send_stop_sm_msg();
 
+void InitGiantLock();
+void DestroyGiantLock();
+void ObtainGiantLock();
+void ReleaseGiantLock();
+
 #endif

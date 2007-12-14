@@ -11,7 +11,9 @@
 #include "sm/plmgr/plmgr.h"
 #include "sm/bufmgr/bm_core.h"
 #include "common/u/usem.h"
+#include "common/u/umutex.h"
 #include "common/ipc_ops.h"
+#include "common/errdbg/exceptions.h"
 
 using namespace std;
 
@@ -86,5 +88,35 @@ void send_stop_sm_msg()
     send_command_to_gov(((gov_config_struct*)gov_shm_pointer)->gov_vars.lstnr_port_number, command);
     
     close_gov_shm(gov_mem_dsc, gov_shm_pointer);
+}
+
+static uMutexType giantLockMutex;
+static bool isGiantLockInitialized = false;
+
+void InitGiantLock()
+{
+	if (isGiantLockInitialized)
+		throw SYSTEM_EXCEPTION("giant lock already initialised");
+	if (uMutexInit(&giantLockMutex,__sys_call_error) != 0)
+		throw SYSTEM_EXCEPTION("giant lock mutex not initialised");
+	isGiantLockInitialized = true;
+}
+
+void DestroyGiantLock()
+{
+	if (isGiantLockInitialized)
+		uMutexDestroy(&giantLockMutex, NULL);
+}
+
+void ObtainGiantLock()
+{
+	if (!isGiantLockInitialized || uMutexLock(&giantLockMutex, __sys_call_error)!=0)
+		throw SYSTEM_EXCEPTION("failed to obtain giant lock");
+}
+
+void ReleaseGiantLock()
+{
+	if (!isGiantLockInitialized || uMutexUnlock(&giantLockMutex, __sys_call_error)!=0)
+		throw SYSTEM_EXCEPTION("failed to release giant lock");
 }
 

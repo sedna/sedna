@@ -76,8 +76,10 @@ int sm_server_handler(void *arg)
     //d_printf1("query received\n");   
 
     sm_msg_struct *msg = (sm_msg_struct*)arg;
+	bool isGiantLockObtained = false;
 
     try {
+		ObtainGiantLock(); isGiantLockObtained = true;
         switch (msg->cmd)
         {   
             case 1:  {//get identifier for transaction
@@ -385,8 +387,9 @@ int sm_server_handler(void *arg)
                          break;
                      }
         }
-
+		ReleaseGiantLock(); isGiantLockObtained = false;
     } catch (SednaUserException &e) {
+		if (isGiantLockObtained) ReleaseGiantLock();
         switch (e.get_code())
         {
             case SE1011:  // Data file has reached its maximum size.
@@ -416,8 +419,10 @@ int sm_server_handler(void *arg)
             default    :  sedna_soft_fault(e, EL_SM);
         }
     } catch (SednaException &e) {
+		if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(e, EL_SM);
     } catch (...) {
+		if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(EL_SM);
     }
 
@@ -495,6 +500,8 @@ int main(int argc, char **argv)
 #endif
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
+
+		InitGiantLock(); atexit(DestroyGiantLock);
         
         ppc = new pping_client(cfg.ping_port_number, EL_SM);
         ppc->startup(ppc_ex);
