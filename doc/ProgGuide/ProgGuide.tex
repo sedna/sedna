@@ -558,6 +558,9 @@ $Attribute$&$Attribute Value$&$Attribute Value Length$\\
 \verb!SEDNA_ATTR_DEBUG! & \verb!SEDNA_DEBUG_ON!,	 & sizeof(int)\\
                         & \verb!SEDNA_DEBUG_OFF!      & \\
 \hline
+\verb!SEDNA_ATTR_CONCURRENCY_TYPE! & \verb!SEDNA_READONLY_TRANSACTION!,	 & sizeof(int)\\
+                        & \verb!SEDNA_UPDATE_TRANSACTION!      & \\
+\hline
 \end{tabular}}
 \end{center}
 \end{figure}
@@ -565,6 +568,9 @@ $Attribute$&$Attribute Value$&$Attribute Value Length$\\
 The \verb!SEDNA_ATTR_SESSION_DIRECTORY! connection attribute defines the \verb!session directory!. If this attribute is set, paths in the \verb!LOAD! statement \ref{bulk-load} are evaluated relative to the session directory.
 
 The \verb!SEDNA_ATTR_DEBUG! connection attribute turns on/off query debug mode. Query debug mode is off by default. Note, that \verb!SEDNA_ATTR_DEBUG! connection attribute must be set only after SEconnect has been called on the \verb!conn!.
+
+The \verb!SEDNA_ATTR_CONCURRENCY_TYPE! connection attribute changes the mode of the next transactions. Transaction can be set to run as READ-ONLY (\verb!SEDNA_READONLY_TRANSACTION!) or UPDATE-transaction (\verb!SEDNA_UPDATE_TRANSACTION!). 
+
 
 An application can get connection attributes using \verb!SEgetConnectionAttr!:
 
