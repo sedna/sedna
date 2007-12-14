@@ -108,8 +108,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
     d_printf2("last checkpoint lsn=%d\n", cp_lsn);
 
-    //flush logical log
-    ll_logical_log_flush();
+    //flush logical log (now implemented as a part of ll_log_checkpoint)
+//    ll_logical_log_flush();
     d_printf1("flush logical log completed\n");
 
     // there was a bug in the next function since last record is not exactly checkpoint one

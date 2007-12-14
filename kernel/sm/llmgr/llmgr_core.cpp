@@ -73,6 +73,8 @@ void llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, plmgr_c
   rollback_active = false;
   recovery_active = false;
 
+  checkpoint_active = false;
+
   indir_rec = NULL;
   indir_rec_len = 0;
   
@@ -1141,6 +1143,10 @@ LONG_LSN llmgr_core::ll_log_checkpoint(bool sync)
 
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
+  checkpoint_active = true;
+
+  ll_log_flush(false);
+
   ll_log_unlock(sync);
 
   //std::cout << "ll_log_checkpoint ret_lsn=" << ret_lsn << endl;;
@@ -1446,6 +1452,34 @@ void llmgr_core::ll_log_flush_all_last_records(bool sync)
 
   mem_head->next_durable_lsn += bytes_to_flush;
 
+  if (checkpoint_active)
+  {
+        UFile fd = get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]);
+
+  		res = uSetFilePointer(
+        		           fd,
+                		   sizeof(LONG_LSN),
+		                   NULL,
+        		           U_FILE_BEGIN,
+                		   __sys_call_error
+		                 );
+
+		if (res == 0)
+		   throw USER_EXCEPTION2(SE4046, "logical log file");
+
+		res = uWriteFile(fd,
+                         &(mem_head->next_durable_lsn),
+                 		 sizeof(LONG_LSN),
+		                 &written,
+        		         __sys_call_error
+                		);
+  
+  		if (res == 0 || written != sizeof(LONG_LSN))
+   		   throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
+
+        checkpoint_active = false;
+  }
+  
   ll_log_unlock(sync);
 
   //d_printf1("flush of logical log finished\n");
