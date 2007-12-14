@@ -69,15 +69,10 @@ SSMMsg::SSMMsg(mode _m_,
     sysinf_addr = NULL;
     sems_num = NAMED_SEMS_NUM + 3 * servers_amount;
 
-#ifdef _WIN32
     _g_name_shmem = UGlobalNameFromCompoundName(_g_name_, 0, buf1, 128);
     _g_name_sems = UGlobalNameFromCompoundName(_g_name_, 1, buf2, 128);
     g_name_shmem = _g_name_shmem.c_str();
     g_name_sems = _g_name_sems.c_str();
-#else
-    g_name_shmem = _g_name_;
-    g_name_sems = _g_name_;
-#endif
 
     server_param = NULL;
 
