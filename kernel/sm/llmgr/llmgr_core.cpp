@@ -2112,8 +2112,12 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+	if (rmndr == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    else if (rmndr == 0)
+      lsn += sizeof(logical_log_file_head);
 
     rec = get_record_from_disk(lsn);
     body_len = ((logical_log_head*)rec)->body_len;
@@ -2214,9 +2218,12 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+	if (rmndr == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
-
+    else if (rmndr == 0)
+      lsn += sizeof(logical_log_file_head);
  
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
