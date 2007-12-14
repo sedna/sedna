@@ -25,6 +25,10 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/idx/indexes.h"
 
+#ifdef SE_ENABLE_TRIGGERS
+#include "tr/triggers/triggers_data.h"
+#endif
+
 using namespace std;
 
 int rcv_number_of_records =0;//for debug
@@ -829,6 +833,118 @@ try{
 
   }
 #endif
+#ifdef SE_ENABLE_TRIGGERS
+  else if (op == LL_INSERT_DOC_TRG || op == LL_DELETE_DOC_TRG || op == LL_INSERT_COL_TRG || op == LL_DELETE_COL_TRG)
+  {
+    const char *trigger_path, *path_to_parent, *trigger_title, *doc_name;
+    trigger_time tr_time;
+    trigger_event tr_event;
+    trigger_granularity tr_gran;
+    int tr_action_size;
+    const char *tr_action_buf;
+    inserting_node innode;
+
+    int tmp;
+
+    int offs = sizeof(char) + sizeof(transaction_id);
+    
+	memcpy(&tmp, rec + offs, sizeof(int));
+    offs += sizeof(int);
+    tr_time = (trigger_time)tmp;
+
+    memcpy(&tmp, rec + offs, sizeof(int));
+    offs += sizeof(int);
+    tr_event = (trigger_event)tmp;
+
+    trigger_path = rec + offs;
+    offs += strlen(trigger_path) + 1;
+
+    memcpy(&tmp, rec + offs, sizeof(int));
+    offs += sizeof(int);
+    tr_gran = (trigger_granularity)tmp;
+
+    memcpy(&tr_action_size, rec + offs, sizeof(int));
+    offs += sizeof(int);
+
+    tr_action_buf = rec + offs;
+    offs += tr_action_size;
+
+    innode.name = const_cast<char *>(rec) + offs;
+    offs += strlen(innode.name) + 1;
+
+    memcpy(&tmp, rec + offs, sizeof(int));
+    offs += sizeof(int);
+    innode.type = (t_item)tmp;
+
+    path_to_parent = rec + offs;
+    offs += strlen(path_to_parent) + 1;
+
+    trigger_title = rec + offs;
+    offs += strlen(trigger_title) + 1;
+    
+    doc_name = rec + offs;
+
+    // restore trigger_action_cell sequence
+    int i = 0;
+    trigger_action_cell *trac = (trigger_action_cell *)scm_malloc(sizeof(trigger_action_cell),true);
+    rcv_tac = trac;
+    
+    while (i < tr_action_size)
+    {
+        trac->statement = (char *)scm_malloc(strlen(tr_action_buf + i) + 1, true);
+        strcpy(trac->statement, tr_action_buf + i);
+        i += strlen(tr_action_buf + i) + 1;
+
+        memcpy(&(trac->cxt_size), tr_action_buf + i, sizeof(int));
+        i += sizeof(int);
+
+        if (i < tr_action_size) 
+        	trac->next = (trigger_action_cell *)scm_malloc(sizeof(trigger_action_cell), true);
+        else
+        	trac->next = NULL;
+
+        trac = trac->next;
+    }
+
+    U_ASSERT(i == tr_action_size);
+        
+    if ((isUNDO && (op == LL_DELETE_DOC_TRG || op == LL_DELETE_COL_TRG) ) || (!isUNDO && (op == LL_INSERT_DOC_TRG || op == LL_INSERT_COL_TRG)))
+    {//create trigger
+        if (op == LL_DELETE_DOC_TRG || op == LL_INSERT_DOC_TRG)
+        {// is_doc - true
+           schema_node *doc_node = find_document(doc_name);
+
+           if (doc_node->type == document || doc_node->type == virtual_root)
+               trigger_cell::create_trigger(tr_time, tr_event, 
+               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, true) : NULL,
+               								tr_gran,
+                                            NULL,
+                                            innode,
+                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, true) : NULL,
+                                            (doc_schema_node *)doc_node,
+                                            trigger_title, doc_name, true);
+           else throw SYSTEM_EXCEPTION("Can't create trigger for document");
+   		}
+        else
+        {      
+           schema_node *coll_node = find_collection(doc_name);
+
+           if (coll_node->type == document || coll_node->type == virtual_root)
+               trigger_cell::create_trigger(tr_time, tr_event, 
+               								(strlen(trigger_path)) ? lr2PathExpr(NULL, trigger_path, true) : NULL,
+               								tr_gran,
+                                            NULL,
+                                            innode,
+                                            (strlen(path_to_parent)) ? lr2PathExpr(NULL, path_to_parent, true) : NULL,
+                                            (doc_schema_node *)coll_node,
+                                            trigger_title, doc_name, false);
+           else throw SYSTEM_EXCEPTION("Can't create trigger for collection");
+        }      
+    }
+    else // delete trigger
+    	trigger_cell::delete_trigger(trigger_title);
+  }
+#endif  
   else
     throw SYSTEM_EXCEPTION("bad logical record given from logical log");
 
