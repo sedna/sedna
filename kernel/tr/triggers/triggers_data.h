@@ -49,6 +49,8 @@ struct trigger_action_cell
     trigger_action_cell* next;
 };
 
+extern trigger_action_cell *rcv_tac; // for recovery purposes
+
 typedef std::vector<PPXptr*> qep_parameters_vec;
 
 struct trigger_cell

@@ -24,6 +24,8 @@ qep_parameters_vec* qep_parameters = NULL;
 pers_sset<trigger_cell,unsigned short> *triggerdata;
 USemaphore trigger_sem;//SEMAPHORE!!!
 
+trigger_action_cell *rcv_tac = NULL; // for recovery purposes
+
 static bool triggers_initialized = false;
 
 //inits metadata library
@@ -130,28 +132,37 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trig
 	trc->trigger_event = tr_event;
     trc->trigger_time = tr_time;
     trc->trigger_granularity = tr_gran;
-    trc->trigger_action = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
-    trigger_action_cell* trac = trc->trigger_action;
-    for(int i = 0; i < action->size(); i++)
+    
+    if (rcv_tac != NULL) // recovery mode
     {
-		if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
-        {
-            trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
-            trac->cxt_size = atoi(action->at(i).internal.str+35);
-// FIXME cxt_size for trigger statements must be extracted in scheme part
-//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
-        }
-        else  //this is update
-        {
-            trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            strcpy(trac->statement,action->at(i).internal.str);
-        }
-        if(i==action->size()-1)
-            trac->next = NULL;
-        else
-            trac->next = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
-        trac = trac->next;
+    	trc->trigger_action = rcv_tac; // trigger_action_cell sequence has already been recovered from logical log
+    	rcv_tac = NULL;
+    }
+    else
+    {
+    	trc->trigger_action = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
+    	trigger_action_cell* trac = trc->trigger_action;
+    	for(int i = 0; i < action->size(); i++)
+    	{
+			if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
+        	{
+            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
+            	strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
+            	trac->cxt_size = atoi(action->at(i).internal.str+35);
+	// FIXME cxt_size for trigger statements must be extracted in scheme part
+	//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
+        	}
+        	else  //this is update
+        	{
+            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
+            	strcpy(trac->statement,action->at(i).internal.str);
+        	}
+        	if(i==action->size()-1)
+            	trac->next = NULL;
+        	else
+            	trac->next = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
+        	trac = trac->next;
+    	}
     }
     // if the trigger is on before insert and statement level
     if((trc->trigger_event == TRIGGER_INSERT_EVENT) &&
@@ -177,7 +188,7 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trig
 
 	triggerdata->put(trc);
 	trigger_sem_up();
-    hl_logical_log_trigger(tr_time, tr_event, trigger_path, tr_gran, trc->trigger_action, innode, path_to_parent, trigger_title, doc_name, is_doc, true);
+    hl_logical_log_trigger(tr_time, tr_event, trigger_path, tr_gran, trc->trigger_action, trc->innode, path_to_parent, trigger_title, doc_name, is_doc, true);
 
 	// ALGORITHM: setting up trigger over discriptive scheme
 	//II. Execute abs path (object_path) on the desriptive schema

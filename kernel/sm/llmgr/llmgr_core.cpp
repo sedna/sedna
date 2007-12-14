@@ -1007,6 +1007,65 @@ void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, 
   ll_log_insert_record(tmp_rec, rec_len, trid, sync);
 }
 
+/* 
+Trigger log record format:
+	op (1 byte)
+	trid(transaction_id)
+	tr_time(int)
+	tr_event(int)
+	trigger_path(null-terminated string)
+	tr_gran(int)
+	tr_action_size(int)
+	tr_action_buf(tr_action_size bytes)
+	in_name(null-terminated string)
+	in_type(int)
+	path_to_parent(null-terminated string)
+	trigger_title(null-terminated string)
+	doc_name(null-terminated string)
+*/
+
+void llmgr_core::ll_log_trigger(transaction_id &trid, int tr_time, int tr_event, const char *trigger_path, int tr_gran, char *tr_action_buf, int tr_action_size, const char *in_name, int in_type, const char *path_to_parent, const char *trigger_title, const char *doc_name, bool is_doc, bool inserted, bool sync)
+{
+  if (rollback_active || recovery_active) return;
+
+  int rec_len;
+  int tr_path_len = (trigger_path != NULL) ? (strlen(trigger_path) + 1) : 1;
+  int in_name_len = (in_name != NULL) ? (strlen(in_name) + 1) : 1;
+  int path_to_par_len = (path_to_parent != NULL) ? (strlen(path_to_parent) + 1) : 1;
+  int tr_title_len = (trigger_title != NULL) ? (strlen(trigger_title) + 1) : 1;
+  int doc_name_len = (doc_name != NULL) ? (strlen(doc_name) + 1) : 1;
+
+  rec_len = sizeof(char) + sizeof(transaction_id) + 5 * sizeof(int) + tr_path_len + tr_action_size + in_name_len +
+  			path_to_par_len + tr_title_len + doc_name_len;
+
+  char *tmp_rec = ll_log_malloc(rec_len);
+
+  char op;
+
+  if (is_doc)
+     op = inserted ? LL_INSERT_DOC_TRG : LL_DELETE_DOC_TRG;
+  else
+     op = inserted ? LL_INSERT_COL_TRG : LL_DELETE_COL_TRG;
+
+  int offs = 0;
+
+  inc_mem_copy(tmp_rec, offs, &op, sizeof(char));
+  inc_mem_copy(tmp_rec, offs, &trid, sizeof(transaction_id));
+  inc_mem_copy(tmp_rec, offs, &tr_time, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, &tr_event, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, (trigger_path != NULL) ? trigger_path : "", tr_path_len);
+  inc_mem_copy(tmp_rec, offs, &tr_gran, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, &tr_action_size, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, tr_action_buf, tr_action_size);
+  inc_mem_copy(tmp_rec, offs, (in_name != NULL) ? in_name : "", in_name_len);
+  inc_mem_copy(tmp_rec, offs, &in_type, sizeof(int));
+  inc_mem_copy(tmp_rec, offs, (path_to_parent != NULL) ? path_to_parent : "", path_to_par_len);
+  inc_mem_copy(tmp_rec, offs, (trigger_title != NULL) ? trigger_title : "", tr_title_len);
+  inc_mem_copy(tmp_rec, offs, (doc_name != NULL) ? doc_name : "", doc_name_len);
+
+  ll_log_insert_record(tmp_rec, rec_len, trid, sync);
+}
+
 /*
  commit log record format:
  op (1 byte)
@@ -2259,7 +2318,9 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
         body_beg[0] == LL_INSERT_DOC_INDEX  || body_beg[0] == LL_DELETE_DOC_INDEX ||
         body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX ||
         body_beg[0] == LL_INSERT_DOC_FTS_INDEX  || body_beg[0] == LL_DELETE_DOC_FTS_INDEX ||
-        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX)
+        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX ||
+        body_beg[0] == LL_INSERT_DOC_TRG  || body_beg[0] == LL_DELETE_DOC_TRG ||
+        body_beg[0] == LL_INSERT_COL_TRG  || body_beg[0] == LL_DELETE_COL_TRG)
 
     {
       res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);

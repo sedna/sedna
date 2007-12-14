@@ -81,7 +81,11 @@ enum {LL_INSERT_ELEM,
       LL_INSERT_DOC_FTS_INDEX,
       LL_DELETE_DOC_FTS_INDEX,
       LL_INSERT_COL_FTS_INDEX,
-      LL_DELETE_COL_FTS_INDEX
+      LL_DELETE_COL_FTS_INDEX,
+      LL_INSERT_DOC_TRG,
+      LL_DELETE_DOC_TRG,
+      LL_INSERT_COL_TRG,
+      LL_DELETE_COL_TRG,
      };
 
 enum transaction_mode {NORMAL_MODE, ROLLBACK_MODE};
@@ -250,6 +254,7 @@ public:
   void ll_log_ns(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted, bool sync);
   void ll_log_index(transaction_id& trid, const char *object_path, const char *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted, bool sync);
   void ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync);
+  void ll_log_trigger(transaction_id& trid, int tr_time, int tr_event, const char *trigger_path, int tr_gran, char *tr_action_buf, int tr_action_size, const char *in_name, int in_type, const char *path_to_parent, const char *trigger_titile, const char *doc_name, bool is_doc, bool inserted, bool sync);  
 
   LONG_LSN ll_log_commit(transaction_id _trid, bool sync);
   void ll_log_rollback(transaction_id _trid, bool sync);
