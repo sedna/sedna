@@ -26,6 +26,7 @@
 #include "sm/bufmgr/bm_functions.h"
 #include "common/SSMMsg.h"
 #include "sm/trmgr.h"
+#include "sm/sm_functions.h"
 
 using namespace std;
 
@@ -114,6 +115,7 @@ void AdvanceSnapshots()
 U_THREAD_PROC (checkpoint_thread, arg)
 {
 #ifdef CHECKPOINT_ON
+	bool isGiantLockObtained = false;
  try{
 
 
@@ -142,28 +144,33 @@ U_THREAD_PROC (checkpoint_thread, arg)
 	    }
     	d_printf1("All sems acquired\n");
 
-		WuSnapshotStats wuStats;
-    	// obtain timestamps of persistent and current snapshots
-    	WuGatherSnapshotsStatsExn(&wuStats);
 		
-		//if (!is_recovery_mode)
-//			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
-				AdvanceSnapshots(); // TODO: check for shutdown on recovery
-    	
-    	WuOnBeginCheckpointExn();
+		ObtainGiantLock(); isGiantLockObtained = true;
+		{
+			WuSnapshotStats wuStats;
+    		// obtain timestamps of persistent and current snapshots
+    		WuGatherSnapshotsStatsExn(&wuStats);
+			
+			//if (!is_recovery_mode)
+	//			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
+					AdvanceSnapshots(); // TODO: check for shutdown on recovery
+	    	
+    		WuOnBeginCheckpointExn();
 
-		WuEnumerateVersionsParams params;
-    	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+			WuEnumerateVersionsParams params;
+    		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
 
-	    flush_data_buffers();
-    	d_printf1("flush data buffers completed\n");
+			flush_data_buffers();
+    		d_printf1("flush data buffers completed\n");
 
-	    ll_logical_log_flush();
-    	d_printf1("flush logical log completed\n");
+			ll_logical_log_flush();
+    		d_printf1("flush logical log completed\n");
 
-	    ll_truncate_logical_log();
+			ll_truncate_logical_log();
 
-    	WuOnCompleteCheckpointExn();
+    		WuOnCompleteCheckpointExn();
+		}
+		ReleaseGiantLock(); isGiantLockObtained = false;
 
     	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
         	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
@@ -186,7 +193,11 @@ U_THREAD_PROC (checkpoint_thread, arg)
 		    }
     		d_printf1("All sems acquired\n");
 
-			AdvanceSnapshots();
+			ObtainGiantLock(); isGiantLockObtained = true;
+			{
+				AdvanceSnapshots();
+			}
+			ReleaseGiantLock(); isGiantLockObtained = false;
 
 	    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	    	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
@@ -211,8 +222,10 @@ U_THREAD_PROC (checkpoint_thread, arg)
 
   }//end while
  } catch(SednaException &e) {
+   if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(e, EL_SM);
  } catch (...) {
+   if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(EL_SM);
  }
 #endif
