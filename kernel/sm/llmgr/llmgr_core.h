@@ -200,6 +200,8 @@ private:
   bool rollback_active;//used only from transaction (not used from sm)
   bool recovery_active;//used only from rcv_db process and if recovery_active == true the recovery process must not write to phys log
 
+  bool checkpoint_active; // true if checkpoint record was added to buffer; used to flush next_lsn
+
   char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
   int indir_rec_len;
   int indir_rec_buf_size;
