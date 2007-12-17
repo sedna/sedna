@@ -263,6 +263,10 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1,shft shift,int sz)
 		copy_to_buffer(v1,shift,sz);
 	}	
 }
+
+/*static char bufA[100000];
+static char bufB[100000];*/
+
 int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 {
 	int s1=get_size_ser(v1);
@@ -276,6 +280,19 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		return (s1-s2);
 	}*/
 
+/*  /// Straightforward implementation for debug:
+
+    copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
+    memcpy(bufA, temp_buffer, s1);
+    copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s2);
+	memcpy(bufB, temp_buffer, s2);
+	int res = sign(memcmp(bufA, bufB, min(s1, s2)));
+    if( 0 == res )
+	{
+	     if(s1 > s2) return 1; if(s2 > s1) return -1;
+		 return 0;
+	} return res;*/
+
 	if (s1<s2)
 	{
 		copy_data_ser_to_buffer(get_ptr_ser(v1,s1),s1);
@@ -286,7 +303,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		if (res) return sign(res);
 		else
 		{
-			if (s1<s2_p1) return -1;
+			if (s1<=s2_p1) return -1;
 			else
 			{
 				if (s2_p1==s2) return (s1-s2);
@@ -295,7 +312,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v2)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
 					res=memcmp(temp_buffer+s2_p1,XADDR(data),min(s1,s2)-s2_p1);
-					if (res) return -sign(res);
+					if (res) return sign(res);
 					else
 						return (s1-s2);
 				}
@@ -303,7 +320,7 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 			}
 		}
 	}
-	else
+	else  /* s1 >= s2 */
 	{
 		copy_data_ser_to_buffer(get_ptr_ser(v2,s2),s2);
 		xptr data=get_ptr_ser(v1,s1);
@@ -313,7 +330,8 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 		if (res) return -sign(res);
 		else
 		{
-			if (s2<s1_p1) return 1;
+			if (s2 == s1_p1 && s1_p1 < s1) return 1;  
+			if (s2 < s1_p1) return 1;
 			else
 			{
 				if (s1_p1==s1) return (s1-s2);
@@ -322,11 +340,10 @@ int PPDDO::compare_less (xptr v1,xptr v2, const void * Udata)
 					data=((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+sizeof(seq_blk_hdr);
 					CHECKP(data);
 					res=memcmp(temp_buffer+s1_p1,XADDR(data),min(s1,s2)-s1_p1);
-					if (res) return sign(res);
+					if (res) return -sign(res);
 					else
 						return (s1-s2);
 				}
-
 			}
 		}
 	}
