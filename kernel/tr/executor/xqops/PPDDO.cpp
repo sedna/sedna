@@ -363,6 +363,12 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 	CHECKP(node);
 	int sz=((n_dsc*)XADDR(node))->nid.size;
 	xptr addr=(sz)? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix):*(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
+	if (!sz)
+	{
+	    CHECKP(addr);
+		addr = PSTRDEREF(addr);
+		CHECKP(node);
+	}
 	if (!sz)sz=*(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));
 	CHECKP(v1);
 	*((xptr*)XADDR(v1))=node;	
@@ -388,6 +394,12 @@ void PPDDO::serialize_2_blks (tuple& t,xptr& v1,shft size1,xptr& v2, const void 
 	CHECKP(node);
 	int sz=((n_dsc*)XADDR(node))->nid.size;
 	xptr addr=(sz)? ADDR2XPTR(((n_dsc*)XADDR(node))->nid.prefix):*(xptr*)(((n_dsc*)XADDR(node))->nid.prefix);
+	if (!sz)
+	{
+	    CHECKP(addr);
+		addr = PSTRDEREF(addr);
+		CHECKP(node);
+	}
 	if (!sz)sz=*(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));	
 	copy_to_buffer(&node,sizeof(xptr));
 	copy_to_buffer(&sz,sizeof(xptr),sizeof(shft));	
