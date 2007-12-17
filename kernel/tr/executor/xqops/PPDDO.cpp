@@ -235,6 +235,7 @@ xptr PPDDO::get_ptr_ser(xptr& v1,int sz)
 }
 void PPDDO::copy_data_ser_to_buffer(xptr v1,int sz)
 {
+	CHECKP(v1);
 	if (sz>GET_FREE_SPACE(v1))
 	{
 		copy_to_buffer(v1,GET_FREE_SPACE(v1));
@@ -249,6 +250,7 @@ void PPDDO::copy_data_ser_to_buffer(xptr v1,int sz)
 }
 void PPDDO::copy_data_ser_to_buffer(xptr v1,shft shift,int sz)
 {
+	CHECKP(v1);
 	if (sz>GET_FREE_SPACE(v1))
 	{
 		copy_to_buffer(v1,shift,GET_FREE_SPACE(v1));
