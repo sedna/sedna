@@ -387,8 +387,11 @@ U_THREAD_PROC(_vmm_thread, arg)
         USemaphoreDown(sm_to_vmm_callback_sem1, __sys_call_error);
         //printf("vmm_thread");fflush(stdout);
 
-        if (shutdown_vmm_thread) 
+		/* quick and dirty workaround - request unmapping of 0xffffffff to stop VMM callback thread */ 
+        if (XADDR(*(xptr*)p_sm_callback_data) == (void*)-1) 
         {
+			*(bool*)p_sm_callback_data = true;
+			USemaphoreUp(sm_to_vmm_callback_sem2, __sys_call_error);
             return 0;
         }
 
