@@ -1,0 +1,11 @@
+#ifndef __RCV_TEST_TR_H__
+#define __RCV_TEST_TR_H__
+
+#include "common/rcv_test.h"
+
+#define TEST_AFTER_RCV
+
+// checks all documents and collections for consistency (by employing checkTreeConsistency from PPTest)
+void test_db_after_rcv();
+
+#endif
