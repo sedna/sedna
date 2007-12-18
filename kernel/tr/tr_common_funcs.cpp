@@ -169,6 +169,13 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Logical log on transaction begin...");
    hl_logical_log_on_transaction_begin(rcv_active);
    d_printf1("OK\n");
+
+#ifdef SE_ENABLE_TRIGGERS
+   d_printf1("Triggers on transaction begin...");
+   triggers_on_transaction_begin();
+   d_printf1("OK\n");
+#endif
+   
 }
 
 // is_commit defines mode: 
@@ -177,6 +184,12 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 {
    clear_authmap();
+
+#ifdef SE_ENABLE_TRIGGERS
+   d_printf1("Triggers on transaction end...");
+   triggers_on_transaction_end(is_commit);
+   d_printf1("OK\n");
+#endif
 
    d_printf1("\nReleasing logical log...");
    hl_logical_log_on_transaction_end(is_commit, rcv_active);

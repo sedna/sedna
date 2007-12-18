@@ -24,6 +24,12 @@ xptr triggers_test(xptr new_var, xptr where_var, const char* name, t_item node_t
     }
 	return new_var;
 }
+
+void run_triggers(bool isOn)
+{
+    isTriggersOn = isOn;
+}
+
 xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 {
    	if (auth == BLOCK_AUTH_CHECK) return new_var;

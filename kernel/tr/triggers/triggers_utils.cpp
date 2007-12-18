@@ -262,6 +262,8 @@ t_triggers_set* find_triggers_for_docnode(doc_schema_node* doc_node, trigger_eve
 xptr prepare_old_node(xptr node, schema_node* scm_node, trigger_event event)
 {
    	t_triggers_set treated_triggers;
+    if (!isTriggersOn) return XNULL;
+    
     CHECKP(node);
     
     if(find_trigger_for_node(scm_node, event, TRIGGER_AFTER, TRIGGER_FOR_EACH_NODE, &treated_triggers))
