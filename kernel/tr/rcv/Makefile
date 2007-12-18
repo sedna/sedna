@@ -6,6 +6,6 @@ PP = ../../..
 
 include $(PP)/Makefile.include
 
-OBJS = rcv_funcs$(OBJ_EXT)
+OBJS = rcv_funcs$(OBJ_EXT) rcv_test_tr$(OBJ_EXT)
 
 include $(PP)/Makefile.ordlib

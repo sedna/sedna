@@ -15,6 +15,8 @@
 #include "common/utils.h"
 #include "common/u/uprocess.h"
 
+#include "common/rcv_test.h"
+
 #define SEDNA_DATA_STRUCTURES_VER 6
 
 // buffer memory offset; this type is used for addressing buffers in buffer

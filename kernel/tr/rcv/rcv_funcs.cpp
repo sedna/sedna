@@ -57,6 +57,9 @@ void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
   string str = string("recover+db_by_logical_log finished\n");
   WRITE_DEBUG_LOG(str.c_str());
 
+#ifdef TEST_AFTER_RCV
+  test_db_after_rcv();
+#endif
 
 #endif
 }

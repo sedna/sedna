@@ -27,6 +27,8 @@
 #include "common/mmgr/memutils.h"
 #include "tr/tr_common_funcs.h"
 
+#include "tr/rcv/rcv_test_tr.h"
+
 // only for MSDEV 6.0
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
 extern "C" long _ftol(double);  //defined by VC6 C libs
@@ -269,7 +271,8 @@ int main(int argc, char *argv[])
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;
         bool expect_another_transaction = true;
-
+		
+		read_test_cfg(); // prepare recovery tester
         /////////////////////////////////////////////////////////////////////////////////
         /// CYCLE BY TRANSACTIONS
         /////////////////////////////////////////////////////////////////////////////////

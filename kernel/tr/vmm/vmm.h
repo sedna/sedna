@@ -17,6 +17,8 @@
 
 #include  "common/wutypes.h"
 
+#include "tr/rcv/rcv_test_tr.h"
+
 extern session_id sid;
 
 //#define VMM_GATHER_STATISTICS
@@ -49,6 +51,7 @@ extern session_id sid;
 #else 
 
 #define CHECKP(p)			try {													\
+                                RECOVERY_CRASH;                                     \
                                 VMM_INC_NUMBER_OF_CHECKP_CALLS						\
                                 VMM_TRACE_CHECKP(p)									\
 								vmm_cur_ptr = XADDR(p);								\

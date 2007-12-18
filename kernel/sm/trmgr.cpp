@@ -28,6 +28,8 @@
 #include "sm/trmgr.h"
 #include "sm/sm_functions.h"
 
+#include "common/rcv_test.h"
+
 using namespace std;
 
 /* global variables for checkpoint */
@@ -158,8 +160,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 	    	
     		WuOnBeginCheckpointExn();
 
-			WuEnumerateVersionsParams params;
-    		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+		WuEnumerateVersionsParams params;
+    	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
 
 			flush_data_buffers();
     		d_printf1("flush data buffers completed\n");

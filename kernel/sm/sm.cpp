@@ -27,6 +27,8 @@
 
 #include "sm/wu/wu.h"
 
+#include "common/rcv_test.h"
+
 using namespace std;
 
 SSMMsg *ssmmsg;
@@ -689,6 +691,7 @@ int main(int argc, char **argv)
             WuInitExn(0,0, ll_returnTimestampOfPersSnapshot());
             elog(EL_LOG, ("SM : Wu is initialized"));
 
+            read_test_cfg();
 
             d_printf1("OK\n");
 
