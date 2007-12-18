@@ -48,6 +48,16 @@ void triggers_on_session_end()
     triggers_initialized = false;
 }
 
+void triggers_on_transaction_begin()
+{
+    isTriggersOn = true;
+}
+
+void triggers_on_transaction_end(bool is_commit)
+{
+    isTriggersOn = is_commit;
+}
+
 void triggers_on_statement_begin()
 {
     current_nesting_level = 0;

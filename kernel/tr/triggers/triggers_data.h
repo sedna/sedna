@@ -15,6 +15,8 @@
 class PPXptr;    
 class PathExpr;
 
+static bool isTriggersOn;
+
 enum trigger_event
 {
 	TRIGGER_INSERT_EVENT,
@@ -100,6 +102,9 @@ extern qep_parameters_vec* qep_parameters;
 //inits metadata library
 void triggers_on_session_begin(pers_sset<trigger_cell,unsigned short> * _triggerdata_);
 void triggers_on_session_end();
+
+void triggers_on_transaction_begin();
+void triggers_on_transaction_end(bool is_commit);
 
 void triggers_on_statement_begin();
 void triggers_on_statement_end();
