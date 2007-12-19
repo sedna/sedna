@@ -15,7 +15,7 @@
 class PPXptr;    
 class PathExpr;
 
-static bool isTriggersOn;
+extern bool isTriggersOn;
 
 enum trigger_event
 {

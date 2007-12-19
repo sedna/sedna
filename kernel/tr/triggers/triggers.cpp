@@ -507,14 +507,17 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
         case TRIGGER_BEFORE:
          switch (event){
              case TRIGGER_INSERT_EVENT:
-                  return apply_before_insert_triggers(new_var, where_var);
+                 if (!isTriggersOn) return new_var;
+                 return apply_before_insert_triggers(new_var, where_var);
 //                  return triggers_test(new_var, where_var, new_name, new_type);
                   
              case TRIGGER_DELETE_EVENT:
+                 if (!isTriggersOn) return old_var;
                   return apply_before_delete_triggers(old_var, where_var, scm_node);
                   
              case TRIGGER_REPLACE_EVENT:
-                  return apply_before_replace_triggers(new_var, old_var, scm_node);
+                 if (!isTriggersOn) return new_var;
+                 return apply_before_replace_triggers(new_var, old_var, scm_node);
              
              default: 
                   throw SYSTEM_EXCEPTION("Bad trigger event");
@@ -523,16 +526,19 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
         case TRIGGER_AFTER:
           switch (event){
              case TRIGGER_INSERT_EVENT:
-                  apply_after_insert_triggers(new_var, where_var, scm_node);
-                  return XNULL;
+                 if (!isTriggersOn) return XNULL;
+                 apply_after_insert_triggers(new_var, where_var, scm_node);
+                 return XNULL;
                   
              case TRIGGER_DELETE_EVENT:
-                  apply_after_delete_triggers(old_var, where_var, scm_node);
-                  return XNULL;
+                 if (!isTriggersOn) return XNULL;
+                 apply_after_delete_triggers(old_var, where_var, scm_node);
+                 return XNULL;
                   
              case TRIGGER_REPLACE_EVENT:
-                  apply_after_replace_triggers(new_var, old_var, where_var, scm_node);
-                  return XNULL;
+                 if (!isTriggersOn) return XNULL;
+                 apply_after_replace_triggers(new_var, old_var, where_var, scm_node);
+                 return XNULL;
                   
              default: 
                   throw SYSTEM_EXCEPTION("Bad trigger event");
@@ -544,6 +550,8 @@ xptr apply_per_node_triggers(xptr new_var, xptr old_var, xptr where_var, schema_
 
 void apply_per_statement_triggers(xptr_sequence* target_seq, bool target_seq_direct, xptr_sequence* upd_seq, bool upd_seq_direct, trigger_time time, trigger_event event)
 {
+    if (!isTriggersOn) return;
+
     switch (time){
         case TRIGGER_BEFORE:
          switch (event){

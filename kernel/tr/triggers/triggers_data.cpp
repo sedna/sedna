@@ -25,6 +25,7 @@ pers_sset<trigger_cell,unsigned short> *triggerdata;
 USemaphore trigger_sem;//SEMAPHORE!!!
 
 trigger_action_cell *rcv_tac = NULL; // for recovery purposes
+bool isTriggersOn = true;
 
 static bool triggers_initialized = false;
 
