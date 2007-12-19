@@ -1057,6 +1057,7 @@
                  (!fn!checkpoint .         PPFnCheckpoint)
                  (!se!checkpoint .         PPCheckpoint)
                  (!fn!ftindex-scan .       PPFtIndexScan)
+                 (!fn!ftindex-scan2 .      PPFtIndexScan2)
                  (!fn!ftscan .             PPFtScan)
                  (!fn!fthighlight .        PPFtHighlight)
                  (!fn!fthighlight2 .       PPFtHighlight2)

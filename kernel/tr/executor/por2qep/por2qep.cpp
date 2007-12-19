@@ -3105,6 +3105,30 @@ fn_dt_funcs_correct_type:
 			make_pp_op(cxt, lst->at(1).internal.list), 
 			make_pp_op(cxt, lst->at(2).internal.list));
     }
+	else if (op == "PPFtIndexScan2")
+    {
+        if (   lst->size() < 3 || lst->size() > 5
+			|| lst->at(1).type != SCM_LIST
+			|| lst->at(2).type != SCM_LIST
+           ) throw USER_EXCEPTION(SE1004);
+
+		
+		if (lst->size() == 3)
+			opit = se_new PPFtIndexScan2(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list));
+		else if (lst->size() == 4)
+			opit = se_new PPFtIndexScan2(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list),
+				make_pp_op(cxt, lst->at(3).internal.list));
+		else
+			opit = se_new PPFtIndexScan2(cxt,
+				make_pp_op(cxt, lst->at(1).internal.list), 
+				make_pp_op(cxt, lst->at(2).internal.list),
+				make_pp_op(cxt, lst->at(3).internal.list),
+				make_pp_op(cxt, lst->at(4).internal.list));
+    }
 	else if (op == "PPFtHighlight")
     {
         if (   lst->size() < 3 || lst->size() > 4

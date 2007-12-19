@@ -1050,3 +1050,119 @@ void SednaConvertJob::OnOutput(const char * txt, int length)
 	result.append_mstr(txt,length);
 }
 
+/////////////////////
+// SednaSearchJob2
+/////////////////////
+
+SednaSearchJob2::SednaSearchJob2() : dts_job(), request(NULL), indexesToSearch(NULL), dts_results(NULL), res_id(-1)
+{
+}
+
+void SednaSearchJob2::set_request(tuple_cell& request)
+{
+	op_str_buf buf(request);
+
+	if (this->request)
+		free(this->request);
+	this->request = (char*)malloc(buf.get_size() + 1);
+	strcpy(this->request, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
+
+	this->dts_job.request2 = this->request;
+}
+void SednaSearchJob2::get_next_result(tuple &t)
+{
+	if (!dts_results)
+	{
+		{
+			//FIXME
+			dtsOptions opts;
+			short result;
+			dtssGetOptions(opts, result);
+			this->save_field_flags = opts.fieldFlags;
+			//opts.fieldFlags |= dtsoFfXmlSkipAttributes  | dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField;
+			opts.fieldFlags = dtsoFfXmlHideFieldNames | dtsoFfSkipFilenameField | dtsoFfXmlSkipAttributes;
+			std::string stemming_file = std::string(SEDNA_DATA) + std::string("/data/")
+									+ std::string(db_name) + std::string("_files/dtsearch/stemming.dat");
+
+			strcpy(opts.stemmingRulesFile, stemming_file.c_str());
+					
+			dtssSetOptions(opts, result);
+		}
+
+		//TODO!: check results as filter stuff in dtsearch
+		//TODO!: check delay doc info stuff in dtsearch
+
+		dts_results = new dtsSearchResults();
+		dts_job.resultsHandle = dts_results->getHandle();
+		short errorFlag;
+		dtssDoSearchJob(dts_job, errorFlag);
+		//TODO: check errors
+
+		dts_results->sort(dtsSortByRelevanceScore, NULL);
+
+		this->res_id = 0;
+	}
+
+	if (res_id >= dts_results->getCount())
+	{
+		delete dts_results;
+		dts_results = NULL;
+		this->res_id = -1;
+
+		t.set_eos();
+	}
+	else
+	{
+		dtsSearchResultsItem res_item;
+		if (dts_results->getDocInfo(res_id, res_item) < 0) //FIXME: apiRef says nothing about getDocInfo return code, but c++ samples use it
+			throw USER_EXCEPTION2(SE1003, "dtsearch: getDocInfo failed");
+		res_id++;
+
+		t.copy(tuple_cell::node(SednaDataSource::filenameToRecord(res_item.filename)));
+	}
+}
+
+void SednaSearchJob2::set_index(tuple_cell& name)
+{
+	ft_index_cell* ft_idx=ft_index_cell::find_index(op_str_buf(name).c_str());
+	if (ft_idx==NULL)
+		throw USER_EXCEPTION(SE1061);
+#ifdef _WIN32
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("\\data\\")
+		+ std::string(db_name) + std::string("_files\\dtsearch\\");
+#else
+	std::string index_path1 = std::string(SEDNA_DATA) + std::string("/data/")
+		+ std::string(db_name) + std::string("_files/dtsearch/");
+#endif
+	std::string index_path = index_path1 + std::string(ft_idx->index_title);
+
+	if (this->indexesToSearch)
+		free(this->indexesToSearch);
+	this->indexesToSearch = (char*)malloc(index_path.length() + 2);
+	strcpy(this->indexesToSearch, index_path.c_str());
+	this->indexesToSearch[index_path.length() + 1] = 0;
+
+	dts_job.indexesToSearch = this->indexesToSearch;
+	dts_job.action.searchIndexes = true;
+}
+
+void SednaSearchJob2::set_max_results(long max_results)
+{
+	dts_job.maxFilesToRetrieve2 = max_results;
+}
+
+
+void SednaSearchJob2::reopen()
+{
+	//TODO: check what is this function supposed to do
+}
+
+SednaSearchJob2::~SednaSearchJob2()
+{
+	if (this->request)
+		free(this->request);
+	if (this->indexesToSearch)
+		free(this->indexesToSearch);
+	if (this->dts_results)
+		delete this->dts_results;
+}
