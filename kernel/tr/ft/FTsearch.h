@@ -218,5 +218,30 @@ class SednaSearchJob : public dtSearch::DSearchJob {
 		  SednaConvertJob * hl;
      };
 
+//strict variant (with sort by relevance)
+class SednaSearchJob2 {
+     public:
+		 //TODO: scan w/o index
+		 //TODO: add highlight?
+		   //SednaSearchJob2(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
+		   SednaSearchJob2();
+		   void set_request(tuple_cell& request);
+		   void get_next_result(tuple &t);
+		   void set_index(tuple_cell& name);
+		   void set_max_results(long max_results);
+		   void reopen();
+		   virtual ~SednaSearchJob2();
+	  private:
+		  dtsSearchJob dts_job;
+		  dtsSearchResults *dts_results;
+		  long save_field_flags;
+		  xptr res;
+		  //TODO: consider removing these and using only fields in dts_job, check that they are NULL in the constructor
+		  char *request;
+		  char *indexesToSearch;
+		  int res_id;
+};
+
+
 
 #endif

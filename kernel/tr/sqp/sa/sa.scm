@@ -960,6 +960,9 @@
     (,sa:fn-ns "ftindex-scan" 2 2
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftindex-scan)
+    (,sa:fn-ns "ftwindex-scan" 2 4
+     ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
+     ,sa:type-nodes !fn!ftindex-scan2)
     (,sa:fn-ns "ftscan" 3 4
      ,(lambda (num-args) (sa:make-list sa:type-atomic num-args))
      ,sa:type-nodes !fn!ftscan)

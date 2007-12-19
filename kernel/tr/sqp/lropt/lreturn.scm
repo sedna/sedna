@@ -403,7 +403,7 @@
                        var-types prolog processed-funcs
                        #f #f #f))
      ; Index scan functions and full-text search functions
-     ((!fn!index-scan !fn!index-scan-between !fn!ftindex-scan)
+     ((!fn!index-scan !fn!index-scan-between !fn!ftindex-scan !fn!ftindex-scan2)
       (lropt:sedna-index-fun-calls expr called-once? order-required?
                                    var-types prolog processed-funcs))
      ((!fn!ftscan)
