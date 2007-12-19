@@ -283,7 +283,7 @@ tuple_cell cast_primitive_to_xs_string(const tuple_cell &c)
                                       res.set_xtype(xs_string);
                                       return res;
                                   }
-        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_untypedAtomic);
+        default					: return _cast_is_not_supported(c.get_atomic_type(), xs_string);
     }
 }
 
