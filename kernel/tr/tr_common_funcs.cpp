@@ -172,7 +172,7 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 
 #ifdef SE_ENABLE_TRIGGERS
    d_printf1("Triggers on transaction begin...");
-   triggers_on_transaction_begin();
+   triggers_on_transaction_begin(rcv_active);
    d_printf1("OK\n");
 #endif
    
