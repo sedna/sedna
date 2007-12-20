@@ -49,9 +49,9 @@ void triggers_on_session_end()
     triggers_initialized = false;
 }
 
-void triggers_on_transaction_begin()
+void triggers_on_transaction_begin(bool isRecovery)
 {
-    isTriggersOn = true;
+    isTriggersOn = !isRecovery;
 }
 
 void triggers_on_transaction_end(bool is_commit)
