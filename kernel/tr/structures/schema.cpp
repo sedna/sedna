@@ -85,6 +85,7 @@ void doc_schema_node::delete_index(index_cell* idx)
 	while (icell!=NULL)
 	{
 		if (icell->index==idx) break;
+		RECOVERY_CRASH;
 		icell=icell->next;
 	}
 	if (icell->next!=NULL) icell->next->previous=icell->previous;
@@ -114,6 +115,7 @@ void doc_schema_node::delete_ft_index(ft_index_cell* idx)
 	while (icell!=NULL)
 	{
 		if (icell->index==idx) break;
+		RECOVERY_CRASH;
 		icell=icell->next;
 	}
 	if (icell->next!=NULL) icell->next->previous=icell->previous;
@@ -143,6 +145,7 @@ void doc_schema_node::delete_trigger(trigger_cell* trc)
 	while (tcell!=NULL)
 	{
 		if (tcell->trigger==trc) break;
+		RECOVERY_CRASH;
 		tcell=tcell->next;
 	}
 	if (tcell->next!=NULL) tcell->next->previous=tcell->previous;
@@ -327,6 +330,7 @@ void schema_node::add_child(schema_node* node)
 			{
 				node->add_index(ind->index,*idn);
 				idn++;
+				RECOVERY_CRASH;
 			}
 			ind=ind->next;
 		}
@@ -349,6 +353,7 @@ void schema_node::add_child(schema_node* node)
 			{
 				node->add_trigger(sc_trigger->trigger);
 			}
+			RECOVERY_CRASH;
 			sc_trigger=sc_trigger->next;
 		}
 		#endif
@@ -565,6 +570,7 @@ void schema_node::delete_scheme_node()
 		sc1=sc->next;
 		scm_free(sc,this->persistent);
 		sc=sc1;
+		RECOVERY_CRASH;
 	}
 	scm_free(this,this->persistent);
 }
@@ -579,6 +585,7 @@ void temp_schema_node::delete_scheme_node()
 		sc1=sc->next_sibl;
 		sc->delete_scheme_node();
 		sc=sc1;
+		RECOVERY_CRASH;
 	}
 	scm_free(this,false);
 }
@@ -619,6 +626,7 @@ void schema_node::remove_index(index_cell* index)
 		sci1=sci->next;
 		if (sci->index==index) this->delete_index(sci);
 		sci=sci1;
+		RECOVERY_CRASH;
 	}
 	
 	sc_ref* sc=this->first_child;
@@ -626,6 +634,7 @@ void schema_node::remove_index(index_cell* index)
 	{
 		sc->snode->remove_index(index);
 		sc=sc->next;
+		RECOVERY_CRASH;
 	}
 }
 
@@ -665,12 +674,14 @@ void schema_node::remove_ft_index(ft_index_cell* index)
 			break;
 		}
 		sci = sci1;
+		RECOVERY_CRASH;
 	}	
 	sc_ref* sc=this->first_child;
 	while (sc!=NULL)
 	{
 		sc->snode->remove_ft_index(index);
 		sc=sc->next;
+		RECOVERY_CRASH;
 	}
 }
 
@@ -711,12 +722,14 @@ void schema_node::remove_trigger(trigger_cell* trigger)
 			break;
 		}
 		sct = sct1;
+		RECOVERY_CRASH;
 	}	
 	sc_ref* sc=this->first_child;
 	while (sc!=NULL)
 	{
 		sc->snode->remove_trigger(trigger);
 		sc=sc->next;
+		RECOVERY_CRASH;
 	}
 }
 
@@ -744,6 +757,7 @@ bool schema_node::is_ancestor_or_self (schema_node* node)
 	{
 		if (sc->snode->is_ancestor_or_self(node)) return true;
 		sc=sc->next;
+		RECOVERY_CRASH;
 	}
 	return false;
 }

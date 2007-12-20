@@ -91,6 +91,7 @@ void AdvanceSnapshots()
    		if (UEventWait(&end_of_rotr_event,  __sys_call_error) != 0)
    			throw SYSTEM_EXCEPTION("Checkpoint or snapshot advancement thread waiting failed");
 	}
+	RECOVERY_CRASH;
 	ll_updateMinRcvLSN();
 
 #if 0	
@@ -163,13 +164,13 @@ U_THREAD_PROC (checkpoint_thread, arg)
 		WuEnumerateVersionsParams params;
     	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
 
-			flush_data_buffers();
-    		d_printf1("flush data buffers completed\n");
+	    flush_data_buffers();
+    	d_printf1("flush data buffers completed\n");
 
-			ll_logical_log_flush();
-    		d_printf1("flush logical log completed\n");
+	    ll_logical_log_flush();
+    	d_printf1("flush logical log completed\n");
 
-			ll_truncate_logical_log();
+	    ll_truncate_logical_log();
 
     		WuOnCompleteCheckpointExn();
 		}
@@ -201,6 +202,8 @@ U_THREAD_PROC (checkpoint_thread, arg)
 				AdvanceSnapshots();
 			}
 			ReleaseGiantLock(); isGiantLockObtained = false;
+
+			RECOVERY_CRASH;
 
 	    	for (int i=0; i<CHARISMA_MAX_TRNS_NUMBER; i++)    
     	    	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )

@@ -98,6 +98,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 		if (scm==NULL) 
 			scm=   par_sc->add_child(ns,name,node_type);
 		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
+		RECOVERY_CRASH;
 		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir ,  type,node_type);
 	}
 	par_indir=GETPARENTPOINTER(tmp);
@@ -135,9 +136,11 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 xptr secondElementInsertProcedure(xptr right_sib,  xptr parent,t_item ntype, xmlscm_type type)
 {
 	#ifdef _MYDEBUG
+
 		crm_out<<" secondElementInsertProcedure";
 	#endif
 	int res= splitBlockIfFullAfterLeftInsert(right_sib);
+	RECOVERY_CRASH;
 	n_dsc* new_node;
 	xptr new_block;
 	xptr left_sib=GETLEFTPOINTER(right_sib);
@@ -264,6 +267,7 @@ xptr firstNodeInsertProcedure(xptr left_sib,  xptr parent,t_item ntype,  xmlscm_
 	#endif
 	xptr l_sib=left_sib;
 	int res= splitBlockIfFullAfterRightInsert(l_sib);
+	RECOVERY_CRASH;
 	n_dsc* new_node;
 	xptr new_block;
 	

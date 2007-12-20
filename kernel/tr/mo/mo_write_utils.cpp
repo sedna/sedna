@@ -33,6 +33,7 @@ void makeNewBlockConsistentAfterFilling(xptr block, xptr node,shft shift_size)
 	{
 		tmp->desc_next=CALCSHIFT(tmp,block_hdr)+shift_size;
 		tmp=(n_dsc*)((char*)tmp+shift_size);
+		RECOVERY_CRASH;
 		tmp->desc_prev=CALCSHIFT(tmp,block_hdr)-shift_size;
 		counter++;
 	}
@@ -93,6 +94,7 @@ void makeBlockConsistentAfterCuttingTheBeginning(node_blk_hdr *block,n_dsc* node
 	{
 		MAKEFREESPACE(tmp,CALCSHIFT(nextnode,block));     
 		tmp=nextnode;
+		RECOVERY_CRASH;
 		nextnode= GETNEXTDESCRIPTOR_BL(block,tmp);
 	}
 	MAKEFREESPACE(tmp,freespace);
@@ -131,6 +133,7 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 	{
 		MAKEFREESPACE( tmp,CALCSHIFT(nextnode,block));     
 		tmp=nextnode;
+		RECOVERY_CRASH;
 		nextnode= GETNEXTDESCRIPTOR_BL(block,tmp);
 	}
 	MAKEFREESPACE(tmp,freespace);
@@ -204,6 +207,7 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 		for (int i=0;i<chcnt;i++)
 		{
 			*childx=XNULL;
+			RECOVERY_CRASH;
 			childx+=1;
 		}
 	}
@@ -279,6 +283,7 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	else
 		new_block->desc_last=CALCSHIFT(new_pointer,new_block);
 	new_block->free_first=next_first;
+	RECOVERY_CRASH;
 	new_block->desc_first=CALCSHIFT(new_pointer,new_block);
 	return dest;
 }
@@ -377,6 +382,7 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 	pr_blk->count++;
 	(GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next=pr_blk->free_first;
 	pr_blk->free_first=next_first;
+	RECOVERY_CRASH;
 	pr_blk->desc_last=CALCSHIFT(new_pointer,pr_blk);
 	return dest;
 }
@@ -1191,6 +1197,7 @@ xptr createNewBlock(schema_node* scm,bool persistent)
 	new_block_hdr->snode=scm;
 	UPDATEFIRSTBLOCKPOINTER(scm,new_block);
 	scm->blockcnt++;
+	RECOVERY_CRASH;
 	return new_block;
 }
 
@@ -1236,6 +1243,7 @@ xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr par
 	new_node->indir=tmp;
 	createNID( left_sib, right_sib, parent,nodex); 
 	CHECKP(newblock);
+	RECOVERY_CRASH;
 	return nodex;
 }
 
@@ -1284,6 +1292,7 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->snode->blockcnt++;
 	CHECKP(new_block);
 	delete tmp;
+	RECOVERY_CRASH;
 	return new_block;
 	
 }
@@ -1337,6 +1346,7 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	CHECKP(new_block);
 	new_block_hdr->snode->blockcnt++;
 	delete tmp;
+	RECOVERY_CRASH;
 	return new_block;
 
 }
@@ -2138,6 +2148,7 @@ void update_idx_add (xptr node)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(node,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	CHECKP(node);
@@ -2150,6 +2161,7 @@ void update_idx_add (xptr node,const char* value, int size)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(node,value,size,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	CHECKP(node);
@@ -2164,6 +2176,7 @@ void update_idx_add_txt (xptr node)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(node,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	// parent
@@ -2175,6 +2188,7 @@ void update_idx_add_txt (xptr node)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(pnode,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	CHECKP(node);
@@ -2187,6 +2201,7 @@ void update_idx_add_txt (xptr node,const char* value, int size)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(node,value,size,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	// parent
@@ -2198,6 +2213,7 @@ void update_idx_add_txt (xptr node,const char* value, int size)
 	while (ind!=NULL)
 	{
 		ind->index->put_to_index(pnode,value,size,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 	CHECKP(node);
@@ -2209,6 +2225,7 @@ void update_idx_delete (xptr node)
 	while (ind!=NULL)
 	{
 		ind->index->delete_from_index(node,ind->object);
+		RECOVERY_CRASH;
 		ind=ind->next;
 	}
 }

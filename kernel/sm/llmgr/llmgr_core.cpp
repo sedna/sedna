@@ -444,6 +444,8 @@ void llmgr_core::ll_log_on_transaction_end(transaction_id &trid, bool sync)
 */
 void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xptr& left, const xptr& right, const xptr& parent, const char* name, const char* uri, const char* prefix, xmlscm_type type, bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;
@@ -511,6 +513,8 @@ void llmgr_core::ll_log_element(transaction_id& trid, const xptr& self,const xpt
 
 void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const char* value,int value_size,const char* uri,const char* prefix,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;
@@ -579,6 +583,8 @@ void llmgr_core::ll_log_attribute(transaction_id& trid, const xptr &self,const x
 
 void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int value_size,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;
@@ -631,6 +637,8 @@ void llmgr_core::ll_log_text(transaction_id& trid, const xptr &self,const xptr &
 */
 void llmgr_core::ll_log_text_edit(transaction_id& trid, const xptr& self,const char* value, int data_size, bool begin, bool inserted, bool sync)
 {//!!! this operation does not need indirection information
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;
@@ -678,6 +686,8 @@ void llmgr_core::ll_log_text_edit(transaction_id& trid, const xptr& self,const c
 
 void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  char* name,const  char* collection,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;
@@ -734,6 +744,8 @@ void llmgr_core::ll_log_document(transaction_id& trid, const xptr &self,const  c
 */
 void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;  
@@ -792,6 +804,8 @@ void llmgr_core::ll_log_pi(transaction_id& trid, const xptr &self,const xptr &le
 */
 void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int value_size,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;  
@@ -846,6 +860,8 @@ void llmgr_core::ll_log_comment(transaction_id& trid, const xptr &self,const xpt
 
 void llmgr_core::ll_log_collection(transaction_id& trid, const  char* name,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;  
@@ -897,6 +913,8 @@ void llmgr_core::ll_log_collection(transaction_id& trid, const  char* name,bool 
 */
 void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   char *tmp_rec;  
@@ -955,6 +973,8 @@ void llmgr_core::ll_log_ns(transaction_id& trid, const xptr &self,const xptr &le
 */
 void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, const char* key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   //d_printf2("written in log obj_path=%s\n", object_path);
@@ -1021,6 +1041,8 @@ void llmgr_core::ll_log_index(transaction_id& trid, const char* object_path, con
 
 void llmgr_core::ll_log_ft_index(transaction_id& trid, const char *object_path, int itconst, const char* index_title, const char *doc_name, bool is_doc, char* custom_tree_buf, int custom_tree_size, bool inserted, bool sync)
 {
+  RECOVERY_CRASH;
+
   if (rollback_active || recovery_active) return;
 
   //d_printf2("written in log obj_path=%s\n", object_path);
@@ -1137,6 +1159,8 @@ void llmgr_core::ll_log_trigger(transaction_id &trid, int tr_time, int tr_event,
 */
 LONG_LSN llmgr_core::ll_log_commit(transaction_id trid, bool sync)
 {
+  RECOVERY_CRASH;
+
   char *tmp_rec;  
   int rec_len;
   LONG_LSN ret_lsn;
@@ -1173,6 +1197,8 @@ LONG_LSN llmgr_core::ll_log_commit(transaction_id trid, bool sync)
 */
 void llmgr_core::ll_log_rollback(transaction_id trid, bool sync)
 {
+  RECOVERY_CRASH;
+
   char *tmp_rec;  
   int rec_len;
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
@@ -1402,6 +1428,8 @@ void llmgr_core::ll_log_indirection(transaction_id trid, int cl_hint, std::vecto
 
 void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool sync)
 {
+  RECOVERY_CRASH;
+
   char *tmp_rec;  
   int rec_len;
   LONG_LSN ret_lsn;
@@ -1466,6 +1494,8 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
 
 LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGarbage, TIMESTAMP ts, bool sync)
 {
+  RECOVERY_CRASH;
+
   char *tmp_rec;  
   int rec_len;
   LONG_LSN ret_lsn;
@@ -1532,6 +1562,8 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
 */
 void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
 {
+  RECOVERY_CRASH;
+
   char *tmp_rec;  
   int rec_len;
   LONG_LSN ret_lsn;
@@ -1585,6 +1617,8 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
 
 LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction_id &trid, bool sync)
 {
+  RECOVERY_CRASH;
+
   LONG_LSN ret_lsn;
   ll_log_lock(sync);
 
@@ -1649,6 +1683,8 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
 void llmgr_core::writeSharedMemoryWithCheck(const void *header, const void* rec_addr)
 {
+  RECOVERY_CRASH;
+
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
   int body_len = ((logical_log_head *)header)->body_len;
@@ -1663,6 +1699,8 @@ void llmgr_core::writeSharedMemoryWithCheck(const void *header, const void* rec_
 
 void llmgr_core::writeSharedMemory(const void* rec_addr, int rec_len)
 {
+  RECOVERY_CRASH;
+
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
 
 //  moved to writeSharedMemoryWithCheck
@@ -1711,6 +1749,8 @@ void llmgr_core::writeSharedMemory(const void* rec_addr, int rec_len)
 
 void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 {
+  RECOVERY_CRASH;
+
   //d_printf1("flushing of logical log started\n");
   ll_log_lock(sync);
  
@@ -1841,6 +1881,8 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 //flushed by ll_log_flush() method
 void llmgr_core::ll_log_flush_last_record(bool sync)
 {
+  RECOVERY_CRASH;
+
   ll_log_lock(sync);
   logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
   char* mem_beg = (char*)shared_mem;
@@ -1965,6 +2007,7 @@ void llmgr_core::ll_log_flush(bool sync)
   {
       ll_log_flush(i, false);
       mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
+	  RECOVERY_CRASH;
   }
 
   ll_log_unlock(sync);
@@ -1972,6 +2015,8 @@ void llmgr_core::ll_log_flush(bool sync)
 
 void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
 {
+  RECOVERY_CRASH;
+
   //d_printf1("flushing of logical log started\n");
   ll_log_lock(sync);
  
@@ -2098,6 +2143,8 @@ void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
 
 void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (const char*, int, bool), bool sync)
 {//before this call all log records are completed
+  RECOVERY_CRASH;
+
   ll_log_lock(sync);
 
   rollback_active = true;
@@ -2157,6 +2204,7 @@ void llmgr_core::rollback_trn(transaction_id &trid, void (*exec_micro_op_func) (
      rec_beg = get_record_from_disk(lsn);
      log_head = (logical_log_head*)rec_beg;
 
+	 RECOVERY_CRASH;
   }
 
   rollback_active = false;
@@ -2513,6 +2561,7 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
                    last_lsn,
                    exec_micro_op);
   
+  RECOVERY_CRASH;
   
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_list, redo_list, last_checkpoint_lsn);
@@ -2617,6 +2666,8 @@ void llmgr_core::redo_commit_trns(trns_redo_analysis_list& redo_list, LONG_LSN &
         
     lsn += sizeof(logical_log_head) + body_len;
 	i++;
+
+	RECOVERY_CRASH;
 
   } while(lsn <= end_lsn);
 }
@@ -2872,9 +2923,14 @@ void llmgr_core::commit_trn(transaction_id& trid, bool sync)
   ll_log_lock(sync);
 
   LONG_LSN commit_lsn = ll_log_commit(trid, false);
+
+  RECOVERY_CRASH;
+
   ll_log_flush(trid, false);
 //  flush_last_commit_lsn(commit_lsn);//writes to the logical log file header lsn of last commited function
   
+  RECOVERY_CRASH;
+
   flush_file_head(false); // flush file header
 
   ll_log_unlock(sync);
@@ -2955,6 +3011,8 @@ void llmgr_core::ll_truncate_log(bool sync)
 
   int res;
   int written;
+
+  RECOVERY_CRASH;
 
   //write file header
   res = uWriteFile(ll_curr_file_dsc,
