@@ -326,6 +326,7 @@ void SednaIndexJob::rollback_index(ftlog_file *log_file, const char *index_name)
 	ftlog_file::lsn_t last_lsn = ftlog_file::invalid_lsn;
 	bool ftindex_is_consistent = true;
 	cur_lsn = log_file->next_lsn;
+	RECOVERY_CRASH;
 	while (log_file->read_data(&lrec, sizeof(ftlog_record)))
 	{
 		switch (lrec.rec_type)

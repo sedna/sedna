@@ -79,6 +79,7 @@ void ft_index_cell::delete_custom_tree (pers_sset<ft_custom_cell,unsigned short>
 		scm_free(mdc,IS_PH_PTR(mdc));
 		tmp->obj=NULL;
 		tmp=custom_tree->rb_successor(tmp);
+		RECOVERY_CRASH;
 	}
 	pers_sset<ft_custom_cell,unsigned short>::sset_free(custom_tree);
 }
@@ -158,6 +159,7 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 		{	
 			xptr blk= sobj[i]->bblk;
 			sobj[i]->add_ft_index(idc);
+			RECOVERY_CRASH;
 			if (blk!=XNULL)
 			{
 			CHECKP(blk);
@@ -187,6 +189,7 @@ void ft_index_cell::delete_index (const char *index_title, bool just_heap)
 		ft_index_cell* ic=idc->obj;
 		doc_schema_node* sm=(idc->obj)->schemaroot;
 		free_ft_indexdata_cell(idc);
+		RECOVERY_CRASH;
 		(*ft_idx_counter)--;
 		sm->delete_ft_index(ic);
 		ft_index_sem_up();

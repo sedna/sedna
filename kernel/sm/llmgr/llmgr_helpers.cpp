@@ -80,6 +80,8 @@ void llmgr_core::writeIsStoppedCorrectly(bool is_stopped_correctly)
   int res;
   int written;
 
+  RECOVERY_CRASH;
+
   res = uWriteFile(ll_curr_file_dsc,
 //                   buf,
                    &file_head,
@@ -123,6 +125,8 @@ void llmgr_core::flush_file_head(bool sync)
 //  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
 //  memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
 
+  RECOVERY_CRASH;
+
   res = uWriteFile(ll_curr_file_dsc,
 //                   buf,
                    &file_head,
@@ -153,6 +157,8 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
   memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
 
   //flush last commit lsn
+  RECOVERY_CRASH;
+
   res = uWriteFile(ll_curr_file_dsc,
                    buf,
                    2*sizeof(LONG_LSN),
@@ -658,6 +664,8 @@ UFile create_logical_log(const char* log_file_name,
   ll_head.sedna_db_version = SEDNA_DATA_STRUCTURES_VER;
   
   int nbytes_written;
+
+  RECOVERY_CRASH;
 
   int res;
   res = uWriteFile(

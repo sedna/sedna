@@ -109,6 +109,9 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     }
 */
     lsn = *((LONG_LSN *)(block_ofs + count * sizeof(WuVersionEntry)));
+
+    RECOVERY_CRASH;
+
   } while (state != 0);
   
   lsn = file_head.last_chain_lsn;
@@ -219,6 +222,8 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     	}
 
     	lsn_offs += count * sizeof(WuVersionEntry);
+
+	    RECOVERY_CRASH;
   	}
   	else
   		throw USER_EXCEPTION(SE4154);
@@ -304,6 +309,8 @@ void sm_llmgr::restorePh()
      	if (uDeleteFile(ph_file.name, __sys_call_error) == 0)
         	throw USER_EXCEPTION(SE4041);
 
+	 RECOVERY_CRASH;
+
   } while(_findnext(dsc, &ph_file) == 0);
 
     
@@ -344,6 +351,8 @@ void sm_llmgr::restorePh()
      if (strcmp(dent->d_name, ph_bu_file_name_wo_path.c_str()))
      	if (uDeleteFile((db_files_path + dent->d_name).c_str(), __sys_call_error) == 0)
         	throw USER_EXCEPTION(SE4041);
+	 
+	 RECOVERY_CRASH;
   }
 
   if (0 != closedir(dir))

@@ -181,6 +181,7 @@ void inline clear_references(node_blk_hdr* block,n_dsc* node)
 	xptr* childx=(xptr*)((char*)node+size_of_node(block));
 	for (int i=0;i<chcnt;i++)
 	{
+		RECOVERY_CRASH;
 		*childx=XNULL;
 		childx+=1;
 	}

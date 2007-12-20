@@ -73,6 +73,8 @@ try{
 
   char op = rec[0];
 
+  RECOVERY_CRASH;
+
   if(op == LL_INSERT_ELEM || op == LL_DELETE_ELEM || op == LL_INDIR_INSERT_ELEM || op == LL_INDIR_DELETE_ELEM)
   {
      const char* name, *uri, *prefix;

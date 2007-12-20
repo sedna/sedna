@@ -156,6 +156,8 @@ index_cell* create_index (PathExpr *object_path,
 			//VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)
 			skey[j]->add_index(idc,sobj[i]);
 
+			RECOVERY_CRASH;
+
 			if (skey[j]->bblk != XNULL)
 			{
 				xptr blk = skey[j]->bblk;

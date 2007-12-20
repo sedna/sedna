@@ -47,6 +47,7 @@ static inline void intl_alloc_blk(const xptr desc, xptr &new_blk)
 	else
 		vmm_alloc_tmp_block(&new_blk);
 
+	RECOVERY_CRASH;
 	DBGBLOCKS_PRITNF(("alloc_blk: 0x%08lx %08lx\n", new_blk.layer, new_blk.addr));
 }
 
@@ -227,6 +228,7 @@ static inline bool intl_append_str_pc(const xptr desc, const char *data, pstr_lo
 	intl_ftr.cursor += size;
 	intl_ftr.char_count += intl_char_counter->count_chars(data, size);
 
+	RECOVERY_CRASH;
 	return plog;
 }
 
@@ -384,6 +386,7 @@ static inline void intl_delete_blk(const xptr &blk)
 	if (IS_DATA_BLOCK(blk))
 		hl_phys_log_change_blk(XADDR(blk));
 	vmm_delete_block(blk);
+	RECOVERY_CRASH;
 	DBGBLOCKS_PRITNF(("delete_blk: 0x%08lx %08lx\n", blk.layer, blk.addr));
 }
 

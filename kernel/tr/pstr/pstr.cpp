@@ -262,6 +262,7 @@ CHECKP(blk);
 		throw PSTRException("debug");*/
 	/*if (debug4 != *((char*)blk.addr+PAGE_SIZE))
 		throw PSTRException("debug");*/
+	RECOVERY_CRASH;
 	return result;
 }
 
@@ -322,6 +323,7 @@ CHECKP(blk);
 		h.hole_size -=s_size;
 		hh_insert(blk, h);
 	}
+	RECOVERY_CRASH;
 	return result;
 }
 
@@ -479,6 +481,7 @@ post_operations:
 		//PHYS LOG REC
 		if (IS_DATA_BLOCK(blk))
 			hl_phys_log_change_blk(XADDR(blk));
+		RECOVERY_CRASH;
 		vmm_delete_block(blk);
 		return true;
 	} else {
@@ -497,6 +500,7 @@ post_operations:
 	//	if ((int)blk.addr==0x4acc0000)
 	//	check_blk_consistency(blk);
 	}
+	RECOVERY_CRASH;
 	return false;
 }
 
@@ -597,6 +601,8 @@ CHECKP(blk);
 
 	/* copy back tmp block to blk */
 	memcpy((char*)XADDR(blk) + sizeof(struct vmm_sm_blk_hdr), buf + sizeof(struct vmm_sm_blk_hdr), PAGE_SIZE-sizeof(struct vmm_sm_blk_hdr));
+
+	RECOVERY_CRASH;
 
 	/* update block metastructures */
 	*(shft*)HHSIZE_ADDR(blk)=0;

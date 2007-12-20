@@ -51,7 +51,6 @@ extern session_id sid;
 #else 
 
 #define CHECKP(p)			try {													\
-                                RECOVERY_CRASH;                                     \
                                 VMM_INC_NUMBER_OF_CHECKP_CALLS						\
                                 VMM_TRACE_CHECKP(p)									\
 								vmm_cur_ptr = XADDR(p);								\
@@ -106,7 +105,8 @@ extern session_id sid;
                                     VMM_TRACE_SIGNAL_MODIFICATION(p)				\
                                     if (((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->trid_wr_access != sid) \
                                     	vmm_unswap_block_write(p);                  \
-                                    ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true;}
+                                    ((vmm_sm_blk_hdr*)((int)(XADDR(p)) & PAGE_BIT_MASK))->is_changed = true; \
+                                    RECOVERY_CRASH;}
 
 
 void vmm_preliminary_call() throw (SednaException);

@@ -242,6 +242,7 @@ xptr add_record_to_data_indirection_table(xptr p)
 			CHECKP(p);
 			schema_node* sch=(GETBLOCKBYNODE(p))->snode;
 			sch->ind_entry = *(xptr*)(XADDR(rollback_record));
+			RECOVERY_CRASH;
 			CHECKP(rollback_record);
 		}
 		VMM_SIGNAL_MODIFICATION(rollback_record);
@@ -334,6 +335,7 @@ void clear_ind_sequence(xptr& p)
 		p=((indir_blk_hdr*)XADDR(tmp))->nblk;
 		hl_phys_log_change_blk(XADDR(tmp));
 		vmm_delete_block(tmp);
+		RECOVERY_CRASH;
 		tmp=p;
 	}
 }

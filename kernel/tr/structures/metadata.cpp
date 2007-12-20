@@ -83,6 +83,7 @@ void delete_document(const char *document_name)
 		while (sci!=NULL)
 		{
 			delete_index(sci->index->index_title);
+			RECOVERY_CRASH;
 			sci=((doc_schema_node*)snode)->sc_idx;
 		}
 #ifdef SE_ENABLE_FTSEARCH
@@ -90,6 +91,7 @@ void delete_document(const char *document_name)
 		while (ftsci!=NULL)
 		{
 			ft_index_cell::delete_index(ftsci->index->index_title);
+			RECOVERY_CRASH;
 			ftsci=((doc_schema_node*)snode)->sc_ft_idx;
 		}
 #endif
@@ -98,6 +100,7 @@ void delete_document(const char *document_name)
 		while (tcell!=NULL)
 		{
 			trigger_cell::delete_trigger(tcell->trigger->trigger_title);
+			RECOVERY_CRASH;
 			tcell=((doc_schema_node*)snode)->sc_triggers;
 		}
 #endif
@@ -190,6 +193,7 @@ void delete_collection(const char *collection_name)
 		while (sci!=NULL)
 		{
 			delete_index(sci->index->index_title);
+			RECOVERY_CRASH;
 			sci=coll->sc_idx;
 		}
 #ifdef SE_ENABLE_FTSEARCH
@@ -197,6 +201,7 @@ void delete_collection(const char *collection_name)
 		while (ftsci!=NULL)
 		{
 			ft_index_cell::delete_index(ftsci->index->index_title);
+			RECOVERY_CRASH;
 			ftsci=coll->sc_ft_idx;
 		}
 #endif
@@ -205,6 +210,7 @@ void delete_collection(const char *collection_name)
 		while (tcell!=NULL)
 		{
 			trigger_cell::delete_trigger(tcell->trigger->trigger_title);
+			RECOVERY_CRASH;
 			tcell=coll->sc_triggers;
 		}
 #endif
@@ -225,6 +231,7 @@ void delete_collection(const char *collection_name)
 				CHECKP(node);
 				hl_logical_log_document(((n_dsc*)XADDR(node))->indir,(const char*)key.data(),collection_name,false);
 				delete_doc_node(node);
+				RECOVERY_CRASH;
 				up_concurrent_micro_ops_number();
 			}
 		}
