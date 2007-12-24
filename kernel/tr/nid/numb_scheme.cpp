@@ -44,6 +44,12 @@ void	nid_set_dc(char the_dc) {
 	DC = the_dc;
 }
 
+
+bool NID_CONSISTENT(t_prefix &a) {
+	return 
+		(a.prefix[a.size-1] != ALPHABET_SIZE);
+}
+
 /* 
 struct t_prefix {
 	char*	prefix;
@@ -409,70 +415,39 @@ void decrementNID(t_prefix &lp,int size)
 /*  generate nid for new outmost right sibling
 	use PROPORTION var to break alphabet
  */
-void incrementNID(t_prefix &lp,int size, bool regime)
+
+void incrementNID_between(t_prefix &lp, int size)
 {
 	//1. Incrementation
-	int pos=lp.size-1;
-	while (true)
-	{
-		if (lp.prefix[pos]!=ALPHABET_SIZE)
-		{
-			lp.prefix[pos]++;
-			break;
-		}
-		else
-		{
-			lp.prefix[pos]=1;
-			if (pos==size && regime) 
-				throw SYSTEM_EXCEPTION("Algo error");
-			else
-			{
-				while (pos!=lp.size)
-				{
-					lp.prefix[pos]=ALPHABET_SIZE;
-					pos++;
-				}
-				lp.prefix[pos]=DEF_LETTER;
-				lp.size+=1;
-				return;
-			}
-			pos--;
-		}		
-	}
-	//case when between
-	if (!regime) return;
+	lp.prefix[lp.size-1]++;
 	//2. Checking
-	if (lp.prefix[size]==ALPHABET_SIZE)
+	if (lp.prefix[lp.size-1]==ALPHABET_SIZE)
 	{
-		if (lp.size!=size+1) throw SYSTEM_EXCEPTION("Algo error");
-		lp.prefix[size]=MAX_LETTER;
-		lp.prefix[size+1]=ALPHABET_SIZE;
-		lp.prefix[size+2]=1;
-		lp.size+=2;
-		return;
-	}
-	if (lp.prefix[size]==MAX_LETTER)
-	{
-		
-		int pos=size+1;
-		bool test=(pos<lp.size);
-		while (pos<lp.size)
-		{
+		int pos=lp.size-1;
+		while (pos>size)
+		{ 
+			lp.prefix[pos]=1;
+			pos--;
 			if (lp.prefix[pos]!=ALPHABET_SIZE)
 			{
-				test=false;
-				break;
+				lp.prefix[pos]++;
+				return;
 			}
+		}
+
+		pos=size;
+		while (pos<lp.size)
+		{
+			lp.prefix[pos]=ALPHABET_SIZE;
 			pos++;
 		}
-		if (test)
-		{
-			lp.prefix[lp.size+1]=1;
-			lp.size+=1;
-		}
+		lp.prefix[lp.size]=DEF_LETTER;
+		lp.prefix[lp.size+1]=1;
+		lp.size+=2;	
 	}
 }
-void incrementNID(t_prefix &lp,int size)
+
+void incrementNID(t_prefix &lp, int size)
 {
 	//1. Incrementation
 	lp.prefix[lp.size-1]++;
@@ -508,15 +483,17 @@ void incrementNID(t_prefix &lp,int size)
 				lp.prefix[pos]=ALPHABET_SIZE;
 				pos++;
 			}
-			lp.prefix[lp.size]=1;
+			lp.prefix[lp.size]=DEF_LETTER;
 			lp.prefix[lp.size+1]=1;
+//			lp.size+=1;	
 			lp.size+=2;	
 		}
 	}
 }
+
+
 t_prefix* betweenNID(t_prefix & lp,t_prefix & rp)
 {
-	
 	int difsmall=0;
 	int pos=0;
 	//1.find diff
@@ -535,27 +512,26 @@ t_prefix* betweenNID(t_prefix & lp,t_prefix & rp)
 		}
 		pos++;
 	}
-	//2. BAD CASE
+	//2,3. BAD CASE
 	if (difsmall!=0)
 	{
 		if (difsmall<lp.size-1)
 		{
-			//2.1 0<difsmall<lp.size-1
-			incrementNID(lp,difsmall+1,false);
-			return &lp;
+			//3.2 0<difsmall<lp.size-1
+			incrementNID_between(lp,difsmall+1);
 		}
 		else
 		{
-			//2.1 difsmall==lp.size-1
+			//3.1 difsmall==lp.size-1
 			lp.prefix[difsmall+1]=ALPHABET_SIZE;
 			lp.prefix[difsmall+2]=DEF_LETTER;
 			lp.size+=2;
-			return &lp;
 		}
+		return &lp;
 	}
 	else
 	{
-		//2.1 right=left|255|xxxx
+		// 2 right=left|255|xxxx
 		decrementNID(rp,lp.size+1);
 		return &rp;
 	}
@@ -570,11 +546,14 @@ void	nid_create_between(xptr left, xptr right, xptr result) {
 	t_prefix lp = nid_get_prefix(lnid);
 	t_prefix* resp=betweenNID(lp,rp);
 
+	U_ASSERT(NID_CONSISTENT(*resp));
+
 	nid_assign(result,*resp);
 	/* memory free */
 	nid_free(lp.prefix);
 	nid_free(rp.prefix);
 }
+
 void	nid_create_right(xptr left, xptr parent, xptr result) {
 	t_nid lnid = nid_get_nid(left);
 	t_prefix lp = nid_get_prefix(lnid);
@@ -605,13 +584,14 @@ void	nid_create_right(xptr left, xptr parent, xptr result) {
 	{
 		t_nid pnid = nid_get_nid(parent);
 		int size=(pnid.size>0)?pnid.size:*((shft*)(pnid.prefix+sizeof(xptr)));
-		incrementNID(lp,size);
+		incrementNID(lp, size);
 	}
+
+	U_ASSERT(NID_CONSISTENT(lp));
+
 	nid_assign(result,lp);
 	/* memory free */
 	nid_free(lp.prefix);
-	
-
 };
 
 /*  generate nid for new outmost left sibling 
@@ -624,6 +604,8 @@ void	nid_create_left(xptr right, xptr parent, xptr result) {
 	t_nid pnid = nid_get_nid(parent);
 	int size=(pnid.size>0)?pnid.size:*((shft*)(pnid.prefix+sizeof(xptr)));
 	decrementNID(lp,size);
+
+	U_ASSERT(NID_CONSISTENT(lp));
 	nid_assign(result,lp);
 	/* memory free */
 	nid_free(lp.prefix);
@@ -649,6 +631,8 @@ void	nid_create_child(xptr parent, xptr result)
 		pp.prefix[pp.size]=1;
 		pp.size+=1;
 	}
+
+	U_ASSERT(NID_CONSISTENT(pp));
 	nid_assign(result,pp);
 	/* memory free */
 	nid_free(pp.prefix);
