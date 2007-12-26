@@ -2167,9 +2167,9 @@ void update_idx_add_txt (xptr node)
 		ind=ind->next;
 	}
 	// parent
+	CHECKP(node);
 	scm=(GETBLOCKBYNODE(node))->snode->parent;
 	ind=scm->index_object;
-	CHECKP(node);
 	if (ind==NULL) return;
 	xptr pnode=removeIndirection(((n_dsc*)XADDR(node))->pdsc);
 	while (ind!=NULL)
