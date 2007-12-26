@@ -293,7 +293,18 @@ void PPFtIndexScan2::next(tuple &t)
 			}
 		}
 		if (field_weights.op)
-			throw USER_EXCEPTION2(SE1003, "field_weights in ftwindex-scan not implemented"); //TODO
+		{
+			field_weights.op->next(t);
+			if (t.is_eos())
+				throw XQUERY_EXCEPTION(SE1071);
+			tc = t.cells[0];
+			if (!tc.is_atomic() || !is_string_type(tc.get_atomic_type()))
+				throw XQUERY_EXCEPTION(SE1071);
+			sj->set_field_weights(tc);
+			field_weights.op->next(t);
+			if (!t.is_eos())
+				throw XQUERY_EXCEPTION(SE1071);
+		}
 
 		first_time = false;
 	}

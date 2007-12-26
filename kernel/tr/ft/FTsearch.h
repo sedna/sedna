@@ -17,6 +17,7 @@
 
 #include <ios>
 #include <sstream>
+#include <fstream> //needed for dtsearch (in linux), since it defines min & max macros
 #define USE_DTSEARCH_NAMESPACE
 #include "dtsearch/include/dtsfc.h"
 #include "tr/crmutils/crmutils.h"
@@ -226,6 +227,7 @@ class SednaSearchJob2 {
 		   //SednaSearchJob2(PPOpIn* _seq_,ft_index_type _cm_,pers_sset<ft_custom_cell,unsigned short>* _custom_tree_,bool _hilight_=false, bool _hl_fragment_=false);
 		   SednaSearchJob2();
 		   void set_request(tuple_cell& request);
+		   void set_field_weights(tuple_cell& fw);
 		   void get_next_result(tuple &t);
 		   void set_index(tuple_cell& name);
 		   void set_max_results(long max_results);
@@ -238,6 +240,7 @@ class SednaSearchJob2 {
 		  xptr res;
 		  //TODO: consider removing these and using only fields in dts_job, check that they are NULL in the constructor
 		  char *request;
+		  char *field_weights;
 		  char *indexesToSearch;
 		  int res_id;
 };

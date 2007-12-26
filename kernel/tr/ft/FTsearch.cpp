@@ -1054,7 +1054,7 @@ void SednaConvertJob::OnOutput(const char * txt, int length)
 // SednaSearchJob2
 /////////////////////
 
-SednaSearchJob2::SednaSearchJob2() : dts_job(), request(NULL), indexesToSearch(NULL), dts_results(NULL), res_id(-1)
+SednaSearchJob2::SednaSearchJob2() : dts_job(), request(NULL), field_weights(NULL), indexesToSearch(NULL), dts_results(NULL), res_id(-1)
 {
 }
 
@@ -1069,6 +1069,18 @@ void SednaSearchJob2::set_request(tuple_cell& request)
 
 	this->dts_job.request2 = this->request;
 }
+void SednaSearchJob2::set_field_weights(tuple_cell& fw)
+{
+	op_str_buf buf(fw);
+
+	if (this->field_weights)
+		free(this->field_weights);
+	this->field_weights = (char*)malloc(buf.get_size() + 1);
+	strcpy(this->field_weights, buf.c_str()); //FIXME: c_str call may be replaced with copy_to_buf (currently not implemented)
+
+	this->dts_job.fieldWeights = this->field_weights;
+}
+
 void SednaSearchJob2::get_next_result(tuple &t)
 {
 	if (!dts_results)
@@ -1161,6 +1173,8 @@ SednaSearchJob2::~SednaSearchJob2()
 {
 	if (this->request)
 		free(this->request);
+	if (this->field_weights)
+		free(this->field_weights);
 	if (this->indexesToSearch)
 		free(this->indexesToSearch);
 	if (this->dts_results)
