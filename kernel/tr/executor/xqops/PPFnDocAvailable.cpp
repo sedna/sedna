@@ -9,6 +9,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/executor/base/xs_uri.h"
 #include "tr/executor/base/PPUtils.h"
+#include "tr/crmutils/crmutils.h"
 
 PPFnDocAvailable::PPFnDocAvailable(dynamic_context *_cxt_, 
                                    PPOpIn _doc_name_op_) : PPIterator(_cxt_),
@@ -64,7 +65,13 @@ void PPFnDocAvailable::next(tuple &t)
 
         tc_doc = tuple_cell::make_sure_light_atomic(tc_doc);
         
-        bool res = (find_document((const char*)tc_doc.get_str_mem()) != NULL);
+        const char* name = (const char*)tc_doc.get_str_mem();
+        
+        bool res = true;
+
+        /// suppose any system document is available ///
+        if(get_document_type(name, dbe_document) == DT_NON_SYSTEM)
+            res = (find_document(name) != NULL);
 
         t.copy(tuple_cell::atomic(res));
     }

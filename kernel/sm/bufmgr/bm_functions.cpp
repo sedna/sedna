@@ -40,7 +40,11 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
     if (res != 0) 
+#if (EL_DEBUG == 1)
         throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
+#else
+        elog(EL_WARN, ("Can't get working set size. Possibly, there are no admin rights."));
+#endif
 
     res = uSetCurProcessWorkingSetSize(
                         working_set_size,			// minimum working set size
@@ -48,7 +52,11 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
     if (res != 0) 
+#if (EL_DEBUG == 1)
         throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
+#else
+        elog(EL_WARN, ("Can't set working set size. Possibly, there are no admin rights."));
+#endif
 }
 
 void _bm_restore_working_set_size()
@@ -60,7 +68,11 @@ void _bm_restore_working_set_size()
                         __sys_call_error
           );
     if (res != 0)
+#if (EL_DEBUG == 1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);
+#else
+        elog(EL_WARN, ("Can't restore working set size. Possibly, there are no admin rights."));
+#endif
 }
 
 #ifndef _WIN32
@@ -128,10 +140,10 @@ void _bm_init_buffer_pool()
         if (uMemLock(buf_mem_addr, bufs_num * PAGE_SIZE, __sys_call_error) == -1)
         {
 #ifndef _WIN32            
-            elog(EL_LOG, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
+            elog(EL_WARN, ("Can't lock memory. It is not supported without root, RLIMIT_MEMLOCK exceeded or there are not enough system resources."));
             _bm_guarantee_buffer_pool(buf_mem_addr, bufs_num * PAGE_SIZE);
 #else
-            elog(EL_LOG, ("Can't lock memory. There are no admin rights."));
+            elog(EL_WARN, ("Can't lock memory. There are no admin rights."));
 #endif
             lock_memory = 0;
         }
