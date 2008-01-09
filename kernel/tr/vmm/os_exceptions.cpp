@@ -101,7 +101,7 @@ void OS_exceptions_handler::leave_stack_overflow_critical_section()
 jmp_buf access_violation_env;
 jmp_buf vmm_is_busy_env;
 
-static void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
+void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
     //d_printf1("SEGV\n");fflush(stdout);
 
