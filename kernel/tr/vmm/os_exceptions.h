@@ -16,8 +16,9 @@ class win32_access_violation {};
 #define OS_EXCEPTIONS_INSTALL_HANDLER       OS_exceptions_handler::install_handler();
 
 #else
+void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt);
 
-extern jmp_buf stack_overflow_env;
+//extern jmp_buf stack_overflow_env;
 extern jmp_buf access_violation_env;
 extern jmp_buf vmm_is_busy_env;
 
