@@ -118,7 +118,6 @@ static void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
     }
     else
     {
-
         // stack overflow or access violation
 #ifdef PRINT_STACK_TRACE
         int

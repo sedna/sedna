@@ -350,9 +350,12 @@ tuple_cell dm_string_value(xptr node)
                                   int size = T_DSC(node)->size;
                                   xptr data = T_DSC(node)->data;
                                   CHECKP(data);
+                                  if (size <= PSTRMAXSIZE)
+                                      data = PSTRDEREF(data);
+
                                   return tuple_cell::atomic_pstr(xs_string, 
                                                                  size, 
-                                                                 PSTRDEREF(data));
+                                                                 data);
                               }
         default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:string-value");
     }
@@ -395,9 +398,12 @@ tuple_cell dm_typed_value(xptr node)
                                   int size = T_DSC(node)->size;
                                   xptr data = T_DSC(node)->data;
                                   CHECKP(data);
+                                  if (size <= PSTRMAXSIZE)
+                                      data = PSTRDEREF(data);
+
                                   return tuple_cell::atomic_pstr(xs_untypedAtomic, 
                                                                  size, 
-                                                                 PSTRDEREF(data));
+                                                                 data);
                               }
         default				: throw USER_EXCEPTION2(SE1003, "Unexpected type of node passed to dm:typed-value");
     }
