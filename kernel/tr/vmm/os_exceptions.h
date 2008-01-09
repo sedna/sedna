@@ -25,7 +25,7 @@ extern jmp_buf vmm_is_busy_env;
 #define OS_EXCEPTIONS_INSTALL_HANDLER   {   struct sigaction sigsegv_act; \
                                             memset(&sigsegv_act, '\0', sizeof(struct sigaction)); \
                                             sigsegv_act.sa_sigaction = unix_sigsegv_signal_handler; \
-                                            sigsegv_act.sa_flags = SA_SIGINFO \
+                                            sigsegv_act.sa_flags = SA_SIGINFO; \
                                             if (sigaction(SIGSEGV, &sigsegv_act, NULL) == -1) throw USER_EXCEPTION(SE1033); \
                                             if (setjmp(access_violation_env) != 0) throw SYSTEM_EXCEPTION("Access violation or stack overflow");   }
 
