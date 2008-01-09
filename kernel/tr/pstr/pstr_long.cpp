@@ -1914,11 +1914,11 @@ static void pstr_long_write_suffix(xptr start, se_ostream& crmout)
 	//TODO
 }
 
-void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
+//TODO: rename these 2 functions
+void pstr_long_feed2(xptr str,	string_consumer_fn fn, void *p)
 {
 	//TODO : use pstr_long_write_suffix
-	CHECKP(desc);
-	intl_last_blk = ((struct t_dsc *)XADDR(desc))->data;
+	intl_last_blk = str;
 
 	CHECKP(intl_last_blk);
 	xptr start = (PSTR_LONG_LAST_BLK_FTR(intl_last_blk))->start;
@@ -1941,6 +1941,11 @@ void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
 		CHECKP(blk);
 		fn((char*)XADDR(blk) + ofs, intl_ftr.cursor-ofs, p);
 	}
+}
+void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p)
+{
+	CHECKP(desc);
+	pstr_long_feed2(((struct t_dsc *)XADDR(desc))->data, fn, p);
 }
 
 void pstr_long_copy_to_buffer(char *buf, const xptr &data, pstr_long_off_t size)
