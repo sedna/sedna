@@ -58,7 +58,7 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
 #ifdef PRINT_STACK_TRACE
             	sym_engine::stack_trace(std::cout, info->ContextRecord);
 #endif
-                throw USER_EXCEPTION(SE1001);
+                throw SYSTEM_EXCEPTION("Stack overflow");
             }
         default							:
             {
@@ -97,7 +97,7 @@ void OS_exceptions_handler::leave_stack_overflow_critical_section()
 #include "common/errdbg/d_printf.h"
 #endif
 
-jmp_buf stack_overflow_env;
+//jmp_buf stack_overflow_env;
 jmp_buf access_violation_env;
 jmp_buf vmm_is_busy_env;
 
@@ -118,6 +118,7 @@ static void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
     }
     else
     {
+
         // stack overflow or access violation
 #ifdef PRINT_STACK_TRACE
         int
@@ -156,19 +157,21 @@ static void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
         }
         d_printf1(" End of stack trace.\n");
 #endif
+/*      
         if (OS_exceptions_handler::is_in_stack_overflow_critical_section())
             longjmp(stack_overflow_env, 0);
         else 
+*/
             longjmp(access_violation_env, 0);
     }
 }
 
 void OS_exceptions_handler::install_handler()
 {
-/*
-    // !!! This part of the code has been commented because it had been found that
-    // alternative stack doesn't work properly with linux threads
+/// This part of the code has been commented because it had been found that
+/// alternative stack doesn't work properly with linux threads !
 
+/*
     stack_t ss;
     ss.ss_sp = se_new char[1024 * 1024 * 2]; // SIGSTKSZ
     ss.ss_size = 1024 * 1024 * 2; // SIGSTKSZ
@@ -176,23 +179,27 @@ void OS_exceptions_handler::install_handler()
     if (sigaltstack(&ss, NULL) == -1)
         throw USER_EXCEPTION(SE1032);
 */
+
+/// Use OS_EXCEPTIONS_INSTALL_HANDLER macro instead !
+
+/*  
     struct sigaction sigsegv_act;
     memset(&sigsegv_act, '\0', sizeof(struct sigaction));
     sigsegv_act.sa_sigaction = unix_sigsegv_signal_handler;
-    sigsegv_act.sa_flags = SA_SIGINFO /*| SA_ONSTACK*/;
-    if (sigaction(SIGSEGV, &sigsegv_act, NULL) == -1)
-        throw USER_EXCEPTION(SE1033);
+    sigsegv_act.sa_flags = SA_SIGINFO  // | SA_ONSTACK;
+    if (sigaction(SIGSEGV, &sigsegv_act, NULL) == -1) throw USER_EXCEPTION(SE1033);
+    if (setjmp(access_violation_env) != 0) throw SYSTEM_EXCEPTION("Access violation or stack overflow");
+*/
 
-   if (setjmp(access_violation_env) != 0)
-       throw SYSTEM_EXCEPTION("Access violation");
+/// Nothing doing here
 }
 
 void OS_exceptions_handler::enter_stack_overflow_critical_section()
 {
     critical_section = true;
 
-   if (setjmp(stack_overflow_env) != 0)
-       throw USER_EXCEPTION(SE1001);
+//  if (setjmp(stack_overflow_env) != 0)
+//      throw USER_EXCEPTION(SE1001);
 }
 
 void OS_exceptions_handler::leave_stack_overflow_critical_section()

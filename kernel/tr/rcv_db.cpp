@@ -61,7 +61,8 @@ int main (int argc, char** argv)
       set_global_names(atoi(buf));
 
       vmm_preliminary_call();
-      OS_exceptions_handler::install_handler();
+
+      OS_EXCEPTIONS_INSTALL_HANDLER
 
       strcpy(db_name, argv[1]);
 
