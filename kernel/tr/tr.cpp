@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
             } catch (SednaUserException &e) {
                 if (e.get_code() != SE4400) throw;
             }
-            OS_exceptions_handler::install_handler();
+            OS_EXCEPTIONS_INSTALL_HANDLER
         }
 
 #ifdef SE_MEMORY_MNG
