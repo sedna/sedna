@@ -342,7 +342,7 @@ CHECKP(node);
 
 void pstr_deallocate(xptr node) {
 #ifndef PSTR_NO_CHECKP
-//CHECKP(node);
+CHECKP(node);
 #endif
 	xptr	ps = ((t_dsc*)XADDR(node))->data;
 	int		s_size = ((t_dsc*)XADDR(node))->size;
