@@ -70,6 +70,7 @@ void pstr_long_delete_head(xptr desc, pstr_long_off_t size);
 
 void pstr_long_write(xptr desc,se_ostream& crmout);
 void pstr_long_feed(xptr desc,	string_consumer_fn fn, void *p);
+void pstr_long_feed2(xptr str,	string_consumer_fn fn, void *p);
 inline void pstr_long_writextext(xptr desc, se_ostream& crmout)
 {
     pstr_long_feed(desc, writextext_cb, &crmout);

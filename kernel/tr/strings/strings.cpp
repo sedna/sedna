@@ -274,7 +274,7 @@ void feed_tuple_cell(string_consumer_fn fn, void *p, const tuple_cell& tc)
 		estr_feed(fn, p, tc.get_str_vmm(), tc.get_strlen_vmm());
 		return;
 	case tc_heavy_atomic_pstr_long:
-		pstr_long_feed(tc.get_str_vmm(), fn, p);
+		pstr_long_feed2(tc.get_str_vmm(), fn, p);
 		return;
 	}
 }
