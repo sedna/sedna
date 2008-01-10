@@ -324,15 +324,16 @@ else
 	block_hdr->free_first=*((shft*)node);
 	block_hdr->desc_first=CALCSHIFT(node,block_hdr);
 	block_hdr->desc_last=block_hdr->desc_first;
+	block_hdr->count=1;
+	//NODE STATISTICS
+	block_hdr->snode->nodecnt++;
 	d_dsc::init(node);
 	xptr nodex=ADDR2XPTR(node);
 	xptr tmp=add_record_to_indirection_table(nodex);
 	CHECKP(nodex);
 	VMM_SIGNAL_MODIFICATION(nodex);
 	node->indir=tmp;
-	block_hdr->count=1;
-	//NODE STATISTICS
-	block_hdr->snode->nodecnt++;
+	
 	
 	nid_create_root(nodex,persistent);
 	if (persistent)
@@ -442,10 +443,13 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 			hl_phys_log_change(&block_hdr->desc_last,sizeof(shft));
 			hl_phys_log_change(&block_hdr->count,sizeof(shft));
 			hl_phys_log_change(node,block_hdr->dsc_size);
-			hl_phys_log_change(&(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next,sizeof(shft));
+			if (block_hdr->count>0)
+				hl_phys_log_change(&(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next,sizeof(shft));
 		}
 		block_hdr->free_first=*((shft*)node);
-		(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next=CALCSHIFT(node,block_hdr);
+		if (block_hdr->count>0)
+			(GETPOINTERTODESC(block_hdr,block_hdr->desc_last))->desc_next=CALCSHIFT(node,block_hdr);
+		block_hdr->count++;
 		d_dsc::init(node);
 		nodex=ADDR2XPTR(node);
 		xptr tmp=add_record_to_indirection_table(nodex);
@@ -460,7 +464,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
 		VMM_SIGNAL_MODIFICATION(blk);
 		node->desc_prev=block_hdr->desc_last;
 		block_hdr->desc_last=CALCSHIFT(node,block_hdr);
-		block_hdr->count++;
+		
 		addTextValue(nodex,name.c_str(),name.length());
 	}
 	else

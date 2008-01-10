@@ -40,6 +40,7 @@ void schema_node::init(void* p)
 {
 	schema_node* scr=(schema_node*)p;
 	scr->bblk=XNULL;
+	scr->bblk_indir=XNULL;
 	scr->first_child=NULL;
 	scr->last_child=NULL;
 	scr->name=NULL;
@@ -455,6 +456,8 @@ schema_node* schema_node::add_child( xml_ns* _xmlns,const char* name, t_item typ
 	{
 		throw USER_EXCEPTION(SE2032);
 	}
+	if (((this->get_child_count()+1)*sizeof(xptr)+((type==element)?sizeof(e_dsc):sizeof(d_dsc)))>=PAGE_SIZE-sizeof(node_blk_hdr)-sizeof(xptr))
+		throw USER_EXCEPTION(SE2040);
 	schema_node* sc=schema_node::init( this->root,_xmlns,name, type,this->persistent);
 	this->add_child(sc);
 	return sc;
@@ -471,7 +474,7 @@ temp_schema_node* temp_schema_node::add_child( xml_ns* _xmlns,const char* name, 
 int schema_node::is_node_in_scheme_and_in_data (const xml_ns* _xmlns,const  char* name, t_item type)
 {
 	schema_node* ch=this->get_child(_xmlns,name,type);
-	if (ch!=NULL && ch->bblk!=XNULL) return true;
+	if (ch!=NULL && ch->nodecnt!=0) return true;
 	return false;
 }
 

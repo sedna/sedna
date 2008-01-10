@@ -32,6 +32,12 @@ struct node_blk_hdr
     shft	desc_last;		/* shift to the last descriptor in block */
     shft    count;          /* total number of descriptors in block */    
     shft	free_first;		/* shift to the first empty space in block */
+
+	shft indir_count; /* total number of indirection records in block*/
+	shft free_first_indir; /* shift to the first free indirection pointer*/
+	xptr pblk_indir; /* previous block with free indirection space*/
+	xptr nblk_indir; /* next block with free indirection space*/
+
 	static void init(void *p, shft dsc_size);
 };
 

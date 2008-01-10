@@ -203,4 +203,7 @@ void insertTextValue(xptr node,const void* text, unsigned int size,text_type tty
 void delete_text_head(xptr node, int size);
 void delete_text_tail(xptr node, int size);
 
+/*redo operation*/
+void redoBlockCreation(xptr block,xptr left_n,xptr right_n,schema_node* sn, int desc_size);
+
 #endif

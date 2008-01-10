@@ -95,7 +95,7 @@ xptr getNextSiblingNode(xptr node,schema_node* scn);
 /*returns the previous sibling node in document that fits input schema_node */
 xptr getPreviousSiblingNode(xptr node,schema_node* scn);
 /*returns the previous node in document that fits input schema_node*/
-xptr getPreviousDONode(xptr node,schema_node* scn);
+//xptr getPreviousDONode(xptr node,schema_node* scn);
 /*returns the previous non-ancestor node in document that fits input schema_node*/
 xptr getPreviousNANode(xptr node,schema_node* scn);
 

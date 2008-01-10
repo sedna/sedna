@@ -1703,4 +1703,7 @@ sedna-err:SE3210
 sedna-err:SE3211
 
     No trigger with this name.
+sedna-err:SE2040
+
+   Too many xhilds by schema
 

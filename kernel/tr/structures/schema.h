@@ -132,6 +132,7 @@ struct schema_node
 	char*				name;		/* for elements/attributes */
 	xml_ns* xmlns;
 	xptr				bblk;		/* pointer to the first block of block chain */
+	xptr bblk_indir; /* beggining block with free indirection quota*/
 	struct schema_node*	parent;		/* pointer to the parent node */
     sc_ref*				first_child;/* refernce to the first child */
 	sc_ref*				last_child;	/* refernce to the last child  */

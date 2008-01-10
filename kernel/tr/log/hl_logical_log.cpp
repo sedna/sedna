@@ -460,6 +460,14 @@ void hl_logical_log_indirection(int cl_hint, std::vector<xptr>* blocks)
   tr_llmgr->ll_log_indirection(trid, cl_hint, blocks, true);
 #endif
 }
+void hl_logical_log_block_creation(xptr block,xptr left_n,xptr right_n, int desc_size)
+{
+#ifdef LOGICAL_LOG
+  if (!enable_log) return;
+  number_of_records++;
+ //TO DO 
+#endif
+}
 void hl_logical_log_commit(transaction_id _trid)
 {
 #ifdef LOGICAL_LOG

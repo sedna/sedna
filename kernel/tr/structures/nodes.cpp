@@ -26,15 +26,33 @@ void node_blk_hdr::init(void *p, shft dsc_size)
 	hdr->desc_last = 0;
 	hdr->free_first = (shft) sizeof(node_blk_hdr);
 	hdr->count = 0;
-	int i;
+
+	hdr->indir_count =0;
+	hdr->free_first_indir=PAGE_SIZE-sizeof(xptr);
+	hdr->nblk_indir =XNULL;
+	hdr->pblk_indir =XNULL;
+
+	//int i=hdr->free_first;
 	//char* ptr=((char*)p)+hdr->free_first;
 	memset(((char*)hdr)+sizeof(node_blk_hdr),0,PAGE_SIZE-sizeof(node_blk_hdr));
-	for (i = hdr->free_first;
+
+
+	/*for (i = hdr->free_first;
 		 i <= (int)PAGE_SIZE - dsc_size;
 		 i = i+ dsc_size)
-		*((shft *)((char*)p+i)) = (shft)i + dsc_size;
-	 
-	*((shft *)((char*)p+ (i - dsc_size)))=0;
+		*((shft *)((char*)p+i)) = (shft)i + dsc_size;*/
+	shft descp=hdr->free_first;
+	shft desci=hdr->free_first_indir;
+	while (descp+2*dsc_size<desci-sizeof(xptr))
+	{
+		*((shft *)((char*)p+descp)) = descp + dsc_size;
+		*((shft *)((char*)p+desci)) = desci - sizeof(xptr);
+		descp+=dsc_size;
+		desci-=sizeof(xptr);
+	}
+    *((shft *)((char*)p+ descp))=0;
+	*((shft *)((char*)p+ desci))=0;
+	//*((shft *)((char*)p+ (i - dsc_size)))=0;
 	/*crm_out<<"\nFREE SPACE TEST";
 	i=hdr->free_first;
 	while (i!=0)
