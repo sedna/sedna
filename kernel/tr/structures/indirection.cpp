@@ -265,7 +265,7 @@ xptr add_record_to_indirection_table(xptr p)
 	hl_phys_log_change(&(nbi->free_first_indir),sizeof(shft));
 	hl_phys_log_change(&(nbi->indir_count),sizeof(shft));
 	nbi->indir_count++;
-	nbi->free_first_indir=*((shft*)((char*)nbi->free_first_indir+nbi->free_first_indir));
+	nbi->free_first_indir=*((shft*)((char*)nbi+nbi->free_first_indir));
 	hl_phys_log_change(XADDR(rba),sizeof(xptr));
     *(xptr*)(XADDR(rba)) = p;
 	if (nbh!=nbi)
