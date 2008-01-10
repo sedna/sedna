@@ -63,7 +63,7 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 	xptr par_indir=((n_dsc*)XADDR(parent))->indir;
 	schema_node* par_sc=GETSCHEMENODEX(parent);
 	schema_node* scm=par_sc->get_child(ns,name,node_type);
-	if (scm!=NULL && scm->bblk!=XNULL )
+	if (scm!=NULL && scm->nodecnt!=0 )
   	{
 		#ifdef _MYDEBUG
 			crm_out<<" thirdElementAndTextInsertProcedure->4";
@@ -98,7 +98,6 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 		if (scm==NULL) 
 			scm=   par_sc->add_child(ns,name,node_type);
 		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
-		RECOVERY_CRASH;
 		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir ,  type,node_type);
 	}
 	par_indir=GETPARENTPOINTER(tmp);
@@ -516,7 +515,7 @@ xptr textInsertProcedure(xptr parent,const void* value, int size, int& ins_type,
 			scm=   block->snode->add_child(NULL,NULL,text);
 		else
 			scm= block->snode->get_child(NULL,NULL,text);
-		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
+		xptr newblock=(scm->bblk==XNULL)?createNewBlock(scm,IS_DATA_BLOCK(parent)):scm->bblk;
 		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir , NULL,text);
 	} 
     par_indir=GETPARENTPOINTER(tmp);
@@ -806,7 +805,7 @@ xptr insert_attribute(xptr left_sib, xptr right_sib, xptr parent,const char* nam
 			scm=   scm_node->add_child(ns,name,attribute);
 		else
 			scm= scm_node->get_child(ns,name,attribute);
-		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
+		xptr newblock=(scm->bblk==XNULL)?createNewBlock(scm,IS_DATA_BLOCK(parent)):scm->bblk;
 		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir ,type,attribute);
 	}
 	addTextValue(tmp,value,  data_size);

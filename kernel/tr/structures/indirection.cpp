@@ -224,6 +224,100 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	}
 	return first;
 }
+
+xptr add_record_to_indirection_table(xptr p)
+{
+	xptr rba;
+	CHECKP(p);
+	node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
+	if (rollback_mode!=MODE_NORMAL)
+    {
+        
+		rba=rollback_record;        
+    }
+	else
+	{
+		
+		
+		if (nbh->free_first_indir!=0)
+			rba=ADDR2XPTR(GETPOINTERTODESC(nbh,nbh->free_first_indir));
+		else
+		{
+			xptr q_bl=nbh->snode->bblk_indir;
+			CHECKP(q_bl);
+			node_blk_hdr * qbh=(GETBLOCKBYNODE(q_bl));
+			rba=ADDR2XPTR(GETPOINTERTODESC(qbh,qbh->free_first_indir));
+		}
+
+	}
+	CHECKP(rba);		
+	VMM_SIGNAL_MODIFICATION(rba);
+
+	node_blk_hdr * nbi=(GETBLOCKBYNODE(rba));
+	hl_phys_log_change(&(nbi->free_first_indir),sizeof(shft));
+	hl_phys_log_change(&(nbi->indir_count),sizeof(shft));
+	nbi->indir_count++;
+	nbi->free_first_indir=*((shft*)((char*)nbi->free_first_indir+nbi->free_first_indir));
+	hl_phys_log_change(XADDR(rba),sizeof(xptr));
+    *(xptr*)(XADDR(rba)) = p;
+	if (nbh!=nbi)
+	{
+		if (nbi->indir_count>=nbi->count&& 
+			(nbi->pblk_indir!=XNULL ||
+			nbi->nblk_indir!=XNULL ||
+			nbi->snode->bblk_indir==nbi->sm_vmm.p))
+		{
+			xptr l_bl=nbi->pblk_indir;
+			xptr r_bl=nbi->nblk_indir;
+			if (nbi->snode->bblk_indir==nbi->sm_vmm.p)
+				nbi->snode->bblk_indir=r_bl;
+			else
+			if (l_bl!=XNULL)
+			{
+				CHECKP(l_bl);
+				VMM_SIGNAL_MODIFICATION(l_bl);
+				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
+				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
+				lbi->nblk_indir=r_bl;
+			}
+			if (r_bl!=XNULL)
+			{
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=l_bl;
+			}
+				
+		}
+		CHECKP(p);
+		if (nbh->indir_count<nbh->count&& 
+			(nbh->pblk_indir==XNULL &&
+			nbh->nblk_indir==XNULL &&
+			nbh->snode->bblk_indir!=nbh->sm_vmm.p))
+		{
+			VMM_SIGNAL_MODIFICATION(p);
+			hl_phys_log_change(&(nbh->nblk_indir),sizeof(xptr));
+			nbh->nblk_indir=nbh->snode->bblk_indir;
+			nbh->snode->bblk_indir=nbh->sm_vmm.p;
+			xptr r_bl=nbi->nblk_indir;
+			if (r_bl!=XNULL)
+			{
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=nbh->snode->bblk_indir;
+			}
+		}
+
+	}	    
+	CHECKP(rba);	
+	
+    //USemaphoreUp(indirection_table_sem);
+	
+    return rba;
+}
 xptr add_record_to_data_indirection_table(xptr p)
 {
     

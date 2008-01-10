@@ -71,6 +71,7 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 void hl_logical_log_collection(const  char* name,bool inserted);
 void hl_logical_log_index(PathExpr *object_path, PathExpr *key_path, xmlscm_type key_type,const char * index_title, const char* doc_name,bool is_doc,bool inserted);
 void hl_logical_log_indirection(int cl_hint, std::vector<xptr>* blocks);
+void hl_logical_log_block_creation(xptr block,xptr left_n,xptr right_n, int desc_size);
 void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* uri,const char* prefix,bool inserted); 
 void hl_logical_log_commit(transaction_id);
 void hl_logical_log_rollback(transaction_id);

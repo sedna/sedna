@@ -22,17 +22,19 @@ struct indir_blk_hdr
     xptr nblk;				/* next block */
 	static xptr init(xptr p);
 };
-xptr add_record_to_data_indirection_table(xptr p);
+//xptr add_record_to_data_indirection_table(xptr p);
 void del_record_from_data_indirection_table(xptr p);
 
-xptr add_record_to_tmp_indirection_table(xptr p);
+//xptr add_record_to_tmp_indirection_table(xptr p);
 void del_record_from_tmp_indirection_table(xptr p);
 
-inline xptr add_record_to_indirection_table(xptr p)
+/*inline xptr add_record_to_indirection_table(xptr p)
 {
     return IS_DATA_BLOCK(p) ? add_record_to_data_indirection_table(p)
                             : add_record_to_tmp_indirection_table(p);
-}
+}*/
+
+xptr add_record_to_indirection_table(xptr p);
 
 inline void del_record_from_indirection_table(xptr p)
 {

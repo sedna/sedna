@@ -377,10 +377,16 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 		hl_phys_log_change(&(pr_blk->desc_last),sizeof(shft));
 		hl_phys_log_change(&(pr_blk->count),sizeof(shft));
 		hl_phys_log_change(&(pr_blk->free_first),sizeof(shft));
-		hl_phys_log_change(&((GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next),sizeof(shft));
+		if (pr_blk->count>0)
+			hl_phys_log_change(&((GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next),sizeof(shft));			
+		else
+			hl_phys_log_change(&(pr_blk->desc_first),sizeof(shft));		
 	}
 	pr_blk->count++;
-	(GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next=pr_blk->free_first;
+	if (pr_blk->count>1)
+		(GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next=pr_blk->free_first;
+	else
+		pr_blk->desc_first=CALCSHIFT(new_pointer,pr_blk);	
 	pr_blk->free_first=next_first;
 	RECOVERY_CRASH;
 	pr_blk->desc_last=CALCSHIFT(new_pointer,pr_blk);
@@ -507,8 +513,45 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
 	block->nblk=new_block;
 	block->snode->blockcnt++;
 	//CHECKP(new_block);
+	if (persistent)
+	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	return new_block;
+}
+void redoBlockCreation(xptr block,xptr left_n,xptr right_n, int desc_size)
+{
+	vmm_rcv_alloc_indir_block(block);
+	VMM_SIGNAL_MODIFICATION(block);
+	node_blk_hdr::init(XADDR(block),desc_size);
+	node_blk_hdr * new_block_hdr=(node_blk_hdr *)(XADDR(block));
+	
+	//new_block_hdr->snode=sn;
+    new_block_hdr->pblk=left_n;   
+    new_block_hdr->nblk=right_n;	
+	schema_node * snde=NULL;
+	if (left_n!=XNULL)
+	{
+		CHECKP(left_n);
+		node_blk_hdr * tmp_b=(node_blk_hdr *)(XADDR(left_n));
+		tmp_b->nblk=block;
+		snde=tmp_b->snode;
+	}
+	if (right_n!=XNULL)
+	{
+		CHECKP(right_n);
+		node_blk_hdr * tmp_b=(node_blk_hdr *)(XADDR(right_n));
+		tmp_b->pblk=block;
+		snde=tmp_b->snode;
+	}
+	if (snde->bblk==right_n)
+	{
+		snde->bblk=block;
+	}
+	snde->blockcnt++;
+	CHECKP(block);
+	VMM_SIGNAL_MODIFICATION(block);
+	new_block_hdr->snode=snde;
+
 }
 int splitBlockIfFullAfterLeftInsert(xptr& nodex)
 {
@@ -1197,7 +1240,6 @@ xptr createNewBlock(schema_node* scm,bool persistent)
 	new_block_hdr->snode=scm;
 	UPDATEFIRSTBLOCKPOINTER(scm,new_block);
 	scm->blockcnt++;
-	RECOVERY_CRASH;
 	return new_block;
 }
 
@@ -1291,6 +1333,8 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->nblk=new_block;
 	block->snode->blockcnt++;
 	CHECKP(new_block);
+	if (persistent)
+	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
 	return new_block;
@@ -1345,6 +1389,8 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->pblk=new_block;
 	CHECKP(new_block);
 	new_block_hdr->snode->blockcnt++;
+	if (persistent)
+	hl_logical_log_block_creation(new_block,tmp->pblk,old_blk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
 	return new_block;
