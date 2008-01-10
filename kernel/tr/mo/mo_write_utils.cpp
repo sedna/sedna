@@ -1414,7 +1414,15 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 	parent_block= GETBLOCKBYNODE(parent);
 	shft size=parent_block->dsc_size;
 	VMM_SIGNAL_MODIFICATION(parent);
-	if (parent_block->count==1 /*&& CALCSHIFT (XADDR(parent),parent_block)==sizeof(node_blk_hdr)*/)
+	if (parent_block->count==1&&
+		parent_block->indir_count==1&&
+		((n_dsc*)XADDR(parent))->indir==
+		ADDR2XPTR(
+		((char*)parent_block+(PAGE_SIZE-sizeof(xptr))
+		)
+		)
+		)		
+		/*&& CALCSHIFT (XADDR(parent),parent_block)==sizeof(node_blk_hdr)*/
 	{
 		if (IS_DATA_BLOCK(parent)) 
 			hl_phys_log_change_blk(parent_block);
@@ -1485,7 +1493,7 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			VMM_SIGNAL_MODIFICATION(parent);
 		//zero filling
 		ptr=((char*)parent_block)+sizeof(node_blk_hdr)+size;
-		memset(ptr,0,PAGE_SIZE-sizeof(node_blk_hdr)-size);
+		memset(ptr,0,PAGE_SIZE-sizeof(node_blk_hdr)-size-sizeof(xptr));
 		/*while (ptr!=NULL)
 		{
 		char* ptrt=(*((shft *)ptr)==0)?NULL:((char*)parent_block)+(*((shft *)ptr));
@@ -1493,8 +1501,22 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 		ptr=ptrt;
 		}*/
 		parent_block->dsc_size=size_of_node(parent_block)+sizeof(xptr)*parent_block->snode->get_child_count();
+parent_block->free_first=sizeof(node_blk_hdr)+parent_block->dsc_size;
+
+shft descp=parent_block->free_first;
+shft desci=parent_block->free_first_indir;
+	while (descp+2*parent_block->dsc_size<desci-sizeof(xptr))
+	{
+		*((shft *)((char*)parent_block+descp)) = descp + parent_block->dsc_size;
+		//*((shft *)((char*)p+desci)) = desci - sizeof(xptr);
+		descp+=parent_block->dsc_size;
+		desci-=sizeof(xptr);
+	}
+    *((shft *)((char*)parent_block+ descp))=0;
+	*((shft *)((char*)parent_block+ desci))=0;
+/*
 		int i;
-		parent_block->free_first=sizeof(node_blk_hdr)+parent_block->dsc_size;
+		
 		ptr=((char*)parent_block)+parent_block->free_first;
 		for (i = parent_block->free_first;
 			i < (int)PAGE_SIZE - parent_block->dsc_size;
@@ -1504,6 +1526,7 @@ void addChildsBySchemeSplittingBlock(xptr parent, const char* name,t_item type, 
 			*((shft *)((char*)parent_block + i)) = (shft)i + parent_block->dsc_size;
 		}
 		*((shft *)((char*)parent_block+(i-parent_block->dsc_size)))=0;
+	*/
 		*elementContainsChild((n_dsc*)(((char*)parent_block)+sizeof(node_blk_hdr)),name,type,ns)=child;
 	}
 	else
