@@ -21,6 +21,7 @@ xptr bt_create(xmlscm_type t)
     char*   pg;
 
     vmm_alloc_data_block(&root);
+	VMM_SIGNAL_MODIFICATION(root);
     pg = (char*)XADDR(root);
     bt_page_markup(pg, t);
     return root;
@@ -73,10 +74,11 @@ bt_cursor bt_find_ge(const xptr &root, const bt_key &key)
     xptr next;
     xptr res_blk = root;
 
-    CHECKP(res_blk);
+    rc = bt_find_key(res_blk, (bt_key*)&key, key_idx);
+
+	CHECKP(res_blk);
     char* pg = (char*)XADDR(res_blk);
 
-    rc = bt_find_key(res_blk, (bt_key*)&key, key_idx);
     if (!rc && key_idx == BT_RIGHTMOST)
     {
 #ifdef PERMIT_CLUSTERS
@@ -105,10 +107,11 @@ bt_cursor bt_find_gt(const xptr &root, const bt_key &key)
     xptr next;
     xptr res_blk = root;
 	bt_key old_val=key;
+
+    rc = bt_find_key(res_blk, (bt_key*)&key, key_idx);
     CHECKP(res_blk);
     char* pg = (char*)XADDR(res_blk);
 
-    rc = bt_find_key(res_blk, (bt_key*)&key, key_idx);
     if (!rc && key_idx == BT_RIGHTMOST)
     {
 #ifdef PERMIT_CLUSTERS
@@ -160,6 +163,7 @@ bt_cursor bt_lm(const xptr& root)
     }
 }
 
+
 void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
 {
     bool  rc;
@@ -167,39 +171,31 @@ void bt_insert(xptr &root, const bt_key &key, const object &obj,bool with_bt)
     shft  obj_idx = 0;
     xptr  insert_xpg = root; /* xptr passed to search functions, that can change, pointing to insert new data */
     char* insert_pg;
+	bt_path split_path;
 
     /* check key length doesn't exceed limit */
     if (key.get_size() >= BT_PAGE_PAYLOAD / 2)
         throw USER_EXCEPTION2(SE1008, "The size of the index key exceeds max key limit");
 
-    rc = bt_find_key(insert_xpg, (bt_key*)&key, key_idx,with_bt);
+    rc = bt_find_key(insert_xpg, (bt_key*)&key, key_idx, &split_path, with_bt);
     /* page could change */
     insert_pg = (char*)XADDR(insert_xpg);
 
-    if (rc)
-    {
-        rc = bt_leaf_find_obj(insert_xpg, obj, key_idx, obj_idx);
+	if (rc) {
+		bt_leaf_find_obj(insert_xpg, obj, key_idx, obj_idx);
+	    CHECKP(insert_xpg);
+	    insert_pg = (char*)XADDR(insert_xpg);
 
-      /*  if (rc) throw USER_EXCEPTION2(SE1008, "The key/object pair already exists in btree");
-        else
-        {*/
-            CHECKP(insert_xpg);
-            insert_pg = (char*)XADDR(insert_xpg);
+		if (obj_idx == BT_RIGHTMOST)
+		   obj_idx = *((shft*)BT_CHNK_TAB_AT(insert_pg, key_idx) + 1);
+	} else {
+	    if (key_idx == BT_RIGHTMOST)
+			key_idx = BT_KEY_NUM(insert_pg);
+	}
 
-            if (obj_idx == BT_RIGHTMOST)
-                obj_idx = *((shft*)BT_CHNK_TAB_AT(insert_pg, key_idx) + 1);
+	bt_internal_insert(root, insert_pg, key_idx, !rc, key, obj, obj_idx, split_path, with_bt, XNULL);
 
-            bt_leaf_insert(root, insert_pg, key_idx, false, key, obj, obj_idx,with_bt);
-        /*}*/
-    } 
-    else
-    {
-        CHECKP(insert_xpg);
-
-        if (key_idx == BT_RIGHTMOST)
-            key_idx = BT_KEY_NUM(insert_pg);
-        bt_leaf_insert(root, insert_pg, key_idx, true, key, obj, obj_idx,with_bt);
-    }
+//	bt_check_btree(root);
 }
 
 void bt_modify(xptr &root, const bt_key &old_key, const bt_key &new_key, const object &obj)
@@ -219,21 +215,36 @@ void bt_delete(xptr &root, const bt_key& key, const object &obj)
     shft    obj_idx;
     xptr    delete_xpg = root; /* xptr passed to search functions, that can change, pointing to page where data resides */
     char*   delete_pg = (char*)XADDR(delete_xpg);
+	bt_path merge_path;
+	bt_path_item pi;
 
     CHECKP(delete_xpg);
 
-    rc = bt_find_key(delete_xpg, (bt_key*)&key, key_idx);
-    if (rc)
+    if (bt_find_key(delete_xpg, (bt_key*)&key, key_idx, &merge_path))
     {
-        rc = bt_leaf_find_obj(delete_xpg, obj, key_idx, obj_idx);
-        /* page could change */
+		if (!bt_leaf_find_obj(delete_xpg, obj, key_idx, obj_idx)) { 
+			U_ASSERT(false);
+			throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
+		}
+
         CHECKP(delete_xpg);
         delete_pg = (char*)XADDR(delete_xpg);
-        if (rc) bt_delete_obj(delete_pg, key_idx, obj_idx);
-        else throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
+		pi.pg = delete_xpg;
+		pi.idx = key_idx;
+		merge_path.push_back(pi);
+
+		bt_internal_delete(root, key, obj_idx, merge_path);
     }
-    else throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
+	else 
+	{
+		U_ASSERT(false);
+		throw USER_EXCEPTION2(SE1008, "Cannot delete object which is not in the btree");
+	}
+
+//	bt_check_btree(root);
 }
+
+
 
 /* delete key and all associated objects */
 void bt_delete(xptr &root, const bt_key &key) 
@@ -314,10 +325,10 @@ void           bt_drop_page(const btree_blk_hdr * pg)
 			xptr lmp=par_hdr->lmp;
 			CHECKP(lmp);
 			char*   dst = bt_tune_buffering(true, 4);
-			memcpy(dst,(char*)XADDR(lmp)+sizeof(vmm_sm_blk_hdr),PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
+			memcpy(dst,(char*)XADDR(lmp)+sizeof(vmm_sm_blk_hdr),BT_PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
 			CHECKP(parent);
 			VMM_SIGNAL_MODIFICATION(parent);
-			memcpy((char*)XADDR(parent)+sizeof(vmm_sm_blk_hdr),dst,PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
+			memcpy((char*)XADDR(parent)+sizeof(vmm_sm_blk_hdr),dst,BT_PAGE_SIZE-sizeof(vmm_sm_blk_hdr));
 			par_hdr->parent=grandpa;//restore
 			par_hdr->prev=left_unc;
 			par_hdr->next=right_unc;

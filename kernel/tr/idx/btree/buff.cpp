@@ -6,8 +6,8 @@
 #include "common/sedna.h"
 #include "tr/idx/btree/buff.h"
 
-char	buf1[PAGE_SIZE];
-char	buf2[PAGE_SIZE];
+char	buf1[BT_PAGE_SIZE];
+char	buf2[BT_PAGE_SIZE];
 shft	ksize;			/* key size (for fixed-sized keys); if zero the keys are of variable size */
 char*	heap;			/* pointer to the top of heap */
 char*	buf;			/* pointer to the head of buffer */
@@ -20,8 +20,8 @@ char*	buf;			/* pointer to the head of buffer */
    returns pointer to the buffer exploited
  */
 char* bt_tune_buffering(bool first_buffer, shft key_size) {
-	if (first_buffer)	{ heap=buf1+PAGE_SIZE; buf=buf1; }
-	else				{ heap=buf2+PAGE_SIZE; buf=buf2; }
+	if (first_buffer)	{ heap=buf1+BT_PAGE_SIZE; buf=buf1; }
+	else				{ heap=buf2+BT_PAGE_SIZE; buf=buf2; }
 	ksize=key_size;
 	return buf;
 }
