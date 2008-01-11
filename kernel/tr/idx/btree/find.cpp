@@ -118,33 +118,26 @@ CHECKP(xpg);
 	char*	pg = (char*)XADDR(xpg);
 	bool	rc;
 	xptr	pg_xptr;
-	if (key_idx < 0 && key_idx >= BT_KEY_NUM(pg))
-        throw USER_EXCEPTION2(SE1008, "Bad key index");
-	shft*	chnk_tab_slot = (shft*)BT_CHNK_TAB_AT(pg, key_idx);
-	rc = bt_locate_obj_bisection((object*)(pg + *chnk_tab_slot), *(chnk_tab_slot + 1), obj, obj_idx);
-	if (rc)
-		/* the object found */
-		return rc;
-	else {
-#ifdef PERMIT_CLUSTERS
-		/* check if this is the cluster */
-		if (BT_IS_CLUS(pg)) {
-			if (BT_IS_CLUS_TAIL(pg))
-				return false;
-			else {
-				xpg = BT_NEXT(pg);
-CHECKP(xpg);
-				/* move to next cluster page; in this case key_idx remains the same, namely 1 */
-				return bt_leaf_find_obj(xpg, obj, key_idx, obj_idx);
-			}
-		} else {
-			return false;
-		}
+	btree_chnk_hdr c;
 
-#else
-		return false;
-#endif
+	if (key_idx >= BT_KEY_NUM(pg)) throw USER_EXCEPTION2(SE1008, "Bad key index");
+
+	c = *BT_CHNK_ITEM_AT(pg, key_idx);
+	rc = bt_locate_obj_bisection((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
+
+//#ifdef PERMIT_CLUSTERS
+	while (!rc && BT_IS_CLUS(pg) && !BT_IS_CLUS_TAIL(pg) && (obj_idx == BT_RIGHTMOST)) {
+		U_ASSERT(key_idx == 0);
+		/* move to next cluster page; in this case key_idx remains the same, namely 1 */
+		xpg = BT_NEXT(pg);
+		CHECKP(xpg);
+		pg = (char*)XADDR(xpg);
+		c = *BT_CHNK_ITEM_AT(pg, 0);
+		rc = bt_locate_obj_bisection((object*)(pg + c.c_shft), c.c_size, obj, obj_idx);
 	}
+//#endif
+
+	return rc;
 }
 
 /* Search key in given non-leaf page*/
@@ -164,57 +157,38 @@ bool bt_nleaf_find_key(char* pg, bt_key* key, shft &key_idx,bool with_bt) {
    page. When reached leaf level, whether the key was found or not, the 'pg' is set to the page where
    the searched key resides or must be allocated.
  */
-bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx,bool with_bt) {
-CHECKP(xpg);
+
+bool bt_find_key(xptr & xpg, bt_key* key, shft &key_idx, bt_path *path, bool with_bt) {
+	CHECKP(xpg);
 	char*	pg=(char*)XADDR(xpg);
 	bool	rc;
 	shft	el_size;
 	xptr	next_pg_xptr;
+	bt_path_item pi(xpg, 0);
 
 	/* pg - currently processed page */
 	if (!BT_IS_LEAF(pg)) {	
-		rc = bt_nleaf_find_key(pg, key, key_idx,with_bt);
-		if (!rc) {
-			/* if the key not found, there are two cases:
-			   1) if rc == BT_LEFTMOST next page is in LMP field
-			   2) else next page xptr is in (key_idx-1) slot of big_ptr table
-			 */
-			if (key_idx == BT_LEFTMOST) {
-				if (BT_LMP(pg) == XNULL)
-                    throw USER_EXCEPTION2(SE1008, "Cannot follow XNULL left-most pointer");
-				xpg = BT_LMP(pg);
-				goto next_level_call;
-			} else if (key_idx == BT_RIGHTMOST) {
+		if (bt_nleaf_find_key(pg, key, key_idx, with_bt)) {
+			xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx);
+			pi.idx = key_idx;
+		} else if (key_idx == BT_LEFTMOST) {
+			if (BT_LMP(pg) == XNULL)
+                   throw USER_EXCEPTION2(SE1008, "Cannot follow XNULL left-most pointer");
+			xpg = BT_LMP(pg);
+			pi.idx = -1;
+		} else {
+			if (key_idx == BT_RIGHTMOST) {
 				if (BT_KEY_NUM(pg) == 0) return false;
-				key_idx = BT_KEY_NUM(pg) - 1 ;
+				key_idx = BT_KEY_NUM(pg);
 			}
-			else 
-				key_idx--;
+			xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx - 1);
+			pi.idx = key_idx - 1;
 		}
-		/* if the key is found, key_idx-th big_ptr points to next page */
-		
-		xpg = *(xptr*)BT_BIGPTR_TAB_AT(pg, key_idx);
-		/* follow next page */
-next_level_call:
-		
-		/* TEMP */
-		 CHECKP(xpg);
-		 pg=(char*)XADDR(xpg);
-		 if (BT_IS_LEAF(pg)&&BT_IS_CLUS(pg)&&!BT_IS_CLUS_HEAD(pg))
-		 {
-			 throw USER_EXCEPTION2(SE1008, "Cluster error");
-		 }
-		 /* END */
+	
+		if (path != NULL) path->push_back(pi);
 
-		return bt_find_key(xpg, key, key_idx);
+		return bt_find_key(xpg, key, key_idx, path, with_bt);
 	} else {
-		return bt_leaf_find_key(xpg, key, key_idx,with_bt);
+		return bt_leaf_find_key(xpg, key, key_idx, with_bt);
 	}
 }
-
-
-
-
-
-
-

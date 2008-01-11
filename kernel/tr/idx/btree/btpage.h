@@ -134,7 +134,7 @@ struct btree_key_hdr
 
  */
 
-// #define PAGE_SIZE 64*1024
+#define BT_PAGE_SIZE PAGE_SIZE //4*1024
 
 /* this switch define if the btree implementation will support clusters of leaf pages. If defined,
    the groups of objects sticking to common key which don't fit in single block will be permitted
@@ -186,7 +186,7 @@ inline	bool	BT_VARIABLE_KEY_TYPE(char* p)
 
 /* b-tree page header size */
 #define	BT_HSIZE		(sizeof(btree_blk_hdr))
-#define BT_PAGE_PAYLOAD	(PAGE_SIZE - BT_HSIZE)
+#define BT_PAGE_PAYLOAD	(BT_PAGE_SIZE - BT_HSIZE)
 
 /* Macros to access page header fields
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -12,11 +12,21 @@
 #include "tr/idx/btree/btpage.h"
 #include "tr/executor/base/XMLDateTime.h"
 
-typedef xptr object;
+#include <list>
 
+typedef xptr object;
 
 #define NULL_OBJECT	XNULL
 
+struct bt_path_item {
+	xptr	pg;
+	int		idx;
+
+	bt_path_item() : pg(XNULL), idx(0) {}
+	bt_path_item(const xptr apg, const int aidx) : pg(apg), idx(aidx) {}
+};
+
+typedef std::list<bt_path_item> bt_path;
 
 class bt_key {
 private:
@@ -75,7 +85,6 @@ public:
     void setnew_duration(const xs_packed_duration& dur, xmlscm_type t);
 
     void * data () const { return ((type == xs_string )?(void*)(v.s_v):(void*)&v); }
-
 
     xmlscm_type get_type() const { return type; }
     int get_size() const;

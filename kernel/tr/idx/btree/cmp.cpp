@@ -46,11 +46,15 @@ int bt_cmp_key(const bt_key& k1, const bt_key& k2)
 }
 
 /* returns 1 if o1>o2; -1 if o1<o2; 0 if o1=o2 */
-int bt_cmp_obj(object o1, object o2) {
+int bt_cmp_obj(const object &o1, const object &o2) {
+	if (o2 < o1) return 1;
+	if (o1 < o2) return -1;
+	return 0;
+	
+/*
 	int	i=0;
 	unsigned char* c1 = (unsigned char*)&o1;
 	unsigned char* c2 = (unsigned char*)&o2;
-	/* byte-wise comparison */
 	while(i<sizeof(object)) {
 		if ((*c1)^(*c2)) {
 			if ((*c1) > (*c2)) return 1;
@@ -61,6 +65,7 @@ int bt_cmp_obj(object o1, object o2) {
 		c2++;
 	}
 	return 0;
+*/
 }
 
 /* make comparison of the key table element and key as bt_key struct;

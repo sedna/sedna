@@ -5,14 +5,16 @@
 
 #include "common/sedna.h"
 
+#include "tr/idx/btree/btintern.h"
 #include "tr/idx/btree/btstruct.h"
 #include "tr/idx/btree/btpage.h"
 #include "tr/vmm/vmm.h"
 #include "tr/structures/nodes.h"
+#include "tr/crmutils/node_utils.h"
 
 void bt_page_markup(char* pg, xmlscm_type t) {
 	char dummy[10];
-	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
+//	VMM_SIGNAL_MODIFICATION(ADDR2XPTR(pg));
 	(*BT_NEXT_PTR(pg))=XNULL;
 	(*BT_PREV_PTR(pg))=XNULL;
 	(*BT_PARENT_PTR(pg))=XNULL;
@@ -24,9 +26,7 @@ void bt_page_markup(char* pg, xmlscm_type t) {
 	(*BT_KEY_TYPE_PTR(pg))=t;
 	(*BT_KEY_SIZE_PTR(pg))=xmlscm_type_size(t);
 	(*BT_KEY_NUM_PTR(pg))=0;
-	(*BT_HEAP_PTR(pg))=PAGE_SIZE;
-
-    
+	(*BT_HEAP_PTR(pg))=BT_PAGE_SIZE;
 };
 
 /* check page consistency */
@@ -37,3 +37,99 @@ void bt_page_consistency(char* pg, bt_key* key) {
 	if ((BT_VARIABLE_KEY_TYPE(key->get_type()) && BT_KEY_SIZE(pg)) || (!BT_VARIABLE_KEY_TYPE(key->get_type()) && !BT_KEY_SIZE(pg)))
         throw USER_EXCEPTION2(SE1008, "Divergence between key type and key size fields in page header");
 }
+
+
+#define CHECK_ASSERTION(p) if (!(p)) throw USER_EXCEPTION2(SE1008, "Index consistency check failed");
+	
+/* check page consistency (adult) */
+
+void bt_check_page_consistency(xptr pg, bt_key* k, bool leftmost)
+{
+	char * p = (char *) XADDR(pg);
+	bt_key ck;
+	CHECKP(pg);
+
+//	U_ASSERT(BT_KEY_NUM(p) != 0);
+
+	if (!leftmost) {
+		CHECK_ASSERTION(BT_KEY_TYPE(p) == k->get_type());
+	}
+	
+	// check if keys are in right order
+	for (int i = 0; i < BT_KEY_NUM(p); i++) {
+  	   // check if all key pointers are at least in the heap
+		if (BT_VARIABLE_KEY_TYPE(p)) {
+			btree_key_hdr * v = BT_KEY_ITEM_AT(p, i); 
+			CHECK_ASSERTION((v->k_shft >= BT_HEAP(p)) && (v->k_shft + v->k_size <= BT_PAGE_SIZE));
+		}
+		ck.setnew(p, i);
+		if (!leftmost) {
+			CHECK_ASSERTION((*k) <= ck);
+		} else {
+			leftmost = false;
+		}
+		k->setnew(p, i);
+	}
+
+	if (BT_IS_LEAF(p)) {
+		// check the existance of objects
+		for (int i = 0; i < BT_KEY_NUM(p); i++) {
+			btree_chnk_hdr * v = BT_CHNK_ITEM_AT(p, i); 
+			xptr* pt = (xptr *) (p + v->c_shft);
+			CHECK_ASSERTION((v->c_shft >= BT_HEAP(p)) && (v->c_shft + v->c_size <= BT_PAGE_SIZE));
+			xptr save = XNULL;
+			for (int j = 0; j < v->c_size; j++) {
+				// order of objects
+				CHECK_ASSERTION(bt_cmp_obj(pt[j], save) > 0);
+				save = pt[j];
+				CHECK_ASSERTION(XADDR(pt[j]) != NULL);
+				xptr a = removeIndirection(pt[j]);
+				CHECK_ASSERTION(a != XNULL);
+				CHECKP(a);
+				CHECK_ASSERTION((GETBLOCKBYNODE(a))->snode != NULL);
+				CHECKP(pg);
+			}
+		}
+	} else {
+		for (int i = 0; i < BT_KEY_NUM(p); i++) {
+			xptr pt = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
+			char * ptr = (char *) XADDR(pt);
+			CHECK_ASSERTION((((int) ptr) & PAGE_REVERSE_BIT_MASK) == 0);
+		}
+	}
+}
+
+void bt_check_bsubtree(xptr pg, bt_key* left_key, bool leftmost)
+{
+	char * p = (char *) XADDR(pg);
+
+	bt_check_page_consistency(pg, left_key, leftmost);
+
+	CHECKP(pg);
+
+	xptr cpage;
+	bt_key ck, nk;
+	if (!BT_IS_LEAF(p)) {
+		cpage = BT_LMP(p);
+		if (cpage != XNULL) {
+			bt_check_bsubtree(cpage, &ck, true);
+			CHECKP(pg);
+		}
+
+		for (int i = 0; i < BT_KEY_NUM(p); i++) {
+			nk.setnew(p, i);
+			if (cpage != XNULL) CHECK_ASSERTION(ck < nk);
+			cpage = *((xptr *) BT_BIGPTR_TAB_AT(p, i)); 
+			ck = nk;
+			bt_check_bsubtree(cpage, &ck, false);
+			CHECKP(pg);
+		}
+	}
+}
+
+void bt_check_btree(xptr pg) 
+{
+	bt_key k;
+	bt_check_bsubtree(pg, &k, true);
+}
+
