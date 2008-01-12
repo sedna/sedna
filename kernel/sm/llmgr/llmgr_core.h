@@ -332,7 +332,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
 
   void set_checkpoint_on_flag(bool flag, bool sync); // set flag determing if checkpoint thread is active
 
-  bool llmgr_core::get_checkpoint_on_flag(bool sync); // is checkpoint is currently on?
+  bool get_checkpoint_on_flag(bool sync); // is checkpoint is currently on?
 
   void set_checkpoint_flag(bool flag, bool sync); // set flag to enable/disable checkpoint
 
