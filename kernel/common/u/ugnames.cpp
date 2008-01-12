@@ -160,7 +160,7 @@ void ParseGlobalName(GlobalNameComponents *components,
 		int ordinal = 0, base = 0;
 
 		sep = strchr(globalName,'@');
-		if (!sep || (ordinal=strtol(sep+1,&tail,10)), *tail!='\0')
+		if (sep==NULL || (ordinal=strtol(sep+1,&tail,10), *tail!='\0'))
 		{
 			ThrowSystemException("ParseGlobalName: bad global name syntax");
 		}

@@ -1,5 +1,6 @@
 #include <string>
 
+#include <string.h>
 #include "sm_llmgr.h"
 #include "sm/bufmgr/bm_core.h"
 #include "sm/bufmgr/bm_rcv.h"
@@ -324,11 +325,13 @@ void sm_llmgr::restorePh()
 
   while ( NULL != (dent = readdir (dir)) )
   {
+     const char *p = NULL;
      ph_name = dent->d_name;
 //     if (is_seph.size() < 7) continue;
 //d_printf2("IS_LLOG=%s\n", is_llog.c_str());
 
-     if ( ph_name.substr(ph_name.size()-4, 4) != "seph") continue;
+     p = strrchr(ph_name.c_str(),'.');
+     if ( p && 0!=strcmp(p,".seph") ) continue;
 
 //     ph_number = ph_number.erase(0, db_name.size() + 1);
 //d_printf2("7log_number =%s\n", log_number.c_str());

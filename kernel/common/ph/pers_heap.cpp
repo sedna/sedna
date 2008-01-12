@@ -235,7 +235,7 @@ int pers_create(const char *file_name, const char *fm_name, const void *addr, in
     // Close file mapping
     if (uUnmapViewOfFile(ph_file_mapping, ph_start_address, 0, __sys_call_error) != 0) return 6;
 
-    if (uReleaseFileMapping(ph_file_mapping, fm_name, __sys_call_error) != 0) return 7;
+    if (uReleaseFileMapping(ph_file_mapping, FixPersHeapFileMappingName(fm_name), __sys_call_error) != 0) return 7;
 
     if (uCloseFile(ph_file, __sys_call_error) == 0) return 8;
 

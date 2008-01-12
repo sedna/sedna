@@ -60,10 +60,7 @@ private:
     void *sysinf_addr;
     int sems_num;
 
-#ifdef _WIN32
-    std::string _g_name_shmem;
-    std::string _g_name_sems;
-#endif
+    char g_names__buf__ [256];
 
     global_name g_name_shmem;
     global_name g_name_sems;
@@ -136,6 +133,8 @@ public:
 
     // stops accept new messages and wait until all processing messages finish
     int stop_serve_clients();
+
+    static void ipc_cleanup(global_name name);
 };
 
 

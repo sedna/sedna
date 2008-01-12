@@ -4,7 +4,7 @@
  */
 
 
-
+#include <assert.h>
 #include "common/SSMMsg.h"
 #include "common/utils.h"
 #include "common/errdbg/d_printf.h"
@@ -45,7 +45,22 @@ using namespace std;
 #define sem_data_processed2(s)					(NAMED_SEMS_NUM + (s)->servers_amount)
 #define sem_data_read2(s)						(NAMED_SEMS_NUM + 2 * (s)->servers_amount)
 
+struct SSMMsgNames
+{
+	global_name memory;
+	global_name sems;
+};
 
+static void InitSSMMsgNames(SSMMsgNames *names, global_name name, char *buf, size_t bufSz)
+{
+	assert(names);
+	if ((names->memory = UGlobalNameFromCompoundName(name, 0, buf, bufSz)))
+	{
+		size_t consumed = strlen(names->memory)+1;
+		buf+=consumed; bufSz-=consumed;
+	}
+	names->sems = UGlobalNameFromCompoundName(name, 0, buf, bufSz);
+}
 
 SSMMsg::SSMMsg(mode _m_, 
                int _msg_size_, 
@@ -53,7 +68,6 @@ SSMMsg::SSMMsg(mode _m_,
                int _servers_amount_, 
                unsigned int _millisec_)
 {
-	char buf1[128], buf2[128];
     m = _m_;
     msg_size = _msg_size_;
     servers_amount = _servers_amount_;
@@ -69,10 +83,10 @@ SSMMsg::SSMMsg(mode _m_,
     sysinf_addr = NULL;
     sems_num = NAMED_SEMS_NUM + 3 * servers_amount;
 
-    _g_name_shmem = UGlobalNameFromCompoundName(_g_name_, 0, buf1, 128);
-    _g_name_sems = UGlobalNameFromCompoundName(_g_name_, 1, buf2, 128);
-    g_name_shmem = _g_name_shmem.c_str();
-    g_name_sems = _g_name_sems.c_str();
+	SSMMsgNames names = {};
+	InitSSMMsgNames(&names, _g_name_, g_names__buf__, 256);
+    g_name_shmem = names.memory;
+    g_name_sems = names.sems;
 
     server_param = NULL;
 
@@ -425,3 +439,22 @@ int SSMMsg::stop_serve_clients()
 
     return 0;
 }
+
+void SSMMsg::ipc_cleanup(global_name name)
+{
+	USemaphoreArr sems;
+	UShMem memory;
+	SSMMsgNames names;
+	char buf[256];
+
+	InitSSMMsgNames(&names, name, buf, sizeof buf);
+	if (uOpenShMem(&memory, names.memory, 8192, __sys_call_error) == 0)
+	{
+		uReleaseShMem(memory, __sys_call_error);
+	}	
+	if (USemaphoreArrOpen(&sems, 9, names.sems, __sys_call_error) == 0)
+	{
+		USemaphoreArrRelease(sems, 9, __sys_call_error);
+	}
+}
+

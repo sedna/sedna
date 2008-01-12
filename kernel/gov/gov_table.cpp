@@ -444,6 +444,7 @@ int info_table::check_stop_databases()
      if ((((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name)[0] != '\0' &&
          ((gov_config_struct*)gov_shared_mem)->db_vars[i].is_stop == 1)
      {
+	fprintf(stderr,"%s: %d %s\n", __FUNCTION__, i, ((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name);
         stop_sessions(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));
 
         stop_database(string(((gov_config_struct*)gov_shared_mem)->db_vars[i].db_name));

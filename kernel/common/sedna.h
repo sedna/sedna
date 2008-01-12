@@ -30,13 +30,15 @@ extern char* SEDNA_DATA;
 
 int set_sedna_data(char*, sys_call_error_fun fun);
 
+void DumpFaultInfo();
+
 #ifdef __cplusplus
 }
 #endif
 
-
 #define SEDNA_SOFT_FAULT_BASE_MSG \
     fprintf(stderr, "SEDNA Message: FATAL ERROR\n"); \
+    DumpFaultInfo(); \
     fprintf(stderr, "System error. This error means system malfunction.\n")
 
 #define SEDNA_SOFT_FAULT_FINALIZER \
