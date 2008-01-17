@@ -206,4 +206,10 @@ void delete_text_tail(xptr node, int size);
 /*redo operation*/
 void redoBlockCreation(xptr block,xptr left_n,xptr right_n,schema_node* sn, int desc_size);
 
+/*decrement count*/
+void decrement_count(node_blk_hdr* pr_blk,shft count=1);
+/* increment count*/
+void increment_count(node_blk_hdr* pr_blk,shft count=1);
+
+
 #endif

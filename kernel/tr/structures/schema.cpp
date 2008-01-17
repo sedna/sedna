@@ -57,7 +57,7 @@ void schema_node::init(void* p)
 	scr->nodecnt=0;
 	scr->blockcnt=0;
 	scr->extnids=0;
-	scr->cl_hint=0;
+	//scr->cl_hint=0;
 	scr->indir_blk_cnt=0;
 	scr->ind_entry=XNULL;
 	scr->root=NULL;

@@ -16,6 +16,12 @@
 #include "common/sm_vmm_data.h"
 #include "tr/executor/base/xptr_sequence.h"
 
+/*new static variables*/
+static std::set<xptr>* blocks_to_delete;
+static std::set<xptr>* created_blocks;
+static int rollback_mode = MODE_NORMAL;
+static xptr rollback_record;
+/*
 #define OTK_XPTR
 using namespace std;
 typedef std::pair<schema_node*,xptr> id_pair;
@@ -33,13 +39,15 @@ static std::map<id_pair,std::vector<xptr> *>* deleted_cells;
 
 static std::set<xptr>* deleted_docs;
 
-static int rollback_mode = MODE_NORMAL;
+
 bool delete_mode = false;
-static xptr rollback_record;
+
 static int redo_hint=-1;
 static std::vector<xptr>* redo_blocks=NULL;
 int indir_block_count=0;
 int indir_node_count=0;
+*/
+
 
 static bool indirection_session_initialized = false;
 static bool indirection_transaction_initialized = false;
@@ -51,7 +59,7 @@ bool is_rolled_back()
 {
 	return rollback_mode != MODE_NORMAL;
 }
-xptr indir_blk_hdr::init(xptr p)
+/*xptr indir_blk_hdr::init(xptr p)
 {    
 	char* pred = ((char *)XADDR(p)) + sizeof(indir_blk_hdr);
     char* cur = pred + sizeof(xptr);
@@ -224,7 +232,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	}
 	return first;
 }
-
+*/
 xptr add_record_to_indirection_table(xptr p)
 {
 	xptr rba;
@@ -300,14 +308,14 @@ xptr add_record_to_indirection_table(xptr p)
 			hl_phys_log_change(&(nbh->nblk_indir),sizeof(xptr));
 			nbh->nblk_indir=nbh->snode->bblk_indir;
 			nbh->snode->bblk_indir=nbh->sm_vmm.p;
-			xptr r_bl=nbi->nblk_indir;
+			xptr r_bl=nbh->nblk_indir;
 			if (r_bl!=XNULL)
 			{
 				CHECKP(r_bl);
 				VMM_SIGNAL_MODIFICATION(r_bl);
 				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
 				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
-				rbi->pblk_indir=nbh->snode->bblk_indir;
+				rbi->pblk_indir=rbi->snode->bblk_indir;
 			}
 		}
 
@@ -315,9 +323,10 @@ xptr add_record_to_indirection_table(xptr p)
 	CHECKP(rba);	
 	
     //USemaphoreUp(indirection_table_sem);
-	
+	//indir_node_count++;
     return rba;
 }
+/*
 xptr add_record_to_data_indirection_table(xptr p)
 {
     
@@ -379,14 +388,90 @@ xptr add_record_to_data_indirection_table(xptr p)
 
     return res;
 }
+*/
+void del_record_from_indirection_table(xptr p)
+{
+	CHECKP(p);		
+	VMM_SIGNAL_MODIFICATION(p);
 
+	xptr node=*((xptr*)XADDR(p));
+	node_blk_hdr* nbi=GETBLOCKBYNODE(p);
+	node_blk_hdr* nbh=GETBLOCKBYNODE(node);
+	hl_phys_log_change(&(nbi->free_first_indir),sizeof(shft));
+	hl_phys_log_change(&(nbi->indir_count),sizeof(shft));
+	hl_phys_log_change(XADDR(p),sizeof(shft));
+	nbi->indir_count--;	
+	if (nbi->count+nbi->indir_count==0)
+			add_predeleted_block(ADDR2XPTR(nbi));
+    *(shft*)(XADDR(p)) = nbi->free_first_indir;
+	nbi->free_first_indir=CALCSHIFT(XADDR(p),nbi);
+
+	if (nbh!=nbi)
+	{
+		if (nbi->indir_count<nbi->count&& 
+			(nbi->pblk_indir==XNULL &&
+			nbi->nblk_indir==XNULL &&
+			nbi->snode->bblk_indir!=nbi->sm_vmm.p))
+		{
+			VMM_SIGNAL_MODIFICATION(p);
+			hl_phys_log_change(&(nbi->nblk_indir),sizeof(xptr));
+			nbi->nblk_indir=nbi->snode->bblk_indir;
+			nbi->snode->bblk_indir=nbi->sm_vmm.p;
+			xptr r_bl=nbi->nblk_indir;
+			if (r_bl!=XNULL)
+			{
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=rbi->snode->bblk_indir;
+			}
+		}
+
+		CHECKP(node);
+		if (nbh->indir_count>=nbh->count&& 
+			(nbh->pblk_indir!=XNULL ||
+			nbh->nblk_indir!=XNULL ||
+			nbh->snode->bblk_indir==nbh->sm_vmm.p))
+		{
+			xptr l_bl=nbh->pblk_indir;
+			xptr r_bl=nbh->nblk_indir;
+			if (nbh->snode->bblk_indir==nbh->sm_vmm.p)
+				nbh->snode->bblk_indir=r_bl;
+			else
+			if (l_bl!=XNULL)
+			{
+				CHECKP(l_bl);
+				VMM_SIGNAL_MODIFICATION(l_bl);
+				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
+				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
+				lbi->nblk_indir=r_bl;
+			}
+			if (r_bl!=XNULL)
+			{
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=l_bl;
+			}
+				
+		}
+		
+	}	
+
+	CHECKP(p);
+
+
+}
+/*
 void del_record_from_data_indirection_table(xptr p)
 {
     // whenever we in rollback mode or not, we just save p to put it to the list
     // of free cells later
 
     // it means put to list
-    if (/*!rollback_mode&&*/!delete_mode) 
+    if (!delete_mode) 
 	{
 		CHECKP(p);
 		xptr node=*(xptr*)XADDR(p);
@@ -540,9 +625,10 @@ void clear_dc()
 #endif
 
 }
+*/
 void indirection_table_on_session_begin()
 {
-    tmp_indirection_table_free_entry = XNULL;
+  /*  tmp_indirection_table_free_entry = XNULL;
 
     if (uOpenShMem(&itfe_file_mapping, CHARISMA_ITFE_SHARED_MEMORY_NAME, sizeof(xptr), __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4021, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
@@ -554,31 +640,25 @@ void indirection_table_on_session_begin()
     if (USemaphoreOpen(&indirection_table_sem, INDIRECTION_TABLE_SEMAPHORE_STR, __sys_call_error) != 0)
         throw USER_EXCEPTION2(SE4012, "INDIRECTION_TABLE_SEMAPHORE_STR");
         clear_dc();
-/*#ifndef OTK_XPTR
-	 deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
-#else
 
-	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
-#endif
-*/
 	if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
-
+*/
     indirection_session_initialized = true;
 }
 
 void indirection_table_on_transaction_begin()
 {
-clear_dc();
-/*
-#ifndef OTK_XPTR
-	deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
-#else
-	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
-#endif
-*/
+/*clear_dc();
+
     if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
+*/
+	if (blocks_to_delete!=NULL) delete blocks_to_delete;    
+	blocks_to_delete = se_new std::set<xptr>;
+
+	if (created_blocks!=NULL) delete created_blocks;    
+	created_blocks = se_new std::set<xptr>;
 
     indirection_transaction_initialized = true;
 }
@@ -594,7 +674,7 @@ void indirection_table_on_session_end()
     {
         // deinitialization
     
-        if (uDettachShMem(itfe_file_mapping, data_indirection_table_free_entry, __sys_call_error) != 0)
+     /*   if (uDettachShMem(itfe_file_mapping, data_indirection_table_free_entry, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4024, "CHARISMA_ITFE_SHARED_MEMORY_NAME");
     
         if (uCloseShMem(itfe_file_mapping, __sys_call_error) != 0)
@@ -602,22 +682,80 @@ void indirection_table_on_session_end()
     
         if (USemaphoreClose(indirection_table_sem, __sys_call_error) != 0)
             throw USER_EXCEPTION2(SE4013, "INDIRECTION_TABLE_SEMAPHORE_STR");
-    
+    */
         indirection_session_initialized = false;
     }
 }
 
+void sync_indirection_table()
+{
+	std::set<xptr> tmp_set;
+	if (rollback_mode == MODE_UNDO)
+		{
+			
+			//1. scan the created blocks and remove from the list some of them
+			
+			std::set<xptr>::iterator it= created_blocks->begin();
+			xptr block;
+			while (it!=created_blocks->end())
+			{
+				block = *it;
+				CHECKP(block);
+				node_blk_hdr* blk=GETBLOCKBYNODE(block);
+				if (blk->count+blk->indir_count>0)
+					tmp_set.insert(block);
+				it++;
+			}
+		}
+		
+		//2. scan the deleted blocks and delete some of them
+		std::set<xptr>::iterator it2= blocks_to_delete->begin();
+		xptr block;
+		while (it2!=blocks_to_delete->end())
+		{
+			block = *it2;
+			CHECKP(block);
+			node_blk_hdr* blk=GETBLOCKBYNODE(block);
+			if (blk->count+blk->indir_count==0)
+					deleteBlock(blk);
+			it2++;
+		}
+        
+		if (rollback_mode == MODE_UNDO)
+		{
+			//3. scan the created blocks and log the rest of them to the journal
+			std::set<xptr>::iterator it= tmp_set.begin();
+			xptr block;
+			while (it!=tmp_set.end())
+			{
+				block = *it;
+				CHECKP(block);
+				node_blk_hdr* blk=GETBLOCKBYNODE(block);
+				hl_logical_log_block_creation(block,blk->pblk,blk->nblk,blk->dsc_size);
+				it++;
+			}
+		}
+
+		delete created_blocks;
+		delete blocks_to_delete;
+        created_blocks = NULL;
+		blocks_to_delete=NULL;
+
+}
 void indirection_table_on_transaction_end()
 {
     if (indirection_transaction_initialized)
     {
-        rollback_mode = MODE_NORMAL;
-		tmp_indirection_table_free_entry = XNULL;
+		sync_indirection_table();
+		rollback_mode = MODE_NORMAL;
+		/*tmp_indirection_table_free_entry = XNULL;
 		clear_dc();
 		delete deleted_cells;
 		delete deleted_docs;
         deleted_cells = NULL;
 		deleted_docs=NULL;
+*/
+		
     
         indirection_transaction_initialized = false;
     }
@@ -627,7 +765,7 @@ void indirection_table_on_statement_end()
 {
     if (indirection_statement_initialized)
     {
-	    tmp_indirection_table_free_entry = XNULL;
+//	    tmp_indirection_table_free_entry = XNULL;
 
         indirection_statement_initialized = false;
     }
@@ -638,22 +776,20 @@ void indirection_table_on_statement_end()
 
 void switch_to_rollback_mode(int type)
 {
-    clear_dc();
-/*    delete deleted_cells;
-	delete deleted_docs;
-    deleted_cells = NULL;
-	deleted_docs=NULL;
-#ifndef OTK_XPTR
-	deleted_cells = se_new std::map<id_pair,xptr_sequence *>;
-#else
-	deleted_cells = se_new std::map<id_pair,std::vector<xptr> *>;
-#endif
-*/
+ /*   clear_dc();
     if (deleted_docs!=NULL) delete deleted_docs;    
 	deleted_docs = se_new std::set<xptr>;
+*/
+
+	if (blocks_to_delete==NULL)     
+	blocks_to_delete = se_new std::set<xptr>;
+
+	if (created_blocks==NULL) 
+	created_blocks = se_new std::set<xptr>;
 
     rollback_mode = type;
 }
+/*
 void start_delete_mode(doc_schema_node* doc)
 {
 	delete_mode=true;
@@ -663,11 +799,12 @@ void stop_delete_mode()
 {
 	delete_mode=false;
 }
+*/
 void set_rollback_record(xptr p)
 {
     rollback_record = p;
 }
-
+/*
 void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 {
 	if (rollback_mode!=MODE_UNDO)
@@ -675,6 +812,17 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 		redo_hint=cl_hint;
 		redo_blocks=blocks;
 	}
+}
+*/
+
+//new indirection
+void add_new_block(xptr block)
+{
+	created_blocks->insert(block);
+}
+void add_predeleted_block(xptr block)
+{
+	blocks_to_delete->insert(block);
 }
 
 xptr get_last_indir()

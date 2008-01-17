@@ -81,7 +81,7 @@ void delete_document(const char *document_name)
 		
 
 		//0. turn on delete mode for indirection
-		start_delete_mode((doc_schema_node*)snode);
+		//start_delete_mode((doc_schema_node*)snode);
 		schema_ind_cell* sci=((doc_schema_node*)snode)->sc_idx;
 		while (sci!=NULL)
 		{
@@ -127,7 +127,7 @@ void delete_document(const char *document_name)
 		up_concurrent_micro_ops_number();
 		
 		//0. turn off delete mode for indirection
-		stop_delete_mode();
+		//stop_delete_mode();
 	}
 	else
 	{
@@ -196,7 +196,7 @@ void delete_collection(const char *collection_name)
 //	free_metadata_cell(cdc);
 	metadata_sem_up();
 	//0. turn on delete mode for indirection
-	start_delete_mode(coll);
+	//start_delete_mode(coll);
 	schema_ind_cell* sci=coll->sc_idx;
 		while (sci!=NULL)
 		{
@@ -281,7 +281,7 @@ void delete_collection(const char *collection_name)
 	//free_metadata_cell(cdc);
 	up_concurrent_micro_ops_number();
 	//3. turn off delete mode for indirection
-	stop_delete_mode();
+	//stop_delete_mode();
 	//metadata_sem_up();
 }
 

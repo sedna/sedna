@@ -631,17 +631,17 @@ void getDebugInfo(schema_node* snode, xptr& node)
 	left=fillStatistics2(left,"innr_blk_saturation",buf,d_in.inner_fill_percentage);
 	left=fillStatistics(left,"total_innr_blk",buf,d_in.inner_block_count);
 	left=fillStatistics(left,"total_innr_size",buf,d_in.inner_block_count*PAGE_SIZE);
-	double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(sizeof(xptr)*d_in.node_count+d_in.ext_nid_count);
+	double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(d_in.ext_nid_count);
 	left=fillStatistics2(left,"strings",buf,(100.*0.0625*d_in.str_blocks/dbc));
 	left=fillStatistics2(left,"descriptors",buf,(100.*0.0625*d_in.block_count/dbc));
-	left=fillStatistics2(left,"indirection",buf,(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc));
+	/*left=fillStatistics2(left,"indirection",buf,(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc));*/
 	left=fillStatistics2(left,"nid",buf,(100.*0.00000095367431640625*d_in.ext_nid_count/dbc));
 	left=fillStatistics2(left,"total_size",buf,dbc);
 	left=fillStatistics2(left,"string_size",buf,(0.0625*d_in.str_blocks));
 	left=fillStatistics2(left,"descriptor_size",buf,(0.0625*d_in.block_count));
 	left=fillStatistics2(left,"nids_size",buf,(0.00000095367431640625*d_in.ext_nid_count));
 	left=fillStatistics2(left,"free_space_in_str_blocks",buf,(0.00000095367431640625*d_in.freestrspace));
-	left=fillStatistics(left,"indirection_size",buf,(0.00000095367431640625*sizeof(xptr)*d_in.node_count));
+	/*left=fillStatistics(left,"indirection_size",buf,(0.00000095367431640625*sizeof(xptr)*d_in.node_count));*/
 	left=insert_element(left,XNULL,XNULL,"distribution",xs_untyped,NULL);
 	if (snode->bblk!=XNULL)
 	{
@@ -670,12 +670,12 @@ void printSimpleDebugInfo(schema_node* snode, se_ostream& crmout)
 	crmout<<"\n TOTAL INNER NODES SIZE="<<(d_in.inner_block_count*PAGE_SIZE);
 	crmout<<"\n INNER FILL PERCENTAGE="<<d_in.inner_fill_percentage;
 	
-	double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(sizeof(xptr)*d_in.node_count+d_in.ext_nid_count);
+	double dbc=0.0625*(d_in.str_blocks+d_in.block_count)+0.00000095367431640625*(/*sizeof(xptr)*d_in.node_count+*/d_in.ext_nid_count);
 
 	crmout<<"\n\n STRINGS percentage="<<(100.*0.0625*d_in.str_blocks/dbc)<<"%";
 	crmout<<"\n DESCRIPTORS percentage="<<(100.*0.0625*d_in.block_count/dbc)<<"%";
-	crmout<<"\n NIDS percentage="<<(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc)<<"%";
-	crmout<<"\n INDIRECTION percentage="<<(100.*0.00000095367431640625*d_in.ext_nid_count/dbc)<<"%";
+	/*crmout<<"\n NIDS percentage="<<(100.*0.00000095367431640625*sizeof(xptr)*d_in.node_count/dbc)<<"%";*/
+	crmout<<"\n NIDS percentage="<<(100.*0.00000095367431640625*d_in.ext_nid_count/dbc)<<"%";
 	
 
 	crmout<<"\n\n TOTAL SIZE Mgb="<<dbc;
@@ -683,7 +683,7 @@ void printSimpleDebugInfo(schema_node* snode, se_ostream& crmout)
 	crmout<<"\n DESCRIPTORS size,MGB="<<(0.0625*d_in.block_count);
 	crmout<<"\n NIDS size,MGB="<<(0.00000095367431640625*d_in.ext_nid_count);
 	crmout<<"\n FREE SPACE IN STRING BLOCKS size,MGB="<<(0.00000095367431640625*d_in.freestrspace);
-	crmout<<"\n INDIRECTION size,MGB="<<(0.00000095367431640625*sizeof(xptr)*d_in.node_count);
+	/*crmout<<"\n INDIRECTION size,MGB="<<(0.00000095367431640625*sizeof(xptr)*d_in.node_count);*/
 	if (snode->bblk!=XNULL)
 	{
 		CHECKP(snode->bblk);
