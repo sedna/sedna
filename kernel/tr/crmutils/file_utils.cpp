@@ -60,7 +60,7 @@ std::vector<stat_pair*> curp;
 //pair
 void remove_hints(schema_node* nd)
 {
-	nd->cl_hint=0;
+	//nd->cl_hint=0;
 	nd->lastnode_ind=XNULL;
 	sc_ref* sc=nd->first_child;
 	while (sc!=NULL)
@@ -484,7 +484,7 @@ static void sc_start(void *data, const char *el, const char **attr)
 	{
 		d_printf1("be"); fflush(stdout);
 	}*/
-	child->cl_hint++;
+	//child->cl_hint++;
 	curr_fo.back()++;
 	clear_text();
 	curr_fo.push_back(0);
@@ -497,7 +497,7 @@ static void sc_start(void *data, const char *el, const char **attr)
 		curr_fo.back()+=is_ns;
 		
 		schema_node* xsn=sc_parent->get_child(NULL,NULL,xml_namespace);
-		xsn->cl_hint+=is_ns;
+		//xsn->cl_hint+=is_ns;
 		is_ns=0;
 	}
 	schema_node* atts;
@@ -517,7 +517,7 @@ static void sc_start(void *data, const char *el, const char **attr)
 		atts=sc_parent->get_child(ns,local,attribute);
 		if (atts==NULL)atts=sc_parent->add_child(ns,local,attribute);
 		//statistics
-		atts->cl_hint++;
+		//atts->cl_hint++;
 		curr_fo.back()++;
 	}
 }
@@ -541,7 +541,7 @@ void sc_data(void *userData, const char *s, int len)
 		schema_node* xsn=sc_parent->get_child(NULL,NULL,text);
 		if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,text);
 		//statistics
-       		xsn->cl_hint++;
+       	//	xsn->cl_hint++;
 		curr_fo.back()++;
 		text_inserted=true;
 	}
@@ -598,7 +598,7 @@ void sc_comment (void *userData, const char *data)
 	schema_node* xsn=sc_parent->get_child(NULL,NULL,comment);
 	if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,comment);
 	//statistics
-	xsn->cl_hint++;
+	//xsn->cl_hint++;
 	curr_fo.back()++;
 	clear_text();
 }
@@ -626,7 +626,7 @@ void sc_cdata_start (void *userData)
 	schema_node* xsn=sc_parent->get_child(NULL,NULL,cdata);
 	if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,cdata);
 	//statistics
-	xsn->cl_hint++;
+	//xsn->cl_hint++;
 	curr_fo.back()++;
 	cdata_mode=true;
 }
@@ -665,7 +665,7 @@ void sc_pi (void *userData, const char *target, const char *data)
 	if (xsn==NULL)xsn=sc_parent->add_child(NULL,NULL,pr_ins);
 	clear_text();
 	//statistics
-	xsn->cl_hint++;
+	//xsn->cl_hint++;
 	curr_fo.back()++;
 }
 void dt_pi (void *userData, const char *target, const char *data)
@@ -752,7 +752,7 @@ void parse_schema(FILE* f)
 	curr_fo.clear();
 	curr_fo.push_back(0);
 	max_fo.clear();
-	sc_parent->cl_hint=1;
+	//sc_parent->cl_hint=1;
 	XML_Parser p = XML_ParserCreateNS(NULL,SEPARATOR);
     if (! p) throw USER_ENV_EXCEPTION("file_utils.cpp,549,Couldn't allocate memory for parser\n",true);
 	XML_SetReturnNSTriplet(p,1);

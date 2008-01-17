@@ -147,7 +147,7 @@ struct schema_node
 	/*stat end*/
 	struct doc_schema_node* root;
 	
-	int cl_hint;
+	//int cl_hint;
 	xptr ind_entry;//pointer to first free space in inderection entry
 	bool persistent;
 	//INDEX SUPPORT

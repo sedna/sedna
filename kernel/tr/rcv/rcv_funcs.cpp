@@ -137,8 +137,8 @@ try{
 
      if( (isUNDO && (op == LL_DELETE_ELEM || op == LL_INDIR_DELETE_ELEM)) || (!isUNDO && (op == LL_INSERT_ELEM || op == LL_INDIR_INSERT_ELEM)))
      {
-       if (op == LL_INDIR_INSERT_ELEM)
-          set_redo_hint(cl_hint, &indir_blocks);
+     //  if (op == LL_INDIR_INSERT_ELEM)
+     //     set_redo_hint(cl_hint, &indir_blocks);
 
 //       set_rollback_record(self);
 	   if (!isUNDO)
@@ -167,8 +167,8 @@ try{
      }
      else
      {
-       if ( op == LL_INDIR_DELETE_ELEM)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if ( op == LL_INDIR_DELETE_ELEM)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {
@@ -248,8 +248,8 @@ try{
      if ( (isUNDO && (op == LL_DELETE_ATTR || op == LL_INDIR_DELETE_ATTR)) || (!isUNDO && (op == LL_INSERT_ATTR || op == LL_INDIR_INSERT_ATTR))) 
      {
 
-       if (op == LL_INDIR_INSERT_ATTR)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_ATTR)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 //       set_rollback_record(self);
 	   if (!isUNDO)
@@ -280,8 +280,8 @@ try{
      }
      else
      {
-       if (op == LL_INDIR_DELETE_ATTR)
-          set_redo_hint(cl_hint, &indir_blocks);
+      // if (op == LL_INDIR_DELETE_ATTR)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {
@@ -350,8 +350,8 @@ try{
 
      if ((isUNDO && (op == LL_DELETE_TEXT || op == LL_INDIR_DELETE_TEXT)) || (!isUNDO && (op == LL_INSERT_TEXT || op == LL_INDIR_INSERT_TEXT)))
      {
-       if (op == LL_INDIR_INSERT_TEXT)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_TEXT)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 //       set_rollback_record(self);
 	   if (!isUNDO)
@@ -378,8 +378,8 @@ try{
      }
      else
      {
-       if (op == LL_INDIR_DELETE_TEXT)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_DELETE_TEXT)
+        //  set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {
@@ -485,8 +485,8 @@ try{
 
     if ((isUNDO && (op == LL_DELETE_DOC || op == LL_INDIR_DELETE_DOC)) || (!isUNDO && (op == LL_INSERT_DOC || op == LL_INDIR_INSERT_DOC)))
     {
-       if (op == LL_INDIR_INSERT_DOC)
-           set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_DOC)
+        //   set_redo_hint(cl_hint, &indir_blocks);
 
        if(strlen(collection) == 0)
 	   {
@@ -509,8 +509,8 @@ try{
     }   
     else
     {
-       if (op == LL_INDIR_DELETE_DOC)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_DELETE_DOC)
+        //  set_redo_hint(cl_hint, &indir_blocks);
 
        if(strlen(collection) == 0)
        {
@@ -578,8 +578,8 @@ try{
 
      if((isUNDO && (op == LL_DELETE_COMMENT || op == LL_INDIR_DELETE_COMMENT)) || (!isUNDO && (op == LL_INSERT_COMMENT || op == LL_INDIR_INSERT_COMMENT)))
      {
-       if (op == LL_INDIR_INSERT_COMMENT)
-           set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_COMMENT)
+        //   set_redo_hint(cl_hint, &indir_blocks);
 
 //       set_rollback_record(self);
 	   if (!isUNDO)
@@ -606,8 +606,8 @@ try{
      }
      else
      {
-       if (op == LL_INDIR_DELETE_COMMENT)
-          set_redo_hint(cl_hint, &indir_blocks);
+      // if (op == LL_INDIR_DELETE_COMMENT)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {
@@ -678,8 +678,8 @@ try{
 
      if ((isUNDO && (op == LL_DELETE_PI || op == LL_INDIR_DELETE_PI)) || (!isUNDO && (op == LL_INSERT_PI || op == LL_INDIR_INSERT_PI)))
      {
-       if (op == LL_INDIR_INSERT_PI)
-           set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_PI)
+       //    set_redo_hint(cl_hint, &indir_blocks);
 
 
 //       set_rollback_record(self);
@@ -710,8 +710,7 @@ try{
      else
      {
        if (op == LL_INDIR_DELETE_PI)
-//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+          set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {
@@ -763,15 +762,15 @@ try{
 
      if ((isUNDO && (op == LL_DELETE_COLLECTION || op == LL_INDIR_DELETE_COLLECTION)) || (!isUNDO && (op == LL_INSERT_COLLECTION || op == LL_INDIR_INSERT_COLLECTION)))
      {
-       if (op == LL_INDIR_INSERT_COLLECTION)
-           set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_COLLECTION)
+        //   set_redo_hint(cl_hint, &indir_blocks);
 
         insert_collection(name);
      }
      else
      {
-       if (op == LL_INDIR_DELETE_COLLECTION)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_DELETE_COLLECTION)
+        //  set_redo_hint(cl_hint, &indir_blocks);
 
         delete_collection(name);
      }
@@ -831,8 +830,8 @@ try{
      if((isUNDO && (op == LL_DELETE_NS || op == LL_INDIR_DELETE_NS) ) || (!isUNDO && (op == LL_INSERT_NS || op == LL_INDIR_INSERT_NS)))
      {
 
-       if (op == LL_INDIR_INSERT_NS)
-           set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_INSERT_NS)
+        //   set_redo_hint(cl_hint, &indir_blocks);
 
 //       set_rollback_record(self);
 	   if (!isUNDO)
@@ -859,8 +858,8 @@ try{
      }
      else
      {
-       if (op == LL_INDIR_DELETE_NS)
-          set_redo_hint(cl_hint, &indir_blocks);
+      // if (op == LL_INDIR_DELETE_NS)
+      //    set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {

@@ -1798,7 +1798,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 	//indirection record
 //	d_printf1("\nEL Node DELETE indir=");
 //	ind.print();
-	del_record_from_indirection_table(ind);
+	
 	CHECKP(nodex);
 	//nid
 	nid_delete(nodex);
@@ -1806,8 +1806,15 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 	CHECKP(nodex);
 	VMM_SIGNAL_MODIFICATION(nodex);
 	node_blk_hdr*  block=GETBLOCKBYNODE(nodex);
+	if (IS_DATA_BLOCK(nodex)) 
+	{
+		hl_phys_log_change(&block->count,sizeof(shft));
+	}
+	block->count=block->count-1;
 	if (node->desc_prev==0 && node->desc_next==0)
-		deleteBlock(block);
+	{	if (block->count+block->indir_count==0)
+			add_predeleted_block(ADDR2XPTR(block));
+	}
 	else
 	{
 		if (node->desc_prev==0) 
@@ -1838,17 +1845,19 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 				hl_phys_log_change(&(GETPOINTERTODESC(block,node->desc_next))->desc_prev,sizeof(shft));
 			(GETPOINTERTODESC(block,node->desc_next))->desc_prev=node->desc_prev;
 		}
-		//PHYS LOG
-		if (IS_DATA_BLOCK(nodex)) 
-		{
-			hl_phys_log_change(node,sizeof(shft));
-			hl_phys_log_change(&block->count,sizeof(shft));
-			hl_phys_log_change(&block->free_first,sizeof(shft));
-		}
-		*((shft*) node)=block->free_first;
-		block->free_first=CALCSHIFT(node,block);
-		block->count=block->count-1;
+
+	}	//PHYS LOG
+	if (IS_DATA_BLOCK(nodex)) 
+	{
+		hl_phys_log_change(node,sizeof(shft));
+		hl_phys_log_change(&block->free_first,sizeof(shft));
 	}
+	*((shft*) node)=block->free_first;
+	block->free_first=CALCSHIFT(node,block);
+	
+	
+	del_record_from_indirection_table(ind);
+	CHECKP(nodex);
 	if (IS_DATA_BLOCK(nodex)&& type!=document)
     {
 		up_concurrent_micro_ops_number();

@@ -38,7 +38,7 @@ void makeNewBlockConsistentAfterFilling(xptr block, xptr node,shft shift_size)
 		counter++;
 	}
 	tmp->desc_next=0;
-	block_hdr->count+=counter;
+	increment_count(block_hdr,counter);
 	block_hdr->desc_last=CALCSHIFT(tmp,block_hdr);
 }
 
@@ -102,11 +102,11 @@ void makeBlockConsistentAfterCuttingTheBeginning(node_blk_hdr *block,n_dsc* node
 	{
 		f_leaved->desc_prev=0;
 		block->desc_first=CALCSHIFT(f_leaved,block);   
-		block->count-=counter;
+		decrement_count(block,counter);
 	}
 	else
 	{
-		deleteBlock(block);
+		add_predeleted_block(ADDR2XPTR(block));
 		return;
 	}
 }
@@ -119,12 +119,12 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 	if (tmp!=((n_dsc*)(block))) 
 	{
 		tmp->desc_next=0;
-		block->desc_last=CALCSHIFT(tmp,block);   
-		block->count-=counter;
+		block->desc_last=CALCSHIFT(tmp,block); 
+		decrement_count(block,counter);		
 	}
 	else 
 	{
-		deleteBlock(block);
+		add_predeleted_block(ADDR2XPTR(block));
 		return;
 	}
 	tmp=node;
@@ -262,7 +262,7 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_prev))->desc_next),sizeof(shft));
 	}
 	block->desc_last=source->desc_prev;
-	block->count--;
+	decrement_count(block);	
 	(GETPOINTERTODESC(block,source->desc_prev))->desc_next=0;
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
@@ -277,7 +277,7 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 		else
 			hl_phys_log_change(&(new_block->desc_last),sizeof(shft));
 	}
-	new_block->count++;
+	increment_count(new_block);
 	if (new_block->count>1)
 		(GETPOINTERTODESC(new_block,new_block->desc_first))->desc_prev=new_block->free_first;
 	else
@@ -367,7 +367,7 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_next))->desc_prev),sizeof(shft));
 	}
 	block->desc_first=source->desc_next;
-	block->count--;
+	decrement_count(block);	
 	(GETPOINTERTODESC(block,source->desc_next))->desc_prev=0;
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
@@ -382,7 +382,7 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 		else
 			hl_phys_log_change(&(pr_blk->desc_first),sizeof(shft));		
 	}
-	pr_blk->count++;
+	increment_count(pr_blk);
 	if (pr_blk->count>1)
 		(GETPOINTERTODESC(pr_blk,pr_blk->desc_last))->desc_next=pr_blk->free_first;
 	else
@@ -514,7 +514,8 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
 	block->snode->blockcnt++;
 	//CHECKP(new_block);
 	if (persistent)
-	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
+		add_new_block(new_block);
+	//hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	return new_block;
 }
@@ -1334,7 +1335,8 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->snode->blockcnt++;
 	CHECKP(new_block);
 	if (persistent)
-	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
+		add_new_block(new_block);
+	//	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
 	return new_block;
@@ -1390,7 +1392,8 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	CHECKP(new_block);
 	new_block_hdr->snode->blockcnt++;
 	if (persistent)
-	hl_logical_log_block_creation(new_block,tmp->pblk,old_blk,	tmp->dsc_size);
+		add_new_block(new_block);
+	//	hl_logical_log_block_creation(new_block,tmp->pblk,old_blk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
 	return new_block;
@@ -2333,4 +2336,75 @@ void update_idx_delete_text (schema_node* scm,xptr node,const char* value, int s
 	}
 	delete [] z;
 }
+
+/*decrement count*/
+void decrement_count(node_blk_hdr* pr_blk,shft count)
+{
+	xptr blk=ADDR2XPTR(pr_blk);
+	
+	pr_blk->count-=count;
+
+	if (pr_blk->indir_count>=pr_blk->count&& 
+			(pr_blk->pblk_indir!=XNULL ||
+			pr_blk->nblk_indir!=XNULL ||
+			pr_blk->snode->bblk_indir==pr_blk->sm_vmm.p))
+		{
+			xptr l_bl=pr_blk->pblk_indir;
+			xptr r_bl=pr_blk->nblk_indir;
+			if (pr_blk->snode->bblk_indir==pr_blk->sm_vmm.p)
+				pr_blk->snode->bblk_indir=r_bl;
+			else
+			if (l_bl!=XNULL)
+			{
+				CHECKP(l_bl);
+				VMM_SIGNAL_MODIFICATION(l_bl);
+				node_blk_hdr * lbi=(GETBLOCKBYNODE(l_bl));
+				hl_phys_log_change(&(lbi->nblk_indir),sizeof(xptr));
+				lbi->nblk_indir=r_bl;
+			}
+			if (r_bl!=XNULL)
+			{
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=l_bl;
+			}
+			CHECKP(blk);
+			VMM_SIGNAL_MODIFICATION(blk);
+				
+		}
+}
+/* increment count*/
+void increment_count(node_blk_hdr* pr_blk,shft count)
+{
+	xptr blk=ADDR2XPTR(pr_blk);
+	
+	pr_blk->count+=count;
+
+	if (pr_blk->indir_count<pr_blk->count&& 
+			(pr_blk->pblk_indir==XNULL &&
+			pr_blk->nblk_indir==XNULL &&
+			pr_blk->snode->bblk_indir!=pr_blk->sm_vmm.p))
+		{
+			
+			hl_phys_log_change(&(pr_blk->nblk_indir),sizeof(xptr));
+			pr_blk->nblk_indir=pr_blk->snode->bblk_indir;
+			pr_blk->snode->bblk_indir=pr_blk->sm_vmm.p;
+			xptr r_bl=pr_blk->nblk_indir;
+			if (r_bl!=XNULL)
+			{
+				
+				CHECKP(r_bl);
+				VMM_SIGNAL_MODIFICATION(r_bl);
+				node_blk_hdr * rbi=(GETBLOCKBYNODE(r_bl));
+				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
+				rbi->pblk_indir=rbi->snode->bblk_indir;
+				CHECKP(blk);
+				VMM_SIGNAL_MODIFICATION(blk);
+			}
+			
+		}
+}
+
 
