@@ -179,7 +179,7 @@ int USemaphoreDown(USemaphore sem, sys_call_error_fun fun)
     //struct sembuf op_op[1] = {{0, -1, 0}};
     struct sembuf op_op[1];
     op_op[0].sem_num = 0;
-    op_op[0].sem_op = -1
+    op_op[0].sem_op = -1;
     op_op[0].sem_flg = 0;
 
 
@@ -225,7 +225,7 @@ int USemaphoreDownTimeout(USemaphore sem, unsigned int millisec, sys_call_error_
     //struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
     struct sembuf op_op[1];
     op_op[0].sem_num = 0;
-    op_op[0].sem_op = -1
+    op_op[0].sem_op = -1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
         
@@ -271,7 +271,7 @@ int USemaphoreUp(USemaphore sem, sys_call_error_fun fun)
 	//struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
     struct sembuf op_op[1];
     op_op[0].sem_num = 0;
-    op_op[0].sem_op = 1
+    op_op[0].sem_op = 1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
 	res = semop(sem, op_op, 1);	
@@ -541,7 +541,7 @@ int USemaphoreArrDown(USemaphoreArr sem, int i, sys_call_error_fun fun)
     //struct sembuf op_op[1] = {{0, -1, 0}};
     struct sembuf op_op[1];
     op_op[0].sem_num = i;
-    op_op[0].sem_op = -1
+    op_op[0].sem_op = -1;
     op_op[0].sem_flg = 0;
 
 
@@ -587,7 +587,7 @@ int USemaphoreArrDownTimeout(USemaphoreArr sem, int i, unsigned int millisec, sy
     //struct sembuf op_op[1] = {{0, -1, IPC_NOWAIT}};
     struct sembuf op_op[1];
     op_op[0].sem_num = i;
-    op_op[0].sem_op = -1
+    op_op[0].sem_op = -1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
         
@@ -635,7 +635,7 @@ int USemaphoreArrUp(USemaphoreArr sem, int i, sys_call_error_fun fun)
 	//struct sembuf op_op[1] = {{0, 1, IPC_NOWAIT}};
 	struct sembuf op_op[1];
     op_op[0].sem_num = i;
-    op_op[0].sem_op = 1
+    op_op[0].sem_op = 1;
     op_op[0].sem_flg = IPC_NOWAIT;
 
 	res = semop(sem, op_op, 1);
