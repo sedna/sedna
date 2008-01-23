@@ -106,7 +106,9 @@ void makeBlockConsistentAfterCuttingTheBeginning(node_blk_hdr *block,n_dsc* node
 	}
 	else
 	{
-		add_predeleted_block(ADDR2XPTR(block));
+		decrement_count(block,counter);
+		if (block->indir_count==0)
+			add_predeleted_block(ADDR2XPTR(block));
 		return;
 	}
 }
@@ -124,7 +126,9 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 	}
 	else 
 	{
-		add_predeleted_block(ADDR2XPTR(block));
+		decrement_count(block,counter);
+		if (block->indir_count==0)
+			add_predeleted_block(ADDR2XPTR(block));		
 		return;
 	}
 	tmp=node;
