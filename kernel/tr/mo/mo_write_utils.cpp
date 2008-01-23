@@ -1508,7 +1508,7 @@ shft desci=parent_block->free_first_indir;
 	while (descp+2*parent_block->dsc_size<desci-sizeof(xptr))
 	{
 		*((shft *)((char*)parent_block+descp)) = descp + parent_block->dsc_size;
-		//*((shft *)((char*)p+desci)) = desci - sizeof(xptr);
+		*((shft *)((char*)parent_block+desci)) = desci - sizeof(xptr);
 		descp+=parent_block->dsc_size;
 		desci-=sizeof(xptr);
 	}
