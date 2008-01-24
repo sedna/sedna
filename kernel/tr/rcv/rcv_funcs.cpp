@@ -31,6 +31,8 @@
 
 using namespace std;
 
+static map <xptr, xptr> indir_map; // mapping for redo indirection purposes
+
 int rcv_number_of_records =0;//for debug
 int rcv_number_of_text = 0;
 
@@ -50,8 +52,10 @@ void recover_db_by_logical_log(const LONG_LSN& last_cp_lsn)
 {
 #ifdef LOGICAL_LOG
  #ifdef SE_ENABLE_FTSEARCH
+//  DebugBreak();
   tr_llmgr->recover_db_by_logical_log(SednaIndexJob::recover_db,exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);  
 #else
+//  DebugBreak();
   tr_llmgr->recover_db_by_logical_log(exec_micro_op, switch_to_rollback_mode, vmm_rcv_add_to_indir_block_set,vmm_rcv_clear_indir_block_set, sync_indirection_table, last_cp_lsn,  MODE_UNDO, MODE_REDO, false);	
 #endif
   string str = string("recover+db_by_logical_log finished\n");
@@ -134,7 +138,16 @@ try{
        if (op == LL_INDIR_INSERT_ELEM)
           set_redo_hint(cl_hint, &indir_blocks);
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+	        set_rollback_record(self);
+	   	 
        insert_element(removeIndirection(left),
                       removeIndirection(right),
                       removeIndirection(parent),
@@ -142,13 +155,23 @@ try{
                       type,
                       (strlen(uri) != 0) ? uri: NULL,
                       (strlen(prefix) != 0) ? prefix: NULL);
+
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if ( op == LL_INDIR_DELETE_ELEM)
           set_redo_hint(cl_hint, &indir_blocks);
 
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        delete_node(removeIndirection(self));
+
+       if (!isUNDO) indir_map.erase(self);
      } 
   }
   else
@@ -220,7 +243,16 @@ try{
        if (op == LL_INDIR_INSERT_ATTR)
           set_redo_hint(cl_hint, &indir_blocks);
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+	       set_rollback_record(self);
+
        insert_attribute(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
@@ -230,13 +262,23 @@ try{
                         value_size,
                         (strlen(uri) != 0) ? uri : NULL,
                         (strlen(prefix) != 0) ? prefix: NULL);
+
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if (op == LL_INDIR_DELETE_ATTR)
           set_redo_hint(cl_hint, &indir_blocks);
 
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        delete_node(removeIndirection(self));
+
+       if (!isUNDO) indir_map.erase(self);
      }  
   }
   else
@@ -297,19 +339,37 @@ try{
        if (op == LL_INDIR_INSERT_TEXT)
           set_redo_hint(cl_hint, &indir_blocks);
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+		   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+           set_rollback_record(self);
+
        insert_text(removeIndirection(left),
                    removeIndirection(right),
                    removeIndirection(parent),
                    value,
                    value_size);
+
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if (op == LL_INDIR_DELETE_TEXT)
           set_redo_hint(cl_hint, &indir_blocks);
 
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        delete_node(removeIndirection(self));
+       if (!isUNDO) indir_map.erase(self);
      }
         
   }
@@ -334,6 +394,11 @@ try{
 
      if (   (isUNDO && (op == LL_DELETE_LEFT_TEXT || op == LL_DELETE_RIGHT_TEXT)) || (!isUNDO && (op == LL_INSERT_LEFT_TEXT || op == LL_INSERT_RIGHT_TEXT)))
      {//insert case
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
            appendTextValue(removeIndirection(self), value, value_size,text_mem);
        else
@@ -341,6 +406,11 @@ try{
      }
      else 
      {//delete case
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
           delete_text_tail(removeIndirection(self), value_size);
        else
@@ -398,13 +468,19 @@ try{
 
        if(strlen(collection) == 0)
 	   {
-          set_rollback_record(self);
+          if (isUNDO) set_rollback_record(self);
           insert_document(name);
+
+	      xptr self_res = get_last_indir();
+    	  if (self_res != self) indir_map[self] = self_res;
 	   }
        else
        {
-		  set_rollback_record(self);
+		  if (isUNDO) set_rollback_record(self);
           insert_document_in_collection(collection, name);    
+
+	      xptr self_res = get_last_indir();
+    	  if (self_res != self) indir_map[self] = self_res;
        }
     }   
     else
@@ -418,9 +494,9 @@ try{
        }
        else
           delete_document(collection, name);
-    }
-    
 
+       if (!isUNDO) indir_map.erase(self);
+    }
   }
   else
   if (op == LL_INSERT_COMMENT || op == LL_DELETE_COMMENT || op == LL_INDIR_INSERT_COMMENT || op == LL_INDIR_DELETE_COMMENT)
@@ -480,20 +556,36 @@ try{
        if (op == LL_INDIR_INSERT_COMMENT)
            set_redo_hint(cl_hint, &indir_blocks);
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+	       set_rollback_record(self);
+
        insert_comment(removeIndirection(left),
                       removeIndirection(right),
                       removeIndirection(parent),
                       value,
                       value_size);
 
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if (op == LL_INDIR_DELETE_COMMENT)
           set_redo_hint(cl_hint, &indir_blocks);
 
-       delete_node(removeIndirection(self));
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
+       if (!isUNDO) indir_map.erase(self);
      }
   }
   else
@@ -559,7 +651,16 @@ try{
            set_redo_hint(cl_hint, &indir_blocks);
 
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+	       set_rollback_record(self);
+
        insert_pi(removeIndirection(left),
                  removeIndirection(right),
                  removeIndirection(parent),
@@ -567,13 +668,23 @@ try{
                  target_size,
                  value+(target_size),
                 (total_size)-(target_size));
+
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if (op == LL_INDIR_DELETE_PI)
           set_redo_hint(cl_hint, &indir_blocks);
 
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        delete_node(removeIndirection(self));
+
+       if (!isUNDO) indir_map.erase(self);
      }
      
   }
@@ -685,20 +796,38 @@ try{
        if (op == LL_INDIR_INSERT_NS)
            set_redo_hint(cl_hint, &indir_blocks);
 
-       set_rollback_record(self);
+//       set_rollback_record(self);
+	   if (!isUNDO)
+	   {
+		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+	   }
+	   else
+	       set_rollback_record(self);
+
        insert_namespace(removeIndirection(left),
                         removeIndirection(right),
                         removeIndirection(parent),
                         uri,
                         prefix);
 
+       xptr self_res = get_last_indir();
+       if (self_res != self) indir_map[self] = self_res;
      }
      else
      {
        if (op == LL_INDIR_DELETE_NS)
           set_redo_hint(cl_hint, &indir_blocks);
 
+	   if (!isUNDO)
+	   {
+	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   }
+
        delete_node(removeIndirection(self));
+
+       if (!isUNDO) indir_map.erase(self);
      }
      
   }
