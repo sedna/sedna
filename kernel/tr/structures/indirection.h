@@ -61,6 +61,7 @@ extern int indir_node_count;
 extern bool delete_mode ;
 bool is_rolled_back();
 
+xptr get_last_indir();
 #endif
 
 

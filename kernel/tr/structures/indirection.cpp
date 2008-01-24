@@ -44,6 +44,9 @@ int indir_node_count=0;
 static bool indirection_session_initialized = false;
 static bool indirection_transaction_initialized = false;
 static bool indirection_statement_initialized = false;
+
+static xptr last_indir = XNULL;
+
 bool is_rolled_back()
 {
 	return rollback_mode != MODE_NORMAL;
@@ -224,7 +227,8 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 xptr add_record_to_data_indirection_table(xptr p)
 {
     
-	if (rollback_mode!=MODE_NORMAL)
+//	if (rollback_mode!=MODE_NORMAL)
+	if (rollback_mode == MODE_UNDO)
     {
         // This fragment of code can be thrown out because rollback_record
         // was not changed
@@ -277,6 +281,8 @@ xptr add_record_to_data_indirection_table(xptr p)
 	
     //USemaphoreUp(indirection_table_sem);
 	
+    last_indir = res;
+
     return res;
 }
 
@@ -577,3 +583,7 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 	}
 }
 
+xptr get_last_indir()
+{
+	return last_indir;
+}
