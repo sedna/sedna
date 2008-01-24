@@ -585,7 +585,6 @@ void temp_schema_node::delete_scheme_node()
 		sc1=sc->next_sibl;
 		sc->delete_scheme_node();
 		sc=sc1;
-		RECOVERY_CRASH;
 	}
 	scm_free(this,false);
 }
@@ -757,7 +756,6 @@ bool schema_node::is_ancestor_or_self (schema_node* node)
 	{
 		if (sc->snode->is_ancestor_or_self(node)) return true;
 		sc=sc->next;
-		RECOVERY_CRASH;
 	}
 	return false;
 }

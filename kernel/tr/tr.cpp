@@ -272,7 +272,9 @@ int main(int argc, char *argv[])
         StmntsArray *st = NULL;
         bool expect_another_transaction = true;
 		
+#ifdef RCV_TEST_CRASH
 		read_test_cfg(); // prepare recovery tester
+#endif
         /////////////////////////////////////////////////////////////////////////////////
         /// CYCLE BY TRANSACTIONS
         /////////////////////////////////////////////////////////////////////////////////

@@ -2,24 +2,35 @@
 #include "common/ipc_ops.h"
 #include "common/rcv_test.h"
 #include "common/errdbg/d_printf.h"
+#include "common/u/uhdd.h"
 
 #include <map>
 
-static std::map <std::string, int> fname_prob_table;
+static std::map <std::string, double> fname_prob_table;
 
 void rcv_test_crash_point(const char *func_name)
 {
-	std::map<std::string, int>::iterator it = fname_prob_table.find(std::string(func_name));
-	int prob;
+    UFile r_fh;
+
+	std::map<std::string, double>::iterator it = fname_prob_table.find(std::string(func_name));
+	double prob;
 
 	if (it == fname_prob_table.end()) return;
 
 	prob = it->second;
 
-    if (((rand() % 100) + 1) <= prob)
+    if (((double)rand() / (double)RAND_MAX) < prob)
     {
        elog(EL_ERROR, ("\nTr is crashed in %s due to recovery testing\n", func_name));
        d_printf2("\nTr is crashed in %s due to recovery testing\n", func_name);
+       
+       std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string("rcv_test_crash");
+
+       r_fh = uCreateFile(rcv_fname.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, NULL, NULL);
+       if (r_fh == U_INVALID_FD)
+       		fprintf(stderr, "Cannot create rcv_test_crash file\n");
+       uCloseFile(r_fh, NULL);
+
        _exit(1);
     }
 }
@@ -30,11 +41,11 @@ void startElement_rcv_cfg(void *cnt, const char *name, const char **atts)
 
 void endElement_rcv_cfg(void *cfg, const char *name)
 {
-  int prob = atoi(erase_ws(elem_content.c_str()).c_str());
+  double prob = atof(erase_ws(elem_content.c_str()).c_str());
   
-  if (prob < 0 || prob > 100)
+  if (prob < 0.0 || prob > 1.0)
   {
-  	d_printf2("ignoring parameter for %s since it's out of range [0;100]\n", name);
+  	d_printf2("ignoring parameter for %s since it's out of range [0;1]\n", name);
     return;
   }
 
@@ -71,10 +82,12 @@ void parse_test_cfg(std::string cfg_text)
 void read_test_cfg()
 {
   //find and parse rcv_test.xml
-  char rcv_test_cfg_file[U_MAX_PATH + 1];
-  char proc_buf[U_MAX_PATH + 1];
+//  char rcv_test_cfg_file[U_MAX_PATH + 1];
+//  char proc_buf[U_MAX_PATH + 1];
+  std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string("rcv_test.xml");
+  const char *rcv_test_cfg_file = rcv_fname.c_str();
 
-  uGetImageProcPath(proc_buf, __sys_call_error);
+/*  uGetImageProcPath(proc_buf, __sys_call_error);
   if (proc_buf[0] == '\0') 
       throw USER_EXCEPTION(SE4081);
 
@@ -86,7 +99,7 @@ void read_test_cfg()
   strcpy(rcv_test_file, proc_buf);
   strcat(rcv_test_cfg_file, "/rcv_test.xml");
 #endif
-
+*/
 
   FILE* fs;
   char buf[1024];
@@ -100,7 +113,7 @@ void read_test_cfg()
 
   if (fs != NULL)  
   {
-     d_printf1("rcv_test.xml exists in image directory\n");
+//     d_printf1("rcv_test.xml exists in image directory\n");
 
      while (true)
      {

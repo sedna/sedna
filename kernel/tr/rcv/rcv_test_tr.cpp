@@ -8,6 +8,7 @@
 #include "tr/structures/metadata.h"
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/PPBase.h"
+#include "tr/tr_globals.h"
 
 #include <map>
 
@@ -113,6 +114,7 @@ void checkTreeConsistency(xptr node)
 // end of hunk from PPTest.cpp
 
 static FILE *logfile = NULL;
+static bool isRcvOK = true;
 
 void test_document(char *name, xptr doc_dsc, bool is_throw)
 {
@@ -126,6 +128,7 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
        if (is_throw) throw;
        elog(EL_ERROR, ("Recovery failed on document: %s, error: %s\n", name, e.getMsg().c_str()));
        fprintf(logfile, "Recovery failed on document: %s, error: %s\n", name, e.getMsg().c_str());
+       isRcvOK = false;
     }
 }
 
@@ -149,6 +152,7 @@ void test_collection(char *name, col_schema_node *coll)
 		{
        		elog(EL_ERROR, ("Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.getMsg().c_str()));
        		fprintf(logfile, "Recovery failed on collection: %s, document: %s, error: %s\n", name, (char*)key.data(), e.getMsg().c_str());
+	       	isRcvOK = false;
     	}
 	} 
 	while(cursor.bt_next_key());
@@ -156,8 +160,13 @@ void test_collection(char *name, col_schema_node *coll)
 
 void test_db_after_rcv()
 {
-	logfile = fopen("test_rcv_result.log","at");
+	std::string rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files/rcv_test_result.log");
+	UFile r_fh;
 
+	logfile = fopen(rcv_fname.c_str(), "at");
+
+   	fprintf(logfile, "---------------------------------------------------------------------");
+	
 	metadata_sem_down();
 
 	pers_sset<sn_metadata_cell,unsigned short>::pers_sset_entry* mdc=metadata->rb_minimum(metadata->root);
@@ -180,4 +189,16 @@ void test_db_after_rcv()
    	metadata_sem_up();
 
    	fclose(logfile);
+
+   	rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files");
+
+   	if (isRcvOK)
+   		rcv_fname += std::string("/rcv_ok");
+   	else
+   		rcv_fname += std::string("/rcv_failed");
+
+    r_fh = uCreateFile(rcv_fname.c_str(), U_SHARE_READ | U_SHARE_WRITE, U_READ_WRITE, U_NO_BUFFERING, NULL, NULL);
+    if (r_fh == U_INVALID_FD)
+  		fprintf(stderr, "Cannot create rcv result file\n");
+    uCloseFile(r_fh, NULL);
 }
