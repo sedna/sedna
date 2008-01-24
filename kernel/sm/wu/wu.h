@@ -55,6 +55,8 @@ void WuGatherSnapshotsStatsExn(WuSnapshotStats *);
 
 bool WuTryAdvanceSnapshotsExn();
 
+void WuOnFlushBufferExn(xptr p);
+
 #define WU_DBG_DUMP_CLIENTS		1
 #define WU_DBG_DUMP_VERSIONS	2
 #define WU_DBG_DUMP_SNAPSHOTS	4
@@ -97,6 +99,8 @@ int WuOnUnregisterTransaction(int sid);
 int WuGatherSnapshotsStats(WuSnapshotStats *);
 
 int WuTryAdvanceSnapshots(int *bSuccess);
+
+int WuOnFlushBuffer(xptr p);
 
 #endif
 

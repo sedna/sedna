@@ -12,6 +12,7 @@
 #include "sm/llmgr/llmgr.h"
 #include "sm/sm_globals.h"
 #include "common/errdbg/d_printf.h"
+#include "sm/wu/wu.h"
 
 using namespace std;
 
@@ -196,7 +197,9 @@ void read_block(const xptr &p, ramoffs offs) throw (SednaException)
 
 void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (SednaException)
 {
-    vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
+#if 0
+	/* moved to flush_buffer */ 
+	vmm_sm_blk_hdr *blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
 
     blk->roffs = 0;
     blk->is_changed = false;
@@ -205,6 +208,7 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
 //        ll_phys_log_flush_blk(blk, sync_phys_log);
     if (IS_DATA_BLOCK(p)) 
 		ll_logical_log_flush_lsn(blk->lsn);
+#endif
 
     // write block
     __int64 dsk_offs = 0;
@@ -215,7 +219,7 @@ void write_block(const xptr &p, ramoffs offs, bool sync_phys_log = true) throw (
         throw SYSTEM_ENV_EXCEPTION("Cannot set file pointer");
 
     int number_of_bytes_written = 0;
-    int res = uWriteFile(file_handler, blk, PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
+    int res = uWriteFile(file_handler, OFFS2ADDR(offs), PAGE_SIZE, &number_of_bytes_written, __sys_call_error);
     if (res == 0 || number_of_bytes_written != PAGE_SIZE)
         throw SYSTEM_ENV_EXCEPTION("Cannot write block");
 }
@@ -310,30 +314,30 @@ xptr get_free_buffer(session_id sid, ramoffs /*out*/ *offs)
         //if (it == trs.end()) break; // successfully approved
     }
 
-    buffer_table.remove((*phys_xptrs)[*offs/PAGE_SIZE]);
-	flush_buffer(*offs,false);
+    flush_buffer(*offs,false);
+	buffer_table.remove((*phys_xptrs)[*offs/PAGE_SIZE]);
+	
 	(*phys_xptrs)[*offs/PAGE_SIZE]=XNULL;
 	
-#if 0
-    // store block to disk if it was changed
-    vmm_sm_blk_hdr *blk = NULL;
-    blk = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
-    if (IS_CHANGED(blk)) write_block(cur_p, *offs);
-#endif
-
     return cur_p;
 }
+
+bool find_block_in_buffers(const xptr &p,
+						   ramoffs *offs)
+{
+	int res = 0;
+	
+	res = buffer_table.find(p, *offs);
+	return (res == 0); // we have found the block in memory?
+}
+
 
 xptr put_block_to_buffer(session_id sid, 
                          const xptr &p, 
                          ramoffs /*out*/ *offs, 
                          bool read_block_from_disk)
 {
-    int res = 0;
-
-//d_printf1("put 1\n");
-    res = buffer_table.find(p, *offs);
-    if (res == 0) return xptr(); // we have found the block in memory
+    if (find_block_in_buffers(p, offs)) return xptr(); // we have found the block in memory
 	
 //d_printf1("put 2\n");
     // this block is not in memory
@@ -369,22 +373,29 @@ void flush_buffer(ramoffs offs, bool sync_phys_log)
 {
 	vmm_sm_blk_hdr *blk = NULL;
 	int ind = offs / PAGE_SIZE;
+	xptr physXptr;
 
     blk = (vmm_sm_blk_hdr*)OFFS2ADDR(offs);
 
     if (IS_CHANGED(blk)) 
 	{
-        write_block((*phys_xptrs)[ind], offs, sync_phys_log);
-		blk->is_changed=false;
+		physXptr = (*phys_xptrs)[ind];
+		if (IS_DATA_BLOCK(physXptr)) 
+		{
+			ll_logical_log_flush_lsn(blk->lsn);
+		}
+		WuOnFlushBufferExn(physXptr);
+        write_block(physXptr, offs, sync_phys_log);
+		blk->is_changed = false;
+		/*	TODO: it will introduce bugs if flushed a buffer which a transaction is modifying now,
+			anyway it will lead to unpredictable results even w/o is_changed issue */ 
 	}
 }
 
 void flush_buffers(bool sync_phys_log)
 {
+	vmm_sm_blk_hdr *blk = NULL;
     t_buffer_table::iterator it;
-    vmm_sm_blk_hdr *blk = NULL;
-
-    int ind; // index of offset in buffer
 
     //d_printf1("Flush buffers: starting...\n");
 
@@ -395,19 +406,15 @@ void flush_buffers(bool sync_phys_log)
         //d_printf2("record 		(offs = %d) xptr = ", (ramoffs)(*it));
         blk->p.print();
 
-        if (IS_CHANGED(blk)) 
-        {
-            //d_printf2("write record 	(offs = %d) xptr = ", (ramoffs)(*it));
-            blk->p.print();
-
-            ind = (ramoffs)(*it) / PAGE_SIZE;
-            write_block((*phys_xptrs)[ind], (ramoffs)(*it), sync_phys_log);
-        }
+		flush_buffer((ramoffs)(*it), sync_phys_log);
     }
 
     d_printf1("Flush buffers: complete\n");
 }
 
+/* TODO: 
+	rename to flush_buffers_on_checkpoint
+	flush only blocks from the pers snapshot */ 
 void flush_data_buffers()
 {
     t_buffer_table::iterator it;
@@ -423,18 +430,7 @@ void flush_data_buffers()
 
         if (IS_DATA_BLOCK(blk->p))
         {
-            d_printf2("record 		(offs = %d) xptr = ", (ramoffs)(*it));
-            blk->p.print();
-
-            if (IS_CHANGED(blk)) 
-            {
-                d_printf2("write record 	(offs = %d) xptr = ", (ramoffs)(*it));
-                blk->p.print();
-
-                ind = (ramoffs)(*it) / PAGE_SIZE;
-
-                write_block((*phys_xptrs)[ind], (ramoffs)(*it));
-            }
+			flush_buffer((ramoffs)(*it), false);
         }
     }
 

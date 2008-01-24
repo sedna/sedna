@@ -1,4 +1,4 @@
-/*
+ /*
  * File:  trmgr.cpp
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
@@ -161,16 +161,24 @@ U_THREAD_PROC (checkpoint_thread, arg)
 	    	
     		WuOnBeginCheckpointExn();
 
-		WuEnumerateVersionsParams params;
-    	WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+			RECOVERY_CRASH;
+			
+			WuEnumerateVersionsParams params;
+    		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
 
-	    flush_data_buffers();
-    	d_printf1("flush data buffers completed\n");
+			RECOVERY_CRASH;
 
-	    ll_logical_log_flush();
-    	d_printf1("flush logical log completed\n");
+			flush_data_buffers();
+    		d_printf1("flush data buffers completed\n");
 
-	    ll_truncate_logical_log();
+			RECOVERY_CRASH;
+        
+			ll_logical_log_flush();
+    		d_printf1("flush logical log completed\n");
+
+			RECOVERY_CRASH;
+
+			ll_truncate_logical_log();
 
     		WuOnCompleteCheckpointExn();
 		}

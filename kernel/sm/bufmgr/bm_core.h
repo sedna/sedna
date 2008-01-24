@@ -187,6 +187,8 @@ xptr put_block_to_buffer(session_id sid,
                          ramoffs /*out*/ *offs,
                          bool read_block_from_disk = true);
 
+bool find_block_in_buffers(const xptr &p,
+						   ramoffs *offs);
 
 void flush_buffer(ramoffs offs, bool sync_phys_log = true); // this function flushes block with a given offset from the buffer
 void flush_buffers(bool sync_phys_log = true);
