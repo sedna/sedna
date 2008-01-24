@@ -147,7 +147,9 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 	ft_indexdata->put(idc);
 	ft_index_sem_up();
     hl_logical_log_ft_index(object_path, it,(char *) index_title, doc_name,is_doc,idc->custom_tree,true);
-	up_concurrent_micro_ops_number();
+	
+	if (just_heap) up_concurrent_micro_ops_number(); // because here we don't modify ph
+	
 	// ALGORITHM: indexing data
 	//II. Execute abs path (object_path) on the desriptive schema
 	if (!just_heap)
@@ -167,6 +169,9 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 			}
 		}
 		
+		up_concurrent_micro_ops_number(); // added because we shoudn't modify ph outside of micro-op
+		
+		// ft_index recovery should take the responsibility here
 		SednaIndexJob sij(idc);
 		sij.create_index(&start_nodes);
 	}
