@@ -691,8 +691,9 @@ int main(int argc, char **argv)
             WuInitExn(0,0, ll_returnTimestampOfPersSnapshot());
             elog(EL_LOG, ("SM : Wu is initialized"));
 
+#ifdef RCV_TEST_CRASH
             read_test_cfg();
-
+#endif
             d_printf1("OK\n");
 
                             sm_blk_stat stat;
