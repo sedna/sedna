@@ -30,10 +30,11 @@ struct e_str_blk_hdr
 
 	static void init(void *p, const xptr pblk)
     { 
+        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
         ((e_str_blk_hdr*)p)->nblk = XNULL; 
 		((e_str_blk_hdr*)p)->pblk = pblk; 
         ((e_str_blk_hdr*)p)->cursor = sizeof(e_str_blk_hdr);
-        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
+//        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
     }
 };
 
