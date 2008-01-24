@@ -23,6 +23,13 @@
  * 				    
  */
 
+#if (_MSC_VER > 1000)
+#pragma once
+#endif
+
+#ifndef UHASH_MAP_H_INCLUDED
+#define UHASH_MAP_H_INCLUDED
+
 #ifdef _WIN32
 
 #include <hash_map>
@@ -67,3 +74,4 @@ namespace __sedna_U
 
 #endif
 
+#endif

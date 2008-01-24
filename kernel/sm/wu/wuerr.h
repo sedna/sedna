@@ -86,6 +86,10 @@
 #define WUERR_VERSIONS_UNSUPPORTED_FOR_THIS_BLOCK_TYPE                   (52 + WUERR_FIRST_ERR)
 #define WUERR_VERSIONS_DISABLED                                          (53 + WUERR_FIRST_ERR)
 
+/* manually added errors */ 
+
+#define WUERR_BLOCK_NOT_IN_BUFFERS                                       (54 + WUERR_FIRST_ERR)
+
 /* no more errors */ 
 
 int WuIsAppError(int error);

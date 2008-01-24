@@ -28,12 +28,17 @@ struct VeSetup
 
 	/*	Buffer functions */ 
 	int (*putBlockToBuffer) (XPTR xptr, int *bufferId);
+	int (*findBlockInBuffers) (XPTR xptr, int *bufferId);
 	int (*markBufferDirty) (int bufferId);
+	int (*flushBuffer) (int bufferId);
 	int (*grantExclusiveAccessToBuffer) (int bufferId);
 	int (*allocateBlock) (XPTR *xptr, int *bufferId);
 	int (*freeBlock) (XPTR xptr);
 	int (*allocateBlockAndCopyData) (XPTR *xptr, int *bufferId, int srcBufferId);
 	int (*locateVersionsHeader) (int bufferId, VersionsHeader **header);
+
+	/* Callbacks */ 
+	int (*onPersVersionRelocating) (LXPTR lxptr, XPTR oldVerXptr);
 };
 
 int VeInitialize();
@@ -66,6 +71,10 @@ int VeCreateBlockVersion(LXPTR lxptr, int *bufferId);
 int VeFreeBlock(LXPTR lxptr);
 
 int VeFreeBlockLowAndUpdateRestrictions(XPTR xptr);
+
+int VeOnFlushBuffer(XPTR xptr);
+
+int VeOnCheckpoint();
 
 void VeDbgDump(int flags);
 

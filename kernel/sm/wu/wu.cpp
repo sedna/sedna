@@ -148,6 +148,30 @@ int PutBlockToBuffer (XPTR xptr, int *bufferId)
 	return success;
 }
 
+static 
+int FindBlockInBuffers (XPTR xptr, int *bufferId)
+{
+	int success = 0;
+	ramoffs ofs = 0;
+	
+	assert(bufferId); *bufferId = -1;
+	try
+	{
+		if (find_block_in_buffers(WuExternaliseXptr(xptr), &ofs))
+		{
+			*bufferId = BufferIdFromRamoffs(ofs);
+			success = 1;
+		}
+		else
+		{
+			WuSetLastErrorMacro(WUERR_BLOCK_NOT_IN_BUFFERS);
+		}
+	}
+	WU_CATCH_EXCEPTIONS()
+
+	return success;
+}
+
 static
 int MarkBufferDirty(int bufferId)
 {
@@ -158,6 +182,23 @@ int MarkBufferDirty(int bufferId)
 		header->is_changed = true;
 		success = 1;
 	}
+	return success;
+}
+
+static
+int FlushBuffer(int bufferId)
+{
+	ramoffs offs = 0;
+	int success = 0;
+	
+	try
+	{
+		offs = RamoffsFromBufferId(bufferId);
+		flush_buffer(offs);
+		success = 1;
+	}
+	WU_CATCH_EXCEPTIONS()
+
 	return success;
 }
 
@@ -283,21 +324,6 @@ int LocateVersionsHeader(int bufferId, VersionsHeader **veHeader)
 }
 
 static
-int OnCompleteBlockRelocation(int clientId, LXPTR lxptr, XPTR xptr)
-{
-	int success=0;
-	WuVersionEntry versionEntry = {lxptr, xptr};
-	try
-	{
-		LONG_LSN lsn=ll_add_pers_snapshot_block_info(&versionEntry, INVALID_TIMESTAMP);
-		ll_logical_log_flush_lsn(lsn);	
-		success=1;
-	}
-	WU_CATCH_EXCEPTIONS()
-	return success;
-}
-
-static
 int OnDiscardSnapshot(TIMESTAMP snapshotTs)
 {
 	int success=0;
@@ -315,6 +341,28 @@ static
 int OnBeforeDiscardSnapshot(TIMESTAMP snapshotTs, int *bDenyDiscarding)
 {
 	return 1;
+}
+
+static
+int OnPersVersionRelocating(LXPTR lxptr, XPTR oldVerXptr)
+{
+	vmm_sm_blk_hdr *header = NULL;
+	TIMESTAMP oldVerTs = INVALID_TIMESTAMP;
+	WuVersionEntry versionEntry = {lxptr, oldVerXptr};
+	int success=0, bufferId=-1;
+
+	try
+	{			
+		if (FindBlockInBuffers(oldVerXptr, &bufferId) &&
+			LocateBlockHeader(bufferId, &header))
+		{
+			oldVerTs = header->versionsHeader.creatorTs[0];
+			header->lsn = ll_add_pers_snapshot_block_info(&versionEntry, oldVerTs);
+			success=1;
+		}
+	}
+	WU_CATCH_EXCEPTIONS()
+	return success;
 }
 
 /* public api */ 
@@ -368,6 +416,9 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	veSetup.locateVersionsHeader = LocateVersionsHeader;
 	veSetup.markBufferDirty = MarkBufferDirty;
 	veSetup.putBlockToBuffer = PutBlockToBuffer;
+	veSetup.findBlockInBuffers = FindBlockInBuffers;
+	veSetup.flushBuffer = FlushBuffer;
+	veSetup.onPersVersionRelocating = OnPersVersionRelocating;
 
 	snSetup.maxClientsCount = CHARISMA_MAX_TRNS_NUMBER;
 	snSetup.freeBlock = VeFreeBlockLowAndUpdateRestrictions;
@@ -448,7 +499,7 @@ int WuOnBeginCheckpoint()
 	TIMESTAMP ts = INVALID_TIMESTAMP;
 	if (uMutexLock(&gMutex,__sys_call_error)==0)
 	{
-		success = SnOnBeginCheckpoint(&ts);
+		success = SnOnBeginCheckpoint(&ts) && VeOnCheckpoint();
 		uMutexUnlock(&gMutex,__sys_call_error);
 	}
 	return success;
@@ -835,6 +886,21 @@ void WuDbgDump(int selector, int reserved)
 #endif
 }
 
+int WuOnFlushBuffer(xptr lilXptr)
+{
+	XPTR bigXptr = 0;
+	int success = 0;
+	
+	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	else
+	{
+		bigXptr = WuInternaliseXptr(lilXptr);
+		success = VeOnFlushBuffer(bigXptr);
+		uMutexUnlock(&gMutex, __sys_call_error);
+	}
+	return success;
+}
+
 /* public api, exn adapters */ 
 
 void WuInitExn(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
@@ -918,4 +984,9 @@ bool WuTryAdvanceSnapshotsExn()
 	int bSuccess = 0;
 	if (!WuTryAdvanceSnapshots(&bSuccess)) WuThrowException();
 	return bSuccess;
+}
+
+void WuOnFlushBufferExn(xptr p)
+{
+	if (!WuOnFlushBuffer(p)) WuThrowException();
 }

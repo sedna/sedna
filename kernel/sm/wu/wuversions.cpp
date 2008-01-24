@@ -41,7 +41,7 @@ struct VeRestriction
 
 typedef std::list<VeFunction> VeFunctionList;
 
-struct MyHash
+struct XptrHashFunc
 {
 	size_t operator() (XPTR xptr) const
 	{
@@ -49,7 +49,9 @@ struct MyHash
 	}
 };
 
-typedef U_HASH_MAP_W_CUSTOM_HASH_FN(XPTR, VeRestriction, MyHash) VeRestrictionHash;
+typedef U_HASH_MAP_W_CUSTOM_HASH_FN(XPTR, VeRestriction, XptrHashFunc) VeRestrictionHash;
+
+typedef U_HASH_MAP_W_CUSTOM_HASH_FN(XPTR, XPTR, XptrHashFunc) VeFlushingDependenciesHash;
 
 struct VeClientState
 {
@@ -63,6 +65,7 @@ struct VeClientState
 static int isInitialized = 0;
 static VeSetup setup = {};
 static VeRestrictionHash *restrictionHash = NULL;
+static VeFlushingDependenciesHash *flushingDependenciesHash = NULL;
 
 /* functions from other modules */ 
 static int ImpGetCurrentStateBlock (VeClientState **ptr)
@@ -97,6 +100,17 @@ static int ImpExpandDfvHeader (const TIMESTAMP tsIn[],
 							   size_t *szOut,
 							   TIMESTAMP *anchorTs)
 {
+	size_t szOutLocal = 0;
+	TIMESTAMP tsOutBuf[VE_VERSIONS_COUNT+2] = {};
+	int idOutBuf[VE_VERSIONS_COUNT+2] = {};
+
+	if (!szOut) szOut = &szOutLocal;
+	if (*szOut == 0 && tsOut == NULL && idOut == NULL)
+	{
+		*szOut = VE_VERSIONS_COUNT+2;
+		tsOut = tsOutBuf;
+		idOut = idOutBuf;
+	}
 	return SnExpandDfvHeader(tsIn, szIn, tsOut, idOut, szOut, anchorTs);
 }
 
@@ -115,6 +129,12 @@ static int ImpPutBlockToBuffer(XPTR xptr, int *bufferId)
 {
 	assert (setup.putBlockToBuffer);
 	return setup.putBlockToBuffer(xptr, bufferId);
+}
+
+static int ImpFindBlockInBuffers(XPTR xptr, int *bufferId)
+{
+	assert (setup.findBlockInBuffers);
+	return setup.findBlockInBuffers(xptr, bufferId);
 }
 
 static int ImpLocateHeader(int bufferId, VersionsHeader **header)
@@ -141,6 +161,12 @@ static int ImpMarkBufferDirty(int bufferId)
 	return setup.markBufferDirty(bufferId);
 }
 
+static int ImpFlushBuffer(int bufferId)
+{
+	assert (setup.flushBuffer);
+	return setup.flushBuffer(bufferId);
+}
+
 static int ImpAllocateBlockAndCopyData(XPTR *xptr, int *bufferId, int srcBuf)
 {
 	assert (setup.allocateBlockAndCopyData);
@@ -151,6 +177,12 @@ static int ImpGrantExclusiveAccessToBuffer(int bufferId)
 {
 	assert (setup.grantExclusiveAccessToBuffer);
 	return setup.grantExclusiveAccessToBuffer(bufferId);
+}
+
+static int ImpOnPersVersionRelocating(LXPTR lxptr, XPTR xptr)
+{
+	assert (setup.onPersVersionRelocating);
+	return setup.onPersVersionRelocating(lxptr, xptr);
 }
 
 /* utility functions */ 
@@ -303,6 +335,71 @@ int ValidateHeader(VersionsHeader *hdr)
 		while (i<VE_VERSIONS_COUNT && hdr->xptr[i]==0 && hdr->creatorTs[i]==INVALID_TIMESTAMP) ++i;
 		success = (i == VE_VERSIONS_COUNT);
 	}
+	return success;
+}
+
+static
+int ResetFlushingDependencies()
+{
+	assert (flushingDependenciesHash);
+	flushingDependenciesHash->clear();
+	return 1;
+}
+
+static
+int UpdateFlushingDependency(XPTR trigger, XPTR target)
+{
+	assert (flushingDependenciesHash);
+	if (target)
+	{
+		(*flushingDependenciesHash)[trigger] = target;
+	}
+	else
+	{
+		flushingDependenciesHash->erase(trigger);
+	}
+	return 1;
+}
+
+static
+int LookupFlushingDependency(XPTR trigger, XPTR *target)
+{
+	VeFlushingDependenciesHash::iterator iter;
+
+	assert (flushingDependenciesHash && target);
+	*target = 0;
+	iter = flushingDependenciesHash->find(trigger);
+	if (iter != flushingDependenciesHash->end()) *target = iter->second;
+
+	return 1;
+}
+
+static int OnFlushBuffer(XPTR xptr)
+{
+	int success = 0, bufferId=-1;
+	XPTR target = 0;
+	VersionsHeader *header = NULL;
+
+	if (!LookupFlushingDependency(xptr, &target)) { /* error */ }
+	else if (target)
+	{
+		/* we have a flushing dependency - fire it */ 
+		success = 
+			ImpFindBlockInBuffers(target, &bufferId) && 
+			ImpFlushBuffer(bufferId) && 
+			UpdateFlushingDependency(xptr, 0);
+	}
+	else
+	{
+		/* we don't have a flushing dependency but probably the block is part of another dependency */ 
+		if (ImpFindBlockInBuffers(xptr, &bufferId) && 
+			ImpLocateHeader(bufferId, &header) &&
+			LookupFlushingDependency(header->xptr[0], &target))
+		{
+			success = (target != xptr || UpdateFlushingDependency(header->xptr[0], 0));
+		}
+	}
+
 	return success;
 }
 
@@ -504,14 +601,37 @@ int OnCreateVersion(LXPTR lxptr,
 					int oldVerBufferId, 
 					int isOldVerPers)
 {
-	/* TODO: write log if isOldVerPers */ 
-	return 1;
+	int success = 0;
+	
+	if (isOldVerPers)
+	{
+		success = UpdateFlushingDependency(lxptr, oldVerXptr) && 
+				  ImpOnPersVersionRelocating(lxptr, oldVerXptr);
+	}
+	else success = 1;
+
+	return success;
 }
 
 int OnFreeBlock(LXPTR lxptr, TIMESTAMP *pAnchorTs)
 {
-	/* TODO: get anchorTs if block in buf, eject buf, try to optimize stuff */ 
-	return 1;
+	int success = 0, bufferId = -1;
+	VersionsHeader *header = NULL;
+
+	if (!ImpFindBlockInBuffers(lxptr, &bufferId))
+	{
+		/*	block not in buffers - unable to make an assumption when it is safe to
+			discard block, thus not changing pAnchorTs */ 
+		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS);
+	}
+	else
+	{
+		/*	we are going to update pAnchorTs */ 
+		success = ImpLocateHeader(bufferId, &header) &&
+				  ImpExpandDfvHeader(header->creatorTs, VE_VERSIONS_COUNT, NULL, NULL, NULL, pAnchorTs);
+	}
+
+	return success;
 }
 
 int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
@@ -592,6 +712,7 @@ int VeInitialize()
 void VeDeinitialize()
 {
 	restrictionHash = NULL;
+	flushingDependenciesHash = NULL;
 	isInitialized = 0;
 }
 
@@ -607,13 +728,14 @@ int VeStartup(VeSetup *psetup)
 	{
 		restrictionHash = new VeRestrictionHash;
 	}
+	flushingDependenciesHash = new VeFlushingDependenciesHash;
 	return 1;
 }
 
 int VeShutdown()
 {
-	delete restrictionHash;
-	restrictionHash = NULL;
+	delete restrictionHash; restrictionHash = NULL;
+	delete flushingDependenciesHash; flushingDependenciesHash = NULL;
 	return 1;
 }
 
@@ -982,6 +1104,16 @@ int VeOnTransactionEnd(int how, TIMESTAMP currentSnapshotTs)
 		if (success) state->isCompleted = 1;
 	}
 	return success;
+}
+
+int VeOnFlushBuffer(XPTR xptr)
+{
+	return OnFlushBuffer(xptr);
+}
+
+int VeOnCheckpoint()
+{
+	return ResetFlushingDependencies();
 }
 
 void VeDbgDump(int reserved)

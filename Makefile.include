@@ -1,6 +1,33 @@
+# DEAR TEAMMATES!
+# PLEASE DON'T CHANGE DEFAULT CONFIGURATION PARAMETERS IN THIS FILE.
+# 
+# We don't have dependencies in our makefiles that will trigger full
+# rebuild if configuration parameters are changed. After applying
+# a patch which changes the conf parameters we get a broken build
+# (since only part of sorce tree is rebuilt and existing object files
+# are reused, and these files were built with different settings).
+#
+# An extra file is introduced for your advantage - Makefile.localconf.
+# This is YOUR local config - if you aren't satisfied with default
+# configuration parameters and you're unwilling to tweak configuration
+# parameters via environment variables.
+#
+# Missing Makefile.localconf is NOT considered as error.
+#
+# PLEASE DON'T ADD Makefile.localconf TO VERSION CONTROL OR YOU WILL
+# DISTORT LOCAL CONFIG OF EACH OTHER.
+#
+# ZNV
+
+
+
 #
 # Common part for almost all Makefiles
 #
+
+ifeq ($(shell ls $(PP)/Makefile.localconf), $(PP)/Makefile.localconf)
+include $(PP)/Makefile.localconf
+endif
 
 # Configuration constants
 
@@ -64,7 +91,7 @@ endif
 # options: Enable dtsearch  - 1
 #          Disable dfsearch - 0
 ifndef ENABLE_DTSEARCH
-ENABLE_DTSEARCH = 1
+ENABLE_DTSEARCH = 0
 endif
 
 # options: triggers is on  - 1
