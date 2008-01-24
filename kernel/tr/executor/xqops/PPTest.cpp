@@ -250,7 +250,21 @@ void PPTest::checkTreeConsistency(xptr node)
 	n_dsc* node_d=(n_dsc*)XADDR(node);
 	t_nid nd=node_d->nid;
 	schema_node* scn=(GETBLOCKBYNODE(node))->snode;
+	node_blk_hdr* n_blk=GETBLOCKBYNODE(node);
 #ifdef DESC_CONSIST
+	if (node_d->desc_prev!=0)
+	{
+		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_prev );
+		if (pr_n->desc_next!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
+			throw XQUERY_EXCEPTION(SE2030);	  
+	}
+	if (node_d->desc_next!=0)
+	{
+		n_dsc* pr_n=(n_dsc*)((char*)n_blk + node_d->desc_next );
+		if (pr_n->desc_prev!=CALCSHIFT(node_d,n_blk) || pr_n==node_d)
+			throw XQUERY_EXCEPTION(SE2030);	  
+	}
+	
 	//1. indirection test
 	xptr indir=node_d->indir;
 	if (removeIndirection(indir)!=node)

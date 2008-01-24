@@ -771,7 +771,6 @@ void indirection_table_on_statement_end()
     }
 }
 
-
 // functions for rollback
 
 void switch_to_rollback_mode(int type)
@@ -818,14 +817,111 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 //new indirection
 void add_new_block(xptr block)
 {
-	created_blocks->insert(block);
+	if (IS_DATA_BLOCK(block)) {
+		created_blocks->insert(block);
+	}
 }
 void add_predeleted_block(xptr block)
 {
-	blocks_to_delete->insert(block);
+	if (IS_DATA_BLOCK(block)) {
+		blocks_to_delete->insert(block);
+	}
 }
 
-xptr get_last_indir()
+
+
+
+/*
+ *  Check indirection infrastructure to be consistent.
+ * 
+ *  For given schema node the function checks following invariants:
+ *
+ *   - occupied indirection record count equals to the number of 
+ *     occupied node descriptors
+ *
+ *   - count of occupied indirection records, stored in indirection quote blocks
+ *     is less than node descriptor count for that blocks
+ *
+ *   - count of occupied indirection records, stored in blocks, that are not 
+ *     indirection quote blocks, is greater than or equal to node descriptor 
+ *     count for that blocks
+ *
+ *   - check block list pointers and indirection quota block list pointers
+ *
+ *  If recourse parameter is set to true, recoursively repeat function for all
+ *  schema node children
+ *
+ */
+
+bool check_indirection_consistency_schema(schema_node * sn, bool recourse = false) 
 {
-	return last_indir;
+	xptr b, left_nb;
+	node_blk_hdr * nbh;
+	int node_desc_count, ind_rec_count;
+	sc_ref* sn_i;
+	
+	b = sn->bblk;
+	node_desc_count = 0;
+	ind_rec_count = 0;
+	while (b != XNULL) {
+		CHECKP(b);
+		nbh = ((node_blk_hdr *) XADDR(b));
+		
+		/* Count the total number of node descriptors and indirection records */
+	
+		node_desc_count += nbh->count;
+		ind_rec_count += nbh->indir_count;
+
+		/* If the block is in inirection quota list, check if it should really be
+		 * there. And if it's not there, check whether it really should not. */
+		
+		if (nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) {
+			if (nbh->count <= nbh->indir_count) 
+				throw USER_EXCEPTION2(SE2030, "Indirection quota block has overfull indirection table");
+		} else {
+			if (nbh->count > nbh->indir_count) 
+				throw USER_EXCEPTION2(SE2030, "Non-indirection quota block has underfull indirection table");
+		}
+		
+		b = nbh->nblk;
+	}
+
+  /* Check if the total number of node descriptors equals to the 
+	 * one of indirection records  */
+	
+	if (node_desc_count != ind_rec_count)
+		throw USER_EXCEPTION2(SE2030, "Total number of node descriptors and total number of indirection table records differ");
+	
+	b = sn->bblk_indir;
+	left_nb = XNULL;
+	while (b != XNULL) {
+		CHECKP(b);
+		nbh = ((node_blk_hdr *) XADDR(b));
+ 		
+    /* Check if quota block list pointer is ok and 
+		 * belongs to the right schema node */		
+
+		if (nbh->snode != sn)
+			throw USER_EXCEPTION2(SE2030, "Unexpected block in indirection quota chain");
+		
+		if (nbh->pblk_indir != left_nb)
+			throw USER_EXCEPTION2(SE2030, "Broken indirection quota chain");
+		
+		left_nb = b;
+
+		b = nbh->nblk_indir;
+	}
+	
+	if (recourse) {
+		sn_i = sn->first_child;
+		while (sn_i != NULL) {
+			if (!check_indirection_consistency_schema(sn_i->snode, true)) {
+				return false;
+			}
+			sn_i = sn_i->next;
+		}
+	}
+	
+	return true;
 }
+
