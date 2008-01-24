@@ -673,7 +673,7 @@ return debug_result; */
    // node.print();
    // rbd.print();
    // next_node.print();
-    fflush(stdout);
+   // fflush(stdout);
 	do {
 		/* omit getNextDescriptorOfSameSortXptr() call for the lbd node */
 		if (!first_iteration) 
