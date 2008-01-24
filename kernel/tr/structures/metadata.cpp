@@ -75,8 +75,11 @@ void delete_document(const char *document_name)
 	{
 	//	down_concurrent_micro_ops_number();
 		schema_node* snode=(mdc->obj)->snode;
-		free_metadata_cell(mdc);
+//      we cannot free mdc here becuse of: free mdc -> checkpoint before down_cmon -> crash. recovery is impossible.
+//		free_metadata_cell(mdc);
 		metadata_sem_up();
+		
+
 		//0. turn on delete mode for indirection
 		start_delete_mode((doc_schema_node*)snode);
 		schema_ind_cell* sci=((doc_schema_node*)snode)->sc_idx;
@@ -116,6 +119,11 @@ void delete_document(const char *document_name)
 		
 		
 		snode->delete_scheme_node();
+
+		metadata_sem_down();
+		free_metadata_cell(mdc);
+		metadata_sem_up();
+		
 		up_concurrent_micro_ops_number();
 		
 		//0. turn off delete mode for indirection
@@ -185,7 +193,7 @@ void delete_collection(const char *collection_name)
 		return;
 	}
 	col_schema_node* coll=(col_schema_node*)cdc->obj->snode;
-	free_metadata_cell(cdc);
+//	free_metadata_cell(cdc);
 	metadata_sem_up();
 	//0. turn on delete mode for indirection
 	start_delete_mode(coll);
@@ -266,6 +274,10 @@ void delete_collection(const char *collection_name)
 	
 	((schema_node*)coll)->delete_scheme_node();
 	hl_logical_log_collection(collection_name,false);
+	
+	metadata_sem_down();
+	free_metadata_cell(cdc);
+	metadata_sem_up();
 	//free_metadata_cell(cdc);
 	up_concurrent_micro_ops_number();
 	//3. turn off delete mode for indirection
