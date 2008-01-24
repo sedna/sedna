@@ -693,7 +693,7 @@ return debug_result; */
 #endif	
 		VMM_SIGNAL_MODIFICATION(next_node);
 		/* skip descriptors without pstr data except "node" descriptor */
-		if ((((t_dsc*)XADDR(next_node))->data == XNULL) && (next_node != node))
+		if (((((t_dsc*)XADDR(next_node))->data == XNULL) || (((t_dsc*)XADDR(next_node))->size > PSTRMAXSIZE)) && (next_node != node))
 			continue;
 		
 		/* if this is new descriptor */
