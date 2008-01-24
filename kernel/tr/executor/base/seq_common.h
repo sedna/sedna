@@ -15,9 +15,10 @@ struct seq_blk_hdr
 
 	static void init(void *p) 
     { 
+        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
         ((seq_blk_hdr*)p)->nblk = XNULL; 
         ((seq_blk_hdr*)p)->cursor = sizeof(seq_blk_hdr);
-        VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
+//	    VMM_SIGNAL_MODIFICATION(ADDR2XPTR(p));
     }
 };
 

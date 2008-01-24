@@ -265,13 +265,30 @@ schema_node *get_schema_node(counted_ptr<db_entity> db_ent, const char *err_deta
 	nested_updates_tracking(local_lock_mrg->get_cur_lock_mode(), root, db_ent->name);
 #endif
 
-
     switch (db_ent->type)
     {
         case dbe_document	: local_lock_mrg->put_lock_on_document  (db_ent->name); break;
         case dbe_collection	: local_lock_mrg->put_lock_on_collection(db_ent->name); break;
         default				: throw USER_EXCEPTION2(SE1003, err_details);
     }
+
+    // at this point doc/coll could have become deleted or replaced due to recovery
+    // so we must check its existence again and obtain proper root pointer
+    switch (db_ent->type)
+    {
+        case dbe_document	: root = find_document  (db_ent->name); break;
+        case dbe_collection	: root = find_collection(db_ent->name); break;
+        default				: throw USER_EXCEPTION2(SE1003, err_details);
+    }    
+
+    if (!root) 
+    {
+        if (db_ent->type == dbe_document)
+            throw XQUERY_EXCEPTION2(FODC0002, (std::string("Document '") + db_ent->name + "'").c_str());
+        else 
+            throw XQUERY_EXCEPTION2(FODC0004, (std::string("Collection '") + db_ent->name + "'").c_str());
+    }
+    // here we can be sure that doc/coll exists and is properly locked
 
     lock_mode cur_lock = local_lock_mrg->get_cur_lock_mode();
     local_lock_mrg->lock(lm_s);
