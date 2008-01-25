@@ -1,24 +1,7 @@
-# DEAR TEAMMATES!
 # PLEASE DON'T CHANGE DEFAULT CONFIGURATION PARAMETERS IN THIS FILE.
-# 
-# We don't have dependencies in our makefiles that will trigger full
-# rebuild if configuration parameters are changed. After applying
-# a patch which changes the conf parameters we get a broken build
-# (since only part of sorce tree is rebuilt and existing object files
-# are reused, and these files were built with different settings).
-#
-# An extra file is introduced for your advantage - Makefile.localconf.
-# This is YOUR local config - if you aren't satisfied with default
-# configuration parameters and you're unwilling to tweak configuration
-# parameters via environment variables.
-#
-# Missing Makefile.localconf is NOT considered as error.
-#
-# PLEASE DON'T ADD Makefile.localconf TO VERSION CONTROL OR YOU WILL
-# DISTORT LOCAL CONFIG OF EACH OTHER.
-#
-# ZNV
-
+# DEFAULT PARAMETERS ARE FETCHED FROM Makefile.localconf IF IT EXISTS.
+# CREATE THIS FILE, DO ***NOT*** ADD IT TO VERSION CONTROL AND SETUP 
+# PREFERED DEFAULT SETTINGS THERE.
 
 
 #
