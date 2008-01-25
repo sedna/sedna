@@ -117,7 +117,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 				*(xptr*)XADDR(last)=XNULL;
 				root->ind_free_space=last;
 			}
-			hl_logical_log_indirection( cl_size,NULL);
+//			hl_logical_log_indirection( cl_size,NULL);
 			return first+sizeof(xptr);
 		}
 		else
@@ -219,7 +219,7 @@ xptr create_new_cluster(int cl_size,doc_schema_node* root,schema_node* sch,std::
 	//redo.2 save log
 	if (blocks==NULL)
 	{
-		hl_logical_log_indirection( cl_size, blks);
+//		hl_logical_log_indirection( cl_size, blks);
 		delete blks;
 	}
 	return first;
