@@ -835,7 +835,7 @@ int ValidateRequestForGc(const SnRequestForGc *req)
 	{
 		/* must have valid lxptr either */ 
 	}
-	else if (!IsValidTimestamp(req->anchorTs) && 
+	else if (!IsValidTimestamp(req->anchorTs) && req->anchorTs!=INVALID_TIMESTAMP && 
 		(req->type == SN_REQUEST_ADD_NORMAL_VERSION || req->type == SN_REQUEST_ADD_BOGUS_VERSION))
 	{
 		/* must have valid anchor timestamp */ 
