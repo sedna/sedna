@@ -747,12 +747,14 @@ int main(int argc, char **argv)
         //shutdown checkpoint thread (it also makes checkpoint)
         shutdown_chekpoint_thread();
 
-        WuReleaseExn();
-        elog(EL_LOG, ("SM : Wu is released"));
+//        WuReleaseExn();
+//        elog(EL_LOG, ("SM : Wu is released"));
 
         // shutdown bm
         bm_shutdown();
 
+        WuReleaseExn();
+        elog(EL_LOG, ("SM : Wu is released"));
 
         //shutdown phys log
         ll_phys_log_shutdown();
@@ -897,7 +899,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
 
        WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
 //       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
-       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot()); // turn on versioning mechanism on recovery
+       WuInitExn(0,0,ll_returnTimestampOfPersSnapshot()); // turn on versioning mechanism on recovery
        elog(EL_LOG, ("SM : Wu is initialized"));
 
 //	   ll_set_phys_rec_flag(false);
@@ -923,13 +925,15 @@ void recover_database_by_physical_and_logical_log(int db_id)
        shutdown_chekpoint_thread();
        elog(EL_LOG, ("SM : shutdown checkpoint thread done"));
 
-       WuReleaseExn();
-       elog(EL_LOG, ("SM : Wu is released"));
+//       WuReleaseExn();
+//       elog(EL_LOG, ("SM : Wu is released"));
 
 	   // shutdown bm
        bm_shutdown();
        elog(EL_LOG, ("SM : bm_shutdown done"));
 
+       WuReleaseExn();
+       elog(EL_LOG, ("SM : Wu is released"));
        //shutdown phys log
 //       ll_phys_log_shutdown();
 //       elog(EL_LOG, ("SM : ll_phys_log_shutdown done"));

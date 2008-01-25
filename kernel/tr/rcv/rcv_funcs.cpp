@@ -25,13 +25,9 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/idx/indexes.h"
 
-#ifdef SE_ENABLE_TRIGGERS
-#include "tr/triggers/triggers_data.h"
-#endif
-
 using namespace std;
 
-static map <xptr, xptr> indir_map; // mapping for redo indirection purposes
+static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
 
 int rcv_number_of_records =0;//for debug
 int rcv_number_of_text = 0;
@@ -141,9 +137,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
 	        set_rollback_record(self);
@@ -157,7 +156,8 @@ try{
                       (strlen(prefix) != 0) ? prefix: NULL);
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
@@ -166,12 +166,14 @@ try{
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      } 
   }
   else
@@ -246,9 +248,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
 	       set_rollback_record(self);
@@ -264,7 +269,8 @@ try{
                         (strlen(prefix) != 0) ? prefix: NULL);
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
@@ -273,12 +279,14 @@ try{
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      }  
   }
   else
@@ -342,9 +350,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-		   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
            set_rollback_record(self);
@@ -356,7 +367,8 @@ try{
                    value_size);
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
@@ -365,11 +377,13 @@ try{
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        delete_node(removeIndirection(self));
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      }
         
   }
@@ -396,7 +410,8 @@ try{
      {//insert case
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//		   if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+		   indir_map.find(self, self);
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
@@ -408,7 +423,8 @@ try{
      {//delete case
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        if (op == LL_INSERT_RIGHT_TEXT || op == LL_DELETE_RIGHT_TEXT)
@@ -472,7 +488,8 @@ try{
           insert_document(name);
 
 	      xptr self_res = get_last_indir();
-    	  if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+	      if (self_res != self) indir_map.insert(self, self_res);
 	   }
        else
        {
@@ -480,7 +497,8 @@ try{
           insert_document_in_collection(collection, name);    
 
 	      xptr self_res = get_last_indir();
-    	  if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+	      if (self_res != self) indir_map.insert(self, self_res);
        }
     }   
     else
@@ -495,7 +513,8 @@ try{
        else
           delete_document(collection, name);
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
     }
   }
   else
@@ -559,9 +578,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
 	       set_rollback_record(self);
@@ -573,7 +595,8 @@ try{
                       value_size);
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
@@ -582,10 +605,12 @@ try{
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      }
   }
   else
@@ -654,9 +679,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
 	       set_rollback_record(self);
@@ -670,21 +698,25 @@ try{
                 (total_size)-(target_size));
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
        if (op == LL_INDIR_DELETE_PI)
-          set_redo_hint(cl_hint, &indir_blocks);
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      }
      
   }
@@ -799,9 +831,12 @@ try{
 //       set_rollback_record(self);
 	   if (!isUNDO)
 	   {
-		   if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
-		   if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
-	   	   if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+//	   		if (indir_map.find(left) != indir_map.end()) left = indir_map[left];
+//	   		if (indir_map.find(right) != indir_map.end()) right = indir_map[right];
+//	   		if (indir_map.find(parent) != indir_map.end()) parent = indir_map[parent];
+            indir_map.find(left, left);
+            indir_map.find(right, right);
+            indir_map.find(parent, parent);
 	   }
 	   else
 	       set_rollback_record(self);
@@ -813,7 +848,8 @@ try{
                         prefix);
 
        xptr self_res = get_last_indir();
-       if (self_res != self) indir_map[self] = self_res;
+//       if (self_res != self) indir_map[self] = self_res;
+       if (self_res != self) indir_map.insert(self, self_res);
      }
      else
      {
@@ -822,12 +858,14 @@ try{
 
 	   if (!isUNDO)
 	   {
-	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+//	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
+	   		indir_map.find(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
-       if (!isUNDO) indir_map.erase(self);
+//       if (!isUNDO) indir_map.erase(self);
+       if (!isUNDO) indir_map.remove(self);
      }
      
   }
