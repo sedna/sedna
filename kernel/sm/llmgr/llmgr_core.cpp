@@ -1747,6 +1747,105 @@ void llmgr_core::writeSharedMemory(const void* rec_addr, int rec_len)
                    Flush functions
 ******************************************************************************/
 
+// this funtion flushes all remaining records on disk
+// !!! transaction-owned records should be flushed using ll_log_flush functions !!!
+void llmgr_core::ll_log_flush_all_last_records(bool sync)
+{
+  RECOVERY_CRASH;
+
+  //d_printf1("flushing of logical log started\n");
+  ll_log_lock(sync);
+ 
+
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+  char* mem_beg = (char*)shared_mem;
+
+  int rmndr_len;
+
+  // all records have been flushed
+  if (mem_head->begin_not_drbl_offs == mem_head->end_offs)
+  {
+	  ll_log_unlock(sync);
+	  return;
+  }
+  	
+  //compute number of bytes to be flushed 
+  if (mem_head->begin_not_drbl_offs <= mem_head->end_offs)
+     rmndr_len = mem_head->end_offs - mem_head->begin_not_drbl_offs;
+  else
+     rmndr_len = mem_head->size - sizeof(logical_log_sh_mem_head) - 
+                 (mem_head->begin_not_drbl_offs - mem_head->end_offs);
+  
+  // records are written in logical log in nonatomic manner (first header, then the record itself)
+  // here, we can have a situation when we've got only header to flush
+  // in this case we must leave it there
+  if (rmndr_len == sizeof(logical_log_head))
+  {
+	  ll_log_unlock(sync);
+	  return;
+  }
+  
+  int res;
+  int bytes_to_flush = rmndr_len;
+  int offs = mem_head->begin_not_drbl_offs;
+  int to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
+                      rmndr_len,
+                      mem_head->size - offs);
+  int written, i;
+
+  //set file pointer to the end  
+  set_file_pointer(mem_head->next_durable_lsn);
+
+
+  //d_printf2("need to write bytes=%d\n", rmndr_len);
+  //flush needed records;
+  while (rmndr_len > 0)
+  {
+     res = uWriteFile(ll_curr_file_dsc,
+                      (char*)shared_mem + offs,
+                      to_write,
+                      &written,
+                      __sys_call_error
+                    );
+
+     U_ASSERT(res != 0 && to_write == written);
+     if (res == 0 || to_write != written)
+       throw SYSTEM_EXCEPTION("Can't write to logical log");
+
+     if ( (offs + to_write) > mem_head->size)
+        throw SYSTEM_EXCEPTION("Internal Error in Logical Log");
+
+
+     if(( offs + to_write) == mem_head->size) 
+        offs =  sizeof(logical_log_sh_mem_head);
+     else
+        offs += to_write;
+
+     rmndr_len-= to_write;
+     to_write = min3(LOGICAL_LOG_FLUSH_PORTION,
+                     rmndr_len,
+                     mem_head->size - offs);
+     
+  }
+
+  //change sh memory header
+  if ((mem_head->size - mem_head->begin_not_drbl_offs) > bytes_to_flush )
+    mem_head->begin_not_drbl_offs += bytes_to_flush;
+  else
+    mem_head->begin_not_drbl_offs = sizeof(logical_log_sh_mem_head) +
+                                    bytes_to_flush - 
+                                    (mem_head->size - mem_head->begin_not_drbl_offs);
+
+  mem_head->free_bytes += bytes_to_flush;
+  mem_head->keep_bytes -= bytes_to_flush;
+
+  mem_head->next_durable_lsn += bytes_to_flush;
+
+  ll_log_unlock(sync);
+
+  //d_printf1("flush of logical log finished\n");
+}
+
 void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 {
   RECOVERY_CRASH;
@@ -2009,6 +2108,16 @@ void llmgr_core::ll_log_flush(bool sync)
       mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
 	  RECOVERY_CRASH;
   }
+
+  //there was a bug here, because we could get buffer filled with rogue rollback records
+  //the above logic doesn't flush this records since corresponding transactions are not in t_tbl anymore
+  //another possible bug: flushing only transaction-owned records might be not enough to free the needed space
+  //fixed: implemented "true" flushing function, which flushes all last independent records also
+  ll_log_flush_all_last_records(false); // flush all last records (not transaction-owned)
+
+  RECOVERY_CRASH;
+
+  flush_file_head(false); // flush file header
 
   ll_log_unlock(sync);
 }
@@ -2733,7 +2842,9 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-	if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+	if (rmndr == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
     else if (rmndr == 0)
       lsn += sizeof(logical_log_file_head);

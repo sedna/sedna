@@ -230,6 +230,14 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    d_printf1("Setting transaction mode for local lock manager...");
    set_tr_mode_lock_mgr(is_ro_mode);
    d_printf1("OK\n");
+
+   is_ft_disabled = is_ro_mode;
+
+#ifdef SE_ENABLE_TRIGGERS
+   d_printf1("Triggers on transaction begin...");
+   triggers_on_transaction_begin(rcv_active);
+   d_printf1("OK\n");
+#endif
 }
 
 // is_commit defines mode: 
@@ -238,6 +246,25 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
 void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
 {
    clear_authmap();
+
+   sm_msg_struct msg;
+        
+/*   if (!rcv_active || (rcv_active && is_commit))
+   {
+       msg.cmd = 38; // transaction commit/rollback
+       msg.trid = trid; 
+       msg.sid = sid;
+       msg.data.data[0] = !is_commit;
+
+       if (sm_server->send_msg(&msg) != 0)
+           throw USER_EXCEPTION(SE1034);
+   }
+*/
+#ifdef SE_ENABLE_TRIGGERS
+   d_printf1("Triggers on transaction end...");
+   triggers_on_transaction_end(is_commit);
+   d_printf1("OK\n");
+#endif
 
    d_printf1("\nReleasing logical log...");
    hl_logical_log_on_transaction_end(is_commit, rcv_active);

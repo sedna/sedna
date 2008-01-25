@@ -571,3 +571,55 @@ std::vector< std::pair< std::pair<xml_ns*,char*>,ft_index_type> >* ft_rebuild_cu
     return NULL;
 }
 #endif
+    
+#ifdef SE_ENABLE_TRIGGERS
+void hl_logical_log_trigger(trigger_time tr_time, trigger_event tr_event, PathExpr *trigger_path, trigger_granularity tr_gran, trigger_action_cell* trac, inserting_node insnode, PathExpr *path_to_parent, const char* trigger_title, const char* doc_name, bool is_doc, bool inserted)
+{
+#ifdef LOGICAL_LOG
+  if (!enable_log) return;
+  number_of_records++;
+  
+  std::ostringstream tr_path(std::ios::out | std::ios::binary);
+  if (trigger_path) 
+  	PathExpr2lr(trigger_path, tr_path);
+
+  std::ostringstream path_to_par(std::ios::out | std::ios::binary);
+  if (path_to_parent) 
+  	PathExpr2lr(path_to_parent, path_to_par);
+  
+  int trac_len = 0;
+
+  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
+      trac_len += strlen(tr_act->statement) + 1 + sizeof(int);
+
+  char *tr_action_buf = new char[trac_len];
+  int tr_action_buf_size = 0;
+  int str_len = 0;
+
+  for (trigger_action_cell *tr_act = trac; tr_act != NULL; tr_act = tr_act->next)
+  {
+      str_len = strlen(tr_act->statement);
+
+      U_ASSERT(tr_action_buf_size + str_len + 1 + sizeof(int) <= trac_len);
+      
+      if (str_len)
+      {
+          memcpy(tr_action_buf + tr_action_buf_size, tr_act->statement, str_len + 1);
+          tr_action_buf_size += str_len + 1;
+      }
+      else
+      {
+          tr_action_buf[tr_action_buf_size] = '\x0';
+          tr_action_buf_size++;
+      }
+      memcpy(tr_action_buf + tr_action_buf_size, &(tr_act->cxt_size), sizeof(int));
+      tr_action_buf_size += sizeof(int);
+  }
+  
+  tr_llmgr->ll_log_trigger(trid, tr_time, tr_event,  tr_path.str().c_str(), tr_gran, tr_action_buf, tr_action_buf_size, 
+  	  insnode.name, insnode.type, path_to_par.str().c_str(), trigger_title, doc_name, is_doc, inserted, true);
+
+  delete[] tr_action_buf;
+#endif
+}
+#endif

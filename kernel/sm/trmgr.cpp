@@ -41,7 +41,13 @@ USemaphore concurrent_trns_sem;
 USemaphore wait_for_recovery;
 
 UTHANDLE  checkpoint_thread_dsc;
-bool shutdown_checkpoint_thread = false;
+
+volatile bool shutdown_checkpoint_thread = false;
+volatile bool shutdown_event_call = false;
+volatile bool is_recovery_mode = false;
+
+UEvent start_checkpoint_snapshot; // this event signals the need for checkpoint/snapshot advancement
+UEvent end_of_rotr_event; // this event signals 
 
 /* global variables for transaction ids table */
 USemaphore trn_table_ids_sync_sem;
@@ -323,8 +329,17 @@ U_THREAD_PROC (checkpoint_thread, arg)
 //    ll_logical_log_flush();
     d_printf1("flush logical log completed\n");
 
-    ll_logical_log_flush_last_record();
+    // there was a bug in the next function since last record is not exactly checkpoint one
+    // fixed: all flush logic is now encapsulated in ll_logical_log_flush
+//    ll_logical_log_flush_last_record();
     d_printf1("checkpoint record has been flushed\n");
+//    ll_log_flush_last_records(); // flush checkpoint records
+
+//    ll_flush_file_head();
+
+//    ll_delete_prev_ph_file(prev_ph_counter);
+//    ll_logical_log_flush_last_record();
+//    d_printf1("checkpoint record has been flushed\n");
 
     //clear physical log
 //    ll_phys_log_clear(cp_lsn);

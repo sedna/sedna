@@ -25,6 +25,12 @@
 #include "tr/executor/base/XPath.h"
 #include "tr/idx/indexes.h"
 
+#ifdef SE_ENABLE_TRIGGERS
+#include "tr/triggers/triggers_data.h"
+#endif
+
+#include "common/XptrHash.h"
+
 using namespace std;
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
