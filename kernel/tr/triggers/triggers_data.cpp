@@ -152,24 +152,30 @@ trigger_cell* trigger_cell::create_trigger (enum trigger_time tr_time, enum trig
     }
     else
     {
-		if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
-        {
-            trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
-            trac->cxt_size = atoi(action->at(i).internal.str+35);
-// FIXME cxt_size for trigger statements must be extracted in scheme part
-//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
-        }
-        else  //this is update
-        {
-            trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
-            strcpy(trac->statement,action->at(i).internal.str);
-        }
-        if(i==action->size()-1)
-            trac->next = NULL;
-        else
-            trac->next = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
-        trac = trac->next;
+    	trc->trigger_action = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
+    	trigger_action_cell* trac = trc->trigger_action;
+    	for(int i = 0; i < action->size(); i++)
+    	{
+			if(strstr(action->at(i).internal.str, "PPQueryRoot") != NULL) // this is a query
+        	{
+            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
+            	strncpy(trac->statement,action->at(i).internal.str+37, strlen(action->at(i).internal.str)-2);
+            	trac->cxt_size = atoi(action->at(i).internal.str+35);
+	// FIXME cxt_size for trigger statements must be extracted in scheme part
+	//            trac->cxt_size = atoi(action->at(i+1).internal.num); 
+        	}
+        	else  //this is update
+        	{
+            	trac->statement = (char*)scm_malloc(strlen(action->at(i).internal.str)+1,true);
+            	strcpy(trac->statement,action->at(i).internal.str);
+        	}
+        	if(i==action->size()-1)
+            	trac->next = NULL;
+        	else
+            	trac->next = (trigger_action_cell*)scm_malloc(sizeof(trigger_action_cell),true);
+        	trac = trac->next;
+			RECOVERY_CRASH;
+    	}
     }
     // if the trigger is on before insert and statement level
     if((trc->trigger_event == TRIGGER_INSERT_EVENT) &&

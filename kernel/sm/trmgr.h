@@ -47,7 +47,7 @@ extern USemaphore checkpoint_finished;
 extern UEvent start_checkpoint_snapshot;
 extern UEvent end_of_rotr_event;
 
-extern bool is_recovery_mode;
+volatile extern bool is_recovery_mode;
 
 int PhOnInitialSnapshotCreate(TIMESTAMP ts);
 int PhOnSnapshotCreate(TIMESTAMP ts);

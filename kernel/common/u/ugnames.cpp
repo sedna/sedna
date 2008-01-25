@@ -173,10 +173,12 @@ void ParseGlobalName(GlobalNameComponents *components,
 
 static
 const char *StrNameFromGlobalName(const char *globalName,
+								  size_t limit,
 								  const char *prefix,
 								  char *buf,
 								  size_t bufSize)
 {
+	char bufjr[16];
 	const char * atptr = NULL;
 	size_t partSz = 0, stored = 0;
 	GlobalNameComponents components = {NULL};
@@ -193,6 +195,13 @@ const char *StrNameFromGlobalName(const char *globalName,
 		stored = snprintf(buf, bufSize, "%s%.*s", prefix, partSz, components.strNameBegin);
 		if (stored<0 || stored>=bufSize)
 			ThrowSystemException("StrNameFromGlobalName: buffer too small");
+		if (limit>0 && stored>limit)
+		{
+			stored = snprintf(bufjr, sizeof bufjr, "~%d", components.ordinal);
+			if (stored<0 || stored>=sizeof bufjr) ThrowSystemException("StrNameFromGlobalName: internal error");
+			if (stored>limit) ThrowSystemException("StrNameFromGlobalName: impossible limit");
+			strcpy(buf+limit-stored, bufjr);
+		}			
 	}
 	return buf;
 }
@@ -201,14 +210,22 @@ const char *UWinIPCNameFromGlobalName(const char *globalName,
 									  char *buf,
 									  size_t bufSize)
 {
-	return StrNameFromGlobalName(globalName, "", buf, bufSize);
+	return StrNameFromGlobalName(globalName, 0, "", buf, bufSize);
 }
 
 const char *UPosixIPCNameFromGlobalName(const char *globalName,
 										char *buf,
 										size_t bufSize)
 {
-	return StrNameFromGlobalName(globalName, "/", buf, bufSize);
+	const char *prefix = "/";
+	size_t limit = 0;
+
+#if (defined(FreeBSD) || defined(DARWIN))
+	prefix = "/tmp/";
+	limit = 32;
+#endif
+
+	return StrNameFromGlobalName(globalName, limit, prefix, buf, bufSize);
 }
 
 int USys5IPCKeyFromGlobalName(const char *globalName)

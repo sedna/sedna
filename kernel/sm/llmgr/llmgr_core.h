@@ -84,7 +84,14 @@ enum {LL_INSERT_ELEM,
       LL_INSERT_DOC_FTS_INDEX,
       LL_DELETE_DOC_FTS_INDEX,
       LL_INSERT_COL_FTS_INDEX,
-      LL_DELETE_COL_FTS_INDEX
+      LL_DELETE_COL_FTS_INDEX,
+      LL_FREE_BLOCKS,       // info about free blocks
+      LL_PERS_SNAPSHOT_ADD, // additional info about persistent snapshot
+      LL_DECREASE,          // decrease_info from physical log
+      LL_INSERT_DOC_TRG,
+      LL_DELETE_DOC_TRG,
+      LL_INSERT_COL_TRG,
+      LL_DELETE_COL_TRG,
      };
 
 enum transaction_mode {NORMAL_MODE, ROLLBACK_MODE};
@@ -219,6 +226,11 @@ protected:
   bool rollback_active;//used only from transaction (not used from sm)
   bool recovery_active;//used only from rcv_db process and if recovery_active == true the recovery process must not write to phys log
 
+  bool checkpoint_active; // true if checkpoint record was added to buffer; used to flush next_lsn
+
+//  __int64 last_checkpoint_ph_counter;
+//  __int64 ph_file_counter; // counter for the ph files
+
   char* indir_rec;//pointer to indirection log record; it must be appended to the next micro op log record and set to NULL
   int indir_rec_len;
   int indir_rec_buf_size;
@@ -286,7 +298,6 @@ public:
   void ll_log_flush_all_last_records(bool sync);
   void ll_log_flush(bool sync);
   void ll_log_flush(transaction_id trid, bool sync);
-  void ll_log_flush_all_last_records(bool sync);
   void ll_log_flush_last_record(bool sync);
   void ll_truncate_log(bool sync);
 
