@@ -495,7 +495,7 @@ int main(int argc, char **argv)
              d_printf1("bm_startup call successful\n");
 
              WuSetTimestamp(0x10000);
-             WuInitExn(0,0, 0x10000);
+//             WuInitExn(0,0, 0x10000);
 
              extend_data_file(data_file_initial_size);
              d_printf1("extend_data_file call successful\n");
@@ -507,8 +507,8 @@ int main(int argc, char **argv)
              bm_shutdown();
              d_printf1("bm_shutdown call successful\n");
 
-		     WuReleaseExn();
-       		 elog(EL_LOG, ("cdb : Wu is released"));
+//		     WuReleaseExn();
+//       		 elog(EL_LOG, ("cdb : Wu is released"));
 
              ll_phys_log_clear((LONG_LSN)(-1));
              d_printf1("ll_phys_log_clear call successful\n");

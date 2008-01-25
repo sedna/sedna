@@ -891,7 +891,12 @@ int WuOnFlushBuffer(xptr lilXptr)
 	XPTR bigXptr = 0;
 	int success = 0;
 	
-	if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
+	if (!isSynchrObjectsInitialized)
+	{
+		/* we are called from BM, but wu is not currently initialised - silently ignore */ 
+		success = 1;
+	}
+	else if (uMutexLock(&gMutex,__sys_call_error)!=0) {}
 	else
 	{
 		bigXptr = WuInternaliseXptr(lilXptr);
