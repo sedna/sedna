@@ -896,7 +896,8 @@ void recover_database_by_physical_and_logical_log(int db_id)
        d_printf1("OK\n");
 
        WuSetTimestamp(ll_returnTimestampOfPersSnapshot() + 1);
-       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
+//       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot());
+       WuInitExn(1,0,ll_returnTimestampOfPersSnapshot()); // turn on versioning mechanism on recovery
        elog(EL_LOG, ("SM : Wu is initialized"));
 
 //	   ll_set_phys_rec_flag(false);
