@@ -12,11 +12,8 @@
 #include "common/xptr.h"
 #include "common/u/uutils.h"
 
-
-
-static UMMap global_memory_mapping;
 static void *global_memory;
-
+UMMap global_memory_mapping;
 
 void create_global_memory_mapping(int os_primitives_id_min_bound)
 {
