@@ -40,7 +40,7 @@ using namespace std;
 *******************************************************************************/
 
 static UMMap file_mapping;
-static UMMap global_memory_mapping;
+extern UMMap global_memory_mapping;
 
 #ifdef _WIN32
 #define VMM_THREAD_STACK_SIZE       10240
@@ -527,6 +527,16 @@ void vmm_determine_region(bool log) throw (SednaException)
             printf("Can't open file se_trn_log\n");
             return;
         }
+        /*global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
+        if (U_INVALID_FILEMAPPING(global_memory_mapping))
+            throw USER_EXCEPTION2(SE4074, "See file FAQ shipped with the distribution");
+        void* global_memory;
+        global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
+        if (global_memory == NULL)
+            throw USER_EXCEPTION(SE4078);
+
+        memset(global_memory, '\0', PAGE_SIZE);
+        *(t_layer*)global_memory = INVALID_LAYER;*/
     }
     else
     {
@@ -568,7 +578,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         p = mmap((void*)cur, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, global_memory_mapping.map, 0);
         if (p != MAP_FAILED)
         {
-            if (log) fprintf(f_se_trn_log, "PASSED\n");
+            if (log) fprintf(f_se_trn_log, "PASSED, map %d\n", global_memory_mapping.map);
             if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
             else is_free = true;
 
@@ -576,7 +586,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         }
         else
         {
-            if (log) fprintf(f_se_trn_log, "FAILED with error %d\n", errno);
+            if (log) fprintf(f_se_trn_log, "FAILED with error %d, map %d\n", errno, global_memory_mapping.map);
             is_free = false;
         }
 #endif
@@ -659,6 +669,11 @@ void vmm_determine_region(bool log) throw (SednaException)
     }
 
     if(log) return;
+/*    {
+        if (uCloseFileMapping(global_memory_mapping, __sys_call_error) == -1)
+            throw USER_EXCEPTION(SE4077);
+        return;
+    }*/
 
     LAYER_ADDRESS_SPACE_SIZE = s_min(segment_size - PH_SIZE, VMM_REGION_MAX_SIZE);
 
