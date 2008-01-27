@@ -191,13 +191,15 @@ int __vmm_map(void *addr, ramoffs offs)
 #else
     addr = mmap(addr, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, m, offs);
 #endif
+#ifdef _WIN32
     if (addr == NULL)
     {
-#ifdef _WIN32
         d_printf1("MapViewOfFileEx failed\n");
         d_printf3("Error %d; addr = 0x%x\n", GetLastError(), (int)(addr));
 #else
-        d_perror("mmap");
+    if (addr == MAP_FAILED)
+    {
+        d_perror("mmap failed");
         d_printf2("Addr = 0x%x\n", (int)(addr));
 #endif
         return -1;
@@ -564,7 +566,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         }
 #else
         p = mmap((void*)cur, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, global_memory_mapping.map, 0);
-        if (p)
+        if (p != MAP_FAILED)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
             if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
