@@ -165,7 +165,7 @@ void test_db_after_rcv()
 
 	logfile = fopen(rcv_fname.c_str(), "at");
 
-   	fprintf(logfile, "---------------------------------------------------------------------");
+   	fprintf(logfile, "---------------------------------------------------------------------\n");
 	
 	metadata_sem_down();
 
