@@ -111,6 +111,29 @@ int cleanup_db(const char* db_name)
    }
 */
 
+   //delete rcv testing files
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error)) 
+   {
+      db_exist = true;
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_ok").c_str(), __sys_call_error);
+      if (res == 0)
+         return 2;
+   }
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error)) 
+   {
+      db_exist = true;
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_failed").c_str(), __sys_call_error);
+      if (res == 0)
+         return 2;
+   }
+   if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error)) 
+   {
+      db_exist = true;
+      res = uDeleteFile((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files/rcv_test_result.log").c_str(), __sys_call_error);
+      if (res == 0)
+         return 2;
+   }
+
    //delete db data directory
    if (uIsFileExist((string(SEDNA_DATA) + "/data/" + string(db_name) + "_files").c_str(), __sys_call_error))
    {
