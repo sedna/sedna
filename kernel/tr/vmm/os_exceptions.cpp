@@ -18,8 +18,12 @@ bool OS_exceptions_handler::critical_section = false;
 #ifdef _WIN32
 
 #ifdef PRINT_STACK_TRACE
-#include "sym_engine.h"
+#include "tr/vmm/sym_engine.h"
 #endif
+
+#include <iostream>
+#include <assert.h>
+#include "exndisphook.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// WIN32 SECTION
