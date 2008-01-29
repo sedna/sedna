@@ -1267,6 +1267,7 @@ xptr createNewBlock(schema_node* scm,bool persistent)
 	new_block_hdr->snode=scm;
 	UPDATEFIRSTBLOCKPOINTER(scm,new_block);
 	scm->blockcnt++;
+	RECOVERY_CRASH;
 	return new_block;
 }
 

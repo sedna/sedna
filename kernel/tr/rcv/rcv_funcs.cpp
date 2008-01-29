@@ -709,8 +709,8 @@ try{
      }
      else
      {
-       if (op == LL_INDIR_DELETE_PI)
-          set_redo_hint(cl_hint, &indir_blocks);
+       //if (op == LL_INDIR_DELETE_PI)
+       //   set_redo_hint(cl_hint, &indir_blocks);
 
 	   if (!isUNDO)
 	   {

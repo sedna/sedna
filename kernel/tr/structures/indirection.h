@@ -65,6 +65,12 @@ extern int indir_node_count;
 extern bool delete_mode ;
 bool is_rolled_back();
 
+//new indirection
+void add_new_block(xptr block);
+void add_predeleted_block(xptr block);
+
+xptr get_last_indir();
+
 #endif
 
 

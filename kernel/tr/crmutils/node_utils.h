@@ -236,11 +236,13 @@ bool inline is_node_attribute (xptr node)
 	CHECKP(node);
  return (GETSCHEMENODEX(node)->type==attribute);
 }
+
 bool inline is_node_child (xptr node)
 {
 	CHECKP(node);
 	return (GETSCHEMENODEX(node)->type!=attribute &&GETSCHEMENODEX(node)->type!=xml_namespace);
 }
+
 bool inline is_node_in_collection (xptr node)
 {
 

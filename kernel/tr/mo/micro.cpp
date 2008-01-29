@@ -97,7 +97,8 @@ xptr thirdElementAndTextInsertProcedure(xptr  left_sib, xptr right_sib,  xptr pa
 		#endif
 		if (scm==NULL) 
 			scm=   par_sc->add_child(ns,name,node_type);
-		xptr newblock=createNewBlock(scm,IS_DATA_BLOCK(parent));
+		xptr newblock=(scm->bblk==XNULL)?createNewBlock(scm,IS_DATA_BLOCK(parent)):scm->bblk;
+		RECOVERY_CRASH;
 		tmp =addNewNodeFirstInRow(newblock, left_sib, right_sib, parent,par_indir ,  type,node_type);
 	}
 	par_indir=GETPARENTPOINTER(tmp);

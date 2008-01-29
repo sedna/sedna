@@ -238,7 +238,8 @@ xptr add_record_to_indirection_table(xptr p)
 	xptr rba;
 	CHECKP(p);
 	node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
-	if (rollback_mode!=MODE_NORMAL)
+	
+	if (rollback_mode==MODE_UNDO)
     {
         
 		rba=rollback_record;        
@@ -324,6 +325,8 @@ xptr add_record_to_indirection_table(xptr p)
 	
     //USemaphoreUp(indirection_table_sem);
 	//indir_node_count++;
+    last_indir = rba;
+
     return rba;
 }
 /*
@@ -925,3 +928,23 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
 	return true;
 }
 
+/*
+ *  Check indirection infrastructure to be consistent wrapper.
+ * 
+ *  Function takes node pointer as input and computes it's schema node.
+ *  Then, checks indirection consistency for that schema node.
+ *
+ */
+
+bool check_indirection_consistency(xptr p, bool recourse = false) 
+{
+  CHECKP(p);
+	schema_node * sn = (GETBLOCKBYNODE(p))->snode;
+	
+	return check_indirection_consistency_schema(sn, recourse);
+}
+
+xptr get_last_indir()
+{
+	return last_indir;
+}

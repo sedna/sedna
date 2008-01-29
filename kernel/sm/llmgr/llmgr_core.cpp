@@ -2670,7 +2670,9 @@ void llmgr_core::recover_db_by_logical_log(void (*exec_micro_op) (const char*, i
                    last_lsn,
                    exec_micro_op);
   
-  
+  RECOVERY_CRASH;
+ 
+//  _sync_indirection_table_();
 #ifdef SE_ENABLE_FTSEARCH
   index_op(undo_list, redo_list, last_checkpoint_lsn);
 #endif

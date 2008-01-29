@@ -161,6 +161,8 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 		{	
 			xptr blk;
 			sobj[i]->add_ft_index(idc);
+			RECOVERY_CRASH;
+			blk = getUnemptyBlockFore(sobj[i]->bblk);
 			if (blk!=XNULL)
 			{
 				CHECKP(blk);
