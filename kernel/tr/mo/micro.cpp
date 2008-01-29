@@ -1812,8 +1812,26 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 	}
 	block->count=block->count-1;
 	if (node->desc_prev==0 && node->desc_next==0)
-	{	if (block->count+block->indir_count==0)
+	{	
+		if (block->count+block->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(block));
+
+		/* If there is a block, that has no node descriptors, 
+		 * but still has indirection records, we still need to
+		 * normalize the head pointer and the tail pointer.
+		 */
+		
+		if (block->count == 0) {
+			if (IS_DATA_BLOCK(nodex)) 
+				hl_phys_log_change(&block->desc_first, sizeof(shft));
+
+			block->desc_first=0;
+
+			if (IS_DATA_BLOCK(nodex)) 
+				hl_phys_log_change(&block->desc_last, sizeof(shft));
+
+			block->desc_last=0;
+		}
 	}
 	else
 	{

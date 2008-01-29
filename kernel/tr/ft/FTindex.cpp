@@ -309,9 +309,10 @@ void SednaIndexJob::rebuild_index(const char *index_name)
 	std::vector<xptr> start_nodes;
 	for (int i = 0; i < sobj.size(); i++)
 	{	
-		xptr blk= sobj[i]->bblk;
-		CHECKP(blk);
-		start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+		xptr blk= getUnemptyBlockFore(sobj[i]->bblk);
+		if (blk != XNULL) {
+			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+		}
 	}
 	
 	SednaIndexJob sij(ft_idx, true);

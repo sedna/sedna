@@ -144,6 +144,11 @@ xptr getBaseUri(xptr node);
 /* return root */
 xptr getRoot(xptr node);
 
+/* returns nearest unempty page from right */
+xptr getUnemptyBlockFore(xptr p); 
+/* returns nearest unempty page from left */
+xptr getUnemptyBlockBack(xptr p); 
+
 
 /* return the vector of schema node descandants of the current schema node*/
 
@@ -231,13 +236,6 @@ bool inline is_node_attribute (xptr node)
 	CHECKP(node);
  return (GETSCHEMENODEX(node)->type==attribute);
 }
-
-bool inline checkp_and_call_is_node_attribute (xptr node)
-{
-	CHECKP(node);
-	return is_node_attribute(node);
-}
-
 bool inline is_node_child (xptr node)
 {
 	CHECKP(node);

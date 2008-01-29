@@ -18,12 +18,8 @@ bool OS_exceptions_handler::critical_section = false;
 #ifdef _WIN32
 
 #ifdef PRINT_STACK_TRACE
-#include "tr/vmm/sym_engine.h"
+#include "sym_engine.h"
 #endif
-
-#include <iostream>
-#include <assert.h>
-#include "exndisphook.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// WIN32 SECTION
@@ -227,6 +223,8 @@ void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
     //d_printf1("SEGV\n");fflush(stdout);
 
     U_ASSERT(false);
+
+//    U_ASSERT(false);
 
     if (LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)(info->si_addr) && 
         (int)(info->si_addr) < LAYER_ADDRESS_SPACE_BOUNDARY_INT)
