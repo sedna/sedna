@@ -1278,6 +1278,51 @@ xptr getRoot(xptr node)
     }
 }
 
+/*
+	Function scans the block chain foreward starting from the given one, skipping all empty ones.
+	Side effect: blocks are mapped to memory (CHECKP).
+	If there is no unempty blocks, function returns XNULL.
+*/
+
+xptr getUnemptyBlockFore(xptr p) 
+{
+	node_blk_hdr* x;
+
+	while (p != XNULL) {
+		CHECKP(p);
+		x = (node_blk_hdr*) XADDR(p);
+
+		if (x->count > 0) return p;
+		p = x->nblk;
+	}
+	
+	return p;
+}
+
+/*
+	Function scans the block chain backward starting from the given one, skipping all empty ones.
+	Side effect: blocks are mapped to memory (CHECKP).
+	If there is no unempty blocks, function returns XNULL.
+*/
+
+xptr getUnemptyBlockBack(xptr p) 
+{
+	node_blk_hdr* x;
+
+	while (p != XNULL) {
+		CHECKP(p);
+		x = (node_blk_hdr*) XADDR(p);
+
+		if (x->count > 0) return p;
+		p = x->pblk;
+	}
+	
+	return p;
+}
+
+
+
+
 shft size_of_node(node_blk_hdr* block)
 {
 	t_item type=GETTYPE(block->snode);

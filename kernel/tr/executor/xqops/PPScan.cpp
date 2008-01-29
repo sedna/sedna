@@ -47,7 +47,7 @@ void PPScan::next(tuple &t)
     
     if (res == NULL)
     {
-        res = scm_node->bblk;
+        res = getUnemptyBlockFore(scm_node->bblk);
 
         if (res == NULL)
         {

@@ -107,6 +107,10 @@ void makeBlockConsistentAfterCuttingTheBeginning(node_blk_hdr *block,n_dsc* node
 	else
 	{
 		decrement_count(block,counter);
+		if (block->count==0) {
+			block->desc_first=0;
+			block->desc_last=0;
+		}
 		if (block->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(block));
 		return;
@@ -127,6 +131,10 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 	else 
 	{
 		decrement_count(block,counter);
+		if (block->count==0) {
+			block->desc_first=0;
+			block->desc_last=0;
+		}
 		if (block->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(block));		
 		return;
@@ -217,6 +225,9 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	}
 	n_dsc* new_pointer=(n_dsc*)(XADDR(dest));
 	new_pointer->desc_next=new_block->desc_first;
+	if (new_block->count == 0) {
+		U_ASSERT(new_pointer->desc_next==0);
+	}
 	new_pointer->desc_prev=0;
 	xptr tmp1= new_pointer->ldsc;
 	xptr tmp2= new_pointer->rdsc;
@@ -267,6 +278,11 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 	}
 	block->desc_last=source->desc_prev;
 	decrement_count(block);	
+
+	if (block->count == 0) {
+		block->desc_first = 0;
+	}
+
 	(GETPOINTERTODESC(block,source->desc_prev))->desc_next=0;
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
@@ -294,16 +310,17 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 {
 	n_dsc* source=GETPOINTERTODESC(block,block->desc_first);
-	xptr par_indir;
+	xptr par_indir=XNULL;
 	xptr old_xptr=ADDR2XPTR(source);
 	xptr prev_blk=block->pblk;
-    shft size=block->dsc_size;
+	shft size=block->dsc_size;
 	node_blk_hdr * pr_blk=(node_blk_hdr *)XADDR(prev_blk);
-    CHECKP(prev_blk);
-	n_dsc* prev_desc=GETPOINTERTODESC(pr_blk,pr_blk->desc_last);
-	par_indir=prev_desc->pdsc;
+	
+	n_dsc* prev_desc=getPreviousDescriptorOfSameSort(source);
+	if (prev_desc != NULL) par_indir = prev_desc->pdsc;
+	CHECKP(prev_blk);
 
-    shft next_first=*((shft*)((char*)pr_blk+pr_blk->free_first));
+	shft next_first=*((shft*)((char*)pr_blk+pr_blk->free_first));
 	xptr dest=ADDR2XPTR(GETPOINTERTODESC(pr_blk,pr_blk->free_first));
 	if (IS_DATA_BLOCK(dest)) 
 		hl_phys_log_change(XADDR(dest),pr_blk->dsc_size);
@@ -372,6 +389,11 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 	}
 	block->desc_first=source->desc_next;
 	decrement_count(block);	
+
+	if (block->count == 0) {
+		block->desc_last = 0;
+	}
+
 	(GETPOINTERTODESC(block,source->desc_next))->desc_prev=0;
 	*((shft*)source)=block->free_first;
 	block->free_first=CALCSHIFT(source,block);
@@ -413,21 +435,21 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 		if (block->pblk!=XNULL)
 		{
 			CHECKP(block->pblk);
-			if (pblk->count==0) 
+
+			while (pblk->count==0 && pblk->pblk!=XNULL) 
 			{
-				if (pblk->pblk!=XNULL)
-				{
-					const xptr tmpx = pblk->pblk;
-					CHECKP(tmpx);
-					pblk=(node_blk_hdr *)XADDR(tmpx);
-				}
+				const xptr tmpx = pblk->pblk;
+				CHECKP(tmpx);
+				pblk=(node_blk_hdr *)XADDR(tmpx);
 			}
+
 			if (pblk->desc_last!=0)
 			{
 				prev_desc=GETPOINTERTODESC(pblk,pblk->desc_last);
 				par_indir=prev_desc->pdsc;				
 			}
 			else par_indir=XNULL;
+
 			CHECKP(old_xptr);
 		}
 		else par_indir=XNULL;
@@ -1253,6 +1275,7 @@ xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr par
 							 xptr par_indir ,  xmlscm_type type, t_item node_typ)
 {
 	node_blk_hdr * block_namesake=(node_blk_hdr*)XADDR(newblock);
+	CHECKP(newblock);
 	VMM_SIGNAL_MODIFICATION(newblock);
 	n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);

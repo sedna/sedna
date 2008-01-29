@@ -153,15 +153,15 @@ index_cell* create_index (PathExpr *object_path,
 		//V. For each schema node found (sn_key)
         for (int j = 0; j < skey.size(); j++)
 		{
+			xptr blk;
 			//VI. Add pair <&ind,&sn_obj> into schema node (the special list is used)
 			skey[j]->add_index(idc,sobj[i]);
 
 			RECOVERY_CRASH;
 
-			if (skey[j]->bblk != XNULL)
+			blk = getUnemptyBlockFore(skey[j]->bblk);
+			if (blk != XNULL)
 			{
-				xptr blk = skey[j]->bblk;
-				CHECKP(blk);
 				xptr node_key = GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)));
 				//VII. For every descriptor node_key that corresponds to sn_key.
 				while (node_key != XNULL)

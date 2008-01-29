@@ -251,7 +251,7 @@ void PPAbsPath::create_merged_seq(int &scmnodes_num, xptr*& merged_seq_arr,
     merged_seq_arr = se_new xptr[scmnodes_num];
     for (int i = 0; i < scmnodes_num; i++) 
     {
-        xptr first_blk = nodes[i]->bblk;
+        xptr first_blk = getUnemptyBlockFore(nodes[i]->bblk);
         if (first_blk == NULL) merged_seq_arr[i] = XNULL;
         else
         {

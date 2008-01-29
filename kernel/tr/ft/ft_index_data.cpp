@@ -159,13 +159,12 @@ ft_index_cell* ft_index_cell::create_index (PathExpr *object_path, ft_index_type
 		std::vector<xptr> start_nodes;
 		for (int i = 0; i < sobj.size(); i++)
 		{	
-			xptr blk= sobj[i]->bblk;
+			xptr blk;
 			sobj[i]->add_ft_index(idc);
-			RECOVERY_CRASH;
 			if (blk!=XNULL)
 			{
-			CHECKP(blk);
-			start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE(((node_blk_hdr*)XADDR(blk)))));
+				CHECKP(blk);
+				start_nodes.push_back((GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk))));
 			}
 		}
 		
