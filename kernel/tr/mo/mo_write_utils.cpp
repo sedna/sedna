@@ -1279,6 +1279,7 @@ xptr addNewNodeFirstInRow(xptr newblock, xptr left_sib, xptr right_sib, xptr par
 	CHECKP(newblock);
 	VMM_SIGNAL_MODIFICATION(newblock);
 	n_dsc* new_node= GETBLOCKFIRSTFREESPACEABSOLUTE  (block_namesake);
+	U_ASSERT(new_node != XADDR(newblock));
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
 	
 	switch (node_typ)
