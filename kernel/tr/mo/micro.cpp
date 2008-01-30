@@ -1414,7 +1414,7 @@ xptr insert_text(xptr left_sib, xptr right_sib, xptr parent, const  void* value,
         //d_printf1("3");fflush(stdout);
 		xptr tmp=thirdElementAndTextInsertProcedure( left_sib, right_sib,  parent, NULL, 0,text,NULL);
 		//NODE STATISTICS
-		if (IS_DATA_BLOCK(parent))
+//		if (IS_DATA_BLOCK(parent))
 			(GETBLOCKBYNODE(tmp))->snode->nodecnt++;
 		if (size>0) addTextValue(tmp,value, size,ttype);
 		result=tmp;
