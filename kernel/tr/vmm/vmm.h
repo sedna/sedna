@@ -25,7 +25,8 @@ extern session_id sid;
 //#define VMM_TRACE
 //#define VMM_UNIX_LIGHT_CHECKP
 //#define VMM_DEBUG_CHECKP
-#define VMM_DEBUG_VERSIONS
+
+//#define VMM_DEBUG_VERSIONS
 
 // External interface to VMM
 
