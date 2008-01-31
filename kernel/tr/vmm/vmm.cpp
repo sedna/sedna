@@ -213,19 +213,21 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
         return -1;
     }
 
+/*
+    
     if (offs != RAMOFFS_OUT_OFF_BOUNDS && isWrite)
     {
         xptr p = ((vmm_sm_blk_hdr *)addr)->p;
         write_table.insert(p, addr);
     }
-
+*/
     return 0;
 }
 
 inline int __vmm_unmap(void *addr)
 {
-    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
-    write_table.remove(p);
+//    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
+//    write_table.remove(p);
 
 #ifdef _WIN32
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
@@ -929,8 +931,8 @@ void vmm_on_transaction_end() throw (SednaException)
 
         // there was a bug here: reusing read-mapped versions between transactions leads to problems because of old versions
         // temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
-/*
-		std::vector<void *> intermedStorg;
+
+/*		std::vector<void *> intermedStorg;
 		std::vector<void *>::iterator i;
 		t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
 
@@ -1399,7 +1401,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 #ifdef VMM_DEBUG_VERSIONS
 	        _vmm_remap(XADDR(p), offs, true);
 #else
-	        write_table.insert(p, XADDR(p));
+//	        write_table.insert(p, XADDR(p));
 #endif
 	    }
 
