@@ -2886,7 +2886,9 @@ void llmgr_core::get_undo_redo_trns_list(LONG_LSN &start_lsn,
         body_beg[0] == LL_INSERT_DOC_INDEX  || body_beg[0] == LL_DELETE_DOC_INDEX ||
         body_beg[0] == LL_INSERT_COL_INDEX  || body_beg[0] == LL_DELETE_COL_INDEX ||
         body_beg[0] == LL_INSERT_DOC_FTS_INDEX  || body_beg[0] == LL_DELETE_DOC_FTS_INDEX ||
-        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX)
+        body_beg[0] == LL_INSERT_COL_FTS_INDEX  || body_beg[0] == LL_DELETE_COL_FTS_INDEX ||
+        body_beg[0] == LL_INSERT_DOC_TRG  || body_beg[0] == LL_DELETE_DOC_TRG ||
+        body_beg[0] == LL_INSERT_COL_TRG  || body_beg[0] == LL_DELETE_COL_TRG)
 
     {
 //      res1 = find_undo_trn_cell(*trid, _undo_list_, undo_trn_cell/*out*/);

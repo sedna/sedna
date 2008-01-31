@@ -926,6 +926,10 @@ void vmm_on_transaction_end() throw (SednaException)
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
         // reset blocks with write access from current trid
+
+        // there was a bug here: reusing read-mapped versions between transactions leads to problems because of old versions
+        // temporary fix proposal: unmap the whole region (except INVALID_LAYER pages)
+/*
 		std::vector<void *> intermedStorg;
 		std::vector<void *>::iterator i;
 		t_blocks_write_table::iterator it=write_table.begin(), itend=write_table.end();
@@ -939,7 +943,18 @@ void vmm_on_transaction_end() throw (SednaException)
 		{
 			_vmm_unmap_decent(*i);
 		}
-		write_table.clear();      	
+
+		write_table.clear();
+*/
+	    // fix of the aforementioned bug
+	    __uint32 cur;
+    	for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
+        	 cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+         	 cur += (__uint32)PAGE_SIZE)
+    	{
+        	if ((*(t_layer *)cur) != INVALID_LAYER)
+        		_vmm_unmap_decent((void *)cur);
+    	}  
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
