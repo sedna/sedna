@@ -38,6 +38,8 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
   
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
 
+//  DebugBreak();
+
   logical_log_file_head file_head =
                   read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
 
@@ -69,8 +71,15 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+	if (rmndr == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    else if (rmndr == 0)
+      lsn += sizeof(logical_log_file_head);
+
+//    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+//      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
@@ -139,8 +148,15 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     if( uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
        throw SYSTEM_EXCEPTION("Can't get file size");
 
-    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+	int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+	
+	if (rmndr == file_size)//here we must reinit lsn
       lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+    else if (rmndr == 0)
+      lsn += sizeof(logical_log_file_head);
+
+//    if ((lsn%LOG_FILE_PORTION_SIZE) == file_size)//here we must reinit lsn
+//      lsn = (lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
 
     rec = get_record_from_disk(lsn);
     body_beg = rec + sizeof(logical_log_head);
@@ -177,7 +193,7 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
     		bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         }
 
-        lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(int);
+        lsn_offs += sizeof(char) + sizeof(WuVersionEntry) + sizeof(TIMESTAMP) + sizeof(int);
     }
     else
     if (body_beg[0] == LL_DECREASE)
