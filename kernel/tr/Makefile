@@ -68,9 +68,11 @@ endif
 
 ADD_LIBS = $(COMMON_FILES_LIB) $(PHYS_LOG_LIB) $(LOGICAL_LOG_LIB) \
            $(FT_ADD_LIB) $(COMMON_FILES_LIB) 
+
+ADD_LIBS_2 =
 	   
 ifeq ($(PLATFORM), WIN32)
-ADD_LIBS += detours.lib detoured.lib ntdll.lib
+ADD_LIBS_2 += detours.lib detoured.lib ntdll.lib
 endif
 
 
@@ -85,21 +87,21 @@ endif
 
 
 ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS) $(LSLIBS)
+$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
 else
-$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) 
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(LSLIBS)
+$(PP)/bin/se_trn$(EXE_EXT): $(TRN_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
 endif
 
 
 
 ifeq ("$(PLATFORM)", "WIN32")
-$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS)
-	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS)
+$(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
+	$(LD) $(E_LFLAGS) $(LDOUT)$@ $^ $(ADD_LIBS) $(ADD_LIBS_2)
 else					
 $(PP)/bin/se_rcv$(EXE_EXT): $(RCV_OBJS) $(SUBDIROBJS) $(ADD_LIBS)
-	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(LSLIBS)
+	$(LD) $(LFLAGS) $(LDOUT)$@ $^ $(SUBDIROBJS) $(ADD_LIBS) $(ADD_LIBS_2) $(LSLIBS)
 endif
 
 
