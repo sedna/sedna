@@ -3,9 +3,11 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#ifndef _WIN32
 /* need this to enable UNIX98 features like pthread_mutexattr_settype from pthread.h */ 
 #define _GNU_SOURCE
 
+#include <pthread.h>
 #include "common/u/umutex.h"
 
 int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)
