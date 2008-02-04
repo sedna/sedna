@@ -21,6 +21,12 @@ int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)
       return res;
     }
 
+	if (res = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE), res!=0)
+	{
+		sys_call_error("pthread_mutexattr_settype");
+		return res;
+	}
+
     if ((res = pthread_mutex_init(mutex, &attr)) != 0)
        sys_call_error("pthread_mutex_init");
     return res;
