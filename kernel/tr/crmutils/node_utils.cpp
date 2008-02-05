@@ -155,7 +155,7 @@ xptr  getFirstByOrderChildNode(xptr source)
 			if (left==XNULL) return node;
 			CHECKP(left);
 			t_item typ=GETTYPE((GETBLOCKBYNODE(left))->snode);
-			if (typ==attribute ||typ==xml_namespace)return node;
+			if (typ==attribute ||typ==xml_namespace) { CHECKP(node); return node;}
 			CHECKP(source);
 		}
 		childx+=1;
