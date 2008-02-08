@@ -18,7 +18,7 @@
 
 /*new static variables*/
 static std::set<xptr>* blocks_to_delete;
-static std::set<xptr>* created_blocks;
+//static std::set<xptr>* created_blocks;
 static int rollback_mode = MODE_NORMAL;
 static xptr rollback_record;
 /*
@@ -238,8 +238,7 @@ xptr add_record_to_indirection_table(xptr p)
 	xptr rba;
 	CHECKP(p);
 	node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
-	
-	if (rollback_mode==MODE_UNDO)
+	if (rollback_mode!=MODE_NORMAL)
     {
         
 		rba=rollback_record;        
@@ -660,8 +659,8 @@ void indirection_table_on_transaction_begin()
 	if (blocks_to_delete!=NULL) delete blocks_to_delete;    
 	blocks_to_delete = se_new std::set<xptr>;
 
-	if (created_blocks!=NULL) delete created_blocks;    
-	created_blocks = se_new std::set<xptr>;
+	/*if (created_blocks!=NULL) delete created_blocks;    
+	created_blocks = se_new std::set<xptr>;*/
 
     indirection_transaction_initialized = true;
 }
@@ -693,7 +692,7 @@ void indirection_table_on_session_end()
 void sync_indirection_table()
 {
 	std::set<xptr> tmp_set;
-	if (rollback_mode == MODE_UNDO)
+	/*if (rollback_mode == MODE_UNDO)
 		{
 			
 			//1. scan the created blocks and remove from the list some of them
@@ -710,7 +709,7 @@ void sync_indirection_table()
 				it++;
 			}
 		}
-		
+	*/	
 		//2. scan the deleted blocks and delete some of them
 		std::set<xptr>::iterator it2= blocks_to_delete->begin();
 		xptr block;
@@ -724,7 +723,7 @@ void sync_indirection_table()
 			it2++;
 		}
         
-		if (rollback_mode == MODE_UNDO)
+		/*if (rollback_mode == MODE_UNDO)
 		{
 			//3. scan the created blocks and log the rest of them to the journal
 			std::set<xptr>::iterator it= tmp_set.begin();
@@ -737,11 +736,11 @@ void sync_indirection_table()
 				hl_logical_log_block_creation(block,blk->pblk,blk->nblk,blk->dsc_size);
 				it++;
 			}
-		}
+		}*/
 
-		delete created_blocks;
+		//delete created_blocks;
 		delete blocks_to_delete;
-        created_blocks = NULL;
+        //created_blocks = NULL;
 		blocks_to_delete=NULL;
 
 }
@@ -786,9 +785,9 @@ void switch_to_rollback_mode(int type)
 	if (blocks_to_delete==NULL)     
 	blocks_to_delete = se_new std::set<xptr>;
 
-	if (created_blocks==NULL) 
+	/*if (created_blocks==NULL) 
 	created_blocks = se_new std::set<xptr>;
-
+	*/
     rollback_mode = type;
 }
 /*
@@ -818,12 +817,12 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 */
 
 //new indirection
-void add_new_block(xptr block)
+/*void add_new_block(xptr block)
 {
 	if (IS_DATA_BLOCK(block)) {
 		created_blocks->insert(block);
 	}
-}
+}*/
 void add_predeleted_block(xptr block)
 {
 	if (IS_DATA_BLOCK(block)) {

@@ -539,8 +539,7 @@ xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
 	block->nblk=new_block;
 	block->snode->blockcnt++;
 	//CHECKP(new_block);
-	if (persistent)
-		add_new_block(new_block);
+	//if (persistent)	add_new_block(new_block);
 	//hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	return new_block;
@@ -1363,8 +1362,7 @@ xptr createBlockNextToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->nblk=new_block;
 	block->snode->blockcnt++;
 	CHECKP(new_block);
-	if (persistent)
-		add_new_block(new_block);
+	//if (persistent)		add_new_block(new_block);
 	//	hl_logical_log_block_creation(new_block,old_blk,tmp->nblk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
@@ -1420,8 +1418,7 @@ xptr createBlockPriorToTheCurrentWithAdvancedDescriptor(node_blk_hdr* block)
 	block->pblk=new_block;
 	CHECKP(new_block);
 	new_block_hdr->snode->blockcnt++;
-	if (persistent)
-		add_new_block(new_block);
+	//if (persistent)		add_new_block(new_block);
 	//	hl_logical_log_block_creation(new_block,tmp->pblk,old_blk,	tmp->dsc_size);
 	delete tmp;
 	RECOVERY_CRASH;
