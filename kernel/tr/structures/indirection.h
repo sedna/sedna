@@ -71,6 +71,11 @@ void add_predeleted_block(xptr block);
 
 xptr get_last_indir();
 
+//new indirection
+//void add_new_block(xptr block);
+void add_predeleted_block(xptr block);
+
+xptr get_last_indir();
 #endif
 
 

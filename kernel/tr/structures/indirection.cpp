@@ -238,7 +238,7 @@ xptr add_record_to_indirection_table(xptr p)
 	xptr rba;
 	CHECKP(p);
 	node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
-	if (rollback_mode!=MODE_NORMAL)
+	if (rollback_mode==MODE_UNDO)
     {
         
 		rba=rollback_record;        
@@ -324,7 +324,7 @@ xptr add_record_to_indirection_table(xptr p)
 	
     //USemaphoreUp(indirection_table_sem);
 	//indir_node_count++;
-    last_indir = rba;
+    last_indir = rba; // we need this hint to apply dynamic xptr remapping durind redo
 
     return rba;
 }
@@ -943,6 +943,7 @@ bool check_indirection_consistency(xptr p, bool recourse = false)
 	return check_indirection_consistency_schema(sn, recourse);
 }
 
+// we use this function to fetch a hint about last indirection record (for redo purposes)
 xptr get_last_indir()
 {
 	return last_indir;
