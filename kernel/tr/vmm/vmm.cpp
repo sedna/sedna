@@ -527,166 +527,112 @@ void vmm_determine_region(bool log) throw (SednaException)
             printf("Can't open file se_trn_log\n");
             return;
         }
-        /*global_memory_mapping = uCreateFileMapping(U_INVALID_FD, PAGE_SIZE, SEDNA_GLOBAL_MEMORY_MAPPING, NULL, __sys_call_error);
-        if (U_INVALID_FILEMAPPING(global_memory_mapping))
-            throw USER_EXCEPTION2(SE4074, "See file FAQ shipped with the distribution");
-        void* global_memory;
-        global_memory = uMapViewOfFile(global_memory_mapping, NULL, PAGE_SIZE, 0, __sys_call_error);
-        if (global_memory == NULL)
-            throw USER_EXCEPTION(SE4078);
+    }
 
-        memset(global_memory, '\0', PAGE_SIZE);
-        *(t_layer*)global_memory = INVALID_LAYER;*/
+    __uint32 cur = 0;              
+    __uint32 segment_size = 0;
+    void *res_addr = NULL;         
+
+#ifndef _WIN32
+    int fd_dev_zero;
+    if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1) 
+    {
+        perror("Can't open /dev/zero");
+        if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
+        else vmm_determine_region(true);
+        return;       
+    }
+#endif /* _WIN32 */
+    
+    for (cur  = VMM_REGION_SEARCH_MAX_SIZE; 
+         cur >= PH_SIZE + VMM_REGION_MIN_SIZE; 
+         cur -= (__uint32)PAGE_SIZE)
+    {
+        // trying to allocate a continuous region of size "cur" ...
+        if (log) fprintf(f_se_trn_log, "Probing size 0x%d... ", cur); 
+#ifdef _WIN32
+        res_addr = VirtualAlloc(
+                   NULL,           // system determines where to allocate the region
+                   cur,            // size of region
+                   MEM_RESERVE,    // type of allocation
+                   PAGE_READWRITE  // type of access protection
+            );
+        if (res_addr)
+        {
+            if (log) fprintf(f_se_trn_log, "PASSED\n");
+            segment_size = cur;
+            VirtualFree(res_addr, 0, MEM_RELEASE);
+            break;
+        }
+        else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", GetLastError());
+#else /* _WIN32 */
+        res_addr = mmap(0, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd_dev_zero, 0);
+        if (res_addr != MAP_FAILED)
+        {
+            if (log) fprintf(f_se_trn_log, "PASSED\n");
+            segment_size = cur;
+            munmap(res_addr, cur);
+            break;
+        }
+        else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", errno);
+#endif /* _WIN32 */
+    }
+    
+    if(log)
+    {
+        if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
+        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, res_addr);
+        if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
     }
     else
     {
-        open_global_memory_mapping(SE4400);
-    }
-
-    __uint32 cur = 0, cur_right = 0;
-    __uint32 res_left = 0, res_right = 0;
-    bool is_free = false;
-    void *p = NULL;
-
-    for (cur = VMM_REGION_SEARCH_RIGHT_BOUND - (__uint32)PAGE_SIZE; 
-         cur >= VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE; 
-         cur -= (__uint32)PAGE_SIZE)
-    {
-        //check cur page 
-        if (log) fprintf(f_se_trn_log, "Probing address 0x%x... ", cur);
-#ifdef _WIN32
-        p = VirtualAlloc(
-                   (void*)cur,    // region to reserve or commit
-                   PAGE_SIZE,     // size of region
-                   MEM_RESERVE,   // type of allocation
-                   PAGE_READWRITE // type of access protection
-            );
-        if (p)
+        if (0 == segment_size)
         {
-            if (log) fprintf(f_se_trn_log, "PASSED\n");
-            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
-            else is_free = true;
-
-            VirtualFree(p, 0, MEM_RELEASE);
-        }
-        else 
-        {
-            if (log) fprintf(f_se_trn_log, "FAILED with error %d\n", GetLastError());
-            is_free = false;
-        }
-#else
-        p = mmap((void*)cur, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, global_memory_mapping.map, 0);
-        if (p != MAP_FAILED)
-        {
-            if (log) fprintf(f_se_trn_log, "PASSED, map %d\n", global_memory_mapping.map);
-            if (cur == VMM_REGION_SEARCH_LEFT_BOUND - (__uint32)PAGE_SIZE) is_free = false;
-            else is_free = true;
-
-            munmap(p, PAGE_SIZE);
-        }
-        else
-        {
-            if (log) fprintf(f_se_trn_log, "FAILED with error %d, map %d\n", errno, global_memory_mapping.map);
-            is_free = false;
-        }
-#endif
-
-        if (is_free)
-        {
-            if (cur_right == 0) cur_right = cur;
-        }
-        else
-        {
-            if (cur_right != 0)
-            {
-                d_printf4("vmm segment found: left = 0x%x, right = 0x%x, size = %d\n", 
-                       cur + (__uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (__uint32)PAGE_SIZE);
-
-                if (log) fprintf(f_se_trn_log, "vmm segment found: left = 0x%x, right = 0x%x, size = %d\n", 
-                                 cur + (__uint32)PAGE_SIZE, cur_right, (cur_right - cur) / (__uint32)PAGE_SIZE);
-
-                if ((cur_right - cur) > (res_right - res_left + (__uint32)PAGE_SIZE))
-                {
-                    res_left = cur + (__uint32)PAGE_SIZE;
-                    res_right = cur_right;
-                }
-                cur_right = 0;
-            }
-        }
-    }
-
-    if (res_left == 0) // nothing found
-    {
-        if (log) 
-        {
-            fprintf(f_se_trn_log, "Nothing found\n");
-
-            if (fclose(f_se_trn_log) != 0)
-            {
-                printf("Can't close file trn_log\n");
-                return;
-            }
-
-            return;
-        }
-        else 
-        {
+            printf("Nothing has been found\n");
             vmm_determine_region(true);
-            close_global_memory_mapping();
+#ifndef _WIN32
+            if (close(fd_dev_zero) == -1) printf("Can't close file fd_dev_zero\n");           
+#endif /* _WIN32 */
             throw USER_EXCEPTION(SE1040);
         }
-    }
-
-    __uint32 segment_size = res_right - res_left + (__uint32)PAGE_SIZE;
-
-    d_printf4("\nvmm_determine_region:\nres_left = 0x%x\nres_right = 0x%x\nregion size (in pages) = %d\n", 
-              res_left, res_right, segment_size / (__uint32)PAGE_SIZE);
-
-    if (log) fprintf(f_se_trn_log, "\nvmm_determine_region:\nres_left = 0x%x\nres_right = 0x%x\nregion size (in pages) = %d\n", 
-                     res_left, res_right, segment_size / (__uint32)PAGE_SIZE);
-
-
-    if (PH_SIZE + VMM_REGION_MIN_SIZE > segment_size)
-    {
-        if (log)
-        {
-            fprintf(f_se_trn_log, "Segment is of not enough size\n");
-
-            if (fclose(f_se_trn_log) != 0)
-            {
-                printf("Can't close file trn_log\n");
-                return;
-            }
-
-            return;
-        }
         else
         {
-            vmm_determine_region(true);
+            d_printf2("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, res_addr);
+    
+            if(segment_size > PH_SIZE + VMM_REGION_MAX_SIZE)
+            {
+                LAYER_ADDRESS_SPACE_SIZE = VMM_REGION_MAX_SIZE;
+
+                int pages_in_founded_segment = segment_size / (__uint32)PAGE_SIZE;
+                int pages_in_needed_region   = (VMM_REGION_MAX_SIZE + PH_SIZE) / (__uint32)PAGE_SIZE;
+                int pages_left_shift         = (pages_in_founded_segment - pages_in_needed_region) / 2;
+
+                LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + 
+                                                   (pages_left_shift * (__uint32)PAGE_SIZE)+
+                                                   (LAYER_ADDRESS_SPACE_SIZE + PH_SIZE);
+            }
+            else /* PH_SIZE + VMM_REGION_MAX_SIZE <= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
+            {
+                LAYER_ADDRESS_SPACE_SIZE = segment_size - PH_SIZE;
+                LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + segment_size; 
+            }
+            
+            LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT - LAYER_ADDRESS_SPACE_SIZE;
+            PH_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_SIZE;
+            
+            LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
+            LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+            PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
+
+            open_global_memory_mapping(SE4400);
+            set_vmm_region_values();
             close_global_memory_mapping();
-            throw USER_EXCEPTION(SE1040);
-        }
+        } 
     }
 
-    if(log) return;
-/*    {
-        if (uCloseFileMapping(global_memory_mapping, __sys_call_error) == -1)
-            throw USER_EXCEPTION(SE4077);
-        return;
-    }*/
-
-    LAYER_ADDRESS_SPACE_SIZE = s_min(segment_size - PH_SIZE, VMM_REGION_MAX_SIZE);
-
-    LAYER_ADDRESS_SPACE_BOUNDARY_INT = res_right + PAGE_SIZE;
-    LAYER_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_BOUNDARY_INT - LAYER_ADDRESS_SPACE_SIZE;
-    PH_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_SIZE;
-
-    LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
-    LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-    PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
-
-    set_vmm_region_values();
-    close_global_memory_mapping();
+#ifndef _WIN32
+    if (close(fd_dev_zero) == -1) printf("Can't close file fd_dev_zero\n");           
+#endif /* _WIN32 */
 }
 
 
