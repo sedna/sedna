@@ -76,7 +76,7 @@ struct vmm_region_values
     __uint32 LAYER_ADDRESS_SPACE_SIZE;
 };
 
-#ifdef _WIN32
+/*#ifdef _WIN32
 #define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x20000000)
 #define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0x80000000)
 #elif defined(DARWIN)
@@ -85,8 +85,8 @@ struct vmm_region_values
 #else
 #define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x40000000)
 #define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0xB0000000)
-#endif
-
+#endif*/
+#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0xC0000000)
 #define PH_SIZE                                         ((__uint32)0x6400000)
 #define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
 #define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
