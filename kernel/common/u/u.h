@@ -51,6 +51,17 @@
 #define HAVE_SPINLOCKS
 #endif
 
+#if defined(LINUX)
+#define U_MAP_ANONYMOUS MAP_ANONYMOUS
+#elif (defined(DARWIN) || defined(FreeBSD) || defined(SunOS))
+#define U_MAP_ANONYMOUS MAP_ANON
+#endif
+
+#if defined(LINUX)
+#define U_MAP_NORESERVE MAP_NORESERVE
+#elif (defined(DARWIN) || defined(FreeBSD) || defined(SunOS))
+#define U_MAP_NORESERVE 0
+#endif
 
 #if defined(DARWIN)
 #define U_MSG_NOSIGNAL SO_NOSIGPIPE

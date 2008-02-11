@@ -112,8 +112,6 @@ int main(int argc, char *argv[])
         else
             determine_vmm_region = atoi(buf);
 
-        vmm_determine_region(true);
-
         if (determine_vmm_region == 1)
         {
             vmm_determine_region();

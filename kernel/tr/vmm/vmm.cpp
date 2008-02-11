@@ -517,6 +517,30 @@ void vmm_preliminary_call() throw (SednaException)
 #endif
 }
 
+
+/* Some "technical" comments:
+
+   1. Mapping with readonly and both read/write permissions in some systems behave differently.
+      Since vmm_determine_region intended only to find free continuous region it is better to use
+      readonly access protection.
+   2. Similarly, in Linux/UNIX it is better to use MAP_PRIVATE.
+   3. MAP_NORESERVE in Linux can be used since we will never commit simultaneously more than 
+      database buffers size (100MiB is default).
+   4. mmap() of /dev/zero can be used in systems under which MAP_ANON(YMOUS) 
+      flag is not supported. 
+   
+      Example:
+    
+      int fd_dev_zero;    // Don't forget to properly close fd_dev_zero!
+      if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1) 
+      {
+          perror("Can't open /dev/zero");
+          if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
+          else vmm_determine_region(true);
+          return;       
+      }
+*/
+
 void vmm_determine_region(bool log) throw (SednaException)
 {
     if (log)
@@ -531,32 +555,23 @@ void vmm_determine_region(bool log) throw (SednaException)
 
     __uint32 cur = 0;              
     __uint32 segment_size = 0;
+    
     void *res_addr = NULL;
 
-#ifndef _WIN32
-    int fd_dev_zero;
-    if ((fd_dev_zero = open("/dev/zero", O_RDWR)) == -1) 
-    {
-        perror("Can't open /dev/zero");
-        if(log) fprintf(f_se_trn_log, "Can't open /dev/zero.\nError: %d\n", errno);
-        else vmm_determine_region(true);
-        return;       
-    }
-#endif /* _WIN32 */
-    
     for (cur  = VMM_REGION_SEARCH_MAX_SIZE; 
          cur >= PH_SIZE + VMM_REGION_MIN_SIZE; 
          cur -= (__uint32)PAGE_SIZE)
     {
-        // trying to allocate a continuous region of size "cur" ...
         if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur); 
+
 #ifdef _WIN32
+        
         res_addr = VirtualAlloc(
                    NULL,                      // system determines where to allocate the region
-                   cur + (__uint32)PAGE_SIZE, // size of region
+                   cur + (__uint32)PAGE_SIZE, // additional PAGE is used to perform aligning afterwards
                    MEM_RESERVE,               // type of allocation
-                   PAGE_READWRITE             // type of access protection
-            );
+                   PAGE_READONLY);            // READONLY here is enough
+
         if (res_addr)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
@@ -565,9 +580,12 @@ void vmm_determine_region(bool log) throw (SednaException)
 	    res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
             break;
         }
-        else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", GetLastError());
-#else /* _WIN32 */
-        res_addr = mmap(0, cur + (__uint32)PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd_dev_zero, 0);
+        else if(log) 
+            fprintf(f_se_trn_log, "FAILED with error %d\n", GetLastError());
+
+#else
+        res_addr = mmap(0, cur + (__uint32)PAGE_SIZE, PROT_READ, MAP_PRIVATE | U_MAP_NORESERVE | U_MAP_ANONYMOUS, -1, 0);
+
         if (res_addr != MAP_FAILED)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
@@ -576,7 +594,9 @@ void vmm_determine_region(bool log) throw (SednaException)
             res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
             break;
         }
-        else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", errno);
+        else if(log) 
+            fprintf(f_se_trn_log, "FAILED with error: %s\n", strerror(errno));
+
 #endif /* _WIN32 */
     }
     
@@ -592,9 +612,6 @@ void vmm_determine_region(bool log) throw (SednaException)
         {
             printf("Nothing has been found\n");
             vmm_determine_region(true);
-#ifndef _WIN32
-            if (close(fd_dev_zero) == -1) printf("Can't close file fd_dev_zero\n");           
-#endif /* _WIN32 */
             throw USER_EXCEPTION(SE1040);
         }
         else
@@ -631,10 +648,6 @@ void vmm_determine_region(bool log) throw (SednaException)
             close_global_memory_mapping();
         } 
     }
-
-#ifndef _WIN32
-    if (close(fd_dev_zero) == -1) printf("Can't close file fd_dev_zero\n");           
-#endif /* _WIN32 */
 }
 
 
