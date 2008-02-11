@@ -549,7 +549,7 @@ void vmm_determine_region(bool log) throw (SednaException)
          cur -= (__uint32)PAGE_SIZE)
     {
         // trying to allocate a continuous region of size "cur" ...
-        if (log) fprintf(f_se_trn_log, "Probing size %ud... ", cur); 
+        if (log) fprintf(f_se_trn_log, "Probing size %u... ", cur); 
 #ifdef _WIN32
         res_addr = VirtualAlloc(
                    NULL,                      // system determines where to allocate the region

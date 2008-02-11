@@ -51,11 +51,11 @@ typedef __int16 xmlscm_type;
 /* shift in the block */
 typedef unsigned short int shft;
 
-#define PAGE_SIZE										65536
-#define PAGE_BIT_MASK									(__uint32)0xFFFF0000
+#define PAGE_SIZE								65536
+#define PAGE_BIT_MASK								(__uint32)0xFFFF0000
 #define PAGE_REVERSE_BIT_MASK							(__uint32)0x0000FFFF
-//#define PAGE_SIZE										4096
-//#define PAGE_BIT_MASK									0xFFFFF000
+//#define PAGE_SIZE								4096
+//#define PAGE_BIT_MASK								0xFFFFF000
 //#define PAGE_REVERSE_BIT_MASK							0x00000FFF
 
 
@@ -86,7 +86,7 @@ struct vmm_region_values
 #define VMM_REGION_SEARCH_LEFT_BOUND                    ((__uint32)0x40000000)
 #define VMM_REGION_SEARCH_RIGHT_BOUND                   ((__uint32)0xB0000000)
 #endif*/
-#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0xC0000000)
+#define VMM_REGION_SEARCH_MAX_SIZE                      ((__uint32)0x80000000)
 #define PH_SIZE                                         ((__uint32)0x6400000)
 #define VMM_REGION_MIN_SIZE                             ((__uint32)0x4000000)
 #define VMM_REGION_MAX_SIZE                             ((__uint32)0x40000000)
