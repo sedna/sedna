@@ -1189,7 +1189,7 @@ xptr createNewBlock(schema_node* scm,bool persistent)
 	node_blk_hdr::init(XADDR(new_block),dscsz);
 	node_blk_hdr * new_block_hdr=(node_blk_hdr *)(XADDR(new_block));
 	new_block_hdr->snode=scm;
-    UPDATEFIRSTBLOCKPOINTER(scm,new_block);
+	UPDATEFIRSTBLOCKPOINTER(scm,new_block);
 	scm->blockcnt++;
 	return new_block;
 }

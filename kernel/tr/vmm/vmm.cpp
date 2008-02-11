@@ -531,7 +531,7 @@ void vmm_determine_region(bool log) throw (SednaException)
 
     __uint32 cur = 0;              
     __uint32 segment_size = 0;
-    void *res_addr = NULL;         
+    void *res_addr = NULL;
 
 #ifndef _WIN32
     int fd_dev_zero;
@@ -549,29 +549,31 @@ void vmm_determine_region(bool log) throw (SednaException)
          cur -= (__uint32)PAGE_SIZE)
     {
         // trying to allocate a continuous region of size "cur" ...
-        if (log) fprintf(f_se_trn_log, "Probing size 0x%d... ", cur); 
+        if (log) fprintf(f_se_trn_log, "Probing size %ud... ", cur); 
 #ifdef _WIN32
         res_addr = VirtualAlloc(
-                   NULL,           // system determines where to allocate the region
-                   cur,            // size of region
-                   MEM_RESERVE,    // type of allocation
-                   PAGE_READWRITE  // type of access protection
+                   NULL,                      // system determines where to allocate the region
+                   cur + (__uint32)PAGE_SIZE, // size of region
+                   MEM_RESERVE,               // type of allocation
+                   PAGE_READWRITE             // type of access protection
             );
         if (res_addr)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
             segment_size = cur;
             VirtualFree(res_addr, 0, MEM_RELEASE);
+	    res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
             break;
         }
         else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", GetLastError());
 #else /* _WIN32 */
-        res_addr = mmap(0, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd_dev_zero, 0);
+        res_addr = mmap(0, cur + (__uint32)PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd_dev_zero, 0);
         if (res_addr != MAP_FAILED)
         {
             if (log) fprintf(f_se_trn_log, "PASSED\n");
             segment_size = cur;
             munmap(res_addr, cur);
+            res_addr = (void*)(((__uint32)res_addr + (__uint32)PAGE_SIZE) & PAGE_BIT_MASK);
             break;
         }
         else if(log) fprintf(f_se_trn_log, "FAILED with error %d\n", errno);
@@ -581,7 +583,7 @@ void vmm_determine_region(bool log) throw (SednaException)
     if(log)
     {
         if (0 == segment_size) fprintf(f_se_trn_log, "Nothing has been found\n");
-        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, res_addr);
+        else fprintf(f_se_trn_log, "\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
         if (fclose(f_se_trn_log) != 0) printf("Can't close file se_trn_log\n");
     }
     else
@@ -597,7 +599,7 @@ void vmm_determine_region(bool log) throw (SednaException)
         }
         else
         {
-            d_printf2("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, res_addr);
+            d_printf3("\nvmm_determine_region:\nregion size (in pages) = %d\nsystem given addr = 0x%x\n", segment_size / (__uint32)PAGE_SIZE, (__uint32)res_addr);
     
             if(segment_size > PH_SIZE + VMM_REGION_MAX_SIZE)
             {
