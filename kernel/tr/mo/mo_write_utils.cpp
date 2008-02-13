@@ -113,7 +113,6 @@ void makeBlockConsistentAfterCuttingTheBeginning(node_blk_hdr *block,n_dsc* node
 		}
 		if (block->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(block));
-		return;
 	}
 }
 
@@ -137,7 +136,6 @@ void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft 
 		}
 		if (block->indir_count==0)
 			add_predeleted_block(ADDR2XPTR(block));		
-		return;
 	}
 	tmp=node;
 	n_dsc* nextnode= GETNEXTDESCRIPTOR_BL(block,tmp);
