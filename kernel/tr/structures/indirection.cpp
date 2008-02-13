@@ -826,6 +826,8 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 void add_predeleted_block(xptr block)
 {
 	if (IS_DATA_BLOCK(block)) {
+		((node_blk_hdr *) XADDR(block))->pblk_indir = XNULL;
+		((node_blk_hdr *) XADDR(block))->nblk_indir = XNULL;
 		blocks_to_delete->insert(block);
 	}
 }
