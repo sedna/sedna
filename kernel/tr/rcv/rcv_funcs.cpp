@@ -173,13 +173,12 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      } 
   }
   else
@@ -286,13 +285,12 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      }  
   }
   else
@@ -384,12 +382,11 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      }
         
   }
@@ -612,11 +609,10 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      }
   }
   else
@@ -715,13 +711,12 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      }
      
   }
@@ -864,13 +859,12 @@ try{
 	   if (!isUNDO)
 	   {
 //	   		if (indir_map.find(self) != indir_map.end()) self = indir_map[self];
-	   		indir_map.find(self, self);
+	   		indir_map.find_remove(self, self);
 	   }
 
        delete_node(removeIndirection(self));
 
 //       if (!isUNDO) indir_map.erase(self);
-       if (!isUNDO) indir_map.remove(self);
      }
      
   }
@@ -1126,6 +1120,7 @@ try{
   else
     throw SYSTEM_EXCEPTION("bad logical record given from logical log");
 
+  
   rcv_number_of_records++;
   //d_printf2("exec micro op completed num=%d\n", rcv_number_of_records);
 
