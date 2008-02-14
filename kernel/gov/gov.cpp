@@ -240,6 +240,8 @@ int main(int argc, char** argv)
 
       create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
 
+      elog(EL_LOG, ("SEDNA event log is down"));
+
       pps->startup();
       is_pps_close = false;
       d_printf1("ping started\n");
