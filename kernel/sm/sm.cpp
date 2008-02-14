@@ -376,7 +376,7 @@ int main(int argc, char **argv)
     bool is_ppc_closed = true;
     char buf[1024];
     UShMem gov_mem_dsc;
-
+    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
 
     try {
 
@@ -431,9 +431,8 @@ int main(int argc, char **argv)
 
         if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
         
-        SednaUserException e = USER_EXCEPTION(SE4400);
         ppc = new pping_client(cfg.ping_port_number, EL_SM);
-        ppc->startup(e);
+        ppc->startup(ppc_ex);
         is_ppc_closed = false;
 
         elog(EL_LOG, ("SM ping started"));

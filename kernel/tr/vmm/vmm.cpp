@@ -794,7 +794,6 @@ void vmm_on_transaction_begin() throw (SednaException)
         vmm_cur_xptr = XNULL;
         shutdown_vmm_thread = false;
 
-
         msg.cmd = 35; // bm_register_transaction
         msg.trid = trid;
         msg.sid = sid;

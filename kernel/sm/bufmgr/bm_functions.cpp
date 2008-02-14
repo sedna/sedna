@@ -51,6 +51,7 @@ void _bm_set_working_set_size()
                         working_set_size,			// maximum working set size
                         __sys_call_error
           );
+
     if (res != 0) 
 #if (EL_DEBUG == 1)
         throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
@@ -67,6 +68,7 @@ void _bm_restore_working_set_size()
                         MaximumWorkingSetSize_orig,// maximum working set size
                         __sys_call_error
           );
+
     if (res != 0)
 #if (EL_DEBUG == 1)
         throw USER_ENV_EXCEPTION("Cannot release system structures", false);

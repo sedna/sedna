@@ -144,6 +144,10 @@ void create_global_memory_mapping(int os_primitives_id_min_bound)
         if (uCloseFile(fd, __sys_call_error) == 0)
             throw USER_EXCEPTION2(SE4043, "vmm.dat");
     }
+
+    elog(EL_INFO,  ("Layer address space start addr = 0x%x", LAYER_ADDRESS_SPACE_START_ADDR));
+    elog(EL_INFO,  ("Layer address space boundary   = 0x%x", LAYER_ADDRESS_SPACE_BOUNDARY));
+    elog(EL_INFO,  ("Persistent heap start addr     = 0x%x", PH_ADDRESS_SPACE_START_ADDR));
 }
 
 void release_global_memory_mapping()
