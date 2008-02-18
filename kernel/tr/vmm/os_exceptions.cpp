@@ -226,8 +226,6 @@ void unix_sigsegv_signal_handler(int signo, siginfo_t *info, void *cxt)
 {
     //d_printf1("SEGV\n");fflush(stdout);
 
-    U_ASSERT(false);
-
 //    U_ASSERT(false);
 
     if (LAYER_ADDRESS_SPACE_START_ADDR_INT <= (int)(info->si_addr) && 
