@@ -302,38 +302,46 @@ void create_phys_log(int phys_log_size)
 #endif
 }
 
-
+static inline void cleanup_db_and_check_result(const char* db_name)
+{
+    // if we can't perform cleanup the maximum we can do is to give user an advice
+    if(cleanup_db(db_name) == 2)
+    {
+        fprintf(stderr, "%s\n", "Can not perform cleanup. Please stop Sedna and drop created database files manually.");
+        fprintf(stderr, "%s\n", "'/cfg/$_cfg.xml' and '/data/$_files' directory ('$' is the database name).");
+    }
+}
 
 int main(int argc, char **argv)
 {
     program_name_argv_0 = argv[0];
-    __int64 data_file_max_size = 0x80000000;	// = 2Gb
+    __int64 data_file_max_size = 0x80000000;    // = 2Gb
     __int64 tmp_file_max_size = 0x80000000;		// = 2Gb
     int data_file_extending_portion = 1600;		// = 100Mb (in pages)
     int tmp_file_extending_portion = 1600;		// = 100Mb (in pages)
     int data_file_initial_size = 1600;			// = 10Mb (in pages)
     int tmp_file_initial_size = 1600;			// = 10Mb (in pages)
     int persistent_heap_size = 0xA00000;		// = 10Mb
-//    int phys_log_size = 0xA00000;                       // = 10Mb
-//    int phys_log_ext_portion = 0xA00000;                // = 10Mb
+//    int phys_log_size = 0xA00000;               // = 10Mb
+//    int phys_log_ext_portion = 0xA00000;        // = 10Mb
     pping_client *ppc = NULL;
-    bool is_ppc_closed = true;
-    bool is_bm_started = false;
-    bool is_ll_phys_log_started = false;
-    UShMem gov_mem_dsc;
-    int db_id;
+    SednaUserException ppc_ex = USER_EXCEPTION(SE4400);
 
+    bool is_ppc_started         = false;
+    bool is_bm_started          = false;
+    bool is_ll_phys_log_started = false;
+
+    UShMem gov_mem_dsc;
+    int db_id = -1;
+    gov_header_struct cfg;
 
     try {
 
 #ifdef SE_MEMORY_MNG
         SafeMemoryContextInit();
 #endif
-        gov_header_struct cfg;
         get_default_sednaconf_values(&cfg);
-        get_gov_config_parameters_from_sednaconf(&cfg);//get config parameters from sednaconf
-
-        //!!! Now all parameters checked
+        get_gov_config_parameters_from_sednaconf(&cfg); 
 
         set_global_names(cfg.os_primitives_id_min_bound);
 
@@ -395,7 +403,7 @@ int main(int argc, char **argv)
         db_id = get_next_free_db_id((gov_config_struct*)gov_shm_pointer);
 
         if (db_id == -1)//there is no such database
-           throw USER_EXCEPTION2(SE4211, "The maximum number of databases hosted by one server is exceeded");
+            throw USER_EXCEPTION2(SE4211, "The maximum number of databases hosted by one server is exceeded");
 
         fill_database_cell_in_gov_shm((gov_config_struct*)gov_shm_pointer,
                                       db_id,
@@ -413,10 +421,9 @@ int main(int argc, char **argv)
 
         try {
              if (uSocketInit(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3001);
-             SednaUserException e = USER_EXCEPTION(SE4400);
              ppc = new pping_client(cfg.ping_port_number, EL_SM);               
-             ppc->startup(e);
-             is_ppc_closed = false;
+             ppc->startup(ppc_ex);
+             is_ppc_started = true;
 
 
 
@@ -427,10 +434,7 @@ int main(int argc, char **argv)
                              (phys_log_ext_portion / 0x100000)
                             );
 
-
              create_data_directory();
-
-
 
              create_db(data_file_max_size, 
                        tmp_file_max_size,
@@ -439,14 +443,11 @@ int main(int argc, char **argv)
                        persistent_heap_size
                       );
 
-
-
              d_printf1("create_db call successful\n");
 
              create_phys_log(phys_log_size);
 
              d_printf1("create_phys_log call successful\n");
-
 
              create_logical_log((string(db_files_path) + string(db_name) + ".0llog").c_str(),
                                 0,
@@ -460,8 +461,8 @@ int main(int argc, char **argv)
              d_printf1("create_logical_log call successful\n");
 
 
-             init_checkpoint_sems();
 
+             init_checkpoint_sems();
 
              ll_phys_log_startup(sedna_db_version);
              is_ll_phys_log_started = true;
@@ -482,8 +483,8 @@ int main(int argc, char **argv)
              extend_tmp_file (tmp_file_initial_size);
              d_printf1("extend_tmp_file call successful\n");
 
-             bm_shutdown();
              is_bm_started = false;
+             bm_shutdown();
              d_printf1("bm_shutdown call successful\n");
 
              ll_phys_log_clear((LONG_LSN)(-1));
@@ -492,22 +493,15 @@ int main(int argc, char **argv)
              ll_phys_log_set_ph_bu_to_ph(true);
              d_printf1("ll_phys_log_set_ph_bu_to_ph\n");
 
-             ll_phys_log_shutdown();
              is_ll_phys_log_started = false;
+             ll_phys_log_shutdown();
              d_printf1("phys_log_shutdown call successful\n");
 
              release_checkpoint_sems();
 
-             int load_res;
-             load_res = load_metadata_in_database(db_name);
-
-             if (load_res == 0)
-             {
-                fprintf(res_os, "The database '%s' has been created successfully\n", db_name);
-                fflush(res_os);
-             }
-             else
-                throw USER_EXCEPTION2(SE4211, db_name);
+             int load_res = load_metadata_in_database(db_name);
+             if (load_res != 0) 
+                 throw USER_EXCEPTION2(SE4211, db_name);
 
              elog(EL_LOG, ("Request for database creation satisfied"));
              event_logger_release();
@@ -515,29 +509,31 @@ int main(int argc, char **argv)
              ppc->shutdown();
              delete ppc;
              ppc = NULL;
-             is_ppc_closed = true;
+             is_ppc_started = false;
              if (uSocketCleanup(__sys_call_error) == U_SOCKET_ERROR) throw USER_EXCEPTION(SE3000);
-
+             
+             fprintf(res_os, "The database '%s' has been created successfully\n", db_name);
+             fflush(res_os);
 
         } catch (SednaUserException &e) {
+             fprintf(stderr, "%s\n", e.getMsg().c_str());
              event_logger_release();
-             if (!is_ppc_closed) {if (ppc) ppc->shutdown();}
+             if (is_ppc_started) {if (ppc) ppc->shutdown();}
              if (is_bm_started) bm_shutdown();
              if (is_ll_phys_log_started) ll_phys_log_shutdown();
-             cleanup_db(db_name);
-             fprintf(stderr, "%s\n", e.getMsg().c_str());
+             cleanup_db_and_check_result(db_name);
              uSocketCleanup(__sys_call_error);  
              erase_database_cell_in_gov_shm(db_id, (gov_config_struct*)gov_shm_pointer);
              return 1;
         } catch (SednaException &e) {
              if (is_bm_started) bm_shutdown();
              if (is_ll_phys_log_started) ll_phys_log_shutdown();
-             cleanup_db(db_name);            
+             cleanup_db_and_check_result(db_name);            
              sedna_soft_fault(e, EL_CDB);
         } catch (...) {
              if (is_bm_started) bm_shutdown();
              if (is_ll_phys_log_started) ll_phys_log_shutdown();
-             cleanup_db(db_name);            
+             cleanup_db_and_check_result(db_name);            
              sedna_soft_fault(EL_CDB);
         }
 

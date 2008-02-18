@@ -40,11 +40,8 @@ void _bm_set_working_set_size()
                         __sys_call_error
           );
     if (res != 0) 
-#if (EL_DEBUG == 1)
-        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
-#else
-        elog(EL_WARN, ("Can't get working set size. Possibly, there are no admin rights."));
-#endif
+
+    elog(EL_WARN, ("Can't get working set size. Possibly, there are no admin rights."));
 
     res = uSetCurProcessWorkingSetSize(
                         working_set_size,			// minimum working set size
@@ -53,11 +50,8 @@ void _bm_set_working_set_size()
           );
 
     if (res != 0) 
-#if (EL_DEBUG == 1)
-        throw USER_EXCEPTION2(SE1015, "See file FAQ shipped with the distribution");
-#else
-        elog(EL_WARN, ("Can't set working set size. Possibly, there are no admin rights."));
-#endif
+
+    elog(EL_WARN, ("Can't set working set size. Possibly, there are no admin rights."));
 }
 
 void _bm_restore_working_set_size()
@@ -70,11 +64,8 @@ void _bm_restore_working_set_size()
           );
 
     if (res != 0)
-#if (EL_DEBUG == 1)
-        throw USER_ENV_EXCEPTION("Cannot release system structures", false);
-#else
-        elog(EL_WARN, ("Can't restore working set size. Possibly, there are no admin rights."));
-#endif
+
+    elog(EL_WARN, ("Can't restore working set size. Possibly, there are no admin rights."));
 }
 
 #ifndef _WIN32
