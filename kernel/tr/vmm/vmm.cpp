@@ -630,7 +630,7 @@ void vmm_determine_region(bool log) throw (SednaException)
                                                    (pages_left_shift * (__uint32)PAGE_SIZE)+
                                                    (LAYER_ADDRESS_SPACE_SIZE + PH_SIZE);
             }
-            else /* PH_SIZE + VMM_REGION_MAX_SIZE <= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
+            else /* PH_SIZE + VMM_REGION_MAX_SIZE >= segment_size >= PH_SIZE + VMM_REGION_MIN_SIZE */
             {
                 LAYER_ADDRESS_SPACE_SIZE = segment_size - PH_SIZE;
                 LAYER_ADDRESS_SPACE_BOUNDARY_INT = (__uint32)res_addr + segment_size; 
@@ -640,8 +640,8 @@ void vmm_determine_region(bool log) throw (SednaException)
             PH_ADDRESS_SPACE_START_ADDR_INT = LAYER_ADDRESS_SPACE_START_ADDR_INT - PH_SIZE;
             
             LAYER_ADDRESS_SPACE_START_ADDR = (void*)LAYER_ADDRESS_SPACE_START_ADDR_INT;
-            LAYER_ADDRESS_SPACE_BOUNDARY = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
-            PH_ADDRESS_SPACE_START_ADDR = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
+            LAYER_ADDRESS_SPACE_BOUNDARY   = (void*)LAYER_ADDRESS_SPACE_BOUNDARY_INT;
+            PH_ADDRESS_SPACE_START_ADDR    = (void*)PH_ADDRESS_SPACE_START_ADDR_INT;
 
             open_global_memory_mapping(SE4400);
             set_vmm_region_values();
