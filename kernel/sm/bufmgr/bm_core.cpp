@@ -457,3 +457,41 @@ void backup_ph()
 }
 
 
+void dump_bufmgr_state()
+{
+	int bufsNum = 0, i = 0;
+	xptr physXptr, logXptr;
+	void *ptr=NULL;
+	vmm_sm_blk_hdr *hdr=NULL;
+	ramoffs offs=0;
+	char auxInfo[2048]="";
+	char flags[16]="";
+
+	bufsNum = bufs_num;
+
+	fprintf(stderr,"---STARTING DUMP OF BUFMGR STATE---\n");
+	for (i=0; i<bufsNum; ++i)
+	{
+		strcpy(flags,"");
+		ptr = (char*)buf_mem_addr + i*PAGE_SIZE;
+		hdr = (vmm_sm_blk_hdr*)ptr;
+		physXptr = phys_xptrs->at(i);
+		logXptr = hdr->p;
+		if (0==free_mem.find(i*PAGE_SIZE))
+		{
+			/* skip - it's free buf */ 
+		}
+		else if (0==buffer_table.find(physXptr, offs)) 
+		{
+			if (offs!=i*PAGE_SIZE)
+			{
+				fprintf(stderr,"%4d error - expected offset %6x, offset %6x according to buffer_table\n", i, i*PAGE_SIZE, offs);
+			}
+			if (hdr->is_changed) strcat(flags,"D");
+			fprintf(stderr, "%4d xptr:%8x%08p lxptr:%8x%08p %4s %s\n",
+				i, physXptr.layer, physXptr.addr, logXptr.layer, logXptr.addr, flags, auxInfo);
+		}
+	}
+	fprintf(stderr,"---FINISHED DUMP OF BUFMGR STATE---\n");
+}
+
