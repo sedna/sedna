@@ -342,8 +342,12 @@ int EventWait(UEvent *uEvent, sys_call_error_fun fun)
 	ops[1].sem_num = SEMIDX_EVENT_STATE;
 	ops[1].sem_op = SEMVAL_EVENT_STATE_SET;
 	
+retry:
 	if (-1 == semop(uEvent->semid, ops, 2))
+	{
+		if (errno == EINTR) goto retry;
 		SYS_CALL_ERROR(fun, "semop");
+	}
 	else status = 0;
 	
 	return status;
@@ -361,8 +365,12 @@ int EventWaitReset(UEvent *uEvent, sys_call_error_fun fun)
         ops[1].sem_num = SEMIDX_EVENT_STATE;
         ops[1].sem_op = SEMVAL_EVENT_STATE_RESET;
 
+retry:
         if (-1 == semop(uEvent->semid, ops, 2))
+	{
+		if (errno == EINTR) goto retry;
                 SYS_CALL_ERROR(fun, "semop");
+	}
         else status = 0;
 
         return status;
