@@ -501,6 +501,7 @@ void bm_delete_block(session_id sid,
     {
         used_mem.find_remove(offs);
         free_mem.push(offs);
+	phys_xptrs->at(offs/PAGE_SIZE)=xptr();
     }
 
     if (IS_DATA_BLOCK(p))
