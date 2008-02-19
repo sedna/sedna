@@ -15,8 +15,7 @@ all: $(PP)/bin/se_trn$(EXE_EXT) $(PP)/bin/se_rcv$(EXE_EXT)
 TRN_OBJS = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT)
-RCV_OBJS = rcv_db$(OBJ_EXT) tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
-           tr_globals$(OBJ_EXT)
+RCV_OBJS = rcv_db$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) tr_globals$(OBJ_EXT)
 OBJS     = tr$(OBJ_EXT) socket_client$(OBJ_EXT) cl_client$(OBJ_EXT) \
            tr_functions$(OBJ_EXT) tr_common_funcs$(OBJ_EXT) \
            tr_globals$(OBJ_EXT) rcv_db$(OBJ_EXT)
