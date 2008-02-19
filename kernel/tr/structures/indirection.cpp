@@ -835,9 +835,9 @@ void add_predeleted_block(xptr block)
 
 		if (nbh->snode->bblk_indir == nbh->sm_vmm.p)
 			nbh->snode->bblk_indir=r_bl;
-		else 
+
+		if (l_bl!=XNULL)
 		{
-			U_ASSERT(l_bl!=XNULL);
 			CHECKP(l_bl);
 			VMM_SIGNAL_MODIFICATION(l_bl);
 			((node_blk_hdr *) (GETBLOCKBYNODE(l_bl)))->nblk_indir = r_bl;
