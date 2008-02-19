@@ -75,6 +75,8 @@ xptr get_last_indir();
 //void add_new_block(xptr block);
 void add_predeleted_block(xptr block);
 
+bool check_indirection_consistency(xptr p, bool recourse = false);
+ 
 xptr get_last_indir();
 #endif
 

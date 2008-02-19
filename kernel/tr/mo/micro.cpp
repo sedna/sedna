@@ -1823,14 +1823,7 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
 		 */
 		
 		if (block->count == 0) {
-			if (IS_DATA_BLOCK(nodex)) 
-				hl_phys_log_change(&block->desc_first, sizeof(shft));
-
 			block->desc_first=0;
-
-			if (IS_DATA_BLOCK(nodex)) 
-				hl_phys_log_change(&block->desc_last, sizeof(shft));
-
 			block->desc_last=0;
 		}
 	}
@@ -1886,6 +1879,8 @@ bool delete_node_inner_2 (xptr nodex, t_item type)
     }
 	return true;
 }
+
+/*
 void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 {
 	#ifdef _MYDEBUG
@@ -1950,7 +1945,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 		#ifdef _MYDEBUG
 			crm_out<<"delete_node->5";
 		#endif
-		deleteBlock(block);
+		delete____Block(block);
 		return;
 	}
 	if (node_d->desc_prev==0) 
@@ -2019,6 +2014,7 @@ void delete_node_inner (xptr node, node_blk_hdr*  block,t_item type)
 		}
 	}
 }
+*/
 
 void delete_node (xptr node)
 {

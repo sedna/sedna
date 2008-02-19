@@ -521,7 +521,7 @@ void clear_ind_sequence(xptr& p)
 		CHECKP(tmp);
 		p=((indir_blk_hdr*)XADDR(tmp))->nblk;
 		hl_phys_log_change_blk(XADDR(tmp));
-		vmm_delete_block(tmp);
+		vmm___delete_block(tmp);
 		RECOVERY_CRASH;
 		tmp=p;
 	}
@@ -826,8 +826,33 @@ void set_redo_hint(int cl_hint,std::vector<xptr>* blocks)
 void add_predeleted_block(xptr block)
 {
 	if (IS_DATA_BLOCK(block)) {
-		((node_blk_hdr *) XADDR(block))->pblk_indir = XNULL;
-		((node_blk_hdr *) XADDR(block))->nblk_indir = XNULL;
+		CHECKP(block);
+
+		node_blk_hdr * nbh = (node_blk_hdr *) XADDR(block);
+
+		xptr l_bl = nbh->pblk_indir;
+		xptr r_bl = nbh->nblk_indir;
+
+		if (nbh->snode->bblk_indir == nbh->sm_vmm.p)
+			nbh->snode->bblk_indir=r_bl;
+		else 
+		{
+			U_ASSERT(l_bl!=XNULL);
+			CHECKP(l_bl);
+			VMM_SIGNAL_MODIFICATION(l_bl);
+			((node_blk_hdr *) (GETBLOCKBYNODE(l_bl)))->nblk_indir = r_bl;
+		}
+
+		if (r_bl!=XNULL)
+		{
+			CHECKP(r_bl);
+			VMM_SIGNAL_MODIFICATION(r_bl);
+			((node_blk_hdr *) (GETBLOCKBYNODE(r_bl)))->pblk_indir = l_bl;
+		}
+
+		nbh->pblk_indir = XNULL;
+		nbh->nblk_indir = XNULL;
+
 		blocks_to_delete->insert(block);
 	}
 }
@@ -937,7 +962,7 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
  *
  */
 
-bool check_indirection_consistency(xptr p, bool recourse = false) 
+bool check_indirection_consistency(xptr p, bool recourse) 
 {
   CHECKP(p);
 	schema_node * sn = (GETBLOCKBYNODE(p))->snode;

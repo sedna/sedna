@@ -1782,6 +1782,7 @@ second:
 }
 
 /*node deletion*/
+/*
 void delete_inner_nodes(n_dsc* node)
 {
 	xptr tmp,tmp2;
@@ -1863,7 +1864,7 @@ void delete_inner_nodes(n_dsc* node)
                 { 
 					CHECKP(tmp); 
 					tmp2=((node_blk_hdr*)XADDR(tmp))->nblk;
-					deleteBlock((node_blk_hdr*)XADDR(tmp));
+					delete____Block((node_blk_hdr*)XADDR(tmp));
 					tmp=tmp2;
 				}
 				continue;
@@ -1877,7 +1878,7 @@ void delete_inner_nodes(n_dsc* node)
 				{ 
 					CHECKP(tmp) ;
 					tmp2= ((node_blk_hdr*)XADDR(tmp))->nblk;
-					deleteBlock((node_blk_hdr*)XADDR(tmp));
+					delete____Block((node_blk_hdr*)XADDR(tmp));
 					tmp=tmp2;
 				}  
 			}
@@ -1890,7 +1891,7 @@ void delete_inner_nodes(n_dsc* node)
 				{ 
 					CHECKP(tmp) ;
 					tmp2= ((node_blk_hdr*)XADDR(tmp))->pblk;
-					deleteBlock((node_blk_hdr*)XADDR(tmp));
+					delete____Block((node_blk_hdr*)XADDR(tmp));
 					tmp=tmp2;
 				}  
 			}
@@ -1940,6 +1941,7 @@ void delete_inner_nodes(n_dsc* node)
 		CHECKP(node_x) ;
 	}
 }
+*/
 
 void copy_to_buffer(char * buf,const void* src, int size, text_type ttype)
 {
