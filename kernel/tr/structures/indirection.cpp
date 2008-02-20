@@ -325,14 +325,6 @@ xptr add_record_to_indirection_table(xptr p)
 	}	    
 	CHECKP(rba);	
 	
-	CHECKP(p);
-	U_ASSERT( ((nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) && (nbh->count > nbh->indir_count)) ||
-		   (nbh->nblk_indir == XNULL && nbh->pblk_indir == XNULL && nbh->count <= nbh->indir_count));
-
-	CHECKP(rba);
-	U_ASSERT( ((nbi->nblk_indir != XNULL || nbi->pblk_indir != XNULL) && (nbi->count > nbi->indir_count)) ||
-		   (nbi->nblk_indir == XNULL && nbi->pblk_indir == XNULL && nbi->count <= nbi->indir_count));
-
     //USemaphoreUp(indirection_table_sem);
 	//indir_node_count++;
     last_indir = rba; // we need this hint to apply dynamic xptr remapping durind redo
@@ -474,14 +466,6 @@ void del_record_from_indirection_table(xptr p)
 			nbh->nblk_indir = XNULL;
 		}
 	}	
-
-	CHECKP(node);
-	U_ASSERT( ((nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) && (nbh->count > nbh->indir_count)) ||
-		   (nbh->nblk_indir == XNULL && nbh->pblk_indir == XNULL && nbh->count <= nbh->indir_count));
-
-	CHECKP(p);
-	U_ASSERT( ((nbi->nblk_indir != XNULL || nbi->pblk_indir != XNULL) && (nbi->count > nbi->indir_count)) ||
-		   (nbi->nblk_indir == XNULL && nbi->pblk_indir == XNULL && nbi->count <= nbi->indir_count));
 
 	CHECKP(p);
 }
