@@ -2419,9 +2419,11 @@ void decrement_count(node_blk_hdr* pr_blk,shft count)
 				hl_phys_log_change(&(rbi->pblk_indir),sizeof(xptr));
 				rbi->pblk_indir=l_bl;
 			}
+
 			CHECKP(blk);
 			VMM_SIGNAL_MODIFICATION(blk);
-				
+			pr_blk->pblk_indir = XNULL;
+			pr_blk->nblk_indir = XNULL;
 		}
 }
 /* increment count*/

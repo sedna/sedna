@@ -325,6 +325,14 @@ xptr add_record_to_indirection_table(xptr p)
 	}	    
 	CHECKP(rba);	
 	
+	CHECKP(p);
+	U_ASSERT( ((nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) && (nbh->count > nbh->indir_count)) ||
+		   (nbh->nblk_indir == XNULL && nbh->pblk_indir == XNULL && nbh->count <= nbh->indir_count));
+
+	CHECKP(rba);
+	U_ASSERT( ((nbi->nblk_indir != XNULL || nbi->pblk_indir != XNULL) && (nbi->count > nbi->indir_count)) ||
+		   (nbi->nblk_indir == XNULL && nbi->pblk_indir == XNULL && nbi->count <= nbi->indir_count));
+
     //USemaphoreUp(indirection_table_sem);
 	//indir_node_count++;
     last_indir = rba; // we need this hint to apply dynamic xptr remapping durind redo
@@ -466,6 +474,14 @@ void del_record_from_indirection_table(xptr p)
 			nbh->nblk_indir = XNULL;
 		}
 	}	
+
+	CHECKP(node);
+	U_ASSERT( ((nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) && (nbh->count > nbh->indir_count)) ||
+		   (nbh->nblk_indir == XNULL && nbh->pblk_indir == XNULL && nbh->count <= nbh->indir_count));
+
+	CHECKP(p);
+	U_ASSERT( ((nbi->nblk_indir != XNULL || nbi->pblk_indir != XNULL) && (nbi->count > nbi->indir_count)) ||
+		   (nbi->nblk_indir == XNULL && nbi->pblk_indir == XNULL && nbi->count <= nbi->indir_count));
 
 	CHECKP(p);
 }
@@ -910,10 +926,12 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
 		
 		if (nbh->nblk_indir != XNULL || nbh->pblk_indir != XNULL) {
 			if (nbh->count <= nbh->indir_count) 
-				throw USER_EXCEPTION2(SE2030, "Indirection quota block has overfull indirection table");
+				throw SYSTEM_EXCEPTION("Indirection quota block has overfull indirection table");
+//				throw USER_EXCEPTION2(SE2030, "Indirection quota block has overfull indirection table");
 		} else {
 			if (nbh->count > nbh->indir_count) 
-				throw USER_EXCEPTION2(SE2030, "Non-indirection quota block has underfull indirection table");
+				throw SYSTEM_EXCEPTION("Non-indirection quota block has underfull indirection table");
+//				throw USER_EXCEPTION2(SE2030, "Non-indirection quota block has underfull indirection table");
 		}
 		
 		b = nbh->nblk;
@@ -923,7 +941,8 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
 	 * one of indirection records  */
 	
 	if (node_desc_count != ind_rec_count)
-		throw USER_EXCEPTION2(SE2030, "Total number of node descriptors and total number of indirection table records differ");
+		throw SYSTEM_EXCEPTION("Total number of node descriptors and total number of indirection table records differ");
+//		throw USER_EXCEPTION2(SE2030, "Total number of node descriptors and total number of indirection table records differ");
 	
 	b = sn->bblk_indir;
 	left_nb = XNULL;
@@ -935,10 +954,12 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
 		 * belongs to the right schema node */		
 
 		if (nbh->snode != sn)
-			throw USER_EXCEPTION2(SE2030, "Unexpected block in indirection quota chain");
+			throw SYSTEM_EXCEPTION("Unexpected block in indirection quota chain");
+//			throw USER_EXCEPTION2(SE2030, "Unexpected block in indirection quota chain");
 		
 		if (nbh->pblk_indir != left_nb)
-			throw USER_EXCEPTION2(SE2030, "Broken indirection quota chain");
+			throw SYSTEM_EXCEPTION("Broken indirection quota chain");
+//			throw USER_EXCEPTION2(SE2030, "Broken indirection quota chain");
 		
 		left_nb = b;
 
