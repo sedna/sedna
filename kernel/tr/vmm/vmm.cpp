@@ -1038,9 +1038,10 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 void vmm_delete_block(xptr p) throw (SednaException)
 {
 	// TODO: fix this interesting logic :)
+	
 	if (IS_DATA_BLOCK(p)) 
 	{
-	    CHECKP(p);
+		CHECKP(p);
 		VMM_SIGNAL_MODIFICATION(p);
 	}
 
