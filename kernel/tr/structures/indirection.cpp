@@ -267,7 +267,7 @@ xptr add_record_to_indirection_table(xptr p)
 	nbi->indir_count++;
 	nbi->free_first_indir=*((shft*)((char*)nbi+nbi->free_first_indir));
 	hl_phys_log_change(XADDR(rba),sizeof(xptr));
-    *(xptr*)(XADDR(rba)) = p;
+	*(xptr*)(XADDR(rba)) = p;
 	if (nbh!=nbi)
 	{
 		if (nbi->indir_count>=nbi->count&& 
@@ -913,7 +913,7 @@ bool check_indirection_consistency_schema(schema_node * sn, bool recourse = fals
 				throw SYSTEM_EXCEPTION("Indirection quota block has overfull indirection table");
 //				throw USER_EXCEPTION2(SE2030, "Indirection quota block has overfull indirection table");
 		} else {
-			if (nbh->count > nbh->indir_count) 
+			if ((nbh->snode->bblk_indir != nbh->sm_vmm.p) && (nbh->count > nbh->indir_count)) 
 				throw SYSTEM_EXCEPTION("Non-indirection quota block has underfull indirection table");
 //				throw USER_EXCEPTION2(SE2030, "Non-indirection quota block has underfull indirection table");
 		}
