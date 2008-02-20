@@ -181,7 +181,7 @@ bt_cursor::bt_cursor(char* pg, shft the_key_idx)
 
 #ifdef PERMIT_CLUSTERS
     /* in case of cluster cursors may be constructed only from the head of the cluster */
-    if (BT_IS_CLUS(pg) && !(BT_IS_CLUS_HEAD(pg)))
+    if (BT_IS_CLUS(pg) && !(BT_IS_CLUS_HEAD(pg)) && !(BT_IS_CLUS_TAIL(pg)))
         throw USER_EXCEPTION2(SE1008, "Trying to construct cursor from non-head cluster page");
 #endif
 
