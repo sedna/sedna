@@ -274,6 +274,9 @@ xptr shiftLastNodeToTheNextBlock(node_blk_hdr* block)
 		hl_phys_log_change(source,sizeof(shft));
 		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_prev))->desc_next),sizeof(shft));
 	}
+
+	VMM_SIGNAL_MODIFICATION(old_xptr);
+
 	block->desc_last=source->desc_prev;
 	decrement_count(block);	
 
@@ -385,6 +388,9 @@ xptr shiftFirstNodeToThePreviousBlock(node_blk_hdr* block)
 		hl_phys_log_change(source,sizeof(shft));
 		hl_phys_log_change(&((GETPOINTERTODESC(block,source->desc_next))->desc_prev),sizeof(shft));
 	}
+
+	VMM_SIGNAL_MODIFICATION(old_xptr);
+
 	block->desc_first=source->desc_next;
 	decrement_count(block);	
 
