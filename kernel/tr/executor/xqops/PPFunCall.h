@@ -78,11 +78,13 @@ private:
     fun_arg** args;
     int args_num;
     dynamic_context *new_cxt;
-    bool need_reopen;
 #ifdef STRICT_FUNS
     sequence* s;
     int spos;
 #endif
+    bool need_reopen;
+    bool is_body_opened;
+
 
     inline void reinit_consumer_table();
 

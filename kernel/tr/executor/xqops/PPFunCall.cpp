@@ -177,7 +177,8 @@ void PPFunCall::open ()
     for (int i = 0; i < args_num; i++) 
         ch_arr[i].op->open();
 
-    need_reopen = false;
+    need_reopen    = false;
+    is_body_opened = false;
 }
 
 void PPFunCall::reopen ()
@@ -208,8 +209,11 @@ void PPFunCall::close ()
 
     if (body) 
     {
-        body->close();
-
+        if(is_body_opened) 
+        {
+            is_body_opened = false;
+            body->close();
+        }
         delete body_fcr;
         body_fcr = NULL;
     }
@@ -343,8 +347,8 @@ void PPFunCall::next(tuple &t)
             }
 
             body = fd.op->copy(new_cxt);
-
             body->open();
+            is_body_opened = true;
 #ifdef STRICT_FUNS
         }
 #endif
