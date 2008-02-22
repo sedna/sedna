@@ -1032,7 +1032,10 @@ xptr addNewNodeOfSameSortAfter(xptr namesake, xptr left_sib,xptr right_sib, xptr
 	//PHYS LOG
 	if (IS_DATA_BLOCK(namesake)) 
 		hl_phys_log_change(&block_namesake->free_first,sizeof(shft));
+
+	VMM_SIGNAL_MODIFICATION(n_blk);
 	block_namesake->free_first=GETPOINTERTONEXTFREESPACE(new_node);
+
 	//PHYS LOG
 	if (IS_DATA_BLOCK(namesake)) 
 		hl_phys_log_change(new_node,block_namesake->dsc_size);
