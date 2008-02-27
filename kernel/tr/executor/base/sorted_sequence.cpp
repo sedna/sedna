@@ -465,6 +465,7 @@ void sorted_sequence::copy_ptr_to_new_place(xptr ptr,xptr& place, bool marking)
 	pt.size=((data_ptr*)XADDR(ptr))->size;
 	pt.value=((data_ptr*)XADDR(ptr))->value;
 	CHECKP(place);
+	VMM_SIGNAL_MODIFICATION(place);
 	((seq_blk_hdr*)XADDR(BLOCKXPTR(place)))->cursor++;
 	((data_ptr*)XADDR(place))->value=pt.value;
 	((data_ptr*)XADDR(place))->size=pt.size;
@@ -621,7 +622,16 @@ void sorted_sequence::set_next_ptr_with_free(xptr& ptr, bool free)
 		CHECKP(ptr);
 		if (free) empty_blk_arr.push_back(BLOCKXPTR(ptr));
 		ptr=((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->nblk;
-		if (ptr!=XNULL)ptr+=sizeof(seq_blk_hdr);		
+		if (ptr!=XNULL)
+		{
+		    CHECKP(ptr);
+            if(((seq_blk_hdr*)XADDR(BLOCKXPTR(ptr)))->cursor) ptr+=sizeof(seq_blk_hdr);
+            else 
+            {
+                if (free) empty_blk_arr.push_back(BLOCKXPTR(ptr));
+                ptr = XNULL;
+            }
+        }
 	}
 }
 void sorted_sequence::unlock_memory()
