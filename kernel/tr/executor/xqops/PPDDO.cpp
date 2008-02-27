@@ -184,6 +184,7 @@ int PPDDO::get_size_ser(xptr& v1)
 	CHECKP(v1);
 	xptr ptr=(GET_FREE_SPACE(v1)<=sizeof(xptr))?
 		((seq_blk_hdr*)XADDR(BLOCKXPTR(v1)))->nblk+(sizeof(seq_blk_hdr)+sizeof(xptr)-GET_FREE_SPACE(v1)):v1+sizeof(xptr);
+	CHECKP(ptr);
 	if (GET_FREE_SPACE(ptr)<sizeof(shft))
 	{
 		copy_to_buffer(XADDR(ptr),GET_FREE_SPACE(ptr));
