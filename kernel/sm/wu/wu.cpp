@@ -205,14 +205,31 @@ int FlushBuffer(int bufferId)
 static
 int GrantExclusiveAccessToBuffer(int bufferId)
 {
-	int success = 0;
+	int success = 0, curClientId = 0;
 	vmm_sm_blk_hdr *header = NULL;
-	if (LocateBlockHeader(bufferId, &header))
+
+	curClientId = ClGetCurrentClientId(NULL);
+	if (LocateBlockHeader(bufferId, &header) && header->trid_wr_access==-1)
 	{
-		header->trid_wr_access = ClGetCurrentClientId(NULL);
+		header->trid_wr_access = curClientId;
 		success = 1;
 	}
-	return 1;
+	return success;
+}
+
+static
+int RevokeExclusiveAccessToBuffer(int bufferId)
+{
+	int success = 0, curClientId = 0;
+	vmm_sm_blk_hdr *header = NULL;
+
+	curClientId = ClGetCurrentClientId(NULL);
+	if (LocateBlockHeader(bufferId, &header) && header->trid_wr_access==curClientId)
+	{
+		header->trid_wr_access = -1;
+		success = 1;
+	}
+	return success;
 }
 
 static
@@ -413,6 +430,7 @@ int WuInit(int isRecoveryMode, int isVersionsDisabled, TIMESTAMP persSnapshotTs)
 	veSetup.allocateBlockAndCopyData = AllocateDataBlockAndCopyData;
 	veSetup.freeBlock = FreeBlock;
 	veSetup.grantExclusiveAccessToBuffer = GrantExclusiveAccessToBuffer;
+	veSetup.revokeExclusiveAccessToBuffer = RevokeExclusiveAccessToBuffer;
 	veSetup.locateVersionsHeader = LocateVersionsHeader;
 	veSetup.markBufferDirty = MarkBufferDirty;
 	veSetup.putBlockToBuffer = PutBlockToBuffer;

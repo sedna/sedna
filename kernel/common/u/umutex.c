@@ -6,8 +6,7 @@
 #ifndef _WIN32
 /* need this to enable UNIX98 features like pthread_mutexattr_settype from pthread.h */ 
 #define _GNU_SOURCE
-
-#include <pthread.h>
+#endif
 #include "common/u/umutex.h"
 
 int uMutexInit(uMutexType *mutex, sys_call_error_fun fun)

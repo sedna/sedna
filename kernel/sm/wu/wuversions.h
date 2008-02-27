@@ -32,6 +32,7 @@ struct VeSetup
 	int (*markBufferDirty) (int bufferId);
 	int (*flushBuffer) (int bufferId);
 	int (*grantExclusiveAccessToBuffer) (int bufferId);
+	int (*revokeExclusiveAccessToBuffer) (int bufferId);
 	int (*allocateBlock) (XPTR *xptr, int *bufferId);
 	int (*freeBlock) (XPTR xptr);
 	int (*allocateBlockAndCopyData) (XPTR *xptr, int *bufferId, int srcBufferId);

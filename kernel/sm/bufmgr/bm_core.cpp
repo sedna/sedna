@@ -351,7 +351,12 @@ xptr put_block_to_buffer(session_id sid,
 
 //d_printf1("put 4\n");
     // read block from disk
-    if (read_block_from_disk) read_block(p, *offs);
+    if (read_block_from_disk) 
+	{
+		read_block(p, *offs);
+		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);
+		hdr->trid_wr_access = -1;
+	}
 	else
 	{
 		vmm_sm_blk_hdr *hdr = (vmm_sm_blk_hdr*)OFFS2ADDR(*offs);

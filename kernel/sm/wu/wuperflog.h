@@ -50,4 +50,34 @@ int WuPerfLogInitialize(const char *filename);
 int WuPerfLogDeinitialize();
 int WuPerfLogRecordEvent(int type, int token, const char *fmt, ...);
 
+/*
+KRNLCALL     sid:10 trid:12
+
+EXTDATAFILE
+EXTTEMPFILE
+READBLK
+WRITEBLK
+PUTBLK2BUF
+GETFREEBUF
+VMMCALLBK
+FLUSHONE
+FLUSHALL
+ALLOCDATA
+DELETDATA
+ALLOCTEMP
+DELETTEMP
+BUFCHGSTATE  buf-id:0 state:AD prev-state:A xptr:AEFD0812.10027BE0
+
+--------------------------------------------------------
+
+KRNLCALL
++--PUTBLK2BUF
+   +--GETFREEBUF
+   |  +--VMMCALLBK
+   |  +--BUFCHGSTATE
+   +--READBLK
+      +--BUFCHGSTATE
+
+	  */ 
+
 #endif
