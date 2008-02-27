@@ -179,6 +179,12 @@ static int ImpGrantExclusiveAccessToBuffer(int bufferId)
 	return setup.grantExclusiveAccessToBuffer(bufferId);
 }
 
+static int ImpRevokeExclusiveAccessToBuffer(int bufferId)
+{
+	assert (setup.revokeExclusiveAccessToBuffer);
+	return setup.revokeExclusiveAccessToBuffer(bufferId);
+}
+
 static int ImpOnPersVersionRelocating(LXPTR lxptr, XPTR xptr)
 {
 	assert (setup.onPersVersionRelocating);
@@ -638,7 +644,7 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 {
 	SnRequestForGc buf[VE_BUFSZ], *ibuf=buf, *ebuf=buf+VE_BUFSZ;
 	VeFunctionList::iterator i;
-	int success = 0;
+	int success = 0, bufferId = 0;
 
 	if (state->functionList == NULL)
 	{
@@ -657,6 +663,20 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 			}
 
 			*ibuf=*i;
+			/*	QUICK & DIRTY
+				need to revoke exclusive access to buffer form trn 
+				this should normally be a part of buffer manager, consider
+			*/ 
+			if (ibuf->type == VE_FUNCTION_ALLOCATE_BLOCK ||
+				ibuf->type == VE_FUNCTION_CREATE_VERSION ||
+				ibuf->type == VE_FUNCTION_CREATE_VERSION_PERS)
+			{
+				if (!ImpFindBlockInBuffers(ibuf->lxptr, &bufferId) &&
+					WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError() ||
+					!ImpRevokeExclusiveAccessToBuffer(bufferId)) break;
+			}
+			/*	END OF QUICK & DIRTY
+			*/ 
 			switch (i->type)
 			{
 			case VE_FUNCTION_ALLOCATE_BLOCK:
