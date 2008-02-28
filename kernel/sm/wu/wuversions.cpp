@@ -580,24 +580,31 @@ int ComposeHeader(VersionsHeader *pHeaderOut,
 	int success = 0, prevId = -1;
 	unsigned i=0, o=1, l=VE_VERSIONS_COUNT;
 
-	ResetHeader(pHeaderOut);
-
-	/* copy all unique entries */ 
-	while (i<sz && o<l)
+	if (pHeaderIn->creatorTs[0]>=creatorTs)
 	{
-		if (idBuf[i]!=prevId)
-		{
-			pHeaderOut->creatorTs[o] = pHeaderIn->creatorTs[idBuf[i]];
-			pHeaderOut->xptr[o] = pHeaderIn->xptr[idBuf[i]];
-			prevId = idBuf[i];
-			++o;
-		}
-		++i;
+		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
+	else
+	{
+		ResetHeader(pHeaderOut);
 
-	pHeaderOut->creatorTs[0] = creatorTs;
-	pHeaderOut->xptr[0] = xptr;
-	success = (i==sz || ImpDamageSnapshots(tsBuf[i]));
+		/* copy all unique entries */ 
+		while (i<sz && o<l)
+		{
+			if (idBuf[i]!=prevId)
+			{
+				pHeaderOut->creatorTs[o] = pHeaderIn->creatorTs[idBuf[i]];
+				pHeaderOut->xptr[o] = pHeaderIn->xptr[idBuf[i]];
+				prevId = idBuf[i];
+				++o;
+			}
+			++i;
+		}
+
+		pHeaderOut->creatorTs[0] = creatorTs;
+		pHeaderOut->xptr[0] = xptr;
+		success = (i==sz || ImpDamageSnapshots(tsBuf[i]));
+	}
 	return success;
 }
 
