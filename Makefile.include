@@ -1,17 +1,3 @@
-# PLEASE DON'T CHANGE DEFAULT CONFIGURATION PARAMETERS IN THIS FILE.
-# DEFAULT PARAMETERS ARE FETCHED FROM Makefile.localconf IF IT EXISTS.
-# CREATE THIS FILE, DO ***NOT*** ADD IT TO VERSION CONTROL AND SETUP 
-# PREFERED DEFAULT SETTINGS THERE.
-
-
-#
-# Common part for almost all Makefiles
-#
-
-ifeq ($(shell ls $(PP)/Makefile.localconf), $(PP)/Makefile.localconf)
-include $(PP)/Makefile.localconf
-endif
-
 # Configuration constants
 
 # options: Release configuration - Release
