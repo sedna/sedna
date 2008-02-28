@@ -274,16 +274,16 @@ public:
   void commit_trn(transaction_id& trid, bool sync);
   void rollback_trn(transaction_id &trid, void (*exec_micro_op) (const char*, int, bool), bool sync);  
 #ifdef SE_ENABLE_FTSEARCH
-void llmgr_core::recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
-										   void (*exec_micro_op) (const char*, int, bool),
-                                           void(*switch_indirection)(int),
-                                           void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
-                                           void (*_vmm_rcv_clear_indir_block_set_)(),
-                                           void (*_sync_indirection_table_)(),
-                                           const LONG_LSN& last_cp_lsn,
-                                           int undo_indir_mode,
-                                           int redo_indir_mode,
-                                           bool sync);
+void recover_db_by_logical_log(void (*index_op) (const trns_undo_analysis_list&, const trns_redo_analysis_list&, const LONG_LSN&),
+                               void (*exec_micro_op) (const char*, int, bool),
+                               void(*switch_indirection)(int),
+                               void (*_vmm_rcv_add_to_indir_block_set_)(xptr p),
+                               void (*_vmm_rcv_clear_indir_block_set_)(),
+                               void (*_sync_indirection_table_)(),
+                               const LONG_LSN& last_cp_lsn,
+                               int undo_indir_mode,
+                               int redo_indir_mode,
+                               bool sync);
 #else
 void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),void(*switch_indirection)(int),void (*_vmm_rcv_add_to_indir_block_set_)(xptr p), void (*_vmm_rcv_clear_indir_block_set_)(),void (*_sync_indirection_table_)(), const LONG_LSN& last_cp_lsn, int undo_mode, int redo_mode, bool sync);
 
