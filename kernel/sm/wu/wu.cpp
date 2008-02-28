@@ -209,7 +209,19 @@ int GrantExclusiveAccessToBuffer(int bufferId)
 	vmm_sm_blk_hdr *header = NULL;
 
 	curClientId = ClGetCurrentClientId(NULL);
-	if (LocateBlockHeader(bufferId, &header) && header->trid_wr_access==-1)
+	if (curClientId==-1)
+	{
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+	}
+	else if (!LocateBlockHeader(bufferId, &header))
+	{
+		/* error */ 
+	}
+	else if (header->trid_wr_access!=-1 && header->trid_wr_access!=curClientId)
+	{
+		WuSetLastErrorMacro(WUERR_UNEXPECTED_TRID_WR_A);
+	}
+	else
 	{
 		header->trid_wr_access = curClientId;
 		success = 1;
@@ -224,7 +236,19 @@ int RevokeExclusiveAccessToBuffer(int bufferId)
 	vmm_sm_blk_hdr *header = NULL;
 
 	curClientId = ClGetCurrentClientId(NULL);
-	if (LocateBlockHeader(bufferId, &header) && header->trid_wr_access==curClientId)
+	if (curClientId==-1)
+	{
+		WuSetLastErrorMacro(WUERR_FUNCTION_INVALID_IN_THIS_STATE);
+	}
+	else if (!LocateBlockHeader(bufferId, &header))
+	{
+		/* error */ 
+	}
+	else if(header->trid_wr_access!=-1 && header->trid_wr_access!=curClientId)
+	{
+		WuSetLastErrorMacro(WUERR_UNEXPECTED_TRID_WR_A);
+	}
+	else
 	{
 		header->trid_wr_access = -1;
 		success = 1;

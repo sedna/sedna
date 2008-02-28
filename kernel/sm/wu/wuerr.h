@@ -89,6 +89,7 @@
 /* manually added errors */ 
 
 #define WUERR_BLOCK_NOT_IN_BUFFERS                                       (54 + WUERR_FIRST_ERR)
+#define WUERR_UNEXPECTED_TRID_WR_A                                       (55 + WUERR_FIRST_ERR)
 
 /* no more errors */ 
 
