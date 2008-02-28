@@ -678,9 +678,14 @@ int OnTransactionCommit(VeClientState *state, TIMESTAMP currentSnapshotTs)
 				ibuf->type == VE_FUNCTION_CREATE_VERSION ||
 				ibuf->type == VE_FUNCTION_CREATE_VERSION_PERS)
 			{
-				if (!ImpFindBlockInBuffers(ibuf->lxptr, &bufferId) &&
-					WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError() ||
-					!ImpRevokeExclusiveAccessToBuffer(bufferId)) break;
+				if (ImpFindBlockInBuffers(ibuf->lxptr, &bufferId))
+				{
+					if (!ImpRevokeExclusiveAccessToBuffer(bufferId)) break;
+				}
+				else
+				{
+					if (WUERR_BLOCK_NOT_IN_BUFFERS != WuGetLastError()) break;
+				}					
 			}
 			/*	END OF QUICK & DIRTY
 			*/ 
