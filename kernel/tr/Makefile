@@ -71,9 +71,9 @@ ADD_LIBS = $(COMMON_FILES_LIB) $(PHYS_LOG_LIB) $(LOGICAL_LOG_LIB) \
 
 ADD_LIBS_2 =
 	   
-ifeq ($(PLATFORM), WIN32)
-ADD_LIBS_2 += detours.lib detoured.lib ntdll.lib
-endif
+#ifeq ($(PLATFORM), WIN32)
+#ADD_LIBS_2 += detours.lib detoured.lib ntdll.lib
+#endif
 
 
 ################################################################################
