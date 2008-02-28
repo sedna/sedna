@@ -44,7 +44,7 @@ endif
 # options: recovery testing is on  - 1
 #          recovery testing is off - 0
 ifndef RCV_TEST
-RCV_TEST = 1
+RCV_TEST = 0
 endif
 
 # options: Compile java files        - 1
