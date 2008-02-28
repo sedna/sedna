@@ -12,6 +12,9 @@
 
 #define PRINT_STACK_TRACE
 
+#ifdef PRINT_STACK_TRACE
+#undef PRINT_STACK_TRACE
+#endif
 
 bool OS_exceptions_handler::critical_section = false;
 
@@ -23,7 +26,6 @@ bool OS_exceptions_handler::critical_section = false;
 
 #include <iostream>
 #include <assert.h>
-#include "exndisphook.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// WIN32 SECTION
@@ -80,112 +82,6 @@ static void win32_exception_translate(unsigned code, EXCEPTION_POINTERS* info)
                 throw SYSTEM_EXCEPTION("Unknown system error");
             }
     }
-}
-
-const char base[] = __FILE__;
-int strip = 3;
-
-void WriteStackTrace(PCONTEXT context, FILE *file)
-{
-	int success = 0, i = 0;
-	char fileName[MAX_PATH] = "<unknown file>", procName[256] = "<unknown proc>", *fileNamePtr=fileName;
-	const char *j = NULL;
-	unsigned lineNo = 0, displ = 0;
-	size_t len = 0;
-	CONTEXT context2 = {};
-	sym_engine sym(0);
-
-	assert(context);
-	context2=*context;
-	if (!sym.stack_first(&context2)) {}
-	else
-	{
-		success = 1;
-		sym.fileline(fileName, sizeof(fileName), &lineNo, &displ);
-		sym.symbol(procName, sizeof(procName), &displ);
-		len=strlen(procName);
-		if (len>=2 && 0==strcmp(procName+len-2,"()")) procName[len-2]='\0';
-		i=strip+1;
-		j=base+strlen(base);
-		while(j>base)
-		{			
-			if (j[-1]=='\\') --i;
-			if (i<=0) break;
-			--j;
-		}
-		if (strncmp(base,fileName,j-base)==0)
-		{
-			fileNamePtr=fileName+(j-base);
-		}
-	}
-
-	if (!success)
-	{
-		fprintf(file,"No file-line-function info availible, breaking into debugger.\n");
-		DebugBreak();
-	}
-	else
-	{
-		fprintf(file,"%-30s %4d %s\n",procName,lineNo,fileNamePtr);
-	}
-	fflush(file);
-}
-
-static FILE *logfile = NULL;
-
-static LONG NTAPI NullExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
-{
-	return EXCEPTION_CONTINUE_SEARCH;
-}
-
-static __declspec(thread) UserExceptionDispatcherProc exceptionDispatcherProc = NullExceptionDispatcher;
-
-static LONG NTAPI WorkerThreadExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
-{
-	PVOID hit = NULL;
-	int isW = 0;
-	LONG resolution = EXCEPTION_CONTINUE_SEARCH;
-	/* if we are invoked recursively we just give up*/ 
-	exceptionDispatcherProc = NullExceptionDispatcher;
-
-	if (ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) 
-	{
-		/* not the type of exception we are interested in */ 
-	}
-	else
-	{
-		hit = (PVOID) ExceptionRecord->ExceptionInformation[1];
-		isW = (int) ExceptionRecord->ExceptionInformation[0];
-		if (isW && LAYER_ADDRESS_SPACE_START_ADDR <= hit && hit < LAYER_ADDRESS_SPACE_BOUNDARY)
-		{
-			WriteStackTrace(Context, logfile ? logfile : stderr);
-			VMM_SIGNAL_MODIFICATION(ADDR2XPTR(hit));
-			resolution = EXCEPTION_CONTINUE_EXECUTION;
-		}
-	}
-
-	exceptionDispatcherProc = WorkerThreadExceptionDispatcher;
-	return resolution;
-}
-
-static LONG NTAPI RootExceptionDispatcher(PEXCEPTION_RECORD ExceptionRecord, PCONTEXT Context)
-{
-	LONG resolution = exceptionDispatcherProc(ExceptionRecord,Context);
-#	if (_MSC_VER < 1400)
-	/*	If we are compiling with Microsoft compiler and it is anything older than ver. 2005
-		call UnhandledExceptionFilter() now to get a "the program performed an ilegal operation" 
-		dialog that offers us to attach a debuger. The old Microsoft compilers generated
-		the code that catched SEH exceptions with catch(...) statement; that is bad. */ 
-	if (resolution == EXCEPTION_CONTINUE_SEARCH &&
-		ExceptionRecord->ExceptionCode != 0xE06D7363 /* C++ exception*/ && 
-		ExceptionRecord->ExceptionCode != EXCEPTION_BREAKPOINT &&
-		ExceptionRecord->ExceptionCode != EXCEPTION_SINGLE_STEP) 
-	{
-		EXCEPTION_POINTERS ep = {ExceptionRecord, Context};
-		if (UnhandledExceptionFilter(&ep)==EXCEPTION_CONTINUE_SEARCH) DebugBreak();
-	}
-#	endif
-	return resolution;
 }
 
 void OS_exceptions_handler::install_handler()
