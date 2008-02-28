@@ -447,6 +447,7 @@ int main(int argc, char **argv)
     char buf[1024];
     UShMem gov_mem_dsc;
 
+    SednaUserException ppc_ex = USER_EXCEPTION(SE4400); // used below in ppc->startup() 
 
     try {
 
