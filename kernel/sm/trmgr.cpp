@@ -194,8 +194,9 @@ U_THREAD_PROC (checkpoint_thread, arg)
         	if (USemaphoreUp(concurrent_trns_sem, __sys_call_error) !=0 )
 	         throw SYSTEM_EXCEPTION("Can't up semaphore concurrent micro ops number semaphore");
 
-
 		ll_set_checkpoint_on_flag(false);
+
+   		elog(EL_LOG, ("Checkpoint procedure is finished"));
 	}
 	else // we need only snapshot advance (subject to criterion)
 	{
@@ -226,8 +227,6 @@ U_THREAD_PROC (checkpoint_thread, arg)
    	}
    	
     d_printf2("checkpoint finished times=%d\n", times);
-
-   	elog(EL_LOG, ("Checkpoint procedure is finished"));
 
     times++;
 
