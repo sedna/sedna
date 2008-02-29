@@ -31,15 +31,6 @@
 
 #include "common/XptrHash.h"
 
-v v v v v v v
-#ifdef SE_ENABLE_TRIGGERS
-#include "tr/triggers/triggers_data.h"
-#endif
-
-*************
-#include "common/XptrHash.h"
-
-^ ^ ^ ^ ^ ^ ^
 using namespace std;
 
 static XptrHash <xptr, 16, 16> indir_map; // mapping for redo indirection purposes
