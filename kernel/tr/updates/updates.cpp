@@ -136,7 +136,7 @@ void update_update_sequence(xptr node,schema_ft_ind_cell* icell)
 }
 void update_delete_sequence(xptr node,schema_ft_ind_cell* icell)
 {
-	if (delete_mode ||icell==NULL ) return;
+	if (icell==NULL ) return;
 	schema_ft_ind_cell* obj=icell;
 	CHECKP(node);
 	xptr ind=((n_dsc*)XADDR(node))->indir;
@@ -149,7 +149,7 @@ void update_delete_sequence(xptr node,schema_ft_ind_cell* icell)
 }
 void init_ft_sequences (xptr& left, xptr& right, xptr& parent)
 {
-	if (delete_mode || IS_TMP_BLOCK(left)||IS_TMP_BLOCK(right)||IS_TMP_BLOCK(parent)) return;
+	if (IS_TMP_BLOCK(left)||IS_TMP_BLOCK(right)||IS_TMP_BLOCK(parent)) return;
 	xptr tmp;
 	schema_node* scn;
 	if (parent!=XNULL)
