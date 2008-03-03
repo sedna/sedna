@@ -225,7 +225,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
 {
 #ifdef _WIN32
     int written = 0;
-	BOOl res = 0;
+	BOOL res = 0;
     while(written < to_write)
     {
         res = WriteFile(fd, buf + written, to_write - written, (LPDWORD) already_written, NULL);
