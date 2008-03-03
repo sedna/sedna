@@ -198,17 +198,39 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
 int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    BOOL res = WriteFile(fd, buf, to_write, (LPDWORD) already_written, NULL);
-    if (res == 0)
-        sys_call_error("WriteFile");
-    return res;
+    int written = 0;
+	BOOl res = 0;
+    while(written < to_write)
+    {
+        res = WriteFile(fd, buf + written, to_write - written, (LPDWORD) already_written, NULL);
+        if (res == 0)
+        {
+            sys_call_error("WriteFile");
+            return 0;
+        }
+        else
+            written += (*already_written);
+    }
+    return 1;
 #else
-    int res = write(fd, buf, to_write);
-    if (res == -1)
-        sys_call_error("write");
-    else 
-        *already_written = res;
-    return (res == -1 ? 0 : 1);
+    int res = 0, written = 0;
+    
+    while(written < to_write)
+    {
+       res = write(fd, buf + written, to_write - written);
+       if (res == -1)
+           if (errno == EINTR)
+                continue;
+           else
+           {
+               sys_call_error("write");
+               return 0;
+           }
+       else
+           written += res;
+    }
+    *already_written = written;
+    return written;
 #endif
 }
 
