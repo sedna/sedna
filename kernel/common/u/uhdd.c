@@ -179,17 +179,43 @@ int uDelDir(const char *dir, sys_call_error_fun fun)
 int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    BOOL res = ReadFile(fd, buf, to_read, (LPDWORD) already_read, NULL);
-    if (res == 0)
-        sys_call_error("ReadFile");
-    return res;
+    int read = 0;
+    BOOL res = 0;
+
+    while(read < to_read)
+    {
+        res = ReadFile(fd, buf + read, to_read - read, (LPDWORD) already_read, NULL);
+        if (res == 0)
+        {
+            sys_call_error("ReadFile");
+            return 0;
+        }
+        else
+            read += (*already_read);
+    }
+    
+    *already_read = read;
+    return read;
 #else
-    int res = read(fd, buf, to_read);
-    if (res == -1)
-        sys_call_error("read");
-    else 
-        *already_read = res;
-    return (res == -1 ? 0 : 1);
+    int res = 0, read = 0;
+
+    while(read < to_read)
+    {
+        res = read(fd, buf + read, to_read - read);
+        if (res == -1)
+           if (errno == EINTR)
+                continue;
+           else
+           {
+               sys_call_error("read");
+               return 0;
+           }
+       else
+           read += res;
+    }
+    
+    *already_read = read;
+    return read;
 #endif
 }
 
@@ -209,9 +235,10 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
             return 0;
         }
         else
-            written += (*already_written);
+           written += (*already_written);
     }
-    return 1;
+    *already_written = written;
+    return written;
 #else
     int res = 0, written = 0;
     
