@@ -184,7 +184,7 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
 
     while(read < to_read)
     {
-        res = ReadFile(fd, buf + read, to_read - read, (LPDWORD) already_read, NULL);
+        res = ReadFile(fd, (char*)buf + read, to_read - read, (LPDWORD) already_read, NULL);
         if (res == 0)
         {
             sys_call_error("ReadFile");
@@ -228,7 +228,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
 	BOOL res = 0;
     while(written < to_write)
     {
-        res = WriteFile(fd, buf + written, to_write - written, (LPDWORD) already_written, NULL);
+        res = WriteFile(fd, (char*)buf + written, to_write - written, (LPDWORD) already_written, NULL);
         if (res == 0)
         {
             sys_call_error("WriteFile");
