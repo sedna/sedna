@@ -1689,13 +1689,11 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
     else if (op == "PPIndexScan")
     {
         if (   lst->size() != 5
-            || lst->at(1).type != SCM_STRING
+            || lst->at(1).type != SCM_LIST
             || lst->at(2).type != SCM_LIST
             || lst->at(3).type != SCM_LIST
             || lst->at(4).type != SCM_SYMBOL)
             throw USER_EXCEPTION2(SE1004, "61");
-
-        string index_name = string(lst->at(1).internal.str);
 
         string isc_string = string(lst->at(4).internal.symb);
         index_scan_condition isc;
@@ -1710,61 +1708,11 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         else if (isc_string == "isc_ge_le")	isc = isc_ge_le;
         else throw USER_EXCEPTION2(SE1004, "62");
 
-        scheme_list *p1 = lst->at(2).internal.list;
-        scheme_list *p2 = lst->at(3).internal.list;
-
-        if (   p1->size() != 2
-            || p1->at(0).type != SCM_NUMBER
-            || p1->at(1).type != SCM_LIST
-            || p1->at(1).internal.list->at(0).type != SCM_SYMBOL 
-            || p2->size() != 2
-            || p2->at(0).type != SCM_NUMBER
-            || p2->at(1).type != SCM_LIST
-            || p2->at(1).internal.list->at(0).type != SCM_SYMBOL)
-            throw USER_EXCEPTION2(SE1004, "63");
-
-        string op1 = string(p1->at(1).internal.list->at(0).internal.symb);
-        string op2 = string(p2->at(1).internal.list->at(0).internal.symb);
-
-        if (op1 == "PPConst" && op2 == "PPConst")
-        {
-            tuple_cell tc = make_const(p1->at(1).internal.list->at(2), p1->at(1).internal.list->at(1));
-            tuple_cell tc2 = make_const(p2->at(1).internal.list->at(2), p2->at(1).internal.list->at(1));
-
-            opit = se_new PPIndexScan(cxt,
-                                   index_name,
-                                   tc,
-                                   tc2,
-                                   isc); 
-        }
-        else if (op1 == "PPConst")
-        {
-            tuple_cell tc = make_const(p1->at(1).internal.list->at(2), p1->at(1).internal.list->at(1));
-
-            opit = se_new PPIndexScan(cxt,
-                                   index_name,
-                                   tc,
-                                   make_pp_op(cxt, p2),
-                                   isc); 
-        }
-        else if (op2 == "PPConst")
-        {
-            tuple_cell tc2 = make_const(p2->at(1).internal.list->at(2), p2->at(1).internal.list->at(1));
-
-            opit = se_new PPIndexScan(cxt,
-                                   index_name,
-                                   make_pp_op(cxt, p1),
-                                   tc2,
-                                   isc); 
-        }
-        else
-        {
-            opit = se_new PPIndexScan(cxt,
-                                   index_name,
-                                   make_pp_op(cxt, p1),
-                                   make_pp_op(cxt, p2),
-                                   isc); 
-        }
+		opit = se_new PPIndexScan(cxt,
+                                  make_pp_op(cxt, lst->at(1).internal.list),
+                                  make_pp_op(cxt, lst->at(2).internal.list),
+                                  make_pp_op(cxt, lst->at(3).internal.list),
+                                  isc); 
     }
     else if (op == "PPEQNodeComparison")
     {

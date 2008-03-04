@@ -4475,7 +4475,7 @@
                      (const (type !xs!string) "LE")
                      (const (type !xs!string) "EQ")))
            pair   ; everything is ok
-           (cl:signal-user-error SE5050 third))))
+           (cl:signal-user-error SE5050 "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)"))))
       ((!fn!index-scan-between)
        (let ((fourth (list-ref (sa:op-args expr) 3)))
          (if (member fourth
@@ -4484,7 +4484,7 @@
                        (const (type !xs!string) "HINTL")
                        (const (type !xs!string) "HINTR")))
              pair   ; everything is ok
-             (cl:signal-user-error SE5051 fourth))))
+             (cl:signal-user-error SE5051 "index scan range must be predefined string constant (INT, SEG, HINTL or HINTR)"))))
       ((!fn!name !fn!namespace-uri !fn!string-length !fn!normalize-space
                  !fn!string !fn!local-name !fn!number !fn!base-uri
                  !fn!root)
