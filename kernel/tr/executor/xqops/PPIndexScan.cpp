@@ -12,49 +12,8 @@
 #include "tr/executor/base/PPUtils.h"
 #include "tr/executor/fo/casting_operations.h"
 
-
-PPIndexScan::PPIndexScan(dynamic_context *_cxt_, 
-                         const std::string &_index_name_,
-                         const tuple_cell& _tc_,
-                         const tuple_cell& _tc2_,
-                         index_scan_condition _isc_) : PPIterator(_cxt_),
-                                                       index_name(_index_name_),
-                                                       tc(_tc_),
-                                                       tc2(_tc2_),
-                                                       child(NULL, 0),
-                                                       child2(NULL, 0),
-                                                       isc(_isc_)
-{
-}
-
 PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
-                         const std::string &_index_name_,
-                         PPOpIn _child_,
-                         const tuple_cell& _tc2_,
-                         index_scan_condition _isc_) : PPIterator(_cxt_),
-                                                       index_name(_index_name_),
-                                                       tc2(_tc2_),
-                                                       child(_child_),
-                                                       child2(NULL, 0),
-                                                       isc(_isc_)
-{
-}
-
-PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
-                         const std::string &_index_name_,
-                         const tuple_cell& _tc_,
-                         PPOpIn _child2_,
-                         index_scan_condition _isc_) : PPIterator(_cxt_),
-                                                       index_name(_index_name_),
-                                                       tc(_tc_),
-                                                       child(NULL, 0),
-                                                       child2(_child2_),
-                                                       isc(_isc_)
-{
-}
-
-PPIndexScan::PPIndexScan(dynamic_context *_cxt_,
-                         const std::string &_index_name_,
+                         PPOpIn _index_name_,
                          PPOpIn _child_,
                          PPOpIn _child2_,
                          index_scan_condition _isc_) : PPIterator(_cxt_),
@@ -81,18 +40,6 @@ PPIndexScan::~PPIndexScan()
 
 void PPIndexScan::open ()
 {
-    // Put lock on documents under index scan and check security for document
-    schema_node *root = get_schema_node(find_entity(index_name.c_str()), "Unknown entity passed to PPIndexScan");
-    // we don't need to check auth privilege for using index, because
-    // read access to index is allowed to everyone
-
-    // Find B-Tree root
-    btree = find_btree(index_name.c_str());
-    if (btree == NULL) throw XQUERY_EXCEPTION2(SE1061, index_name.c_str());
-
-    idx_type = get_index_xmlscm_type(index_name.c_str());
-    if (idx_type == -1) throw XQUERY_EXCEPTION2(SE1061, index_name.c_str());
-
     switch (isc)
     {
         case isc_eq		: next_fun = &PPIndexScan::next_eq; break;
@@ -104,9 +51,10 @@ void PPIndexScan::open ()
         case isc_gt_le	:
         case isc_ge_lt	:
         case isc_ge_le	: next_fun = &PPIndexScan::next_between; break;
-        default			: throw USER_EXCEPTION2(SE1003, "Unexpected index scan condition");
+        default			: throw USER_EXCEPTION2(SE1003, "Unexpected index scan condition (internal error, please report a bug)");
     }
 
+    if (index_name.op) index_name.op->open();
     if (child.op) child.op->open();
     if (child2.op) child2.op->open();
 
@@ -116,6 +64,7 @@ void PPIndexScan::open ()
 
 void PPIndexScan::reopen()
 {
+    if (index_name.op) index_name.op->reopen();
     if (child.op) child.op->reopen();
     if (child2.op) child2.op->reopen();
 
@@ -125,6 +74,7 @@ void PPIndexScan::reopen()
 
 void PPIndexScan::close ()
 {
+    if (index_name.op) index_name.op->close();
     if (child.op) child.op->close();
     if (child2.op) child2.op->close();
 }
@@ -166,10 +116,34 @@ void obtain_tuple_cell(tuple_cell /*out*/ &tc, PPOpIn /*out*/ &child, xmlscm_typ
 }
 
 
+void PPIndexScan::initialize()
+{
+	U_ASSERT(first_time);
+	
+	tuple_cell index_name_tuple;
+    obtain_tuple_cell(index_name_tuple, index_name, xs_string);
+	char * index_name_string = index_name_tuple.get_str_mem();
+	
+    // Put lock on documents under index scan and check security for document
+    get_schema_node(find_entity(index_name_string), "Unknown entity passed to PPIndexScan");
+    // we don't need to check auth privilege for using index, because
+    // read access to index is allowed to everyone
+
+    // Find B-Tree root
+    btree = find_btree(index_name_string);
+    if (btree == NULL) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
+
+    idx_type = get_index_xmlscm_type(index_name_string);
+    if (idx_type == -1) throw XQUERY_EXCEPTION2(SE1061, index_name_string);
+}
+
+
 void PPIndexScan::next_eq(tuple &t)
 {
     if (first_time)
     {
+		initialize();
+		
         obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
@@ -189,6 +163,8 @@ void PPIndexScan::next_lt_le(tuple &t)
 {
     if (first_time)
     {
+		initialize();
+		
         obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
@@ -220,7 +196,9 @@ void PPIndexScan::next_gt_ge(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
+		initialize();
+
+		obtain_tuple_cell(tc, child, idx_type);
 
         tuple_cell2bt_key(tc, key);
         cursor = isc == isc_gt ? bt_find_gt(btree, key)
@@ -244,7 +222,9 @@ void PPIndexScan::next_between(tuple &t)
 {
     if (first_time)
     {
-        obtain_tuple_cell(tc, child, idx_type);
+		initialize();
+
+		obtain_tuple_cell(tc, child, idx_type);
         obtain_tuple_cell(tc2, child2, idx_type);
 
         tuple_cell2bt_key(tc, key);
@@ -282,25 +262,12 @@ PPIterator* PPIndexScan::copy(dynamic_context *_cxt_)
     if (child.op && child2.op)
     {
         res = se_new PPIndexScan(_cxt_, index_name, child, child2, isc);
+		res->index_name.op = index_name.op->copy(_cxt_);
         res->child.op = child.op->copy(_cxt_);
         res->child2.op = child2.op->copy(_cxt_);
-    }
-    else if (child.op)
-    {
-        res = se_new PPIndexScan(_cxt_, index_name, child, tc2, isc);
-        res->child.op = child.op->copy(_cxt_);
-    }
-    else if (child2.op)
-    {
-        res = se_new PPIndexScan(_cxt_, index_name, tc, child2, isc);
-        res->child2.op = child2.op->copy(_cxt_);
-    }
-    else
-    {
-        res = se_new PPIndexScan(_cxt_, index_name, tc, tc2, isc);
     }
 
-    res->set_xquery_line(__xquery_line);
+	res->set_xquery_line(__xquery_line);
 
     return res;
 }

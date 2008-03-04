@@ -1132,13 +1132,12 @@
 
              ; *** !fn!index-scan ***
              ((eq? op-name '!fn!index-scan)
-              (let ((ind-name (caddr (car node)))
-                    (condition (l2p:lr-scan-cond2por-scan-cond
+              (let ((condition (l2p:lr-scan-cond2por-scan-cond
                                 (caddr (caddr node))))
                     (line-num (l2p:list-last node)))
                 `((1 ,line-num)
                   (PPIndexScan 
-                   ,ind-name
+                   ,(l2p:any-lr-node2por (car node))
                    ,(l2p:any-lr-node2por (cadr node))
                    ; DL: the 4th list member was: (1 (PPConst 0 !xs!integer))
                    (1 (PPConst "0" !xs!integer))
@@ -1146,13 +1145,12 @@
              
              ; *** !fn!index-scan-between ***
              ((eq? op-name '!fn!index-scan-between)
-              (let ((ind-name (caddr (car node)))
-                    (range (l2p:lr-range2por-range
+              (let ((range (l2p:lr-range2por-range
                             (caddr (cadddr node))))
                     (line-num (l2p:list-last node)))
                 `((1 ,line-num)
                   (PPIndexScan 
-                   ,ind-name
+                   ,(l2p:any-lr-node2por (car node))
                    ,(l2p:any-lr-node2por (cadr node)) 
                    ,(l2p:any-lr-node2por (caddr node))
                    ,range))))
@@ -1739,13 +1737,17 @@
         ((string=? condit "LT") 'isc_lt)
         ((string=? condit "GE") 'isc_ge)
         ((string=? condit "LE") 'isc_le)
-        ((string=? condit "EQ") 'isc_eq)))
+        ((string=? condit "EQ") 'isc_eq)
+        (else (cl:signal-input-error SE4006 "index scan condition must be predefined string constant (GT, LT, GE, LE or EQ)")))
+)
   
 (define (l2p:lr-range2por-range range)
   (cond ((string=? range "INT") 'isc_gt_lt)
         ((string=? range "SEG") 'isc_ge_le)
         ((string=? range "HINTL") 'isc_ge_lt)
-        ((string=? range "HINTR") 'isc_gt_le)))  
+        ((string=? range "HINTR") 'isc_gt_le)
+        (else (cl:signal-input-error SE4006 "index scan range must be predefined string constant (INT, SEG, HINTL or HINTR)")))
+)  
 
   
 (define (l2p:lr-oocur-ind2por-occur-ind occ-ind)

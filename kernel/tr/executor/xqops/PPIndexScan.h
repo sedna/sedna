@@ -35,9 +35,8 @@ protected:
     typedef void (PPIndexScan::*t_next_fun)(tuple &t);
 
     // given parameters
-    std::string index_name;
-    tuple_cell tc, tc2;
-    PPOpIn child, child2;
+	tuple_cell tc, tc2;
+    PPOpIn index_name, child, child2;
     index_scan_condition isc;
 
     // obtained parameters and local data
@@ -58,28 +57,15 @@ public:
     virtual void open   ();
     virtual void reopen ();
     virtual void close  ();
+
+	virtual void initialize   (); // This is the common initialization function for all next interators 
     virtual strict_fun res_fun () { return result; };
     virtual void next   (tuple &t) { SET_CURRENT_PP(this); (this->*next_fun)(t); RESTORE_CURRENT_PP; }
 
     virtual PPIterator* copy(dynamic_context *_cxt_);
 
     PPIndexScan(dynamic_context *_cxt_,
-                const std::string &_index_name_,
-                const tuple_cell& _tc_,
-                const tuple_cell& _tc2_,
-                index_scan_condition _isc_);
-    PPIndexScan(dynamic_context *_cxt_,
-                const std::string &_index_name_,
-                PPOpIn _child_,
-                const tuple_cell& _tc2_,
-                index_scan_condition _isc_);
-    PPIndexScan(dynamic_context *_cxt_,
-                const std::string &_index_name_,
-                const tuple_cell& _tc_,
-                PPOpIn _child2_,
-                index_scan_condition _isc_);
-    PPIndexScan(dynamic_context *_cxt_,
-                const std::string &_index_name_,
+                PPOpIn _index_name_,
                 PPOpIn _child_,
                 PPOpIn _child2_,
                 index_scan_condition _isc_);
