@@ -477,6 +477,8 @@ Meta-commands are commands for \verb!se_term! that proccessed by the \verb!se_te
 
 \verb!TRANSACTION_READ_ONLY! - when set, transactions are run as READ-ONLY. When unset, transactions are run as UPDATE-transactions. By default transactions are run as UPDATE-transactions.
 
+\verb!QUERY_TIMEOUT=<time in seconds>! - when set, every query execution will be dropped on server if it lasts longer than timeout set. By default there is no any timeout set (query is executed as long as needed).
+
 \verb!set?! - provides help on \verb!se_term! internal variables.
 
 \subsection{Backup and Restore}
