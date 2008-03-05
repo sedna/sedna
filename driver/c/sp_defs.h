@@ -28,6 +28,8 @@
 #define SEDNA_READONLY_TRANSACTION                         2
 #define SEDNA_UPDATE_TRANSACTION                           3
 
+#define SEDNA_QUERY_EXEC_TIMEOUT                           4
+
 typedef int sp_int32;
 
 enum se_debug_info_type 

@@ -80,7 +80,7 @@ extern "C"
 
 
     
-    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY, SEDNA_ATTR_DEBUG, SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD, SEDNA_ATTR_CONCURRENCY_TYPE};
+    enum SEattr {SEDNA_ATTR_AUTOCOMMIT, SEDNA_ATTR_SESSION_DIRECTORY, SEDNA_ATTR_DEBUG, SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD, SEDNA_ATTR_CONCURRENCY_TYPE, SEDNA_ATTR_QUERY_EXEC_TIMEOUT};
     
     typedef void (*debug_handler_t)(enum se_debug_info_type, const char *msg_body);
     
@@ -127,9 +127,10 @@ extern "C"
         debug_handler_t debug_handler;
         
         char boundary_space_preserve;
+        int query_timeout;
     };
 
-#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0}
+#define SEDNA_CONNECTION_INITIALIZER {"", "", "", "", "", -1, -1, "", "", 0, 0, 0, 0, {0, "", ""}, SEDNA_NO_TRANSACTION, SEDNA_CONNECTION_CLOSED, 1, 0, 0, "", {0, 0, ""}, NULL, 0, 0}
 
     int SEconnect(struct SednaConnection *conn, const char *host, const char *db_name, const char *login, const char *password);
 

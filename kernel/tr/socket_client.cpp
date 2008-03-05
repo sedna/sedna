@@ -477,9 +477,9 @@ void socket_client::set_session_options(msg_struct *msg)
     while (pos < msg->length)
     {
         net_int2int(&option, msg->body+pos);
-        pos = pos + 5;
+        pos += 5;
         net_int2int(&option_len, msg->body+pos);
-        pos = pos + 4;
+        pos += 4;
         switch (option)
         {
             case SEDNA_DEBUG_ON:
@@ -496,10 +496,13 @@ void socket_client::set_session_options(msg_struct *msg)
                 // set Sasha's parameter here
                 SwitchSessionToRO(false);
                 break;
+            case SEDNA_QUERY_EXEC_TIMEOUT:
+                net_int2int(&query_timeout, msg->body+pos);
+                break;
 			default: 
                 throw USER_EXCEPTION2(SE4619,int2string(option).c_str());
         }
-        pos = pos + option_len;
+        pos += option_len;
     }
 d_printf1("\nSetting session option\n");
     sp_msg.instruction = se_SetSessionOptionsOk; // Session options have been set ok

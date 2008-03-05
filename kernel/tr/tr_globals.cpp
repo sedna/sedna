@@ -26,6 +26,7 @@ int socket_port = 0;
 int write_phys_log = 1;
 int user_id = 0;
 int auth = AUTH_SWITCH;
+int query_timeout = 0;
 
 char db_name[SE_MAX_DB_NAME_LENGTH+1];
 char filename[TR_ARG_MAX_LENGTH+1];
@@ -35,7 +36,7 @@ char login[SE_MAX_LOGIN_LENGTH+1];
 char password[SE_MAX_PASSWORD_LENGTH+1];
 char output_file[TR_ARG_MAX_LENGTH+1];
 
-const size_t narg = 13;
+const size_t narg = 14;
 
 arg_rec tr_argtable[] =
 {
@@ -50,6 +51,7 @@ arg_rec tr_argtable[] =
 /* {"-server-mode",    " on/off",   arg_bool,  &server_mode,               "off",     "\t  work in server mode (output result to pipe)\n\t\t\t  (default off)"}, */
 {"-query-type",     " type",     arg_str,   q_type,                     "XQuery",  "\t  type of the query to execute: XQuery, POR, Scheme, LR\n\t\t\t  (default XQuery)"},
 {"-debug",          " on/off",   arg_bool,  &debug_mode,                "off",     "\t\t  execute statements in debug mode (default off)\t"},
+{"-timeout",        " value",    arg_int,   &query_timeout,                   "0",       "\t\t  set timeout for execution of a query in seconds (no timeout by default)\t"},
 {"-name",           " name",     arg_str,   login,                      "SYSTEM",  "\t\t  user name (default SYSTEM)"},
 {"-pswd",           " password", arg_str,   password,                   "MANAGER", "\t  user password (default MANAGER)"},
 {NULL,              " db-name",  arg_str,   db_name,                    "???",     "\t\t  database name"},

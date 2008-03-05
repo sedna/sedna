@@ -201,7 +201,7 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
 
     while(read < to_read)
     {
-        res = read(fd, buf + read, to_read - read);
+        res = read(fd, (char*)buf + read, to_read - read);
         if (res == -1)
            if (errno == EINTR)
                 continue;
@@ -244,7 +244,7 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
     
     while(written < to_write)
     {
-       res = write(fd, buf + written, to_write - written);
+       res = write(fd, (char*)buf + written, to_write - written);
        if (res == -1)
            if (errno == EINTR)
                 continue;
