@@ -85,11 +85,13 @@ struct ErrorProperties
 	int code;
 };
 
+/*
 #ifdef _WIN32
 __declspec(thread) 
 #else
 __thread
 #endif	
+*/
 ErrorProperties errorProperties =
 {
 	0, NULL, -1, NULL, NULL, "", 0

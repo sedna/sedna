@@ -25,11 +25,13 @@ struct ClThreadState
 
 static int isInitialized = 0;
 static
+/*
 #ifdef _MSC_VER
 __declspec(thread)
 #else
 __thread
 #endif
+*/
 ClThreadState threadState =
 {
 	-1, 0
