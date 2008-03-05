@@ -197,11 +197,11 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
     *already_read = read;
     return read;
 #else
-    int res = 0, read = 0;
+    int res = 0, bytes_read = 0;
 
     while(read < to_read)
     {
-        res = read(fd, (char*)buf + read, to_read - read);
+        res = read(fd, (char*)buf + bytes_read, to_read - bytes_read);
         if (res == -1)
            if (errno == EINTR)
                 continue;
@@ -211,11 +211,11 @@ int uReadFile(UFile fd, void *buf, int to_read, int *already_read, sys_call_erro
                return 0;
            }
        else
-           read += res;
+           bytes_read += res;
     }
     
-    *already_read = read;
-    return read;
+    *already_read = bytes_read;
+    return bytes_read;
 #endif
 }
 
