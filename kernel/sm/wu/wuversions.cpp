@@ -335,8 +335,8 @@ int ValidateHeader(VersionsHeader *hdr)
 		for (i=1; i<VE_VERSIONS_COUNT; ++i)
 		{
 			if (hdr->xptr[i]==0 || 
-				!IsValidTimestamp(hdr->creatorTs[i]) || 
-				hdr->creatorTs[i]>=hdr->creatorTs[i-1]) break;
+				!IsValidTimestamp(hdr->creatorTs[i]) /*|| 
+				hdr->creatorTs[i]>=hdr->creatorTs[i-1]*/) break;
 		}
 		while (i<VE_VERSIONS_COUNT && hdr->xptr[i]==0 && hdr->creatorTs[i]==INVALID_TIMESTAMP) ++i;
 		success = (i == VE_VERSIONS_COUNT);
@@ -580,11 +580,13 @@ int ComposeHeader(VersionsHeader *pHeaderOut,
 	int success = 0, prevId = -1;
 	unsigned i=0, o=1, l=VE_VERSIONS_COUNT;
 
+/*
 	if (pHeaderIn->creatorTs[0]>=creatorTs)
 	{
-		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
+/		WuSetLastErrorMacro(WUERR_BAD_TIMESTAMP);
 	}
 	else
+*/
 	{
 		ResetHeader(pHeaderOut);
 
