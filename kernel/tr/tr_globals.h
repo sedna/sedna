@@ -31,6 +31,7 @@ extern int debug_mode;
 extern int write_phys_log;
 extern int user_id;
 extern int auth;
+extern int query_timeout;
 
 extern char db_name[];
 extern char filename[];

@@ -1690,7 +1690,6 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
             }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
             conn->msg.length = 9;
-            value = (int*) attrValue;
 			int2net_int(*value, conn->msg.body); //option type
             conn->msg.body[4] = 0;
             int2net_int(0, conn->msg.body+5); //length of the option value string = 0
@@ -1719,6 +1718,44 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                 return SEDNA_ERROR;
             }
 
+         case SEDNA_ATTR_QUERY_EXEC_TIMEOUT:
+            value = (int*) attrValue;
+            if (*value < 0)
+            {
+               setDriverErrorMsg(conn, SE3022, "Timeout value must be > 0");        /* "Invalid argument."*/
+               return SEDNA_ERROR;
+            }
+            conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
+            conn->msg.length = 9;
+			int2net_int(SEDNA_QUERY_EXEC_TIMEOUT, conn->msg.body); //option type
+            conn->msg.body[4] = 0;
+            int2net_int(*value, conn->msg.body+5); //value of attribute - here int
+            if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3006, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (sp_recv_msg(conn->socket, &(conn->msg)) != 0)
+            {
+                connectionFailure(conn, SE3007, "Connection was broken while setting session option on the server", NULL);
+                return SEDNA_ERROR;
+            }
+            if (conn->msg.instruction == se_SetSessionOptionsOk)
+                return SEDNA_SET_ATTRIBUTE_SUCCEEDED;
+            else if (conn->msg.instruction == se_ErrorResponse)
+            {
+                setServerErrorMsg(conn, conn->msg);
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+            else
+            {
+                connectionFailure(conn, SE3008, "Unknown message got while setting session option on the server", NULL);            /* "Unknown message from server" */
+                conn->isInTransaction = SEDNA_NO_TRANSACTION;
+                return SEDNA_ERROR;
+            }
+            conn->query_timeout = *value;
+         
          default: 
              setDriverErrorMsg(conn, SE3022, NULL);        /* "Invalid argument."*/
              return SEDNA_ERROR;
@@ -1745,6 +1782,11 @@ int SEgetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, void* at
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
         case SEDNA_ATTR_BOUNDARY_SPACE_PRESERVE_WHILE_LOAD:
             value = (conn->boundary_space_preserve) ? SEDNA_BOUNDARY_SPACE_PRESERVE_ON: SEDNA_BOUNDARY_SPACE_PRESERVE_OFF;
+            memcpy(attrValue, &value, 4);
+            *attrValueLength = 4;
+            return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
+        case SEDNA_ATTR_QUERY_EXEC_TIMEOUT:
+            value = (conn->query_timeout);
             memcpy(attrValue, &value, 4);
             *attrValueLength = 4;
             return SEDNA_GET_ATTRIBUTE_SUCCEEDED;
