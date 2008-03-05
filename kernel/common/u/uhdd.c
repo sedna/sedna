@@ -226,6 +226,12 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
 #ifdef _WIN32
     int written = 0;
 	BOOL res = 0;
+
+    if(to_write == 0)
+    {
+        *already_written = 0;
+        return 1;
+    }
     while(written < to_write)
     {
         res = WriteFile(fd, (char*)buf + written, to_write - written, (LPDWORD) already_written, NULL);
@@ -241,12 +247,17 @@ int uWriteFile(UFile fd, const void *buf, int to_write, int *already_written, sy
     return written;
 #else
     int res = 0, written = 0;
-    
+
+    if(to_write == 0)
+    {
+        *already_written = 0;
+        return 1;
+    }
     while(written < to_write)
     {
        res = write(fd, (char*)buf + written, to_write - written);
-       if (res == -1)
-           if (errno == EINTR)
+       if (res == -1 || res == 0)
+           if (res == -1 && errno == EINTR)
                 continue;
            else
            {
