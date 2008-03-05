@@ -1726,10 +1726,11 @@ int SEsetConnectionAttr(struct SednaConnection *conn, enum SEattr attr, const vo
                return SEDNA_ERROR;
             }
             conn->msg.instruction = se_SetSessionOptions;    /*se_SetSessionOptions*/
-            conn->msg.length = 9;
+            conn->msg.length = 13;
 			int2net_int(SEDNA_QUERY_EXEC_TIMEOUT, conn->msg.body); //option type
             conn->msg.body[4] = 0;
-            int2net_int(*value, conn->msg.body+5); //value of attribute - here int
+            int2net_int(4, conn->msg.body+5); //length of value - here sizeof int = 4
+            int2net_int(*value, conn->msg.body+9); //value of attribute - here int
             if (sp_send_msg(conn->socket, &(conn->msg)) != 0)
             {
                 connectionFailure(conn, SE3006, "Connection was broken while setting session option on the server", NULL);

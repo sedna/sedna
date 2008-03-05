@@ -115,6 +115,12 @@ int set_commans_help()
     term_output1("                        When unset, transactions are run as UPDATE-transactions.\n");
     term_output1("                        By default transactions are run as UPDATE-transactions.\n");
     term_output1("-----------------------------------------------------------------------\n");
+    term_output1("QUERY_TIMEOUT=<time in secs> - when set, every query execution\n");
+    term_output1("                               will be dropped on server\n");
+    term_output1("                               if it lasts longer than timeout set.\n");
+    term_output1("                               By default there is no any timeout set\n");
+    term_output1("                               (query is executed as long as needed).\n");
+    term_output1("-----------------------------------------------------------------------\n");
     
    	return 0;
 }
@@ -427,9 +433,29 @@ int process_command(char* buffer)
             
             return EXIT_SUCCESS;
         }
+        else if(strncmp(buffer+4, "QUERY_TIMEOUT", 13) == 0)
+        {
+            char* p = strrchr(buffer, '=');
+            if(!p)
+            {
+                fprintf(stderr, "Invalid use of se_term command. See help (\\set?)\n");
+                fflush(stderr);
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;            
+            }
+            int value = (*(p+1) == ' ') ? atoi(p+2) : atoi(p+1);
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_QUERY_EXEC_TIMEOUT, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to set query timeout.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            term_output2("Timeout for query execution is set to %d.\n", (const void*)value);
+            return EXIT_SUCCESS;
+        }
         else
         {
-   	    	fprintf(stderr, "Unknown variable.\n");
+   	    	fprintf(stderr, "Unknown variable. See \\set? for help\n");
             fflush(stderr);
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
@@ -462,6 +488,19 @@ int process_command(char* buffer)
             term_output1("Debug mode is off.\n");
             return EXIT_SUCCESS;
         }
+        else if(strcmp(buffer+6, "QUERY_TIMEOUT") == 0)
+        {
+            int value = 0;
+            res = SEsetConnectionAttr(&conn, SEDNA_ATTR_QUERY_EXEC_TIMEOUT, (void*)&value, sizeof(int));
+            if (res != SEDNA_SET_ATTRIBUTE_SUCCEEDED)
+            {
+                fprintf(stderr, "Failed to unset query timeout.\n%s\n", SEgetLastErrorMsg(&conn));
+                fflush(stderr);
+                return EXIT_STATEMENT_OR_COMMAND_FAILED;
+            }
+            term_output1("Timeout for query execution is unset.\n");
+            return EXIT_SUCCESS;
+        }
         else if(strcmp(buffer+6, "TRANSACTION_READ_ONLY") == 0)
         {
             int value = SEDNA_UPDATE_TRANSACTION;
@@ -480,7 +519,7 @@ int process_command(char* buffer)
         }
         else
         {
-	    	fprintf(stderr, "Unknown variable.\n");
+	    	fprintf(stderr, "Unknown variable. See \\set? for help\n");
             fflush(stderr);
 		    return EXIT_STATEMENT_OR_COMMAND_FAILED;
         }
