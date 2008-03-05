@@ -10,7 +10,11 @@
 #include <assert.h>
 #include "wuincguard.h"
 
+#ifdef _WIN32
 #define  I64FMT		"I64"
+#else
+#define I64FMT		"ll"
+#endif
 
 static
 inline
