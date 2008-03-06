@@ -1,3 +1,9 @@
+/*
+ * File:  uevent.c
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
+
 #include <assert.h>
 #include "uevent.h"
 #include "common/errdbg/d_printf.h"
