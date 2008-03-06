@@ -687,11 +687,7 @@ xptr sorted_sequence::get_data(int pos)
 	 {
 		 if (!sorted_seqs_arr.size())
 		 {
-			  bblk_in_chain=XNULL;
-			  blk_cnt=0;	
-			  sorted_seqs_arr.clear();
-			  finalized=false;
-			  return;
+		     goto reinit_vars;
 		 }
 		 res_seq=sorted_seqs_arr.back().first+sizeof(seq_blk_hdr);
 		 sorted_seqs_arr.pop_back();	
@@ -709,7 +705,9 @@ xptr sorted_sequence::get_data(int pos)
 		 else
 			 break;
 	 }
-	 //2. init vars
+    
+    //2. reinit vars and clear merge_tree
+reinit_vars:
 	 bblk_in_chain=XNULL;
 	 blk_cnt=0;	
 	 sorted_seqs_arr.clear();
