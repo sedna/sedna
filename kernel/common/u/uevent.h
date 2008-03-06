@@ -1,3 +1,8 @@
+/*
+ * File:  uevent.h
+ * Copyright (C) 2008 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+ */
+
 #if (_MSC_VER>1000)
 #pragma once
 #endif
