@@ -99,14 +99,14 @@ void command_line_client::init()
       if ((f = fopen(filename, "r")) == NULL)
         throw USER_EXCEPTION2(SE4042, filename);
 
-      char buf[1000000];
-      plain_batch_text.reserve(100000);
-
       while(!feof(f)){
-     
-        size_t len= fread(buf, sizeof(char), sizeof(buf), f);
+		  static const size_t rdChunkSz = 0x10000; /* 64 KB */ 
+		  size_t rdSz = 0, curSz = 0;
 
-        plain_batch_text.append(buf, len);
+		  curSz = plain_batch_text.size();
+		  plain_batch_text.resize(curSz + rdChunkSz);
+		  rdSz = fread(&plain_batch_text[curSz], 1, rdChunkSz, f); /* fread NEVER return -1 on error */ 
+		  plain_batch_text.resize(curSz + rdSz);
       }
    }
    else 
