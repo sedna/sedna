@@ -222,7 +222,10 @@ const char *UPosixIPCNameFromGlobalName(const char *globalName,
 
 #if (defined(FreeBSD) || defined(DARWIN))
 	prefix = "/tmp/";
-	limit = 32;
+#endif
+
+#if defined(DARWIN)
+    limit = 30;
 #endif
 
 	return StrNameFromGlobalName(globalName, limit, prefix, buf, bufSize);
