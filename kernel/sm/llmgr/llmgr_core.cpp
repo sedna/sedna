@@ -1478,6 +1478,8 @@ void llmgr_core::ll_log_free_blocks(xptr phys_xptr, void *block, int size, bool 
   mem_head->last_lsn = ret_lsn;
   mem_head->last_chain_lsn = ret_lsn;
   
+  U_ASSERT(mem_head->next_lsn + sizeof(logical_log_head) + rec_len >= 0);
+  
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
@@ -1547,6 +1549,9 @@ LONG_LSN llmgr_core::ll_log_pers_snapshot_add(WuVersionEntry *blk_info, int isGa
 
   mem_head->last_lsn = ret_lsn;
   mem_head->last_chain_lsn = ret_lsn;
+
+  U_ASSERT(mem_head->next_lsn + sizeof(logical_log_head) + rec_len >= 0);
+
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
@@ -1605,6 +1610,9 @@ void llmgr_core::ll_log_decrease(__int64 old_size, bool sync)
   
   mem_head->last_lsn = ret_lsn;
   mem_head->last_chain_lsn = ret_lsn;
+
+  U_ASSERT(mem_head->next_lsn + sizeof(logical_log_head) + rec_len >= 0);
+
   mem_head->next_lsn += sizeof(logical_log_head) + rec_len;
 
   ll_log_unlock(sync);
@@ -1657,12 +1665,17 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   
   //reinit shared memory header (only lsns)
   mem_head->t_tbl[trid].last_rec_mem_offs = rec_offs;
+  
+  U_ASSERT(mem_head->next_lsn >= 0);
   mem_head->t_tbl[trid].last_lsn = mem_head->next_lsn;
 
   if (mem_head->t_tbl[trid].first_lsn == NULL_LSN) 
      mem_head->t_tbl[trid].first_lsn = mem_head->next_lsn;
 
+  U_ASSERT(mem_head->next_lsn + sizeof(logical_log_head) + len >= 0);
+
   mem_head->next_lsn+= sizeof(logical_log_head) + len;
+  
   mem_head->t_tbl[trid].num_of_log_records +=1;
   
   ret_lsn = mem_head->t_tbl[trid].last_lsn;

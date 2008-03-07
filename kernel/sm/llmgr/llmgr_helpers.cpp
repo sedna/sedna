@@ -370,6 +370,8 @@ void llmgr_core::extend_logical_log(bool sync)
 
 //This is not correct  mem_head->next_lsn = (mem_head->next_lsn/LOG_FILE_PORTION_SIZE + 1)*LOG_FILE_PORTION_SIZE + 
 //                       sizeof(logical_log_file_head); 
+  U_ASSERT(mem_head->base_addr + (mem_head->ll_files_num - 1)*LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head) >= 0);
+
   mem_head->next_lsn = mem_head->base_addr + (mem_head->ll_files_num - 1)*LOG_FILE_PORTION_SIZE +
                        sizeof(logical_log_file_head); 
 
