@@ -21,6 +21,8 @@
 #include "sm/plmgr/plmgr_core.h"
 #include "common/mmgr/memutils.h"
 
+#include <stdint.h>
+
 #include "sm/wu/wu.h"
 
 #define LOGICAL_LOG
@@ -34,7 +36,7 @@
 #define COMMIT_LOG_RECORD_LEN (sizeof(logical_log_head) + sizeof(char) + sizeof(transaction_id))
 
 //this parameter must be more than CHARISMA_LOGICAL_LOG_SHARED_MEM_SIZE
-#define LOG_FILE_PORTION_SIZE (100 * (1024*1024)) //was 2
+#define LOG_FILE_PORTION_SIZE (INT64_C(100) * (1024*1024)) //was 2
 #define MAX_LOG_FILE_PORTIONS_NUMBER_WITHOUT_CHECKPOINTS 5 //was 3
 //#define MAX_ALL_LOG_FILE_SIZE 10*LOG_FILE_PORTION_SIZE
 
