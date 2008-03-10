@@ -60,12 +60,19 @@ struct UFindDataStruct
 /* uCreateFile/UOpenFile error return value */
 #define U_INVALID_FD			(-1)
 /* UFlag (for create/open) */
-#define U_WRITE_THROUGH			O_SYNC
+
+#if (defined(DARWIN) || defined(FreeBSD))
+#define U_WRITE_THROUGH         O_FSYNC
+#define U_NO_BUFFERING          O_FSYNC
+#else /* Linux */
+#define U_WRITE_THROUGH         O_SYNC
 /* !!! It has been found that there are some problems with
    !!! O_DIRECT flag in Linux, so it has been temporary substituted wih
    !!! the O_SYNC flag */
-/* #define U_NO_BUFFERING                        O_DIRECT */
-#define U_NO_BUFFERING			O_SYNC
+/* #define U_NO_BUFFERING          O_DIRECT */
+#define U_NO_BUFFERING          O_SYNC
+#endif /* FreeBSD && Mac OS */
+
 /* UFlag (for setting file pointer) */
 #define U_FILE_BEGIN			SEEK_SET
 #define U_FILE_END				SEEK_END

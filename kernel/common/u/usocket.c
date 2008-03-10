@@ -10,7 +10,10 @@
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#else
+#include <Winsock2.h>
 #endif
+
 
 #include "common/u/usocket.h"
 #include "common/errdbg/d_printf.h"
@@ -344,7 +347,7 @@ int uclose_socket(USOCKET s, sys_call_error_fun fun)
 int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
 {
 #ifdef _WIN32
-    int res = shutdown(s, 0x02);
+    int res = shutdown(s, SD_BOTH);
     if (res != 0)
     {
        sys_call_error("shutdown");
@@ -354,11 +357,14 @@ int ushutdown_close_socket(USOCKET s, sys_call_error_fun fun)
     if (res == U_SOCKET_ERROR) sys_call_error("closesocket");  
     return res;
 #else
-    int res = shutdown(s, 2);
+    int res = shutdown(s, SHUT_RDWR);
     if (res != 0)
     {
-       sys_call_error("shutdown");       
-       return U_SOCKET_ERROR;
+       if(errno != ENOTCONN)
+       {
+           sys_call_error("shutdown");       
+           return U_SOCKET_ERROR;
+       }
     }
     res = close(s);
     if (res == U_SOCKET_ERROR) sys_call_error("close"); 
