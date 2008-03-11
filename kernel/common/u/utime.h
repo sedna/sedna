@@ -3,20 +3,22 @@
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
-
 #ifndef UTIME_H
 #define UTIME_H
 
 #include "common/u/u.h"
 
+
+#ifndef EXTERN_C
 #ifdef __cplusplus
-extern "C" {
+#define EXTERN_C         extern "C"
+#else
+#define EXTERN_C
+#endif
 #endif
 
-  
 // Define the time structure class in the spirit of extended POSIX tm
 // structure
-
 typedef struct {
    /* ANSI standard fields */
    int utm_millis;   /* 0 to 1000 */
@@ -32,18 +34,15 @@ typedef struct {
        /* >0 if Daylight Savings Time,
         *  0 if Standard,
         * <0 if unknown */
-
    /* extensions to ANSI standard */
    char *utm_zone;  /* time zone name    */
    long utm_gmtoff; /* offset from GMT   */
 } utm;
 
+
+EXTERN_C
 utm getLocalTime();
 
-#ifdef __cplusplus
-}
-#endif
 
-
-#endif
+#endif /* UTIME_H */
 

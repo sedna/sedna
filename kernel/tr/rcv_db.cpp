@@ -138,7 +138,7 @@ int main (int argc, char** argv)
 */
 	  sid=0;
       on_session_begin(sm_server, true);
-      on_transaction_begin(sm_server, true);//true means recovery active
+      on_transaction_begin(sm_server, ppc, true);//true means recovery active
       on_kernel_recovery_statement_begin();
 
       LONG_LSN last_cp_lsn = _atoi64(argv[2]);
@@ -181,7 +181,7 @@ int main (int argc, char** argv)
       d_printf1("OK\n");
 */
       on_kernel_recovery_statement_end();
-      on_transaction_end(sm_server, true, true);
+      on_transaction_end(sm_server, true, ppc, true);
       on_session_end(sm_server);
 
 

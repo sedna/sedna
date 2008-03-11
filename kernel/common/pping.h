@@ -30,16 +30,29 @@ private:
     UTHANDLE client_thread_handle;
     UUnnamedSemaphore sem;
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /// Timeout counter and flags. 
+    /// Timer is implemented above pping since there is no portable way to implement good timer on POSIX systems.
+    int counter;
+    int timeout;
+    volatile bool  reset_flag;
+    volatile bool* signaled_flag;
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     void throw_exception(SednaUserException& e, bool is_soft);
     void startup(SednaUserException& e, bool is_soft);
 
 public:
     pping_client(int _port_, int _component_, const char* _host_ = NULL);
+    pping_client(int _port_, int _component_, volatile bool* _signaled_flag_, const char* _host_ = NULL);
     ~pping_client();
 
     void startup(SednaUserException& e);
     void startup(SednaUserSoftException& e);
     void shutdown();
+
+    void start_timer(int _timeout_);
+    void stop_timer();
 
     friend U_THREAD_PROC(pping_client_thread_proc, arg);
 };
