@@ -25,7 +25,6 @@ class PPIterator;
 
 
 
-
 /*******************************************************************************
  * Class incapsulates 'in' argument for PPIterator operation
  ******************************************************************************/
@@ -150,29 +149,57 @@ public:
 };
 
 
+/*******************************************************************************
+ * Global variables
+ ******************************************************************************/
+
+namespace tr_globals 
+{
+
+//extern pp_static_context st_ct;
+
+/// buffer for strings that fit in main memory (used for various intermediate 
+/// operations with strings instead of allocating dynamic memory by se_new operator)
+extern char mem_str_buf[MAX_MEM_STR_SIZE + 1];
+extern char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
+
+/// buffer for e_strs (used for various intermediate operations with e_strs 
+/// instead of allocating dynamic memory by se_new operator)
+extern char e_string_buf[PAGE_SIZE];
+
+extern TLS_VAR_DECL 
+PPIterator* __current_physop;
+
+extern TLS_VAR_DECL
+volatile bool is_timer_fired;
+
+}
 
 
 /*******************************************************************************
  * Thread variable to throw smart XQUERY_EXCEPTION
  ******************************************************************************/
 
-extern
-#ifdef _MSC_VER
-__declspec(thread)
-#endif
-PPIterator* __current_physop;
-
 /// These macroses must be called on operation enter and exit correspondingly!
 /// *       - in next(tuple)
 /// *_VAR   - in next(tuple, var)
-#define SET_CURRENT_PP(pp)       __current_physop_backup = __current_physop; __current_physop = (pp);
-#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = __current_physop; __current_physop = (pp);
 
-#define RESTORE_CURRENT_PP       __current_physop = __current_physop_backup; __current_physop_backup = NULL;
-#define RESTORE_CURRENT_PP_VAR   __current_physop = __current_physop_backup_var; __current_physop_backup_var = NULL;
+#define SET_CURRENT_PP(pp)       __current_physop_backup = tr_globals::__current_physop; \
+                                 tr_globals::__current_physop = (pp); \
+                                 if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
+
+#define SET_CURRENT_PP_VAR(pp)   __current_physop_backup_var = tr_globals::__current_physop; \
+                                 tr_globals::__current_physop = (pp); \
+                                 if (tr_globals::is_timer_fired) throw USER_EXCEPTION(SE4620);
+
+#define RESTORE_CURRENT_PP       tr_globals::__current_physop = __current_physop_backup; \
+                                 __current_physop_backup = NULL;
+
+#define RESTORE_CURRENT_PP_VAR   tr_globals::__current_physop = __current_physop_backup_var; \
+                                 __current_physop_backup_var = NULL;
 
 /// Must be called after delete qep_tree in trn!
-#define RESET_CURRENT_PP         __current_physop = NULL;
+#define RESET_CURRENT_PP         tr_globals::__current_physop = NULL;
 
 /*******************************************************************************
  * SednaXQueryException
@@ -249,7 +276,7 @@ public:
 
 
 /*******************************************************************************
- * Global variables and corresponding structures and functions
+ * Corresponding structures and functions
  ******************************************************************************/
 
 
@@ -267,30 +294,6 @@ struct db_entity
 
     ~db_entity() { delete [] name; name = NULL; }
 };
-
-
-namespace tr_globals 
-{
-
-//extern pp_static_context st_ct;
-
-
-/// BUFFERS ///////////////////////////////////////////////////////////////////
-
-/// buffer for strings that fit in main memory (used for various intermediate 
-/// operations with strings instead of allocating dynamic memory by se_new operator)
-extern char mem_str_buf[MAX_MEM_STR_SIZE + 1];
-
-extern char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
-
-/// buffer for e_strs (used for various intermediate operations with e_strs 
-/// instead of allocating dynamic memory by se_new operator)
-extern char e_string_buf[PAGE_SIZE];
-
-
-
-}
-
 
 
 #endif

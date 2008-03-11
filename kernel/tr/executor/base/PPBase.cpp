@@ -36,11 +36,17 @@ char mem_str_buf[MAX_MEM_STR_SIZE + 1];
 char mem_str_buf2[MAX_MEM_STR_SIZE + 1];
 
 char e_string_buf[PAGE_SIZE];
+
+/// Used to throw XQUERY_EXCEPTION which contains line information.
+ 
+TLS_VAR_DECL
+PPIterator* __current_physop = NULL;
+
+/// Used to interrupt execution due to timeout.
+TLS_VAR_DECL
+volatile bool is_timer_fired = false;
+
 }
 
 
-#ifdef _MSC_VER
-__declspec(thread)
-#endif
-PPIterator* __current_physop = NULL;
 

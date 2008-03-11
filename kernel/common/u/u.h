@@ -14,6 +14,7 @@
  *===========================================================================*/
 #if (defined(_WIN32) && !defined(WIN32))
 #define WIN32
+#define _WIN32_WINNT 0x0400
 #endif
 
 #if (defined(__APPLE__) && defined(__MACH__))
@@ -125,6 +126,16 @@
 #define __SE_FUNCTION__ __FUNCTION__
 #endif
 
+
+#ifdef _WIN32
+#ifdef _MSC_VER
+#define TLS_VAR_DECL    __declspec(thread)
+#else 
+#define TLS_VAR_DECL
+#endif
+#else
+#define TLS_VAR_DECL
+#endif
 
 
 #define HAVE_STRINGIZE

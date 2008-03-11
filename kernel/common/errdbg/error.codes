@@ -1705,5 +1705,9 @@ sedna-err:SE3211
     No trigger with this name.
 sedna-err:SE2040
 
-   Too many xhilds by schema
+   Too many xhilds by schema.
+sedna-err:SE4620
+
+   Transaction timeout has been expired.
+
 

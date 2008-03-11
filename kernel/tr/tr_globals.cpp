@@ -67,12 +67,12 @@ UShMem gov_shm_dsc;
 void* gov_shared_mem;
 
 persistent_db_data* entry_point;
-
 msg_struct sp_msg;
 
 bool is_need_checkpoint_on_transaction_commit = false;
-
-bool is_ro_mode = false, need_ph_reinit, is_ft_disabled;
+bool is_ro_mode = false;
+bool need_ph_reinit;
+bool is_ft_disabled;
 
 int db_id;
 

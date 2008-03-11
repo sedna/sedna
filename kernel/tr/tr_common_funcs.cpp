@@ -150,7 +150,7 @@ void on_session_end(SSMMsg* &sm_server)
    d_printf1("OK\n");
 }
 
-void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
+void on_transaction_begin(SSMMsg* &sm_server, pping_client* ppc, bool rcv_active)
 {
    // ph shutdown between transactions
    d_printf1("Releasing PH between transactions on the same session...");
@@ -238,13 +238,19 @@ void on_transaction_begin(SSMMsg* &sm_server, bool rcv_active)
    triggers_on_transaction_begin(rcv_active);
    d_printf1("OK\n");
 #endif
+
+   d_printf2("Reset transaction timeout (%d secs.)...", query_timeout);
+   ppc->start_timer(query_timeout);
+   d_printf1("OK\n");
 }
 
 // is_commit defines mode: 
 //  true - transaction commit
 //  false - transaction rollback
-void on_transaction_end(SSMMsg* &sm_server, bool is_commit, bool rcv_active)
+void on_transaction_end(SSMMsg* &sm_server, bool is_commit, pping_client* ppc, bool rcv_active)
 {
+   ppc->stop_timer();
+
    clear_authmap();
 
    sm_msg_struct msg;

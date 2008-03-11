@@ -126,9 +126,7 @@ int main(int argc, char *argv[])
 			wrong Sedna installation which is not good (different vmm region settings are
 			possible though the probability is low, however the worse thing is that we wreck isolation
 			of unrelated installations; we may even fail if the shmem is created by the
-			installation running as a different user). 
-			
-			ZN*/ 
+			installation running as a different user). ZN*/ 
 		InitGlobalNames(os_primitives_id_min_bound, INT_MAX);
 		SetGlobalNames();
 
@@ -225,7 +223,7 @@ int main(int argc, char *argv[])
         register_session_on_gov();
 
         SednaUserException e = USER_EXCEPTION(SE4400);
-        ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN);
+        ppc = se_new pping_client(((gov_config_struct*)gov_shm_pointer)->gov_vars.ping_port_number, EL_TRN, &tr_globals::is_timer_fired);
         ppc->startup(e);
 
         // sid is known
@@ -289,7 +287,7 @@ int main(int argc, char *argv[])
             {
                 try
                 {
-                    on_transaction_begin(sm_server);
+                    on_transaction_begin(sm_server, ppc);
                     client->respond_to_client(se_BeginTransactionOk);
 
                     qep_tree = NULL;    //qep of current stmnt
@@ -419,7 +417,7 @@ int main(int argc, char *argv[])
                         case se_CommitTransaction:     //commit command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, true /*COMMIT*/);
+                                on_transaction_end(sm_server, true /*COMMIT*/, ppc);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_CommitTransactionOk);
@@ -430,7 +428,7 @@ int main(int argc, char *argv[])
                         case se_RollbackTransaction:   //rollback command
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/);
+                                on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
                                 ret_code = 0;
 
                                 client->respond_to_client(se_RollbackTransactionOk);
@@ -445,7 +443,7 @@ int main(int argc, char *argv[])
                         case se_CloseConnection:       //close connection
                             {
                                 on_user_statement_end(qep_tree, st);
-                                on_transaction_end(sm_server, false /*ROLLBACK*/);
+                                on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
                                 ret_code = 1;
 
                                 client->respond_to_client(se_TransactionRollbackBeforeClose);
@@ -479,7 +477,7 @@ int main(int argc, char *argv[])
                 catch(SednaUserException & e)
                 {
                     on_user_statement_end(qep_tree, st);
-                    on_transaction_end(sm_server, false /*ROLLBACK*/);
+                    on_transaction_end(sm_server, false /*ROLLBACK*/, ppc);
                     ret_code = 1;
 
                     d_printf1("\nTr is rolled back successfully\n");

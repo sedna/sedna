@@ -46,6 +46,21 @@ U_THREAD_PROC(pping_client_thread_proc, arg)
             }
         }
         UUnnamedSemaphoreDownTimeout(&(ppc->sem), 1000, NULL);
+
+        if(ppc->timeout)
+        {
+
+            if (!ppc->counter && !ppc->reset_flag) {*(ppc->signaled_flag) = true; ppc->counter = ppc->timeout;}
+  
+            if(ppc->reset_flag)
+            {
+                ppc->counter = ppc->timeout;
+                if(ppc->signaled_flag) *(ppc->signaled_flag) = false;
+                ppc->reset_flag = false;
+            }
+
+            (ppc->counter)--;
+        }
     }
     return 0;
 }
@@ -62,6 +77,31 @@ pping_client::pping_client(int _port_, int _component_, const char* _host_)
 	
     stop_keep_alive = false;
     initialized = false;
+
+    counter = 0;
+    timeout = 0;
+    reset_flag = false;
+    signaled_flag = NULL;
+#endif
+}
+
+pping_client::pping_client(int _port_, int _component_, volatile bool* _signaled_flag_, const char* _host_)
+{
+#ifdef PPING_ON
+    port = _port_;
+    if (_host_ && strlen(_host_) < PPING_MAX_HOSTLEN)
+        strcpy(host, _host_);
+    else
+        strcpy(host, "127.0.0.1");
+	component = _component_;
+	
+    stop_keep_alive = false;
+    initialized = false;
+
+    counter = 0;
+    timeout = 0;
+    reset_flag = false;
+    signaled_flag = _signaled_flag_;
 #endif
 }
 
@@ -134,7 +174,21 @@ void pping_client::shutdown()
 #endif
 }
 
+void pping_client::start_timer(int _timeout_)
+{
+#ifdef PPING_ON
+    
+	timeout = _timeout_;
+	reset_flag = true;
+    if(signaled_flag) *signaled_flag = false;
 
+#endif    
+}
+
+void pping_client::stop_timer()
+{
+   start_timer(0);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// pping_server
