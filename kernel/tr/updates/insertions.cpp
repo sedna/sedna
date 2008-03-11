@@ -60,7 +60,7 @@ void insert_before(PPOpIn arg2, PPOpIn arg1)
 		auth_for_update(&arg1seq, INSERT_STATEMENT, false);
 
 	// Creating the second sequence (different validity tests+ indirection deref)
-    local_lock_mrg->lock(lm_x); // put exclusive lock on the second sequence (first sequence is locked with shared lock)
+    local_lock_mrg->lock(lm_x); // put shared lock on the second sequence (first sequence is locked with exclusive lock)
 	t_item prev_item=attribute;
 	arg2.op->next(t2);
 	while (!t2.is_eos())
@@ -312,7 +312,7 @@ void insert_following(PPOpIn arg2, PPOpIn arg1)
 		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
 	
 	// Creating the second sequence (different validity tests+ indirection deref)
-    local_lock_mrg->lock(lm_x); // put exclusive lock on the second sequence (first sequence is locked with shared lock)
+    local_lock_mrg->lock(lm_x); // put shared lock on the second sequence (first sequence is locked with exclusive lock)
 	t_item prev_item=attribute;
 	arg2.op->next(t2);
 	while (!t2.is_eos())
@@ -553,7 +553,7 @@ void insert_to(PPOpIn arg2, PPOpIn arg1)
 		auth_for_update(&arg1seq, INSERT_STATEMENT, true);
 	
 	// Creating the second sequence (different validity tests+ indirection deref)
-    local_lock_mrg->lock(lm_x); // put exclusive lock on the second sequence (first sequence is locked with shared lock)
+    local_lock_mrg->lock(lm_s); // put shared lock on the second sequence (first sequence is locked with exclusive lock)
 	t_item prev_item=attribute;
 	arg2.op->next(t2);
 	while (!t2.is_eos())
