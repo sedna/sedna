@@ -190,6 +190,13 @@ LONG_LSN sm_llmgr::recover_db_by_phys_records(/*const LONG_LSN& last_cp_lsn,*/ b
         if (ts != ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0])
         {
         	bm_rcv_read_block(WuExternaliseXptr(blocks_info->xptr), ctrl_blk);
+
+    		U_ASSERT( 
+    				  ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.creatorTs[0] == ts &&
+    				  ((vmm_sm_blk_hdr *)ctrl_blk)->p == WuExternaliseXptr(blocks_info->lxptr) &&
+    				  ((vmm_sm_blk_hdr *)ctrl_blk)->versionsHeader.xptr[0] == blocks_info->lxptr 
+    				);
+
     		bm_rcv_change(WuExternaliseXptr(blocks_info->lxptr), ctrl_blk, PAGE_SIZE);
         }
 
