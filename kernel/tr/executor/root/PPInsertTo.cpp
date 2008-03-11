@@ -34,7 +34,7 @@ PPInsertTo::~PPInsertTo()
 
 void PPInsertTo::open()
 {
-    local_lock_mrg->lock(lm_x);
+    local_lock_mrg->lock(lm_s);
     dynamic_context::global_variables_open();
     child1.op->open();
     child2.op->open();
