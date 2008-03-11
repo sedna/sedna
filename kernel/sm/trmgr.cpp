@@ -154,26 +154,25 @@ U_THREAD_PROC (checkpoint_thread, arg)
 	    }
     	d_printf1("All sems acquired\n");
 
-		
+		WuSnapshotStats wuStats;
+   		// obtain timestamps of persistent and current snapshots
+   		WuGatherSnapshotsStatsExn(&wuStats);
+			
+		//if (!is_recovery_mode)
+//			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
+		AdvanceSnapshots(); // TODO: check for shutdown on recovery
+    	
+   		WuOnBeginCheckpointExn();
+
+		RECOVERY_CRASH;
+			
+		WuEnumerateVersionsParams params;
+   		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
+
+		RECOVERY_CRASH;
+
 		ObtainGiantLock(); isGiantLockObtained = true;
-		{
-			WuSnapshotStats wuStats;
-    		// obtain timestamps of persistent and current snapshots
-    		WuGatherSnapshotsStatsExn(&wuStats);
-			
-			//if (!is_recovery_mode)
-	//			if (shutdown_event_call || wuStats.curSnapshotTs == wuStats.persSnapshotTs || SnapshotAdvanceCriterion())
-					AdvanceSnapshots(); // TODO: check for shutdown on recovery
-	    	
-    		WuOnBeginCheckpointExn();
-
-			RECOVERY_CRASH;
-			
-			WuEnumerateVersionsParams params;
-    		WuEnumerateVersionsForCheckpointExn(&params, ll_logical_log_checkpoint);
-
-			RECOVERY_CRASH;
-
+		{	
 			flush_data_buffers();
     		d_printf1("flush data buffers completed\n");
 
