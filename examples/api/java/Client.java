@@ -9,9 +9,8 @@
  *
  * This is an example of a client application that uses the Java API
  * to work with Sedna.
- * This application connects to the Sedna DBMS, opens a session with parameters
- * specified. The session consists of one transaction. In the
- * transaction application loads data from file 'region.xml' and executes
+ * This application connects to the Sedna DBMS, opens a session. 
+ * The session consists of one transaction. Application loads data from file 'region.xml' and executes
  * three statements: two XQuery queries and one update statement. When statements
  * are executed, application commits the transaction and closes the session.
  */
@@ -38,7 +37,7 @@ class Client {
 
         // set up arguments for the call to the getConnection method.
         String          url      = "localhost";
-        String          dbname   = "sample-db";
+        String          dbname   = "testdb";
         String          user     = "SYSTEM";
         String          password = "MANAGER";
         String          item;
@@ -59,7 +58,7 @@ class Client {
             // execute a statement. the statement is a bluk load.
             System.out.println("Loading data");
 
-            boolean call_res = st1.execute("LOAD \"..\data\region.xml\" \"region\"");
+            boolean call_res = st1.execute("LOAD \"../data/region.xml\" \"region\"");
 
             if (!call_res)    // if call_res is false the statement was an update
             {

@@ -43,7 +43,7 @@ int main()
     printf("Module has been loaded successfully.\n");
 
     // execute query that uses module
-    res = SEexecute(&conn, "import module namespace math = \"http://example.org/math\"; math:increment(math:square(\$math:pi))"); 
+    res = SEexecute(&conn, "import module namespace math = \"http://example.org/math\"; math:increment(math:square($math:pi))"); 
     if(res != SEDNA_QUERY_SUCCEEDED) 
     {
         printf("Query failed: \n%s\n", SEgetLastErrorMsg(&conn));
