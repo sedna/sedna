@@ -302,7 +302,7 @@ import java.util.*;
         // execute a statement. the statement is a bluk load.
          System.out.println("Loading data");
          boolean call_res = 
-           st1.execute("LOAD \"region.xml\" \"region\"");
+           st1.execute("LOAD \"..\data\region.xml\" \"region\"");
          if(!call_res) // if call_res is false the statement was an update
            {
             System.out.println("Bulk load succeeded");
@@ -364,10 +364,8 @@ import java.util.*;
  // close the connection    
    con.close();  
    }
-
      catch(DriverException e)
        {
-
            System.out.println(e.toString());
        }
    ...
@@ -377,10 +375,10 @@ import java.util.*;
 
 The source code of this example program can be found in 
 \begin{verbatim}
-[win:] INSTALL_DIR\examples\applications\java\Client.java
+[win:] INSTALL_DIR\examples\api\java\Client.java
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/applications/java/Client.java
+[linux:] INSTALL_DIR/examples/api/java/Client.java
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 %Before run the example make sure that the Sedna DBMS is running with the listener started. For more detail see the Sedna Administration Guide.
@@ -1116,10 +1114,10 @@ int main()
 
 The source code of this example program can be found in 
 \begin{verbatim}
-[win:] INSTALL_DIR\examples\applications\c\Client.c
+[win:] INSTALL_DIR\examples\api\c\Client.c
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/applications/c/Client.c
+[linux:] INSTALL_DIR/examples/api/c/Client.c
 \end{verbatim}
 
 \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
@@ -1440,8 +1438,8 @@ the Scheme API driver.
 
 You can find the example and the Scheme API driver code in:
 \begin{verbatim}
-[win:] INSTALL_DIR\examples\applications\scheme
-[linux:] INSTALL_DIR/examples/applications/scheme
+[win:] INSTALL_DIR\examples\api\scheme
+[linux:] INSTALL_DIR/examples/api/scheme
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 
@@ -1475,8 +1473,8 @@ this machine when connecting to the database with
 
 For running the example supplied, you should copy all files from the folder
 \begin{verbatim}
-[win:] INSTALL_DIR\examples\applications\scheme
-[linux:] INSTALL_DIR/examples/applications/scheme
+[win:] INSTALL_DIR\examples\api\scheme
+[linux:] INSTALL_DIR/examples/api/scheme
 \end{verbatim} 
 into the folder where the Scheme API driver code is located 
 \begin{verbatim}
@@ -2139,10 +2137,10 @@ where the directory \verb!data! with database data is located or (2) in the dire
 
 There is a sample external function code available in the folder:
 \begin{verbatim}
-[win:] INSTALL_DIR\examples\applications\external-functions\c\
+[win:] INSTALL_DIR\examples\api\external-functions\c\
 \end{verbatim}
 \begin{verbatim}
-[linux:] INSTALL_DIR/examples/applications/external-functions/c/
+[linux:] INSTALL_DIR/examples/api/external-functions/c/
 \end{verbatim}
 where \verb!INSTALL_DIR! refers to the directory where Sedna is installed.
 

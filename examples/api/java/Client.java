@@ -59,7 +59,7 @@ class Client {
             // execute a statement. the statement is a bluk load.
             System.out.println("Loading data");
 
-            boolean call_res = st1.execute("LOAD \"region.xml\" \"region\"");
+            boolean call_res = st1.execute("LOAD \"..\data\region.xml\" \"region\"");
 
             if (!call_res)    // if call_res is false the statement was an update
             {

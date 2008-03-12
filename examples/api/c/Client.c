@@ -46,7 +46,7 @@ int main()
     }
 
     // load data from file "region.xml" into the document "region"
-    res = SEexecute(&conn, "LOAD \"region.xml\" \"region\""); 
+    res = SEexecute(&conn, "LOAD \"..\data\region.xml\" \"region\""); 
     if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
     {
         printf("Bulk load failed: \n%s\n", SEgetLastErrorMsg(&conn));

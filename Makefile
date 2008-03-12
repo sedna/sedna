@@ -150,15 +150,15 @@ ifeq ($(JAVA_DRIVER), 1)
 endif
 ifeq ($(PLATFORM), UNIX)
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.a $(SEDNA_INSTALL)/sedna/driver/c/libsedna.a
-	$(INSTALL) -Dp $(PERM2) examples/applications/c/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/applications/c/Clientbuild.sh
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/applications/java/Clientbuild.sh
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Client.sh $(SEDNA_INSTALL)/sedna/examples/applications/java/Client.sh
+	$(INSTALL) -Dp $(PERM2) examples/api/c/build.sh $(SEDNA_INSTALL)/sedna/examples/api/c/build.sh
+	$(INSTALL) -Dp $(PERM2) examples/api/java/Clientbuild.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.sh
+	$(INSTALL) -Dp $(PERM2) examples/api/java/Client.sh $(SEDNA_INSTALL)/sedna/examples/api/java/Client.sh
 else
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.lib $(SEDNA_INSTALL)/sedna/driver/c/libsedna.lib
 	$(INSTALL) -Dp $(PERM3) driver/c/libsednamt.lib $(SEDNA_INSTALL)/sedna/driver/c/libsednamt.lib
-	$(INSTALL) -Dp $(PERM2) examples/applications/c/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/applications/c/Clientbuild.bat
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/applications/java/Clientbuild.bat
-	$(INSTALL) -Dp $(PERM2) examples/applications/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/applications/java/Client.bat
+	$(INSTALL) -Dp $(PERM2) examples/api/c/build.bat $(SEDNA_INSTALL)/sedna/examples/api/c/build.bat
+	$(INSTALL) -Dp $(PERM2) examples/api/java/Clientbuild.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Clientbuild.bat
+	$(INSTALL) -Dp $(PERM2) examples/api/java/Client.bat $(SEDNA_INSTALL)/sedna/examples/api/java/Client.bat
 endif
 	$(INSTALL) -Dp $(PERM3) driver/c/libsedna.h $(SEDNA_INSTALL)/sedna/driver/c/libsedna.h
 	$(INSTALL) -Dp $(PERM3) driver/c/sp_defs.h $(SEDNA_INSTALL)/sedna/driver/c/sp_defs.h
@@ -172,18 +172,17 @@ endif
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-api.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-api.scm
 	$(INSTALL) -Dp $(PERM3) driver/scheme/sedna-api/sedna-low.scm $(SEDNA_INSTALL)/sedna/driver/scheme/sedna-api/sedna-low.scm
 	$(INSTALL) -Dp $(PERM3) etc/sednaconf.xml.sample $(SEDNA_INSTALL)/sedna/etc/sednaconf.xml.sample
-	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/client.scm $(SEDNA_INSTALL)/sedna/examples/applications/scheme/client.scm
-	$(INSTALL) -Dp $(PERM3) examples/applications/scheme/region.xml $(SEDNA_INSTALL)/sedna/examples/applications/scheme/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/applications/c/region.xml $(SEDNA_INSTALL)/sedna/examples/applications/c/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/applications/c/Client.c $(SEDNA_INSTALL)/sedna/examples/applications/c/Client.c
-	$(INSTALL) -Dp $(PERM3) examples/applications/java/Client.java $(SEDNA_INSTALL)/sedna/examples/applications/java/Client.java
-	$(INSTALL) -Dp $(PERM3) examples/applications/java/region.xml $(SEDNA_INSTALL)/sedna/examples/applications/java/region.xml
-	$(INSTALL) -Dp $(PERM3) examples/databases/auction/auction.xml $(SEDNA_INSTALL)/sedna/examples/databases/auction/auction.xml
-	$(INSTALL) -Dp $(PERM3) examples/databases/auction/*.xquery $(SEDNA_INSTALL)/sedna/examples/databases/auction/
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/sample.xquery $(SEDNA_INSTALL)/sedna/examples/applications/external-functions/c/sample.xquery
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/sample.cpp $(SEDNA_INSTALL)/sedna/examples/applications/external-functions/c/sample.cpp
-	$(INSTALL) -Dp $(PERM3) examples/applications/external-functions/c/Makefile $(SEDNA_INSTALL)/sedna/examples/applications/external-functions/c/Makefile
+	$(INSTALL) -Dp $(PERM3) examples/api/scheme/client.scm $(SEDNA_INSTALL)/sedna/examples/api/scheme/client.scm
+	$(INSTALL) -Dp $(PERM3) examples/api/c/*.c $(SEDNA_INSTALL)/sedna/examples/api/c/
+	$(INSTALL) -Dp $(PERM3) examples/api/c/math.xqlib $(SEDNA_INSTALL)/sedna/examples/api/c/math.xqlib
+	$(INSTALL) -Dp $(PERM3) examples/api/java/Client.java $(SEDNA_INSTALL)/sedna/examples/api/java/Client.java
+	$(INSTALL) -Dp $(PERM3) examples/commandline/auction.xml $(SEDNA_INSTALL)/sedna/examples/commandline/auction.xml
+	$(INSTALL) -Dp $(PERM3) examples/commandline/*.xquery $(SEDNA_INSTALL)/sedna/examples/commandline/
+	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/sample.xquery $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.xquery
+	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/sample.cpp $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/sample.cpp
+	$(INSTALL) -Dp $(PERM3) examples/api/external-functions/c/Makefile $(SEDNA_INSTALL)/sedna/examples/api/external-functions/c/Makefile
 	$(INSTALL) -Dp $(PERM3) include/sedna_ef.h $(SEDNA_INSTALL)/sedna/include/sedna_ef.h
+	$(INSTALL) -Dp $(PERM3) examples/api/data/*.xml $(SEDNA_INSTALL)/sedna/examples/api/data/
 ifeq ($(AUTH_SWITCH), 1)
 	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
 endif

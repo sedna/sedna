@@ -1,0 +1,423 @@
+<?xml version="1.0"  encoding="UTF-8" ?>
+  <page>
+    <title>Floating point</title>
+    <id>11376</id>
+    <revision>
+      <id>182371247</id>
+      <timestamp>2008-01-05T20:37:51Z</timestamp>
+      <contributor>
+        <ip>71.60.140.56</ip>
+      </contributor>
+      <comment>/* Dealing with exceptional cases */</comment>
+      <text xml:space="preserve"><template head="Cleanup"><field name="date">August 2006</field></template>
+
+<summary><p>In <link label="Computing">computing</link>, <b>floating-point</b> describes a numerical representation system in which a <link label="String">string</link> of digits (or <link label="Bit">bit</link>s) represents a <link label="Real number">real number</link>. The most commonly encountered representations are those defined by the <link label="IEEE 754">IEEE 754</link> Standard. </p>
+
+<p>The name &quot;floating-point&quot; refers to the fact that the <link label="Radix point">radix point</link> (decimal point, or, more commonly in computers, binary point) can 'float'; that is, it can be placed anywhere relative to the <link label="Significant figures">significant digits</link> of the number.  This position is indicated separately in the internal representation, and floating-point representation can thus be thought of as a computer realization of <link label="Scientific notation">scientific notation</link>.</p>
+
+<p>The advantage of floating-point representation over <b><link label="Fixed-point arithmetic">fixed-point</link></b> (and <link label="Integer (computer science)">integer</link>) representation is that it can support a much wider range of values. For example, a fixed-point representation that has eight decimal digits, with the decimal point assumed to be positioned after the sixth digit, can represent the numbers 123456.78, 8765.43, 123.00, and so on, whereas a floating-point representation with eight decimal digits could also represent 1.2345678, 1234567.8, 0.000012345678, 12345678000000000, and so on. The floating-point format needs slightly more storage (to encode the position of the decimal point), so when stored in the same space, floating-point numbers achieve their greater range at the expense of slightly less <link label="Accuracy and precision">precision</link>.</p>
+
+<p>The speed of floating-point operations is an important measure of performance for computers in many application domains. It is measured in &quot;mega<link label="FLOPS">FLOPS</link>&quot; (million floating-point operations per second), or GigaFLOPS, etc.  <link label="TOP500">World-class supercomputer installations</link> are generally rated in <link label="Tera">teraflops</link>.</p>
+</summary><section depth="1"><title>Overview</title>
+<p>There are several mechanisms by which strings of digits can represent numbers:</p>
+
+<p>* In common mathematical notation, the digit string can be of any length, and the location of the radix point is indicated by placing an explicit <link label="Decimal separator">&quot;point&quot; character</link> (dot or comma) there. If the radix point is omitted then it is implicitly assumed to lie at the right (least significant) end of the string (that is, the number is an <link label="Integer">integer</link>).
+* In <link label="Fixed-point arithmetic">fixed-point</link> systems, some specific convention is made about where the <link label="Radix point">radix point</link> is located in the string.  For example, the convention could be made that the string consists of 8 digits, with the point in the middle, so that &quot;00012345&quot; has a value of 1.2345.
+* In <link label="Scientific notation">scientific notation</link>, the given number is scaled by a power of 10 so that it lies within a certain range &amp;ndash; typically between 1 and 10, with the radix point appearing immediately after the first digit. The scaling factor, as a power of ten, is then indicated separately at the end of the number. For example, the revolution period of <link label="Jupiter (planet)">Jupiter's</link> moon <link label="Io (moon)">Io</link> is 152853.5047 <link label="Seconds">seconds</link>.  This would be represented in standard-form scientific notation as 1.528535047<template head="e"><field>5</field></template> seconds.
+* Floating-point representation generally refers to a system similar to scientific notation, but without the explicit inclusion of a radix point. Instead, the radix point is implicitly assumed to always lie in a cetain position &amp;ndash; often just after or just before the most significant digit. As in scientific notation, the actual magnitude of the number is specified by separate &quot;<link label="Exponent">exponent</link>&quot; information. This article will follow the convention that the radix point is just after the most significant (leftmost) digit.  Under that convention, the orbital period of <link label="Io (moon)">Io</link> is 1528535047 with an exponent of 5.  The standard interpretation of that digit string would be 1.528535047, and the exponent designation indicates that the radix point is actually 5 digits to the right of that, that is, the actual number is 10&lt;sup&gt;5&lt;/sup&gt; times bigger than the standard interpretation.</p>
+<section depth="2"><title>Range of floating-point numbers</title>
+
+<p>By allowing the <link label="Radix point">radix point</link> to be adjustable, floating-point notation allows calculations over a wide range of magnitudes, using a fixed number of digits, while maintaining good precision.  For example, in a decimal floating-point system with three digits, the multiplication that humans would write as
+:0.12 × 0.12 = 0.0144
+would be expressed as
+:(1.20<template head="e"><field>&amp;minus;1</field></template>) × (1.20<template head="e"><field>&amp;minus;1</field></template>) = (1.44<template head="e"><field>&amp;minus;2</field></template>)
+In a fixed-point system with the decimal point at the left, it would be
+:0.120 × 0.120 = 0.014
+A digit of the result was lost because of the inability of the digits and decimal point to 'float' relative to each other within the digit string.</p>
+
+<p>The range of floating-point numbers depends on the number of bits used for representation of the <link label="Significand">coefficient</link> (the significant digits of the number) and for the exponent.  On a typical computer system, a 'double precision' (64-bit) floating-point number has a coefficient of 53 bits (one of which is implied), an exponent of 11 bits, and one sign bit.  Positive floating-point numbers in this format have an approximate range of 10&lt;sup&gt;&amp;minus;308&lt;/sup&gt; to 10&lt;sup&gt;308&lt;/sup&gt; (because 308 is approximately 1023 * log&lt;sub&gt;10&lt;/sub&gt;(2), since the range of the exponent is [-1022,1023]).  The complete range of the format is from about &amp;minus;10&lt;sup&gt;308&lt;/sup&gt; through +10&lt;sup&gt;308&lt;/sup&gt; (see <link label="IEEE 754">IEEE 754</link>).</p>
+</section><section depth="2"><title>[[Nomenclature]]</title>
+<template head="Inappropriate tone"><field name="date">December 2007</field></template>
+<p>In floating-point representation, the string of digits is called the <link label="Significand">significand</link>, or sometimes the <link label="Mantissa">mantissa</link>. The representation of the significand is defined by a choice of <i>base</i> or <i><link label="Radix">radix</link></i>, and the number of digits stored in that base. Throughout this article the base will be denoted by <i>b</i>, and the number of digits (or the precision) by <i>p</i>. Historically, different <link label="Base_%28mathematics%29">bases</link> have been used for floating-point, but until recently almost all modern computer architectures used base 2, or <link label="Binary numeral system">binary</link>.  Some examples in this article will be in base 10, the familiar <link label="Decimal representation">decimal</link> notation.</p>
+
+<p>The representation also includes a number called the exponent. This records the position, or offset, of the significand into the number. This can also be referred to as the characteristic, or scale.  The significand always stores the most significant digits in the number: the first non-zero digits in decimal or bits in binary. The exponent is the power of the base by which the significand is multiplied.</p>
+
+<p>Floating-point representation <i>per se</i> is generally used only in computers, because it holds no advantage over scientific notation for human reading.  There are many ways to represent floating-point numbers in computers—floating-point is a generic term to describe number representations in computing that are used to implement the above system of arithmetic. </p>
+
+<p>A number representation (called a <link label="Numeral system">numeral system</link> in mathematics) specifies some way of storing a number that may be encoded as a string of bits. The arithmetic is defined as a set of actions on the representation that simulate classical  arithmetic operations. When the numbers being represented are the <link label="Rationals">rationals</link>, one immediate issue is that there are an infinite number of rational numbers, and only a finite number of bits inside a real computer. The numbers that we represent must be a subset of the entire set. When we restrict ourselves to base-2 floating-point representations (because these are easiest to operate upon in a digital computer) the subset of the Rationals that we operate on is restricted to denominators that are powers of 2. Under this restriction, any rational with a denominator that has a prime factor other than 2 will have an infinite binary expansion (for example, the decimal value 0.1, or 1/10, has a prime factor of 5 and in binary is 0.00011001100..., with the last four digits recurring).</p>
+
+<p>If we consider this expansion as an infinite string of bits then there are several methods for approximating this string in memory:
+* When we store a fixed size significand at a constant position in the bit-string the representation is called <link label="Fixed-point">fixed-point</link>.  The hardware to manipulate these representations is less costly than floating-point and is commonly used to perform integer operations.  In this case the <link label="Radix point">radix point</link> is at some pre-determined fixed position, usually within or adjacent to the significand.
+* When we store a fixed size significand that is allowed to sample the bit-string at any position, with the <link label="Radix point">radix point</link> location not necessarily within the significand, the representation is called floating-point.  For the 0.1&lt;sub&gt;10&lt;/sub&gt; example, the binary significand 11001100...&lt;sub&gt;2&lt;/sub&gt; might be stored along with an exponent that indicates its true value.</p>
+</section></section><section depth="1"><title>IEEE floating-point</title>
+<template head="main"><link label="IEEE 754-1985">IEEE 754r</link></template>
+<p>The most common ways of representing floating-point numbers in computers are the formats standardized as the IEEE 754 standard, commonly called &quot;IEEE floating-point&quot;.  These formats can be manipulated efficiently by nearly all modern floating-point computer hardware, and this article will focus on them.  The standard actually provides for many closely-related formats, differing in only a few details.  Two of these formats are called <i>basic formats</i>, and are ubiquitous in computer hardware and languages:
+*<link label="Single precision">Single precision</link>, called &quot;float&quot; in the <link label="C (programming language)">C</link> language family, and &quot;real&quot; or &quot;real*4&quot; in <link label="Fortran">Fortran</link>.  This occupies 32 bits (4 bytes) and has a significand precision of 24 bits (about 7 decimal digits).
+*<link label="Double precision">Double precision</link>, called &quot;double&quot; in the C language family, and &quot;doubleprecision&quot; or &quot;real*8&quot; in Fortran.  This occupies 64 bits (8 bytes) and has a significand precision of 53 bits (about 16 decimal digits).</p>
+<section depth="2"><title>Alternative computer representations for non-integral numbers</title>
+<p>While the standard IEEE formats are by far the most common floating-point representations because they are efficiently handled in most large computer processors, there are alternatives:
+* <link label="Fixed-point arithmetic">Fixed-point</link> representation uses integer hardware operations with a specific convention about the location of the binary or decimal point, for example, 6 bits or digits from the right.  This has to be done in the context of a program that implements whatever convention is adopted.  Binary fixed point is usually used in special-purpose applications on embedded processors that can only do integer arithmetic, but decimal fixed point is common in commercial applications.
+* Where greater precision is desired, floating-point arithmetic can be <link label="Emulate">emulate</link>d in software with variable-sized significands which might grow and shrink as the program runs.  This is called <link label="Arbitrary-precision arithmetic">arbitrary-precision</link>, or &quot;scaled bignum&quot;, arithmetic.
+* Some numbers (e.g., 1/3 and 0.1) cannot be represented exactly in binary floating-point no matter what the precision.  Software packages that perform <link label="Fraction (mathematics)">rational arithmetic</link> represent numbers as fractions with integral numerator and denominator, and can therefore represent any rational number exactly.  Such packages generally need to use bignum arithmetic for the individual integers.
+* Some software packages (e.g., <link label="Maxima (software)">Maxima</link> and <link label="Maple computer algebra system">Maple</link>) can perform <link label="Computer algebra system">symbolic arithmetic</link>, handling irrational numbers like <math>\pi</math> or <math>\sqrt{3}</math> in a completely &quot;formal&quot; way, without dealing with a specific encoding of the significand.  Such programs can evaluate expressions like &quot;<math>\sin 3\pi</math>&quot; exactly, because they &quot;know&quot; the underlying mathematics.
+* A representation based on <link label="Natural logarithm">natural logarithm</link>s is sometimes used in <link label="FPGA">FPGA</link> based applications where most arithmetic operations are multiplication or division<ref><template head="cite journal"><field name="title">Comparing Floating-point and Logarithmic Number Representations for Reconfigurable Acceleration</field><field name="author">Haohuan Fu, Oskar Mencer, Wayne Luk</field><field name="url">http://ieeexplore.ieee.org/search/wrapper.jsp?arnumber=4042464 </field><field name="journal">IEEE Conference on Field Programmable Technology</field><field name="date">Dec. 2006</field></template></ref>.  Like floating-point representation, this solution has precision for smaller numbers, as well as a wide range.</p>
+</section><section depth="2"><title>Normalization</title>
+<p>&lt;!--Computation with floating-point numbers plays a very important role in an enormous variety of applications in science, engineering, and industry.  The ability to perform floating-point operations is an important measure of performance for computers intended for such applications.  The extent of this ability is measured in &quot;<link label="FLOPS">FLOPS</link>&quot; (FLoating-point Operations Per Second).
+relevant, here? --&gt;
+&lt;!-- well, there's a whole WP article on Flops, so I guess we ought to say something. --&gt;
+&lt;!-- yes but it is nothing to do with Normalization ... --&gt;</p>
+
+<p>When the significand is adjusted so that its leftmost digit is nonzero, it is said to be <b><link label="Normal number (computing)">normalized</link></b>.  For binary floating-point numbers, the first digit is then always 1 and hence need not be encoded, hence giving an extra bit of precision.  Normalization can therefore be thought of as a form of compression.</p>
+
+<p>When a (nonzero) floating-point number is normalized, the value of its significand obeys 1 ≤ s &amp;lt; b if the radix point is assumed to follow the first digit. (Zero and subnormal numbers need special treatment; this will be described below.)
+&lt;!-- this next bit is true whether or not the number is normalized .. move somewhere else?
+When a number is in floating-point representation one no longer needs to express the point explicitly; the exponent provides that information. In decimal floating-point notation with precision of 10, the revolution period of Io is simply an exponent e=5 and a significand s=1528535047.  The implied decimal point is after the first digit of s (after the '1' and before the first '5'). --&gt;</p>
+</section><section depth="2"><title>Value</title>
+<p>The mathematical value of a floating-point number, using the convention given above, is s.ssssssss...sss × b&lt;sup&gt;e&lt;/sup&gt; (where s.ssssssss...sss are the digits of the significand, with the radix point assumed after the first, b is the base, and e is the exponent).</p>
+
+<p>Equivalently, this is:
+: <math>\frac{s}{b^{p-1}} \times b^e</math> (where <b>s</b>, here, means the integer value of the entire significand)</p>
+
+<p>In binary <link label="Radix">radix</link> (base 2), the significand is a string of <link label="Bit">bit</link>s (1s and 0s) of length <i>p</i>, of which the leftmost bit is 1. The real number <link label="Pi">π</link>, represented in binary as an infinite series of bits is
+:11.0010010000111111011010101000100010000101101000110000100011010011... but is
+:11.0010010000111111011011 when approximated by <link label="Rounding">rounding</link> to a precision of 24 bits.
+In binary single-precision floating-point, this is represented as s=110010010000111111011011 with e=&amp;minus;23 (or e=1 if s is not an integer but is assumed to have a binary point after the first bit).
+This has a decimal value of
+:<b>3.141592</b>7410125732421875, whereas the true value of π is
+:<b>3.1415926535897932384626433832795</b>...</p>
+
+<p>Floating-point numbers with a limited number of digits can represent only a subset of the <link label="Real number">real number</link>s, so any real number outside of that subset (e.g., 1/3, or an irrational number such as π) cannot be represented exactly.  Numbers which appear to be short and exact when written can also suffer from this problem when converted to binary floating-point; for example, the decimal number 0.1 is not representable in binary floating-point of any finite precision.  The exact binary representation would have a &quot;1100&quot; sequence continuing endlessly:
+:e=-4; s=1100110011001100110011001100110011..., but when rounded to 24 bits it becomes
+:e=-4; s=110011001100110011001101 which is actually 0.100000001490116119384765625 in decimal. 
+&lt;!-- Edit/rearrange this if you want, but please leave the 0.1 example in.  (My previous reference to pi being more &quot;sophisticated&quot; than 0.1 was admittedly not artful.)  I have known professional software engineers (who should have known better!) who believed that numbers with short decimal representations could always be represented exactly.  Putting the many f.p. fallacies/superstitions to rest is important. --&gt;</p>
+</section><section depth="2"><title>Conversion and rounding</title>
+<p>When a number is represented in some format (such as a character string) which is not a floating-point represntation supported in a computer implementation, then it will require a conversion before it can be used in that impementation.</p>
+
+<p>If the number can be represented exactly in the floating-point format then the conversion is exact.  If there is not an exact representation then the conversion requires a choice of which floating-point number to use to represent the original value.  The representation chosen will have a different value to the original, and the value thus addjusted is called the <i>rounded value</i>. </p>
+
+<p>There are several different <link label="Rounding">rounding schemes</link> (or <i>rounding modes</i>) used for determining the rounded value to use.  Often, <link label="Truncation">truncation</link> was the typical approach.  Since the introduction of IEEE 754, the default method (<link label="Rounding">''round to nearest, ties to even''</link>, sometimes called Banker's Rounding) is more commonly used.  This method chooses the nearest  value, or in the case of a tie, the value that would make the significand end in a 0 bit.  The result of rounding π to 24-bit binary floating-point differs from the true value by about 0.03 parts per million, and matches the decimal representation of π in the first 7 digits.  The difference is the <link label="Discretization error">discretization error</link> and is limited by the <link label="Machine epsilon">machine epsilon</link>.</p>
+
+<p>Rounding modes are also used when the exact result of a floating-point operation would need more significant digits than there are digits in the significand.  In this case the rounding mode is applied to the exact result to convert it to the desired floating-point representation.  A further use of rounding modes is where a number is rounded to a certain number of decimal (or binary) places, as when rounding a result to euros and cents (two decimal places); in this case a common rounding mode is <i>round to nearest, ties away from zero</i>, in which a tie is rounded up for positive values.</p>
+
+<p>Other common rounding modes always round the number in a certain direction (e.g., towards infinity or &amp;minus;infinity). These alternative modes are useful when the amount of error being introduced must be bounded.  Applications that require a bounded error are multi-precision floating-point, and <link label="Interval arithmetic">interval arithmetic</link>.</p>
+</section><section depth="2"><title>Mantissa</title>
+<p>The word <i><link label="Mantissa">mantissa</link></i> is often used as a synonym for significand.  Purists may not consider this usage to be correct, since the mantissa is traditionally defined as the fractional part of a logarithm, while the <i>characteristic</i> is the integer part. This terminology comes from the way <link label="Common logarithm">logarithm</link> tables were used before computers became commonplace. Log tables were actually tables of mantissas. Therefore, a mantissa is the logarithm of the significand. &lt;!-- this is already stated:  The term &quot;mantissa&quot; is nevertheless widely used to refer to the significand because of the similarity of the pairs (mantissa, characteristic) in logarithms to (significand, exponent) in floating-point numbers. --&gt;</p>
+</section></section><section depth="1"><title>History</title>
+
+<p>The floating-point system of numbers was used by the <link label="Kerala School">Kerala School</link> of mathematics in <link label="14th century">14th century</link> <link label="India">India</link> to investigate and rationalise about the <link label="Convergence">convergence</link> of <link label="Series (mathematics)">series</link>.</p>
+
+<p>In <link label="1938">1938</link>, <link label="Konrad Zuse">Konrad Zuse</link> of Berlin, completed the &quot;<link label="Z1 (computer)">Z1</link>&quot;, the first mechanical binary programmable computer. It was based on Boolean Algebra and had most of the basic ingredients of modern machines, using the binary system and today's standard separation of <link label="Computer storage">storage</link> and control. Zuse's <link label="1936">1936</link> patent application (Z23139/GMD Nr. 005/021) also suggests a <b><link label="Von Neumann architecture">von Neumann architecture</link></b> (re-invented in <link label="1945">1945</link>) with program and data modifiable in storage. Originally the machine was called the &quot;V1&quot; but retroactively renamed after the war, to avoid confusion with the V1 missile. It worked with floating-point numbers having a 7-bit exponent, 16-bit mantissa, and a sign bit. The memory used sliding metal parts to store 16 such numbers, and worked well; but the arithmetic unit was less successful, occasionally suffering from certain mechanical engineering problems. The program was read from punched discarded 35 mm movie film. Data values could be entered from a numeric keyboard, and outputs were displayed on electric lamps. The machine was not a general purpose computer because it lacked looping capabilities. The <link label="Z3">Z3</link> was completed in <link label="1941">1941</link> and was program controlled. </p>
+
+<p>Once electronic digital computers became a reality, the need to process data in this way was quickly recognized.  The first commercial computer to be able to do this in hardware appears to be the <link label="Z4 (computer)">Z4</link> in <link label="1950">1950</link>, followed by the <link label="IBM 704">IBM 704</link> in <link label="1954">1954</link>.  For some time after that, floating-point hardware was an optional feature, and computers that had it were said to be &quot;scientific computers&quot;, or to have &quot;scientific computing&quot; capability.  All modern general-purpose computers have this ability. The <link label="PDP-11/44">PDP-11/44</link> was an extension of the 11/34 that included the <link label="Cache memory">cache memory</link> and floating-point units as a standard feature.</p>
+
+<p>The <link label="UNIVAC 1100/2200 series">UNIVAC 1100/2200 series</link>, introduced in <link label="1962">1962</link>, supported two floating-point formats. Single precision used 36 bits, organised into a 1-bit sign, 8-bit exponent, and a 27-bit mantissa. Double precision used 72 bits organised as a 1-bit sign, 11-bit exponent, and a 60-bit mantissa.  The <link label="IBM 7094">IBM 7094</link>, introduced the same year, also supported single and double precision, with slightly different formats.</p>
+
+<p>Prior to the <link label="IEEE-754">IEEE-754</link> standard, computers used many different forms of floating-point. These differed in the word-sizes, the format of the representations, and the rounding behaviour of operations. These differing systems implemented different parts of the arithmetic in hardware and software, with varying accuracy.</p>
+
+<p>The IEEE-754 standard was created in the early 1980s, after word sizes of 32 bits (or 16 or 64) had been generally settled upon.  Among its innovations are these:
+*A precisely specified encoding of the bits, so that all compliant computers would interpret bit patterns the same way.  This made it possible to transfer floating-point numbers from one computer to another.
+*A precisely specified behavior of the arithmetic operations.  This meant that a given program, with given data, would always produce the same result on any compliant computer.  This helped reduce the almost mystical reputation that floating-point computation had for seemingly nondeterministic behavior.
+*The ability of exceptional conditions (overflow, divide by zero, etc.) to propagate through a computation in a benign manner and be handled by the software in a controlled way.</p>
+</section><section depth="1"><title>Floating-point arithmetic operations</title>
+<p>The usual rule for performing floating-point arithmetic is that the exact mathematical value is calculated,<ref>Computer hardware doesn't necessarily compute the exact value; it simply has to produce the equivalent rounded result as though it had computed the infinitely precise result.</ref> and the result is then rounded to the nearest representable value in the specified precision.  This is in fact the behavior mandated for IEEE-compliant computer hardware, under normal rounding behavior and in the absence of exceptional conditions.</p>
+
+<p>For ease of presentation and understanding, decimal <link label="Radix">radix</link> with 7 digit precision will be used in the examples. The fundamental principles are the same in any <link label="Radix">radix</link> or precision.</p>
+<section depth="2"><title>Addition</title>
+<p>A simple method to add floating-point numbers is to first represent them with the same exponent. In the example below, the second number is shifted right by three digits. We proceed with the usual addition method:</p>
+
+<p>The following example is decimal (base 10):
+   123456.7 = 1.234567 * 10^5
+   101.7654 = 1.017654 * 10^2 = 0.001017654 * 10^5
+   
+   Hence:
+   123456.7 + 101.7654 = (1.234567 * 10^5) + (1.017654 * 10^2)
+                       = (1.234567 * 10^5) + (0.001017654 * 10^5)
+                       = (1.234567 + 0.001017654) * 10^5
+                       =  1.235584654 * 10^5</p>
+
+<p>This is nothing else as converting to engineering notation.
+In detail:</p>
+
+   <p>e=5;  s=1.234567     (123456.7)
+ + e=2;  s=1.017654     (101.7654)
+ 
+   e=5;  s=1.234567
+ + e=5;  s=0.001017654  (after shifting)
+ --------------------
+   e=5;  s=1.235584654  (true sum: 123558.4654)</p>
+
+<p>This is the true result, the exact sum of the operands. It will be rounded to seven digits and then normalized if necessary. The final result is
+   e=5;  s=1.235585    (final sum: 123558.5)</p>
+
+<p>Note that the low 3 digits of the second operand (654) are essentially lost. This is <link label="Round-off error">round-off error</link>. In extreme cases, the sum of two non-zero numbers may be equal to one of them:</p>
+
+   <p>e=5;  s=1.234567
+ + e=-3; s=9.876543
+ 
+   e=5;  s=1.234567
+ + e=5;  s=0.00000009876543 (after shifting)
+ ----------------------
+   e=5;  s=1.23456709876543 (true sum)
+   e=5;  s=1.234567         (after rounding/normalization)</p>
+
+<p>Another problem of loss of significance occurs when two close numbers are subtracted.
+e=5; s=1.234571 and e=5; s=1.234567 are representations of the rationals 123457.1467 and 123456.659.</p>
+
+   <p>e=5;  s=1.234571
+ - e=5;  s=1.234567
+ ----------------
+   e=5;  s=0.000004
+   e=-1; s=4.000000 (after rounding/normalization)</p>
+
+<p>The best representation of this difference is e=-1; s=4.877000, which differs more than 20% from e=-1; s=4.000000. In extreme cases, the final result may be zero even though an exact calculation may be several million. This <i><link label="Loss of significance">cancellation</link></i> illustrates the danger in assuming that all of the digits of a computed result are meaningful.</p>
+
+<p>Dealing with the consequences of these errors are topics in <link label="Numerical analysis">numerical analysis</link>.</p>
+</section><section depth="2"><title>Multiplication</title>
+<p>To multiply, the significands are multiplied while the exponents are added, and the result is rounded and normalized.
+ 
+   e=3;  s=4.734612
+ × e=5;  s=5.417242
+ -----------------------
+   e=8;  s=25.648538980104 (true product)
+   e=8;  s=25.64854        (after rounding)
+   e=9;  s=2.564854        (after normalization)</p>
+
+<p>Division is done similarly, but that is more complicated.</p>
+
+<p>There are no cancellation or absorption problems with multiplication or division, though small errors may accumulate as operations are performed repeatedly. In practice, the way these operations are carried out in digital logic can be quite complex. (see <link label="Booth's multiplication algorithm">Booth's multiplication algorithm</link> and <link label="Division (digital)">digital division</link>)<ref>The enormous complexity of modern division algorithms once led to a famous error.  An early version of the Intel Pentium chip was shipped with a division instruction that, on rare occasions, gave slightly incorrect results. Many computers had been shipped before the error was discovered. Until the defective computers were replaced, patched versions of compilers were developed that could avoid the failing cases.  See <i><link label="Pentium FDIV bug">Pentium FDIV bug</link></i>.</ref></p>
+</section></section><section depth="1"><title>Computer representation</title>
+<p>Floating-point numbers are typically packed into a computer datum as the sign bit, the exponent field, and the significand (mantissa), from left to right.  For the common (IEEE standard) formats they are apportioned as follows:
+          sign   exponent  (exponent bias)  significand   total
+ single    1        8         (127)             23         32
+ double    1       11         (1023)            52         64
+While the exponent can be positive or negative, it is stored as an unsigned number that has a fixed &quot;bias&quot; added to it. A value of zero, or all 1's, in this field is reserved for special treatment.  Therefore the legal exponent range for normalized numbers is [-126, 127] for single precision or [-1022, 1023] for double.</p>
+
+<p>When a number is normalized, its leftmost <b>significand</b> bit is known to be 1.  In the IEEE single and double precision formats that bit is not actually stored in the computer datum.  It is called the &quot;hidden&quot; or &quot;implicit&quot; bit.  Because of this, single precision format actually has 24 bits of significand precision, while double precision format has 53.</p>
+
+<p>For example, it was shown above that π, rounded to 24 bits of precision, has:
+* sign = 0 ; e=1 ; s=110010010000111111011011 (including the hidden bit)
+The sum of the exponent bias (127) and the exponent (1) is 128, so this is represented in single precision format as
+* 0 10000000 10010010000111111011011 (excluding the hidden bit) = 40490FDB in <link label="Hexadecimal">hexadecimal</link></p>
+</section><section depth="1"><title>Dealing with exceptional cases</title>
+<p>Floating-point computation in a computer can run into three kinds of problems:
+* An operation can be mathematically illegal, such as division by zero.
+* An operation can be legal in principle, but not supported by the specific format, for example, calculating the square root of -1 or the inverse sine of 2.
+* An operation can be legal in principle, but the result can be impossible to represent in the specified format, because the exponent is too large or too small to encode in the exponent field.  Such an event is called an <link label="Arithmetic overflow">overflow</link> (exponent too large) or <link label="Arithmetic underflow">underflow</link> (exponent too small.)
+Prior to the IEEE standard, such things usually caused the program to terminate, or caused some kind of <link label="Trap (computing)">trap</link> that the programmer might be able to catch.  How this worked was system-dependent, meaning that floating-point programs were not <link label="Porting">portable</link>.  Modern IEEE-compliant systems have a uniform way of handling these situations.  An important part of the mechanism involves <i>error values</i> that result from a failing computation, and that can propagate silently through subsequent computation until they are detected at a point of the programmer's choosing.</p>
+
+<p>The two error values are &quot;infinity&quot; (often denoted &quot;INF&quot;), and &quot;<link label="NaN">NaN</link>&quot; (&quot;not a number&quot;), which covers all other errors.</p>
+
+<p>:&quot;Infinity&quot; does not necessarily mean that the result is actually infinite.  It simply means &quot;too large to represent&quot;.</p>
+
+<p>Both of these are encoded with the exponent field set to all 1's.  (Recall that exponent fields of all 0's or all 1's are reserved for special meanings.)  The significand field is set to something that can distinguish them—typically zero for INF and nonzero for NaN.  The sign bit is meaningful for INF, that is, floating-point hardware distinguishes between +∞ and −∞.</p>
+
+<p>When a nonzero number is divided by zero (the divisor must be <i>exactly</i> zero), a &quot;zerodivide&quot; event occurs, and the result is set to infinity of the appropriate sign.  In other cases in which the result's exponent is too large to represent, an &quot;overflow&quot; event occurs, also producing infinity of the appropriate sign.</p>
+
+<p>:Division of an extremely large number by an extremely small number can overflow and produce infinity.  This is different from a zerodivide, though both produce a result of infinity, and the distinction is usually unimportant in practice.</p>
+
+<p>Floating-point hardware is generally designed to handle operands of infinity in a reasonable way, such as
+* (+INF) + (+7) = (+INF)
+* (+INF) × (-2) = (-INF)
+* But: (+INF) × 0 = NaN—there is no meaningful thing to do</p>
+
+<p>When the result of an operation has an exponent too small to represent properly, an &quot;underflow&quot; event occurs.  The hardware responds to this by changing to a format in which the significand is not normalized, and there is no &quot;hidden&quot; bit—that is, all significand bits are represented.  The exponent field is set to the reserved value of zero.  The significand is set to whatever it has to be in order to be consistent with the exponent.  Such a number is said to be &quot;<link label="Denormal number">denormalized</link>&quot; (a &quot;denorm&quot; for short), or, in more modern terminology, &quot;subnormal&quot;.  Denorms are perfectly legal operands to arithmetic operations.</p>
+
+<p>If no significant bits are able to appear in the significand field, the number is zero.  Note that, in this case, the exponent field and significand field are all zeros—floating-point zero is represented by all zeros.</p>
+
+<p>Other errors, such as division of zero by zero, or taking the square root of -1, cause an &quot;operand error&quot; event, and produce a NaN result.  NaNs propagate aggressively through arithmetic operations—any NaN operand to any operation causes an operand error and produces a NaN result.</p>
+
+<p>There are five special &quot;events&quot; that may occur, though some of them are quite benign:
+* An overflow occurs as described previously, producing an infinity.
+* An underflow occurs as described previously, producing a denorm or zero.
+* A zerodivide occurs as described previously, producing an infinity of the appropriate sign.
+* An &quot;operand error&quot; occurs as described previously, producing a NaN.
+* An &quot;inexact&quot; event occurs whenever the rounding of a result changed that result from the true mathematical value. This occurs almost all the time, and is usually ignored. It is looked at only in the most exacting applications.</p>
+
+<p>Computer hardware is typically able to raise <link label="Exception handling">exceptions</link> when these events occur. How this is done is system-dependent. Usually these exceptions are all <i>masked</i> (disabled), relying only on the propagation of error values.  Sometimes overflow, zerodivide, and operand error are enabled.</p>
+</section><section depth="1"><title>Implementation in actual computers</title>
+<p>The <link label="IEEE">IEEE</link> has standardized the computer representation for binary floating-point numbers in <link label="IEEE floating-point standard">IEEE 754</link>. This standard is followed by almost all modern machines. Notable exceptions include IBM Mainframes, which support <link label="IBM Floating-Point Standard">IBM's own format</link> (in addition to IEEE 754 data types), and Cray vector machines, where the T90 series had an IEEE version, but the SV1 still uses Cray floating-point format.</p>
+
+<p>The standard allows for many different precision levels, of which the 32 bit (&quot;single&quot;) and 64 bit (&quot;double&quot;) are by far the most common, since they are supported in common programming languages. Computer hardware (for example, the Intel Pentium series and the Motorola 68000 series) often provides an 80 bit <link label="Extended precision">extended precision</link> format, with 15 exponent bits and 64 significand bits, with no hidden bit.
+There is controversy about the failure of most programming languages to make these extended precision formats available to programmers (although <link label="C (programming language)">C</link> and related programming languages usually provide these formats via the <link label="Long double">long double</link> type on such hardware). System vendors may also provide additional extended formats (e.g. 128 bits) emulated in software.</p>
+
+<p>A project for revising the IEEE 754 standard has been under way since 2000. See <link label="IEEE 754r">IEEE 754r</link>. A late phase of the review was <external href="http://www.validlab.com/754R/">completed</external> on 10 March, 2007 but final ratification of the new standard is still awaiting a decision later in 2007.</p>
+</section><section depth="1"><title>Behavior of computer arithmetic</title>
+<p>The standard behavior of computer hardware is to round the ideal (infinitely precise) result of an arithmetic operation to the nearest representable value, and give that representation as the result. In practice, there are other options. IEEE-754-compliant hardware allows one to set the <b>rounding mode</b> to any of the following:
+* round to nearest (the default; by far the most common mode)
+* round up (toward +∞; negative results round toward zero)
+* round down (toward −∞; negative results round away from zero)
+* round toward zero (sometimes called &quot;chop&quot; mode; it is similar to the common behavior of float-to-integer conversions, which convert −3.9 to −3)</p>
+
+<p>In the default rounding mode the IEEE 754 standard mandates the round-to-nearest behavior described above for all fundamental algebraic operations, including square root. (&quot;Library&quot; functions such as cosine and log are not mandated.) This means that IEEE-compliant hardware's behavior is completely determined in all 32 or 64 bits.</p>
+
+<p>The mandated behavior for dealing with overflow and underflow is that the appropriate result is computed, taking the rounding mode into consideration, as though the exponent range were infinitely large. If that resulting exponent can't be packed into its field correctly, the overflow/underflow action described above is taken.</p>
+
+<p>The arithmetical difference between two consecutive representable floating-point numbers which have the same exponent is called an &quot;ULP&quot;, for Unit in the Last Place. For example, the numbers represented by 45670123 and 45670124 hexadecimal is one ULP. For numbers with an exponent of 0, an ULP is exactly 2&lt;sup&gt;-23&lt;/sup&gt; or about 10&lt;sup&gt;−7&lt;/sup&gt; in single precision, and about 10&lt;sup&gt;−16&lt;/sup&gt; in double precision. The mandated behavior of IEEE-compliant hardware is that the result be within one-half of an ULP.</p>
+</section><section depth="1"><title>Accuracy problems</title>
+<template head="Cleanup"><field name="date">October 2007</field></template>
+<p>The fact that floating-point numbers cannot faithfully mimic the real numbers, and that floating-point operations cannot faithfully mimic true arithmetic operations, lead to many surprising situations.</p>
+
+<p>For example, the non-representability of 0.1 and 0.01 means that the result of attempting to square 0.1 is neither 0.01 nor the representable number closest to it.  In 24-bit (single precision) representation, 0.1 (decimal) was given previously as e=-4; s=110011001100110011001101, which is
+:.100000001490116119384765625 exactly.
+Squaring this number gives
+:.010000000298023226097399174250313080847263336181640625 exactly.
+Squaring it with single-precision floating-point hardware (with rounding) gives
+:.010000000707805156707763671875 exactly.
+But the representable number closest to 0.01 is
+:.009999999776482582092285156250 exactly.</p>
+
+<p>Also, the non-representability of π (and π/2) means that an attempted computation of tan(π/2) will not yield a result of infinity, nor will it even overflow.  It is simply not possible for standard floating-point hardware to attempt to compute tan(π/2), because π/2 cannot be represented exactly.  This computation in C:
+   // Enough digits to be sure we get the correct approximation.
+   double pi = 3.1415926535897932384626433832795;
+   double z = tan(pi/2.0);
+Will give a result of 16331239353195370.0.  In single precision (using the tanf function), the result will be -22877332.0.</p>
+
+<p>By the same token, an attempted computation of sin(π) will not yield zero.  The result will be (approximately) .1225<template head="e"><field>-15</field></template> in double precision, or -.8742<template head="e"><field>-7</field></template> in single precision.<ref>But an attempted computation of cos(π) yields -1 exactly.  Since the derivative is nearly zero near π, the effect of the inaccuracy in the argument is far smaller than the spacing of the floating-point numbers around -1, and the rounded result is exact.</ref></p>
+
+<p>In fact, while addition and multiplication are both <link label="Commutative">commutative</link> (a+b = b+a and a×b = b×a), they are not <link label="Associative">associative</link> (a + b) + c = a + (b + c).  Using 7-digit decimal arithmetic:
+  1234.567 + 45.67844 = 1280.245
+                        1280.245 + 0.0004 = 1280.245
+  but 
+  45.67844 + 0.0004 = 45.67884
+                      45.67884 + 1234.567 = 1280.246
+They are also not <link label="Distributive">distributive</link> (a + b)×c = a×c + b×c :
+  1234.567 × 3.333333 = 4115.223
+  1.234567 × 3.333333 = 4.115223
+                        4115.223 + 4.115223 = 4119.338
+  but 
+  1234.567 + 1.234567 = 1235.802
+                        1235.802 × 3.333333 = 4119.340</p>
+
+<p>In addition to loss of significance, inability to represent numbers such as π and 0.1 exactly, and other slight inaccuracies, the following phenomena may occur:
+* Cancellation: subtraction of nearly equal operands may cause extreme loss of accuracy. This is perhaps the most common and serious accuracy problem.
+* Conversions to integer are unforgiving: converting (63.0/9.0) to integer yields 7, but converting (0.63/0.09) may yield 6.  This is because conversions generally truncate rather than round.
+* Limited exponent range: results might overflow yielding infinity, or underflow yielding a <link label="Denormal">denormal</link> value or zero. If a <link label="Denormal number">denormal number</link> results, precision will be lost.
+* Testing for safe division is problematical: Checking that the divisor is not zero does not guarantee that a division will not overflow and yield infinity.
+* Equality is problematical! Two computational sequences that are mathematically equal may well produce different floating-point values. Programmers often perform comparisons within some tolerance (often a decimal constant, itself not accurately represented), but that doesn't necessarily make the problem go away.</p>
+</section><section depth="1"><title>Minimizing the effect of accuracy problems</title>
+<p>Because of the problems noted above, naive use of floating-point arithmetic can lead to many problems. A good understanding of <link label="Numerical analysis">numerical analysis</link> is essential to the creation of robust floating-point software. The subject is actually quite complicated, and the reader is referred to the references at the bottom of this article.</p>
+
+<p>In addition to careful design of programs, careful handling by the <link label="Compiler">compiler</link> is essential. Certain &quot;optimizations&quot; that compilers might make (for example, reordering operations) can work against the goals of well-behaved software. There is some controversy about the failings of compilers and language designs in this area. See the external references at the bottom of this article.</p>
+
+<p>Floating-point arithmetic is at its best when it is simply being used to measure real-world quantities over a wide range of scales (such as the orbital period of <link label="Io (moon)">Io</link> or the mass of the <link label="Proton">proton</link>), and at its worst when it is expected to model the interactions of quantities expressed as decimal strings that are expected to be exact. An example of the latter case is financial calculations. For this reason, financial software tends not to use a binary floating-point number representation. See: http://www2.hursley.ibm.com/decimal/. The &quot;decimal&quot; data type of the C# programming language, and the IEEE 854 standard, are designed to avoid the problems of binary floating-point representation, and make the arithmetic always behave as expected when numbers are printed in decimal.</p>
+
+
+<p>What makes floating-point arithmetic troublesome is that people write mathematical algorithms that perform operations an enormous number of times, and so small errors grow. A few examples are matrix inversion, eigenvector computation, and differential equation solving. These algorithms must be very carefully designed if they are to work well.</p>
+
+<p>People often carry expectations from their mathematics training into the field of floating-point computation. For example, it is known that <math>(x+y)(x-y) = x^2-y^2\,</math>, and that <math>\sin^2{\theta}+\cos^2{\theta} = 1\,</math>. These facts can't be counted on when the quantities involved are the result of floating-point computation.</p>
+
+<p>While a treatment of the techniques for writing high-quality floating-point software is far beyond the scope of this article, here are a few simple tricks:</p>
+
+<p>The use of the equality test (&lt;tt&gt;if (x==y) ...&lt;/tt&gt;) is usually not a good idea when it is based on expectations from pure mathematics. Such things are sometimes replaced with &quot;fuzzy&quot; tests (&lt;tt&gt;if (abs(x-y) &lt; epsilon) ...&lt;/tt&gt;), where epsilon is sufficiently small and tailored to the application, such as 1.0E-13). The wisdom of doing this varies greatly. It is often better to organize the code in such a way that such tests are unnecessary.</p>
+
+<p>An awareness of when loss of significance can occur is useful. For example, if one is adding a very large number of numbers, the individual addends are very small compared with the sum. This can lead to loss of significance. Suppose, for example, that one needs to add many numbers, all approximately equal to 3. After 1000 of them have been added, the running sum is about 3000. A typical addition would then be something like
+ 3253.671
+ +  3.141276
+ --------
+ 3256.812
+The low 3 digits of the addends are effectively lost. The <link label="Kahan summation algorithm">Kahan summation algorithm</link> may be used to reduce the errors.</p>
+
+<p>Another thing that can be done is to rearrange the computation in a way that is mathematically equivalent but less prone to error. As an example, <link label="Archimedes">Archimedes</link> approximated π by calculating the perimeters of polygons inscribing and circumscribing a circle, starting with hexagons, and successively doubling the number of sides. The recurrence formula for the circumscribed polygon is:</p>
+
+<p>:<math>t_0 = \frac{1}{\sqrt{3}}</math></p>
+
+<p>:<math>t_{i+1} = \frac{\sqrt{t_i^2+1}-1}{t_i}\qquad\mathrm{second\ form:}\qquad t_{i+1} = \frac{t_i}{\sqrt{t_i^2+1}+1}</math></p>
+
+<p>:<math>\pi \sim 6 \times 2^i \times t_i,\qquad\mathrm{converging\ as\ i \rightarrow \infty}\,</math></p>
+
+<p>Here is a computation using IEEE &quot;double&quot; (53 bits of significand precision) arithmetic:</p>
+
+  <p>i   6 × 2&lt;sup&gt;i&lt;/sup&gt; × t&lt;sub&gt;i&lt;/sub&gt;, first form    6 × 2&lt;sup&gt;i&lt;/sup&gt; × t&lt;sub&gt;i&lt;/sub&gt;, second form
+ 
+  0   <b>3</b>.4641016151377543863      <b>3</b>.4641016151377543863
+  1   <b>3</b>.2153903091734710173      <b>3</b>.2153903091734723496
+  2   <b>3.1</b>596599420974940120      <b>3.1</b>596599420975006733
+  3   <b>3.14</b>60862151314012979      <b>3.14</b>60862151314352708
+  4   <b>3.14</b>27145996453136334      <b>3.14</b>27145996453689225
+  5   <b>3.141</b>8730499801259536      <b>3.141</b>8730499798241950
+  6   <b>3.141</b>6627470548084133      <b>3.141</b>6627470568494473
+  7   <b>3.141</b>6101765997805905      <b>3.141</b>6101766046906629
+  8   <b>3.14159</b>70343230776862      <b>3.14159</b>70343215275928
+  9   <b>3.14159</b>37488171150615      <b>3.14159</b>37487713536668
+ 10   <b>3.141592</b>9278733740748      <b>3.141592</b>9273850979885
+ 11   <b>3.141592</b>7256228504127      <b>3.141592</b>7220386148377
+ 12   <b>3.1415926</b>717412858693      <b>3.1415926</b>707019992125
+ 13   <b>3.1415926</b>189011456060      <b>3.14159265</b>78678454728
+ 14   <b>3.1415926</b>717412858693      <b>3.14159265</b>46593073709
+ 15   <b>3.14159</b>19358822321783      <b>3.141592653</b>8571730119
+ 16   <b>3.1415926</b>717412858693      <b>3.141592653</b>6566394222
+ 17   <b>3.1415</b>810075796233302      <b>3.141592653</b>6065061913
+ 18   <b>3.1415926</b>717412858693      <b>3.1415926535</b>939728836
+ 19   <b>3.141</b>4061547378810956      <b>3.1415926535</b>908393901
+ 20   <b>3.14</b>05434924008406305      <b>3.1415926535</b>900560168
+ 21   <b>3.14</b>00068646912273617      <b>3.141592653589</b>8608396
+ 22   <b>3.1</b>349453756585929919      <b>3.141592653589</b>8122118
+ 23   <b>3.14</b>00068646912273617      <b>3.14159265358979</b>95552
+ 24   <b>3</b>.2245152435345525443      <b>3.14159265358979</b>68907
+ 25                              <b>3.14159265358979</b>62246
+ 26                              <b>3.14159265358979</b>62246
+ 27                              <b>3.14159265358979</b>62246
+ 28                              <b>3.14159265358979</b>62246
+               The true value is <b>3.1415926535897932385...</b></p>
+
+<p>While the two forms of the recurrence formula are clearly equivalent, the first subtracts 1 from a number extremely close to 1, leading to huge cancellation errors. Note that, as the recurrence is applied repeatedly, the accuracy improves at first, but then it deteriorates. It never gets better than about 8 digits, even though 53-bit arithmetic should be capable of about 16 digits of precision. When the second form of the recurrence is used, the value converges to 15 digits of precision.</p>
+</section><section depth="1"><title>A few nice properties</title>
+<p>&lt;!-- Maybe these can be integrated into the rest of the article and this secion removed... --&gt;
+One can sometimes take advantage of a few nice properties:
+* Any integer less than or equal to 2&lt;sup&gt;24&lt;/sup&gt; can be exactly represented in the single precision format, and any integer less than or equal to 2&lt;sup&gt;53&lt;/sup&gt; can be exactly represented in the double precision format. Furthermore, any reasonable power of 2 times such a number can be represented. This property is sometimes used in purely integer applications, to get 53-bit integers on platforms that have double precision floats but only 32-bit integers.
+* The bit representations of IEEE floating-point numbers are monotonic, as long as exceptional values are avoided and the signs are handled properly.  IEEE floating-point numbers are equal if and only if their integer bit representations are equal. Comparisons for larger or smaller can be done with integer comparisons on the bit patterns, as long as the signs match. However, the actual floating-point comparisons provided by hardware typically have much more sophistication in dealing with exceptional values.
+* To a rough approximation, the bit representation of an IEEE floating-point number is proportional to its base 2 logarithm, with an average error of about 3%. (This is because the exponent field is in the more significant part of the datum.) This can be exploited in some applications, such as volume ramping in digital sound processing.</p>
+</section><section depth="1"><title>See also</title>
+<p>&lt;div style=&quot;-moz-column-count:3; column-count:3;&quot;&gt;
+* <link label="Significant digits">Significant digits</link>
+* <link label="Fixed-point arithmetic">Fixed-point arithmetic</link>
+* <link label="Computable number">Computable number</link>
+* <link label="IEEE 754">IEEE 754</link> - Standard for Binary Floating-Point Arithmetic 
+* <link label="IBM Floating Point Architecture">IBM Floating Point Architecture</link>
+* <link label="FLOPS">FLOPS</link>
+* <link label="−0 (number)">−0 (number)</link>
+* <link label="Half precision">half precision</link> — <link label="Single precision">single precision</link> — <link label="Double precision">double precision</link> — <link label="Quad precision">quad precision</link> — <link label="Minifloat">minifloat</link>
+* <link label="Numerical Recipes">Numerical Recipes</link>
+* <link label="Q (number format)">Q (number format)</link> for constant resolution
+&lt;/div&gt;</p>
+</section><section depth="1"><title>Notes and references</title>
+<p>&lt;references/&gt;</p>
+</section><section depth="1"><title>External links</title>
+<p>&lt;!-- ============================== NoMoreLinks ===============--&gt;
+&lt;!-- DO NOT ADD MORE LINKS TO THIS ARTICLE. WIKIPEDIA IS NOT A COLLECTION OF LINKS --&gt;
+&lt;!-- If you think that your link might be useful,  instead of placing it here, put    --&gt;
+&lt;!-- it on this article's discussion page first. Links that have not been verified --&gt;
+&lt;!-- WILL BE DELETED.  See WP:WPSPAM for motivation.                                   --&gt;
+&lt;!-- ====================================================== --&gt;
+* An edited reprint of the paper <i><external href="http://docs.sun.com/source/806-3568/ncg_goldberg.html">What Every Computer Scientist Should Know About Floating-Point Arithmetic</external></i>, by David Goldberg, published in the March, 1991 issue of Computing Surveys.
+* David Bindel’s <external href="http://www.cs.berkeley.edu/~dbindel/class/cs279/dsb-bib.pdf">Annotated Bibliography</external> on computer support for scientific computation.
+* <link label="Donald Knuth">Donald Knuth</link>. <i>The Art of Computer Programming</i>, Volume 2: <i>Seminumerical Algorithms</i>, Third Edition. Addison-Wesley, 1997. ISBN 0-201-89684-2. Section 4.2: Floating Point Arithmetic, pp.214–264.
+* Press et. al. <i><link label="Numerical Recipes">Numerical Recipes</link> in <link label="C++">C++</link>. The Art of Scientific Computing,</i> ISBN 0-521-75033-4.
+* Kahan, William and Darcy, Joseph (2001). How Java’s floating-point hurts everyone everywhere. Retrieved Sep. 5, 2003 from <external href="http://www.cs.berkeley.edu/~wkahan/JAVAhurt.pdf">http://www.cs.berkeley.edu/~wkahan/JAVAhurt.pdf</external>.
+* <external href="http://home.earthlink.net/~mrob/pub/math/floatformats.html">Survey of Floating-Point Formats</external> This page gives a very brief summary of floating-point formats that have been used over the years.
+* <external href="http://hal.archives-ouvertes.fr/hal-00128124/en/">A compendium of non-intuitive behaviours of floating-point on popular architectures</external>, with implications for program verification and testing</p>
+
+<p>
+</p>
+
+<p><link label="Ar:العمليات الحسابية على أعداد الفاصلة العائمة">ar:العمليات الحسابية على أعداد الفاصلة العائمة</link>
+<link label="De:Gleitkommazahl">de:Gleitkommazahl</link>
+<link label="Et:Ujukomaarv">et:Ujukomaarv</link>
+<link label="Es:Coma flotante">es:Coma flotante</link>
+<link label="Fr:Virgule flottante">fr:Virgule flottante</link>
+<link label="Ko:부동 소수점">ko:부동 소수점</link>
+<link label="Id:Floating-point">id:Floating-point</link>
+<link label="It:Numero in virgola mobile">it:Numero in virgola mobile</link>
+<link label="He:נקודה צפה">he:נקודה צפה</link>
+<link label="Nl:Drijvendekommagetal">nl:Drijvendekommagetal</link>
+<link label="Ja:浮動小数点数">ja:浮動小数点数</link>
+<link label="Pl:Liczba zmiennoprzecinkowa">pl:Liczba zmiennoprzecinkowa</link>
+<link label="Pt:Vírgula flutuante">pt:Vírgula flutuante</link>
+<link label="Ru:Плавающая запятая">ru:Плавающая запятая</link>
+<link label="Sk:Pohyblivá desatinná čiarka">sk:Pohyblivá desatinná čiarka</link>
+<link label="Fi:Liukuluku">fi:Liukuluku</link>
+<link label="Sv:Flyttal">sv:Flyttal</link>
+<link label="Tr:Kayan Nokta">tr:Kayan Nokta</link>
+<link label="Zh:浮点数">zh:浮点数</link></p></section></text><catlinks><catlink href="Category:Data types"/><catlink href="Category:Computer arithmetic"/></catlinks>
+    </revision>
+  </page>

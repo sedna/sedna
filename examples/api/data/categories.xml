@@ -1,0 +1,74 @@
+<?xml version="1.0"  encoding="UTF-8" ?>
+<categories>
+<category id="Category:Anarchism">
+<parent id="Category:Forms of government"/>
+<parent id="Category:Political movements"/>
+<parent id="Category:Political philosophy"/>
+<parent id="Category:Political ideologies"/>
+<parent id="Category:Social philosophy"/>
+<parent id="Category:Philosophical schools and traditions"/>
+<parent id="Category:Philosophical movements"/>
+<parent id="Category:Social movements"/>
+</category>
+
+<category id="Category:Social philosophy">
+<parent id="Category:Branches of philosophy"/>
+<parent id="Category:Branches of sociology (interdisciplinary)"/>
+<parent id="Category:Human sciences"/>
+<parent id="Category:Political philosophy"/>
+<parent id="Category:Philosophical movements"/>
+</category>
+
+<category id="Category:Aristotle">
+<parent id="Category:Classical Greek philosophy"/>
+</category>
+
+<category id="Category:Data types">
+<parent id="Category:Data structures"/>
+<parent id="Category:Computer languages"/>
+<parent id="Category:Programming constructs"/>
+</category>
+
+<category id="Category:XML">
+<parent id="Category:Markup languages"/>
+<parent id="Category:Semantic web"/>
+<parent id="Category:World Wide Web Consortium standards"/>
+<parent id="Category:Data modeling languages"/>
+<parent id="Category:Data serialization formats"/>
+</category>
+
+<category id="Category:Continents">
+<parent id="Category:Earth"/>
+<parent id="Category:Landforms"/>
+<parent id="Category:Geography by continent"/>
+<parent id="Category:Plate tectonics"/>
+</category>
+
+<category id="Category:Integral calculus">
+<parent id="Category:Calculus"/>
+<parent id="Category:Real analysis"/>
+</category>
+
+<category id="Category:Franz Kafka">
+<parent id="Category:German-language writers"/>
+<parent id="Category:Czech novelists"/>
+</category>
+
+<category id="Category:Capitalism">
+<parent id="Category:Political theories"/>
+<parent id="Category:Economic theories"/>
+</category>
+
+<category id="Category:NASA">
+<parent id="Category:Science and technology in the United States"/>
+<parent id="Category:Independent agencies of the United States government"/>
+<parent id="Category:Space programs"/>
+<parent id="Category:Aerospace"/>
+</category>
+
+<category id="Category:Cats">
+<parent id="Category:Domesticated animals"/>
+<parent id="Category:Felines"/>
+</category>
+
+</categories>
