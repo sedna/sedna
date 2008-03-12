@@ -386,26 +386,24 @@ static int OnFlushBuffer(XPTR xptr)
 	XPTR target = 0;
 	VersionsHeader *header = NULL;
 
-	if (!LookupFlushingDependency(xptr, &target)) { /* error */ }
-	else if (target)
+	if (!LookupFlushingDependency(xptr, &target))
 	{
-		/* we have a flushing dependency - fire it */ 
-		success = 
-			ImpFindBlockInBuffers(target, &bufferId) && 
-			ImpFlushBuffer(bufferId) && 
-			UpdateFlushingDependency(xptr, 0);
+		/* internal error */ 
+	}
+	else if (!target)
+	{
+		/* no buffer must be flushed ahead of this one  */ 
+		success = 1;
+	}
+	else if (!ImpFindBlockInBuffers(target, &bufferId))
+	{
+		/* the block to be flushed ahead of the current one not in buffers? fine for us */ 
+		success = (WuGetLastError() == WUERR_BLOCK_NOT_IN_BUFFERS);
 	}
 	else
 	{
-		/* we don't have a flushing dependency but probably the block is part of another dependency */ 
-		if (ImpFindBlockInBuffers(xptr, &bufferId) && 
-			ImpLocateHeader(bufferId, &header) &&
-			LookupFlushingDependency(header->xptr[0], &target))
-		{
-			success = (target != xptr || UpdateFlushingDependency(header->xptr[0], 0));
-		}
+		success = UpdateFlushingDependency(xptr, 0) && ImpFlushBuffer(bufferId);
 	}
-
 	return success;
 }
 
