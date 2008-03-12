@@ -3,7 +3,7 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  * 
  * This is an example application that works with Sedna XML DBMS through C-API using libsedna library.
- * The application opens a session to "sample-db" database, begins a transaction, loads document "region.xml"
+ * The application opens a session to "testdb" database, begins a transaction, loads document "region.xml"
  * to "sample-db" database, executes XQuery query, retrieves every item of the result data, commits the 
  * transaction and closes the session.
  */
@@ -18,7 +18,7 @@ int main()
     char buf[1024];
 
     const char* url = "localhost";
-    const char* db_name = "sample-db";
+    const char* db_name = "testdb";
     const char* login = "SYSTEM";
     const char* password = "MANAGER";
 
@@ -27,7 +27,7 @@ int main()
     value = SEDNA_AUTOCOMMIT_OFF;
     res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
 
-    //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
+    //connecting to database "testdb" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN) 
     {
@@ -46,7 +46,7 @@ int main()
     }
 
     // load data from file "region.xml" into the document "region"
-    res = SEexecute(&conn, "LOAD \"..\data\region.xml\" \"region\""); 
+    res = SEexecute(&conn, "LOAD \"..\\data\\region.xml\" \"region\""); 
     if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
     {
         printf("Bulk load failed: \n%s\n", SEgetLastErrorMsg(&conn));

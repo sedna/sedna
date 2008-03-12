@@ -280,7 +280,7 @@ import java.util.*;
 
   // Set up arguments for the call to the getConnection method.
        String url = "localhost";
-       String dbname = "sample-db";
+       String dbname = "testdb";
        String user = "SYSTEM";
        String password = "MANAGER";
        String item;
@@ -391,15 +391,15 @@ se_gov
 \end{verbatim}
 If Sedna is started successfully it prints "GOVERNOR has been started in
 the background mode".
-\item Create a new database \verb!sample-db! by running the following command:
+\item Create a new database \verb!testdb! by running the following command:
 \begin{verbatim}
-se_cdb sample-db
+se_cdb testdb
 \end{verbatim}
-If the database is created successfully it prints "The database 'sample-db'
+If the database is created successfully it prints "The database 'testdb'
 has been created successfully".
-\item Start the sample-db database by running the following command:
+\item Start the testdb database by running the following command:
 \begin{verbatim}
-se_sm sample-db
+se_sm testdb
 \end{verbatim}
 If the database is started successfully it prints "SM has been started in
 the background mode".
@@ -999,7 +999,7 @@ int main()
     char buf[1024];
 
     const char* url = "localhost";
-    const char* db_name = "sample-db";
+    const char* db_name = "testdb";
     const char* login = "SYSTEM";
     const char* password = "MANAGER";
 
@@ -1008,7 +1008,7 @@ int main()
     value = SEDNA_AUTOCOMMIT_OFF;
     res = SEsetConnectionAttr(&conn, SEDNA_ATTR_AUTOCOMMIT, (void*)&value, sizeof(int));
 
-    //connecting to database "sample-db" with login "SYSTEM", password "MANAGER"
+    //connecting to database "testdb" with login "SYSTEM", password "MANAGER"
     res = SEconnect(&conn, url, db_name, login, password);
     if(res != SEDNA_SESSION_OPEN) 
     {
@@ -1130,15 +1130,15 @@ se_gov
 \end{verbatim}
 If Sedna is started successfully it prints "GOVERNOR has been started in
 the background mode".
-\item Create a new database \verb!sample-db! by running the following command:
+\item Create a new database \verb!testdb! by running the following command:
 \begin{verbatim}
-se_cdb sample-db
+se_cdb testdb
 \end{verbatim}
-If the database is created successfully it prints "The database 'sample-db'
+If the database is created successfully it prints "The database 'testdb'
 has been created successfully".
-\item Start the sample-db database by running the following command:
+\item Start the testdb database by running the following command:
 \begin{verbatim}
-se_sm sample-db
+se_sm testdb
 \end{verbatim}
 If the database is started successfully it prints "SM has been started in
 the background mode".
@@ -1400,7 +1400,7 @@ the Scheme API driver.
 
 ; Create a connection
 (define conn
-  (sedna:connect-to-database "localhost" "sample-db" "SYSTEM" "MANAGER"))
+  (sedna:connect-to-database "localhost" "testdb" "SYSTEM" "MANAGER"))
 
 ; Begin a transaction
 (sedna:begin-transaction conn)
@@ -1451,15 +1451,15 @@ se_gov
 \end{verbatim}
 If Sedna is started successfully it prints "GOVERNOR has been started in
 the background mode".
-\item Create a new database \verb!sample-db! by running the following command:
+\item Create a new database \verb!testdb! by running the following command:
 \begin{verbatim}
-se_cdb sample-db
+se_cdb testdb
 \end{verbatim}
-If the database is created successfully it prints "The database 'sample-db'
+If the database is created successfully it prints "The database 'testdb'
 has been created successfully".
-\item Start the sample-db database by running the following command:
+\item Start the testdb database by running the following command:
 \begin{verbatim}
-se_sm sample-db
+se_sm testdb
 \end{verbatim}
 If the database is started successfully it prints "SM has been started in
 the background mode".
@@ -1917,15 +1917,15 @@ An Sedna error is raised if operation cannot be completed.
 %\end{verbatim}
 %If the listener is started successfully it prints "Listener has been started in
 %the background mode".
-%\item Create a new database \verb!sample-db! by running the following command:
+%\item Create a new database \verb!testdb! by running the following command:
 %\begin{verbatim}
-%se_cdb sample-db
+%se_cdb testdb
 %\end{verbatim}
-%If the database is created successfully it prints "The database 'sample-db'
+%If the database is created successfully it prints "The database 'testdb'
 %has been created successfully".
-%\item Start the sample-db database by running the following command:
+%\item Start the testdb database by running the following command:
 %\begin{verbatim}
-%se_sm sample-db
+%se_sm testdb
 %\end{verbatim}
 %If the database is started successfully it prints "SM has been started in
 %the background mode".
