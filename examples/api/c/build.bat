@@ -1,0 +1,11 @@
+cl /MT /I ..\..\..\driver\c 01_connect.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 02_load.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 03_load_coll.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 04_query.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 05_trans.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 06_value_index.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 07_fts_index.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 08_update.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 09_trigger.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c 10_module.c ..\..\..\driver\c\libsednamt.lib  wsock32.lib Advapi32.lib
+cl /MT /I ..\..\..\driver\c Client.c ..\..\..\driver\c\libsednamt.lib wsock32.lib Advapi32.lib

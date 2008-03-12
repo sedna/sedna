@@ -1,0 +1,11 @@
+module namespace math = "http://example.org/math";
+
+declare variable $math:pi as xs:decimal := 3.1415926;
+
+declare function math:increment($num as xs:decimal) as xs:decimal {
+    $num + 1
+};
+
+declare function math:square($num as xs:decimal) as xs:decimal {
+    $num * $num
+};
