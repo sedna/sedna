@@ -328,6 +328,7 @@ void recover_db_by_logical_log(void (*exec_micro_op) (const char*, int, bool),vo
   void flush_last_commit_lsn(LONG_LSN &commit_lsn);//flushes to header last commit lsn
   //void flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn);
   void flush_file_head(bool sync);
+  void flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN plsn, bool sync);
   void writeIsStoppedCorrectly(bool is_stopped_correctly);
 
   int  get_num_of_records_written_by_trn(transaction_id &trid);//used for debug

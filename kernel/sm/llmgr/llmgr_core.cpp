@@ -1630,7 +1630,6 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
   LONG_LSN ret_lsn;
   ll_log_lock(sync);
 
-
   logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
   logical_log_head log_head;
 
@@ -2153,6 +2152,10 @@ void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
   		return;
   }
 
+  // if last physical record is out of reach flush until this record 
+  if (mem_head->last_chain_lsn > lsn)
+  		lsn = mem_head->last_chain_lsn;
+
   LONG_LSN curr_lsn = mem_head->next_durable_lsn;
   int mem_offs = mem_head->begin_not_drbl_offs;
   int bytes_to_flush = 0;
@@ -2248,9 +2251,14 @@ void llmgr_core::ll_log_flush_lsn(LONG_LSN lsn, bool sync)
         mem_head->t_tbl[i].last_rec_mem_offs = NULL_OFFS;
   }
 
+  
   mem_head->next_durable_lsn += bytes_to_flush;
 
-  flush_file_head(false); // flush file header
+  // there was a bug here: header contains info about all records in buffer, but we flush only some part of it
+  // result: header is inconsisten with the rest of the log
+  // fixed: by implementing special flush function with 
+//  flush_file_head(false); // flush file header
+  flush_file_head_lsn(lsn, mem_head->next_durable_lsn, mem_head->last_chain_lsn, false);
 
   ll_log_unlock(sync);
 

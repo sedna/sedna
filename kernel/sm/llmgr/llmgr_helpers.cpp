@@ -169,6 +169,52 @@ void llmgr_core::flush_last_commit_lsn(LONG_LSN &commit_lsn)
      throw SYSTEM_EXCEPTION("Can't write to logical log file last commit lsn");
 }
 
+void llmgr_core::flush_file_head_lsn(LONG_LSN llsn, LONG_LSN nlsn, LONG_LSN lclsn, bool sync)
+{
+
+  ll_log_lock(sync);
+
+  logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  logical_log_file_head file_head =
+              read_log_file_header(get_log_file_descriptor(mem_head->ll_files_arr[mem_head->ll_files_num - 1]));
+
+  //get tail log dsc;
+  //set pointer to the begin of last file 
+  LONG_LSN lsn = ((mem_head->last_lsn)/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE;
+  set_file_pointer(lsn);
+
+  int res;
+  int written;
+//  LONG_LSN next_lsn = commit_lsn + COMMIT_LOG_RECORD_LEN; 
+
+  file_head.last_lsn = llsn;
+  file_head.next_lsn = nlsn;
+
+  file_head.last_checkpoint_lsn = mem_head->last_checkpoint_lsn;
+  file_head.last_chain_lsn = lclsn;
+  file_head.ts = mem_head->ts;
+//  file_head.ph_cp_counter = this->last_checkpoint_ph_counter;
+//  file_head.ph_cur_counter = this->ph_file_counter;
+//  char buf[sizeof(LONG_LSN) + sizeof(LONG_LSN)];
+//  memcpy(buf, &commit_lsn, sizeof(LONG_LSN));
+//  memcpy(buf+sizeof(LONG_LSN), &next_lsn, sizeof(LONG_LSN));
+
+  RECOVERY_CRASH;
+
+  res = uWriteFile(ll_curr_file_dsc,
+//                   buf,
+                   &file_head,
+                   sizeof(logical_log_file_head),
+                   &written,
+                   __sys_call_error
+                    );
+  if (res == 0 || written != sizeof(logical_log_file_head))
+     throw SYSTEM_EXCEPTION("Can't write file_head to logical log file");
+
+  ll_log_unlock(sync);
+}
+
 /*
 void llmgr_core::flush_last_checkpoint_lsn(LONG_LSN &checkpoint_lsn)
 {
