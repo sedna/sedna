@@ -6,7 +6,7 @@ PP = ../../../..
 
 include $(PP)/Makefile.include
 
-OBJS      = bit_set$(OBJ_EXT) compare$(OBJ_EXT) dm_accessors$(OBJ_EXT) \
+OBJS      = compare$(OBJ_EXT) dm_accessors$(OBJ_EXT) \
             dynamic_context$(OBJ_EXT) ext_sort$(OBJ_EXT) merge$(OBJ_EXT) \
             PPBase$(OBJ_EXT) PPUtils$(OBJ_EXT) sequence$(OBJ_EXT) \
             SequenceType$(OBJ_EXT) sorted_sequence$(OBJ_EXT) tuple$(OBJ_EXT) \
