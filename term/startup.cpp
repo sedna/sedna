@@ -72,33 +72,6 @@ int main(int argc, char *argv[])
             if ((strcmp(echo_str, "on") != 0) && (strcmp(echo_str, "off") != 0)) throw USER_EXCEPTION(SE4601);
             echo = (strcmp(echo_str, "on") == 0) ? 1 : 0;
         }
-/*
-#ifdef AUTH_SWITCH
-#  if (AUTH_SWITCH == 1)
-        if (strcmp(login,"???") == 0)           //
-        {                                       // security is ON!!!
-        //	throw USER_EXCEPTION(SE3067);       //
-
-        //
-        //  ask password from keybord
-        //
-       		char* got_login = simple_prompt("Login: ", 100, true);
-		    strcpy(login,got_login);
-       		free(got_login);
-        }                                       //
-                                                // 
-       if (strcmp(password,"???") == 0)
-       {
-        //
-        //  ask password from keybord
-        //
-       		char* got_password = simple_prompt("Password: ", 100, false);
-		    strcpy(password,got_password);
-       		free(got_password);
-       }
-#  endif
-#  endif
-*/
         if (strcmp(login,"???") == 0)
             strcpy(login,"SYSTEM");
 

@@ -29,6 +29,8 @@ extern int _bufs_num_;
 extern int _max_trs_num_;
 extern double _upd_crt_;
 
+extern char db_security[32];
+
 extern arg_rec cdb_argtable[];
 extern const size_t cdb_narg;
 

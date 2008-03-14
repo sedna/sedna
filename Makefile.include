@@ -6,12 +6,6 @@ ifndef ACTIVE_CONFIGURATION
 ACTIVE_CONFIGURATION = Debug
 endif
 
-# options: auth is on  - 1
-#          auth is off - 0
-ifndef AUTH_SWITCH
-AUTH_SWITCH = 0
-endif
-
 # options: Compile latex files        - 1
 #          Do not compile latex files - 0
 ifndef MAKE_DOC
@@ -202,12 +196,6 @@ ifeq ($(RCV_TEST),1)
 CPPFLAGS+= /DRCV_TEST_CRASH
 CFLAGS+= /DRCV_TEST_CRASH
 endif
-ifeq ($(AUTH_SWITCH),1)
-CPPFLAGS+= /DSE_ENABLE_SECURITY
-CFLAGS+= /DSE_ENABLE_SECURITY
-endif
-CPPFLAGS+= /DAUTH_SWITCH=$(AUTH_SWITCH)
-
 
 CFLAGS_CHICKEN_EXE = /nologo /ZI /Od $(INCLUDE_DIRECTIVES_VC) /MT /D _CONSOLE				\
                      /DEL_DEBUG=$(EL_DEBUG) /DC_NO_PIC_NO_DLL
@@ -314,11 +302,7 @@ ifeq ($(RCV_TEST),1)
 CPPFLAGS+= -DRCV_TEST_CRASH -D__UNIX__ -DUnicodeText
 CFLAGS+= -DRCV_TEST_CRASH
 endif
-ifeq ($(AUTH_SWITCH),1)
-CPPFLAGS+= -DSE_ENABLE_SECURITY -D__UNIX__ -DUnicodeText
-CFLAGS += -DSE_ENABLE_SECURITY
-endif
-CPPFLAGS+= -DAUTH_SWITCH=$(AUTH_SWITCH)
+
 
 CFLAGS_CHICKEN_EXE = -DC_NO_PIC_NO_DLL $(INCLUDE_DIRECTIVES_GCC) -fomit-frame-pointer \
                      -fno-strict-aliasing -Wall	-Wno-unused -Wno-uninitialized \

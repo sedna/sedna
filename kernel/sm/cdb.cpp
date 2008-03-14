@@ -117,6 +117,8 @@ void create_db(__int64 data_file_max_size,
         throw USER_EXCEPTION(SE4303);
 
     pdb->init();
+    pdb->set_authentication_flag((strcmp(db_security,"authorization") == 0) ? true : (strcmp(db_security,"authentication") == 0) ? true : false );
+    pdb->set_authorization_flag((strcmp(db_security,"authorization") == 0) ? true : false);
 
     if (pers_close() != 0)
         throw USER_EXCEPTION(SE4304);

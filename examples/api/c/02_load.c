@@ -31,7 +31,7 @@ int main()
 		return -1;
     }
 
-    // load data from file "region.xml" into the document "region"
+    // load data from file "categories.xml" into the document "categories"
     res = SEexecute(&conn, "LOAD \"../data/categories.xml\" \"categories\""); 
     if(res != SEDNA_BULK_LOAD_SUCCEEDED) 
     {

@@ -186,7 +186,6 @@ int main(int argc, char *argv[])
         if (uSocketInit(__sys_call_error) != 0)
             throw USER_EXCEPTION(SE3001);
 
-        // FIXME: I think, it's possible to combine init and get_session_parameters into one functions (AF)
         //  u_ftime(&ttt1);
         client->init();
 
@@ -258,13 +257,14 @@ int main(int argc, char *argv[])
 //d_printf2("TEST1: %s\n", to_string(t_test2 - t_test1).c_str());
         elog(EL_LOG, ("Session is ready"));
 
-#ifdef SE_ENABLE_SECURITY          //if security is on
         if (entry_point->is_first_transaction())
         {
             entry_point->clear_first_transaction_flag();
-            auth = 0;
+            first_transaction = 1;
         }
-#endif
+        authentication = entry_point->is_authentication_on();
+        authorization = entry_point->is_authorization_on();
+
 
         PPQueryEssence *qep_tree = NULL;        //qep of current stmnt
         StmntsArray *st = NULL;
@@ -310,7 +310,7 @@ int main(int argc, char *argv[])
 #ifdef SE_MEMORY_MNG
                                 MemoryContextSwitchTo(UserStatementContext);
 #endif
-                                authentication();
+                                do_authentication();
 #ifdef SE_MEMORY_MNG
                                 MemoryContextReset(UserStatementContext);
                                 MemoryContextSwitchTo(TransactionContext);

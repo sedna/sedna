@@ -302,7 +302,7 @@ if (persistent)
 	if (search_metadata_cell(NULL,name.c_str())!=NULL || get_document_type(name.c_str(), dbe_document) != DT_NON_SYSTEM)
 	{
 	  metadata_sem_up();
-	  throw USER_EXCEPTION(SE2001);
+	  throw USER_EXCEPTION2(SE2001, name.c_str());
 	}
 
 	down_concurrent_micro_ops_number();
@@ -360,7 +360,7 @@ schema_node *insert_collection(const char *collection_name)
 	if (search_metadata_cell(collection_name,NULL)!=NULL || get_document_type(collection_name, dbe_collection) != DT_NON_SYSTEM)
 	{
 		metadata_sem_up();	
-		throw USER_EXCEPTION(SE2002);
+		throw USER_EXCEPTION2(SE2002,collection_name);
 	}
 	
 	down_concurrent_micro_ops_number();
@@ -398,7 +398,7 @@ xptr insert_document_in_collection(const char *collection_name, const char *uri)
     if (ptr == NULL)
 	{
 		metadata_sem_up();
-		throw USER_EXCEPTION(SE2003);
+		throw USER_EXCEPTION2(SE2003, collection_name);
 	}	
     coll=ptr->obj;
     down_concurrent_micro_ops_number();

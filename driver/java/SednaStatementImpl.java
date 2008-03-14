@@ -178,7 +178,9 @@ class SednaStatementImpl implements SednaStatement {
             throws DriverException {
         NetOps.Message msg = new NetOps.Message();
         StringBuffer debugInfo = new StringBuffer();
-        boolean gotDebug = false;
+        boolean gotDebug = false, res;
+        String file_name = "";
+        FileInputStream fis;
 
         try {
             byte query_bytes[] = queryText.getBytes("utf8");
@@ -236,9 +238,9 @@ class SednaStatementImpl implements SednaStatement {
             }
 
             NetOps.readMsg(msg, bufInputStream);
-
             // read debug information if any
             gotDebug = NetOps.readDebugInfo(msg, bufInputStream, debugInfo);
+
             if (msg.instruction == NetOps.se_QuerySucceeded) {
                 NetOps.String_item sitem =
                     NetOps.readStringItem(bufInputStream, this.doTraceOutput);
@@ -252,21 +254,18 @@ class SednaStatementImpl implements SednaStatement {
 
                 return true;
             } else if (msg.instruction == NetOps.se_QueryFailed) {
-            	
             	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
             	                                         NetOps.getErrorCode(msg.body));
             	if (gotDebug) ex.setDebugInfo(debugInfo);
                 throw ex;
 
             } else if (msg.instruction == NetOps.se_UpdateFailed) {
-            	
             	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
             	                                         NetOps.getErrorCode(msg.body));
             	if (gotDebug) ex.setDebugInfo(debugInfo);
                 throw ex;
 
             } else if (msg.instruction == NetOps.se_ErrorResponse) {
-            	
             	DriverException ex = new DriverException(NetOps.getErrorInfo(msg.body, msg.length), 
             	                                         NetOps.getErrorCode(msg.body));
             	if (gotDebug) ex.setDebugInfo(debugInfo);
@@ -278,17 +277,14 @@ class SednaStatementImpl implements SednaStatement {
  
             } else if (msg.instruction == NetOps.se_BulkLoadFileName) {
             	
-                String          file_name = new String(msg.body, 5,
-                                                msg.length - 5);
-                FileInputStream fis       = new FileInputStream(file_name);
-                boolean         res       = NetOps.bulkLoad(fis,
-                                                this.bufInputStream,
-                                                this.outputStream);
+                file_name = new String(msg.body, 5, msg.length - 5);
+                fis = new FileInputStream(file_name);
+                res = NetOps.bulkLoad(fis, this.bufInputStream, this.outputStream);
                 return res;
  
             } else if (msg.instruction == NetOps.se_BulkLoadFromStream) {
  
-                boolean res = NetOps.bulkLoad(System.in, this.bufInputStream, this.outputStream);
+                res = NetOps.bulkLoad(System.in, this.bufInputStream, this.outputStream);
                 return res;
  
             }
@@ -302,7 +298,7 @@ class SednaStatementImpl implements SednaStatement {
             msg.instruction = NetOps.se_BulkLoadError;
             NetOps.writeMsg(msg, outputStream);
 
-            throw new DriverException(ErrorCodes.SE4042, "");
+            throw new DriverException(ErrorCodes.SE4042, ": " + file_name);
         } catch (UnsupportedEncodingException uex) {
             throw new DriverException(ErrorCodes.SE5502, "");
         } catch (DriverException de) {

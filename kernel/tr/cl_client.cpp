@@ -110,32 +110,26 @@ void command_line_client::init()
       }
    }
    else 
-   {
-#ifdef SE_ENABLE_SECURITY
-      string path_to_security_file; 
-      char path_buf[U_MAX_PATH + 32];
-      path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+   { 
+       string path_to_security_file; 
+       char path_buf[U_MAX_PATH + 32];
+       path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
 #ifdef _WIN32
-      int i;
-      for (i=0; i<path_to_security_file.size(); i++)
-        if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
+       for (int i=0; i<path_to_security_file.size(); i++)
+          if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
 #else
-      if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
-         path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
+       if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
+          path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
 #endif
 
 
-      plain_batch_text = string("LOAD ") +
-                         string("\"") + path_to_security_file + string("\" ") +
-                         string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"") +
-                         string("\n\\\n") +
-                         string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
-#else
-      plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
-#endif
+       plain_batch_text = string("LOAD ") +
+                          string("\"") + path_to_security_file + string("\" ") +
+                          string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"") +
+                          string("\n\\\n") +
+                          string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
    }
-
 //   StringVector stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
    stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
 

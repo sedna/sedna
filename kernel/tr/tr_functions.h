@@ -41,7 +41,7 @@ bool next(PPQueryEssence* qep_tree);
 
 bool is_command_line_args_length_overflow(int argc, char ** argv);
 void print_tr_usage();
-void authentication();
+void do_authentication();
 void register_session_on_gov();
 
 bool check_database_existence(const char* db_name);

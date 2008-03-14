@@ -275,7 +275,8 @@ int is_show_time()					{ return show_time; }
 int is_print_intermed()				{ return print_intermed; }
 char* get_user_login()				{ return login; }
 int is_server_mode()				{ return server_mode; }
-int is_auth()                       { return auth; }
+int is_auth()                       { return authorization; }
+int is_first_transaction()          { return first_transaction; }
 int is_run_popt()					{ return run_popt; }
 
 //extern "C"

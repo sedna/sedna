@@ -26,12 +26,12 @@ struct gov_db_struct
    double upd_crt;
    int phys_log_ext_portion;
    int phys_log_size;
-   int logical_log_file_size;//size of one logical log's file
+   int logical_log_file_size; //size of one logical log's file
 };
 
 struct gov_header_struct
 {
-   int is_server_stop;//0->indicates that sedna operates;//1->indicates that sedna want to stop
+   int is_server_stop; //0->indicates that sedna operates;//1->indicates that sedna wants to stop
    UPID gov_pid;
    char SEDNA_DATA[SEDNA_DATA_VAR_SIZE];
    int os_primitives_id_min_bound;
