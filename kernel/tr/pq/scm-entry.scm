@@ -29,6 +29,8 @@ EOF
 (define user (foreign-safe-lambda c-string "get_user_login"))
 (declare (foreign-declare "extern int is_auth();"))
 (define is-auth (foreign-safe-lambda int "is_auth"))
+(declare (foreign-declare "extern int is_first_transaction();"))
+(define is-first-transaction (foreign-safe-lambda int "is_first_transaction"))
 (declare (foreign-declare "extern int is_run_popt();"))
 (define is-run-popt (foreign-safe-lambda int "is_run_popt"))
 
@@ -62,18 +64,18 @@ EOF
                               query))
          
          (query           (if (>= step-id 7)
-                              ;                              (if (eq? (is-auth) 0)
-                              ;                                  query
-                              (let* ((tmp (if (eq? (car query) #t)
-                                              (handle-exceptions ex
-                                                                 `(#f ,(cl:get-exception-message ex))
-                                                                 `(#t ,@(sc:auth-query-rewriting 
-                                                                         (cadr query) (user) (is-auth))))
+                              (if (eq? (is-first-transaction) 1)
+                                  query
+                                  (let* ((tmp (if (eq? (car query) #t)
+                                                  (handle-exceptions ex
+                                                                     `(#f ,(cl:get-exception-message ex))
+                                                                     `(#t ,@(sc:auth-query-rewriting 
+                                                                             (cadr query) (user) (is-auth))))
                                               query)))
                                 (if (eq? 1 (is-print-intermed))
                                     (cl:write-to-file tmp "intermed2_auth.scm"))
                                 
-                                tmp)
+                                tmp))
                               query))         
          
          

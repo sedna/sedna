@@ -95,12 +95,6 @@ export ACTIVE_CONFIGURATION=Release
        Turns on the release mode. Otherwise (ACTIVE_CONFIGURATION=Debug) 
        executables will contain debug information.
 
-export AUTH_SWITCH=1
-
-       Turns on support for Database users access privileges. Set AUTH_SWITCH 
-       to 0 if you would like to turn this feature off (if you are not 
-       planning to use this feature we recommend to turn it off).
-
 export ENABLE_TRIGGERS=1
 
        Turns on support for triggers. Set ENABLE_TRIGGERS to 0 if you would 

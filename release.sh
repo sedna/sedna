@@ -138,7 +138,6 @@ create_sed_script()
 {
     cat > $SEDSCRIPT <<EEE
 s/^ACTIVE_CONFIGURATION[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/ACTIVE_CONFIGURATION = Release\1/
-s/^AUTH_SWITCH[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/AUTH_SWITCH = 1\1/
 s/^MAKE_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/MAKE_DOC = 0\1/
 s/^INSTALL_DOC[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/INSTALL_DOC = 1\1/
 s/^EL_DEBUG[ ]\+\?=[A-Za-z0-9 ]\+\(\r\?\)$/EL_DEBUG = 0\1/
@@ -350,7 +349,6 @@ make clean || failwith "make clean failed"
 
 ##### MAKE ####################################################################
 export ACTIVE_CONFIGURATION=Release
-export AUTH_SWITCH=1
 export DOCUMENTATION=1
 export EL_DEBUG=0
 export JAVA_DRIVER=1

@@ -11,10 +11,8 @@
          '()
          (begin
            (write expr)
-         (if (eq? is-auth 0)
-             (if (memq (caaddr expr) '(create-user drop-user alter-user create-role drop-role grant-role grant-priv-on-doc grant-priv-on-col grant-priv revoke-priv revoke-priv-from-doc revoke-priv-from-col revoke-role))
-                 (cl:signal-input-error SE3068 "Compile Sedna with AUTH_SWITH=1 if you want to turn this feature on")
-                 (list expr))
+         (if (eq? is-auth 0) ; if database was created with db-security authentication/off
+             (list expr)
              (cond
                ( (eq? (car expr) 'retrieve-metadata)   
                        (begin

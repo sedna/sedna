@@ -29,7 +29,6 @@ using namespace std;
 SSMMsg *sm_server = NULL;
 
 //this variables are not used during recovery
-//int auth =AUTH_SWITCH;
 //char login[1];
 //char password[1];
 

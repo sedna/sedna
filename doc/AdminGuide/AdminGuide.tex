@@ -240,33 +240,43 @@ Besides, for each database there are run-time configuration parameters, which ar
 The usage of the \verb!se_cdb! command is as follows:
 
 \begin{verbatim}
-Usage: se_cdb [options] db_name
+Usage: se_cdb [options] dbname
 
 options:
-  -help                         display this help and exit
-  --help                        display this help and exit
-  -version                      display product version and exit
-  -data-file-max-size Mbs       the max size of data file (in Mb),
-                                infinite size by default
-  -tmp-file-max-size Mbs        the max size of tmp file (in Mb),
-                                infinite size by default
-  -data-file-ext-portion Mbs    the data file extending portion size 
-                                (in Mb), default 100Mb
-  -tmp-file-ext-portion Mbs     the tmp file extending portion size
-                                (in Mb), default 100Mb
-  -data-file-init-size Mbs      the data file initial size (in Mb),
-                                default 100Mb
-  -tmp-file-init-size Mbs       the tmp file initial size (in Mb),
-                                default 100Mb
-  -persistent-heap-size Mbs     the persistent heap size (in Mb),
-                                allowed in the range of 10Mb - 99Mb,
-                                default 10Mb
-  -bufs-num N                   the number of buffers in main memory,
-                                default 1600
-  -max-trs-num N                the number of concurrent micro transactions
-                                over database, default 20
-
-db_name         the name of the database to be created
+  --help		 				display this help and exit
+  -help							display this help and exit
+  -version						display product version and exit
+  -data-file-max-size Mbs		the max size of data file (in Mb), infinite size
+								by default
+  -tmp-file-max-size Mbs		the max size of tmp file (in Mb), infinite size
+								by default
+  -data-file-ext-portion Mbs	the data file extending portion size (in Mb), 
+								default 100Mb
+  -tmp-file-ext-portion Mbs		the tmp file extending portion size (in Mb),
+								default 100Mb
+  -data-file-init-size Mbs		the data file initial size (in Mb),
+								default 100Mb
+  -tmp-file-init-size Mbs		the tmp file initial size (in Mb),
+								default 100Mb
+  -persistent-heap-size Mbs		the persistent heap size (in Mb), 
+								allowed in the range of 10Mb - 99Mb,
+								default 10Mb
+  -bufs-num N					the number of buffers in main memory,
+								default 1600 (the size of the buffer is 64Kb)
+  -max-trs-num N				the number of concurrent micro transactions
+								over database, default 10
+  -phys-log-init-size Mbs		the physical log file initial size (in Mb),
+								default 100Mb
+  -phys-log-ext-portion Mbs		the physical log file extending portion size 
+								(in Mb), default 10Mb
+  -upd-crt N					update criterion parameter 
+								(fraction of database), default 0.25
+  -db-security  security level  the level of database security:
+								 1) 'off' - none;
+								 2) 'authentication' (default);
+								 3) 'authorization'
+  
+   db_name   					the name of the database to be created
 \end{verbatim}
 
 
@@ -291,6 +301,8 @@ The \verb!-persistent-heap-size! option allows Administrator to set up the size 
 The \verb!-bufs-num! option allows Administrator to set up the number of buffers in main memory. This number is connected with the size of the main memory, but the performance of the database depends of this number very much. The default value is 1600 buffers, which is equal to 100Mb and we do not recommend to use less number of buffers. The size of one buffer is 64Kb and can't be customized by Administrator.
 
 The \verb!-max-trs-num! option is the parameter of the Sedna Storage Manager. In current version of Sedna only default value can be used for this parameter.
+
+The \verb!-db-security! option is used to set the level of security in a database being created. Currently there are 3 possible levels: (1) \verb!off! - there is no authentication, neither authorization; (2) \verb!authentication! - only authentication supported (checks user name and password on session open) (3) \verb!authorization! - authentication and authorization supported (support for database users and privileges). By default database is created with \verb!authentication! level. Note, that this parameter is set only once on database creation and cannot be changed later for the database.
 
 The last parameter \verb!db_name! is the name of the database to be created. Administrator can use the arbitrary sequence of latin characters and digits for database name. There  cannot be two databases with the same name.
 
@@ -727,7 +739,7 @@ se_stop
 %========================================================================================
 \section{Sedna Database Users and Privileges}
 
-Every Sedna database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object. 
+When created with \verb!-db-security authorization! option , a database contains a set of database users. Those users are separate from the users managed by the operating system on which Sedna runs. Users own database object (for examples, documents) and can assign privileges on those objects to other users to control who has access to which object. 
 
 This chapter describes how to create and manage users and introduces the privilege system.
 
@@ -970,9 +982,11 @@ A DBA user can grant "DBA" role to another user, thus making that user also a DB
 
 \subsection{Client Authentication}
 
-When a client application connects to the database server, it specifies which Sedna database user name it wants to connect as. Database user name determines access privileges to database objects, therefore, it is essential to restrict which database users can connect.
+When a client application connects to the database server, it specifies which Sedna database user name it wants to connect as. User name determines access privileges to database objects, therefore, client authentication is used to restrict which database users can connect.
 
 \emph{Authentication} is the process by which the database server establishes the identity of the client and determines whether the client application (or the user who runs the client application) is permitted to connect with the user name that was requested.
+
+When created with \verb!-db-security authorization! of \verb!-db-security authentication! option, database will check the user password on session open. 
 
 Currently, Sedna uses password authentication: client application that connects to the database must specify user name and user password (in \verb!se_term! utility use \verb!-pswd! and \verb!-name! options; for client application that works through Sedna API see "Sedna Programmer's Guide"). Authentication process consists in checking the password correctness.
 

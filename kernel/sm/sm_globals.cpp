@@ -37,6 +37,7 @@ int phys_log_ext_portion;
 int phys_log_size;
 double upd_crt;
 
+
 char db_name[SE_MAX_DB_NAME_LENGTH + 1];
 char db_files_path[U_MAX_PATH + 1];
 int sedna_db_version = 0;
@@ -150,12 +151,12 @@ arg_rec sm_argtable[] =
 {"--help",           NULL,       arg_lit,  &sm_help,                 "0",    "\t\t   display this help and exit"},
 {"-version",         NULL,       arg_lit,  &sm_version,              "0",    "\t\t   display product version and exit"},
 {"-background-mode", " on/off",  arg_bool, &background_mode,         "on",  "  start the server in the background mode (default on)"},
-{"-bufs-num",        " N",       arg_int,  &__bufs_num__,             "-1",  "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
-{"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,          "-1",  "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
-{"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,                  "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t (default value retrieved from config file)"},
+{"-bufs-num",        " N",       arg_int,  &__bufs_num__,            "-1",  "\t\t   the number of buffers in main memory, \n\t\t\t   (default value retrieved from config file)" },
+{"-max-trs-num",     " N",       arg_int,  &__max_trs_num__,         "-1",  "\t   the number of concurrent micro transactions over \n\t\t\t   database, (default value retrieved from config file)" },
+{"-upd-crt",         " N",       arg_dbl,  &__upd_crt__,             "-1.0","\t\t   criterion parameter to advance snapshots, \n\t\t\t (default value retrieved from config file)"},
 /*
-{"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,           "on",  "   write to physical log (default on)"},
+{"-write-phys-log",  " on/off",  arg_bool, &write_phys_log,          "on",  "   write to physical log (default on)"},
 */
-{NULL,               " db-name", arg_str,  db_name,                  "???",  "\t\t   The name of the database "},
+{NULL,               " db-name", arg_str,   db_name,                 "???", "\t\t   the name of the database "}
 };
 

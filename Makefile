@@ -184,9 +184,7 @@ endif
 	$(INSTALL) -Dp $(PERM3) include/sedna_ef.h $(SEDNA_INSTALL)/sedna/include/sedna_ef.h
 	$(INSTALL) -Dp $(PERM3) examples/api/data/categories.xml $(SEDNA_INSTALL)/sedna/examples/api/data/categories.xml
 	$(INSTALL) -Dp $(PERM3) examples/api/data/*.xml $(SEDNA_INSTALL)/sedna/examples/api/data/
-ifeq ($(AUTH_SWITCH), 1)
 	$(INSTALL) -Dp $(PERM3) share/sedna_auth_md.xml $(SEDNA_INSTALL)/sedna/share/sedna_auth_md.xml
-endif
 	$(INSTALL) -Dp $(PERM3) AUTHORS   $(SEDNA_INSTALL)/sedna/AUTHORS
 	$(INSTALL) -Dp $(PERM3) COPYRIGHT $(SEDNA_INSTALL)/sedna/COPYRIGHT
 	$(INSTALL) -Dp $(PERM3) FAQ.html  $(SEDNA_INSTALL)/sedna/FAQ.html

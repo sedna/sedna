@@ -25,7 +25,10 @@ int debug_mode = 0;
 int socket_port = 0;
 int write_phys_log = 1;
 int user_id = 0;
-int auth = AUTH_SWITCH;
+int internal_auth_switch = DEPLOY_AUTH_CHECK;
+int first_transaction = 0;
+int authentication;
+int authorization;
 int query_timeout = 0;
 
 char db_name[SE_MAX_DB_NAME_LENGTH+1];

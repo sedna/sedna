@@ -37,15 +37,16 @@ int _max_trs_num_ =10;
 
 double _upd_crt_ = 0.25;
 
+char db_security[32];
 
-const size_t cdb_narg = 16;
+const size_t cdb_narg = 17;
 
 arg_rec cdb_argtable[] =
 {
 {"--help",                       NULL,  arg_lit, &_cdb_l_help_,                 "0",   "\t\t\tdisplay this help and exit"},
 {"-help",                        NULL,  arg_lit, &_cdb_s_help_,                 "0",   "\t\t\t\tdisplay this help and exit"},
 {"-version",                     NULL,  arg_lit, &_cdb_version_,                  "0",   "\t\t\tdisplay product version and exit"},
-{"-data-file-max-size",          " Mbs", arg_int, &_data_file_max_size_,         "2147483647", "\tthe max size of data file (in Mb), infinite size\t\t\t\tby default"},
+{"-data-file-max-size",          " Mbs", arg_int, &_data_file_max_size_,         "2147483647", "\tthe max size of data file (in Mb), infinite size\n\t\t\t\tby default"},
 {"-tmp-file-max-size",           " Mbs", arg_int, &_tmp_file_max_size_,          "2147483647","\tthe max size of tmp file (in Mb), infinite size\n\t\t\t\tby default"},
 {"-data-file-ext-portion", " Mbs", arg_int, &_data_file_extending_portion_,"100", "\tthe data file extending portion size (in Mb), \n\t\t\t\tdefault 100Mb"},
 {"-tmp-file-ext-portion",  " Mbs", arg_int, &_tmp_file_extending_portion_, "100", "\tthe tmp file extending portion size (in Mb),\n\t\t\t\tdefault 100Mb"},
@@ -56,9 +57,10 @@ arg_rec cdb_argtable[] =
 {"-max-trs-num",                 " N",   arg_int, &_max_trs_num_,                "10",  "\t\tthe number of concurrent micro transactions\n\t\t\t\tover database, default 10"},
 {"-phys-log-init-size",         " Mbs", arg_int, &_phys_log_size_,                  "100", "\tthe physical log file initial size (in Mb),\n\t\t\t\tdefault 100Mb" },
 {"-phys-log-ext-portion",  " Mbs",  arg_int, &_phys_log_ext_portion_,                 "10", "\tthe physical log file extending portion size \n\t\t\t\t(in Mb), default 10Mb"},
-{"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter (fraction of database), default 0.25"},
+{"-upd-crt", " N", arg_dbl, &_upd_crt_, "0.25", "\t\t\tupdate criterion parameter \n\t\t\t\t(fraction of database), default 0.25"},
+{"-db-security",  "  security level",  arg_str,  &db_security,       "authentication", "  the level of database security:\n\t\t\t\t 1) 'off' - none;\n\t\t\t\t 2) 'authentication' (default);\n\t\t\t\t 3) 'authorization'"},
 
-{NULL,                     "\ndb_name", arg_str, &db_name,               "???", "\t\tthe name of the database to be created"}
+{NULL,                     "\n   db_name", arg_str, &db_name,               "???", "   \t\t\tthe name of the database to be created"}
 };
 
 void print_cdb_usage()
@@ -113,6 +115,11 @@ void setup_cdb_globals(int argc,
    phys_log_ext_portion = _phys_log_ext_portion_ * 0x100000;
    upd_crt = _upd_crt_;
 
+   if (strcmp(db_security, "???") == 0)
+       strcpy(db_security, "authentication");
+
+   if ((strcmp(db_security, "off") != 0) && (strcmp(db_security, "authentication") != 0) && (strcmp(db_security, "authorization") != 0))
+       throw USER_EXCEPTION2(SE4601, "'db-security' parameter is incorrect");
 
    if (strcmp(db_name, "???") == 0)
       throw USER_EXCEPTION2(SE4601, "The name of the database must be specified");

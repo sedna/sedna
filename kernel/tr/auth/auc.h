@@ -26,7 +26,6 @@
 
 struct dbe_properties { int update_privileges;     // this user's update privileges on this db_entity
 					    bool current_statement;     // is db_entity refered in curent statement
-					    bool was_updated;
 					  };
 					   
 typedef std::map<counted_ptr<db_entity>, struct dbe_properties> auth_map;

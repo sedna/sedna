@@ -15,7 +15,6 @@
 
 int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions, int inherit_handle, sys_call_error_fun fun)
 {
-#ifdef SE_ENABLE_SECURITY          /*if security is off - Security attributes are set by default*/
 #ifdef _WIN32
     DWORD dwRes;
     PACL pACL = NULL;
@@ -108,22 +107,10 @@ int uCreateSA(USECURITY_ATTRIBUTES** sa, UAccess_Permissions access_permissions,
     (**sa) = access_permissions;
     return 0;
 #endif
-#else
-#ifdef _WIN32
-    *sa = NULL;
-    return 0;
-#else
-    *sa = (USECURITY_ATTRIBUTES *) malloc(sizeof(USECURITY_ATTRIBUTES));
-    (**sa) = 0;
-    return 0;
-#endif
-#endif
-
 }
 
 int uReleaseSA(USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 {
-#ifdef SE_ENABLE_SECURITY
 #ifdef _WIN32 /* Security is on; WIN */
     free(sa->lpSecurityDescriptor);
     free(sa);
@@ -131,14 +118,6 @@ int uReleaseSA(USECURITY_ATTRIBUTES* sa, sys_call_error_fun fun)
 #else         /* Security is on; UNIX */
     free(sa);
     return 0;
-#endif
-#else
-#ifdef _WIN32 /* Security is off; WIN */
-    return 0;
-#else         /* Security is off; UNIX */
-    free(sa);
-    return 0;
-#endif
 #endif
 }
 

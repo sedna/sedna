@@ -12,6 +12,7 @@
 #include "tr/client_core.h"
 #include "common/argtable.h"
 #include "common/persistent_db_data.h"
+#include "tr/auth/auc.h"
 
 #define TR_ARG_MAX_LENGTH       511
 
@@ -30,7 +31,10 @@ extern int server_mode;
 extern int debug_mode;
 extern int write_phys_log;
 extern int user_id;
-extern int auth;
+extern int internal_auth_switch;
+extern int first_transaction;
+extern int authentication;
+extern int authorization;
 extern int query_timeout;
 
 extern char db_name[];

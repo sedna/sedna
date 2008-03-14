@@ -32,7 +32,7 @@ void run_triggers(bool isOn)
 
 xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return new_var;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return new_var;
     
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return new_var;
@@ -76,7 +76,7 @@ xptr apply_before_insert_triggers(xptr new_var, xptr where_var)
 
 void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
 	//if insert while constructor
 	if (IS_TMP_BLOCK(where_var)) return;
@@ -107,7 +107,7 @@ void apply_after_insert_triggers(xptr new_var, xptr where_var, schema_node* scm_
 
 xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired_triggers)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return node;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return node;
 
     schema_node* scm_node = GETSCHEMENODEX(node);
     node_triggers_map attribute_fired_triggers;
@@ -173,7 +173,7 @@ xptr apply_before_delete_triggers_on_subtree(xptr node, node_triggers_map *fired
 
 xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return old_var;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return old_var;
     
    	if (IS_TMP_BLOCK(old_var)) return old_var;
 
@@ -225,7 +225,7 @@ xptr apply_before_delete_triggers(xptr old_var, xptr where_var, schema_node* scm
 }
 void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
 	// care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_DELETE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
@@ -256,7 +256,7 @@ void apply_after_delete_triggers(xptr old_var, xptr where_var, schema_node* scm_
 
 xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return old_node;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return old_node;
     
 	CHECKP(old_node);
     schema_trigger_cell* scm_trc = scm_node->trigger_object;
@@ -280,7 +280,7 @@ xptr apply_before_replace_triggers(xptr new_node, xptr old_node, schema_node* sc
 
 void apply_after_replace_triggers(xptr new_node, xptr old_node, xptr where_var, schema_node* scm_node)
 {
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     // care about after-statement triggers
     find_triggers_for_node(scm_node, TRIGGER_REPLACE_EVENT, TRIGGER_AFTER, TRIGGER_FOR_EACH_STATEMENT, &after_statement_triggers);
@@ -318,7 +318,7 @@ void apply_before_insert_for_each_statement_triggers(xptr_sequence* target_seq, 
 	schema_node* scn;
     xptr node;
 
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
 
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_INSERT_EVENT, TRIGGER_BEFORE)) return;
@@ -384,7 +384,7 @@ void apply_before_delete_for_each_statement_triggers(xptr_sequence* target_seq, 
     std::set<trigger_cell*>::iterator set_triggers_iter;
     schema_nodes_triggers_map docs_statement_triggers;
     schema_nodes_triggers_map::iterator statement_triggers_iter;
-  	if (auth == BLOCK_AUTH_CHECK) return;
+  	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
     
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_DELETE_EVENT, TRIGGER_BEFORE)) return;
@@ -455,7 +455,7 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
     xptr_sequence::iterator it1;
     std::set<trigger_cell*>::iterator set_triggers_iter;
 
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
     
     //if there are no statement level triggers at all - return
     if(!has_statement_triggers(TRIGGER_REPLACE_EVENT, TRIGGER_BEFORE)) return;
@@ -481,7 +481,7 @@ void apply_before_replace_for_each_statement_triggers(xptr_sequence* target_seq,
 
 void apply_after_statement_triggers()
 {
-   	if (auth == BLOCK_AUTH_CHECK) return;
+   	if (internal_auth_switch == BLOCK_AUTH_CHECK) return;
     
     if(after_statement_triggers.size()==0) return;
     

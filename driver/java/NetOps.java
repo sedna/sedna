@@ -144,12 +144,12 @@ class NetOps {
 
         // result of bulk loading
         NetOps.readMsg(msg, bufInputStream);
-
+                   	
         if ((msg.instruction == 440) || (msg.instruction == 340)) {
             return false;
         } else if ((msg.instruction == 450) || (msg.instruction == 350)
                    || (msg.instruction == 100)) {
-            throw new DriverException(getErrorInfo(msg.body, msg.length),getErrorCode(msg.body));
+             throw new DriverException(getErrorInfo(msg.body, msg.length),getErrorCode(msg.body));
         } else {
             throw new DriverException(ErrorCodes.SE3008, "");
         }
@@ -413,7 +413,7 @@ class NetOps {
      *  Makes a string that is error info (usually for DriverException)
      */
     static String getErrorInfo(byte[] body, int length) {
-        return new String(body, 9, length - 9);
+         return new String(body, 9, length - 9);
     }
 
     /**

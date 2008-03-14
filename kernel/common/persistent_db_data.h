@@ -34,6 +34,8 @@ struct persistent_db_data
 	pers_sset<xml_ns, unsigned short>* nslist;
 
     bool is_first_trn; // true if the current transaction is first for the current db
+    bool authentication; 
+    bool authorization;
 
 	void init() 
 	{
@@ -55,6 +57,12 @@ struct persistent_db_data
          #endif
              
 	}
+    bool is_authentication_on() const { return authentication; }
+    bool is_authorization_on() const { return authorization; }
+
+    void set_authentication_flag(bool _authentication_) { authentication = _authentication_; }
+    void set_authorization_flag(bool _authorization_) { authorization = _authorization_; }
+
     bool is_first_transaction() const { return is_first_trn; }
     void clear_first_transaction_flag() { is_first_trn = false; }
 };
