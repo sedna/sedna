@@ -6,8 +6,6 @@
 #ifndef _BIT_SET_H
 #define _BIT_SET_H
 
-#include "common/sedna.h"
-
 class bit_set {
 
 private:
@@ -19,6 +17,9 @@ private:
 
 	void initialize();
 
+	bit_set(const bit_set&);
+	void operator = (const bit_set&);
+
 public:
 
     bit_set (int _size_);   //_size_ is needed size in bits
@@ -28,6 +29,7 @@ public:
     void setAt   (int i);
     void clearAt (int i);
     bool testAt  (int i) const;
+    int getNextSetBitIdx(int startPos = 0) const;
 
     void clear();           //set all bits to zero
     int  get_size() const;  //return size in bits

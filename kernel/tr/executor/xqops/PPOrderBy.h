@@ -10,7 +10,7 @@
 #include "common/sedna.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/executor/base/PPUtils.h"
-#include "tr/executor/base/bit_set.h"
+#include "common/bit_set.h"
 #include "tr/executor/base/sorted_sequence.h"
 #include "tr/strings/e_string.h"
 #include "tr/executor/fo/op_map.h"

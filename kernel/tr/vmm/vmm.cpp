@@ -27,6 +27,7 @@
 #include "common/gmm.h"
 #include "common/errdbg/d_printf.h"
 #include "common/XptrHash.h"
+#include "common/bit_set.h"
 
 using namespace std;
 
@@ -149,8 +150,9 @@ void vmm_trace_delete_block(const xptr& p)
 
 #endif
 
-typedef XptrHash<void*, 16, 16> t_blocks_write_table;
-static t_blocks_write_table write_table;
+//typedef XptrHash<void*, 16, 16> t_blocks_write_table;
+//static t_blocks_write_table write_table;
+bit_set *mapped_pages = NULL; // constructor zeroes it
 
 /*******************************************************************************
 ********************************************************************************
@@ -221,6 +223,11 @@ int __vmm_map(void *addr, ramoffs offs, bool isWrite = true)
         write_table.insert(p, addr);
     }
 */
+
+    // we need to update mapped_blocks here
+    if (offs != RAMOFFS_OUT_OFF_BOUNDS)
+	    mapped_pages->setAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
+    
     return 0;
 }
 
@@ -228,6 +235,9 @@ inline int __vmm_unmap(void *addr)
 {
 //    xptr p = ((vmm_sm_blk_hdr *)addr)->p;
 //    write_table.remove(p);
+
+	//we need to update unmap_blocks here
+    mapped_pages->clearAt(((char *)addr - (char *)LAYER_ADDRESS_SPACE_START_ADDR) / PAGE_SIZE);
 
 #ifdef _WIN32
     return (UnmapViewOfFile(addr) == 0 ? -1 : 0);
@@ -238,6 +248,9 @@ inline int __vmm_unmap(void *addr)
 
 void _vmm_preinit_region()
 {
+    // init mapped_pages bit_set
+    mapped_pages = new bit_set(LAYER_ADDRESS_SPACE_SIZE / PAGE_SIZE); // constructor zeroes it
+
 #ifdef VMM_ACCURATE
     __uint32 cur;
     for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
@@ -901,11 +914,24 @@ void vmm_on_session_end() throw (SednaException)
 
     close_global_memory_mapping();
 
+    delete mapped_pages;
+    mapped_pages = NULL;
+
     vmm_session_initialized = false;
 
 #ifdef VMM_TRACE
     if (fclose(trace_file) != 0) throw USER_ENV_EXCEPTION("Error closing VMM trace file");
 #endif
+}
+
+void unmapAllBlocks()
+{
+	int p = -1;
+
+	while ((p = mapped_pages->getNextSetBitIdx(p + 1)) != -1)
+		_vmm_unmap_decent((char *)LAYER_ADDRESS_SPACE_START_ADDR + PAGE_SIZE * p);
+
+	mapped_pages->clear();
 }
 
 void vmm_on_transaction_end() throw (SednaException)
@@ -949,7 +975,7 @@ void vmm_on_transaction_end() throw (SednaException)
 		write_table.clear();
 */
 	    // fix of the aforementioned bug
-	    __uint32 cur;
+/*	    __uint32 cur;
     	for (cur = LAYER_ADDRESS_SPACE_START_ADDR_INT; 
         	 cur < LAYER_ADDRESS_SPACE_BOUNDARY_INT;
          	 cur += (__uint32)PAGE_SIZE)
@@ -957,6 +983,9 @@ void vmm_on_transaction_end() throw (SednaException)
         	if ((*(t_layer *)cur) != INVALID_LAYER)
         		_vmm_unmap_decent((void *)cur);
     	}  
+*/    	
+    	// more efficient fix of the aforementioned bug
+    	unmapAllBlocks();
 
     } catch (...) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);

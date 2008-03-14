@@ -2,11 +2,12 @@
  * File:  bit_set.cpp
  * Copyright (C) 2006 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
-
-
 #include "common/sedna.h"
-#include "tr/executor/base/bit_set.h"
+#include "common/bit_set.h"
 
+#define OFFSET_PTR(P,OFS)		(void *)((char*)(P)+(OFS))
+#define ROUND_SIZE_UP(SZ,K)		(((SZ)+(K)-1)&~((K)-1))
+#define PTR_DISTANCE(A,B)		((char*)(A)-(char*)(B))
 
 bit_set::bit_set (int _size_): size(_size_),
                                external_memory(false)
@@ -14,8 +15,7 @@ bit_set::bit_set (int _size_): size(_size_),
    	if (size <= 0) 
         throw USER_EXCEPTION2(SE1003, "Size must be positive in bit_set::bit_set.");
 	
-    capacity = (size >> 0x03);
-    if ((size & 0x07) != 0) capacity++;
+    capacity = ROUND_SIZE_UP(_size_,8)/8;
     bits = se_new unsigned char[capacity];
     initialize();
 }
@@ -24,10 +24,35 @@ bit_set::bit_set (void* _bits_, int _size_): size(_size_),
                                              external_memory(true),
                                              bits((unsigned char*)_bits_)
 {
-    capacity = (size >> 0x03);
-    if ((size & 0x07) != 0) capacity++;
+    capacity = ROUND_SIZE_UP(_size_,8)/8;
 }
 
+int bit_set::getNextSetBitIdx(int startPos) const
+{
+	static const int bitsPerInt = sizeof(int)*8;
+	int base = startPos % (bitsPerInt);
+	void *start = OFFSET_PTR(bits, startPos/bitsPerInt*4);
+	void *end = OFFSET_PTR(bits, capacity);
+	unsigned *istart = (unsigned *)start;
+	unsigned *iend = (unsigned *)end;
+	unsigned sample = 0;
+	int res = -1, i = 0;
+
+	if (istart<iend)
+	{
+		sample = istart[0] & (((unsigned)-1)<<base);
+		while (sample==0 && istart<iend)
+		{
+			sample = (++istart)[0];
+		}
+
+		while (i<bitsPerInt && 0==(sample & ~((~(unsigned)1)<<i))) ++i;
+		res = (int)PTR_DISTANCE(istart,bits)*bitsPerInt/4 + i;
+		
+		if (res>=size) res=-1;
+	}
+	return res;
+}
 
 bit_set::~bit_set ()
 {
