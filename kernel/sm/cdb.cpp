@@ -527,7 +527,7 @@ int main(int argc, char **argv)
 
              release_checkpoint_sems();
 
-             int load_res = load_metadata_in_database(db_name);
+             int load_res = load_metadata_in_database(db_name, db_security);
              if (load_res != 0) 
                  throw USER_EXCEPTION2(SE4211, db_name);
 

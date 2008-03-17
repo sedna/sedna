@@ -7,7 +7,6 @@
 #include <string>
 #include "common/base.h"
 #include "common/u/uhdd.h"
-#include "sm/cdb_globals.h"
 #include "sm/db_utils.h"
 #include "common/errdbg/d_printf.h"
 #ifdef _WIN32
@@ -172,7 +171,7 @@ bool exist_db(const char* db_name)
 }
 
 
-int load_metadata_in_database(const char* db_name)
+int load_metadata_in_database(const char* db_name, const char* db_security_level)
 {
   UPID pid;
   UPHANDLE proc_h;
@@ -207,14 +206,13 @@ int load_metadata_in_database(const char* db_name)
      throw SYSTEM_EXCEPTION("Can't startup SM to load metadata");
   }
 
-
-   //!!! Load Security Document !!!  
-
   run_command = uGetImageProcPath(buf, __sys_call_error) + string("/") + SESSION_EXE +
                 string(" ") + db_name;
 
-
-  uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", __sys_call_error);
+  if(strcmp(db_security_level, "off") == 0)
+      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "1", __sys_call_error);
+  else // if db-security is not off we need to load db_security data
+      uSetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, "2", __sys_call_error); 
 
   strcpy(buf, run_command.c_str());
   if (0 != uCreateProcess(buf,

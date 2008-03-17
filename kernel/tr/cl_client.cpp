@@ -86,8 +86,8 @@ void command_line_client::init()
 
    string plain_batch_text;
 
-   char buf[1024];
-   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, buf, 1024, __sys_call_error) != 0)
+   char env_buf[8];
+   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 1024, __sys_call_error) != 0)
    {
       //init output res
       if (string(output_file) == "STDOUT") res_os = stdout;
@@ -110,27 +110,32 @@ void command_line_client::init()
       }
    }
    else 
-   { 
-       string path_to_security_file; 
-       char path_buf[U_MAX_PATH + 32];
-       path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
+   {
+       plain_batch_text = string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
+       if(strcmp(env_buf, "2") == 0) // database is created with db-security option != off => we need to load db_security_data
+       {
+           string path_to_security_file; 
+           char path_buf[U_MAX_PATH + 32];
+           path_to_security_file = uGetImageProcPath(path_buf, __sys_call_error) + string("/../share/") + string(INITIAL_SECURITY_METADATA_FILE_NAME);
 
 #ifdef _WIN32
-       for (int i=0; i<path_to_security_file.size(); i++)
-          if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
+           for (int i=0; i<path_to_security_file.size(); i++)
+              if (path_to_security_file[i] == '\\') path_to_security_file[i] = '/';
+/*
+MG: now metadata is stored locally in sedna/share/sedna_auth_md.xml
 #else
        if(!uIsFileExist(path_to_security_file.c_str(), __sys_call_error))
-          path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");
+          path_to_security_file = string("/usr/share/sedna-") + SEDNA_VERSION + "." + SEDNA_BUILD +string("/sedna_auth_md.xml");*/
 #endif
 
 
-       plain_batch_text = string("LOAD ") +
-                          string("\"") + path_to_security_file + string("\" ") +
-                          string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"") +
-                          string("\n\\\n") +
-                          string("CREATE COLLECTION ") + string("\"") + string(MODULES_COLLECTION_NAME) + string("\"");
+
+            plain_batch_text += string("\n\\\n") +
+                                string("LOAD ") +
+                                string("\"") + path_to_security_file + string("\" ") +
+                                string("\"") + string(SECURITY_METADATA_DOCUMENT) + string("\"");
+       }
    }
-//   StringVector stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
    stmnts_array = parse_batch(query_type, plain_batch_text.c_str());
 
 
