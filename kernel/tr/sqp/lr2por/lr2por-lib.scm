@@ -303,7 +303,12 @@
                            "l2p:findPPAbsPath: unknown KindTest")))))))
                (reverse (caddr first-arg)))))
           #f)))
-      ((and (eq? (xlr:op-name expr) '!fn!document) (eq? (length (filter (lambda (x) (not (number? x))) (xlr:op-args expr))) 1))
+      ((and (eq? (xlr:op-name expr) '!fn!document)
+            (eq? (length
+                  (filter
+                   (lambda (x) (not (number? x)))
+                   (xlr:op-args expr)))
+                 1))
        ;           (if first-call
        ;               #f
        `(PPAbsPath (document ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
@@ -311,10 +316,13 @@
        ;           )
        )
       ((eq? (xlr:op-name expr) '!fn!collection)
-       (if first-call
-           #f
-           `(PPAbsPath (collection ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
-                       ())))
+       ;(if first-call
+       ;    #f
+           `(PPAbsPath
+             (collection ,(l2p:getDocorCollNamePor (car (xlr:op-args expr))))
+             ())
+           ;)
+       )
       ((eq? (xlr:op-name expr) 'ddo)
        (rpt (car (xlr:op-args expr)) #t))
       (else #f))))
