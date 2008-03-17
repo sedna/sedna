@@ -372,13 +372,12 @@ void PPDDO::serialize (tuple& t,xptr v1, const void * Udata)
 	}
 	if (!sz)sz=*(shft*)(((n_dsc*)XADDR(node))->nid.prefix+sizeof(xptr));
 	CHECKP(v1);
+	VMM_SIGNAL_MODIFICATION(v1);
 	*((xptr*)XADDR(v1))=node;	
 	*((shft*)((char*)XADDR(v1)+sizeof(xptr)))=sz;
-	CHECKP(node);	
+
 	if ((sz+(sizeof(xptr)+sizeof(shft)))>DATA_BLK_SIZE)
 	{		
-		CHECKP(v1);
-		VMM_SIGNAL_MODIFICATION(v1);
 		*((xptr*)((char*)XADDR(v1)+sizeof(xptr)+sizeof(shft)))=addr;		
 	}
 	else
