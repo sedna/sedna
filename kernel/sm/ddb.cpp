@@ -13,7 +13,6 @@
 #include "common/u/usecurity.h"
 #include "common/ipc_ops.h"
 #include "common/sp.h"
-#include "sm/cdb_globals.h"
 #include "sm/sm_functions.h"
 #include "common/ugc.h"
 #include "sm/db_utils.h"

@@ -80,22 +80,19 @@ void on_user_statement_begin(QueryType query_type,
     is_stmt_built = true;
     se_nullostream auth_s;
 
-	if(authorization)
+    internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
+        
+    for (int i = 0; i < st->stmnts.size() - 1; i++)
     {
-        internal_auth_switch = BLOCK_AUTH_CHECK; //turn off security checkings
-        
-        for (int i = 0; i < st->stmnts.size() - 1; i++)
-        {
-            on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml, qep_tree);
-            execute(qep_tree);
-            on_kernel_statement_end(qep_tree);
-        }
-        
-        if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
-            
-        internal_auth_switch = DEPLOY_AUTH_CHECK;                   // turn on security checkings
+        on_kernel_statement_begin(st->stmnts[i].stmnt, &auth_s, xml, qep_tree);
+        execute(qep_tree);
+        on_kernel_statement_end(qep_tree);
     }
+        
+    if (st->stmnts.size() >= 3) clear_authmap(); // security metadata was updated - clear auth map
 
+    internal_auth_switch = DEPLOY_AUTH_CHECK;                   // turn on security checkings
+ 
 #ifdef SE_ENABLE_TRIGGERS
     triggers_on_statement_begin();
 #endif
@@ -188,10 +185,8 @@ void print_tr_usage()
 
 void do_authentication()
 {
-   if(!authentication) return;
+   if(!authentication || first_transaction) return;
 
-    elog(EL_LOG, ("authentication"));
-   
    string security_metadata_document = string(SECURITY_METADATA_DOCUMENT);	
    string auth_query_in_por = "(query (query-prolog) (PPQueryRoot 2 (1 (PPIf (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_psw\" \"\") (1 (PPReturn (0) (1 (PPAbsPath (document \"" + security_metadata_document + "\") (((PPAxisChild qname (\"\" \"db_security_data\" \"\"))) ((PPAxisChild qname (\"\" \"users\" \"\")))))) (1 (PPPred1 (1) (1 (PPAxisChild qname (\"\" \"user\" \"\") (1 (PPVariable 0)))) () (1 (PPCalculate (BinaryValEQ (LeafAtomOp 0) (LeafAtomOp 1)) (1 (PPAxisChild qname (\"\" \"user_name\" \"\") (1 (PPVariable 1)))) (1 (PPConst \"" + string(login) +  "\" !xs!string)))) 0)) -1)))) (1 (PPConst \"" + string(password) + "\" !xs!string)))) (1 (PPNil)) ((1 4) (PPFnError ((1 4) (PPFnQName (1 (PPConst \"http://www.modis.ispras.ru/sedna\" !xs!string)) (1 (PPConst \"SE3053\" !xs!string)))) (1 (PPConst \"Authentication failed.\" !xs!string))))))))";
    scheme_list *auth_query_in_scheme_lst = NULL;
@@ -201,14 +196,11 @@ void do_authentication()
    auth_query_in_scheme_lst = make_tree_from_scheme_list(auth_query_in_por.c_str());
 
    try {
-       if (!first_transaction) // internal auth switch checks if we are not called from internal statement
-       {
            internal_auth_switch = BLOCK_AUTH_CHECK;
            on_kernel_statement_begin(auth_query_in_scheme_lst, &s, xml, qep_tree);
            execute(qep_tree);
            on_kernel_statement_end(qep_tree);
   	   	   internal_auth_switch = DEPLOY_AUTH_CHECK;
-       }
        }
    catch (SednaUserException &e) {
        
