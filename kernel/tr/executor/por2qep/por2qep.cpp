@@ -1663,6 +1663,15 @@ PPOpIn make_pp_op(dynamic_context *cxt, scheme_list *lst)
         opit = se_new PPDDO(cxt,
                          make_pp_op(cxt, lst->at(1).internal.list));
     }
+    else if (op == "PPSXptr")
+    {
+        if (   lst->size() != 2
+            || lst->at(1).type != SCM_LIST
+           ) throw USER_EXCEPTION2(SE1004, "57.1");
+
+        opit = se_new PPSXptr(cxt,
+                              make_pp_op(cxt, lst->at(1).internal.list));
+    }
 	else if (op == "PPFEL")
     {
         if (   lst->size() != 2

@@ -49,6 +49,7 @@
 #include "tr/executor/xqops/PPNil.h"
 #include "tr/executor/xqops/PPSequenceTypes.h"
 #include "tr/executor/xqops/PPDDO.h"
+#include "tr/executor/xqops/PPSXptr.h"
 #include "tr/executor/xqops/PPSequence.h"
 #include "tr/executor/xqops/PPBooleanOps.h"
 #include "tr/executor/xqops/PPAccessors.h"

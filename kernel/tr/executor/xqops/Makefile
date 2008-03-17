@@ -63,6 +63,7 @@ OBJS =  PPAbsPath$(OBJ_EXT) \
         PPStringFuncs$(OBJ_EXT) \
         PPStringsCompare$(OBJ_EXT) \
         PPSubsMatch$(OBJ_EXT) \
+        PPSXptr$(OBJ_EXT) \
         PPTest$(OBJ_EXT) \
         PPTuple$(OBJ_EXT) \
         PPUnion$(OBJ_EXT) \
