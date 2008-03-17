@@ -226,26 +226,25 @@ int main(int argc, char** argv)
         /////////////// BACKGROUND MODE ////////////////////////////////////////
 
 
-        if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
-            throw SYSTEM_EXCEPTION("Failed to initialize event log");
-
-//        elog(EL_LOG, ("=============================================="));
-//        elog(EL_LOG, ("SEDNA event log is ready"));
+      if (event_logger_start_daemon(EL_LOG, SE_EVENT_LOG_SHARED_MEMORY_NAME, SE_EVENT_LOG_SEMAPHORES_NAME))
+          throw SYSTEM_EXCEPTION("Failed to initialize event log");
 
 
       gov_table = new info_table();
       gov_table->init(&cfg);
-
       SEDNA_DATA = gov_table->get_config_struct()->gov_vars.SEDNA_DATA;
 
+      elog(EL_INFO, ("SEDNA version is %s.%s", SEDNA_VERSION, SEDNA_BUILD));
+      elog(EL_LOG, ("SEDNA event log is ready"));
+      
       create_global_memory_mapping(gov_table->get_config_struct()->gov_vars.os_primitives_id_min_bound);
-
-      elog(EL_LOG, ("SEDNA event log is down"));
+            
 
       pps->startup();
       is_pps_close = false;
+      
       d_printf1("ping started\n");
-
+      elog(EL_LOG, ("Process ping server is ready"));
 
 #ifdef _WIN32
       BOOL fSuccess; 
