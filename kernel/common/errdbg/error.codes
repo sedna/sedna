@@ -1430,15 +1430,6 @@ sedna-err:SE4706
 
    Cannot provide X-locks in RO-mode
 
-######################################################################
-#  Wu errors
-######################################################################
-sedna-err:SE4801
-
-   Cannot initialize wu
-sedna-err:SE4802
-
-   Cannot release wu
 
 ######################################################################
 ### Static (semantic) analyzer errors (SA)
@@ -1710,4 +1701,12 @@ sedna-err:SE4620
 
    Transaction timeout has been expired.
 
+######################################################################
+#  Wu errors
+######################################################################
+sedna-err:SE4801
 
+   Cannot initialize wu
+sedna-err:SE4802
+
+   Cannot release wu
