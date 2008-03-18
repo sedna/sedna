@@ -10,6 +10,7 @@
 #include "tr/idx/index_data.h"
 #include "tr/executor/base/PPBase.h"
 #include "tr/tr_globals.h"
+#include "tr/idx/btree/btintern.h"
 
 #include <map>
 
@@ -136,6 +137,28 @@ void test_document(char *name, xptr doc_dsc, bool is_throw)
     }
 }
 
+void test_indexes(schema_ind_cell* sc_idx)
+{
+	schema_ind_cell* p = sc_idx;
+	
+	while (p != NULL)
+	{
+		try
+		{
+			bt_check_btree(sc_idx->index->btree_root);
+       		fprintf(logfile, "Checked index: %s\n", sc_idx->index->index_title);
+	    }	
+		catch (SednaException &e)
+		{
+    		elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", sc_idx->index->index_title, e.getMsg().c_str()));
+       		fprintf(logfile, "Recovery failed on index: %s, error: %s\n", sc_idx->index->index_title, e.getMsg().c_str());
+	    	isRcvOK = false;
+    	}
+
+		p = p->next;				
+    }	
+}
+
 void test_collection(char *name, col_schema_node *coll)
 {
 	bt_key key;
@@ -160,6 +183,8 @@ void test_collection(char *name, col_schema_node *coll)
     	}
 	} 
 	while(cursor.bt_next_key());
+
+	test_indexes(coll->sc_idx);
 }
 
 void test_db_after_rcv()
@@ -185,6 +210,7 @@ void test_db_after_rcv()
 		    CHECKP(blk);
 			xptr doc_dsc = GETBLOCKFIRSTDESCRIPTORABSOLUTE((node_blk_hdr*)XADDR(blk));
     		test_document(mdc->obj->document_name, doc_dsc, false);
+    		test_indexes(((doc_schema_node *)mdc->obj->snode)->sc_idx);
     	}
     
    		mdc=metadata->rb_successor(mdc);
@@ -194,6 +220,7 @@ void test_db_after_rcv()
 
    	fclose(logfile);
 
+#ifdef RCV_TEST_CRASH
    	rcv_fname = std::string(SEDNA_DATA) + std::string("/data/") + std::string(db_name) + std::string("_files");
 
    	if (isRcvOK)
@@ -205,4 +232,5 @@ void test_db_after_rcv()
     if (r_fh == U_INVALID_FD)
   		fprintf(stderr, "Cannot create rcv result file\n");
     uCloseFile(r_fh, NULL);
+#endif
 }
