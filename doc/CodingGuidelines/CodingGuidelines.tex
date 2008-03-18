@@ -1,0 +1,183 @@
+\documentclass{article}
+\usepackage{a4wide}
+\usepackage{bbding}
+\usepackage{boxedminipage}
+
+
+\begin{document}
+
+\section{C{\small ++} Exceptions}
+
+\begin{itemize}
+\item Use exception classes defined in appendix \ref{sec:exnclasses}.
+\item Never use \verb|catch(...)|, use \verb|catch(ANY_SE_EXCEPTION)| instead\footnote{We have code-generation problem with \texttt{cl} compiler older than v14.}.
+\item When adopting external library make sure that the library either doesn't use exceptions at all or is throwing exceptions derived from \texttt{std::exception}\footnote{\texttt{ANY\_SE\_EXCEPTION} is coded with assumption that \emph{every} exception object is derived from \texttt{std::exception}.}.
+\end{itemize}
+
+\newpage
+\appendix
+\section[Sedna Exception Classes]{Sedna Exception Classes\footnote{originating from notes in \texttt{kernel/common/errdbg/exceptions.h} by AF}}
+\label{sec:exnclasses}
+
+The following primary exceptions are defined for Sedna (later referred as 
+``the system") -- see fig.~\ref{fig:exceptions}.
+
+\begin{figure}[ht]
+\centering
+\begin{boxedminipage}{4in}
+{\Large SednaException}
+	\begin{list}{\ArrowBoldDownRight}{}
+	\item\textbf{SednaSystemException}
+		\smallskip
+		\begin{list}{\ArrowBoldRightStrobe}{}
+		\item SednaSystemEnvException
+		\end{list}
+		\smallskip
+	\item\textbf{SednaUserException}
+		\smallskip
+		\begin{list}{\ArrowBoldRightStrobe}{}
+		\item SednaUserExceptionFnError
+		\item SednaUserEnvException
+		\item SednaUserSoftException
+		\item SednaXQueryException
+		\end{list}
+	\end{list}
+\end{boxedminipage}
+\caption{Sedna exceptions hierarchy}
+\label{fig:exceptions}
+\end{figure}
+
+
+\paragraph{SednaException} abstract base exception class. You cannot use it for raising
+exceptions.
+
+\paragraph{SednaSystemException} use it when some system error happens. This error means
+that the system is completely malfunction. The reaction on this error is hard 
+stopping of all components currently running.
+
+\paragraph{SednaSystemEnvException} the same as SednaSystemException except one point.
+The output to a user produced as the reaction to this error says that it was 
+environment (operating system) fault and the system can not be longer running.
+For the previous exception responsibility is on the developers.
+
+\paragraph{SednaUserException} use it when some kind of error happens but this error
+is not fatal for the system but rather a recoverable error. Most errors of 
+this type are errors caused by users (wrong queries they sends). But they can
+be other errors such as ``can not connect to sm because sm is not running"
+caused by trn. The reaction on this error is to produce correct message to the
+user with an explanation of the problem. Error codes and descriptions of errors
+are defined in error.codes file, which is in the same directory as the file you
+are reading now.
+
+\paragraph{SednaUserExceptionFnError} use it for errors raised by users (\texttt{fn:error} function).
+
+\paragraph{SednaUserEnvException} the same as \emph{SednaUserException} with a bit different
+semantics.  Use this exception to notify the user that the system cannot do
+something because of the environment (operating system). You need not define 
+error code for this kind of error (it is already defined), but you
+rather need to provide a correct description. This exception is needed to
+simplify the life of the developers, because it allow them not to define
+enormous number of error codes for routine operations such as semaphore
+creation.
+
+The example of using this exception is the following:
+
+\smallskip\noindent
+\begin{boxedminipage}{\textwidth}
+\begin{verbatim}
+if (<cannot create semaphore during startup>)
+   throw USER_ENV_EXCEPTION(
+      "Cannot create semaphore <the name of the semaphore>", false);
+\end{verbatim}
+\end{boxedminipage}
+
+\paragraph{SednaUserSoftException} this exception class rather differs from other 
+exceptions. It is used for correct program termination instead of signaling
+some error condition. Its purpose can be clarified by the following example.
+Suppose you have to parse command line arguments for already started (and 
+initialized) process. If you find some error in command line parameters its your
+obligatory to finish the process and bring the error message to the user. If you
+just simply write error message to console and exit from the process, it may
+crash the system because in this case you avoid process deinitialization, which
+is performed by the program code somewhere else in the program. From the other
+hand, if you raise SednaUserException then you have to supply error code and,
+what is more important, the error message that is identified by this error
+code will be enlarged with additional information such as error code and a 
+comment. The solution to this problem is to use SednaUserSoftException for raising
+the error. In this case process deinitialization will be completed as a part
+of the standard error handling mechanism and the user will see exactly the same
+error message that you have supplied.
+
+\paragraph{SednaXQueryException} use it within physical plan operations (\texttt{PP}*). It has 
+semantic as SednaUserException with better diagnostic. Line of the XQuery query
+must be provided with which error is connected. 0 means `I can't say exact line'.
+
+\subsection{Constructing Exception Objects}
+
+For constructing exception objects it is better to use the set of predefined macroses --- consult fig.~\ref{fig:macroses} for details.
+
+\begin{figure}[hbt]
+\centering
+\begin{boxedminipage}{\textwidth}
+\begin{description}
+\item[SYSTEM\_EXCEPTION({\it msg})]
+\item[SYSTEM\_ENV\_EXCEPTION({\it msg})]
+\item[USER\_EXCEPTION({\it code})]
+\item[USER\_EXCEPTION2({\it code}, {\it details})]
+\item[XQUERY\_EXCEPTION({\it code})]
+\item[XQUERY\_EXCEPTION2({\it code}, {\it details})]
+\item[USER\_EXCEPTION\_FNERROR({\it ename}, {\it edescr})]
+\item[USER\_ENV\_EXCEPTION({\it msg}, {\it rollback})]
+\item[USER\_ENV\_EXCEPTION2({\it msg}, {\it expl}, {\it rollback})]
+\item[USER\_SOFT\_EXCEPTION({\it msg})]
+\end{description}
+\end{boxedminipage}
+\begin{tabular}{lp{5in}}
+\it msg & a textual message (some kind of error description) \\
+\it code & the code for user defined error (use constants defined in \verb|error_codes.h|; example is \verb|SE1001|)\\
+\it details & details for user error\\
+\it ename & error name for fn error\\
+\it edescr &error description for fn error\\
+\it expl & explanation of error\\
+\it rollback & does the error leads to rollback?\\
+\end{tabular}
+\caption{Constructing exception objects}
+\label{fig:macroses}
+\end{figure}
+
+
+\subsection{Error Reporting Format}
+
+Errors could be outputted to the user in the following format -- consult fig.~\ref{fig:output} for details.
+
+\begin{figure}[t]
+\centering
+\begin{boxedminipage}{\textwidth}
+\begin{verbatim}
+<sedna-message> ::=
+            "SEDNA Message: " <problem> <line-break>
+            <description> <line-break>
+            [ "Details: " <details> <line-break> ]
+            [ "Position: [" <file> ":" <function> ":" <line> "]" <line-break> ]
+
+<problem> ::= "ERROR " <code>
+            | "FATAL ERROR"
+
+<description> ::= <string-without-line-break>
+
+<file> ::= <string-without-line-break>
+
+<function> ::= <string-without-line-break>
+
+<line> ::= <integer>
+
+<code> ::= <code-from-(error.codes)>
+\end{verbatim}
+\end{boxedminipage}
+\caption{Error reporting format}
+\label{fig:output}
+\end{figure}
+
+\end{document}
+
+\end{document}

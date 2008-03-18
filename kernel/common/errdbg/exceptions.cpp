@@ -8,6 +8,86 @@
 #include "common/u/uprocess.h"
 #include "common/errdbg/event_log.h"
 
+std::string SednaSystemException::getMsg() const
+{
+    std::string res;
+    res += "SEDNA Message: FATAL ERROR\n";
+    res += "System error. This error means system malfunction.\n";
+    res += "Details: " + err_msg + "\n";
+#if (EL_DEBUG == 1)
+    res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+    return res;
+}
+	
+std::string SednaSystemEnvException::getMsg() const
+{
+    std::string res;
+    res += "SEDNA Message: FATAL ERROR\n";
+    res += "Environment error. This error is caused by environment (operating system) and ";
+    res += "it means that the system cannot continue execution anymore.\n";
+    res += "Details: " + err_msg + "\n";
+#if (EL_DEBUG == 1)
+    res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+    return res;
+}
+
+std::string SednaUserException::getMsg() const
+{
+    std::string res;
+    res += "SEDNA Message: ERROR ";
+    res += std::string(user_error_code_entries[internal_code].code) + "\n";
+    res += std::string(user_error_code_entries[internal_code].descr) + "\n";
+    if (err_msg.length() != 0)
+    {
+        res += "Details: " + err_msg + "\n";
+    }
+#if (EL_DEBUG == 1)
+    res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+    return res;
+}
+
+std::string SednaUserExceptionFnError::getMsg() const
+{
+    U_ASSERT(error_name.size() != 0);
+
+    std::string res;
+    res += "SEDNA Message: ERROR ";
+    res += error_name + "\n";
+    res += "    " + (error_descr.size() == 0 ? std::string("User defined error") : error_descr) + "\n";
+#if (EL_DEBUG == 1)
+    res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+    return res;
+}
+
+std::string SednaUserEnvException::getDescription() const 
+{ 
+    return err_msg + 
+            (explanation.length() != 0 ? " (" + explanation + ")"
+                                        : ""); 
+}
+
+std::string SednaUserEnvException::getMsg() const
+{
+    std::string res;
+    res += "SEDNA Message: ERROR ";
+    res += std::string(user_error_code_entries[internal_code].code) + "\n";
+    res += std::string(user_error_code_entries[internal_code].descr) + "\n";
+    res += "Details: " + err_msg;
+    if (explanation.length() != 0)
+    {
+        res += " (" + explanation + ")";
+    }
+    res += "\n";
+#if (EL_DEBUG == 1)
+    res += "Position: [" + file + ":" + function + ":" + int2string(line) + "]\n";
+#endif
+    return res;
+}
+
 
 void sedna_soft_fault(const SednaException &e,  int component)
 {

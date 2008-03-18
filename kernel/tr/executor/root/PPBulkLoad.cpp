@@ -154,7 +154,7 @@ void PPBulkLoad::execute()
             if (!write_to_logical_log) hl_enable_log();
             if (!write_to_logical_log) hl_logical_log_document(doc_root, tc_document.get_str_mem(), tc_collection.get_str_mem(), true);
         }
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         client->close_file_from_client(cf_vec[0]);
         
         throw;
