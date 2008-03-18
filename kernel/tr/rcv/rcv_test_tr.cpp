@@ -145,18 +145,18 @@ void test_indexes(schema_ind_cell* sc_idx)
 	{
 		try
 		{
-			bt_check_btree(sc_idx->index->btree_root);
-       		fprintf(logfile, "Checked index: %s\n", sc_idx->index->index_title);
-	    }	
+			bt_check_btree(p->index->btree_root);
+       			fprintf(logfile, "Checked index: %s\n", p->index->index_title);
+	    	}	
 		catch (SednaException &e)
 		{
-    		elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", sc_idx->index->index_title, e.getMsg().c_str()));
-       		fprintf(logfile, "Recovery failed on index: %s, error: %s\n", sc_idx->index->index_title, e.getMsg().c_str());
-	    	isRcvOK = false;
-    	}
+    			elog(EL_ERROR, ("Recovery failed on index: %s, error: %s\n", p->index->index_title, e.getMsg().c_str()));
+       			fprintf(logfile, "Recovery failed on index: %s, error: %s\n", p->index->index_title, e.getMsg().c_str());
+	    		isRcvOK = false;
+    		}
 
 		p = p->next;				
-    }	
+    	}	
 }
 
 void test_collection(char *name, col_schema_node *coll)
