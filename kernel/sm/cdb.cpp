@@ -558,7 +558,7 @@ int main(int argc, char **argv)
              if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db_and_check_result(db_name);            
              sedna_soft_fault(e, EL_CDB);
-        } catch (...) {
+        } catch (ANY_SE_EXCEPTION) {
              if (is_bm_started) bm_shutdown();
              if (is_ll_phys_log_started) ll_phys_log_shutdown();
              cleanup_db_and_check_result(db_name);            
@@ -572,7 +572,7 @@ int main(int argc, char **argv)
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_CDB);
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_CDB);
     }
 

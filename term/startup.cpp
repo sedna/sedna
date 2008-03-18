@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     } catch (SednaException &e) {
     	fprintf(stderr, "System error\n");
     	fprintf(stderr, e.getMsg().c_str());
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
        	fprintf(stderr, "System error\n");
     }
     

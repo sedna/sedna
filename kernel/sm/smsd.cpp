@@ -154,7 +154,7 @@ end:
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SMSD);
-    } catch (...){
+    } catch (ANY_SE_EXCEPTION){
         sedna_soft_fault(EL_SMSD);
     }
 

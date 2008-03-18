@@ -495,7 +495,7 @@ int main(int argc, char *argv[])
                 {
                     sedna_soft_fault(e, EL_TRN);
                 }
-                catch(...)
+                catch(ANY_SE_EXCEPTION)
                 {
                     sedna_soft_fault(EL_TRN);
                 }
@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
                 delete client;
             }
         }
-        catch(...)
+        catch(ANY_SE_EXCEPTION)
         {
             d_printf1("Connection with client has been broken\n");
         }
@@ -614,7 +614,7 @@ int main(int argc, char *argv[])
     {
         sedna_soft_fault(e, EL_TRN);
     }
-    catch(...)
+    catch(ANY_SE_EXCEPTION)
     {
         sedna_soft_fault(EL_TRN);
     }

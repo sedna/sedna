@@ -20,7 +20,7 @@ void WuThrowException();
 	{ \
 		WuSetLastExceptionObject(e); \
 	} \
-	catch (...) \
+	catch (ANY_SE_EXCEPTION) \
 	{ \
 		WuSetLastErrorMacro(WUERR_UNKNOWN_EXCEPTION); \
 	}

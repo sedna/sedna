@@ -278,7 +278,7 @@ try{
    } catch (SednaException &e) {
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault(e, EL_GOV);
-   } catch (...) {
+   } catch (ANY_SE_EXCEPTION) {
        sp_error_message_handler(socknew, 100, 0, "System error");
        sedna_soft_fault(EL_GOV);
    }

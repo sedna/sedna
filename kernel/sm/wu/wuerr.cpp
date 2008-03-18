@@ -218,7 +218,7 @@ void WuSetLastExceptionObject(const SednaException &e)
 		error = WUERR_SEDNA_USER_EXCEPTION;
 		code = e.get_code();
 	}
-	catch (...) {}
+	catch (ANY_SE_EXCEPTION) {}
 
 	WuSetLastError2(cFile,line,cFunction,error);
 	errorProperties.description = cDescription;

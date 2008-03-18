@@ -206,7 +206,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 				ret_type=xs_string;
 			}
 		}
-		catch(...)
+		catch(ANY_SE_EXCEPTION)
 		{
 		 if (max_num)
 			 throw XQUERY_EXCEPTION(FORG0001);
@@ -230,7 +230,7 @@ xmlscm_type PPLMGeneralComparison::fill_minimums(tuple_cell value)
 				ret_type=xs_string;
 			}
 		}
-		catch(...)
+		catch(ANY_SE_EXCEPTION)
 		{
 			if (max_dat)
 			 throw XQUERY_EXCEPTION(FORG0001);
@@ -313,7 +313,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 				ret_type=xs_string;
 			}
 		}
-		catch(...)
+		catch(ANY_SE_EXCEPTION)
 		{
 			if (min_num)
 			 throw XQUERY_EXCEPTION(FORG0001);
@@ -337,7 +337,7 @@ xmlscm_type PPLMGeneralComparison::fill_maximums(tuple_cell value)
 				ret_type=xs_string;
 			}
 		}
-		catch(...)
+		catch(ANY_SE_EXCEPTION)
 		{
 			if (min_dat)
 			 throw XQUERY_EXCEPTION(FORG0001);

@@ -134,7 +134,7 @@ void set_session_finished()
   try{
 
       ((gov_config_struct*)gov_shm_pointer)->sess_vars[sid].idfree = 2;
-  } catch(...){}
+  } catch(ANY_SE_EXCEPTION){}
 }
 
 

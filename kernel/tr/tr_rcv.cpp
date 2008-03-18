@@ -84,7 +84,7 @@ int main (int argc, char** argv)
   } catch(CharismaException &e) {
       fprintf(stderr, "%s\n", e.getMsg());
 
-  } catch(...) {
+  } catch(ANY_SE_EXCEPTION) {
       fprintf(stderr, "unknown error\n");
   }
 

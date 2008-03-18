@@ -212,7 +212,7 @@ int main (int argc, char** argv)
       fprintf(stderr, "%s\n", e.getMsg());
   } catch(SednaException & e) {
         sedna_soft_fault(e, EL_RCV);
-  } catch(...) {
+  } catch(ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_RCV);
   }
 

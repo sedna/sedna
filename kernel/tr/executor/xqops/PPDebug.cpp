@@ -62,7 +62,7 @@ void PPDebug::next(tuple &t)
         cc++;
         child.op->next(t);
     }
-    catch(...)
+    catch(ANY_SE_EXCEPTION)
     {
         std::string message;
         char str[40];

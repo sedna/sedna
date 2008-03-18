@@ -332,7 +332,7 @@ int sm_server_handler(void *arg)
 						 {
 							 WuOnRegisterTransactionExn(msg->sid, isUsingSnapshot, (TIMESTAMP*) &msg->data.snp_info.ts, &msg->data.snp_info.type_of_snp);
 						 }
-						 catch(...)
+						 catch(ANY_SE_EXCEPTION)
 						 {
 							 bm_unregister_transaction(msg->sid, msg->trid);
 							 throw;
@@ -423,7 +423,7 @@ int sm_server_handler(void *arg)
     } catch (SednaException &e) {
 		if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(e, EL_SM);
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
 		if (isGiantLockObtained) ReleaseGiantLock();
         sedna_soft_fault(EL_SM);
     }
@@ -593,7 +593,7 @@ int main(int argc, char **argv)
             return 1;
         } catch (SednaException &e) {
             sedna_soft_fault(e, EL_SM);
-        } catch (...) {
+        } catch (ANY_SE_EXCEPTION) {
             sedna_soft_fault(EL_SM);
         }
     	}
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
 
             USemaphoreRelease(wait_for_shutdown, __sys_call_error);
 
-        } catch(...) {
+        } catch(ANY_SE_EXCEPTION) {
             ssmmsg->stop_serve_clients();
             ssmmsg->shutdown();
             throw;
@@ -791,7 +791,7 @@ int main(int argc, char **argv)
         return 1;
     } catch (SednaException &e) {
         sedna_soft_fault(e, EL_SM);
-    } catch(...) {
+    } catch (ANY_SE_EXCEPTION) {
         sedna_soft_fault(EL_SM);
     }
 
@@ -962,7 +962,7 @@ void recover_database_by_physical_and_logical_log(int db_id)
        throw USER_EXCEPTION(SE4205);       
   } catch (SednaException &e) {
         throw;
-  } catch(...) {
+  } catch (ANY_SE_EXCEPTION) {
         throw;
   }
 

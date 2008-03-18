@@ -242,7 +242,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
  } catch(SednaException &e) {
    if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(e, EL_SM);
- } catch (...) {
+ } catch (ANY_SE_EXCEPTION) {
    if (isGiantLockObtained) ReleaseGiantLock();
    sedna_soft_fault(EL_SM);
  }
@@ -386,7 +386,7 @@ U_THREAD_PROC (checkpoint_thread, arg)
   }//end while
  } catch(SednaException &e) {
    sedna_soft_fault(e, EL_SM);
- } catch (...) {
+ } catch(ANY_SE_EXCEPTION) {
    sedna_soft_fault(EL_SM);
  }
 #endif

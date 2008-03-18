@@ -316,7 +316,7 @@ void command_line_client::get_file_from_client(std::vector<string>* filenames, s
             strcpy(cf.name, client_filename);
         } //for
            
-  } catch (...) {
+  } catch (ANY_SE_EXCEPTION) {
     // close all files from cf_vec
     for (int j=0; j<i; j++)
     {

@@ -192,7 +192,7 @@ void PPLoadModule::execute()
         insert_text(XNULL, XNULL, elem_ptr, module_pc_text.c_str(), module_pc_text.size());
         
         auth_for_load_module(module_name1.c_str());
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         close_all_client_files(cf_vec);
         /*client->close_file_from_client(cf);*/
         throw;

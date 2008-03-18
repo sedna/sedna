@@ -62,7 +62,7 @@ bool is_first_start_of_gov(int ping_port)
     ppc.shutdown();
     return false;
 
-  } catch (...) {
+  } catch (ANY_SE_EXCEPTION) {
     return true;//cannot connect to pping server
   }
     return true;

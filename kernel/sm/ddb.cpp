@@ -60,7 +60,7 @@ bool start_ppc(pping_client& ppc, SednaUserException& e)
     ppc.startup(e);
     return true;
 
-  } catch (...) {
+  } catch (ANY_SE_EXCEPTION) {
     return false;//cannot connect to pping server
   }
 
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
       return 1;
   } catch (SednaException &e) {
       sedna_soft_fault(e, EL_DDB);
-  } catch (...){
+  } catch (ANY_SE_EXCEPTION){
       sedna_soft_fault(EL_DDB);
   }
 

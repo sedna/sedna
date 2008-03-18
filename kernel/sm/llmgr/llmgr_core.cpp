@@ -1638,7 +1638,7 @@ LONG_LSN llmgr_core::ll_log_insert_record(const void* addr, int len, transaction
 
   //check that log file will not be overflowed
   if (LOG_FILE_PORTION_SIZE - (mem_head->next_lsn - (mem_head->base_addr + (mem_head->ll_files_num -1)*LOG_FILE_PORTION_SIZE)) <
-	  (sizeof(logical_log_head) + len))
+	  ((int)sizeof(logical_log_head) + len))
 
 //  if ((mem_head->next_lsn - (mem_head->next_lsn/LOG_FILE_PORTION_SIZE)*LOG_FILE_PORTION_SIZE)) < (sizeof(logical_log_head) + len)
   {//current log must be flushed and new file created

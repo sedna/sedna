@@ -1127,7 +1127,7 @@ try{
   string str = string("exec_micro_op finished\n");
   WRITE_DEBUG_LOG(str.c_str());
 
-} catch (...) {
+} catch (ANY_SE_EXCEPTION) {
   d_printf1("\n\n!!!EXEC_MICRO_OP EXCEPTION!!!\n\n");
   throw;
 }

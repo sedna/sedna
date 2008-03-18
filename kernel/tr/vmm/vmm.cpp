@@ -811,7 +811,7 @@ persistent_db_data *vmm_on_session_begin(SSMMsg *_ssmmsg_, bool is_rcv_mode) thr
         if (trace_file == NULL) throw USER_ENV_EXCEPTION("Error opening VMM trace file");
 #endif
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -844,7 +844,7 @@ void vmm_on_transaction_begin(bool is_query, TIMESTAMP &ts, int &type_of_snp) th
         ts = msg.data.snp_info.ts;
         type_of_snp = msg.data.snp_info.type_of_snp;
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -899,7 +899,7 @@ void vmm_on_session_end() throw (SednaException)
         USemaphoreClose(sm_to_vmm_callback_sem1, __sys_call_error);
         USemaphoreClose(sm_to_vmm_callback_sem2, __sys_call_error);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -987,7 +987,7 @@ void vmm_on_transaction_end() throw (SednaException)
     	// more efficient fix of the aforementioned bug
     	unmapAllBlocks();
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1008,7 +1008,7 @@ void _vmm_alloc_data_block(xptr *p) throw (SednaException)
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         _vmm_alloc_block(p, true);
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1052,7 +1052,7 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         _vmm_alloc_block(p, false);
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1066,14 +1066,6 @@ void vmm_alloc_tmp_block(xptr *p) throw (SednaException)
 
 void vmm_delete_block(xptr p) throw (SednaException)
 {
-	// TODO: fix this interesting logic :)
-	
-	if (IS_DATA_BLOCK(p)) 
-	{
-		CHECKP(p);
-		VMM_SIGNAL_MODIFICATION(p);
-	}
-
     USemaphoreDown(vmm_sm_sem, __sys_call_error);
     try {
         p = block_xptr(p);
@@ -1101,7 +1093,7 @@ void vmm_delete_block(xptr p) throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1137,7 +1129,7 @@ void vmm_delete_tmp_blocks() throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1164,7 +1156,7 @@ void vmm_enter_exclusive_mode(int *number_of_potentially_allocated_blocks) throw
 
         is_exclusive_mode = true;
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1188,7 +1180,7 @@ void vmm_exit_exclusive_mode() throw (SednaException)
 
         is_exclusive_mode = false;
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1219,7 +1211,7 @@ void vmm_memlock_block(xptr p) throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1249,7 +1241,7 @@ void vmm_memunlock_block(xptr p) throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1273,7 +1265,7 @@ void vmm_storage_block_statistics(sm_blk_stat /*out*/ *stat) throw (SednaExcepti
 
         *stat = msg.data.stat;
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1303,7 +1295,7 @@ void _vmm_pseudo_alloc_data_block(xptr *p) throw (SednaException)
 
         *p = *(xptr*)(&(msg.data.ptr));
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1327,7 +1319,7 @@ void _vmm_pseudo_delete_block(xptr p) throw (SednaException)
 
         if (msg.cmd != 0) _vmm_process_sm_error(msg.cmd);
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1435,7 +1427,7 @@ void vmm_unswap_block(xptr p) throw (SednaException)
 #endif
 	    }
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
@@ -1484,7 +1476,7 @@ void vmm_unswap_block_write(xptr p) throw (SednaException)
         
 //        write_table.insert(p, XADDR(p));
 
-    } catch (...) {
+    } catch (ANY_SE_EXCEPTION) {
         USemaphoreUp(vmm_sm_sem, __sys_call_error);
         throw;
     }
