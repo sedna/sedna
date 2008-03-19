@@ -1572,6 +1572,10 @@ const char *SEshowTime(struct SednaConnection *conn)
         return conn->query_time;
     }
 
+    /* clean socket*/
+    if (cleanSocket(conn) == SEDNA_ERROR)
+        return SEDNA_ERROR;
+
     conn->msg.instruction = se_ShowTime;        /*ShowTime*/
     conn->msg.length = 0;
 
