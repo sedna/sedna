@@ -8,7 +8,7 @@
 #include "common/u/uprocess.h"
 #include "common/errdbg/event_log.h"
 
-std::string SednaSystemException::getMsg() const
+std::string SednaSystemException::getMsg2() const
 {
     std::string res;
     res += "SEDNA Message: FATAL ERROR\n";
@@ -20,7 +20,7 @@ std::string SednaSystemException::getMsg() const
     return res;
 }
 	
-std::string SednaSystemEnvException::getMsg() const
+std::string SednaSystemEnvException::getMsg2() const
 {
     std::string res;
     res += "SEDNA Message: FATAL ERROR\n";
@@ -33,7 +33,7 @@ std::string SednaSystemEnvException::getMsg() const
     return res;
 }
 
-std::string SednaUserException::getMsg() const
+std::string SednaUserException::getMsg2() const
 {
     std::string res;
     res += "SEDNA Message: ERROR ";
@@ -49,7 +49,7 @@ std::string SednaUserException::getMsg() const
     return res;
 }
 
-std::string SednaUserExceptionFnError::getMsg() const
+std::string SednaUserExceptionFnError::getMsg2() const
 {
     U_ASSERT(error_name.size() != 0);
 
@@ -70,7 +70,7 @@ std::string SednaUserEnvException::getDescription() const
                                         : ""); 
 }
 
-std::string SednaUserEnvException::getMsg() const
+std::string SednaUserEnvException::getMsg2() const
 {
     std::string res;
     res += "SEDNA Message: ERROR ";

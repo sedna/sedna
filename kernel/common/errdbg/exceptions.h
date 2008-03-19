@@ -205,26 +205,32 @@ Errors could be outputted to the user in the format of <sedna-message>:
 /// SednaException
 //////////////////////////////////////////////////////////////////////////////
 
-class SednaException : public std::runtime_error
+class SednaException : public std::exception
 {
+private:
+	mutable std::string descriptCache;
 protected:
     std::string file; 
     std::string function;
     int line;
     std::string err_msg;
 
+    virtual std::string getMsg2()         const = 0;
+
 public:
     SednaException(const char* _file_, 
                    const char* _function_,
                    int _line_,
-                   const char* _err_msg_) : std::runtime_error(_err_msg_),
-											file(_file_),
+                   const char* _err_msg_) : file(_file_),
                                             function(_function_),
                                             line(_line_),
                                             err_msg(_err_msg_) {}
     virtual ~SednaException() {}
-
-    virtual std::string getMsg()         const = 0;
+	const std::string &getMsg()          const
+	{
+		if (descriptCache.empty()) descriptCache.swap(getMsg2());
+		return descriptCache;
+	}
     virtual std::string getDescription() const { return err_msg; }
     virtual std::string getFile()        const { return file; }
     virtual std::string getFunction()    const { return function; }
@@ -232,7 +238,7 @@ public:
 
 	virtual void raise() const = 0;
 
-	const char *what() const { return getMsg().c_str(); }
+	const char *what() const throw() { return getMsg().c_str(); }
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -241,6 +247,9 @@ public:
 
 class SednaSystemException : public SednaException
 {
+protected:
+	virtual std::string getMsg2() const;
+
 public:
     SednaSystemException(const char* _file_, 
                          const char* _function_,
@@ -249,7 +258,6 @@ public:
                                                                         _function_,
                                                                         _line_,
                                                                         _err_msg_) {}
-    virtual std::string getMsg() const;
 	virtual void raise() const { throw *this; }
 };
 
@@ -259,6 +267,9 @@ public:
 
 class SednaSystemEnvException : public SednaSystemException
 {
+protected:
+	virtual std::string getMsg2() const;
+
 public:
     SednaSystemEnvException(const char* _file_, 
                             const char* _function_,
@@ -267,7 +278,6 @@ public:
                                                                                  _function_, 
                                                                                  _line_, 
                                                                                  _err_msg_) {}
-    virtual std::string getMsg() const;
 	virtual void raise() const { throw *this; }
 };
 
@@ -279,6 +289,7 @@ class SednaUserException : public SednaException
 {
 protected:
     int internal_code;
+	virtual std::string getMsg2() const;
 
 public:
     SednaUserException(const char* _file_, 
@@ -298,7 +309,6 @@ public:
                                                              _line_,
                                                              _err_msg_), 
                                               internal_code(_internal_code_) {}
-    virtual std::string getMsg() const;
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() 
 	{
@@ -316,6 +326,7 @@ class SednaUserExceptionFnError : public SednaUserException
 protected:
     std::string error_name;
     std::string error_descr;
+	virtual std::string getMsg2() const;
 
 public:
     SednaUserExceptionFnError(const char* _file_, 
@@ -330,7 +341,6 @@ public:
                                     error_name(_error_name_),
                                     error_descr(_error_descr_ ? _error_descr_ : "") {}
 
-    virtual std::string getMsg() const;
     virtual int  get_code() const { return internal_code; }
     virtual bool need_rollback() { return true; }
 	virtual void raise() const { throw *this; }
@@ -345,6 +355,8 @@ class SednaUserEnvException : public SednaUserException
 protected:
     bool rollback;
     std::string explanation;
+	virtual std::string getMsg2() const;
+
 public:
     SednaUserEnvException(const char* _file_, 
                           const char* _function_,
@@ -370,7 +382,6 @@ public:
 					     explanation(_explanation_){}
 
     virtual std::string getDescription() const;
-    virtual std::string getMsg() const;
     virtual bool need_rollback() { return rollback; }
 	virtual void raise() const { throw *this; }
 };
@@ -381,6 +392,9 @@ public:
 
 class SednaUserSoftException : public SednaUserException
 {
+protected:
+	virtual std::string getMsg2() const { return err_msg; }
+
 public:
     SednaUserSoftException(const char* _file_, 
                            const char* _function_,
@@ -390,7 +404,6 @@ public:
                                                                        _line_,
                                                                        _err_msg_,
                                                                        -1) {}
-    virtual std::string getMsg() const { return err_msg; }
     virtual bool need_rollback() { return false; }
 	virtual void raise() const { throw *this; }
 };
