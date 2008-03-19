@@ -225,10 +225,13 @@ public:
                                             function(_function_),
                                             line(_line_),
                                             err_msg(_err_msg_) {}
-    virtual ~SednaException() {}
 	const std::string &getMsg()          const
 	{
-		if (descriptCache.empty()) descriptCache.swap(getMsg2());
+		if (descriptCache.empty()) 
+		{
+			std::string descript = getMsg2();
+			descriptCache.swap(descript);
+		}
 		return descriptCache;
 	}
     virtual std::string getDescription() const { return err_msg; }
