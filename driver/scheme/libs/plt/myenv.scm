@@ -3,9 +3,6 @@
 ; This file is the part of SSAX package (http://ssax.sourceforge.net),
 ; which is in public domain.
 
-
-
-
 ; DL: this piece of code is taken from the previous version of "myenv.scm"
 
 ;==============================================================================
@@ -30,10 +27,6 @@
     (if (pair? rest)
 	(cons x (recur (car rest) (cdr rest)))
 	x)))
-
-
-
-
 
 ;; [ssax-plt] This is a modified version of "official/lib/myenv.scm".
  ;(module myenv mzscheme
@@ -327,21 +320,28 @@
                (if (procedure? ,defact-symb) (,defact-symb) ,defact-symb))))))
     `(or (assoc ,key ,alist) ,default-action)))
 
-
-			; Convenience macros to avoid quoting of symbols
-			; being deposited/looked up in the environment
+; Convenience macros to avoid quoting of symbols
+; being deposited/looked up in the environment
 (define-macro (env.find key) `(%%env.find ',key))
 (define-macro (env.demand key) `(%%env.demand ',key))
 (define-macro (env.bind key value) `(%%env.bind ',key ,value))
 
-			; Implementation of SRFI-0
-			; Only feature-identifiers srfi-0 and gambit
-			; assumed predefined
 (define-macro (cond-expand . clauses)
-  (define feature-ids '(plt srfi-0))
+  (define feature-ids `(plt srfi-0))
+  
+  ; If symbol id is defined, return then-branch
+  ; Otherwise returns else-branch
+  ; NOTE: PLT-specific
+  (define (ifdef id then-branch else-branch)
+    (with-handlers
+        (((lambda (x) #t)
+          (lambda (x) `,else-branch)))
+      (namespace-variable-value id)
+      `,then-branch))  
   (define (feature-req-satisfies? fr) ; does feature-request satisfies?
     (cond
      ((memq fr feature-ids) #t)
+     ((eq? fr 'plt-bytes) (ifdef 'bytes? #t #f))
      ((not (pair? fr)) #f)
      ((eq? 'and (car fr))
       (let loop ((clauses (cdr fr)))

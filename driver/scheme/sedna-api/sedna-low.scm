@@ -1,9 +1,11 @@
 
 ; File:  sedna-low.scm
-; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
+; Copyright (C) 2004 The Institute for System Programming
+; of the Russian Academy of Sciences (ISP RAS)
 
 ;; Low-level Scheme-specific functions
 
+;-------------------------------------------------
 ; Working with a TCP connection
 ; This part of code is much borrowed from Oleg Kiselyov's "http.scm"
 ;
@@ -108,6 +110,7 @@
     (apply string-append str-lst))
   ))
 
+;==========================================================================
 ; Pipes
 ; 
 ;  1. (sedna:make-pipe)
@@ -136,3 +139,163 @@
     (cons #f #f))
   (define (sedna:close-output-pipe port) #f)
   ))
+
+;==========================================================================
+; Byte-level transfer operations
+; Moved here from "sedna-api.scm"
+
+(cond-expand
+ ((and plt plt-bytes)
+  ; Special byte operations for PLT with (non-R5RS) byte datatype support
+
+  (define sedna:char000 0)
+  (define sedna:char001 1)
+  
+  (define sedna:read-byte read-byte)
+  (define sedna:peek-byte peek-byte)
+  
+  ;-------------------------------------------------
+  ; Convertions between the integer and its 4-byte representation in the
+  ; Network byte order
+  
+  ; Converts an integer number to a list of 4 characters
+  (define (sedna:integer->chars num)
+    (let* ((frst (quotient num 16777216))
+           (num (- num (* frst 16777216)))
+           (scnd (quotient num 65536))
+           (num (- num (* scnd 65536)))
+           (thrd (quotient num 256))
+           (frth (- num (* thrd 256))))
+      (list frst scnd thrd frth)))
+  
+  (define (sedna:chars->integer byte-lst)
+    (+ (* (car byte-lst) 16777216)
+       (* (cadr byte-lst) 65536)
+       (* (caddr byte-lst) 256)
+       (cadddr byte-lst)))
+  
+  ;-------------------------------------------------
+  ; Conversion between a string and its protocol network representation
+  
+  ; Converts a string to its network representation
+  ; Returns: (listof char)
+  (define (sedna:string->network str)
+    (let ((lst (bytes->list (string->bytes/utf-8 str))))
+      (cons
+       sedna:char000
+       (append
+        (sedna:integer->chars (length lst))
+        lst))))
+  
+  ; Extracts the network string from the list of chars
+  ; Returns: (values string remaining-chars)
+  (define (sedna:extract-string chars)
+    (if
+     (< (length chars) 5)  ; at least 5 chars for format and length
+     (begin
+       (sedna:raise-exn "sedna:extract-string: No string found")
+       #f)
+     (let ((lng 
+            (sedna:chars->integer
+             (sedna:first-n 4 (cdr chars))))
+           (rest (list-tail chars 5)))
+       (values (bytes->string/utf-8 (list->bytes (sedna:first-n lng rest)))
+               (list-tail rest lng)))))
+  
+  ;-------------------------------------------------
+  ; Writing a package
+  
+  ; Writes the package to the output-port
+  ;  header-code - the number that represents the code of the message
+  ;  body - the list of bytes that represent the message body
+  (define (sedna:write-package-as-bytes header-code body output-port)
+    (display
+     (list->bytes (sedna:integer->chars header-code))
+     output-port)
+    (display
+     (list->bytes (sedna:integer->chars (length body)))
+     output-port)
+    (display (list->bytes body) output-port)
+    (sedna:flush-output-port output-port))
+  
+  )
+ (else
+  ; Char datatype assumed to be represented as a byte
+  
+  ; Several constants for char, since Bigloo doesn't support sedna:char000  and such
+  (define sedna:char000 (integer->char 0))
+  (define sedna:char001 (integer->char 1))
+  
+  (define sedna:read-byte read-char)
+  (define sedna:peek-byte peek-char)
+  
+  ;-------------------------------------------------
+  ; Convertions between the integer and its 4-byte representation in the
+  ; Network byte order
+  
+  ; Converts an integer number to a list of 4 characters
+  (define (sedna:integer->chars num)
+    (let* ((frst (quotient num 16777216))
+           (num (- num (* frst 16777216)))
+           (scnd (quotient num 65536))
+           (num (- num (* scnd 65536)))
+           (thrd (quotient num 256))
+           (frth (- num (* thrd 256))))
+      (list (integer->char frst)
+            (integer->char scnd)
+            (integer->char thrd)
+            (integer->char frth))))
+  
+  (define (sedna:chars->integer char-lst)
+    (+ (* (char->integer (car char-lst)) 16777216)
+       (* (char->integer (cadr char-lst)) 65536)
+       (* (char->integer (caddr char-lst)) 256)
+       (char->integer (cadddr char-lst))))
+  
+  ;-------------------------------------------------
+  ; Conversion between a string and its protocol network representation
+  
+  ; Converts a string to its network representation
+  ; Returns: (listof char)
+  (define (sedna:string->network str)
+    (cons
+     sedna:char000
+     (append
+      (sedna:integer->chars (string-length str))
+      (string->list str))))
+  
+  ; Extracts the network string from the list of chars
+  ; Returns: (values string remaining-chars)
+  (define (sedna:extract-string chars)
+    (if
+     (< (length chars) 5)  ; at least 5 chars for format and length
+     (begin
+       (sedna:raise-exn "sedna:extract-string: No string found")
+       #f)
+     (let ((lng 
+            (sedna:chars->integer
+             (sedna:first-n 4 (cdr chars))))
+           (rest (list-tail chars 5)))
+       (values (list->string (sedna:first-n lng rest))
+               (list-tail rest lng)))))
+  
+  ;-------------------------------------------------
+  ; Writing a package
+  
+  ; Writes the package to the output-port
+  ;  header-code - the number that represents the code of the message
+  ;  body - the list of bytes that represent the message body
+  (define (sedna:write-package-as-bytes header-code body output-port)
+    (display
+     (list->string (sedna:integer->chars header-code))
+     output-port)
+    (display
+     (list->string (sedna:integer->chars (length body)))
+     output-port)
+    (display
+     (list->string body)
+     output-port)
+    (sedna:flush-output-port output-port))
+  
+  ))
+  
