@@ -46,7 +46,7 @@ public:
   virtual void close_file_from_client(client_file &inout_fs);
   virtual void respond_to_client(int instruction);
   virtual void begin_item();
-  virtual void end_of_item(bool exist_next);
+  virtual void end_of_item(qepNextAnswer exist_next);
   virtual bool is_print_progress() { return true; }
 
   virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }

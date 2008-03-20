@@ -19,8 +19,8 @@
 
 void write_func(void *param, const char *str, int len);
 enum executor_ostream_t {eot_std, eot_sock, eot_str, eot_null};
-	
-	
+
+enum qepNextAnswer {se_no_next_item, se_next_item_exists, se_result_is_cut_off};
 
 class se_ostream
 {
@@ -46,7 +46,7 @@ public:
     virtual se_ostream& writextext(char *s, int n);
 	virtual se_ostream& writeattribute(char *s, int n);
     virtual se_ostream& flush()                                    = 0;
-    virtual void end_of_data(bool res)                             = 0;
+    virtual void end_of_data(qepNextAnswer res)                    = 0;
     virtual void endline()                                         = 0;
     virtual void error(const char*)                                = 0;
     virtual se_ostream* get_debug_ostream() = 0;
@@ -80,7 +80,7 @@ public:
     virtual se_ostream& put(char c)                                              { o_str.put(c); return *this; }
     virtual se_ostream& write(const char *s, int n)                              { o_str.write(s, n); return *this; }
 	virtual se_ostream& flush()                                                  { o_str.flush(); return *this; }
-    virtual void end_of_data(bool res)                                           { o_str << std::endl; }
+    virtual void end_of_data(qepNextAnswer res)                                  { o_str << std::endl; }
     virtual void endline()                                                       { o_str << std::endl; }
     virtual void error(const char* str)                                          { o_str << str << std::endl; }
     virtual se_ostream* get_debug_ostream()               { return se_new se_stdlib_ostream(std::cerr); }
@@ -112,7 +112,7 @@ public:
     virtual se_ostream& write(const char *s, int n)                        { return *this; }
     virtual se_ostream& write_debug(int debug_type, const char *s, int n)  { return *this; }
 	virtual se_ostream& flush()                                            { return *this; }
-    virtual void end_of_data(bool res)                                     { ; }
+    virtual void end_of_data(qepNextAnswer res)                            { ; }
     virtual void endline()                                                 { ; }
     virtual void error(const char* str)                                    { ; }
     virtual se_ostream* get_debug_ostream()         { return se_new se_nullostream(); }
@@ -128,6 +128,8 @@ class se_socketostream_base : public se_ostream
         msg_struct* _res_msg;
         int _instruction;
         int _type_offset;
+        int max_result_size;
+        int result_portion_sent;
     
     public:
 
@@ -267,12 +269,23 @@ class se_socketostream_base : public se_ostream
     
     virtual se_ostream& flush()				
     {
+        // if result portion sent is already of maximum size - do not send anymore
+        if(max_result_size)
+			if(result_portion_sent >= max_result_size-_res_msg->length+5+_type_offset)
+		    {
+              _res_msg->length = max_result_size-result_portion_sent+5+_type_offset;
+              result_portion_sent = max_result_size;
+		    }
+			else
+				throw USER_EXCEPTION(SE2041);
+        
         if(_res_msg->length > 5+_type_offset)
         {
             _res_msg->instruction = _instruction; 
             int2net_int(_res_msg->length-5-_type_offset, _res_msg->body+1+_type_offset);
             
             if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
+            result_portion_sent += _res_msg->length;
             
             _res_msg->length = 5+_type_offset;
         }
@@ -292,12 +305,13 @@ class se_socketostream_base : public se_ostream
         memcpy(_res_msg->body+5+_type_offset, str, strlen(str));
         int2net_int(strlen(str), _res_msg->body+1+_type_offset);      
         _res_msg->length = strlen(str)+5+_type_offset;
-        if(sp_send_msg(_out_socket, _res_msg)!=0)
-            throw USER_EXCEPTION(SE3006);
+        if(sp_send_msg(_out_socket, _res_msg)!=0) throw USER_EXCEPTION(SE3006);
+        result_portion_sent += _res_msg->length;
         
         _res_msg->length = 5;
+        result_portion_sent = 0;
     }
-    virtual void end_of_data(bool res) = 0;
+    virtual void end_of_data(qepNextAnswer res) = 0;
     virtual se_ostream* get_debug_ostream() = 0;
     virtual void set_debug_info_type(se_debug_info_type type) = 0;
 };
@@ -308,7 +322,7 @@ friend class se_debug_socketostream;
 
 protected:
     msg_struct res_msg;
-    
+
 public:
   	se_socketostream(USOCKET out_socket, protocol_version p_ver) 
    	{  
@@ -317,20 +331,37 @@ public:
        _res_msg = &res_msg;
        _instruction = se_ItemPart;
        _type_offset = 0;
-            
-    	_res_msg->body[0] = 0;           // in this version string format is always 0
-       	_res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
+       _res_msg->body[0] = 0;           // in this version string format is always 0
+       _res_msg->length = 5;   // the body contains string format - 1 byte, string length - 4 bytes and a string
+       
+       max_result_size = 0;
+       result_portion_sent = 0;
    	}
  	virtual ~se_socketostream() {}
-    virtual void end_of_data(bool res)	
+    void set_max_result_size_to_pass(int _max_result_size_)
+    {
+        max_result_size = _max_result_size_;
+    }
+    virtual void end_of_data(qepNextAnswer res)	
     {
         flush(); 
-        if (res) _res_msg->instruction = se_ItemEnd; //ItemEnd
-        else _res_msg->instruction = se_ResultEnd;     //ResultEnd
-        _res_msg->length = 0;
+        if (res == se_next_item_exists)
+            _res_msg->instruction = se_ItemEnd; //ItemEnd
+        else if (res == se_no_next_item)
+        {
+            _res_msg->instruction = se_ResultEnd;     //ResultEnd
+            _res_msg->length = 0;
+        }
+        else // res == se_result_is_cut_off
+        {
+            _res_msg->instruction = se_ResultEnd;     //ResultEnd
+            _res_msg->length = 4;
+            int2net_int(1, _res_msg->body);            //the flag means result was cut
+        }
         if(sp_send_msg(_out_socket, _res_msg)!=0)
             throw USER_EXCEPTION(SE3006);
-        _res_msg->length = 5+_type_offset; ;
+        _res_msg->length = 5+_type_offset;
+        result_portion_sent = 0;
     }
     virtual se_ostream* get_debug_ostream();
     virtual void set_debug_info_type(se_debug_info_type type) {};
@@ -358,7 +389,7 @@ class se_debug_socketostream : public se_socketostream_base
        	_res_msg->length = 5+_type_offset;   // the body contains type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
   	}
   	virtual ~se_debug_socketostream() {}
-    virtual void end_of_data(bool res)	
+    virtual void end_of_data(qepNextAnswer res)	
     {
         flush(); 
         _res_msg->length = 5+_type_offset;

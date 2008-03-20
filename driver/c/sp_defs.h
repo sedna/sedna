@@ -29,6 +29,7 @@
 #define SEDNA_UPDATE_TRANSACTION                           3
 
 #define SEDNA_QUERY_EXEC_TIMEOUT                           4
+#define SEDNA_MAX_RESULT_SIZE                              5
 
 typedef int sp_int32;
 
