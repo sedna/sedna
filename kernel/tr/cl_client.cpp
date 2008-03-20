@@ -87,7 +87,7 @@ void command_line_client::init()
    string plain_batch_text;
 
    char env_buf[8];
-   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 1024, __sys_call_error) != 0)
+   if (uGetEnvironmentVariable(SEDNA_LOAD_METADATA_TRANSACTION, env_buf, 8, __sys_call_error) != 0)
    {
       //init output res
       if (string(output_file) == "STDOUT") res_os = stdout;
