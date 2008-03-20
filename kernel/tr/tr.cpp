@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 
                     qep_tree = NULL;    //qep of current stmnt
                     st = NULL;
-                    bool has_next_item = false;
+                    qepNextAnswer item_status = se_no_next_item;
 
                     d_printf1("============== Trn execution started ======================\n");
 
@@ -355,10 +355,10 @@ int main(int argc, char *argv[])
                                 {
                                     client->begin_item();
                                     GET_TIME(&t1_exec);
-                                    execute(qep_tree);
+                                    item_status = execute(qep_tree);
                                     GET_TIME(&t2_exec);
 
-                                    client->end_of_item(false);
+                                    client->end_of_item(item_status);
 
                                     on_user_statement_end(qep_tree, st);
                                 }
@@ -366,11 +366,11 @@ int main(int argc, char *argv[])
                                 {
                                     client->begin_item();
                                     GET_TIME(&t1_exec);
-                                    has_next_item = next(qep_tree);
+                                    item_status = next(qep_tree);
                                     GET_TIME(&t2_exec);
 
-                                    client->end_of_item(has_next_item);
-                                    if (!has_next_item)
+                                    client->end_of_item(item_status);
+                                    if (item_status != se_next_item_exists)
                                     {
                                         on_user_statement_end(qep_tree, st);
                                     }
@@ -390,20 +390,20 @@ int main(int argc, char *argv[])
                                 u_ftime(&t_qep1);
                                 if (qep_tree) // if statement execution is in progress
                                 {
-                                    if (has_next_item)
+                                    if (item_status == se_next_item_exists)
                                     {
                                         GET_TIME(&t1_exec);
-                                        has_next_item = next(qep_tree);
+                                        item_status = next(qep_tree);
                                         
                                         GET_TIME(&t2_exec);
                                     }
-                                    client->end_of_item(has_next_item);
+                                    client->end_of_item(item_status);
                                     u_ftime(&t_qep2);
                                     
                                     t_qep = (t_qep2 - (t_qep1 - t_qep));
                                     
                                     qep_time = to_string(t_qep);
-                                    if (!has_next_item)
+                                    if (item_status != se_next_item_exists)
                                     {
                                         on_user_statement_end(qep_tree, st);
                                     }

@@ -36,8 +36,8 @@ void set_session_finished();
 
 void clear_state(StmntsArray* &st, PPQueryEssence* &qep_tree);
 void exec_implicit_stmnt_part(StmntsArray *st);
-void execute(PPQueryEssence* qep_tree);
-bool next(PPQueryEssence* qep_tree);
+qepNextAnswer execute(PPQueryEssence* qep_tree);
+qepNextAnswer next(PPQueryEssence* qep_tree);
 
 bool is_command_line_args_length_overflow(int argc, char ** argv);
 void print_tr_usage();

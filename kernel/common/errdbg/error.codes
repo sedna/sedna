@@ -671,7 +671,7 @@ sedna-err:SE2036
     Document node deletion is prohibited by this function use DROP DOCUMENT in metadata API
 sedna-err:SE2037
 
-The size of string is limited by 4 GB
+    The size of string is limited by 4 GB
 sedna-err:SE2038
 
    An attempt to insert attribute node after element
@@ -1706,7 +1706,11 @@ sedna-err:SE4620
 ######################################################################
 sedna-err:SE4801
 
-   Cannot initialize wu
+   Cannot initialize wu.
 sedna-err:SE4802
 
-   Cannot release wu
+   Cannot release wu.
+sedna-err:SE2041
+
+   Result is cut, because its size exceeds max allowed size (set by client).
+

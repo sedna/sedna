@@ -36,6 +36,7 @@ socket_client::socket_client()
 
 	 Sock = U_INVALID_SOCKET;
      stream = NULL;
+     max_result_size_to_pass = 0; //can be sent as a session option; 0 - pass whole result
      long_query_stream = NULL;
 }
 
@@ -359,7 +360,7 @@ void socket_client::begin_item()
 	if(sp_send_msg(Sock, &sp_msg)!=0) {Sock = U_INVALID_SOCKET; throw USER_EXCEPTION2(SE3006,usocket_error_translator());}
 }
 
-void socket_client::end_of_item(bool res) //res variable is ignored
+void socket_client::end_of_item(qepNextAnswer res) //res variable is ignored
 {
     (*stream).end_of_data(res);   // flushes the buffer and sends ItemEnd message
 }
@@ -498,6 +499,10 @@ void socket_client::set_session_options(msg_struct *msg)
                 break;
             case SEDNA_QUERY_EXEC_TIMEOUT:
                 net_int2int(&query_timeout, msg->body+pos);
+                break;
+            case SEDNA_MAX_RESULT_SIZE:
+                net_int2int(&max_result_size_to_pass, msg->body+pos);
+                stream->set_max_result_size_to_pass(max_result_size_to_pass);
                 break;
 			default: 
                 throw USER_EXCEPTION2(SE4619,int2string(option).c_str());

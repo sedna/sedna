@@ -39,7 +39,7 @@ public:
     virtual void close_file_from_client(client_file &inout_cf) = 0;
     virtual void respond_to_client(int instruction) = 0;
     virtual void begin_item() = 0;
-    virtual void end_of_item(bool exist_next) = 0;
+    virtual void end_of_item(qepNextAnswer exist_next) = 0;
     virtual bool is_print_progress() = 0;
     virtual int get_os_primitives_id_min_bound() = 0;
     virtual void authentication_result(bool res, const std::string& body) = 0;

@@ -37,6 +37,7 @@ private:
 	char query_string[SE_SOCKET_MSG_BUF_SIZE+1];
 	
 	se_socketostream *stream;
+    int max_result_size_to_pass;
     char* long_query_stream;
 	
     struct timeval timeout;
@@ -61,7 +62,7 @@ public:
     virtual void reset_session_options();
     virtual void respond_to_client(int instruction);
     virtual void begin_item();
-    virtual void end_of_item(bool res);
+    virtual void end_of_item(qepNextAnswer res);
     virtual bool is_print_progress() { return false; }
 
     virtual int get_os_primitives_id_min_bound() { return os_primitives_id_min_bound; }

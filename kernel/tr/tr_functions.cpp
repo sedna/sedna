@@ -139,7 +139,7 @@ void set_session_finished()
 
 
 
-void execute(PPQueryEssence* qep_tree)
+qepNextAnswer execute(PPQueryEssence* qep_tree)
 {
     OS_exceptions_handler::enter_stack_overflow_critical_section();
 
@@ -147,13 +147,15 @@ void execute(PPQueryEssence* qep_tree)
         qep_tree->execute();
     } catch (SednaUserException &e) {
         OS_exceptions_handler::leave_stack_overflow_critical_section();
+        if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }
 
     OS_exceptions_handler::leave_stack_overflow_critical_section();
+    return se_no_next_item;
 }
 
-bool next(PPQueryEssence* qep_tree)
+qepNextAnswer next(PPQueryEssence* qep_tree)
 {
     bool res;
     OS_exceptions_handler::enter_stack_overflow_critical_section();
@@ -162,12 +164,13 @@ bool next(PPQueryEssence* qep_tree)
         res = ((PPQueryRoot*)qep_tree)->next();
     } catch (SednaUserException &e) {
         OS_exceptions_handler::leave_stack_overflow_critical_section();
+        if (e.get_code() == SE2041) return se_result_is_cut_off;
         throw;
     }
 
     OS_exceptions_handler::leave_stack_overflow_critical_section();
 
-    return res;
+    return (res) ? se_next_item_exists : se_no_next_item;
 }
 
 bool is_command_line_args_length_overflow(int argc, char ** argv)

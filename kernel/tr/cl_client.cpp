@@ -378,10 +378,9 @@ void command_line_client::begin_item()
 {
 }
 
-void command_line_client::end_of_item(bool exist_next)
+void command_line_client::end_of_item(qepNextAnswer exist_next)
 {
-  
-  if (exist_next)
+  if (exist_next == se_next_item_exists)
   {//put next portion on top of stack
      cl_command cmd;
      cmd.type = se_GetNextItem;
