@@ -1,4 +1,3 @@
-
 ; File:  sedna-api.scm
 ; Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
 
@@ -8,10 +7,6 @@
 
 ;==========================================================================
 ; Low-level operations
-
-; Several constants for char, since Bigloo doesn't support sedna:char000  and such
-(define sedna:char000 (integer->char 0))
-(define sedna:char001 (integer->char 1))
 
 ; Raises an exception
 (define (sedna:raise-exn . msg)
@@ -23,23 +18,23 @@
 ; Basic read and write operations on port
 
 ; Reads n characters from the input-port
-(define (sedna:read-n-chars n input-port)
+(define (sedna:read-n-bytes n input-port)
   (cond
     ((= n 0)  ; nothing to read
      '())
-    ((eof-object? (peek-char input-port))
-     (sedna:raise-exn "sedna:read-n-chars: Unexpected end of input port")
+    ((eof-object? (sedna:peek-byte input-port))
+     (sedna:raise-exn "sedna:read-n-bytes: Unexpected end of input port")
      #f)
     (else
-     (cons (read-char input-port)
-           (sedna:read-n-chars (- n 1) input-port)))))
+     (cons (sedna:read-byte input-port)
+           (sedna:read-n-bytes (- n 1) input-port)))))
 
 ; Reads n or less characters from the input-port
 (define (sedna:read-n-or-less n input-port)
   (if
-   (or (eof-object? (peek-char input-port)) (= n 0))
+   (or (eof-object? (sedna:peek-byte input-port)) (= n 0))
    '()       
-   (cons (read-char input-port)
+   (cons (sedna:read-byte input-port)
          (sedna:read-n-or-less (- n 1) input-port))))
 
 ; Returns the first n members of the list
@@ -55,39 +50,7 @@
            (sedna:first-n (- n 1) (cdr lst))))))
 
 ;-------------------------------------------------
-; Convertions between the integer and its 4-byte representation in the
-; Network byte order
-
-; Converts an integer number to a list of 4 characters
-(define (sedna:integer->chars num)
-  (let* ((frst (quotient num 16777216))
-         (num (- num (* frst 16777216)))
-         (scnd (quotient num 65536))
-         (num (- num (* scnd 65536)))
-         (thrd (quotient num 256))
-         (frth (- num (* thrd 256))))
-    (list (integer->char frst)
-          (integer->char scnd)
-          (integer->char thrd)
-          (integer->char frth))))
-
-(define (sedna:chars->integer char-lst)
-  (+ (* (char->integer (car char-lst)) 16777216)
-     (* (char->integer (cadr char-lst)) 65536)
-     (* (char->integer (caddr char-lst)) 256)
-     (char->integer (cadddr char-lst))))
-
-;-------------------------------------------------
 ; Conversion between a string and its protocol network representation
-
-; Converts a string to its network representation
-; Returns: (listof char)
-(define (sedna:string->network str)
-  (cons
-   sedna:char000
-   (append
-    (sedna:integer->chars (string-length str))
-    (string->list str))))
 
 ; Converts a list of chars to their network representation
 ; Returns: (listof char)
@@ -97,53 +60,6 @@
    (append
     (sedna:integer->chars (length chars))
     chars)))
-
-; Extracts the network string from the list of chars
-; Returns: (values string remaining-chars)
-(define (sedna:extract-string chars)
-  (if
-   (< (length chars) 5)  ; at least 5 chars for format and length
-   (begin
-     (sedna:raise-exn "sedna:extract-string: No string found")
-     #f)
-   (let ((lng 
-          (sedna:chars->integer
-           (sedna:first-n 4 (cdr chars))))
-         (rest (list-tail chars 5)))
-     (values (list->string (sedna:first-n lng rest))
-             (list-tail rest lng)))))
-                    
-;-------------------------------------------------
-; Writing a package
-
-;; Writes the package to the output-port
-;;  header-code - the number that represents the code of the message
-;;  body - the string that represents the message body
-;(define (sedna:write-package header-code body output-port)
-;  (display
-;   (list->string (sedna:integer->chars header-code))
-;   output-port)
-;  (display
-;   (list->string (sedna:integer->chars (string-length body)))
-;   output-port)
-;  (display body output-port))
-
-; Writes the package to the output-port
-;  header-code - the number that represents the code of the message
-;  body - the list of bytes that represent the message body
-(define (sedna:write-package-as-bytes header-code body output-port)
-  (display
-   (list->string (sedna:integer->chars header-code))
-   output-port)
-  (display
-   (list->string (sedna:integer->chars (length body)))
-   output-port)
-  (display
-   (list->string body)
-   output-port)
-  (sedna:flush-output-port output-port)
-  ;(pp (list "Sent:" header-code))
-  )
   
 ;-------------------------------------------------
 ; Reading a package
@@ -158,12 +74,12 @@
 ;  (let*  ; the order of evaluation is significant
 ;      ((header-code
 ;        (sedna:chars->integer
-;         (sedna:read-n-chars 4 input-port)))
+;         (sedna:read-n-bytes 4 input-port)))
 ;       (body-size
 ;        (sedna:chars->integer
-;         (sedna:read-n-chars 4 input-port))))
+;         (sedna:read-n-bytes 4 input-port))))
 ;    (values header-code
-;            (list->string (sedna:read-n-chars body-size input-port)))))
+;            (list->string (sedna:read-n-bytes body-size input-port)))))
 
 ; Reads the package from input port
 ; Returns: (values header-code body-char-list)
@@ -172,13 +88,13 @@
   (let*  ; the order of evaluation is significant
       ((header-code
         (sedna:chars->integer
-         (sedna:read-n-chars 4 input-port)))
+         (sedna:read-n-bytes 4 input-port)))
        (body-size
         (sedna:chars->integer
-         (sedna:read-n-chars 4 input-port))))
+         (sedna:read-n-bytes 4 input-port))))
     ;(pp (list "Received:" header-code))
     (values header-code
-            (sedna:read-n-chars body-size input-port))))
+            (sedna:read-n-bytes body-size input-port))))
 
 ; Reads the first package after packages with sedna:ItemPart and sedna:ItemEnd
 ; header codes.
@@ -709,7 +625,7 @@
 (define (sedna:bulk-load-port port connection)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))  
-     (let loop ((ch (peek-char port)))
+     (let loop ((ch (sedna:peek-byte port)))
        (cond
          ((eof-object? ch)
           (close-input-port port)
@@ -739,7 +655,7 @@
            sedna:BulkLoadPortion
            (sedna:chars->network (sedna:read-n-or-less 1000 port))
            out)
-          (loop (peek-char port)))))))
+          (loop (sedna:peek-byte port)))))))
 
 ;-------------------------------------------------
 ; High-level API functions
@@ -869,11 +785,11 @@
          ((sedna:input-stream-item-part-getter input-stream)))
         (port-reader port)))))
 
-; Analogue of R5RS `read-char'
-(define sedna:read-char (sedna:char-reader-helper read-char))
+; Analogue of R5RS `sedna:read-byte'
+(define sedna:sedna:read-byte (sedna:char-reader-helper sedna:read-byte))
 
-; Analogue of R5RS `peek-char'
-(define sedna:peek-char (sedna:char-reader-helper peek-char))
+; Analogue of R5RS `sedna:peek-byte'
+(define sedna:sedna:peek-byte (sedna:char-reader-helper sedna:peek-byte))
   
 ; Reads the string from Sedna input stream until the newline symbol
 ; Consumes the newline symbol from stream, returns the string without
@@ -886,7 +802,7 @@
                    (char-ready? port)
                    #t
                    ((sedna:input-stream-item-part-getter input-stream)))
-                  (read-char port))))
+                  (sedna:read-byte port))))
         (cond
           ((eof-object? ch)  ; the file is over
            (if (null? char-lst)  ; nothing was read
@@ -897,14 +813,14 @@
              (if  ; followed by newline
               (and
                (not (and (char-ready? port)
-                         (eof-object? (peek-char port))))
+                         (eof-object? (sedna:peek-byte port))))
                (begin
                  (if
                    (char-ready? port)
                    #t
                    ((sedna:input-stream-item-part-getter input-stream)))
-                 (char=? (peek-char port) #\newline)))
-              (read-char port)  ; consume this newline as well
+                 (char=? (sedna:peek-byte port) #\newline)))
+              (sedna:read-byte port)  ; consume this newline as well
               #t  ; otherwise, do nothing
               )
              (list->string (reverse char-lst))))
@@ -932,7 +848,7 @@
                   (lambda ()
                     (cond  ; stream is over?
                       ((and (char-ready? pipe-from)
-                            (eof-object? (peek-char pipe-from)))
+                            (eof-object? (sedna:peek-byte pipe-from)))
                        #f  ; nothing was read from in
                        )
                       ((not (= (sedna:port-position out) curr-position))

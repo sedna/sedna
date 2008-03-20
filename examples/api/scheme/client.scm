@@ -24,7 +24,7 @@
       (newline)
       (k (sedna:begin-transaction conn)))
     (lambda ()
-      (sedna:execute-query conn "LOAD \"..\data\region.xml\" \"regions\"")))))
+      (sedna:execute-query conn "LOAD '../data/region.xml' 'regions'")))))
 
 ; Execute a statement and represent it as an SXML nodeset
 (pp
