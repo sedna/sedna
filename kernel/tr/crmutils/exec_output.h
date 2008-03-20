@@ -274,10 +274,12 @@ class se_socketostream_base : public se_ostream
 			if(result_portion_sent >= max_result_size-_res_msg->length+5+_type_offset)
 		    {
               _res_msg->length = max_result_size-result_portion_sent+5+_type_offset;
-              result_portion_sent = max_result_size;
-		    }
-			else
-				throw USER_EXCEPTION(SE2041);
+			  if(_res_msg->length <= 0)
+			  {
+				  result_portion_sent = 0;
+				  throw USER_EXCEPTION(SE2041);
+			  }
+			}
         
         if(_res_msg->length > 5+_type_offset)
         {
@@ -383,8 +385,11 @@ class se_debug_socketostream : public se_socketostream_base
         _type_offset = 4;
         
         se_debug_info_type type = se_QueryTrace; //if debug_info_type is not set, it is se_QueryTrace by default
+
+		max_result_size = 0;
+        result_portion_sent = 0;
         
-        int2net_int(type, _res_msg->body);
+		int2net_int(type, _res_msg->body);
       	_res_msg->body[_type_offset] = 0;    // in this version string format is always 0
        	_res_msg->length = 5+_type_offset;   // the body contains type - 4 bytes, string format - 1 byte, string length - 4 bytes and a string
   	}
