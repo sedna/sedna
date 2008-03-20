@@ -561,6 +561,8 @@ $Attribute$&$Attribute Value$&$Attribute Value Length$\\
 \hline
 \verb!SEDNA_ATTR_QUERY_EXEC_TIMEOUT! & \emph{time in seconds}	 & sizeof(int)\\
 \hline
+\verb!SEDNA_ATTR_MAX_RESULT_SIZE! & \emph{size in bytes}	 & sizeof(int)\\
+\hline
 \end{tabular}}
 \end{center}
 \end{figure}
@@ -572,6 +574,8 @@ The \verb!SEDNA_ATTR_DEBUG! connection attribute turns on/off query debug mode. 
 The \verb!SEDNA_ATTR_CONCURRENCY_TYPE! connection attribute changes the mode of the next transactions. Transaction can be set to run as READ-ONLY (\verb!SEDNA_READONLY_TRANSACTION!) or UPDATE-transaction (\verb!SEDNA_UPDATE_TRANSACTION!). 
 
 The \verb!SEDNA_ATTR_QUERY_EXEC_TIMEOUT! connection attribute allows to set the limit on query execution time. If set, for each next query in this session, query execution will be stopped if it lasts longer than timeout set. In this case transaction in bounds of which the query run is rollback. By default there is no any timeout for query execution, that is a query can be executed as long as needed.
+
+The \verb!SEDNA_ATTR_MAX_RESULT_SIZE! connection attribute allows to set the limit on query result size. If this attribute is set, the server will cut the result data if its size exceeds the specified limit. By default, result data that is passed from server in reponse to user query can be of unlimited size. 
 
 An application can get connection attributes using \verb!SEgetConnectionAttr!:
 
