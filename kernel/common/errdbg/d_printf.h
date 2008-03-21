@@ -13,6 +13,7 @@
 
 #ifdef EL_DEBUG
 #  if (EL_DEBUG == 1)
+#    define DPRINTF(ARGS)                       el_debug_printf ARGS
 #    define d_printf1(s1)						el_debug_printf(s1)
 #    define d_printf2(s1, s2)					el_debug_printf(s1, s2)
 #    define d_printf3(s1, s2, s3)				el_debug_printf(s1, s2, s3)
@@ -23,6 +24,7 @@
 #    define d_flush()							el_debug_flush()
 #    define ASSERT								U_ASSERT
 #  else
+#    define DPRINTF(ARGS)                       (void)0
 #    define d_printf1(s1)						0
 #    define d_printf2(s1, s2)					0
 #    define d_printf3(s1, s2, s3)				0
@@ -34,6 +36,7 @@
 #    define ASSERT(x)							0
 #  endif
 #else
+#  define DPRINTF(ARGS)                         (void)0
 #  define d_printf1(s1)							0
 #  define d_printf2(s1, s2)						0
 #  define d_printf3(s1, s2, s3)					0

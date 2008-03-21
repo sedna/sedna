@@ -138,6 +138,12 @@ Errors could be outputted to the user in the format of <sedna-message>:
 #include "common/utils.h"
 #include "common/errdbg/error_codes.h"
 
+/*	Never use catch(...), use catch(ANY_SE_EXCEPTION) instead. Catch(...) 
+	statement is missinterpreted by cl version 13 and earlier ones. It catches
+	not just any C++ object coming from 'throw' statement (as per C++ standard)
+	but also access violations and other exceptional conditions reported by OS.
+	For catch(ANY_SE_EXCEPTION) to work properly ensure that all exceptions
+	in the project are descendants of std::exception class. */ 
 #define ANY_SE_EXCEPTION	std::exception &
 
 #define SYSTEM_EXCEPTION(msg) \
@@ -208,7 +214,9 @@ Errors could be outputted to the user in the format of <sedna-message>:
 class SednaException : public std::exception
 {
 private:
+	/* see SednaException::getMsg() for explanation (in cpp file) */ 
 	mutable std::string descriptCache;
+
 protected:
     std::string file; 
     std::string function;
@@ -218,29 +226,52 @@ protected:
     virtual std::string getMsg2()         const = 0;
 
 public:
-    SednaException(const char* _file_, 
+	/*	Since SednaException is derived from std::exception, throw() specification
+		established in base class must be met. The compiler-generated destructor
+		has wrong throw() specification since std::string destructor doesn't
+		manifest anything about exceptions. 
+		
+		GCC is the jerk! */ 
+	~SednaException() throw() { ; }
+
+	SednaException(const char* _file_, 
                    const char* _function_,
                    int _line_,
                    const char* _err_msg_) : file(_file_),
                                             function(_function_),
                                             line(_line_),
                                             err_msg(_err_msg_) {}
-	const std::string &getMsg()          const
-	{
-		if (descriptCache.empty()) 
-		{
-			std::string descript = getMsg2();
-			descriptCache.swap(descript);
-		}
-		return descriptCache;
-	}
+
+	const std::string &getMsg()          const;
     virtual std::string getDescription() const { return err_msg; }
     virtual std::string getFile()        const { return file; }
     virtual std::string getFunction()    const { return function; }
     virtual int         getLine()        const { return line; }
 
+	/*	Throw self. Used somewhere to determine the preciese type
+		of the exception object given a reference to SednaException.
+		The code is similar to this snippet:
+		
+		void DispatchSednaException(SednaException *e)
+		{
+			try
+			{
+				e.rase();
+			}
+			catch(const SednaSystemEnvException &sysEnvE)
+			{
+				-- the exception is SednaSystemEnvException, act accordingly --
+			}
+			catch(const SednaSystemException &sysE)
+			{
+				-- the exception is SednaSystemException, act accordingly --
+			}
+			-- etc --
+		}*/ 
 	virtual void raise() const = 0;
 
+	/*	The standard method to obtain exception info defined by 
+		all std::exception descendants. */ 
 	const char *what() const throw() { return getMsg().c_str(); }
 };
 
@@ -332,6 +363,9 @@ protected:
 	virtual std::string getMsg2() const;
 
 public:
+	/* see ~SednaException() for explanation */ 
+	~SednaUserExceptionFnError() throw() { ; }
+
     SednaUserExceptionFnError(const char* _file_, 
                               const char* _function_,
                               int _line_,
@@ -361,6 +395,9 @@ protected:
 	virtual std::string getMsg2() const;
 
 public:
+	/* see ~SednaException() for explanation */ 
+	~SednaUserEnvException() throw() { ; }
+
     SednaUserEnvException(const char* _file_, 
                           const char* _function_,
                           int _line_,
