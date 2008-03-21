@@ -117,7 +117,7 @@ DWORD WinExceptFilter(DWORD exceptCode,
 #else
 #include <unistd.h>
 #include <signal.h>
-#include <mman.h>
+#include <sys/mman.h>
 #include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
@@ -150,12 +150,12 @@ int main(int argc, char **argv)
 {
 	int exitCode = -1;
 	void *altStackMem = NULL;
-	stack_t altStackNew = {0}, altStackOld = {0};
+	stack_t altStackNew, altStackOld;
 	int pageSize = 0;
 	int altStackPagesNum = 0;
 	int altStackPagesTotal = 0;
 	int altStackPagesOffset = 0;
-	struct sigaction segvSigActionNew = {0}, segvSigActionOld = {0};
+	struct sigaction segvSigActionNew, segvSigActionOld;
 
 	pageSize = getpagesize();
 #ifdef ENABLE_ALTSTACK
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 	exitCode = TRmain(argc, argv);
 
 	/* restore SEGV signal handler */ 
-	if (0 != sigaction(SIGSEGV, &segSigActionOld, NULL))
+	if (0 != sigaction(SIGSEGV, &segvSigActionOld, NULL))
 	{
 		perror("sigaction");
 		abort(); 
