@@ -8,9 +8,30 @@
 #include "common/u/uprocess.h"
 #include "common/errdbg/event_log.h"
 
+/*	SednaException is derived from std::exception, hence
+	it must implement the following method:
+	
+	const char *what() const throw();
+
+	SednaException defines virtual function to obtain
+	error description as std::string, namely getMsg2().
+	The string must not vanish when what() function
+	returns. We have descriptCache member for this purpose.
+*/ 
+const std::string &SednaException::getMsg() const
+{
+	if (descriptCache.empty()) 
+	{
+		std::string descript = getMsg2();
+		descriptCache.swap(descript);
+	}
+	return descriptCache;
+}
+
 std::string SednaSystemException::getMsg2() const
 {
     std::string res;
+	res.reserve(1024);
     res += "SEDNA Message: FATAL ERROR\n";
     res += "System error. This error means system malfunction.\n";
     res += "Details: " + err_msg + "\n";
@@ -23,6 +44,7 @@ std::string SednaSystemException::getMsg2() const
 std::string SednaSystemEnvException::getMsg2() const
 {
     std::string res;
+	res.reserve(1024);
     res += "SEDNA Message: FATAL ERROR\n";
     res += "Environment error. This error is caused by environment (operating system) and ";
     res += "it means that the system cannot continue execution anymore.\n";
@@ -36,6 +58,7 @@ std::string SednaSystemEnvException::getMsg2() const
 std::string SednaUserException::getMsg2() const
 {
     std::string res;
+	res.reserve(1024);
     res += "SEDNA Message: ERROR ";
     res += std::string(user_error_code_entries[internal_code].code) + "\n";
     res += std::string(user_error_code_entries[internal_code].descr) + "\n";
@@ -54,6 +77,7 @@ std::string SednaUserExceptionFnError::getMsg2() const
     U_ASSERT(error_name.size() != 0);
 
     std::string res;
+	res.reserve(1024);
     res += "SEDNA Message: ERROR ";
     res += error_name + "\n";
     res += "    " + (error_descr.size() == 0 ? std::string("User defined error") : error_descr) + "\n";
@@ -73,6 +97,7 @@ std::string SednaUserEnvException::getDescription() const
 std::string SednaUserEnvException::getMsg2() const
 {
     std::string res;
+	res.reserve(1024);
     res += "SEDNA Message: ERROR ";
     res += std::string(user_error_code_entries[internal_code].code) + "\n";
     res += std::string(user_error_code_entries[internal_code].descr) + "\n";
