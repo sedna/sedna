@@ -36,7 +36,8 @@ SSMMsg *sm_server = NULL;
 
 DECLARE_TIME_VARS
 
-int main (int argc, char** argv)
+extern "C"
+int TRmain (int argc, char** argv)
 {
 //  getchar();
 //  Sleep(100);

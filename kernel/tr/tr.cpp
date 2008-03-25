@@ -82,8 +82,8 @@ void TrnCtrlHandler(int signo)
 
 //u_timeb ttt1, ttt2;
 
-
-int main(int argc, char *argv[])
+extern "C"
+int TRmain(int argc, char *argv[])
 {
     int ret_code = 0;
 	//DebugBreak();

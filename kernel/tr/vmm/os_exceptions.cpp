@@ -4,6 +4,81 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+#include "common/errdbg/d_printf.h"
+
+extern "C" int TRmain(int argc, char **argv);
+
+enum HitType {HIT_UNKNOWN, HIT_READ, HIT_WRITE};
+
+extern "C" int IsAccessViolationNonFatal(void *addr,
+										 HitType hitType,
+										 void *context)
+{
+	return 0;
+}
+
+#define ABORT_CONDITIONAL_HALT()
+
+#ifdef _WIN32
+#include <windows.h>
+
+static DWORD WinExceptFilter(DWORD exceptCode,
+							 LPEXCEPTION_POINTERS exceptPtrs);
+
+int main(int argc, char **argv)
+{
+	int exitCode=-1;
+	__try
+	{
+		exitCode = TRmain(argc, argv);
+	}
+	__except(WinExceptFilter(GetExceptionCode(), GetExceptionInformation()))
+	{
+		/* will not get here normally */ 
+		TerminateProcess(GetCurrentProcess(), exitCode);
+	}
+	return exitCode;
+}
+
+DWORD WinExceptFilter(DWORD exceptCode,
+					  LPEXCEPTION_POINTERS exceptPtrs)
+{
+	DWORD resolution = EXCEPTION_CONTINUE_SEARCH;
+	switch(exceptCode)
+	{
+		case EXCEPTION_ACCESS_VIOLATION:
+		{
+			void *hitAddr = (void *)exceptPtrs->ExceptionRecord->ExceptionInformation[1];
+			HitType hitType = (exceptPtrs->ExceptionRecord->ExceptionInformation[0] ? HIT_WRITE : HIT_READ);
+
+			if (IsAccessViolationNonFatal(hitAddr, hitType, exceptPtrs->ContextRecord))
+			{
+				resolution = EXCEPTION_CONTINUE_EXECUTION;
+			}
+			else 
+			{
+				ABORT_CONDITIONAL_HALT(); 
+			}
+		}
+	}
+	return resolution;
+}
+
+#else
+
+static void UnixSegvSignalHandler()
+
+int main(int argc, char **argv)
+{
+	int exitCode=-1;
+
+	exitCode = TRmain(argc, argv);
+
+	return exitCode;
+}
+
+#endif
+
 #include "common/sedna.h"
 #include "tr/vmm/os_exceptions.h"
 #include "tr/vmm/vmm.h"
