@@ -502,21 +502,24 @@ void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * blo
 }
 
 
-xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block)
+xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block, const xptr & undo_hint)
 {
     xptr old_blk=ADDR2XPTR(block);
 	node_blk_hdr* tmp= se_new node_blk_hdr;
 	*tmp=*block;
-	xptr new_block;
+	xptr new_block = undo_hint;
 	bool persistent= IS_DATA_BLOCK(old_blk);
-	if (persistent)
-	{
-		vmm_alloc_data_block(&new_block);
-		//PHYS LOG
-		hl_phys_log_create_node_blk(XADDR(new_block));
+	if (new_block == XNULL) {
+		if (persistent)
+		{
+			vmm_alloc_data_block(&new_block);
+			//PHYS LOG
+			hl_phys_log_create_node_blk(XADDR(new_block));
+		}
+		else
+			vmm_alloc_tmp_block(&new_block);
 	}
-	else
-		vmm_alloc_tmp_block(&new_block);
+	CHECKP(new_block);
 	VMM_SIGNAL_MODIFICATION(new_block);
 	node_blk_hdr::init(XADDR(new_block),tmp->dsc_size);
 	node_blk_hdr * new_block_hdr=(node_blk_hdr *)(XADDR(new_block));
