@@ -92,7 +92,7 @@ void deleteBlock(node_blk_hdr * block);
 
 void makeBlockConsistentAfterCuttingTheEnd(node_blk_hdr *block,n_dsc* node,shft counter);
 
-xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block);
+xptr createBlockNextToTheCurrentBlock (node_blk_hdr * block, const xptr & undo_hint = XNULL);
 
 void shiftNodeToTheNewBlock(n_dsc* source,xptr dest,shft size,node_blk_hdr * block);
 

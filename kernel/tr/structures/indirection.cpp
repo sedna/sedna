@@ -237,16 +237,22 @@ xptr add_record_to_indirection_table(xptr p)
 {
 	xptr rba;
 	CHECKP(p);
+	node_blk_hdr * rbh;
 	node_blk_hdr * nbh=(GETBLOCKBYNODE(p));
+	
 	if (rollback_mode==MODE_UNDO)
     {
-        
-		rba=rollback_record;        
-    }
-	else
-	{
+		rba=rollback_record;
+		rbh=(GETBLOCKBYNODE(rba));
 		
+		if (blocks_to_delete->find(BLOCKXPTR(rba)) != blocks_to_delete->end()) {
+			blocks_to_delete->erase(BLOCKXPTR(rba));
+			createBlockNextToTheCurrentBlock(nbh, BLOCKXPTR(rba));
+			CHECKP(p);
+		}
 		
+		U_ASSERT(blocks_to_delete->find(BLOCKXPTR(rba)) == blocks_to_delete->end());
+    } else {
 		if (nbh->free_first_indir!=0)
 			rba=ADDR2XPTR(GETPOINTERTODESC(nbh,nbh->free_first_indir));
 		else
@@ -256,8 +262,8 @@ xptr add_record_to_indirection_table(xptr p)
 			node_blk_hdr * qbh=(GETBLOCKBYNODE(q_bl));
 			rba=ADDR2XPTR(GETPOINTERTODESC(qbh,qbh->free_first_indir));
 		}
-
 	}
+
 	CHECKP(rba);		
 	VMM_SIGNAL_MODIFICATION(rba);
 
@@ -721,8 +727,8 @@ void sync_indirection_table()
 			block = *it2;
 			CHECKP(block);
 			node_blk_hdr* blk=GETBLOCKBYNODE(block);
-			if (blk->count+blk->indir_count==0)
-					deleteBlock(blk);
+			U_ASSERT(blk->count+blk->indir_count==0);
+			vmm_delete_block(blk->sm_vmm.p);
 			it2++;
 		}
         
@@ -830,32 +836,58 @@ void add_predeleted_block(xptr block)
 {
 	if (IS_DATA_BLOCK(block)) {
 		CHECKP(block);
-
 		node_blk_hdr * nbh = (node_blk_hdr *) XADDR(block);
+		
+//		if ((int) block.addr == 0x6e280000) {
+//			sleep(15);
+//		}
+		U_ASSERT(blocks_to_delete->find(BLOCKXPTR(block)) == blocks_to_delete->end());
+		U_ASSERT((nbh->count + nbh->indir_count) == 0);
 
-		xptr l_bl = nbh->pblk_indir;
-		xptr r_bl = nbh->nblk_indir;
+		xptr li = nbh->pblk_indir;
+		xptr ri = nbh->nblk_indir;
+		xptr lb = nbh->pblk;
+		xptr rb = nbh->nblk;
 
 		if (nbh->snode->bblk_indir == nbh->sm_vmm.p)
-			nbh->snode->bblk_indir=r_bl;
+			nbh->snode->bblk_indir = ri;
 
-		if (l_bl!=XNULL)
-		{
-			CHECKP(l_bl);
-			VMM_SIGNAL_MODIFICATION(l_bl);
-			((node_blk_hdr *) (GETBLOCKBYNODE(l_bl)))->nblk_indir = r_bl;
-		}
-
-		if (r_bl!=XNULL)
-		{
-			CHECKP(r_bl);
-			VMM_SIGNAL_MODIFICATION(r_bl);
-			((node_blk_hdr *) (GETBLOCKBYNODE(r_bl)))->pblk_indir = l_bl;
-		}
+		if (nbh->snode->bblk == nbh->sm_vmm.p)
+			nbh->snode->bblk = rb;
 
 		VMM_SIGNAL_MODIFICATION(block);
 		nbh->pblk_indir = XNULL;
 		nbh->nblk_indir = XNULL;
+		nbh->pblk = XNULL;
+		nbh->nblk = XNULL;
+		
+		if (li!=XNULL)
+		{
+			CHECKP(li);
+			VMM_SIGNAL_MODIFICATION(li);
+			((node_blk_hdr *) (GETBLOCKBYNODE(li)))->nblk_indir = ri;
+		}
+
+		if (lb!=XNULL)
+		{
+			CHECKP(lb);
+			VMM_SIGNAL_MODIFICATION(lb);
+			((node_blk_hdr *) (GETBLOCKBYNODE(lb)))->nblk = rb;
+		}
+
+		if (ri!=XNULL)
+		{
+			CHECKP(ri);
+			VMM_SIGNAL_MODIFICATION(ri);
+			((node_blk_hdr *) (GETBLOCKBYNODE(ri)))->pblk_indir = li;
+		}
+
+		if (rb!=XNULL)
+		{
+			CHECKP(rb);
+			VMM_SIGNAL_MODIFICATION(rb);
+			((node_blk_hdr *) (GETBLOCKBYNODE(rb)))->pblk = lb;
+		}
 
 		blocks_to_delete->insert(block);
 	}
