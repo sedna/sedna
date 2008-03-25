@@ -59,9 +59,9 @@
   (define (exc:signal obj)	; Encapsulate the object into a cell
     (raise (list obj)))         ; to let Gambit know it's our object
 
-  (define gambit-error error)	; Save the native Gambit 'error' function
+;  (define gambit-error error)	; Save the native Gambit 'error' function
 
-  (define (error msg . args)
+  (define (myenv:error msg . args)
     (abort (make-property-condition
 	    'exn
 	    'message (cons msg args))))
@@ -95,19 +95,20 @@
 		 'message
 		 (list proc mes obj)))))))
 
-  ; An "at hock" implementation
-  (define-macro (handle-exceptions var handle-expr expr . more-exprs)
-    `(try
-      ,(cons `begin (cons expr more-exprs))		
-      (lambda (escape proc mes obj)
-        (let((,var
-              (if (pair? proc)  ; by abort or exc:signal
-                  (car proc)
-                  (make-property-condition  ; required by SRFI-12
-                   'exn
-                   'message
-                   (list proc mes obj)))))
-          ,handle-expr))))
+  ; DL: defined in "myenv-bigloo.scm"
+  ;; An "ad hoc" implementation
+  ;(define-macro (handle-exceptions var handle-expr expr . more-exprs)
+  ;  `(try
+  ;    ,(cons `begin (cons expr more-exprs))		
+  ;    (lambda (escape proc mes obj)
+  ;      (let((,var
+  ;            (if (pair? proc)  ; by abort or exc:signal
+  ;                (car proc)
+  ;                (make-property-condition  ; required by SRFI-12
+  ;                 'exn
+  ;                 'message
+  ;                 (list proc mes obj)))))
+  ;        ,handle-expr))))
   
   (define (abort obj)		; Encapsulate the object into a cell
     (the_failure (list obj) "" "")	; to let Bigloo know it's our object
@@ -151,19 +152,22 @@
   (define (parent-exception-handler)
     (lambda (exn) (exc:signal exn)))
   )
- 
- 
+
+ (chicken  ; Chicken supports SRFI-12 natively
+   (define exc:signal signal)
+ )
+  
  (plt
   
-  ; This function was borrowed from Bigloo's cond-expand branch
-  ; I am not sure whether this is right
-  (define (current-exception-handler)
-    (let ((result
-	   (call-with-current-continuation
-	    (lambda (k)
-	      (lambda (exn) (k (list exn)))))))
-      (if (procedure? result) result
-	  (abort (car result)))))
+  ; DL: supported in PLT natively
+;  ; Borrowed from Bigloo's cond-expand branch
+;  (define (current-exception-handler)
+;    (let ((result
+;	   (call-with-current-continuation
+;	    (lambda (k)
+;	      (lambda (exn) (k (list exn)))))))
+;      (if (procedure? result) result
+;	  (abort (car result)))))
   
   
   ; A helper function which converts an exception (PLT internal exception
@@ -218,9 +222,8 @@
 
   (define (signal obj)
     (raise (list obj)))
-
   
-  )
+  )  ; end of PLT branch
 
 )
 
