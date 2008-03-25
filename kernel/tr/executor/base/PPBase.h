@@ -250,8 +250,8 @@ public:
     RESET_CURRENT_PP;
 }
 
-
-    virtual std::string getMsg() const
+protected:
+    virtual std::string getMsg2() const
     {
         std::string res;
         res += "SEDNA Message: ERROR ";
