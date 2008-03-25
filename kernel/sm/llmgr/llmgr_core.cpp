@@ -1858,6 +1858,7 @@ void llmgr_core::ll_log_flush_all_last_records(bool sync)
   //d_printf1("flush of logical log finished\n");
 }
 
+/*
 void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 {
   RECOVERY_CRASH;
@@ -1906,7 +1907,6 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 	  ll_log_unlock(sync);
 	  return;
   }
-
 
   //compute number of bytes to be flushed 
   if (mem_head->begin_not_drbl_offs < (mem_head->t_tbl[trid].last_rec_mem_offs + last_rec_len))
@@ -1984,7 +1984,32 @@ void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
 
   //d_printf1("flush of logical log finished\n");
 }
+*/
 
+void llmgr_core::ll_log_flush(transaction_id trid, bool sync)
+{
+  RECOVERY_CRASH;
+
+  //d_printf1("flushing of logical log started\n");
+  ll_log_lock(sync);
+ 
+
+  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+  int rmndr_len;
+
+  if (mem_head->t_tbl[trid].last_rec_mem_offs == NULL_OFFS)
+  {
+     ll_log_unlock(sync);
+     return; //ok all trid records on disk
+  }
+
+  ll_log_flush_lsn(mem_head->t_tbl[trid].last_lsn, false);
+
+  U_ASSERT(mem_head->t_tbl[trid].last_rec_mem_offs == NULL_OFFS);
+
+  ll_log_unlock(sync);
+}
 
 //this function flushes last record in bufer
 //it is only used when all records excepting last one are flushed on disk
