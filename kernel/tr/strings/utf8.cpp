@@ -487,7 +487,7 @@ void CharsetHandler_utf8::matches (tuple &t, tuple_cell *t1, tuple_cell *t2, tup
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-	catch (const std::exception &e)
+	catch (const PcreException &e)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
