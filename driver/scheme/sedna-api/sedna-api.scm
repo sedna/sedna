@@ -8,12 +8,6 @@
 ;==========================================================================
 ; Low-level operations
 
-; Raises an exception
-(define (sedna:raise-exn . msg)
-  (exc:signal
-   (make-property-condition 'exn
-                            'message (sedna:apply-string-append msg))))
-
 ;-------------------------------------------------
 ; Basic read and write operations on port
 
@@ -36,18 +30,6 @@
    '()       
    (cons (sedna:read-byte input-port)
          (sedna:read-n-or-less (- n 1) input-port))))
-
-; Returns the first n members of the list
-(define (sedna:first-n n lst)
-  (cond
-    ((= n 0)  ; nothing to read
-     '())
-    ((null? lst)
-     (sedna:raise-exn "sedna:first-n: Unexpected end of the list")
-     #f)
-    (else
-     (cons (car lst)
-           (sedna:first-n (- n 1) (cdr lst))))))
 
 ;-------------------------------------------------
 ; Conversion between a string and its protocol network representation
@@ -123,12 +105,12 @@
 ;    (connection-input-port ,port)
 ;    (connection-output-port ,port))
 
-; Predicate
+; Predicate: whether an object is a Sedna connection object
 (define (sedna:connection? obj)
   (and (pair? obj) (not (null? obj))
        (eq? (car obj) 'connection)
        (assq 'host (cdr obj)) (assq 'db-name (cdr obj))
-       (assq 'user (cdr obj)) (assq 'passworn (cdr obj))
+       (assq 'user (cdr obj)) (assq 'password (cdr obj))
        (assq 'connection-input-port (cdr obj))
        (assq 'connection-output-port (cdr obj))))
 
@@ -219,7 +201,7 @@
 (define sedna:AuthentificationFailed 170)
 (define sedna:ErrorResponse 100)
 
-; Establishing a connection
+; Establishing a connection with a Sedna database
 ; In the normal case, connection object is returned.
 ; In case of an error, exception is raised and #f is returned
 (define (sedna:connect-to-database host db-name user password)
@@ -295,7 +277,7 @@
 (define sedna:TransactionRollbackBeforeClose 520)
 
 ; Disconnects from the database
-; Returns #t in the correct case
+; Returns #t on a proper disconnect
 (define (sedna:disconnect-from-database connection)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -702,7 +684,7 @@
            "sedna:execute-query-xml: Unexpected header code from server: "
            (number->string code))))))))
 
-; Execute a query
+; Execute a query; query result items are represented in SXML
 (define (sedna:execute-query connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -951,6 +933,7 @@
 ;==========================================================================
 ; Wrapper for bulk load from stream
 
+; Load an XML document from an input stream into a database
 ; Is to be executed withing a transaction
 ;  port - an input port for a stream
 ;  document-name - the name of a new document in a database

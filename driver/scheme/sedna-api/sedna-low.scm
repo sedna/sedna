@@ -144,6 +144,24 @@
 ; Byte-level transfer operations
 ; Moved here from "sedna-api.scm"
 
+; Raises an exception
+(define (sedna:raise-exn . msg)
+  (exc:signal
+   (make-property-condition 'exn
+                            'message (sedna:apply-string-append msg))))
+
+; Returns the first n members of the list
+(define (sedna:first-n n lst)
+  (cond
+    ((= n 0)  ; nothing to read
+     '())
+    ((null? lst)
+     (sedna:raise-exn "sedna:first-n: Unexpected end of the list")
+     #f)
+    (else
+     (cons (car lst)
+           (sedna:first-n (- n 1) (cdr lst))))))
+
 (cond-expand
  ((and plt plt-bytes)
   ; Special byte operations for PLT with (non-R5RS) byte datatype support
