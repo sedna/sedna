@@ -3,6 +3,8 @@
  * Copyright (C) 2004 The Institute for System Programming of the Russian Academy of Sciences (ISP RAS)
  */
 
+/* os_exceptions.h now obsolete */ 
+
 #ifndef _OS_EXCEPTIONS_H
 #define _OS_EXCEPTIONS_H
 
