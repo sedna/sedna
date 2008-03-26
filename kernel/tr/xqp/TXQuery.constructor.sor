@@ -169,7 +169,7 @@ commentConstructor! [in_context in_c] >[out_context out_c]:
 
 	#(AST_COMMENT_CONSTR 
 	    (  e:expr[in_c] >[out_c] <<#commentConstructor=#(#["comment"], e);>>
-	     | s:AST_STRING_CONST <<#commentConstructor=#(#["comment"], #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"") + std::string(s->getText()) + std::string("\"")]));>>
+	     | s:AST_STRING_CONST <<#commentConstructor=#(#["comment"], #(#["const"], #(#["type"], #["!xs!string"]), #[std::string("\"") + escape_quot(std::string(s->getText())) + std::string("\"")]));>>
 	    )
 	 )
 

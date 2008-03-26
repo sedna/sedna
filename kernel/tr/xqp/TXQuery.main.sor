@@ -8,6 +8,7 @@
 #include "tr/xqp/context.h"
 #include "common/errdbg/exceptions.h"
 #include "common/u/uutils.h"
+#include "tr/xqp/parserutils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
