@@ -38,7 +38,7 @@ void u_ftime(u_timeb *t)
     gettimeofday(&tv, &tz);    /// ftime() is obsolete in FreeBSD 6.2 and higher
     
     t->time     = tv.tv_sec;
-    t->millitm  = tv.tv_usec;
+    t->millitm  = tv.tv_usec/1000;
     t->dstflag  = tz.tz_dsttime;
     t->timezone = tz.tz_minuteswest; 
 }
