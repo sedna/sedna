@@ -67,6 +67,8 @@ DWORD WinExceptFilter(DWORD exceptCode,
 #else
 
 static void UnixSegvSignalHandler()
+{
+}
 
 int main(int argc, char **argv)
 {
