@@ -754,6 +754,8 @@ void	nid_delete(xptr node) {
     CHECKP(node);
 	n_dsc*	dsc = (n_dsc*)XADDR(node);
 	bool	root = (dsc->pdsc == XNULL)?true:false;
+	bool	vroot = (GETBLOCKBYNODE(node))->snode->type == virtual_root;
+
 	t_nid	the_nid = nid_get_nid(node);
 	/* debug */
 	/*bool	root = true;
@@ -783,6 +785,19 @@ void	nid_delete(xptr node) {
 		delete[] (char*)XADDR(*(xptr*)the_nid.prefix);
 		--------------------------------------------------------*/
 	}
+
+    /*
+	 * If the virtual root is being deleted, then we should take care of
+	 * temporary nid string space pointer (TMPNIDBLK). All temporary blocks 
+	 * are deleted on the end of the kernel statement including TMPNIDBLK.
+	 * So it must be nulled when the last temporary schema node is deleted.
+	 * The virtual root schema node is always deleted after all others temporary
+	 * nodes, and it is always temporary by definition.
+	 */
+	if (vroot) {
+		TMPNIDBLK = XNULL;
+	}
+
 }
 
 /* 

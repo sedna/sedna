@@ -223,13 +223,14 @@ public:
                                                                             _internal_code_),
                                                                             xquery_line(0),
                                                                             physop_msg(NULL) {
-    if(_current_physop_)
-    {
-        xquery_line = _current_physop_->get_xquery_line();
-        physop_msg  = _current_physop_->get_error_msg();
+        if(_current_physop_)
+        {
+            xquery_line = _current_physop_->get_xquery_line();
+            physop_msg  = _current_physop_->get_error_msg();
+        }
+        RESET_CURRENT_PP;
     }
-    RESET_CURRENT_PP;
-}
+    
     SednaXQueryException(const char* _file_, 
                          const char* _function_,
                          int _line_,
@@ -242,13 +243,13 @@ public:
                                                                             _internal_code_), 
                                                                             xquery_line(0),
                                                                             physop_msg(NULL) {
-    if(_current_physop_)
-    {
-        xquery_line = _current_physop_->get_xquery_line();
-        physop_msg  = _current_physop_->get_error_msg();
+        if(_current_physop_)
+        {
+            xquery_line = _current_physop_->get_xquery_line();
+            physop_msg  = _current_physop_->get_error_msg();
+        }
+        RESET_CURRENT_PP;
     }
-    RESET_CURRENT_PP;
-}
 
 protected:
     virtual std::string getMsg2() const
