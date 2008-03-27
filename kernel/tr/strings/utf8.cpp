@@ -459,12 +459,6 @@ void CharsetHandler_utf8::replace (tuple &t, tuple_cell *t1, tuple_cell *t2, tup
 		//FIXME FORX0002 - is not ok here
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-	catch (const std::exception &e)
-	{
-		//FIXME FORX0002 - is not ok here
-		//FIXME: is this barch possible??
-		throw USER_EXCEPTION2(FORX0002, e.what());
-	}
 }
 
 template<class Iterator>
@@ -571,7 +565,7 @@ TokenizerResult* CharsetHandler_utf8::tokenize ( tuple_cell *t1, tuple_cell *t2,
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-	catch (const std::exception &e)
+	catch (const PcreException &e)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
@@ -608,7 +602,7 @@ bool CharsetHandler_utf8::matches (const tuple_cell *tc, const char *regex)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-	catch (const std::exception &e)
+	catch (const PcreException &e)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
@@ -627,7 +621,7 @@ bool CharsetHandler_utf8::matches (const char *tc, const char *regex)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
-	catch (const std::exception &e)
+	catch (const PcreException &e)
 	{
 		throw USER_EXCEPTION2(FORX0002, e.what());
 	}
