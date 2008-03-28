@@ -78,6 +78,9 @@ void hl_logical_log_on_transaction_begin(bool rcv_active, bool tr_ro_mode)
   is_need_checkpoint_on_transaction_commit = false;
   is_ll_on_transaction_initialized = true; 
 #endif
+#ifdef LOG_TRACE
+  elog(EL_LOG, ("LOG_TRACE: Transaction is started: trid=%d", trid));
+#endif
 }
 
 void hl_logical_log_on_session_end()
@@ -127,6 +130,9 @@ void hl_logical_log_on_transaction_end(bool is_commit, bool rcv_active)
         }
         else
         {
+#ifdef LOG_TRACE
+		   elog(EL_LOG, ("LOG_TRACE: Transaction starts rolling back: trid=%d", trid));
+#endif
            rollback_tr_by_logical_log(trid);
 #ifdef SE_ENABLE_FTSEARCH
 	   	   SednaIndexJob::rollback();
@@ -300,6 +306,14 @@ void hl_logical_log_element(const xptr &self,const xptr &left,const xptr &right,
   number_of_records++;
   tr_llmgr->ll_log_element(trid, self, left, right, parent, name, uri, prefix, type, inserted, true);
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Element is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Element is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+#endif
 }
 
 void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const char* name, xmlscm_type type,const  char* value,int data_size,const char* uri,const char* prefix,bool inserted)
@@ -309,6 +323,14 @@ void hl_logical_log_attribute(const xptr &self,const xptr &left,const xptr &righ
   number_of_records++;
   tr_llmgr->ll_log_attribute(trid, self, left, right, parent, name, type, value, data_size, uri, prefix, inserted, true);
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Attribute is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Attribute is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+#endif
 }
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int data_size,bool inserted)
 {
@@ -317,6 +339,14 @@ void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,con
   number_of_records++;
   tr_llmgr->ll_log_text(trid, self, left, right, parent, (char*)value, data_size, inserted, true);
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Text is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+#endif
 }
 void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,bool begin,bool inserted)
 {
@@ -324,6 +354,11 @@ void hl_logical_log_text_edit(const xptr &self,const  char* value,int data_size,
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_text_edit(trid, self, (char*)value, data_size, begin, inserted, true);
+#endif
+#ifdef LOG_TRACE
+  const char *op_name = (begin) ? (inserted ? "Insert left text":"Delete left text"):(inserted ? "Insert right text":"Delete right text");
+  	elog(EL_LOG, ("LOG_TRACE:  %s: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		op_name, self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
 void hl_logical_log_text(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,xptr& value,int data_size,bool inserted ) 
@@ -415,6 +450,14 @@ void hl_logical_log_comment(const xptr &self,const xptr &left,const xptr &right,
   number_of_records++;
   tr_llmgr->ll_log_comment(trid, self, left, right, parent, value, data_size, inserted, true); 
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Comment is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Comment is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+#endif
 }
 void hl_logical_log_document(const xptr &self,const  char* name,const  char* collection,bool inserted)
 {
@@ -425,6 +468,14 @@ void hl_logical_log_document(const xptr &self,const  char* name,const  char* col
 //  self.print();
   tr_llmgr->ll_log_document(trid, self, name, collection, inserted, true); 
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Document is inserted: trid=%d, self=%016llx, name=%s, coll=%s", trid, 
+  		self.layer, (int)self.addr, name, collection));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Document is deleted: trid=%d, self=%016llx, name=%s, coll=%s", trid, 
+  		self.layer, (int)self.addr, name, collection));
+#endif
 }
 void hl_logical_log_collection(const  char* name,bool inserted)
 {
@@ -432,6 +483,12 @@ void hl_logical_log_collection(const  char* name,bool inserted)
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_collection(trid, name, inserted, true);
+#endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Collection is created: trid=%d, name=%s", trid, name));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Text is deleted: trid=%d, name=%s", trid, name));
 #endif
 }
 
@@ -443,6 +500,14 @@ void hl_logical_log_namespace(const xptr &self,const xptr &left,const xptr &righ
   number_of_records++;
   tr_llmgr->ll_log_ns(trid, self, left, right, parent, uri, prefix, inserted, true);
 #endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Namespace is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Namespace is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+#endif
 }
 void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const xptr &parent,const  char* value,int total_size,shft target_size,bool inserted)
 {
@@ -450,6 +515,14 @@ void hl_logical_log_pi(const xptr &self,const xptr &left,const xptr &right,const
   if (!enable_log) return;
   number_of_records++;
   tr_llmgr->ll_log_pi(trid, self, left, right, parent, value, total_size, target_size, inserted, true);
+#endif
+#ifdef LOG_TRACE
+  if (inserted)
+  	elog(EL_LOG, ("LOG_TRACE: Pi is inserted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
+  else
+  	elog(EL_LOG, ("LOG_TRACE: Pi is deleted: trid=%d, self=%016llx, left=%016llx, right=%016llx, parent=%016llx", trid, 
+  		self.layer, (int)self.addr, left.layer, (int)left.addr, right.layer, (int)right.addr, parent.layer, (int)parent.addr));
 #endif
 }
 void hl_logical_log_indirection(int cl_hint, std::vector<xptr>* blocks)
@@ -476,6 +549,9 @@ void hl_logical_log_commit(transaction_id _trid)
      activate_and_wait_for_end_checkpoint();
   tr_llmgr->commit_trn(_trid, true);
 #endif
+#ifdef LOG_TRACE
+  elog(EL_LOG, ("LOG_TRACE: Transaction is committed: trid=%d", trid));
+#endif
 }
 
 void hl_logical_log_rollback(transaction_id _trid)
@@ -483,6 +559,9 @@ void hl_logical_log_rollback(transaction_id _trid)
 #ifdef LOGICAL_LOG
   tr_llmgr->ll_log_rollback(_trid, true);
   //d_printf3("num of records written by transaction id=%d, num=%d\n", trid, tr_llmgr->get_num_of_records_written_by_trn(trid)); 
+#endif
+#ifdef LOG_TRACE
+  elog(EL_LOG, ("LOG_TRACE: Transaction is rolled back: trid=%d", trid));
 #endif
 }
 
