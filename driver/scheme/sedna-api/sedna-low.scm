@@ -238,7 +238,7 @@
   
   )
  (else
-  ; Char datatype assumed to be represented as a byte
+  ; bytes datatype not defined
   
   ; Several constants for char, since Bigloo doesn't support sedna:char000  and such
   (define sedna:char000 (integer->char 0))

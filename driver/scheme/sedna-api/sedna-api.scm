@@ -106,13 +106,20 @@
 ;    (connection-output-port ,port))
 
 ; Predicate: whether an object is a Sedna connection object
+;
+; Function signature:
+;   object -> boolean
+;
+; Return value:
+;   #t iff Sedna connection object is supplied as argument
 (define (sedna:connection? obj)
   (and (pair? obj) (not (null? obj))
        (eq? (car obj) 'connection)
        (assq 'host (cdr obj)) (assq 'db-name (cdr obj))
        (assq 'user (cdr obj)) (assq 'password (cdr obj))
        (assq 'connection-input-port (cdr obj))
-       (assq 'connection-output-port (cdr obj))))
+       (assq 'connection-output-port (cdr obj))
+       #t))
 
 ; Constructor
 (define (sedna:construct-connection host db-name user password
@@ -201,9 +208,21 @@
 (define sedna:AuthentificationFailed 170)
 (define sedna:ErrorResponse 100)
 
-; Establishing a connection with a Sedna database
-; In the normal case, connection object is returned.
-; In case of an error, exception is raised and #f is returned
+; Establishing a connection with a database
+;
+; Function signature:
+;   string string string string -> connection-object
+;
+; Arguments (all of them having a string type):
+;   host name, database name, user name, password
+; A string "localhost" can be used for a database on the same machine
+;
+; Return value:
+;   a special Sedna connection object that denotes a connection with the
+;   database and is further supplied as an argument to the other API functions
+;
+; On failure to connect (e.g. Sedna database server not started
+; on the given host), an exception is raised
 (define (sedna:connect-to-database host db-name user password)
   (let* ((host (if (string=? host "localhost")
                    "127.0.0.1" host))
@@ -276,8 +295,14 @@
 (define sedna:CloseConnectionOk 510)
 (define sedna:TransactionRollbackBeforeClose 520)
 
-; Disconnects from the database
-; Returns #t on a proper disconnect
+; Disconnecting from the database
+;
+; Function signature:
+;   connection-object -> boolean
+; Sedna connection object is supplied as argument
+;
+; Return value: #t on successful disconnect
+; On failure to disconnect, an exception is raised
 (define (sedna:disconnect-from-database connection)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -316,8 +341,14 @@
 ;-------------------------------------------------
 ; High-level API functions
 
-; Begin transaction
-; In the normal case, returns #t. Otherwise, exception is raised
+; Begin a transaction
+;
+; Function signature:
+;   connection-object -> boolean
+;
+; Return value: #t on successfully beginning a new transaction
+; On failure to begin a transaction (e.g. another transaction is already in
+; progress for the given connection object), an exception is raised
 (define (sedna:begin-transaction connection)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -339,9 +370,15 @@
            "sedna:begin-transaction: Unexpected header code from server: "
            (number->string code))))))))
     
-; End transaction
-;  action ::= 'COMMIT | 'ROLLBACK
-; In the normal case, returns #t. Otherwise, exception is raised
+; End a transaction
+;
+; Function signature:
+;   connection-object action -> boolean
+;   action ::= 'COMMIT | 'ROLLBACK
+;
+; Return value: #t on successfully ending the transaction
+; On failure to end a transaction (e.g. no transaction is started),
+; an exception is raised
 (define (sedna:end-transaction connection action)
   (cond
     ((eq? action 'COMMIT)  
@@ -437,15 +474,35 @@
               (loop (+ i max-query-length))))))))))       
 
 ;-------------------------------------------------
-; Representation for a result
-;  result ::= (cons item promise)
-;  item - the current item in the sequence
-;  promise - the promise to obtain the remaining items
+; Representation for an XQuery result
 
+; Obtain the next item of the XQuery result
+; 
+; Function signature:
+;   xquery-result -> xquery-result | '()
+; where
+;   xquery-result ::= (cons item promise)
+;   item ::= S-expression       ; current result item
+;   promise ::= Scheme-promise  ; a promise to obtain the remaining items
+;
+; Return value:
+;   xquery-result   ; if the query result contains the next item
+;   | '()           ; if there are no more items in the query result
+;
+; Implementation details:
+;   The implementation is simply
+;   (force (cdr xquery-result))
 (define (sedna:next result)
   (force (cdr result)))
 
-; Reads the whole result, transforms it into the list
+; Obtain the complete query result in the form of a list of result items
+;
+; Function signature:
+;   xquery-result -> (listof item)
+;
+; Implementation details:
+;   The function recursively forces promises for an xquery-result and combines
+;   result items into a list
 (define (sedna:result->list result)
   (if
    (not (pair? result))  ; result of an update operation
@@ -649,6 +706,10 @@
 (define sedna:UpdateFailed 350)
 
 ; Execute a query and represent the result in the form of XML
+; Function signature and return value are the same as for function
+;   sedna:execute-query,
+; with the only difference that result item for an XQuery query is represented
+; in XML, as a string
 (define (sedna:execute-query-xml connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -684,7 +745,35 @@
            "sedna:execute-query-xml: Unexpected header code from server: "
            (number->string code))))))))
 
-; Execute a query; query result items are represented in SXML
+; Execute a query, query result items are represented in SXML
+;
+; Function signature:
+;   connection-object string -> boolean | xquery-result
+;
+; The second argument is a query, which can be one of the following:
+;  1. Data Definition Language statement, e.g.
+;      "CREATE DOCUMENT 'a'"
+;  2. XML update statement, e.g.
+;      "UPDATE insert <person><name>Paul</name></person> into doc('a')"
+;  3. XQuery query, e.g.
+;      "doc('a')/person/name"
+;
+; Return value:
+;    #t               ; for Data Definition Language and update statements
+;    | xquery-result  ; for an XQuery query
+;  xquery-result ::= (cons item promise)
+;  item ::= S-expression       ; current result item, represented in SXML
+;  promise ::= Scheme-promise  ; a promise to obtain the remaining items
+;
+; The function is to be called when Sedna transaction is begun with
+;   sedna:begin-transaction
+;
+; Sedna engine is fully streamlined, i.e. result items for an XQuery query
+; are evaluated and returned in a lazy fashion, upon forcing promises
+; of the xquery-result
+;
+; On a failure encountered during query execution (e.g. the queried document
+; does not exist), an exception is raised
 (define (sedna:execute-query connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -894,6 +983,10 @@
 ; Higher-level API
 
 ; Execute a query and represent the result in the form of XML stream
+; Function signature and return value are the same as for function
+;   sedna:execute-query,
+; with the only difference that result item for an XQuery query is represented
+; in XML as an input stream
 (define (sedna:execute-query-xml-stream connection query)
   (let ((in (sedna:connection-input connection))
         (out (sedna:connection-output connection)))
@@ -934,11 +1027,18 @@
 ; Wrapper for bulk load from stream
 
 ; Load an XML document from an input stream into a database
-; Is to be executed withing a transaction
-;  port - an input port for a stream
-;  document-name - the name of a new document in a database
-;  collection-name - if supplied, specifies the name of the collection for a
-; document in the database
+;
+; Function signature:
+;   connection-object input-port string [string] -> boolean
+; where 
+;   input-port - an input port for a stream
+;   document-name - the name of a new document in a Sedna database
+;   collection-name - if supplied, specifies the name of the collection for a
+;     document in the Sedna database
+;
+; Return value: #t on successful loading
+; On a failure during loading a document (e.g. the XML document
+; is not a well-formed one), an exception is raised
 (define (sedna:bulk-load-from-xml-stream
          connection port document-name . collection-name)
   (let ((in (sedna:connection-input connection))
@@ -968,19 +1068,23 @@
 ;==========================================================================
 ; Transaction operators
 
-; queries ::= (listof query)
-; Each query is a string
-; Begins a transaction and executer all supplied queries in a sequence.
-; If every query executes properly, the function commits the transaction and
-; returns the result of the last query executed
-; If an error occurs during some query processing, further queries are not
-; executed and transaction rollback is performed. Exception is re-raised
+; Execute a list of queries as a single transaction
+;
+; Function signature:
+;   connection-object string* -> last-query-result
+;
+; Semantics:
+;   Begins a transaction and executes all supplied queries in a sequence.
+;   If every query executes successfully, the function commits the transaction
+;   and returns the result of the last query executed
+;   If executing some query fails, further queries are not executed,
+;   transaction rollback is performed, and the exception is re-raised
 (define (sedna:transaction connection . queries)
   (handle-exceptions
    exc
    (begin
      ; DL: should be rollback
-     (sedna:end-transaction connection 'COMMIT)
+     (sedna:end-transaction connection 'ROLLBACK)
      ; Re-raising the exception
      (exc:signal exc))
    (begin
