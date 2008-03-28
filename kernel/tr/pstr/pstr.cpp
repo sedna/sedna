@@ -20,7 +20,7 @@ using namespace std;
 
 const shft	PSTRBLK_HEADER_SIZE = sizeof(struct vmm_sm_blk_hdr) + 6*sizeof(shft) + HHMAXSIZE*sizeof(hh_slot);
 /* the maximum string storable in our block - the case of single sting occupying whole block */
-const shft	PSTRMAXSIZE = PAGE_SIZE - PSTRBLK_HEADER_SIZE - 2*sizeof(shft);
+const shft	PSTRMAXSIZE = PAGE_SIZE - PSTRBLK_HEADER_SIZE - sizeof(shft);
 
 //#define PSTR_NO_CHECKP
 void checkPointer(xptr blk, char* ptr, int size)
@@ -52,18 +52,17 @@ xptr pstr_create_blk(bool persistent) {
 }
 
 
-
 /*	Make initial markup of pstr block.
 	Assume block is in-memory 
  */
 void pstr_blk_markup(xptr blk) {
 	/* set static fields */
 	*(shft*)PSTRNUM_ADDR(blk) = 0;
-	*(shft*)SITB_ADDR(blk) = PAGE_SIZE-sizeof(shft);
-	*(shft*)SITH_ADDR(blk) = PSTR_EMPTY_SLOT;				/* no free slots - the SIT is empty */
-	*(shft*)SSB_ADDR(blk) = SS_ADDR(blk)-(char*)XADDR(blk);
-	*(shft*)BFS_ADDR(blk) = PSTRMAXSIZE+sizeof(shft);					/* one slot is registered in SIT */
-	*(shft*)HHSIZE_ADDR(blk) = 0;
+	*(shft*)SITB_ADDR(blk)    = PAGE_SIZE-sizeof(shft);
+	*(shft*)SITH_ADDR(blk)    = PSTR_EMPTY_SLOT;                  /* no free slots - the SIT is empty */
+	*(shft*)SSB_ADDR(blk)     = SS_ADDR(blk)-(char*)XADDR(blk);
+	*(shft*)BFS_ADDR(blk)     = PSTRMAXSIZE+sizeof(shft);         /* one slot is registered in SIT */
+	*(shft*)HHSIZE_ADDR(blk)  = 0;
 }
 
 /* checks if the string of given size will fit into block */
