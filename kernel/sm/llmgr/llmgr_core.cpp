@@ -39,6 +39,72 @@ static int count_free = 0;
                           Init and Close Functions
 ******************************************************************************/
 
+/* This functions is used to initialize/deinitialize logical log to work with external utilities, such as log viewer */
+int llmgr_core::ll_log_init_simple(string _db_files_path_, string _db_name_)
+{
+	  db_files_path = _db_files_path_;
+  	  db_name = _db_name_;
+
+	  open_all_log_files();
+
+	  if (ll_open_files.size() < 1) return 1;
+	 	
+	  logical_log_file_head file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
+	  int valid_number = file_head.valid_number;
+
+	  //determine files to throw out from list
+	  int i = 0, j;
+
+      while (ll_open_files[i].name_number != valid_number) i++;
+
+	  //shift files to left
+  	  for (j = 0; j < i; j++)
+      	ll_open_files.erase(ll_open_files.begin());
+
+
+	  //create memory header
+
+	  shared_mem = malloc(sizeof(logical_log_sh_mem_head));
+
+	  if (shared_mem == NULL) return 2;
+
+	  //init header of shared memory
+   	  logical_log_sh_mem_head *mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+	  file_head = read_log_file_header(ll_open_files[ll_open_files.size() - 1].dsc);
+	  mem_head->next_lsn =  file_head.next_lsn;
+	  mem_head->next_durable_lsn = mem_head->next_lsn;
+
+	  mem_head->last_checkpoint_lsn = file_head.last_checkpoint_lsn;
+	  mem_head->min_rcv_lsn = NULL_LSN;
+	  mem_head->last_chain_lsn = file_head.last_chain_lsn;
+	  mem_head->last_lsn = file_head.last_lsn;
+   
+	  mem_head->ts = file_head.ts;
+
+	  for (i=0; i< ll_open_files.size(); i++)
+      	mem_head->ll_files_arr[i] = ll_open_files[i].name_number;
+
+	  mem_head->ll_files_num = ll_open_files.size();
+
+	  mem_head->base_addr = file_head.base_addr;//here base addr of tail log file
+
+	  read_buf = (char *)malloc(LOGICAL_LOG_UNDO_READ_PORTION);
+	  if (read_buf == NULL) return 2;
+	  read_buf_size = LOGICAL_LOG_UNDO_READ_PORTION;
+
+	  close_all_log_files();
+
+	  return 0;
+}
+
+void llmgr_core::ll_log_release_simple()
+{
+      free(read_buf);
+      free(shared_mem);  
+	  close_all_log_files();
+}
+
 /*                 !!!These Functions called on sm !!!                         */
 bool llmgr_core::ll_log_create(string _db_files_path_, string _db_name_, int &sedna_db_version/*, plmgr_core* phys_log_mgr_*/)
 {
