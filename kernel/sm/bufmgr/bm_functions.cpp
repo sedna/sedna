@@ -457,6 +457,7 @@ void bm_allocate_data_block(session_id sid,
 	vmm_sm_blk_hdr::init(hdr);
     hdr->p = *p;
     hdr->roffs = *offs;
+	hdr->is_changed = true;
 //printf("allocate 4\n");
     //d_printf1("bm_allocate_data_block: end\n");
 }
@@ -484,6 +485,7 @@ void bm_allocate_tmp_block(session_id sid,
 	vmm_sm_blk_hdr::init(hdr);
     hdr->p = *p;
     hdr->roffs = *offs;
+	hdr->is_changed = true;
 }
 
 void bm_delete_block(session_id sid,

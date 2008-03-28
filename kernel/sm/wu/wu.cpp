@@ -327,6 +327,7 @@ int AllocateDataBlockAndCopyData (XPTR *xptr, int *bufferId, int srcBufferId)
 		if (AllocateDataBlock(xptr, bufferId) && LocateBlockHeader(*bufferId, &destHeader))
 		{
 			memcpy(destHeader, srcHeader, PAGE_SIZE);
+			destHeader->is_changed = true;
 			success = 1;
 		}
 		buffer_on_stake = -1;
