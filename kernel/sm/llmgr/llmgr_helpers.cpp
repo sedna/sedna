@@ -891,3 +891,171 @@ LONG_LSN llmgr_core::getFirstCheckpointLSN(LONG_LSN lastCheckpointLSN)
 
   return ret_lsn;
 }
+
+static const char *glogentrynam(int i)
+{
+	const char *res="UNK";
+
+#define LOCAL_BRANCH(NAM) case NAM: res=#NAM; break;
+	switch(i)
+	{
+		LOCAL_BRANCH(LL_INSERT_ATTR)
+		LOCAL_BRANCH(LL_DELETE_ATTR)
+		LOCAL_BRANCH(LL_INSERT_ELEM)
+		LOCAL_BRANCH(LL_DELETE_ELEM)
+		LOCAL_BRANCH(LL_INSERT_TEXT)
+		LOCAL_BRANCH(LL_DELETE_TEXT)
+		LOCAL_BRANCH(LL_INSERT_LEFT_TEXT)
+		LOCAL_BRANCH(LL_DELETE_LEFT_TEXT)
+		LOCAL_BRANCH(LL_INSERT_RIGHT_TEXT)
+		LOCAL_BRANCH(LL_DELETE_RIGHT_TEXT)
+		LOCAL_BRANCH(LL_INSERT_DOC)
+		LOCAL_BRANCH(LL_DELETE_DOC)
+		LOCAL_BRANCH(LL_INSERT_COMMENT)
+		LOCAL_BRANCH(LL_DELETE_COMMENT)
+		LOCAL_BRANCH(LL_INSERT_PI)
+		LOCAL_BRANCH(LL_DELETE_PI)
+		LOCAL_BRANCH(LL_INSERT_COLLECTION)
+		LOCAL_BRANCH(LL_DELETE_COLLECTION)
+		LOCAL_BRANCH(LL_INSERT_NS)
+		LOCAL_BRANCH(LL_DELETE_NS)
+		LOCAL_BRANCH(LL_INSERT_DOC_INDEX)
+		LOCAL_BRANCH(LL_DELETE_DOC_INDEX)
+		LOCAL_BRANCH(LL_INSERT_COL_INDEX)
+		LOCAL_BRANCH(LL_DELETE_COL_INDEX)
+		LOCAL_BRANCH(LL_COMMIT)
+		LOCAL_BRANCH(LL_ROLLBACK)
+		LOCAL_BRANCH(LL_CHECKPOINT)
+		LOCAL_BRANCH(LL_INSERT_DOC_FTS_INDEX)
+		LOCAL_BRANCH(LL_DELETE_DOC_FTS_INDEX)
+		LOCAL_BRANCH(LL_INSERT_COL_FTS_INDEX)
+		LOCAL_BRANCH(LL_DELETE_COL_FTS_INDEX)
+		LOCAL_BRANCH(LL_FREE_BLOCKS)       
+		LOCAL_BRANCH(LL_PERS_SNAPSHOT_ADD) 
+		LOCAL_BRANCH(LL_DECREASE)          
+		LOCAL_BRANCH(LL_INSERT_DOC_TRG)
+		LOCAL_BRANCH(LL_DELETE_DOC_TRG)
+		LOCAL_BRANCH(LL_INSERT_COL_TRG)
+		LOCAL_BRANCH(LL_DELETE_COL_TRG)
+	}
+#undef LOCAL_BRANCH
+
+	return res;
+}
+
+void llmgr_core::print_llog()
+{
+
+	logical_log_sh_mem_head* mem_head = (logical_log_sh_mem_head*)shared_mem;
+
+	__int64 file_size;
+	
+	const char *rec, *body_beg;
+	
+	LONG_LSN lsn = mem_head->base_addr + sizeof(logical_log_file_head), end_lsn = mem_head->last_lsn;
+
+	printf("Start of logical log...\n");
+
+	while (lsn <= end_lsn)
+	{
+		set_file_pointer(lsn);
+		
+		if (uGetFileSize(ll_curr_file_dsc, &file_size, __sys_call_error) == 0)
+			throw SYSTEM_EXCEPTION("Cannot get file size!");
+
+		int rmndr = lsn % LOG_FILE_PORTION_SIZE;
+
+		if (rmndr == file_size)
+			lsn = (lsn / LOG_FILE_PORTION_SIZE + 1) * LOG_FILE_PORTION_SIZE + sizeof(logical_log_file_head);
+		else if (rmndr == 0)
+			lsn += sizeof(logical_log_file_head);
+
+		rec = get_record_from_disk(lsn);
+		body_beg = rec + sizeof(logical_log_head);
+
+		char type = body_beg[0];
+		int offs = sizeof(char);
+		int trid;
+
+		if (type == LL_INSERT_ATTR || type == LL_DELETE_ATTR)
+		{
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+
+		    const char *name, *uri, *prefix, *value;
+		    int value_size;
+		    xmlscm_type xtype;
+		    xptr self, left, right, parent;
+			
+			name = body_beg + offs;
+			offs += strlen(name) + 1;
+			uri = body_beg + offs;
+			offs += strlen(uri) + 1;
+			prefix = body_beg + offs;
+			offs += strlen(prefix) + 1;
+			memcpy(&value_size, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+			value = body_beg + offs;
+			offs += value_size;
+		    memcpy(&xtype, body_beg + offs, sizeof(xmlscm_type));
+		    offs += sizeof(xmlscm_type);
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&left, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&right, body_beg + offs, sizeof(xptr));
+		    offs += sizeof(xptr);
+		    memcpy(&parent, body_beg + offs, sizeof(xptr));
+
+		    #define XPTR_FMT(P) (P).layer, (int)(P).addr
+
+		    printf("%016llx %s self=%08x%08x left=%08x%08x right=%08x%08x parent=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	XPTR_FMT(self),
+		   		XPTR_FMT(left),
+		    	XPTR_FMT(right),
+		    	XPTR_FMT(parent)
+		    );
+		}
+		else if (type == LL_COMMIT || type == LL_ROLLBACK)
+		{
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+
+			printf("Transaction id = %d\n", trid);
+		    printf("%016llx %s\n", 
+		    	lsn,
+		    	glogentrynam(type)
+		    );
+		}
+		else if (type == LL_INSERT_DOC || type == LL_DELETE_DOC)
+		{
+		    const char *name, *coll;
+		    xptr self;
+
+			memcpy(&trid, body_beg + offs, sizeof(int));
+			offs += sizeof(int);
+			printf("Transaction id = %d\n", trid);
+
+		    name = body_beg + offs;
+		    offs += strlen(name) + 1;
+		    coll = body_beg + offs;
+		    offs += strlen(coll) + 1;
+		    memcpy(&self, body_beg + offs, sizeof(xptr));
+
+		    printf("%016llx %s name=%s coll=%s self=%08x%08x\n", 
+		    	lsn,
+		    	glogentrynam(type),
+		    	name,
+		    	coll,
+		    	XPTR_FMT(self)
+		    );
+		}
+		
+		lsn += get_record_length(rec);
+	}
+}

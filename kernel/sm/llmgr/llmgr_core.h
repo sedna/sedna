@@ -250,6 +250,13 @@ protected:
   char* internal_buf;
 
 public:
+  //init and release functions; called in some external utility
+  int  ll_log_init_simple(std::string _db_files_path_, std::string _db_name_);
+  void ll_log_release_simple();
+
+  // debug function
+  void print_llog();
+
   //create and release functions; called in sm
   bool ll_log_create(std::string _db_files_path_, std::string _db_name_, int &sedna_db_version/*, plmgr_core* _phys_log_mgr_*/);
   void ll_log_create_shared_mem();
