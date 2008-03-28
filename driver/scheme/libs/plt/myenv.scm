@@ -328,20 +328,12 @@
 
 (define-macro (cond-expand . clauses)
   (define feature-ids `(plt srfi-0))
-  
-  ; If symbol id is defined, return then-branch
-  ; Otherwise returns else-branch
-  ; NOTE: PLT-specific
-  (define (ifdef id then-branch else-branch)
-    (with-handlers
-        (((lambda (x) #t)
-          (lambda (x) `,else-branch)))
-      (namespace-variable-value id)
-      `,then-branch))  
-  (define (feature-req-satisfies? fr) ; does feature-request satisfies?
+    (define (feature-req-satisfies? fr) ; does feature-request satisfies?
     (cond
      ((memq fr feature-ids) #t)
-     ((eq? fr 'plt-bytes) (ifdef 'bytes? #t #f))
+     ((eq? fr 'plt-bytes) ;(ifdef 'bytes? #t #f)
+      (not (and (string->number (version)) (< (string->number (version)) 299)))
+     )
      ((not (pair? fr)) #f)
      ((eq? 'and (car fr))
       (let loop ((clauses (cdr fr)))
