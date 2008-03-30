@@ -433,8 +433,8 @@ xptr isAttributePointerSet(n_dsc* node,const char* name,const char* uri)
 	while (sc!=NULL)
 	{
 		++cnt;
-		if (sc->type==attribute && my_strcmp(name,sc->name)==0 &&  (((char*)sc->xmlns)==uri ||
-			my_strcmp(uri,sc->xmlns->uri)==0)) 
+		if (sc->type==attribute && my_strcmp(name,sc->name)==0 &&  
+			(((char*)sc->xmlns)==uri || (sc->xmlns!=NULL && my_strcmp(uri,sc->xmlns->uri)==0))) /// sc->xmlns usually NULL on attribute schema nodes (IS)
 		{
 			if (block->dsc_size>=((shft)size_of_node(block)+((shft)cnt+1)*((shft)sizeof(xptr))) && 
 		((*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))))!=XNULL)) return (*(xptr*)((char*)node+(shft)size_of_node(block)+(shft)cnt*((shft)sizeof(xptr))));

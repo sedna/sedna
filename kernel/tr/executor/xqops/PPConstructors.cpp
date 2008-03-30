@@ -680,6 +680,9 @@ void PPAttributeConstructor::next  (tuple &t)
                  (ns->prefix!=NULL && my_strcmp(ns->prefix,"http://www.w3.org/2000/xmlns/")==0 )
                 ))
 				throw XQUERY_EXCEPTION(XQDY0044);
+			
+			if (ns!=NULL && ns->prefix!=NULL && my_strcmp(prefix,"")!=0)               /// Note: default namespace is not applied to the attributes (IS)
+				ns=NULL;
 		}
 		else
 		{
@@ -688,10 +691,10 @@ void PPAttributeConstructor::next  (tuple &t)
 				        (prefix==NULL||my_strcmp(prefix,"")==0) && my_strcmp(name,"xmlns")==0)
 				     || (prefix!=NULL && my_strcmp(prefix,"http://www.w3.org/2000/xmlns/")==0) )
 			{
-				if (prefix != NULL) { delete prefix; prefix = NULL; }  /// Added by Ivan Shcheklein
+				if (prefix != NULL) { delete prefix; prefix = NULL; }  /// We should clear memory here ... (IS)
 				throw XQUERY_EXCEPTION(XQDY0044);
 			}
-			if (prefix!=NULL)
+			if (prefix!=NULL && my_strcmp(prefix,"")!=0)               /// Note: default namespace is not applied to the attributes (IS)
 			{
 				ns=cxt->st_cxt->get_xmlns_by_prefix(prefix);
 				delete prefix;			
