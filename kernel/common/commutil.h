@@ -24,6 +24,9 @@
 	% with bitwize operators when alignment is power of 2 (the most common scenario).
 */ 
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifndef EXTERN_C
 #ifdef __cplusplus
 #define EXTERN_C extern "C"
